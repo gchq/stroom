@@ -46,6 +46,7 @@ import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.EnumSet;
 
@@ -66,6 +67,11 @@ public class App extends Application<Config> {
     private ManagedServices managedServices;
 
     private final Path configFile;
+
+    // Needed for DropwizardExtensionsSupport
+    public App() {
+        configFile = Paths.get("PATH_NOT_SUPPLIED");
+    }
 
     App(final Path configFile) {
         super();

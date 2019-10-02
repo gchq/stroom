@@ -6,12 +6,10 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import io.dropwizard.testing.junit5.DropwizardAppExtension;
-import io.dropwizard.testing.junit5.DropwizardExtensionsSupport;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.app.App;
 import stroom.config.app.Config;
 import stroom.docref.DocRef;
@@ -41,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * This is not currently a test. It is a way of exercising the query api, i.e. it is support for manual testing.
  */
-@ExtendWith(DropwizardExtensionsSupport.class)
+//@ExtendWith(DropwizardExtensionsSupport.class)
 class TestStroomIndexQueryResource {
 
     // local.yml is not in source control and is created using local.yml.sh
@@ -88,7 +86,7 @@ class TestStroomIndexQueryResource {
         return objectMapper.writeValueAsString(searchRequest);
     }
 
-    @Disabled
+    @Disabled // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes ages to run no tests
     @Test
     void testSavedFromFile() throws IOException {
         // Given
@@ -113,7 +111,7 @@ class TestStroomIndexQueryResource {
         System.out.println(response.toString());
     }
 
-    @Disabled
+    @Disabled // if this is re-enabled then un-comment the DropwizardExtensionSupport class extension above, else test takes ages to run no tests
     @Test
     void test() throws JsonProcessingException {
         // Given
