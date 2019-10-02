@@ -31,6 +31,7 @@ import stroom.data.store.impl.fs.FsVolumeStateDao;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
+import stroom.db.util.HikariConfigHolder;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.test.StroomUnitTest;
@@ -80,7 +81,8 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 
         final SecurityContext securityContext = new MockSecurityContext();
 
-        final ConnectionProvider connectionProvider = new FsDataStoreDbModule().getConnectionProvider(DataStoreServiceConfig::new);
+        final ConnectionProvider connectionProvider = new FsDataStoreDbModule()
+                .getConnectionProvider(DataStoreServiceConfig::new, new HikariConfigHolder());
         final FsVolumeDao fsVolumeDao = new FsVolumeDaoImpl(connectionProvider);
         final FsVolumeStateDao fsVolumeStateDao = new FsVolumeStateDaoImpl(connectionProvider);
         volumeService = new FsVolumeService(fsVolumeDao,

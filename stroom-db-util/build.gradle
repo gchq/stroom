@@ -11,6 +11,7 @@ dependencies {
 //    
 //    compile libs.commons_codec
 //    compile libs.dropwizard_metrics_healthchecks
+    compile libs.flyway_core
     compile libs.google_findbugs
     compile libs.guava
     compile libs.hikari

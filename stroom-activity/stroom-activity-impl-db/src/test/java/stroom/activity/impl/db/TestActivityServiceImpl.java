@@ -33,6 +33,7 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.activity.shared.FindActivityCriteria;
+import stroom.db.util.HikariConfigHolder;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseResultList;
 
@@ -52,7 +53,8 @@ class TestActivityServiceImpl {
         Mockito.when(securityContext.getUserId()).thenReturn("testUser");
         Mockito.when(securityContext.isLoggedIn()).thenReturn(true);
 
-        final ConnectionProvider connectionProvider = new ActivityDbModule().getConnectionProvider(ActivityConfig::new);
+        final ConnectionProvider connectionProvider = new ActivityDbModule()
+                .getConnectionProvider(ActivityConfig::new, new HikariConfigHolder());
 
         final ActivityDao activityDao = new ActivityDaoImpl(connectionProvider);
         activityService = new ActivityServiceImpl(securityContext, activityDao);

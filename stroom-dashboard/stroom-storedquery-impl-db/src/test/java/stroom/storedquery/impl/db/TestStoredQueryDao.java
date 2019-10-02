@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.db.util.DbUtil;
+import stroom.db.util.HikariConfigHolder;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -69,7 +70,8 @@ class TestStoredQueryDao {
         Mockito.when(securityContext.getUserId()).thenReturn("testuser");
 
         // need an explicit teardown and setup of the DB before each test method
-        final ConnectionProvider connectionProvider = new StoredQueryDbModule().getConnectionProvider(StoredQueryConfig::new);
+        final ConnectionProvider connectionProvider = new StoredQueryDbModule()
+                .getConnectionProvider(StoredQueryConfig::new, new HikariConfigHolder());
         DbUtil.clearAllTables(connectionProvider.getConnection());
 
         storedQueryDao = new StoredQueryDaoImpl(connectionProvider);

@@ -23,32 +23,37 @@ public class HikariConfigHolder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HikariConfigHolder.class);
 
-    private final ConcurrentMap<DbConfig, HikariConfigWrapper> map = new ConcurrentHashMap<>();
+    private final ConcurrentMap<DbConfig, HikariConfigWrapper> dbConfigToHikariConfigMap = new ConcurrentHashMap<>();
 
-    HikariConfigHolder() {
+    public HikariConfigHolder() {
         LOGGER.debug("Initialising {}", this.getClass().getSimpleName());
     }
 
     public HikariConfig getHikariConfig(final HasDbConfig config) {
 
         String requestingConfigClass = config.getClass().getSimpleName();
-        LOGGER.debug("Getting Hikari database config for {}", requestingConfigClass);
+        LOGGER.debug("Getting Hikari database config for {}, current map size {}",
+                requestingConfigClass, dbConfigToHikariConfigMap.size());
         final DbConfig dbConfig = config.getDbConfig();
 
-        final HikariConfigWrapper hikariConfigWrapper = map.compute(dbConfig, (key, existingValue) -> {
+        final HikariConfigWrapper hikariConfigWrapper = dbConfigToHikariConfigMap
+                .compute(dbConfig, (key, existingValue) -> {
 
-            HikariConfigWrapper value;
-            if (existingValue == null) {
-                LOGGER.info("Creating new Hikari database config for {}", requestingConfigClass);
-                value = new HikariConfigWrapper(HikariUtil.createConfig(config), requestingConfigClass);
-            } else {
-                LOGGER.info("Found existing Hikari config for {} that matches the required config for {}",
-                        existingValue.getSource(),
-                        config.getClass().getSimpleName());
-                value = existingValue;
-            }
-            return value;
-        });
+                    final HikariConfigWrapper value;
+                    if (existingValue == null) {
+                        LOGGER.info("Creating new Hikari database config for {}",
+                                requestingConfigClass);
+                        value = new HikariConfigWrapper(
+                                HikariUtil.createConfig(config),
+                                requestingConfigClass);
+                    } else {
+                        LOGGER.info("Found existing Hikari config for {} that matches the required config for {}",
+                                existingValue.getSource(),
+                                config.getClass().getSimpleName());
+                        value = existingValue;
+                    }
+                    return value;
+                });
 
         Objects.requireNonNull(hikariConfigWrapper, "Should not be null here");
         return hikariConfigWrapper.getHikariConfig();
