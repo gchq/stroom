@@ -17,6 +17,8 @@
 package stroom.test;
 
 
+import io.vavr.Tuple;
+import io.vavr.Tuple2;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.SegmentOutputStream;
@@ -70,11 +72,14 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.filter;
 
 /**
  * A tool used to add data to a stream store.
@@ -82,18 +87,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public final class StoreCreationTool {
     private static final int OLD_YEAR = 2006;
-    private static final Path eventDataPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard_Pipelines/Event_Data.Pipeline.7740cfc4-3443-4001-bf0b-6adc77d5a3cf.xml");
-    private static final Path referenceDataPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard_Pipelines/Reference_Data.Pipeline.b15e0cc8-3f82-446d-b106-04f43c38e19c.xml");
-    private static final Path referenceLoaderPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard_Pipelines/Reference_Loader.Pipeline.da1c7351-086f-493b-866a-b42dbe990700.xml");
-    private static final Path contextDataPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard_Pipelines/Context_Data.Pipeline.fc281170-360d-4773-ad79-5378c5dcf52e.xml");
-    private static final Path indexingPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard_Pipelines/Indexing.Pipeline.fcef1b20-083e-436c-ab95-47a6ce453435.xml");
-    private static final Path searchExtractionPipeline = StroomCoreServerTestFileUtil
-            .getFile("samples/config/Standard_Pipelines/Search_Extraction.Pipeline.3d9d60e9-61c2-4c88-a57b-7bc584dd970e.xml");
+
+    private static final String EVENT_DATA_PIPELINE_UUID = "b07a43a9-f970-4642-9452-42a38fbd447e";
+    private static final String REFERENCE_DATA_PIPELINE_UUID = "b15e0cc8-3f82-446d-b106-04f43c38e19c";
+    private static final String REFERENCE_LOADER_PIPELINE_UUID = "da1c7351-086f-493b-866a-b42dbe990700";
+    private static final String CONTEXT_DATA_PIPELINE_UUID = "fc281170-360d-4773-ad79-5378c5dcf52e";
+    private static final String INDEXING_PIPELINE_UUID = "fcef1b20-083e-436c-ab95-47a6ce453435";
+    private static final String SEARCH_EXTRACTION_PIPELINE_UUID = "3d9d60e9-61c2-4c88-a57b-7bc584dd970e";
+
+//    private static final Path eventDataPipeline = StroomCoreServerTestFileUtil
+//            .getFile("samples/config/Standard_Pipelines/Event_Data.Pipeline.7740cfc4-3443-4001-bf0b-6adc77d5a3cf.xml");
+//    private static final Path referenceDataPipeline = StroomCoreServerTestFileUtil
+//            .getFile("samples/config/Standard_Pipelines/Reference_Data.Pipeline.b15e0cc8-3f82-446d-b106-04f43c38e19c.xml");
+//    private static final Path referenceLoaderPipeline = StroomCoreServerTestFileUtil
+//            .getFile("samples/config/Standard_Pipelines/Reference_Loader.Pipeline.da1c7351-086f-493b-866a-b42dbe990700.xml");
+//    private static final Path contextDataPipeline = StroomCoreServerTestFileUtil
+//            .getFile("samples/config/Standard_Pipelines/Context_Data.Pipeline.fc281170-360d-4773-ad79-5378c5dcf52e.xml");
+//    private static final Path indexingPipeline = StroomCoreServerTestFileUtil
+//            .getFile("samples/config/Standard_Pipelines/Indexing.Pipeline.fcef1b20-083e-436c-ab95-47a6ce453435.xml");
+//    private static final Path searchExtractionPipeline = StroomCoreServerTestFileUtil
+//            .getFile("samples/config/Standard_Pipelines/Search_Extraction.Pipeline.3d9d60e9-61c2-4c88-a57b-7bc584dd970e.xml");
     private static long effectiveMsOffset = 0;
 
     private final Store store;
@@ -224,9 +237,14 @@ public final class StoreCreationTool {
                                         final Path textConverterLocation,
                                         final Path xsltLocation) {
         // Setup the pipeline.
-        final String data = StreamUtil.fileToString(referenceDataPipeline);
-        final DocRef pipelineRef = getPipeline(feedName, data);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+//        final String data = StreamUtil.fileToString(referenceDataPipeline);
+//        final DocRef pipelineRef = getPipeline(feedName, data);
+//        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+
+        final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
+                new DocRef(PipelineDoc.DOCUMENT_TYPE, REFERENCE_DATA_PIPELINE_UUID),
+                feedName);
+        final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
 
         // Setup the text converter.
         final DocRef textConverterRef = getTextConverter(feedName, textConverterType, textConverterLocation);
@@ -241,7 +259,7 @@ public final class StoreCreationTool {
         pipelineDoc.getPipelineData()
                 .addProperty(PipelineDataUtil.createProperty("storeAppender", "streamType", StreamTypeNames.REFERENCE));
         pipelineStore.writeDocument(pipelineDoc);
-        return pipelineRef;
+        return pipelineRefAndDoc._1();
     }
 
     /**
@@ -365,7 +383,9 @@ public final class StoreCreationTool {
         final DocRef pipelineRef = getEventPipeline(feedName, translationTextConverterType,
                 translationTextConverterLocation, translationXsltLocation, flatteningXsltLocation, pipelineReferences);
 
-        final Processor streamProcessor = processorService.find(new ExpressionCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineRef))).getFirst();
+        final Processor streamProcessor = processorService
+                .find(new ExpressionCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineRef)))
+                .getFirst();
         if (streamProcessor == null) {
             // Setup the stream processor filter.
             final QueryData findStreamQueryData = new QueryData.Builder()
@@ -389,9 +409,15 @@ public final class StoreCreationTool {
         final DocRef contextXSLT = getXSLT(feedName + "_CONTEXT", contextXsltLocation);
 
         // Setup the pipeline.
-        final String data = StreamUtil.fileToString(contextDataPipeline);
-        final DocRef pipelineRef = getPipeline(feedName + "_CONTEXT", data);
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+//        final String data = StreamUtil.fileToString(contextDataPipeline);
+//        final DocRef pipelineRef = getPipeline(feedName + "_CONTEXT", data);
+//        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+
+        final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
+                new DocRef(PipelineDoc.DOCUMENT_TYPE, CONTEXT_DATA_PIPELINE_UUID),
+                feedName + "_CONTEXT");
+        final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
+
 
         if (contextTextConverterRef != null) {
             pipelineDoc.getPipelineData().addProperty(PipelineDataUtil.createProperty(CombinedParser.DEFAULT_NAME,
@@ -403,19 +429,26 @@ public final class StoreCreationTool {
         }
 
         pipelineStore.writeDocument(pipelineDoc);
-        return pipelineRef;
+        return pipelineRefAndDoc._1();
     }
 
     private DocRef getReferenceLoaderPipeline() {
         // Setup the pipeline.
-        return getPipeline("ReferenceLoader", StreamUtil.fileToString(referenceLoaderPipeline));
+//        return getPipeline("ReferenceLoader", StreamUtil.fileToString(referenceLoaderPipeline));
+        return getPipeline(new DocRef(PipelineDoc.DOCUMENT_TYPE, REFERENCE_LOADER_PIPELINE_UUID))
+                .orElseThrow();
     }
 
     private DocRef getEventPipeline(final String feedName, final TextConverterType textConverterType,
                                     final Path translationTextConverterLocation, final Path translationXsltLocation,
                                     final Path flatteningXsltLocation, final List<PipelineReference> pipelineReferences) {
-        final DocRef pipelineRef = getPipeline(feedName, StreamUtil.fileToString(eventDataPipeline));
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+//        final DocRef pipelineRef = getPipeline(feedName, StreamUtil.fileToString(eventDataPipeline));
+//        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+
+        final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
+                new DocRef(PipelineDoc.DOCUMENT_TYPE, EVENT_DATA_PIPELINE_UUID),
+                feedName);
+        final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
 
         // Setup the text converter.
         final DocRef translationTextConverterRef = getTextConverter(feedName, textConverterType,
@@ -475,12 +508,18 @@ public final class StoreCreationTool {
 
         pipelineStore.writeDocument(pipelineDoc);
 
-        return pipelineRef;
+        return pipelineRefAndDoc._1();
     }
 
     private DocRef getIndexingPipeline(final DocRef indexRef, final Path xsltLocation) {
-        final DocRef pipelineRef = getPipeline(indexRef.getName(), StreamUtil.fileToString(indexingPipeline));
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+
+//        final DocRef pipelineRef = getPipeline(indexRef.getName(), StreamUtil.fileToString(indexingPipeline));
+//        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+
+        final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
+                new DocRef(PipelineDoc.DOCUMENT_TYPE, INDEXING_PIPELINE_UUID),
+                indexRef.getName());
+        final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
 
 
         // Setup the xslt.
@@ -511,7 +550,7 @@ public final class StoreCreationTool {
         // pipeline.setMeta(data);
 
         pipelineStore.writeDocument(pipelineDoc);
-        return pipelineRef;
+        return pipelineRefAndDoc._1();
     }
 
     private DocRef getTextConverter(final String name,
@@ -570,20 +609,53 @@ public final class StoreCreationTool {
         return null;
     }
 
+    private Optional<DocRef> getPipeline(final DocRef docRef) {
+        Objects.requireNonNull(docRef);
+        // Try to find an existing one first.
+        return pipelineStore.list()
+                .stream()
+                .filter(docRef2 ->
+                        docRef.getUuid().equals(docRef.getUuid()))
+                .findFirst();
+    }
+
+    private Optional<DocRef> getPipeline(final String name) {
+        // Try to find an existing one first.
+        return pipelineStore.list()
+                .stream()
+                .filter(docRef ->
+                        name.equals(docRef.getName()))
+                .findFirst();
+    }
+
     private DocRef getPipeline(final String name, final String data) {
         // Try to find an existing one first.
-        final List<DocRef> refs = pipelineStore.list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());
-        if (refs != null && refs.size() > 0) {
-            return refs.get(0);
-        }
+        return getPipeline(name)
+                .orElse(PipelineTestUtil.createTestPipeline(
+                        pipelineStore,
+                        name,
+                        "Description " + name,
+                        data));
+    }
 
-        return PipelineTestUtil.createTestPipeline(pipelineStore, name, "Description " + name,
-                data);
+    private Tuple2<DocRef, PipelineDoc> duplicatePipeline(final DocRef sourcePipelineDocRef,
+                                                          final String newName) {
+        DocRef newDocRef = PipelineTestUtil.duplicatePipeline(
+                pipelineStore,
+                sourcePipelineDocRef,
+                newName,
+                "Description " + newName);
+        PipelineDoc newPipelineDoc = pipelineStore.readDocument(newDocRef);
+        return Tuple.of(newDocRef, newPipelineDoc);
     }
 
     public DocRef addIndex(final String name, final Path translationXsltLocation, final OptionalInt maxDocsPerShard) {
         // Try to find an existing one first.
-        final List<DocRef> refs = indexStore.list().stream().filter(docRef -> name.equals(docRef.getName())).collect(Collectors.toList());
+        final List<DocRef> refs = indexStore.list()
+                .stream()
+                .filter(docRef ->
+                        name.equals(docRef.getName()))
+                .collect(Collectors.toList());
         if (refs != null && refs.size() > 0) {
             return refs.get(0);
         }
@@ -596,7 +668,8 @@ public final class StoreCreationTool {
         // Create the indexing pipeline.
         final DocRef pipelineRef = getIndexingPipeline(indexRef, translationXsltLocation);
 
-        final Processor streamProcessor = processorService.find(new ExpressionCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineRef)))
+        final Processor streamProcessor = processorService.find(new ExpressionCriteria(
+                ProcessorExpressionUtil.createPipelineExpression(pipelineRef)))
                 .getFirst();
         if (streamProcessor == null) {
             // Setup the stream processor filter.
@@ -633,8 +706,13 @@ public final class StoreCreationTool {
     }
 
     public DocRef getSearchResultPipeline(final String name, final Path xsltLocation) {
-        final DocRef pipelineRef = getPipeline(name, StreamUtil.fileToString(searchExtractionPipeline));
-        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+//        final DocRef pipelineRef = getPipeline(name, StreamUtil.fileToString(searchExtractionPipeline));
+//        final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipelineRef);
+
+        final Tuple2<DocRef, PipelineDoc> pipelineRefAndDoc = duplicatePipeline(
+                new DocRef(PipelineDoc.DOCUMENT_TYPE, SEARCH_EXTRACTION_PIPELINE_UUID),
+                name);
+        final PipelineDoc pipelineDoc = pipelineRefAndDoc._2();
 
         // Setup the xslt.
         final DocRef xslt = getXSLT(name, xsltLocation);
@@ -657,6 +735,6 @@ public final class StoreCreationTool {
         // pipeline.setMeta(data);
 
         pipelineStore.writeDocument(pipelineDoc);
-        return pipelineRef;
+        return pipelineRefAndDoc._1();
     }
 }

@@ -21,6 +21,8 @@ import stroom.docstore.impl.Serialiser2FactoryImpl;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 
+import java.util.Objects;
+
 public final class PipelineTestUtil {
     private static final PipelineSerialiser SERIALISER = new PipelineSerialiser(new Serialiser2FactoryImpl());
 
@@ -54,5 +56,30 @@ public final class PipelineTestUtil {
         }
         pipelineStore.writeDocument(pipelineDoc);
         return docRef;
+    }
+
+    public static DocRef duplicatePipeline(final PipelineStore pipelineStore,
+                                           final DocRef sourcePipelineDocRef,
+                                           final String newName,
+                                           final String newDescription) {
+        Objects.requireNonNull(pipelineStore);
+        Objects.requireNonNull(sourcePipelineDocRef);
+        Objects.requireNonNull(newName);
+
+        final PipelineDoc sourcePipeline = pipelineStore.readDocument(sourcePipelineDocRef);
+
+        final DocRef newDocRef = pipelineStore.createDocument(newName);
+        final PipelineDoc newPipeline = pipelineStore.readDocument(newDocRef);
+
+        newPipeline.setName(newName);
+        if (newDescription != null) {
+            newPipeline.setDescription(newDescription);
+        }
+
+        // copy the data part
+        newPipeline.setPipelineData(sourcePipeline.getPipelineData());
+
+        pipelineStore.writeDocument(newPipeline);
+        return newDocRef;
     }
 }

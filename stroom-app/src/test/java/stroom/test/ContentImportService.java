@@ -27,7 +27,8 @@ public class ContentImportService {
     public enum ContentPackName {
         CORE_XML_SCHEMAS("core-xml-schemas"),
         EVENT_LOGGING_XML_SCHEMA("event-logging-xml-schema"),
-        TEMPLATE_PIPELINES("template-pipelines");
+        TEMPLATE_PIPELINES("template-pipelines"),
+        STANDARD_PIPELINES("standard-pipelines");
 
         private final String packName;
 
@@ -52,6 +53,10 @@ public class ContentImportService {
             ContentPackName.TEMPLATE_PIPELINES,
             Version.of(0, 2));
 
+    public static final ContentPack STANDARD_PIPELINES_PACK = ContentPack.of(
+            ContentPackName.STANDARD_PIPELINES,
+            Version.of(0, 1));
+
     private static final Version VISUALISATIONS_VERSION = Version.of(3, 0, 4);
 
     private ImportExportService importExportService;
@@ -62,13 +67,14 @@ public class ContentImportService {
     }
 
     /**
-     * Imports standard packs, i.e. all the schemas and template pipelines
+     * Imports standard packs, i.e. all the schemas and standard/template pipelines
      */
     public void importStandardPacks() {
         importContentPacks(Arrays.asList(
                 CORE_XML_SCHEMAS_PACK,
                 EVENT_LOGGING_XML_SCHEMA_PACK,
-                TEMPLATE_PIPELINES_PACK
+                TEMPLATE_PIPELINES_PACK,
+                STANDARD_PIPELINES_PACK
         ));
     }
 
