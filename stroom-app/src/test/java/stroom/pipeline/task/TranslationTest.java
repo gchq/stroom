@@ -136,7 +136,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         importExportSerializer.read(configDir, null, ImportMode.IGNORE_CONFIRMATION);
 
-        contentImportService.importXmlSchemas();
+        contentImportService.importStandardPacks();
 
         // Process reference data.
         processData(inputDir, outputDir, true, compareOutput, exceptions);

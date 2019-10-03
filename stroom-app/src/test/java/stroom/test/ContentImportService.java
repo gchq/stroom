@@ -14,16 +14,44 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * This class should be used when integration tests require stroom content. The downloadStroomContent gradle
- * task that is part of the setupSampleData task should be used when you need stroom content for manual testing
- * inside stroom
+ * This class should be used when integration tests require stroom content that is available as
+ * released content packs from the stroom-content git repo.
+ *
+ * The setupSampleData gradle task should be used when you need stroom content for manual testing
+ * inside stroom. See {@link SetupSampleData} for details.
  */
 public class ContentImportService {
 
     public static final String CONTENT_PACK_IMPORT_DIR = "transientContentPacks";
 
-    private static final Version CORE_XML_SCHEMAS_VERSION = Version.of(1, 1);
-    private static final Version EVENT_LOGGING_XML_SCHEMA_VERSION = Version.of(3, 1, 1);
+    public enum ContentPackName {
+        CORE_XML_SCHEMAS("core-xml-schemas"),
+        EVENT_LOGGING_XML_SCHEMA("event-logging-xml-schema"),
+        TEMPLATE_PIPELINES("template-pipelines");
+
+        private final String packName;
+
+        ContentPackName(final String packName) {
+            this.packName = packName;
+        }
+
+        String getPackName() {
+            return packName;
+        }
+    }
+
+    public static final ContentPack CORE_XML_SCHEMAS_PACK = ContentPack.of(
+            ContentPackName.CORE_XML_SCHEMAS,
+            Version.of(1, 1));
+
+    public static final ContentPack EVENT_LOGGING_XML_SCHEMA_PACK = ContentPack.of(
+            ContentPackName.EVENT_LOGGING_XML_SCHEMA,
+            Version.of(3, 1, 1));
+
+    public static final ContentPack TEMPLATE_PIPELINES_PACK = ContentPack.of(
+            ContentPackName.TEMPLATE_PIPELINES,
+            Version.of(0, 2));
+
     private static final Version VISUALISATIONS_VERSION = Version.of(3, 0, 4);
 
     private ImportExportService importExportService;
@@ -33,34 +61,38 @@ public class ContentImportService {
         this.importExportService = importExportService;
     }
 
-    public void importXmlSchemas() {
+    /**
+     * Imports standard packs, i.e. all the schemas and template pipelines
+     */
+    public void importStandardPacks() {
         importContentPacks(Arrays.asList(
-                ContentPack.of("core-xml-schemas", CORE_XML_SCHEMAS_VERSION),
-                ContentPack.of("event-logging-xml-schema", EVENT_LOGGING_XML_SCHEMA_VERSION)
+                CORE_XML_SCHEMAS_PACK,
+                EVENT_LOGGING_XML_SCHEMA_PACK,
+                TEMPLATE_PIPELINES_PACK
         ));
     }
 
     public void importVisualisations() {
 
-        Path contentPackDirPath = getContentPackDirPath();
+        final Path contentPackDirPath = getContentPackDirPath();
 
-        Path packPath = VisualisationsDownloader.downloadVisualisations(VISUALISATIONS_VERSION, contentPackDirPath);
+        final Path packPath = VisualisationsDownloader.downloadVisualisations(
+                VISUALISATIONS_VERSION, contentPackDirPath);
         importExportService.performImportWithoutConfirmation(packPath);
     }
 
     public void importContentPacks(final List<ContentPack> packs) {
 
-        Path contentPackDirPath = getContentPackDirPath();
-
         packs.forEach(pack -> {
             Path packPath = ContentPackDownloader.downloadContentPack(
-                    pack.getName(), pack.getVersion(), contentPackDirPath);
+                    pack.getNameAsStr(), pack.getVersion(), getContentPackDirPath());
             importExportService.performImportWithoutConfirmation(packPath);
         });
     }
 
     private Path getContentPackDirPath() {
-        Path contentPackDir = StroomCoreServerTestFileUtil.getTestResourcesDir().resolve(CONTENT_PACK_IMPORT_DIR);
+        final Path contentPackDir = StroomCoreServerTestFileUtil.getTestResourcesDir()
+                .resolve(CONTENT_PACK_IMPORT_DIR);
         try {
             Files.createDirectories(contentPackDir);
         } catch (final IOException e) {
@@ -71,19 +103,23 @@ public class ContentImportService {
     }
 
     public static class ContentPack {
-        private final String name;
+        private final ContentPackName name;
         private final Version version;
 
-        public ContentPack(final String name, final Version version) {
+        public ContentPack(final ContentPackName name, final Version version) {
             this.name = name;
             this.version = version;
         }
 
-        public static ContentPack of(final String name, final Version version) {
+        public static ContentPack of(final ContentPackName name, final Version version) {
             return new ContentPack(name, version);
         }
 
-        public String getName() {
+        public String getNameAsStr() {
+            return name.getPackName();
+        }
+
+        ContentPackName getName() {
             return name;
         }
 
@@ -91,5 +127,4 @@ public class ContentImportService {
             return version;
         }
     }
-
 }

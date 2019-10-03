@@ -112,6 +112,6 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
     @Override
     public void createRequiredXMLSchemas() {
-        contentImportService.importXmlSchemas();
+        contentImportService.importStandardPacks();
     }
 }
