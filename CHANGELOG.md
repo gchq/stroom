@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1266** : Stroom will now lock the cluster before releasing owned tasks so it doesn't clash with other task related processes that lock the DB for long periods.
+
 
 ## [v6.0.11] - 2019-09-16
 
