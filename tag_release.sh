@@ -31,6 +31,7 @@
 # CHANGELOG for tag_release.sh
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
+# 2019-10-04 - Check if determined version has been tagged
 # 2019-10-04 - Refactor to use tag_release_config.env
 
 
@@ -207,7 +208,13 @@ validate_for_uncommitted_work() {
   fi
 }
 
+apply_custom_validation() {
+  # this can be overridden in tag_release_config.env, : is a no-op
+  :
+}
+
 do_validation() {
+  apply_custom_validation
   validate_version_string
   validate_in_git_repo
   validate_for_duplicate_tag
@@ -228,6 +235,12 @@ determine_version_to_release() {
     grep -oP "${RELEASE_VERSION_IN_HEADING_REGEX}" "${changelog_file}" \
     | head -n1 || echo ""
   )"
+
+  if git tag | grep -q "^${determined_version}$"; then
+    error_exit "${GREEN}The latest version in ${BLUE}${CHANGELOG_FILENAME}${GREEN}" \
+      "[${BLUE}${determined_version}${GREEN}] has already been tagged in git.${NC}"
+    determined_version=
+  fi
 
   if [ -n "${determined_version}" ]; then
     # Found a version so seek confirmation
