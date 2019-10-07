@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1274** : Fixed issue with batch search caused by Hibernate not returning pipeline details in stream processor filters.
+
 * Issue **#1272** : Fixed saving query favourites.
 
 * Issue **#1266** : Stroom will now lock the cluster before releasing owned tasks so it doesn't clash with other task related processes that lock the DB for long periods.

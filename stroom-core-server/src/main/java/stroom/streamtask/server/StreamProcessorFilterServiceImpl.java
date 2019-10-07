@@ -98,6 +98,7 @@ public class StreamProcessorFilterServiceImpl
 
         // First see if we can find a stream processor for this pipeline.
         final FindStreamProcessorCriteria findStreamProcessorCriteria = new FindStreamProcessorCriteria(pipelineEntity);
+        findStreamProcessorCriteria.getFetchSet().add(PipelineEntity.ENTITY_TYPE);
         final List<StreamProcessor> list = streamProcessorService.find(findStreamProcessorCriteria);
         StreamProcessor processor = null;
         if (list == null || list.size() == 0) {
