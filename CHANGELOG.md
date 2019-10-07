@@ -50,7 +50,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1247** : Added XSLT functions (`source`, `sourceId`, `partNo`, `recordNo`, `lineFrom`, `colFrom`, `lineTo`, `colTo`) to determine the current source location so it can be embedded in a cooked event. Events containing raw source location info can be made into links in dashboard tables or the text pane so that a user can see raw source data or jump directly to stepping that raw record. 
 
-
 * Add data retention feature and index optimisation to Solr indexes.
 
 * Initial support for Solr indexing and search.
