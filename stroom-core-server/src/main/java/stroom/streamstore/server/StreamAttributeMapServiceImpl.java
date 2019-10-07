@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -130,29 +131,17 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
             final BaseResultList<Stream> streamList = streamStore.find(streamCriteria);
 
             if (streamList.size() > 0) {
-                // We need to decorate streams with retention rules as a processing user.
-                try (final SecurityHelper sh = SecurityHelper.processingUser(securityContext)) {
-                    // Create a data retention rule decorator for adding data retention information to returned stream attribute maps.
-                    List<DataRetentionRule> rules = Collections.emptyList();
-
-                    final DataRetentionService dataRetentionService = dataRetentionServiceProvider.get();
-                    if (dataRetentionService != null) {
-                        final DataRetentionPolicy dataRetentionPolicy = dataRetentionService.load();
-                        if (dataRetentionPolicy != null && dataRetentionPolicy.getRules() != null) {
-                            rules = dataRetentionPolicy.getRules();
-                        }
-                        final StreamAttributeMapRetentionRuleDecorator ruleDecorator = new StreamAttributeMapRetentionRuleDecorator(expressionMatcherFactory, rules);
-
-                        // Query the database for the attribute values
-                        if (criteria.isUseCache()) {
-                            LOGGER.info("Loading attribute map from DB");
-                            loadAttributeMapFromDatabase(criteria, streamMDList, streamList, ruleDecorator);
-                        } else {
-                            LOGGER.info("Loading attribute map from filesystem");
-                            loadAttributeMapFromFileSystem(criteria, streamMDList, streamList, ruleDecorator);
-                        }
-                    }
+                // Query the database for the attribute values
+                if (criteria.isUseCache()) {
+                    LOGGER.info("Loading attribute map from DB");
+                    loadAttributeMapFromDatabase(criteria, streamMDList, streamList);
+                } else {
+                    LOGGER.info("Loading attribute map from filesystem");
+                    loadAttributeMapFromFileSystem(criteria, streamMDList, streamList);
                 }
+
+                // We need to decorate streams with retention rules.
+                decorate(streamMDList);
             }
 
             result = new BaseResultList<>(streamMDList, streamList.getPageResponse().getOffset(),
@@ -162,11 +151,38 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
         return result;
     }
 
+    private void decorate(final Collection<StreamAttributeMap> streamAttributeMaps) {
+        // Create a data retention rule decorator for adding data retention information to returned stream attribute maps.
+        StreamAttributeMapRetentionRuleDecorator ruleDecorator = null;
+
+        final DataRetentionService dataRetentionService = dataRetentionServiceProvider.get();
+        if (dataRetentionService != null) {
+            // We need to decorate streams with retention rules as a processing user.
+            try (final SecurityHelper sh = SecurityHelper.processingUser(securityContext)) {
+                // Create a data retention rule decorator for adding data retention information to returned stream attribute maps.
+                List<DataRetentionRule> rules = Collections.emptyList();
+                final DataRetentionPolicy dataRetentionPolicy = dataRetentionService.load();
+                if (dataRetentionPolicy != null && dataRetentionPolicy.getRules() != null) {
+                    rules = dataRetentionPolicy.getRules();
+                }
+                ruleDecorator = new StreamAttributeMapRetentionRuleDecorator(expressionMatcherFactory, rules);
+            }
+        }
+
+        if (ruleDecorator != null) {
+            // We need to decorate streams with retention rules as a processing user.
+            try (final SecurityHelper sh = SecurityHelper.processingUser(securityContext)) {
+                // Add additional data retention information.
+                streamAttributeMaps.parallelStream().forEach(ruleDecorator::addMatchingRetentionRuleInfo);
+            }
+        }
+    }
+
     /**
      * Load attributes from database
      */
     private void loadAttributeMapFromDatabase(final FindStreamAttributeMapCriteria criteria,
-                                              final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList, final StreamAttributeMapRetentionRuleDecorator ruleDecorator) {
+                                              final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList) {
         final Map<Long, StreamAttributeMap> streamMap = new HashMap<>();
 
         // Get a list of valid stream ids.
@@ -238,15 +254,28 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
                 streamMap.get(streamId).addAttribute(streamAttributeKey, value);
             }
         }
-
-        // Add additional data retention information.
-        streamMap.values().parallelStream().forEach(ruleDecorator::addMatchingRetentionRuleInfo);
     }
 
     private void resolveRelations(final FindStreamAttributeMapCriteria criteria, final Stream stream, final Map<EntityRef, Optional<Object>> localCache) throws PermissionException {
         if (stream.getFeed() != null && criteria.getFetchSet().contains(Feed.ENTITY_TYPE)) {
             final EntityRef ref = new EntityRef(Feed.ENTITY_TYPE, stream.getFeed().getId());
-            localCache.computeIfAbsent(ref, key -> safeOptional(() -> feedService.loadById(key.id))).ifPresent(obj -> stream.setFeed((Feed) obj));
+
+            final Optional<Object> optional = localCache.computeIfAbsent(ref, key -> {
+                try {
+                    final Feed feed = feedService.loadById(key.id);
+                    return Optional.ofNullable(feed);
+                } catch (final RuntimeException e) {
+                    return Optional.of(e);
+                }
+            });
+            if (optional.isPresent()) {
+                final Object o = optional.get();
+                if (o instanceof RuntimeException) {
+                    throw (RuntimeException) o;
+                } else {
+                    stream.setFeed((Feed) o);
+                }
+            }
         }
 
         if (stream.getStreamType() != null && criteria.getFetchSet().contains(StreamType.ENTITY_TYPE)) {
@@ -291,7 +320,7 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
     }
 
     private void loadAttributeMapFromFileSystem(final FindStreamAttributeMapCriteria criteria,
-                                                final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList, final StreamAttributeMapRetentionRuleDecorator ruleDecorator) {
+                                                final List<StreamAttributeMap> streamMDList, final BaseResultList<Stream> streamList) {
         final List<StreamAttributeKey> allKeys = streamAttributeKeyService.findAll();
         final Map<String, StreamAttributeKey> keyMap = new HashMap<>();
         for (final StreamAttributeKey key : allKeys) {
@@ -362,9 +391,6 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
                         LOGGER.error("loadAttributeMapFromFileSystem() ", e);
                     }
                 }
-
-                // Add additional data retention information.
-                ruleDecorator.addMatchingRetentionRuleInfo(streamAttributeMap);
             }
         }
     }

@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1275** : Fixed permission filtering when showing related streams.
+
 * Issue **#1274** : Fixed issue with batch search caused by Hibernate not returning pipeline details in stream processor filters.
 
 * Issue **#1272** : Fixed saving query favourites.
