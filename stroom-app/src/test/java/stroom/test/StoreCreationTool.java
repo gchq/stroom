@@ -239,26 +239,42 @@ public final class StoreCreationTool {
     }
 
     private DocRef createFeed(final String feedName) {
-        final DocRef docRef;
+        DocRef docRef;
         docRef = explorerService.create(FeedDoc.DOCUMENT_TYPE, feedName, ExplorerConstants.ROOT_DOC_REF, PermissionInheritance.DESTINATION);
+        if (docRef == null) {
+            // allow for a mocked explorer service
+            docRef = feedStore.createDocument(feedName);
+        }
         return docRef;
     }
 
     private DocRef createTextConverter(final String name) {
-        final DocRef docRef;
+        DocRef docRef;
         docRef = explorerService.create(TextConverterDoc.DOCUMENT_TYPE, name, ExplorerConstants.ROOT_DOC_REF, PermissionInheritance.DESTINATION);
+        if (docRef == null) {
+            // allow for a mocked explorer service
+            docRef = textConverterStore.createDocument(name);
+        }
         return docRef;
     }
 
     private DocRef createXslt(final String name) {
-        final DocRef docRef;
+        DocRef docRef;
         docRef = explorerService.create(XsltDoc.DOCUMENT_TYPE, name, ExplorerConstants.ROOT_DOC_REF, PermissionInheritance.DESTINATION);
+        if (docRef == null) {
+            // allow for a mocked explorer service
+            docRef = xsltStore.createDocument(name);
+        }
         return docRef;
     }
 
     private DocRef createPipeline(final String name) {
-        final DocRef docRef;
+        DocRef docRef;
         docRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, name, ExplorerConstants.ROOT_DOC_REF, PermissionInheritance.DESTINATION);
+        if (docRef == null) {
+            // allow for a mocked explorer service
+            docRef = pipelineStore.createDocument(name);
+        }
         return docRef;
     }
 
@@ -696,11 +712,14 @@ public final class StoreCreationTool {
         final PipelineDoc sourcePipeline = pipelineStore.readDocument(sourcePipelineDocRef);
 
 //        final DocRef newDocRef = pipelineStore.createDocument(newName);
-        final DocRef newDocRef = explorerService.create(
+        DocRef newDocRef = explorerService.create(
                 PipelineDoc.DOCUMENT_TYPE,
                 newName,
                 ExplorerConstants.ROOT_DOC_REF,
                 PermissionInheritance.DESTINATION);
+        if (newDocRef == null) {
+            newDocRef = pipelineStore.createDocument(newName);
+        }
         final PipelineDoc newPipeline = pipelineStore.readDocument(newDocRef);
 
         newPipeline.setName(newName);
