@@ -22,7 +22,6 @@ import net.sf.saxon.event.ReceivingContentHandler;
 import net.sf.saxon.s9api.*;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import net.sf.saxon.tree.tiny.TinyTree;
-import org.json.JSONObject;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -230,9 +229,8 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
 
                 if (hasChildElement){
                     if (createJson) {
-                        JSONObject json = org.json.XML.toJSONObject(node.toString());
-//                        String json = jsonFromXML(node.toString());
-                        thisVal.append(json);
+                        String serialisedForm = complexElementToJson(node.toString());
+                        thisVal.append(serialisedForm);
                     }
                     else {
                         thisVal.append(node.toString());
@@ -276,30 +274,10 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
 
         return numberOfVals;
     }
-//
-//    private String jsonFromXML (String xml){
-//        try {
-//            SAXParserFactory factory = SAXParserFactory.newInstance();
-//            factory.setNamespaceAware(true);
-//            SAXParser parser = factory.newSAXParser();
-//
-//            JSONWriter j = null;
-//            DefaultHandler handler = j;
-//            parser.parse(xmlFile, j);
-//        }
-//        catch (FactoryConfigurationError e) {
-//            // unable to get a document builder factory
-//        }
-//        catch (ParserConfigurationException e) {
-//            // parser was unable to be configured
-//        }
-//catch (SAXException e) {
-//                // parsing error
-//            }
-//catch (IOException e) {
-//                // i/o error
-//            }
-//    }
+
+    protected String complexElementToJson(String xml){
+        return "Not Supported in this Version";
+    }
 
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
@@ -432,11 +410,11 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
         this.multipleValueDelimiter = delimiter;
     }
 
-    @PipelineProperty(description = "Whether XML elements should be returned in JSON instead of XML.",
-            defaultValue = "false",
-            displayPriority = 2)
-    public void setCreateJson(final boolean createJson) {
-        this.createJson = createJson;
-    }
+//    @PipelineProperty(description = "Whether XML elements should be returned in JSON instead of XML.",
+//            defaultValue = "false",
+//            displayPriority = 2)
+//    public void setCreateJson(final boolean createJson) {
+//        this.createJson = createJson;
+//    }
 
 }
