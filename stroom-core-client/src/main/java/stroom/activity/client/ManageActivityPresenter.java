@@ -27,6 +27,7 @@ import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.core.client.UrlParameters;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.shared.EntityServiceDeleteAction;
 import stroom.entity.shared.EntityServiceLoadAction;
@@ -47,7 +48,6 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import javax.inject.Inject;
 import java.util.function.Consumer;
 
-
 public class ManageActivityPresenter extends
         MyPresenterWidget<ManageActivityView> implements ManageActivityUiHandlers, HasHandlers {
     public static final String LIST = "LIST";
@@ -56,6 +56,9 @@ public class ManageActivityPresenter extends
     private final Provider<ActivityEditPresenter> editProvider;
     private final ClientDispatchAsync dispatcher;
     private final ClientPropertyCache clientPropertyCache;
+    private final UrlParameters urlParameters;
+    private final CurrentActivity currentActivity;
+
     private FindActivityCriteria criteria = new FindActivityCriteria();
     private ButtonView newButton;
     private ButtonView openButton;
@@ -67,12 +70,16 @@ public class ManageActivityPresenter extends
                                    final ActivityListPresenter listPresenter,
                                    final Provider<ActivityEditPresenter> editProvider,
                                    final ClientDispatchAsync dispatcher,
-                                   final ClientPropertyCache clientPropertyCache) {
+                                   final ClientPropertyCache clientPropertyCache,
+                                   final UrlParameters urlParameters,
+                                   final CurrentActivity currentActivity) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
         this.dispatcher = dispatcher;
         this.clientPropertyCache = clientPropertyCache;
+        this.urlParameters = urlParameters;
+        this.currentActivity = currentActivity;
 
         getView().setUiHandlers(this);
 
@@ -123,8 +130,21 @@ public class ManageActivityPresenter extends
         clientPropertyCache.get().onSuccess(clientProperties -> {
             final boolean show = clientProperties.getBoolean(ClientProperties.ACTIVITY_CHOOSE_ON_STARTUP, false) &&
                     clientProperties.getBoolean(ClientProperties.ACTIVITY_ENABLED, false);
+
             if (show) {
-                show(consumer);
+                if (urlParameters.isEmbedded()) {
+                    // If we are in embedded more then see if we can find a current activity set in the session.
+                    currentActivity.getActivity(activity -> {
+                        // If no activity is set then ask the user to choose.
+                        if (activity == null) {
+                            show(null, consumer);
+                        } else {
+                            consumer.accept(activity);
+                        }
+                    });
+                } else {
+                    show(null, consumer);
+                }
             } else {
                 consumer.accept(null);
             }
@@ -132,6 +152,11 @@ public class ManageActivityPresenter extends
     }
 
     public void show(final Consumer<Activity> consumer) {
+        currentActivity.getActivity(activity -> show(activity, consumer));
+    }
+
+    private void show(final Activity activity, final Consumer<Activity> consumer) {
+        setSelected(activity);
         listPresenter.refresh();
 
         final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
@@ -142,6 +167,8 @@ public class ManageActivityPresenter extends
 
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
+                final Activity activity = getSelected();
+                currentActivity.setActivity(activity);
                 consumer.accept(getSelected());
             }
         };
@@ -257,14 +284,14 @@ public class ManageActivityPresenter extends
         onEdit(new Activity());
     }
 
-    void setSelected(final Activity activity) {
+    private void setSelected(final Activity activity) {
         listPresenter.getSelectionModel().clear();
         if (activity != null) {
             listPresenter.getSelectionModel().setSelected(activity);
         }
     }
 
-    Activity getSelected() {
+    private Activity getSelected() {
         return listPresenter.getSelectionModel().getSelected();
     }
 

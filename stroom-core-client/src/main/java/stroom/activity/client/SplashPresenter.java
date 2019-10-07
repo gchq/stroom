@@ -23,6 +23,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.activity.shared.AcknowledgeSplashAction;
 import stroom.alert.client.event.AlertEvent;
+import stroom.core.client.UrlParameters;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
@@ -38,16 +39,19 @@ import java.util.function.Consumer;
 public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashView> {
     private final ClientPropertyCache clientPropertyCache;
     private final ClientDispatchAsync dispatcher;
+    private final UrlParameters urlParameters;
 //    private boolean enabled;
 
     @Inject
     public SplashPresenter(final EventBus eventBus,
                            final SplashView view,
                            final ClientPropertyCache clientPropertyCache,
-                           final ClientDispatchAsync dispatcher) {
+                           final ClientDispatchAsync dispatcher,
+                           final UrlParameters urlParameters) {
         super(eventBus, view);
         this.clientPropertyCache = clientPropertyCache;
         this.dispatcher = dispatcher;
+        this.urlParameters = urlParameters;
     }
 
 //    @Override
@@ -69,7 +73,7 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
     public void show(final Consumer<Boolean> consumer) {
         clientPropertyCache.get().onSuccess(clientProperties -> {
             final boolean enableSplashScreen = clientProperties.getBoolean(ClientProperties.SPLASH_ENABLED, false);
-            if (enableSplashScreen) {
+            if (enableSplashScreen && !urlParameters.isEmbedded()) {
                 final String title = clientProperties.get(ClientProperties.SPLASH_TITLE);
                 final String body = clientProperties.get(ClientProperties.SPLASH_BODY);
                 final String version = clientProperties.get(ClientProperties.SPLASH_VERSION);

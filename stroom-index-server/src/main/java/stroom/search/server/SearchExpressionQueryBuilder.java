@@ -508,7 +508,7 @@ public class SearchExpressionQueryBuilder {
                 // As this is just indexed as a keyword we only want to search
                 // for the term.
                 if (!field.isCaseSensitive()) {
-                    val = value.toLowerCase();
+                    val = val.toLowerCase();
                 }
 
                 final Term term = new Term(field.getFieldName(), val);
@@ -582,7 +582,7 @@ public class SearchExpressionQueryBuilder {
         return numbers;
     }
 
-    static class SearchExpressionQuery {
+    public static class SearchExpressionQuery {
         private final Query query;
         private final Set<String> terms;
 
@@ -591,12 +591,17 @@ public class SearchExpressionQueryBuilder {
             this.terms = terms;
         }
 
-        Query getQuery() {
+        public Query getQuery() {
             return query;
         }
 
-        Set<String> getTerms() {
+        public Set<String> getTerms() {
             return terms;
+        }
+
+        @Override
+        public String toString() {
+            return query.toString();
         }
     }
 }

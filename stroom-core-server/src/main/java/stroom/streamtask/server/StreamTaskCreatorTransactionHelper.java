@@ -112,6 +112,13 @@ public class StreamTaskCreatorTransactionHelper {
      * Anything that we owned release
      */
     public void releaseOwnedTasks() {
+        LOGGER.info("Locking cluster to release owned tasks for node {}", nodeCache.getDefaultNode().getName());
+
+        // Lock the cluster so that only this node is able to release owned tasks at this time.
+        lockCluster();
+
+        LOGGER.debug("Locked cluster");
+
         final SqlBuilder sql = new SqlBuilder();
         sql.append("UPDATE ");
         sql.append(StreamTask.TABLE_NAME);
@@ -131,8 +138,7 @@ public class StreamTaskCreatorTransactionHelper {
 
         final long results = stroomEntityManager.executeNativeUpdate(sql);
 
-        LOGGER.info(
-                "doStartup() - Set {} Tasks back to UNPROCESSED (Reprocess), NULL that were UNPROCESSED, ASSIGNED, PROCESSING for node {}",
+        LOGGER.info("Set {} Tasks back to UNPROCESSED (Reprocess), NULL that were UNPROCESSED, ASSIGNED, PROCESSING for node {}",
                 results, nodeCache.getDefaultNode().getName());
     }
 

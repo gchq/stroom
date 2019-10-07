@@ -25,6 +25,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.dashboard.shared.CreateQueryFavouriteAction;
 import stroom.dashboard.shared.FindQueryCriteria;
 import stroom.dashboard.shared.QueryEntity;
 import stroom.dispatch.client.ClientDispatchAsync;
@@ -126,7 +127,7 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                 queryEntity.setName(entityName);
                                 queryEntity.setFavourite(true);
 
-                                save(queryEntity, autoClose, ok);
+                                create(queryEntity, autoClose, ok);
                             }
                         } else {
                             HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
@@ -254,6 +255,13 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         }
 
         HidePopupEvent.fire(queryPresenter, QueryFavouritesPresenter.this);
+    }
+
+    private void create(final QueryEntity query, final boolean autoClose, final boolean ok) {
+        dispatcher.exec(new CreateQueryFavouriteAction(query)).onSuccess(result -> {
+            refresh(false);
+            HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
+        });
     }
 
     private void save(final QueryEntity query, final boolean autoClose, final boolean ok) {

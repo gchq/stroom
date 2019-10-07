@@ -51,7 +51,6 @@ import stroom.dictionary.server.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.spring.DictionaryConfiguration;
 import stroom.dispatch.shared.DispatchService;
-import stroom.elastic.spring.ElasticIndexConfiguration;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.entity.server.util.ConnectionUtil;
 import stroom.explorer.server.ExplorerConfiguration;
@@ -99,7 +98,7 @@ import stroom.servlet.ExportConfigResource;
 import stroom.servlet.HttpServletRequestFilter;
 import stroom.servlet.ImportFileServlet;
 import stroom.servlet.RejectPostFilter;
-import stroom.servlet.SessionListListener;
+import stroom.security.server.SessionListListener;
 import stroom.servlet.SessionListServlet;
 import stroom.servlet.SessionResourceStoreImpl;
 import stroom.servlet.StatusServlet;
@@ -403,7 +402,6 @@ public class App extends Application<Config> {
                 MetaDataStatisticConfiguration.class,
                 StatisticsConfiguration.class,
                 SecurityConfiguration.class,
-                ElasticIndexConfiguration.class,
                 RuleSetConfiguration.class
         );
         try {

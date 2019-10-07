@@ -33,7 +33,6 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.activity.client.ActivityChangedEvent;
 import stroom.activity.client.CurrentActivity;
-import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
 import stroom.dispatch.client.ClientDispatchAsync;
@@ -114,7 +113,7 @@ public class ExplorerTreePresenter
 
                 view.setCellTree(dockLayoutPanel);
 
-                updateActivitySummary(currentActivity.getActivity());
+                updateActivitySummary();
 
             } else {
                 view.setCellTree(explorerTree);
@@ -130,7 +129,7 @@ public class ExplorerTreePresenter
         registerHandler(getEventBus().addHandler(RefreshExplorerTreeEvent.getType(), this));
 
         // Register for changes to the current activity.
-        registerHandler(getEventBus().addHandler(ActivityChangedEvent.getType(), event -> updateActivitySummary(event.getActivity())));
+        registerHandler(getEventBus().addHandler(ActivityChangedEvent.getType(), event -> updateActivitySummary()));
 
         // Register for highlight events.
         registerHandler(getEventBus().addHandler(HighlightExplorerNodeEvent.getType(), this));
@@ -144,26 +143,28 @@ public class ExplorerTreePresenter
         registerHandler(activityContainer.addClickHandler(event -> currentActivity.showActivityChooser()));
     }
 
-    private void updateActivitySummary(final Activity activity) {
-        final StringBuilder sb = new StringBuilder("<h2>Current Activity</h2>");
+    private void updateActivitySummary() {
+        currentActivity.getActivity(activity -> {
+            final StringBuilder sb = new StringBuilder("<h2>Current Activity</h2>");
 
-        if (activity != null) {
-            final ActivityDetails activityDetails = activity.getDetails();
-            for (final Prop prop : activityDetails.getProperties()) {
-                if (prop.isShowInSelection()) {
-                    sb.append("<b>");
-                    sb.append(prop.getName());
-                    sb.append(": </b>");
-                    sb.append(prop.getValue());
-                    sb.append("</br>");
+            if (activity != null) {
+                final ActivityDetails activityDetails = activity.getDetails();
+                for (final Prop prop : activityDetails.getProperties()) {
+                    if (prop.isShowInSelection()) {
+                        sb.append("<b>");
+                        sb.append(prop.getName());
+                        sb.append(": </b>");
+                        sb.append(prop.getValue());
+                        sb.append("</br>");
+                    }
                 }
+            } else {
+                sb.append("<b>");
+                sb.append("none");
             }
-        } else {
-            sb.append("<b>");
-            sb.append("none");
-        }
 
-        activityContainer.setHTML(sb.toString());
+            activityContainer.setHTML(sb.toString());
+        });
     }
 
     @Override
