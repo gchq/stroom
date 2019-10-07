@@ -23,11 +23,6 @@
         "width" : 200,
         "visible" : true
       }, {
-        "name" : "JSON",
-        "expression" : "${Json}",
-        "width" : 1281,
-        "visible" : true
-      }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
