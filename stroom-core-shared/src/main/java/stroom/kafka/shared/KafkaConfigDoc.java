@@ -29,7 +29,7 @@ import java.util.Properties;
 public class KafkaConfigDoc extends Doc {
     private static final long serialVersionUID = 4519634323788508083L;
 
-    public static final String DOCUMENT_TYPE = "KAFKA_CONFIG";
+    public static final String DOCUMENT_TYPE = "KafkaConfig";
 
     private static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
     private static final String BATCH_SIZE_CONFIG = "batch.size";
