@@ -48,7 +48,6 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import javax.inject.Inject;
 import java.util.function.Consumer;
 
-
 public class ManageActivityPresenter extends
         MyPresenterWidget<ManageActivityView> implements ManageActivityUiHandlers, HasHandlers {
     public static final String LIST = "LIST";
@@ -134,15 +133,17 @@ public class ManageActivityPresenter extends
 
             if (show) {
                 if (urlParameters.isEmbedded()) {
+                    // If we are in embedded more then see if we can find a current activity set in the session.
                     currentActivity.getActivity(activity -> {
+                        // If no activity is set then ask the user to choose.
                         if (activity == null) {
-                            show(consumer);
+                            show(null, consumer);
                         } else {
-                            consumer.accept(null);
+                            consumer.accept(activity);
                         }
                     });
                 } else {
-                    show(consumer);
+                    show(null, consumer);
                 }
             } else {
                 consumer.accept(null);
@@ -151,6 +152,11 @@ public class ManageActivityPresenter extends
     }
 
     public void show(final Consumer<Activity> consumer) {
+        currentActivity.getActivity(activity -> show(activity, consumer));
+    }
+
+    private void show(final Activity activity, final Consumer<Activity> consumer) {
+        setSelected(activity);
         listPresenter.refresh();
 
         final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
@@ -161,6 +167,8 @@ public class ManageActivityPresenter extends
 
             @Override
             public void onHide(final boolean autoClose, final boolean ok) {
+                final Activity activity = getSelected();
+                currentActivity.setActivity(activity);
                 consumer.accept(getSelected());
             }
         };
@@ -276,14 +284,14 @@ public class ManageActivityPresenter extends
         onEdit(new Activity());
     }
 
-    void setSelected(final Activity activity) {
+    private void setSelected(final Activity activity) {
         listPresenter.getSelectionModel().clear();
         if (activity != null) {
             listPresenter.getSelectionModel().setSelected(activity);
         }
     }
 
-    Activity getSelected() {
+    private Activity getSelected() {
         return listPresenter.getSelectionModel().getSelected();
     }
 

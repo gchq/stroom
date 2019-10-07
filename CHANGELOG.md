@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1264** : Dashboards running in embedded mode will not always ask for the user to choose an activity if the users session has one set already.
+
 * Issue **#1275** : Fixed permission filtering when showing related streams.
 
 * Issue **#1274** : Fixed issue with batch search caused by Hibernate not returning pipeline details in stream processor filters.
@@ -16,8 +18,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 
 ## [v6.0.11] - 2019-09-16
-
-* Issue **#1264** : Dashboards running in embedded mode will not always ask for the user to choose an activity if the users session has one set already.
 
 * Issue **#1264** : Added `embedded` mode for dashboards to hide dashboard chrome and save options.
 

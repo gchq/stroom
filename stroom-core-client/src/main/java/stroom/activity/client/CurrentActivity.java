@@ -68,19 +68,11 @@ public class CurrentActivity implements HasHandlers {
     }
 
     public void showInitialActivityChooser(final Consumer<Activity> consumer) {
-        final ManageActivityPresenter manageActivityPresenter = manageActivityPresenterProvider.get();
-        manageActivityPresenter.showInitial(activity -> {
-            setActivity(activity);
-            consumer.accept(activity);
-        });
+        manageActivityPresenterProvider.get().showInitial(consumer);
     }
 
     public void showActivityChooser() {
-        getActivity(activity -> {
-            final ManageActivityPresenter manageActivityPresenter = manageActivityPresenterProvider.get();
-            manageActivityPresenter.setSelected(activity);
-            manageActivityPresenter.show(this::setActivity);
-        });
+        manageActivityPresenterProvider.get().show(a -> {});
     }
 
     @Override
