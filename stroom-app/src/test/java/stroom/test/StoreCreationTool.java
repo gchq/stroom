@@ -649,7 +649,7 @@ public final class StoreCreationTool {
         return pipelineStore.list()
                 .stream()
                 .filter(docRef2 ->
-                        docRef.getUuid().equals(docRef.getUuid()))
+                        docRef2.getUuid().equals(docRef.getUuid()))
                 .findFirst();
     }
 
