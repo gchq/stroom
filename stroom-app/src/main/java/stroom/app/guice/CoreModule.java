@@ -86,6 +86,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.search.solr.SolrSearchModule());
         install(new stroom.security.impl.db.SecurityDbModule());
         install(new stroom.security.impl.SecurityModule());
+        install(new stroom.security.impl.session.SessionSecurityModule());
         install(new stroom.servicediscovery.impl.ServiceDiscoveryModule());
         install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());
         install(new stroom.statistics.impl.hbase.internal.InternalModule());

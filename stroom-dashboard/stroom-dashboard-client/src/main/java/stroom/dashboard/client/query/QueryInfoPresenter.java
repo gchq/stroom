@@ -60,54 +60,56 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
     }
 
     public void show(final String queryInfo, final Consumer<State> consumer) {
-        boolean required = true;
-        if (currentActivity.getActivity() != null && currentActivity.getActivity().getDetails() != null) {
-            final String value = currentActivity.getActivity().getDetails().value("requireQueryInfo");
-            if (value != null && value.equalsIgnoreCase("false")) {
-                required = false;
+        currentActivity.getActivity(activity -> {
+            boolean required = true;
+            if (activity != null && activity.getDetails() != null) {
+                final String value = activity.getDetails().value("requireQueryInfo");
+                if (value != null && value.equalsIgnoreCase("false")) {
+                    required = false;
+                }
             }
-        }
 
-        if (queryInfoPopupEnabled && required) {
-            getView().setQueryInfo(queryInfo);
-            final PopupSize popupSize = new PopupSize(640, 480, true);
-            ShowPopupEvent.fire(this,
-                    this,
-                    PopupType.OK_CANCEL_DIALOG,
-                    popupSize, queryInfoPopupTitle,
-                    new PopupUiHandlers() {
-                        @Override
-                        public void onHideRequest(final boolean autoClose, final boolean ok) {
-                            if (ok) {
-                                boolean valid = true;
-                                if (queryInfoPopupValidationRegex != null && !queryInfoPopupValidationRegex.isEmpty()) {
-                                    valid = false;
-                                    try {
-                                        valid = getView().getQueryInfo().matches(queryInfoPopupValidationRegex);
-                                    } catch (final RuntimeException e) {
-                                        AlertEvent.fireErrorFromException(QueryInfoPresenter.this, e, null);
+            if (queryInfoPopupEnabled && required) {
+                getView().setQueryInfo(queryInfo);
+                final PopupSize popupSize = new PopupSize(640, 480, true);
+                ShowPopupEvent.fire(this,
+                        this,
+                        PopupType.OK_CANCEL_DIALOG,
+                        popupSize, queryInfoPopupTitle,
+                        new PopupUiHandlers() {
+                            @Override
+                            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                                if (ok) {
+                                    boolean valid = true;
+                                    if (queryInfoPopupValidationRegex != null && !queryInfoPopupValidationRegex.isEmpty()) {
+                                        valid = false;
+                                        try {
+                                            valid = getView().getQueryInfo().matches(queryInfoPopupValidationRegex);
+                                        } catch (final RuntimeException e) {
+                                            AlertEvent.fireErrorFromException(QueryInfoPresenter.this, e, null);
+                                        }
                                     }
-                                }
 
-                                if (valid) {
-                                    HidePopupEvent.fire(QueryInfoPresenter.this, QueryInfoPresenter.this);
-                                    consumer.accept(new State(getView().getQueryInfo(), true));
+                                    if (valid) {
+                                        HidePopupEvent.fire(QueryInfoPresenter.this, QueryInfoPresenter.this);
+                                        consumer.accept(new State(getView().getQueryInfo(), true));
+                                    } else {
+                                        AlertEvent.fireWarn(QueryInfoPresenter.this, "The text entered is not valid", null);
+                                    }
                                 } else {
-                                    AlertEvent.fireWarn(QueryInfoPresenter.this, "The text entered is not valid", null);
+                                    HidePopupEvent.fire(QueryInfoPresenter.this, QueryInfoPresenter.this);
+                                    consumer.accept(new State(getView().getQueryInfo(), false));
                                 }
-                            } else {
-                                HidePopupEvent.fire(QueryInfoPresenter.this, QueryInfoPresenter.this);
-                                consumer.accept(new State(getView().getQueryInfo(), false));
                             }
-                        }
 
-                        @Override
-                        public void onHide(final boolean autoClose, final boolean ok) {
-                        }
-                    });
-        } else {
-            consumer.accept(new State(null, true));
-        }
+                            @Override
+                            public void onHide(final boolean autoClose, final boolean ok) {
+                            }
+                        });
+            } else {
+                consumer.accept(new State(null, true));
+            }
+        });
     }
 
     public interface QueryInfoView extends View {

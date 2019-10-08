@@ -228,6 +228,18 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
         }
     }
 
+    public boolean hasDirtyDocuments() {
+        for (final DocumentTabData tabData : tabDataToDocumentMap.keySet()) {
+            if (tabData instanceof DocumentEditPresenter<?, ?>) {
+                final DocumentEditPresenter<?, ?> presenter = (DocumentEditPresenter<?, ?>) tabData;
+                if (presenter.isDirty()) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public boolean isDirty(final DocRef docRef) {
         final DocumentTabData tabData = documentToTabDataMap.get(docRef);
         if (tabData instanceof DocumentEditPresenter<?, ?>) {

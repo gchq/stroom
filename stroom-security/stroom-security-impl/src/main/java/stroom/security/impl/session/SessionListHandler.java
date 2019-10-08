@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.core.servlet;
+package stroom.security.impl.session;
 
 import stroom.cluster.task.api.ClusterCallEntry;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Map.Entry;
 
 
-class SessionListHandler extends AbstractTaskHandler<SessionListAction, ResultList<SessionDetails>> {
+class SessionListHandler extends AbstractTaskHandler<SessionListTask, ResultList<SessionDetails>> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final SecurityContext securityContext;
 
@@ -43,7 +43,7 @@ class SessionListHandler extends AbstractTaskHandler<SessionListAction, ResultLi
     }
 
     @Override
-    public ResultList<SessionDetails> exec(final SessionListAction action) {
+    public ResultList<SessionDetails> exec(final SessionListTask action) {
         return securityContext.insecureResult(() -> {
             final DefaultClusterResultCollector<ResultList<SessionDetails>> collector = dispatchHelper
                     .execAsync(
