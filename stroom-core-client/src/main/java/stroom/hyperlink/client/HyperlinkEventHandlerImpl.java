@@ -12,6 +12,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HandlerContainerImpl;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.ShowAnnotationEvent;
 import stroom.core.client.ContentManager;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
@@ -163,6 +164,12 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     final int colTo = (int) getParam(href, "colTo", 0);
                     final SourceLocation sourceLocation = new SourceLocation(id, null, partNo, recordNo, new Highlight(new DefaultLocation(lineFrom, colFrom), new DefaultLocation(lineTo, colTo)));
                     ShowDataEvent.fire(this, sourceLocation);
+                    break;
+                }
+                case ANNOTATION: {
+                    final long metaId = getParam(href, "metaId", 0);
+                    final long eventId = getParam(href, "eventId", 0);
+                    ShowAnnotationEvent.fire(this, metaId, eventId);
                     break;
                 }
                 default:

@@ -52,7 +52,7 @@ public final class IndexDataSourceFieldUtil {
         }
 
         // Add annotation fields if this index has stream and event ids.
-        if (securityContext == null || securityContext.hasAppPermission(AnnotationDataSource.ANNOTATIONS_PERMISSION)) {
+        if (securityContext == null || securityContext.hasAppPermission(AnnotationDataSource.ANNOTATION_PERMISSION)) {
             final Set<String> names = indexFields
                     .getIndexFields()
                     .stream()

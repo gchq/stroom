@@ -16,13 +16,14 @@
 
 package stroom.annotation.client;
 
-        import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
-        import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
-        import stroom.annotation.client.ChooserPresenter.ChooserView;
+import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
+import stroom.annotation.client.ChooserPresenter.ChooserView;
 
 public class AnnotationModule extends AbstractPresenterModule {
     @Override
     protected void configure() {
+        bind(AnnotationEditSupport.class).asEagerSingleton();
         bindPresenterWidget(AnnotationEditPresenter.class, AnnotationEditView.class, AnnotationEditViewImpl.class);
         bindPresenterWidget(ChooserPresenter.class, ChooserView.class, ChooserViewImpl.class);
     }

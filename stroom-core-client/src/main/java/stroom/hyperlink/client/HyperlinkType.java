@@ -6,5 +6,6 @@ public enum HyperlinkType {
     DASHBOARD,
     STEPPING,
     DATA,
+    ANNOTATION,
     BROWSER
 }
