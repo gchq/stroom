@@ -19,7 +19,7 @@ import javax.sql.DataSource;
 public class AnnotationsDbModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationsDbModule.class);
     private static final String MODULE = "stroom-annotation";
-    private static final String FLYWAY_LOCATIONS = "stroom/annotations/impl/db/migration";
+    private static final String FLYWAY_LOCATIONS = "stroom/annotation/impl/db/migration";
     private static final String FLYWAY_TABLE = "annotation_schema_history";
 
     private final AnnotationsConfig annotationsConfig;
