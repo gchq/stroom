@@ -18,7 +18,9 @@
 package stroom.search.server;
 
 import org.springframework.context.annotation.Scope;
+import stroom.annotation.api.AnnotationDataSource;
 import stroom.pipeline.server.errorhandler.MessageUtil;
+import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.coprocessor.CompletionState;
 import stroom.search.coprocessor.Coprocessors;
 import stroom.search.coprocessor.CoprocessorsFactory;
@@ -26,6 +28,7 @@ import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.NewCoprocessor;
 import stroom.search.coprocessor.Receiver;
 import stroom.search.coprocessor.ReceiverImpl;
+import stroom.search.extraction.ExpressionFilter;
 import stroom.search.extraction.ExtractionDecoratorFactory;
 import stroom.search.resultsender.NodeResult;
 import stroom.search.resultsender.ResultSender;
@@ -167,7 +170,8 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 final Receiver extractionReceiver = extractionDecoratorFactory.create(rootReceiver, task.getStoredFields(), coprocessors, query, hasTerminate);
 
                 // Search all index shards.
-                indexShardSearchFactory.search(task, extractionReceiver, taskContext, hasTerminate);
+                final ExpressionOperator expression = ExpressionFilter.filter(task.getQuery().getExpression(), AnnotationDataSource.ANNOTATION_FIELD_PREFIX, true);
+                indexShardSearchFactory.search(task, expression, extractionReceiver, taskContext, hasTerminate);
 
                 // Wait for index search completion.
                 long extractionCount = getMinExtractions(coprocessors.getSet());

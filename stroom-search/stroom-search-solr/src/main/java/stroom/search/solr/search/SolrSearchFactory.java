@@ -50,7 +50,7 @@ public class SolrSearchFactory {
         this.solrSearchTaskHandler = solrSearchTaskHandler;
     }
 
-    public void search(final SolrClusterSearchTask task, final Receiver receiver, final TaskContext taskContext, final HasTerminate hasTerminate) {
+    public void search(final SolrClusterSearchTask task, final ExpressionOperator expression, final Receiver receiver, final TaskContext taskContext, final HasTerminate hasTerminate) {
         // Reload the index.
         final CachedSolrIndex index = task.getCachedSolrIndex();
 
@@ -61,8 +61,7 @@ public class SolrSearchFactory {
 
         // Create a map of index fields keyed by name.
         final Map<String, SolrIndexField> indexFieldsMap = index.getFieldsMap();
-
-        final SearchExpressionQuery query = getQuery(task.getQuery().getExpression(), indexFieldsMap, task.getDateTimeLocale(), task.getNow());
+        final SearchExpressionQuery query = getQuery(expression, indexFieldsMap, task.getDateTimeLocale(), task.getNow());
         final String queryString = query.toString();
         final SolrQuery solrQuery = new SolrQuery(queryString);
         solrQuery.setRows(Integer.MAX_VALUE);

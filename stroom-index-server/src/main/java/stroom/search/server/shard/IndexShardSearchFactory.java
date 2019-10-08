@@ -72,7 +72,7 @@ public class IndexShardSearchFactory {
         this.maxBooleanClauseCount = PropertyUtil.toInt(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
     }
 
-    public void search(final ClusterSearchTask task, final Receiver receiver, final TaskContext taskContext, final HasTerminate hasTerminate) {
+    public void search(final ClusterSearchTask task, final ExpressionOperator expression, final Receiver receiver, final TaskContext taskContext, final HasTerminate hasTerminate) {
         // Reload the index.
         final Index index = indexService.loadByUuid(task.getQuery().getDataSource().getUuid());
 
@@ -92,7 +92,7 @@ public class IndexShardSearchFactory {
 
             final Map<Version, Optional<SearchExpressionQuery>> queryMap = new HashMap<>();
             final IndexShardQueryFactory queryFactory = createIndexShardQueryFactory(
-                    task, task.getQuery(), indexFieldsMap, queryMap, receiver.getErrorConsumer());
+                    task, expression, indexFieldsMap, queryMap, receiver.getErrorConsumer());
 
             final IndexShardSearchTaskProducer indexShardSearchTaskProducer = new IndexShardSearchTaskProducer(
                     indexShardSearchTaskExecutor,
@@ -122,7 +122,7 @@ public class IndexShardSearchFactory {
     }
 
     private IndexShardQueryFactory createIndexShardQueryFactory(final ClusterSearchTask task,
-                                                                final stroom.query.api.v2.Query query,
+                                                                final ExpressionOperator expression,
                                                                 final IndexFieldsMap indexFieldsMap,
                                                                 final Map<Version, Optional<SearchExpressionQuery>> queryMap,
                                                                 final Consumer<Error> errorConsumer) {
@@ -131,7 +131,7 @@ public class IndexShardSearchFactory {
             public Query getQuery(final Version luceneVersion) {
                 final Optional<SearchExpressionQuery> optional = queryMap.computeIfAbsent(luceneVersion, k -> {
                     // Get a query for the required lucene version.
-                    return getQuery(k, query.getExpression(), indexFieldsMap);
+                    return getQuery(k, expression, indexFieldsMap);
                 });
                 return optional.map(SearchExpressionQuery::getQuery).orElse(null);
             }
