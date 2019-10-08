@@ -51,11 +51,11 @@ class AnnotationsReceiverDecoratorFactory implements AnnotationsDecoratorFactory
         final Function<Annotation, Boolean> filter = createFilter(query.getExpression());
 
         final Integer createUserIndex = fieldIndexMap.getMap().get(AnnotationDataSource.CREATE_USER);
-//        final Integer commentIndex = fieldIndexMap.getMap().get(AnnotationDataSource.COMMENT);
+        final Integer titleIndex = fieldIndexMap.getMap().get(AnnotationDataSource.TITLE);
         final Integer statusIndex = fieldIndexMap.getMap().get(AnnotationDataSource.STATUS);
         final Integer assignedToIndex = fieldIndexMap.getMap().get(AnnotationDataSource.ASSIGNED_TO);
 
-        if (filter == null && createUserIndex == null && statusIndex == null && assignedToIndex == null) {
+        if (filter == null && createUserIndex == null && titleIndex == null && statusIndex == null && assignedToIndex == null) {
             return receiver;
         }
 
@@ -72,6 +72,7 @@ class AnnotationsReceiverDecoratorFactory implements AnnotationsDecoratorFactory
             // Filter based on annotation.
             if (filter == null || filter.apply(annotation)) {
                 setValue(values.getValues(), createUserIndex, annotation.getCreateUser());
+                setValue(values.getValues(), titleIndex, annotation.getTitle());
                 setValue(values.getValues(), statusIndex, annotation.getStatus());
                 setValue(values.getValues(), assignedToIndex, annotation.getAssignedTo());
 
@@ -95,6 +96,7 @@ class AnnotationsReceiverDecoratorFactory implements AnnotationsDecoratorFactory
         return annotation -> {
             final Map<String, Object> attributeMap = new HashMap<>();
             attributeMap.put(AnnotationDataSource.CREATE_USER, annotation.getCreateUser());
+            attributeMap.put(AnnotationDataSource.TITLE, annotation.getTitle());
             attributeMap.put(AnnotationDataSource.STATUS, annotation.getStatus());
             attributeMap.put(AnnotationDataSource.ASSIGNED_TO, annotation.getAssignedTo());
             return expressionMatcher.match(attributeMap, filteredExpression);

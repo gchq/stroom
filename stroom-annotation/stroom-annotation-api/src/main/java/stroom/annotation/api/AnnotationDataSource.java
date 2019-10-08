@@ -15,13 +15,15 @@ public interface AnnotationDataSource {
     String NAMESPACE = "annotation";
     String ANNOTATION_FIELD_PREFIX = NAMESPACE + ":";
     String CREATE_USER = ANNOTATION_FIELD_PREFIX + "CreatedBy";
+    String TITLE = ANNOTATION_FIELD_PREFIX + "Title";
     String STATUS = ANNOTATION_FIELD_PREFIX + "Status";
     String ASSIGNED_TO = ANNOTATION_FIELD_PREFIX + "AssignedTo";
 
     DataSourceField CREATED_BY_FIELD = new DataSourceField.Builder().name(CREATE_USER).type(DataSourceFieldType.FIELD).queryable(true).build();
+    DataSourceField TITLE_FIELD = new DataSourceField.Builder().name(TITLE).type(DataSourceFieldType.FIELD).queryable(true).build();
     DataSourceField STATUS_FIELD = new DataSourceField.Builder().name(STATUS).type(DataSourceFieldType.FIELD).queryable(true).build();
     DataSourceField ASSIGNED_TO_FIELD = new DataSourceField.Builder().name(ASSIGNED_TO).type(DataSourceFieldType.FIELD).queryable(true).build();
 
-    List<DataSourceField> FIELDS = Arrays.asList(CREATED_BY_FIELD, STATUS_FIELD, ASSIGNED_TO_FIELD);
+    List<DataSourceField> FIELDS = Arrays.asList(CREATED_BY_FIELD, TITLE_FIELD, STATUS_FIELD, ASSIGNED_TO_FIELD);
     Map<String, DataSourceField> FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(DataSourceField::getName, Function.identity()));
 }
