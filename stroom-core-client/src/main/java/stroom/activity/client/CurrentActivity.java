@@ -22,6 +22,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.activity.shared.Activity;
+import stroom.activity.shared.GetCurrentActivityAction;
 import stroom.activity.shared.SetCurrentActivityAction;
 import stroom.dispatch.client.ClientDispatchAsync;
 
@@ -33,7 +34,9 @@ public class CurrentActivity implements HasHandlers {
     private final EventBus eventBus;
     private final Provider<ManageActivityPresenter> manageActivityPresenterProvider;
     private final ClientDispatchAsync dispatcher;
-    private Activity activity;
+
+    private Activity currentActivity;
+    private boolean fetched;
 
     @Inject
     public CurrentActivity(final EventBus eventBus,
@@ -44,30 +47,32 @@ public class CurrentActivity implements HasHandlers {
         this.dispatcher = dispatcher;
     }
 
-    public Activity getActivity() {
-        return activity;
+    public void getActivity(final Consumer<Activity> consumer) {
+        if (fetched) {
+            consumer.accept(currentActivity);
+        } else {
+            dispatcher.exec(new GetCurrentActivityAction()).onSuccess(a -> {
+                currentActivity = a;
+                fetched = true;
+                consumer.accept(a);
+            });
+        }
     }
 
     public void setActivity(final Activity activity) {
-        this.activity = activity;
         dispatcher.exec(new SetCurrentActivityAction(activity)).onSuccess(a -> {
-            this.activity = a;
+            currentActivity = a;
+            fetched = true;
             ActivityChangedEvent.fire(this, a);
         });
     }
 
     public void showInitialActivityChooser(final Consumer<Activity> consumer) {
-        final ManageActivityPresenter manageActivityPresenter = manageActivityPresenterProvider.get();
-        manageActivityPresenter.showInitial(activity -> {
-            setActivity(activity);
-            consumer.accept(activity);
-        });
+        manageActivityPresenterProvider.get().showInitial(consumer);
     }
 
     public void showActivityChooser() {
-        final ManageActivityPresenter manageActivityPresenter = manageActivityPresenterProvider.get();
-        manageActivityPresenter.setSelected(activity);
-        manageActivityPresenter.show(this::setActivity);
+        manageActivityPresenterProvider.get().show(a -> {});
     }
 
     @Override

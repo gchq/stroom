@@ -18,6 +18,7 @@ package stroom.core.client;
 
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
+import stroom.document.client.DocumentPluginEventManager;
 
 import javax.inject.Inject;
 
@@ -25,10 +26,12 @@ public class LocationManager {
     private boolean ignoreClose;
 
     @Inject
-    public LocationManager() {
+    public LocationManager(final DocumentPluginEventManager entityPluginEventManager) {
         Window.addWindowClosingHandler(event -> {
             if (!ignoreClose) {
-                event.setMessage("Are you sure you want to leave Stroom?");
+                if (entityPluginEventManager.hasDirtyDocuments()) {
+                    event.setMessage("Are you sure you want to leave Stroom?");
+                }
             } else {
                 ignoreClose = false;
             }

@@ -75,5 +75,4 @@ public class SessionDetails implements SharedObject {
     public void setLastAccessedAgent(String lastAccessedAgent) {
         this.lastAccessedAgent = lastAccessedAgent;
     }
-
 }

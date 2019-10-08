@@ -1,8 +1,8 @@
-#This is an example of the configuration file ~/.stroom/stroom.conf that sets 
-#various properties for running stroom in development
-#It is also used by travis for configuring stroom's integration tests
+# This is an example of the configuration file ~/.stroom/stroom.conf that sets
+# various properties for running stroom in development
+# It is also used by travis for configuring stroom's integration tests
 
-#Choose whether Stroom requires authenticated access
+# Choose whether Stroom requires authenticated access
 stroom.authentication.required=true
 
 stroom.htmlTitle=Development Stroom
@@ -11,34 +11,36 @@ stroom.node=node1a
 stroom.rack=rack1
 stroom.temp=/tmp/stroom/
 
-#Uncomment this to enable browser's right click menu for development
+# Uncomment this to enable browser's right click menu for development
 #stroom.ui.oncontextmenu=
 
-#Hibernate properties
-#~~~~~~~~~~~~~~~~~~~~
+# Hibernate properties
+# ~~~~~~~~~~~~~~~~~~~~
 stroom.jpaHbm2DdlAuto=validate
 stroom.jpaDialect=org.hibernate.dialect.MySQLInnoDBDialect
 
-#Stroom database properties
-#~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Stroom database properties
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~
 stroom.jdbcDriverClassName=com.mysql.jdbc.Driver
 stroom.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
 stroom.jdbcDriverUsername=stroomuser
 stroom.jdbcDriverPassword=stroompassword1
 
-#SQL Statistics database properties
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# SQL Statistics database properties
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 stroom.statistics.sql.jdbcDriverClassName=com.mysql.jdbc.Driver
 stroom.statistics.sql.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3307/stats?useUnicode=yes&characterEncoding=UTF-8
 stroom.statistics.sql.jdbcDriverUsername=statsuser
 stroom.statistics.sql.jdbcDriverPassword=stroompassword1
 
+# Security
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 stroom.security.apiToken=eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6InN0cm9vbSIsInNpZCI6bnVsbH0.k0Ssb43GCdTunAMeM26fIulYKNUuPUaJJk6GxDmzCPb7kVPwEtdfBSrtwazfEFM97dnmvURkLqs-DAZTXhhf-0VqQx4hkwcCHf83eVptWTy-lufIhQo6FCM223c9ONIhl6CPqknWh9Bo3vFNrNJoKz5Zw2T_iCcQhi2WGjd_tjTG7VbibTIpH3lPQDw1IBD2nMsEqACJSk3IaFe0GYcrAEMwsjj3sjAwByMbj5DJvo_DJbAuzUwS5IVpASEENen5Xd3wALLirrraUfED1OY0G56Ttcwl3uQ2s-grZXBM4JCiIurlWR5iNtNwoPUsZsyMju4FMSXt3Ur1NIpD7XKJlg
 stroom.security.apiToken.durationToWarnBeforeExpiry=10m
 
-# Change this to HTTP and visit directly if you want to run GWT Super Dev Mode
+#  Change this to HTTP and visit directly if you want to run GWT Super Dev Mode
 stroom.advertisedUrl=https://IP_ADDRESS
-# This is appended to stroom.advertisedUrl to get the full address of Stroom's UI
+#  This is appended to stroom.advertisedUrl to get the full address of Stroom's UI
 stroom.uiPath=/stroom/ui?prompt=login
 
 stroom.auth.jwt.issuer=stroom
@@ -50,47 +52,35 @@ stroom.users.ui.url=https://IP_ADDRESS/s/users
 stroom.apikeys.ui.url=https://IP_ADDRESS/s/tokens
 stroom.changepassword.url=https://IP_ADDRESS/s/changepassword
 
-#Service discovery
-#~~~~~~~~~~~~~~~~~
-#Set this to false to local service lookup when you do not have Zookeeper
+# Service discovery
+# ~~~~~~~~~~~~~~~~~
+# Set this to false to local service lookup when you do not have Zookeeper
 stroom.serviceDiscovery.enabled=false
-#If simple serviceDiscovery is in use, this sets the host/port to use use for all simple lookups
+# If simple serviceDiscovery is in use, this sets the host/port to use use for all simple lookups
 stroom.serviceDiscovery.simpleLookup.basePath=http://IP_ADDRESS:8080
 
-#Plugins
+# Plugins
 stroom.plugins.lib.dir=HOME_DIR/.stroom/plugins
 
-#Kafka
-#~~~~~
-#Set this to blank to prevent stroom from trying to establish a connection
+# Kafka
+# ~~~~~
+# Set this to blank to prevent stroom from trying to establish a connection
 stroom.connectors.kafka.default.bootstrap.servers=IP_ADDRESS:9092
 stroom.connectors.kafka.default.connector.version=2.1.1
 
-# Elastic
-#~~~~~~~~
-stroom.connectors.elastic.default.transport.hosts=IP_ADDRESS:9300
-stroom.connectors.elastic.default.elastic.http.url=http://IP_ADDRESS:9200
-stroom.connectors.elastic.default.cluster.name=docker-cluster
-stroom.connectors.elastic.default.connector.version=5.6.4
-
-# UI URLs
-#~~~~~~~~
-stroom.url.list=annotations-ui,elastic-ui,annotations-service,elastic-service,kibana-ui,dashboard
-stroom.url.annotations-ui=http://IP_ADDRESS:5001
-stroom.url.annotations-service=http://IP_ADDRESS:8199
-stroom.url.elastic-ui=http://IP_ADDRESS:5002
-stroom.url.elastic-service=http://IP_ADDRESS:8299
-stroom.url.kibana-ui=http://IP_ADDRESS:5601
+#  UI URLs
+# ~~~~~~~~
+stroom.url.list=dashboard
 stroom.url.dashboard=http://IP_ADDRESS/stroom/dashboard.jsp
 
-# Content Packs
-#~~~~~~~~~~~~~~
+#  Content Packs
+# ~~~~~~~~~~~~~~
 stroom.contentPackImportEnabled=false
 
-# Internal statistic definitions
-#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#By default stroom will configure each internal stat key to point to two docRefs, one for sqlstats and one of stroom-stats
-#If you just want it to use sql stats then uncomment these lines
+#  Internal statistic definitions
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# By default stroom will configure each internal stat key to point to two docRefs, one for sqlstats and one of stroom-stats
+# If you just want it to use sql stats then uncomment these lines
 #stroom.internalstatistics.benchmarkCluster.docRefs=docRef(StatisticStore,946a88c6-a59a-11e6-bdc4-0242ac110002,Benchmark-Cluster Test)
 #stroom.internalstatistics.pipelineStreamProcessor.docRefs=docRef(StatisticStore,946a80fc-a59a-11e6-bdc4-0242ac110002,PipelineStreamProcessor)
 #stroom.internalstatistics.metaDataStreamSize.docRefs=docRef(StatisticStore,946a8814-a59a-11e6-bdc4-0242ac110002,Meta Data-Stream Size)
@@ -102,3 +92,6 @@ stroom.contentPackImportEnabled=false
 #stroom.internalstatistics.memory.docRefs=docRef(StatisticStore,77c09ccb-e251-4ca5-bca0-56a842654397,Memory)
 #stroom.internalstatistics.heapHistogramInstances.docRefs=docRef(StatisticStore,e4f243b8-2c70-4d6e-9d5a-16466bf8764f,Heap Histogram Instances)
 #stroom.internalstatistics.heapHistogramBytes.docRefs=docRef(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)
+
+
+# vim: filetype=jproperties:

@@ -6,6 +6,36 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1264** : Dashboards running in embedded mode will not always ask for the user to choose an activity if the users session has one set already.
+
+* Issue **#1275** : Fixed permission filtering when showing related streams.
+
+* Issue **#1274** : Fixed issue with batch search caused by Hibernate not returning pipeline details in stream processor filters.
+
+* Issue **#1272** : Fixed saving query favourites.
+
+* Issue **#1266** : Stroom will now lock the cluster before releasing owned tasks so it doesn't clash with other task related processes that lock the DB for long periods.
+
+* Issue **#1264** : Added `embedded` mode for dashboards to hide dashboard chrome and save options.
+
+* Issue **#1264** : Stroom no longer asks if you want to leave the web page if no content needs saving.
+
+* Issue **#1263** : Fixed issues related to URL encoding/decoding with the `dashboard()` function.
+
+* Issue **#1263** : Fixed issue where date expressions were being allowed without '+' or '-' signs to add or subtract durations.
+
+* Add fallback config.yml file into the docker images for running outside of a stack.
+
+* Issue **#1263** : Fixed issues related to URL encoding/decoding in dashboard expressions.
+
+* Issue **#1262** : Improved behaviour of `+` when used for concatenation in dashboard expressions.
+
+* Issue **#1259** : Fixed schema compliance when logging failed document update events.
+
+* Issue **#1245** : Fixed various issues with session management and authentication.
+
+* Issue **#1258** : Fixed issue affecting search expressions against keyword fields using dictionaries containing carriage returns.
+
 
 ## [v6.1-beta.4] - 2019-09-04
 

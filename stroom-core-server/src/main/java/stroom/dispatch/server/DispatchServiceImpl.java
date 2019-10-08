@@ -28,10 +28,10 @@ import stroom.entity.server.util.EntityServiceExceptionUtil;
 import stroom.entity.shared.Action;
 import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.PermissionException;
+import stroom.feed.server.UserAgentSessionUtil;
 import stroom.security.SecurityContext;
 import stroom.security.UserTokenUtil;
 import stroom.servlet.HttpServletRequestHolder;
-import stroom.servlet.SessionListListener;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskHandlerBeanRegistry;
 import stroom.task.server.TaskManager;
@@ -140,8 +140,8 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
     @Override
     protected void service(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
         try {
-            SessionListListener.setLastRequest(req);
-
+            // Set the user agent in the session.
+            UserAgentSessionUtil.set(req);
             super.service(req, resp);
 
         } catch (final Exception ex) {

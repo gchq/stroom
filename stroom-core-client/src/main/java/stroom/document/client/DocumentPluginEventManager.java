@@ -628,6 +628,15 @@ public class DocumentPluginEventManager extends Plugin {
                 "Ctrl+Shift+S", enabled, command);
     }
 
+    public boolean hasDirtyDocuments() {
+        for (final DocumentPlugin<?> plugin : pluginMap.values()) {
+            if (plugin.hasDirtyDocuments()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private MenuItem createInfoMenuItem(final List<ExplorerNode> explorerNodeList, final int priority, final boolean enabled) {
         final Command command = () ->
                 explorerNodeList.forEach(explorerNode ->

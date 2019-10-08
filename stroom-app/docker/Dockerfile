@@ -82,8 +82,9 @@ VOLUME /stroom/volumes/
 # see https://github.com/krallin/tini/issues/8
 ENTRYPOINT ["/sbin/tini", "--", "/stroom/docker-entrypoint.sh"]
 
-#start the app, the config file will be supplied by a bind mount volume.
-CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar stroom-app-all.jar server config/config.yml"]
+# start the app, the config file will either be supplied by a bind mount volume
+# or a fallback version baked into the image
+CMD ["./start.sh"]
 
 # https://github.com/gchq/stroom/issues/884
 # JRE fails to load fonts if there are no standard fonts in the image; ttf-DejaVu is a good choice,
@@ -97,6 +98,7 @@ RUN \
     adduser -u 1000 -S -s /bin/false -D -G stroom stroom && \
     mkdir -p /stroom && \
     mkdir -p /stroom/config && \
+    mkdir -p /stroom/config-fallback && \
     mkdir -p /stroom/contentPackImport && \
     mkdir -p /stroom/logs/access && \
     mkdir -p /stroom/logs/app && \
@@ -106,12 +108,18 @@ RUN \
     mkdir -p /stroom/volumes && \
     chown -R stroom:stroom /stroom
 
+# Those that are most likely to have changed get copied last to speed up build
+
 # Copy in all the content packs downloaded in the intermediate build stage
 COPY --chown=stroom:stroom ./build/contentPacks /stroom/contentPackImport
 
 # Copy all the fat jars for the application and connectors
-# Those that are most likely to have changed get copied last to speed up build
 COPY --chown=stroom:stroom *.sh /stroom/
+
+# This config file is a fallback for use in development 
+# (or when a stack with the config bind mount is not available)
+COPY --chown=stroom:stroom build/prod.yml /stroom/config-fallback/config.yml
+
 COPY --chown=stroom:stroom ./build/plugins /stroom/plugins/
 COPY --chown=stroom:stroom --from=fat-jar-stage /stroom-app-all.jar /stroom/
 

@@ -22,6 +22,9 @@ import stroom.pipeline.server.PipelineService;
 import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.shared.CreateProcessorAction;
 import stroom.security.Secured;
+import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
+import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamtask.server.StreamProcessorFilterService;
 import stroom.streamtask.shared.StreamProcessor;
 import stroom.streamtask.shared.StreamProcessorFilter;
@@ -39,11 +42,24 @@ public class CreateProcessorHandler extends AbstractTaskHandler<CreateProcessorA
     private StreamProcessorFilterService streamProcessorFilterService;
     @Resource
     private PipelineService pipelineService;
+    @Resource
+    private SecurityContext securityContext;
 
     @Override
     public StreamProcessorFilter exec(final CreateProcessorAction action) {
-        final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
-        return streamProcessorFilterService.createNewFilter(pipelineEntity, action.getQueryData(),
-                action.isEnabled(), action.getPriority());
+        StreamProcessorFilter result = null;
+
+        try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
+            final PipelineEntity pipelineEntity = pipelineService.loadByUuid(action.getPipeline().getUuid());
+            result = streamProcessorFilterService.createNewFilter(pipelineEntity, action.getQueryData(),
+                    action.isEnabled(), action.getPriority());
+        }
+
+        // If the user doesn't have read permissions on the pipeline then return null.
+        if (!securityContext.hasDocumentPermission(PipelineEntity.ENTITY_TYPE, action.getPipeline().getUuid(), DocumentPermissionNames.READ)) {
+            result = null;
+        }
+
+        return result;
     }
 }
