@@ -103,7 +103,7 @@ COPY --chown=proxy:proxy *.sh /stroom-proxy/
 # (or when a stack with the config bind mount is not available)
 COPY --chown=proxy:proxy build/proxy-prod.yml /stroom-proxy/config-fallback/config.yml
 
-COPY --chown=proxy:proxy --from=fat-jar-stage /stroom-app-all.jar /stroom-proxy/
+COPY --chown=proxy:proxy --from=fat-jar-stage /stroom-proxy-app-all.jar /stroom-proxy/
 
 # Label the image so we can see what commit/tag it came from
 ARG GIT_COMMIT=unspecified
