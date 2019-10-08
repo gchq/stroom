@@ -7,6 +7,7 @@ import stroom.activity.shared.CreateActivityAction;
 import stroom.activity.shared.DeleteActivityAction;
 import stroom.activity.shared.FetchActivityAction;
 import stroom.activity.shared.FindActivityAction;
+import stroom.activity.shared.GetCurrentActivityAction;
 import stroom.activity.shared.SetCurrentActivityAction;
 import stroom.activity.shared.UpdateActivityAction;
 import stroom.activity.shared.ValidateActivityAction;
@@ -24,6 +25,7 @@ public class ActivityModule extends AbstractModule {
                 .bind(DeleteActivityAction.class, DeleteActivityHandler.class)
                 .bind(FetchActivityAction.class, FetchActivityHandler.class)
                 .bind(FindActivityAction.class, FindActivityHandler.class)
+                .bind(GetCurrentActivityAction.class, GetCurrentActivityHandler.class)
                 .bind(SetCurrentActivityAction.class, SetCurrentActivityHandler.class)
                 .bind(ValidateActivityAction.class, ValidateActivityHandler.class);
     }

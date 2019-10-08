@@ -500,7 +500,7 @@ public class SearchExpressionQueryBuilder {
             // As this is just indexed as a keyword we only want to search
             // for the term.
 //                if (!field.isCaseSensitive()) {
-//                    val = value.toLowerCase();
+//                    val = val.toLowerCase();
 //                }
 
             final Term term = new Term(field.getFieldName(), val);

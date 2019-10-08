@@ -1,4 +1,4 @@
-package stroom.security.impl;
+package stroom.security.impl.session;
 
 import stroom.security.shared.User;
 

@@ -220,30 +220,37 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
      */
     @Override
     public void releaseOwnedTasks() {
-        final Integer nodeId = processorNodeCache.getOrCreate(nodeInfo.getThisNodeName());
+        LOGGER.info(() -> "Locking cluster to release owned tasks for node " + nodeInfo.getThisNodeName());
 
-        final Set<Byte> statusSet = Set.of(
-                TaskStatus.UNPROCESSED.getPrimitiveValue(),
-                TaskStatus.ASSIGNED.getPrimitiveValue(),
-                TaskStatus.PROCESSING.getPrimitiveValue());
-        final CriteriaSet<Byte> criteriaSet = new CriteriaSet<>();
-        criteriaSet.setSet(statusSet);
+        // Lock the cluster so that only this node is able to release owned tasks at this time.
+        clusterLockService.lock(LOCK_NAME, () -> {
+            LOGGER.debug(() -> "Locked cluster");
 
-        final Collection<Condition> conditions = JooqUtil.conditions(
-                Optional.of(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)),
-                JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, criteriaSet));
+            final Integer nodeId = processorNodeCache.getOrCreate(nodeInfo.getThisNodeName());
 
-        final int results = JooqUtil.contextResult(connectionProvider, context -> context
-                .update(PROCESSOR_TASK)
-                .set(PROCESSOR_TASK.STATUS, TaskStatus.UNPROCESSED.getPrimitiveValue())
-                .set(PROCESSOR_TASK.STATUS_TIME_MS, System.currentTimeMillis())
-                .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, (Integer) null)
-                .where(conditions)
-                .execute());
+            final Set<Byte> statusSet = Set.of(
+                    TaskStatus.UNPROCESSED.getPrimitiveValue(),
+                    TaskStatus.ASSIGNED.getPrimitiveValue(),
+                    TaskStatus.PROCESSING.getPrimitiveValue());
+            final CriteriaSet<Byte> criteriaSet = new CriteriaSet<>();
+            criteriaSet.setSet(statusSet);
 
-        LOGGER.info(LambdaLogUtil.message(
-                "doStartup() - Set {} Tasks back to UNPROCESSED (Reprocess), NULL that were UNPROCESSED, ASSIGNED, PROCESSING for node {}",
-                results, nodeInfo.getThisNodeName()));
+            final Collection<Condition> conditions = JooqUtil.conditions(
+                    Optional.of(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)),
+                    JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, criteriaSet));
+
+            final int results = JooqUtil.contextResult(connectionProvider, context -> context
+                    .update(PROCESSOR_TASK)
+                    .set(PROCESSOR_TASK.STATUS, TaskStatus.UNPROCESSED.getPrimitiveValue())
+                    .set(PROCESSOR_TASK.STATUS_TIME_MS, System.currentTimeMillis())
+                    .set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, (Integer) null)
+                    .where(conditions)
+                    .execute());
+
+            LOGGER.info(() -> "Set " +
+                    results +
+                    " tasks back to UNPROCESSED (Reprocess), NULL that were UNPROCESSED, ASSIGNED, PROCESSING for node " +
+                    nodeInfo.getThisNodeName());
 
 //        final SqlBuilder sql = new SqlBuilder();
 //        sql.append("UPDATE ");
@@ -267,6 +274,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 //        LOGGER.info(
 //                "doStartup() - Set {} Tasks back to UNPROCESSED (Reprocess), NULL that were UNPROCESSED, ASSIGNED, PROCESSING for node {}",
 //                results, nodeInfo.getThisNodeName());
+        });
     }
 
 

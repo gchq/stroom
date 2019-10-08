@@ -46,7 +46,7 @@ class ExplorerSessionImpl implements ExplorerSession {
                 if (request == null) {
                     LOGGER.debug("Request provider has no current request");
                 } else {
-                    return Optional.ofNullable(request.getSession());
+                    return Optional.ofNullable(request.getSession(false));
                 }
             }
         } catch (final RuntimeException e) {

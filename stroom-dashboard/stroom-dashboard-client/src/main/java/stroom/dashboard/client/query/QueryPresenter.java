@@ -404,8 +404,13 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void openEditor(final QueryData queryData, final DocRef pipeline) {
         // Now create the processor filter using the find stream criteria.
-        dispatcher.exec(new CreateProcessorFilterAction(pipeline, queryData, true, 1))
-                .onSuccess(processorFilter -> CreateProcessorEvent.fire(QueryPresenter.this, processorFilter));
+        dispatcher.exec(new CreateProcessorFilterAction(pipeline, queryData, true, 1)).onSuccess(streamProcessorFilter -> {
+            if (streamProcessorFilter != null) {
+                CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter);
+            } else {
+                AlertEvent.fireInfo(this, "Created batch processor", null);
+            }
+        });
     }
 
     private void showWarnings() {

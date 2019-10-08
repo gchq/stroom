@@ -24,12 +24,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
 import stroom.security.api.SecurityContext;
+import stroom.security.impl.session.UserSessionUtil;
+import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.security.api.UserTokenUtil;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.shared.User;
 import stroom.security.shared.UserToken;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.io.StreamUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -47,8 +48,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.util.Optional;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
@@ -58,9 +59,20 @@ import java.util.regex.Pattern;
  */
 @Singleton
 class SecurityFilter implements Filter {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityFilter.class);
+
     private static final String IGNORE_URI_REGEX = "ignoreUri";
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityFilter.class);
+    private static final String SCOPE = "scope";
+    private static final String RESPONSE_TYPE = "response_type";
+    private static final String CLIENT_ID = "client_id";
+    private static final String REDIRECT_URL = "redirect_url";
+    private static final String STATE = "state";
+    private static final String NONCE = "nonce";
+    private static final String PROMPT = "prompt";
+    private static final String ACCESS_CODE = "accessCode";
+
+    private static final Set<String> RESERVED_PARAMS = Set.of(SCOPE, RESPONSE_TYPE, CLIENT_ID, REDIRECT_URL, STATE, NONCE, PROMPT, ACCESS_CODE);
 
     private final AuthenticationConfig config;
     private final UiConfig uiConfig;
@@ -245,7 +257,7 @@ class SecurityFilter implements Filter {
         boolean loggedIn = false;
 
         // If we have a state id then this should be a return from the auth service.
-        final String stateId = request.getParameter("state");
+        final String stateId = getLastParam(request, STATE);
         if (stateId != null) {
             LOGGER.debug("We have the following state: {{}}", stateId);
 
@@ -255,16 +267,27 @@ class SecurityFilter implements Filter {
                 LOGGER.warn("Unexpected state: " + stateId);
 
             } else {
-                // If we have an access code we can try and log in.
-                final String accessCode = request.getParameter("accessCode");
-                if (accessCode != null) {
-                    LOGGER.debug("We have the following access code: {{}}", accessCode);
-                    final AuthenticationToken token = createUIToken(request, state, accessCode);
-                    final User userRef = securityContext.asProcessingUserResult(() -> authenticationService.getUser(token));
 
-                    if (userRef != null) {
+                // If we have an access code we can try and log in.
+                final String accessCode = getLastParam(request, ACCESS_CODE);
+                if (accessCode != null) {
+                    // Invalidate the current session.
+                    HttpSession session = request.getSession(false);
+                    if (session != null) {
+                        session.invalidate();
+                    }
+
+                    LOGGER.debug("We have the following access code: {{}}", accessCode);
+                    session = request.getSession(true);
+
+                    UserAgentSessionUtil.set(request);
+
+                    final AuthenticationToken token = createUIToken(session, state, accessCode);
+                    final User user = authenticationService.getUser(token);
+
+                    if (user != null) {
                         // Set the user ref in the session.
-                        UserSessionUtil.set(request.getSession(true), userRef);
+                        UserSessionUtil.set(session, user);
 
                         loggedIn = true;
                     }
@@ -281,84 +304,103 @@ class SecurityFilter implements Filter {
         return loggedIn;
     }
 
-    private void redirectToAuthService(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
-        // Invalidate the current session.
-        HttpSession session = request.getSession(false);
-        if (session != null) {
-            session.invalidate();
+    /**
+     * Gets the last parameter assuming that it has been appended to the end of the URL.
+     *
+     * @param request The request containing the parameters.
+     * @param name    The parameter name to get.
+     * @return The last value of the parameter if it exists, else null.
+     */
+    private String getLastParam(final HttpServletRequest request, final String name) {
+        final String[] arr = request.getParameterValues(name);
+        if (arr != null && arr.length > 0) {
+            return arr[arr.length - 1];
         }
+        return null;
+    }
+
+    private void redirectToAuthService(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
+//        // Invalidate the current session.
+//        HttpSession session = request.getSession(false);
+//        if (session != null) {
+//            session.invalidate();
+//        }
 
         // We have a a new request so we're going to redirect with an AuthenticationRequest.
-        final String authenticationRequestBaseUrl = config.getAuthenticationServiceUrl() + "/authenticate";
-
         // Get the redirect URL for the auth service from the current request.
-        String url = request.getRequestURL().toString();
-        String query = request.getQueryString();
-        if (!Strings.isNullOrEmpty(query)) {
-            url += "?" + query;
-        }
+        final String url = getFullUrl(request);
+        final UriBuilder uriBuilder = UriBuilder.fromUri(url);
 
-        // Create a state for this authentication request.
-        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, url);
+        // When the auth service has performed authentication it will redirect back to the current URL with some
+        // additional parameters (e.g. `state` and `accessCode`). It is important that these parameters are not
+        // provided by our redirect URL else the redirect URL that the authentication service redirects back to may
+        // end up with multiple copies of these parameters which will confuse Stroom as it will not know which one
+        // of the param values to use (i.e. which were on the original redirect request and which have been added by
+        // the authentication service). For this reason we will cleanse the URL of any reserved parameters here. The
+        // authentication service should do the same to the redirect URL before adding its additional parameters.
+        RESERVED_PARAMS.forEach(param -> uriBuilder.replaceQueryParam(param, new Object[0]));
 
-        // If we're using the request URL we want to trim off any trailing params
-        final URI parsedRequestUrl = UriBuilder.fromUri(url).build();
-        String redirectUrl;
+        URI redirectUri = uriBuilder.build();
 
         if (uiConfig.getUrlConfig() != null && uiConfig.getUrlConfig().getUi() != null && uiConfig.getUrlConfig().getUi().trim().length() > 0) {
             LOGGER.debug("Using the advertised URL as the OpenID redirect URL");
-            redirectUrl = uiConfig.getUrlConfig().getUi();
-        } else {
-            redirectUrl = parsedRequestUrl.getScheme() + "://" + parsedRequestUrl.getHost() + ":" + parsedRequestUrl.getPort();
-        }
-
-        // Putting the path and query back on
-        if (parsedRequestUrl.getPath() != null && parsedRequestUrl.getPath().length() > 0 && !parsedRequestUrl.getPath().equals("/")) {
-            redirectUrl += parsedRequestUrl.getPath();
-            redirectUrl += "?";
-            if (!Strings.isNullOrEmpty(query)) {
-                redirectUrl += query;
+            final UriBuilder builder = UriBuilder.fromUri(uiConfig.getUrlConfig().getUi());
+            if (redirectUri.getPath() != null) {
+                builder.path(redirectUri.getPath());
             }
+            if (redirectUri.getFragment() != null) {
+                builder.fragment(redirectUri.getFragment());
+            }
+            if (redirectUri.getQuery() != null) {
+                builder.replaceQuery(redirectUri.getQuery());
+            }
+            redirectUri = builder.build();
         }
+        // Create a state for this authentication request.
+        final String redirectUrl = redirectUri.toString();
+        final AuthenticationState state = AuthenticationStateSessionUtil.create(request, redirectUrl);
 
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
-
-
-        String authenticationRequestParams = "" +
-                "?scope=openid" +
-                "&response_type=code" +
-                "&client_id=stroom" +
-                "&redirect_url=" +
-                URLEncoder.encode(redirectUrl, StreamUtil.DEFAULT_CHARSET_NAME) +
-                "&state=" +
-                URLEncoder.encode(state.getId(), StreamUtil.DEFAULT_CHARSET_NAME) +
-                "&nonce=" +
-                URLEncoder.encode(state.getNonce(), StreamUtil.DEFAULT_CHARSET_NAME);
+        final UriBuilder authenticationRequest = UriBuilder.fromUri(config.getAuthenticationServiceUrl())
+                .path("/authenticate")
+                .queryParam(SCOPE, "openid")
+                .queryParam(RESPONSE_TYPE, "code")
+                .queryParam(CLIENT_ID, "stroom")
+                .queryParam(REDIRECT_URL, redirectUrl)
+                .queryParam(STATE, state.getId())
+                .queryParam(NONCE, state.getNonce());
 
         // If there's 'prompt' in the request then we'll want to pass that on to the AuthenticationService.
         // In OpenId 'prompt=login' asks the IP to present a login page to the user, and that's the effect
         // this will have. We need this so that we can bypass certificate logins, e.g. for when we need to
         // log in as the 'admin' user but the browser is always presenting a certificate.
-        String prompt = request.getParameter("prompt");
+        final String prompt = getLastParam(request, PROMPT);
         if (!Strings.isNullOrEmpty(prompt)) {
-            authenticationRequestParams += "&prompt=" + prompt;
+            authenticationRequest.queryParam(PROMPT, prompt);
         }
 
-        final String authenticationRequestUrl = authenticationRequestBaseUrl + authenticationRequestParams;
+        final String authenticationRequestUrl = authenticationRequest.build().toString();
         LOGGER.info("Redirecting with an AuthenticationRequest to: {}", authenticationRequestUrl);
         // We want to make sure that the client has the cookie.
         response.sendRedirect(authenticationRequestUrl);
+    }
+
+    private String getFullUrl(final HttpServletRequest request) {
+        if (request.getQueryString() == null) {
+            return request.getRequestURL().toString();
+        }
+        return request.getRequestURL().toString() + "?" + request.getQueryString();
     }
 
     /**
      * This method must create the token.
      * It does this by enacting the OpenId exchange of accessCode for idToken.
      */
-    private AuthenticationToken createUIToken(final HttpServletRequest request, final AuthenticationState state, final String accessCode) {
+    private AuthenticationToken createUIToken(final HttpSession session, final AuthenticationState state, final String accessCode) {
         AuthenticationToken token = null;
 
         try {
-            String sessionId = request.getSession().getId();
+            String sessionId = session.getId();
             final String idToken = authenticationServiceClients.newAuthenticationApi().getIdToken(accessCode);
             final JwtClaims jwtClaimsOptional = jwtService.verifyToken(idToken);
             final String nonce = (String) jwtClaimsOptional.getClaimsMap().get("nonce");
