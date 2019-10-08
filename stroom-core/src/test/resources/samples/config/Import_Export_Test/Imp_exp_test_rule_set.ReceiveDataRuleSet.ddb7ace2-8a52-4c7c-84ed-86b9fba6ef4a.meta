@@ -1,0 +1,83 @@
+{
+  "type" : "ReceiveDataRuleSet",
+  "uuid" : "ddb7ace2-8a52-4c7c-84ed-86b9fba6ef4a",
+  "name" : "Imp_exp_test_rule_set",
+  "version" : "b2954372-49aa-44c8-9bca-2609051dd954",
+  "fields" : [ {
+    "type" : "Text",
+    "name" : "One",
+    "queryable" : true,
+    "conditions" : [ "CONTAINS", "EQUALS", "IN", "IN_DICTIONARY" ]
+  }, {
+    "type" : "Boolean",
+    "name" : "Two",
+    "queryable" : true,
+    "conditions" : [ "EQUALS" ]
+  }, {
+    "type" : "Long",
+    "name" : "Three",
+    "queryable" : true,
+    "conditions" : [ "EQUALS", "BETWEEN", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO" ]
+  } ],
+  "rules" : [ {
+    "ruleNumber" : 1,
+    "creationTime" : 1570546924118,
+    "name" : "Disabled Rule",
+    "enabled" : true,
+    "expression" : {
+      "type" : "operator",
+      "op" : "AND",
+      "children" : [ {
+        "type" : "term",
+        "field" : "One",
+        "condition" : "EQUALS",
+        "value" : "xxx",
+        "enabled" : true
+      } ],
+      "enabled" : true
+    },
+    "action" : "DROP"
+  }, {
+    "ruleNumber" : 2,
+    "creationTime" : 1570546845676,
+    "name" : "Rule One",
+    "enabled" : true,
+    "expression" : {
+      "type" : "operator",
+      "op" : "AND",
+      "children" : [ {
+        "type" : "term",
+        "field" : "One",
+        "condition" : "EQUALS",
+        "value" : "abc",
+        "enabled" : true
+      } ],
+      "enabled" : true
+    },
+    "action" : "RECEIVE"
+  }, {
+    "ruleNumber" : 3,
+    "creationTime" : 1570546870382,
+    "name" : "Rule Two",
+    "enabled" : true,
+    "expression" : {
+      "type" : "operator",
+      "op" : "AND",
+      "children" : [ {
+        "type" : "term",
+        "field" : "Two",
+        "condition" : "EQUALS",
+        "value" : "true",
+        "enabled" : true
+      }, {
+        "type" : "term",
+        "field" : "Three",
+        "condition" : "EQUALS",
+        "value" : "123",
+        "enabled" : true
+      } ],
+      "enabled" : true
+    },
+    "action" : "REJECT"
+  } ]
+}

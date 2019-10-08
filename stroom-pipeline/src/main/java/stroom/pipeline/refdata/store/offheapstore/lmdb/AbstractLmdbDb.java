@@ -113,7 +113,7 @@ public abstract class AbstractLmdbDb<K, V> implements LmdbDb {
         if (keySerdeCapacity > envMaxKeySize) {
             LOGGER.debug("Key serde {} capacity {} is greater than the maximum key size for the environment {}. " +
                             "The max environment key size {} will be used instead.",
-                    keySerde.getClass().getName(), keySerdeCapacity, envMaxKeySize);
+                    keySerde.getClass().getName(), keySerdeCapacity, envMaxKeySize, envMaxKeySize);
         }
         this.keyBufferCapacity = Math.min(envMaxKeySize, keySerdeCapacity);
         this.valueBufferCapacity = Math.min(Serde.DEFAULT_CAPACITY, valueSerde.getBufferCapacity());

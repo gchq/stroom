@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LogUtil;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -198,8 +199,12 @@ public final class ComparisonHelper {
             reader2 = new BufferedReader(new InputStreamReader(Files.newInputStream(actualFile), StreamUtil.DEFAULT_CHARSET));
 
             if (!doCompareReaders(reader1, reader2, ignoreWhitespace, xml)) {
-                throw new RuntimeException("Files are not the same: \n" + FileUtil.getCanonicalPath(expectedFile) + "\n"
-                        + FileUtil.getCanonicalPath(actualFile));
+                throw new RuntimeException(LogUtil.message("Files are not the same: \n{}\n{}\n\nvimdiff {} {}",
+                        FileUtil.getCanonicalPath(expectedFile),
+                        FileUtil.getCanonicalPath(actualFile),
+                        FileUtil.getCanonicalPath(expectedFile),
+                        FileUtil.getCanonicalPath(actualFile)
+                ));
             }
 
         } catch (final IOException e) {

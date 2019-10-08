@@ -25,8 +25,26 @@ public class CoreTestModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        // Load dev.yaml
-        final String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
+
+        final AppConfig appConfig = getLocalAppConfig();
+
+        install(new AppConfigModule(appConfig));
+        install(new CoreModule());
+        install(new ResourceModule());
+        install(new stroom.cluster.impl.MockClusterModule());
+        install(new VolumeTestConfigModule());
+        install(new MockSecurityContextModule());
+        install(new MockMetaStatisticsModule());
+        install(new stroom.test.DatabaseTestControlModule());
+    }
+
+    private static AppConfig getLocalAppConfig() {
+        final AppConfig appConfig;// Load dev.yaml
+        final String codeSourceLocation = CoreTestModule.class
+                .getProtectionDomain()
+                .getCodeSource()
+                .getLocation()
+                .getPath();
 
         Path path = Paths.get(codeSourceLocation);
         while (path != null && !path.getFileName().toString().equals("stroom-app")) {
@@ -47,19 +65,11 @@ public class CoreTestModule extends AbstractModule {
         LOGGER.info("Using config from: " + FileUtil.getCanonicalPath(path));
 
         try (final InputStream inputStream = Files.newInputStream(path)) {
-            final AppConfig appConfig = YamlUtil.read(inputStream);
-            install(new AppConfigModule(appConfig));
+            appConfig = YamlUtil.read(inputStream);
         } catch (final IOException e) {
             throw new UncheckedIOException("Error opening local.yml, try running local.yml.sh in the root of " +
                     "the repo to create one.", e);
         }
-
-        install(new CoreModule());
-        install(new ResourceModule());
-        install(new stroom.cluster.impl.MockClusterModule());
-        install(new VolumeTestConfigModule());
-        install(new MockSecurityContextModule());
-        install(new MockMetaStatisticsModule());
-        install(new stroom.test.DatabaseTestControlModule());
+        return appConfig;
     }
 }

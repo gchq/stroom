@@ -17,9 +17,10 @@
 package stroom.kafka.impl;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.explorer.api.ExplorerActionHandler;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.kafka.pipeline.KafkaProducerFactory;
+import stroom.util.guice.GuiceUtil;
 
 public class KafkaModule extends AbstractModule {
     @Override
@@ -27,7 +28,10 @@ public class KafkaModule extends AbstractModule {
         bind(KafkaProducerFactory.class).to(KafkaProducerFactoryImpl.class);
         bind(KafkaConfigStore.class).to(KafkaConfigStoreImpl.class);
 
-        final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
-        explorerActionHandlerBinder.addBinding().to(KafkaConfigStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
+                .addBinding(KafkaConfigStoreImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(KafkaConfigStoreImpl.class);
     }
 }

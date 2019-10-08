@@ -19,17 +19,19 @@ package stroom.kafka.shared;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import stroom.docstore.shared.Doc;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "properties"})
 @JsonInclude(Include.NON_EMPTY)
 public class KafkaConfigDoc extends Doc {
     private static final long serialVersionUID = 4519634323788508083L;
 
-    public static final String DOCUMENT_TYPE = "KAFKA_CONFIG";
+    public static final String DOCUMENT_TYPE = "KafkaConfig";
 
     private static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
     private static final String BATCH_SIZE_CONFIG = "batch.size";
@@ -42,10 +44,10 @@ public class KafkaConfigDoc extends Doc {
 
     private String description;
     private String kafkaVersion = "0.10.0.1";
-    private Properties properties;
+    private Map<String, Object> properties;
 
     public KafkaConfigDoc() {
-        properties = new Properties();
+        properties = new HashMap<>();
 
         // Set some useful defaults.
         properties.put(BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
@@ -55,6 +57,7 @@ public class KafkaConfigDoc extends Doc {
         properties.put(LINGER_MS_CONFIG, 1);
         properties.put(BUFFER_MEMORY_CONFIG, 33554432);
 
+        // TODO not sure if these should be strings or Class objects (the latter will be awkward)
         // Serializers are hard coded as we have to specify the types when creating the
         properties.put(KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
         properties.put(VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
@@ -76,12 +79,17 @@ public class KafkaConfigDoc extends Doc {
         this.kafkaVersion = kafkaVersion;
     }
 
-    public Properties getProperties() {
+    @JsonTypeInfo(use=JsonTypeInfo.Id.CLASS, include=JsonTypeInfo.As.WRAPPER_ARRAY)
+    public Map<String, Object> getProperties() {
         return properties;
     }
 
-    public void setProperties(final Properties properties) {
+    public void setProperties(final Map<String, Object> properties) {
         this.properties = properties;
+    }
+
+    public void addProperty(final String key, final Object value) {
+        properties.put(key, value);
     }
 
     @Override
