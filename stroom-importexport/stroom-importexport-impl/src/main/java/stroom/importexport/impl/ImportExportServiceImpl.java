@@ -94,7 +94,7 @@ public class ImportExportServiceImpl implements ImportExportService {
             Files.createDirectories(explodeDir);
 
             // Serialize the config in a human readable tree structure.
-            importExportSerializer.write(explodeDir, docRefs, false, messageList);
+            importExportSerializer.write(explodeDir, docRefs, true, messageList);
 
             // Now zip the dir.
             ZipUtil.zip(zipFile, explodeDir);
