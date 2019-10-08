@@ -15,7 +15,7 @@ import stroom.kafka.shared.KafkaConfigDoc;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
-import java.util.Properties;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,7 +28,7 @@ class TestStroomKafkaProducer {
     @BeforeEach
     void setup() {
         final KafkaConfigDoc kafkaConfigDoc = new KafkaConfigDoc();
-        final Properties properties = kafkaConfigDoc.getProperties();
+        final Map<String, Object> properties = kafkaConfigDoc.getProperties();
         properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "kafka:9092");
 
         Mockito.when(kafkaConfigStore.readDocument(Mockito.any())).thenReturn(kafkaConfigDoc);

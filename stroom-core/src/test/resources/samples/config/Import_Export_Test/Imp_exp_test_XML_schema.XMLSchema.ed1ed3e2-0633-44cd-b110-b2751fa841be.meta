@@ -1,0 +1,11 @@
+{
+  "type" : "XMLSchema",
+  "uuid" : "ed1ed3e2-0633-44cd-b110-b2751fa841be",
+  "name" : "Imp_exp_test_XML_schema",
+  "version" : "38df2c5c-b4a8-478d-aff2-cb08c391e2b0",
+  "description" : "My description",
+  "namespaceURI" : "example:1",
+  "systemId" : "file://example.xsd",
+  "deprecated" : false,
+  "schemaGroup" : "EXAMPLE"
+}

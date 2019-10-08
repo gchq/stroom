@@ -15,7 +15,9 @@ import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -40,43 +42,12 @@ public class CoreTestModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        Path path;
 
         if (appConfig == null) {
-            if (yamlConfigPath != null) {
-                path = yamlConfigPath;
-            } else {
-                // Load dev.yaml
-                final String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
-
-                path = Paths.get(codeSourceLocation);
-                while (path != null && !path.getFileName().toString().equals("stroom-app")) {
-                    path = path.getParent();
-                }
-
-                // resolve local.yml in the root of the repo
-                if (path != null) {
-                    path = path.getParent();
-                    path = path.resolve("local.yml");
-                }
-
-                if (path == null) {
-                    throw new RuntimeException("Unable to find local.yml, try running local.yml.sh in the root of the repo " +
-                            "to create one.");
-                }
-            }
-
-            LOGGER.info("Using config from: " + FileUtil.getCanonicalPath(path));
-
-            try  {
-                appConfig = YamlUtil.readAppConfig(path);
-            } catch (final IOException e) {
-                throw new UncheckedIOException("Error opening local.yml, try running local.yml.sh in the root of " +
-                        "the repo to create one.", e);
-            }
+            appConfig = getLocalAppConfig();
         } else {
             LOGGER.info("Using supplied AppConfig object");
-            path = Paths.get("DUMMY");
+            yamlConfigPath = Paths.get("DUMMY");
         }
 
         if (useTestContainers) {
@@ -87,7 +58,7 @@ public class CoreTestModule extends AbstractModule {
             LOGGER.info("Not using test container DB connection config");
         }
 
-        install(new AppConfigModule(appConfig, path));
+        install(new AppConfigModule(appConfig, yamlConfigPath));
         install(new CoreModule());
         install(new ResourceModule());
         install(new stroom.cluster.impl.MockClusterModule());
@@ -97,4 +68,40 @@ public class CoreTestModule extends AbstractModule {
         install(new stroom.test.DatabaseTestControlModule());
     }
 
+    private AppConfig getLocalAppConfig() {
+        final AppConfig appConfig;// Load dev.yaml
+        final String codeSourceLocation = CoreTestModule.class
+                .getProtectionDomain()
+                .getCodeSource()
+                .getLocation()
+                .getPath();
+
+        Path path = Paths.get(codeSourceLocation);
+        while (path != null && !path.getFileName().toString().equals("stroom-app")) {
+            path = path.getParent();
+        }
+
+        // resolve local.yml in the root of the repo
+        if (path != null) {
+            path = path.getParent();
+            path = path.resolve("local.yml");
+        }
+
+        if (path == null) {
+            throw new RuntimeException("Unable to find local.yml, try running local.yml.sh in the root of the repo " +
+                    "to create one.");
+        }
+
+        LOGGER.info("Using config from: " + FileUtil.getCanonicalPath(path));
+
+        this.yamlConfigPath = path;
+
+        try {
+            appConfig = YamlUtil.readAppConfig(path);
+        } catch (final IOException e) {
+            throw new UncheckedIOException("Error opening local.yml, try running local.yml.sh in the root of " +
+                    "the repo to create one.", e);
+        }
+        return appConfig;
+    }
 }

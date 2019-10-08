@@ -45,6 +45,14 @@ public final class PipelineTestUtil {
     public static DocRef createTestPipeline(final PipelineStore pipelineStore, final String name,
                                             final String description, final String data) {
         final DocRef docRef = pipelineStore.createDocument(name);
+        return createTestPipeline(pipelineStore, docRef, name, description, data);
+    }
+
+    public static DocRef createTestPipeline(final PipelineStore pipelineStore,
+                                            final DocRef docRef,
+                                            final String name,
+                                            final String description,
+                                            final String data) {
         final PipelineDoc pipelineDoc = pipelineStore.readDocument(docRef);
         pipelineDoc.setName(name);
         pipelineDoc.setDescription(description);
@@ -54,5 +62,7 @@ public final class PipelineTestUtil {
         }
         pipelineStore.writeDocument(pipelineDoc);
         return docRef;
+
     }
+
 }

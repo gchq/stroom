@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+<xs:element name="root">
+  <xs:complexType>
+    <xs:sequence>
+      <xs:element name="one" type="xs:string"/>
+      <xs:element name="two" type="xs:string"/>
+      <xs:element name="three" type="xs:string"/>
+    </xs:sequence>
+  </xs:complexType>
+</xs:element>
+
+</xs:schema>

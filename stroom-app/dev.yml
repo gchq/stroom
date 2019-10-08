@@ -70,10 +70,10 @@ appConfig:
     meta:
       metaValueConfig: null
   dataSourceUrl:
-    index: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/api/stroom-index/v2
-    solrIndex: "${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/api/stroom-solr-index/v2"
-    statisticStore: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/api/sqlstatistics/v2
-    searchable: "${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/api/searchable/v2"
+    index: ${STROOM_ADVERTISED_URL:-http://127.0.0.1:8080}/api/stroom-index/v2
+    solrIndex: "${STROOM_ADVERTISED_URL:-http://127.0.0.1:8080}/api/stroom-solr-index/v2"
+    statisticStore: ${STROOM_ADVERTISED_URL:-http://127.0.0.1:8080}/api/sqlstatistics/v2
+    searchable: "${STROOM_ADVERTISED_URL:-http://127.0.0.1:8080}/api/searchable/v2"
 #    annotations: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/annotationsService/queryApi/v1
 #    elasticIndex: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/queryElasticService/queryApi/v1
   job:

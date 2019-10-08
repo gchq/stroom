@@ -12,7 +12,7 @@ import stroom.kafka.shared.KafkaConfigDoc;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
@@ -48,7 +48,7 @@ class KafkaProducerImpl implements KafkaProducer {
         }
 
         LOGGER.info("Initialising kafka producer for {}", bootstrapServers);
-        Properties props = kafkaConfigDoc.getProperties();
+        Map<String, Object> props = kafkaConfigDoc.getProperties();
 
         LOGGER.info("Creating Kafka Producer with Props: " + props);
 

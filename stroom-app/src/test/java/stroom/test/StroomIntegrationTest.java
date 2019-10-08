@@ -159,7 +159,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
 
     public void importSchemas(final boolean force) {
         if (force || !XML_SCHEMAS_DOWNLOADED) {
-            contentImportService.importXmlSchemas();
+            contentImportService.importStandardPacks();
             XML_SCHEMAS_DOWNLOADED = true;
         }
     }

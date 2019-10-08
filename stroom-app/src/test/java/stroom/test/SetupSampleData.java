@@ -21,9 +21,24 @@ import com.google.inject.Injector;
 import stroom.task.api.TaskManager;
 
 /**
- * Script to create some base data for testing.
+ * A main() method for pre-loading the stroom database with content and data for manual testing
+ * of the application.
+ *
+ * ***********************************************************************************************
+ * IMPORTANT - This should only be run from the gradle task setupSampleData, NOT from the IDE.
+ * The gradle task does the additional step of downloading content packs and placing them in the
+ * appropriate directory for auto-import into stroom on boot. If you run it from the IDE you will
+ * not get the content packs.
+ * ***********************************************************************************************
+ *
+ * The aim of setupSampleData is to load test content and data that is located in
+ * stroom-core/src/test/resources/samples. The content in this folder should NOT duplicate any content
+ * that is available in content packs.
+ *
+ * The content packs that get downlaoded (for auto import) are defined in the root build.gradle file.
  */
 public final class SetupSampleData {
+
     public static void main(final String[] args) {
 
         // We are running stroom so want to use a proper db

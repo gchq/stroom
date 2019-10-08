@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.test.ContentImportService;
 import stroom.test.ContentImportService.ContentPack;
 import stroom.test.ContentPackDownloader;
 import stroom.test.common.ComparisonHelper;
@@ -142,12 +143,12 @@ class TestHeadless {
 
     private void importXmlSchemas(final Path path) {
         importContentPacks(Arrays.asList(
-                ContentPack.of("core-xml-schemas", CORE_XML_SCHEMAS_VERSION),
-                ContentPack.of("event-logging-xml-schema", EVENT_LOGGING_XML_SCHEMA_VERSION)
+                ContentImportService.CORE_XML_SCHEMAS_PACK,
+                ContentImportService.EVENT_LOGGING_XML_SCHEMA_PACK
         ), path);
     }
 
     private void importContentPacks(final List<ContentPack> packs, final Path path) {
-        packs.forEach(pack -> ContentPackDownloader.downloadContentPack(pack.getName(), pack.getVersion(), path));
+        packs.forEach(pack -> ContentPackDownloader.downloadContentPack(pack.getNameAsStr(), pack.getVersion(), path));
     }
 }

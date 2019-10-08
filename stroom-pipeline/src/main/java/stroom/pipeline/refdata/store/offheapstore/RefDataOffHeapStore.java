@@ -24,6 +24,7 @@ import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
 import org.apache.commons.io.FileUtils;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.Txn;
@@ -83,6 +84,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Singleton
@@ -169,8 +171,8 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private Env<ByteBuffer> createEnvironment(final RefDataStoreConfig refDataStoreConfig) {
         LOGGER.info(
-                "Creating RefDataOffHeapStore with maxSize: {}, dbDir {}, maxReaders {}, maxPutsBeforeCommit {}, " +
-                        "valueBufferCapacity {}, isReadAheadEnabled {}",
+                "Creating RefDataOffHeapStore environment with [maxSize: {}, dbDir {}, maxReaders {}, " +
+                        "maxPutsBeforeCommit {}, valueBufferCapacity {}, isReadAheadEnabled {}]",
                 FileUtils.byteCountToDisplaySize(maxSize),
                 dbDir.toAbsolutePath().toString() + File.separatorChar,
                 maxReaders,
@@ -196,11 +198,18 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             envFlags = new EnvFlags[]{EnvFlags.MDB_NORDAHEAD};
         }
 
-        return Env.create()
+        final Env<ByteBuffer> env = Env.create()
                 .setMaxReaders(maxReaders)
                 .setMapSize(maxSize)
                 .setMaxDbs(7) //should equal the number of DBs we create which is fixed at compile time
                 .open(dbDir.toFile(), envFlags);
+
+        LOGGER.info("Existing databases: [{}]",
+                env.getDbiNames()
+                        .stream()
+                        .map(Bytes::toString)
+                        .collect(Collectors.joining(",")));
+        return env;
     }
 
     @Override

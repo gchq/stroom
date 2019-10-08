@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix missing icons for Kafka Config and Rule Set.
+
+* Fix Kafka Config entity serialisation.
+
 * Issue **#1264** : Dashboards running in embedded mode will not always ask for the user to choose an activity if the users session has one set already.
 
 * Issue **#1275** : Fixed permission filtering when showing related streams.
