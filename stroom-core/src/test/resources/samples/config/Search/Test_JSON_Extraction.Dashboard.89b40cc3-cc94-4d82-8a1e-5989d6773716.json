@@ -23,6 +23,11 @@
         "width" : 200,
         "visible" : true
       }, {
+        "name" : "Json",
+        "expression" : "${Json}",
+        "width" : 1313,
+        "visible" : true
+      }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
@@ -69,22 +74,6 @@
         "refreshInterval" : "10s"
       }
     }
-  }, {
-    "type" : "text",
-    "id" : "text-OQOGW",
-    "name" : "Text",
-    "settings" : {
-      "type" : "text",
-      "showAsHtml" : false
-    }
-  }, {
-    "type" : "text",
-    "id" : "text-S7NLI",
-    "name" : "Text",
-    "settings" : {
-      "type" : "text",
-      "showAsHtml" : false
-    }
   } ],
   "layout" : {
     "type" : "splitLayout",
@@ -107,30 +96,10 @@
       "type" : "tabLayout",
       "preferredSize" : {
         "width" : 200,
-        "height" : 469
+        "height" : 378
       },
       "tabs" : [ {
         "id" : "table-IIO1T"
-      } ],
-      "selected" : 0
-    }, {
-      "type" : "tabLayout",
-      "preferredSize" : {
-        "width" : 200,
-        "height" : 216
-      },
-      "tabs" : [ {
-        "id" : "text-OQOGW"
-      } ],
-      "selected" : 0
-    }, {
-      "type" : "tabLayout",
-      "preferredSize" : {
-        "width" : 200,
-        "height" : 200
-      },
-      "tabs" : [ {
-        "id" : "text-S7NLI"
       } ],
       "selected" : 0
     } ]
