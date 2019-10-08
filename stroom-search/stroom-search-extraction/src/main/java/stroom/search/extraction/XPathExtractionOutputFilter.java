@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -46,10 +47,11 @@ import static stroom.index.shared.IndexConstants.STREAM_ID;
 
 
 @ConfigurableElement(type = "XPathExtractionOutputFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.SEARCH)
-public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
-    private String multipleValueDelimiter = DEFAULT_MULTIPLE_STRING_DELIMITER;
+        PipelineElementType.ROLE_TARGET}, icon = ElementIcons.XML_SEARCH)
+public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilter {
     private static final String DEFAULT_MULTIPLE_STRING_DELIMITER = ",";
+
+    private String multipleValueDelimiter = DEFAULT_MULTIPLE_STRING_DELIMITER;
 
     private boolean createJson = false;
 
@@ -61,24 +63,27 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
 
     private final Configuration config = new Configuration();
     private final PipelineConfiguration pipeConfig = config.makePipelineConfiguration();
-    final Processor processor = new Processor(config);
-    final XPathCompiler compiler = processor.newXPathCompiler();
+    private final Processor processor = new Processor(config);
+    private final XPathCompiler compiler = processor.newXPathCompiler();
 
     private TinyBuilder builder = null;
 
-    private ReceivingContentHandler rch = null;
+    private ReceivingContentHandler contentHandler = null;
     private String topLevelElementToSkip = "";
     private String secondLevelElementToCreateDocs = "";
     private int depth = 0;
 
     private HashMap<String, String> prefixMappings = new HashMap<>();
-    private XPathExecutable[] xPathExecutables = null;;
+    private XPathExecutable[] xPathExecutables = null;
+
+    private String topLevelUri = null;
+    private String topLevelQName = null;
+    private Attributes topLevelAtts = null;
 
     @Inject
     public XPathExtractionOutputFilter(final LocationFactoryProxy locationFactory,
                                        final SecurityContext securityContext,
                                        final ErrorReceiverProxy errorReceiverProxy) {
-        super(false);
         this.locationFactory = locationFactory;
         this.errorReceiverProxy = errorReceiverProxy;
         this.securityContext = securityContext;
@@ -101,12 +106,6 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
         depth = 0;
         super.startDocument();
     }
-
-
-    private String topLevelUri = null;
-    private String topLevelQName = null;
-    private Attributes topLevelAtts = null;
-
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -132,24 +131,24 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
 
                 //Start new document
                 builder = new TinyBuilder(pipeConfig);
-                rch = new ReceivingContentHandler();
-                rch.setPipelineConfiguration(pipeConfig);
-                rch.setReceiver(builder);
+                contentHandler = new ReceivingContentHandler();
+                contentHandler.setPipelineConfiguration(pipeConfig);
+                contentHandler.setReceiver(builder);
 
                 for (String key : prefixMappings.keySet()) {
-                    rch.startPrefixMapping(key, prefixMappings.get(key));
+                    contentHandler.startPrefixMapping(key, prefixMappings.get(key));
                 }
-                rch.startDocument();
+                contentHandler.startDocument();
 
-                rch.startElement(topLevelUri, topLevelElementToSkip, topLevelQName, topLevelAtts);
+                contentHandler.startElement(topLevelUri, topLevelElementToSkip, topLevelQName, topLevelAtts);
 
-                rch.startElement(uri, localName, qName, atts);
+                contentHandler.startElement(uri, localName, qName, atts);
             } else {
-                rch.startElement(uri, localName, qName, atts);
+                contentHandler.startElement(uri, localName, qName, atts);
             }
           } catch (SAXException saxException) {
 
-            log(Severity.ERROR, "XML error creating element " + localName, saxException);
+            log(Severity.ERROR,  LogUtil.message("XML error creating element {}", localName), saxException);
         }
 
     }
@@ -171,7 +170,7 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
             try {
                 xPathExecutables[index] = compiler.compile(xpath);
             } catch (SaxonApiException e) {
-                log(Severity.FATAL_ERROR, "Error in XPath Expression: " + xpath, e);
+                log(Severity.FATAL_ERROR,  LogUtil.message("Error in XPath Expression: {}", xpath), e);
             }
         }
 
@@ -269,7 +268,7 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
                 thisVal.append(item.getStringValue());
             }
         } else {
-            log(Severity.ERROR, "Unknown type of XdmItem:" + item.getClass().getName(), null);
+            log(Severity.ERROR,  LogUtil.message("Unknown type of XdmItem:{}", item.getClass().getName()), null);
         }
 
         return numberOfVals;
@@ -286,10 +285,10 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
         if (depth == 1){
             if (secondLevelElementToCreateDocs.equals(localName)) {
                 try {
-                    rch.endElement(uri, localName, qName);
-                    rch.endElement(topLevelUri, topLevelElementToSkip, topLevelQName);
+                    contentHandler.endElement(uri, localName, qName);
+                    contentHandler.endElement(topLevelUri, topLevelElementToSkip, topLevelQName);
 
-                    rch.endDocument();
+                    contentHandler.endDocument();
                     //Finish new document and extract XPaths
                     // Get the tree.
 
@@ -319,12 +318,12 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
                 } catch (SaxonApiException ex) {
                     log(Severity.ERROR, "Unable to evaluate XPaths", ex);
                 } finally {
-                    rch = null;
+                    contentHandler = null;
                 }
             } else {
-                rch = null;
+                contentHandler = null;
                 secondLevelElementToCreateDocs = "";
-                log (Severity.ERROR, "Unable to finding closing tag for " + secondLevelElementToCreateDocs, null);
+                log (Severity.ERROR, LogUtil.message("Unable to finding closing tag for {}", secondLevelElementToCreateDocs), null);
             }
 
         } else if (depth == 0) {
@@ -332,12 +331,12 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
                 topLevelElementToSkip = "";
             } else {
                 topLevelElementToSkip = "";
-                log(Severity.ERROR, "Unable to finding closing tag for " + topLevelElementToSkip, null);
+                log(Severity.ERROR, LogUtil.message("Unable to finding closing tag for {}", topLevelElementToSkip), null);
             }
 
         } else {
             //Pop element
-            rch.endElement(uri, localName, qName);
+            contentHandler.endElement(uri, localName, qName);
         }
 
         super.endElement(uri, localName, qName);
@@ -345,11 +344,11 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
 
     @Override
     public void characters(char[] ch, int start, int length) throws SAXException {
-        if (rch != null)
-            rch.characters(ch, start, length);
+        if (contentHandler != null)
+            contentHandler.characters(ch, start, length);
         else
-            log(Severity.ERROR, "Unexpected text node " + new String(ch, start, length) +
-                    " at position " + start, null);
+            log(Severity.ERROR, LogUtil.message("Unexpected text node {} at position {}",
+                    new String(ch, start, length), start), null);
 
         super.characters(ch, start, length);
     }
@@ -378,8 +377,8 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
      */
     @Override
     public void startPrefixMapping(final String prefix, final String uri) throws SAXException {
-        if (rch != null)
-            rch.startPrefixMapping(prefix, uri);
+        if (contentHandler != null)
+            contentHandler.startPrefixMapping(prefix, uri);
 
         prefixMappings.put (prefix, uri);
         compiler.declareNamespace(prefix, uri);
@@ -397,8 +396,8 @@ public class XPathExtractionOutputFilter extends SearchResultOutputFilter {
     @Override
     public void endPrefixMapping(final String prefix) throws SAXException {
         prefixMappings.remove(prefix);
-        if (rch != null)
-            rch.endPrefixMapping(prefix);
+        if (contentHandler != null)
+            contentHandler.endPrefixMapping(prefix);
 
         super.endPrefixMapping(prefix);
     }

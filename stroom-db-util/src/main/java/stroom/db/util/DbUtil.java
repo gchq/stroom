@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 
 public class DbUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(DbUtil.class);
-    private static final boolean USE_TEST_CONTAINERS = false;
+    private static final boolean USE_TEST_CONTAINERS = true;
     private static final long MAX_SLEEP_TIME_MS = 30_000;
     private static final int ACCESS_DENIED_BAD_UNAME_OR_PWORD = 1045;
     private static final int ACCESS_DENIED_BAD_DATABASE = 1044;

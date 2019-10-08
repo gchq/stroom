@@ -29,29 +29,19 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.search.extraction.ExtractionTask.ResultReceiver;
 
 @ConfigurableElement(type = "SearchResultOutputFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.SEARCH)
-public class SearchResultOutputFilter extends AbstractXMLFilter {
+        PipelineElementType.ROLE_TARGET}, icon = ElementIcons.SEARCH)
+public class SearchResultOutputFilter  extends AbstractSearchResultOutputFilter {
     private static final String RECORD = "record";
     private static final String DATA = "data";
     private static final String NAME = "name";
     private static final String VALUE = "value";
 
-    protected FieldIndexMap fieldIndexes;
-    protected ResultReceiver resultReceiver;
-    protected Val[] values;
-    private boolean sendRecords = true;
 
     public SearchResultOutputFilter () {}
-
-    SearchResultOutputFilter (boolean sendRecords){
-        this.sendRecords = sendRecords;
-    }
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-
-            if (sendRecords) {
                 if (DATA.equals(localName) && values != null) {
                     String name = atts.getValue(NAME);
                     String value = atts.getValue(VALUE);
@@ -69,13 +59,12 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
                 } else if (RECORD.equals(localName)) {
                     values = new Val[fieldIndexes.size()];
                 }
-            }
         super.startElement(uri, localName, qName, atts);
     }
 
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-        if (RECORD.equals(localName) && sendRecords) {
+        if (RECORD.equals(localName)) {
             resultReceiver.receive(new Values(values));
             values = null;
         }
@@ -83,8 +72,5 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
         super.endElement(uri, localName, qName);
     }
 
-    public void setup(final FieldIndexMap fieldIndexes, final ResultReceiver resultReceiver) {
-        this.fieldIndexes = fieldIndexes;
-        this.resultReceiver = resultReceiver;
-    }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,16 @@
 
 package stroom.search.extraction;
 
-import stroom.pipeline.factory.PipelineElementModule;
+import stroom.dashboard.expression.v1.FieldIndexMap;
+import stroom.dashboard.expression.v1.Val;
+import stroom.pipeline.filter.AbstractXMLFilter;
 
-class XPathExtractionElementModule extends PipelineElementModule {
-    @Override
-    protected void configureElements() {
-        bindElement(XPathExtractionOutputFilter.class);
+public abstract class AbstractSearchResultOutputFilter extends AbstractXMLFilter {
+    protected FieldIndexMap fieldIndexes;
+    protected ExtractionTask.ResultReceiver resultReceiver;
+    protected Val[] values;
+    public void setup(final FieldIndexMap fieldIndexes, final ExtractionTask.ResultReceiver resultReceiver) {
+        this.fieldIndexes = fieldIndexes;
+        this.resultReceiver = resultReceiver;
     }
 }

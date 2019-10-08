@@ -162,8 +162,8 @@ public class ExtractionTaskHandler {
             // Setup the search result output filter to expect the same order of
             // event ids and give it the result cache and stored data to write
             // values to.
-            final SearchResultOutputFilter searchResultOutputFilter = getFilter(pipeline,
-                    SearchResultOutputFilter.class);
+            final AbstractSearchResultOutputFilter searchResultOutputFilter = getFilter(pipeline,
+                    AbstractSearchResultOutputFilter.class);
 
             searchResultOutputFilter.setup(task.getFieldIndexes(), task.getResultReceiver());
 
