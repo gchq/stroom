@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.core.servlet;
+package stroom.security.impl.session;
 
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;

@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.core.servlet;
+package stroom.security.impl.session;
 
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskIdFactory;
 import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
 
@@ -34,7 +33,7 @@ import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SessionListServlet extends HttpServlet {
+class SessionListServlet extends HttpServlet {
     private static final long serialVersionUID = 8723931558071593017L;
 
     private final TaskManager taskManager;
@@ -73,10 +72,8 @@ public class SessionListServlet extends HttpServlet {
 
         final List<List<String>> table = new ArrayList<>();
 
-        final SessionListAction sessionListAction = new SessionListAction();
-        sessionListAction.setId(TaskIdFactory.create());
-
-        final List<SessionDetails> sessionDetailsList = taskManager.exec(sessionListAction);
+        final SessionListTask sessionListTask = new SessionListTask();
+        final List<SessionDetails> sessionDetailsList = taskManager.exec(sessionListTask);
 
         final HttpSession httpSession = request.getSession(false);
 

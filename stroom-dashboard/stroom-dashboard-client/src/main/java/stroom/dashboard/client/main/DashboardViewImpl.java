@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.main;
 
+import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.BlurEvent;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
@@ -74,6 +75,14 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers> i
     @Override
     public void setContent(final View view) {
         content.setWidget(view.asWidget());
+    }
+
+    @Override
+    public void setEmbedded(final boolean embedded) {
+        content.getElement().getStyle().clearTop();
+        if (embedded) {
+            content.getElement().getStyle().setTop(0, Unit.PX);
+        }
     }
 
     @UiHandler("params")

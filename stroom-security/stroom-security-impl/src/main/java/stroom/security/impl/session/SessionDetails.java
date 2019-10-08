@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.core.servlet;
+package stroom.security.impl.session;
 
 import stroom.docref.SharedObject;
 
-public class SessionDetails implements SharedObject {
+class SessionDetails implements SharedObject {
     private static final long serialVersionUID = -7654691243590208784L;
 
     private String userName;
@@ -75,5 +75,4 @@ public class SessionDetails implements SharedObject {
     public void setLastAccessedAgent(String lastAccessedAgent) {
         this.lastAccessedAgent = lastAccessedAgent;
     }
-
 }

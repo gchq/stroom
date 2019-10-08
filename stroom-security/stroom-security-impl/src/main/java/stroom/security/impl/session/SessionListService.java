@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.core.servlet;
+package stroom.security.impl.session;
 
 import stroom.util.entity.FindService;
 import stroom.util.shared.BaseCriteria;

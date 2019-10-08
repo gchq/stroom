@@ -2,6 +2,7 @@ package stroom.security.impl;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import stroom.util.servlet.UserAgentSessionUtil;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -33,20 +34,35 @@ public final class AuthenticationStateSessionUtil {
         return state;
     }
 
+    @SuppressWarnings("unchecked")
     public static AuthenticationState pop(final HttpServletRequest request, final String stateId) {
-        Cache<String, AuthenticationState> cache = getOrCreateCache(request);
-        return cache.getIfPresent(stateId);
+        final HttpSession session = request.getSession(false);
+        if (session != null) {
+            final Cache<String, AuthenticationState> cache = (Cache) session.getAttribute(AUTHENTICATION_STATE_SESSION_ATTRIBUTE);
+            if (cache != null) {
+                return cache.getIfPresent(stateId);
+            }
         }
 
-    private static Cache<String, AuthenticationState> getOrCreateCache(HttpServletRequest request) {
+        return null;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Cache<String, AuthenticationState> getOrCreateCache(final HttpServletRequest request) {
         final HttpSession session = request.getSession(true);
         Cache cache = (Cache) session.getAttribute(AUTHENTICATION_STATE_SESSION_ATTRIBUTE);
         if (cache == null) {
-            cache = CacheBuilder.newBuilder()
-                    .maximumSize(100)
-                    .expireAfterWrite(1, TimeUnit.MINUTES)
-                    .build();
-            session.setAttribute(AUTHENTICATION_STATE_SESSION_ATTRIBUTE, cache);
+            synchronized (session) {
+                cache = (Cache) session.getAttribute(AUTHENTICATION_STATE_SESSION_ATTRIBUTE);
+                if (cache == null) {
+                    cache = CacheBuilder.newBuilder()
+                            .maximumSize(100)
+                            .expireAfterWrite(1, TimeUnit.MINUTES)
+                            .build();
+                    session.setAttribute(AUTHENTICATION_STATE_SESSION_ATTRIBUTE, cache);
+                    UserAgentSessionUtil.set(request);
+                }
+            }
         }
         return cache;
     }

@@ -49,7 +49,7 @@ class DocumentServiceWriteHandler extends AbstractTaskHandler<DocumentServiceWri
                 documentEventLog.update(before, after, null);
                 return after;
             } catch (final RuntimeException e) {
-                documentEventLog.update(action.getDocRef(), null, e);
+                documentEventLog.update(null, action.getDocRef(), e);
                 throw e;
             }
         });

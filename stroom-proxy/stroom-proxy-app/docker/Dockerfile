@@ -69,8 +69,9 @@ VOLUME /stroom-proxy/logs/
 # see https://github.com/krallin/tini/issues/8
 ENTRYPOINT ["/sbin/tini", "--", "/stroom-proxy/docker-entrypoint.sh"]
 
-#start the app, the config file will be supplied by a bind mount volume.
-CMD ["sh", "-c", "echo \"JAVA_OPTS: [${JAVA_OPTS}]\"; java ${JAVA_OPTS} -jar stroom-proxy-app-all.jar server /stroom-proxy/config/config.yml"]
+# start the app, the config file will either be supplied by a bind mount volume
+# or a fallback version baked into the image
+CMD ["./start.sh"]
 
 # The following line can be used as a temproary hack in dev if the build can't
 # resolve alpine's apk repo server.
@@ -84,6 +85,7 @@ RUN \
     mkdir -p /stroom-proxy && \
     mkdir -p /stroom-proxy/certs && \
     mkdir -p /stroom-proxy/config && \
+    mkdir -p /stroom-proxy/config-fallback && \
     mkdir -p /stroom-proxy/content && \
     mkdir -p /stroom-proxy/logs/access && \
     mkdir -p /stroom-proxy/logs/receive && \
@@ -92,9 +94,15 @@ RUN \
     mkdir -p /stroom-proxy/repo && \
     chown -R proxy:proxy /stroom-proxy
 
-# Order matters for COPY/ADD operations, least likely to change go first so cache is used
 # Copy all the fat jars for the application and connectors
+
+# Order matters for COPY/ADD operations, least likely to change go first so cache is used
 COPY --chown=proxy:proxy *.sh /stroom-proxy/
+
+# This config file is a fallback for use in development
+# (or when a stack with the config bind mount is not available)
+COPY --chown=proxy:proxy build/proxy-prod.yml /stroom-proxy/config-fallback/config.yml
+
 COPY --chown=proxy:proxy --from=fat-jar-stage /stroom-proxy-app-all.jar /stroom-proxy/
 
 # Label the image so we can see what commit/tag it came from

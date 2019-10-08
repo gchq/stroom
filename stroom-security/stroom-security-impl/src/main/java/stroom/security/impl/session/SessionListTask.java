@@ -14,19 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.core.servlet;
+package stroom.security.impl.session;
 
-import stroom.cluster.task.api.ClusterTask;
-import stroom.security.shared.UserToken;
+import stroom.task.api.ServerTask;
 import stroom.util.shared.ResultList;
 
-public class SessionListClusterTask extends ClusterTask<ResultList<SessionDetails>> {
+public class SessionListTask extends ServerTask<ResultList<SessionDetails>> {
     private static final long serialVersionUID = 7441063582135677305L;
-
-    public SessionListClusterTask(final UserToken userToken,
-                                  final String taskName) {
-        super(userToken, taskName);
-    }
 
     @Override
     public String getTaskName() {

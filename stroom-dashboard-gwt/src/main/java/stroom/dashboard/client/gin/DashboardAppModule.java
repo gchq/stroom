@@ -24,6 +24,7 @@ import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
 import com.gwtplatform.mvp.client.proxy.ParameterTokenFormatter;
 import com.gwtplatform.mvp.client.proxy.PlaceManager;
 import com.gwtplatform.mvp.client.proxy.TokenFormatter;
+import stroom.core.client.UrlParameters;
 import stroom.core.client.gin.InactivePlaceManager;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.CorePresenter.CoreProxy;
@@ -57,6 +58,7 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bind(TokenFormatter.class).to(ParameterTokenFormatter.class).in(Singleton.class);
         bind(RootPresenter.class).asEagerSingleton();
         bind(PlaceManager.class).to(InactivePlaceManager.class).in(Singleton.class);
+        bind(UrlParameters.class).in(Singleton.class);
 
         // Presenters
         bindPresenter(CorePresenter.class, CoreView.class, CoreViewImpl.class, CoreProxy.class);

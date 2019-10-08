@@ -31,8 +31,7 @@ import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 
-
-public class SetCurrentActivityHandler extends AbstractTaskHandler<SetCurrentActivityAction, Activity> {
+class SetCurrentActivityHandler extends AbstractTaskHandler<SetCurrentActivityAction, Activity> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SetCurrentActivityHandler.class);
 
     private final CurrentActivity currentActivity;

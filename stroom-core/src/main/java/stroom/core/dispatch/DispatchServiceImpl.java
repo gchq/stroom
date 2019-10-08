@@ -21,7 +21,6 @@ import com.google.gwt.user.server.rpc.SerializationPolicy;
 import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.core.servlet.SessionListListener;
 import stroom.dispatch.shared.DispatchService;
 import stroom.docref.SharedObject;
 import stroom.security.api.SecurityContext;
@@ -33,6 +32,7 @@ import stroom.task.impl.TaskHandlerRegistry;
 import stroom.task.shared.Action;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.servlet.SessionIdProvider;
+import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PermissionException;
@@ -113,8 +113,8 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
     @Override
     protected void service(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
         try {
-            SessionListListener.setLastRequest(req);
-
+            // Set the user agent in the session.
+            UserAgentSessionUtil.set(req);
             super.service(req, resp);
 
         } catch (final RuntimeException e) {

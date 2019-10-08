@@ -28,6 +28,8 @@ import stroom.task.shared.FindUserTaskProgressAction;
 import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.guice.GuiceUtil;
 
+import javax.servlet.http.HttpSessionListener;
+
 public class TaskModule extends AbstractModule {
     @Override
     protected void configure() {
@@ -41,6 +43,9 @@ public class TaskModule extends AbstractModule {
                 .bind(FindUserTaskProgressAction.class, FindUserTaskProgressHandler.class)
                 .bind(GenericServerTask.class, GenericServerTaskHandler.class)
                 .bind(TerminateTaskProgressAction.class, TerminateTaskProgressHandler.class);
+
+        GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
+                .addBinding(TaskManagerSessionListener.class);
 
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(SearchableTaskProgress.class);

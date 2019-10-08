@@ -90,6 +90,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     private String currentParams;
     private String lastUsedQueryInfo;
+    private boolean embedded;
 
     @Inject
     public DashboardPresenter(final EventBus eventBus,
@@ -178,6 +179,11 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         logger.log(Level.INFO, "Dashboard Presenter setParams " + params);
 
         this.currentParams = params;
+    }
+
+    void setEmbedded(final boolean embedded) {
+        this.embedded = embedded;
+        getView().setEmbedded(embedded);
     }
 
     @Override
@@ -314,13 +320,15 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
 
     @Override
     public void onReadOnly(final boolean readOnly) {
-        super.onReadOnly(readOnly);
+        super.onReadOnly(readOnly || embedded);
 
-        saveButton.setEnabled(isDirty() && !readOnly);
-        saveAsButton.setEnabled(true);
+        boolean enabled = !readOnly && !embedded;
 
-        addButton.setEnabled(!readOnly);
-        if (!readOnly) {
+        saveButton.setEnabled(isDirty() && enabled);
+        saveAsButton.setEnabled(enabled);
+
+        addButton.setEnabled(enabled);
+        if (enabled) {
             registerHandler(addButton.addClickHandler(event -> {
                 if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                     onAdd(event);
@@ -447,6 +455,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         void setParams(String params);
 
         void setContent(View view);
+
+        void setEmbedded(boolean embedded);
     }
 
     private class AddSelectionHandler implements SelectionChangeEvent.Handler {

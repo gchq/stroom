@@ -19,29 +19,22 @@ package stroom.core.servlet;
 import com.google.inject.AbstractModule;
 import stroom.receive.common.DebugServlet;
 import stroom.receive.common.ReceiveDataServlet;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
-import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.ResourcePaths;
 import stroom.util.guice.ServletBinder;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.servlet.SessionIdProvider;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSessionListener;
 
 public class ServletModule extends AbstractModule {
     private static final String MATCH_ALL_PATHS = "/*";
 
     @Override
     protected void configure() {
-        bind(SessionListService.class).to(SessionListListener.class);
         bind(HttpServletRequest.class).toProvider(HttpServletRequestHolder.class);
         bind(SessionIdProvider.class).to(SessionIdProviderImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
-                .addBinding(SessionListListener.class);
 
         FilterBinder.create(binder())
                 .bind(new FilterInfo(HttpServletRequestFilter.class.getSimpleName(), MATCH_ALL_PATHS),
@@ -60,12 +53,7 @@ public class ServletModule extends AbstractModule {
                 .bind(ResourcePaths.ROOT_PATH + "/echo", EchoServlet.class)
                 .bind(ResourcePaths.ROOT_PATH + "/datafeed", ReceiveDataServlet.class)
                 .bind(ResourcePaths.ROOT_PATH + "/datafeed/*", ReceiveDataServlet.class)
-                .bind(ResourcePaths.ROOT_PATH + "/sessionList", SessionListServlet.class)
                 .bind(ResourcePaths.ROOT_PATH + "/ui", StroomServlet.class)
                 .bind(ResourcePaths.ROOT_PATH + "/status", StatusServlet.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(SessionListAction.class, SessionListHandler.class)
-                .bind(SessionListClusterTask.class, SessionListClusterHandler.class);
     }
 }
