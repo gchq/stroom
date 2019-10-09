@@ -83,7 +83,15 @@ class TestContentPackImport {
             });
         }
 
-        Mockito.lenient()
+    }
+
+    @AfterEach
+    void teardown() throws IOException {
+        deleteTestFiles();
+    }
+
+    private void setStandardMockAnswers() {
+        Mockito
                 .doAnswer(invocation -> {
                     Runnable runnable = invocation.getArgument(1);
                     runnable.run();
@@ -96,11 +104,6 @@ class TestContentPackImport {
         Mockito
                 .when(authenticationService.getAdminUser())
                 .thenReturn(adminUser);
-    }
-
-    @AfterEach
-    void teardown() throws IOException {
-        deleteTestFiles();
     }
 
     private void deleteTestFiles() throws IOException {
@@ -125,6 +128,7 @@ class TestContentPackImport {
 
     @Test
     void testStartup_enabledNoFiles() {
+        setStandardMockAnswers();
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
         ContentPackImport contentPackImport = getContentPackImport();
         contentPackImport.startup();
@@ -133,6 +137,7 @@ class TestContentPackImport {
 
     @Test
     void testStartup_enabledThreeFiles() throws IOException {
+        setStandardMockAnswers();
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
         ContentPackImport contentPackImport = getContentPackImport();
 
@@ -158,6 +163,7 @@ class TestContentPackImport {
 
     @Test
     void testStartup_failedImport() throws IOException {
+        setStandardMockAnswers();
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
         ContentPackImport contentPackImport = getContentPackImport();
 
