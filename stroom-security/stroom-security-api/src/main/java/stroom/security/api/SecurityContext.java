@@ -79,27 +79,65 @@ public interface SecurityContext {
      */
     boolean hasDocumentPermission(String documentType, String documentUuid, String permission);
 
+    /**
+     * Run the supplied code as the specified user.
+     */
     <T> T asUserResult(UserToken userToken, Supplier<T> supplier);
 
+    /**
+     * Run the supplied code as the specified user.
+     */
     void asUser(UserToken userToken, Runnable runnable);
 
+    /**
+     * Run the supplied code as the internal processing user.
+     */
     <T> T asProcessingUserResult(Supplier<T> supplier);
 
+    /**
+     * Run the supplied code as the internal processing user.
+     */
     void asProcessingUser(Runnable runnable);
 
+    /**
+     * Allow the current user to read items that they only have 'Use' permission on.
+     */
     <T> T useAsReadResult(Supplier<T> supplier);
 
+    /**
+     * Allow the current user to read items that they only have 'Use' permission on.
+     */
     void useAsRead(Runnable runnable);
 
+    /**
+     * Secure the supplied code with the supplied application permission.
+     */
     void secure(String permission, Runnable runnable);
 
+    /**
+     * Secure the supplied code with the supplied application permission.
+     */
     <T> T secureResult(String permission, Supplier<T> supplier);
 
+    /**
+     * Secure the supplied code to ensure that there is a current authenticated user.
+     */
     void secure(Runnable runnable);
 
+    /**
+     * Secure the supplied code to ensure that there is a current authenticated user.
+     */
     <T> T secureResult(Supplier<T> supplier);
 
+    /**
+     * Run the supplied code regardless of whether there is a current user and also allow all inner code to run
+     * insecurely even if it is often secured when executed from other entry points.
+     */
     void insecure(Runnable runnable);
 
+    /**
+     * Run the supplied code regardless of whether there is a current user and also allow all inner code to run
+     * insecurely even if it is often secured when executed from other entry points.
+     */
     <T> T insecureResult(Supplier<T> supplier);
 }
