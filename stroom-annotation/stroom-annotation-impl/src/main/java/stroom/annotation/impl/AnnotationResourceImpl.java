@@ -52,7 +52,9 @@ public class AnnotationResourceImpl implements AnnotationResource, HasHealthChec
         LOGGER.info(() -> "Getting annotation " + id);
         try {
             annotationDetail = annotationsService.getDetail(id);
-            documentEventLog.view(annotationDetail, null);
+            if (annotationDetail != null) {
+                documentEventLog.view(annotationDetail, null);
+            }
         } catch (final RuntimeException e) {
             documentEventLog.view("Annotation " + id, e);
         }
