@@ -27,6 +27,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.UserToken;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -77,6 +78,14 @@ class TestContentPackImport {
                 }
             });
         }
+
+        Mockito.lenient()
+                .doAnswer(invocation -> {
+                    Runnable runnable = invocation.getArgument(1);
+                    runnable.run();
+                    return null;
+                })
+                .when(securityContext).asUser(Mockito.any(UserToken.class), Mockito.any(Runnable.class));
     }
 
     @AfterEach
