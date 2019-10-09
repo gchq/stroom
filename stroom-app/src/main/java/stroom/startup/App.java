@@ -84,6 +84,8 @@ import stroom.script.spring.ScriptConfiguration;
 import stroom.search.solr.SolrIndexConfiguration;
 import stroom.search.solr.search.StroomSolrIndexQueryResource;
 import stroom.search.spring.SearchConfiguration;
+import stroom.searchable.impl.SearchableResource;
+import stroom.searchable.impl.spring.SearchableConfiguration;
 import stroom.security.server.AuthorisationResource;
 import stroom.security.server.JWTService;
 import stroom.security.server.SecurityFilter;
@@ -316,6 +318,7 @@ public class App extends Application<Config> {
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomKafkaProducerFactoryService.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomElasticProducerFactoryService.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SqlStatisticsQueryResource.class);
+        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SearchableResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomIndexQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomSolrIndexQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, DictionaryResource.class);
@@ -357,6 +360,7 @@ public class App extends Application<Config> {
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomSolrIndexQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, SearchableResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SessionResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, FeedStatusResource.class);
@@ -410,6 +414,7 @@ public class App extends Application<Config> {
                 DashboardConfiguration.class,
                 MetaDataStatisticConfiguration.class,
                 StatisticsConfiguration.class,
+                SearchableConfiguration.class,
                 SecurityConfiguration.class,
                 RuleSetConfiguration.class
         );

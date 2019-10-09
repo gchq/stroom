@@ -23,6 +23,7 @@ import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.CreateEntryRequest;
+import stroom.logging.DocumentEventLog;
 import stroom.security.SecurityContext;
 import stroom.task.server.TaskContext;
 import stroom.util.HasHealthCheck;
@@ -36,24 +37,44 @@ public class AnnotationResourceImpl implements AnnotationResource, HasHealthChec
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationResourceImpl.class);
 
     private final AnnotationsService annotationsService;
+    private final DocumentEventLog documentEventLog;
 
     @Inject
-    public AnnotationResourceImpl(final AnnotationsService annotationsService) {
+    public AnnotationResourceImpl(final AnnotationsService annotationsService, final DocumentEventLog documentEventLog) {
         this.annotationsService = annotationsService;
+        this.documentEventLog = documentEventLog;
     }
 
     @Override
     public AnnotationDetail get(final String id) {
-        // TODO : Add logging.
+        AnnotationDetail annotationDetail = null;
+
         LOGGER.info(() -> "Getting annotation " + id);
-        return annotationsService.getDetail(id);
+        try {
+            annotationDetail = annotationsService.getDetail(id);
+            documentEventLog.view(annotationDetail, null);
+        } catch (final RuntimeException e) {
+            documentEventLog.view("Annotation " + id, e);
+        }
+
+        return annotationDetail;
     }
 
     @Override
     public AnnotationDetail createEntry(final CreateEntryRequest request) {
-        // TODO : Add logging.
+        final String id = request.getMetaId() + ":" + request.getEventId();
 
-        return annotationsService.createEntry(request);
+        AnnotationDetail annotationDetail = null;
+
+        LOGGER.info(() -> "Creating annotation entry " + id);
+        try {
+            annotationDetail =  annotationsService.createEntry(request);
+            documentEventLog.create(annotationDetail, null);
+        } catch (final RuntimeException e) {
+            documentEventLog.create("Annotation entry " + id, e);
+        }
+
+        return annotationDetail;
     }
 
     @Override

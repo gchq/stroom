@@ -1,7 +1,14 @@
 package stroom.annotation.impl.db;
 
+import org.jooq.Condition;
+import org.jooq.Cursor;
+import org.jooq.Field;
+import org.jooq.OrderField;
 import org.jooq.Record;
+import org.jooq.Result;
+import org.jooq.SelectJoinStep;
 import org.springframework.stereotype.Component;
+import stroom.annotation.api.AnnotationDataSource;
 import stroom.annotation.impl.AnnotationsDao;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 import stroom.annotation.shared.Annotation;
@@ -9,11 +16,27 @@ import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationEntry.EntryType;
 import stroom.annotation.shared.CreateEntryRequest;
+import stroom.dashboard.expression.v1.Val;
+import stroom.dashboard.expression.v1.ValLong;
+import stroom.dashboard.expression.v1.ValNull;
+import stroom.dashboard.expression.v1.ValString;
+import stroom.datasource.api.v2.DataSourceField;
+import stroom.db.util.ExpressionMapper;
+import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.JooqUtil;
+import stroom.db.util.ValueMapper;
+import stroom.db.util.ValueMapper.Mapper;
+import stroom.entity.shared.ExpressionCriteria;
+import stroom.entity.shared.PageRequest;
+import stroom.entity.shared.Sort;
+import stroom.query.api.v2.ExpressionOperator;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static stroom.annotation.impl.db.jooq.tables.Annotation.ANNOTATION;
@@ -122,11 +145,29 @@ class AnnotationsDaoImpl implements AnnotationsDao {
 
 
     private final ConnectionProvider connectionProvider;
-
+    private final ExpressionMapper expressionMapper;
+    private final ValueMapper valueMapper;
 
     @Inject
-    AnnotationsDaoImpl(final ConnectionProvider connectionProvider) {
+    AnnotationsDaoImpl(final ConnectionProvider connectionProvider,
+                       final ExpressionMapperFactory expressionMapperFactory) {
         this.connectionProvider = connectionProvider;
+
+        expressionMapper = expressionMapperFactory.create();
+        expressionMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION.META_ID, Long::valueOf);
+        expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION.EVENT_ID, Long::valueOf);
+        expressionMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, value -> value);
+        expressionMapper.map(AnnotationDataSource.TITLE_FIELD, ANNOTATION.TITLE, value -> value);
+        expressionMapper.map(AnnotationDataSource.STATUS_FIELD, ANNOTATION.STATUS, value -> value);
+        expressionMapper.map(AnnotationDataSource.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, value -> value);
+
+        valueMapper = new ValueMapper();
+        valueMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION.META_ID, ValLong::create);
+        valueMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION.EVENT_ID, ValLong::create);
+        valueMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, ValString::create);
+        valueMapper.map(AnnotationDataSource.TITLE_FIELD, ANNOTATION.TITLE, ValString::create);
+        valueMapper.map(AnnotationDataSource.STATUS_FIELD, ANNOTATION.STATUS, ValString::create);
+        valueMapper.map(AnnotationDataSource.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, ValString::create);
     }
 
 //    @Override
@@ -338,5 +379,83 @@ class AnnotationsDaoImpl implements AnnotationsDao {
             annotation.setVersion(1);
             return annotation;
         }).orElse(get(annotation));
+    }
+
+    @Override
+    public void search(final ExpressionCriteria criteria, final DataSourceField[] fields, final Consumer<Val[]> consumer) {
+        final List<DataSourceField> fieldList = Arrays.asList(fields);
+
+        final PageRequest pageRequest = criteria.getPageRequest();
+        final Condition condition = createCondition(criteria.getExpression());
+        final OrderField[] orderFields = createOrderFields(criteria);
+        final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
+        final Mapper[] mappers = valueMapper.getMappers(fields);
+
+        JooqUtil.context(connectionProvider, context -> {
+            int offset = 0;
+            int numberOfRows = 1000000;
+
+            if (pageRequest != null) {
+                offset = pageRequest.getOffset().intValue();
+                numberOfRows = pageRequest.getLength();
+            }
+
+            SelectJoinStep<?> select = context.select(dbFields).from(ANNOTATION);
+
+            try (final Cursor<?> cursor = select
+                    .where(condition)
+                    .orderBy(orderFields)
+                    .limit(offset, numberOfRows)
+                    .fetchLazy()) {
+
+                while (cursor.hasNext()) {
+                    final Result<?> result = cursor.fetchNext(1000);
+                    result.forEach(r -> {
+                        final Val[] arr = new Val[fields.length];
+                        for (int i = 0; i < fields.length; i++) {
+                            Val val = ValNull.INSTANCE;
+                            final Mapper<?> mapper = mappers[i];
+                            if (mapper != null) {
+                                val = mapper.map(r);
+                            }
+                            arr[i] = val;
+                        }
+                        consumer.accept(arr);
+                    });
+                }
+            }
+        });
+    }
+
+    private Condition createCondition(final ExpressionOperator expression) {
+        return expressionMapper.apply(expression);
+    }
+
+    private OrderField[] createOrderFields(final ExpressionCriteria criteria) {
+        if (criteria.getSortList() == null || criteria.getSortList().size() == 0) {
+            return new OrderField[]{ANNOTATION.ID};
+        }
+
+        return criteria.getSortList().stream().map(sort -> {
+            Field field;
+            if (AnnotationDataSource.CREATED_BY.equals(sort.getField())) {
+                field = ANNOTATION.CREATE_USER;
+            } else if (AnnotationDataSource.TITLE.equals(sort.getField())) {
+                field = ANNOTATION.TITLE;
+            } else if (AnnotationDataSource.STATUS.equals(sort.getField())) {
+                field = ANNOTATION.STATUS;
+            } else if (AnnotationDataSource.ASSIGNED_TO.equals(sort.getField())) {
+                field = ANNOTATION.ASSIGNED_TO;
+            } else {
+                field = ANNOTATION.ID;
+            }
+
+            OrderField orderField = field;
+            if (Sort.Direction.DESCENDING.equals(sort.getDirection())) {
+                orderField = field.desc();
+            }
+
+            return orderField;
+        }).toArray(OrderField[]::new);
     }
 }

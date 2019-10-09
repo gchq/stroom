@@ -20,41 +20,18 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.CreateEntryRequest;
+import stroom.dashboard.expression.v1.Val;
+import stroom.datasource.api.v2.DataSourceField;
+import stroom.entity.shared.ExpressionCriteria;
+
+import java.util.function.Consumer;
 
 public interface AnnotationsDao {
-//    TreeModel createModel(Function<String, String> iconUrlProvider);
-//
-//    void update(ExplorerTreeNode node);
-//
-//    ExplorerTreeNode createRoot(ExplorerTreeNode node);
-//
-//    List<ExplorerTreeNode> getRoots();
-//
-//    void removeAll();
-//
-//    List<ExplorerTreeNode> getTree(ExplorerTreeNode node);
-//
-//    List<ExplorerTreeNode> getChildren(ExplorerTreeNode node);
-//
-//    ExplorerTreeNode getParent(ExplorerTreeNode node);
-//
-//    List<ExplorerTreeNode> getPath(ExplorerTreeNode node);
-//
-//    ExplorerTreeNode addChild(ExplorerTreeNode parent, ExplorerTreeNode child);
-//
-//    void remove(ExplorerTreeNode node);
-//
-//    void move(ExplorerTreeNode node, ExplorerTreeNode parent);
-//
-//    ExplorerTreeNode findByUUID(final String uuid);
-
     Annotation get(long metaId, long eventId);
-
-//    Annotation get(Annotation annotation);
-
-//    AnnotationDetail getDetail(Annotation annotation);
 
     AnnotationDetail getDetail(long metaId, long eventId);
 
     AnnotationDetail createEntry(CreateEntryRequest request, String user);
+
+    void search(ExpressionCriteria criteria, DataSourceField[] fields, Consumer<Val[]> consumer);
 }

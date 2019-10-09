@@ -6,7 +6,6 @@ import stroom.annotation.api.AnnotationDataSource;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.datasource.api.v2.DataSourceField;
 import stroom.index.shared.IndexConstants;
 import stroom.process.shared.ExpressionUtil;
 import stroom.query.api.v2.ExpressionOperator;
@@ -50,7 +49,7 @@ class AnnotationsReceiverDecoratorFactory implements AnnotationsDecoratorFactory
         // Do we need to filter based on annotation attributes.
         final Function<Annotation, Boolean> filter = createFilter(query.getExpression());
 
-        final Integer createUserIndex = fieldIndexMap.getMap().get(AnnotationDataSource.CREATE_USER);
+        final Integer createUserIndex = fieldIndexMap.getMap().get(AnnotationDataSource.CREATED_BY);
         final Integer titleIndex = fieldIndexMap.getMap().get(AnnotationDataSource.TITLE);
         final Integer statusIndex = fieldIndexMap.getMap().get(AnnotationDataSource.STATUS);
         final Integer assignedToIndex = fieldIndexMap.getMap().get(AnnotationDataSource.ASSIGNED_TO);
@@ -95,7 +94,7 @@ class AnnotationsReceiverDecoratorFactory implements AnnotationsDecoratorFactory
         final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(AnnotationDataSource.FIELD_MAP);
         return annotation -> {
             final Map<String, Object> attributeMap = new HashMap<>();
-            attributeMap.put(AnnotationDataSource.CREATE_USER, annotation.getCreateUser());
+            attributeMap.put(AnnotationDataSource.CREATED_BY, annotation.getCreateUser());
             attributeMap.put(AnnotationDataSource.TITLE, annotation.getTitle());
             attributeMap.put(AnnotationDataSource.STATUS, annotation.getStatus());
             attributeMap.put(AnnotationDataSource.ASSIGNED_TO, annotation.getAssignedTo());

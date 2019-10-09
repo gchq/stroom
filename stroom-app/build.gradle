@@ -88,6 +88,8 @@ dependencies {
     compile project(':stroom-dashboard-server')
     compile project(':stroom-search:stroom-search-extraction')
     permitUnusedDeclared project(':stroom-search:stroom-search-extraction') // picked up by DI
+    compile project(':stroom-search:stroom-searchable-impl')
+    permitUnusedDeclared project(':stroom-search:stroom-searchable-impl') // picked up by DI
     compile project(':stroom-search:stroom-search-solr')
     compile project(':stroom-statistics-server')
     compile project(':stroom-ruleset-server')

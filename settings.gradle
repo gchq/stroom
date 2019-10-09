@@ -61,6 +61,8 @@ include 'stroom-app-gwt'
 
 include 'stroom-search:stroom-search-extraction'
 include 'stroom-search:stroom-search-solr'
+include 'stroom-search:stroom-searchable-api'
+include 'stroom-search:stroom-searchable-impl'
 
 // Common test project
 include 'stroom-test-common'
