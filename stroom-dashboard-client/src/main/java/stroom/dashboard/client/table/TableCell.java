@@ -25,7 +25,6 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import stroom.dashboard.shared.Field;
 import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.Hyperlink.Builder;
 import stroom.hyperlink.client.HyperlinkEvent;
 
 import java.util.ArrayList;
@@ -100,9 +99,14 @@ public class TableCell extends AbstractCell<Row> {
         parts.forEach(p -> {
             if (p instanceof Hyperlink) {
                 final Hyperlink hyperlink = (Hyperlink) p;
-                sb.appendHtmlConstant("<u link=\"" + hyperlink.toString() + "\">");
-                sb.appendEscaped(hyperlink.getText());
-                sb.appendHtmlConstant("</u>");
+                if (!hyperlink.getText().trim().isEmpty()) {
+                    sb.appendHtmlConstant("<u link=\"" + hyperlink.toString() + "\">");
+                    sb.appendEscaped(hyperlink.getText());
+                    sb.appendHtmlConstant("</u>");
+
+                } else {
+                    sb.appendHtmlConstant("&nbsp;");
+                }
             } else {
                 sb.appendEscaped(p.toString());
             }
