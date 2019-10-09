@@ -16,6 +16,7 @@ import stroom.config.common.CommonDbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.test.CoreTestModule;
 import stroom.util.config.PropertyUtil;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsConfig;
 
 import java.io.FileNotFoundException;
@@ -110,8 +111,8 @@ class TestAppConfigModule {
                 .stream()
                 .filter(classInfo -> packageNameFilter.test(classInfo.getPackageName()))
                 .map(ClassPath.ClassInfo::load)
-                .filter(IsConfig.class::isAssignableFrom)
                 .filter(classFilter)
+                .filter(IsConfig.class::isAssignableFrom)
                 .peek(clazz -> {
                     LOGGER.debug(clazz.getSimpleName());
                 })
@@ -123,6 +124,17 @@ class TestAppConfigModule {
                 appConfig,
                 prop -> packageNameFilter.test(prop.getValueClass().getPackageName()),
                 prop -> {
+                    // make sure we have a getter and a setter
+                    Assertions.assertThat(prop.getGetter())
+                            .as(LogUtil.message("{} {}",
+                                    prop.getParentObject().getClass().getSimpleName(), prop.getGetter().getName()))
+                            .isNotNull();
+
+                    Assertions.assertThat(prop.getSetter())
+                            .as(LogUtil.message("{} {}",
+                                    prop.getParentObject().getClass().getSimpleName(), prop.getSetter().getName()))
+                            .isNotNull();
+
                     Class<?> valueClass = prop.getValueClass();
                     if (classFilter.test(valueClass)) {
                         configClasses.add(prop.getValueClass());
