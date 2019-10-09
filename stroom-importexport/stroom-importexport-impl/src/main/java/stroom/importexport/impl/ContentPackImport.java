@@ -18,6 +18,7 @@ package stroom.importexport.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.security.api.AuthenticationService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserTokenUtil;
 import stroom.security.shared.User;
@@ -48,15 +49,19 @@ public class ContentPackImport {
     private final ImportExportService importExportService;
     private final ContentPackImportConfig config;
     private final SecurityContext securityContext;
+    private final AuthenticationService authenticationService;
+
 
     @SuppressWarnings("unused")
     @Inject
     ContentPackImport(final ImportExportService importExportService,
                       final ContentPackImportConfig config,
-                      final SecurityContext securityContext) {
+                      final SecurityContext securityContext,
+                      final AuthenticationService authenticationService) {
         this.importExportService = importExportService;
         this.config = config;
         this.securityContext = securityContext;
+        this.authenticationService = authenticationService;
     }
 
     //Startup with very low priority to ensure it starts after everything else
@@ -65,11 +70,18 @@ public class ContentPackImport {
         final boolean isEnabled = config.isEnabled();
 
         if (isEnabled) {
-            final UserToken adminToken = UserTokenUtil.create(User.ADMIN_USER_NAME);
-            securityContext.asUser(adminToken, this::doImport);
+            final UserToken adminUserToken = getAdminUserToken();
+            securityContext.asUser(adminUserToken, this::doImport);
         } else {
             LOGGER.info("Content pack import currently disabled via property");
         }
+    }
+
+    private UserToken getAdminUserToken() {
+        // We need to get the user from the service first to ensure that the account is created in
+        // stroom
+        User adminUser = authenticationService.getAdminUser();
+        return UserTokenUtil.create(adminUser.getName());
     }
 
     private void doImport() {

@@ -18,6 +18,7 @@ package stroom.security.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.security.api.AuthenticationService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserTokenUtil;
 import stroom.security.shared.PermissionNames;
@@ -49,8 +50,8 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public User getUser(final AuthenticationToken token) {
-        if (token == null || token.getUserId() == null || token.getUserId().trim().length() == 0) {
+    public User getUser(final String userId) {
+        if (userId == null || userId.trim().length() == 0) {
             return null;
         }
 
@@ -61,7 +62,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
         User userRef = null;
 
         while (userRef == null) {
-            userRef = loadUserByUsername(token.getUserId());
+            userRef = loadUserByUsername(userId);
 
             if (userRef == null) {
                 // At this point the user has been authenticated using JWT.
@@ -69,7 +70,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 // some way of sensibly referencing the user and something to attach permissions to.
                 // We need to elevate the user because no one is currently logged in.
                 try {
-                    userRef = securityContext.asProcessingUserResult(() -> userService.createUser(token.getUserId()));
+                    userRef = securityContext.asProcessingUserResult(() -> userService.createUser(userId));
                 } catch (final Exception e) {
                     final String msg = String.format("Could not create user, this is attempt %d", attempts);
                     if (attempts == 0) {
@@ -112,6 +113,10 @@ class AuthenticationServiceImpl implements AuthenticationService {
         return securityContext.asProcessingUserResult(() -> {
             User userRef = userService.getUserByName(name);
             if (userRef == null) {
+                if (User.ADMIN_USER_NAME.equals(name)) {
+                    LOGGER.info("Creating user {}", name);
+                }
+
                 userRef = userService.createUser(name);
 
                 final User userGroup = createOrRefreshAdminUserGroup();

@@ -1,4 +1,4 @@
-package stroom.security.impl;
+package stroom.security.api;
 
 public class AuthenticationToken {
     private final String userId;

@@ -14,10 +14,23 @@
  * limitations under the License.
  */
 
-package stroom.security.impl;
+package stroom.security.api;
 
 import stroom.security.shared.User;
 
 public interface AuthenticationService {
-    User getUser(AuthenticationToken token);
+
+    default User getUser(AuthenticationToken token) {
+        if (token == null) {
+            return null;
+        } else {
+            return getUser(token.getUserId());
+        }
+    }
+
+    default User getAdminUser() {
+        return getUser(User.ADMIN_USER_NAME);
+    }
+
+    User getUser(final String userId);
 }
