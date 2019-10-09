@@ -119,9 +119,9 @@ class AuthenticationServiceClients {
         SearchRequest authSearchRequest = new SearchRequest();
         authSearchRequest.setLimit(10);
         authSearchRequest.setPage(0);
-        authSearchRequest.setFilters(new HashMap<String, String>() {{
-            put("user_email", userId);
-            put("token_type", "api");
+        authSearchRequest.setFilters(new HashMap<>() {{
+            put("userEmail", userId);
+            put("tokenType", "api");
             put("enabled", "true");
         }});
 
@@ -131,13 +131,13 @@ class AuthenticationServiceClients {
             for (Token token : authSearchResponse.getTokens()) {
                 // We're using the auth token search API to get this token. It'll be a fuzzy match so
                 // we need to make sure the userId matches exactly.
-                if (token.getUserEmail().equalsIgnoreCase(userId)) {
+                if (token .getUserEmail() != null && token.getUserEmail().equalsIgnoreCase(userId)) {
                     usersApiToken = Optional.of(token.getToken());
                     break;
                 }
             }
 
-            if (!usersApiToken.isPresent()) {
+            if (usersApiToken.isEmpty()) {
                 // User doesn't have an API token and cannot make this request.
                 LOGGER.warn("Tried to get a user's API key but they don't have one! User: [{}]", userId);
             }
