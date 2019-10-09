@@ -31,6 +31,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
+import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public final class PropertyUtil {
@@ -40,13 +42,43 @@ public final class PropertyUtil {
         // Utility class.
     }
 
+    public static void walkObjectTree(final Object object,
+                                      final Predicate<Prop> filter,
+                                      final Consumer<Prop> propConsumer) {
+        walkObjectTree(object, filter, propConsumer, "");
+    }
+
+    private static void walkObjectTree(final Object object,
+                                       final Predicate<Prop> filter,
+                                       final Consumer<Prop> propConsumer,
+                                       final String indent) {
+
+        final Map<String, Prop> propMap = getProperties(object);
+
+        propMap.values().stream()
+                .filter(filter)
+                .forEach(prop -> {
+                    LOGGER.trace("{}{}#{}", indent, object.getClass().getSimpleName(), prop.getName());
+
+                    // process the prop
+                    propConsumer.accept(prop);
+                    Object childValue = prop.getValueFromConfigObject();
+                    if (childValue == null) {
+                        LOGGER.trace("{}Null value", indent + "  ");
+                    } else {
+                        // descend into the prop, which may or may not have its own props
+                        walkObjectTree(prop.getValueFromConfigObject(), filter, propConsumer, indent + "  ");
+                    }
+                });
+    }
+
     /**
      * Builds a map of property names to a {@link Prop} object that provides access to the getter/setter.
      * Only includes public properties, not package private
      */
     public static Map<String, Prop> getProperties(final Object object) {
         Objects.requireNonNull(object);
-        LOGGER.debug("getProperties called for {}", object);
+        LOGGER.trace("getProperties called for {}", object);
         final Class<?> clazz = object.getClass();
         // Using getMethods rather than getDeclaredMethods means we have to make the methods public
         // but it does allow us to see inherited methods, e.g. on CommonDbConfig
@@ -97,7 +129,7 @@ public final class PropertyUtil {
                 .stream()
                 .filter(e -> {
                     if (e.getValue().getter == null || e.getValue().setter == null) {
-                        LOGGER.debug("Invalid property " + e.getKey() + " on " + clazz.getName());
+                        LOGGER.trace("Invalid property " + e.getKey() + " on " + clazz.getName());
                         return false;
                     }
                     return true;

@@ -4,16 +4,15 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.introspector.PropertyUtils;
+import stroom.util.config.PropertyUtil;
 import stroom.util.shared.IsConfig;
 
-import javax.inject.Singleton;
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.stream.Collectors;
 
 class TestAppConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfig.class);
+
+    private final static String STROOM_PACKAGE_PREFIX = "stroom.";
 
     /**
      * Test to verify that all fields in the config tree of type stroom.*
@@ -44,5 +43,21 @@ class TestAppConfig {
                 // Not a stroom config object so nothing to do
             }
         }
+    }
+
+
+    @Test
+    void showPropsWithNullValues() {
+        // list any config values that are null.  This may be valid so no assertions used.
+        PropertyUtil.walkObjectTree(
+                new AppConfig(),
+                prop -> true,
+                prop -> {
+                    if (prop.getValueFromConfigObject() == null) {
+                        LOGGER.warn("{}.{} is null",
+                                prop.getParentObject().getClass().getSimpleName(),
+                                prop.getName());
+                    }
+                });
     }
 }

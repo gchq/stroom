@@ -1,5 +1,6 @@
 package stroom.config;
 
+import com.google.common.reflect.ClassPath;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -14,7 +15,8 @@ import stroom.config.app.YamlUtil;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.test.CoreTestModule;
-import stroom.util.io.FileUtil;
+import stroom.util.config.PropertyUtil;
+import stroom.util.shared.IsConfig;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -22,17 +24,22 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 class TestAppConfigModule {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfigModule.class);
     private static final String MODIFIED_JDBC_DRIVER = "modified.jdbc.driver";
+    private final static String STROOM_PACKAGE_PREFIX = "stroom.";
 
-    private final Path tmpDir = FileUtil.createTempDir(this.getClass().getSimpleName());
+//    private final Path tmpDir = FileUtil.createTempDir(this.getClass().getSimpleName());
 
     @AfterEach
     void afterEach() {
-        FileUtil.deleteContents(tmpDir);
+//        FileUtil.deleteContents(tmpDir);
     }
 
     @Test
@@ -83,7 +90,60 @@ class TestAppConfigModule {
                 });
     }
 
-    public static Path getDevYamlPath() throws FileNotFoundException {
+    /**
+     * IMPORTANT: This test must be run from stroom-app so it can see all the other modules
+     */
+    @Test
+    void testIsConfigPresence() throws IOException {
+        final AppConfig appConfig = new AppConfig();
+
+        Predicate<String> packageNameFilter = name ->
+                name.startsWith(STROOM_PACKAGE_PREFIX) && !name.contains("shaded");
+
+        Predicate<Class<?>> classFilter = clazz ->
+                !clazz.equals(IsConfig.class) && !clazz.equals(AppConfig.class);
+
+
+        // Find all classes that implement IsConfig
+        final ClassLoader classLoader = getClass().getClassLoader();
+        final Set<Class<?>> isConfigClasses = ClassPath.from(classLoader).getAllClasses()
+                .stream()
+                .filter(classInfo -> packageNameFilter.test(classInfo.getPackageName()))
+                .map(ClassPath.ClassInfo::load)
+                .filter(IsConfig.class::isAssignableFrom)
+                .filter(classFilter)
+                .peek(clazz -> {
+                    LOGGER.debug(clazz.getSimpleName());
+                })
+                .collect(Collectors.toSet());
+
+        // Find all stroom. classes in the AppConfig tree, i.e. config POJOs
+        final Set<Class<?>> configClasses = new HashSet<>();
+        PropertyUtil.walkObjectTree(
+                appConfig,
+                prop -> packageNameFilter.test(prop.getValueClass().getPackageName()),
+                prop -> {
+                    Class<?> valueClass = prop.getValueClass();
+                    if (classFilter.test(valueClass)) {
+                        configClasses.add(prop.getValueClass());
+                    }
+                });
+
+        Assertions.assertThat(isConfigClasses)
+                .contains(CommonDbConfig.class);
+        Assertions.assertThat(configClasses)
+                .contains(CommonDbConfig.class);
+
+        // Make sure all config classes implement IsConfig and all IsConfig classes are in
+        // the AppConfig tree
+        Assertions.assertThat(isConfigClasses)
+                .containsAll(configClasses);
+        Assertions.assertThat(configClasses)
+                .containsAll(isConfigClasses);
+    }
+
+
+    static Path getDevYamlPath() throws FileNotFoundException {
         // Load dev.yaml
         final String codeSourceLocation = TestAppConfigModule.class.getProtectionDomain().getCodeSource().getLocation().getPath();
 
