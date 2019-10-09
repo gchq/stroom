@@ -75,6 +75,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     private long metaId;
     private long eventId;
     private String currentTitle;
+    private String currentSubject;
     private String currentStatus;
     private String currentAssignedTo;
 
@@ -101,20 +102,20 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
         registerHandler(statusPresenter.addDataSelectionHandler(e -> {
             final String selected = statusPresenter.getSelected();
-            changeStatus(selected);
+            changeStatus(selected, true);
         }));
         registerHandler(assignedToPresenter.addDataSelectionHandler(e -> {
             final String selected = assignedToPresenter.getSelected();
-            changeAssignedTo(selected);
+            changeAssignedTo(selected, true);
         }));
     }
 
-    private void changeTitle(final String selected) {
+    private void changeTitle(final String selected, final boolean addEntry) {
         if (!Objects.equals(currentTitle, selected)) {
             currentTitle = selected;
             getView().setTitle(selected);
 
-            if (annotationDetail != null) {
+            if (addEntry && annotationDetail != null) {
                 final CreateEntryRequest request = new CreateEntryRequest(
                         metaId,
                         eventId,
@@ -122,23 +123,45 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                         selected,
                         null,
                         null,
+                        null,
                         null);
                 addEntry(request);
             }
         }
     }
 
-    private void changeStatus(final String selected) {
+    private void changeSubject(final String selected, final boolean addEntry) {
+        if (!Objects.equals(currentSubject, selected)) {
+            currentSubject = selected;
+            getView().setSubject(selected);
+
+            if (addEntry && annotationDetail != null) {
+                final CreateEntryRequest request = new CreateEntryRequest(
+                        metaId,
+                        eventId,
+                        EntryType.SUBJECT,
+                        null,
+                        selected,
+                        null,
+                        null,
+                        null);
+                addEntry(request);
+            }
+        }
+    }
+
+    private void changeStatus(final String selected, final boolean addEntry) {
         if (!Objects.equals(currentStatus, selected)) {
             currentStatus = selected;
             getView().setStatus(selected);
             HidePopupEvent.fire(this, statusPresenter, true, true);
 
-            if (annotationDetail != null) {
+            if (addEntry && annotationDetail != null) {
                 final CreateEntryRequest request = new CreateEntryRequest(
                         metaId,
                         eventId,
                         EntryType.STATUS,
+                        null,
                         null,
                         null,
                         selected,
@@ -148,17 +171,18 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         }
     }
 
-    private void changeAssignedTo(final String selected) {
+    private void changeAssignedTo(final String selected, final boolean addEntry) {
         if (!Objects.equals(currentAssignedTo, selected)) {
             currentAssignedTo = selected;
             getView().setAssignedTo(selected);
             HidePopupEvent.fire(this, assignedToPresenter, true, true);
 
-            if (annotationDetail != null) {
+            if (addEntry && annotationDetail != null) {
                 final CreateEntryRequest request = new CreateEntryRequest(
                         metaId,
                         eventId,
                         EntryType.ASSIGNED_TO,
+                        null,
                         null,
                         null,
                         null,
@@ -231,9 +255,11 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
             final Annotation annotation = annotationDetail.getAnnotation();
             currentTitle = annotation.getTitle();
+            currentSubject = annotation.getSubject();
             currentStatus = annotation.getStatus();
             currentAssignedTo = annotation.getAssignedTo();
             getView().setTitle(currentTitle);
+            getView().setSubject(currentSubject);
             getView().setStatus(currentStatus);
             getView().setAssignedTo(currentAssignedTo);
 
@@ -290,14 +316,18 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
             final Rest<List<String>> rest = restFactory.create();
             rest.onSuccess(values -> {
                 if (currentStatus == null && values != null && values.size() > 0) {
-                    changeStatus(values.get(0));
+                    changeStatus(values.get(0), false);
                 }
             }).call(annotationResource).getStatus(null);
         }
 
         if (currentTitle == null || currentTitle.trim().length() == 0) {
-            changeTitle("Title");
-            getView().startTitleEdit();
+            changeTitle("Title", false);
+//            getView().startTitleEdit();
+        }
+
+        if (currentSubject == null || currentSubject.trim().length() == 0) {
+            changeSubject("Subject", false);
         }
     }
 
@@ -358,7 +388,12 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
     @Override
     public void onTitleChange() {
-        changeTitle(getView().getTitle());
+        changeTitle(getView().getTitle(), true);
+    }
+
+    @Override
+    public void onSubjectChange() {
+        changeSubject(getView().getSubject(), true);
     }
 
     @Override
@@ -404,7 +439,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
     @Override
     public void assignYourself() {
-        changeAssignedTo(clientSecurityContext.getUserId());
+        changeAssignedTo(clientSecurityContext.getUserId(), true);
     }
 
     @Override
@@ -416,6 +451,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                     eventId,
                     EntryType.COMMENT,
                     currentTitle,
+                    currentSubject,
                     comment,
                     currentStatus,
                     currentAssignedTo);
@@ -430,6 +466,10 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         String getTitle();
 
         void setTitle(String title);
+
+        String getSubject();
+
+        void setSubject(String subject);
 
         void setStatus(String status);
 

@@ -26,6 +26,8 @@ public interface AnnotationEditUiHandlers extends UiHandlers {
 
     void onTitleChange();
 
+    void onSubjectChange();
+
     void assignYourself();
 
     void create();

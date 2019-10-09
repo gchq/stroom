@@ -10,7 +10,12 @@
                 <g:Label ui:field="titleLabel" styleName="annotationTitleLabel"/>
                 <g:TextBox ui:field="titleTextBox" styleName="annotationTitleTextBox"/>
             </g:FlowPanel>
+            <g:FlowPanel addStyleNames="annotationSubjectContainer">
+                <g:Label ui:field="subjectLabel" styleName="annotationSubjectLabel"/>
+                <g:TextBox ui:field="subjectTextBox" styleName="annotationSubjectTextBox"/>
+            </g:FlowPanel>
         </g:FlowPanel>
+        <g:SimplePanel styleName="annotationSettingDivider"/>
         <g:FlowPanel styleName="annotationBottom">
             <g:FlowPanel styleName="annotationLeft">
                 <v:ResizeSimplePanel ui:field="history" styleName="annotationHistory"/>

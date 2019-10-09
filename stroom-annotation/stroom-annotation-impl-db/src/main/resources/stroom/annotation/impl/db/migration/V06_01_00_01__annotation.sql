@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS annotation (
   meta_id               bigint(20) NOT NULL,
   event_id              bigint(20) NOT NULL,
   title                 longtext,
+  subject               longtext,
   status                varchar(255) NOT NULL,
   assigned_to           varchar(255) NOT NULL,
   PRIMARY KEY           (id),

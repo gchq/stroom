@@ -7,6 +7,7 @@ public class CreateEntryRequest {
     private long eventId;
     private EntryType entryType;
     private String title;
+    private String subject;
     private String comment;
     private String status;
     private String assignedTo;
@@ -18,6 +19,7 @@ public class CreateEntryRequest {
                               final long eventId,
                               final EntryType entryType,
                               final String title,
+                              final String subject,
                               final String comment,
                               final String status,
                               final String assignedTo) {
@@ -25,6 +27,7 @@ public class CreateEntryRequest {
         this.eventId = eventId;
         this.entryType = entryType;
         this.title = title;
+        this.subject = subject;
         this.comment = comment;
         this.status = status;
         this.assignedTo = assignedTo;
@@ -60,6 +63,14 @@ public class CreateEntryRequest {
 
     public void setTitle(final String title) {
         this.title = title;
+    }
+
+    public String getSubject() {
+        return subject;
+    }
+
+    public void setSubject(final String subject) {
+        this.subject = subject;
     }
 
     public String getComment() {

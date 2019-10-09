@@ -41,7 +41,7 @@ import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Annotation extends TableImpl<AnnotationRecord> {
 
-    private static final long serialVersionUID = -1686098502;
+    private static final long serialVersionUID = -2127691765;
 
     /**
      * The reference instance of <code>stroom.annotation</code>
@@ -100,6 +100,11 @@ public class Annotation extends TableImpl<AnnotationRecord> {
      * The column <code>stroom.annotation.title</code>.
      */
     public final TableField<AnnotationRecord, String> TITLE = createField("title", org.jooq.impl.SQLDataType.CLOB, this, "");
+
+    /**
+     * The column <code>stroom.annotation.subject</code>.
+     */
+    public final TableField<AnnotationRecord, String> SUBJECT = createField("subject", org.jooq.impl.SQLDataType.CLOB, this, "");
 
     /**
      * The column <code>stroom.annotation.status</code>.

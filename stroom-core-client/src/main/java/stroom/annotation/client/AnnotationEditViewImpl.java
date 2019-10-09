@@ -47,6 +47,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     TextBox titleTextBox;
     @UiField
+    Label subjectLabel;
+    @UiField
+    TextBox subjectTextBox;
+    @UiField
     Label statusLabel;
     @UiField(provided = true)
     SvgButton statusIcon;
@@ -80,6 +84,8 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         widget = binder.createAndBindUi(this);
         titleTextBox.setVisible(false);
         titleLabel.setVisible(true);
+        subjectTextBox.setVisible(false);
+        subjectLabel.setVisible(true);
     }
 
     @Override
@@ -91,6 +97,17 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void setTitle(final String title) {
         this.titleLabel.setText(title);
         this.titleTextBox.setText(title);
+    }
+
+    @Override
+    public String getSubject() {
+        return subjectTextBox.getText();
+    }
+
+    @Override
+    public void setSubject(final String subject) {
+        this.subjectLabel.setText(subject);
+        this.subjectTextBox.setText(subject);
     }
 
     @Override
@@ -158,6 +175,27 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
         titleLabel.setVisible(true);
     }
 
+    private void startSubjectEdit() {
+        subjectTextBox.setText(subjectLabel.getText());
+        subjectTextBox.setVisible(true);
+        subjectLabel.setVisible(false);
+        Scheduler.get().scheduleDeferred(() -> {
+            comment.setFocus(true);
+            subjectTextBox.setFocus(true);
+        });
+    }
+
+    private void finishSubjectEdit() {
+        if (subjectTextBox.getText().trim().length() > 0) {
+            subjectLabel.setText(subjectTextBox.getText());
+            if (getUiHandlers() != null) {
+                getUiHandlers().onSubjectChange();
+            }
+        }
+        subjectTextBox.setVisible(false);
+        subjectLabel.setVisible(true);
+    }
+
     @UiHandler("titleLabel")
     public void onTitleClick(final ClickEvent e) {
         startTitleEdit();
@@ -172,6 +210,23 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void onTitleReturn(final KeyDownEvent e) {
         if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
             finishTitleEdit();
+        }
+    }
+
+    @UiHandler("subjectLabel")
+    public void onSubjectClick(final ClickEvent e) {
+        startSubjectEdit();
+    }
+
+    @UiHandler("subjectTextBox")
+    public void onSubjectBlur(final BlurEvent e) {
+        finishSubjectEdit();
+    }
+
+    @UiHandler("subjectTextBox")
+    public void onSubjectReturn(final KeyDownEvent e) {
+        if (e.getNativeKeyCode() == KeyCodes.KEY_ENTER) {
+            finishSubjectEdit();
         }
     }
 

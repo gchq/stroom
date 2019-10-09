@@ -61,6 +61,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         annotation.setMetaId(record.get(ANNOTATION.META_ID));
         annotation.setEventId(record.get(ANNOTATION.EVENT_ID));
         annotation.setTitle(record.get(ANNOTATION.TITLE));
+        annotation.setSubject(record.get(ANNOTATION.SUBJECT));
         annotation.setStatus(record.get(ANNOTATION.STATUS));
         annotation.setAssignedTo(record.get(ANNOTATION.ASSIGNED_TO));
         return annotation;
@@ -158,6 +159,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION.EVENT_ID, Long::valueOf);
         expressionMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, value -> value);
         expressionMapper.map(AnnotationDataSource.TITLE_FIELD, ANNOTATION.TITLE, value -> value);
+        expressionMapper.map(AnnotationDataSource.SUBJECT_FIELD, ANNOTATION.SUBJECT, value -> value);
         expressionMapper.map(AnnotationDataSource.STATUS_FIELD, ANNOTATION.STATUS, value -> value);
         expressionMapper.map(AnnotationDataSource.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, value -> value);
 
@@ -166,6 +168,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         valueMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION.EVENT_ID, ValLong::create);
         valueMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, ValString::create);
         valueMapper.map(AnnotationDataSource.TITLE_FIELD, ANNOTATION.TITLE, ValString::create);
+        valueMapper.map(AnnotationDataSource.SUBJECT_FIELD, ANNOTATION.SUBJECT, ValString::create);
         valueMapper.map(AnnotationDataSource.STATUS_FIELD, ANNOTATION.STATUS, ValString::create);
         valueMapper.map(AnnotationDataSource.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, ValString::create);
     }
@@ -259,6 +262,7 @@ class AnnotationDaoImpl implements AnnotationDao {
             parentAnnotation.setMetaId(request.getMetaId());
             parentAnnotation.setEventId(request.getEventId());
             parentAnnotation.setTitle(request.getTitle());
+            parentAnnotation.setSubject(request.getSubject());
             parentAnnotation.setCreateTime(now);
             parentAnnotation.setCreateUser(user);
             parentAnnotation.setUpdateTime(now);
@@ -274,6 +278,14 @@ class AnnotationDaoImpl implements AnnotationDao {
             JooqUtil.context(connectionProvider, context -> context
                     .update(ANNOTATION)
                     .set(ANNOTATION.TITLE, request.getTitle())
+                    .set(ANNOTATION.UPDATE_USER, user)
+                    .set(ANNOTATION.UPDATE_TIME_MS, now)
+                    .where(ANNOTATION.ID.eq(annotationId))
+                    .execute());
+        } else if (EntryType.SUBJECT.equals(request.getEntryType())) {
+            JooqUtil.context(connectionProvider, context -> context
+                    .update(ANNOTATION)
+                    .set(ANNOTATION.SUBJECT, request.getSubject())
                     .set(ANNOTATION.UPDATE_USER, user)
                     .set(ANNOTATION.UPDATE_TIME_MS, now)
                     .where(ANNOTATION.ID.eq(annotationId))
@@ -336,6 +348,8 @@ class AnnotationDaoImpl implements AnnotationDao {
         switch (request.getEntryType()) {
             case TITLE:
                 return request.getTitle();
+            case SUBJECT:
+                return request.getSubject();
             case COMMENT:
                 return request.getComment();
             case STATUS:
@@ -357,6 +371,7 @@ class AnnotationDaoImpl implements AnnotationDao {
                         ANNOTATION.META_ID,
                         ANNOTATION.EVENT_ID,
                         ANNOTATION.TITLE,
+                        ANNOTATION.SUBJECT,
                         ANNOTATION.STATUS,
                         ANNOTATION.ASSIGNED_TO)
                 .values(1,
@@ -367,6 +382,7 @@ class AnnotationDaoImpl implements AnnotationDao {
                         annotation.getMetaId(),
                         annotation.getEventId(),
                         annotation.getTitle(),
+                        annotation.getSubject(),
                         annotation.getStatus(),
                         annotation.getAssignedTo())
                 .onDuplicateKeyIgnore()
@@ -442,6 +458,8 @@ class AnnotationDaoImpl implements AnnotationDao {
                 field = ANNOTATION.CREATE_USER;
             } else if (AnnotationDataSource.TITLE.equals(sort.getField())) {
                 field = ANNOTATION.TITLE;
+            } else if (AnnotationDataSource.SUBJECT.equals(sort.getField())) {
+                field = ANNOTATION.SUBJECT;
             } else if (AnnotationDataSource.STATUS.equals(sort.getField())) {
                 field = ANNOTATION.STATUS;
             } else if (AnnotationDataSource.ASSIGNED_TO.equals(sort.getField())) {

@@ -55,10 +55,11 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
         final Integer createUserIndex = fieldIndexMap.getMap().get(AnnotationDataSource.CREATED_BY);
         final Integer titleIndex = fieldIndexMap.getMap().get(AnnotationDataSource.TITLE);
+        final Integer subjectIndex = fieldIndexMap.getMap().get(AnnotationDataSource.SUBJECT);
         final Integer statusIndex = fieldIndexMap.getMap().get(AnnotationDataSource.STATUS);
         final Integer assignedToIndex = fieldIndexMap.getMap().get(AnnotationDataSource.ASSIGNED_TO);
 
-        if (filter == null && createUserIndex == null && titleIndex == null && statusIndex == null && assignedToIndex == null) {
+        if (filter == null && createUserIndex == null && titleIndex == null && subjectIndex == null && statusIndex == null && assignedToIndex == null) {
             return receiver;
         }
 
@@ -76,6 +77,7 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             if (filter == null || filter.apply(annotation)) {
                 setValue(values.getValues(), createUserIndex, annotation.getCreateUser());
                 setValue(values.getValues(), titleIndex, annotation.getTitle());
+                setValue(values.getValues(), subjectIndex, annotation.getSubject());
                 setValue(values.getValues(), statusIndex, annotation.getStatus());
                 setValue(values.getValues(), assignedToIndex, annotation.getAssignedTo());
 
@@ -98,12 +100,20 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
         final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(AnnotationDataSource.FIELD_MAP);
         return annotation -> {
             final Map<String, Object> attributeMap = new HashMap<>();
-            attributeMap.put(AnnotationDataSource.CREATED_BY, annotation.getCreateUser());
-            attributeMap.put(AnnotationDataSource.TITLE, annotation.getTitle());
-            attributeMap.put(AnnotationDataSource.STATUS, annotation.getStatus());
-            attributeMap.put(AnnotationDataSource.ASSIGNED_TO, annotation.getAssignedTo());
+            attributeMap.put(AnnotationDataSource.CREATED_BY, getString(annotation.getCreateUser()));
+            attributeMap.put(AnnotationDataSource.TITLE, getString(annotation.getTitle()));
+            attributeMap.put(AnnotationDataSource.SUBJECT, getString(annotation.getSubject()));
+            attributeMap.put(AnnotationDataSource.STATUS, getString(annotation.getStatus()));
+            attributeMap.put(AnnotationDataSource.ASSIGNED_TO, getString(annotation.getAssignedTo()));
             return expressionMatcher.match(attributeMap, filteredExpression);
         };
+    }
+
+    private String getString(final String str) {
+        if (str != null) {
+            return str;
+        }
+        return "";
     }
 
     private Long getLong(final Val[] values, final int index) {

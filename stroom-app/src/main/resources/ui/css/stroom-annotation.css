@@ -54,8 +54,11 @@
     min-width: 0;
 }
 
+
+
+
 .annotationTitleContainer {
-    padding-bottom: 15px;
+    padding-bottom: 2px;
 }
 
 .annotationTitleLabel {
@@ -78,6 +81,36 @@
 .annotationTitle:hover {
     opacity: 0.9;
 }
+
+
+
+
+.annotationSubjectContainer {
+    padding-bottom: 10px;
+}
+
+.annotationSubjectLabel {
+    font-size: 14pt;
+    width: 100%;
+    opacity: 0.6;
+    cursor: pointer;
+    padding: 3px;
+    transition: opacity 0.5s linear;
+    -webkit-transition: opacity 0.5s linear;
+    -moz-transition: opacity 0.5s linear;
+    -o-transition: opacity 0.5s linear;
+}
+
+.annotationSubjectTextBox {
+    font-size: 14pt;
+    width: 100%;
+}
+
+.annotationSubject:hover {
+    opacity: 0.9;
+}
+
+
 
 .annotationSettingHeading {
     display: flex;
