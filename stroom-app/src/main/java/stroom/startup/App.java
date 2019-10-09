@@ -39,8 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import stroom.annotation.impl.AnnotationResourceImpl;
-import stroom.annotation.impl.db.spring.AnnotationsConfiguration;
+import stroom.annotation.impl.db.spring.AnnotationConfiguration;
 import stroom.annotation.impl.db.spring.ConnectionProviderFactoryBean;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.cluster.server.ClusterCallServiceRPC;
@@ -301,7 +300,7 @@ public class App extends Application<Config> {
         }
 
         // Temporary shim for annotations.
-        ConnectionProviderFactoryBean.setAnnotationsConfig(configuration.getAnnotationsConfig());
+        ConnectionProviderFactoryBean.setAnnotationDbConfig(configuration.getAnnotationDbConfig());
 
         // Start the spring context.
         LOGGER.info("Loading Spring context");
@@ -397,7 +396,7 @@ public class App extends Application<Config> {
         applicationContext.getBeanFactory().registerSingleton("dwConfiguration", configuration);
         applicationContext.getBeanFactory().registerSingleton("dwEnvironment", environment);
         applicationContext.register(
-                AnnotationsConfiguration.class,
+                AnnotationConfiguration.class,
                 ScopeConfiguration.class,
                 PersistenceConfiguration.class,
                 ServerComponentScanConfiguration.class,

@@ -55,7 +55,6 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
@@ -287,24 +286,19 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         }
 
         if (currentStatus == null) {
-            final List<String> values = getStatusValues();
-            if (values.size() > 0) {
-                changeStatus(values.get(0));
-            }
+            final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
+            final Rest<List<String>> rest = restFactory.create();
+            rest.onSuccess(values -> {
+                if (currentStatus == null && values != null && values.size() > 0) {
+                    changeStatus(values.get(0));
+                }
+            }).call(annotationResource).getStatus(null);
         }
 
         if (currentTitle == null || currentTitle.trim().length() == 0) {
             changeTitle("Title");
             getView().startTitleEdit();
         }
-
-//        getView().setTitle("Event Id: " + annotation.getMetaId() + ":" + annotation.getEventId());
-//        getView().setCreateTime(ClientDateUtil.toDateString(annotation.getCreateTime()));
-//        getView().setCreateUser(annotation.getCreateUser());
-
-
-//        HidePopupEvent.fire(this, statusPresenter, true, true);
-//        HidePopupEvent.fire(this, assignedToPresenter, true, true);
     }
 
     private SafeHtml getDurationLabel(final long time, final Date now) {
@@ -369,53 +363,16 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
     @Override
     public void showStatusChooser(final Element element) {
-
-
-//        final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
-//            @Override
-//            public void onHideRequest(final boolean autoClose, final boolean ok) {
-////                    if (ok) {
-////                        write(consumer);
-////                    } else {
-////                        consumer.accept(activity);
-////                hide();
-////                    }
-//
-//                GWT.log(autoClose + "asfd" + ok);
-//
-//                hide();
-//            }
-//
-//            @Override
-//            public void onHide(final boolean autoClose, final boolean ok) {
-//                GWT.log(autoClose + "asfd" + ok);
-//            }
-//        };
-
         statusPresenter.setDataSupplier((filter, consumer) -> {
-            final List<String> values = getStatusValues();
-            if (filter == null) {
-                consumer.accept(values);
-            } else {
-                final List<String> filtered = values
-                        .stream()
-                        .filter(value -> value.toLowerCase().contains(filter.toLowerCase()))
-                        .collect(Collectors.toList());
-                consumer.accept(filtered);
-            }
+            final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
+            final Rest<List<String>> rest = restFactory.create();
+            rest.onSuccess(consumer).call(annotationResource).getStatus(filter);
         });
+        statusPresenter.clearFilter();
         statusPresenter.setSelected(currentStatus);
         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.fire(this, statusPresenter, PopupType.POPUP, popupPosition, null, element);
-    }
-
-    private List<String> getStatusValues() {
-        final List<String> status = new ArrayList<>();
-        status.add("New");
-        status.add("Assigned");
-        status.add("Closed");
-        return status;
     }
 
     @Override
@@ -438,6 +395,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                 consumer.accept(filtered);
             });
         });
+        assignedToPresenter.clearFilter();
         assignedToPresenter.setSelected(currentAssignedTo);
         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
@@ -473,14 +431,6 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
         void setTitle(String title);
 
-        //        String getCreatedBy();
-//
-//        void setCreateUser(String createdBy);
-//
-//        String getCreatedOn();
-//
-//        void setCreateTime(String createdOn);
-//
         void setStatus(String status);
 
         void setAssignedTo(String assignedTo);

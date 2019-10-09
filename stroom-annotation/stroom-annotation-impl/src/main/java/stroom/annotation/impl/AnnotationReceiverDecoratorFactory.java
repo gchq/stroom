@@ -1,8 +1,8 @@
 package stroom.annotation.impl;
 
 import org.springframework.stereotype.Component;
-import stroom.annotation.shared.Annotation;
 import stroom.annotation.api.AnnotationDataSource;
+import stroom.annotation.shared.Annotation;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
@@ -26,14 +26,18 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Component
-class AnnotationsReceiverDecoratorFactory implements AnnotationsDecoratorFactory {
-    private final AnnotationsDao annotationsDao;
+class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory {
+    private final AnnotationDao annotationDao;
     private final ExpressionMatcherFactory expressionMatcherFactory;
+    private final AnnotationConfig annotationConfig;
 
     @Inject
-    AnnotationsReceiverDecoratorFactory(final AnnotationsDao annotationsDao, final ExpressionMatcherFactory expressionMatcherFactory) {
-        this.annotationsDao = annotationsDao;
+    AnnotationReceiverDecoratorFactory(final AnnotationDao annotationDao,
+                                       final ExpressionMatcherFactory expressionMatcherFactory,
+                                       final AnnotationConfig annotationConfig) {
+        this.annotationDao = annotationDao;
         this.expressionMatcherFactory = expressionMatcherFactory;
+        this.annotationConfig = annotationConfig;
     }
 
     @Override
@@ -62,10 +66,10 @@ class AnnotationsReceiverDecoratorFactory implements AnnotationsDecoratorFactory
             final Long streamId = getLong(values.getValues(), streamIdIndex);
             final Long eventId = getLong(values.getValues(), eventIdIndex);
 
-            Annotation annotation = annotationsDao.get(streamId, eventId);
+            Annotation annotation = annotationDao.get(streamId, eventId);
             if (annotation == null) {
                 annotation = new Annotation();
-                annotation.setStatus("None");
+                annotation.setStatus(annotationConfig.getCreateText());
             }
 
             // Filter based on annotation.

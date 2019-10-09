@@ -1,16 +1,14 @@
 package stroom.annotation.impl.db.spring;
 
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import stroom.annotation.impl.db.AnnotationsConfig;
-import stroom.annotation.impl.db.AnnotationsDbModule;
+import stroom.annotation.impl.db.AnnotationDbConfig;
+import stroom.annotation.impl.db.AnnotationDbModule;
 import stroom.annotation.impl.db.ConnectionProvider;
-import stroom.util.spring.StroomScope;
 
 @Component
 public class ConnectionProviderFactoryBean implements FactoryBean<ConnectionProvider> {
-    private static AnnotationsConfig annotationsConfig;
+    private static AnnotationDbConfig annotationDbConfig;
     private static ConnectionProvider connectionProvider;
 
     @Override
@@ -28,7 +26,7 @@ public class ConnectionProviderFactoryBean implements FactoryBean<ConnectionProv
         return false;
     }
 
-    public static void setAnnotationsConfig(final AnnotationsConfig annotationsConfig) {
-        connectionProvider = new AnnotationsDbModule(annotationsConfig).getConnectionProvider(() -> annotationsConfig);
+    public static void setAnnotationDbConfig(final AnnotationDbConfig annotationDbConfig) {
+        connectionProvider = new AnnotationDbModule(annotationDbConfig).getConnectionProvider(() -> annotationDbConfig);
     }
 }

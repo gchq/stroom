@@ -18,31 +18,33 @@ package stroom.annotation.impl;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import org.springframework.stereotype.Component;
-import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
-import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.logging.DocumentEventLog;
-import stroom.security.SecurityContext;
-import stroom.task.server.TaskContext;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class AnnotationResourceImpl implements AnnotationResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationResourceImpl.class);
 
-    private final AnnotationsService annotationsService;
+    private final AnnotationService annotationService;
     private final DocumentEventLog documentEventLog;
+    private final AnnotationConfig annotationConfig;
 
     @Inject
-    public AnnotationResourceImpl(final AnnotationsService annotationsService, final DocumentEventLog documentEventLog) {
-        this.annotationsService = annotationsService;
+    public AnnotationResourceImpl(final AnnotationService annotationService,
+                                  final DocumentEventLog documentEventLog,
+                                  final AnnotationConfig annotationConfig) {
+        this.annotationService = annotationService;
         this.documentEventLog = documentEventLog;
+        this.annotationConfig = annotationConfig;
     }
 
     @Override
@@ -51,7 +53,7 @@ public class AnnotationResourceImpl implements AnnotationResource, HasHealthChec
 
         LOGGER.info(() -> "Getting annotation " + id);
         try {
-            annotationDetail = annotationsService.getDetail(id);
+            annotationDetail = annotationService.getDetail(id);
             if (annotationDetail != null) {
                 documentEventLog.view(annotationDetail, null);
             }
@@ -70,13 +72,26 @@ public class AnnotationResourceImpl implements AnnotationResource, HasHealthChec
 
         LOGGER.info(() -> "Creating annotation entry " + id);
         try {
-            annotationDetail =  annotationsService.createEntry(request);
+            annotationDetail = annotationService.createEntry(request);
             documentEventLog.create(annotationDetail, null);
         } catch (final RuntimeException e) {
             documentEventLog.create("Annotation entry " + id, e);
         }
 
         return annotationDetail;
+    }
+
+    @Override
+    public List<String> getStatus(final String filter) {
+        final List<String> values = annotationConfig.getStatusValues();
+        if (filter == null || filter.isEmpty()) {
+            return values;
+        }
+
+        return values
+                .stream()
+                .filter(value -> value.toLowerCase().contains(filter.toLowerCase()))
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -54,6 +54,11 @@ class ChooserViewImpl extends ViewWithUiHandlers<ChooserUiHandlers> implements C
         return widget;
     }
 
+    @Override
+    public void clearFilter() {
+        nameFilter.clear();
+    }
+
     @UiHandler("nameFilter")
     public void onFilterChange(final ValueChangeEvent<String> e) {
         if (getUiHandlers() != null) {

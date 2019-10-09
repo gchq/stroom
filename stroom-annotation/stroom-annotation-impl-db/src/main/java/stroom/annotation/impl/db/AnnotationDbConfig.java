@@ -7,7 +7,7 @@ import stroom.config.common.ConnectionPoolConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class AnnotationsConfig {
+public class AnnotationDbConfig {
     private ConnectionConfig connectionConfig = new ConnectionConfig();
     private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
 

@@ -29,10 +29,10 @@ import org.springframework.context.annotation.FilterType;
 @Configuration
 @ComponentScan(basePackages = {"stroom.annotation.impl", "stroom.annotation.impl.db", "stroom.annotation.impl.db.spring"}, excludeFilters = {
         @ComponentScan.Filter(type = FilterType.ANNOTATION, value = Configuration.class),})
-public class AnnotationsConfiguration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationsConfiguration.class);
+public class AnnotationConfiguration {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationConfiguration.class);
 
-    public AnnotationsConfiguration() {
-        LOGGER.info("AnnotationsConfiguration loading...");
+    public AnnotationConfiguration() {
+        LOGGER.info("AnnotationConfiguration loading...");
     }
 }

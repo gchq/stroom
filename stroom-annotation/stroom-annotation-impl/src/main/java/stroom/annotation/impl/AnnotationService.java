@@ -19,16 +19,16 @@ import javax.inject.Inject;
 import java.util.function.Consumer;
 
 @Component
-public class AnnotationsService implements Searchable {
+public class AnnotationService implements Searchable {
     private static final DocRef ANNOTATIONS_PSEUDO_DOC_REF = new DocRef("Searchable", "Annotations", "Annotations");
 
-    private final AnnotationsDao annotationsDao;
+    private final AnnotationDao annotationDao;
     private final SecurityContext securityContext;
 
     @Inject
-    AnnotationsService(final AnnotationsDao annotationsDao,
-                       final SecurityContext securityContext) {
-        this.annotationsDao = annotationsDao;
+    AnnotationService(final AnnotationDao annotationDao,
+                      final SecurityContext securityContext) {
+        this.annotationDao = annotationDao;
         this.securityContext = securityContext;
     }
 
@@ -51,7 +51,7 @@ public class AnnotationsService implements Searchable {
     @Override
     public void search(final ExpressionCriteria criteria, final DataSourceField[] fields, final Consumer<Val[]> consumer) {
         checkPermission();
-        annotationsDao.search(criteria, fields, consumer);
+        annotationDao.search(criteria, fields, consumer);
     }
 
     public Annotation get(String id) {
@@ -59,7 +59,7 @@ public class AnnotationsService implements Searchable {
         final String[] parts = id.split(":");
         final long metaId = Long.parseLong(parts[0]);
         final long eventId = Long.parseLong(parts[1]);
-        return annotationsDao.get(metaId, eventId);
+        return annotationDao.get(metaId, eventId);
     }
 
     AnnotationDetail getDetail(String id) {
@@ -71,12 +71,12 @@ public class AnnotationsService implements Searchable {
     }
 
     private AnnotationDetail getDetail(Long metaId, Long eventId) {
-        return annotationsDao.getDetail(metaId, eventId);
+        return annotationDao.getDetail(metaId, eventId);
     }
 
     AnnotationDetail createEntry(final CreateEntryRequest request) {
         checkPermission();
-        return annotationsDao.createEntry(request, securityContext.getUserId());
+        return annotationDao.createEntry(request, securityContext.getUserId());
     }
 
     private void checkPermission() {

@@ -7,7 +7,7 @@ import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.annotation.impl.AnnotationsDao;
+import stroom.annotation.impl.AnnotationDao;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.db.util.HikariUtil;
@@ -16,24 +16,24 @@ import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.sql.DataSource;
 
-public class AnnotationsDbModule extends AbstractModule {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationsDbModule.class);
+public class AnnotationDbModule extends AbstractModule {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationDbModule.class);
     private static final String MODULE = "stroom-annotation";
     private static final String FLYWAY_LOCATIONS = "stroom/annotation/impl/db/migration";
     private static final String FLYWAY_TABLE = "annotation_schema_history";
 
-    private final AnnotationsConfig annotationsConfig;
+    private final AnnotationDbConfig annotationDbConfig;
 
-    public AnnotationsDbModule(final AnnotationsConfig annotationsConfig) {
-        this.annotationsConfig = annotationsConfig;
+    public AnnotationDbModule(final AnnotationDbConfig annotationDbConfig) {
+        this.annotationDbConfig = annotationDbConfig;
     }
 
     @Override
     protected void configure() {
         // Bind the application config.
-        bind(AnnotationsConfig.class).toInstance(this.annotationsConfig);
+        bind(AnnotationDbConfig.class).toInstance(this.annotationDbConfig);
 
-        bind(AnnotationsDao.class).to(AnnotationsDaoImpl.class).asEagerSingleton();
+        bind(AnnotationDao.class).to(AnnotationDaoImpl.class).asEagerSingleton();
 
 //        // MultiBind the connection provider so we can see status for all databases.
 //        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
@@ -42,7 +42,7 @@ public class AnnotationsDbModule extends AbstractModule {
 
     @Provides
     @Singleton
-    public ConnectionProvider getConnectionProvider(final Provider<AnnotationsConfig> configProvider) {
+    public ConnectionProvider getConnectionProvider(final Provider<AnnotationDbConfig> configProvider) {
         LOGGER.info("Creating connection provider for {}", MODULE);
         final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
         final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();

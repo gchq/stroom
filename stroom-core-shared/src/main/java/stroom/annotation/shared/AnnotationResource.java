@@ -19,7 +19,6 @@ package stroom.annotation.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.query.api.v2.DocRef;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -27,8 +26,10 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 @Api(value = "annotations")
 @Path("/annotation")
@@ -48,4 +49,13 @@ public interface AnnotationResource extends DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("")
     AnnotationDetail createEntry(CreateEntryRequest request);
+
+    @GET
+    @Path("status")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Gets a list of allowed statuses",
+            response = Response.class)
+    List<String> getStatus(@QueryParam("filter") String filter);
 }

@@ -19,10 +19,10 @@ package stroom.annotation.impl;
 import com.google.inject.AbstractModule;
 import stroom.search.extraction.AnnotationsDecoratorFactory;
 
-public class AnnotationsModule extends AbstractModule {
+public class AnnotationModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(AnnotationsDecoratorFactory.class).to(AnnotationsReceiverDecoratorFactory.class);
+        bind(AnnotationsDecoratorFactory.class).to(AnnotationReceiverDecoratorFactory.class);
 //        bind(ExplorerNodeService.class).to(ExplorerNodeServiceImpl.class);
 //        bind(ExplorerSession.class).to(ExplorerSessionImpl.class);
 //        bind(ExplorerService.class).to(ExplorerServiceImpl.class);

@@ -9,7 +9,7 @@ import org.jooq.Result;
 import org.jooq.SelectJoinStep;
 import org.springframework.stereotype.Component;
 import stroom.annotation.api.AnnotationDataSource;
-import stroom.annotation.impl.AnnotationsDao;
+import stroom.annotation.impl.AnnotationDao;
 import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
@@ -43,7 +43,7 @@ import static stroom.annotation.impl.db.jooq.tables.Annotation.ANNOTATION;
 import static stroom.annotation.impl.db.jooq.tables.AnnotationEntry.ANNOTATION_ENTRY;
 
 @Component
-class AnnotationsDaoImpl implements AnnotationsDao {
+class AnnotationDaoImpl implements AnnotationDao {
     //    private final stroom.explorer.impl.db.jooq.tables.ExplorerPath p = EXPLORER_PATH.as("p");
 //    private final stroom.explorer.impl.db.jooq.tables.ExplorerPath p1 = EXPLORER_PATH.as("p1");
 //    private final stroom.explorer.impl.db.jooq.tables.ExplorerPath p2 = EXPLORER_PATH.as("p2");
@@ -149,8 +149,8 @@ class AnnotationsDaoImpl implements AnnotationsDao {
     private final ValueMapper valueMapper;
 
     @Inject
-    AnnotationsDaoImpl(final ConnectionProvider connectionProvider,
-                       final ExpressionMapperFactory expressionMapperFactory) {
+    AnnotationDaoImpl(final ConnectionProvider connectionProvider,
+                      final ExpressionMapperFactory expressionMapperFactory) {
         this.connectionProvider = connectionProvider;
 
         expressionMapper = expressionMapperFactory.create();

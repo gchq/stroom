@@ -2,12 +2,12 @@ package stroom.startup;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.dropwizard.Configuration;
-import stroom.annotation.impl.db.AnnotationsConfig;
+import stroom.annotation.impl.db.AnnotationDbConfig;
 import stroom.proxy.guice.ProxyConfig;
 
 public class Config extends Configuration {
     private String mode;
-    private AnnotationsConfig annotationsConfig;
+    private AnnotationDbConfig annotationDbConfig;
     private ProxyConfig proxyConfig;
     private String externalConfig = "~/.stroom/stroom.conf";
 
@@ -31,14 +31,14 @@ public class Config extends Configuration {
         this.proxyConfig = proxyConfig;
     }
 
-    @JsonProperty
-    public AnnotationsConfig getAnnotationsConfig() {
-        return annotationsConfig;
+    @JsonProperty("annotationConfig")
+    public AnnotationDbConfig getAnnotationDbConfig() {
+        return annotationDbConfig;
     }
 
-    @JsonProperty
-    public void setAnnotationsConfig(final AnnotationsConfig annotationsConfig) {
-        this.annotationsConfig = annotationsConfig;
+    @JsonProperty("annotationConfig")
+    public void setAnnotationDbConfig(final AnnotationDbConfig annotationDbConfig) {
+        this.annotationDbConfig = annotationDbConfig;
     }
 
     @JsonProperty

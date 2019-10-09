@@ -34,7 +34,6 @@ import stroom.annotation.client.ChooserPresenter.ChooserView;
 import stroom.data.table.client.CellTableView;
 import stroom.data.table.client.CellTableViewImpl;
 import stroom.data.table.client.CellTableViewImpl.HoverResources;
-import stroom.widget.dropdowntree.client.view.QuickFilter;
 
 import java.util.List;
 import java.util.function.Consumer;
@@ -53,42 +52,6 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
         table = new CellTableViewImpl<>(true, (Resources) GWT.create(HoverResources.class));
         view.setBottomView(table);
 
-//        // Checked.
-//        final Column<DocumentType, TickBoxState> checkedColumn = new Column<DocumentType, TickBoxState>(
-//                TickBoxCell.create(false, true)) {
-//            @Override
-//            public TickBoxState getValue(final DocumentType documentType) {
-//                return TickBoxState.fromBoolean(selected.contains(documentType.getType()));
-//            }
-//        };
-//        checkedColumn.setFieldUpdater((index, object, value) -> {
-//            if (selected.contains(object.getType())) {
-//                selected.remove(object.getType());
-//            } else {
-//                selected.add(object.getType());
-//            }
-//
-//            DataSelectionEvent.fire(StatusPresenter.this, StatusPresenter.this, false);
-//        });
-//        getView().addColumn(checkedColumn);
-//
-//        // Icon.
-//        final Column<String, SafeHtml> iconColumn = new Column<DocumentType, SafeHtml>(new SafeHtmlCell()) {
-//            @Override
-//            public SafeHtml getValue(final String status) {
-//                return SafeHtmlUtils.fromTrustedString("<img style=\"width:16px;height:16px;padding:2px\" src=\"" + ImageUtil.getImageURL() + object.getIconUrl() + "\"/>");
-//            }
-//        };
-//        getView().addColumn(iconColumn);
-//
-//        // Text.
-//        final Column<DocumentType, String> textColumn = new Column<DocumentType, String>(new TextCell()) {
-//            @Override
-//            public String getValue(final DocumentType documentType) {
-//                return documentType.getDisplayType();
-//            }
-//        };
-
         // Text.
         final Column<String, SafeHtml> textColumn = new Column<String, SafeHtml>(new SafeHtmlCell()) {
             @Override
@@ -103,19 +66,11 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
         table.addColumn(textColumn);
         table.setSupportsSelection(true);
         table.setSelectionModel(selectionModel);
-
-
-//        final Style style = getView().asWidget().getElement().getStyle();
-//        style.setPaddingLeft(1, Unit.PX);
-//        style.setPaddingRight(3, Unit.PX);
-//        style.setPaddingTop(2, Unit.PX);
-//        style.setPaddingBottom(1, Unit.PX);
     }
 
-//    void setStatusValues(final List<String> statusValues) {
-//        table.setRowData(0, statusValues);
-//        table.setRowCount(statusValues.size());
-//    }
+    void clearFilter() {
+        getView().clearFilter();
+    }
 
     String getSelected() {
         return selectionModel.getSelectedObject();
@@ -133,8 +88,10 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
     public void onFilterChange(final String filter) {
         if (dataSupplier != null) {
             dataSupplier.onChange(filter, values -> {
-                table.setRowData(0, values);
-                table.setRowCount(values.size());
+                if (values != null) {
+                    table.setRowData(0, values);
+                    table.setRowCount(values.size());
+                }
             });
         }
     }
@@ -150,5 +107,7 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
 
     public interface ChooserView extends View, HasUiHandlers<ChooserUiHandlers> {
         void setBottomView(View view);
+
+        void clearFilter();
     }
 }
