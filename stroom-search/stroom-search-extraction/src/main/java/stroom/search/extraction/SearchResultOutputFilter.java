@@ -29,38 +29,36 @@ import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.search.extraction.ExtractionTask.ResultReceiver;
 
 @ConfigurableElement(type = "SearchResultOutputFilter", category = Category.FILTER, roles = {
-        PipelineElementType.ROLE_TARGET, PipelineElementType.ROLE_HAS_TARGETS}, icon = ElementIcons.SEARCH)
-public class SearchResultOutputFilter extends AbstractXMLFilter {
+        PipelineElementType.ROLE_TARGET}, icon = ElementIcons.SEARCH)
+public class SearchResultOutputFilter  extends AbstractSearchResultOutputFilter {
     private static final String RECORD = "record";
     private static final String DATA = "data";
     private static final String NAME = "name";
     private static final String VALUE = "value";
 
-    private FieldIndexMap fieldIndexes;
-    private ResultReceiver resultReceiver;
-    private Val[] values;
+
+    public SearchResultOutputFilter () {}
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-        if (DATA.equals(localName) && values != null) {
-            String name = atts.getValue(NAME);
-            String value = atts.getValue(VALUE);
-            if (name != null && value != null) {
-                name = name.trim();
-                value = value.trim();
+                if (DATA.equals(localName) && values != null) {
+                    String name = atts.getValue(NAME);
+                    String value = atts.getValue(VALUE);
+                    if (name != null && value != null) {
+                        name = name.trim();
+                        value = value.trim();
 
-                if (name.length() > 0 && value.length() > 0) {
-                    final int fieldIndex = fieldIndexes.get(name);
-                    if (fieldIndex >= 0) {
-                        values[fieldIndex] = ValString.create(value);
+                        if (name.length() > 0 && value.length() > 0) {
+                            final int fieldIndex = fieldIndexes.get(name);
+                            if (fieldIndex >= 0) {
+                                values[fieldIndex] = ValString.create(value);
+                            }
+                        }
                     }
+                } else if (RECORD.equals(localName)) {
+                    values = new Val[fieldIndexes.size()];
                 }
-            }
-        } else if (RECORD.equals(localName)) {
-            values = new Val[fieldIndexes.size()];
-        }
-
         super.startElement(uri, localName, qName, atts);
     }
 
@@ -74,8 +72,5 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
         super.endElement(uri, localName, qName);
     }
 
-    public void setup(final FieldIndexMap fieldIndexes, final ResultReceiver resultReceiver) {
-        this.fieldIndexes = fieldIndexes;
-        this.resultReceiver = resultReceiver;
-    }
+
 }

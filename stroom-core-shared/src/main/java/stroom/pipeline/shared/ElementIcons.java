@@ -29,6 +29,7 @@ public final class ElementIcons {
     public static final String RECORD_OUTPUT = "recordOutput.svg";
     public static final String REFERENCE_DATA = "referenceData.svg";
     public static final String SEARCH = "search.svg";
+    public static final String XML_SEARCH = "xmlSearch.svg";
     public static final String SOLR = "solr.svg";
     public static final String SPLIT = "split.svg";
     public static final String STATISTICS = "statistics.svg";
