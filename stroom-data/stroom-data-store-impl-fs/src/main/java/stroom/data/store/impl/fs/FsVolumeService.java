@@ -492,14 +492,32 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
     private Optional<Path> getDefaultVolumesPath() {
         return Stream.<Supplier<Optional<Path>>>of(
                 this::getApplicationJarDir,
+                this::getDotStroomDir,
                 () -> Optional.of(FileUtil.getTempDir()),
-                Optional::empty)
+                Optional::empty
+        )
                 .map(Supplier::get)
                 .filter(Optional::isPresent)
                 .findFirst()
                 .map(Optional::get)
                 .flatMap(path -> Optional.of(path.resolve(DEFAULT_VOLUMES_SUBDIR)));
     }
+
+    private Optional<Path> getDotStroomDir() {
+        final String userHome = System.getProperty("user.home");
+        if (userHome == null) {
+            return Optional.empty();
+        } else {
+            final Path dotStroomDir = Paths.get(userHome)
+                    .resolve(".stroom");
+            if (Files.isDirectory(dotStroomDir)) {
+                return Optional.of(dotStroomDir);
+            } else {
+                return Optional.empty();
+            }
+        }
+    }
+
 
     private Optional<Path> getApplicationJarDir() {
         try {
