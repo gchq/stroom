@@ -18,6 +18,10 @@ package stroom.importexport.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.security.api.SecurityContext;
+import stroom.security.api.UserTokenUtil;
+import stroom.security.shared.User;
+import stroom.security.shared.UserToken;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
@@ -43,13 +47,16 @@ public class ContentPackImport {
 
     private final ImportExportService importExportService;
     private final ContentPackImportConfig config;
+    private final SecurityContext securityContext;
 
     @SuppressWarnings("unused")
     @Inject
     ContentPackImport(final ImportExportService importExportService,
-                      final ContentPackImportConfig config) {
+                      final ContentPackImportConfig config,
+                      final SecurityContext securityContext) {
         this.importExportService = importExportService;
         this.config = config;
+        this.securityContext = securityContext;
     }
 
     //Startup with very low priority to ensure it starts after everything else
@@ -58,7 +65,8 @@ public class ContentPackImport {
         final boolean isEnabled = config.isEnabled();
 
         if (isEnabled) {
-            doImport();
+            final UserToken adminToken = UserTokenUtil.create(User.ADMIN_USER_NAME);
+            securityContext.asUser(adminToken, this::doImport);
         } else {
             LOGGER.info("Content pack import currently disabled via property");
         }
@@ -140,11 +148,30 @@ public class ContentPackImport {
     }
 
     private List<Path> getContentPackBaseDirs() {
-        return Stream.of(getApplicationJarDir(), Optional.of(FileUtil.getTempDir()))
+        // Look in a number of places for content packs:
+        //  Relative to the jar if we are running in a jar
+        //  ~/.stroom
+        // stroom.temp
+        return Stream.of(
+                getApplicationJarDir(),
+                getDotStroomDir(),
+                Optional.of(FileUtil.getTempDir())
+        )
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .map(path -> path.resolve(CONTENT_PACK_IMPORT_DIR))
                 .collect(Collectors.toList());
+    }
+
+    private Optional<Path> getDotStroomDir() {
+        final String userHome = System.getProperty("user.home");
+        if (userHome == null) {
+            return Optional.empty();
+        } else {
+            final Path dotStroomDir = Paths.get(userHome)
+                    .resolve(".stroom");
+            return Optional.of(dotStroomDir);
+        }
     }
 
     private Optional<Path> getApplicationJarDir() {
