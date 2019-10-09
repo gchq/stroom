@@ -65,7 +65,7 @@ appConfig:
       jdbcDriverUsername: ${STROOM_JDBC_DRIVER_USERNAME:-stroomuser}
       jdbcDriverPassword: ${STROOM_JDBC_DRIVER_PASSWORD:-stroompassword1}
   contentPackImport:
-    enabled: false
+    enabled: true
   data:
     meta:
       metaValueConfig: null

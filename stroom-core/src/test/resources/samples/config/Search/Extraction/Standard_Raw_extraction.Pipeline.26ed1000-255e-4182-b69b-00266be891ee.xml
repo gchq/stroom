@@ -1,0 +1,39 @@
+<?xml version="1.1" encoding="UTF-8"?>
+<pipeline>
+   <elements>
+      <add>
+         <element>
+            <id>xPathExtractionOutputFilter</id>
+            <type>XPathExtractionOutputFilter</type>
+         </element>
+      </add>
+      <remove>
+         <element>
+            <id>searchResultOutputFilter</id>
+            <type>SearchResultOutputFilter</type>
+         </element>
+      </remove>
+   </elements>
+   <properties>
+      <add>
+         <property>
+            <element>xsltFilter</element>
+            <name>xslt</name>
+         </property>
+      </add>
+   </properties>
+   <links>
+      <add>
+         <link>
+            <from>xsltFilter</from>
+            <to>xPathExtractionOutputFilter</to>
+         </link>
+      </add>
+      <remove>
+         <link>
+            <from>xsltFilter</from>
+            <to>searchResultOutputFilter</to>
+         </link>
+      </remove>
+   </links>
+</pipeline>
