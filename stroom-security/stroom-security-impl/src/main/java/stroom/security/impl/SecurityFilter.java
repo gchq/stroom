@@ -23,6 +23,8 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
+import stroom.security.api.AuthenticationService;
+import stroom.security.api.AuthenticationToken;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.session.UserSessionUtil;
 import stroom.util.servlet.UserAgentSessionUtil;

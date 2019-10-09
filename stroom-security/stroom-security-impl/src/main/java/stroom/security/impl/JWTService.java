@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
+import stroom.security.api.AuthenticationToken;
 import stroom.security.impl.AuthenticationConfig.JwtConfig;
 import stroom.util.HasHealthCheck;
 import stroom.util.shared.ModelStringUtil;

@@ -26,6 +26,10 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import stroom.security.api.AuthenticationService;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.User;
+import stroom.security.shared.UserToken;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -52,6 +56,10 @@ class TestContentPackImport {
     private ImportExportService importExportService;
     @Mock
     private ContentPackImportConfig contentPackImportConfig;
+    @Mock
+    private SecurityContext securityContext;
+    @Mock
+    private AuthenticationService authenticationService;
 
     private Path testPack1 = CONTENT_PACK_DIR.resolve("testPack1.zip");
     private Path testPack2 = CONTENT_PACK_DIR.resolve("testPack2.zip");
@@ -74,6 +82,20 @@ class TestContentPackImport {
                 }
             });
         }
+
+        Mockito.lenient()
+                .doAnswer(invocation -> {
+                    Runnable runnable = invocation.getArgument(1);
+                    runnable.run();
+                    return null;
+                })
+                .when(securityContext).asUser(Mockito.any(UserToken.class), Mockito.any(Runnable.class));
+
+        User adminUser = new User();
+        adminUser.setName(User.ADMIN_USER_NAME);
+        Mockito
+                .when(authenticationService.getAdminUser())
+                .thenReturn(adminUser);
     }
 
     @AfterEach
@@ -91,7 +113,7 @@ class TestContentPackImport {
     @Test
     void testStartup_disabled() throws IOException {
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(false);
-        ContentPackImport contentPackImport = new ContentPackImport(importExportService, contentPackImportConfig);
+        ContentPackImport contentPackImport = getContentPackImport();
 
         FileUtil.touch(testPack1);
 
@@ -104,7 +126,7 @@ class TestContentPackImport {
     @Test
     void testStartup_enabledNoFiles() {
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
-        ContentPackImport contentPackImport = new ContentPackImport(importExportService, contentPackImportConfig);
+        ContentPackImport contentPackImport = getContentPackImport();
         contentPackImport.startup();
         Mockito.verifyZeroInteractions(importExportService);
     }
@@ -112,7 +134,7 @@ class TestContentPackImport {
     @Test
     void testStartup_enabledThreeFiles() throws IOException {
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
-        ContentPackImport contentPackImport = new ContentPackImport(importExportService, contentPackImportConfig);
+        ContentPackImport contentPackImport = getContentPackImport();
 
         FileUtil.touch(testPack1);
         FileUtil.touch(testPack2);
@@ -137,7 +159,7 @@ class TestContentPackImport {
     @Test
     void testStartup_failedImport() throws IOException {
         Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
-        ContentPackImport contentPackImport = new ContentPackImport(importExportService, contentPackImportConfig);
+        ContentPackImport contentPackImport = getContentPackImport();
 
         Mockito.doThrow(new RuntimeException("Error thrown by mock import service for test"))
                 .when(importExportService)
@@ -150,5 +172,10 @@ class TestContentPackImport {
         //File should have moved into the failed dir
         assertThat(Files.exists(testPack1)).isFalse();
         assertThat(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.FAILED_DIR).resolve(testPack1.getFileName()))).isTrue();
+    }
+
+    private ContentPackImport getContentPackImport() {
+        return new ContentPackImport(
+                importExportService, contentPackImportConfig, securityContext, authenticationService);
     }
 }
