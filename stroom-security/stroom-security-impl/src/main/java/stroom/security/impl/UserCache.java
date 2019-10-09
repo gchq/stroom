@@ -41,9 +41,14 @@ class UserCache implements Clearable {
     UserCache(final CacheManager cacheManager,
               final UserService userService,
               final SecurityContext securityContext) {
+        // TODO if get is called on the cache before the admin user has been created
+        //  then the cache will get an empty optional and then nobody will be able to
+        //  get the admin user. May want to call getUser on AuthenticationService which
+        //  will ensure the user.
         final CacheLoader<String, Optional<User>> cacheLoader = CacheLoader.from(
                 name -> securityContext.asProcessingUserResult(
                         () -> Optional.ofNullable(userService.getUserByName(name))));
+
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
                 .maximumSize(MAX_CACHE_ENTRIES)
                 .expireAfterAccess(30, TimeUnit.MINUTES);
