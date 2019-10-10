@@ -19,6 +19,7 @@ package stroom.kafka.shared;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import stroom.docstore.shared.Doc;
 
@@ -79,7 +80,17 @@ public class KafkaConfigDoc extends Doc {
         this.kafkaVersion = kafkaVersion;
     }
 
-    @JsonTypeInfo(use=JsonTypeInfo.Id.CLASS, include=JsonTypeInfo.As.WRAPPER_ARRAY)
+    // Kafka expects typed property values so jackson needs to know what
+    // types to de-serialise as using a white list of aliased types
+    @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.WRAPPER_ARRAY)
+    @JsonSubTypes({
+            @JsonSubTypes.Type(value = Boolean.class, name = "booleanType"),
+            @JsonSubTypes.Type(value = Integer.class, name = "integerType"),
+            @JsonSubTypes.Type(value = Short.class, name = "shortType"),
+            @JsonSubTypes.Type(value = Long.class, name = "longType"),
+            @JsonSubTypes.Type(value = String.class, name = "stringType"),
+            @JsonSubTypes.Type(value = Class.class, name = "classType")
+    })
     public Map<String, Object> getProperties() {
         return properties;
     }
