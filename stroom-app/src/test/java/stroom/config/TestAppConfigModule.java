@@ -101,9 +101,12 @@ class TestAppConfigModule {
         Predicate<String> packageNameFilter = name ->
                 name.startsWith(STROOM_PACKAGE_PREFIX) && !name.contains("shaded");
 
-        Predicate<Class<?>> classFilter = clazz ->
-                !clazz.equals(IsConfig.class) && !clazz.equals(AppConfig.class);
+        Predicate<Class<?>> classFilter = clazz -> {
 
+            return !clazz.equals(IsConfig.class) && !clazz.equals(AppConfig.class);
+        };
+
+        LOGGER.info("Finding all IsConfig classes");
 
         // Find all classes that implement IsConfig
         final ClassLoader classLoader = getClass().getClassLoader();
@@ -117,6 +120,8 @@ class TestAppConfigModule {
                     LOGGER.debug(clazz.getSimpleName());
                 })
                 .collect(Collectors.toSet());
+
+        LOGGER.info("Finding all classes in object tree");
 
         // Find all stroom. classes in the AppConfig tree, i.e. config POJOs
         final Set<Class<?>> configClasses = new HashSet<>();
@@ -141,13 +146,10 @@ class TestAppConfigModule {
                     }
                 });
 
-        Assertions.assertThat(isConfigClasses)
-                .contains(CommonDbConfig.class);
-        Assertions.assertThat(configClasses)
-                .contains(CommonDbConfig.class);
-
         // Make sure all config classes implement IsConfig and all IsConfig classes are in
-        // the AppConfig tree
+        // the AppConfig tree. If there is a mismatch then it may be due to the getter/setter not
+        // being public in the config class, else the config class may not be a property in the
+        // AppConfig object tree
         Assertions.assertThat(isConfigClasses)
                 .containsAll(configClasses);
         Assertions.assertThat(configClasses)
