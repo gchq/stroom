@@ -12,6 +12,7 @@ import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
+import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.impl.IndexConfig;
@@ -22,6 +23,8 @@ import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.search.impl.SearchConfig;
+import stroom.search.solr.search.SolrSearchConfig;
+import stroom.searchable.impl.SearchableConfig;
 import stroom.security.impl.SecurityConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryHistoryConfig;
@@ -45,6 +48,7 @@ public class AppConfig implements IsConfig {
     private DataSourceUrlConfig dataSourceUrlConfig;
     private ExplorerConfig explorerConfig;
     private ExportConfig exportConfig;
+    private FeedConfig feedConfig;
     private IndexConfig indexConfig;
     private JobSystemConfig jobSystemConfig;
     private LifecycleConfig lifecycleConfig;
@@ -56,8 +60,10 @@ public class AppConfig implements IsConfig {
     private ProxyAggregationConfig proxyAggregationConfig;
     private ReceiveDataConfig receiveDataConfig;
     private SearchConfig searchConfig;
+    private SearchableConfig searchableConfig;
     private SecurityConfig securityConfig;
     private ServiceDiscoveryConfig serviceDiscoveryConfig;
+    private SolrSearchConfig solrSearchConfig;
     private StatisticsConfig statisticsConfig;
     private StoredQueryHistoryConfig storedQueryHistoryConfig;
     private UiConfig uiConfig;
@@ -75,6 +81,7 @@ public class AppConfig implements IsConfig {
         this.dataSourceUrlConfig = new DataSourceUrlConfig();
         this.explorerConfig = new ExplorerConfig();
         this.exportConfig = new ExportConfig();
+        this.feedConfig = new FeedConfig();
         this.indexConfig = new IndexConfig();
         this.jobSystemConfig = new JobSystemConfig();
         this.lifecycleConfig = new LifecycleConfig();
@@ -86,6 +93,8 @@ public class AppConfig implements IsConfig {
         this.proxyAggregationConfig = new ProxyAggregationConfig();
         this.receiveDataConfig = new ReceiveDataConfig();
         this.searchConfig = new SearchConfig();
+        this.searchableConfig = new SearchableConfig();
+        this.solrSearchConfig = new SolrSearchConfig();
         this.securityConfig = new SecurityConfig();
         this.serviceDiscoveryConfig = new ServiceDiscoveryConfig();
         this.statisticsConfig = new StatisticsConfig();
@@ -105,6 +114,7 @@ public class AppConfig implements IsConfig {
               final DataSourceUrlConfig dataSourceUrlConfig,
               final ExplorerConfig explorerConfig,
               final ExportConfig exportConfig,
+              final FeedConfig feedConfig,
               final IndexConfig indexConfig,
               final JobSystemConfig jobSystemConfig,
               final LifecycleConfig lifecycleConfig,
@@ -116,6 +126,8 @@ public class AppConfig implements IsConfig {
               final ProxyAggregationConfig proxyAggregationConfig,
               final ReceiveDataConfig receiveDataConfig,
               final SearchConfig searchConfig,
+              final SearchableConfig searchableConfig,
+              final SolrSearchConfig solrSearchConfig,
               final SecurityConfig securityConfig,
               final ServiceDiscoveryConfig serviceDiscoveryConfig,
               final StatisticsConfig statisticsConfig,
@@ -134,6 +146,7 @@ public class AppConfig implements IsConfig {
         this.dataSourceUrlConfig = dataSourceUrlConfig;
         this.explorerConfig = explorerConfig;
         this.exportConfig = exportConfig;
+        this.feedConfig = feedConfig;
         this.indexConfig = indexConfig;
         this.jobSystemConfig = jobSystemConfig;
         this.lifecycleConfig = lifecycleConfig;
@@ -145,6 +158,8 @@ public class AppConfig implements IsConfig {
         this.proxyAggregationConfig = proxyAggregationConfig;
         this.receiveDataConfig = receiveDataConfig;
         this.searchConfig = searchConfig;
+        this.searchableConfig = searchableConfig;
+        this.solrSearchConfig = solrSearchConfig;
         this.securityConfig = securityConfig;
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.statisticsConfig = statisticsConfig;
@@ -196,7 +211,7 @@ public class AppConfig implements IsConfig {
         return commonDbConfig;
     }
 
-    void setCommonDbConfig(final CommonDbConfig commonDbConfig) {
+    public void setCommonDbConfig(final CommonDbConfig commonDbConfig) {
         this.commonDbConfig = commonDbConfig;
     }
 
@@ -245,6 +260,15 @@ public class AppConfig implements IsConfig {
 
     public void setExplorerConfig(final ExplorerConfig explorerConfig) {
         this.explorerConfig = explorerConfig;
+    }
+
+    @JsonProperty("feed")
+    public FeedConfig getFeedConfig() {
+        return feedConfig;
+    }
+
+    public void setFeedConfig(final FeedConfig feedConfig) {
+        this.feedConfig = feedConfig;
     }
 
     @JsonProperty("export")
@@ -363,6 +387,24 @@ public class AppConfig implements IsConfig {
 
     public void setSearchConfig(final SearchConfig searchConfig) {
         this.searchConfig = searchConfig;
+    }
+
+    @JsonProperty("searchable")
+    public SearchableConfig getSearchableConfig() {
+        return searchableConfig;
+    }
+
+    public void setSearchableConfig(final SearchableConfig searchableConfig) {
+        this.searchableConfig = searchableConfig;
+    }
+
+    @JsonProperty("solrSearch")
+    public SolrSearchConfig getSolrSearchConfig() {
+        return solrSearchConfig;
+    }
+
+    public void setSolrSearchConfig(final SolrSearchConfig solrSearchConfig) {
+        this.solrSearchConfig = solrSearchConfig;
     }
 
     @JsonProperty("security")
