@@ -14,12 +14,11 @@ dependencies {
 
     compile libs.stroomDocRef
 
-    compile group: 'org.apache.kafka', name:'kafka-clients', version:'0.10.0.1' //CDH5.10 uses kafka 10.0, Kafka <10.2 is picky about client and server versions.
-
     compile libs.guice4
     compile libs.jackson_annotations
     compile libs.javax_inject;
     compile libs.jaxb_api
+    compile libs.kafka_clients
     compile libs.slf4j_api
 
     testCompile libs.assertj_core
