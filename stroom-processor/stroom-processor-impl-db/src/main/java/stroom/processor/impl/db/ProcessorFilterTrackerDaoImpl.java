@@ -15,8 +15,8 @@ class ProcessorFilterTrackerDaoImpl implements ProcessorFilterTrackerDao {
     private final GenericDao<ProcessorFilterTrackerRecord, ProcessorFilterTracker, Integer> genericDao;
 
     @Inject
-    ProcessorFilterTrackerDaoImpl(final ConnectionProvider connectionProvider) {
-        this.genericDao = new GenericDao<>(PROCESSOR_FILTER_TRACKER, PROCESSOR_FILTER_TRACKER.ID, ProcessorFilterTracker.class, connectionProvider);
+    ProcessorFilterTrackerDaoImpl(final ProcessorDbConnProvider processorDbConnProvider) {
+        this.genericDao = new GenericDao<>(PROCESSOR_FILTER_TRACKER, PROCESSOR_FILTER_TRACKER.ID, ProcessorFilterTracker.class, processorDbConnProvider);
     }
 
     @Override

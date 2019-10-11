@@ -11,7 +11,7 @@ import stroom.security.impl.UserDao;
 
 import java.util.function.Function;
 
-public class SecurityDbModule extends AbstractFlyWayDbModule<SecurityConfig, ConnectionProvider> {
+public class SecurityDbModule extends AbstractFlyWayDbModule<SecurityConfig, SecurityDbConnProvider> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityDbModule.class);
     private static final String MODULE = "stroom-security";
     private static final String FLYWAY_LOCATIONS = "stroom/security/impl/db/migration";
@@ -41,12 +41,12 @@ public class SecurityDbModule extends AbstractFlyWayDbModule<SecurityConfig, Con
     }
 
     @Override
-    public Function<HikariConfig, ConnectionProvider> getConnectionProviderConstructor() {
-        return ConnectionProvider::new;
+    public Function<HikariConfig, SecurityDbConnProvider> getConnectionProviderConstructor() {
+        return SecurityDbConnProvider::new;
     }
 
     @Override
-    public Class<ConnectionProvider> getConnectionProviderType() {
-        return ConnectionProvider.class;
+    public Class<SecurityDbConnProvider> getConnectionProviderType() {
+        return SecurityDbConnProvider.class;
     }
 }

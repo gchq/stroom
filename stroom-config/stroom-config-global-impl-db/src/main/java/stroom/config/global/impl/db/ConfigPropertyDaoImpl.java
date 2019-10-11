@@ -55,13 +55,13 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
         return record;
     };
 
-    private final ConnectionProvider connectionProvider;
+    private final GlobalConfigDbConnProvider globalConfigDbConnProvider;
     private final GenericDao<ConfigRecord, ConfigProperty, Integer> genericDao;
 
     @Inject
-    ConfigPropertyDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
-        this.genericDao = new GenericDao<>(CONFIG, CONFIG.ID, ConfigProperty.class, connectionProvider);
+    ConfigPropertyDaoImpl(final GlobalConfigDbConnProvider globalConfigDbConnProvider) {
+        this.globalConfigDbConnProvider = globalConfigDbConnProvider;
+        this.genericDao = new GenericDao<>(CONFIG, CONFIG.ID, ConfigProperty.class, globalConfigDbConnProvider);
         genericDao.setRecordToObjectMapper(RECORD_TO_CONFIG_PROPERTY_MAPPER);
         genericDao.setObjectToRecordMapper(CONFIG_PROPERTY_TO_RECORD_MAPPER);
     }
@@ -88,7 +88,7 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
 
     @Override
     public boolean delete(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(globalConfigDbConnProvider, context -> context
                 .deleteFrom(CONFIG)
                 .where(CONFIG.NAME.eq(name))
                 .execute()) > 0;
@@ -96,7 +96,7 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
 
     @Override
     public List<ConfigProperty> list() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(globalConfigDbConnProvider, context -> context
                 .fetch(CONFIG)
                 .map(RECORD_TO_CONFIG_PROPERTY_MAPPER::apply));
     }

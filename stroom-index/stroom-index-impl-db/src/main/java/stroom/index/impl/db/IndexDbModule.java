@@ -11,7 +11,7 @@ import stroom.index.impl.IndexVolumeGroupDao;
 
 import java.util.function.Function;
 
-public class IndexDbModule extends AbstractFlyWayDbModule<IndexConfig, ConnectionProvider> {
+public class IndexDbModule extends AbstractFlyWayDbModule<IndexConfig, IndexDbConnProvider> {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexDbModule.class);
     private static final String MODULE = "stroom-index";
     private static final String FLYWAY_LOCATIONS = "stroom/index/impl/db/migration";
@@ -41,12 +41,12 @@ public class IndexDbModule extends AbstractFlyWayDbModule<IndexConfig, Connectio
     }
 
     @Override
-    public Function<HikariConfig, ConnectionProvider> getConnectionProviderConstructor() {
-        return ConnectionProvider::new;
+    public Function<HikariConfig, IndexDbConnProvider> getConnectionProviderConstructor() {
+        return IndexDbConnProvider::new;
     }
 
     @Override
-    public Class<ConnectionProvider> getConnectionProviderType() {
-        return ConnectionProvider.class;
+    public Class<IndexDbConnProvider> getConnectionProviderType() {
+        return IndexDbConnProvider.class;
     }
 }

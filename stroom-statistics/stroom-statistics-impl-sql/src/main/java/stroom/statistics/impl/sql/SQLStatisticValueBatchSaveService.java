@@ -52,11 +52,11 @@ class SQLStatisticValueBatchSaveService {
         SAVE_CALL = sql.toString();
     }
 
-    private final ConnectionProvider connectionProvider;
+    private final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider;
 
     @Inject
-    SQLStatisticValueBatchSaveService(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    SQLStatisticValueBatchSaveService(final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider) {
+        this.SQLStatisticsDbConnProvider = SQLStatisticsDbConnProvider;
     }
 
     @SuppressWarnings("SQL_NONCONSTANT_STRING_PASSED_TO_EXECUTE")
@@ -178,6 +178,6 @@ class SQLStatisticValueBatchSaveService {
     }
 
     Connection getConnection() throws SQLException {
-        return connectionProvider.getConnection();
+        return SQLStatisticsDbConnProvider.getConnection();
     }
 }

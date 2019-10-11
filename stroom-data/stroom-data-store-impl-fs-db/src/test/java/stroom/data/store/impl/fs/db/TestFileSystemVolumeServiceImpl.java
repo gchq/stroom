@@ -81,10 +81,10 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 
         final SecurityContext securityContext = new MockSecurityContext();
 
-        final ConnectionProvider connectionProvider = new FsDataStoreDbModule()
+        final FsDataStoreDbConnProvider fsDataStoreDbConnProvider = new FsDataStoreDbModule()
                 .getConnectionProvider(DataStoreServiceConfig::new, new HikariConfigHolder());
-        final FsVolumeDao fsVolumeDao = new FsVolumeDaoImpl(connectionProvider);
-        final FsVolumeStateDao fsVolumeStateDao = new FsVolumeStateDaoImpl(connectionProvider);
+        final FsVolumeDao fsVolumeDao = new FsVolumeDaoImpl(fsDataStoreDbConnProvider);
+        final FsVolumeStateDao fsVolumeStateDao = new FsVolumeStateDaoImpl(fsDataStoreDbConnProvider);
         volumeService = new FsVolumeService(fsVolumeDao,
                 fsVolumeStateDao,
                 securityContext,

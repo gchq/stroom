@@ -10,7 +10,7 @@ import stroom.db.util.AbstractFlyWayDbModule;
 
 import java.util.function.Function;
 
-public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyServiceConfig, ConnectionProvider> {
+public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyServiceConfig, GlobalConfigDbConnProvider> {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigDbModule.class);
     private static final String MODULE = "stroom-config";
     private static final String FLYWAY_LOCATIONS = "stroom/config/global/impl/db/migration";
@@ -40,12 +40,12 @@ public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyService
     }
 
     @Override
-    public Function<HikariConfig, ConnectionProvider> getConnectionProviderConstructor() {
-        return ConnectionProvider::new;
+    public Function<HikariConfig, GlobalConfigDbConnProvider> getConnectionProviderConstructor() {
+        return GlobalConfigDbConnProvider::new;
     }
 
     @Override
-    public Class<ConnectionProvider> getConnectionProviderType() {
-        return ConnectionProvider.class;
+    public Class<GlobalConfigDbConnProvider> getConnectionProviderType() {
+        return GlobalConfigDbConnProvider.class;
     }
 }

@@ -44,7 +44,7 @@ class TestAppConfigModule {
     }
 
     @Test
-    void configure() throws IOException {
+    void testCommonDbConfig() throws IOException {
 
         Path devYamlPath = getDevYamlPath();
 

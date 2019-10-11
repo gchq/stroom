@@ -15,11 +15,11 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsMetaVolume.FS_META_VOLU
 import static stroom.data.store.impl.fs.db.jooq.tables.FsVolume.FS_VOLUME;
 
 public class DataVolumeDaoImpl implements DataVolumeDao {
-    private final ConnectionProvider connectionProvider;
+    private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
 
     @Inject
-    DataVolumeDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    DataVolumeDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider) {
+        this.fsDataStoreDbConnProvider = fsDataStoreDbConnProvider;
     }
 
     @Override
@@ -28,7 +28,7 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
                 JooqUtil.getSetCondition(FS_META_VOLUME.FS_VOLUME_ID, criteria.getVolumeIdSet()),
                 JooqUtil.getSetCondition(FS_META_VOLUME.META_ID, criteria.getMetaIdSet()));
 
-        return JooqUtil.contextResult(connectionProvider, context -> {
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> {
             final List<DataVolume> list = context.select(FS_META_VOLUME.META_ID, FS_VOLUME.PATH)
                     .from(FS_META_VOLUME)
                     .join(FS_VOLUME).on(FS_VOLUME.ID.eq(FS_META_VOLUME.FS_VOLUME_ID))
@@ -46,7 +46,7 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
      */
     @Override
     public DataVolume findDataVolume(final long metaId) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                 .select(FS_META_VOLUME.META_ID, FS_VOLUME.PATH)
                 .from(FS_META_VOLUME)
                 .join(FS_VOLUME).on(FS_VOLUME.ID.eq(FS_META_VOLUME.FS_VOLUME_ID))
@@ -58,7 +58,7 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
 
     @Override
     public DataVolume createDataVolume(final long dataId, final FsVolume volume) {
-        return JooqUtil.contextResult(connectionProvider, context -> {
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> {
             context.insertInto(FS_META_VOLUME, FS_META_VOLUME.META_ID, FS_META_VOLUME.FS_VOLUME_ID)
                         .values(dataId, volume.getId())
                         .execute();

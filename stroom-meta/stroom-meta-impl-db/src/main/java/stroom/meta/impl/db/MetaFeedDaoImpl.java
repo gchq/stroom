@@ -37,11 +37,11 @@ class MetaFeedDaoImpl implements MetaFeedDao {
     // TODO : @66 Replace with a proper cache.
     private final Map<String, Integer> cache = new ConcurrentHashMap<>();
 
-    private final ConnectionProvider connectionProvider;
+    private final MetaDbConnProvider metaDbConnProvider;
 
     @Inject
-    MetaFeedDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    MetaFeedDaoImpl(final MetaDbConnProvider metaDbConnProvider) {
+        this.metaDbConnProvider = metaDbConnProvider;
     }
 
     @Override
@@ -71,7 +71,7 @@ class MetaFeedDaoImpl implements MetaFeedDao {
     }
 
     Optional<Integer> get(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(META_FEED.ID)
                 .from(META_FEED)
                 .where(META_FEED.NAME.eq(name))
@@ -80,7 +80,7 @@ class MetaFeedDaoImpl implements MetaFeedDao {
 
     List<Integer> find(final String name) {
         final Condition condition = createCondition(META_FEED.NAME, name);
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(META_FEED.ID)
                 .from(META_FEED)
                 .where(condition)
@@ -98,7 +98,7 @@ class MetaFeedDaoImpl implements MetaFeedDao {
     }
 
     Optional<Integer> create(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .insertInto(META_FEED, META_FEED.NAME)
                 .values(name)
                 .onDuplicateKeyIgnore()
@@ -109,7 +109,7 @@ class MetaFeedDaoImpl implements MetaFeedDao {
 
     @Override
     public List<String> list() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(META_FEED.NAME)
                 .from(META_FEED)
                 .fetch(META_FEED.NAME));
@@ -122,7 +122,7 @@ class MetaFeedDaoImpl implements MetaFeedDao {
     }
 
     private int deleteAll() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .delete(META_FEED)
                 .execute());
     }

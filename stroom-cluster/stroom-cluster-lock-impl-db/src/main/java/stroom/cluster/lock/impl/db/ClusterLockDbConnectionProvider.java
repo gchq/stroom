@@ -3,8 +3,8 @@ package stroom.cluster.lock.impl.db;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-class ConnectionProvider extends HikariDataSource {
-    ConnectionProvider(final HikariConfig configuration) {
+class ClusterLockDbConnectionProvider extends HikariDataSource {
+    ClusterLockDbConnectionProvider(final HikariConfig configuration) {
         super(configuration);
     }
 }

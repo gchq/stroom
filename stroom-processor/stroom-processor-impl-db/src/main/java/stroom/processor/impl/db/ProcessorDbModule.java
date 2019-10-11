@@ -15,7 +15,7 @@ import stroom.util.shared.Clearable;
 
 import java.util.function.Function;
 
-public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorConfig, ConnectionProvider> {
+public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorConfig, ProcessorDbConnProvider> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorDbModule.class);
     private static final String MODULE = "stroom-processor";
     private static final String FLYWAY_LOCATIONS = "stroom/processor/impl/db/migration";
@@ -50,12 +50,12 @@ public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorConfig, C
     }
 
     @Override
-    public Function<HikariConfig, ConnectionProvider> getConnectionProviderConstructor() {
-        return ConnectionProvider::new;
+    public Function<HikariConfig, ProcessorDbConnProvider> getConnectionProviderConstructor() {
+        return ProcessorDbConnProvider::new;
     }
 
     @Override
-    public Class<ConnectionProvider> getConnectionProviderType() {
-        return ConnectionProvider.class;
+    public Class<ProcessorDbConnProvider> getConnectionProviderType() {
+        return ProcessorDbConnProvider.class;
     }
 }

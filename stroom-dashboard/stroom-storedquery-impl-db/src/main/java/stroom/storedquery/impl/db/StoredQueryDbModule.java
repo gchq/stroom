@@ -11,7 +11,7 @@ import stroom.util.shared.Clearable;
 
 import java.util.function.Function;
 
-public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryConfig, ConnectionProvider> {
+public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryConfig, StoredQueryDbConnProvider> {
     private static final Logger LOGGER = LoggerFactory.getLogger(StoredQueryModule.class);
     private static final String MODULE = "stroom-storedquery";
     private static final String FLYWAY_LOCATIONS = "stroom/storedquery/impl/db/migration";
@@ -42,12 +42,12 @@ public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryConfi
     }
 
     @Override
-    public Function<HikariConfig, ConnectionProvider> getConnectionProviderConstructor() {
-        return ConnectionProvider::new;
+    public Function<HikariConfig, StoredQueryDbConnProvider> getConnectionProviderConstructor() {
+        return StoredQueryDbConnProvider::new;
     }
 
     @Override
-    public Class<ConnectionProvider> getConnectionProviderType() {
-        return ConnectionProvider.class;
+    public Class<StoredQueryDbConnProvider> getConnectionProviderType() {
+        return StoredQueryDbConnProvider.class;
     }
 }

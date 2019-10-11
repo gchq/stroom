@@ -89,6 +89,9 @@ appConfig:
           cachePrepStmts: true
           prepStmtCacheSize: 250
           prepStmtCacheSqlLimit: 2048
+    filesystemVolume:
+      volumeSelector: "RoundRobin"
+      createDefaultOnStart: true
   dataSourceUrl:
     index: "http://127.0.0.1:8080/api/stroom-index/v2"
     solrIndex: "http://127.0.0.1:8080/api/stroom-solr-index/v2"
@@ -109,6 +112,9 @@ appConfig:
         prepStmtCacheSqlLimit: 2048
   export:
     enabled: false
+  feed:
+    unknownClassification: "UNKNOWN CLASSIFICATION"
+    feedNamePattern: "^[A-Z0-9_-]{3,}$"
   index:
     ramBufferSizeMB: 1024
     db:
@@ -215,7 +221,7 @@ appConfig:
     maxFilesPerAggregate: 10000
     maxUncompressedFileSize: "1G"
     buffferSize: 8192
-  feed:
+  receive:
     receiptPolicyUuid: null
     bufferSize: 8192
     unknownClassification: "UNKNOWN CLASSIFICATION"
@@ -231,6 +237,8 @@ appConfig:
       maxDocIdQueueSize: 1000000
       maxThreads: 4
       maxThreadsPerTask: 2
+  searchable:
+    storeSize: "1000000,100,10,1"
   security:
     db:
       connection:
@@ -264,6 +272,13 @@ appConfig:
     curatorMaxSleepTimeMs: 300000
     curatorMaxRetries: 100
     zookeeperBasePath: "/stroom-services"
+  solrSearch:
+    maxStoredDataQueueSize: 1000
+    maxBooleanClauseCount: 1024
+    storeSize: "1000000,100,10,1"
+    extraction:
+      maxThreads: 4
+      maxThreadsPerTask: 2
   statistics:
     sql:
       docRefType: "StatisticStore"

@@ -63,13 +63,13 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         return record;
     };
 
-    private final ConnectionProvider connectionProvider;
+    private final IndexDbConnProvider indexDbConnProvider;
     private final GenericDao<IndexVolumeRecord, IndexVolume, Integer> genericDao;
 
     @Inject
-    IndexVolumeDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
-        genericDao = new GenericDao<>(INDEX_VOLUME, INDEX_VOLUME.ID, IndexVolume.class, connectionProvider);
+    IndexVolumeDaoImpl(final IndexDbConnProvider indexDbConnProvider) {
+        this.indexDbConnProvider = indexDbConnProvider;
+        genericDao = new GenericDao<>(INDEX_VOLUME, INDEX_VOLUME.ID, IndexVolume.class, indexDbConnProvider);
         genericDao.setRecordToObjectMapper(RECORD_TO_INDEX_VOLUME_MAPPER);
         genericDao.setObjectToRecordMapper(INDEX_VOLUME_TO_RECORD_MAPPER);
     }
@@ -96,7 +96,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
 
     @Override
     public List<IndexVolume> getAll() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .select()
                 .from(INDEX_VOLUME)
                 .fetch()
@@ -105,7 +105,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
 
     @Override
     public List<IndexVolume> getVolumesInGroupOnNode(final String groupName, final String nodeName) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .select()
                 .from(INDEX_VOLUME)
                 .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.NAME.eq(INDEX_VOLUME.INDEX_VOLUME_GROUP_NAME))

@@ -10,7 +10,7 @@ import stroom.job.impl.JobSystemConfig;
 
 import java.util.function.Function;
 
-public class JobDbModule extends AbstractFlyWayDbModule<JobSystemConfig, ConnectionProvider> {
+public class JobDbModule extends AbstractFlyWayDbModule<JobSystemConfig, JobDbConnProvider> {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobDbModule.class);
     private static final String MODULE = "stroom-job";
     private static final String FLYWAY_LOCATIONS = "stroom/job/impl/db/migration";
@@ -39,12 +39,12 @@ public class JobDbModule extends AbstractFlyWayDbModule<JobSystemConfig, Connect
     }
 
     @Override
-    public Function<HikariConfig, ConnectionProvider> getConnectionProviderConstructor() {
-        return ConnectionProvider::new;
+    public Function<HikariConfig, JobDbConnProvider> getConnectionProviderConstructor() {
+        return JobDbConnProvider::new;
     }
 
     @Override
-    public Class<ConnectionProvider> getConnectionProviderType() {
-        return ConnectionProvider.class;
+    public Class<JobDbConnProvider> getConnectionProviderType() {
+        return JobDbConnProvider.class;
     }
 }

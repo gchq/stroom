@@ -24,11 +24,11 @@ class FsFeedPathDaoImpl implements FsFeedPathDao {
     // TODO : @66 Replace with a proper cache.
     private final Map<String, String> cache = new ConcurrentHashMap<>();
 
-    private final ConnectionProvider connectionProvider;
+    private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
 
     @Inject
-    FsFeedPathDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    FsFeedPathDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider) {
+        this.fsDataStoreDbConnProvider = fsDataStoreDbConnProvider;
     }
 
     @Override
@@ -56,7 +56,7 @@ class FsFeedPathDaoImpl implements FsFeedPathDao {
             LOGGER.warn(LambdaLogUtil.message("A non standard feed name was found when registering a file path '{}'", name));
         }
 
-        JooqUtil.context(connectionProvider, context -> context
+        JooqUtil.context(fsDataStoreDbConnProvider, context -> context
                 .insertInto(FS_FEED_PATH, FS_FEED_PATH.NAME, FS_FEED_PATH.PATH)
                 .values(name, path)
                 .onDuplicateKeyIgnore()
@@ -64,7 +64,7 @@ class FsFeedPathDaoImpl implements FsFeedPathDao {
     }
 
     private Optional<String> getPath(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                 .select(FS_FEED_PATH.PATH)
                 .from(FS_FEED_PATH)
                 .where(FS_FEED_PATH.NAME.eq(name))

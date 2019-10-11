@@ -29,7 +29,7 @@ import stroom.db.util.AbstractFlyWayDbModule;
 
 import java.util.function.Function;
 
-public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreServiceConfig, ConnectionProvider> {
+public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreServiceConfig, FsDataStoreDbConnProvider> {
     private static final Logger LOGGER = LoggerFactory.getLogger(FsDataStoreDbModule.class);
     private static final String MODULE = "stroom-data-store";
     private static final String FLYWAY_LOCATIONS = "stroom/data/store/impl/fs/db/migration";
@@ -61,12 +61,12 @@ public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreService
     }
 
     @Override
-    public Function<HikariConfig, ConnectionProvider> getConnectionProviderConstructor() {
-        return ConnectionProvider::new;
+    public Function<HikariConfig, FsDataStoreDbConnProvider> getConnectionProviderConstructor() {
+        return FsDataStoreDbConnProvider::new;
     }
 
     @Override
-    public Class<ConnectionProvider> getConnectionProviderType() {
-        return ConnectionProvider.class;
+    public Class<FsDataStoreDbConnProvider> getConnectionProviderType() {
+        return FsDataStoreDbConnProvider.class;
     }
 }

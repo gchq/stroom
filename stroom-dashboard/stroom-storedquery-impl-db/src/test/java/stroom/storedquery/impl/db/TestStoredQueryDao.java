@@ -70,11 +70,11 @@ class TestStoredQueryDao {
         Mockito.when(securityContext.getUserId()).thenReturn("testuser");
 
         // need an explicit teardown and setup of the DB before each test method
-        final ConnectionProvider connectionProvider = new StoredQueryDbModule()
+        final StoredQueryDbConnProvider storedQueryDbConnProvider = new StoredQueryDbModule()
                 .getConnectionProvider(StoredQueryConfig::new, new HikariConfigHolder());
-        DbUtil.clearAllTables(connectionProvider.getConnection());
+        DbUtil.clearAllTables(storedQueryDbConnProvider.getConnection());
 
-        storedQueryDao = new StoredQueryDaoImpl(connectionProvider);
+        storedQueryDao = new StoredQueryDaoImpl(storedQueryDbConnProvider);
         storedQueryDao.clear();
 
         queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(new SimpleTaskContext(), storedQueryDao, new StoredQueryHistoryConfig());

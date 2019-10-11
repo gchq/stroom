@@ -15,16 +15,16 @@ import static stroom.security.impl.db.jooq.tables.AppPermission.APP_PERMISSION;
 import static stroom.security.impl.db.jooq.tables.StroomUser.STROOM_USER;
 
 public class AppPermissionDaoImpl implements AppPermissionDao {
-    private final ConnectionProvider connectionProvider;
+    private final SecurityDbConnProvider securityDbConnProvider;
 
     @Inject
-    public AppPermissionDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    public AppPermissionDaoImpl(final SecurityDbConnProvider securityDbConnProvider) {
+        this.securityDbConnProvider = securityDbConnProvider;
     }
 
     @Override
     public Set<String> getPermissionsForUser(final String userUuid) {
-        return JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.select()
                         .from(APP_PERMISSION)
                         .where(APP_PERMISSION.USER_UUID.eq(userUuid))
@@ -35,7 +35,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
     public Set<String> getPermissionsForUserName(String userName) {
         Set<String> permissions = new HashSet<>();
         // Get all permissions for this user
-        permissions.addAll(JooqUtil.contextResult(connectionProvider, context ->
+        permissions.addAll(JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.select()
                         .from(APP_PERMISSION)
                         .join(STROOM_USER)
@@ -47,7 +47,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
         // Get all permissions for this user's groups
         StroomUser userUser = STROOM_USER.as("userUser");
         StroomUser groupUser = STROOM_USER.as("groupUser");
-        permissions.addAll(JooqUtil.contextResult(connectionProvider, context ->
+        permissions.addAll(JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.select()
                         .from(APP_PERMISSION)
                         // app_permission -> group user
@@ -67,7 +67,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
 
     @Override
     public void addPermission(final String userUuid, final String permission) {
-        JooqUtil.context(connectionProvider, context -> {
+        JooqUtil.context(securityDbConnProvider, context -> {
             final Record user = context.fetchOne(STROOM_USER, STROOM_USER.UUID.eq(userUuid));
             if (null == user) {
                 throw new SecurityException(String.format("Could not find user: %s", userUuid));
@@ -82,7 +82,7 @@ public class AppPermissionDaoImpl implements AppPermissionDao {
 
     @Override
     public void removePermission(final String userUuid, String permission) {
-        JooqUtil.context(connectionProvider, context ->
+        JooqUtil.context(securityDbConnProvider, context ->
                 context.deleteFrom(APP_PERMISSION)
                         .where(APP_PERMISSION.USER_UUID.eq(userUuid))
                         .and(APP_PERMISSION.PERMISSION.eq(permission)).execute());

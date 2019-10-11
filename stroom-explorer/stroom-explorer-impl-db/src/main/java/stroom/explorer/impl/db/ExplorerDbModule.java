@@ -8,7 +8,7 @@ import stroom.explorer.impl.ExplorerTreeDao;
 
 import java.util.function.Function;
 
-public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerConfig, ConnectionProvider> {
+public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerConfig, ExplorerDbConnProvider> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExplorerDbModule.class);
     private static final String MODULE = "stroom-explorer";
     private static final String FLYWAY_LOCATIONS = "stroom/explorer/impl/db/migration";
@@ -37,12 +37,12 @@ public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerConfig, Con
     }
 
     @Override
-    public Function<HikariConfig, ConnectionProvider> getConnectionProviderConstructor() {
-        return ConnectionProvider::new;
+    public Function<HikariConfig, ExplorerDbConnProvider> getConnectionProviderConstructor() {
+        return ExplorerDbConnProvider::new;
     }
 
     @Override
-    public Class<ConnectionProvider> getConnectionProviderType() {
-        return ConnectionProvider.class;
+    public Class<ExplorerDbConnProvider> getConnectionProviderType() {
+        return ExplorerDbConnProvider.class;
     }
 }

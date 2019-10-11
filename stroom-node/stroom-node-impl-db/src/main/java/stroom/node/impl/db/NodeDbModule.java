@@ -9,7 +9,7 @@ import stroom.node.impl.NodeDao;
 
 import java.util.function.Function;
 
-public class NodeDbModule extends AbstractFlyWayDbModule<NodeConfig, ConnectionProvider> {
+public class NodeDbModule extends AbstractFlyWayDbModule<NodeConfig, NodeDbConnProvider> {
     private static final Logger LOGGER = LoggerFactory.getLogger(NodeDbModule.class);
     private static final String MODULE = "stroom-node";
     private static final String FLYWAY_LOCATIONS = "stroom/node/impl/db/migration";
@@ -49,12 +49,12 @@ public class NodeDbModule extends AbstractFlyWayDbModule<NodeConfig, ConnectionP
     }
 
     @Override
-    public Function<HikariConfig, ConnectionProvider> getConnectionProviderConstructor() {
-        return ConnectionProvider::new;
+    public Function<HikariConfig, NodeDbConnProvider> getConnectionProviderConstructor() {
+        return NodeDbConnProvider::new;
     }
 
     @Override
-    public Class<ConnectionProvider> getConnectionProviderType() {
-        return ConnectionProvider.class;
+    public Class<NodeDbConnProvider> getConnectionProviderType() {
+        return NodeDbConnProvider.class;
     }
 }

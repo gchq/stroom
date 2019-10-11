@@ -37,6 +37,7 @@ import javax.sql.DataSource;
 public class DataSourceModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceModule.class);
     private static final String MODULE = "datasource-module";
+
     @Override
     protected void configure() {
         // Force creation of connection provider so that legacy migration code executes.
@@ -44,7 +45,7 @@ public class DataSourceModule extends AbstractModule {
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
-                .addBinding(ConnectionProvider.class);
+                .addBinding(CoreDbConnectionProvider.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(FindSystemTableStatusAction.class, FindSystemTableStatusHandler.class);
@@ -52,13 +53,13 @@ public class DataSourceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final Provider<CoreConfig> configProvider,
-                                             final HikariConfigHolder hikariConfigHolder) {
+    CoreDbConnectionProvider getConnectionProvider(final Provider<CoreConfig> configProvider,
+                                                   final HikariConfigHolder hikariConfigHolder) {
         LOGGER.info("Creating connection provider for {}", MODULE);
         final HikariConfig config = hikariConfigHolder.getHikariConfig(configProvider.get());
-        final ConnectionProvider connectionProvider = new ConnectionProvider(config);
+        final CoreDbConnectionProvider coreDbConnectionProvider = new CoreDbConnectionProvider(config);
 //        flyway(connectionProvider);
-        return connectionProvider;
+        return coreDbConnectionProvider;
     }
 
     @Override

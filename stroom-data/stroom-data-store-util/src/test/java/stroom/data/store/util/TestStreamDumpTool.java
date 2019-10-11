@@ -24,7 +24,7 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.db.util.DbUtil;
-import stroom.meta.impl.db.ConnectionProvider;
+import stroom.meta.impl.db.MetaDbConnProvider;
 import stroom.meta.shared.MetaProperties;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.test.common.util.test.TempDir;
@@ -41,7 +41,7 @@ import java.sql.SQLException;
 @ExtendWith(TempDirExtension.class)
 class TestStreamDumpTool {
     @Inject
-    private ConnectionProvider connectionProvider;
+    private MetaDbConnProvider metaDbConnProvider;
     @Inject
     private Store streamStore;
 
@@ -49,7 +49,7 @@ class TestStreamDumpTool {
     void setup() {
         new ToolInjector().getInjector().injectMembers(this);
 
-        try (final Connection connection = connectionProvider.getConnection()) {
+        try (final Connection connection = metaDbConnProvider.getConnection()) {
             DbUtil.clearAllTables(connection);
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);

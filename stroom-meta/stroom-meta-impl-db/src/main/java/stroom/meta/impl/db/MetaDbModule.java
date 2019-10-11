@@ -16,7 +16,7 @@ import stroom.util.shared.Clearable;
 
 import java.util.function.Function;
 
-public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, ConnectionProvider> {
+public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, MetaDbConnProvider> {
     private static final Logger LOGGER = LoggerFactory.getLogger(MetaModule.class);
     private static final String MODULE = "stroom-meta";
     private static final String FLYWAY_LOCATIONS = "stroom/meta/impl/db/migration";
@@ -52,12 +52,12 @@ public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, Conn
     }
 
     @Override
-    public Function<HikariConfig, ConnectionProvider> getConnectionProviderConstructor() {
-        return ConnectionProvider::new;
+    public Function<HikariConfig, MetaDbConnProvider> getConnectionProviderConstructor() {
+        return MetaDbConnProvider::new;
     }
 
     @Override
-    public Class<ConnectionProvider> getConnectionProviderType() {
-        return ConnectionProvider.class;
+    public Class<MetaDbConnProvider> getConnectionProviderType() {
+        return MetaDbConnProvider.class;
     }
 }

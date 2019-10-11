@@ -3,8 +3,8 @@ package stroom.index.impl.db;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
-class ConnectionProvider extends HikariDataSource {
-    ConnectionProvider(final HikariConfig configuration) {
+class IndexDbConnProvider extends HikariDataSource {
+    IndexDbConnProvider(final HikariConfig configuration) {
         super(configuration);
     }
 }

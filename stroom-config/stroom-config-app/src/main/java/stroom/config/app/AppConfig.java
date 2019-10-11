@@ -371,7 +371,7 @@ public class AppConfig implements IsConfig {
         this.storedQueryHistoryConfig = storedQueryHistoryConfig;
     }
 
-    @JsonProperty("feed")
+    @JsonProperty("receive")
     public ReceiveDataConfig getReceiveDataConfig() {
         return receiveDataConfig;
     }

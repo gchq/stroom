@@ -24,7 +24,7 @@ import stroom.task.api.TaskHandlerBinder;
 
 import java.util.function.Function;
 
-public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsConfig, ConnectionProvider> {
+public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsConfig, SQLStatisticsDbConnProvider> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SQLStatisticsModule.class);
     private static final String MODULE = "stroom-statistics";
     private static final String FLYWAY_LOCATIONS = "stroom/statistics/impl/sql/db/migration";
@@ -60,13 +60,13 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
     }
 
     @Override
-    public Function<HikariConfig, ConnectionProvider> getConnectionProviderConstructor() {
-        return ConnectionProvider::new;
+    public Function<HikariConfig, SQLStatisticsDbConnProvider> getConnectionProviderConstructor() {
+        return SQLStatisticsDbConnProvider::new;
     }
 
     @Override
-    public Class<ConnectionProvider> getConnectionProviderType() {
-        return ConnectionProvider.class;
+    public Class<SQLStatisticsDbConnProvider> getConnectionProviderType() {
+        return SQLStatisticsDbConnProvider.class;
     }
 
 //    @Provides

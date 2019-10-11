@@ -27,9 +27,9 @@ public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_Con
 
     public abstract String getFlyWayTableName();
 
-    public abstract String getModuleName();
-
     public abstract String getFlyWayLocation();
+
+    public abstract String getModuleName();
 
     public abstract Function<HikariConfig, T_ConnProvider> getConnectionProviderConstructor();
 
@@ -52,8 +52,10 @@ public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_Con
 
         final HikariConfig config = hikariConfigHolder.getHikariConfig(configProvider.get());
         // We could do this with reflection and getConnectionProviderType but sacrifices type safety
-        final T_ConnProvider connectionProvider = getConnectionProviderConstructor().apply(config);
+        T_ConnProvider connectionProvider = getConnectionProviderConstructor().apply(config);
+
         runFlywayMigration(connectionProvider);
+
         return connectionProvider;
     }
 
