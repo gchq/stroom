@@ -36,9 +36,9 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.security.api.SecurityContext;
+import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.StoredQueryHistoryCleanExecutor;
-import stroom.storedquery.impl.StoredQueryHistoryConfig;
 import stroom.task.api.SimpleTaskContext;
 import stroom.util.AuditUtil;
 import stroom.util.shared.BaseResultList;
@@ -77,7 +77,7 @@ class TestStoredQueryDao {
         storedQueryDao = new StoredQueryDaoImpl(storedQueryDbConnProvider);
         storedQueryDao.clear();
 
-        queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(new SimpleTaskContext(), storedQueryDao, new StoredQueryHistoryConfig());
+        queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(new SimpleTaskContext(), storedQueryDao, new StoredQueryConfig());
 
         dashboardRef = new DocRef("Dashboard", "8c1bc23c-f65c-413f-ba72-7538abf90b91", "Test Dashboard");
         indexRef = new DocRef("Index", "4a085071-1d1b-4c96-8567-82f6954584a4", "Test Index");

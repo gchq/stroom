@@ -4,6 +4,7 @@ import com.zaxxer.hikari.HikariConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.StoredQueryModule;
 import stroom.util.guice.GuiceUtil;

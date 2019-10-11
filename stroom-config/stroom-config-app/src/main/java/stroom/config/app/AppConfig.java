@@ -27,7 +27,7 @@ import stroom.search.solr.search.SolrSearchConfig;
 import stroom.searchable.impl.SearchableConfig;
 import stroom.security.impl.SecurityConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
-import stroom.storedquery.impl.StoredQueryHistoryConfig;
+import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.shared.IsConfig;
@@ -65,7 +65,7 @@ public class AppConfig implements IsConfig {
     private ServiceDiscoveryConfig serviceDiscoveryConfig;
     private SolrSearchConfig solrSearchConfig;
     private StatisticsConfig statisticsConfig;
-    private StoredQueryHistoryConfig storedQueryHistoryConfig;
+    private StoredQueryConfig storedQueryConfig;
     private UiConfig uiConfig;
     private VolumeConfig volumeConfig;
 
@@ -98,7 +98,7 @@ public class AppConfig implements IsConfig {
         this.securityConfig = new SecurityConfig();
         this.serviceDiscoveryConfig = new ServiceDiscoveryConfig();
         this.statisticsConfig = new StatisticsConfig();
-        this.storedQueryHistoryConfig = new StoredQueryHistoryConfig();
+        this.storedQueryConfig = new StoredQueryConfig();
         this.uiConfig = new UiConfig();
         this.volumeConfig = new VolumeConfig();
     }
@@ -131,7 +131,7 @@ public class AppConfig implements IsConfig {
               final SecurityConfig securityConfig,
               final ServiceDiscoveryConfig serviceDiscoveryConfig,
               final StatisticsConfig statisticsConfig,
-              final StoredQueryHistoryConfig storedQueryHistoryConfig,
+              final StoredQueryConfig storedQueryConfig,
               final UiConfig uiConfig,
               final VolumeConfig volumeConfig,
               final ActivityConfig activityConfig ) {
@@ -163,7 +163,7 @@ public class AppConfig implements IsConfig {
         this.securityConfig = securityConfig;
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
         this.statisticsConfig = statisticsConfig;
-        this.storedQueryHistoryConfig = storedQueryHistoryConfig;
+        this.storedQueryConfig = storedQueryConfig;
         this.uiConfig = uiConfig;
         this.volumeConfig = volumeConfig;
     }
@@ -363,12 +363,12 @@ public class AppConfig implements IsConfig {
     }
 
     @JsonProperty("queryHistory")
-    public StoredQueryHistoryConfig getStoredQueryHistoryConfig() {
-        return storedQueryHistoryConfig;
+    public StoredQueryConfig getStoredQueryConfig() {
+        return storedQueryConfig;
     }
 
-    public void setStoredQueryHistoryConfig(final StoredQueryHistoryConfig storedQueryHistoryConfig) {
-        this.storedQueryHistoryConfig = storedQueryHistoryConfig;
+    public void setStoredQueryConfig(final StoredQueryConfig storedQueryConfig) {
+        this.storedQueryConfig = storedQueryConfig;
     }
 
     @JsonProperty("receive")

@@ -5,7 +5,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
-import stroom.cluster.lock.impl.db.ClusterLockDbConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.db.CoreConfig;
@@ -43,7 +42,7 @@ import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.statistics.impl.InternalStatisticsConfig;
 import stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig;
 import stroom.statistics.impl.sql.SQLStatisticsConfig;
-import stroom.storedquery.impl.StoredQueryHistoryConfig;
+import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.ui.config.shared.SplashConfig;
@@ -82,7 +81,6 @@ public class AppConfigModule extends AbstractModule {
         this.configFile = configFile;
     }
 
-
     @Override
     protected void configure() {
 
@@ -97,15 +95,13 @@ public class AppConfigModule extends AbstractModule {
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own.
         // This allows gradle modules to know nothing about the other modules.
-        // Our bind method does it the reverse way to guice so we can more easily see
-        // the tree structure
+        // Our bind method has the arguments in the reverse way to guice so we can
+        // more easily see the tree structure
 
         bind(AppConfig::getActivityConfig, stroom.activity.impl.db.ActivityConfig.class);
         bind(AppConfig::getBenchmarkClusterConfig, BenchmarkClusterConfig.class);
         bind(AppConfig::getClusterConfig, ClusterConfig.class);
-        bind(AppConfig::getClusterLockConfig, ClusterLockConfig.class, c -> {
-            bind(c, ClusterLockConfig::getDbConfig, ClusterLockDbConfig.class);
-        });
+        bind(AppConfig::getClusterLockConfig, ClusterLockConfig.class);
         bind(AppConfig::getCommonDbConfig, CommonDbConfig.class);
         bind(AppConfig::getContentPackImportConfig, ContentPackImportConfig.class);
         bind(AppConfig::getCoreConfig, CoreConfig.class);
@@ -128,7 +124,7 @@ public class AppConfigModule extends AbstractModule {
             });
         });
         bind(AppConfig::getPathConfig, PathConfig.class);
-        bind(AppConfig::getPipelineConfig, PipelineConfig.class, c-> {
+        bind(AppConfig::getPipelineConfig, PipelineConfig.class, c -> {
             bind(c, PipelineConfig::getAppenderConfig, AppenderConfig.class);
             bind(c, PipelineConfig::getRefDataStoreConfig, RefDataStoreConfig.class);
             bind(c, PipelineConfig::getXsltConfig, XsltConfig.class);
@@ -154,7 +150,7 @@ public class AppConfigModule extends AbstractModule {
                 bind(c2, SQLStatisticsConfig::getSearchConfig, stroom.statistics.impl.sql.search.SearchConfig.class);
             });
         });
-        bind(AppConfig::getStoredQueryHistoryConfig, StoredQueryHistoryConfig.class);
+        bind(AppConfig::getStoredQueryConfig, StoredQueryConfig.class);
         bind(AppConfig::getUiConfig, UiConfig.class, c -> {
             bind(c, UiConfig::getActivityConfig, ActivityConfig.class);
             bind(c, UiConfig::getProcessConfig, stroom.ui.config.shared.ProcessConfig.class);
