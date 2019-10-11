@@ -387,6 +387,16 @@ appConfig:
   queryHistory:
     itemsRetention: 100
     daysRetention: 365
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
   ui:
     welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
       \ multiple systems.</p>"

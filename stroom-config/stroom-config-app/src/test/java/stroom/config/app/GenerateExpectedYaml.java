@@ -38,7 +38,23 @@ public class GenerateExpectedYaml {
         }
 
         final String generatedYaml = TestYamlUtil.getYamlFromJavaModel();
+
+        String outputStr;
+        if (args.length > 0) {
+            // called for a specific output location so add a header
+            final String comment = "# This file contains all the default configuration values that are built into stroom.\n" +
+                    "# It serves as an example of the structure of the full configuration tree.\n" +
+                    "# If any configuration item is not explicitly set then the default will be used instead.\n" +
+                    "# Some configuration items are expected to set, e.g. appConfig.commonDbDetails.connection.jdbcDriverUrl,\n" +
+                    "# but most can be left with their default values.";
+
+            outputStr = generatedYaml.replace("---", "---\n" + comment);
+        } else {
+            // called manually for TestYamlUtil so don't modify the content else it will break the test
+            outputStr = generatedYaml;
+        }
+
         LOGGER.info("Writing generated yaml to {}", outputFile.toAbsolutePath());
-        Files.writeString(outputFile, generatedYaml);
+        Files.writeString(outputFile, outputStr);
     }
 }
