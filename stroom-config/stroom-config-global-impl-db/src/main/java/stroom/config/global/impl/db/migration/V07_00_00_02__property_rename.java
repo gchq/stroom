@@ -5,8 +5,6 @@ import org.flywaydb.core.api.migration.Context;
 import org.jooq.DSLContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.config.app.AppConfig;
-import stroom.config.global.impl.ConfigMapper;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.db.util.JooqUtil;
 
@@ -46,7 +44,7 @@ public class V07_00_00_02__property_rename extends BaseJavaMigration {
         // stroom.benchmark.concurrentWriters
         // stroom.benchmark.recordCount
         // stroom.benchmark.streamCount
-        FROM_TO_MAP.put("stroom.bufferSize", "stroom.feed.bufferSize");
+        FROM_TO_MAP.put("stroom.bufferSize", "stroom.receive.bufferSize");
         FROM_TO_MAP.put("stroom.clusterCallIgnoreSSLHostnameVerifier", "stroom.cluster.clusterCallIgnoreSSLHostnameVerifier");
         FROM_TO_MAP.put("stroom.clusterCallReadTimeout", "stroom.cluster.clusterCallReadTimeout");
         FROM_TO_MAP.put("stroom.clusterCallUseLocal", "stroom.cluster.clusterCallUseLocal");
