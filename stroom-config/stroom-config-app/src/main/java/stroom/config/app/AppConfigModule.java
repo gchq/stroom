@@ -13,6 +13,7 @@ import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.data.retention.impl.DataRetentionConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
+import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
@@ -50,7 +51,6 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UrlConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.IsConfig;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -109,6 +109,7 @@ public class AppConfigModule extends AbstractModule {
         bind(ExportConfig.class).toInstance(appConfig.getExportConfig());
         bind(ExtractionConfig.class).toInstance(appConfig.getSearchConfig().getExtractionConfig());
         bind(FeedConfig.class).toInstance(appConfig.getFeedConfig());
+        bind(FsVolumeConfig.class).toInstance(appConfig.getDataConfig().getFsVolumeConfig());
         bind(HBaseStatisticsConfig.class).toInstance(appConfig.getStatisticsConfig().getHbaseStatisticsConfig());
         bind(HeapHistogramConfig.class).toInstance(appConfig.getNodeConfig().getStatusConfig().getHeapHistogramConfig());
         bind(IndexConfig.class).toInstance(appConfig.getIndexConfig());
