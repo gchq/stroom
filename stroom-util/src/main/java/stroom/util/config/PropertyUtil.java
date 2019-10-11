@@ -42,21 +42,25 @@ public final class PropertyUtil {
         // Utility class.
     }
 
+    /**
+     * Walks the public properties of the supplied object, passing each property to the
+     * property consumer if it passes the filter test.
+     */
     public static void walkObjectTree(final Object object,
-                                      final Predicate<Prop> filter,
+                                      final Predicate<Prop> propFilter,
                                       final Consumer<Prop> propConsumer) {
-        walkObjectTree(object, filter, propConsumer, "");
+        walkObjectTree(object, propFilter, propConsumer, "");
     }
 
     private static void walkObjectTree(final Object object,
-                                       final Predicate<Prop> filter,
+                                       final Predicate<Prop> propFilter,
                                        final Consumer<Prop> propConsumer,
                                        final String indent) {
 
         final Map<String, Prop> propMap = getProperties(object);
 
         propMap.values().stream()
-                .filter(filter)
+                .filter(propFilter)
                 .forEach(prop -> {
                     LOGGER.trace("{}{}#{}", indent, object.getClass().getSimpleName(), prop.getName());
 
@@ -67,7 +71,7 @@ public final class PropertyUtil {
                         LOGGER.trace("{}Null value", indent + "  ");
                     } else {
                         // descend into the prop, which may or may not have its own props
-                        walkObjectTree(prop.getValueFromConfigObject(), filter, propConsumer, indent + "  ");
+                        walkObjectTree(prop.getValueFromConfigObject(), propFilter, propConsumer, indent + "  ");
                     }
                 });
     }
@@ -96,7 +100,7 @@ public final class PropertyUtil {
                             && !method.getReturnType().equals(Void.TYPE)) {
                         final String name = getPropertyName(methodName, 2);
                         final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
-                        prop.getter = method;
+                        prop.setGetter(method);
                     }
 
                 } else if (methodName.startsWith("get")) {
@@ -108,7 +112,7 @@ public final class PropertyUtil {
                             && !method.getReturnType().equals(Void.TYPE)) {
                         final String name = getPropertyName(methodName, 3);
                         final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
-                        prop.getter = method;
+                        prop.setGetter(method);
                     }
                 } else if (methodName.startsWith("set")) {
                     // Setter.
@@ -118,7 +122,7 @@ public final class PropertyUtil {
                             && method.getReturnType().equals(Void.TYPE)) {
                         final String name = getPropertyName(methodName, 3);
                         final Prop prop = propMap.computeIfAbsent(name, k -> new Prop(name, object));
-                        prop.setter = method;
+                        prop.setSetter(method);
                     }
                 }
             }
@@ -172,8 +176,16 @@ public final class PropertyUtil {
             return getter;
         }
 
+        void setGetter(final Method getter) {
+            this.getter = getter;
+        }
+
         public Method getSetter() {
             return setter;
+        }
+
+        void setSetter(final Method setter) {
+            this.setter = setter;
         }
 
         public Object getValueFromConfigObject() {
@@ -208,4 +220,5 @@ public final class PropertyUtil {
                     '}';
         }
     }
+
 }
