@@ -3,6 +3,11 @@ package stroom.test.common.util.db;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
+import stroom.config.common.HasDbConfig;
+import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.HikariConfigHolder;
+
+import javax.sql.DataSource;
 
 public class DbTestUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(DbTestUtil.class);
@@ -10,6 +15,22 @@ public class DbTestUtil {
     private static final String TESTCONTAINERS_JDBC_CONTAINER_DATABASE_DRIVER = "org.testcontainers.jdbc.ContainerDatabaseDriver";
 
     private DbTestUtil() {
+    }
+
+    /**
+     * Gets a TestContainers DB datasource for use in tests that don't use CoreTestModule
+     *
+     */
+    public static <T_Config extends HasDbConfig, T_ConnProvider extends DataSource> T_ConnProvider getTestDbDatasource(
+            final AbstractFlyWayDbModule<T_Config, T_ConnProvider> dbModule,
+            final T_Config config) {
+
+        applyTestContainersConfig(config);
+        return dbModule.getConnectionProvider(() -> config, new HikariConfigHolder());
+    }
+
+    public static void applyTestContainersConfig(final HasDbConfig hasDbConfig) {
+        applyTestContainersConfig(hasDbConfig.getDbConfig().getConnectionConfig());
     }
 
     public static void applyTestContainersConfig(final ConnectionConfig connectionConfig) {

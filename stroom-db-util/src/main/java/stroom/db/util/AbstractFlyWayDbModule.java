@@ -20,7 +20,7 @@ import java.util.function.Function;
  * @param <T_Config> A config class that implements {@link HasDbConfig}
  * @param <T_ConnProvider> A class that extends {@link HikariDataSource}
  */
-public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_ConnProvider extends HikariDataSource>
+public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_ConnProvider extends DataSource>
         extends AbstractModule {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFlyWayDbModule.class);
@@ -47,7 +47,7 @@ public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_Con
     @Provides
     @Singleton
     public T_ConnProvider getConnectionProvider(final Provider<T_Config> configProvider,
-                                             final HikariConfigHolder hikariConfigHolder) {
+                                                final HikariConfigHolder hikariConfigHolder) {
         LOGGER.info("Creating connection provider for {}", getModuleName());
 
         final HikariConfig config = hikariConfigHolder.getHikariConfig(configProvider.get());

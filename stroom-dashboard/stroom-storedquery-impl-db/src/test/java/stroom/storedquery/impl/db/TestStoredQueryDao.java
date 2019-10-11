@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.db.util.DbUtil;
-import stroom.db.util.HikariConfigHolder;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -40,6 +39,7 @@ import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.StoredQueryHistoryCleanExecutor;
 import stroom.task.api.SimpleTaskContext;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.AuditUtil;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Sort.Direction;
@@ -70,8 +70,9 @@ class TestStoredQueryDao {
         Mockito.when(securityContext.getUserId()).thenReturn("testuser");
 
         // need an explicit teardown and setup of the DB before each test method
-        final StoredQueryDbConnProvider storedQueryDbConnProvider = new StoredQueryDbModule()
-                .getConnectionProvider(StoredQueryConfig::new, new HikariConfigHolder());
+        final StoredQueryDbConnProvider storedQueryDbConnProvider = DbTestUtil.getTestDbDatasource(
+                new StoredQueryDbModule(), new StoredQueryConfig());
+
         DbUtil.clearAllTables(storedQueryDbConnProvider.getConnection());
 
         storedQueryDao = new StoredQueryDaoImpl(storedQueryDbConnProvider);

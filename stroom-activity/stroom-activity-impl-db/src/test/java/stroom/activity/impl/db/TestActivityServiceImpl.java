@@ -33,8 +33,8 @@ import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.activity.shared.FindActivityCriteria;
-import stroom.db.util.HikariConfigHolder;
 import stroom.security.api.SecurityContext;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.shared.BaseResultList;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,8 +53,8 @@ class TestActivityServiceImpl {
         Mockito.when(securityContext.getUserId()).thenReturn("testUser");
         Mockito.when(securityContext.isLoggedIn()).thenReturn(true);
 
-        final ActivityDbConnectionProvider activityDbConnectionProvider = new ActivityDbModule()
-                .getConnectionProvider(ActivityConfig::new, new HikariConfigHolder());
+        final ActivityDbConnectionProvider activityDbConnectionProvider = DbTestUtil.getTestDbDatasource(
+                new ActivityDbModule(), new ActivityConfig());
 
         final ActivityDao activityDao = new ActivityDaoImpl(activityDbConnectionProvider);
         activityService = new ActivityServiceImpl(securityContext, activityDao);

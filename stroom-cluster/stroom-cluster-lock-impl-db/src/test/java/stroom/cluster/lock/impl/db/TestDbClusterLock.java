@@ -18,7 +18,7 @@ package stroom.cluster.lock.impl.db;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.db.util.HikariConfigHolder;
+import stroom.test.common.util.db.DbTestUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,8 +29,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestDbClusterLock {
     @Test
     void test() throws InterruptedException {
-        final DbClusterLock dbClusterLock = new DbClusterLock(new ClusterLockDbModule()
-                .getConnectionProvider(ClusterLockConfig::new, new HikariConfigHolder()));
+
+        final ClusterLockDbConnectionProvider clusterLockDbConnectionProvider = DbTestUtil.getTestDbDatasource(
+                new ClusterLockDbModule(), new ClusterLockConfig());
+
+        final DbClusterLock dbClusterLock = new DbClusterLock(clusterLockDbConnectionProvider);
         final DbClusterLockThreads dbClusterLockThreads = new DbClusterLockThreads(dbClusterLock);
 
         final CountDownLatch countDownLatch = new CountDownLatch(2);
