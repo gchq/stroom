@@ -22,6 +22,7 @@ import com.zaxxer.hikari.HikariConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.db.util.HikariConfigHolder;
+import stroom.db.util.HikariConfigHolderImpl;
 import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
@@ -40,6 +41,8 @@ public class DataSourceModule extends AbstractModule {
 
     @Override
     protected void configure() {
+
+        bind(HikariConfigHolder.class).to(HikariConfigHolderImpl.class);
         // Force creation of connection provider so that legacy migration code executes.
         bind(DataSource.class).toProvider(DataSourceProvider.class).asEagerSingleton();
 
@@ -56,7 +59,7 @@ public class DataSourceModule extends AbstractModule {
     CoreDbConnectionProvider getConnectionProvider(final Provider<CoreConfig> configProvider,
                                                    final HikariConfigHolder hikariConfigHolder) {
         LOGGER.info("Creating connection provider for {}", MODULE);
-        final HikariConfig config = hikariConfigHolder.getHikariConfig(configProvider.get());
+        final HikariConfig config = hikariConfigHolder.getOrCreateHikariConfig(configProvider.get());
         final CoreDbConnectionProvider coreDbConnectionProvider = new CoreDbConnectionProvider(config);
 //        flyway(connectionProvider);
         return coreDbConnectionProvider;

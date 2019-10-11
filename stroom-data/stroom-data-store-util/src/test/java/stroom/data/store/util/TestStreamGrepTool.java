@@ -16,15 +16,20 @@
 
 package stroom.data.store.util;
 
+import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
-import stroom.db.util.DbUtil;
 import stroom.meta.impl.db.MetaDbConnProvider;
 import stroom.meta.shared.MetaProperties;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
@@ -33,18 +38,30 @@ import java.io.UncheckedIOException;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+@ExtendWith(MockitoExtension.class)
 class TestStreamGrepTool {
+
     @Inject
     private MetaDbConnProvider metaDbConnProvider;
+
     @Inject
     private Store streamStore;
 
+    @Mock
+    private ToolInjector toolInjector;
+
     @BeforeEach
     void setup() {
-        new ToolInjector().getInjector().injectMembers(this);
+
+        final Injector injector = DbTestUtil.overrideModuleWithTestDatabase(new ToolModule());
+
+        injector.injectMembers(this);
+
+        Mockito.when(toolInjector.getInjector())
+                .thenReturn(injector);
 
         try (final Connection connection = metaDbConnProvider.getConnection()) {
-            DbUtil.clearAllTables(connection);
+            DbTestUtil.clearAllTables(connection);
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -58,7 +75,7 @@ class TestStreamGrepTool {
             addData(feedName, "This is some test data to match on");
             addData(feedName, "This is some test data to not match on");
 
-            final StreamGrepTool streamGrepTool = new StreamGrepTool();
+            final StreamGrepTool streamGrepTool = new StreamGrepTool(toolInjector);
             streamGrepTool.setFeed(feedName);
 
             streamGrepTool.run();

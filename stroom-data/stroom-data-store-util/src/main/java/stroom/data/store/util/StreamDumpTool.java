@@ -47,7 +47,7 @@ import java.util.stream.Stream;
  * Handy tool to dump out content.
  */
 public class StreamDumpTool extends AbstractCommandLineTool {
-    private final ToolInjector toolInjector = new ToolInjector();
+    private final ToolInjector toolInjector;
 
     private String feed;
     private String streamType;
@@ -55,6 +55,15 @@ public class StreamDumpTool extends AbstractCommandLineTool {
     private String createPeriodTo;
     private String outputDir;
     private String format;
+
+    public StreamDumpTool() {
+        this.toolInjector = new ToolInjector();
+    }
+
+    // for testing
+    StreamDumpTool(final ToolInjector toolInjector) {
+        this.toolInjector = toolInjector;
+    }
 
     public static void main(final String[] args) {
         new StreamDumpTool().doMain(args);

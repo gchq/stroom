@@ -39,6 +39,8 @@ public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_Con
     protected void configure() {
         super.configure();
 
+        bind(HikariConfigHolder.class).to(HikariConfigHolderImpl.class);
+
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
                 .addBinding((getConnectionProviderType()));
@@ -50,7 +52,7 @@ public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_Con
                                                 final HikariConfigHolder hikariConfigHolder) {
         LOGGER.info("Creating connection provider for {}", getModuleName());
 
-        final HikariConfig config = hikariConfigHolder.getHikariConfig(configProvider.get());
+        final HikariConfig config = hikariConfigHolder.getOrCreateHikariConfig(configProvider.get());
         // We could do this with reflection and getConnectionProviderType but sacrifices type safety
         T_ConnProvider connectionProvider = getConnectionProviderConstructor().apply(config);
 

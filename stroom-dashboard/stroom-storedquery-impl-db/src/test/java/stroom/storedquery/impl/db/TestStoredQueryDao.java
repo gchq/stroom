@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
-import stroom.db.util.DbUtil;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -73,7 +72,7 @@ class TestStoredQueryDao {
         final StoredQueryDbConnProvider storedQueryDbConnProvider = DbTestUtil.getTestDbDatasource(
                 new StoredQueryDbModule(), new StoredQueryConfig());
 
-        DbUtil.clearAllTables(storedQueryDbConnProvider.getConnection());
+        DbTestUtil.clearAllTables(storedQueryDbConnProvider.getConnection());
 
         storedQueryDao = new StoredQueryDaoImpl(storedQueryDbConnProvider);
         storedQueryDao.clear();

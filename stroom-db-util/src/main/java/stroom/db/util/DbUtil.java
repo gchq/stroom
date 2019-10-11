@@ -8,14 +8,11 @@ import stroom.util.logging.LogUtil;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class DbUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(DbUtil.class);
@@ -121,75 +118,9 @@ public class DbUtil {
         return 0;
     }
 
-    public static void clearAllTables(final Connection connection) {
-        final List<String> tables = new ArrayList<>();
-
-        try (final PreparedStatement statement = connection.prepareStatement("SELECT table_name FROM information_schema.tables where table_type like '%BASE TABLE%';")) {
-            try (final ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    final String name = resultSet.getString(1);
-                    if (!name.contains("schema")) {
-                        tables.add(name);
-                    }
-                }
-            }
-        } catch (final SQLException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-
-        clearTables(connection, tables);
-    }
-
-    private static void clearTables(final Connection connection, final List<String> tableNames) {
-        List<String> deleteStatements = tableNames.stream()
-                .map(tableName -> "DELETE FROM " + tableName)
-                .collect(Collectors.toList());
-
-        executeStatementsWithNoConstraints(connection, deleteStatements);
-    }
-
-    private static void executeStatementsWithNoConstraints(final Connection connection, final List<String> statements) {
-        final List<String> allStatements = new ArrayList<>();
-        allStatements.add("SET FOREIGN_KEY_CHECKS=0");
-        allStatements.addAll(statements);
-        allStatements.add("SET FOREIGN_KEY_CHECKS=1");
-
-        executeStatements(connection, allStatements);
-    }
 
 //    private void executeStatement(final Connection connection, final String sql) throws SQLException {
 //        executeStatements(connection, Collections.singletonList(sql));
 //    }
 
-    private static void executeStatements(final Connection connection, final List<String> sqlStatements) {
-        LOGGER.debug(">>> %s", sqlStatements);
-//        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        try (final Statement statement = connection.createStatement()) {
-            sqlStatements.forEach(sql -> {
-                try {
-                    statement.addBatch(sql);
-                } catch (SQLException e) {
-                    throw new RuntimeException(String.format("Error adding sql [%s] to batch", sql), e);
-                }
-            });
-            int[] results = statement.executeBatch();
-            boolean isFailure = Arrays.stream(results)
-                    .anyMatch(val -> val == Statement.EXECUTE_FAILED);
-
-            if (isFailure) {
-                throw new RuntimeException(String.format("Got error code for batch %s", sqlStatements));
-            }
-
-//            log(logExecutionTime,
-//                    () -> Arrays.stream(results)
-//                            .mapToObj(Integer::toString)
-//                            .collect(Collectors.joining(",")),
-//                    sqlStatements::toString,
-//                    Collections.emptyList());
-
-        } catch (final SQLException e) {
-            LOGGER.error("executeStatement() - " + sqlStatements, e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
 }
