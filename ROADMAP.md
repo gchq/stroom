@@ -6,7 +6,7 @@
 Users can be added to user groups and individual users and groups can have various permissions (e.g. Use, Read, Update, Delete) on individual items available in the explorer tree.
 
 ## Raw streaming
-Data can be streamed in it's raw form from the stream store to multiple destinations without any transformation taking place.
+Data can be streamed in its raw form from the stream store to multiple destinations without any transformation taking place.
 
 ## HDFS appender
 Pipeline XML/text data can be writen out to a HDFS (Hadoop Distributed File System) cluster. This increases the options for using Stroom's data for other purposes.
