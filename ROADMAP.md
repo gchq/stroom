@@ -1,8 +1,8 @@
 # v5.0
 
-## Initial open source release
+## Initial open-source release
 
-## Fine grained permissions for explorer items
+## Fine-grained permissions for explorer items
 Users can be added to user groups and individual users and groups can have various permissions (e.g. Use, Read, Update, Delete) on individual items available in the explorer tree.
 
 ## Raw streaming
@@ -49,7 +49,7 @@ New pipeline elements for writing XML or text data to a Kafka topic. This provid
 # v7.0
 
 ## Reference data storage
-Reference data uses a memory mapped disk based store rather than direct memory to reduce the memory overhead associated with storing reference data. Reference data is also enhanced to cope with changes (additions and removals) of state information rather than always relying on complete snapshots.
+Reference data uses a memory-mapped disk-based store rather than direct memory to reduce the memory overhead associated with storing reference data. Reference data is also enhanced to cope with changes (additions and removals) of state information rather than always relying on complete snapshots.
 
 ## Modularisation
 Separation of Stroom components into discreet modules that have clear APIs and separate persistence where required to reduce coupling.
@@ -68,7 +68,7 @@ Add support for HDFS as a data storage option.
 # v9.0
 
 ## New UI
-Replace the GWT UI with a React based implementation.
+Replace the GWT UI with a React-based implementation.
 
 # v10+
 
