@@ -85,7 +85,7 @@ Stroom proxy is capable of pipeline processing in the same way as a full Stroom 
 Stroom is capable of processing data from a Kafka topic, HDFS, the local file system, HTTP POST in addition to the included stream store.
 
 ## Multiple output destinations
-Stroom has improved support for writing to various destinations such as Kafka, HDFS etc. Improvements include compression and meta data wrapping for future import.
+Stroom has improved support for writing to various destinations such as Kafka, HDFS, etc. Improvements include compression and meta data wrapping for future import.
 
 ## Improved field extraction
 Enhancements to data splitter and associated UI to make the process of extracting field data from raw content much easier.
