@@ -35,7 +35,7 @@ Data arriving in Stroom has meta data that can be matched against a policy so th
 Filtering of data also applies to Stroom proxy where each proxy can get a filtering policy from an upstream proxy or a Stroom instance.
 
 ## Data retention policies
-The length of time that data will be retained in Strooms stream store can be defined by creating data retention rules. These rules match streams based on their meta data and will automatically delete data once the retention period associated with the rule is exceeded.
+The length of time that data will be retained in Stroom's stream store can be defined by creating data retention rules. These rules match streams based on their meta data and will automatically delete data once the retention period associated with the rule is exceeded.
 
 ## Dashboard linking
 Links can be created in dashboards to jump to other dashboards or other external sites that provide additional contextual information.
