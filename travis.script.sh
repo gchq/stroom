@@ -245,7 +245,7 @@ else
       -Pversion="${TRAVIS_TAG}" \
       -PgwtCompilerWorkers=1 \
       -PgwtCompilerMinHeap=50M \
-      -PgwtCompilerMaxHeap=500M \
+      -PgwtCompilerMaxHeap=1G \
       clean \
       build \
       buildDistribution \
