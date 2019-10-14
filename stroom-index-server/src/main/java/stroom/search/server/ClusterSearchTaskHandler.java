@@ -170,7 +170,8 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 final Receiver extractionReceiver = extractionDecoratorFactory.create(rootReceiver, task.getStoredFields(), coprocessors, query, hasTerminate);
 
                 // Search all index shards.
-                final ExpressionOperator expression = ExpressionFilter.filter(task.getQuery().getExpression(), AnnotationDataSource.ANNOTATION_FIELD_PREFIX, true);
+                final ExpressionFilter expressionFilter = new ExpressionFilter(AnnotationDataSource.ANNOTATION_FIELD_PREFIX, true);
+                final ExpressionOperator expression = expressionFilter.copy(task.getQuery().getExpression());
                 indexShardSearchFactory.search(task, expression, extractionReceiver, taskContext, hasTerminate);
 
                 // Wait for index search completion.

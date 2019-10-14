@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.dashboard.expression.v1.FieldIndexMap;
-import stroom.dictionary.server.DictionaryStore;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.Query;
 import stroom.search.coprocessor.Coprocessors;
@@ -70,7 +69,7 @@ public class ExtractionDecoratorFactory {
                            final String[] storedFields,
                            final Coprocessors coprocessors,
                            final Query query,
-                            final HasTerminate hasTerminate) {
+                           final HasTerminate hasTerminate) {
         // Update config for extraction task executor.
         extractionTaskExecutor.setMaxThreads(extractionTaskProperties.getMaxThreads());
 
@@ -91,30 +90,30 @@ public class ExtractionDecoratorFactory {
 
         final Map<DocRef, Receiver> receivers = new HashMap<>();
         map.forEach((docRef, coprocessorSet) -> {
-                    // Create a receiver that will send data to all coprocessors.
-                    Receiver receiver;
-                    if (coprocessorSet.size() == 1) {
-                        final NewCoprocessor coprocessor = coprocessorSet.iterator().next();
-                        final FieldIndexMap fieldIndexMap = coprocessor.getFieldIndexMap();
-                        final Consumer<Values> valuesConsumer = coprocessor.getValuesConsumer();
-                        final Consumer<Error> errorConsumer = coprocessor.getErrorConsumer();
-                        final Consumer<Long> completionCountConsumer = coprocessor.getCompletionCountConsumer();
-                        receiver = new ReceiverImpl(valuesConsumer, errorConsumer, completionCountConsumer, fieldIndexMap);
-                    } else {
-                        // We assume all coprocessors for the same extraction use the same field index map.
-                        // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
-                        final FieldIndexMap fieldIndexMap = coprocessorSet.iterator().next().getFieldIndexMap();
-                        final Consumer<Values> valuesConsumer = values -> coprocessorSet.forEach(coprocessor -> coprocessor.getValuesConsumer().accept(values));
-                        final Consumer<Error> errorConsumer = error -> coprocessorSet.forEach(coprocessor -> coprocessor.getErrorConsumer().accept(error));
-                        final Consumer<Long> completionCountConsumer = delta -> coprocessorSet.forEach(coprocessor -> coprocessor.getCompletionCountConsumer().accept(delta));
-                        receiver = new ReceiverImpl(valuesConsumer, errorConsumer, completionCountConsumer, fieldIndexMap);
-                    }
+            // Create a receiver that will send data to all coprocessors.
+            Receiver receiver;
+            if (coprocessorSet.size() == 1) {
+                final NewCoprocessor coprocessor = coprocessorSet.iterator().next();
+                final FieldIndexMap fieldIndexMap = coprocessor.getFieldIndexMap();
+                final Consumer<Values> valuesConsumer = coprocessor.getValuesConsumer();
+                final Consumer<Error> errorConsumer = coprocessor.getErrorConsumer();
+                final Consumer<Long> completionCountConsumer = coprocessor.getCompletionCountConsumer();
+                receiver = new ReceiverImpl(valuesConsumer, errorConsumer, completionCountConsumer, fieldIndexMap);
+            } else {
+                // We assume all coprocessors for the same extraction use the same field index map.
+                // This is only the case at the moment as the CoprocessorsFactory creates field index maps this way.
+                final FieldIndexMap fieldIndexMap = coprocessorSet.iterator().next().getFieldIndexMap();
+                final Consumer<Values> valuesConsumer = values -> coprocessorSet.forEach(coprocessor -> coprocessor.getValuesConsumer().accept(values));
+                final Consumer<Error> errorConsumer = error -> coprocessorSet.forEach(coprocessor -> coprocessor.getErrorConsumer().accept(error));
+                final Consumer<Long> completionCountConsumer = delta -> coprocessorSet.forEach(coprocessor -> coprocessor.getCompletionCountConsumer().accept(delta));
+                receiver = new ReceiverImpl(valuesConsumer, errorConsumer, completionCountConsumer, fieldIndexMap);
+            }
 
-                    // Decorate result with annotations.
-                    receiver = receiverDecoratorFactory.create(receiver, query);
+            // Decorate result with annotations.
+            receiver = receiverDecoratorFactory.create(receiver, query);
 
-                    receivers.put(docRef, receiver);
-                });
+            receivers.put(docRef, receiver);
+        });
 
         // Make a task producer that will create event data extraction tasks when requested by the executor.
         final ExtractionTaskProducer extractionTaskProducer = new ExtractionTaskProducer(
