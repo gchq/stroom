@@ -65,7 +65,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 @Component
 public class StreamAttributeMapServiceImpl implements StreamAttributeMapService {
@@ -259,64 +259,57 @@ public class StreamAttributeMapServiceImpl implements StreamAttributeMapService 
     private void resolveRelations(final FindStreamAttributeMapCriteria criteria, final Stream stream, final Map<EntityRef, Optional<Object>> localCache) throws PermissionException {
         if (stream.getFeed() != null && criteria.getFetchSet().contains(Feed.ENTITY_TYPE)) {
             final EntityRef ref = new EntityRef(Feed.ENTITY_TYPE, stream.getFeed().getId());
-
-            final Optional<Object> optional = localCache.computeIfAbsent(ref, key -> {
-                try {
-                    final Feed feed = feedService.loadById(key.id);
-                    return Optional.ofNullable(feed);
-                } catch (final RuntimeException e) {
-                    return Optional.of(e);
-                }
-            });
-            if (optional.isPresent()) {
-                final Object o = optional.get();
-                if (o instanceof RuntimeException) {
-                    throw (RuntimeException) o;
-                } else {
-                    stream.setFeed((Feed) o);
-                }
-            }
+            final Feed feed = getCached(localCache, ref, key -> feedService.loadById(key.id), false);
+            stream.setFeed(feed);
         }
 
         if (stream.getStreamType() != null && criteria.getFetchSet().contains(StreamType.ENTITY_TYPE)) {
             final EntityRef ref = new EntityRef(StreamType.ENTITY_TYPE, stream.getStreamType().getId());
-            localCache.computeIfAbsent(ref, key -> safeOptional(() -> streamTypeService.loadById(key.id))).ifPresent(obj -> stream.setStreamType((StreamType) obj));
+            final StreamType streamType = getCached(localCache, ref, key -> streamTypeService.loadById(key.id), true);
+            stream.setStreamType(streamType);
         }
 
         if (stream.getStreamProcessor() != null && criteria.getFetchSet().contains(StreamProcessor.ENTITY_TYPE)) {
-            // We will try and load the stream processor but will ignore
-            // permission failures as we don't mind users seeing streams even if
-            // they do not have visibility of the processor that created the
-            // stream.
             final EntityRef ref = new EntityRef(StreamProcessor.ENTITY_TYPE, stream.getStreamProcessor().getId());
-            final Optional<Object> optional = localCache.computeIfAbsent(ref, key -> {
-                final Optional<Object> optionalStreamProcessor = safeOptional(() -> streamProcessorService.loadByIdInsecure(key.id));
-                if (criteria.getFetchSet().contains(PipelineEntity.ENTITY_TYPE)) {
-                    optionalStreamProcessor.ifPresent(proc -> {
-                        final StreamProcessor streamProcessor = (StreamProcessor) proc;
-                        if (streamProcessor.getPipeline() != null) {
-                            // We will try and load the pipeline but will ignore permission
-                            // failures as we don't mind users seeing streams even if they do
-                            // not have visibility of the pipeline that created the stream.
-                            final EntityRef pipelineRef = new EntityRef(PipelineEntity.ENTITY_TYPE, streamProcessor.getPipeline().getId());
-                            localCache.computeIfAbsent(pipelineRef, innerKey -> safeOptional(() -> pipelineService.loadById(innerKey.id))).ifPresent(obj -> streamProcessor.setPipeline((PipelineEntity) obj));
-                        }
-                    });
-                }
-                return optionalStreamProcessor;
-            });
-            optional.ifPresent(obj -> stream.setStreamProcessor((StreamProcessor) obj));
+            final StreamProcessor streamProcessor = getCached(localCache, ref, key -> streamProcessorService.loadByIdInsecure(key.id), true);
+            stream.setStreamProcessor(streamProcessor);
+
+            if (streamProcessor != null) {
+                final EntityRef pipelineRef = new EntityRef(PipelineEntity.ENTITY_TYPE, streamProcessor.getPipeline().getId());
+                final PipelineEntity pipelineEntity = getCached(localCache, pipelineRef, key -> pipelineService.loadById(key.id), true);
+                streamProcessor.setPipeline(pipelineEntity);
+            }
         }
     }
 
-    private static <T> Optional<T> safeOptional(final Supplier<T> supplier) {
-        Optional<T> optional = Optional.empty();
-        try {
-            optional = Optional.ofNullable(supplier.get());
-        } catch (final Exception e) {
-            LOGGER.debug(e.getMessage());
+    @SuppressWarnings("unchecked")
+    private <T> T getCached(final Map<EntityRef, Optional<Object>> localCache,
+                            final EntityRef ref,
+                            final Function<EntityRef, Object> service,
+                            final boolean asProcessingUser) {
+        final Optional<Object> optional = localCache.computeIfAbsent(ref, key -> {
+            try {
+                if (asProcessingUser) {
+                    try (final SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+                        return Optional.ofNullable(service.apply(key));
+                    }
+                } else {
+                    return Optional.ofNullable(service.apply(key));
+                }
+            } catch (final RuntimeException e) {
+                return Optional.of(e);
+            }
+        });
+        if (optional.isPresent()) {
+            final Object o = optional.get();
+            if (o instanceof RuntimeException) {
+                throw (RuntimeException) o;
+            } else {
+                return (T) o;
+            }
         }
-        return optional;
+
+        return null;
     }
 
     private void loadAttributeMapFromFileSystem(final FindStreamAttributeMapCriteria criteria,

@@ -43,13 +43,13 @@ class ExecutorProviderImpl implements ExecutorProvider {
     @Override
     public Executor getExecutor() {
         final Task<?> parentTask = CurrentTaskState.currentTask();
-        return new TaskExecutor(taskManager, null, parentTask, getUserToken(parentTask), getTaskName(parentTask, "Generic Task"));
+        return new ExecutorImpl(taskManager, null, parentTask, getUserToken(parentTask), getTaskName(parentTask, "Generic Task"));
     }
 
     @Override
     public Executor getExecutor(final ThreadPool threadPool) {
         final Task<?> parentTask = CurrentTaskState.currentTask();
-        return new TaskExecutor(taskManager, threadPool, parentTask, getUserToken(parentTask), threadPool.getName());
+        return new ExecutorImpl(taskManager, threadPool, parentTask, getUserToken(parentTask), threadPool.getName());
     }
 
     private String getUserToken(final Task<?> parentTask) {
@@ -78,14 +78,14 @@ class ExecutorProviderImpl implements ExecutorProvider {
         return defaultName;
     }
 
-    private static class TaskExecutor implements Executor {
+    private static class ExecutorImpl implements Executor {
         private final TaskManager taskManager;
         private final ThreadPool threadPool;
         private final Task<?> parentTask;
         private final String userToken;
         private final String taskName;
 
-        TaskExecutor(final TaskManager taskManager, final ThreadPool threadPool, final Task<?> parentTask, final String userToken, final String taskName) {
+        ExecutorImpl(final TaskManager taskManager, final ThreadPool threadPool, final Task<?> parentTask, final String userToken, final String taskName) {
             this.taskManager = taskManager;
             this.threadPool = threadPool;
             this.parentTask = parentTask;
@@ -95,25 +95,7 @@ class ExecutorProviderImpl implements ExecutorProvider {
 
         @Override
         public void execute(final Runnable command) {
-            if (parentTask != null && parentTask.isTerminated()) {
-                return;
-            }
-
-            final GenericServerTask genericServerTask = GenericServerTask.create(parentTask, userToken, taskName, null);
-            final Runnable runnable = () -> {
-                try {
-                    command.run();
-                } finally {
-                    genericServerTask.setRunnable(null);
-                }
-            };
-            genericServerTask.setRunnable(runnable);
-
-            if (threadPool == null) {
-                taskManager.execAsync(genericServerTask);
-            } else {
-                taskManager.execAsync(genericServerTask, threadPool);
-            }
+            taskManager.execAsync(parentTask, userToken, taskName, command, threadPool);
         }
     }
 }

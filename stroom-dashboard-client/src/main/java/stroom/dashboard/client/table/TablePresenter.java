@@ -433,7 +433,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void addColumn(final Field field, final int pos) {
-        final TableCell cell = new TableCell(this, field, pos);
+        final TableCell cell = new TableCell(this, dataGrid.getSelectionModel(), field, pos);
         final Column<Row, Row> column = new Column<Row, Row>(cell) {
             @Override
             public Row getValue(final Row row) {

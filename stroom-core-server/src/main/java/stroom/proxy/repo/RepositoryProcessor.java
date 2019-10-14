@@ -355,7 +355,11 @@ public final class RepositoryProcessor {
                     fileSetProcessor.process(fileSet);
                 };
                 final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
-                completableFuture.thenAccept(r -> futures.remove(completableFuture));
+                completableFuture.thenRun(() -> futures.remove(completableFuture));
+                completableFuture.exceptionally(t -> {
+                    futures.remove(completableFuture);
+                    return null;
+                });
                 futures.add(completableFuture);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
@@ -410,7 +414,11 @@ public final class RepositoryProcessor {
                     }
                 };
                 final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
-                completableFuture.thenAccept(r -> futures.remove(completableFuture));
+                completableFuture.thenRun(() -> futures.remove(completableFuture));
+                completableFuture.exceptionally(t -> {
+                    futures.remove(completableFuture);
+                    return null;
+                });
                 futures.add(completableFuture);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
@@ -465,7 +473,11 @@ public final class RepositoryProcessor {
                     }
                 };
                 final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
-                completableFuture.thenAccept(r -> futures.remove(completableFuture));
+                completableFuture.thenRun(() -> futures.remove(completableFuture));
+                completableFuture.exceptionally(t -> {
+                    futures.remove(completableFuture);
+                    return null;
+                });
                 futures.add(completableFuture);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
