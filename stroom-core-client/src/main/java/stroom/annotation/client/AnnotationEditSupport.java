@@ -26,7 +26,7 @@ public class AnnotationEditSupport {
     public AnnotationEditSupport(final EventBus eventBus, final Provider<AnnotationEditPresenter> presenterProvider) {
         eventBus.addHandler(ShowAnnotationEvent.getType(), e -> {
             final AnnotationEditPresenter presenter = presenterProvider.get();
-            presenter.show(e.getMetaId(), e.getEventId());
+            presenter.show(e.getAnnotation());
         });
     }
 }

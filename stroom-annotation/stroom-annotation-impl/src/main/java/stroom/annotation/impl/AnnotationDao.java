@@ -27,6 +27,10 @@ import stroom.entity.shared.ExpressionCriteria;
 import java.util.function.Consumer;
 
 public interface AnnotationDao {
+    Annotation get(long annotationId);
+
+    AnnotationDetail getDetail(long annotationId);
+
     Annotation get(long metaId, long eventId);
 
     AnnotationDetail getDetail(long metaId, long eventId);

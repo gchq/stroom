@@ -24,7 +24,6 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -36,18 +35,20 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public interface AnnotationResource extends DirectRestService {
     @GET
-    @Path("{id}")
+    @Path("")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Gets an annotation",
             response = Response.class)
-    AnnotationDetail get(@PathParam("id") String id);
+    AnnotationDetail get(@QueryParam("annotationId") Long annotationId,
+                         @QueryParam("metaId") Long metaId,
+                         @QueryParam("eventId") Long eventId);
 
     @POST
+    @Path("")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("")
     AnnotationDetail createEntry(CreateEntryRequest request);
 
     @GET

@@ -33,7 +33,6 @@ import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationEntry;
-import stroom.annotation.shared.AnnotationEntry.EntryType;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.dispatch.client.ClientDispatchAsync;
@@ -72,8 +71,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     private final ClientSecurityContext clientSecurityContext;
 
     private AnnotationDetail annotationDetail;
-    private long metaId;
-    private long eventId;
+    private Annotation sourceAnnotation;
     private String currentTitle;
     private String currentSubject;
     private String currentStatus;
@@ -116,15 +114,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
             getView().setTitle(selected);
 
             if (addEntry && annotationDetail != null) {
-                final CreateEntryRequest request = new CreateEntryRequest(
-                        metaId,
-                        eventId,
-                        EntryType.TITLE,
-                        selected,
-                        null,
-                        null,
-                        null,
-                        null);
+                final CreateEntryRequest request = new CreateEntryRequest(annotationDetail.getAnnotation(), Annotation.TITLE, selected);
                 addEntry(request);
             }
         }
@@ -136,15 +126,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
             getView().setSubject(selected);
 
             if (addEntry && annotationDetail != null) {
-                final CreateEntryRequest request = new CreateEntryRequest(
-                        metaId,
-                        eventId,
-                        EntryType.SUBJECT,
-                        null,
-                        selected,
-                        null,
-                        null,
-                        null);
+                final CreateEntryRequest request = new CreateEntryRequest(annotationDetail.getAnnotation(), Annotation.SUBJECT, selected);
                 addEntry(request);
             }
         }
@@ -157,15 +139,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
             HidePopupEvent.fire(this, statusPresenter, true, true);
 
             if (addEntry && annotationDetail != null) {
-                final CreateEntryRequest request = new CreateEntryRequest(
-                        metaId,
-                        eventId,
-                        EntryType.STATUS,
-                        null,
-                        null,
-                        null,
-                        selected,
-                        null);
+                final CreateEntryRequest request = new CreateEntryRequest(annotationDetail.getAnnotation(), Annotation.STATUS, selected);
                 addEntry(request);
             }
         }
@@ -178,15 +152,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
             HidePopupEvent.fire(this, assignedToPresenter, true, true);
 
             if (addEntry && annotationDetail != null) {
-                final CreateEntryRequest request = new CreateEntryRequest(
-                        metaId,
-                        eventId,
-                        EntryType.ASSIGNED_TO,
-                        null,
-                        null,
-                        null,
-                        null,
-                        selected);
+                final CreateEntryRequest request = new CreateEntryRequest(annotationDetail.getAnnotation(), Annotation.ASSIGNED_TO, selected);
                 addEntry(request);
             }
         }
@@ -198,12 +164,12 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         rest.onSuccess(this::read).call(annotationResource).createEntry(request);
     }
 
-    public void show(final long metaId, final long eventId) {
-        this.metaId = metaId;
-        this.eventId = eventId;
+    public void show(final Annotation annotation) {
+        this.sourceAnnotation = annotation;
+        readAnnotation(sourceAnnotation);
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
         final Rest<AnnotationDetail> rest = restFactory.create();
-        rest.onSuccess(this::edit).call(annotationResource).get(metaId + ":" + eventId);
+        rest.onSuccess(this::edit).call(annotationResource).get(annotation.getId(), annotation.getMetaId(), annotation.getEventId());
     }
 
     private void edit(final AnnotationDetail annotationDetail) {
@@ -253,15 +219,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
             getView().setButtonText("Comment");
 
-            final Annotation annotation = annotationDetail.getAnnotation();
-            currentTitle = annotation.getTitle();
-            currentSubject = annotation.getSubject();
-            currentStatus = annotation.getStatus();
-            currentAssignedTo = annotation.getAssignedTo();
-            getView().setTitle(currentTitle);
-            getView().setSubject(currentSubject);
-            getView().setStatus(currentStatus);
-            getView().setAssignedTo(currentAssignedTo);
+            readAnnotation(annotationDetail.getAnnotation());
 
             final List<AnnotationEntry> entries = annotationDetail.getEntries();
             if (entries != null) {
@@ -270,7 +228,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                 entries.forEach(entry -> {
                     builder.appendHtmlConstant("<div class=\"annotationHistoryLine\">");
                     builder.appendHtmlConstant("<div class=\"annotationHistoryLineMargin\"><div class=\"annotationHistoryLineMarker\"></div></div>");
-                    if (EntryType.COMMENT.equals(entry.getEntryType())) {
+                    if (Annotation.COMMENT.equals(entry.getEntryType())) {
                         builder.appendHtmlConstant("<div class=\"annotationHistoryCommentBorder\">");
                         builder.appendHtmlConstant("<div class=\"annotationHistoryCommentHeader\">");
                         builder.appendHtmlConstant("<b>");
@@ -289,7 +247,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                         builder.appendEscaped(entry.getCreateUser());
                         builder.appendHtmlConstant("</b>");
                         builder.appendEscaped(" changed ");
-                        builder.appendEscaped(entry.getEntryType().getDisplayValue().toLowerCase());
+                        builder.appendEscaped(entry.getEntryType().toLowerCase());
                         builder.appendEscaped(" to ");
                         builder.appendHtmlConstant("<b>");
                         builder.appendEscaped(entry.getData());
@@ -323,12 +281,22 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
         if (currentTitle == null || currentTitle.trim().length() == 0) {
             changeTitle("Title", false);
-//            getView().startTitleEdit();
         }
 
         if (currentSubject == null || currentSubject.trim().length() == 0) {
             changeSubject("Subject", false);
         }
+    }
+
+    private void readAnnotation(final Annotation annotation) {
+        currentTitle = annotation.getTitle();
+        currentSubject = annotation.getSubject();
+        currentStatus = annotation.getStatus();
+        currentAssignedTo = annotation.getAssignedTo();
+        getView().setTitle(currentTitle);
+        getView().setSubject(currentSubject);
+        getView().setStatus(currentStatus);
+        getView().setAssignedTo(currentAssignedTo);
     }
 
     private SafeHtml getDurationLabel(final long time, final Date now) {
@@ -446,15 +414,17 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     public void create() {
         final String comment = getView().getComment();
         if (comment != null && comment.length() > 0) {
-            final CreateEntryRequest request = new CreateEntryRequest(
-                    metaId,
-                    eventId,
-                    EntryType.COMMENT,
-                    currentTitle,
-                    currentSubject,
-                    comment,
-                    currentStatus,
-                    currentAssignedTo);
+            final Annotation annotation = new Annotation();
+            annotation.setMetaId(sourceAnnotation.getMetaId());
+            annotation.setEventId(sourceAnnotation.getEventId());
+            annotation.setTitle(currentTitle);
+            annotation.setSubject(currentSubject);
+            annotation.setStatus(currentStatus);
+            annotation.setAssignedTo(currentAssignedTo);
+            annotation.setComment(comment);
+            annotation.setHistory(comment);
+
+            final CreateEntryRequest request = new CreateEntryRequest(annotation, Annotation.COMMENT, comment);
             addEntry(request);
             getView().setComment("");
         } else {

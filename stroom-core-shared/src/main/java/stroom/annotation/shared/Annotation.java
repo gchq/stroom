@@ -1,18 +1,26 @@
 package stroom.annotation.shared;
 
 public class Annotation {
+    public static final String TITLE = "Title";
+    public static final String SUBJECT = "Subject";
+    public static final String COMMENT = "Comment";
+    public static final String STATUS = "Status";
+    public static final String ASSIGNED_TO = "Assigned";
+
     private Long id;
     private Integer version;
     private Long createTime;
     private String createUser;
     private Long updateTime;
     private String updateUser;
-    private long metaId;
-    private long eventId;
+    private Long metaId;
+    private Long eventId;
     private String title;
     private String subject;
     private String status;
     private String assignedTo;
+    private String comment;
+    private String history;
 
     public Annotation() {
     }
@@ -65,19 +73,19 @@ public class Annotation {
         this.updateUser = updateUser;
     }
 
-    public long getMetaId() {
+    public Long getMetaId() {
         return metaId;
     }
 
-    public void setMetaId(final long metaId) {
+    public void setMetaId(final Long metaId) {
         this.metaId = metaId;
     }
 
-    public long getEventId() {
+    public Long getEventId() {
         return eventId;
     }
 
-    public void setEventId(final long eventId) {
+    public void setEventId(final Long eventId) {
         this.eventId = eventId;
     }
 
@@ -96,7 +104,7 @@ public class Annotation {
     public void setSubject(final String subject) {
         this.subject = subject;
     }
-    
+
     public String getStatus() {
         return status;
     }
@@ -111,5 +119,33 @@ public class Annotation {
 
     public void setAssignedTo(final String assignedTo) {
         this.assignedTo = assignedTo;
+    }
+
+    public String getComment() {
+        return comment;
+    }
+
+    public void setComment(final String comment) {
+        this.comment = comment;
+    }
+
+    public String getHistory() {
+        return history;
+    }
+
+    public void setHistory(final String history) {
+        this.history = history;
+    }
+
+    @Override
+    public String toString() {
+        if (id != null) {
+            return String.valueOf(id);
+        }
+        if (metaId != null && eventId != null) {
+            return metaId + ":" + eventId;
+        }
+
+        return null;
     }
 }

@@ -48,17 +48,29 @@ public class AnnotationResourceImpl implements AnnotationResource, HasHealthChec
     }
 
     @Override
-    public AnnotationDetail get(final String id) {
+    public AnnotationDetail get(final Long annotationId, final Long metaId, final Long eventId) {
         AnnotationDetail annotationDetail = null;
 
-        LOGGER.info(() -> "Getting annotation " + id);
-        try {
-            annotationDetail = annotationService.getDetail(id);
-            if (annotationDetail != null) {
-                documentEventLog.view(annotationDetail, null);
+        if (annotationId != null) {
+            LOGGER.info(() -> "Getting annotation " + annotationId);
+            try {
+                annotationDetail = annotationService.getDetail(annotationId);
+                if (annotationDetail != null) {
+                    documentEventLog.view(annotationDetail, null);
+                }
+            } catch (final RuntimeException e) {
+                documentEventLog.view("Annotation " + annotationId, e);
             }
-        } catch (final RuntimeException e) {
-            documentEventLog.view("Annotation " + id, e);
+        } else {
+            LOGGER.info(() -> "Getting annotation " + metaId + ":" + eventId);
+            try {
+                annotationDetail = annotationService.getDetail(metaId, eventId);
+                if (annotationDetail != null) {
+                    documentEventLog.view(annotationDetail, null);
+                }
+            } catch (final RuntimeException e) {
+                documentEventLog.view("Annotation " + metaId + ":" + eventId, e);
+            }
         }
 
         return annotationDetail;
@@ -66,16 +78,14 @@ public class AnnotationResourceImpl implements AnnotationResource, HasHealthChec
 
     @Override
     public AnnotationDetail createEntry(final CreateEntryRequest request) {
-        final String id = request.getMetaId() + ":" + request.getEventId();
-
         AnnotationDetail annotationDetail = null;
 
-        LOGGER.info(() -> "Creating annotation entry " + id);
+        LOGGER.info(() -> "Creating annotation entry " + request.getAnnotation());
         try {
             annotationDetail = annotationService.createEntry(request);
             documentEventLog.create(annotationDetail, null);
         } catch (final RuntimeException e) {
-            documentEventLog.create("Annotation entry " + id, e);
+            documentEventLog.create("Annotation entry " + request.getAnnotation(), e);
         }
 
         return annotationDetail;

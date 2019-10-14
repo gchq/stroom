@@ -1,7 +1,5 @@
 package stroom.annotation.shared;
 
-import stroom.util.shared.HasDisplayValue;
-
 public class AnnotationEntry {
     private Long id;
     private Integer version;
@@ -9,7 +7,7 @@ public class AnnotationEntry {
     private String createUser;
     private Long updateTime;
     private String updateUser;
-    private EntryType entryType;
+    private String entryType;
     private String data;
 
     public Long getId() {
@@ -60,11 +58,11 @@ public class AnnotationEntry {
         this.updateUser = updateUser;
     }
 
-    public EntryType getEntryType() {
+    public String getEntryType() {
         return entryType;
     }
 
-    public void setEntryType(final EntryType entryType) {
+    public void setEntryType(final String entryType) {
         this.entryType = entryType;
     }
 
@@ -76,39 +74,39 @@ public class AnnotationEntry {
         this.data = data;
     }
 
-    public enum EntryType implements HasDisplayValue {
-        TITLE("Title", 0),
-        SUBJECT("Subject", 1),
-        COMMENT("Comment", 2),
-        STATUS("Status", 3),
-        ASSIGNED_TO("Assigned", 4);
-
-        private static EntryType[] values = new EntryType[] {TITLE, SUBJECT, COMMENT, STATUS, ASSIGNED_TO};
-        public static EntryType fromPrimitive(int index) {
-            if (index >= 0 && index < values.length) {
-                return values[index];
-            }
-            return null;
-        }
-
-        private final String displayValue;
-        private final int primitiveValue;
-
-        EntryType(final String displayValue, int primitiveValue) {
-            this.displayValue = displayValue;
-            this.primitiveValue = primitiveValue;
-        }
-
-        /**
-         * @return drop down string value.
-         */
-        @Override
-        public String getDisplayValue() {
-            return displayValue;
-        }
-
-        public int getPrimitiveValue() {
-            return primitiveValue;
-        }
-    }
+//    public enum EntryType implements HasDisplayValue {
+//        TITLE("Title", 0),
+//        SUBJECT("Subject", 1),
+//        COMMENT("Comment", 2),
+//        STATUS("Status", 3),
+//        ASSIGNED_TO("Assigned", 4);
+//
+//        private static EntryType[] values = new EntryType[] {TITLE, SUBJECT, COMMENT, STATUS, ASSIGNED_TO};
+//        public static EntryType fromPrimitive(int index) {
+//            if (index >= 0 && index < values.length) {
+//                return values[index];
+//            }
+//            return null;
+//        }
+//
+//        private final String displayValue;
+//        private final int primitiveValue;
+//
+//        EntryType(final String displayValue, int primitiveValue) {
+//            this.displayValue = displayValue;
+//            this.primitiveValue = primitiveValue;
+//        }
+//
+//        /**
+//         * @return drop down string value.
+//         */
+//        @Override
+//        public String getDisplayValue() {
+//            return displayValue;
+//        }
+//
+//        public int getPrimitiveValue() {
+//            return primitiveValue;
+//        }
+//    }
 }

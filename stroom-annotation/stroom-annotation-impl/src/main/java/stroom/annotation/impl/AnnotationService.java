@@ -2,7 +2,6 @@ package stroom.annotation.impl;
 
 import org.springframework.stereotype.Component;
 import stroom.annotation.api.AnnotationDataSource;
-import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.dashboard.expression.v1.Val;
@@ -11,6 +10,8 @@ import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.entity.shared.PermissionException;
 import stroom.query.api.v2.DocRef;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.search.extraction.ExpressionReplacer;
 import stroom.searchable.api.Searchable;
 import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -51,26 +52,22 @@ public class AnnotationService implements Searchable {
     @Override
     public void search(final ExpressionCriteria criteria, final DataSourceField[] fields, final Consumer<Val[]> consumer) {
         checkPermission();
+
+        final ExpressionReplacer expressionReplacer = new ExpressionReplacer(AnnotationDataSource.ANNOTATION_FIELD_PREFIX, false, securityContext.getUserId());
+        ExpressionOperator expression = criteria.getExpression();
+        expression = expressionReplacer.copy(expression);
+        criteria.setExpression(expression);
+
         annotationDao.search(criteria, fields, consumer);
     }
 
-    public Annotation get(String id) {
+    AnnotationDetail getDetail(Long annotationId) {
         checkPermission();
-        final String[] parts = id.split(":");
-        final long metaId = Long.parseLong(parts[0]);
-        final long eventId = Long.parseLong(parts[1]);
-        return annotationDao.get(metaId, eventId);
+        return annotationDao.getDetail(annotationId);
     }
 
-    AnnotationDetail getDetail(String id) {
+    AnnotationDetail getDetail(Long metaId, Long eventId) {
         checkPermission();
-        final String[] parts = id.split(":");
-        final long metaId = Long.parseLong(parts[0]);
-        final long eventId = Long.parseLong(parts[1]);
-        return getDetail(metaId, eventId);
-    }
-
-    private AnnotationDetail getDetail(Long metaId, Long eventId) {
         return annotationDao.getDetail(metaId, eventId);
     }
 
