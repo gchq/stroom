@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.13] - 2019-10-14
+
 * Issue **#1288** : Streams now show the name of the pipeline used to create them even if the user doesn't have permission to see the pipeline.
 
 * Issue **#1282** : Fixed issue where items were imported into the explorer even if not selected for import.
@@ -1917,7 +1920,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.12...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.13...6.0
+[v6.0.13]: https://github.com/gchq/stroom/compare/v6.0.12...v6.0.13
 [v6.0.12]: https://github.com/gchq/stroom/compare/v6.0.11...v6.0.12
 [v6.0.11]: https://github.com/gchq/stroom/compare/v6.0.10...v6.0.11
 [v6.0.10]: https://github.com/gchq/stroom/compare/v6.0.9...v6.0.10
