@@ -271,7 +271,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             if (openWriters.size() > 0) {
                 // Flush all writers.
                 final CountDownLatch countDownLatch = new CountDownLatch(openWriters.size());
-                openWriters.forEach(indexShardWriter -> flush(indexShardWriter, asyncRunner).thenAccept(isw -> countDownLatch.countDown()));
+                openWriters.forEach(indexShardWriter -> flush(indexShardWriter, asyncRunner).thenRun(countDownLatch::countDown));
                 countDownLatch.await();
             }
         } catch (final InterruptedException e) {
@@ -433,7 +433,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
                     return null;
                 });
-                completableFuture.thenApply(result -> closing.decrementAndGet());
+                completableFuture.thenRun(closing::decrementAndGet);
                 completableFuture.exceptionally(t -> {
                     LOGGER.error(t::getMessage, t);
                     closing.decrementAndGet();

@@ -75,6 +75,8 @@ public interface TaskManager extends FindService<TaskProgress, FindTaskProgressC
      */
     <R> void execAsync(Task<R> task, TaskCallback<R> callback, ThreadPool threadPool);
 
+    void execAsync(Task<?> parentTask, String userToken, String taskName, Runnable runnable, ThreadPool threadPool);
+
     /**
      * Get a currently executing task by id.
      */

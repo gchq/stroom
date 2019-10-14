@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+* Issue **#1290** : Fix issue where executor provider was not executing supplied runnable if parent task had terminated.
+
+
 ## [v6.0.12] - 2019-10-07
 
 * Issue **#1264** : Dashboards running in embedded mode will not always ask for the user to choose an activity if the users session has one set already.
