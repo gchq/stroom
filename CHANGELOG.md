@@ -6,8 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1291** : Fixed issue where empty dashboard table cells did not select table rows when clicked. 
 
-* Issue **#1290** : Fix issue where executor provider was not executing supplied runnable if parent task had terminated.
+* Issue **#1290** : Fixed issue where executor provider was not executing supplied runnable if parent task had terminated.
 
 
 ## [v6.0.12] - 2019-10-07

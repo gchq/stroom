@@ -25,24 +25,26 @@ import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import stroom.dashboard.shared.Field;
 import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.Hyperlink.Builder;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class TableCell extends AbstractCell<Row> {
+class TableCell extends AbstractCell<Row> {
     private static final Set<String> ENABLED_EVENTS = Collections.singleton("click");
 
     private final HasHandlers hasHandlers;
+    private final MultiSelectionModel<Row> selectionModel;
     private final Field field;
     private final int pos;
 
-    public TableCell(final HasHandlers hasHandlers, final Field field, final int pos) {
+    TableCell(final HasHandlers hasHandlers, final MultiSelectionModel<Row> selectionModel, final Field field, final int pos) {
         super(ENABLED_EVENTS);
         this.hasHandlers = hasHandlers;
+        this.selectionModel = selectionModel;
         this.field = field;
         this.pos = pos;
     }
@@ -52,6 +54,8 @@ public class TableCell extends AbstractCell<Row> {
                                final NativeEvent event, final ValueUpdater<Row> valueUpdater) {
         super.onBrowserEvent(context, parent, row, event, valueUpdater);
         final String value = getValue(row);
+
+        boolean handled = false;
         if (value != null && "click".equals(event.getType())) {
             final EventTarget eventTarget = event.getEventTarget();
             if (!Element.is(eventTarget)) {
@@ -61,12 +65,17 @@ public class TableCell extends AbstractCell<Row> {
             if (element.hasTagName("u")) {
                 final String link = element.getAttribute("link");
                 if (link != null) {
-                    final Hyperlink hyperlink = getHyperlink(link, 0);
+                    final Hyperlink hyperlink = Hyperlink.create(link);
                     if (hyperlink != null) {
+                        handled = true;
                         HyperlinkEvent.fire(hasHandlers, hyperlink);
                     }
                 }
             }
+        }
+
+        if (!handled) {
+            selectionModel.setSelected(row);
         }
     }
 
@@ -100,9 +109,11 @@ public class TableCell extends AbstractCell<Row> {
         parts.forEach(p -> {
             if (p instanceof Hyperlink) {
                 final Hyperlink hyperlink = (Hyperlink) p;
-                sb.appendHtmlConstant("<u link=\"" + hyperlink.toString() + "\">");
-                sb.appendEscaped(hyperlink.getText());
-                sb.appendHtmlConstant("</u>");
+                if (!hyperlink.getText().trim().isEmpty()) {
+                    sb.appendHtmlConstant("<u link=\"" + hyperlink.toString() + "\">");
+                    sb.appendEscaped(hyperlink.getText());
+                    sb.appendHtmlConstant("</u>");
+                }
             } else {
                 sb.appendEscaped(p.toString());
             }
@@ -118,7 +129,7 @@ public class TableCell extends AbstractCell<Row> {
             final char c = value.charAt(i);
 
             if (c == '[') {
-                final Hyperlink hyperlink = getHyperlink(value, i);
+                final Hyperlink hyperlink = Hyperlink.create(value, i);
                 if (hyperlink != null) {
                     if (sb.length() > 0) {
                         parts.add(sb.toString());
@@ -140,43 +151,5 @@ public class TableCell extends AbstractCell<Row> {
         }
 
         return parts;
-    }
-
-    private static Hyperlink getHyperlink(final String value, final int pos) {
-        Hyperlink hyperlink = null;
-
-        int index = pos;
-        final String text = nextToken(value, index, '[', ']');
-        if (text != null) {
-            index = index + text.length() + 2;
-            final String href = nextToken(value, index, '(', ')');
-            if (href != null) {
-                index = index + href.length() + 2;
-                final String type = nextToken(value, index, '{', '}');
-                hyperlink = new Builder().text(text).href(href).type(type).build();
-            }
-        }
-
-        return hyperlink;
-    }
-
-    private static String nextToken(final String value, final int pos, final char startChar, final char endChar) {
-        if (value.length() <= pos + 2 || value.charAt(pos) != startChar) {
-            return null;
-        }
-
-        final StringBuilder sb = new StringBuilder();
-        for (int i = pos + 1; i < value.length(); i++) {
-            final char c = value.charAt(i);
-            if (c == endChar) {
-                return sb.toString();
-            } else if (c == '[' || c == ']' || c == '(' || c == ')') {
-                // Unexpected token
-                return null;
-            } else {
-                sb.append(c);
-            }
-        }
-        return null;
     }
 }
