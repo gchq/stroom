@@ -229,7 +229,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                         final DocRef imported = importExportActionHandler.importDocument(docRef, dataMap, importState, importMode);
 
                         // Add explorer node afterwards on successful import as they won't be controlled by doc service.
-                        if (!ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
+                        if (importState.ok(importMode)) {
                             if (!existingNode.isPresent()) {
                                 explorerNodeService.createNode(imported, folderRef, PermissionInheritance.DESTINATION);
                             }
