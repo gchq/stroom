@@ -26,22 +26,25 @@ import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import stroom.dashboard.shared.Field;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-public class TableCell extends AbstractCell<Row> {
+class TableCell extends AbstractCell<Row> {
     private static final Set<String> ENABLED_EVENTS = Collections.singleton("click");
 
     private final HasHandlers hasHandlers;
+    private final MultiSelectionModel<Row> selectionModel;
     private final Field field;
     private final int pos;
 
-    public TableCell(final HasHandlers hasHandlers, final Field field, final int pos) {
+    TableCell(final HasHandlers hasHandlers, final MultiSelectionModel<Row> selectionModel, final Field field, final int pos) {
         super(ENABLED_EVENTS);
         this.hasHandlers = hasHandlers;
+        this.selectionModel = selectionModel;
         this.field = field;
         this.pos = pos;
     }
@@ -51,6 +54,8 @@ public class TableCell extends AbstractCell<Row> {
                                final NativeEvent event, final ValueUpdater<Row> valueUpdater) {
         super.onBrowserEvent(context, parent, row, event, valueUpdater);
         final String value = getValue(row);
+
+        boolean handled = false;
         if (value != null && "click".equals(event.getType())) {
             final EventTarget eventTarget = event.getEventTarget();
             if (!Element.is(eventTarget)) {
@@ -62,10 +67,15 @@ public class TableCell extends AbstractCell<Row> {
                 if (link != null) {
                     final Hyperlink hyperlink = Hyperlink.create(link);
                     if (hyperlink != null) {
+                        handled = true;
                         HyperlinkEvent.fire(hasHandlers, hyperlink);
                     }
                 }
             }
+        }
+
+        if (!handled) {
+            selectionModel.setSelected(row);
         }
     }
 
@@ -103,9 +113,6 @@ public class TableCell extends AbstractCell<Row> {
                     sb.appendHtmlConstant("<u link=\"" + hyperlink.toString() + "\">");
                     sb.appendEscaped(hyperlink.getText());
                     sb.appendHtmlConstant("</u>");
-
-                } else {
-                    sb.appendHtmlConstant("&nbsp;");
                 }
             } else {
                 sb.appendEscaped(p.toString());

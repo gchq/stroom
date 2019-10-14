@@ -188,13 +188,18 @@ public abstract class TaskExecutor {
 
                 if (currentTask != null) {
                     executing = true;
-                    CompletableFuture.runAsync(currentTask, currentProducer.getExecutor())
+                    try {
+                        CompletableFuture.runAsync(currentTask, currentProducer.getExecutor())
                             .thenRun(this::complete)
-                            .exceptionally(t -> {
-                                complete();
-                                LOGGER.error(t.getMessage(), t);
-                                return null;
-                            });
+                                .exceptionally(t -> {
+                                    complete();
+                                    LOGGER.error(t.getMessage(), t);
+                                    return null;
+                                });
+                    } catch (final RuntimeException e) {
+                        totalThreads.decrementAndGet();
+                        LOGGER.error(e.getMessage(), e);
+                    }
                 }
             }
         } finally {

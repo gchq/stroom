@@ -40,6 +40,7 @@ import stroom.util.shared.Monitor;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
+import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.ExternalShutdownController;
 import stroom.util.task.HasMonitor;
@@ -364,6 +365,118 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
                 callback.onFailure(t);
             } catch (final Throwable t2) {
                 // Ignore.
+            }
+        }
+    }
+
+    @Override
+    public void execAsync(final Task<?> parentTask, final String userToken, final String taskName, final Runnable runnable, ThreadPool threadPool) {
+        if (userToken == null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Task has null user token: " + taskName);
+            }
+        }
+
+        final GenericServerTask task = GenericServerTask.create(parentTask, userToken, taskName, null);
+        if (threadPool == null) {
+            threadPool = task.getThreadPool();
+        }
+
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
+
+        if (task.getId() == null) {
+            throw new IllegalStateException("All tasks must have a pre-allocated id");
+        }
+
+        // We might need to be able to retrieve the associate task handler
+        // right away so associate it here before we execute as the task
+        // will run asynchronously.
+        final TaskThread<VoidResult> taskThread = new TaskThread<>(task);
+
+        // Create the task scope runnable object outside of the executing
+        // thread so we can store a reference to the current task scope
+        // context.
+        // The reference to the current context is stored during
+        // construction of this object.
+        final TaskScopeRunnable taskScopeRunnable = new TaskScopeRunnable(task) {
+            @Override
+            protected void exec() {
+                if (stop.get()) {
+                    throw new TaskTerminatedException();
+                }
+
+                final Thread currentThread = Thread.currentThread();
+                final String oldThreadName = currentThread.getName();
+
+                if (Thread.interrupted()) {
+                    LOGGER.debug("Thread was interrupted");
+                }
+
+                try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, userToken)) {
+                    currentThread.setName(oldThreadName + " - " + task.getClass().getSimpleName());
+
+                    currentTasks.put(task.getId(), taskThread);
+                    LOGGER.debug("execAsync()->exec() - {} {} took {}",
+                            task.getClass().getSimpleName(),
+                            task.getTaskName(),
+                            logExecutionTime.toString()
+                    );
+
+                    taskThread.setThread(Thread.currentThread());
+
+                    // Create a task monitor bean to be injected inside the handler.
+                    final TaskMonitorImpl taskMonitor = beanStore.getBean(TaskMonitorImpl.class);
+                    taskMonitor.setMonitor(task.getMonitor());
+
+                    CurrentTaskState.pushState(task, taskMonitor);
+                    LOGGER.debug("doExec() - exec >> '{}' {}", task.getClass().getName(), task);
+                    runnable.run();
+                    LOGGER.debug("doExec() - exec << '{}' {}", task.getClass().getName(), task);
+
+                } catch (final ThreadDeath t) {
+                    LOGGER.error("exec() - ThreadDeath (" + task.getClass().getSimpleName() + ")");
+                    LOGGER.debug("exec() (" + task.getClass().getSimpleName() + ")", t);
+                    throw t;
+                } catch (final TaskTerminatedException t) {
+                    LOGGER.error("exec() (" + task.getClass().getSimpleName() + ")", t);
+                    throw t;
+                } catch (final Throwable t) {
+                    LOGGER.error(t.getMessage() + " (" + task.getClass().getSimpleName() + ")", t);
+                    throw t;
+                } finally {
+                    CurrentTaskState.popState();
+
+                    taskThread.setThread(null);
+                    // Decrease the count of the number of async tasks.
+                    currentAsyncTaskCount.decrementAndGet();
+                    currentTasks.remove(task.getId());
+
+                    currentThread.setName(oldThreadName);
+                }
+            }
+        };
+
+        // Now we have a task scoped runnable we will execute it in a new
+        // thread.
+        final Executor executor = getExecutor(threadPool);
+        if (executor != null) {
+            currentAsyncTaskCount.incrementAndGet();
+
+            try {
+                // We might run out of threads and get a can't fork
+                // exception from the thread pool.
+                executor.execute(taskScopeRunnable);
+
+            } catch (final Throwable t) {
+                try {
+                    LOGGER.error(MarkerFactory.getMarker("FATAL"), "exec() - Unexpected Exception (" + task.getClass().getSimpleName() + ")", t);
+                    throw t;
+
+                } finally {
+                    taskThread.setThread(null);
+                    // Decrease the count of the number of async tasks.
+                    currentAsyncTaskCount.decrementAndGet();
+                }
             }
         }
     }
