@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class TaskExecutor {
+public abstract class TaskExecutor {
     private static final int DEFAULT_MAX_THREADS = 5;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskExecutor.class);
@@ -189,7 +189,7 @@ public class TaskExecutor {
                 if (currentTask != null) {
                     executing = true;
                     CompletableFuture.runAsync(currentTask, currentProducer.getExecutor())
-                            .thenAccept(result -> complete())
+                            .thenRun(this::complete)
                             .exceptionally(t -> {
                                 complete();
                                 LOGGER.error(t.getMessage(), t);
