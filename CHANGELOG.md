@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1288** : Streams now show the name of the pipeline used to create them even if the user doesn't have permission to see the pipeline.
+
 * Issue **#1282** : Fixed issue where items were imported into the explorer even if not selected for import.
 
 * Issue **#1291** : Fixed issue where empty dashboard table cells did not select table rows when clicked. 
