@@ -5,7 +5,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.meta.shared.FindMetaCriteria;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Param;
 import stroom.query.api.v2.SearchRequest;
@@ -87,7 +87,7 @@ class SearchableStore implements Store {
                 coprocessorSettingsMap, fieldIndexMap, paramMap);
 
         final ExpressionOperator expression = searchRequest.getQuery().getExpression();
-        final FindMetaCriteria criteria = new FindMetaCriteria(expression);
+        final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 
         resultHandler = new SearchResultHandler(
                 completionState, coprocessorSettingsMap, defaultMaxResultsSizes, storeSize);
