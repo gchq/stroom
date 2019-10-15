@@ -5,7 +5,10 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskManager;
 import stroom.task.api.TaskTerminatedException;
+import stroom.task.impl.CurrentTaskState;
+import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;
 import stroom.task.shared.ThreadPoolImpl;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -28,6 +31,8 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
     @Inject
     private ExecutorProvider executorProvider;
+    @Inject
+    private TaskManager taskManager;
 
     @Test
     void testMoreItemsThanThreads_boundedPool() throws ExecutionException, InterruptedException {
@@ -197,7 +202,7 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
         final Executor executor = executorProvider.getExecutor();
         CompletableFuture.runAsync(() -> {
-            Thread.currentThread().interrupt();
+            terminateCurrentTask();
             testCompletedExceptionally();
         }, executor)
                 .thenRun(() -> completedNormally.set(true))
@@ -217,7 +222,7 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
         final Executor executor = executorProviderOuter.getExecutor();
         CompletableFuture.runAsync(() -> {
-            Thread.currentThread().interrupt();
+            terminateCurrentTask();
             testCompletedExceptionally(executorProviderInner, true);
         }, executor)
                 .thenRun(() -> completedNormally.set(true))
@@ -238,7 +243,7 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
         final Executor executor = executorProvider.getExecutor();
         CompletableFuture.runAsync(() -> {
-            Thread.currentThread().interrupt();
+            terminateCurrentTask();
             testCompletedNormally();
         }, executor)
                 .thenRun(() -> completedNormally.set(true))
@@ -277,5 +282,11 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
                 return executor;
             }
         };
+    }
+
+    private void terminateCurrentTask() {
+        final TaskId taskId = CurrentTaskState.currentTask().getId();
+        taskManager.terminate(taskId);
+//            Thread.currentThread().interrupt();
     }
 }

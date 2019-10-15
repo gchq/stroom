@@ -365,14 +365,23 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 LOGGER.warn("This thread was previously interrupted");
             }
 
+            // Get the parent task thread if there is one.
+            TaskThread parentTaskThread = null;
+            if (parentTask != null) {
+                parentTaskThread = currentTasks.get(parentTask.getId());
+            }
+
             final Thread currentThread = Thread.currentThread();
             final String oldThreadName = currentThread.getName();
             final TaskThread taskThread = new TaskThread(task);
 
             currentThread.setName(oldThreadName + " - " + task.getClass().getSimpleName());
             try {
-                currentTasks.put(task.getId(), taskThread);
                 taskThread.setThread(Thread.currentThread());
+                if (parentTaskThread != null) {
+                    parentTaskThread.addChild(taskThread);
+                }
+                currentTasks.put(task.getId(), taskThread);
 
                 securityContext.asUser(userToken, () -> {
                     CurrentTaskState.pushState(taskThread);
@@ -396,12 +405,14 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 LOGGER.error(e.getMessage() + " (" + task.getClass().getSimpleName() + ")", e);
                 throw e;
             } finally {
-                currentThread.setName(oldThreadName);
-
+                currentTasks.remove(task.getId());
+                if (parentTaskThread != null) {
+                    parentTaskThread.removeChild(taskThread);
+                }
                 taskThread.setThread(null);
+                currentThread.setName(oldThreadName);
                 // Decrease the count of the number of async tasks.
                 currentAsyncTaskCount.decrementAndGet();
-                currentTasks.remove(task.getId());
             }
         });
 
@@ -430,6 +441,12 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
     }
 
     private <R> void doExec(final Task<R> task, final TaskCallback<R> callback) {
+        // Get the parent task thread if there is one.
+        TaskThread parentTaskThread = null;
+        if (task.getParentTask() != null) {
+            parentTaskThread = currentTasks.get(task.getParentTask().getId());
+        }
+
         final Thread currentThread = Thread.currentThread();
         final String oldThreadName = currentThread.getName();
         final TaskThread taskThread = new TaskThread(task);
@@ -448,8 +465,11 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 LOGGER.warn("This thread was previously interrupted");
             }
 
-            currentTasks.put(task.getId(), taskThread);
             taskThread.setThread(Thread.currentThread());
+            if (parentTaskThread != null) {
+                parentTaskThread.addChild(taskThread);
+            }
+            currentTasks.put(task.getId(), taskThread);
 
             if (stop.get() || currentThread.isInterrupted()) {
                 throw new TaskTerminatedException(stop.get());
@@ -470,10 +490,12 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 }
             });
         } finally {
-            currentThread.setName(oldThreadName);
-
-            taskThread.setThread(null);
             currentTasks.remove(task.getId());
+            if (parentTaskThread != null) {
+                parentTaskThread.removeChild(taskThread);
+            }
+            taskThread.setThread(null);
+            currentThread.setName(oldThreadName);
         }
     }
 
