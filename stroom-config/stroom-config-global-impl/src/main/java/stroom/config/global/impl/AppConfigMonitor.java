@@ -74,9 +74,14 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     @Override
     public void start() throws Exception {
         if (isValidFile) {
-            startWatcher();
+            try {
+                startWatcher();
+            } catch (Exception e) {
+                LOGGER.error("Unable to start config file monitor due to [{}]. Changes to {} will not be monitored.",
+                        e.getMessage(), configFile.toAbsolutePath().normalize(), e);
+            }
         } else {
-            LOGGER.warn("Unable to start watcher as {} is not a valid file", configFile);
+            LOGGER.error("Unable to start watcher as {} is not a valid file", configFile.toAbsolutePath().normalize());
         }
     }
 
@@ -84,7 +89,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         try {
             watchService = FileSystems.getDefault().newWatchService();
         } catch (IOException e) {
-            throw new RuntimeException(LogUtil.message("Error creating watch new service"), e);
+            throw new RuntimeException(LogUtil.message("Error creating watch new service, {}", e.getMessage()), e);
         }
 
         dirToWatch.register(watchService, StandardWatchEventKinds.ENTRY_MODIFY);

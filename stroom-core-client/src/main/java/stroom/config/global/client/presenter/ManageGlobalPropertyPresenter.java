@@ -24,7 +24,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.config.global.api.ConfigProperty;
+import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.client.presenter.ManageGlobalPropertyPresenter.ManageGlobalPropertyView;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.StringCriteria.MatchStyle;

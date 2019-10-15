@@ -1,7 +1,7 @@
 package stroom.config.global.impl;
 
-import stroom.config.global.api.ConfigProperty;
-import stroom.config.global.api.ListGlobalConfigAction;
+import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.ListGlobalConfigAction;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;

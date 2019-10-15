@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.config.global.api;
+package stroom.config.global.shared;
 
-import stroom.task.shared.Action;
+import stroom.entity.shared.FindAction;
 
-public class FetchGlobalConfigAction extends Action<ConfigProperty> {
-    private static final long serialVersionUID = 6083235358421128201L;
+public class FindGlobalConfigAction extends FindAction<FindGlobalConfigCriteria, ConfigProperty> {
+    private static final long serialVersionUID = -6808045615241590297L;
 
-    private int configId;
-
-    public FetchGlobalConfigAction() {
+    public FindGlobalConfigAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchGlobalConfigAction(final int configId) {
-        this.configId = configId;
-    }
-
-    public int getConfigId() {
-        return configId;
-    }
-
-    @Override
-    public String getTaskName() {
-        return "Load Global Property";
+    public FindGlobalConfigAction(final FindGlobalConfigCriteria criteria) {
+        super(criteria);
     }
 }

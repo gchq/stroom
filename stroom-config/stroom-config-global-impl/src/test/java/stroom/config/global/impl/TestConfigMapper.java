@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
-import stroom.config.global.api.ConfigProperty;
+import stroom.config.global.shared.ConfigProperty;
 import stroom.docref.DocRef;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsConfig;

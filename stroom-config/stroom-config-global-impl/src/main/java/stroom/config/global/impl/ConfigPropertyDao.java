@@ -1,6 +1,6 @@
 package stroom.config.global.impl;
 
-import stroom.config.global.api.ConfigProperty;
+import stroom.config.global.shared.ConfigProperty;
 import stroom.util.shared.HasIntCrud;
 
 import java.util.List;

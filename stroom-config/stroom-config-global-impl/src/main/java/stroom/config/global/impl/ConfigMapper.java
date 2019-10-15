@@ -28,7 +28,7 @@ import stroom.config.app.AppConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
-import stroom.config.global.api.ConfigProperty;
+import stroom.config.global.shared.ConfigProperty;
 import stroom.docref.DocRef;
 import stroom.util.config.FieldMapper;
 import stroom.util.config.PropertyUtil;

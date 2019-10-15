@@ -20,7 +20,8 @@ package stroom.config.global.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.config.global.api.ConfigProperty;
+import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.FindGlobalConfigCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
@@ -34,6 +35,7 @@ import javax.inject.Singleton;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton // Needs to be singleton to prevent initialise being called multiple times
@@ -99,15 +101,28 @@ class GlobalConfigService {
         updateConfigFromDb();
     }
 
-    public List<ConfigProperty> list() {
+    public List<ConfigProperty> list(FindGlobalConfigCriteria criteria) {
+        if (criteria.getName() != null) {
+            return list(v -> criteria.getName().isMatch(v.getName()));
+        } else {
+            return list();
+        }
+    }
+
+    private List<ConfigProperty> list(final Predicate<ConfigProperty> filter) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
             // Ensure the global config properties are up to date with the db values
             updateConfigFromDb();
 
             return configMapper.getGlobalProperties().stream()
                     .sorted(Comparator.comparing(ConfigProperty::getName))
+                    .filter(filter)
                     .collect(Collectors.toList());
         });
+    }
+
+    public List<ConfigProperty> list() {
+        return list(v -> true);
     }
 
     public Optional<ConfigProperty> fetch(final int id) {

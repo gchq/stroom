@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.config.global.api;
+package stroom.config.global.shared;
 
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;
@@ -86,7 +86,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     private boolean requireUiRestart;
 
     public ConfigProperty() {
-        // Required for Gwt
+        // Required for GWT serialisation
     }
 
     public Integer getId() {
@@ -374,8 +374,12 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         private static final OverrideValue UNSET =  new OverrideValue<>(false, null);
         private static final OverrideValue NULL_VALUE =  new OverrideValue<>(true, null);
 
-        private final boolean hasOverride;
-        private final T value;
+        private boolean hasOverride;
+        private T value;
+
+        OverrideValue() {
+            // Required for GWT serialisation
+        }
 
         @SuppressWarnings("unchecked")
         public static <T> OverrideValue<T> unSet() {

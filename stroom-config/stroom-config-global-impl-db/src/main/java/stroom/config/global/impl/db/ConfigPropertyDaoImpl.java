@@ -1,7 +1,7 @@
 package stroom.config.global.impl.db;
 
 import org.jooq.Record;
-import stroom.config.global.api.ConfigProperty;
+import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.impl.ConfigPropertyDao;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.db.util.GenericDao;

@@ -2,9 +2,10 @@ package stroom.config.global.impl;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.lifecycle.Managed;
-import stroom.config.global.api.FetchGlobalConfigAction;
-import stroom.config.global.api.ListGlobalConfigAction;
-import stroom.config.global.api.UpdateGlobalConfigAction;
+import stroom.config.global.shared.FetchGlobalConfigAction;
+import stroom.config.global.shared.FindGlobalConfigAction;
+import stroom.config.global.shared.ListGlobalConfigAction;
+import stroom.config.global.shared.UpdateGlobalConfigAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HealthCheckBinder;
@@ -15,6 +16,7 @@ public class GlobalConfigModule extends AbstractModule {
         bind(AppConfigMonitor.class).asEagerSingleton();
 
         TaskHandlerBinder.create(binder())
+                .bind(FindGlobalConfigAction.class, FindGlobalConfigHandler.class)
                 .bind(ListGlobalConfigAction.class, ListGlobalConfigHandler.class)
                 .bind(FetchGlobalConfigAction.class, FetchGlobalConfigHandler.class)
                 .bind(UpdateGlobalConfigAction.class, UpdateGlobalConfigHandler.class);

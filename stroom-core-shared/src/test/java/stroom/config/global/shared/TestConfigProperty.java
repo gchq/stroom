@@ -1,4 +1,4 @@
-package stroom.config.global.api;
+package stroom.config.global.shared;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;

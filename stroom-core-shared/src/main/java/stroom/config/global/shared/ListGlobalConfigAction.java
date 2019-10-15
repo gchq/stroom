@@ -14,29 +14,32 @@
  * limitations under the License.
  */
 
-package stroom.config.global.api;
+package stroom.config.global.shared;
 
 import stroom.task.shared.Action;
+import stroom.util.shared.HasCriteria;
+import stroom.util.shared.ResultList;
 
-public class UpdateGlobalConfigAction extends Action<ConfigProperty> {
+public class ListGlobalConfigAction extends Action<ResultList<ConfigProperty>> implements HasCriteria {
     private static final long serialVersionUID = 6083235358421128201L;
 
-    private ConfigProperty configProperty;
+    private FindGlobalConfigCriteria findGlobalConfigCriteria = new FindGlobalConfigCriteria();
 
-    public UpdateGlobalConfigAction() {
+    public ListGlobalConfigAction() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public UpdateGlobalConfigAction(final ConfigProperty configProperty) {
-        this.configProperty = configProperty;
+    public ListGlobalConfigAction(final FindGlobalConfigCriteria findGlobalConfigCriteria) {
+        this.findGlobalConfigCriteria = findGlobalConfigCriteria;
     }
 
-    public ConfigProperty getConfigProperty() {
-        return configProperty;
+    @Override
+    public FindGlobalConfigCriteria getCriteria() {
+        return findGlobalConfigCriteria;
     }
 
     @Override
     public String getTaskName() {
-        return "Save Global Property";
+        return "Fetch Global Properties";
     }
 }
