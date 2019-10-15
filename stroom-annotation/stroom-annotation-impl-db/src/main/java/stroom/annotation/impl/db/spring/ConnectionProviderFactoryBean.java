@@ -6,13 +6,24 @@ import stroom.annotation.impl.db.AnnotationDbConfig;
 import stroom.annotation.impl.db.AnnotationDbModule;
 import stroom.annotation.impl.db.ConnectionProvider;
 
+import javax.inject.Singleton;
+
 @Component
+@Singleton
 public class ConnectionProviderFactoryBean implements FactoryBean<ConnectionProvider> {
-    private static AnnotationDbConfig annotationDbConfig;
     private static ConnectionProvider connectionProvider;
 
     @Override
     public ConnectionProvider getObject() {
+        if (connectionProvider == null) {
+            synchronized (ConnectionProviderFactoryBean.class) {
+                if (connectionProvider == null) {
+                    final AnnotationDbConfig annotationDbConfig = new AnnotationDbConfig();
+                    connectionProvider = new AnnotationDbModule(annotationDbConfig).getConnectionProvider(() -> annotationDbConfig);
+                }
+            }
+        }
+
         return connectionProvider;
     }
 
@@ -23,7 +34,7 @@ public class ConnectionProviderFactoryBean implements FactoryBean<ConnectionProv
 
     @Override
     public boolean isSingleton() {
-        return false;
+        return true;
     }
 
     public static void setAnnotationDbConfig(final AnnotationDbConfig annotationDbConfig) {
