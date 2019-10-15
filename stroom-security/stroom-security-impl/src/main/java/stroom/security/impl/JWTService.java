@@ -53,7 +53,8 @@ class JWTService implements HasHealthCheck {
                final JwtConfig jwtConfig,
                final AuthenticationServiceClients authenticationServiceClients) {
         if (securityConfig.getDurationToWarnBeforeExpiry() != null) {
-            this.durationToWarnBeforeExpiry = Duration.ofMillis(ModelStringUtil.parseDurationString(securityConfig.getDurationToWarnBeforeExpiry()));
+            this.durationToWarnBeforeExpiry = Duration.ofMillis(
+                    ModelStringUtil.parseDurationString(securityConfig.getDurationToWarnBeforeExpiry()));
         }
         this.apiKey = securityConfig.getApiToken();
         this.authJwtIssuer = jwtConfig.getJwtIssuer();
@@ -245,19 +246,22 @@ class JWTService implements HasHealthCheck {
         try {
             JwtClaims claims = verifyToken(this.apiKey);
             if (this.durationToWarnBeforeExpiry == null) {
-                resultBuilder.withDetail(KEY, "'stroom.security.apiToken.durationToWarnBeforeExpiry' is not defined! You will not be warned when Stroom's API key is about to expire!");
+                resultBuilder.withDetail(KEY, "'stroom.security.authentication.durationToWarnBeforeExpiry' is " +
+                        "not defined! You will not be warned when Stroom's API key is about to expire!");
                 resultBuilder.unhealthy();
             } else {
                 NumericDate expiration = claims.getExpirationTime();
                 if (expiration == null) {
                     // This isn't about health, it's just a warning.
-                    resultBuilder.withDetail(KEY, "Warning: Stroom's API key has no expiration. It would be more secure to use a key which does expire.");
+                    resultBuilder.withDetail(KEY, "Warning: Stroom's API key has no expiration. It would be more " +
+                            "secure to use a key which does expire.");
                 } else {
                     Instant expiresOn = Instant.ofEpochMilli(expiration.getValueInMillis());
                     Instant now = Instant.now(clock);
                     long minutesUntilExpiry = ChronoUnit.MINUTES.between(now, expiresOn);
                     if (minutesUntilExpiry < this.durationToWarnBeforeExpiry.toMinutes()) {
-                        resultBuilder.withDetail(KEY, String.format("Stroom's API key expires soon! It expires on %s", expiresOn.toString()));
+                        resultBuilder.withDetail(KEY, String.format(
+                                "Stroom's API key expires soon! It expires on %s", expiresOn.toString()));
                         resultBuilder.unhealthy();
                     }
                 }
