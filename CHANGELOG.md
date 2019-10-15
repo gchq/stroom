@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift Kafka client to v2.2.1.
+
 
 ## [v6.0.13] - 2019-10-14
 
