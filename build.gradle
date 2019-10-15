@@ -113,6 +113,7 @@ ext.versions = [
         hikari            : '3.2.0',
         jooq              : '3.11.9',
         junit_jupiter     : '5.3.2',
+        kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
         mockito           : '2.23.4',
         rxjava            : '2.1.10',
@@ -225,6 +226,7 @@ ext.libs = [
         jul_to_slf4j                   : "org.slf4j:jul-to-slf4j", // version controlled by DW BOM
         junit_jupiter_api              : "org.junit.jupiter:junit-jupiter-api:$versions.junit_jupiter",
         junit_jupiter_engine           : "org.junit.jupiter:junit-jupiter-engine:$versions.junit_jupiter",
+        kafka_clients                  : "org.apache.kafka:kafka-clients:$versions.kafka",
         kryo                           : "com.esotericsoftware:kryo-shaded:4.0.0",
         lmdbjava                       : "org.lmdbjava:lmdbjava:0.6.3",
         log4j_over_slf4j               : "org.slf4j:log4j-over-slf4j", // version controlled by DW BOM

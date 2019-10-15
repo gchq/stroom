@@ -14,7 +14,7 @@ public class AuthenticationConfig implements IsConfig {
     private boolean authenticationRequired = true;
     private String apiToken = "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc";
     private String authServicesBaseUrl = "http://auth-service:8099";
-    private String durationToWarnBeforeExpiry;
+    private String durationToWarnBeforeExpiry = "30d";
     private JwtConfig jwtConfig = new JwtConfig();
     private boolean preventLogin;
     private String userNamePattern = "^[a-zA-Z0-9_-]{3,}$";
