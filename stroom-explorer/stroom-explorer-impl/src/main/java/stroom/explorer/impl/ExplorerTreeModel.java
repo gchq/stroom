@@ -78,10 +78,18 @@ class ExplorerTreeModel {
             if (currentModel.getCreationTime() < oldestAllowed) {
                 // Perform a build asynchronously if we aren't already building elsewhere.
                 if (performingRebuild.compareAndSet(0, 1)) {
-                    final Executor executor = executorProvider.getExecutor();
-                    CompletableFuture
-                            .runAsync(this::updateModel, executor)
-                            .thenRun(performingRebuild::decrementAndGet);
+                    try {
+                        final Executor executor = executorProvider.getExecutor();
+                        CompletableFuture
+                                .runAsync(this::updateModel, executor)
+                                .thenRun(performingRebuild::decrementAndGet)
+                                .exceptionally(t -> {
+                                    performingRebuild.decrementAndGet();
+                                    return null;
+                                });
+                    } catch (final RuntimeException e) {
+                        performingRebuild.decrementAndGet();
+                    }
                 }
             }
         }

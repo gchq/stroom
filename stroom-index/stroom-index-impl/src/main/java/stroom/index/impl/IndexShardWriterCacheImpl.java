@@ -255,7 +255,14 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             if (openWriters.size() > 0) {
                 // Flush all writers.
                 final CountDownLatch countDownLatch = new CountDownLatch(openWriters.size());
-                openWriters.forEach(indexShardWriter -> flush(indexShardWriter, asyncRunner).thenAccept(isw -> countDownLatch.countDown()));
+                openWriters.forEach(indexShardWriter -> {
+                    try {
+                        flush(indexShardWriter, asyncRunner).thenRun(countDownLatch::countDown);
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e::getMessage, e);
+                        countDownLatch.countDown();
+                    }
+                });
                 countDownLatch.await();
             }
         } catch (final InterruptedException e) {
@@ -389,38 +396,43 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                 // Set the status of the shard to closing so it won't be used again immediately when removed from the map.
                 indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSING);
 
-                // Close the shard.
-                closing.incrementAndGet();
-                final CompletableFuture<IndexShardWriter> completableFuture = exec.exec(() -> {
-                    try {
+                try {
+                    // Close the shard.
+                    final CompletableFuture<IndexShardWriter> completableFuture = exec.exec(() -> {
                         try {
-                            LOGGER.debug(() -> "Closing " + indexShardId);
-                            LOGGER.trace(() -> "Closing " + indexShardId + " - " + indexShardKey.toString());
+                            try {
+                                LOGGER.debug(() -> "Closing " + indexShardId);
+                                LOGGER.trace(() -> "Closing " + indexShardId + " - " + indexShardKey.toString());
 
-                            taskContext.setName("Closing writer");
-                            taskContext.info("Closing writer for index shard " + indexShardId);
+                                taskContext.setName("Closing writer");
+                                taskContext.info("Closing writer for index shard " + indexShardId);
 
-                            // Close the shard.
-                            indexShardWriter.close();
-                        } finally {
-                            // Remove the writer from ones that can be used by readers.
-                            openWritersByShardId.remove(indexShardId);
+                                // Close the shard.
+                                indexShardWriter.close();
+                            } finally {
+                                // Remove the writer from ones that can be used by readers.
+                                openWritersByShardId.remove(indexShardId);
 
-                            // Update the shard status.
-                            indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
+                                // Update the shard status.
+                                indexShardManager.setStatus(indexShardId, IndexShardStatus.CLOSED);
+                            }
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e::getMessage, e);
                         }
-                    } catch (final RuntimeException e) {
-                        LOGGER.error(e::getMessage, e);
-                    }
 
-                    return null;
-                });
-                completableFuture.thenApply(result -> closing.decrementAndGet());
-                completableFuture.exceptionally(t -> {
-                    LOGGER.error(t::getMessage, t);
+                        return null;
+                    });
+                    completableFuture.thenRun(closing::decrementAndGet);
+                    completableFuture.exceptionally(t -> {
+                        LOGGER.error(t::getMessage, t);
+                        closing.decrementAndGet();
+                        return null;
+                    });
+                    closing.incrementAndGet();
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e::getMessage, e);
                     closing.decrementAndGet();
-                    return null;
-                });
+                }
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
             }
