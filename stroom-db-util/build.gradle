@@ -5,7 +5,7 @@ dependencies {
 //    compile project(':stroom-dictionary:stroom-dictionary-api')
 //    compile project(':stroom-explorer:stroom-collection-api')
     compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+//    compile project(':stroom-util-shared')
     compile project(':stroom-entity-shared')
     compile project(':stroom-core-server')
 //
@@ -22,9 +22,10 @@ dependencies {
 //    compile libs.jackson_databind
 //    compile libs.javassist
 //    compile libs.javax_servlet_api
-//    compile libs.javax_inject
+    compile libs.javax_inject
 //    compile libs.jaxb_api
     compile libs.jooq
+    compile libs.spring_context
     compile libs.stroomExpression
     compile libs.stroomQueryApi
 //    compile libs.saxon_he

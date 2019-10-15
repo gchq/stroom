@@ -2,15 +2,18 @@ ext.moduleName = 'stroom.annotation.impl.db'
 
 dependencies {
     compile project(':stroom-annotation:stroom-config-common')
+    compile project(':stroom-core-shared')
     compile project(':stroom-db-util')
+    compile project(':stroom-entity-shared')
+    compile project(':stroom-annotation:stroom-annotation-api')
     compile project(':stroom-annotation:stroom-annotation-impl')
     compile project(':stroom-annotation:stroom-annotation-impl-db-jooq')
-    compile project(':stroom-util')
-    compile project(':stroom-util-shared')
+//    compile project(':stroom-util')
+//    compile project(':stroom-util-shared')
 
     compile libs.stroomQueryApi
 
-    compile libs.dropwizard_jersey
+//    compile libs.dropwizard_jersey
     compile libs.flyway_core
     compile libs.guice4
     compile libs.hikari
@@ -18,6 +21,9 @@ dependencies {
     compile libs.javax_inject
     compile libs.jooq
     compile libs.slf4j_api
+    compile libs.spring_beans
+    compile libs.spring_context
+    compile libs.stroomExpression
 
     runtimeOnly libs.mysql_connector_java
     

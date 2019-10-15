@@ -28,6 +28,7 @@ dependencies {
     compile libs.jackson_annotations
     compile libs.hibernate_jpa_api
     compile libs.restygwt
+    compile libs.swagger_annotations
     compile libs.validation_api
     compile libs.ws_rs_api
 }
