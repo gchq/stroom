@@ -98,6 +98,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         this.connectionProvider = connectionProvider;
 
         expressionMapper = expressionMapperFactory.create();
+        expressionMapper.map(AnnotationDataSource.ID_FIELD, ANNOTATION.ID, Long::valueOf);
         expressionMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION.META_ID, Long::valueOf);
         expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION.EVENT_ID, Long::valueOf);
         expressionMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, value -> value);
@@ -109,6 +110,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         expressionMapper.map(AnnotationDataSource.HISTORY_FIELD, ANNOTATION.HISTORY, value -> value);
 
         valueMapper = new ValueMapper();
+        valueMapper.map(AnnotationDataSource.ID_FIELD, ANNOTATION.ID, ValLong::create);
         valueMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION.META_ID, ValLong::create);
         valueMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION.EVENT_ID, ValLong::create);
         valueMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, ValString::create);

@@ -118,9 +118,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
 
     @Override
     public void setAssignedTo(final String assignedTo) {
-        if (assignedTo == null) {
+        if (assignedTo == null || assignedTo.trim().isEmpty()) {
             currentAssignedToContainer.setVisible(false);
             assignYourselfContainer.setVisible(true);
+            this.assignedTo.setText("");
         } else {
             currentAssignedToContainer.setVisible(true);
             assignYourselfContainer.setVisible(false);
