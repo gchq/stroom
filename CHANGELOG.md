@@ -1930,7 +1930,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.6...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.7...6.1
+[v6.1-beta.7]: https://github.com/gchq/stroom/compare/v6.1-beta.6...v6.1-beta.7
 [v6.1-beta.6]: https://github.com/gchq/stroom/compare/v6.1-beta.5...v6.1-beta.6
 [v6.1-beta.5]: https://github.com/gchq/stroom/compare/v6.1-beta.4...v6.1-beta.5
 [v6.1-beta.4]: https://github.com/gchq/stroom/compare/v6.1-beta.3...v6.1-beta.4
