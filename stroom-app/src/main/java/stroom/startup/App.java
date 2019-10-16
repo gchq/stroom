@@ -40,7 +40,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import stroom.annotation.impl.db.spring.AnnotationConfiguration;
-import stroom.annotation.impl.db.spring.ConnectionProviderFactoryBean;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.cluster.server.ClusterCallServiceRPC;
 import stroom.connectors.elastic.StroomElasticProducerFactoryService;
@@ -298,9 +297,6 @@ public class App extends Application<Config> {
             LOGGER.error("Can't connect to all databases, shutting down");
             System.exit(1);
         }
-
-        // Temporary shim for annotations.
-        ConnectionProviderFactoryBean.setAnnotationDbConfig(configuration.getAnnotationDbConfig());
 
         // Start the spring context.
         LOGGER.info("Loading Spring context");

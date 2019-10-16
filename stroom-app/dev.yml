@@ -58,15 +58,4 @@ logging:
     timeZone: UTC
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
-annotationConfig:
-  connection:
-    jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}
-    jdbcDriverUrl: ${STROOM_JDBC_DRIVER_URL:-jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8}
-    jdbcDriverUsername: ${STROOM_JDBC_DRIVER_USERNAME:-stroomuser}
-    jdbcDriverPassword: ${STROOM_JDBC_DRIVER_PASSWORD:-stroompassword1}
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
-
 externalConfig: "~/.stroom/stroom.conf"
