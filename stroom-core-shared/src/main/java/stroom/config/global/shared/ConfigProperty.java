@@ -61,17 +61,17 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     // e.g. a custom UI control for managing List/Map/boolean types
 
 
-    // The values are held inside a NullWrapper so we can one of three things:
-    // A null reference - indicating no value has been supplied
-    // A NullWrapper holding null - indicating a null value has been supplied, e.g. an empty maintenanceMessage
-    // A NullWrapper holding a non-null value - indicating a non-null value has been supplied, e.g.
+    // The values are held inside an OverrideValue so we can one of three things:
+    // A null reference - indicating no override value has been supplied
+    // A OverrideValue holding null - indicating a null value has been supplied, e.g. an empty maintenanceMessage
+    // A OverrideValue holding a non-null value - indicating a non-null value has been supplied
 
     // The cluster wide compile-time default value set in the AppConfig object tree
     private String defaultValue = null;
-//    private NullWrapper<String> defaultValue = null;
 
     // The cluster wide value held in the database and set by the user in the UI, may be null.
     private OverrideValue<String> databaseOverrideValue = OverrideValue.unSet();
+
 
     // These fields are not saved to the database,
     // they come from the annotations on the java config classes
@@ -84,6 +84,8 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     private boolean isPassword;
     private boolean requireRestart;
     private boolean requireUiRestart;
+    // TODO this is a stopgap until we have fully typed values
+    private String dataType;
 
     public ConfigProperty() {
         // Required for GWT serialisation
@@ -321,6 +323,14 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         } else {
             return SourceType.DEFAULT;
         }
+    }
+
+    public String getDataType() {
+        return dataType;
+    }
+
+    public void setDataType(final String dataType) {
+        this.dataType = dataType;
     }
 
     @Override

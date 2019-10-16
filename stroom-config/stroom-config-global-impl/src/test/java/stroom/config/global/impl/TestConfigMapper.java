@@ -66,6 +66,22 @@ class TestConfigMapper {
     }
 
     @Test
+    void getDataTypeNames() {
+        TestConfig appConfig = new TestConfig();
+        ConfigMapper configMapper = new ConfigMapper(appConfig);
+
+        Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
+
+        String txt = configProperties.stream()
+                .sorted(Comparator.comparing(ConfigProperty::getName))
+                .map(configProperty ->
+                        LogUtil.message("{}, {}", configProperty.getName(), configProperty.getDataType()))
+                .collect(Collectors.joining("\n"));
+
+        LOGGER.debug("Properties\n{}", txt);
+    }
+
+    @Test
     void testSerdeAllProperties() {
         AppConfig appConfig = getAppConfig();
         ConfigMapper configMapper = new ConfigMapper(appConfig);

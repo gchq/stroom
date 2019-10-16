@@ -20,6 +20,7 @@ package stroom.config.global.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.google.common.base.CaseFormat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import org.slf4j.Logger;
@@ -346,6 +347,38 @@ public class ConfigMapper {
                 }
                 configProperty.setEditable(false);
             }
+            configProperty.setDataType(getDataTypeName(prop.getValueType()));
+        }
+    }
+
+    private String getDataTypeName(final Type type) {
+
+        if (type instanceof Class) {
+            final Class<?> valueClass = (Class) type;
+            String dataTypeName;
+
+            if (valueClass.equals(int.class)) {
+                dataTypeName = "Integer";
+            } else {
+                dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName());
+            }
+
+            if (List.class.isAssignableFrom(valueClass)
+                    || Map.class.isAssignableFrom(valueClass)
+                    || DocRef.class.isAssignableFrom(valueClass)) {
+                final String genericTypes = getGenericTypes(type)
+                        .stream()
+                        .map(this::getDataTypeName)
+                        .collect(Collectors.joining(","));
+
+                dataTypeName += "<" + genericTypes + ">";
+            }
+            return dataTypeName;
+        } else if (type instanceof ParameterizedType) {
+            da
+
+        } else {
+            return "";
         }
     }
 

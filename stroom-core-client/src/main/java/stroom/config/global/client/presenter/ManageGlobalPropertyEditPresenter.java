@@ -119,19 +119,26 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         getView().setRequireRestart(getEntity().isRequireRestart());
         getView().setRequireUiRestart(getEntity().isRequireUiRestart());
         getView().getName().setText(getEntity().getName());
-        String databaseOverride = "";
+        String databaseOverrideValue = "";
         if (getEntity().hasDatabaseOverride()) {
-            databaseOverride = getEntity().getDatabaseOverrideValue().getValueOrElse("");
+            databaseOverrideValue = getEntity().getDatabaseOverrideValue().getValueOrElse("");
         }
-        getView().getDatabaseValue().setText(databaseOverride);
-        getView().getDescription().setText(getEntity().getDescription());
+        String yamlOverrideValue = "";
+        if (getEntity().hasYamlOverride()) {
+            yamlOverrideValue = getEntity().getYamlOverrideValue().getValueOrElse("");
+        }
         getView().getDefaultValue().setText(getEntity().getDefaultValue().orElse(""));
+        getView().getYamlValue().setText(yamlOverrideValue);
+        getView().getDatabaseValue().setText(databaseOverrideValue);
+        getView().getEffectiveValue().setText(getEntity().getEffectiveValue().orElse(""));
+        getView().getDescription().setText(getEntity().getDescription());
+        getView().getDataType().setText(getEntity().getDataType());
         getView().getSource().setText(getEntity().getSource().getName());
     }
 
     private void write(final boolean hideOnSave) {
-        String value = getView().getDatabaseValue().getText();
-        if (value != null) {
+        if (getView().getUseOverride()) {
+            final String value = getView().getDatabaseValue().getText();
             getEntity().setDatabaseOverrideValue(value.trim());
         } else {
             getEntity().setDatabaseOverrideValue(null);
@@ -150,7 +157,11 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
     }
 
     protected PopupSize getPopupSize() {
-        return new PopupSize(550, 340, 550, 340, 1024, 340, true);
+        return new PopupSize(
+                550, 560,
+                550, 560,
+                1024, 560,
+                true);
     }
 
     public interface GlobalPropertyEditView extends View {
@@ -160,13 +171,17 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
 
         HasText getDatabaseValue();
 //
-//        HasText getYamlValue();
+        HasText getYamlValue();
 
-//        HasText getEffectiveValue();
+        HasText getEffectiveValue();
 
         HasText getDescription();
 
         HasText getSource();
+
+        HasText getDataType();
+
+        boolean getUseOverride();
 
         void setEditable(boolean edit);
 
@@ -175,5 +190,7 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         void setRequireRestart(boolean requiresRestart);
 
         void setRequireUiRestart(boolean requiresRestart);
+
+        void setUseOverride(boolean useOverride);
     }
 }

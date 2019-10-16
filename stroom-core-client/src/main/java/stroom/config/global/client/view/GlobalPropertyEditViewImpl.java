@@ -39,17 +39,26 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
     @UiField
     TextArea description;
     @UiField
+    TextArea defaultValue;
+    @UiField
+    TickBox useOverride;
+    @UiField
     TextArea databaseValue;
     @UiField
+    PasswordTextBox databaseValuePassword;
+    @UiField
+    TextArea yamlValue;
+    @UiField
+    TextArea effectiveValue;
+    @UiField
+    TextBox dataType;
+    @UiField
     TextBox source;
-    @UiField
-    TextBox defaultValue;
-    @UiField
-    PasswordTextBox valuePassword;
     @UiField
     TickBox requireRestart;
     @UiField
     TickBox requireUiRestart;
+
     private boolean password;
 
     // TODO add a checkbox called 'Override default' next to the databaseValue field, which when checked enables the
@@ -65,6 +74,9 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
         description.setReadOnly(true);
         source.setReadOnly(true);
         defaultValue.setReadOnly(true);
+        yamlValue.setReadOnly(true);
+        effectiveValue.setReadOnly(true);
+        dataType.setReadOnly(true);
 
         requireRestart.setEnabled(false);
         requireUiRestart.setEnabled(false);
@@ -83,7 +95,7 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
     @Override
     public HasText getDatabaseValue() {
         if (password) {
-            return valuePassword;
+            return databaseValuePassword;
         } else {
             return databaseValue;
         }
@@ -100,16 +112,36 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
     }
 
     @Override
+    public HasText getYamlValue() {
+        return yamlValue;
+    }
+
+    @Override
+    public HasText getEffectiveValue() {
+        return effectiveValue;
+    }
+
+    @Override
+    public HasText getDataType() {
+        return dataType;
+    }
+
+    @Override
     public HasText getSource() {
         return source;
+    }
+
+    @Override
+    public boolean getUseOverride() {
+        return useOverride.getBooleanValue();
     }
 
     @Override
     public void setPasswordStyle(final boolean password) {
         this.password = password;
 
-        grid.getRowFormatter().setVisible(2, !password);
-        grid.getRowFormatter().setVisible(3, password);
+        grid.getRowFormatter().setVisible(5, !password);
+        grid.getRowFormatter().setVisible(6, password);
     }
 
     @Override
@@ -125,7 +157,13 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
     @Override
     public void setEditable(final boolean edit) {
         databaseValue.setReadOnly(!edit);
-        valuePassword.setReadOnly(!edit);
+        databaseValuePassword.setReadOnly(!edit);
+        useOverride.setEnabled(!edit);
+    }
+
+    @Override
+    public void setUseOverride(final boolean useOverride) {
+        this.useOverride.setBooleanValue(useOverride);
     }
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {
