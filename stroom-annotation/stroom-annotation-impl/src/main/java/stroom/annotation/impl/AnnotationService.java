@@ -11,7 +11,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.entity.shared.PermissionException;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
-import stroom.search.extraction.ExpressionReplacer;
+import stroom.search.extraction.ExpressionFilter;
 import stroom.searchable.api.Searchable;
 import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -53,9 +53,12 @@ public class AnnotationService implements Searchable {
     public void search(final ExpressionCriteria criteria, final DataSourceField[] fields, final Consumer<Val[]> consumer) {
         checkPermission();
 
-        final ExpressionReplacer expressionReplacer = new ExpressionReplacer(AnnotationDataSource.ANNOTATION_FIELD_PREFIX, false, securityContext.getUserId());
+        final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
+                .addReplacementFilter(AnnotationDataSource.CURRENT_USER_FUNCTION, securityContext.getUserId())
+                .build();
+
         ExpressionOperator expression = criteria.getExpression();
-        expression = expressionReplacer.copy(expression);
+        expression = expressionFilter.copy(expression);
         criteria.setExpression(expression);
 
         annotationDao.search(criteria, fields, consumer);

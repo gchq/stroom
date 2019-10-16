@@ -16,7 +16,7 @@ import stroom.search.coprocessor.Receiver;
 import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.coprocessor.Values;
 import stroom.search.extraction.AnnotationsDecoratorFactory;
-import stroom.search.extraction.ExpressionReplacer;
+import stroom.search.extraction.ExpressionFilter;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.ExpressionMatcher;
 import stroom.streamstore.server.ExpressionMatcherFactory;
@@ -143,8 +143,12 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     }
 
     private Function<Annotation, Boolean> createFilter(final ExpressionOperator expression) {
-        final ExpressionReplacer expressionReplacer = new ExpressionReplacer(AnnotationDataSource.ANNOTATION_FIELD_PREFIX, false, securityContext.getUserId());
-        final ExpressionOperator filteredExpression = expressionReplacer.copy(expression);
+        final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
+                .addPrefixIncludeFilter(AnnotationDataSource.ANNOTATION_FIELD_PREFIX)
+                .addReplacementFilter(AnnotationDataSource.CURRENT_USER_FUNCTION, securityContext.getUserId())
+                .build();
+
+        final ExpressionOperator filteredExpression = expressionFilter.copy(expression);
 
         final List<String> expressionValues = ExpressionUtil.values(filteredExpression);
         if (expressionValues == null || expressionValues.size() == 0) {

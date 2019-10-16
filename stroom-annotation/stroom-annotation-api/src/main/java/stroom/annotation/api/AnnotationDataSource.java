@@ -13,6 +13,8 @@ import java.util.stream.Collectors;
 public interface AnnotationDataSource {
     String ANNOTATION_PERMISSION = "Annotation";
 
+    String CURRENT_USER_FUNCTION = "currentUser()";
+
     String NAMESPACE = "annotation";
     String ANNOTATION_FIELD_PREFIX = NAMESPACE + ":";
     String ID = ANNOTATION_FIELD_PREFIX + "Id";
