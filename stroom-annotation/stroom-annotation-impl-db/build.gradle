@@ -8,7 +8,7 @@ dependencies {
     compile project(':stroom-annotation:stroom-annotation-api')
     compile project(':stroom-annotation:stroom-annotation-impl')
     compile project(':stroom-annotation:stroom-annotation-impl-db-jooq')
-//    compile project(':stroom-util')
+    compile project(':stroom-util')
 //    compile project(':stroom-util-shared')
 
     compile libs.stroomQueryApi
