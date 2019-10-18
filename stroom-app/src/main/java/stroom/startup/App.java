@@ -117,6 +117,7 @@ import stroom.visualisation.spring.VisualisationConfiguration;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.ws.rs.client.Client;
+import java.util.AbstractMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -315,8 +316,12 @@ public class App extends Application<Config> {
 
         // Add filters
         SpringUtil.addFilter(servletContextHandler, applicationContext, HttpServletRequestFilter.class, "/*");
-        FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter").setInitParameter("rejectUri", "/");
-        FilterUtil.addFilter(servletContextHandler, CacheControlFilter.class, "cacheControlFilter").setInitParameter("seconds", "600");
+        FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter")
+                .setInitParameter("rejectUri", "/");
+        String cacheablePathsRegex = "^" + ResourcePaths.ROOT_PATH + "/script/?$";
+        FilterUtil.addFilter(servletContextHandler, CacheControlFilter.class, "cacheControlFilter",
+                new AbstractMap.SimpleEntry<>(CacheControlFilter.INIT_PARAM_KEY_SECONDS, "600"),
+                new AbstractMap.SimpleEntry<>(CacheControlFilter.INIT_PARAM_KEY_CACHEABLE_PATH_REGEX, cacheablePathsRegex));
         SpringUtil.addFilter(servletContextHandler, applicationContext, SecurityFilter.class, "/*");
 
         // Add servlets
