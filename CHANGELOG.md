@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Uplift Kafka client to v2.2.1.
 
+* Issue **#1293** : Add more static file types to allow nginx/browser caching on.
+
 
 ## [v6.0.13] - 2019-10-14
 
