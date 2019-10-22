@@ -18,11 +18,13 @@ package stroom.dispatch.client;
 
 import com.google.gwt.inject.client.AbstractGinModule;
 import com.google.inject.Singleton;
+import org.fusesource.restygwt.client.Dispatcher;
 
 public class ClientDispatchModule extends AbstractGinModule {
     @Override
     protected void configure() {
         bind(ClientDispatchAsync.class).to(ClientDispatchAsyncImpl.class).in(Singleton.class);
+        bind(Dispatcher.class).to(RestDispatcher.class);
         bind(RestFactory.class).to(RestFactoryImpl.class).in(Singleton.class);
     }
 }

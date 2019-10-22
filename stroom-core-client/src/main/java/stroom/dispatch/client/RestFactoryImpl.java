@@ -7,6 +7,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import org.fusesource.restygwt.client.Defaults;
 import org.fusesource.restygwt.client.DirectRestService;
+import org.fusesource.restygwt.client.Dispatcher;
 import org.fusesource.restygwt.client.Method;
 import org.fusesource.restygwt.client.MethodCallback;
 import org.fusesource.restygwt.client.REST;
@@ -20,7 +21,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
     private final EventBus eventBus;
 
     @Inject
-    public RestFactoryImpl(final EventBus eventBus) {
+    public RestFactoryImpl(final EventBus eventBus, final Dispatcher dispatcher) {
         this.eventBus = eventBus;
 
         String hostPageBaseUrl = GWT.getHostPageBaseURL();
@@ -28,6 +29,7 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         hostPageBaseUrl = hostPageBaseUrl.substring(0, hostPageBaseUrl.lastIndexOf("/"));
         final String apiUrl = hostPageBaseUrl + "/api/";
         Defaults.setServiceRoot(apiUrl);
+        Defaults.setDispatcher(dispatcher);
     }
 
     @Override

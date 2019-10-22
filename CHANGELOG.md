@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1297** : The UI now supplies API tokens to the backend for resource calls.
+
 * Issue **#1296** : Fixed NPE in StreamMapCreator caused when a stream can not be found.
 
 ## [v6.1-beta.7] - 2019-10-16
