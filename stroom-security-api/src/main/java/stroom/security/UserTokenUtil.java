@@ -27,8 +27,6 @@ public final class UserTokenUtil {
     private static final String INTERNAL_PROCESSING_USER_TYPE = SYSTEM;
     private static final String INTERNAL_PROCESSING_USER_USER_ID = INTERNAL;
 
-
-
     private UserTokenUtil() {
         // Utility class.
     }

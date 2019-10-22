@@ -28,6 +28,7 @@ import stroom.security.UserTokenUtil;
 import stroom.security.server.exception.AuthenticationException;
 import stroom.security.shared.UserRef;
 import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -43,13 +44,14 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URI;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -62,6 +64,7 @@ import java.util.regex.Pattern;
  */
 public class SecurityFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityFilter.class);
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SecurityFilter.class);
 
     public static String BYPASS_PARAM_PREFIX = "bypassRegex";
     public static String DISPATCH_PATH_REGEX_PARAM = "dispatchPathRegex";
@@ -116,6 +119,8 @@ public class SecurityFilter implements Filter {
             final String name = initParams.nextElement();
             final String value = filterConfig.getInitParameter(name);
 
+            LOGGER.debug("Initialising SecurityFilter with name: {}, value: {}", name, value);
+
             if (name.startsWith(BYPASS_PARAM_PREFIX)) {
                 try {
                     LOGGER.debug("Adding bypass pattern {}", value);
@@ -138,6 +143,7 @@ public class SecurityFilter implements Filter {
     @Override
     public void doFilter(final ServletRequest request, final ServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
+
         if (!(response instanceof HttpServletResponse)) {
             final String message = "Unexpected response type: " + response.getClass().getName();
             LOGGER.error(message);
@@ -159,10 +165,13 @@ public class SecurityFilter implements Filter {
     private void filter(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
 
-        LOGGER.debug("Filtering request {}", request);
+        LAMBDA_LOGGER.debug(() ->
+                LambdaLogger.buildMessage("Filtering request uri: {},  servletPath: {}",
+                        request.getRequestURI(), request.getServletPath()));
 
         if (request.getMethod().toUpperCase().equals(HttpMethod.OPTIONS)) {
             // We need to allow CORS preflight requests
+            LOGGER.debug("Passing on to next filter");
             chain.doFilter(request, response);
         } else {
             // We need to distinguish between requests from an API client and from the UI.
@@ -174,15 +183,16 @@ public class SecurityFilter implements Filter {
             final String servletPath = request.getServletPath().toLowerCase();
 
             if (isApiRequest(servletPath)) {
+                LOGGER.debug("API request");
                 if (!config.isAuthenticationRequired()) {
-                    bypassAuthentication(request, response, chain, false);
+                    authenticateAsAdmin(request, response, chain, false);
                 } else {
                     // Authenticate requests to the API.
                     final UserRef userRef = loginAPI(request, response);
                     continueAsUser(request, response, chain, userRef);
                 }
-            } else if (shouldBypass(servletPath)) {
-                bypassAuthentication(request, response, chain, false);
+            } else if (shouldBypassNormalAuthentication(servletPath)) {
+                authenticateAsProcUser(request, response, chain, false);
             } else {
                 // Authenticate requests from the UI.
 
@@ -191,7 +201,7 @@ public class SecurityFilter implements Filter {
                 if (userRef != null) {
                     continueAsUser(request, response, chain, userRef);
                 } else if (!config.isAuthenticationRequired()) {
-                    bypassAuthentication(request, response, chain, true);
+                    authenticateAsAdmin(request, response, chain, true);
                 } else {
                     // If the session doesn't have a user ref then attempt login.
                     final boolean loggedIn = loginUI(request, response);
@@ -212,12 +222,11 @@ public class SecurityFilter implements Filter {
         }
     }
 
-    private boolean shouldBypass(String servletPath) {
+    private boolean shouldBypassNormalAuthentication(String servletPath) {
         boolean result = bypassPatterns.stream()
                 .anyMatch(pattern ->
                         pattern.matcher(servletPath).matches());
-
-        LOGGER.debug("shouldBypass result {}", result);
+        LOGGER.debug("shouldBypassNormalAuthentication({}) result {}", servletPath, result);
         return result;
     }
 
@@ -229,12 +238,33 @@ public class SecurityFilter implements Filter {
         return dispatchPathPattern != null && dispatchPathPattern.matcher(servletPath).matches();
     }
 
+    private void authenticateAsAdmin(final HttpServletRequest request,
+                                     final HttpServletResponse response,
+                                     final FilterChain chain,
+                                     final boolean useSession) throws IOException, ServletException {
+
+        bypassAuthentication(request, response, chain, useSession, UserService.ADMIN_USER_NAME);
+    }
+
+    private void authenticateAsProcUser(final HttpServletRequest request,
+                                        final HttpServletResponse response,
+                                        final FilterChain chain,
+                                        final boolean useSession) throws IOException, ServletException {
+
+        bypassAuthentication(request, response, chain, useSession, UserTokenUtil.getInternalProcessingUserId());
+    }
+
+
     private void bypassAuthentication(final HttpServletRequest request,
                                       final HttpServletResponse response,
                                       final FilterChain chain,
-                                      final boolean useSession) throws IOException, ServletException {
-//        final AuthenticationToken token = new AuthenticationToken("admin", null);
-        final AuthenticationToken token = new AuthenticationToken(UserTokenUtil.getInternalProcessingUserId(), null);
+                                      final boolean useSession,
+                                      final String userId) throws IOException, ServletException {
+        LAMBDA_LOGGER.debug(() ->
+                LambdaLogger.buildMessage("Authenticating as user {} for request {}",
+                        userId, request.getRequestURI()));
+
+        final AuthenticationToken token = new AuthenticationToken(userId, null);
 
         final UserRef userRef = authenticationService.getUserRef(token);
         if (userRef != null) {
@@ -242,7 +272,6 @@ public class SecurityFilter implements Filter {
                 // Set the user ref in the session.
                 UserRefSessionUtil.set(request.getSession(true), userRef);
             }
-
             continueAsUser(request, response, chain, userRef);
         }
     }
@@ -485,7 +514,7 @@ public class SecurityFilter implements Filter {
     public void destroy() {
     }
 
-    public static String makeBypassInitKey(final String key) {
+    public static String makeBypassAuthInitKey(final String key) {
         return SecurityFilter.BYPASS_PARAM_PREFIX + key;
     }
 }

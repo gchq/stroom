@@ -37,7 +37,7 @@ public class SpringUtil {
                                          final ApplicationContext applicationContext,
                                          final Class<? extends Filter> clazz,
                                          final String url) {
-        return addFilter(servletContextHandler, applicationContext, clazz, url);
+        return addFilter(servletContextHandler, applicationContext, clazz, url, null);
     };
 
         public static FilterHolder addFilter(final ServletContextHandler servletContextHandler,

@@ -128,23 +128,25 @@ public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     // This name is used by dropwizard metrics
-    public static final String PROXY_JERSEY_CLIENT_NAME = "stroom-proxy_jersey_client";
+    private static final String PROXY_JERSEY_CLIENT_NAME = "stroom-proxy_jersey_client";
 
-    private static final String UI_PATH = ResourcePaths.ROOT_PATH + "/ui";
-    private static final String DASHBOARD_PATH = ResourcePaths.ROOT_PATH + "/dashboard";
-    private static final String DYNAMIC_CSS_PATH = ResourcePaths.ROOT_PATH + "/dynamic.css";
-    private static final String DISPATCH_RPC_PATH = ResourcePaths.ROOT_PATH + "/dispatch.rpc";
-    private static final String IMPORT_FILE_RPC_PATH = ResourcePaths.ROOT_PATH + "/importfile.rpc";
-    private static final String SCRIPT_PATH = ResourcePaths.ROOT_PATH + "/script";
+    // All the servlet paths
     private static final String CLUSTER_CALL_RPC_PATH = ResourcePaths.ROOT_PATH + "/clustercall.rpc";
-    private static final String STATUS_PATH = ResourcePaths.ROOT_PATH + "/status";
-    private static final String ECHO_PATH = ResourcePaths.ROOT_PATH + "/echo";
-    private static final String DEBUG_PATH = ResourcePaths.ROOT_PATH + "/debug";
-    private static final String SESSION_LIST_PATH = ResourcePaths.ROOT_PATH + "/sessionList";
-    private static final String RESOURCE_STORE_PATH = ResourcePaths.ROOT_PATH + "/resourcestore";
-    private static final String GWT_REQUEST_PATH = ResourcePaths.ROOT_PATH + "/gwtRequest";
-    private static final String REMOTING_RPC_PATH = ResourcePaths.ROOT_PATH + "/remoting/remotefeedservice.rpc";
+    private static final String CONFIG_PATH = ResourcePaths.ROOT_PATH + "/config";
+    private static final String DASHBOARD_PATH = ResourcePaths.ROOT_PATH + "/dashboard";
     private static final String DATAFEED_PATH = ResourcePaths.ROOT_PATH + "/datafeed";
+    private static final String DEBUG_PATH = ResourcePaths.ROOT_PATH + "/debug";
+    private static final String DISPATCH_RPC_PATH = ResourcePaths.ROOT_PATH + "/dispatch.rpc";
+    private static final String DYNAMIC_CSS_PATH = ResourcePaths.ROOT_PATH + "/dynamic.css";
+    private static final String ECHO_PATH = ResourcePaths.ROOT_PATH + "/echo";
+    private static final String GWT_REQUEST_PATH = ResourcePaths.ROOT_PATH + "/gwtRequest";
+    private static final String IMPORT_FILE_RPC_PATH = ResourcePaths.ROOT_PATH + "/importfile.rpc";
+    private static final String REMOTING_RPC_PATH = ResourcePaths.ROOT_PATH + "/remoting/remotefeedservice.rpc";
+    private static final String RESOURCE_STORE_PATH = ResourcePaths.ROOT_PATH + "/resourcestore";
+    private static final String SCRIPT_PATH = ResourcePaths.ROOT_PATH + "/script";
+    private static final String SESSION_LIST_PATH = ResourcePaths.ROOT_PATH + "/sessionList";
+    private static final String STATUS_PATH = ResourcePaths.ROOT_PATH + "/status";
+    private static final String UI_PATH = ResourcePaths.ROOT_PATH + "/ui";
 
     private static String configPath;
 
@@ -237,7 +239,7 @@ public class App extends Application<Config> {
 
         // Add servlets
         ConfigServlet configServlet = new ConfigServlet(configPath);
-        String configPathSpec = ResourcePaths.ROOT_PATH + "/config";
+        String configPathSpec = CONFIG_PATH;
         servletContextHandler.addServlet(new ServletHolder(configServlet), configPathSpec);
         healthCheckRegistry.register(configServlet.getClass().getName(), new HealthCheck() {
             @Override
@@ -249,11 +251,11 @@ public class App extends Application<Config> {
             }
         });
 
-        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed", healthCheckRegistry);
-        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*", healthCheckRegistry);
-        GuiceUtil.addServlet(servletContextHandler, injector, ProxyWelcomeServlet.class, ResourcePaths.ROOT_PATH + "/ui", healthCheckRegistry);
-        GuiceUtil.addServlet(servletContextHandler, injector, ProxyStatusServlet.class, ResourcePaths.ROOT_PATH + "/status", healthCheckRegistry);
-        GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, ResourcePaths.ROOT_PATH + "/debug", healthCheckRegistry);
+        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, DATAFEED_PATH, healthCheckRegistry);
+        GuiceUtil.addServlet(servletContextHandler, injector, DataFeedServlet.class, DATAFEED_PATH + "/*", healthCheckRegistry);
+        GuiceUtil.addServlet(servletContextHandler, injector, ProxyWelcomeServlet.class, UI_PATH, healthCheckRegistry);
+        GuiceUtil.addServlet(servletContextHandler, injector, ProxyStatusServlet.class, STATUS_PATH, healthCheckRegistry);
+        GuiceUtil.addServlet(servletContextHandler, injector, DebugServlet.class, DEBUG_PATH, healthCheckRegistry);
 
         // Add resources.
         GuiceUtil.addResource(environment.jersey(), injector, DictionaryResource.class);
@@ -360,7 +362,7 @@ public class App extends Application<Config> {
         SpringUtil.addServlet(servletContextHandler, applicationContext, SpringRequestFactoryServlet.class, GWT_REQUEST_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, RemoteFeedServiceRPC.class, REMOTING_RPC_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, DATAFEED_PATH);
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, DASHBOARD_PATH + "/*");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, DATAFEED_PATH + "/*");
 
         // Add session listeners.
         SpringUtil.addServletListener(environment.servlets(), applicationContext, SessionListListener.class);
@@ -384,23 +386,26 @@ public class App extends Application<Config> {
 
     private void registerSecurityFilter(final ApplicationContext applicationContext,
                                         final ServletContextHandler servletContextHandler) {
+        // Specify a number of regexes to bypass normal authentication for
         final Map<String, String> initParams = ImmutableMap.<String, String>builder()
                 .put(SecurityFilter.API_PATH_REGEX_PARAM, ResourcePaths.API_PATH + ".*")
                 .put(SecurityFilter.DISPATCH_PATH_REGEX_PARAM, DISPATCH_RPC_PATH + "$")
                 // define a number of path regexes to bypass user authentication as there is no user
-                .put(makeBypassInitParam(CLUSTER_CALL_RPC_PATH))
-                .put(makeBypassInitParam(DATAFEED_PATH))
-                .put(makeBypassInitParam(STATUS_PATH))
-                .put(makeBypassInitParam(ECHO_PATH))
-                .put(makeBypassInitParam(DEBUG_PATH))
-                .put(makeBypassInitParam(REMOTING_RPC_PATH))
+                .put(makeBypassAuthInitParam(CLUSTER_CALL_RPC_PATH, false))
+                // need to cater for /stroom/datafeed and /stroom/datafeed/* for some reason
+                .put(makeBypassAuthInitParam(DATAFEED_PATH, true))
+                .put(makeBypassAuthInitParam(STATUS_PATH, false))
+                .put(makeBypassAuthInitParam(ECHO_PATH, false))
+                .put(makeBypassAuthInitParam(DEBUG_PATH, false))
+                .put(makeBypassAuthInitParam(REMOTING_RPC_PATH, false))
                 .build();
 
         SpringUtil.addFilter(servletContextHandler, applicationContext, SecurityFilter.class, "/*", initParams);
     }
 
-    private Map.Entry<String, String> makeBypassInitParam(final String path) {
-        return new AbstractMap.SimpleEntry<>(SecurityFilter.makeBypassInitKey(path), path + ".*");
+    private Map.Entry<String, String> makeBypassAuthInitParam(final String path, final boolean allowPartialMatch) {
+        final String regex = "^" + path + (allowPartialMatch ? ".*" : "$");
+        return new AbstractMap.SimpleEntry<>(SecurityFilter.makeBypassAuthInitKey(path), regex);
     }
 
     private boolean waitForStroomDbConnection() {
