@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
 import stroom.feed.server.UserAgentSessionUtil;
+import stroom.security.UserTokenUtil;
 import stroom.security.server.exception.AuthenticationException;
 import stroom.security.shared.UserRef;
 import stroom.util.logging.LambdaLogger;
@@ -48,6 +49,8 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -60,7 +63,10 @@ import java.util.regex.Pattern;
 public class SecurityFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityFilter.class);
 
-    public static String BYPASS_PREFIX = "bypass";
+    public static String BYPASS_PARAM_PREFIX = "bypassRegex";
+    public static String DISPATCH_PATH_REGEX_PARAM = "dispatchPathRegex";
+    public static String API_PATH_REGEX_PARAM = "apiPathRegex";
+
     private static final String IGNORE_URI_REGEX = "ignoreUri";
 
     private static final String SCOPE = "scope";
@@ -89,6 +95,8 @@ public class SecurityFilter implements Filter {
 
 //    private Pattern pattern = null;
     private List<Pattern> bypassPatterns = new ArrayList<>();
+    private Pattern apiPathPattern;
+    private Pattern dispatchPathPattern;
 
     public SecurityFilter(
             final SecurityConfig config,
@@ -103,25 +111,28 @@ public class SecurityFilter implements Filter {
 
     @Override
     public void init(final FilterConfig filterConfig) {
-        Enumeration<String> initParams = filterConfig.getInitParameterNames();
+        final Enumeration<String> initParams = filterConfig.getInitParameterNames();
         while (initParams.hasMoreElements()) {
-            String name = initParams.nextElement();
-            String value = filterConfig.getInitParameter(name);
+            final String name = initParams.nextElement();
+            final String value = filterConfig.getInitParameter(name);
 
-            if (name.startsWith(BYPASS_PREFIX)) {
+            if (name.startsWith(BYPASS_PARAM_PREFIX)) {
                 try {
-                    Pattern pattern = Pattern.compile(value);
+                    LOGGER.debug("Adding bypass pattern {}", value);
+                    final Pattern pattern = Pattern.compile(value);
                     bypassPatterns.add(pattern);
                 } catch (Exception e) {
                     throw new RuntimeException(LambdaLogger.buildMessage("Error compiling pattern for regex {}",
                             value));
                 }
+            } else if (name.equals(DISPATCH_PATH_REGEX_PARAM)) {
+                dispatchPathPattern = Pattern.compile(value);
+            } else if (name.equals(API_PATH_REGEX_PARAM)) {
+                apiPathPattern = Pattern.compile(value);
             }
         }
-//        final String regex = filterConfig.getInitParameter(IGNORE_URI_REGEX);
-//        if (regex != null) {
-//            pattern = Pattern.compile(regex);
-//        }
+        Objects.requireNonNull(dispatchPathPattern);
+        Objects.requireNonNull(apiPathPattern);
     }
 
     @Override
@@ -148,14 +159,11 @@ public class SecurityFilter implements Filter {
     private void filter(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
 
+        LOGGER.debug("Filtering request {}", request);
+
         if (request.getMethod().toUpperCase().equals(HttpMethod.OPTIONS)) {
             // We need to allow CORS preflight requests
             chain.doFilter(request, response);
-
-        } else if (ignoreUri(request.getRequestURI())) {
-            // Allow some URIs to bypass authentication checks
-            chain.doFilter(request, response);
-
         } else {
             // We need to distinguish between requests from an API client and from the UI.
             // - If a request is from the UI and fails authentication then we need to redirect to the login page.
@@ -164,12 +172,8 @@ public class SecurityFilter implements Filter {
             //   let it through. It is essential that port 8080 is not exposed and that any reverse-proxy
             //   blocks requests that look like '.*clustercall.rpc$'.
             final String servletPath = request.getServletPath().toLowerCase();
-            final boolean isApiRequest = servletPath.contains("/api");
-            final boolean isDatafeedRequest = servletPath.contains("/datafeed");
-            final boolean isClusterCallRequest = servletPath.contains("clustercall.rpc");
-            final boolean isDispatchRequest = servletPath.contains("dispatch.rpc");
 
-            if (isApiRequest) {
+            if (isApiRequest(servletPath)) {
                 if (!config.isAuthenticationRequired()) {
                     bypassAuthentication(request, response, chain, false);
                 } else {
@@ -177,7 +181,6 @@ public class SecurityFilter implements Filter {
                     final UserRef userRef = loginAPI(request, response);
                     continueAsUser(request, response, chain, userRef);
                 }
-
             } else if (shouldBypass(servletPath)) {
                 bypassAuthentication(request, response, chain, false);
             } else {
@@ -187,10 +190,8 @@ public class SecurityFilter implements Filter {
                 final UserRef userRef = UserRefSessionUtil.get(request.getSession(false));
                 if (userRef != null) {
                     continueAsUser(request, response, chain, userRef);
-
                 } else if (!config.isAuthenticationRequired()) {
                     bypassAuthentication(request, response, chain, true);
-
                 } else {
                     // If the session doesn't have a user ref then attempt login.
                     final boolean loggedIn = loginUI(request, response);
@@ -202,7 +203,7 @@ public class SecurityFilter implements Filter {
                     //   3. This request, not being logged in, starts a new authentication flow
                     //   4. This new authentication flow partially over-writes the relying party data in auth.
                     // This would manifest as a bad redirect_url, one which contains 'dispatch.rpc'.
-                    if (!loggedIn && !isDispatchRequest) {
+                    if (!loggedIn && !isDispatchRequest(servletPath)) {
                         // We were unable to login so we're going to redirect with an AuthenticationRequest.
                         redirectToAuthService(request, response);
                     }
@@ -220,11 +221,21 @@ public class SecurityFilter implements Filter {
         return result;
     }
 
+    private boolean isApiRequest(String servletPath) {
+        return apiPathPattern != null && apiPathPattern.matcher(servletPath).matches();
+    }
+
+    private boolean isDispatchRequest(String servletPath) {
+        return dispatchPathPattern != null && dispatchPathPattern.matcher(servletPath).matches();
+    }
+
     private void bypassAuthentication(final HttpServletRequest request,
                                       final HttpServletResponse response,
                                       final FilterChain chain,
                                       final boolean useSession) throws IOException, ServletException {
-        final AuthenticationToken token = new AuthenticationToken("admin", null);
+//        final AuthenticationToken token = new AuthenticationToken("admin", null);
+        final AuthenticationToken token = new AuthenticationToken(UserTokenUtil.getInternalProcessingUserId(), null);
+
         final UserRef userRef = authenticationService.getUserRef(token);
         if (userRef != null) {
             if (useSession) {
@@ -252,10 +263,6 @@ public class SecurityFilter implements Filter {
             }
         }
     }
-
-//    private boolean ignoreUri(final String uri) {
-//        return pattern != null && pattern.matcher(uri).matches();
-//    }
 
     private boolean loginUI(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
         boolean loggedIn = false;
@@ -304,7 +311,6 @@ public class SecurityFilter implements Filter {
                 }
             }
         }
-
         return loggedIn;
     }
 
@@ -477,5 +483,9 @@ public class SecurityFilter implements Filter {
 
     @Override
     public void destroy() {
+    }
+
+    public static String makeBypassInitKey(final String key) {
+        return SecurityFilter.BYPASS_PARAM_PREFIX + key;
     }
 }

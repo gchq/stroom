@@ -118,6 +118,7 @@ import stroom.visualisation.spring.VisualisationConfiguration;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.ws.rs.client.Client;
+import java.util.AbstractMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -134,17 +135,16 @@ public class App extends Application<Config> {
     private static final String DYNAMIC_CSS_PATH = ResourcePaths.ROOT_PATH + "/dynamic.css";
     private static final String DISPATCH_RPC_PATH = ResourcePaths.ROOT_PATH + "/dispatch.rpc";
     private static final String IMPORT_FILE_RPC_PATH = ResourcePaths.ROOT_PATH + "/importfile.rpc";
-
     private static final String SCRIPT_PATH = ResourcePaths.ROOT_PATH + "/script";
-private static final String CLUSTER_CALL_RPC_PATH = ResourcePaths.ROOT_PATH + "/clustercall.rpc";
-private static final String STATUS_PATH = ResourcePaths.ROOT_PATH + "/status";
-private static final String ECHO_PATH = ResourcePaths.ROOT_PATH + "/echo";
-private static final String DEBUG_PATH = ResourcePaths.ROOT_PATH + "/debug";
-private static final String SESSION_LIST_PATH = ResourcePaths.ROOT_PATH + "/sessionList";
-private static final String RESOURCE_STORE_PATH = ResourcePaths.ROOT_PATH + "/resourcestore";
-private static final String GWT_REQUEST_PATH = ResourcePaths.ROOT_PATH + "/gwtRequest";
-private static final String REMOTING_RPC_PATH = ResourcePaths.ROOT_PATH + "/remoting/remotefeedservice.rpc";
-private static final String DATAFEED_PATH = ResourcePaths.ROOT_PATH + "/datafeed";
+    private static final String CLUSTER_CALL_RPC_PATH = ResourcePaths.ROOT_PATH + "/clustercall.rpc";
+    private static final String STATUS_PATH = ResourcePaths.ROOT_PATH + "/status";
+    private static final String ECHO_PATH = ResourcePaths.ROOT_PATH + "/echo";
+    private static final String DEBUG_PATH = ResourcePaths.ROOT_PATH + "/debug";
+    private static final String SESSION_LIST_PATH = ResourcePaths.ROOT_PATH + "/sessionList";
+    private static final String RESOURCE_STORE_PATH = ResourcePaths.ROOT_PATH + "/resourcestore";
+    private static final String GWT_REQUEST_PATH = ResourcePaths.ROOT_PATH + "/gwtRequest";
+    private static final String REMOTING_RPC_PATH = ResourcePaths.ROOT_PATH + "/remoting/remotefeedservice.rpc";
+    private static final String DATAFEED_PATH = ResourcePaths.ROOT_PATH + "/datafeed";
 
     private static String configPath;
 
@@ -336,16 +336,13 @@ private static final String DATAFEED_PATH = ResourcePaths.ROOT_PATH + "/datafeed
         FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter",
                 ImmutableMap.of("rejectUri", "/"));
 
-        String cacheablePathsRegex = "^" + ResourcePaths.ROOT_PATH + "/script/?$";
+        final String cacheablePathsRegex = "^" + ResourcePaths.ROOT_PATH + "/script/?$";
         FilterUtil.addFilter(servletContextHandler, CacheControlFilter.class, "cacheControlFilter",
                 ImmutableMap.of(
                         CacheControlFilter.INIT_PARAM_KEY_SECONDS, "600",
                         CacheControlFilter.INIT_PARAM_KEY_CACHEABLE_PATH_REGEX, cacheablePathsRegex));
 
-        SpringUtil.addFilter(servletContextHandler, applicationContext, SecurityFilter.class, "/*",
-                ImmutableMap.of(
-                        "", ""
-                ));
+        registerSecurityFilter(applicationContext, servletContextHandler);
 
         // Add servlets
         SpringUtil.addServlet(servletContextHandler, applicationContext, StroomServlet.class, UI_PATH);
@@ -383,6 +380,27 @@ private static final String DATAFEED_PATH = ResourcePaths.ROOT_PATH + "/datafeed
 
         // Listen to the lifecycle of the Dropwizard app.
         SpringUtil.manage(environment.lifecycle(), applicationContext, LifecycleService.class);
+    }
+
+    private void registerSecurityFilter(final ApplicationContext applicationContext,
+                                        final ServletContextHandler servletContextHandler) {
+        final Map<String, String> initParams = ImmutableMap.<String, String>builder()
+                .put(SecurityFilter.API_PATH_REGEX_PARAM, ResourcePaths.API_PATH + ".*")
+                .put(SecurityFilter.DISPATCH_PATH_REGEX_PARAM, DISPATCH_RPC_PATH + "$")
+                // define a number of path regexes to bypass user authentication as there is no user
+                .put(makeBypassInitParam(CLUSTER_CALL_RPC_PATH))
+                .put(makeBypassInitParam(DATAFEED_PATH))
+                .put(makeBypassInitParam(STATUS_PATH))
+                .put(makeBypassInitParam(ECHO_PATH))
+                .put(makeBypassInitParam(DEBUG_PATH))
+                .put(makeBypassInitParam(REMOTING_RPC_PATH))
+                .build();
+
+        SpringUtil.addFilter(servletContextHandler, applicationContext, SecurityFilter.class, "/*", initParams);
+    }
+
+    private Map.Entry<String, String> makeBypassInitParam(final String path) {
+        return new AbstractMap.SimpleEntry<>(SecurityFilter.makeBypassInitKey(path), path + ".*");
     }
 
     private boolean waitForStroomDbConnection() {
