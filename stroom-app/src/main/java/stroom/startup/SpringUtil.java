@@ -14,18 +14,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import stroom.util.HasHealthCheck;
 
-import javax.inject.Provider;
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
 import javax.servlet.Servlet;
-import javax.servlet.ServletConfig;
-import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpSessionListener;
-import java.io.IOException;
 import java.util.EnumSet;
 import java.util.Map;
 
@@ -33,18 +25,33 @@ public class SpringUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(SpringUtil.class);
     private static final String HEALTH_CHECK_SUFFIX = "HealthCheck";
 
-    public static void addHealthCheck(final HealthCheckRegistry healthCheckRegistry, final ApplicationContext applicationContext, final Class<? extends HasHealthCheck> clazz) {
+    public static void addHealthCheck(final HealthCheckRegistry healthCheckRegistry,
+                                      final ApplicationContext applicationContext,
+                                      final Class<? extends HasHealthCheck> clazz) {
         final HasHealthCheck hasHealthCheck = applicationContext.getBean(clazz);
         String name = clazz.getName() + HEALTH_CHECK_SUFFIX;
         LOGGER.debug("Registering heath check {}", name);
         healthCheckRegistry.register(name, hasHealthCheck.getHealthCheck());
     }
+    public static FilterHolder addFilter(final ServletContextHandler servletContextHandler,
+                                         final ApplicationContext applicationContext,
+                                         final Class<? extends Filter> clazz,
+                                         final String url) {
+        return addFilter(servletContextHandler, applicationContext, clazz, url);
+    };
 
-    public static FilterHolder addFilter(final ServletContextHandler servletContextHandler, final ApplicationContext applicationContext, final Class<? extends Filter> clazz, final String url) {
+        public static FilterHolder addFilter(final ServletContextHandler servletContextHandler,
+                                             final ApplicationContext applicationContext,
+                                             final Class<? extends Filter> clazz,
+                                             final String url,
+                                             final Map<String, String> initParams) {
         final Filter filter = applicationContext.getBean(clazz);
 
         final FilterHolder filterHolder = new FilterHolder(filter);
         filterHolder.setName(clazz.getSimpleName());
+        if (initParams != null) {
+            filterHolder.setInitParameters(initParams);
+        }
 
         servletContextHandler.addFilter(filterHolder, url, EnumSet.of(DispatcherType.REQUEST));
 

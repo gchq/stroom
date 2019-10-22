@@ -18,6 +18,7 @@ package stroom.startup;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import io.dropwizard.Application;
@@ -43,7 +44,6 @@ import stroom.cluster.server.ClusterCallServiceRPC;
 import stroom.connectors.elastic.StroomElasticProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
 import stroom.content.ContentSyncService;
-import stroom.proxy.security.ProxySecurityFilter;
 import stroom.dashboard.spring.DashboardConfiguration;
 import stroom.datafeed.server.DataFeedServlet;
 import stroom.dictionary.server.DictionaryResource;
@@ -68,6 +68,7 @@ import stroom.proxy.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.handler.RemoteFeedStatusService;
 import stroom.proxy.repo.ProxyLifecycle;
 import stroom.proxy.repo.ProxyRepositoryManager;
+import stroom.proxy.security.ProxySecurityFilter;
 import stroom.proxy.servlet.ConfigServlet;
 import stroom.proxy.servlet.ProxyStatusServlet;
 import stroom.proxy.servlet.ProxyWelcomeServlet;
@@ -81,6 +82,7 @@ import stroom.search.spring.SearchConfiguration;
 import stroom.security.server.AuthorisationResource;
 import stroom.security.server.JWTService;
 import stroom.security.server.SecurityFilter;
+import stroom.security.server.SessionListListener;
 import stroom.security.server.SessionResource;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.servicediscovery.ResourcePaths;
@@ -96,7 +98,6 @@ import stroom.servlet.ExportConfigResource;
 import stroom.servlet.HttpServletRequestFilter;
 import stroom.servlet.ImportFileServlet;
 import stroom.servlet.RejectPostFilter;
-import stroom.security.server.SessionListListener;
 import stroom.servlet.SessionListServlet;
 import stroom.servlet.SessionResourceStoreImpl;
 import stroom.servlet.StatusServlet;
@@ -117,7 +118,6 @@ import stroom.visualisation.spring.VisualisationConfiguration;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.ws.rs.client.Client;
-import java.util.AbstractMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
@@ -128,6 +128,23 @@ public class App extends Application<Config> {
 
     // This name is used by dropwizard metrics
     public static final String PROXY_JERSEY_CLIENT_NAME = "stroom-proxy_jersey_client";
+
+    private static final String UI_PATH = ResourcePaths.ROOT_PATH + "/ui";
+    private static final String DASHBOARD_PATH = ResourcePaths.ROOT_PATH + "/dashboard";
+    private static final String DYNAMIC_CSS_PATH = ResourcePaths.ROOT_PATH + "/dynamic.css";
+    private static final String DISPATCH_RPC_PATH = ResourcePaths.ROOT_PATH + "/dispatch.rpc";
+    private static final String IMPORT_FILE_RPC_PATH = ResourcePaths.ROOT_PATH + "/importfile.rpc";
+
+    private static final String SCRIPT_PATH = ResourcePaths.ROOT_PATH + "/script";
+private static final String CLUSTER_CALL_RPC_PATH = ResourcePaths.ROOT_PATH + "/clustercall.rpc";
+private static final String STATUS_PATH = ResourcePaths.ROOT_PATH + "/status";
+private static final String ECHO_PATH = ResourcePaths.ROOT_PATH + "/echo";
+private static final String DEBUG_PATH = ResourcePaths.ROOT_PATH + "/debug";
+private static final String SESSION_LIST_PATH = ResourcePaths.ROOT_PATH + "/sessionList";
+private static final String RESOURCE_STORE_PATH = ResourcePaths.ROOT_PATH + "/resourcestore";
+private static final String GWT_REQUEST_PATH = ResourcePaths.ROOT_PATH + "/gwtRequest";
+private static final String REMOTING_RPC_PATH = ResourcePaths.ROOT_PATH + "/remoting/remotefeedservice.rpc";
+private static final String DATAFEED_PATH = ResourcePaths.ROOT_PATH + "/datafeed";
 
     private static String configPath;
 
@@ -316,31 +333,37 @@ public class App extends Application<Config> {
 
         // Add filters
         SpringUtil.addFilter(servletContextHandler, applicationContext, HttpServletRequestFilter.class, "/*");
-        FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter")
-                .setInitParameter("rejectUri", "/");
+        FilterUtil.addFilter(servletContextHandler, RejectPostFilter.class, "rejectPostFilter",
+                ImmutableMap.of("rejectUri", "/"));
+
         String cacheablePathsRegex = "^" + ResourcePaths.ROOT_PATH + "/script/?$";
         FilterUtil.addFilter(servletContextHandler, CacheControlFilter.class, "cacheControlFilter",
-                new AbstractMap.SimpleEntry<>(CacheControlFilter.INIT_PARAM_KEY_SECONDS, "600"),
-                new AbstractMap.SimpleEntry<>(CacheControlFilter.INIT_PARAM_KEY_CACHEABLE_PATH_REGEX, cacheablePathsRegex));
-        SpringUtil.addFilter(servletContextHandler, applicationContext, SecurityFilter.class, "/*");
+                ImmutableMap.of(
+                        CacheControlFilter.INIT_PARAM_KEY_SECONDS, "600",
+                        CacheControlFilter.INIT_PARAM_KEY_CACHEABLE_PATH_REGEX, cacheablePathsRegex));
+
+        SpringUtil.addFilter(servletContextHandler, applicationContext, SecurityFilter.class, "/*",
+                ImmutableMap.of(
+                        "", ""
+                ));
 
         // Add servlets
-        SpringUtil.addServlet(servletContextHandler, applicationContext, StroomServlet.class, ResourcePaths.ROOT_PATH + "/ui");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DashboardServlet.class, ResourcePaths.ROOT_PATH + "/dashboard");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DynamicCSSServlet.class, ResourcePaths.ROOT_PATH + "/dynamic.css");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DispatchService.class, ResourcePaths.ROOT_PATH + "/dispatch.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, ImportFileServlet.class, ResourcePaths.ROOT_PATH + "/importfile.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, ScriptServlet.class, ResourcePaths.ROOT_PATH + "/script");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, ClusterCallServiceRPC.class, ResourcePaths.ROOT_PATH + "/clustercall.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, StatusServlet.class, ResourcePaths.ROOT_PATH + "/status");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, EchoServlet.class, ResourcePaths.ROOT_PATH + "/echo");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DebugServlet.class, ResourcePaths.ROOT_PATH + "/debug");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionListServlet.class, ResourcePaths.ROOT_PATH + "/sessionList");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionResourceStoreImpl.class, ResourcePaths.ROOT_PATH + "/resourcestore/*");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, SpringRequestFactoryServlet.class, ResourcePaths.ROOT_PATH + "/gwtRequest");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, RemoteFeedServiceRPC.class, ResourcePaths.ROOT_PATH + "/remoting/remotefeedservice.rpc");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed");
-        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, ResourcePaths.ROOT_PATH + "/datafeed/*");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, StroomServlet.class, UI_PATH);
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DashboardServlet.class, DASHBOARD_PATH);
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DynamicCSSServlet.class, DYNAMIC_CSS_PATH);
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DispatchService.class, DISPATCH_RPC_PATH);
+        SpringUtil.addServlet(servletContextHandler, applicationContext, ImportFileServlet.class, IMPORT_FILE_RPC_PATH);
+        SpringUtil.addServlet(servletContextHandler, applicationContext, ScriptServlet.class, SCRIPT_PATH);
+        SpringUtil.addServlet(servletContextHandler, applicationContext, ClusterCallServiceRPC.class, CLUSTER_CALL_RPC_PATH);
+        SpringUtil.addServlet(servletContextHandler, applicationContext, StatusServlet.class, STATUS_PATH);
+        SpringUtil.addServlet(servletContextHandler, applicationContext, EchoServlet.class, ECHO_PATH);
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DebugServlet.class, DEBUG_PATH);
+        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionListServlet.class, SESSION_LIST_PATH);
+        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionResourceStoreImpl.class, RESOURCE_STORE_PATH + "+/*");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, SpringRequestFactoryServlet.class, GWT_REQUEST_PATH);
+        SpringUtil.addServlet(servletContextHandler, applicationContext, RemoteFeedServiceRPC.class, REMOTING_RPC_PATH);
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, DATAFEED_PATH);
+        SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, DASHBOARD_PATH + "/*");
 
         // Add session listeners.
         SpringUtil.addServletListener(environment.servlets(), applicationContext, SessionListListener.class);

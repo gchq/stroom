@@ -26,6 +26,7 @@ import stroom.auth.service.ApiException;
 import stroom.feed.server.UserAgentSessionUtil;
 import stroom.security.server.exception.AuthenticationException;
 import stroom.security.shared.UserRef;
+import stroom.util.logging.LambdaLogger;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -41,9 +42,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -56,6 +60,7 @@ import java.util.regex.Pattern;
 public class SecurityFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityFilter.class);
 
+    public static String BYPASS_PREFIX = "bypass";
     private static final String IGNORE_URI_REGEX = "ignoreUri";
 
     private static final String SCOPE = "scope";
@@ -82,7 +87,8 @@ public class SecurityFilter implements Filter {
     private final AuthenticationServiceClients authenticationServiceClients;
     private final AuthenticationService authenticationService;
 
-    private Pattern pattern = null;
+//    private Pattern pattern = null;
+    private List<Pattern> bypassPatterns = new ArrayList<>();
 
     public SecurityFilter(
             final SecurityConfig config,
@@ -97,10 +103,25 @@ public class SecurityFilter implements Filter {
 
     @Override
     public void init(final FilterConfig filterConfig) {
-        final String regex = filterConfig.getInitParameter(IGNORE_URI_REGEX);
-        if (regex != null) {
-            pattern = Pattern.compile(regex);
+        Enumeration<String> initParams = filterConfig.getInitParameterNames();
+        while (initParams.hasMoreElements()) {
+            String name = initParams.nextElement();
+            String value = filterConfig.getInitParameter(name);
+
+            if (name.startsWith(BYPASS_PREFIX)) {
+                try {
+                    Pattern pattern = Pattern.compile(value);
+                    bypassPatterns.add(pattern);
+                } catch (Exception e) {
+                    throw new RuntimeException(LambdaLogger.buildMessage("Error compiling pattern for regex {}",
+                            value));
+                }
+            }
         }
+//        final String regex = filterConfig.getInitParameter(IGNORE_URI_REGEX);
+//        if (regex != null) {
+//            pattern = Pattern.compile(regex);
+//        }
     }
 
     @Override
@@ -157,7 +178,7 @@ public class SecurityFilter implements Filter {
                     continueAsUser(request, response, chain, userRef);
                 }
 
-            } else if (isClusterCallRequest | isDatafeedRequest) {
+            } else if (shouldBypass(servletPath)) {
                 bypassAuthentication(request, response, chain, false);
             } else {
                 // Authenticate requests from the UI.
@@ -190,7 +211,19 @@ public class SecurityFilter implements Filter {
         }
     }
 
-    private void bypassAuthentication(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain, final boolean useSession) throws IOException, ServletException {
+    private boolean shouldBypass(String servletPath) {
+        boolean result = bypassPatterns.stream()
+                .anyMatch(pattern ->
+                        pattern.matcher(servletPath).matches());
+
+        LOGGER.debug("shouldBypass result {}", result);
+        return result;
+    }
+
+    private void bypassAuthentication(final HttpServletRequest request,
+                                      final HttpServletResponse response,
+                                      final FilterChain chain,
+                                      final boolean useSession) throws IOException, ServletException {
         final AuthenticationToken token = new AuthenticationToken("admin", null);
         final UserRef userRef = authenticationService.getUserRef(token);
         if (userRef != null) {
@@ -203,7 +236,10 @@ public class SecurityFilter implements Filter {
         }
     }
 
-    private void continueAsUser(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain, final UserRef userRef)
+    private void continueAsUser(final HttpServletRequest request,
+                                final HttpServletResponse response,
+                                final FilterChain chain,
+                                final UserRef userRef)
             throws IOException, ServletException {
         if (userRef != null) {
             // If the session already has a reference to a user then continue the chain as that user.
@@ -217,9 +253,9 @@ public class SecurityFilter implements Filter {
         }
     }
 
-    private boolean ignoreUri(final String uri) {
-        return pattern != null && pattern.matcher(uri).matches();
-    }
+//    private boolean ignoreUri(final String uri) {
+//        return pattern != null && pattern.matcher(uri).matches();
+//    }
 
     private boolean loginUI(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
         boolean loggedIn = false;
