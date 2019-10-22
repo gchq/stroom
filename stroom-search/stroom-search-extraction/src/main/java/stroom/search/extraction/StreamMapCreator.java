@@ -29,8 +29,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
-public class StreamMapCreator {
+class StreamMapCreator {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamMapCreator.class);
 
     private final StreamStore streamStore;
@@ -38,11 +39,11 @@ public class StreamMapCreator {
     private final int streamIdIndex;
     private final int eventIdIndex;
 
-    private Map<Long, Object> fiteredStreamCache;
+    private Map<Long, Optional<Object>> fiteredStreamCache;
     private ExtractionException error;
 
-    public StreamMapCreator(final String[] storedFields,
-                            final StreamStore streamStore) {
+    StreamMapCreator(final String[] storedFields,
+                     final StreamStore streamStore) {
         this.streamStore = streamStore;
 
         // First get the index in the stored data of the stream and event id fields.
@@ -92,25 +93,31 @@ public class StreamMapCreator {
                 fiteredStreamCache = new HashMap<>();
             }
 
-            final Object stream = fiteredStreamCache.computeIfAbsent(longStreamId, k -> {
+            final Optional<Object> optional = fiteredStreamCache.computeIfAbsent(longStreamId, k -> {
                 try {
                     // See if we can load the stream. We might get a StreamPermissionException if we aren't allowed to read from this stream.
-                    return streamStore.loadStreamById(longStreamId);
+                    return Optional.ofNullable(streamStore.loadStreamById(longStreamId));
                 } catch (final StreamPermissionException e) {
                     LOGGER.debug(e::getMessage, e);
-                    return e;
+                    return Optional.of(e);
                 } catch (final RuntimeException e) {
                     LOGGER.error(e::getMessage, e);
-                    return e;
+                    return Optional.of(e);
                 }
             });
 
-            if (stream instanceof Stream) {
-                return new Values(storedData);
+            if (!optional.isPresent()) {
+                throw new ExtractionException("Stream not found with id=" + longStreamId);
             }
 
-            final Throwable t = (Throwable) stream;
-            throw new ExtractionException(t.getMessage(), t);
+            final Object cached = optional.get();
+            if (cached instanceof Throwable) {
+                final Throwable t = (Throwable) cached;
+                throw new ExtractionException(t.getMessage(), t);
+            } else if (cached instanceof Stream) {
+                return new Values(storedData);
+            }
+            throw new ExtractionException("Unexpected cached type " + cached.getClass().getSimpleName());
         }
 
         throw new ExtractionException("No event id supplied");
