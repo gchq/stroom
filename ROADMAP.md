@@ -1,15 +1,15 @@
 # v5.0
 
-## Initial open source release
+## Initial open-source release
 
-## Fine grained permissions for explorer items
+## Fine-grained permissions for explorer items
 Users can be added to user groups and individual users and groups can have various permissions (e.g. Use, Read, Update, Delete) on individual items available in the explorer tree.
 
 ## Raw streaming
-Data can be streamed in it's raw form from the stream store to multiple destinations without any transformation taking place.
+Data can be streamed in its raw form from the stream store to multiple destinations without any transformation taking place.
 
 ## HDFS appender
-Pipeline XML/text data can be writen out to a HDFS (Hadoop Distributed File System) cluster. This increases the options for using Stroom's data for other purposes.
+Pipeline XML/text data can be written out to a HDFS (Hadoop Distributed File System) cluster. This increases the options for using Stroom's data for other purposes.
 
 ## Dashboard enhancements
 Date and time operators can be used to specify times in search expressions. These include constants such as `now()`, `second()`, `minute()`, `hour()`, `day()`, `week()`, `month()` and `year()`. You can also perform simple date time artithmetic in expressions such as `day() - 2d` or `hour() - 30m`.
@@ -35,7 +35,7 @@ Data arriving in Stroom has meta data that can be matched against a policy so th
 Filtering of data also applies to Stroom proxy where each proxy can get a filtering policy from an upstream proxy or a Stroom instance.
 
 ## Data retention policies
-The length of time that data will be retained in Strooms stream store can be defined by creating data retention rules. These rules match streams based on their meta data and will automatically delete data once the retention period associated with the rule is exceeded.
+The length of time that data will be retained in Stroom's stream store can be defined by creating data retention rules. These rules match streams based on their meta data and will automatically delete data once the retention period associated with the rule is exceeded.
 
 ## Dashboard linking
 Links can be created in dashboards to jump to other dashboards or other external sites that provide additional contextual information.
@@ -49,7 +49,7 @@ New pipeline elements for writing XML or text data to a Kafka topic. This provid
 # v7.0
 
 ## Reference data storage
-Reference data uses a memory mapped disk based store rather than direct memory to reduce the memory overhead associated with storing reference data. Reference data is also enhanced to cope with changes (additions and removals) of state information rather than always relying on complete snapshots.
+Reference data uses a memory-mapped disk-based store rather than direct memory to reduce the memory overhead associated with storing reference data. Reference data is also enhanced to cope with changes (additions and removals) of state information rather than always relying on complete snapshots.
 
 ## Modularisation
 Separation of Stroom components into discreet modules that have clear APIs and separate persistence where required to reduce coupling.
@@ -68,7 +68,7 @@ Add support for HDFS as a data storage option.
 # v9.0
 
 ## New UI
-Replace the GWT UI with a React based implementation.
+Replace the GWT UI with a React-based implementation.
 
 # v10+
 
@@ -85,7 +85,7 @@ Stroom proxy is capable of pipeline processing in the same way as a full Stroom 
 Stroom is capable of processing data from a Kafka topic, HDFS, the local file system, HTTP POST in addition to the included stream store.
 
 ## Multiple output destinations
-Stroom has improved support for writing to various destinations such as Kafka, HDFS etc. Improvements include compression and meta data wrapping for future import.
+Stroom has improved support for writing to various destinations such as Kafka, HDFS, etc. Improvements include compression and meta data wrapping for future import.
 
 ## Improved field extraction
 Enhancements to data splitter and associated UI to make the process of extracting field data from raw content much easier.
