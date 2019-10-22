@@ -117,7 +117,7 @@ class ExtractionTaskProducer extends TaskProducer {
                             streamMapCreator.addEvent(streamEventMap, values.getValues());
                         }
                     } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
+                        LOGGER.debug(e.getMessage(), e);
                         receivers.values().forEach(receiver -> {
                             receiver.getErrorConsumer().accept(new Error(e.getMessage(), e));
                             receiver.getCompletionCountConsumer().accept(1L);
