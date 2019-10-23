@@ -18,6 +18,7 @@ package stroom.explorer.server;
 
 import fri.util.database.jpa.tree.uniqueconstraints.UniqueConstraintViolationException;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.ContextConfiguration;
@@ -62,6 +63,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Ignore // A manual test for checking performance of the tree
 @ActiveProfiles(value = {
         StroomSpringProfiles.PROD,
         StroomSpringProfiles.IT,
