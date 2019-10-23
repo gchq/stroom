@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1293** : Add more static file types to allow nginx/browser caching on.
 
-* Issue **#1295** : Add authentication bypass for servlets such as remoting, status, sessionList, etc.
+* Issue **#1295** : Add authentication bypass for servlets such as /remoting, /status, /echo, etc.
 
 
 ## [v6.0.13] - 2019-10-14
