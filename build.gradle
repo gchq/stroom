@@ -333,7 +333,7 @@ subprojects {
         afterTest { desc, result -> 
             def durationSecs = (result.endTime - result.startTime) / 1000
             if (durationSecs > 1) {
-                println "Test ${desc.name} [${desc.className}] with result: ${result.resultType}, took longer than 1s, duration: ${durationSecs}s"
+                println "Test ${desc.name} [${desc.className}], took longer than 1s, result: ${result.resultType}, duration: ${durationSecs}s"
             }
         }
     }
@@ -370,7 +370,7 @@ subprojects {
         // Integration tests are quite slow so output progress for each test to keep travis alive
         afterTest { desc, result -> 
             def durationSecs = (result.endTime - result.startTime) / 1000
-            println "Executed test ${desc.name} [${desc.className}] with result: ${result.resultType}, duration: ${durationSecs}s"
+            println "Tested ${desc.name} [${desc.className}], result: ${result.resultType}, duration: ${durationSecs}s"
         }
         
         //afterSuite { desc, result -> 
