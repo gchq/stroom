@@ -14,11 +14,18 @@ public final class FilterUtil {
     private FilterUtil() {
     }
 
-    public static FilterHolder addFilter(final ServletContextHandler servletContextHandler, Class<? extends Filter> clazz, String name) {
-        return addFilter(servletContextHandler, clazz, name, MATCH_ALL_PATHS);
+    public static FilterHolder addFilter(final ServletContextHandler servletContextHandler,
+                                         final Class<? extends Filter> clazz,
+                                         final String name,
+                                         final Map<String, String> initParams) {
+        return addFilter(servletContextHandler, clazz, name, MATCH_ALL_PATHS, initParams);
     }
 
-    public static FilterHolder addFilter(final ServletContextHandler servletContextHandler, Class<? extends Filter> clazz, String name, final String urlPattern) {
+    public static FilterHolder addFilter(final ServletContextHandler servletContextHandler,
+                                         final Class<? extends Filter> clazz,
+                                         final String name,
+                                         final String urlPattern,
+                                         final Map<String, String> initParams) {
         FilterHolder filterHolder = new FilterHolder(clazz);
         filterHolder.setName(name);
 
@@ -26,6 +33,10 @@ public final class FilterUtil {
                 filterHolder,
                 urlPattern,
                 EnumSet.of(DispatcherType.REQUEST));
+
+        if (initParams != null) {
+            filterHolder.setInitParameters(initParams);
+        }
 
         return filterHolder;
     }
