@@ -238,14 +238,16 @@ else
     echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs[*]}${NC}]"
 
     # Do the gradle build
-    # Use 1 local worker to avoid using too much memory as each worker will
-    # chew up ~500Mb ram
+    # Use custom gwt compile jvm settings to avoid blowing the ram limit in 
+    # travis. At time of writing a sudo VM in travis has 7.5gb ram.
+    # Each work will chew up the maxHeap value and we have to allow for
+    # our docker services as well.
     ./gradlew \
       -PdumpFailedTestXml=true \
       -Pversion="${TRAVIS_TAG}" \
-      -PgwtCompilerWorkers=1 \
+      -PgwtCompilerWorkers=2 \
       -PgwtCompilerMinHeap=50M \
-      -PgwtCompilerMaxHeap=500M \
+      -PgwtCompilerMaxHeap=750M \
       clean \
       build \
       buildDistribution \
