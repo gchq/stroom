@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.1-beta.8] - 2019-10-23
+
 * Uplift Kafka client to v2.2.1.
 
 * Issue **#1293** : Add more static file types to allow nginx/browser caching on.
@@ -1940,7 +1942,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.7...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.8...6.1
+[v6.1-beta.8]: https://github.com/gchq/stroom/compare/v6.1-beta.7...v6.1-beta.8
 [v6.1-beta.7]: https://github.com/gchq/stroom/compare/v6.1-beta.6...v6.1-beta.7
 [v6.1-beta.6]: https://github.com/gchq/stroom/compare/v6.1-beta.5...v6.1-beta.6
 [v6.1-beta.5]: https://github.com/gchq/stroom/compare/v6.1-beta.4...v6.1-beta.5
