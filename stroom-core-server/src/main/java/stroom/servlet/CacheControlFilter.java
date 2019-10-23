@@ -17,6 +17,8 @@
 package stroom.servlet;
 
 import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -31,43 +33,72 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
+import java.util.regex.Pattern;
 
 public class CacheControlFilter implements Filter {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(CacheControlFilter.class);
+
+    public static String INIT_PARAM_KEY_SECONDS = "seconds";
+    public static String INIT_PARAM_KEY_CACHEABLE_PATH_REGEX = "cacheablePathRegex";
+
     private static final String GET_METHOD = "GET";
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter
             .ofPattern("EEE, d MMM yyyy HH:mm:ss zzz");
-    private static final List<String> CACHE_FILE_TYPES = Arrays.asList("js", "css", "png", "jpg", "gif", "svg");
+    private static final Set<String> CACHEABLE_FILE_TYPES = new HashSet<>(Arrays.asList(
+            "js", "css", "png", "jpg", "gif", "svg", "ico","gif","jpeg","woff","woff2","eot","ttf","webp"));
+    private static final String GWT_NO_CACHE = ".nocache.";
+
     private static final long DEFAULT_EXPIRES = 600; // Ten minutes
 
     private long seconds = DEFAULT_EXPIRES;
+    private Pattern cacheablePathRegex;
+
 
     @Override
     public void init(final FilterConfig filterConfig) {
-        final String value = filterConfig.getInitParameter("seconds");
+        final String value = filterConfig.getInitParameter(INIT_PARAM_KEY_SECONDS);
         if (value != null && value.length() > 0) {
             seconds = Long.valueOf(value);
         }
+        final String cacheablePathRegexStr = filterConfig.getInitParameter(INIT_PARAM_KEY_CACHEABLE_PATH_REGEX);
+        Objects.requireNonNull(cacheablePathRegexStr);
+        cacheablePathRegex = Pattern.compile(cacheablePathRegexStr);
     }
 
     @Override
-    public void doFilter(final ServletRequest servletRequest, final ServletResponse servletResponse, final FilterChain filterChain) throws IOException, ServletException {
+    public void doFilter(final ServletRequest servletRequest,
+                         final ServletResponse servletResponse,
+                         final FilterChain filterChain) throws IOException, ServletException {
         final HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         final HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
         final String filetypeRequested = FilenameUtils.getExtension(httpServletRequest.getRequestURL().toString());
+        final String requestUri = httpServletRequest.getRequestURI();
 
-        if (GET_METHOD.equals(httpServletRequest.getMethod()) && seconds > 0 && CACHE_FILE_TYPES.contains(filetypeRequested)) {
+        if (GET_METHOD.equals(httpServletRequest.getMethod())
+                && seconds > 0
+                && (CACHEABLE_FILE_TYPES.contains(filetypeRequested) || isCacheablePath(requestUri))
+                && !requestUri.contains(GWT_NO_CACHE)) {
             httpServletResponse.setHeader("Cache-Control", "public, max-age=" + seconds);
 
             // Add an expiry time, e.g. Expires: Wed, 21 Oct 2015 07:28:00 GMT
             httpServletResponse.setHeader("Expires", getExpires(seconds));
+            LOGGER.trace("{} is cacheable", requestUri);
         } else {
             httpServletResponse.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
             httpServletResponse.setHeader("Expires", "0");
             httpServletResponse.setHeader("Pragma", "no-cache");
+            LOGGER.trace("{} is not cacheable", requestUri);
         }
 
         filterChain.doFilter(servletRequest, servletResponse);
+    }
+
+    private boolean isCacheablePath(final String requestUri) {
+        return cacheablePathRegex.matcher(requestUri).matches();
     }
 
     @Override

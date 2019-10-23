@@ -139,13 +139,13 @@ dependencies {
 
 run {
     //Ensure we have the latest kafka plugin jar available for runtime
-    dependsOn ':stroom-kafka-client-impl_2_1_1:copyPluginJar'
+    dependsOn ':stroom-kafka-client-impl_2_2_1:copyPluginJar'
     args 'server', './dev.yml'
 }
 
 runShadow {
     //Ensure we have the latest kafka plugin jar available for runtime
-    dependsOn ':stroom-kafka-client-impl_2_1_1:copyPluginJar'
+    dependsOn ':stroom-kafka-client-impl_2_2_1:copyPluginJar'
     args 'server', './dev.yml'
 }
 
@@ -167,7 +167,7 @@ clean{
 task copyFilesForStroomDockerBuild() {
     dependsOn shadowJar
     dependsOn parent.downloadStroomContent
-    dependsOn tasks.getByPath(':stroom-kafka-client-impl_2_1_1:shadowJar')
+    dependsOn tasks.getByPath(':stroom-kafka-client-impl_2_2_1:shadowJar')
 
     doFirst {
         new File(stroomPluginsDir).mkdirs()
@@ -183,7 +183,7 @@ task copyFilesForStroomDockerBuild() {
 
         //Copy the kafka client fat jar
         copy {
-            from project(':stroom-kafka-client-impl_2_1_1').file('build/libs/stroom-kafka-client-impl_2_1_1-all.jar')
+            from project(':stroom-kafka-client-impl_2_2_1').file('build/libs/stroom-kafka-client-impl_2_2_1-all.jar')
             into stroomDockerPluginsDir
         }
 

@@ -6,6 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift Kafka client to v2.2.1.
+
+* Issue **#1293** : Add more static file types to allow nginx/browser caching on.
+
+* Issue **#1295** : Add authentication bypass for servlets such as /remoting, /status, /echo, etc.
 
 * Issue **#1288** : Streams now show the name of the pipeline used to create them even if the user doesn't have permission to see the pipeline.
 
