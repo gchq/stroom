@@ -287,6 +287,8 @@ task copyFilesForStroomDockerBuild() {
 
         // Copy the dropwizard yml configuration
         copy {
+            // TODO we whould be using the prod one as that has the proper prod logging config in it.
+            //   Need to wait till the properties work is merge in.
             from "${projectDir}/dev.yml"
             rename ("dev.yml", "prod.yml")
             into stroomDockerBuildDir
