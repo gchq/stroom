@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.15] - 2019-10-24
+
 * Uplift stroom-query to v2.2.4 to add better diagnostic logging.
 
 
@@ -1931,7 +1934,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.14...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.15...6.0
+[v6.0.15]: https://github.com/gchq/stroom/compare/v6.0.14...v6.0.15
 [v6.0.14]: https://github.com/gchq/stroom/compare/v6.0.13...v6.0.14
 [v6.0.13]: https://github.com/gchq/stroom/compare/v6.0.12...v6.0.13
 [v6.0.12]: https://github.com/gchq/stroom/compare/v6.0.11...v6.0.12
