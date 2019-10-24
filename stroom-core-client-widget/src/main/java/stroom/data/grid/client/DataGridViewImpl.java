@@ -254,7 +254,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                             final Heading heading = getHeading(event);
                             headingListener.onContextMenu(event, heading);
 
-                            // Detatch event preview handler.
+                            // Detach event preview handler.
                             resizeHandle.hide();
                             if (handlerRegistration != null) {
                                 handlerRegistration.removeHandler();
