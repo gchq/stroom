@@ -125,6 +125,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
                           final MenuListPresenter menuListPresenter,
+                          final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
                           final Provider<ExpressionPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
                           final FilterPresenter filterPresenter,
@@ -152,7 +153,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         downloadButton = dataGrid.addButton(SvgPresets.DOWNLOAD);
         downloadButton.setVisible(securityContext.hasAppPermission(Dashboard.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
-        fieldsManager = new FieldsManager(this, menuListPresenter, expressionPresenterProvider, formatPresenter,
+        fieldsManager = new FieldsManager(this, menuListPresenter, renameFieldPresenterProvider, expressionPresenterProvider, formatPresenter,
                 filterPresenter);
         dataGrid.setHeadingListener(fieldsManager);
 
@@ -455,6 +456,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         dataGrid.addResizableColumn(column, fieldHeader, field.getWidth());
         existingColumns.add(column);
+    }
+
+    public void redrawHeaders() {
+        dataGrid.redrawHeaders();
     }
 
     private void performRowAction(final Row result) {

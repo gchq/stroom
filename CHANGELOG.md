@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#67** : Table columns now display menu items on left click.
+
 
 ## [v6.0.15] - 2019-10-24
 
