@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#67** : Table columns now display menu items on left click.
+
+* Uplift stroom-query to v2.2.4 to add better diagnostic logging.
+
 ## [v6.1-beta.8] - 2019-10-23
 
 * Uplift Kafka client to v2.2.1.
