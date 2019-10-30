@@ -60,7 +60,6 @@ import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HealthCheckBinder;
-import stroom.util.guice.ResourcePaths;
 import stroom.util.guice.ServletBinder;
 import stroom.util.io.BufferFactory;
 import stroom.util.shared.BuildInfo;
@@ -126,12 +125,12 @@ public class ProxyModule extends AbstractModule {
                 .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), "/*"), ProxySecurityFilter.class);
 
         ServletBinder.create(binder())
-                .bind(ResourcePaths.ROOT_PATH + "/config", ConfigServlet.class)
-                .bind(ResourcePaths.ROOT_PATH + "/datafeed", ReceiveDataServlet.class)
-                .bind(ResourcePaths.ROOT_PATH + "/datafeed/*", ReceiveDataServlet.class)
-                .bind(ResourcePaths.ROOT_PATH + "/debug", DebugServlet.class)
-                .bind(ResourcePaths.ROOT_PATH + "/status", ProxyStatusServlet.class)
-                .bind(ResourcePaths.ROOT_PATH + "/ui", ProxyWelcomeServlet.class);
+                .bind(ConfigServlet.class)
+                .bind(DebugServlet.class)
+                .bind(ProxyStatusServlet.class)
+                .bind(ProxyWelcomeServlet.class)
+                .bind(ReceiveDataServlet.class)
+                .bind(ReceiveDataServlet.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(DictionaryResource.class)

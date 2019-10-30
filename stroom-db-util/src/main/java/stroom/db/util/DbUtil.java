@@ -35,10 +35,12 @@ public class DbUtil {
                     LOGGER.info("Using test container DB connection config");
 
                     connectionConfig.setJdbcDriverClassName("com.mysql.cj.jdbc.Driver");
-                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.5.52://localhost:3306/test");
-//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.6.43://localhost:3306/test");
-//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.7.25://localhost:3306/test");
-//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:8.0.15://localhost:3306/test");
+                    // Use reusable test containers with TC_REUSABLE=true
+                    // see https://github.com/testcontainers/testcontainers-java/pull/1781
+                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.5.52://localhost:3306/test?TC_REUSABLE=true");
+//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.6.43://localhost:3306/test?TC_REUSABLE=true");
+//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.7.25://localhost:3306/test?TC_REUSABLE=true");
+//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:8.0.15://localhost:3306/test?TC_REUSABLE=true");
                     connectionConfig.setJdbcDriverPassword("test");
                     connectionConfig.setJdbcDriverUsername("test");
 

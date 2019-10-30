@@ -27,7 +27,6 @@ import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.RestResource;
 import stroom.util.guice.GuiceUtil;
-import stroom.util.guice.ResourcePaths;
 import stroom.util.guice.ServletBinder;
 
 public class DataStoreHandlerModule extends AbstractModule {
@@ -45,7 +44,7 @@ public class DataStoreHandlerModule extends AbstractModule {
                 .bind(UploadDataAction.class, UploadDataHandler.class);
 
         ServletBinder.create(binder())
-                .bind(ResourcePaths.ROOT_PATH + "/importfile.rpc", ImportFileServlet.class);
+                .bind(ImportFileServlet.class);
 
         // TODO probably not the right place for this binding
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)

@@ -24,7 +24,7 @@ import java.sql.Statement;
 @Singleton
 public class DataSourceProvider implements Provider<DataSource> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceProvider.class);
-    private static final String MODULE = "stroom-corer";
+    private static final String MODULE = "stroom-core";
     private static final String FLYWAY_LOCATIONS = "stroom/core/db/migration/mysql";
     private static final String FLYWAY_TABLE = "schema_version";
 

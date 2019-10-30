@@ -16,14 +16,21 @@
 
 package stroom.core.servlet;
 
+import stroom.util.shared.IsServlet;
+import stroom.util.shared.Unauthenticated;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Set;
 
-public class EchoServlet extends HttpServlet {
+@Unauthenticated
+public class EchoServlet extends HttpServlet implements IsServlet {
     private static final long serialVersionUID = -2569496543022536282L;
+
+    private static final Set<String> PATH_SPECS = Set.of("/echo");
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -31,5 +38,10 @@ public class EchoServlet extends HttpServlet {
 //        final InputStream is = new BlockGZIPInputStream(req.getInputStream());
 //        resp.setStatus(200);
 //        StreamUtil.streamToStream(is, resp.getOutputStream());
+    }
+
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
     }
 }

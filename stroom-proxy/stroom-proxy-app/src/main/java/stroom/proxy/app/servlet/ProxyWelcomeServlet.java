@@ -1,6 +1,7 @@
 package stroom.proxy.app.servlet;
 
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.IsServlet;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -10,8 +11,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Set;
 
-public class ProxyWelcomeServlet extends HttpServlet {
+public class ProxyWelcomeServlet extends HttpServlet implements IsServlet {
+    private static final Set<String> PATH_SPECS = Set.of("/ui");
+
     private final Provider<BuildInfo> buildInfoProvider;
 
     @Inject
@@ -54,5 +58,14 @@ public class ProxyWelcomeServlet extends HttpServlet {
             url += "/";
         }
         return url;
+    }
+
+    /**
+     * @return The part of the path that will be in addition to any base path,
+     * e.g. "/datafeed".
+     */
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
     }
 }

@@ -20,10 +20,15 @@ import com.caucho.hessian.server.HessianServlet;
 import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceLocal;
 import stroom.cluster.api.ServiceName;
+import stroom.util.shared.IsServlet;
 
 import javax.inject.Inject;
+import java.util.Set;
 
-class ClusterCallServiceRPC extends HessianServlet implements ClusterCallService {
+class ClusterCallServiceRPC extends HessianServlet implements ClusterCallService, IsServlet {
+
+    private static final Set<String> PATH_SPECS = Set.of("/clustercall.rpc");
+
     private final ClusterCallService clusterCallService;
 
     @Inject
@@ -34,5 +39,10 @@ class ClusterCallServiceRPC extends HessianServlet implements ClusterCallService
     @Override
     public Object call(final String sourceNode, final String targetNode, final ServiceName serviceName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
         return clusterCallService.call(sourceNode, targetNode, serviceName, methodName, parameterTypes, args);
+    }
+
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
     }
 }

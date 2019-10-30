@@ -26,13 +26,17 @@ import stroom.auth.service.ApiException;
 import stroom.security.api.AuthenticationService;
 import stroom.security.api.AuthenticationToken;
 import stroom.security.api.SecurityContext;
-import stroom.security.impl.session.UserSessionUtil;
-import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.security.api.UserTokenUtil;
 import stroom.security.impl.exception.AuthenticationException;
+import stroom.security.impl.session.UserSessionUtil;
 import stroom.security.shared.User;
 import stroom.security.shared.UserToken;
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.guice.ResourcePaths;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.servlet.UserAgentSessionUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -52,7 +56,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Pattern;
 
 /**
  * <p>
@@ -62,8 +65,7 @@ import java.util.regex.Pattern;
 @Singleton
 class SecurityFilter implements Filter {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityFilter.class);
-
-    private static final String IGNORE_URI_REGEX = "ignoreUri";
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SecurityFilter.class);
 
     private static final String SCOPE = "scope";
     private static final String RESPONSE_TYPE = "response_type";
@@ -73,8 +75,10 @@ class SecurityFilter implements Filter {
     private static final String NONCE = "nonce";
     private static final String PROMPT = "prompt";
     private static final String ACCESS_CODE = "accessCode";
+    private static final String NO_AUTH_PATH = ResourcePaths.ROOT_PATH + ResourcePaths.NO_AUTH_PATH + "/";
 
-    private static final Set<String> RESERVED_PARAMS = Set.of(SCOPE, RESPONSE_TYPE, CLIENT_ID, REDIRECT_URL, STATE, NONCE, PROMPT, ACCESS_CODE);
+    private static final Set<String> RESERVED_PARAMS = Set.of(
+            SCOPE, RESPONSE_TYPE, CLIENT_ID, REDIRECT_URL, STATE, NONCE, PROMPT, ACCESS_CODE);
 
     private final AuthenticationConfig config;
     private final UiConfig uiConfig;
@@ -82,8 +86,6 @@ class SecurityFilter implements Filter {
     private final AuthenticationServiceClients authenticationServiceClients;
     private final AuthenticationService authenticationService;
     private final SecurityContext securityContext;
-
-    private Pattern pattern = null;
 
     @Inject
     SecurityFilter(
@@ -103,10 +105,7 @@ class SecurityFilter implements Filter {
 
     @Override
     public void init(final FilterConfig filterConfig) {
-        final String regex = filterConfig.getInitParameter(IGNORE_URI_REGEX);
-        if (regex != null) {
-            pattern = Pattern.compile(regex);
-        }
+        LOGGER.debug("Initialising {}", this.getClass().getSimpleName());
     }
 
     @Override
@@ -136,11 +135,6 @@ class SecurityFilter implements Filter {
         if (request.getMethod().toUpperCase().equals(HttpMethod.OPTIONS)) {
             // We need to allow CORS preflight requests
             chain.doFilter(request, response);
-
-        } else if (ignoreUri(request.getRequestURI())) {
-            // Allow some URIs to bypass authentication checks
-            chain.doFilter(request, response);
-
         } else {
             // We need to distinguish between requests from an API client and from the UI.
             // - If a request is from the UI and fails authentication then we need to redirect to the login page.
@@ -149,14 +143,10 @@ class SecurityFilter implements Filter {
             //   let it through. It is essential that port 8080 is not exposed and that any reverse-proxy
             //   blocks requests that look like '.*clustercall.rpc$'.
             final String servletPath = request.getServletPath().toLowerCase();
-            final boolean isApiRequest = servletPath.contains("/api");
-            final boolean isDatafeedRequest = servletPath.contains("/datafeed");
-            final boolean isClusterCallRequest = servletPath.contains("clustercall.rpc");
-            final boolean isDispatchRequest = servletPath.contains("dispatch.rpc");
 
-            if (isApiRequest) {
+            if (isApiRequest(servletPath)) {
                 if (!config.isAuthenticationRequired()) {
-                    bypassAuthentication(request, response, chain, false);
+                    authenticateAsAdmin(request, response, chain, false);
                 } else {
                     // Authenticate requests to the API.
                     final User userRef = loginAPI(request, response);
@@ -169,9 +159,8 @@ class SecurityFilter implements Filter {
 
                     continueAsUser(request, response, chain, userToken, userRef);
                 }
-
-            } else if (isClusterCallRequest | isDatafeedRequest) {
-                bypassAuthentication(request, response, chain, false);
+            } else if (shouldBypassAuthentication(servletPath)) {
+                authenticateAsProcUser(request, response, chain, false);
             } else {
                 // Authenticate requests from the UI.
 
@@ -187,7 +176,7 @@ class SecurityFilter implements Filter {
                     continueAsUser(request, response, chain, userToken, userRef);
 
                 } else if (!config.isAuthenticationRequired()) {
-                    bypassAuthentication(request, response, chain, true);
+                    authenticateAsAdmin(request, response, chain, true);
 
                 } else {
                     // If the session doesn't have a user ref then attempt login.
@@ -200,7 +189,7 @@ class SecurityFilter implements Filter {
                     //   3. This request, not being logged in, starts a new authentication flow
                     //   4. This new authentication flow partially over-writes the relying party data in auth.
                     // This would manifest as a bad redirect_url, one which contains 'dispatch.rpc'.
-                    if (!loggedIn && !isDispatchRequest) {
+                    if (!loggedIn && !isDispatchRequest(servletPath)) {
                         // We were unable to login so we're going to redirect with an AuthenticationRequest.
                         redirectToAuthService(request, response);
                     }
@@ -209,7 +198,42 @@ class SecurityFilter implements Filter {
         }
     }
 
-    private void bypassAuthentication(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain, final boolean useSession) throws IOException, ServletException {
+    private boolean isApiRequest(String servletPath) {
+        return servletPath.startsWith(ResourcePaths.API_PATH);
+    }
+
+    private boolean isDispatchRequest(String servletPath) {
+        return servletPath.endsWith(ResourcePaths.DISPATCH_RPC_PATH);
+    }
+
+    private boolean shouldBypassAuthentication(String servletPath) {
+        return servletPath.startsWith(NO_AUTH_PATH);
+    }
+
+    private void authenticateAsAdmin(final HttpServletRequest request,
+                                     final HttpServletResponse response,
+                                     final FilterChain chain,
+                                     final boolean useSession) throws IOException, ServletException {
+
+        bypassAuthentication(request, response, chain, useSession, User.ADMIN_USER_NAME);
+    }
+
+    private void authenticateAsProcUser(final HttpServletRequest request,
+                                        final HttpServletResponse response,
+                                        final FilterChain chain,
+                                        final boolean useSession) throws IOException, ServletException {
+
+        bypassAuthentication(request, response, chain, useSession, UserTokenUtil.getInternalProcessingUserId());
+    }
+
+    private void bypassAuthentication(final HttpServletRequest request,
+                                      final HttpServletResponse response,
+                                      final FilterChain chain,
+                                      final boolean useSession,
+                                      final String userId) throws IOException, ServletException {
+
+        LAMBDA_LOGGER.debug(() ->
+                LogUtil.message("Authenticating as user {} for request {}", userId, request.getRequestURI()));
         final AuthenticationToken token = new AuthenticationToken("admin", null);
         final User userRef = securityContext.asProcessingUserResult(() -> authenticationService.getUser(token));
         if (userRef != null) {
@@ -249,10 +273,6 @@ class SecurityFilter implements Filter {
                 CurrentUserState.pop();
             }
         }
-    }
-
-    private boolean ignoreUri(final String uri) {
-        return pattern != null && pattern.matcher(uri).matches();
     }
 
     private boolean loginUI(final HttpServletRequest request, final HttpServletResponse response) throws IOException {

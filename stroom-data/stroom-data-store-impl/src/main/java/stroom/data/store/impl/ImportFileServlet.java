@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import stroom.resource.api.ResourceStore;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.IsServlet;
 import stroom.util.shared.PropertyMap;
 import stroom.util.shared.ResourceKey;
 
@@ -41,14 +42,17 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Generic Import Service
  */
-public final class ImportFileServlet extends HttpServlet {
+public final class ImportFileServlet extends HttpServlet implements IsServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(ImportFileServlet.class);
 
     private static final long serialVersionUID = 487567988479000995L;
+
+    private static final Set<String> PATH_SPECS = Set.of("/importfile.rpc");
 
     private final ResourceStore resourceStore;
     private final StreamEventLog streamEventLog;
@@ -114,5 +118,14 @@ public final class ImportFileServlet extends HttpServlet {
         }
 
         return fields;
+    }
+
+    /**
+     * @return The part of the path that will be in addition to any base path,
+     * e.g. "/datafeed".
+     */
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
     }
 }

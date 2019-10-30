@@ -19,6 +19,7 @@ package stroom.resource.impl;
 import stroom.resource.api.ResourceStore;
 import stroom.util.io.FileUtil;
 import stroom.util.servlet.HttpServletRequestHolder;
+import stroom.util.shared.IsServlet;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
@@ -29,14 +30,17 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Set;
 import java.util.UUID;
 
 /**
  * Wrapper for the ResourceStore that makes sure the user can only access stuff
  * in the session.
  */
-public class SessionResourceStoreImpl extends HttpServlet implements ResourceStore {
+public class SessionResourceStoreImpl extends HttpServlet implements ResourceStore, IsServlet {
+
     private static final long serialVersionUID = -4533441835216235920L;
+    private static final Set<String> PATH_SPECS = Set.of("/resourcestore/*");
     private static final String UUID_ARG = "UUID";
 
     private final ResourceStore resourceStore;
@@ -133,5 +137,14 @@ public class SessionResourceStoreImpl extends HttpServlet implements ResourceSto
             // Reset current request.
             httpServletRequestHolder.set(originalRequest);
         }
+    }
+
+    /**
+     * @return The part of the path that will be in addition to any base path,
+     * e.g. "/datafeed".
+     */
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
     }
 }
