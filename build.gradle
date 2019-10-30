@@ -50,8 +50,20 @@ if (!JavaVersion.current().isJava12()) {
     throw new GradleException("This build must be run with Java 12 (current = " + JavaVersion.current() + ")")
 }
 
+
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
 ext.stroomContentImportDir = System.getProperty("user.home") + "/.stroom/contentPackImport"
+ext.testContainersConfigFile = System.getProperty("user.home") + "/.testcontainers.properties"
+
+// Create a config file for test containers so we can make it reuse the mysql container to speed the build up
+if (!file(testContainersConfigFile).exists()) {
+    println "Creating file $testContainersConfigFile"
+    new File(testContainersConfigFile).text = "" +
+        "testcontainers.reuse.enable=true\n" +
+        "checks.disable=true\n"
+} else {
+    println "Using exising test containers config in $testContainersConfigFile"
+}
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
@@ -118,7 +130,7 @@ ext.versions = [
         mockito           : '2.23.4',
         rxjava            : '2.1.10',
         swagger           : '1.5.21',
-        test_containers   : '1.12.2',
+        test_containers   : '1.12.3',
         unirest           : '1.4.9',
         zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
         zzDUMMYzz         : 'makes sorting easier'
@@ -403,13 +415,19 @@ subprojects {
     test {
         useJUnitPlatform()
 
+        // Report duration of tests that take over 1s
+        afterTest { descriptor, result ->
+            def durationSecs = (result.endTime - result.startTime) / 1000
+            if (durationSecs > 1) {
+                println "Test ${descriptor.className}.${descriptor.name}, took longer than 1s, result: ${result.resultType}, duration: ${durationSecs}s"
+            }
+        }
+
         reports.html.destination = file("${reporting.baseDir}/${name}")
 
-        afterSuite { descriptor, result ->
-            //println "Executed suite ${descriptor.name} ${descriptor.className} with result: ${result.resultType}"
-
-            if (descriptor != null
-                    && descriptor.className != null
+        afterSuite { descriptor, result -> 
+            if (descriptor != null 
+                    && descriptor.className != null 
                     && result.resultType.toString() == "FAILURE") {
 
                 //test class failed so add its project info and test report file to a global list for
@@ -430,7 +448,7 @@ subprojects {
     }
 
     clean {
-        // clear out the 'out' dirs used by intelliJ
+        //clear out the 'out' dirs used by intelliJ
         delete "out"
     }
 

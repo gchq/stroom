@@ -66,7 +66,7 @@ class TaskThread implements HasTerminate {
     }
 
     @Override
-    public void terminate() {
+    public synchronized void terminate() {
         this.terminate = true;
         children.forEach(TaskThread::terminate);
 
@@ -133,7 +133,7 @@ class TaskThread implements HasTerminate {
         this.info = args;
     }
 
-    public void addChild(final TaskThread taskThread) {
+    public synchronized void addChild(final TaskThread taskThread) {
         children.add(taskThread);
         if (terminate) {
             taskThread.terminate();

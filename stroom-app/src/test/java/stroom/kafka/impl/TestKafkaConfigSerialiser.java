@@ -91,7 +91,7 @@ public class TestKafkaConfigSerialiser {
                 "    \"aStringValue\" : [ \"stringType\", \"abcdefg\" ],\n" +
                 "    \"aGoodClass\" : [ \"classType\", \"stroom.kafka.impl.TestKafkaConfigSerialiser$GoodClass\" ]\n" +
                 "  },\n" +
-                "  \"kafkaVersion\" : \"0.10.0.1\"\n" +
+                "  \"kafkaVersion\" : \"2.2.1\"\n" +
                 "}";
 
         LOGGER.info("\n{}", json);
@@ -114,7 +114,7 @@ public class TestKafkaConfigSerialiser {
                 // want to make sure jackson won't try to instantiate some unknown class
                 "    \"Bad\" : [ \"stroom.kafka.impl.TestKafkaConfigSerialiser.BadClass\", \"some value\" ],\n" +
                 "  },\n" +
-                "  \"kafkaVersion\" : \"0.10.0.1\"\n" +
+                "  \"kafkaVersion\" : \"2.2.1\"\n" +
                 "}";
 
         final Map<String, byte[]> data = Map.of("meta", Bytes.toBytes(json));

@@ -31,9 +31,11 @@ import stroom.task.api.TaskManager;
 import stroom.task.impl.TaskHandlerRegistry;
 import stroom.task.shared.Action;
 import stroom.util.EntityServiceExceptionUtil;
+import stroom.util.guice.ResourcePaths;
 import stroom.util.servlet.SessionIdProvider;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.EntityServiceException;
+import stroom.util.shared.IsServlet;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PermissionException;
 
@@ -47,9 +49,12 @@ import java.text.ParseException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
-public class DispatchServiceImpl extends RemoteServiceServlet implements DispatchService {
+public class DispatchServiceImpl extends RemoteServiceServlet implements DispatchService, IsServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(DispatchServiceImpl.class);
+
+    private static final Set<String> PATH_SPECS = Set.of(ResourcePaths.DISPATCH_RPC_PATH);
 
     // This path is where we expect to find the `.gwt.rpc` file. It must be valid for startup for both dev and executable
     // jar. If you change where the webapp/ui files are stored, which is currently 'ui', then this path must change too.
@@ -149,5 +154,14 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
         }
 
         return null;
+    }
+
+    /**
+     * @return The part of the path that will be in addition to any base path,
+     * e.g. "/datafeed".
+     */
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
     }
 }

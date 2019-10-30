@@ -24,7 +24,6 @@ import stroom.importexport.api.ImportExportActionHandler;
 import stroom.script.shared.FetchScriptAction;
 import stroom.script.shared.ScriptDoc;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.guice.ResourcePaths;
 import stroom.util.guice.ServletBinder;
 
 public class ScriptModule extends AbstractModule {
@@ -33,7 +32,7 @@ public class ScriptModule extends AbstractModule {
         bind(ScriptStore.class).to(ScriptStoreImpl.class);
 
         ServletBinder.create(binder())
-                .bind(ResourcePaths.ROOT_PATH + "/script", ScriptServlet.class);
+                .bind(ScriptServlet.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(FetchScriptAction.class, FetchScriptHandler.class);

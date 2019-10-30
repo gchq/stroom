@@ -17,10 +17,15 @@
 package stroom.core.servlet;
 
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.shared.IsServlet;
 
 import javax.inject.Inject;
+import java.util.Set;
 
-public class DashboardServlet extends AppServlet {
+public class DashboardServlet extends AppServlet implements IsServlet {
+
+    private static final Set<String> PATH_SPECS = Set.of("/dashboard");
+
     @Inject
     DashboardServlet(final UiConfig uiConfig) {
         super(uiConfig);
@@ -28,5 +33,10 @@ public class DashboardServlet extends AppServlet {
 
     String getScript() {
         return "dashboard/dashboard.nocache.js";
+    }
+
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
     }
 }

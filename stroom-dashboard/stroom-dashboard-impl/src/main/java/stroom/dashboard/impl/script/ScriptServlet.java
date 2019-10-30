@@ -20,6 +20,7 @@ package stroom.dashboard.impl.script;
 import stroom.docref.DocRef;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.IsServlet;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServlet;
@@ -31,14 +32,16 @@ import java.io.UncheckedIOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>
  * SERVLET that reports status of Stroom for scripting purposes.
  * </p>
  */
-class ScriptServlet extends HttpServlet {
+class ScriptServlet extends HttpServlet implements IsServlet {
     private static final long serialVersionUID = 2912973031600581055L;
+    private static final Set<String> PATH_SPECS = Set.of("/script");
 
     private final ScriptStore scriptStore;
     private final SecurityContext securityContext;
@@ -97,5 +100,14 @@ class ScriptServlet extends HttpServlet {
         }
 
         return map;
+    }
+
+    /**
+     * @return The part of the path that will be in addition to any base path,
+     * e.g. "/datafeed".
+     */
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
     }
 }

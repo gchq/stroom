@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.IsServlet;
+import stroom.util.shared.Unauthenticated;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -34,14 +36,18 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UncheckedIOException;
+import java.util.Set;
 
 /**
  * <p>
  * SERVLET that reports status of Stroom for scripting purposes.
  * </p>
  */
-public class StatusServlet extends HttpServlet {
+@Unauthenticated
+public class StatusServlet extends HttpServlet implements IsServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(StatusServlet.class);
+
+    private static final Set<String> PATH_SPECS = Set.of("/status");
 
     private static final long serialVersionUID = 1L;
     private static final String INFO = "INFO";
@@ -116,6 +122,11 @@ public class StatusServlet extends HttpServlet {
                 throw new UncheckedIOException(e);
             }
         });
+    }
+
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
     }
 
     /**

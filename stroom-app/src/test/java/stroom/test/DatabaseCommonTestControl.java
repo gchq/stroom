@@ -18,11 +18,12 @@ package stroom.test;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.data.store.impl.fs.FsVolumeService;
+import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.impl.IndexVolumeService;
-import stroom.index.shared.IndexVolume;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Clearable;
@@ -31,7 +32,6 @@ import javax.inject.Inject;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -50,6 +50,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
     private final VolumeCreator nodeConfig;
     private final ProcessorTaskManager processorTaskManager;
     private final Set<Clearable> clearables;
+    private final FsVolumeService fsVolumeService;
 
     @Inject
     DatabaseCommonTestControl(final IndexVolumeService volumeService,
@@ -59,7 +60,8 @@ public class DatabaseCommonTestControl implements CommonTestControl {
                               final DatabaseCommonTestControlTransactionHelper databaseCommonTestControlTransactionHelper,
                               final VolumeCreator nodeConfig,
                               final ProcessorTaskManager processorTaskManager,
-                              final Set<Clearable> clearables) {
+                              final Set<Clearable> clearables,
+                              final FsVolumeService fsVolumeService) {
         this.volumeService = volumeService;
         this.contentImportService = contentImportService;
         this.indexShardManager = indexShardManager;
@@ -68,6 +70,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         this.nodeConfig = nodeConfig;
         this.processorTaskManager = processorTaskManager;
         this.clearables = clearables;
+        this.fsVolumeService = fsVolumeService;
     }
 
     @Override
@@ -93,13 +96,22 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         indexShardWriterCache.shutdown();
         indexShardManager.deleteFromDisk();
 
-        // Delete the contents of all volumes.
-        final List<IndexVolume> volumes = volumeService.getAll();
-        for (final IndexVolume volume : volumes) {
-            // The parent will also pick up the index shard (as well as the
-            // store)
-            FileUtil.deleteContents(Paths.get(volume.getPath()));
-        }
+        // Delete the contents of all index volumes.
+        volumeService.getAll()
+                .forEach(volume -> {
+                    // The parent will also pick up the index shard (as well as the
+                    // store)
+                    LOGGER.info("Clearing index volume {}", volume.getPath());
+                    FileUtil.deleteContents(Paths.get(volume.getPath()));
+
+                });
+
+        // Delete the contents of all stream store volumes.
+        fsVolumeService.find(new FindFsVolumeCriteria())
+                .forEach(fsVolume -> {
+                    LOGGER.info("Clearing fs volume {}", fsVolume.getPath());
+                    FileUtil.deleteContents(Paths.get(fsVolume.getPath()));
+                });
 
         // Clear all the tables using direct sql on a different connection
         // in theory truncating the tables should be quicker but it was taking 1.5s to truncate all the tables

@@ -3,6 +3,8 @@ package stroom.proxy.app.servlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.IsServlet;
+import stroom.util.shared.Unauthenticated;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -12,9 +14,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.Writer;
+import java.util.Set;
 
-public class ProxyStatusServlet extends HttpServlet {
+@Unauthenticated
+public class ProxyStatusServlet extends HttpServlet implements IsServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyStatusServlet.class);
+
+    private static final Set<String> PATH_SPECS = Set.of("/config");
 
     private final Provider<BuildInfo> buildInfoProvider;
 
@@ -50,5 +56,14 @@ public class ProxyStatusServlet extends HttpServlet {
         writer.write("\nINFO,STROOM_PROXY,Up date ");
         writer.write(buildInfo.getUpDate());
         writer.close();
+    }
+
+    /**
+     * @return The part of the path that will be in addition to any base path,
+     * e.g. "/datafeed".
+     */
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
     }
 }

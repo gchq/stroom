@@ -26,12 +26,19 @@ public final class UserTokenUtil {
     private static final String USER = "user";
     private static final String SYSTEM = "system";
 
+    private static final String INTERNAL_PROCESSING_USER_TYPE = SYSTEM;
+    private static final String INTERNAL_PROCESSING_USER_USER_ID = INTERNAL;
+
     private UserTokenUtil() {
         // Utility class.
     }
 
     private static UserToken createStaticInternal() {
-        return create(SYSTEM, INTERNAL, null);
+        return create(INTERNAL_PROCESSING_USER_TYPE, INTERNAL_PROCESSING_USER_USER_ID, null);
+    }
+
+    public static String getInternalProcessingUserId() {
+        return INTERNAL_PROCESSING_USER_USER_ID;
     }
 
     public static UserToken processingUser() {

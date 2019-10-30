@@ -17,10 +17,14 @@
 package stroom.core.servlet;
 
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.shared.IsServlet;
 
 import javax.inject.Inject;
+import java.util.Set;
 
-public class StroomServlet extends AppServlet {
+public class StroomServlet extends AppServlet implements IsServlet {
+    private static final Set<String> PATH_SPECS = Set.of("/ui");
+
     @Inject
     StroomServlet(final UiConfig uiConfig) {
         super(uiConfig);
@@ -28,5 +32,10 @@ public class StroomServlet extends AppServlet {
 
     String getScript() {
         return "stroom/stroom.nocache.js";
+    }
+
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
     }
 }

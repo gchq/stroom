@@ -19,6 +19,7 @@ package stroom.core.servlet;
 import stroom.ui.config.shared.ThemeConfig;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.shared.IsServlet;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServlet;
@@ -27,8 +28,11 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.util.Set;
 
-public class DynamicCSSServlet extends HttpServlet {
+public class DynamicCSSServlet extends HttpServlet implements IsServlet {
+    private static final Set<String> PATH_SPECS = Set.of("/dynamic.css");
+
     private static final String THEME_BACKGROUND_ATTACHMENT = "@THEME_BACKGROUND_ATTACHMENT@";
     private static final String THEME_BACKGROUND_COLOR = "@THEME_BACKGROUND_COLOR@";
     private static final String THEME_BACKGROUND_IMAGE = "@THEME_BACKGROUND_IMAGE@";
@@ -89,5 +93,10 @@ public class DynamicCSSServlet extends HttpServlet {
             return css.replace(sourcePattern, value);
         }
         return css;
+    }
+
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
     }
 }

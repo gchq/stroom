@@ -29,6 +29,7 @@ import stroom.task.shared.Task;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 
@@ -112,7 +113,8 @@ class FsCleanExecutor {
         // Load the node.
         asyncTaskHelper = new AsyncTaskHelper<>(null, taskContext, taskManager, batchSize);
 
-        logInfo("Starting file system clean task. oldAge = {}", ModelStringUtil.formatDurationString(oldAge));
+        logInfo(LogUtil.message("Starting file system clean task. oldAge = {}",
+                ModelStringUtil.formatDurationString(oldAge)));
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -203,6 +205,6 @@ class FsCleanExecutor {
             printWriterMap.values().forEach(CloseableUtil::closeLogAndIgnoreException);
         }
 
-        logInfo("start() - Completed file system clean task in {}", logExecutionTime);
+        logInfo(LogUtil.message("start() - Completed file system clean task in {}", logExecutionTime));
     }
 }

@@ -347,8 +347,8 @@ public class ConfigMapper {
                 }
                 configProperty.setEditable(false);
             }
-            configProperty.setDataType(getDataTypeName(prop.getValueType()));
         }
+        configProperty.setDataType(getDataTypeName(prop.getValueType()));
     }
 
     private String getDataTypeName(final Type type) {
@@ -359,24 +359,37 @@ public class ConfigMapper {
 
             if (valueClass.equals(int.class)) {
                 dataTypeName = "Integer";
+            } else if (valueClass.equals(Enum.class)) {
+                    dataTypeName = "Enumeration";
+            } else if (valueClass.equals(List.class) || valueClass.equals(Map.class)) {
+                dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName()) + " of ";
             } else {
                 dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName());
             }
 
-            if (List.class.isAssignableFrom(valueClass)
-                    || Map.class.isAssignableFrom(valueClass)
-                    || DocRef.class.isAssignableFrom(valueClass)) {
-                final String genericTypes = getGenericTypes(type)
-                        .stream()
-                        .map(this::getDataTypeName)
-                        .collect(Collectors.joining(","));
-
-                dataTypeName += "<" + genericTypes + ">";
-            }
+//            if (List.class.isAssignableFrom(valueClass)
+//                    || Map.class.isAssignableFrom(valueClass)
+//                    || DocRef.class.isAssignableFrom(valueClass)) {
+//                final String genericTypes = getGenericTypes(type)
+//                        .stream()
+//                        .map(this::getDataTypeName)
+//                        .collect(Collectors.joining(","));
+//
+//                dataTypeName += "<" + genericTypes + ">";
+//            }
             return dataTypeName;
         } else if (type instanceof ParameterizedType) {
-            da
+            final ParameterizedType parameterizedType = (ParameterizedType) type;
+            final String rawTypeName = getDataTypeName(parameterizedType.getRawType());
 
+            if (parameterizedType.getActualTypeArguments() != null) {
+                final String genericTypes = Arrays.stream(parameterizedType.getActualTypeArguments())
+                        .map(this::getDataTypeName)
+                        .collect(Collectors.joining(", "));
+                return rawTypeName + genericTypes;
+            } else {
+                return rawTypeName;
+            }
         } else {
             return "";
         }

@@ -2,6 +2,8 @@ package stroom.proxy.app.servlet;
 
 import com.codahale.metrics.health.HealthCheck;
 import stroom.util.HasHealthCheck;
+import stroom.util.shared.IsServlet;
+import stroom.util.shared.Unauthenticated;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -11,8 +13,11 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Set;
 
-public class ConfigServlet extends HttpServlet implements HasHealthCheck {
+@Unauthenticated
+public class ConfigServlet extends HttpServlet implements HasHealthCheck, IsServlet {
+    private static final Set<String> PATH_SPECS = Set.of("/config");
     private static String PATH;
     private final String data;
 
@@ -46,5 +51,14 @@ public class ConfigServlet extends HttpServlet implements HasHealthCheck {
 
     public static void setPath(final String PATH) {
         ConfigServlet.PATH = PATH;
+    }
+
+    /**
+     * @return The part of the path that will be in addition to any base path,
+     * e.g. "/datafeed".
+     */
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
     }
 }

@@ -58,7 +58,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(MockResourceModule.class)
 @IncludeModule(SecurityContextModule.class)
-@Disabled
+@Disabled // manual testing only
 class TestExplorerTreePerformance {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestExplorerTreePerformance.class);
     private static final int MAX_CHILDREN = 200;

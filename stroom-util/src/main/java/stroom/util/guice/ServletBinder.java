@@ -1,23 +1,23 @@
 package stroom.util.guice;
 
 import com.google.inject.Binder;
-import com.google.inject.multibindings.MapBinder;
-
-import javax.servlet.Servlet;
+import com.google.inject.multibindings.Multibinder;
+import stroom.util.shared.IsServlet;
 
 public class ServletBinder {
-    private final MapBinder<ServletInfo, Servlet> mapBinder;
+//    private final MapBinder<ServletInfo, Servlet> mapBinder;
+    private final Multibinder<IsServlet> multibinder;
 
     private ServletBinder(final Binder binder) {
-        mapBinder = MapBinder.newMapBinder(binder, ServletInfo.class, Servlet.class);
+        multibinder = Multibinder.newSetBinder(binder, IsServlet.class);
     }
 
     public static ServletBinder create(final Binder binder) {
         return new ServletBinder(binder);
     }
 
-    public <H extends Servlet> ServletBinder bind(final String path, final Class<H> servletClass) {
-        mapBinder.addBinding(new ServletInfo(path)).to(servletClass);
+    public <H extends IsServlet> ServletBinder bind(final Class<H> servletClass) {
+        multibinder.addBinding().to(servletClass);
         return this;
     }
 }

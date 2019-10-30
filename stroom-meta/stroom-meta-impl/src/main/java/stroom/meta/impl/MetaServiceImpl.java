@@ -291,7 +291,6 @@ public class MetaServiceImpl implements MetaService, Searchable {
         return simpleFind(builder.build());
     }
 
-
     private Meta findParent(final Meta meta) {
         final ExpressionOperator expression = new ExpressionOperator.Builder()
                 .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, meta.getParentMetaId())

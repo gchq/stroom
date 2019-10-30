@@ -18,6 +18,8 @@ package stroom.receive.common;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.shared.IsServlet;
+import stroom.util.shared.Unauthenticated;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -27,16 +29,20 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.Set;
 
 /**
  * <p>
  * Servlet that streams files to disk based on meta input arguments.
  * </p>
  */
-public class ReceiveDataServlet extends HttpServlet {
-    private static final long serialVersionUID = 1L;
+@Unauthenticated
+public class ReceiveDataServlet extends HttpServlet implements IsServlet {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ReceiveDataServlet.class);
+    private static final long serialVersionUID = 1L;
+
+    private static final Set<String> PATH_SPECS = Set.of("/datafeed", "/datafeed/*");
 
     private final Provider<RequestHandler> requestHandlerProvider;
 
@@ -131,5 +137,10 @@ public class ReceiveDataServlet extends HttpServlet {
         trace.append(request.getRequestURI());
 
         return trace.toString();
+    }
+
+    @Override
+    public Set<String> getPathSpecs() {
+        return PATH_SPECS;
     }
 }

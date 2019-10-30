@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class DbTestUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(DbTestUtil.class);
 
-    private static final String TESTCONTAINERS_JDBC_CONTAINER_DATABASE_DRIVER = "org.testcontainers.jdbc.ContainerDatabaseDriver";
+    private static final String TEST_CONTAINERS_JDBC_CONTAINER_DATABASE_DRIVER = "org.testcontainers.jdbc.ContainerDatabaseDriver";
 
     private static final String USE_TEST_CONTAINERS_ENV_VAR = "USE_TEST_CONTAINERS";
     public static final String TEST_CONTAINERS_DB_VERSION = "5.5.52";
@@ -34,7 +34,13 @@ public class DbTestUtil {
 //    public static final String TEST_CONTAINERS_DB_VERSION = "5.7.25";
 //    public static final String TEST_CONTAINERS_DB_VERSION = "8.0.15";
     public static final String TEST_CONTAINERS_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
-    public static final String TEST_CONTAINERS_DRIVER_URL = "jdbc:tc:mysql:" + TEST_CONTAINERS_DB_VERSION + "://localhost:3306/test";
+    // Use reusable test containers with TC_REUSABLE=true
+    // see https://github.com/testcontainers/testcontainers-java/pull/1781
+    public static final String TEST_CONTAINERS_DRIVER_URL = "jdbc:tc:mysql:"
+            + TEST_CONTAINERS_DB_VERSION
+            + "://localhost:3306/test?TC_REUSABLE=true";
+    private static final String TEST_CONTAINERS_DB_PASSWORD = "test";
+    private static final String TEST_CONTAINERS_DB_USERNAME = "test";
 
     private DbTestUtil() {
     }
@@ -74,22 +80,18 @@ public class DbTestUtil {
         // migrate the DB from scratch on each run which is very time consuming
         if (useTestContainersEnvVarVal == null || !useTestContainersEnvVarVal.toLowerCase().equals("false")) {
             try {
-                final Class<?> clazz = Class.forName(TESTCONTAINERS_JDBC_CONTAINER_DATABASE_DRIVER);
+                final Class<?> clazz = Class.forName(TEST_CONTAINERS_JDBC_CONTAINER_DATABASE_DRIVER);
                 if (clazz != null) {
                     LOGGER.info("Using Test Containers v{} DB connection config", TEST_CONTAINERS_DB_VERSION);
 
                     connectionConfig.setJdbcDriverClassName(TEST_CONTAINERS_CLASS_NAME);
                     connectionConfig.setJdbcDriverUrl(TEST_CONTAINERS_DRIVER_URL);
-//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.6.43://localhost:3306/test");
-//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.7.25://localhost:3306/test");
-//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:8.0.15://localhost:3306/test");
-                    connectionConfig.setJdbcDriverPassword("test");
-                    connectionConfig.setJdbcDriverUsername("test");
-
+                    connectionConfig.setJdbcDriverPassword(TEST_CONTAINERS_DB_PASSWORD);
+                    connectionConfig.setJdbcDriverUsername(TEST_CONTAINERS_DB_USERNAME);
                 }
             } catch (final ClassNotFoundException e) {
                 LOGGER.debug("Can't find class {} for Test Containers, falling back to standard DB connection",
-                        TESTCONTAINERS_JDBC_CONTAINER_DATABASE_DRIVER);
+                        TEST_CONTAINERS_JDBC_CONTAINER_DATABASE_DRIVER);
             }
         } else {
             LOGGER.info("{}={} so using standard DB connection",

@@ -36,6 +36,8 @@ public class ServletModule extends AbstractModule {
         bind(HttpServletRequest.class).toProvider(HttpServletRequestHolder.class);
         bind(SessionIdProvider.class).to(SessionIdProviderImpl.class);
 
+        // The regex for our script entities that can be cached
+        final String cacheablePathsRegex = "^" + ResourcePaths.ROOT_PATH + "/script/\\?$";
         FilterBinder.create(binder())
                 .bind(new FilterInfo(HttpServletRequestFilter.class.getSimpleName(), MATCH_ALL_PATHS),
                         HttpServletRequestFilter.class)
@@ -43,17 +45,21 @@ public class ServletModule extends AbstractModule {
                                 .addparameter("rejectUri", "/"),
                         RejectPostFilter.class)
                 .bind(new FilterInfo("cacheControlFilter", MATCH_ALL_PATHS)
-                                .addparameter("seconds", "600"),
+                                .addparameter(CacheControlFilter.INIT_PARAM_KEY_SECONDS, "600")
+                                .addparameter(CacheControlFilter.INIT_PARAM_KEY_CACHEABLE_PATH_REGEX, cacheablePathsRegex),
                         CacheControlFilter.class);
 
         ServletBinder.create(binder())
-                .bind(ResourcePaths.ROOT_PATH + "/dashboard", DashboardServlet.class)
-                .bind(ResourcePaths.ROOT_PATH + "/debug", DebugServlet.class)
-                .bind(ResourcePaths.ROOT_PATH + "/dynamic.css", DynamicCSSServlet.class)
-                .bind(ResourcePaths.ROOT_PATH + "/echo", EchoServlet.class)
-                .bind(ResourcePaths.ROOT_PATH + "/datafeed", ReceiveDataServlet.class)
-                .bind(ResourcePaths.ROOT_PATH + "/datafeed/*", ReceiveDataServlet.class)
-                .bind(ResourcePaths.ROOT_PATH + "/ui", StroomServlet.class)
-                .bind(ResourcePaths.ROOT_PATH + "/status", StatusServlet.class);
+                // authenticated servlets
+                .bind(DashboardServlet.class)
+                .bind(DynamicCSSServlet.class)
+                .bind(StroomServlet.class)
+                // unauthenticated servlets (i.e. run as proc user)
+                .bind(ReceiveDataServlet.class)
+                .bind(ReceiveDataServlet.class)
+                .bind(DebugServlet.class)
+                .bind(EchoServlet.class)
+                .bind(StatusServlet.class);
     }
+
 }

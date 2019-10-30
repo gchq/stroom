@@ -6,6 +6,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Uplift Kafka client to v2.2.1.
+
+* Issue **#1293** : Add more static file types to allow nginx/browser caching on.
+
+* Issue **#1295** : Add authentication bypass for servlets such as /remoting, /status, /echo, etc.
+
+## [v7.0-beta.7] - 2019-10-23
+
+* Issue **#1288** : Streams now show the name of the pipeline used to create them even if the user doesn't have permission to see the pipeline.
+
+* Issue **#1282** : Fixed issue where items were imported into the explorer even if not selected for import.
+
+* Issue **#1291** : Fixed issue where empty dashboard table cells did not select table rows when clicked. 
+
+* Issue **#1290** : Fixed issue where executor provider was not executing supplied runnable if parent task had terminated.
+
+* Fix problem of missing fallback config in docker image.
+
 
 ## [v7.0-beta.6] - 2019-10-15
 
@@ -1786,7 +1804,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.6...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.7...HEAD
+[v7.0-beta.7]: https://github.com/gchq/stroom/compare/v7.0-beta.6...v7.0-beta.7
 [v7.0-beta.6]: https://github.com/gchq/stroom/compare/v7.0-beta.5...v7.0-beta.6
 [v7.0-beta.5]: https://github.com/gchq/stroom/compare/v7.0-beta.4...v7.0-beta.5
 [v7.0-beta.4]: https://github.com/gchq/stroom/compare/v7.0-beta.3...v7.0-beta.4

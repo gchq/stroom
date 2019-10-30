@@ -15,13 +15,13 @@ We love pull requests and we want to make it as easy as possible to contribute c
 * Run a full build from the project root: `./gradlew clean build`.
 
 ## Submitting changes
-* Sign the [GCHQ Contributor Licence Agreement](https://github.com/gchq/Gaffer/wiki/GCHQ-OSS-Contributor-License-Agreement-V1.0) 
+* Sign the [GCHQ Contributor Licence Agreement](https://github.com/gchq/Gaffer/wiki/GCHQ-OSS-Contributor-License-Agreement-V1.0).
 * Push your changes to your fork.
 * Submit a [pull request](https://github.com/gchq/stroom/pulls).
-* We'll look at it pretty soon after it's submitted, and we aim to respond within one week. 
+* We'll look at it pretty soon after it's submitted, and we aim to respond within one week.
 
 ## Getting it accepted
 Here are some things you can do to make this all smoother:
 * If you think it might be controversial then discuss it with us beforehand, via a GitHub issue.
-* Add tests
+* Add tests.
 * Write a [good commit message](http://chris.beams.io/posts/git-commit/).

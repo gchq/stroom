@@ -22,6 +22,7 @@ import org.slf4j.MarkerFactory;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.UserToken;
+import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskHandler;
@@ -332,7 +333,120 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
         }
     }
 
+    @Override
+    public void execAsync(final Task<?> parentTask, final UserToken userToken, final String taskName, final Runnable runnable, ThreadPool threadPool) {
+        if (userToken == null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Task has null user token: " + taskName);
+            }
+        }
+
+        final GenericServerTask task = GenericServerTask.create(parentTask, userToken, taskName, null);
+        if (threadPool == null) {
+            threadPool = task.getThreadPool();
+        }
+
+        if (task.getId() == null) {
+            throw new IllegalStateException("All tasks must have a pre-allocated id");
+        }
+
+        // Create the task scope runnable object outside of the executing
+        // thread so we can store a reference to the current task scope
+        // context.
+        // The reference to the current context is stored during
+        // construction of this object.
+        final Runnable scopedRunnable = () -> pipelineScopeRunnable.scopeRunnable(() -> {
+            if (stop.get()) {
+                throw new TaskTerminatedException(stop.get());
+            }
+
+            // Make sure this thread is not interrupted.
+            if (Thread.interrupted()) {
+                LOGGER.warn("This thread was previously interrupted");
+            }
+
+            // Get the parent task thread if there is one.
+            TaskThread parentTaskThread = null;
+            if (parentTask != null) {
+                parentTaskThread = currentTasks.get(parentTask.getId());
+            }
+
+            final Thread currentThread = Thread.currentThread();
+            final String oldThreadName = currentThread.getName();
+            final TaskThread taskThread = new TaskThread(task);
+
+            currentThread.setName(oldThreadName + " - " + task.getClass().getSimpleName());
+            try {
+                taskThread.setThread(Thread.currentThread());
+                if (parentTaskThread != null) {
+                    parentTaskThread.addChild(taskThread);
+                }
+                currentTasks.put(task.getId(), taskThread);
+
+                securityContext.asUser(userToken, () -> {
+                    CurrentTaskState.pushState(taskThread);
+                    try {
+                        LOGGER.debug("doExec() - exec >> '{}' {}", task.getClass().getName(), task);
+                        runnable.run();
+                        LOGGER.debug("doExec() - exec << '{}' {}", task.getClass().getName(), task);
+
+                    } finally {
+                        CurrentTaskState.popState();
+                    }
+                });
+            } catch (final ThreadDeath t) {
+                LOGGER.error("exec() - ThreadDeath (" + task.getClass().getSimpleName() + ")");
+                LOGGER.debug("exec() (" + task.getClass().getSimpleName() + ")", t);
+                throw t;
+            } catch (final TaskTerminatedException t) {
+                LOGGER.error("exec() (" + task.getClass().getSimpleName() + ")", t);
+                throw t;
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage() + " (" + task.getClass().getSimpleName() + ")", e);
+                throw e;
+            } finally {
+                currentTasks.remove(task.getId());
+                if (parentTaskThread != null) {
+                    parentTaskThread.removeChild(taskThread);
+                }
+                taskThread.setThread(null);
+                currentThread.setName(oldThreadName);
+                // Decrease the count of the number of async tasks.
+                currentAsyncTaskCount.decrementAndGet();
+            }
+        });
+
+        // Now we have a task scoped runnable we will execute it in a new
+        // thread.
+        final Executor executor = getExecutor(threadPool);
+        if (executor != null) {
+            currentAsyncTaskCount.incrementAndGet();
+
+            try {
+                // We might run out of threads and get a can't fork
+                // exception from the thread pool.
+                executor.execute(scopedRunnable);
+
+            } catch (final RuntimeException e) {
+                try {
+                    LOGGER.error(MarkerFactory.getMarker("FATAL"), "exec() - Unexpected Exception (" + task.getClass().getSimpleName() + ")", e);
+                    throw e;
+
+                } finally {
+                    // Decrease the count of the number of async tasks.
+                    currentAsyncTaskCount.decrementAndGet();
+                }
+            }
+        }
+    }
+
     private <R> void doExec(final Task<R> task, final TaskCallback<R> callback) {
+        // Get the parent task thread if there is one.
+        TaskThread parentTaskThread = null;
+        if (task.getParentTask() != null) {
+            parentTaskThread = currentTasks.get(task.getParentTask().getId());
+        }
+
         final Thread currentThread = Thread.currentThread();
         final String oldThreadName = currentThread.getName();
         final TaskThread taskThread = new TaskThread(task);
@@ -351,8 +465,11 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 LOGGER.warn("This thread was previously interrupted");
             }
 
-            currentTasks.put(task.getId(), taskThread);
             taskThread.setThread(Thread.currentThread());
+            if (parentTaskThread != null) {
+                parentTaskThread.addChild(taskThread);
+            }
+            currentTasks.put(task.getId(), taskThread);
 
             if (stop.get() || currentThread.isInterrupted()) {
                 throw new TaskTerminatedException(stop.get());
@@ -373,10 +490,12 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 }
             });
         } finally {
-            currentThread.setName(oldThreadName);
-
-            taskThread.setThread(null);
             currentTasks.remove(task.getId());
+            if (parentTaskThread != null) {
+                parentTaskThread.removeChild(taskThread);
+            }
+            taskThread.setThread(null);
+            currentThread.setName(oldThreadName);
         }
     }
 

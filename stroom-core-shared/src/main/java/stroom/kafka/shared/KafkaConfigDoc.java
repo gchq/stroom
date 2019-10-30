@@ -44,7 +44,7 @@ public class KafkaConfigDoc extends Doc {
     private static final String VALUE_SERIALIZER_CLASS_CONFIG = "value.serializer";
 
     private String description;
-    private String kafkaVersion = "0.10.0.1";
+    private String kafkaVersion = "2.2.1";
     private Map<String, Object> properties;
 
     public KafkaConfigDoc() {

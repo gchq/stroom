@@ -115,6 +115,11 @@ COPY --chown=stroom:stroom ./build/contentPacks /stroom/contentPackImport
 
 # Copy all the fat jars for the application and connectors
 COPY --chown=stroom:stroom *.sh /stroom/
+
+# This config file is a fallback for use in development 
+# (or when a stack with the config bind mount is not available)
+COPY --chown=stroom:stroom build/prod.yml /stroom/config-fallback/config.yml
+
 COPY --chown=stroom:stroom --from=fat-jar-stage /stroom-app-all.jar /stroom/
 
 # Label the image so we can see what commit/tag it came from

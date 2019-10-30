@@ -20,7 +20,6 @@ package stroom.resource.impl;
 
 import com.google.inject.AbstractModule;
 import stroom.resource.api.ResourceStore;
-import stroom.util.guice.ResourcePaths;
 import stroom.util.guice.ServletBinder;
 
 public class SessionResourceModule extends AbstractModule {
@@ -29,6 +28,6 @@ public class SessionResourceModule extends AbstractModule {
         bind(ResourceStore.class).to(SessionResourceStoreImpl.class);
 
         ServletBinder.create(binder())
-                .bind(ResourcePaths.ROOT_PATH + "/resourcestore/*", SessionResourceStoreImpl.class);
+                .bind(SessionResourceStoreImpl.class);
     }
 }
