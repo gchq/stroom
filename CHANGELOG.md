@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#67** : Table columns now display menu items on left click.
+
+* Uplift stroom-query to v2.2.4 to add better diagnostic logging.
+
 * Uplift Kafka client to v2.2.1.
 
 * Issue **#1293** : Add more static file types to allow nginx/browser caching on.
