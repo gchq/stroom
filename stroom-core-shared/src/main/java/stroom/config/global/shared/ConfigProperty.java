@@ -85,7 +85,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     private boolean requireRestart;
     private boolean requireUiRestart;
     // TODO this is a stopgap until we have fully typed values
-    private String dataType;
+    private String dataTypeName;
 
     public ConfigProperty() {
         // Required for GWT serialisation
@@ -325,12 +325,12 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         }
     }
 
-    public String getDataType() {
-        return dataType;
+    public String getDataTypeName() {
+        return dataTypeName;
     }
 
-    public void setDataType(final String dataType) {
-        this.dataType = dataType;
+    public void setDataTypeName(final String dataTypeName) {
+        this.dataTypeName = dataTypeName;
     }
 
     @Override

@@ -26,11 +26,15 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter.GlobalPropertyEditView;
+import stroom.config.global.client.presenter.ManageGlobalPropertyEditUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 
-public final class GlobalPropertyEditViewImpl extends ViewImpl implements GlobalPropertyEditView {
+public final class GlobalPropertyEditViewImpl
+        extends ViewWithUiHandlers<ManageGlobalPropertyEditUiHandlers>
+        implements GlobalPropertyEditView {
+
     private final Widget widget;
     @UiField
     Grid grid;
@@ -61,9 +65,6 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
 
     private boolean password;
 
-    // TODO add a checkbox called 'Override default' next to the databaseValue field, which when checked enables the
-    //  value field and when unchecked clears the field and disables it
-
     @Inject
     public GlobalPropertyEditViewImpl(final EventBus eventBus, final Binder binder) {
         widget = binder.createAndBindUi(this);
@@ -80,6 +81,24 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
 
         requireRestart.setEnabled(false);
         requireUiRestart.setEnabled(false);
+
+        useOverride.addValueChangeHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChangeUseOverride();
+            }
+        });
+
+        databaseValue.addKeyUpHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChangeOverrideValue();
+            }
+        });
+
+        databaseValuePassword.addKeyUpHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChangeOverrideValue();
+            }
+        });
     }
 
     @Override
@@ -158,13 +177,14 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
     public void setEditable(final boolean edit) {
         databaseValue.setReadOnly(!edit);
         databaseValuePassword.setReadOnly(!edit);
-        useOverride.setEnabled(!edit);
+        useOverride.setEnabled(edit);
     }
 
     @Override
     public void setUseOverride(final boolean useOverride) {
         this.useOverride.setBooleanValue(useOverride);
     }
+
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {
     }

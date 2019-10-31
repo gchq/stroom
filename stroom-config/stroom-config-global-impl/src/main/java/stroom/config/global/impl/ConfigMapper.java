@@ -348,7 +348,7 @@ public class ConfigMapper {
                 configProperty.setEditable(false);
             }
         }
-        configProperty.setDataType(getDataTypeName(prop.getValueType()));
+        configProperty.setDataTypeName(getDataTypeName(prop.getValueType()));
     }
 
     private String getDataTypeName(final Type type) {

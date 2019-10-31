@@ -75,7 +75,7 @@ class TestConfigMapper {
         String txt = configProperties.stream()
                 .sorted(Comparator.comparing(ConfigProperty::getName))
                 .map(configProperty ->
-                        LogUtil.message("{}, {}", configProperty.getName(), configProperty.getDataType()))
+                        LogUtil.message("{}, {}", configProperty.getName(), configProperty.getDataTypeName()))
                 .collect(Collectors.joining("\n"));
 
         LOGGER.debug("Properties\n{}", txt);

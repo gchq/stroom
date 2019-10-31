@@ -20,6 +20,7 @@ package stroom.config.global.client.presenter;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.config.global.shared.ConfigProperty;
@@ -34,7 +35,9 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
-public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<ManageGlobalPropertyEditPresenter.GlobalPropertyEditView> {
+public final class ManageGlobalPropertyEditPresenter
+        extends MyPresenterWidget<ManageGlobalPropertyEditPresenter.GlobalPropertyEditView>
+        implements ManageGlobalPropertyEditUiHandlers {
     private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
     private final UiConfigCache clientPropertyCache;
@@ -50,6 +53,7 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         this.dispatcher = dispatcher;
         this.securityContext = securityContext;
         this.clientPropertyCache = clientPropertyCache;
+        view.setUiHandlers(this);
     }
 
     protected ClientSecurityContext getSecurityContext() {
@@ -119,6 +123,7 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         getView().setRequireRestart(getEntity().isRequireRestart());
         getView().setRequireUiRestart(getEntity().isRequireUiRestart());
         getView().getName().setText(getEntity().getName());
+        getView().setUseOverride(getEntity().hasDatabaseOverride());
         String databaseOverrideValue = "";
         if (getEntity().hasDatabaseOverride()) {
             databaseOverrideValue = getEntity().getDatabaseOverrideValue().getValueOrElse("");
@@ -132,17 +137,12 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         getView().getDatabaseValue().setText(databaseOverrideValue);
         getView().getEffectiveValue().setText(getEntity().getEffectiveValue().orElse(""));
         getView().getDescription().setText(getEntity().getDescription());
-        getView().getDataType().setText(getEntity().getDataType());
+        getView().getDataType().setText(getEntity().getDataTypeName());
         getView().getSource().setText(getEntity().getSource().getName());
     }
 
     private void write(final boolean hideOnSave) {
-        if (getView().getUseOverride()) {
-            final String value = getView().getDatabaseValue().getText();
-            getEntity().setDatabaseOverrideValue(value.trim());
-        } else {
-            getEntity().setDatabaseOverrideValue(null);
-        }
+        refreshValuesOnChange();
 
         // Save.
         dispatcher.exec(new UpdateGlobalConfigAction(getEntity())).onSuccess(result -> {
@@ -156,6 +156,20 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
         });
     }
 
+    private void refreshValuesOnChange() {
+        if (getView().getUseOverride()) {
+            final String value = getView().getDatabaseValue().getText();
+            getEntity().setDatabaseOverride(ConfigProperty.OverrideValue.with(value.trim()));
+        } else {
+            getEntity().setDatabaseOverride(ConfigProperty.OverrideValue.unSet());
+            // no override so clear the value
+            getView().getDatabaseValue().setText(null);
+        }
+
+        getView().getEffectiveValue().setText(getEntity().getEffectiveValue().orElse(null));
+        getView().getSource().setText(getEntity().getSource().getName());
+    }
+
     protected PopupSize getPopupSize() {
         return new PopupSize(
                 550, 560,
@@ -164,7 +178,17 @@ public final class ManageGlobalPropertyEditPresenter extends MyPresenterWidget<M
                 true);
     }
 
-    public interface GlobalPropertyEditView extends View {
+    @Override
+    public void onChangeUseOverride() {
+        refreshValuesOnChange();
+    }
+
+    @Override
+    public void onChangeOverrideValue() {
+        refreshValuesOnChange();
+    }
+
+    public interface GlobalPropertyEditView extends View, HasUiHandlers<ManageGlobalPropertyEditUiHandlers> {
         HasText getName();
 
         HasText getDefaultValue();
