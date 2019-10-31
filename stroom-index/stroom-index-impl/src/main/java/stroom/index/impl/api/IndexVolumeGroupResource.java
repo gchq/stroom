@@ -1,4 +1,4 @@
-package stroom.index.impl;
+package stroom.index.impl.api;
 
 import io.swagger.annotations.Api;
 import stroom.index.shared.IndexVolumeGroup;

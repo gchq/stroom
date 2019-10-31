@@ -1,6 +1,5 @@
-package stroom.index.impl.rest;
+package stroom.index.impl.api;
 
-import stroom.index.impl.IndexShardResource;
 import stroom.index.impl.IndexShardService;
 
 import javax.inject.Inject;

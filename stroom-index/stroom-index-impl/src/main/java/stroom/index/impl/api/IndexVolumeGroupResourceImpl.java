@@ -1,6 +1,5 @@
-package stroom.index.impl.rest;
+package stroom.index.impl.api;
 
-import stroom.index.impl.IndexVolumeGroupResource;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.shared.IndexVolumeGroup;
 

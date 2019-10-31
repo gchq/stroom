@@ -1,11 +1,10 @@
-package stroom.index.impl.rest;
+package stroom.index.impl.api;
 
 import com.codahale.metrics.annotation.Timed;
 import stroom.docref.DocRef;
 import stroom.importexport.api.OldDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.index.impl.IndexResource;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 import stroom.util.shared.DocRefs;
