@@ -4,15 +4,19 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <ui:style>
         .max {
-        width:100%;
-        height:100%;
+            width:100%;
+            height:100%;
         }
-        .text-area {
-        width:100%;
-        height:80px;
+        .textArea {
+            width:100%;
+            height:80px;
         }
-        .read-only {
-        height:40px;
+        .reducedHeight {
+            height:40px;
+        }
+        .readonlyText {
+            background-color: rgba(0, 255, 0, 0.01);
+            border-color: hsla(223, 33%, 89%, 1);
         }
     </ui:style>
 
@@ -20,25 +24,23 @@
         <g:row>
             <g:cell>Name:</g:cell>
             <g:customCell>
-                <g:TextBox ui:field="name" width="100%"/>
+                <g:TextBox ui:field="name" width="100%" addStyleNames="globalProperties {style.readonlyText} {style.reducedHeight}"/>
+<!--                <g:TextBox ui:field="name" width="100%"/>-->
+<!--                <g:TextBox ui:field="name" width="100%" disabled="true"/>-->
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Description:</g:cell>
             <g:customCell>
-                <g:TextArea ui:field="description" width="100%" addStyleNames="{style.text-area} {style.read-only}"/>
+<!--                <g:TextArea ui:field="description" width="100%" addStyleNames="{style.textArea} {style.read-only} {style.never-editable}"/>-->
+                <g:TextArea ui:field="description" width="100%" addStyleNames="globalProperties {style.textArea} {style.readonlyText} {style.reducedHeight}"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Default Value:</g:cell>
             <g:customCell>
-                <g:TextArea ui:field="defaultValue" width="100%" addStyleNames="{style.text-area} {style.read-only}"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>YAML Value:</g:cell>
-            <g:customCell>
-                <g:TextArea ui:field="yamlValue" width="100%" addStyleNames="{style.text-area} {style.read-only}"/>
+<!--                <g:TextArea ui:field="defaultValue" width="100%" addStyleNames="{style.textArea} {style.read-only} {style.never-editable}"/>-->
+                <g:TextArea ui:field="defaultValue" width="100%" addStyleNames="globalProperties {style.textArea} {style.readonlyText} {style.reducedHeight}"/>
             </g:customCell>
         </g:row>
         <g:row>
@@ -47,34 +49,44 @@
                 <tickbox:TickBox ui:field="useOverride"/>
             </g:customCell>
         </g:row>
-        <g:row styleName="{style.text-area}">
+        <g:row styleName="{style.textArea}">
             <g:cell>Global Value:</g:cell>
             <g:customCell>
-                <g:TextArea ui:field="databaseValue" width="100%" height="100%"/>
+                <g:TextArea ui:field="databaseValue" width="100%" height="100%" addStyleNames="globalProperties"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Global Value:</g:cell>
             <g:customCell>
-                <g:PasswordTextBox ui:field="databaseValuePassword" width="100%"/>
+                <g:PasswordTextBox ui:field="databaseValuePassword" width="100%" addStyleNames="globalProperties"/>
+            </g:customCell>
+        </g:row>
+        <g:row>
+            <g:cell>YAML Value:</g:cell>
+            <g:customCell>
+<!--                <g:TextArea ui:field="yamlValue" width="100%" addStyleNames="{style.textArea} {style.read-only} {style.never-editable}"/>-->
+                <g:TextArea ui:field="yamlValue" width="100%" addStyleNames="globalProperties {style.textArea} {style.readonlyText} {style.reducedHeight}"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Effective Value:</g:cell>
             <g:customCell>
-                <g:TextArea ui:field="effectiveValue" width="100%" addStyleNames="{style.text-area} {style.read-only}"/>
+<!--                <g:TextArea ui:field="effectiveValue" width="100%" addStyleNames="{style.textArea} {style.read-only} {style.never-editable}"/>-->
+                <g:TextArea ui:field="effectiveValue" width="100%" addStyleNames="globalProperties {style.textArea} {style.readonlyText} {style.reducedHeight}"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Data Type:</g:cell>
             <g:customCell>
-                <g:TextBox ui:field="dataType" width="100%"/>
+                <g:TextBox ui:field="dataType" width="100%" addStyleNames="globalProperties {style.readonlyText} {style.reducedHeight}"/>
+<!--                <g:TextBox ui:field="dataType" width="100%"/>-->
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Source:</g:cell>
             <g:customCell>
-                <g:TextBox ui:field="source" width="100%"/>
+                <g:TextBox ui:field="source" width="100%" addStyleNames="globalProperties {style.readonlyText} {style.reducedHeight}"/>
+<!--                <g:TextBox ui:field="source" width="100%"/>-->
             </g:customCell>
         </g:row>
         <g:row>

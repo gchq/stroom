@@ -23,6 +23,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.FetchGlobalConfigAction;
 import stroom.config.global.shared.UpdateGlobalConfigAction;
@@ -118,7 +119,6 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void read() {
-        getView().setEditable(getEntity().isEditable());// && isCurrentUserUpdate());
         getView().setPasswordStyle(getEntity().isPassword());
         getView().setRequireRestart(getEntity().isRequireRestart());
         getView().setRequireUiRestart(getEntity().isRequireUiRestart());
@@ -139,21 +139,29 @@ public final class ManageGlobalPropertyEditPresenter
         getView().getDescription().setText(getEntity().getDescription());
         getView().getDataType().setText(getEntity().getDataTypeName());
         getView().getSource().setText(getEntity().getSource().getName());
+
+        getView().setEditable(getEntity().isEditable());
     }
 
     private void write(final boolean hideOnSave) {
         refreshValuesOnChange();
 
         // Save.
-        dispatcher.exec(new UpdateGlobalConfigAction(getEntity())).onSuccess(result -> {
-            setEntity(result);
-            if (hideOnSave) {
-                hide();
+        dispatcher.exec(new UpdateGlobalConfigAction(getEntity()))
+                .onSuccess(result -> {
+                    setEntity(result);
+                    if (hideOnSave) {
+                        hide();
 
-                // Refresh client properties in case they were affected by this change.
-                clientPropertyCache.refresh();
-            }
-        });
+                        // Refresh client properties in case they were affected by this change.
+                        clientPropertyCache.refresh();
+                    }
+                })
+                .onFailure(throwable ->
+                        AlertEvent.fireError(ManageGlobalPropertyEditPresenter.this,
+                                "Error saving property",
+                                throwable.getMessage(),
+                                null));
     }
 
     private void refreshValuesOnChange() {
@@ -168,6 +176,9 @@ public final class ManageGlobalPropertyEditPresenter
 
         getView().getEffectiveValue().setText(getEntity().getEffectiveValue().orElse(null));
         getView().getSource().setText(getEntity().getSource().getName());
+
+        // Refresh the edit status of the override fields
+        getView().setEditable(getEntity().isEditable());
     }
 
     protected PopupSize getPopupSize() {
@@ -191,23 +202,21 @@ public final class ManageGlobalPropertyEditPresenter
     public interface GlobalPropertyEditView extends View, HasUiHandlers<ManageGlobalPropertyEditUiHandlers> {
         HasText getName();
 
+        HasText getDescription();
+
         HasText getDefaultValue();
 
-        HasText getDatabaseValue();
-//
         HasText getYamlValue();
 
-        HasText getEffectiveValue();
+        boolean getUseOverride();
 
-        HasText getDescription();
+        HasText getDatabaseValue();
+
+        HasText getEffectiveValue();
 
         HasText getSource();
 
         HasText getDataType();
-
-        boolean getUseOverride();
-
-        void setEditable(boolean edit);
 
         void setPasswordStyle(boolean password);
 
@@ -216,5 +225,8 @@ public final class ManageGlobalPropertyEditPresenter
         void setRequireUiRestart(boolean requiresRestart);
 
         void setUseOverride(boolean useOverride);
+
+        void setEditable(boolean edit);
     }
+
 }
