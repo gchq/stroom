@@ -148,7 +148,12 @@ class GlobalConfigService {
             if (!configProperty.hasDatabaseOverride()) {
                 if (configProperty.getId() != null) {
                     // getDatabaseValue is unset so we need to remove it from the DB
-                    dao.delete(configProperty.getName());
+                    try {
+                        dao.delete(configProperty.getName());
+                    } catch (Exception e) {
+                        throw new RuntimeException(LogUtil.message("Error deleting property {}: {}",
+                                configProperty.getName(), e.getMessage()));
+                    }
                     // this is now orphaned so clear the ID
                     configProperty.setId(null);
                 }
@@ -161,9 +166,19 @@ class GlobalConfigService {
                 AuditUtil.stamp(securityContext.getUserId(), configProperty);
 
                 if (configProperty.getId() == null) {
-                    persistedConfigProperty = dao.create(configProperty);
+                    try {
+                        persistedConfigProperty = dao.create(configProperty);
+                    } catch (Exception e) {
+                        throw new RuntimeException(LogUtil.message("Error inserting property {}: {}",
+                                configProperty.getName(), e.getMessage()));
+                    }
                 } else {
-                    persistedConfigProperty = dao.update(configProperty);
+                    try {
+                        persistedConfigProperty = dao.update(configProperty);
+                    } catch (Exception e) {
+                        throw new RuntimeException(LogUtil.message("Error updating property {} with id {}: {}",
+                                configProperty.getName(), configProperty.getId(), e.getMessage()));
+                    }
                 }
             }
 
