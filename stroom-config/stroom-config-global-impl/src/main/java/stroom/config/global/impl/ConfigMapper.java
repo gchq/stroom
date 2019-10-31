@@ -351,47 +351,39 @@ public class ConfigMapper {
         configProperty.setDataTypeName(getDataTypeName(prop.getValueType()));
     }
 
-    private String getDataTypeName(final Type type) {
+    private static String getDataTypeName(final Type type) {
+        try {
+            if (type instanceof Class) {
+                final Class<?> valueClass = (Class) type;
+                String dataTypeName;
 
-        if (type instanceof Class) {
-            final Class<?> valueClass = (Class) type;
-            String dataTypeName;
+                if (valueClass.equals(int.class)) {
+                    dataTypeName = "Integer";
+                } else if (valueClass.equals(Enum.class)) {
+                        dataTypeName = "Enumeration";
+                } else if (valueClass.equals(List.class) || valueClass.equals(Map.class)) {
+                    dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName()) + " of ";
+                } else {
+                    dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName());
+                }
+                return dataTypeName;
+            } else if (type instanceof ParameterizedType) {
+                final ParameterizedType parameterizedType = (ParameterizedType) type;
+                final String rawTypeName = getDataTypeName(parameterizedType.getRawType());
 
-            if (valueClass.equals(int.class)) {
-                dataTypeName = "Integer";
-            } else if (valueClass.equals(Enum.class)) {
-                    dataTypeName = "Enumeration";
-            } else if (valueClass.equals(List.class) || valueClass.equals(Map.class)) {
-                dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName()) + " of ";
+                if (parameterizedType.getActualTypeArguments() != null) {
+                    final String genericTypes = Arrays.stream(parameterizedType.getActualTypeArguments())
+                            .map(ConfigMapper::getDataTypeName)
+                            .collect(Collectors.joining(", "));
+                    return rawTypeName + genericTypes;
+                } else {
+                    return rawTypeName;
+                }
             } else {
-                dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName());
+                return "";
             }
-
-//            if (List.class.isAssignableFrom(valueClass)
-//                    || Map.class.isAssignableFrom(valueClass)
-//                    || DocRef.class.isAssignableFrom(valueClass)) {
-//                final String genericTypes = getGenericTypes(type)
-//                        .stream()
-//                        .map(this::getDataTypeName)
-//                        .collect(Collectors.joining(","));
-//
-//                dataTypeName += "<" + genericTypes + ">";
-//            }
-            return dataTypeName;
-        } else if (type instanceof ParameterizedType) {
-            final ParameterizedType parameterizedType = (ParameterizedType) type;
-            final String rawTypeName = getDataTypeName(parameterizedType.getRawType());
-
-            if (parameterizedType.getActualTypeArguments() != null) {
-                final String genericTypes = Arrays.stream(parameterizedType.getActualTypeArguments())
-                        .map(this::getDataTypeName)
-                        .collect(Collectors.joining(", "));
-                return rawTypeName + genericTypes;
-            } else {
-                return rawTypeName;
-            }
-        } else {
-            return "";
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error getting type name for {}: {}", type, e.getMessage()));
         }
     }
 
@@ -460,38 +452,47 @@ public class ConfigMapper {
 
         Class<?> type = getDataType(genericType);
 
-        if (type.equals(String.class)) {
-            return value;
-        } else if (type.equals(Byte.class) || type.equals(byte.class)) {
-            return Byte.valueOf(value);
-        } else if (type.equals(Integer.class) || type.equals(int.class)) {
-            return Integer.valueOf(value);
-        } else if (type.equals(Long.class) || type.equals(long.class)) {
-            return Long.valueOf(value);
-        } else if (type.equals(Short.class) || type.equals(short.class)) {
-            return Short.valueOf(value);
-        } else if (type.equals(Float.class) || type.equals(float.class)) {
-            return Float.valueOf(value);
-        } else if (type.equals(Double.class) || type.equals(double.class)) {
-            return Double.valueOf(value);
-        } else if (type.equals(Boolean.class) || type.equals(boolean.class)) {
-            return Boolean.valueOf(value);
-        } else if ((type.equals(Character.class) || type.equals(char.class)) && value.length() > 0) {
-            return value.charAt(0);
-        } else if (List.class.isAssignableFrom(type)) {
-            // determine the type of the list items
-            Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
-            return stringToList(value, itemType);
-//        } else if (type.isAssignableFrom(Map.class)) {
-        } else if (Map.class.isAssignableFrom(type)) {
-            // determine the types of the keys and values
-            Class<?> keyType = getDataType(getGenericTypes(genericType).get(0));
-            Class<?> valueType = getDataType(getGenericTypes(genericType).get(1));
-            return stringToMap(value, keyType, valueType);
-        } else if (type.equals(DocRef.class)) {
-            return stringToDocRef(value);
-        } else if (Enum.class.isAssignableFrom(type)) {
-            return stringToEnum(value, type);
+        try {
+            if (type.equals(String.class)) {
+                return value;
+            } else if (type.equals(Byte.class) || type.equals(byte.class)) {
+                return Byte.valueOf(value);
+            } else if (type.equals(Integer.class) || type.equals(int.class)) {
+                return Integer.valueOf(value);
+            } else if (type.equals(Long.class) || type.equals(long.class)) {
+                return Long.valueOf(value);
+            } else if (type.equals(Short.class) || type.equals(short.class)) {
+                return Short.valueOf(value);
+            } else if (type.equals(Float.class) || type.equals(float.class)) {
+                return Float.valueOf(value);
+            } else if (type.equals(Double.class) || type.equals(double.class)) {
+                return Double.valueOf(value);
+            } else if (type.equals(Boolean.class) || type.equals(boolean.class)) {
+                return Boolean.valueOf(value);
+            } else if ((type.equals(Character.class) || type.equals(char.class)) && value.length() > 0) {
+                return value.charAt(0);
+            } else if (List.class.isAssignableFrom(type)) {
+                // determine the type of the list items
+                Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
+                return stringToList(value, itemType);
+    //        } else if (type.isAssignableFrom(Map.class)) {
+            } else if (Map.class.isAssignableFrom(type)) {
+                // determine the types of the keys and values
+                Class<?> keyType = getDataType(getGenericTypes(genericType).get(0));
+                Class<?> valueType = getDataType(getGenericTypes(genericType).get(1));
+                return stringToMap(value, keyType, valueType);
+            } else if (type.equals(DocRef.class)) {
+                return stringToDocRef(value);
+            } else if (Enum.class.isAssignableFrom(type)) {
+                return stringToEnum(value, type);
+            }
+        } catch (Exception e) {
+            // Don't include the original exception else gwt uses the msg of the original which is
+            // not very user friendly. Enable debug to see the stack
+            LOGGER.debug(LogUtil.message("Unable to convert value [{}] to type {} due to: {}",
+                    value, genericType, e.getMessage()), e);
+            throw new RuntimeException(LogUtil.message("Unable to convert value [{}] to type {} due to: {}",
+                    value, getDataTypeName(genericType), e.getMessage()));
         }
 
         LOGGER.error("Unable to convert value [{}] of type [{}] to an Object", value, type);
