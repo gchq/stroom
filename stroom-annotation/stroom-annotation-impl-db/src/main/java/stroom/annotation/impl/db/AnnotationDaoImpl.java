@@ -54,7 +54,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         annotation.setCreateUser(record.get(ANNOTATION.CREATE_USER));
         annotation.setUpdateTime(record.get(ANNOTATION.UPDATE_TIME_MS));
         annotation.setUpdateUser(record.get(ANNOTATION.UPDATE_USER));
-        annotation.setMetaId(record.get(ANNOTATION.META_ID));
+        annotation.setStreamId(record.get(ANNOTATION.STREAM_ID));
         annotation.setEventId(record.get(ANNOTATION.EVENT_ID));
         annotation.setTitle(record.get(ANNOTATION.TITLE));
         annotation.setSubject(record.get(ANNOTATION.SUBJECT));
@@ -99,9 +99,12 @@ class AnnotationDaoImpl implements AnnotationDao {
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(AnnotationDataSource.ID_FIELD, ANNOTATION.ID, Long::valueOf);
-        expressionMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION.META_ID, Long::valueOf);
+        expressionMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION.STREAM_ID, Long::valueOf);
         expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION.EVENT_ID, Long::valueOf);
+        expressionMapper.map(AnnotationDataSource.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, Long::valueOf);
         expressionMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, value -> value);
+        expressionMapper.map(AnnotationDataSource.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, Long::valueOf);
+        expressionMapper.map(AnnotationDataSource.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, value -> value);
         expressionMapper.map(AnnotationDataSource.TITLE_FIELD, ANNOTATION.TITLE, value -> value);
         expressionMapper.map(AnnotationDataSource.SUBJECT_FIELD, ANNOTATION.SUBJECT, value -> value);
         expressionMapper.map(AnnotationDataSource.STATUS_FIELD, ANNOTATION.STATUS, value -> value);
@@ -111,9 +114,12 @@ class AnnotationDaoImpl implements AnnotationDao {
 
         valueMapper = new ValueMapper();
         valueMapper.map(AnnotationDataSource.ID_FIELD, ANNOTATION.ID, ValLong::create);
-        valueMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION.META_ID, ValLong::create);
+        valueMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION.STREAM_ID, ValLong::create);
         valueMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION.EVENT_ID, ValLong::create);
+        valueMapper.map(AnnotationDataSource.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, ValLong::create);
         valueMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, ValString::create);
+        valueMapper.map(AnnotationDataSource.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, ValLong::create);
+        valueMapper.map(AnnotationDataSource.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, ValString::create);
         valueMapper.map(AnnotationDataSource.TITLE_FIELD, ANNOTATION.TITLE, ValString::create);
         valueMapper.map(AnnotationDataSource.SUBJECT_FIELD, ANNOTATION.SUBJECT, ValString::create);
         valueMapper.map(AnnotationDataSource.STATUS_FIELD, ANNOTATION.STATUS, ValString::create);
@@ -134,18 +140,18 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     @Override
-    public Annotation get(final long metaId, final long eventId) {
+    public Annotation get(final long streamId, final long eventId) {
         return JooqUtil.contextResult(connectionProvider, context -> context
                 .select()
                 .from(ANNOTATION)
-                .where(ANNOTATION.META_ID.eq(metaId).and(ANNOTATION.EVENT_ID.eq(eventId)))
+                .where(ANNOTATION.STREAM_ID.eq(streamId).and(ANNOTATION.EVENT_ID.eq(eventId)))
                 .fetchOptional()
                 .map(RECORD_TO_ANNOTATION_MAPPER)
                 .orElse(null));
     }
 
     private Annotation get(final Annotation annotation) {
-        Annotation result = get(annotation.getMetaId(), annotation.getEventId());
+        Annotation result = get(annotation.getStreamId(), annotation.getEventId());
         if (result == null) {
             return annotation;
         }
@@ -162,8 +168,8 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     @Override
-    public AnnotationDetail getDetail(final long metaId, final long eventId) {
-        final Annotation annotation = get(metaId, eventId);
+    public AnnotationDetail getDetail(final long streamId, final long eventId) {
+        final Annotation annotation = get(streamId, eventId);
         if (annotation == null) {
             return null;
         }
@@ -205,7 +211,9 @@ class AnnotationDaoImpl implements AnnotationDao {
                 JooqUtil.context(connectionProvider, context -> context
                         .update(ANNOTATION)
                         .set(ANNOTATION.COMMENT, request.getData())
-                        .set(ANNOTATION.HISTORY, DSL.trim(DSL.concat(ANNOTATION.HISTORY, " " + request.getData())))
+                        .set(ANNOTATION.HISTORY, DSL
+                                .when(ANNOTATION.HISTORY.isNull(), request.getData())
+                                .otherwise(DSL.concat(ANNOTATION.HISTORY, "  |  " + request.getData())))
                         .set(ANNOTATION.UPDATE_USER, user)
                         .set(ANNOTATION.UPDATE_TIME_MS, now)
                         .where(ANNOTATION.ID.eq(annotationId))
@@ -267,7 +275,7 @@ class AnnotationDaoImpl implements AnnotationDao {
                         ANNOTATION.CREATE_TIME_MS,
                         ANNOTATION.UPDATE_USER,
                         ANNOTATION.UPDATE_TIME_MS,
-                        ANNOTATION.META_ID,
+                        ANNOTATION.STREAM_ID,
                         ANNOTATION.EVENT_ID,
                         ANNOTATION.TITLE,
                         ANNOTATION.SUBJECT,
@@ -280,7 +288,7 @@ class AnnotationDaoImpl implements AnnotationDao {
                         annotation.getCreateTime(),
                         annotation.getUpdateUser(),
                         annotation.getUpdateTime(),
-                        annotation.getMetaId(),
+                        annotation.getStreamId(),
                         annotation.getEventId(),
                         annotation.getTitle(),
                         annotation.getSubject(),
@@ -356,8 +364,14 @@ class AnnotationDaoImpl implements AnnotationDao {
 
         return criteria.getSortList().stream().map(sort -> {
             Field field;
-            if (AnnotationDataSource.CREATED_BY.equals(sort.getField())) {
+            if (AnnotationDataSource.CREATED_ON.equals(sort.getField())) {
+                field = ANNOTATION.CREATE_TIME_MS;
+            } else if (AnnotationDataSource.CREATED_BY.equals(sort.getField())) {
                 field = ANNOTATION.CREATE_USER;
+            } else if (AnnotationDataSource.UPDATED_ON.equals(sort.getField())) {
+                field = ANNOTATION.UPDATE_TIME_MS;
+            } else if (AnnotationDataSource.UPDATED_BY.equals(sort.getField())) {
+                field = ANNOTATION.UPDATE_USER;
             } else if (AnnotationDataSource.TITLE.equals(sort.getField())) {
                 field = ANNOTATION.TITLE;
             } else if (AnnotationDataSource.SUBJECT.equals(sort.getField())) {

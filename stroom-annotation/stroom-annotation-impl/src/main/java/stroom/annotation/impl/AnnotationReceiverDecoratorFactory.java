@@ -20,6 +20,8 @@ import stroom.search.extraction.ExpressionFilter;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.ExpressionMatcher;
 import stroom.streamstore.server.ExpressionMatcherFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -32,6 +34,8 @@ import java.util.function.Function;
 
 @Component
 class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationReceiverDecoratorFactory.class);
+
     private final AnnotationDao annotationDao;
     private final ExpressionMatcherFactory expressionMatcherFactory;
     private final AnnotationConfig annotationConfig;
@@ -41,9 +45,12 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     static {
         VALUE_MAPPING.put(AnnotationDataSource.ID, annotation -> annotation.getId() == null ? ValNull.INSTANCE : ValLong.create(annotation.getId()));
-        VALUE_MAPPING.put(IndexConstants.STREAM_ID, annotation -> annotation.getMetaId() == null ? ValNull.INSTANCE : ValLong.create(annotation.getMetaId()));
+        VALUE_MAPPING.put(IndexConstants.STREAM_ID, annotation -> annotation.getStreamId() == null ? ValNull.INSTANCE : ValLong.create(annotation.getStreamId()));
         VALUE_MAPPING.put(IndexConstants.EVENT_ID, annotation -> annotation.getEventId() == null ? ValNull.INSTANCE : ValLong.create(annotation.getEventId()));
+        VALUE_MAPPING.put(AnnotationDataSource.CREATED_ON, annotation -> annotation.getCreateTime() == null ? ValNull.INSTANCE : ValLong.create(annotation.getCreateTime()));
         VALUE_MAPPING.put(AnnotationDataSource.CREATED_BY, annotation -> annotation.getCreateUser() == null ? ValNull.INSTANCE : ValString.create(annotation.getCreateUser()));
+        VALUE_MAPPING.put(AnnotationDataSource.UPDATED_ON, annotation -> annotation.getUpdateTime() == null ? ValNull.INSTANCE : ValLong.create(annotation.getUpdateTime()));
+        VALUE_MAPPING.put(AnnotationDataSource.UPDATED_BY, annotation -> annotation.getUpdateUser() == null ? ValNull.INSTANCE : ValString.create(annotation.getUpdateUser()));
         VALUE_MAPPING.put(AnnotationDataSource.TITLE, annotation -> annotation.getTitle() == null ? ValNull.INSTANCE : ValString.create(annotation.getTitle()));
         VALUE_MAPPING.put(AnnotationDataSource.SUBJECT, annotation -> annotation.getSubject() == null ? ValNull.INSTANCE : ValString.create(annotation.getSubject()));
         VALUE_MAPPING.put(AnnotationDataSource.STATUS, annotation -> annotation.getStatus() == null ? ValNull.INSTANCE : ValString.create(annotation.getStatus()));
@@ -55,16 +62,19 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
     private static final Map<String, Function<Annotation, Object>> OBJECT_MAPPING = new HashMap<>();
 
     static {
-        OBJECT_MAPPING.put(AnnotationDataSource.ID, annotation -> annotation.getId() == null ? -1L : annotation.getId());
-        OBJECT_MAPPING.put(IndexConstants.STREAM_ID, annotation -> annotation.getMetaId() == null ? -1L : annotation.getMetaId());
-        OBJECT_MAPPING.put(IndexConstants.EVENT_ID, annotation -> annotation.getEventId() == null ? -1L : annotation.getEventId());
-        OBJECT_MAPPING.put(AnnotationDataSource.CREATED_BY, annotation -> annotation.getCreateUser() == null ? "" : annotation.getCreateUser());
-        OBJECT_MAPPING.put(AnnotationDataSource.TITLE, annotation -> annotation.getTitle() == null ? "" : annotation.getTitle());
-        OBJECT_MAPPING.put(AnnotationDataSource.SUBJECT, annotation -> annotation.getSubject() == null ? "" : annotation.getSubject());
-        OBJECT_MAPPING.put(AnnotationDataSource.STATUS, annotation -> annotation.getStatus() == null ? "" : annotation.getStatus());
-        OBJECT_MAPPING.put(AnnotationDataSource.ASSIGNED_TO, annotation -> annotation.getAssignedTo() == null ? "" : annotation.getAssignedTo());
-        OBJECT_MAPPING.put(AnnotationDataSource.COMMENT, annotation -> annotation.getComment() == null ? "" : annotation.getComment());
-        OBJECT_MAPPING.put(AnnotationDataSource.HISTORY, annotation -> annotation.getHistory() == null ? "" : annotation.getHistory());
+        OBJECT_MAPPING.put(AnnotationDataSource.ID, Annotation::getId);
+        OBJECT_MAPPING.put(IndexConstants.STREAM_ID, Annotation::getStreamId);
+        OBJECT_MAPPING.put(IndexConstants.EVENT_ID, Annotation::getEventId);
+        OBJECT_MAPPING.put(AnnotationDataSource.CREATED_ON, Annotation::getCreateTime);
+        OBJECT_MAPPING.put(AnnotationDataSource.CREATED_BY, Annotation::getCreateUser);
+        OBJECT_MAPPING.put(AnnotationDataSource.UPDATED_ON, Annotation::getUpdateTime);
+        OBJECT_MAPPING.put(AnnotationDataSource.UPDATED_BY, Annotation::getUpdateUser);
+        OBJECT_MAPPING.put(AnnotationDataSource.TITLE, Annotation::getTitle);
+        OBJECT_MAPPING.put(AnnotationDataSource.SUBJECT, Annotation::getSubject);
+        OBJECT_MAPPING.put(AnnotationDataSource.STATUS, Annotation::getStatus);
+        OBJECT_MAPPING.put(AnnotationDataSource.ASSIGNED_TO, Annotation::getAssignedTo);
+        OBJECT_MAPPING.put(AnnotationDataSource.COMMENT, Annotation::getComment);
+        OBJECT_MAPPING.put(AnnotationDataSource.HISTORY, Annotation::getHistory);
     }
 
     @Inject
@@ -123,11 +133,15 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
             }
 
             // Filter based on annotation.
-            if (filter == null || filter.apply(annotation)) {
-                for (final String field : usedFields) {
-                    setValue(values.getValues(), fieldIndexMap, field, annotation);
+            try {
+                if (filter == null || filter.apply(annotation)) {
+                    for (final String field : usedFields) {
+                        setValue(values.getValues(), fieldIndexMap, field, annotation);
+                    }
+                    receiver.getValuesConsumer().accept(values);
                 }
-                receiver.getValuesConsumer().accept(values);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
             }
         };
 

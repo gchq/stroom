@@ -169,7 +169,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                 }
                 case ANNOTATION: {
                     final Long annotationId = getLongParam(href, "annotationId");
-                    final Long metaId = getLongParam(href, "metaId");
+                    final Long streamId = getLongParam(href, "streamId");
                     final Long eventId = getLongParam(href, "eventId");
                     final String title = getParam(href, "title");
                     final String subject = getParam(href, "subject");
@@ -179,7 +179,7 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
                     final Annotation annotation = new Annotation();
                     annotation.setId(annotationId);
-                    annotation.setMetaId(metaId);
+                    annotation.setStreamId(streamId);
                     annotation.setEventId(eventId);
                     annotation.setTitle(title);
                     annotation.setSubject(subject);

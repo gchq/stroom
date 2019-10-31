@@ -80,6 +80,10 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
         selectionModel.setSelected(value, true);
     }
 
+    void setClearSelectionText(final String text) {
+        getView().setClearSelectionText(text);
+    }
+
     HandlerRegistration addDataSelectionHandler(final SelectionChangeEvent.Handler handler) {
         return selectionModel.addSelectionChangeHandler(handler);
     }
@@ -96,6 +100,11 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
         }
     }
 
+    @Override
+    public void onClearSelection() {
+        selectionModel.clear();
+    }
+
     public void setDataSupplier(final DataSupplier dataSupplier) {
         this.dataSupplier = dataSupplier;
         onFilterChange(null);
@@ -109,5 +118,7 @@ public class ChooserPresenter extends MyPresenterWidget<ChooserView> implements 
         void setBottomView(View view);
 
         void clearFilter();
+
+        void setClearSelectionText(String text);
     }
 }

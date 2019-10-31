@@ -226,7 +226,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     final String fieldParam = ParamUtil.makeParam(indexFieldName);
 
                     if (indexFieldName.startsWith("annotation:")) {
-                        field.setExpression("link(" + fieldParam + ", '?annotationId=' + ${annotation:Id} + '&metaId=' + ${StreamId} + '&eventId=' + ${EventId}, 'annotation')");
+                        field.setExpression("annotation(" + fieldParam + ", ${annotation:Id}, ${StreamId}, ${EventId})");
                     } else {
                         field.setExpression(fieldParam);
                     }

@@ -28,7 +28,7 @@ import stroom.annotation.impl.db.jooq.tables.Annotation;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> implements Record14<Long, Integer, Long, String, Long, String, Long, Long, String, String, String, String, String, String> {
 
-    private static final long serialVersionUID = 294527965;
+    private static final long serialVersionUID = 1206412477;
 
     /**
      * Setter for <code>stroom.annotation.id</code>.
@@ -115,16 +115,16 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> impl
     }
 
     /**
-     * Setter for <code>stroom.annotation.meta_id</code>.
+     * Setter for <code>stroom.annotation.stream_id</code>.
      */
-    public void setMetaId(Long value) {
+    public void setStreamId(Long value) {
         set(6, value);
     }
 
     /**
-     * Getter for <code>stroom.annotation.meta_id</code>.
+     * Getter for <code>stroom.annotation.stream_id</code>.
      */
-    public Long getMetaId() {
+    public Long getStreamId() {
         return (Long) get(6);
     }
 
@@ -311,7 +311,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> impl
      */
     @Override
     public Field<Long> field7() {
-        return Annotation.ANNOTATION.META_ID;
+        return Annotation.ANNOTATION.STREAM_ID;
     }
 
     /**
@@ -423,7 +423,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> impl
      */
     @Override
     public Long component7() {
-        return getMetaId();
+        return getStreamId();
     }
 
     /**
@@ -535,7 +535,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> impl
      */
     @Override
     public Long value7() {
-        return getMetaId();
+        return getStreamId();
     }
 
     /**
@@ -653,7 +653,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> impl
      */
     @Override
     public AnnotationRecord value7(Long value) {
-        setMetaId(value);
+        setStreamId(value);
         return this;
     }
 
@@ -756,7 +756,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> impl
     /**
      * Create a detached, initialised AnnotationRecord
      */
-    public AnnotationRecord(Long id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, Long metaId, Long eventId, String title, String subject, String status, String assignedTo, String comment, String history) {
+    public AnnotationRecord(Long id, Integer version, Long createTimeMs, String createUser, Long updateTimeMs, String updateUser, Long streamId, Long eventId, String title, String subject, String status, String assignedTo, String comment, String history) {
         super(Annotation.ANNOTATION);
 
         set(0, id);
@@ -765,7 +765,7 @@ public class AnnotationRecord extends UpdatableRecordImpl<AnnotationRecord> impl
         set(3, createUser);
         set(4, updateTimeMs);
         set(5, updateUser);
-        set(6, metaId);
+        set(6, streamId);
         set(7, eventId);
         set(8, title);
         set(9, subject);

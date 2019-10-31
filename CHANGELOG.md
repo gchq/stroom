@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1300** : Multiple changes to annotations.
+
+* Issue **#1265** : Added `modulus()` function along with alias `mod()` and modulus operator `%`.
+
+* Issue **#1300** : Added `annotation()` link creation function, `currentUser()` alias for `param('currentUser()')` and additional link creation functions for `data()` and `stepping()`.
+
 * Issue **#67** : Table columns now display menu items on left click.
 
 * Uplift stroom-query to v2.2.4 to add better diagnostic logging.

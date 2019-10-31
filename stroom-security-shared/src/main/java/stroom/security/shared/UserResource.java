@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.annotation.shared;
+package stroom.security.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -22,7 +22,6 @@ import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
-import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
@@ -30,33 +29,16 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-@Api(value = "annotations")
-@Path("/annotation")
+@Api(value = "user")
+@Path("/user")
 @Produces(MediaType.APPLICATION_JSON)
-public interface AnnotationResource extends DirectRestService {
+public interface UserResource extends DirectRestService {
     @GET
-    @Path("")
+    @Path("associates")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Gets an annotation",
+            value = "Gets a list of associated users",
             response = Response.class)
-    AnnotationDetail get(@QueryParam("annotationId") Long annotationId,
-                         @QueryParam("streamId") Long streamId,
-                         @QueryParam("eventId") Long eventId);
-
-    @POST
-    @Path("")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    AnnotationDetail createEntry(CreateEntryRequest request);
-
-    @GET
-    @Path("status")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Gets a list of allowed statuses",
-            response = Response.class)
-    List<String> getStatus(@QueryParam("filter") String filter);
+    List<String> getAssociates(@QueryParam("filter") String filter);
 }

@@ -35,16 +35,10 @@ import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.CreateEntryRequest;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.entity.shared.PageRequest;
-import stroom.entity.shared.StringCriteria;
-import stroom.entity.shared.StringCriteria.MatchStyle;
 import stroom.security.client.ClientSecurityContext;
-import stroom.security.shared.FetchUserRefAction;
-import stroom.security.shared.FindUserCriteria;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.UserResource;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
@@ -57,14 +51,12 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditView> implements AnnotationEditUiHandlers {
     private static final long ONE_SECOND = 1000;
     private static final long ONE_MINUTE = ONE_SECOND * 60;
     private static final long ONE_HOUR = ONE_MINUTE * 60;
 
-    private final ClientDispatchAsync dispatcher;
     private final RestFactory restFactory;
     private final ChooserPresenter statusPresenter;
     private final ChooserPresenter assignedToPresenter;
@@ -80,13 +72,11 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     @Inject
     public AnnotationEditPresenter(final EventBus eventBus,
                                    final AnnotationEditView view,
-                                   final ClientDispatchAsync dispatcher,
                                    final RestFactory restFactory,
                                    final ChooserPresenter statusPresenter,
                                    final ChooserPresenter assignedToPresenter,
                                    final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
-        this.dispatcher = dispatcher;
         this.restFactory = restFactory;
         this.statusPresenter = statusPresenter;
         this.assignedToPresenter = assignedToPresenter;
@@ -169,7 +159,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         readAnnotation(sourceAnnotation);
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
         final Rest<AnnotationDetail> rest = restFactory.create();
-        rest.onSuccess(this::edit).call(annotationResource).get(annotation.getId(), annotation.getMetaId(), annotation.getEventId());
+        rest.onSuccess(this::edit).call(annotationResource).get(annotation.getId(), annotation.getStreamId(), annotation.getEventId());
     }
 
     private void edit(final AnnotationDetail annotationDetail) {
@@ -194,6 +184,8 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                 popupSize, getCaption(annotationDetail),
                 internalPopupUiHandlers,
                 false);
+
+        getView().focusComment();
     }
 
     private String getCaption(final AnnotationDetail annotationDetail) {
@@ -250,7 +242,11 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                         builder.appendEscaped(entry.getEntryType().toLowerCase());
                         builder.appendEscaped(" to ");
                         builder.appendHtmlConstant("<b>");
-                        builder.appendEscaped(entry.getData());
+                        if (entry.getData() != null && !entry.getData().trim().isEmpty()) {
+                            builder.appendEscaped(entry.getData());
+                        } else {
+                            builder.appendEscaped("'  '");
+                        }
                         builder.appendHtmlConstant("</b> ");
                         builder.append(getDurationLabel(entry.getCreateTime(), now));
                         builder.appendHtmlConstant("</div>");
@@ -280,11 +276,11 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         }
 
         if (currentTitle == null || currentTitle.trim().length() == 0) {
-            changeTitle("Title", false);
+            changeTitle(null, false);
         }
 
         if (currentSubject == null || currentSubject.trim().length() == 0) {
-            changeSubject("Subject", false);
+            changeSubject(null, false);
         }
     }
 
@@ -297,6 +293,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         getView().setSubject(currentSubject);
         getView().setStatus(currentStatus);
         getView().setAssignedTo(currentAssignedTo);
+        getView().setAssignYourselfVisible(!Objects.equals(currentAssignedTo, clientSecurityContext.getUserId()));
     }
 
     private SafeHtml getDurationLabel(final long time, final Date now) {
@@ -380,23 +377,15 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
     @Override
     public void showAssignedToChooser(final Element element) {
+        if (currentAssignedTo == null) {
+            assignedToPresenter.setClearSelectionText(null);
+        } else {
+            assignedToPresenter.setClearSelectionText("Clear");
+        }
         assignedToPresenter.setDataSupplier((filter, consumer) -> {
-            final FindUserCriteria criteria = new FindUserCriteria();
-            criteria.setGroup(false);
-            criteria.setSort(FindUserCriteria.FIELD_NAME);
-            criteria.setPageRequest(new PageRequest(0L, 20));
-            if (filter != null && filter.length() > 0) {
-                criteria.setName(new StringCriteria(filter, MatchStyle.WildStandAndEnd));
-            }
-            final FetchUserRefAction action = new FetchUserRefAction(criteria);
-            dispatcher.exec(action).onSuccess(result -> {
-                final List<String> filtered = result.getValues()
-                        .stream()
-                        .filter(UserRef::isEnabled)
-                        .map(UserRef::getName)
-                        .collect(Collectors.toList());
-                consumer.accept(filtered);
-            });
+            final UserResource userResource = GWT.create(UserResource.class);
+            final Rest<List<String>> rest = restFactory.create();
+            rest.onSuccess(consumer).call(userResource).getAssociates(filter);
         });
         assignedToPresenter.clearFilter();
         assignedToPresenter.setSelected(currentAssignedTo);
@@ -415,7 +404,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         final String comment = getView().getComment();
         if (comment != null && comment.length() > 0) {
             final Annotation annotation = new Annotation();
-            annotation.setMetaId(sourceAnnotation.getMetaId());
+            annotation.setStreamId(sourceAnnotation.getStreamId());
             annotation.setEventId(sourceAnnotation.getEventId());
             annotation.setTitle(currentTitle);
             annotation.setSubject(currentSubject);
@@ -453,6 +442,8 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
         void setButtonText(String text);
 
-        void startTitleEdit();
+        void setAssignYourselfVisible(boolean visible);
+
+        void focusComment();
     }
 }

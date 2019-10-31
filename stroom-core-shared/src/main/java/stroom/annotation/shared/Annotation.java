@@ -13,7 +13,7 @@ public class Annotation {
     private String createUser;
     private Long updateTime;
     private String updateUser;
-    private Long metaId;
+    private Long streamId;
     private Long eventId;
     private String title;
     private String subject;
@@ -73,12 +73,12 @@ public class Annotation {
         this.updateUser = updateUser;
     }
 
-    public Long getMetaId() {
-        return metaId;
+    public Long getStreamId() {
+        return streamId;
     }
 
-    public void setMetaId(final Long metaId) {
-        this.metaId = metaId;
+    public void setStreamId(final Long streamId) {
+        this.streamId = streamId;
     }
 
     public Long getEventId() {
@@ -142,8 +142,8 @@ public class Annotation {
         if (id != null) {
             return String.valueOf(id);
         }
-        if (metaId != null && eventId != null) {
-            return metaId + ":" + eventId;
+        if (streamId != null && eventId != null) {
+            return streamId + ":" + eventId;
         }
 
         return null;

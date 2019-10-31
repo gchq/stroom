@@ -31,9 +31,9 @@ public interface AnnotationDao {
 
     AnnotationDetail getDetail(long annotationId);
 
-    Annotation get(long metaId, long eventId);
+    Annotation get(long streamId, long eventId);
 
-    AnnotationDetail getDetail(long metaId, long eventId);
+    AnnotationDetail getDetail(long streamId, long eventId);
 
     AnnotationDetail createEntry(CreateEntryRequest request, String user);
 

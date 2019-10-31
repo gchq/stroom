@@ -69,9 +69,9 @@ public class AnnotationService implements Searchable {
         return annotationDao.getDetail(annotationId);
     }
 
-    AnnotationDetail getDetail(Long metaId, Long eventId) {
+    AnnotationDetail getDetail(Long streamId, Long eventId) {
         checkPermission();
-        return annotationDao.getDetail(metaId, eventId);
+        return annotationDao.getDetail(streamId, eventId);
     }
 
     AnnotationDetail createEntry(final CreateEntryRequest request) {

@@ -38,7 +38,7 @@ public class AnnotationEventInfoProvider implements EventInfoProvider {
             o.setName(annotation.getTitle());
             o.setState(annotation.getStatus());
 
-            o.getData().add(EventLoggingUtil.createData("Meta Id", String.valueOf(annotation.getMetaId())));
+            o.getData().add(EventLoggingUtil.createData("Stream id", String.valueOf(annotation.getStreamId())));
             o.getData().add(EventLoggingUtil.createData("Event Id", String.valueOf(annotation.getEventId())));
             o.getData().add(EventLoggingUtil.createData("Assigned To", annotation.getAssignedTo()));
 

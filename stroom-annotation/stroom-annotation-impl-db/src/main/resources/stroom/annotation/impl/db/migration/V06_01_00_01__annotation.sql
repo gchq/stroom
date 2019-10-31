@@ -8,16 +8,16 @@ CREATE TABLE IF NOT EXISTS annotation (
   create_user           varchar(255) NOT NULL,
   update_time_ms        bigint(20) NOT NULL,
   update_user           varchar(255) NOT NULL,
-  meta_id               bigint(20) NOT NULL,
-  event_id              bigint(20) NOT NULL,
+  stream_id             bigint(20) DEFAULT NULL,
+  event_id              bigint(20) DEFAULT NULL,
   title                 longtext,
   subject               longtext,
   status                varchar(255) NOT NULL,
-  assigned_to           varchar(255) NOT NULL,
+  assigned_to           varchar(255) DEFAULT NULL,
   comment               longtext,
   history               longtext,
   PRIMARY KEY           (id),
-  UNIQUE KEY            meta_id_event_id (meta_id, event_id)
+  UNIQUE KEY            stream_id_event_id (stream_id, event_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS annotation_entry (

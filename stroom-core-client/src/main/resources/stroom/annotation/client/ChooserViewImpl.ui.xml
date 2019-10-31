@@ -23,6 +23,14 @@
 
         .nameFilter {
         }
+
+        .clearSelection {
+        display: none;
+        color: #0366d6;
+        cursor: pointer;
+        text-decoration: underline;
+        padding: 6px 8px;
+        }
     </ui:style>
 
     <g:FlowPanel styleName="{style.container}">
@@ -31,6 +39,7 @@
         </g:FlowPanel>
         <g:FlowPanel ui:field="bottom" styleName="{style.bottom}">
         </g:FlowPanel>
+        <g:Label ui:field="clearSelection" styleName="{style.clearSelection}"/>
     </g:FlowPanel>
 </ui:UiBinder>
 

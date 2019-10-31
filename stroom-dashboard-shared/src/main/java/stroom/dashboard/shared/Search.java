@@ -66,6 +66,10 @@ public class Search implements Serializable {
         return paramMap;
     }
 
+    public void setParamMap(final Map<String, String> paramMap) {
+        this.paramMap = paramMap;
+    }
+
     public boolean isIncremental() {
         return incremental;
     }

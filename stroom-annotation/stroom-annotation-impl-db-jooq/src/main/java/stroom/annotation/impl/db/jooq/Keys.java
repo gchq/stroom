@@ -43,7 +43,7 @@ public class Keys {
     // -------------------------------------------------------------------------
 
     public static final UniqueKey<AnnotationRecord> KEY_ANNOTATION_PRIMARY = UniqueKeys0.KEY_ANNOTATION_PRIMARY;
-    public static final UniqueKey<AnnotationRecord> KEY_ANNOTATION_META_ID_EVENT_ID = UniqueKeys0.KEY_ANNOTATION_META_ID_EVENT_ID;
+    public static final UniqueKey<AnnotationRecord> KEY_ANNOTATION_STREAM_ID_EVENT_ID = UniqueKeys0.KEY_ANNOTATION_STREAM_ID_EVENT_ID;
     public static final UniqueKey<AnnotationEntryRecord> KEY_ANNOTATION_ENTRY_PRIMARY = UniqueKeys0.KEY_ANNOTATION_ENTRY_PRIMARY;
 
     // -------------------------------------------------------------------------
@@ -63,7 +63,7 @@ public class Keys {
 
     private static class UniqueKeys0 {
         public static final UniqueKey<AnnotationRecord> KEY_ANNOTATION_PRIMARY = Internal.createUniqueKey(Annotation.ANNOTATION, "KEY_annotation_PRIMARY", Annotation.ANNOTATION.ID);
-        public static final UniqueKey<AnnotationRecord> KEY_ANNOTATION_META_ID_EVENT_ID = Internal.createUniqueKey(Annotation.ANNOTATION, "KEY_annotation_meta_id_event_id", Annotation.ANNOTATION.META_ID, Annotation.ANNOTATION.EVENT_ID);
+        public static final UniqueKey<AnnotationRecord> KEY_ANNOTATION_STREAM_ID_EVENT_ID = Internal.createUniqueKey(Annotation.ANNOTATION, "KEY_annotation_stream_id_event_id", Annotation.ANNOTATION.STREAM_ID, Annotation.ANNOTATION.EVENT_ID);
         public static final UniqueKey<AnnotationEntryRecord> KEY_ANNOTATION_ENTRY_PRIMARY = Internal.createUniqueKey(AnnotationEntry.ANNOTATION_ENTRY, "KEY_annotation_entry_PRIMARY", AnnotationEntry.ANNOTATION_ENTRY.ID);
     }
 

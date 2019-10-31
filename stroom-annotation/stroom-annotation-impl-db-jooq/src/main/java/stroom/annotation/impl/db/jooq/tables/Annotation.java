@@ -41,7 +41,7 @@ import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Annotation extends TableImpl<AnnotationRecord> {
 
-    private static final long serialVersionUID = 2038371286;
+    private static final long serialVersionUID = 1891544340;
 
     /**
      * The reference instance of <code>stroom.annotation</code>
@@ -87,14 +87,14 @@ public class Annotation extends TableImpl<AnnotationRecord> {
     public final TableField<AnnotationRecord, String> UPDATE_USER = createField("update_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.annotation.meta_id</code>.
+     * The column <code>stroom.annotation.stream_id</code>.
      */
-    public final TableField<AnnotationRecord, Long> META_ID = createField("meta_id", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<AnnotationRecord, Long> STREAM_ID = createField("stream_id", org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
      * The column <code>stroom.annotation.event_id</code>.
      */
-    public final TableField<AnnotationRecord, Long> EVENT_ID = createField("event_id", org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
+    public final TableField<AnnotationRecord, Long> EVENT_ID = createField("event_id", org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
      * The column <code>stroom.annotation.title</code>.
@@ -114,7 +114,7 @@ public class Annotation extends TableImpl<AnnotationRecord> {
     /**
      * The column <code>stroom.annotation.assigned_to</code>.
      */
-    public final TableField<AnnotationRecord, String> ASSIGNED_TO = createField("assigned_to", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<AnnotationRecord, String> ASSIGNED_TO = createField("assigned_to", org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
 
     /**
      * The column <code>stroom.annotation.comment</code>.
@@ -172,7 +172,7 @@ public class Annotation extends TableImpl<AnnotationRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.ANNOTATION_META_ID_EVENT_ID, Indexes.ANNOTATION_PRIMARY);
+        return Arrays.<Index>asList(Indexes.ANNOTATION_PRIMARY, Indexes.ANNOTATION_STREAM_ID_EVENT_ID);
     }
 
     /**
@@ -196,7 +196,7 @@ public class Annotation extends TableImpl<AnnotationRecord> {
      */
     @Override
     public List<UniqueKey<AnnotationRecord>> getKeys() {
-        return Arrays.<UniqueKey<AnnotationRecord>>asList(Keys.KEY_ANNOTATION_PRIMARY, Keys.KEY_ANNOTATION_META_ID_EVENT_ID);
+        return Arrays.<UniqueKey<AnnotationRecord>>asList(Keys.KEY_ANNOTATION_PRIMARY, Keys.KEY_ANNOTATION_STREAM_ID_EVENT_ID);
     }
 
     /**
