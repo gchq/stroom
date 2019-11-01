@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.16] - 2019-11-01
+
+* Issue **#1313** : Suggestion boxes now make suggestions immediately before the user even starts typing.
+
+* Issue **#1043** : Added feature to allow floating point numbers to be indexed.
+
 * Issue **#1312** : Dictionaries now change the entity name in the DB when renamed.
 
 * Issue **#1312** : Fixed read only behaviour of dictionary settings UI.
@@ -1938,7 +1945,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.15...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.16...6.0
+[v6.0.16]: https://github.com/gchq/stroom/compare/v6.0.15...v6.0.16
 [v6.0.15]: https://github.com/gchq/stroom/compare/v6.0.14...v6.0.15
 [v6.0.14]: https://github.com/gchq/stroom/compare/v6.0.13...v6.0.14
 [v6.0.13]: https://github.com/gchq/stroom/compare/v6.0.12...v6.0.13

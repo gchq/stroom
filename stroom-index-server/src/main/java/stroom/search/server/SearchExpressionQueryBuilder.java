@@ -246,27 +246,63 @@ public class SearchExpressionQueryBuilder {
         }
 
         // Create a query based on the field type and condition.
-        if (indexField.getFieldType().isNumeric()) {
+        if (IndexFieldType.INT_FIELD.equals(indexField.getFieldType())) {
             switch (condition) {
                 case EQUALS:
-                    final Long num1 = getNumber(fieldName, value);
+                    final int num1 = getInt(fieldName, value);
+                    return NumericRangeQuery.newIntRange(fieldName, num1, num1, true, true);
+                case CONTAINS:
+                    return getContains(fieldName, value, indexField, matchVersion, terms);
+                case GREATER_THAN:
+                    return NumericRangeQuery.newIntRange(fieldName, getInt(fieldName, value), Integer.MAX_VALUE, false,
+                            true);
+                case GREATER_THAN_OR_EQUAL_TO:
+                    return NumericRangeQuery.newIntRange(fieldName, getInt(fieldName, value), Integer.MAX_VALUE, true,
+                            true);
+                case LESS_THAN:
+                    return NumericRangeQuery.newIntRange(fieldName, Integer.MIN_VALUE, getInt(fieldName, value), true,
+                            false);
+                case LESS_THAN_OR_EQUAL_TO:
+                    return NumericRangeQuery.newIntRange(fieldName, Integer.MIN_VALUE, getInt(fieldName, value), true,
+                            true);
+                case BETWEEN:
+                    final int[] between = getInts(fieldName, value);
+                    if (between.length != 2) {
+                        throw new SearchException("2 numbers needed for between query");
+                    }
+                    if (between[0] >= between[1]) {
+                        throw new SearchException("From number must lower than to number");
+                    }
+                    return NumericRangeQuery.newIntRange(fieldName, between[0], between[1], true, true);
+                case IN:
+                    return getIntIn(fieldName, value);
+                case IN_DICTIONARY:
+                    return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
+                default:
+                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                            + indexField.getFieldType().getDisplayValue() + " field type");
+            }
+        } else if (IndexFieldType.LONG_FIELD.equals(indexField.getFieldType())) {
+            switch (condition) {
+                case EQUALS:
+                    final Long num1 = getLong(fieldName, value);
                     return NumericRangeQuery.newLongRange(fieldName, num1, num1, true, true);
                 case CONTAINS:
                     return getContains(fieldName, value, indexField, matchVersion, terms);
                 case GREATER_THAN:
-                    return NumericRangeQuery.newLongRange(fieldName, getNumber(fieldName, value), Long.MAX_VALUE, false,
+                    return NumericRangeQuery.newLongRange(fieldName, getLong(fieldName, value), Long.MAX_VALUE, false,
                             true);
                 case GREATER_THAN_OR_EQUAL_TO:
-                    return NumericRangeQuery.newLongRange(fieldName, getNumber(fieldName, value), Long.MAX_VALUE, true,
+                    return NumericRangeQuery.newLongRange(fieldName, getLong(fieldName, value), Long.MAX_VALUE, true,
                             true);
                 case LESS_THAN:
-                    return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getNumber(fieldName, value), true,
+                    return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getLong(fieldName, value), true,
                             false);
                 case LESS_THAN_OR_EQUAL_TO:
-                    return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getNumber(fieldName, value), true,
+                    return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getLong(fieldName, value), true,
                             true);
                 case BETWEEN:
-                    final long[] between = getNumbers(fieldName, value);
+                    final long[] between = getLongs(fieldName, value);
                     if (between.length != 2) {
                         throw new SearchException("2 numbers needed for between query");
                     }
@@ -275,7 +311,79 @@ public class SearchExpressionQueryBuilder {
                     }
                     return NumericRangeQuery.newLongRange(fieldName, between[0], between[1], true, true);
                 case IN:
-                    return getNumericIn(fieldName, value);
+                    return getLongIn(fieldName, value);
+                case IN_DICTIONARY:
+                    return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
+                default:
+                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                            + indexField.getFieldType().getDisplayValue() + " field type");
+            }
+        } else if (IndexFieldType.FLOAT_FIELD.equals(indexField.getFieldType())) {
+            switch (condition) {
+                case EQUALS:
+                    final Float num1 = getFloat(fieldName, value);
+                    return NumericRangeQuery.newFloatRange(fieldName, num1, num1, true, true);
+                case CONTAINS:
+                    return getContains(fieldName, value, indexField, matchVersion, terms);
+                case GREATER_THAN:
+                    return NumericRangeQuery.newFloatRange(fieldName, getFloat(fieldName, value), Float.MAX_VALUE, false,
+                            true);
+                case GREATER_THAN_OR_EQUAL_TO:
+                    return NumericRangeQuery.newFloatRange(fieldName, getFloat(fieldName, value), Float.MAX_VALUE, true,
+                            true);
+                case LESS_THAN:
+                    return NumericRangeQuery.newFloatRange(fieldName, Float.MIN_VALUE, getFloat(fieldName, value), true,
+                            false);
+                case LESS_THAN_OR_EQUAL_TO:
+                    return NumericRangeQuery.newFloatRange(fieldName, Float.MIN_VALUE, getFloat(fieldName, value), true,
+                            true);
+                case BETWEEN:
+                    final float[] between = getFloats(fieldName, value);
+                    if (between.length != 2) {
+                        throw new SearchException("2 numbers needed for between query");
+                    }
+                    if (between[0] >= between[1]) {
+                        throw new SearchException("From number must lower than to number");
+                    }
+                    return NumericRangeQuery.newFloatRange(fieldName, between[0], between[1], true, true);
+                case IN:
+                    return getFloatIn(fieldName, value);
+                case IN_DICTIONARY:
+                    return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
+                default:
+                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                            + indexField.getFieldType().getDisplayValue() + " field type");
+            }
+        } else if (IndexFieldType.DOUBLE_FIELD.equals(indexField.getFieldType())) {
+            switch (condition) {
+                case EQUALS:
+                    final Double num1 = getDouble(fieldName, value);
+                    return NumericRangeQuery.newDoubleRange(fieldName, num1, num1, true, true);
+                case CONTAINS:
+                    return getContains(fieldName, value, indexField, matchVersion, terms);
+                case GREATER_THAN:
+                    return NumericRangeQuery.newDoubleRange(fieldName, getDouble(fieldName, value), Double.MAX_VALUE, false,
+                            true);
+                case GREATER_THAN_OR_EQUAL_TO:
+                    return NumericRangeQuery.newDoubleRange(fieldName, getDouble(fieldName, value), Double.MAX_VALUE, true,
+                            true);
+                case LESS_THAN:
+                    return NumericRangeQuery.newDoubleRange(fieldName, Double.MIN_VALUE, getDouble(fieldName, value), true,
+                            false);
+                case LESS_THAN_OR_EQUAL_TO:
+                    return NumericRangeQuery.newDoubleRange(fieldName, Double.MIN_VALUE, getDouble(fieldName, value), true,
+                            true);
+                case BETWEEN:
+                    final double[] between = getDoubles(fieldName, value);
+                    if (between.length != 2) {
+                        throw new SearchException("2 numbers needed for between query");
+                    }
+                    if (between[0] >= between[1]) {
+                        throw new SearchException("From number must lower than to number");
+                    }
+                    return NumericRangeQuery.newDoubleRange(fieldName, between[0], between[1], true, true);
+                case IN:
+                    return getDoubleIn(fieldName, value);
                 case IN_DICTIONARY:
                     return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
                 default:
@@ -318,6 +426,42 @@ public class SearchExpressionQueryBuilder {
                     throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + indexField.getFieldType().getDisplayValue() + " field type");
             }
+        } else if (indexField.getFieldType().isNumeric()) {
+            switch (condition) {
+                case EQUALS:
+                    final Long num1 = getLong(fieldName, value);
+                    return NumericRangeQuery.newLongRange(fieldName, num1, num1, true, true);
+                case CONTAINS:
+                    return getContains(fieldName, value, indexField, matchVersion, terms);
+                case GREATER_THAN:
+                    return NumericRangeQuery.newLongRange(fieldName, getLong(fieldName, value), Long.MAX_VALUE, false,
+                            true);
+                case GREATER_THAN_OR_EQUAL_TO:
+                    return NumericRangeQuery.newLongRange(fieldName, getLong(fieldName, value), Long.MAX_VALUE, true,
+                            true);
+                case LESS_THAN:
+                    return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getLong(fieldName, value), true,
+                            false);
+                case LESS_THAN_OR_EQUAL_TO:
+                    return NumericRangeQuery.newLongRange(fieldName, Long.MIN_VALUE, getLong(fieldName, value), true,
+                            true);
+                case BETWEEN:
+                    final long[] between = getLongs(fieldName, value);
+                    if (between.length != 2) {
+                        throw new SearchException("2 numbers needed for between query");
+                    }
+                    if (between[0] >= between[1]) {
+                        throw new SearchException("From number must lower than to number");
+                    }
+                    return NumericRangeQuery.newLongRange(fieldName, between[0], between[1], true, true);
+                case IN:
+                    return getLongIn(fieldName, value);
+                case IN_DICTIONARY:
+                    return getDictionary(fieldName, docRef, indexField, matchVersion, terms);
+                default:
+                    throw new SearchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
+                            + indexField.getFieldType().getDisplayValue() + " field type");
+            }
         } else {
             switch (condition) {
                 case EQUALS:
@@ -338,9 +482,28 @@ public class SearchExpressionQueryBuilder {
         }
     }
 
-    private Query getNumericIn(final String fieldName, final String value) {
-        final long[] in = getNumbers(fieldName, value);
-        if (in != null && in.length > 0) {
+    private Query getIntIn(final String fieldName, final String value) {
+        final int[] in = getInts(fieldName, value);
+        if (in.length > 0) {
+            if (in.length == 1) {
+                final int num = in[0];
+                return NumericRangeQuery.newIntRange(fieldName, num, num, true, true);
+            } else {
+                final Builder builder = new Builder();
+                for (final int num : in) {
+                    final Query q = NumericRangeQuery.newIntRange(fieldName, num, num, true, true);
+                    builder.add(q, Occur.SHOULD);
+                }
+                return builder.build();
+            }
+        }
+
+        return null;
+    }
+
+    private Query getLongIn(final String fieldName, final String value) {
+        final long[] in = getLongs(fieldName, value);
+        if (in.length > 0) {
             if (in.length == 1) {
                 final long num = in[0];
                 return NumericRangeQuery.newLongRange(fieldName, num, num, true, true);
@@ -357,9 +520,47 @@ public class SearchExpressionQueryBuilder {
         return null;
     }
 
+    private Query getFloatIn(final String fieldName, final String value) {
+        final float[] in = getFloats(fieldName, value);
+        if (in.length > 0) {
+            if (in.length == 1) {
+                final float num = in[0];
+                return NumericRangeQuery.newFloatRange(fieldName, num, num, true, true);
+            } else {
+                final Builder builder = new Builder();
+                for (final float num : in) {
+                    final Query q = NumericRangeQuery.newFloatRange(fieldName, num, num, true, true);
+                    builder.add(q, Occur.SHOULD);
+                }
+                return builder.build();
+            }
+        }
+
+        return null;
+    }
+
+    private Query getDoubleIn(final String fieldName, final String value) {
+        final double[] in = getDoubles(fieldName, value);
+        if (in.length > 0) {
+            if (in.length == 1) {
+                final double num = in[0];
+                return NumericRangeQuery.newDoubleRange(fieldName, num, num, true, true);
+            } else {
+                final Builder builder = new Builder();
+                for (final double num : in) {
+                    final Query q = NumericRangeQuery.newDoubleRange(fieldName, num, num, true, true);
+                    builder.add(q, Occur.SHOULD);
+                }
+                return builder.build();
+            }
+        }
+
+        return null;
+    }
+
     private Query getDateIn(final String fieldName, final String value) {
         final long[] in = getDates(fieldName, value);
-        if (in != null && in.length > 0) {
+        if (in.length > 0) {
             if (in.length == 1) {
                 final long date = in[0];
                 return NumericRangeQuery.newLongRange(fieldName, date, date, true, true);
@@ -416,10 +617,18 @@ public class SearchExpressionQueryBuilder {
             for (final String val : wordArr) {
                 Query query;
 
-                if (indexField.getFieldType().isNumeric()) {
-                    query = getNumericIn(fieldName, val);
+                if (IndexFieldType.INT_FIELD.equals(indexField.getFieldType())) {
+                    query = getIntIn(fieldName, val);
+                } else if (IndexFieldType.LONG_FIELD.equals(indexField.getFieldType())) {
+                    query = getLongIn(fieldName, val);
+                } else if (IndexFieldType.FLOAT_FIELD.equals(indexField.getFieldType())) {
+                    query = getFloatIn(fieldName, val);
+                } else if (IndexFieldType.DOUBLE_FIELD.equals(indexField.getFieldType())) {
+                    query = getDoubleIn(fieldName, val);
                 } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
                     query = getDateIn(fieldName, val);
+                } else if (indexField.getFieldType().isNumeric()) {
+                    query = getLongIn(fieldName, val);
                 } else {
                     query = getSubQuery(matchVersion, indexField, val, terms, false);
                 }
@@ -563,7 +772,26 @@ public class SearchExpressionQueryBuilder {
         return dates;
     }
 
-    private long getNumber(final String fieldName, final String value) {
+    private int getInt(final String fieldName, final String value) {
+        try {
+            return Integer.parseInt(value);
+        } catch (final NumberFormatException e) {
+            throw new SearchException(
+                    "Expected a numeric value for field \"" + fieldName + "\" but was given string \"" + value + "\"");
+        }
+    }
+
+    private int[] getInts(final String fieldName, final String value) {
+        final String[] values = value.split(DELIMITER);
+        final int[] numbers = new int[values.length];
+        for (int i = 0; i < values.length; i++) {
+            numbers[i] = getInt(fieldName, values[i].trim());
+        }
+
+        return numbers;
+    }
+
+    private long getLong(final String fieldName, final String value) {
         try {
             return Long.parseLong(value);
         } catch (final NumberFormatException e) {
@@ -572,11 +800,49 @@ public class SearchExpressionQueryBuilder {
         }
     }
 
-    private long[] getNumbers(final String fieldName, final String value) {
+    private long[] getLongs(final String fieldName, final String value) {
         final String[] values = value.split(DELIMITER);
         final long[] numbers = new long[values.length];
         for (int i = 0; i < values.length; i++) {
-            numbers[i] = getNumber(fieldName, values[i].trim());
+            numbers[i] = getLong(fieldName, values[i].trim());
+        }
+
+        return numbers;
+    }
+
+    private float getFloat(final String fieldName, final String value) {
+        try {
+            return Float.parseFloat(value);
+        } catch (final NumberFormatException e) {
+            throw new SearchException(
+                    "Expected a numeric value for field \"" + fieldName + "\" but was given string \"" + value + "\"");
+        }
+    }
+
+    private float[] getFloats(final String fieldName, final String value) {
+        final String[] values = value.split(DELIMITER);
+        final float[] numbers = new float[values.length];
+        for (int i = 0; i < values.length; i++) {
+            numbers[i] = getFloat(fieldName, values[i].trim());
+        }
+
+        return numbers;
+    }
+
+    private double getDouble(final String fieldName, final String value) {
+        try {
+            return Double.parseDouble(value);
+        } catch (final NumberFormatException e) {
+            throw new SearchException(
+                    "Expected a numeric value for field \"" + fieldName + "\" but was given string \"" + value + "\"");
+        }
+    }
+
+    private double[] getDoubles(final String fieldName, final String value) {
+        final String[] values = value.split(DELIMITER);
+        final double[] numbers = new double[values.length];
+        for (int i = 0; i < values.length; i++) {
+            numbers[i] = getDouble(fieldName, values[i].trim());
         }
 
         return numbers;

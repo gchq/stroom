@@ -19,6 +19,9 @@ package stroom.query.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.event.dom.client.ClickEvent;
+import com.google.gwt.event.dom.client.FocusEvent;
+import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressHandler;
@@ -559,6 +562,11 @@ public class TermEditor extends Composite {
 
     private SuggestBox createTextBox(final int width) {
         final SuggestBox textBox = new SuggestBox(suggestOracle);
+        textBox.addDomHandler(e -> {
+            if (!textBox.isSuggestionListShowing()) {
+                textBox.showSuggestionList();
+            }
+        }, ClickEvent.getType());
         fixStyle(textBox, width);
         return textBox;
     }
