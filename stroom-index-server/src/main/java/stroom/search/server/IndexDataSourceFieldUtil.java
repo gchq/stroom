@@ -74,8 +74,10 @@ public final class IndexDataSourceFieldUtil {
                 return DataSourceFieldType.FIELD;
             case ID:
                 return DataSourceFieldType.ID;
-            case NUMERIC_FIELD:
-                return DataSourceFieldType.NUMERIC_FIELD;
+            default:
+                if (indexFieldType.isNumeric()) {
+                    return DataSourceFieldType.NUMERIC_FIELD;
+                }
         }
 
         return null;
