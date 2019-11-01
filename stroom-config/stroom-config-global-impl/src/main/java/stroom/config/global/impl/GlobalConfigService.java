@@ -20,8 +20,13 @@ package stroom.config.global.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.DefaultClusterResultCollector;
+import stroom.cluster.task.api.TargetType;
+import stroom.config.global.shared.ClusterConfigProperty;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.FindGlobalConfigCriteria;
+import stroom.config.global.shared.NodeConfigResult;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
@@ -35,6 +40,7 @@ import javax.inject.Singleton;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -46,14 +52,17 @@ class GlobalConfigService {
     private final ConfigPropertyDao dao;
     private final SecurityContext securityContext;
     private final ConfigMapper configMapper;
+    private final ClusterDispatchAsyncHelper dispatchHelper;
 
     @Inject
     GlobalConfigService(final ConfigPropertyDao dao,
                         final SecurityContext securityContext,
-                        final ConfigMapper configMapper) {
+                        final ConfigMapper configMapper,
+                        final ClusterDispatchAsyncHelper dispatchHelper) {
         this.dao = dao;
         this.securityContext = securityContext;
         this.configMapper = configMapper;
+        this.dispatchHelper = dispatchHelper;
 
         initialise();
     }
@@ -149,12 +158,40 @@ class GlobalConfigService {
      */
     public Optional<ConfigProperty> fetch(final int id) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
+
             // update the global config from the returned db record then return the corresponding
             // object from global properties which may have a yaml value in it and a different
             // effective value
-            return dao.fetch(id)
+            final Optional<ConfigProperty> optionalConfigProperty = dao.fetch(id)
                     .map(configMapper::decorateDbConfigProperty);
+
+            return optionalConfigProperty;
         });
+    }
+
+    private ClusterConfigProperty buildClusterConfigProperty(final ConfigProperty configProperty) {
+        // TODO need to run this periodically and cache it, else we have to wait too long
+        //   for all nodes to answer
+        final DefaultClusterResultCollector<NodeConfigResult> collector = dispatchHelper
+                .execAsync(new NodeConfigClusterTask(securityContext.getUserToken()),
+                        5,
+                        TimeUnit.SECONDS,
+                        TargetType.ENABLED);
+
+        ClusterConfigProperty clusterConfigProperty = new ClusterConfigProperty(configProperty);
+        collector.getResponseMap().forEach((nodeName, response) -> {
+            if (response == null) {
+                // TODO
+
+            } else if (response.getError() != null) {
+                // TODO
+
+            } else {
+                clusterConfigProperty.putYamlOverrideValue(
+                        nodeName, response.getResult().getYamlOverrideValue());
+            }
+        });
+        return clusterConfigProperty;
     }
 
     public ConfigProperty update(final ConfigProperty configProperty) {

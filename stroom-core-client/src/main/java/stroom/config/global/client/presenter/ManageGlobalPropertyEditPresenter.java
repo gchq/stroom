@@ -26,6 +26,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.FetchGlobalConfigAction;
+import stroom.config.global.shared.OverrideValue;
 import stroom.config.global.shared.UpdateGlobalConfigAction;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.security.client.api.ClientSecurityContext;
@@ -167,9 +168,9 @@ public final class ManageGlobalPropertyEditPresenter
     private void refreshValuesOnChange() {
         if (getView().getUseOverride()) {
             final String value = getView().getDatabaseValue().getText();
-            getEntity().setDatabaseOverride(ConfigProperty.OverrideValue.with(value.trim()));
+            getEntity().setDatabaseOverride(OverrideValue.with(value.trim()));
         } else {
-            getEntity().setDatabaseOverride(ConfigProperty.OverrideValue.unSet());
+            getEntity().setDatabaseOverride(OverrideValue.unSet());
             // no override so clear the value
             getView().getDatabaseValue().setText(null);
         }

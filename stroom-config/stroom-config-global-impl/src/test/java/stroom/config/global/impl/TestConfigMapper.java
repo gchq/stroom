@@ -16,6 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsConfig;
@@ -125,8 +126,8 @@ class TestConfigMapper {
 
     private void assertValues(final ConfigProperty configProperty,
                               final String expectedDefault,
-                              final ConfigProperty.OverrideValue<String> expectedDatabase,
-                              final ConfigProperty.OverrideValue<String> expectedYaml,
+                              final OverrideValue<String> expectedDatabase,
+                              final OverrideValue<String> expectedYaml,
                               final String expectedEffective) {
 
         assertThat(configProperty.getDatabaseOverrideValue())
@@ -160,8 +161,8 @@ class TestConfigMapper {
 
         assertValues(configProperty,
                 initialValue,
-                ConfigProperty.OverrideValue.unSet(),
-                ConfigProperty.OverrideValue.with(newValue),
+                OverrideValue.unSet(),
+                OverrideValue.with(newValue),
                 newValue);
     }
 
@@ -187,8 +188,8 @@ class TestConfigMapper {
         assertValues(
                 configProperty,
                 initialValue,
-                ConfigProperty.OverrideValue.unSet(),
-                ConfigProperty.OverrideValue.with(newYamlValue),
+                OverrideValue.unSet(),
+                OverrideValue.with(newYamlValue),
                 newYamlValue);
 
 //        assertThat(configProperty.getValue()).isEqualTo(initialValue);

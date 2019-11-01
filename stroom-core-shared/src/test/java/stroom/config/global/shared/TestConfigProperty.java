@@ -284,7 +284,7 @@ class TestConfigProperty {
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
         mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
 
-        ConfigProperty.OverrideValue<String> overrideValue = ConfigProperty.OverrideValue.with("someValue");
+        OverrideValue<String> overrideValue = OverrideValue.with("someValue");
 
         String json = mapper.writeValueAsString(overrideValue);
         LOGGER.info(json);
@@ -321,7 +321,7 @@ class TestConfigProperty {
         mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
 
         assertThat(mapper.canSerialize(ConfigProperty.class)).isTrue();
-        assertThat(mapper.canSerialize(ConfigProperty.OverrideValue.class)).isTrue();
+        assertThat(mapper.canSerialize(OverrideValue.class)).isTrue();
 
         String json = mapper.writeValueAsString(configProperty);
         LOGGER.info(json);
