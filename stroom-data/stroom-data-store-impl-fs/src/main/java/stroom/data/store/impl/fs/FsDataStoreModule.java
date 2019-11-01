@@ -19,6 +19,8 @@ package stroom.data.store.impl.fs;
 import com.google.inject.AbstractModule;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.DataStoreMaintenanceService;
+import stroom.data.store.impl.fs.api.FsVolumeResource;
+import stroom.util.RestResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
@@ -29,6 +31,9 @@ public class FsDataStoreModule extends AbstractModule {
         bind(Store.class).to(FsStore.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(FsVolumeService.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(FsVolumeResource.class);
     }
 
     @Override
