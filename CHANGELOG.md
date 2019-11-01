@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1313** : Suggestion boxes now make suggestions immediately before the user even starts typing.
+
 * Issue **#1043** : Added feature to allow floating point numbers to be indexed.
 
 * Issue **#1312** : Dictionaries now change the entity name in the DB when renamed.

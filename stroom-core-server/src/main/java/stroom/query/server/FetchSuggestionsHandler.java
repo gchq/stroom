@@ -48,6 +48,8 @@ import java.util.stream.Collectors;
 @TaskHandlerBean(task = FetchSuggestionsAction.class)
 @Scope(StroomScope.TASK)
 class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction, SharedList<SharedString>> {
+    private static final int LIMIT = 20;
+
     private final FeedService feedService;
     private final PipelineService pipelineService;
     private final StreamTypeService streamTypeService;
@@ -92,6 +94,7 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
                             .map(StreamStatus::getDisplayValue)
                             .map(SharedString::wrap)
                             .sorted()
+                            .limit(LIMIT)
                             .collect(Collectors.toList()));
                 }
 
@@ -108,12 +111,15 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
     private SharedList<SharedString> createList(final FindService service, final String text, final Predicate<Object> filter) {
         final SharedList<SharedString> result = new SharedList<>();
         final FindNamedEntityCriteria criteria = (FindNamedEntityCriteria) service.createCriteria();
-        criteria.setName(new StringCriteria(text, MatchStyle.WildEnd));
+        if (text != null && text.length() > 0) {
+            criteria.setName(new StringCriteria(text, MatchStyle.WildEnd));
+        }
         final List<Object> list = service.find(criteria);
         list
                 .stream()
                 .filter(filter)
                 .sorted(Comparator.comparing(e -> ((NamedEntity) e).getName()))
+                .limit(LIMIT)
                 .forEachOrdered(e -> result.add(SharedString.wrap(((NamedEntity) e).getName())));
         return result;
     }
