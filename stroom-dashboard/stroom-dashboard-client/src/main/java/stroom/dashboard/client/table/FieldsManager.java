@@ -54,21 +54,26 @@ import java.util.Set;
 public class FieldsManager implements HeadingListener {
     private static Resources resources;
     private final TablePresenter tablePresenter;
+    private final Provider<RenameFieldPresenter> renameFieldPresenterProvider;
     private final Provider<ExpressionPresenter> expressionPresenterProvider;
     private final FormatPresenter formatPresenter;
     private final FilterPresenter filterPresenter;
     private final MenuListPresenter menuListPresenter;
     private int fieldsStartIndex;
     private boolean busy;
+    private int currentColIndex = -1;
+    private boolean ignoreNext;
     private TableComponentSettings tableSettings;
 
     public FieldsManager(final TablePresenter tablePresenter,
                          final MenuListPresenter menuListPresenter,
+                         final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
                          final Provider<ExpressionPresenter> expressionPresenterProvider,
                          final FormatPresenter formatPresenter,
                          final FilterPresenter filterPresenter) {
         this.tablePresenter = tablePresenter;
         this.menuListPresenter = menuListPresenter;
+        this.renameFieldPresenterProvider = renameFieldPresenterProvider;
         this.expressionPresenterProvider = expressionPresenterProvider;
         this.formatPresenter = formatPresenter;
         this.filterPresenter = filterPresenter;
@@ -84,37 +89,65 @@ public class FieldsManager implements HeadingListener {
     }
 
     @Override
-    public void onContextMenu(final NativeEvent event, final Heading heading) {
+    public void onMouseDown(NativeEvent event, Heading heading) {
+        int colIndex = -1;
+        if (heading != null) {
+            colIndex = heading.getColIndex();
+        }
+
+        ignoreNext = currentColIndex == colIndex;
+        HidePopupEvent.fire(tablePresenter, menuListPresenter);
+    }
+
+    @Override
+    public void onMouseUp(final NativeEvent event, final Heading heading) {
         if (heading != null && heading.getColIndex() >= fieldsStartIndex) {
-            final Field field = getField(heading.getColIndex());
-            if (field != null) {
+            final int colIndex = heading.getColIndex();
+
+            final Field field = getField(colIndex);
+            if (field != null && !ignoreNext) {
                 busy = true;
                 new Timer() {
                     @Override
                     public void run() {
-                        final Element target = heading.getElement();
-                        final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
-                                target.getAbsoluteRight(), target.getAbsoluteTop(), target.getAbsoluteBottom(), null,
-                                VerticalLocation.BELOW);
-                        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                            @Override
-                            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                                HidePopupEvent.fire(tablePresenter, menuListPresenter);
+                        if (currentColIndex == colIndex) {
+                            HidePopupEvent.fire(tablePresenter, menuListPresenter);
+
+                        } else {
+                            currentColIndex = colIndex;
+                            final Element target = heading.getElement();
+                            final PopupPosition popupPosition = new PopupPosition(target.getAbsoluteLeft(),
+                                    target.getAbsoluteRight(), target.getAbsoluteTop(), target.getAbsoluteBottom(), null,
+                                    VerticalLocation.BELOW);
+                            final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                                @Override
+                                public void onHideRequest(final boolean autoClose, final boolean ok) {
+                                    HidePopupEvent.fire(tablePresenter, menuListPresenter);
+                                }
+
+                                @Override
+                                public void onHide(final boolean autoClose, final boolean ok) {
+                                    busy = false;
+                                    currentColIndex = -1;
+                                }
+                            };
+
+                            updateMenuItems(field);
+
+                            Element element = event.getEventTarget().cast();
+                            while (!element.getTagName().toLowerCase().equals("th")) {
+                                element = element.getParentElement();
                             }
 
-                            @Override
-                            public void onHide(final boolean autoClose, final boolean ok) {
-                                busy = false;
-                            }
-                        };
-
-                        updateMenuItems(field);
-                        ShowPopupEvent.fire(tablePresenter, menuListPresenter, PopupType.POPUP, popupPosition,
-                                popupUiHandlers);
+                            ShowPopupEvent.fire(tablePresenter, menuListPresenter, PopupType.POPUP, popupPosition,
+                                    popupUiHandlers, element);
+                        }
                     }
                 }.schedule(0);
             }
         }
+
+        ignoreNext = false;
     }
 
     @Override
@@ -223,6 +256,10 @@ public class FieldsManager implements HeadingListener {
         }
     }
 
+    public void showRename(final Field field) {
+        renameFieldPresenterProvider.get().show(tablePresenter, field);
+    }
+
     public void showExpression(final Field field) {
         expressionPresenterProvider.get().show(tablePresenter, field);
     }
@@ -267,6 +304,8 @@ public class FieldsManager implements HeadingListener {
         final List<Item> menuItems = new ArrayList<>();
         final Set<Item> highlights = new HashSet<>();
 
+        // Create rename menu.
+        menuItems.add(createRenameMenu(field));
         // Create expression menu.
         menuItems.add(createExpressionMenu(field, highlights));
         // Create sort menu.
@@ -285,8 +324,12 @@ public class FieldsManager implements HeadingListener {
         menuListPresenter.setData(menuItems);
     }
 
+    private Item createRenameMenu(final Field field) {
+        return new IconMenuItem(0, SvgPresets.EDIT, SvgPresets.EDIT, "Rename", null, true, () -> showRename(field));
+    }
+
     private Item createExpressionMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(0, ImageIcon.create(resources.expression()), null, "Expression", null, true, () -> showExpression(field));
+        final Item item = new IconMenuItem(1, ImageIcon.create(resources.expression()), null, "Expression", null, true, () -> showExpression(field));
         if (field.getExpression() != null) {
             String expression = field.getExpression();
             expression = expression.replaceAll("\\$\\{[^\\{\\}]*\\}", "");
@@ -305,7 +348,7 @@ public class FieldsManager implements HeadingListener {
         menuItems.add(
                 createSortOption(field, highlights, 1, resources.sortza(), "Sort Z to A", SortDirection.DESCENDING));
         menuItems.add(createSortOption(field, highlights, 2, null, "Unsorted", null));
-        final Item item = new SimpleParentMenuItem(1, ImageIcon.create(resources.sortaz()), null, "Sort", null, true, menuItems);
+        final Item item = new SimpleParentMenuItem(2, ImageIcon.create(resources.sortaz()), null, "Sort", null, true, menuItems);
         if (field.getSort() != null) {
             highlights.add(item);
         }
@@ -346,7 +389,7 @@ public class FieldsManager implements HeadingListener {
         final Item item = new IconMenuItem(maxGroup + 1, "Not grouped", null, true, () -> setGroup(field, null));
         menuItems.add(item);
 
-        final Item parentItem = new SimpleParentMenuItem(2, ImageIcon.create(resources.group()), null, "Group", null, true, menuItems);
+        final Item parentItem = new SimpleParentMenuItem(3, ImageIcon.create(resources.group()), null, "Group", null, true, menuItems);
 
         if (field.getGroup() != null) {
             highlights.add(parentItem);
@@ -421,7 +464,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createFilterMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(3, SvgPresets.FILTER, SvgPresets.FILTER, "Filter", null, true, () -> filterField(field));
+        final Item item = new IconMenuItem(4, SvgPresets.FILTER, SvgPresets.FILTER, "Filter", null, true, () -> filterField(field));
         if (field.getFilter() != null && ((field.getFilter().getIncludes() != null
                 && field.getFilter().getIncludes().trim().length() > 0)
                 || (field.getFilter().getExcludes() != null && field.getFilter().getExcludes().trim().length() > 0))) {
@@ -431,7 +474,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createFormatMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(4, ImageIcon.create(resources.format()), null, "Format", null, true, () -> showFormat(field));
+        final Item item = new IconMenuItem(5, ImageIcon.create(resources.format()), null, "Format", null, true, () -> showFormat(field));
         if (field.getFormat() != null && field.getFormat().getSettings() != null
                 && !field.getFormat().getSettings().isDefault()) {
             highlights.add(item);
@@ -440,7 +483,7 @@ public class FieldsManager implements HeadingListener {
     }
 
     private Item createRemoveMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(5, SvgPresets.REMOVE, SvgPresets.REMOVE, "Remove", null, true, () -> deleteField(field));
+        final Item item = new IconMenuItem(6, SvgPresets.REMOVE, SvgPresets.REMOVE, "Remove", null, true, () -> deleteField(field));
         return item;
     }
 
@@ -450,6 +493,8 @@ public class FieldsManager implements HeadingListener {
         String label();
 
         String row();
+
+        String field();
 
         String fieldLabel();
 

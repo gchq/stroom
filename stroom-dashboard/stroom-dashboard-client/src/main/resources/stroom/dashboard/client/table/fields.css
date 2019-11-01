@@ -27,6 +27,11 @@
 	height: 18px;
 }
 
+.field {
+	padding: 0px;
+	cursor: pointer;
+}
+
 .fieldLabel {
 	display: inline-block;
 	height: 16px;
