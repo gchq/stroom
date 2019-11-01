@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1043** : Added feature to allow floating point numbers to be indexed.
+
 * Issue **#1312** : Dictionaries now change the entity name in the DB when renamed.
 
 * Issue **#1312** : Fixed read only behaviour of dictionary settings UI.
