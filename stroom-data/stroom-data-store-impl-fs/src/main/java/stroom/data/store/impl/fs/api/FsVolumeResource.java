@@ -54,7 +54,7 @@ public class FsVolumeResource implements RestResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response delete(@PathParam("id") int id) {
         fsVolumeService.delete(id);
-        return Response.ok().build();
+        return Response.noContent().build();
     }
 
 }
