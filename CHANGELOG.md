@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1312** : Fixed read only behaviour of dictionary settings UI.
+
 
 ## [v6.0.15] - 2019-10-24
 

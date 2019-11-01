@@ -101,7 +101,6 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
         this.doc = doc;
         downloadButton.setEnabled(true);
         settingsPresenter.read(docRef, doc);
-
         if (codePresenter != null) {
             codePresenter.setText(doc.getData());
         }
@@ -110,7 +109,6 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     @Override
     protected void onWrite(final DictionaryDoc doc) {
         settingsPresenter.write(doc);
-
         if (codePresenter != null) {
             doc.setData(codePresenter.getText());
         }
@@ -119,7 +117,7 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     @Override
     public void onReadOnly(final boolean readOnly) {
         super.onReadOnly(readOnly);
-
+        settingsPresenter.onReadOnly(readOnly);
         codePresenter = getOrCreateCodePresenter();
         codePresenter.setReadOnly(readOnly);
         if (getEntity() != null) {
