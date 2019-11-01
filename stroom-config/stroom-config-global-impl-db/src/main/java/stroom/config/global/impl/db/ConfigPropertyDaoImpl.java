@@ -10,6 +10,7 @@ import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -74,6 +75,15 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
     @Override
     public Optional<ConfigProperty> fetch(final int id) {
         return genericDao.fetch(id);
+    }
+
+    @Override
+    public Optional<ConfigProperty> fetch(final String propertyName) {
+        Objects.requireNonNull(propertyName);
+        return JooqUtil.contextResult(globalConfigDbConnProvider, context -> context
+                .selectFrom(CONFIG)
+                .where(CONFIG.NAME.eq(propertyName))
+                .fetchOptional(RECORD_TO_CONFIG_PROPERTY_MAPPER::apply));
     }
 
     @Override

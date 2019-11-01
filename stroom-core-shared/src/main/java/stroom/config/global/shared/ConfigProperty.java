@@ -16,6 +16,10 @@
 
 package stroom.config.global.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;
 
@@ -67,6 +71,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     // A OverrideValue holding a non-null value - indicating a non-null value has been supplied
 
     // The cluster wide compile-time default value set in the AppConfig object tree
+    @JsonProperty("defaultValue")
     private String defaultValue = null;
 
     // The cluster wide value held in the database and set by the user in the UI, may be null.
@@ -91,6 +96,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         // Required for GWT serialisation
     }
 
+    @JsonProperty("id")
     public Integer getId() {
         return id;
     }
@@ -99,6 +105,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         this.id = id;
     }
 
+    @JsonProperty("version")
     public Integer getVersion() {
         return version;
     }
@@ -108,6 +115,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     }
 
     @Override
+    @JsonProperty("createTimeMs")
     public Long getCreateTimeMs() {
         return createTimeMs;
     }
@@ -117,6 +125,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     }
 
     @Override
+    @JsonProperty("createUser")
     public String getCreateUser() {
         return createUser;
     }
@@ -126,6 +135,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     }
 
     @Override
+    @JsonProperty("updateTimeMs")
     public Long getUpdateTimeMs() {
         return updateTimeMs;
     }
@@ -135,6 +145,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     }
 
     @Override
+    @JsonProperty("updateUser")
     public String getUpdateUser() {
         return updateUser;
     }
@@ -150,6 +161,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         return name;
     }
 
+    @JsonProperty("name")
     public void setName(final String name) {
         this.name = name;
     }
@@ -158,6 +170,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
      * @return The effective value of the property on this node taking into account the precedence order
      * of default, database and yaml values
      */
+    @JsonIgnore
     public Optional<String> getEffectiveValue() {
         if (yamlOverrideValue.hasOverride()) {
             return yamlOverrideValue.getValue();
@@ -172,6 +185,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
      * @return The effective value of the property on this node taking into account the precedence order
      * of default, database and yaml values. If the value is a password then the value will be masked.
      */
+    @JsonIgnore
     public Optional<String> getEffectiveValueMasked() {
        if (isPassword) {
            return Optional.of("********************");
@@ -185,10 +199,12 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
      * If no database override value has been set an exception will be thrown.
      * Test with hasDatabaseOverride() first.
      */
+    @JsonProperty("databaseOverrideValue")
     public OverrideValue<String> getDatabaseOverrideValue() {
         return databaseOverrideValue;
     }
 
+    @JsonIgnore
     public void setDatabaseOverrideValue(final String databaseOverrideValue) {
         // If somebody overrides the default with a value identical to the default then we need to save it
         this.databaseOverrideValue = OverrideValue.with(databaseOverrideValue);
@@ -201,6 +217,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * @return True if a value has been supplied to override the defaultValue, even it is null
      */
+    @JsonIgnore
     public boolean hasDatabaseOverride() {
         return this.databaseOverrideValue.hasOverride();
     }
@@ -208,6 +225,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * Remove any override value at the database level, whether null or non-null
      */
+    @JsonIgnore
     public void removeDatabaseOverride() {
         this.databaseOverrideValue = OverrideValue.unSet();
     }
@@ -215,6 +233,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * @return The cluster wide compile time read only default value for the property
      */
+    @JsonIgnore
     public Optional<String> getDefaultValue() {
         return Optional
                 .ofNullable(defaultValue);
@@ -227,6 +246,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * @return The node specific value from the dropwizard YAML file on this node, if present.
      */
+    @JsonProperty("yamlOverrideValue")
     public OverrideValue<String> getYamlOverrideValue() {
         return yamlOverrideValue;
     }
@@ -234,6 +254,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * @return True if a value has been supplied to override the defaultValue, even it is null
      */
+    @JsonIgnore
     public boolean hasYamlOverride() {
         return yamlOverrideValue.hasOverride();
     }
@@ -241,10 +262,12 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * Remove any override value at the yaml level, whether null or non-null
      */
+    @JsonIgnore
     public void removeYamlOverride() {
         this.yamlOverrideValue = OverrideValue.unSet();
     }
 
+    @JsonIgnore
     public void setYamlOverrideValue(final String yamlOverrideValue) {
 
         // We cannot distinguish between a value that has been set in the yaml as say 10
@@ -270,6 +293,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         return description;
     }
 
+    @JsonProperty("description")
     public void setDescription(final String description) {
         this.description = description;
     }
@@ -277,6 +301,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * @return True if the databaseValue for this property can be changed in the UI.
      */
+    @JsonProperty("isEditable")
     public boolean isEditable() {
         return isEditable;
     }
@@ -288,6 +313,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * @return True if a change to the value requires a full cluster restart to take affect.
      */
+    @JsonProperty("requireRestart")
     public boolean isRequireRestart() {
         return requireRestart;
     }
@@ -307,6 +333,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         this.requireUiRestart = requireUiRestart;
     }
 
+    @JsonProperty("isPassword")
     public boolean isPassword() {
         return isPassword;
     }
@@ -315,6 +342,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         this.isPassword = password;
     }
 
+    @JsonProperty("source")
     public SourceType getSource() {
         if (yamlOverrideValue.hasOverride()) {
             return SourceType.YAML;
@@ -325,6 +353,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         }
     }
 
+    @JsonProperty("dataTypeName")
     public String getDataTypeName() {
         return dataTypeName;
     }
@@ -333,6 +362,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         this.dataTypeName = dataTypeName;
     }
 
+    @JsonIgnore
     @Override
     public int compareTo(final ConfigProperty o) {
         return name.compareTo(o.name);
@@ -351,10 +381,38 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
                 '}';
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ConfigProperty that = (ConfigProperty) o;
+        return isEditable == that.isEditable &&
+                isPassword == that.isPassword &&
+                requireRestart == that.requireRestart &&
+                requireUiRestart == that.requireUiRestart &&
+                Objects.equals(id, that.id) &&
+                Objects.equals(version, that.version) &&
+                Objects.equals(createTimeMs, that.createTimeMs) &&
+                Objects.equals(createUser, that.createUser) &&
+                Objects.equals(updateTimeMs, that.updateTimeMs) &&
+                Objects.equals(updateUser, that.updateUser) &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(defaultValue, that.defaultValue) &&
+                Objects.equals(databaseOverrideValue, that.databaseOverrideValue) &&
+                Objects.equals(yamlOverrideValue, that.yamlOverrideValue) &&
+                Objects.equals(description, that.description) &&
+                Objects.equals(dataTypeName, that.dataTypeName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, version, createTimeMs, createUser, updateTimeMs, updateUser, name, defaultValue, databaseOverrideValue, yamlOverrideValue, description, isEditable, isPassword, requireRestart, requireUiRestart, dataTypeName);
+    }
+
     /**
      * The source of the property value
      */
-    public static enum SourceType {
+    public enum SourceType {
         /**
          * A compile-time default value
          */
@@ -374,6 +432,8 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
             this.name = name;
         }
 
+        @JsonValue
+        @JsonProperty("name")
         public String getName() {
             return name;
         }
@@ -385,22 +445,27 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         private static final OverrideValue NULL_VALUE =  new OverrideValue<>(true, null);
 
         private boolean hasOverride;
+        @JsonProperty("value")
         private T value;
 
+        @SuppressWarnings("unused")
         OverrideValue() {
             // Required for GWT serialisation
         }
 
+        @JsonIgnore
         @SuppressWarnings("unchecked")
         public static <T> OverrideValue<T> unSet() {
             return (OverrideValue<T>) UNSET;
         }
 
+        @JsonIgnore
         @SuppressWarnings("unchecked")
         public static <T> OverrideValue<T> withNullValue() {
             return (OverrideValue<T>) NULL_VALUE;
         }
 
+        @JsonIgnore
         @SuppressWarnings("unchecked")
         public static <T> OverrideValue<T> with(final T value) {
             if (value == null) {
@@ -410,11 +475,14 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
             }
         }
 
-        private OverrideValue(final boolean hasOverride, final T value) {
+        @JsonCreator
+        private OverrideValue(final @JsonProperty("hasOverride") boolean hasOverride,
+                              final @JsonProperty("value") T value) {
             this.hasOverride = hasOverride;
             this.value = value;
         }
 
+        @JsonProperty("hasOverride")
         public boolean hasOverride() {
             return hasOverride;
         }
@@ -424,6 +492,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
          * null/empty. If there is no override then a {@link RuntimeException} will be thrown.
          * Use {@link OverrideValue#hasOverride()} to check if there is an override value.
          */
+        @JsonIgnore
         public Optional<T> getValue() {
             if (!hasOverride) {
                 throw new RuntimeException("No override present");
@@ -434,6 +503,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         /**
          * Return the non-null override value or other if the override has explicitly been set to null/empty
          */
+        @JsonIgnore
         public T getValueOrElse(final T other) {
             if (!hasOverride) {
                 throw new RuntimeException("No override present");
@@ -445,6 +515,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
             }
         }
 
+        @JsonIgnore
         public T getValueOrElse(final T valueIfUnSet, final T valueIfNull) {
             if (!hasOverride) {
                 return valueIfUnSet;
@@ -459,6 +530,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
          * If an override value is present then the passed consumer will consume the override value
          * optional which may be empty if a null/empty override has explicitly been set.
          */
+        @JsonIgnore
         public void ifOverridePresent(final Consumer<Optional<T>> consumer) {
             if (hasOverride) {
                 consumer.accept(Optional.ofNullable(value));
@@ -487,109 +559,4 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
             return Objects.hash(hasOverride, value);
         }
     }
-
-    /**
-     * A wrapper to allow us to distinguish between a reference to a thing whose value is null and not
-     * having a reference to a thing.
-     * @param <T>
-     */
-    private static class NullWrapper<T> implements SharedObject {
-        private T value;
-
-        NullWrapper(final T value) {
-            this.value = value;
-        }
-
-        static <T> NullWrapper<T> of(final T value) {
-            return new NullWrapper<>(value);
-        }
-
-        Optional<T> getValue() {
-            return Optional.ofNullable(value);
-        }
-
-        void setValue(final T value) {
-            this.value = value;
-        }
-
-        boolean hasNonNullValue() {
-            return this.value != null;
-        }
-
-        boolean hasNullValue() {
-            return this.value == null;
-        }
-
-        @Override
-        public String toString() {
-            return "NullWrapper{" +
-                    "value=" + value +
-                    '}';
-        }
-
-//        static boolean areEqual(final NullWrapper<?> wrapper1, final NullWrapper<?> wrapper2) {
-//            if (wrapper1 == null && wrapper2 == null) {
-//                return true;
-//            } else if ((wrapper1 != null && wrapper1.value != null) && (wrapper2 != null && wrapper2.value == null)) {
-//                return true;
-//            } else if (wrapper1 != null && wrapper1.value != null && wrapper1.value.equals())
-//        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            final NullWrapper<?> that = (NullWrapper<?>) o;
-            return Objects.equals(value, that.value);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(value);
-        }
-
-    }
-
-//    public static class Builder {
-//        private final ConfigProperty instance = new ConfigProperty();
-//
-//        public Builder name(final String name) {
-//            instance.setName(name);
-//            return this;
-//        }
-//
-//        public Builder value(final String value) {
-//            instance.value = value;
-//            return this;
-//        }
-//
-//        public Builder description(final String description) {
-//            instance.description = description;
-//            return this;
-//        }
-//
-//        public Builder editable(final boolean editable) {
-//            instance.editable = editable;
-//            return this;
-//        }
-//
-//        public Builder requireRestart(final boolean requireRestart) {
-//            instance.requireRestart = requireRestart;
-//            return this;
-//        }
-//
-//        public Builder requireUiRestart(final boolean requireUiRestart) {
-//            instance.requireUiRestart = requireUiRestart;
-//            return this;
-//        }
-//
-//        public Builder password(final boolean password) {
-//            instance.password = password;
-//            return this;
-//        }
-//
-//        public ConfigProperty build() {
-//            return instance;
-//        }
-//    }
 }

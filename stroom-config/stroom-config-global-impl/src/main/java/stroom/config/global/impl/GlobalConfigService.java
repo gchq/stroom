@@ -80,7 +80,7 @@ class GlobalConfigService {
 
                 try {
                     // Update the object model and global config property with the value from the DB
-                    configMapper.updateDatabaseValue(dbConfigProperty);
+                    configMapper.decorateDbConfigProperty(dbConfigProperty);
                 } catch (ConfigMapper.UnknownPropertyException e) {
                     LOGGER.debug("Property {} is in the database but not in the appConfig model", fullPath);
                     if (deleteUnknownProps) {
@@ -125,13 +125,35 @@ class GlobalConfigService {
         return list(v -> true);
     }
 
+    /**
+     * @param propertyName The name of the prop to fetch, e.g. stroom.path.temp
+     * @return A {@link ConfigProperty} if it is a valid prop name. The prop may or may not exist in the
+     * DB. If it doesn't exist in the db then the property will be obtained from the object model.
+     */
+    public Optional<ConfigProperty> fetch(final String propertyName) {
+        return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
+            // update the global config from the returned db record then return the corresponding
+            // object from global properties which may have a yaml value in it and a different
+            // effective value
+            return dao.fetch(propertyName)
+                    .map(configMapper::decorateDbConfigProperty)
+                    .or(() ->
+                            configMapper.getGlobalProperty(propertyName));
+        });
+    }
+
+    /**
+     * @param id The DB primary key for the prop
+     * @return A {@link ConfigProperty} if it exists in the DB, i.e. it has a db override value.
+     * This means a valid prop can return an empty if the prop only has a default/yaml value.
+     */
     public Optional<ConfigProperty> fetch(final int id) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
             // update the global config from the returned db record then return the corresponding
             // object from global properties which may have a yaml value in it and a different
             // effective value
             return dao.fetch(id)
-                    .map(configMapper::updateDatabaseValue);
+                    .map(configMapper::decorateDbConfigProperty);
         });
     }
 
@@ -183,7 +205,7 @@ class GlobalConfigService {
             }
 
             // Update property in the config object tree
-            configMapper.updateDatabaseValue(persistedConfigProperty);
+            configMapper.decorateDbConfigProperty(persistedConfigProperty);
 
             return persistedConfigProperty;
         });

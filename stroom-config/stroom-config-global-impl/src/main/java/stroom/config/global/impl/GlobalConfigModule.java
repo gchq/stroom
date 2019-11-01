@@ -6,6 +6,7 @@ import stroom.config.global.shared.FetchGlobalConfigAction;
 import stroom.config.global.shared.FindGlobalConfigAction;
 import stroom.config.global.shared.UpdateGlobalConfigAction;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.RestResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HealthCheckBinder;
 
@@ -25,6 +26,9 @@ public class GlobalConfigModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)
                 .addBinding(AppConfigMonitor.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(GlobalConfigResourceImpl.class);
     }
 
     @Override

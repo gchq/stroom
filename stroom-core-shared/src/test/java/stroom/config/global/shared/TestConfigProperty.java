@@ -1,11 +1,22 @@
 package stroom.config.global.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestConfigProperty {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestConfigProperty.class);
 
     @Test
     void testPrecedenceNullDefaultOnly() {
@@ -264,5 +275,59 @@ class TestConfigProperty {
 
         assertThat(configProperty.isPassword())
                 .isTrue();
+    }
+
+    @Test
+    void testOverrideValueSerialisation() throws JsonProcessingException {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+
+        ConfigProperty.OverrideValue<String> overrideValue = ConfigProperty.OverrideValue.with("someValue");
+
+        String json = mapper.writeValueAsString(overrideValue);
+        LOGGER.info(json);
+
+    }
+
+    @Test
+    void testSerialisation1() throws IOException {
+
+        ConfigProperty configProperty = new ConfigProperty();
+        configProperty.setId(123);
+        configProperty.setName("name");
+        configProperty.setEditable(true);
+        configProperty.setPassword(false);
+        configProperty.setRequireRestart(true);
+        configProperty.setRequireUiRestart(true);
+        configProperty.setDefaultValue("default-123");
+        configProperty.setYamlOverrideValue("yaml-123");
+        configProperty.setDatabaseOverrideValue("db-123");
+        doSerdeTest(configProperty);
+    }
+
+    @Test
+    void testSerialisation2() throws IOException {
+
+        ConfigProperty configProperty = new ConfigProperty();
+        doSerdeTest(configProperty);
+    }
+
+    private void doSerdeTest(final ConfigProperty configProperty) throws IOException {
+
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+
+        assertThat(mapper.canSerialize(ConfigProperty.class)).isTrue();
+        assertThat(mapper.canSerialize(ConfigProperty.OverrideValue.class)).isTrue();
+
+        String json = mapper.writeValueAsString(configProperty);
+        LOGGER.info(json);
+
+        final ConfigProperty configProperty2 = mapper.readValue(json, ConfigProperty.class);
+
+        assertThat(configProperty2).isEqualTo(configProperty);
     }
 }

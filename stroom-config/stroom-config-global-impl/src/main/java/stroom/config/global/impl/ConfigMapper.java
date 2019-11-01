@@ -171,7 +171,7 @@ public class ConfigMapper {
      * @param dbConfigProperty The config property object obtained from the database
      * @return The updated typed value from the object model
      */
-    ConfigProperty updateDatabaseValue(final ConfigProperty dbConfigProperty) {
+    ConfigProperty decorateDbConfigProperty(final ConfigProperty dbConfigProperty) {
         Objects.requireNonNull(dbConfigProperty);
 
          final String fullPath = dbConfigProperty.getName();

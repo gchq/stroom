@@ -93,7 +93,7 @@ class TestConfigMapper {
             configProperty.setDatabaseOverrideValue(configProperty.getDefaultValue().orElse(null));
 
             // verify we can convert back to an object from a string
-            ConfigProperty newConfigProperty = configMapper.updateDatabaseValue(configProperty);
+            ConfigProperty newConfigProperty = configMapper.decorateDbConfigProperty(configProperty);
 
             LOGGER.debug(configProperty.toString());
             assertThat(newConfigProperty.getSource())
@@ -207,7 +207,7 @@ class TestConfigMapper {
         ConfigMapper configMapper = new ConfigMapper(appConfig);
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(newValue);
-        configMapper.updateDatabaseValue(configProperty);
+        configMapper.decorateDbConfigProperty(configProperty);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
@@ -223,7 +223,7 @@ class TestConfigMapper {
         ConfigMapper configMapper = new ConfigMapper(appConfig);
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(Boolean.valueOf(newValue).toString().toLowerCase());
-        configMapper.updateDatabaseValue(configProperty);
+        configMapper.decorateDbConfigProperty(configProperty);
 
         assertThat(getter.getAsBoolean()).isEqualTo(newValue);
     }
@@ -240,7 +240,7 @@ class TestConfigMapper {
         ConfigMapper configMapper = new ConfigMapper(appConfig);
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(Integer.valueOf(newValue).toString());
-        configMapper.updateDatabaseValue(configProperty);
+        configMapper.decorateDbConfigProperty(configProperty);
 
         assertThat(getter.getAsInt()).isEqualTo(newValue);
     }
@@ -273,7 +273,7 @@ class TestConfigMapper {
         ConfigMapper configMapper = new ConfigMapper(testConfig);
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(newValue);
-        configMapper.updateDatabaseValue(configProperty);
+        configMapper.decorateDbConfigProperty(configProperty);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
@@ -290,7 +290,7 @@ class TestConfigMapper {
         ConfigMapper configMapper = new ConfigMapper(testConfig);
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(Integer.valueOf(newValue).toString());
-        configMapper.updateDatabaseValue(configProperty);
+        configMapper.decorateDbConfigProperty(configProperty);
 
         assertThat(getter.getAsInt()).isEqualTo(newValue);
     }
@@ -307,7 +307,7 @@ class TestConfigMapper {
         ConfigMapper configMapper = new ConfigMapper(testConfig);
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(newValue.toString());
-        configMapper.updateDatabaseValue(configProperty);
+        configMapper.decorateDbConfigProperty(configProperty);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
@@ -332,7 +332,7 @@ class TestConfigMapper {
 
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.updateDatabaseValue(configProperty);
+        configMapper.decorateDbConfigProperty(configProperty);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
@@ -349,7 +349,7 @@ class TestConfigMapper {
 
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.updateDatabaseValue(configProperty);
+        configMapper.decorateDbConfigProperty(configProperty);
 
         assertThat(initialValue).isEqualTo(TestConfig.State.OFF);
         assertThat(getter.get()).isEqualTo(newValue);
@@ -377,7 +377,7 @@ class TestConfigMapper {
 
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.updateDatabaseValue(configProperty);
+        configMapper.decorateDbConfigProperty(configProperty);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
@@ -395,7 +395,7 @@ class TestConfigMapper {
 
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.updateDatabaseValue(configProperty);
+        configMapper.decorateDbConfigProperty(configProperty);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
@@ -415,7 +415,7 @@ class TestConfigMapper {
 
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.updateDatabaseValue(configProperty);
+        configMapper.decorateDbConfigProperty(configProperty);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
@@ -437,7 +437,7 @@ class TestConfigMapper {
 
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.updateDatabaseValue(configProperty);
+        configMapper.decorateDbConfigProperty(configProperty);
 
         assertThat(getter.get()).isEqualTo(newValue);
     }
