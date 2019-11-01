@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
+import java.util.Comparator;
 import java.util.Set;
 
 public class HealthChecks {
@@ -26,7 +27,10 @@ public class HealthChecks {
     public void register() {
         final HealthCheckRegistry healthCheckRegistry = environment.healthChecks();
         LOGGER.info("Adding health checks:");
-        healthChecks.forEach(hasHealthCheck -> {
+        healthChecks.stream()
+                .sorted(Comparator.comparing(hasHealthCheck ->
+                        hasHealthCheck.getClass().getSimpleName()))
+                .forEach(hasHealthCheck -> {
             final String name = hasHealthCheck.getClass().getName() + " - " + HEALTH_CHECK_SUFFIX;
             LOGGER.info("\t{}", name);
             healthCheckRegistry.register(name, hasHealthCheck.getHealthCheck());
