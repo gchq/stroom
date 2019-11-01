@@ -209,6 +209,9 @@ public class DBPersistence implements Persistence {
 
                 if (update) {
                     final DocEntity entity = load(docRef);
+                    // Update the name.
+                    entity.setName(docRef.getName());
+                    // Update the data.
                     entity.setData(toByteArray());
                     update(entity);
                 } else {
