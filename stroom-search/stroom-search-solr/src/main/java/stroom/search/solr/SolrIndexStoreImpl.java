@@ -240,7 +240,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                 .stream()
                 .map(v -> {
                     final SolrIndexField field = fromAttributes(v);
-                    field.setFieldUse(SolrIndexFieldType.TEXT_FIELD);
+                    field.setFieldUse(SolrIndexFieldType.FIELD);
 
                     final SolrIndexField existingField = existingFieldMap.get(field.getFieldName());
                     if (existingField != null) {

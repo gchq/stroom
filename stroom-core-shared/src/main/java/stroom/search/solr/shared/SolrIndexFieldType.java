@@ -19,14 +19,15 @@ package stroom.search.solr.shared;
 import stroom.docref.HasDisplayValue;
 
 public enum SolrIndexFieldType implements HasDisplayValue {
-    ID_FIELD("Id", true),
+    ID("Id", true),
     BOOLEAN_FIELD("Boolean", false),
     INTEGER_FIELD("Integer", true),
     LONG_FIELD("Long", true),
     FLOAT_FIELD("Float", true),
     DOUBLE_FIELD("Double", true),
     DATE_FIELD("Date", false),
-    TEXT_FIELD("Text", false);
+    FIELD("Text", false),
+    NUMERIC_FIELD("Number", true); // Alias for LONG_FIELD.
 
     private final String displayValue;
     private final boolean numeric;
