@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Updated stroom expression to v1.5.4 and added new field types. 
 
+## [v6.0.17] - 2019-11-04
+
+* Issue **#1315** : Improved health check for missing API key.
+
+* Issue **#1314** : Fixed NPE thrown when logging caused when viewing docs that can't be found.
+
+
 ## [v6.0.16] - 2019-11-01
 
 * Issue **#1313** : Suggestion boxes now make suggestions immediately before the user even starts typing.
