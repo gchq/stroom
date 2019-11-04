@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **gchq/stroom-auth#157** : Automatically refresh user's API key when it expires.
 
 ## [v6.0.16] - 2019-11-01
 

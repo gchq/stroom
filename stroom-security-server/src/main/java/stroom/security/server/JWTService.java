@@ -144,6 +144,28 @@ public class JWTService implements HasHealthCheck {
 
     }
 
+    public String refreshTokenIfExpired(String jws) {
+        try {
+            verifyToken(jws);
+            return jws;
+        } catch (InvalidJwtException e) {
+            try {
+                JwtClaims claims = e.getJwtContext().getJwtClaims();
+                if(claims.getExpirationTime().getValueInMillis() < Instant.now().toEpochMilli() ){
+                    LOGGER.info("The API key for user '{}' has expired. An API key is required, i.e. for queries. Creating a new one.", claims.getSubject());
+                    String newJws = authenticationServiceClients.createTokenForUser(claims.getSubject());
+                    return newJws;
+                } else {
+                    return jws;
+                }
+            } catch (MalformedClaimException | ApiException innerEx) {
+                String error = "Unable to get new token! The error was: " + innerEx.getMessage();
+                LOGGER.error(error);
+                throw new RuntimeException(error, innerEx);
+            }
+        }
+    }
+
     public Optional<String> getJws(ServletRequest request) {
         Optional<String> authHeader = getAuthHeader(request);
         Optional<String> jws = Optional.empty();
