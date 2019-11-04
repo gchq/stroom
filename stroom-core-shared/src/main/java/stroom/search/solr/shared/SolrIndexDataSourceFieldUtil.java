@@ -44,7 +44,7 @@ public final class SolrIndexDataSourceFieldUtil {
 
     private static DataSourceFieldType getDataSourceFieldType(final SolrIndexFieldType indexFieldType) {
         switch (indexFieldType) {
-            case ID_FIELD:
+            case ID:
                 return DataSourceFieldType.ID_FIELD;
             case BOOLEAN_FIELD:
                 return DataSourceFieldType.BOOLEAN_FIELD;
@@ -58,8 +58,10 @@ public final class SolrIndexDataSourceFieldUtil {
                 return DataSourceFieldType.DOUBLE_FIELD;
             case DATE_FIELD:
                 return DataSourceFieldType.DATE_FIELD;
-            case TEXT_FIELD:
+            case FIELD:
                 return DataSourceFieldType.TEXT_FIELD;
+            case NUMERIC_FIELD:
+                return DataSourceFieldType.LONG_FIELD;
         }
         return null;
     }

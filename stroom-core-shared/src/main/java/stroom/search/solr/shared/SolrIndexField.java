@@ -61,7 +61,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
 
     public static final String VALID_FIELD_NAME_PATTERN = "[a-zA-Z_](?:[a-zA-Z0-9_])*";
 
-    private SolrIndexFieldType fieldUse = SolrIndexFieldType.TEXT_FIELD;
+    private SolrIndexFieldType fieldUse = SolrIndexFieldType.FIELD;
     private String fieldName;
     private String fieldType;
     private String defaultValue;
@@ -112,7 +112,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
     }
 
     public static SolrIndexField createIdField(final String fieldName) {
-        return new SolrIndexField(SolrIndexFieldType.ID_FIELD, fieldName, true, true, false, null);
+        return new SolrIndexField(SolrIndexFieldType.ID, fieldName, true, true, false, null);
     }
 
     public static SolrIndexField createBooleanField(final String fieldName) {
@@ -151,7 +151,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
     }
 
     public static SolrIndexField createTextField(final String fieldName, final boolean stored, final boolean indexed, final boolean termPositions) {
-        return new SolrIndexField(SolrIndexFieldType.TEXT_FIELD, fieldName, stored, indexed,
+        return new SolrIndexField(SolrIndexFieldType.FIELD, fieldName, stored, indexed,
                 termPositions, null);
     }
 
@@ -174,7 +174,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
 
     public void setFieldUse(final SolrIndexFieldType fieldUse) {
         if (fieldUse == null) {
-            this.fieldUse = SolrIndexFieldType.TEXT_FIELD;
+            this.fieldUse = SolrIndexFieldType.FIELD;
         }
         this.fieldUse = fieldUse;
     }
@@ -393,12 +393,12 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         if (fieldUse != null) {
             // First make sure the operator is set.
             switch (fieldUse) {
-                case ID_FIELD:
+                case ID:
                     conditions.add(Condition.EQUALS);
                     conditions.add(Condition.IN);
                     conditions.add(Condition.IN_DICTIONARY);
                     break;
-                case TEXT_FIELD:
+                case FIELD:
                     conditions.add(Condition.EQUALS);
                     conditions.add(Condition.IN);
                     conditions.add(Condition.IN_DICTIONARY);

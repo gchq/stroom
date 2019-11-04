@@ -51,7 +51,7 @@ public final class IndexDataSourceFieldUtil {
 
     private static DataSourceFieldType getDataSourceFieldType(final IndexFieldType indexFieldType) {
         switch (indexFieldType) {
-            case ID_FIELD:
+            case ID:
                 return DataSourceFieldType.ID_FIELD;
             case BOOLEAN_FIELD:
                 return DataSourceFieldType.BOOLEAN_FIELD;
@@ -65,7 +65,7 @@ public final class IndexDataSourceFieldUtil {
                 return DataSourceFieldType.DOUBLE_FIELD;
             case DATE_FIELD:
                 return DataSourceFieldType.DATE_FIELD;
-            case TEXT_FIELD:
+            case FIELD:
                 return DataSourceFieldType.TEXT_FIELD;
             case NUMERIC_FIELD:
                 return DataSourceFieldType.LONG_FIELD;
