@@ -17,4 +17,5 @@ dependencies {
 
     testRuntimeOnly libs.javax_activation
     testRuntimeOnly libs.jaxb_runtime
+    testRuntimeOnly libs.junit_jupiter_engine
 }

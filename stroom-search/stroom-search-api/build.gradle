@@ -8,6 +8,7 @@ dependencies {
 //
 //    compile libs.javax_inject
 //    compile libs.stroomDocRef
+    compile libs.jaxb_api
     compile libs.stroomQueryApi
 //    compile libs.jackson_annotations
 //    compile libs.swagger_annotations
