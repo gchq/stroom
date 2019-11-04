@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Updated stroom expression to v1.5.4 and added new field types. 
 
+* Issue **#1315** : Improved health check for missing API key.
+
+* Issue **#1314** : Fixed NPE thrown when logging caused when viewing docs that can't be found.
+
 * Issue **#1313** : Suggestion boxes now make suggestions immediately before the user even starts typing.
 
 * Issue **#1043** : Added feature to allow floating point numbers to be indexed.
