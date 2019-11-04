@@ -79,27 +79,27 @@ public class StatisticsDataSourceProviderImpl implements StatisticsDataSourcePro
             for (final StatisticField statisticField : entity.getStatisticFields()) {
                 // TODO currently only EQUALS is supported, but need to add
                 // support for more conditions like CONTAINS
-                addField(statisticField.getFieldName(), DataSourceFieldType.FIELD, true,
+                addField(statisticField.getFieldName(), DataSourceFieldType.TEXT_FIELD, true,
                         supportedConditions, fields);
             }
         }
 
         addField(StatisticStoreEntity.FIELD_NAME_COUNT,
-                DataSourceFieldType.NUMERIC_FIELD,
+                DataSourceFieldType.LONG_FIELD,
                 false,
                 Collections.emptyList(),
                 fields);
 
         if (entity.getStatisticType().equals(StatisticType.VALUE)) {
             addField(StatisticStoreEntity.FIELD_NAME_VALUE,
-                    DataSourceFieldType.NUMERIC_FIELD,
+                    DataSourceFieldType.LONG_FIELD,
                     false,
                     Collections.emptyList(),
                     fields);
         }
 
         addField(StatisticStoreEntity.FIELD_NAME_PRECISION_MS,
-                DataSourceFieldType.NUMERIC_FIELD,
+                DataSourceFieldType.LONG_FIELD,
                 false,
                 Collections.emptyList(),
                 fields);

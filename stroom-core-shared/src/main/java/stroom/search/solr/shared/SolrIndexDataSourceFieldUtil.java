@@ -19,8 +19,6 @@ package stroom.search.solr.shared;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.datasource.api.v2.DataSourceField.DataSourceFieldType;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.search.solr.shared.SolrIndex;
-import stroom.search.solr.shared.SolrIndexFieldType;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -46,16 +44,23 @@ public final class SolrIndexDataSourceFieldUtil {
 
     private static DataSourceFieldType getDataSourceFieldType(final SolrIndexFieldType indexFieldType) {
         switch (indexFieldType) {
+            case ID_FIELD:
+                return DataSourceFieldType.ID_FIELD;
+            case BOOLEAN_FIELD:
+                return DataSourceFieldType.BOOLEAN_FIELD;
+            case INTEGER_FIELD:
+                return DataSourceFieldType.INTEGER_FIELD;
+            case LONG_FIELD:
+                return DataSourceFieldType.LONG_FIELD;
+            case FLOAT_FIELD:
+                return DataSourceFieldType.FLOAT_FIELD;
+            case DOUBLE_FIELD:
+                return DataSourceFieldType.DOUBLE_FIELD;
             case DATE_FIELD:
                 return DataSourceFieldType.DATE_FIELD;
-            case FIELD:
-                return DataSourceFieldType.FIELD;
-            case ID:
-                return DataSourceFieldType.ID;
-            case NUMERIC_FIELD:
-                return DataSourceFieldType.NUMERIC_FIELD;
+            case TEXT_FIELD:
+                return DataSourceFieldType.TEXT_FIELD;
         }
-
         return null;
     }
 }

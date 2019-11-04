@@ -43,7 +43,6 @@ import stroom.util.shared.Message;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -247,7 +246,7 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                 .stream()
                 .map(v -> {
                     final SolrIndexField field = fromAttributes(v);
-                    field.setFieldUse(SolrIndexFieldType.FIELD);
+                    field.setFieldUse(SolrIndexFieldType.TEXT_FIELD);
 
                     final SolrIndexField existingField = existingFieldMap.get(field.getFieldName());
                     if (existingField != null) {

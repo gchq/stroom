@@ -236,14 +236,32 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         final DataSourceField indexField = indexFieldsMap.get(indexFieldName);
                         if (indexField != null) {
                             switch (indexField.getType()) {
+                                case ID_FIELD:
+                                    field.setFormat(new Format(Type.NUMBER));
+                                    break;
+                                case BOOLEAN_FIELD:
+                                    field.setFormat(new Format(Type.GENERAL));
+                                    break;
+                                case INTEGER_FIELD:
+                                    field.setFormat(new Format(Type.NUMBER));
+                                    break;
+                                case LONG_FIELD:
+                                    field.setFormat(new Format(Type.NUMBER));
+                                    break;
+                                case FLOAT_FIELD:
+                                    field.setFormat(new Format(Type.NUMBER));
+                                    break;
+                                case DOUBLE_FIELD:
+                                    field.setFormat(new Format(Type.NUMBER));
+                                    break;
                                 case DATE_FIELD:
                                     field.setFormat(new Format(Type.DATE_TIME));
                                     break;
-                                case NUMERIC_FIELD:
-                                    field.setFormat(new Format(Type.NUMBER));
+                                case TEXT_FIELD:
+                                    field.setFormat(new Format(Type.GENERAL));
                                     break;
-                                case ID:
-                                    field.setFormat(new Format(Type.NUMBER));
+                                case DOC_REF:
+                                    field.setFormat(new Format(Type.GENERAL));
                                     break;
                                 default:
                                     field.setFormat(new Format(Type.GENERAL));

@@ -58,15 +58,16 @@ class StreamAttributeMapUtil {
             if (value != null) {
                 try {
                     switch (field.getType()) {
-                        case FIELD:
+                        case TEXT_FIELD:
                             attributeMap.put(field.getName(), value);
                             break;
                         case DATE_FIELD:
                             attributeMap.put(field.getName(), DateUtil.parseNormalDateTimeString(value));
                             break;
                         case DOC_REF:
-                        case ID:
-                        case NUMERIC_FIELD:
+                        case ID_FIELD:
+                        case LONG_FIELD:
+                            _FIELD:
                             attributeMap.put(field.getName(), Long.valueOf(value));
                             break;
                     }
