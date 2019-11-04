@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Updated stroom expression to v1.5.4 and added new field types. 
 
 ## [v6.0.16] - 2019-11-01
 

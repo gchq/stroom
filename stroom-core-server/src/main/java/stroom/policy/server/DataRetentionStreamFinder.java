@@ -221,7 +221,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
                 final DataSourceField field = StreamDataSource.getFieldMap().get(fieldName);
                 if (field != null) {
                     switch (field.getType()) {
-                        case FIELD:
+                        case TEXT_FIELD:
                             final String string = resultSet.getString(fieldName);
                             attributeMap.put(fieldName, string);
                             break;
@@ -235,9 +235,7 @@ public class DataRetentionStreamFinder implements AutoCloseable {
                                 attributeMap.put(fieldName, DocRefUtil.create(pipeline));
                             }
                             break;
-                        case DATE_FIELD:
-                        case ID:
-                        case NUMERIC_FIELD:
+                        default:
                             final long number = resultSet.getLong(fieldName);
                             attributeMap.put(fieldName, number);
                             break;

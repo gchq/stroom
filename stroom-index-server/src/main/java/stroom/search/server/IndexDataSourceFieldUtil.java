@@ -51,18 +51,25 @@ public final class IndexDataSourceFieldUtil {
 
     private static DataSourceFieldType getDataSourceFieldType(final IndexFieldType indexFieldType) {
         switch (indexFieldType) {
+            case ID_FIELD:
+                return DataSourceFieldType.ID_FIELD;
+            case BOOLEAN_FIELD:
+                return DataSourceFieldType.BOOLEAN_FIELD;
+            case INTEGER_FIELD:
+                return DataSourceFieldType.INTEGER_FIELD;
+            case LONG_FIELD:
+                return DataSourceFieldType.LONG_FIELD;
+            case FLOAT_FIELD:
+                return DataSourceFieldType.FLOAT_FIELD;
+            case DOUBLE_FIELD:
+                return DataSourceFieldType.DOUBLE_FIELD;
             case DATE_FIELD:
                 return DataSourceFieldType.DATE_FIELD;
-            case FIELD:
-                return DataSourceFieldType.FIELD;
-            case ID:
-                return DataSourceFieldType.ID;
-            default:
-                if (indexFieldType.isNumeric()) {
-                    return DataSourceFieldType.NUMERIC_FIELD;
-                }
+            case TEXT_FIELD:
+                return DataSourceFieldType.TEXT_FIELD;
+            case NUMERIC_FIELD:
+                return DataSourceFieldType.LONG_FIELD;
         }
-
         return null;
     }
 }

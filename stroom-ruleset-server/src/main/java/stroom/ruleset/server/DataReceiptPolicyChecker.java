@@ -164,7 +164,7 @@ class DataReceiptPolicyChecker {
                 try {
                     final String string = metaMap.get(fieldName);
                     switch (field.getType()) {
-                        case FIELD:
+                        case TEXT_FIELD:
                             attributeMap.put(fieldName, string);
                             break;
                         default:
