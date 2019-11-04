@@ -251,26 +251,31 @@ public class JWTService implements HasHealthCheck {
         final String KEY = "expiry_warning";
 
         try {
-            JwtClaims claims = verifyToken(this.apiKey);
-            if (this.durationToWarnBeforeExpiry == null) {
+            if (this.apiKey == null || this.apiKey.trim().isEmpty()) {
+                resultBuilder.withDetail(KEY, "'stroom.security.apiToken' is not defined!");
+                resultBuilder.unhealthy();
+
+            } else if (this.durationToWarnBeforeExpiry == null) {
                 resultBuilder.withDetail(KEY, "'stroom.security.apiToken.durationToWarnBeforeExpiry' is not defined! You will not be warned when Stroom's API key is about to expire!");
                 resultBuilder.unhealthy();
+
             } else {
-                NumericDate expiration = claims.getExpirationTime();
+                final JwtClaims claims = verifyToken(this.apiKey);
+                final NumericDate expiration = claims.getExpirationTime();
                 if (expiration == null) {
                     // This isn't about health, it's just a warning.
                     resultBuilder.withDetail(KEY, "Warning: Stroom's API key has no expiration. It would be more secure to use a key which does expire.");
                 } else {
-                    Instant expiresOn = Instant.ofEpochMilli(expiration.getValueInMillis());
-                    Instant now = Instant.now(clock);
-                    long minutesUntilExpiry = ChronoUnit.MINUTES.between(now, expiresOn);
+                    final Instant expiresOn = Instant.ofEpochMilli(expiration.getValueInMillis());
+                    final Instant now = Instant.now(clock);
+                    final long minutesUntilExpiry = ChronoUnit.MINUTES.between(now, expiresOn);
                     if (minutesUntilExpiry < this.durationToWarnBeforeExpiry.toMinutes()) {
                         resultBuilder.withDetail(KEY, String.format("Stroom's API key expires soon! It expires on %s", expiresOn.toString()));
                         resultBuilder.unhealthy();
                     }
                 }
             }
-        } catch (MalformedClaimException | InvalidJwtException e) {
+        } catch (final MalformedClaimException | InvalidJwtException e) {
             resultBuilder.withDetail(KEY, e.getMessage());
             resultBuilder.unhealthy();
         }

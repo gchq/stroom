@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1315** : Improved health check for missing API key.
+
 * Issue **#1314** : Fixed NPE thrown when logging caused when viewing docs that can't be found.
 
 
