@@ -74,7 +74,12 @@ class DocumentServiceReadHandler
 //        return result;
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final SharedObject doc = (SharedObject) documentService.readDocument(action.getDocRef());
-            documentEventLog.view(doc, null);
+            if (doc == null) {
+                documentEventLog.view(action.getDocRef(), new RuntimeException("Unable to find document"));
+            } else {
+                documentEventLog.view(doc, null);
+            }
+
             return doc;
         } catch (final PermissionException e) {
             documentEventLog.view(action.getDocRef(), e);

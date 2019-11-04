@@ -517,6 +517,9 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     private BaseObject createBaseObject(final java.lang.Object object) {
+        if (object == null) {
+            return null;
+        }
         final EventInfoProvider objectInfoAppender = getInfoAppender(object.getClass());
         if (objectInfoAppender == null) {
             return null;

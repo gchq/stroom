@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1314** : Fixed NPE thrown when logging caused when viewing docs that can't be found.
+
 
 ## [v6.0.16] - 2019-11-01
 
