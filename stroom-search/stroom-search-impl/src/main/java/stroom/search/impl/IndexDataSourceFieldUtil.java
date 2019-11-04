@@ -49,7 +49,7 @@ public final class IndexDataSourceFieldUtil {
 
     private static AbstractField convert(final IndexField field) {
         switch (field.getFieldType()) {
-            case ID_FIELD:
+            case ID:
                 return new IdField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
             case BOOLEAN_FIELD:
                 return new BooleanField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
@@ -63,7 +63,7 @@ public final class IndexDataSourceFieldUtil {
                 return new DoubleField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
             case DATE_FIELD:
                 return new DateField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
-            case TEXT_FIELD:
+            case FIELD:
                 return new TextField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
         }
 
