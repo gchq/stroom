@@ -67,7 +67,7 @@ class StreamAttributeMapUtil {
                             attributeMap.put(field.getName(), value);
                             break;
                         case FieldTypes.ID:
-                        case FieldTypes.NUMBER:
+                        case FieldTypes.LONG:
                             map.put(field.getName(), Long.valueOf(value));
                             break;
                     }

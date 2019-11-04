@@ -61,7 +61,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
 
     public static final String VALID_FIELD_NAME_PATTERN = "[a-zA-Z_](?:[a-zA-Z0-9_])*";
 
-    private SolrIndexFieldType fieldUse = SolrIndexFieldType.FIELD;
+    private SolrIndexFieldType fieldUse = SolrIndexFieldType.TEXT_FIELD;
     private String fieldName;
     private String fieldType;
     private String defaultValue;
@@ -111,27 +111,48 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         }
     }
 
-    public static SolrIndexField createField(final String fieldName) {
-        return createField(fieldName, false, true, false);
+    public static SolrIndexField createIdField(final String fieldName) {
+        return new SolrIndexField(SolrIndexFieldType.ID_FIELD, fieldName, true, true, false, null);
     }
 
-    public static SolrIndexField createField(final String fieldName, final boolean stored, final boolean indexed, final boolean termPositions) {
-        return new SolrIndexField(SolrIndexFieldType.FIELD, fieldName, stored, indexed,
-                termPositions, null);
-    }
-
-    public static SolrIndexField createNumericField(final String fieldName) {
-        return new SolrIndexField(SolrIndexFieldType.NUMERIC_FIELD, fieldName, false, true, false,
+    public static SolrIndexField createBooleanField(final String fieldName) {
+        return new SolrIndexField(SolrIndexFieldType.BOOLEAN_FIELD, fieldName, false, true, false,
                 null);
     }
 
-    public static SolrIndexField createIdField(final String fieldName) {
-        return new SolrIndexField(SolrIndexFieldType.ID, fieldName, true, true, false, null);
+    public static SolrIndexField createIntegerField(final String fieldName) {
+        return new SolrIndexField(SolrIndexFieldType.INTEGER_FIELD, fieldName, false, true, false,
+                null);
     }
+
+    public static SolrIndexField createLongField(final String fieldName) {
+        return new SolrIndexField(SolrIndexFieldType.LONG_FIELD, fieldName, false, true, false,
+                null);
+    }
+
+    public static SolrIndexField createFloatField(final String fieldName) {
+        return new SolrIndexField(SolrIndexFieldType.FLOAT_FIELD, fieldName, false, true, false,
+                null);
+    }
+
+    public static SolrIndexField createDoubleField(final String fieldName) {
+        return new SolrIndexField(SolrIndexFieldType.DOUBLE_FIELD, fieldName, false, true, false,
+                null);
+    }
+
 
     public static SolrIndexField createDateField(final String fieldName) {
         return new SolrIndexField(SolrIndexFieldType.DATE_FIELD, fieldName, false, true,
                 false, null);
+    }
+
+    public static SolrIndexField createTextField(final String fieldName) {
+        return createTextField(fieldName, false, true, false);
+    }
+
+    public static SolrIndexField createTextField(final String fieldName, final boolean stored, final boolean indexed, final boolean termPositions) {
+        return new SolrIndexField(SolrIndexFieldType.TEXT_FIELD, fieldName, stored, indexed,
+                termPositions, null);
     }
 
     public static SolrIndexField create(final SolrIndexFieldType fieldType, final String fieldName,
@@ -153,7 +174,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
 
     public void setFieldUse(final SolrIndexFieldType fieldUse) {
         if (fieldUse == null) {
-            this.fieldUse = SolrIndexFieldType.FIELD;
+            this.fieldUse = SolrIndexFieldType.TEXT_FIELD;
         }
         this.fieldUse = fieldUse;
     }
@@ -372,24 +393,13 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         if (fieldUse != null) {
             // First make sure the operator is set.
             switch (fieldUse) {
-                case ID:
+                case ID_FIELD:
                     conditions.add(Condition.EQUALS);
                     conditions.add(Condition.IN);
                     conditions.add(Condition.IN_DICTIONARY);
                     break;
-                case FIELD:
+                case TEXT_FIELD:
                     conditions.add(Condition.EQUALS);
-                    conditions.add(Condition.IN);
-                    conditions.add(Condition.IN_DICTIONARY);
-                    break;
-
-                case NUMERIC_FIELD:
-                    conditions.add(Condition.EQUALS);
-                    conditions.add(Condition.GREATER_THAN);
-                    conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
-                    conditions.add(Condition.LESS_THAN);
-                    conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
-                    conditions.add(Condition.BETWEEN);
                     conditions.add(Condition.IN);
                     conditions.add(Condition.IN_DICTIONARY);
                     break;
@@ -403,6 +413,18 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
                     conditions.add(Condition.BETWEEN);
                     conditions.add(Condition.IN);
                     conditions.add(Condition.IN_DICTIONARY);
+                    break;
+                default:
+                    if (fieldUse.isNumeric()) {
+                        conditions.add(Condition.EQUALS);
+                        conditions.add(Condition.GREATER_THAN);
+                        conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
+                        conditions.add(Condition.LESS_THAN);
+                        conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
+                        conditions.add(Condition.BETWEEN);
+                        conditions.add(Condition.IN);
+                        conditions.add(Condition.IN_DICTIONARY);
+                    }
                     break;
             }
         }

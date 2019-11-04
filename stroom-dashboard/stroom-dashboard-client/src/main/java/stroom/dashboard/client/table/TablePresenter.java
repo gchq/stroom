@@ -239,7 +239,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                     break;
                                 case FieldTypes.INTEGER:
                                 case FieldTypes.LONG:
-                                case FieldTypes.NUMBER:
+                                case FieldTypes.FLOAT:
+                                case FieldTypes.DOUBLE:
                                 case FieldTypes.ID:
                                     field.setFormat(new Format(Type.NUMBER));
                                     break;

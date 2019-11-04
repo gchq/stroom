@@ -203,7 +203,7 @@ class IndexingFilter extends AbstractXMLFilter {
         try {
             Field field = null;
 
-            if (IndexFieldType.INT_FIELD.equals(indexField.getFieldType())) {
+            if (IndexFieldType.INTEGER_FIELD.equals(indexField.getFieldType())) {
                 try {
                     final int val = Integer.parseInt(value);
                     field = FieldFactory.createInt(indexField, val);

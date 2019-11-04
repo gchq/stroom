@@ -17,13 +17,16 @@
 package stroom.search.impl;
 
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.BooleanField;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.DoubleField;
+import stroom.datasource.api.v2.FloatField;
 import stroom.datasource.api.v2.IdField;
-import stroom.datasource.api.v2.NumberField;
+import stroom.datasource.api.v2.IntegerField;
+import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,19 +47,24 @@ public final class IndexDataSourceFieldUtil {
         return dataSourceFields;
     }
 
-    private static AbstractField convert(final IndexField indexField) {
-        final List<Condition> conditions = indexField.getSupportedConditions();
-        switch (indexField.getFieldType()) {
+    private static AbstractField convert(final IndexField field) {
+        switch (field.getFieldType()) {
+            case ID_FIELD:
+                return new IdField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+            case BOOLEAN_FIELD:
+                return new BooleanField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+            case INTEGER_FIELD:
+                return new IntegerField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+            case LONG_FIELD:
+                return new LongField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+            case FLOAT_FIELD:
+                return new FloatField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+            case DOUBLE_FIELD:
+                return new DoubleField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
             case DATE_FIELD:
-                return new DateField(indexField.getFieldName(), indexField.isIndexed(), conditions);
-            case FIELD:
-                return new TextField(indexField.getFieldName(), indexField.isIndexed(), conditions);
-            case ID:
-                return new IdField(indexField.getFieldName(), indexField.isIndexed(), conditions);
-            default:
-                if (indexField.getFieldType().isNumeric()) {
-                    return .NUMERIC_FIELD;
-                }
+                return new DateField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+            case TEXT_FIELD:
+                return new TextField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
         }
 
         return null;

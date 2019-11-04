@@ -68,10 +68,10 @@ public final class FieldTypeFactory {
         fieldType.setStoreTermVectorPositions(indexField.isTermPositions());
         fieldType.setStoreTermVectorPayloads(false);
 
-        if (IndexFieldType.ID.equals(indexField.getFieldType())) {
+        if (IndexFieldType.ID_FIELD.equals(indexField.getFieldType())) {
             fieldType.setNumericPrecisionStep(Integer.MAX_VALUE);
             fieldType.setNumericType(NumericType.LONG);
-        } else if (IndexFieldType.INT_FIELD.equals(indexField.getFieldType())) {
+        } else if (IndexFieldType.INTEGER_FIELD.equals(indexField.getFieldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.INT);
         } else if (IndexFieldType.LONG_FIELD.equals(indexField.getFieldType())) {
