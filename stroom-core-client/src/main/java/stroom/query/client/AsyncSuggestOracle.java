@@ -45,6 +45,11 @@ public class AsyncSuggestOracle extends SuggestOracle {
     }
 
     @Override
+    public void requestDefaultSuggestions(final Request request, final Callback callback) {
+        requestSuggestions(request, callback);
+    }
+
+    @Override
     public void requestSuggestions(final Request request, final Callback callback) {
         if (dispatcher != null && dataSource != null) {
             dispatcher.exec(new FetchSuggestionsAction(dataSource, field, request.getQuery())).onSuccess(result -> {

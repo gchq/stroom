@@ -203,15 +203,46 @@ class IndexingFilter extends AbstractXMLFilter {
         try {
             Field field = null;
 
-            if (indexField.getFieldType().isNumeric()) {
-                final long val = Long.parseLong(value);
-                field = FieldFactory.create(indexField, val);
-
+            if (IndexFieldType.INT_FIELD.equals(indexField.getFieldType())) {
+                try {
+                    final int val = Integer.parseInt(value);
+                    field = FieldFactory.createInt(indexField, val);
+                } catch (final Exception e) {
+                    LOGGER.trace(e.getMessage(), e);
+                }
+            } else if (IndexFieldType.LONG_FIELD.equals(indexField.getFieldType())) {
+                try {
+                    final long val = Long.parseLong(value);
+                    field = FieldFactory.create(indexField, val);
+                } catch (final Exception e) {
+                    LOGGER.trace(e.getMessage(), e);
+                }
+            } else if (IndexFieldType.FLOAT_FIELD.equals(indexField.getFieldType())) {
+                try {
+                    final float val = Float.parseFloat(value);
+                    field = FieldFactory.createFloat(indexField, val);
+                } catch (final Exception e) {
+                    LOGGER.trace(e.getMessage(), e);
+                }
+            } else if (IndexFieldType.DOUBLE_FIELD.equals(indexField.getFieldType())) {
+                try {
+                    final double val = Double.parseDouble(value);
+                    field = FieldFactory.createDouble(indexField, val);
+                } catch (final Exception e) {
+                    LOGGER.trace(e.getMessage(), e);
+                }
             } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
                 try {
                     final long val = DateUtil.parseUnknownString(value);
                     field = FieldFactory.create(indexField, val);
                 } catch (final RuntimeException e) {
+                    LOGGER.trace(e.getMessage(), e);
+                }
+            } else if (indexField.getFieldType().isNumeric()) {
+                try {
+                    final long val = Long.parseLong(value);
+                    field = FieldFactory.create(indexField, val);
+                } catch (final Exception e) {
                     LOGGER.trace(e.getMessage(), e);
                 }
             } else {

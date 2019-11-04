@@ -53,8 +53,10 @@ public final class IndexDataSourceFieldUtil {
                 return new TextField(indexField.getFieldName(), indexField.isIndexed(), conditions);
             case ID:
                 return new IdField(indexField.getFieldName(), indexField.isIndexed(), conditions);
-            case NUMERIC_FIELD:
-                return new NumberField(indexField.getFieldName(), indexField.isIndexed(), conditions);
+            default:
+                if (indexField.getFieldType().isNumeric()) {
+                    return .NUMERIC_FIELD;
+                }
         }
 
         return null;

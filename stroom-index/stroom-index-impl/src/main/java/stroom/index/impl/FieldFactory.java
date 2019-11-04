@@ -16,13 +16,28 @@
 
 package stroom.index.impl;
 
+import org.apache.lucene.document.DoubleField;
 import org.apache.lucene.document.Field;
+import org.apache.lucene.document.FloatField;
+import org.apache.lucene.document.IntField;
 import org.apache.lucene.document.LongField;
 import stroom.index.shared.IndexField;
 
 public class FieldFactory {
     public static LongField create(final IndexField indexField, final long initialValue) {
         return new LongField(indexField.getFieldName(), initialValue, FieldTypeFactory.create(indexField));
+    }
+
+    public static DoubleField createDouble(final IndexField indexField, final double initialValue) {
+        return new DoubleField(indexField.getFieldName(), initialValue, FieldTypeFactory.create(indexField));
+    }
+
+    public static IntField createInt(final IndexField indexField, final int initialValue) {
+        return new IntField(indexField.getFieldName(), initialValue, FieldTypeFactory.create(indexField));
+    }
+
+    public static FloatField createFloat(final IndexField indexField, final float initialValue) {
+        return new FloatField(indexField.getFieldName(), initialValue, FieldTypeFactory.create(indexField));
     }
 
     public static Field create(final IndexField indexField, final String initialValue) {

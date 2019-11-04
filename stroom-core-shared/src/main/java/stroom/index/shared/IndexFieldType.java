@@ -20,9 +20,13 @@ import stroom.docref.HasDisplayValue;
 
 public enum IndexFieldType implements HasDisplayValue {
     FIELD("Text", false),
-    NUMERIC_FIELD("Number", true),
+    ID("Id", true),
+    INT_FIELD("Int", true),
+    LONG_FIELD("Long", true),
+    FLOAT_FIELD("Float", true),
+    DOUBLE_FIELD("Double", true),
     DATE_FIELD("Date", false),
-    ID("Id", true);
+    NUMERIC_FIELD("Number", true);
 
     private final String displayValue;
     private final boolean numeric;

@@ -71,10 +71,22 @@ public final class FieldTypeFactory {
         if (IndexFieldType.ID.equals(indexField.getFieldType())) {
             fieldType.setNumericPrecisionStep(Integer.MAX_VALUE);
             fieldType.setNumericType(NumericType.LONG);
-        } else if (IndexFieldType.NUMERIC_FIELD.equals(indexField.getFieldType())) {
+        } else if (IndexFieldType.INT_FIELD.equals(indexField.getFieldType())) {
+            fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
+            fieldType.setNumericType(NumericType.INT);
+        } else if (IndexFieldType.LONG_FIELD.equals(indexField.getFieldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.LONG);
+        } else if (IndexFieldType.FLOAT_FIELD.equals(indexField.getFieldType())) {
+            fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
+            fieldType.setNumericType(NumericType.FLOAT);
+        } else if (IndexFieldType.DOUBLE_FIELD.equals(indexField.getFieldType())) {
+            fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
+            fieldType.setNumericType(NumericType.DOUBLE);
         } else if (IndexFieldType.DATE_FIELD.equals(indexField.getFieldType())) {
+            fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
+            fieldType.setNumericType(NumericType.LONG);
+        } else if (IndexFieldType.NUMERIC_FIELD.equals(indexField.getFieldType())) {
             fieldType.setNumericPrecisionStep(DEFAULT_PRECISION_STEP);
             fieldType.setNumericType(NumericType.LONG);
         }
