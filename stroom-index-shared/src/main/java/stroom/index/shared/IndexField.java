@@ -102,7 +102,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
 
     public static IndexField createField(final String fieldName, final AnalyzerType analyzerType,
                                          final boolean caseSensitive, final boolean stored, final boolean indexed, final boolean termPositions) {
-        return new IndexField(IndexFieldType.TEXT_FIELD, fieldName, analyzerType, caseSensitive, stored, indexed,
+        return new IndexField(IndexFieldType.FIELD, fieldName, analyzerType, caseSensitive, stored, indexed,
                 termPositions, null);
     }
 
@@ -112,7 +112,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     }
 
     public static IndexField createIdField(final String fieldName) {
-        return new IndexField(IndexFieldType.ID_FIELD, fieldName, AnalyzerType.KEYWORD, false, true, true, false, null);
+        return new IndexField(IndexFieldType.ID, fieldName, AnalyzerType.KEYWORD, false, true, true, false, null);
     }
 
     public static IndexField createDateField(final String fieldName) {
@@ -135,7 +135,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
 
     public IndexFieldType getFieldType() {
         if (fieldType == null) {
-            return IndexFieldType.TEXT_FIELD;
+            return IndexFieldType.FIELD;
         }
 
         return fieldType;
@@ -252,13 +252,13 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         if (fieldType != null) {
             // First make sure the operator is set.
             switch (fieldType) {
-                case ID_FIELD:
+                case ID:
                     conditions.add(Condition.EQUALS);
                     conditions.add(Condition.IN);
                     conditions.add(Condition.IN_DICTIONARY);
                     break;
 
-                case TEXT_FIELD:
+                case FIELD:
                     conditions.add(Condition.EQUALS);
                     conditions.add(Condition.IN);
                     conditions.add(Condition.IN_DICTIONARY);
