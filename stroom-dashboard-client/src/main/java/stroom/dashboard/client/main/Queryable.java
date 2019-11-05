@@ -18,4 +18,6 @@ package stroom.dashboard.client.main;
 
 public interface Queryable {
     void onQuery(String params, String queryInfo);
+
+    void setQueryOnOpen(boolean queryOnOpen);
 }
