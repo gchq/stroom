@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.1-beta.10] - 2019-11-05
+
 * Issue **#1243** : Dashboard visualisations now link with similar functions available to dashboard tables, e.g. `link()`, `dashboard()`, `annotation()`, `stepping()`, `data()`.
 
 * Issue **#1316** : JSONParser now includes various parse options including handling comments. 
@@ -1976,7 +1978,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.9...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.10...6.1
+[v6.1-beta.10]: https://github.com/gchq/stroom/compare/v6.1-beta.9...v6.1-beta.10
 [v6.1-beta.9]: https://github.com/gchq/stroom/compare/v6.1-beta.8...v6.1-beta.9
 [v6.1-beta.8]: https://github.com/gchq/stroom/compare/v6.1-beta.7...v6.1-beta.8
 [v6.1-beta.7]: https://github.com/gchq/stroom/compare/v6.1-beta.6...v6.1-beta.7
