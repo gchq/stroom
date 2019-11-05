@@ -1,7 +1,7 @@
 package stroom.kafka.pipeline;
 
 import stroom.docref.DocRef;
-import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ProcessException;

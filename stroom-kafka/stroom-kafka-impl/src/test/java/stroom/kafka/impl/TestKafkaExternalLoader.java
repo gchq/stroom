@@ -12,10 +12,10 @@ import stroom.kafka.pipeline.KafkaProducer;
 import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.kafka.pipeline.KafkaProducerRecord;
 import stroom.kafka.pipeline.KafkaRecordMetaData;
-import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.kafkaConfig.shared.KafkaConfigDoc;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
@@ -35,7 +35,7 @@ class TestKafkaExternalLoader {
     @BeforeEach
     void setup() {
         final KafkaConfigDoc kafkaConfigDoc = new KafkaConfigDoc();
-        final Map<String, Object> properties = kafkaConfigDoc.getProperties();
+        final Properties properties = KafkaProducerImpl.getProperties(kafkaConfigDoc);
         properties.put("default.connector.version", "2.2.1");
         properties.put("stroom.connectors.kafka.default.bootstrap.servers", "localhost:9092");
 

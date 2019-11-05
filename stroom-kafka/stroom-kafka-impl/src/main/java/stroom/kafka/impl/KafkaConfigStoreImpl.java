@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,9 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
-
 package stroom.kafka.impl;
 
 import stroom.docref.DocRef;
@@ -25,7 +23,7 @@ import stroom.docstore.api.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.util.shared.Message;
 
 import javax.inject.Inject;
@@ -83,7 +81,7 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
 
     @Override
     public DocumentType getDocumentType() {
-        return new DocumentType(5, KafkaConfigDoc.DOCUMENT_TYPE, "Kafka Configuration");
+        return new DocumentType(15, KafkaConfigDoc.DOCUMENT_TYPE, "Kafka Configuration");
     }
 
     ////////////////////////////////////////////////////////////////////////

@@ -10,6 +10,7 @@ dependencies {
     compile libs.jackson_annotations
     compile libs.javax_inject;
     compile libs.jaxb_api
+    compile libs.slf4j_api
     
     testRuntimeOnly libs.javax_activation
     testRuntimeOnly libs.jaxb_runtime

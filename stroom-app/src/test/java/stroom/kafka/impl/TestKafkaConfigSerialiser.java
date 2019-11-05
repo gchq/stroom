@@ -15,12 +15,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.docstore.impl.Persistence;
-import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Map;
+import java.util.Properties;
 
 @ExtendWith(MockitoExtension.class)
 public class TestKafkaConfigSerialiser {
@@ -57,14 +58,6 @@ public class TestKafkaConfigSerialiser {
         KafkaConfigDoc kafkaConfigDoc = new KafkaConfigDoc();
         kafkaConfigDoc.setDescription("My description");
 
-        kafkaConfigDoc.addProperty("Integer", 123);
-        kafkaConfigDoc.addProperty("Short", (short)123);
-        kafkaConfigDoc.addProperty("Long", 123L);
-        kafkaConfigDoc.addProperty("BooleanTrue", true);
-        kafkaConfigDoc.addProperty("BooleanFalse", false);
-        kafkaConfigDoc.addProperty("Class1", Object.class);
-        kafkaConfigDoc.addProperty("Class2", GoodClass.class);
-        kafkaConfigDoc.addProperty("String", "A string");
 
         final Map<String, byte[]> data = serialiser.write(kafkaConfigDoc);
 
@@ -77,9 +70,10 @@ public class TestKafkaConfigSerialiser {
         Assertions.assertThat(kafkaConfigDoc)
                 .isEqualTo(kafkaConfigDoc2);
 
-        Assertions.assertThat(kafkaConfigDoc2.getProperties().get("Class2"))
+        Properties props2 = KafkaProducerImpl.getProperties(kafkaConfigDoc2);
+        Assertions.assertThat(props2.get("Class2"))
                 .isInstanceOf(Class.class);
-        Assertions.assertThat(((Class)kafkaConfigDoc2.getProperties().get("Class2")).getName())
+        Assertions.assertThat(((Class)props2.get("Class2")).getName())
                 .isEqualTo(GoodClass.class.getName());
     }
 
@@ -99,9 +93,10 @@ public class TestKafkaConfigSerialiser {
         final Map<String, byte[]> data = Map.of("meta", Bytes.toBytes(json));
         final KafkaConfigDoc kafkaConfigDoc = serialiser.read(data);
 
-        Assertions.assertThat(kafkaConfigDoc.getProperties().get("aGoodClass"))
+        Properties props = KafkaProducerImpl.getProperties(kafkaConfigDoc);
+        Assertions.assertThat(props.get("aGoodClass"))
                 .isInstanceOf(Class.class);
-        Assertions.assertThat(((Class)kafkaConfigDoc.getProperties().get("aGoodClass")).getName())
+        Assertions.assertThat(((Class)props.get("aGoodClass")).getName())
                 .isEqualTo(GoodClass.class.getName());
     }
 

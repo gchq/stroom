@@ -12,17 +12,16 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.kafka.impl;
+package stroom.kafkaConfig.client.gin;
 
-import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentStore;
-import stroom.kafkaConfig.shared.KafkaConfigDoc;
+import com.google.gwt.inject.client.AsyncProvider;
+import stroom.kafkaConfig.client.KafkaConfigPlugin;
+import stroom.kafkaConfig.client.presenter.KafkaConfigPresenter;
 
-import java.util.List;
+public interface KafkaConfigGinjector {
+    AsyncProvider<KafkaConfigPlugin> getKafkaConfigPlugin();
 
-public interface KafkaConfigStore extends DocumentStore<KafkaConfigDoc> {
-    List<DocRef> list();
+    AsyncProvider<KafkaConfigPresenter> getKafkaConfigPresenter();
 }

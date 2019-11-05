@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
-import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;

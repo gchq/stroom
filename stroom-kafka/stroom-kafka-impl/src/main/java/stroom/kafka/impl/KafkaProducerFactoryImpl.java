@@ -1,3 +1,18 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package stroom.kafka.impl;
 
 import org.slf4j.Logger;
@@ -5,7 +20,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.kafka.pipeline.KafkaProducer;
 import stroom.kafka.pipeline.KafkaProducerFactory;
-import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.kafkaConfig.shared.KafkaConfigDoc;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -14,8 +29,6 @@ import java.util.Optional;
 @Singleton
 class KafkaProducerFactoryImpl implements KafkaProducerFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaProducerFactoryImpl.class);
-
-    private static final String VERSION = "2.1.1";
 
     private final KafkaConfigStore kafkaConfigStore;
 
@@ -31,12 +44,8 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory {
         }
 
         final KafkaConfigDoc kafkaConfigDoc = kafkaConfigStore.readDocument(kafkaConfigRef);
-        if (VERSION.equals(kafkaConfigDoc.getKafkaVersion())) {
-            return Optional.of(new KafkaProducerImpl(kafkaConfigDoc));
-        } else {
-            LOGGER.debug("Requested version [{}] doesn't match my version [{}]", kafkaConfigDoc.getKafkaVersion(), VERSION);
-        }
-        return Optional.empty();
+
+        return Optional.of(new KafkaProducerImpl(kafkaConfigDoc));
     }
 
     void shutdown() {

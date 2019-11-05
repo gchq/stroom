@@ -7,7 +7,7 @@ import stroom.docref.DocRef;
 import stroom.kafka.pipeline.KafkaProducer;
 import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.kafka.pipeline.KafkaProducerRecord;
-import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.impl.InternalStatisticsService;
 import stroom.stats.schema.v4.ObjectFactory;

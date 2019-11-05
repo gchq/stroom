@@ -20,7 +20,7 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;

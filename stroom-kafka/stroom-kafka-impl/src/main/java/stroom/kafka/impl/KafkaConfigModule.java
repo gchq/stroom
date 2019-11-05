@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,14 @@
 package stroom.kafka.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.kafka.pipeline.KafkaProducerFactory;
+import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.util.guice.GuiceUtil;
 
-public class KafkaModule extends AbstractModule {
+public class KafkaConfigModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(KafkaProducerFactory.class).to(KafkaProducerFactoryImpl.class);
@@ -33,5 +35,8 @@ public class KafkaModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(KafkaConfigStoreImpl.class);
+
+        DocumentActionHandlerBinder.create(binder())
+                .bind(KafkaConfigDoc.DOCUMENT_TYPE, KafkaConfigStoreImpl.class);
     }
 }

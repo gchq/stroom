@@ -1,3 +1,18 @@
+/*
+ * Copyright 2019 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package stroom.kafka.impl;
 
 import org.apache.kafka.clients.producer.Producer;
@@ -8,23 +23,22 @@ import org.slf4j.LoggerFactory;
 import stroom.kafka.pipeline.KafkaProducer;
 import stroom.kafka.pipeline.KafkaProducerRecord;
 import stroom.kafka.pipeline.KafkaRecordMetaData;
-import stroom.kafka.shared.KafkaConfigDoc;
+import stroom.kafkaConfig.shared.KafkaConfigDoc;
 
+import java.io.IOException;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /**
- * A singleton responsible for sending records to Kafka.
- * <p>
- * Requires configuration:
- * <<code>
- * stroom.kafka.bootstrap.servers=<host1>:<port>,<host2>:<port>,etc
- * </code>
+ * Responsible for sending records to Kafka.
+ *
+ * Config is defined within KafkaConfigDoc document
  */
 class KafkaProducerImpl implements KafkaProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaProducerImpl.class);
@@ -34,22 +48,24 @@ class KafkaProducerImpl implements KafkaProducer {
 
     KafkaProducerImpl(final KafkaConfigDoc kafkaConfigDoc) {
         if (kafkaConfigDoc == null) {
+            LOGGER.error("KafkaProducer initialised with null config");
             throw new NullPointerException("Null configuration");
         }
 
-        final Object object = kafkaConfigDoc.getProperties().get(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG);
+        Properties props = getProperties(kafkaConfigDoc);
+        final Object object = props.get(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG);
         final String bootstrapServers = (object != null) ? object.toString() : null;
 
         if (bootstrapServers == null || bootstrapServers.isEmpty()) {
             final String msg = String.format(
-                    "Stroom is not properly configured to connect to Kafka: %s is required.",
+                    "Invalid kafka configuration. Property %s is required.",
+                    ProducerConfig.BOOTSTRAP_SERVERS_CONFIG);
+            LOGGER.error("KafkaProducer initialised with invalid config.  Missing props include ",
                     ProducerConfig.BOOTSTRAP_SERVERS_CONFIG);
             throw new RuntimeException(msg);
         }
 
         LOGGER.info("Initialising kafka producer for {}", bootstrapServers);
-        Map<String, Object> props = kafkaConfigDoc.getProperties();
-
         LOGGER.info("Creating Kafka Producer with Props: " + props);
 
         final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
@@ -156,5 +172,16 @@ class KafkaProducerImpl implements KafkaProducer {
         } catch (final RuntimeException e) {
             LOGGER.error("Error closing kafka producer", e);
         }
+    }
+
+    public static Properties getProperties(KafkaConfigDoc doc){
+        Properties properties = new Properties();
+        StringReader reader = new StringReader(doc.getData());
+        try {
+            properties.load(reader);
+        }catch (IOException ex){
+            LOGGER.error("Unable to read kafka properties", ex);
+        }
+        return properties;
     }
 }
