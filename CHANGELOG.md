@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1316** : JSONParser now includes various parse options including handling comments. 
+
 * Issue **#48** : Added option to hide/show dashboard table columns.
 
 * Issue **#1315** : Improved health check for missing API key.

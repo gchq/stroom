@@ -25,14 +25,19 @@ import stroom.xml.converter.ParserFactory;
 @Component
 @Scope(StroomScope.PROTOTYPE)
 public class JSONParserFactory implements ParserFactory {
+    private JSONFactoryConfig config = new JSONFactoryConfig();
     private boolean addRootObject = true;
 
     @Override
     public XMLReader getParser() {
-        return new JSONParser(addRootObject);
+        return new JSONParser(config, addRootObject);
     }
 
     public void setAddRootObject(final boolean addRootObject) {
         this.addRootObject = addRootObject;
+    }
+
+    public void setConfig(final JSONFactoryConfig config) {
+        this.config = config;
     }
 }
