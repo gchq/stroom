@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0.18] - 2019-11-05
+
 * The auth service now supports the use of HTTPS without certificate verification and adds additional logging.
 
 * Issue **gchq/stroom-auth#157** : Automatically refresh user's API key when it expires.
@@ -1955,7 +1957,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.17...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.18...6.0
+[v6.0.18]: https://github.com/gchq/stroom/compare/v6.0.17...v6.0.18
 [v6.0.17]: https://github.com/gchq/stroom/compare/v6.0.16...v6.0.17
 [v6.0.16]: https://github.com/gchq/stroom/compare/v6.0.15...v6.0.16
 [v6.0.15]: https://github.com/gchq/stroom/compare/v6.0.14...v6.0.15
