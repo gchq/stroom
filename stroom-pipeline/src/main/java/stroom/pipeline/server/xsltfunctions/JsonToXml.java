@@ -31,6 +31,7 @@ import org.xml.sax.SAXException;
 import stroom.util.shared.Severity;
 import stroom.util.spring.StroomScope;
 import stroom.xml.converter.json.JSONParser;
+import stroom.xml.converter.json.JSONFactoryConfig;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -69,7 +70,7 @@ class JsonToXml extends StroomExtensionFunctionCall {
         contentHandler.setPipelineConfiguration(pipe);
         contentHandler.setReceiver(builder);
 
-        final JSONParser parser = new JSONParser(false);
+        final JSONParser parser = new JSONParser(new JSONFactoryConfig(), false);
         parser.setContentHandler(contentHandler);
 
         parser.parse(new InputSource(new StringReader(json)));

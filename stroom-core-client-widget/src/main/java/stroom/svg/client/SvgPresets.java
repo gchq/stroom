@@ -85,6 +85,9 @@ public final class SvgPresets {
     public static final SvgPreset FAST_FORWARD_GREEN = new SvgPreset("images/fast-forward-green.svg", "Last", false);
     public static final SvgPreset REFRESH_GREEN = new SvgPreset("images/refresh-green.svg", "Refresh", true);
 
+    public static final SvgPreset SHOW = new SvgPreset("images/show.svg", "Show", true);
+    public static final SvgPreset HIDE = new SvgPreset("images/hide.svg", "Hide", true);
+
     private SvgPresets() {
         // Utility class.
     }

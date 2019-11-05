@@ -22,6 +22,7 @@ import com.google.gwt.http.client.URL;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
@@ -40,6 +41,7 @@ import java.util.Map;
 
 public class DashboardPlugin extends EntityPlugin<Dashboard> {
     private final Provider<DashboardPresenter> editorProvider;
+    private String currentUuid;
 
     @Inject
     public DashboardPlugin(final EventBus eventBus,
@@ -53,11 +55,24 @@ public class DashboardPlugin extends EntityPlugin<Dashboard> {
         registerHandler(eventBus.addHandler(ShowDashboardEvent.getType(), event -> openParameterisedDashboard(event.getHref())));
     }
 
+    @Override
+    public MyPresenterWidget<?> open(final DocRef docRef, final boolean forceOpen) {
+        if (docRef.getType().equals(getType())) {
+            currentUuid = docRef.getUuid();
+        }
+        return super.open(docRef, forceOpen);
+    }
+
     private void openParameterisedDashboard(final String href) {
         final Map<String, String> map = buildListParamMap(href);
         final String title = map.get("title");
-        final String uuid = map.get("uuid");
+        String uuid = map.get("uuid");
         final String params = map.get("params");
+        final boolean queryOnOpen = !Boolean.FALSE.toString().equalsIgnoreCase(map.get("queryOnOpen"));
+
+        if (uuid == null || uuid.trim().length() == 0) {
+            uuid = currentUuid;
+        }
 
         if (uuid == null || uuid.trim().length() == 0) {
             AlertEvent.fireError(this, "No dashboard UUID has been provided for link", null);
@@ -72,6 +87,7 @@ public class DashboardPlugin extends EntityPlugin<Dashboard> {
             final DashboardPresenter presenter = (DashboardPresenter) createEditor();
             presenter.setParams(params);
             presenter.setCustomTitle(title);
+            presenter.setQueryOnOpen(queryOnOpen);
 
             //        // Register the tab as being open.
             //        documentToTabDataMap.put(docRef, tabData);

@@ -551,11 +551,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         updateColumns();
     }
 
-    private void removeHiddenFields() {
-        tableSettings.getFields().removeIf(field -> !field.isVisible());
+    private void removeSpecialFields() {
+        tableSettings.getFields().removeIf(Field::isSpecial);
     }
 
-    private int ensureHiddenField(final String indexFieldName) {
+    private int ensureSpecialField(final String indexFieldName) {
         // Now add new hidden field.
         final DataSourceFieldsMap dataSourceFieldsMap = getIndexFieldsMap();
         if (dataSourceFieldsMap != null) {
@@ -564,6 +564,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 final Field field = new Field(indexFieldName);
                 field.setExpression(ParamUtil.makeParam(indexFieldName));
                 field.setVisible(false);
+                field.setSpecial(true);
                 tableSettings.addField(field);
             }
         }
@@ -583,13 +584,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     void updateColumns() {
         final List<Field> fields = tableSettings.getFields();
 
-        // First remove existing hidden fields.
-        removeHiddenFields();
+        // First remove existing special fields.
+        removeSpecialFields();
 
-        // Now make sure hidden fields exist for stream id and event id and get
+        // Now make sure special fields exist for stream id and event id and get
         // their result index.
-        streamIdIndex = ensureHiddenField(IndexConstants.STREAM_ID);
-        eventIdIndex = ensureHiddenField(IndexConstants.EVENT_ID);
+        streamIdIndex = ensureSpecialField(IndexConstants.STREAM_ID);
+        eventIdIndex = ensureSpecialField(IndexConstants.EVENT_ID);
 
         // Remove existing columns.
         for (final Column<Row, ?> column : existingColumns) {

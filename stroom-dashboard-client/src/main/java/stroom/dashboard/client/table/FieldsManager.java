@@ -24,6 +24,7 @@ import com.google.gwt.resources.client.CssResource;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Provider;
+import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Sort;
 import stroom.dashboard.shared.Sort.SortDirection;
@@ -280,19 +281,50 @@ public class FieldsManager implements HeadingListener {
     }
 
     private void deleteField(final Field field) {
-        tableSettings.removeField(field);
+        if (getVisibleFieldCount() <= 1) {
+            AlertEvent.fireError(tablePresenter, "You cannot remove or hide all fields", null);
+        } else {
+            tableSettings.removeField(field);
+            tablePresenter.setDirty(true);
+            tablePresenter.updateColumns();
+            tablePresenter.clearAndRefresh();
+        }
+    }
+
+    private void showField(final Field field) {
+        field.setVisible(true);
         tablePresenter.setDirty(true);
         tablePresenter.updateColumns();
         tablePresenter.clearAndRefresh();
     }
 
+    private void hideField(final Field field) {
+        if (getVisibleFieldCount() <= 1) {
+            AlertEvent.fireError(tablePresenter, "You cannot remove or hide all fields", null);
+        } else {
+            field.setVisible(false);
+            tablePresenter.setDirty(true);
+            tablePresenter.updateColumns();
+            tablePresenter.clearAndRefresh();
+        }
+    }
+
+    private long getVisibleFieldCount() {
+        final List<Field> fields = tableSettings.getFields();
+        return fields.stream().filter(Field::isVisible).count();
+    }
+
     private Field getField(final int colIndex) {
         final List<Field> fields = tableSettings.getFields();
-        final int index = colIndex - fieldsStartIndex;
-        if (index >= 0 && index < fields.size()) {
-            return fields.get(index);
+        int index = fieldsStartIndex;
+        for (Field field : fields) {
+            if (field.isVisible()) {
+                if (index == colIndex) {
+                    return field;
+                }
+                index++;
+            }
         }
-
         return null;
     }
 
@@ -316,6 +348,15 @@ public class FieldsManager implements HeadingListener {
         menuItems.add(createFormatMenu(field, highlights));
         // Add filter menu item.
         menuItems.add(createFilterMenu(field, highlights));
+
+        // Create hide menu.
+        menuItems.add(createHideMenu(field, highlights));
+
+        // Create show menu.
+        Item showMenu = createShowMenu(field, highlights);
+        if (showMenu != null) {
+            menuItems.add(showMenu);
+        }
 
         // Create remove menu.
         menuItems.add(createRemoveMenu(field, highlights));
@@ -482,9 +523,31 @@ public class FieldsManager implements HeadingListener {
         return item;
     }
 
+    private Item createHideMenu(final Field field, final Set<Item> highlights) {
+        return new IconMenuItem(6, SvgPresets.HIDE, SvgPresets.HIDE, "Hide", null, true, () -> hideField(field));
+    }
+
+    private Item createShowMenu(final Field field, final Set<Item> highlights) {
+        final List<Item> menuItems = new ArrayList<>();
+
+        int i = 0;
+        for (final Field field2 : tableSettings.getFields()) {
+            if (!field2.isVisible() && !field2.isSpecial()) {
+                final Item item2 = new IconMenuItem(i++, SvgPresets.SHOW, SvgPresets.SHOW, field2.getName(), null, true,
+                        () -> showField(field2));
+                menuItems.add(item2);
+            }
+        }
+
+        if (menuItems.size() == 0) {
+            return null;
+        }
+
+        return new SimpleParentMenuItem(7, SvgPresets.SHOW, SvgPresets.SHOW, "Show", null, true, menuItems);
+    }
+
     private Item createRemoveMenu(final Field field, final Set<Item> highlights) {
-        final Item item = new IconMenuItem(6, SvgPresets.REMOVE, SvgPresets.REMOVE, "Remove", null, true, () -> deleteField(field));
-        return item;
+        return new IconMenuItem(8, SvgPresets.DELETE, SvgPresets.DELETE, "Remove", null, true, () -> deleteField(field));
     }
 
     public interface Style extends CssResource {

@@ -18,6 +18,7 @@ var stroomParent;
 var stroomFrameId;
 var stroomOrigin;
 
+// DEPRECATED - HERE FOR BACKWARD COMPATIBILITY
 // Send a message to Stroom to open a link
 // e.g. `stroomLink('type=Dashboard&uuid=<TARGET_DASHBOARD_UUID>&title=title&params=userId%3Duser2', 'DASHBOARD')`
 var stroomLink = function(href, target) {
@@ -27,14 +28,91 @@ var stroomLink = function(href, target) {
         var obj = {
           frameId : stroomFrameId,
           functionName : 'link',
-          href : String(href),
-          target : String(target),
+          href : String(encodeURI(href)),
+          target : String(encodeURI(target)),
         };
 
         var message = JSON.stringify(obj);
         stroomParent.postMessage(message, stroomOrigin);
     }
 }
+
+!function() {
+    var stroom = {};
+
+    function addUrlParam(url, param, value) {
+        if (param && value) {
+            if (url.length == 0) {
+                url += "?";
+            } else {
+                url += "&";
+            }
+            url += param + "=" + encodeURI(value);
+        }
+        return url;
+    }
+
+    // Send a message to Stroom to open a link
+    // e.g. `stroom.link('type=Dashboard&uuid=<TARGET_DASHBOARD_UUID>&title=title&params=userId%3Duser2', 'DASHBOARD')`
+    stroom.link = function(href, target) {
+        target = (typeof target === 'undefined') ? 'browser' : target;
+
+        if (stroomParent && stroomFrameId && stroomOrigin) {
+            var obj = {
+              frameId : stroomFrameId,
+              functionName : 'link',
+              href : String(encodeURI(href)),
+              target : String(encodeURI(target)),
+            };
+
+            var message = JSON.stringify(obj);
+            stroomParent.postMessage(message, stroomOrigin);
+        }
+    };
+
+    stroom.dashboard = function(uuid, params, queryOnOpen) {
+       var url = "";
+       url = addUrlParam(url, "uuid", uuid);
+       url = addUrlParam(url, "params", params);
+       url = addUrlParam(url, "queryOnOpen", queryOnOpen);
+       stroomLink(url, "dashboard");
+    };
+
+    stroom.annotation = function(annotationId, streamId, eventId, title, subject, status, assignedTo, comment) {
+       var url = "";
+       url = addUrlParam(url, "annotationId", annotationId);
+       url = addUrlParam(url, "streamId", streamId);
+       url = addUrlParam(url, "eventId", eventId);
+       url = addUrlParam(url, "title", title);
+       url = addUrlParam(url, "subject", subject);
+       url = addUrlParam(url, "status", status);
+       url = addUrlParam(url, "assignedTo", assignedTo);
+       url = addUrlParam(url, "comment", comment);
+       stroomLink(url, "annotation");
+    };
+
+    stroom.stepping = function(id, partNo, recordNo) {
+       var url = "";
+       url = addUrlParam(url, "id", id);
+       url = addUrlParam(url, "partNo", partNo);
+       url = addUrlParam(url, "recordNo", recordNo);
+       stroomLink(url, "stepping");
+    };
+
+    stroom.data = function(id, partNo, recordNo, lineFrom, colFrom, lineTo, colTo) {
+       var url = "";
+       url = addUrlParam(url, "id", id);
+       url = addUrlParam(url, "partNo", partNo);
+       url = addUrlParam(url, "recordNo", recordNo);
+       url = addUrlParam(url, "lineFrom", lineFrom);
+       url = addUrlParam(url, "colFrom", colFrom);
+       url = addUrlParam(url, "lineTo", lineTo);
+       url = addUrlParam(url, "colTo", colTo);
+       stroomLink(url, "data");
+    };
+
+    this.stroom = stroom;
+}();
 
 /**
  * AN OBJECT TO SEND CALLBACK MESSAGES TO Stroom

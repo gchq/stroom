@@ -18,7 +18,6 @@ package stroom.dashboard.client.main;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style;
-import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.view.client.SelectionChangeEvent;
@@ -92,6 +91,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private String currentParams;
     private String lastUsedQueryInfo;
     private boolean embedded;
+    private boolean queryOnOpen;
 
     @Inject
     public DashboardPresenter(final EventBus eventBus,
@@ -187,6 +187,10 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         getView().setEmbedded(embedded);
     }
 
+    public void setQueryOnOpen(final boolean queryOnOpen) {
+        this.queryOnOpen = queryOnOpen;
+    }
+
     @Override
     protected void onRead(final DocRef docRef, final Dashboard dashboard) {
         this.docRef = docRef;
@@ -276,6 +280,13 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             // }
 
             layoutPresenter.setLayoutData(layoutData);
+
+            // Tell all queryable components whether we want them to query on open.
+            for (final Component component : components) {
+                if (component instanceof Queryable) {
+                    ((Queryable) component).setQueryOnOpen(queryOnOpen);
+                }
+            }
         }
     }
 

@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1243** : Dashboard visualisations now link with similar functions available to dashboard tables, e.g. `link()`, `dashboard()`, `annotation()`, `stepping()`, `data()`.
+
+* Issue **#1316** : JSONParser now includes various parse options including handling comments. 
+
+* Issue **#48** : Added option to hide/show dashboard table columns.
+
+* Issue **#1315** : Improved health check for missing API key.
+
 * Updated stroom expression to v1.5.4 and added new field types. 
 
 * Issue **#1315** : Improved health check for missing API key.
