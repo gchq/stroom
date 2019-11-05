@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **gchq/stroom-auth#157** : Automatically refresh user's API key when it expires.
 
+## [v6.0.17] - 2019-11-04
+
+* Issue **#1315** : Improved health check for missing API key.
+
+* Issue **#1314** : Fixed NPE thrown when logging caused when viewing docs that can't be found.
+
+
 ## [v6.0.16] - 2019-11-01
 
 * Issue **#1313** : Suggestion boxes now make suggestions immediately before the user even starts typing.
@@ -1946,7 +1953,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.16...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.17...6.0
+[v6.0.17]: https://github.com/gchq/stroom/compare/v6.0.16...v6.0.17
 [v6.0.16]: https://github.com/gchq/stroom/compare/v6.0.15...v6.0.16
 [v6.0.15]: https://github.com/gchq/stroom/compare/v6.0.14...v6.0.15
 [v6.0.14]: https://github.com/gchq/stroom/compare/v6.0.13...v6.0.14
