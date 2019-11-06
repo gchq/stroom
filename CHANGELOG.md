@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1321** : Make path relative in stroom distribution .zip.sha256 hash file.
+
 ## [v6.0.18] - 2019-11-05
 
 * The auth service now supports the use of HTTPS without certificate verification and adds additional logging.
