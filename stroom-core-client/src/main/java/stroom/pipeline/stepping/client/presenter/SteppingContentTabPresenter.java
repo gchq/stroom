@@ -25,6 +25,8 @@ import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.core.client.ContentManager.CloseCallback;
 import stroom.core.client.ContentManager.CloseHandler;
+import stroom.core.client.HasSave;
+import stroom.core.client.HasSaveRegistry;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -38,18 +40,23 @@ import stroom.svg.client.SvgIcon;
 import stroom.util.client.ImageUtil;
 
 public class SteppingContentTabPresenter extends ContentTabPresenter<ClassificationWrapperView>
-        implements HasDirtyHandlers, CloseHandler, ClassificationUiHandlers {
+        implements HasSave, HasDirtyHandlers, CloseHandler, ClassificationUiHandlers {
     private final SteppingPresenter steppingPresenter;
+    private final HasSaveRegistry hasSaveRegistry;
     private DocRef pipeline;
     private boolean dirty;
     private boolean reading;
     private String lastLabel;
 
     @Inject
-    public SteppingContentTabPresenter(final EventBus eventBus, final ClassificationWrapperView view,
-                                       final SteppingPresenter steppingPresenter) {
+    public SteppingContentTabPresenter(final EventBus eventBus,
+                                       final ClassificationWrapperView view,
+                                       final SteppingPresenter steppingPresenter,
+                                       final HasSaveRegistry hasSaveRegistry) {
         super(eventBus, view);
         this.steppingPresenter = steppingPresenter;
+        this.hasSaveRegistry = hasSaveRegistry;
+        hasSaveRegistry.register(this);
 
         steppingPresenter.setClassificationUiHandlers(this);
         setInSlot(ClassificationWrapperView.CONTENT, steppingPresenter);
@@ -75,11 +82,13 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
                         callback.closeTab(result);
                         if (result) {
                             unbind();
+                            hasSaveRegistry.unregister(SteppingContentTabPresenter.this);
                         }
                     });
         } else {
             callback.closeTab(true);
             unbind();
+            hasSaveRegistry.unregister(SteppingContentTabPresenter.this);
         }
     }
 
@@ -99,6 +108,12 @@ public class SteppingContentTabPresenter extends ContentTabPresenter<Classificat
         }
     }
 
+    @Override
+    public void save() {
+        steppingPresenter.save();
+    }
+
+    @Override
     public boolean isDirty() {
         return dirty;
     }

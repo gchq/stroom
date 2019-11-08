@@ -89,14 +89,14 @@ public class DashboardViewImpl extends ViewWithUiHandlers<DashboardUiHandlers> i
     public void onParamsKeyDown(final KeyDownEvent event) {
         switch (event.getNativeKeyCode()) {
             case KeyCodes.KEY_ENTER:
-                onParamsChanged();
-                break;
             case KeyCodes.KEY_TAB:
-                onParamsChanged();
-                break;
             case KeyCodes.KEY_ESCAPE:
                 onParamsChanged();
                 break;
+            default:
+                if (getUiHandlers() != null) {
+                    getUiHandlers().onDirty();
+                }
         }
     }
 

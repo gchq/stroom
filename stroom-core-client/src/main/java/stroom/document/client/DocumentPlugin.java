@@ -25,6 +25,7 @@ import stroom.content.client.event.SelectContentTabEvent;
 import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseCallback;
 import stroom.core.client.ContentManager.CloseHandler;
+import stroom.core.client.HasSave;
 import stroom.core.client.presenter.Plugin;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
@@ -44,7 +45,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
+public abstract class DocumentPlugin<D extends SharedObject> extends Plugin implements HasSave {
     private final ClientDispatchAsync dispatcher;
     private final Map<DocRef, DocumentTabData> documentToTabDataMap = new HashMap<>();
     private final Map<DocumentTabData, DocRef> tabDataToDocumentMap = new HashMap<>();
@@ -219,16 +220,15 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin {
         }
     }
 
-    /**
-     * 7. This method will save an document as a copy with a different name.
-     */
-    void saveAll() {
+    @Override
+    public void save() {
         for (final DocumentTabData tabData : tabDataToDocumentMap.keySet()) {
             save(tabData);
         }
     }
 
-    public boolean hasDirtyDocuments() {
+    @Override
+    public boolean isDirty() {
         for (final DocumentTabData tabData : tabDataToDocumentMap.keySet()) {
             if (tabData instanceof DocumentEditPresenter<?, ?>) {
                 final DocumentEditPresenter<?, ?> presenter = (DocumentEditPresenter<?, ?>) tabData;

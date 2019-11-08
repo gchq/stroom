@@ -22,6 +22,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.PresenterWidget;
 import stroom.content.client.event.RefreshContentTabEvent;
+import stroom.core.client.HasSave;
 import stroom.data.table.client.Refreshable;
 import stroom.document.client.DocumentTabData;
 import stroom.document.client.event.SaveAsDocumentEvent;
@@ -45,7 +46,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
-        extends DocumentEditPresenter<V, D> implements DocumentTabData, Refreshable, HasType {
+        extends DocumentEditPresenter<V, D> implements DocumentTabData, Refreshable, HasType, HasSave {
     private final List<TabData> tabs = new ArrayList<>();
     private final ButtonView saveButton;
     private final ButtonView saveAsButton;
@@ -66,9 +67,7 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
         saveAsButton.setEnabled(false);
 
         registerHandler(saveButton.addClickHandler(event -> {
-            if (saveButton.isEnabled()) {
-                WriteDocumentEvent.fire(DocumentEditTabPresenter.this, DocumentEditTabPresenter.this);
-            }
+            save();
         }));
         registerHandler(saveAsButton.addClickHandler(event -> {
             if (saveAsButton.isEnabled()) {
@@ -76,6 +75,13 @@ public abstract class DocumentEditTabPresenter<V extends LinkTabPanelView, D>
             }
         }));
         registerHandler(getView().getTabBar().addSelectionHandler(event -> selectTab(event.getSelectedItem())));
+    }
+
+    @Override
+    public void save() {
+        if (saveButton.isEnabled()) {
+            WriteDocumentEvent.fire(DocumentEditTabPresenter.this, DocumentEditTabPresenter.this);
+        }
     }
 
 
