@@ -32,10 +32,10 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"name", "expression", "sort", "filter", "format", "group", "width", "visible"})
+@JsonPropertyOrder({"name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})
 @JsonInclude(Include.NON_EMPTY)
 @XmlRootElement(name = "field")
-@XmlType(name = "Field", propOrder = {"name", "expression", "sort", "filter", "format", "group", "width", "visible"})
+@XmlType(name = "Field", propOrder = {"name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})
 public class Field implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 
@@ -63,6 +63,8 @@ public class Field implements Serializable {
     @XmlElement(name = "visible")
     @JsonProperty("visible")
     private boolean visible = true;
+    @XmlElement(name = "special")
+    private boolean special = false;
 
     public Field() {
         // Default constructor necessary for GWT serialisation.
@@ -147,6 +149,14 @@ public class Field implements Serializable {
         this.visible = visible;
     }
 
+    public boolean isSpecial() {
+        return special;
+    }
+
+    public void setSpecial(final boolean special) {
+        this.special = special;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == this) {
@@ -200,6 +210,7 @@ public class Field implements Serializable {
         field.group = group;
         field.width = width;
         field.visible = visible;
+        field.special = special;
 
         return field;
     }

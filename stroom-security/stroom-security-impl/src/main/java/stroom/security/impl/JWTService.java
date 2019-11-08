@@ -43,6 +43,7 @@ class JWTService implements HasHealthCheck {
     private PublicJsonWebKey jwk;
     private Duration durationToWarnBeforeExpiry = null;
     private final String apiKey;
+    private final String authenticationServiceUrl;
     private final String authJwtIssuer;
     private AuthenticationServiceClients authenticationServiceClients;
     private final boolean checkTokenRevocation;
@@ -57,6 +58,7 @@ class JWTService implements HasHealthCheck {
                     ModelStringUtil.parseDurationString(securityConfig.getDurationToWarnBeforeExpiry()));
         }
         this.apiKey = securityConfig.getApiToken();
+        this.authenticationServiceUrl = securityConfig.getAuthenticationServiceUrl();
         this.authJwtIssuer = jwtConfig.getJwtIssuer();
         this.authenticationServiceClients = authenticationServiceClients;
         this.checkTokenRevocation = jwtConfig.isEnableTokenRevocationCheck();
@@ -93,9 +95,17 @@ class JWTService implements HasHealthCheck {
      * We need to do this if the remote public key changes and verification fails.
      */
     private String fetchNewPublicKey() throws ApiException {
-        // We need to fetch the public key from the remote authentication service.
-        final ApiKeyApi apiKeyApi = authenticationServiceClients.newApiKeyApi();
-        return apiKeyApi.getPublicKey();
+        try {
+            // We need to fetch the public key from the remote authentication service.
+            final ApiKeyApi apiKeyApi = authenticationServiceClients.newApiKeyApi();
+            return apiKeyApi.getPublicKey();
+        } catch (final ApiException | RuntimeException e) {
+            LOGGER.error("Error fetching new public API key from URL '" + authenticationServiceUrl + "'.");
+            if (authenticationServiceUrl != null && authenticationServiceUrl.toLowerCase().contains("https")) {
+                LOGGER.error("Are you sure you want to use HTTPS? IF so you will need to configure the trust store or disable SSL verification with 'stroom.auth.services.verifyingSsl=false'");
+            }
+            throw e;
+        }
     }
 
     public boolean containsValidJws(ServletRequest request) {
@@ -135,6 +145,28 @@ class JWTService implements HasHealthCheck {
             return false;
         }
 
+    }
+
+    public String refreshTokenIfExpired(String jws) {
+        try {
+            verifyToken(jws);
+            return jws;
+        } catch (InvalidJwtException e) {
+            try {
+                JwtClaims claims = e.getJwtContext().getJwtClaims();
+                if (claims.getExpirationTime().getValueInMillis() < Instant.now().toEpochMilli()) {
+                    LOGGER.info("The API key for user '{}' has expired. An API key is required, i.e. for queries. Creating a new one.", claims.getSubject());
+                    String newJws = authenticationServiceClients.createTokenForUser(claims.getSubject());
+                    return newJws;
+                } else {
+                    return jws;
+                }
+            } catch (MalformedClaimException | ApiException innerEx) {
+                String error = "Unable to get new token! The error was: " + innerEx.getMessage();
+                LOGGER.error(error);
+                throw new RuntimeException(error, innerEx);
+            }
+        }
     }
 
     public Optional<String> getJws(ServletRequest request) {

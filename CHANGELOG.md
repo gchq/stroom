@@ -6,16 +6,25 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Updated stroom expression to v1.5.4 and added new field types. 
+* Issue **#1321** : Make path relative in stroom distribution .zip.sha256 hash file.
 
-## [v6.0.17] - 2019-11-04
+* The auth service now supports the use of HTTPS without certificate verification and adds additional logging.
+
+* Issue **gchq/stroom-auth#157** : Automatically refresh user's API key when it expires.
+
+* Issue **#1243** : Dashboard visualisations now link with similar functions available to dashboard tables, e.g. `link()`, `dashboard()`, `annotation()`, `stepping()`, `data()`.
+
+* Issue **#1316** : JSONParser now includes various parse options including handling comments. 
+
+* Issue **#48** : Added option to hide/show dashboard table columns.
+
+* Issue **#1315** : Improved health check for missing API key.
+
+* Updated stroom expression to v1.5.4 and added new field types. 
 
 * Issue **#1315** : Improved health check for missing API key.
 
 * Issue **#1314** : Fixed NPE thrown when logging caused when viewing docs that can't be found.
-
-
-## [v6.0.16] - 2019-11-01
 
 * Issue **#1313** : Suggestion boxes now make suggestions immediately before the user even starts typing.
 
