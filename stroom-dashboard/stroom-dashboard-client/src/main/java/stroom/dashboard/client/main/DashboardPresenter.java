@@ -29,6 +29,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
+import stroom.core.client.HasSave;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -72,7 +73,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DashboardPresenter extends DocumentEditPresenter<DashboardView, DashboardDoc>
-        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers {
+        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, HasSave {
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final ButtonView saveButton;
     private final ButtonView saveAsButton;
@@ -112,11 +113,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         saveButton.setEnabled(false);
         saveAsButton.setEnabled(false);
 
-        registerHandler(saveButton.addClickHandler(event -> {
-            if (saveButton.isEnabled()) {
-                WriteDocumentEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
-            }
-        }));
+        registerHandler(saveButton.addClickHandler(event -> save()));
         registerHandler(saveAsButton.addClickHandler(event -> {
             if (saveAsButton.isEnabled()) {
                 SaveAsDocumentEvent.fire(DashboardPresenter.this, docRef);
@@ -132,6 +129,13 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         addButton.setEnabled(false);
 
         view.setUiHandlers(this);
+    }
+
+    @Override
+    public void save() {
+        if (saveButton.isEnabled()) {
+            WriteDocumentEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
+        }
     }
 
     private ButtonView addButtonLeft(final SvgPreset preset) {
