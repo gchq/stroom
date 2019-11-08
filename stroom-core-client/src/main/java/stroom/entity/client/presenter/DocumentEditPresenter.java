@@ -21,6 +21,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
+import stroom.core.client.HasSave;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -32,7 +33,7 @@ import stroom.widget.tickbox.client.view.TickBox;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 public abstract class DocumentEditPresenter<V extends View, D> extends MyPresenterWidget<V>
-        implements HasDocumentRead<D>, HasWrite<D>, ReadOnlyChangeHandler, HasDirtyHandlers, HasType {
+        implements HasDocumentRead<D>, HasWrite<D>, ReadOnlyChangeHandler, HasDirtyHandlers, HasType, HasSave {
     private final ClientSecurityContext securityContext;
     private D entity;
     private boolean dirty;
@@ -58,6 +59,7 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
     public void onDirty(final boolean dirty) {
     }
 
+    @Override
     public boolean isDirty() {
         return dirty;
     }

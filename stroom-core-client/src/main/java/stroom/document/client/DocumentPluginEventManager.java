@@ -23,6 +23,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.ContentTabSelectionChangeEvent;
+import stroom.core.client.HasSave;
+import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.KeyboardInterceptor;
 import stroom.core.client.KeyboardInterceptor.KeyTest;
 import stroom.core.client.MenuKeys;
@@ -41,7 +43,6 @@ import stroom.document.client.event.ShowMoveDocumentDialogEvent;
 import stroom.document.client.event.ShowPermissionsDialogEvent;
 import stroom.document.client.event.ShowRenameDocumentDialogEvent;
 import stroom.document.client.event.WriteDocumentEvent;
-import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.entity.shared.SharedDocRef;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
@@ -103,6 +104,7 @@ public class DocumentPluginEventManager extends Plugin {
     private static final KeyTest ALT_W = event -> event.getAltKey() && !event.getShiftKey() && event.getKeyCode() == 'W';
     private static final KeyTest ALT_SHIFT_W = event -> event.getAltKey() && event.getShiftKey() && event.getKeyCode() == 'W';
 
+    private final HasSaveRegistry hasSaveRegistry;
     private final ClientDispatchAsync dispatcher;
     private final DocumentTypeCache documentTypeCache;
     private final MenuListPresenter menuListPresenter;
@@ -113,11 +115,13 @@ public class DocumentPluginEventManager extends Plugin {
 
     @Inject
     public DocumentPluginEventManager(final EventBus eventBus,
+                                      final HasSaveRegistry hasSaveRegistry,
                                       final KeyboardInterceptor keyboardInterceptor,
                                       final ClientDispatchAsync dispatcher,
                                       final DocumentTypeCache documentTypeCache,
                                       final MenuListPresenter menuListPresenter) {
         super(eventBus);
+        this.hasSaveRegistry = hasSaveRegistry;
         this.keyboardInterceptor = keyboardInterceptor;
         this.dispatcher = dispatcher;
         this.documentTypeCache = documentTypeCache;
@@ -129,9 +133,7 @@ public class DocumentPluginEventManager extends Plugin {
         super.onBind();
 
         // track the currently selected content tab.
-        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(),
-                event -> selectedTab = event.getTabData()));
-
+        registerHandler(getEventBus().addHandler(ContentTabSelectionChangeEvent.getType(), e -> selectedTab = e.getTabData()));
 
         // // 2. Handle requests to close tabs.
         // registerHandler(getEventBus().addHandler(
@@ -460,7 +462,7 @@ public class DocumentPluginEventManager extends Plugin {
                     menuItems.add(createCloseAllMenuItem(isTabItemSelected(selectedTab)));
                     menuItems.add(new Separator(5));
                     menuItems.add(createSaveMenuItem(6, isDirty(selectedTab)));
-                    menuItems.add(createSaveAllMenuItem(8, isTabItemSelected(selectedTab)));
+                    menuItems.add(createSaveAllMenuItem(8, hasSaveRegistry.isDirty()));
                     menuItems.add(new Separator(9));
                     addModifyMenuItems(menuItems, singleSelection, documentPermissionMap);
 
@@ -602,8 +604,8 @@ public class DocumentPluginEventManager extends Plugin {
     private MenuItem createSaveMenuItem(final int priority, final boolean enabled) {
         final Command command = () -> {
             if (isDirty(selectedTab)) {
-                final DocumentTabData entityTabData = (DocumentTabData) selectedTab;
-                WriteDocumentEvent.fire(DocumentPluginEventManager.this, entityTabData);
+                final HasSave hasSave = (HasSave) selectedTab;
+                hasSave.save();
             }
         };
 
@@ -614,27 +616,12 @@ public class DocumentPluginEventManager extends Plugin {
     }
 
     private MenuItem createSaveAllMenuItem(final int priority, final boolean enabled) {
-        final Command command = () -> {
-            if (isTabItemSelected(selectedTab)) {
-                for (final DocumentPlugin<?> plugin : pluginMap.values()) {
-                    plugin.saveAll();
-                }
-            }
-        };
+        final Command command = hasSaveRegistry::save;
 
         keyboardInterceptor.addKeyTest(CTRL_SHIFT_S, command);
 
         return new IconMenuItem(priority, SvgPresets.SAVE, SvgPresets.SAVE, "Save All",
                 "Ctrl+Shift+S", enabled, command);
-    }
-
-    public boolean hasDirtyDocuments() {
-        for (final DocumentPlugin<?> plugin : pluginMap.values()) {
-            if (plugin.hasDirtyDocuments()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     private MenuItem createInfoMenuItem(final List<ExplorerNode> explorerNodeList, final int priority, final boolean enabled) {
@@ -691,26 +678,17 @@ public class DocumentPluginEventManager extends Plugin {
 
     void registerPlugin(final String entityType, final DocumentPlugin<?> plugin) {
         pluginMap.put(entityType, plugin);
+        hasSaveRegistry.register(plugin);
     }
 
     private boolean isTabItemSelected(final TabData tabData) {
         return tabData != null;
     }
 
-    private boolean isEntityTabData(final TabData tabData) {
-        if (isTabItemSelected(tabData)) {
-            if (tabData instanceof DocumentEditPresenter<?, ?>) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     private boolean isDirty(final TabData tabData) {
-        if (isEntityTabData(tabData)) {
-            final DocumentEditPresenter<?, ?> editPresenter = (DocumentEditPresenter<?, ?>) tabData;
-            if (editPresenter.isDirty()) {
+        if (tabData instanceof HasSave) {
+            final HasSave hasSave = (HasSave) tabData;
+            if (hasSave.isDirty()) {
                 return true;
             }
         }

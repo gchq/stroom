@@ -1070,6 +1070,14 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
         list.add(new GlobalProperty.Builder()
+                .name("stroom.auth.services.verifyingSsl")
+                .value("false")
+                .description("If using HTTPS should we verify the server certs")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
+        list.add(new GlobalProperty.Builder()
                 .name("stroom.auth.authentication.service.url")
                 .value("http://auth-service:8099/authentication/v1")
                 .description("The URL of the authentication service")
