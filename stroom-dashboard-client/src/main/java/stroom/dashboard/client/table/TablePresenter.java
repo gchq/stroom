@@ -125,6 +125,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final ClientSecurityContext securityContext,
                           final LocationManager locationManager,
                           final MenuListPresenter menuListPresenter,
+                          final Provider<RenameFieldPresenter> renameFieldPresenterProvider,
                           final Provider<ExpressionPresenter> expressionPresenterProvider,
                           final FormatPresenter formatPresenter,
                           final FilterPresenter filterPresenter,
@@ -152,7 +153,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         downloadButton = dataGrid.addButton(SvgPresets.DOWNLOAD);
         downloadButton.setVisible(securityContext.hasAppPermission(Dashboard.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
-        fieldsManager = new FieldsManager(this, menuListPresenter, expressionPresenterProvider, formatPresenter,
+        fieldsManager = new FieldsManager(this, menuListPresenter, renameFieldPresenterProvider, expressionPresenterProvider, formatPresenter,
                 filterPresenter);
         dataGrid.setHeadingListener(fieldsManager);
 
@@ -228,14 +229,32 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         final DataSourceField indexField = indexFieldsMap.get(indexFieldName);
                         if (indexField != null) {
                             switch (indexField.getType()) {
+                                case ID_FIELD:
+                                    field.setFormat(new Format(Type.NUMBER));
+                                    break;
+                                case BOOLEAN_FIELD:
+                                    field.setFormat(new Format(Type.GENERAL));
+                                    break;
+                                case INTEGER_FIELD:
+                                    field.setFormat(new Format(Type.NUMBER));
+                                    break;
+                                case LONG_FIELD:
+                                    field.setFormat(new Format(Type.NUMBER));
+                                    break;
+                                case FLOAT_FIELD:
+                                    field.setFormat(new Format(Type.NUMBER));
+                                    break;
+                                case DOUBLE_FIELD:
+                                    field.setFormat(new Format(Type.NUMBER));
+                                    break;
                                 case DATE_FIELD:
                                     field.setFormat(new Format(Type.DATE_TIME));
                                     break;
-                                case NUMERIC_FIELD:
-                                    field.setFormat(new Format(Type.NUMBER));
+                                case TEXT_FIELD:
+                                    field.setFormat(new Format(Type.GENERAL));
                                     break;
-                                case ID:
-                                    field.setFormat(new Format(Type.NUMBER));
+                                case DOC_REF:
+                                    field.setFormat(new Format(Type.GENERAL));
                                     break;
                                 default:
                                     field.setFormat(new Format(Type.GENERAL));
@@ -457,6 +476,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         existingColumns.add(column);
     }
 
+    public void redrawHeaders() {
+        dataGrid.redrawHeaders();
+    }
+
     private void performRowAction(final Row result) {
         selectedStreamId = null;
         selectedEventId = null;
@@ -521,11 +544,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         updateColumns();
     }
 
-    private void removeHiddenFields() {
-        tableSettings.getFields().removeIf(field -> !field.isVisible());
+    private void removeSpecialFields() {
+        tableSettings.getFields().removeIf(Field::isSpecial);
     }
 
-    private int ensureHiddenField(final String indexFieldName) {
+    private int ensureSpecialField(final String indexFieldName) {
         // Now add new hidden field.
         final DataSourceFieldsMap dataSourceFieldsMap = getIndexFieldsMap();
         if (dataSourceFieldsMap != null) {
@@ -534,6 +557,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 final Field field = new Field(indexFieldName);
                 field.setExpression(ParamUtil.makeParam(indexFieldName));
                 field.setVisible(false);
+                field.setSpecial(true);
                 tableSettings.addField(field);
             }
         }
@@ -553,13 +577,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     void updateColumns() {
         final List<Field> fields = tableSettings.getFields();
 
-        // First remove existing hidden fields.
-        removeHiddenFields();
+        // First remove existing special fields.
+        removeSpecialFields();
 
-        // Now make sure hidden fields exist for stream id and event id and get
+        // Now make sure special fields exist for stream id and event id and get
         // their result index.
-        streamIdIndex = ensureHiddenField(IndexConstants.STREAM_ID);
-        eventIdIndex = ensureHiddenField(IndexConstants.EVENT_ID);
+        streamIdIndex = ensureSpecialField(IndexConstants.STREAM_ID);
+        eventIdIndex = ensureSpecialField(IndexConstants.EVENT_ID);
 
         // Remove existing columns.
         for (final Column<Row, ?> column : existingColumns) {

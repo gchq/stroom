@@ -246,7 +246,7 @@ public class SearchExpressionQueryBuilder {
         }
 
         // Create a query based on the field type and condition.
-        if (IndexFieldType.INT_FIELD.equals(indexField.getFieldType())) {
+        if (IndexFieldType.INTEGER_FIELD.equals(indexField.getFieldType())) {
             switch (condition) {
                 case EQUALS:
                     final int num1 = getInt(fieldName, value);
@@ -617,7 +617,7 @@ public class SearchExpressionQueryBuilder {
             for (final String val : wordArr) {
                 Query query;
 
-                if (IndexFieldType.INT_FIELD.equals(indexField.getFieldType())) {
+                if (IndexFieldType.INTEGER_FIELD.equals(indexField.getFieldType())) {
                     query = getIntIn(fieldName, val);
                 } else if (IndexFieldType.LONG_FIELD.equals(indexField.getFieldType())) {
                     query = getLongIn(fieldName, val);

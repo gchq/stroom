@@ -18,6 +18,7 @@ package stroom.xml.converter.json;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonTokenId;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
@@ -26,6 +27,8 @@ import org.xml.sax.helpers.AttributesImpl;
 import stroom.xml.converter.AbstractParser;
 
 import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class JSONParser extends AbstractParser {
     public static final String XML_ELEMENT_MAP = "map";
@@ -40,12 +43,14 @@ public class JSONParser extends AbstractParser {
     private static final String NAMESPACE = "http://www.w3.org/2013/XSL/json";
 
     private static final Attributes EMPTY_ATTS = new AttributesImpl();
-    private static JsonFactory jsonFactory;
+    private static final Map<JSONFactoryConfig, JsonFactory> JSON_FACTORY_MAP = new ConcurrentHashMap<>();
+    private final JSONFactoryConfig config;
     private final boolean addRoot;
     private Attributes atts;
     private ReaderLocator reader;
 
-    public JSONParser(final boolean addRoot) {
+    public JSONParser(final JSONFactoryConfig config, final boolean addRoot) {
+        this.config = config;
         this.addRoot = addRoot;
     }
 
@@ -55,9 +60,22 @@ public class JSONParser extends AbstractParser {
         // current read location is.
         reader = new ReaderLocator(input.getCharacterStream());
 
-        if (jsonFactory == null) {
-            jsonFactory = new JsonFactory();
-        }
+        final JsonFactory jsonFactory = JSON_FACTORY_MAP.computeIfAbsent(config, k -> {
+            final JsonFactory f = new JsonFactory();
+
+            f.configure(Feature.ALLOW_COMMENTS, config.isAllowComments());
+            f.configure(Feature.ALLOW_YAML_COMMENTS, config.isAllowYamlComments());
+            f.configure(Feature.ALLOW_UNQUOTED_FIELD_NAMES, config.isAllowUnquotedFieldNames());
+            f.configure(Feature.ALLOW_SINGLE_QUOTES, config.isAllowSingleQuotes());
+            f.configure(Feature.ALLOW_UNQUOTED_CONTROL_CHARS, config.isAllowUnquotedControlChars());
+            f.configure(Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, config.isAllowBackslashEscapingAnyCharacter());
+            f.configure(Feature.ALLOW_NUMERIC_LEADING_ZEROS, config.isAllowNumericLeadingZeros());
+            f.configure(Feature.ALLOW_NON_NUMERIC_NUMBERS, config.isAllowNonNumericNumbers());
+            f.configure(Feature.ALLOW_MISSING_VALUES, config.isAllowMissingValues());
+            f.configure(Feature.ALLOW_TRAILING_COMMA, config.isAllowTrailingComma());
+
+            return f;
+        });
 
         final JsonParser jp = jsonFactory.createParser(reader);
 

@@ -21,7 +21,7 @@ public class DataSourceUtil {
     public static DataSourceField createStringField(final String name) {
         return new DataSourceField.Builder()
                 .name(name)
-                .type(DataSourceField.DataSourceFieldType.FIELD)
+                .type(DataSourceFieldType.TEXT_FIELD)
                 .addConditions(Condition.EQUALS)
                 .addConditions(Condition.IN)
                 .addConditions(Condition.IN_DICTIONARY)
@@ -31,7 +31,7 @@ public class DataSourceUtil {
     public static DataSourceField createIdField(final String name) {
         return new DataSourceField.Builder()
                 .name(name)
-                .type(DataSourceField.DataSourceFieldType.ID)
+                .type(DataSourceFieldType.ID_FIELD)
                 .addConditions(Condition.EQUALS)
                 .addConditions(Condition.IN)
                 .build();
@@ -53,7 +53,7 @@ public class DataSourceUtil {
     public static DataSourceField createNumField(final String name) {
         return new DataSourceField.Builder()
                 .name(name)
-                .type(DataSourceFieldType.NUMERIC_FIELD)
+                .type(DataSourceFieldType.LONG_FIELD)
                 .addConditions(Condition.EQUALS)
                 .addConditions(Condition.BETWEEN)
                 .addConditions(Condition.GREATER_THAN)

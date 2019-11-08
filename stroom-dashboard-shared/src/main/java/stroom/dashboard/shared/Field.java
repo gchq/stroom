@@ -27,7 +27,7 @@ import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "field", propOrder = {"name", "expression", "sort", "filter", "format", "group", "width", "visible"})
+@XmlType(name = "field", propOrder = {"name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})
 public class Field implements Serializable {
     private static final long serialVersionUID = 7327802315955158337L;
 
@@ -47,6 +47,8 @@ public class Field implements Serializable {
     private int width = 200;
     @XmlElement(name = "visible")
     private boolean visible = true;
+    @XmlElement(name = "special")
+    private boolean special = false;
 
     public Field() {
         // Default constructor necessary for GWT serialisation.
@@ -131,6 +133,14 @@ public class Field implements Serializable {
         this.visible = visible;
     }
 
+    public boolean isSpecial() {
+        return special;
+    }
+
+    public void setSpecial(final boolean special) {
+        this.special = special;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (o == this) {
@@ -184,6 +194,7 @@ public class Field implements Serializable {
         field.group = group;
         field.width = width;
         field.visible = visible;
+        field.special = special;
 
         return field;
     }

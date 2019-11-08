@@ -62,7 +62,7 @@ public class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         final DataSourceField actual = dataSourceFieldsMap.get("Action");
 
         final DataSourceField expected = new DataSourceField.Builder()
-                .type(DataSourceFieldType.FIELD)
+                .type(DataSourceFieldType.TEXT_FIELD)
                 .name("Action")
                 .queryable(true)
                 .addConditions(actual.getConditions().toArray(new Condition[0]))
