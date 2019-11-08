@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0.19] - 2019-11-08
+
+* Issue **#1322** : Stroom now asks if you really want to leave site when stepping items are dirty. Also fixed `Save` and `Save All` menu items and dashboard param changes now correctly make a dashboard dirty.
+
+* Issue **#1320** : Fixed formatting of XML where trailing spaces were being removed from content surrounded by start and end tags (data content) which should not happen. 
+
 * Issue **#1321** : Make path relative in stroom distribution .zip.sha256 hash file.
 
 * The auth service now supports the use of HTTPS without certificate verification and adds additional logging.

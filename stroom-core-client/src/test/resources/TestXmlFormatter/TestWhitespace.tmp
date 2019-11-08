@@ -3,5 +3,9 @@
   <element>true</element>
   <element>
     <element> </element>
+    <element> leading whitespace</element>
+    <element>trailing whitespace </element>
+    <element> whitespace around </element>
+    <element>  more space  </element>
   </element>
 </test>
