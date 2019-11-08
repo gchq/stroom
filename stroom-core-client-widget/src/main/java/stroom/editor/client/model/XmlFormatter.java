@@ -177,27 +177,30 @@ public class XmlFormatter {
 
                 // Format and output content.
                 if (elementType != lastElementType) {
-                    if (isWhitespace(c) && !preserveWhitespace) {
+                    boolean dataElement = false;
+                    // If the last element was a start element and the next
+                    // element is an end element then this is a data element.
+                    if (lastElementType == ElementType.START) {
+                        if (nextElementType == null) {
+                            nextElementType = getElementType(pos);
+                        }
+                        if (nextElementType != null && nextElementType == ElementType.END) {
+                            dataElement = true;
+                        }
+                    }
+
+                    if (dataElement) {
+                        // Continue to preserve whitespace if this is a data element.
+                        preserveWhitespace = true;
+                        escape(c);
+                        lastElementType = elementType;
+
+                    } else if (isWhitespace(c)) {
                         // Ignore this character...
                         // This has the effect of trimming all of the whitespace
                         // off the beginning of some content as we won't set the
                         // lastElementType until we start to get some non
                         // whitespace chars.
-
-                        // If the last element was a start element and the next
-                        // element is an end element then we want to preserve
-                        // whitespace.
-                        if (lastElementType == ElementType.START) {
-                            if (nextElementType == null) {
-                                nextElementType = getElementType(pos);
-                            }
-
-                            if (nextElementType != null && nextElementType == ElementType.END) {
-                                preserveWhitespace = true;
-                                escape(c);
-                                lastElementType = elementType;
-                            }
-                        }
 
                     } else {
                         escape(c);

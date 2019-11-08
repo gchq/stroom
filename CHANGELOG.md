@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1320** : Fixed formatting of XML where trailing spaces were being removed from content surrounded by start and end tags (data content) which should not happen. 
+
 * Issue **#1321** : Make path relative in stroom distribution .zip.sha256 hash file.
 
 ## [v6.0.18] - 2019-11-05
