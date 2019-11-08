@@ -68,7 +68,7 @@ ext.versions = [
     hadoopHdfsShaded: 'v2.6.4-4',
     stroomAuth: 'v1.0-beta.8',
     stroomExpression: 'v1.5.3',
-    stroomQuery: 'v2.2.3', //same version for both stroom-query-api and stroom-query-common
+    stroomQuery: 'v2.2.4', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha.2',
     stroomProxyApi: 'v5.1.2',
 
@@ -330,10 +330,19 @@ subprojects {
         maven { url "https://dl.bintray.com/stroom/stroom-proxy" }
     }
 
+    test {
+        // Report duration of unit tests that take over 1s
+        afterTest { desc, result -> 
+            def durationSecs = (result.endTime - result.startTime) / 1000
+            if (durationSecs > 1) {
+                println "Test [${desc.className}.${desc.name}], took longer than 1s, result: ${result.resultType}, duration: ${durationSecs}s"
+            }
+        }
+    }
+
     // This means the reports from our integration tests won't over-write the reports from our unit tests.
     tasks.withType(Test) {
         reports.html.destination = file("${reporting.baseDir}/${name}")
-
 
         afterSuite { desc, result -> 
             if (desc != null && desc.className != null && result.resultType.toString() == "FAILURE") {
@@ -362,7 +371,8 @@ subprojects {
 
         // Integration tests are quite slow so output progress for each test to keep travis alive
         afterTest { desc, result -> 
-            println "Executed test ${desc.name} [${desc.className}] with result: ${result.resultType}"
+            def durationSecs = (result.endTime - result.startTime) / 1000
+            println "Tested [${desc.className}.${desc.name}], result: ${result.resultType}, duration: ${durationSecs}s"
         }
         
         //afterSuite { desc, result -> 

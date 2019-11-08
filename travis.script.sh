@@ -38,14 +38,21 @@ doDockerBuild=false
 create_file_hash() {
     local -r file="$1"
     local -r hash_file="${file}.sha256"
+    local dir
+    dir="$(dirname "${file}")"
+    local filename
+    filename="$(basename "${file}")"
 
-    echo -e "Creating a SHA-256 hash for file ${GREEN}${file}${NC}"
+    echo -e "Creating a SHA-256 hash for file ${GREEN}${filename}${NC} in ${GREEN}${dir}${NC}"
     # Go to the dir where the file is so the hash file doesn't contain the full
     # path
-    pushd "$(dirname "${file}")" > /dev/null
-    sha256sum "${file}" > "${hash_file}"
+    pushd "${dir}" > /dev/null
+    sha256sum "${filename}" > "${hash_file}"
     popd > /dev/null
-    echo -e "Created hash file ${GREEN}${hash_file}${NC}"
+    echo -e "Created hash file ${GREEN}${hash_file}${NC}, containing:"
+    echo -e "-------------------------------------------------------"
+    cat "${hash_file}"
+    echo -e "-------------------------------------------------------"
 }
 
 generate_file_hashes() {
@@ -238,14 +245,16 @@ else
     echo -e "extraBuildArgs:                [${GREEN}${extraBuildArgs[*]}${NC}]"
 
     # Do the gradle build
-    # Use 1 local worker to avoid using too much memory as each worker will
-    # chew up ~500Mb ram
+    # Use custom gwt compile jvm settings to avoid blowing the ram limit in 
+    # travis. At time of writing a sudo VM in travis has 7.5gb ram.
+    # Each work will chew up the maxHeap value and we have to allow for
+    # our docker services as well.
     ./gradlew \
       -PdumpFailedTestXml=true \
       -Pversion="${TRAVIS_TAG}" \
-      -PgwtCompilerWorkers=1 \
+      -PgwtCompilerWorkers=2 \
       -PgwtCompilerMinHeap=50M \
-      -PgwtCompilerMaxHeap=500M \
+      -PgwtCompilerMaxHeap=1000M \
       clean \
       build \
       buildDistribution \

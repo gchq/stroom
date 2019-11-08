@@ -71,7 +71,7 @@ include 'stroom-statistics-server'
 include 'stroom-dashboard-server'
 include 'stroom-ruleset-server'
 include 'stroom-connectors'
-include 'stroom-kafka-client-impl_2_1_1'
+include 'stroom-kafka-client-impl_2_2_1'
 
 // Package it all together.
 include 'stroom-app'

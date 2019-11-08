@@ -44,13 +44,13 @@ public class ApiTokenCache {
     public ApiTokenCache(final CacheManager cacheManager,
                          final AuthenticationServiceClients authenticationServiceClients,
                          final JWTService jwtService) {
-
         final CacheLoader<String, Optional<TokenAndExpiry>> cacheLoader = CacheLoader.from(userId -> {
-            final String token = authenticationServiceClients.getUsersApiToken(userId);
+            String token = authenticationServiceClients.getUsersApiToken(userId);
+            token = jwtService.refreshTokenIfExpired(token);
             if (token != null) {
                 try {
                     final JwtClaims claims = jwtService.verifyToken(token);
-                        return Optional.of(new TokenAndExpiry(token, claims.getExpirationTime().getValueInMillis()));
+                    return Optional.of(new TokenAndExpiry(token, claims.getExpirationTime().getValueInMillis()));
                 } catch (final MalformedClaimException | InvalidJwtException e) {
                     LOGGER.warn(e.getMessage());
                 }

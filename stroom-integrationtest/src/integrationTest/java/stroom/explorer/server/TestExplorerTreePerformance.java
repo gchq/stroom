@@ -64,6 +64,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Ignore // A manual test for checking performance of the tree
 @ActiveProfiles(value = {
         StroomSpringProfiles.PROD,
         StroomSpringProfiles.IT,

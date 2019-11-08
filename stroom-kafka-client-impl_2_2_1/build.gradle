@@ -3,7 +3,7 @@ apply plugin: "com.github.johnrengelman.shadow"
 dependencies {
     compile project(':stroom-connectors')
 
-    compile group: 'org.apache.kafka', name:'kafka-clients', version:'2.1.1' //In step with CDH 6.2
+    compile group: 'org.apache.kafka', name:'kafka-clients', version:'2.2.1' //In step with CDH 6.2
 
     compile libs.dropwizard_metrics_healthchecks
     compile libs.guava
@@ -13,7 +13,7 @@ dependencies {
     testCompile libs.mockito_core
 }
 
-def fatJarName = "stroom-kafka-client-impl_2_1_1-all.jar"
+def fatJarName = "stroom-kafka-client-impl_2_2_1-all.jar"
 
 shadowJar {
     // Allows us to build fat jars with lots of files
