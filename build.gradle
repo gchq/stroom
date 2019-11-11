@@ -123,7 +123,7 @@ ext.versions = [
         guice4            : '4.2.2',
         gwt               : '2.8.2',
         hikari            : '3.2.0',
-        jooq              : '3.11.9',
+        jooq              : '3.12.3',
         junit_jupiter     : '5.3.2',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
