@@ -1,6 +1,5 @@
 package stroom.searchable.impl;
 
-import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import stroom.dashboard.expression.v1.FieldIndexMap;
@@ -43,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class SearchableStore implements Store {
@@ -94,7 +94,7 @@ class SearchableStore implements Store {
 
         final Map<String, AbstractField> fieldMap = searchable.getDataSource().getFields()
                 .stream()
-                .collect(Collectors.toMap(AbstractField::getName, Functions.identity()));
+                .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
         final OptionalInt max = fieldIndexMap.getMap().values().stream().mapToInt(Integer::intValue).max();
         final AbstractField[] fieldArray = new AbstractField[max.orElse(-1) + 1];
         fieldIndexMap.getMap().forEach((k, v) -> {
