@@ -30,7 +30,7 @@ plugins {
 
     id "com.github.johnrengelman.shadow" version "4.0.3" apply false
 
-    id 'nu.studer.jooq' version '3.0.2' apply false
+    id 'nu.studer.jooq' version '3.0.3' apply false
 
     id 'org.flywaydb.flyway' version '5.2.4' apply false
 
