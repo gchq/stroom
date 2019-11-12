@@ -11,7 +11,7 @@ Stroom provides a number of powerful capabilities:
 * **Dashboards.** Run queries against your indexes or statistics and view the results within custom visualisations.
 * **Statistics.** Record counts or values of items over time, providing answers to questions such as "how many times has a specific machine provided data in the last hour/day/month?"
 
-<img src="markdown_resources/v6.0.19/stroom-dashboard.png" width="250" height="auto"/> <img src="markdown_resources/v6.0.19/stroom-data-view.png" width="250" height="auto"/> <img src="markdown_resources/v6.0.19/stroom-stepping.png" width="250" height="auto"/>
+<img src="markdown_resources/v6.0.19/stroom-dashboard.png" width="270" height="auto"/> &nbsp; <img src="markdown_resources/v6.0.19/stroom-data-view.png" width="270" height="auto"/> &nbsp; <img src="markdown_resources/v6.0.19/stroom-stepping.png" width="270" height="auto"/>
 
 ## Get Stroom
 
