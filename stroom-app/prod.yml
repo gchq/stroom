@@ -20,50 +20,108 @@ server:
         archivedFileCount: 100
         timeZone: UTC
 
-  logging:
-    level: ${STROOM_LOGGING_LEVEL:- WARN}
-    loggers:
-      stroom: INFO
-      io.dropwizard: INFO
-      org.eclipse.jetty: INFO
-      org.flywaydb: INFO
-      "event-logger":
-        level: INFO
-        additive: false
-        appenders:
-          - type: file
-            currentLogFilename: logs/events/event.log
-            threshold: ALL
-            queueSize: 256
-            discardingThreshold: 0
-            archive: true
-            archivedLogFilenamePattern: logs/events/event-%d{yyyy-MM-dd'T'HH:mm}.log
-            archivedFileCount: 100
-            timeZone: UTC
-            logFormat: "%msg%n"
+logging:
+  level: ${STROOM_LOGGING_LEVEL:- WARN}
+  loggers:
+    stroom: INFO
+    io.dropwizard: INFO
+    org.eclipse.jetty: INFO
+    org.flywaydb: INFO
+    "event-logger":
+      level: INFO
+      additive: false
+      appenders:
+        - type: file
+          currentLogFilename: logs/events/event.log
+          threshold: ALL
+          queueSize: 256
+          discardingThreshold: 0
+          archive: true
+          archivedLogFilenamePattern: logs/events/event-%d{yyyy-MM-dd'T'HH:mm}.log
+          archivedFileCount: 100
+          timeZone: UTC
+          logFormat: "%msg%n"
 
-    appenders:
-      - type: file
-        currentLogFilename: logs/app/app.log
-        threshold: ALL
-        queueSize: 256
-        discardingThreshold: 0
-        archive: true
-        archivedLogFilenamePattern: logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log
-        # One week using minute files
-        archivedFileCount: 10080
-        timeZone: UTC
-        logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
-        # Size rolled logs for admins (10x100M), not curl'd to stroom
-        # Un-comment for non-dockered environments
-        #  - type: file
-        #    currentLogFilename: /stroom/logs/app.log
-        #    threshold: ALL
-        #    queueSize: 256
-        #    discardingThreshold: 0
-        #    archive: true
-        #    archivedLogFilenamePattern: /stroom/logs/app-%i.log
-        #    archivedFileCount: 10
-        #    maxFileSize: "100MB"
-        #    timeZone: UTC
-        #    logFormat: "%-6level [%d{\"yyyy-MM-dd\",UTC}] [%t] %logger - %X{code} %msg %n"
+  appenders:
+    - type: file
+      currentLogFilename: logs/app/app.log
+      threshold: ALL
+      queueSize: 256
+      discardingThreshold: 0
+      archive: true
+      archivedLogFilenamePattern: logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log
+      # One week using minute files
+      archivedFileCount: 10080
+      timeZone: UTC
+      logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
+      # Size rolled logs for admins (10x100M), not curl'd to stroom
+      # Un-comment for non-dockered environments
+      #  - type: file
+      #    currentLogFilename: /stroom/logs/app.log
+      #    threshold: ALL
+      #    queueSize: 256
+      #    discardingThreshold: 0
+      #    archive: true
+      #    archivedLogFilenamePattern: /stroom/logs/app-%i.log
+      #    archivedFileCount: 10
+      #    maxFileSize: "100MB"
+      #    timeZone: UTC
+      #    logFormat: "%-6level [%d{\"yyyy-MM-dd\",UTC}] [%t] %logger - %X{code} %msg %n"
+
+appConfig:
+  commonDbDetails:
+    connection:
+      jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}
+      jdbcDriverUrl: ${STROOM_JDBC_DRIVER_URL:-jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8}
+      jdbcDriverUsername: ${STROOM_JDBC_DRIVER_USERNAME:-stroomuser}
+      jdbcDriverPassword: ${STROOM_JDBC_DRIVER_PASSWORD:-stroompassword1}
+  contentPackImport:
+    enabled: ${STROOM_CONTENT_PACK_IMPORT_ENABLED:-false}
+  data:
+    meta:
+      metaValueConfig: null
+  dataSourceUrl:
+    index: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/api/stroom-index/v2
+    solrIndex: "${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/api/stroom-solr-index/v2"
+    statisticStore: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/api/sqlstatistics/v2
+    searchable: "${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/api/searchable/v2"
+#    annotations: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/annotationsService/queryApi/v1
+#    elasticIndex: ${STROOM_ADVERTISED_URL:-https://127.0.0.1:8080}/queryElasticService/queryApi/v1
+  job:
+    enabled: true
+    executionInterval: "10s"
+  node:
+    node: ${STROOM_NODE:-node1a}
+  path:
+    temp: "/tmp/stroom"
+  security:
+    authentication:
+      authenticationServiceUrl: ${STROOM_AUTHENTICATION_SERVICE_URL:-https://<<<IP_ADDRESS>>>/api/auth/authentication/v1}
+      apiToken: ${STROOM_SECURITY_API_TOKEN:-eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDQ4NjMwNDMsInN1YiI6InN0cm9vbVNlcnZpY2VVc2VyIiwiaXNzIjoic3Ryb29tIn0.gHJkpxeW5CjU_hBzuLhQd8Ot8XkLvhu45_-Ql4gOX96iNbl0AnKEwKu2QmMY3uVerGjYBHDczgKJlLVF_RQtFiwFLorT2P_Mv-9ShcCL0Ml-Tq-1i-_UnHMYHP5Nv-rP3ajUz-vTHwIYqi_WU-IEpIF56MCYBqeDkgQfe-I03VyfsLkWt-3f8L3AKESZirmqjPUB_SPi4vWGpyN28FuJe1KyqdCPo5QVKnrM_dpguE_aIj1Dy1sovmgO5WxFm3-hE7asW3WrnokSopNXQ1bJ3W77v4k1CnMpYDw5schQAKqUffPVGxNE6UxNunZTlRQJQqYihKkhpeiTiZMo9XCHGg}
+      authServicesBaseUrl: ${STROOM_AUTH_SERVICES_URL:-http://<<<IP_ADDRESS>>>/api/auth}
+      preventLogin: false #TODO
+  serviceDiscovery:
+    enabled: ${STROOM_SERVICE_DISCOVERY_ENABLED:-false}
+    zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
+    servicesHostNameOrIpAddress: ${STROOM_ADVERTISED_URL:-localhost}
+  ui:
+    # nodeName is set to appConfig.node.node in FetchUiConfigHandler
+    nodeName: null
+    url:
+      ui: ${STROOM_ADVERTISED_URL:-https://<<<IP_ADDRESS>>>}
+      authenticationService: ${STROOM_AUTHENTICATION_SERVICE_URL:-https://<<<IP_ADDRESS>>>/api/auth/authentication/v1}
+      users: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/users
+      apiKeys: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/apiKeys
+      indexVolumes: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/indexing/volumes
+      indexVolumeGroups: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/indexing/groups
+      userAuthorisation: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/authorisationManager/false
+      groupAuthorisation: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/authorisationManager/true
+      editDoc: https://${STROOM_HOST:-<<<IP_ADDRESS>>>/s/doc/}
+      changepassword: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/changepassword
+      kibana: null
+      trackers: null
+      annotations: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/annotationsService/queryApi/v1
+      elastic: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/queryElasticService/queryApi/v1
+      documentPermissions: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/authorisationManager/document/
+  volumes:
+    createDefaultOnStart: false

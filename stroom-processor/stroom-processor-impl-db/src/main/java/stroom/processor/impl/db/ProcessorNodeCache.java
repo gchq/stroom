@@ -34,11 +34,11 @@ class ProcessorNodeCache implements Clearable {
     // TODO : @66 Replace with a proper cache.
     private final Map<String, Integer> cache = new ConcurrentHashMap<>();
 
-    private final ConnectionProvider connectionProvider;
+    private final ProcessorDbConnProvider processorDbConnProvider;
 
     @Inject
-    ProcessorNodeCache(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    ProcessorNodeCache(final ProcessorDbConnProvider processorDbConnProvider) {
+        this.processorDbConnProvider = processorDbConnProvider;
     }
 
 //    @Override
@@ -69,7 +69,7 @@ class ProcessorNodeCache implements Clearable {
 //    }
 
     private Optional<Integer> get(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
                 .select(PROCESSOR_NODE.ID)
                 .from(PROCESSOR_NODE)
                 .where(PROCESSOR_NODE.NAME.eq(name))
@@ -77,7 +77,7 @@ class ProcessorNodeCache implements Clearable {
     }
 
     private Optional<Integer> create(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
                 .insertInto(PROCESSOR_NODE, PROCESSOR_NODE.NAME)
                 .values(name)
                 .onDuplicateKeyIgnore()
@@ -93,7 +93,7 @@ class ProcessorNodeCache implements Clearable {
     }
 
     int deleteAll() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(processorDbConnProvider, context -> context
                 .delete(PROCESSOR_NODE)
                 .execute());
     }

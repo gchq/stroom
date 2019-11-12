@@ -51,7 +51,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
-    private ConnectionProvider connectionProvider;
+    private SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider;
     @Inject
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
     @Inject
@@ -560,7 +560,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     private int getRowCount(final String tableName) throws SQLException {
         int count;
 
-        try (final Connection connection = connectionProvider.getConnection()) {
+        try (final Connection connection = SQLStatisticsDbConnProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + tableName)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();
@@ -573,7 +573,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
     private int getAggregateByPrecision(final String colName, final byte precision) throws SQLException {
         int count;
-        try (final Connection connection = connectionProvider.getConnection()) {
+        try (final Connection connection = SQLStatisticsDbConnProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("select sum(" + colName + ") from " + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME + " where PRES = " + precision)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();
@@ -586,7 +586,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
     private int getAggregateTotal(final String colName) throws SQLException {
         int count;
-        try (final Connection connection = connectionProvider.getConnection()) {
+        try (final Connection connection = SQLStatisticsDbConnProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("select sum(" + colName + ") from " + SQLStatisticNames.SQL_STATISTIC_VALUE_TABLE_NAME)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();

@@ -86,12 +86,12 @@ class AnnotationDaoImpl implements AnnotationDao {
         UPDATE_FIELD_MAP.put(Annotation.COMMENT, ANNOTATION.COMMENT);
     }
 
-    private final ConnectionProvider connectionProvider;
+    private final AnnotationDbConnectionProvider connectionProvider;
     private final ExpressionMapper expressionMapper;
     private final ValueMapper valueMapper;
 
     @Inject
-    AnnotationDaoImpl(final ConnectionProvider connectionProvider,
+    AnnotationDaoImpl(final AnnotationDbConnectionProvider connectionProvider,
                       final ExpressionMapperFactory expressionMapperFactory) {
         this.connectionProvider = connectionProvider;
 

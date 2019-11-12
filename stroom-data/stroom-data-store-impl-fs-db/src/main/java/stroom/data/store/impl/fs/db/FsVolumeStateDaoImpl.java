@@ -16,8 +16,8 @@ public class FsVolumeStateDaoImpl implements FsVolumeStateDao {
     private GenericDao<FsVolumeStateRecord, FsVolumeState, Integer> genericDao;
 
     @Inject
-    FsVolumeStateDaoImpl(final ConnectionProvider connectionProvider) {
-        genericDao = new GenericDao<>(FS_VOLUME_STATE, FS_VOLUME_STATE.ID, FsVolumeState.class, connectionProvider);
+    FsVolumeStateDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider) {
+        genericDao = new GenericDao<>(FS_VOLUME_STATE, FS_VOLUME_STATE.ID, FsVolumeState.class, fsDataStoreDbConnProvider);
     }
 
     @Override

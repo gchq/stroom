@@ -64,13 +64,13 @@ class MetaKeyDaoImpl implements MetaKeyDao {
 //
 //
 
-    private final ConnectionProvider connectionProvider;
+    private final MetaDbConnProvider metaDbConnProvider;
     private final Map<Integer, String> idToNameCache = new HashMap<>();
     private final Map<String, Integer> nameToIdCache = new HashMap<>();
 
     @Inject
-    MetaKeyDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    MetaKeyDaoImpl(final MetaDbConnProvider metaDbConnProvider) {
+        this.metaDbConnProvider = metaDbConnProvider;
         setup();
     }
 
@@ -101,7 +101,7 @@ class MetaKeyDaoImpl implements MetaKeyDao {
     }
 
     private void fillCache() {
-        JooqUtil.context(connectionProvider, context -> context
+        JooqUtil.context(metaDbConnProvider, context -> context
                 .select(META_KEY.ID, META_KEY.NAME)
                 .from(META_KEY)
                 .fetch()
@@ -114,7 +114,7 @@ class MetaKeyDaoImpl implements MetaKeyDao {
     }
 
     private void create(final String name, final MetaType type) {
-        JooqUtil.context(connectionProvider, context -> context
+        JooqUtil.context(metaDbConnProvider, context -> context
                 .insertInto(META_KEY, META_KEY.NAME, META_KEY.FIELD_TYPE)
                 .values(name, type.getPrimitiveValue())
                 .onDuplicateKeyIgnore()
@@ -130,7 +130,7 @@ class MetaKeyDaoImpl implements MetaKeyDao {
     }
 
     private int deleteAll() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .delete(META_KEY)
                 .execute());
     }

@@ -142,7 +142,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private final ClusterLockService clusterLockService;
     private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao;
     private final ProcessorConfig processorConfig;
-    private final ConnectionProvider connectionProvider;
+    private final ProcessorDbConnProvider processorDbConnProvider;
     private final ProcessorFilterMarshaller marshaller;
 
     private final GenericDao<ProcessorTaskRecord, ProcessorTask, Long> genericDao;
@@ -155,7 +155,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                          final ClusterLockService clusterLockService,
                          final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao,
                          final ProcessorConfig processorConfig,
-                         final ConnectionProvider connectionProvider,
+                         final ProcessorDbConnProvider processorDbConnProvider,
                          final ProcessorFilterMarshaller marshaller,
                          final ExpressionMapperFactory expressionMapperFactory) {
         this.nodeInfo = nodeInfo;
@@ -163,10 +163,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         this.clusterLockService = clusterLockService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.processorConfig = processorConfig;
-        this.connectionProvider = connectionProvider;
+        this.processorDbConnProvider = processorDbConnProvider;
         this.marshaller = marshaller;
 
-        this.genericDao = new GenericDao<>(PROCESSOR_TASK, PROCESSOR_TASK.ID, ProcessorTask.class, connectionProvider);
+        this.genericDao = new GenericDao<>(PROCESSOR_TASK, PROCESSOR_TASK.ID, ProcessorTask.class, processorDbConnProvider);
         this.genericDao.setObjectToRecordMapper((processorTask, record) -> {
             record.from(processorTask);
             if (processorTask.getStatus() != null) {
@@ -239,7 +239,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     Optional.of(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(nodeId)),
                     JooqUtil.getSetCondition(PROCESSOR_TASK.STATUS, criteriaSet));
 
-            final int results = JooqUtil.contextResult(connectionProvider, context -> context
+            final int results = JooqUtil.contextResult(processorDbConnProvider, context -> context
                     .update(PROCESSOR_TASK)
                     .set(PROCESSOR_TASK.STATUS, TaskStatus.UNPROCESSED.getPrimitiveValue())
                     .set(PROCESSOR_TASK.STATUS_TIME_MS, System.currentTimeMillis())
@@ -357,7 +357,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         // filter at this time.
         clusterLockService.lock(LOCK_NAME, () -> {
             // Do everything within a single transaction.
-            JooqUtil.transaction(connectionProvider, context -> {
+            JooqUtil.transaction(processorDbConnProvider, context -> {
                 List<ProcessorTask> availableTaskList = Collections.emptyList();
                 int availableTasksCreated = 0;
                 int totalTasksCreated = 0;
@@ -849,7 +849,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     @Override
     public BaseResultList<ProcessorTask> find(final ExpressionCriteria criteria) {
-        return JooqUtil.contextResult(connectionProvider, context -> find(context, criteria));
+        return JooqUtil.contextResult(processorDbConnProvider, context -> find(context, criteria));
     }
 
     BaseResultList<ProcessorTask> find(final DSLContext context, final ExpressionCriteria criteria) {
@@ -898,7 +898,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
-        final List<ProcessorTaskSummary> list = JooqUtil.contextResult(connectionProvider, context -> context
+        final List<ProcessorTaskSummary> list = JooqUtil.contextResult(processorDbConnProvider, context -> context
                 .select(
                         PROCESSOR.PIPELINE_UUID,
                         PROCESSOR_FILTER.PRIORITY,
@@ -940,7 +940,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final List<Field<?>> dbFields = new ArrayList<>(valueMapper.getFields(fieldList));
         final Mapper[] mappers = valueMapper.getMappers(fields);
 
-        JooqUtil.context(connectionProvider, context -> {
+        JooqUtil.context(processorDbConnProvider, context -> {
             int offset = 0;
             int numberOfRows = 1000000;
 
@@ -1003,7 +1003,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                                           final Long startTime,
                                           final Long endTime) {
         // Do everything within a single transaction.
-        return JooqUtil.transactionResult(connectionProvider, context -> {
+        return JooqUtil.transactionResult(processorDbConnProvider, context -> {
             LOGGER.debug(LambdaLogUtil.message("changeTaskStatus() - Changing task status of {} to node={}, status={}", processorTask, nodeName, status));
             final long now = System.currentTimeMillis();
 

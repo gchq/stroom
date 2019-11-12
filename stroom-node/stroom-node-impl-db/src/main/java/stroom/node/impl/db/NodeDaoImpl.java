@@ -37,16 +37,16 @@ import static stroom.node.impl.db.jooq.tables.Node.NODE;
 public class NodeDaoImpl implements NodeDao {
     private final Map<String, Field> FIELD_MAP = Map.of(FindNodeCriteria.FIELD_ID, NODE.ID, FindNodeCriteria.FIELD_NAME, NODE.NAME);
 
-    private final ConnectionProvider connectionProvider;
+    private final NodeDbConnProvider nodeDbConnProvider;
 
     @Inject
-    NodeDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    NodeDaoImpl(final NodeDbConnProvider nodeDbConnProvider) {
+        this.nodeDbConnProvider = nodeDbConnProvider;
     }
 
     @Override
     public Node create(final Node node) {
-        JooqUtil.context(connectionProvider, context -> context
+        JooqUtil.context(nodeDbConnProvider, context -> context
                 .insertInto(NODE)
                 .set(NODE.NAME, node.getName())
                 .set(NODE.URL, node.getUrl())
@@ -60,7 +60,7 @@ public class NodeDaoImpl implements NodeDao {
 
     @Override
     public Node update(final Node node) {
-        return JooqUtil.contextResultWithOptimisticLocking(connectionProvider, context -> {
+        return JooqUtil.contextResultWithOptimisticLocking(nodeDbConnProvider, context -> {
             final NodeRecord nodeRecord = context.newRecord(NODE, node);
             nodeRecord.update();
             return nodeRecord.into(Node.class);
@@ -74,7 +74,7 @@ public class NodeDaoImpl implements NodeDao {
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
-        final List<Node> list = JooqUtil.contextResult(connectionProvider, context ->
+        final List<Node> list = JooqUtil.contextResult(nodeDbConnProvider, context ->
                 context
                         .selectFrom(NODE)
                         .where(conditions)
@@ -88,7 +88,7 @@ public class NodeDaoImpl implements NodeDao {
 
     @Override
     public Node getNode(final String nodeName) {
-        final Optional<Node> optional = JooqUtil.contextResult(connectionProvider, context -> context
+        final Optional<Node> optional = JooqUtil.contextResult(nodeDbConnProvider, context -> context
                 .selectFrom(NODE)
                 .where(NODE.NAME.eq(nodeName))
                 .fetchOptional()

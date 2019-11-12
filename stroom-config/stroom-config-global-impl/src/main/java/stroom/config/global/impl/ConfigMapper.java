@@ -20,14 +20,20 @@ package stroom.config.global.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.google.common.base.CaseFormat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
-import stroom.config.global.api.ConfigProperty;
-import stroom.config.global.impl.PropertyUtil.Prop;
+import stroom.config.common.CommonDbConfig;
+import stroom.config.common.DbConfig;
+import stroom.config.common.HasDbConfig;
+import stroom.config.global.shared.ConfigProperty;
 import stroom.docref.DocRef;
+import stroom.util.config.FieldMapper;
+import stroom.util.config.PropertyUtil;
+import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
@@ -35,7 +41,6 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
@@ -49,12 +54,19 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+/**
+ * Responsible for mapping between the AppConfig object tree and a flat set of key value pairs.
+ * The key for a leaf of the tree is a dot delimited path of all the branches to get to that leaf,
+ * e.g.
+ */
 @Singleton
 public class ConfigMapper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigMapper.class);
@@ -64,27 +76,68 @@ public class ConfigMapper {
     private static final String ROOT_PROPERTY_PATH = "stroom";
     private static final String DOCREF_PREFIX = "docRef(";
 
-    private final SortedMap<String, ConfigProperty> globalPropertiesMap = new TreeMap<>();
+    // The guice bound appConfig
+    private final AppConfig appConfig;
+
+    // A map of config properties keyed on the fully qualified prop path (i.e. stroom.path.temp)
+    // This is the source of truth for all properties. It is used to update the guice injected object model
+    private final ConcurrentMap<String, ConfigProperty> globalPropertiesMap = new ConcurrentHashMap<>();
+
+    // A map of property accessor objects keyed on the fully qualified prop path (i.e. stroom.path.temp)
     private final Map<String, Prop> propertyMap = new HashMap<>();
 
-    public ConfigMapper(final IsConfig configObject) {
 
-        LOGGER.debug("Initialising ConfigMapper with class {}", configObject.getClass().getName());
-        // The values in the passed AppConfig will have been set from the yaml by DropWizard on
-        // app boot.  We want to know the default values as defined by the compile-time initial values of
-        // the instance variables in the AppConfig tree.  Therefore create our own AppConfig tree and
-        // walk it to populate globalPropertiesMap with the defaults.
+    @Inject
+    public ConfigMapper(final AppConfig appConfig) {
+
+        LOGGER.debug("Initialising ConfigMapper with class {}", appConfig.getClass().getName());
+
+        this.appConfig = appConfig;
+
+        // The values in the passed AppConfig will have been set initially from the compile-time defaults and
+        // then from the DropWizard yaml file on app boot.
+        // We want to know the default values as defined by the compile-time initial values of
+        // the instance variables in the AppConfig tree.  This is so we can make the default values available
+        // to the config UI.  Therefore create our own vanilla AppConfig tree and walk it to populate
+        // globalPropertiesMap with the defaults.
+        LOGGER.debug("Building globalPropertiesMap from compile-time default values and annotations");
         try {
-            IsConfig vanillaObject = configObject.getClass().getDeclaredConstructor().newInstance();
-            addConfigObjectMethods(vanillaObject, ROOT_PROPERTY_PATH, new HashMap<>(), this::defaultPropertyConsumer);
+            final AppConfig vanillaObject = appConfig.getClass().getDeclaredConstructor().newInstance();
+            // Pass in an empty hashmap because we are not parsing the actual guice bound appConfig. We are only
+            // populating the globalPropertiesMap so the passed hashmap is thrown away.
+            addConfigObjectMethods(vanillaObject, ROOT_PROPERTY_PATH, new HashMap<>(), this::defaultValuePropertyConsumer);
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
             throw new RuntimeException(LogUtil.message("Unable to call constructor on class {}",
-                    configObject.getClass().getName()), e);
+                    appConfig.getClass().getName()), e);
         }
+        
+        // Now add in any values from the yaml
+        updateConfigFromYaml(appConfig);
+    }
 
-        // Now walk the AppConfig object model from the YAML updating globalPropertiesMap where values
-        // differ from the defaults.
-        addConfigObjectMethods(configObject, ROOT_PROPERTY_PATH, propertyMap, this::yamlPropertyConsumer);
+    /**
+     * Will copy the contents of the passed {@link AppConfig} into the guice bound {@link AppConfig}
+     * and update the globalPropertiesMap.
+     * It will also apply common database config to all other database config objects.
+     */
+    void updateConfigFromYaml(final AppConfig newAppConfig) {
+
+        // Allow the use of a single set of DB conn details that get applied to all, unless they override it
+        applyCommonDbConfig(newAppConfig);
+
+        synchronized (this) {
+            if (System.identityHashCode(newAppConfig) != System.identityHashCode(appConfig)) {
+                // We have been passed a different object to our instance appConfig so copy all
+                // the values over.
+                LOGGER.debug("Copying values from newAppConfig to appConfig");
+                FieldMapper.copy(newAppConfig, appConfig);
+            }
+
+            // Now walk the AppConfig object model from the DropWiz YAML updating globalPropertiesMap with the
+            // YAML values where present.
+            LOGGER.debug("Adding yaml config values into global property map");
+            addConfigObjectMethods(newAppConfig, ROOT_PROPERTY_PATH, propertyMap, this::yamlPropertyConsumer);
+        }
     }
 
     public boolean validatePropertyPath(final String fullPath) {
@@ -93,6 +146,63 @@ public class ConfigMapper {
 
     Collection<ConfigProperty> getGlobalProperties() {
         return globalPropertiesMap.values();
+    }
+
+    Optional<ConfigProperty> getGlobalProperty(final String fullPath) {
+        Objects.requireNonNull(fullPath);
+        return Optional.ofNullable(globalPropertiesMap.get(fullPath));
+    }
+
+    /**
+     * Verifies that the passed value for the property with fullPath can be converted into
+     * the appropriate object type
+     */
+    void validateStringValue(final String fullPath, final String value) {
+        final Prop prop = propertyMap.get(fullPath);
+        if (prop != null) {
+            final Type genericType = prop.getValueType();
+            convertToObject(value, genericType);
+        } else {
+            throw new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath));
+        }
+    }
+
+    /**
+     * @param dbConfigProperty The config property object obtained from the database
+     * @return The updated typed value from the object model
+     */
+    ConfigProperty decorateDbConfigProperty(final ConfigProperty dbConfigProperty) {
+        Objects.requireNonNull(dbConfigProperty);
+
+         final String fullPath = dbConfigProperty.getName();
+
+        synchronized (this) {
+            ConfigProperty globalConfigProperty = getGlobalProperty(fullPath)
+                    .orElseThrow(() -> new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath)));
+
+            final Prop prop = propertyMap.get(fullPath);
+            if (prop != null) {
+                // Now set the new effective value on our guice bound appConfig instance
+                final Type genericType = prop.getValueType();
+                final Object typedValue = convertToObject(
+                        globalConfigProperty.getEffectiveValue().orElse(null), genericType);
+                prop.setValueOnConfigObject(typedValue);
+
+                // Update all the DB related values from the passed DB config prop
+                globalConfigProperty.setId(dbConfigProperty.getId());
+
+                globalConfigProperty.setDatabaseOverride(dbConfigProperty.getDatabaseOverrideValue());
+                globalConfigProperty.setVersion(dbConfigProperty.getVersion());
+                globalConfigProperty.setCreateTimeMs(dbConfigProperty.getCreateTimeMs());
+                globalConfigProperty.setCreateUser(dbConfigProperty.getCreateUser());
+                globalConfigProperty.setUpdateTimeMs(dbConfigProperty.getUpdateTimeMs());
+                globalConfigProperty.setUpdateUser(dbConfigProperty.getUpdateUser());
+
+                return globalConfigProperty;
+            } else {
+                throw new UnknownPropertyException(LogUtil.message("No prop object for {}", fullPath));
+            }
+        }
     }
 
     private void addConfigObjectMethods(final IsConfig object,
@@ -113,33 +223,29 @@ public class ConfigMapper {
 
             final String fullPath = path + "." + name;
 
-            try {
-                final Class<?> valueType = prop.getValueClass();
+            final Class<?> valueType = prop.getValueClass();
 
-                final Object value = prop.getValueFromConfigObject();
-                if (isSupportedPropertyType(valueType)) {
-                    // This is a leaf, i.e. a property so add it to our map
-                    propertyMap.put(fullPath, prop);
+            final Object value = prop.getValueFromConfigObject();
+            if (isSupportedPropertyType(valueType)) {
+                // This is a leaf, i.e. a property so add it to our map
+                propertyMap.put(fullPath, prop);
 
-                    // Now let the consumer do something to it
-                    propConsumer.accept(fullPath, prop);
-                } else if (IsConfig.class.isAssignableFrom(valueType)) {
-                    // This must be a branch, i.e. config object so recurse into that
-                    if (value != null) {
-                        IsConfig childConfigObject = (IsConfig) value;
-                        addConfigObjectMethods(childConfigObject, fullPath, propertyMap, propConsumer);
-                    }
-                } else {
-                    // This is not expected
-                    throw  new RuntimeException(LogUtil.message(
-                            "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
-                            valueType.getName(),
-                            IsConfig.class.getSimpleName()));
+                // Now let the consumer do something to it
+                propConsumer.accept(fullPath, prop);
+            } else if (IsConfig.class.isAssignableFrom(valueType)) {
+                // This must be a branch, i.e. config object so recurse into that
+                if (value != null) {
+                    IsConfig childConfigObject = (IsConfig) value;
+                    addConfigObjectMethods(childConfigObject, fullPath, propertyMap, propConsumer);
                 }
-
-            } catch (final InvocationTargetException | IllegalAccessException e) {
-                LOGGER.error(e.getMessage(), e);
+            } else {
+                // This is not expected
+                throw  new RuntimeException(LogUtil.message(
+                        "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
+                        valueType.getName(),
+                        IsConfig.class.getSimpleName()));
             }
+
         });
     }
 
@@ -153,36 +259,36 @@ public class ConfigMapper {
                 "YAML but not in the object model, this should not happen", yamlProp, fullPath);
 
         // Create global property.
-        final String valueAsStr = getStringValue(yamlProp);
-
-        if (valueAsStr != null && !valueAsStr.equals(configProperty.getDefaultValue())) {
-            configProperty.setSource(ConfigProperty.SourceType.YAML);
-            configProperty.setValue(valueAsStr);
-        }
-
-        if (configProperty.getValue() == null) {
-            LOGGER.debug("Property {} has no value from {} or {}",
-                    configProperty.getName(),
-                    ConfigProperty.SourceType.DEFAULT,
-                    ConfigProperty.SourceType.YAML);
-        }
+        final String yamlValueAsStr = getStringValue(yamlProp);
+        configProperty.setYamlOverrideValue(yamlValueAsStr);
+//        final String defaultValue = configProperty.getDefaultValue().orElse(null);
+//
+//        // If yaml value is the same as the default then null it out
+//        if (yamlValueAsStr == null && defaultValue == null) {
+//
+//        }
+//        if (configProperty.getDefaultValue() != null && configProperty.getDefaultValue().orElse(null).equals(yamlValueAsStr)) {
+//            configProperty.setYamlValue(null);
+//        } else {
+//            configProperty.setYamlValue(yamlValueAsStr);
+//        }
     }
 
-    private void defaultPropertyConsumer(final String fullPath, final Prop defaultProp) {
+    private void defaultValuePropertyConsumer(final String fullPath, final Prop defaultProp) {
 
         // Create global property.
         final String defaultValueAsStr = getDefaultValue(defaultProp);
 
         // build a new ConfigProperty object from our Prop and our defaults
         final ConfigProperty configProperty = new ConfigProperty();
-        configProperty.setSource(ConfigProperty.SourceType.DEFAULT);
         configProperty.setName(fullPath);
-
-        // Set both value and default to the default value defined in the object
-        configProperty.setValue(defaultValueAsStr);
         configProperty.setDefaultValue(defaultValueAsStr);
-
+        // Add all the meta data for the prop
         updatePropertyFromConfigAnnotations(configProperty, defaultProp);
+
+        if (defaultValueAsStr == null) {
+            LOGGER.debug("Property {} has no default value", fullPath);
+        }
 
         globalPropertiesMap.put(fullPath, configProperty);
     }
@@ -242,6 +348,43 @@ public class ConfigMapper {
                 configProperty.setEditable(false);
             }
         }
+        configProperty.setDataTypeName(getDataTypeName(prop.getValueType()));
+    }
+
+    private static String getDataTypeName(final Type type) {
+        try {
+            if (type instanceof Class) {
+                final Class<?> valueClass = (Class) type;
+                String dataTypeName;
+
+                if (valueClass.equals(int.class)) {
+                    dataTypeName = "Integer";
+                } else if (valueClass.equals(Enum.class)) {
+                        dataTypeName = "Enumeration";
+                } else if (valueClass.equals(List.class) || valueClass.equals(Map.class)) {
+                    dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName()) + " of ";
+                } else {
+                    dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName());
+                }
+                return dataTypeName;
+            } else if (type instanceof ParameterizedType) {
+                final ParameterizedType parameterizedType = (ParameterizedType) type;
+                final String rawTypeName = getDataTypeName(parameterizedType.getRawType());
+
+                if (parameterizedType.getActualTypeArguments() != null) {
+                    final String genericTypes = Arrays.stream(parameterizedType.getActualTypeArguments())
+                            .map(ConfigMapper::getDataTypeName)
+                            .collect(Collectors.joining(", "));
+                    return rawTypeName + genericTypes;
+                } else {
+                    return rawTypeName;
+                }
+            } else {
+                return "";
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error getting type name for {}: {}", type, e.getMessage()));
+        }
     }
 
     private String getNameFromAnnotation(final Method method) {
@@ -255,6 +398,7 @@ public class ConfigMapper {
     }
 
 
+    // pkg private for testing
     static String convertToString(final Object value) {
         List<String> availableDelimiters = new ArrayList<>(DELIMITERS);
         return convertToString(value, availableDelimiters);
@@ -284,45 +428,19 @@ public class ConfigMapper {
     }
 
     private String getStringValue(final Prop prop) {
-        try {
-            final Object value = prop.getValueFromConfigObject();
-            if (value != null) {
-                return convertToString(value);
-            }
-        } catch (final IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-            LOGGER.debug(e.getMessage(), e);
+        final Object value = prop.getValueFromConfigObject();
+        if (value != null) {
+            return convertToString(value);
         }
         return null;
     }
 
     private String getDefaultValue(final Prop prop) {
         if (prop != null) {
-            try {
-                final Object value = prop.getValueFromConfigObject();
-                if (value != null) {
-                    return convertToString(value);
-                }
-            } catch (final IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-                LOGGER.debug(e.getMessage(), e);
+            final Object value = prop.getValueFromConfigObject();
+            if (value != null) {
+                return convertToString(value);
             }
-        }
-        return null;
-    }
-
-    Object updateConfigObject(final String key, final String value) {
-        try {
-            final Prop prop = propertyMap.get(key);
-            if (prop != null) {
-                final Type genericType = prop.getValueType();
-                final Object typedValue = convertToObject(value, genericType);
-                prop.setValueOnConfigObject(typedValue);
-                return typedValue;
-            } else {
-                LOGGER.error(LogUtil.message("Cannot find property with key [{}]", key));
-            }
-        } catch (final IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-            // TODO why swallow these exceptions
-            LOGGER.debug(e.getMessage(), e);
         }
         return null;
     }
@@ -334,42 +452,51 @@ public class ConfigMapper {
 
         Class<?> type = getDataType(genericType);
 
-        if (type.equals(String.class)) {
-            return value;
-        } else if (type.equals(Byte.class) || type.equals(byte.class)) {
-            return Byte.valueOf(value);
-        } else if (type.equals(Integer.class) || type.equals(int.class)) {
-            return Integer.valueOf(value);
-        } else if (type.equals(Long.class) || type.equals(long.class)) {
-            return Long.valueOf(value);
-        } else if (type.equals(Short.class) || type.equals(short.class)) {
-            return Short.valueOf(value);
-        } else if (type.equals(Float.class) || type.equals(float.class)) {
-            return Float.valueOf(value);
-        } else if (type.equals(Double.class) || type.equals(double.class)) {
-            return Double.valueOf(value);
-        } else if (type.equals(Boolean.class) || type.equals(boolean.class)) {
-            return Boolean.valueOf(value);
-        } else if ((type.equals(Character.class) || type.equals(char.class)) && value.length() > 0) {
-            return value.charAt(0);
-        } else if (List.class.isAssignableFrom(type)) {
-            // determine the type of the list items
-            Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
-            return stringToList(value, itemType);
-//        } else if (type.isAssignableFrom(Map.class)) {
-        } else if (Map.class.isAssignableFrom(type)) {
-            // determine the types of the keys and values
-            Class<?> keyType = getDataType(getGenericTypes(genericType).get(0));
-            Class<?> valueType = getDataType(getGenericTypes(genericType).get(1));
-            return stringToMap(value, keyType, valueType);
-        } else if (type.equals(DocRef.class)) {
-            return stringToDocRef(value);
-        } else if (Enum.class.isAssignableFrom(type)) {
-            return stringToEnum(value, type);
+        try {
+            if (type.equals(String.class)) {
+                return value;
+            } else if (type.equals(Byte.class) || type.equals(byte.class)) {
+                return Byte.valueOf(value);
+            } else if (type.equals(Integer.class) || type.equals(int.class)) {
+                return Integer.valueOf(value);
+            } else if (type.equals(Long.class) || type.equals(long.class)) {
+                return Long.valueOf(value);
+            } else if (type.equals(Short.class) || type.equals(short.class)) {
+                return Short.valueOf(value);
+            } else if (type.equals(Float.class) || type.equals(float.class)) {
+                return Float.valueOf(value);
+            } else if (type.equals(Double.class) || type.equals(double.class)) {
+                return Double.valueOf(value);
+            } else if (type.equals(Boolean.class) || type.equals(boolean.class)) {
+                return Boolean.valueOf(value);
+            } else if ((type.equals(Character.class) || type.equals(char.class)) && value.length() > 0) {
+                return value.charAt(0);
+            } else if (List.class.isAssignableFrom(type)) {
+                // determine the type of the list items
+                Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
+                return stringToList(value, itemType);
+    //        } else if (type.isAssignableFrom(Map.class)) {
+            } else if (Map.class.isAssignableFrom(type)) {
+                // determine the types of the keys and values
+                Class<?> keyType = getDataType(getGenericTypes(genericType).get(0));
+                Class<?> valueType = getDataType(getGenericTypes(genericType).get(1));
+                return stringToMap(value, keyType, valueType);
+            } else if (type.equals(DocRef.class)) {
+                return stringToDocRef(value);
+            } else if (Enum.class.isAssignableFrom(type)) {
+                return stringToEnum(value, type);
+            }
+        } catch (Exception e) {
+            // Don't include the original exception else gwt uses the msg of the original which is
+            // not very user friendly. Enable debug to see the stack
+            LOGGER.debug(LogUtil.message("Unable to convert value [{}] to type {} due to: {}",
+                    value, genericType, e.getMessage()), e);
+            throw new RuntimeException(LogUtil.message("Unable to convert value [{}] to type {} due to: {}",
+                    value, getDataTypeName(genericType), e.getMessage()));
         }
 
         LOGGER.error("Unable to convert value [{}] of type [{}] to an Object", value, type);
-        return null;
+        throw new RuntimeException(LogUtil.message("Type [{}] is not supported for value [{}]", genericType, value));
     }
 
 
@@ -562,18 +689,106 @@ public class ConfigMapper {
         return chosenDelimiter;
     }
 
-    public static class ConfigMapperFactory implements Provider<ConfigMapper> {
+    private static void applyCommonDbConfig(AppConfig appConfig) {
+        LOGGER.debug("applyCommonDbConfig() called");
 
-        private final ConfigMapper configMapper;
+        // get an object with the hard coded defaults
+        final DbConfig defaultConfig = new DbConfig();
+        final DbConfig commonConfig = appConfig.getCommonDbConfig();
 
-        @Inject
-        ConfigMapperFactory(final AppConfig appConfig) {
-            configMapper = new ConfigMapper(appConfig);
-        }
+        if (!defaultConfig.equals(commonConfig)) {
+            LOGGER.info("Common database config is non-default so will be used as fall-back configuration");
 
-        @Override
-        public ConfigMapper get() {
-            return configMapper;
+            scanMethodsForDbConfig(appConfig, commonConfig, defaultConfig, "");
+        } else {
+            LOGGER.debug("commonConfig matches default so nothing to do");
         }
     }
+
+    private static void scanMethodsForDbConfig(final IsConfig configObject,
+                                               final DbConfig commonConfig,
+                                               final DbConfig defaultConfig,
+                                               String path) {
+        if (!path.isEmpty()) {
+            path += ".";
+        }
+        path = path + configObject.getClass().getSimpleName();
+
+        // find all getters that return a class that implements HasDbConfig
+        for (Method method : configObject.getClass().getMethods()) {
+            if (method.getName().startsWith("get")) {
+//                LOGGER.info("method {} {}", method.getName(), method.getReturnType());
+
+                if (HasDbConfig.class.isAssignableFrom(method.getReturnType())) {
+                    try {
+                        final HasDbConfig serviceConfig = (HasDbConfig) method.invoke(configObject);
+                        applyCommonDbConfig(defaultConfig, commonConfig, serviceConfig, path);
+                    } catch (IllegalAccessException | InvocationTargetException e) {
+                        throw new RuntimeException(LogUtil.message("Unable to invoke method {}", method.getName()));
+                    }
+                } else {
+                    // Not a HasDbConfig so see if it is a child config object that we can recurse into
+                    if (IsConfig.class.isAssignableFrom(method.getReturnType())) {
+                        try {
+                            final IsConfig childConfigObject = (IsConfig) method.invoke(configObject);
+                            scanMethodsForDbConfig(childConfigObject, commonConfig, defaultConfig, path);
+                        } catch (IllegalAccessException | InvocationTargetException e) {
+                            throw new RuntimeException(LogUtil.message("Unable to invoke method {}", method.getName()));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private static void applyCommonDbConfig(final DbConfig defaultConfig,
+                                            final DbConfig commonConfig,
+                                            final HasDbConfig serviceConfig,
+                                            String path) {
+
+        path += "." + serviceConfig.getClass().getSimpleName();
+        final DbConfig serviceDbConfig = serviceConfig.getDbConfig();
+
+        if (defaultConfig.equals(serviceDbConfig)) {
+            // The service specific config has default values for its db config
+            // so apply all the common values.
+            LOGGER.info("Overwriting default {} with {}",
+                    path, AppConfig.class.getSimpleName() + "." + CommonDbConfig.class.getSimpleName());
+            FieldMapper.copy(commonConfig, serviceDbConfig, FieldMapper.CopyOptions.DONT_COPY_NULLS);
+        } else {
+            LOGGER.debug("{} has custom DB config so leaving it as is", path);
+        }
+    }
+
+    public static class UnknownPropertyException extends RuntimeException {
+        /**
+         * Constructs a new runtime exception with the specified detail message.
+         * The cause is not initialized, and may subsequently be initialized by a
+         * call to {@link #initCause}.
+         *
+         * @param message the detail message. The detail message is saved for
+         *                later retrieval by the {@link #getMessage()} method.
+         */
+        UnknownPropertyException(final String message) {
+            super(message);
+        }
+
+        /**
+         * Constructs a new runtime exception with the specified detail message and
+         * cause.  <p>Note that the detail message associated with
+         * {@code cause} is <i>not</i> automatically incorporated in
+         * this runtime exception's detail message.
+         *
+         * @param message the detail message (which is saved for later retrieval
+         *                by the {@link #getMessage()} method).
+         * @param cause   the cause (which is saved for later retrieval by the
+         *                {@link #getCause()} method).  (A {@code null} value is
+         *                permitted, and indicates that the cause is nonexistent or
+         *                unknown.)
+         * @since 1.4
+         */
+        UnknownPropertyException(final String message, final Throwable cause) {
+            super(message, cause);
+        }
+    };
 }

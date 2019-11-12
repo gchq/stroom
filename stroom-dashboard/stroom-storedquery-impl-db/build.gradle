@@ -21,6 +21,7 @@ dependencies {
 
     runtimeOnly libs.mysql_connector_java
 //
+    testCompile project(':stroom-test-common')
     testCompile libs.assertj_core
     testCompile libs.mockito_core
     testCompile libs.mockito_junit_jupiter

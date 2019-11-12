@@ -101,6 +101,10 @@ class SecurityFilter implements Filter {
         this.authenticationServiceClients = authenticationServiceClients;
         this.authenticationService = authenticationService;
         this.securityContext = securityContext;
+        
+        if (!config.isAuthenticationRequired()) {
+            LOGGER.warn("All authentication is disabled");
+        }
     }
 
     @Override

@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
+import stroom.config.common.HasDbConfig;
 
 public class HikariUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(HikariUtil.class);
@@ -15,9 +16,11 @@ public class HikariUtil {
         // Utility class.
     }
 
-    public static HikariConfig createConfig(final ConnectionConfig connectionConfig, final ConnectionPoolConfig connectionPoolConfig) {
-        // Add test connection details if needed.
-        DbUtil.decorateConnectionConfig(connectionConfig);
+    public static HikariConfig createConfig(final HasDbConfig dbConfig) {
+
+        final ConnectionConfig connectionConfig = dbConfig.getDbConfig().getConnectionConfig();
+        final ConnectionPoolConfig connectionPoolConfig = dbConfig.getDbConfig().getConnectionPoolConfig();
+
         // Validate the connection details.
         DbUtil.validate(connectionConfig);
         // Keep waiting until we can establish a DB connection to allow for the DB to start after the app
@@ -40,7 +43,7 @@ public class HikariUtil {
 
         if (testing) {
             LOGGER.trace("Testing");
-            config.setIdleTimeout(000);
+            config.setIdleTimeout(1000);
             config.setMaxLifetime(1000);
             config.setMaximumPoolSize(2);
         } else {

@@ -17,9 +17,9 @@
 package stroom.config.global.client.presenter;
 
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
-import stroom.config.global.api.ConfigProperty;
-import stroom.config.global.api.FindGlobalConfigCriteria;
-import stroom.config.global.api.ListGlobalConfigAction;
+import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.FindGlobalConfigCriteria;
+import stroom.config.global.shared.ListGlobalConfigAction;
 import stroom.data.client.presenter.ActionDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.table.client.Refreshable;

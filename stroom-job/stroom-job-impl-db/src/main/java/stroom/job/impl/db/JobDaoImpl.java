@@ -56,12 +56,12 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
             FindJobCriteria.FIELD_NAME, JOB.NAME);
 
     private final GenericDao<JobRecord, Job, Integer> genericDao;
-    private final ConnectionProvider connectionProvider;
+    private final JobDbConnProvider jobDbConnProvider;
 
     @Inject
-    JobDaoImpl(final ConnectionProvider connectionProvider) {
-        genericDao = new GenericDao<>(JOB, JOB.ID, Job.class, connectionProvider);
-        this.connectionProvider = connectionProvider;
+    JobDaoImpl(final JobDbConnProvider jobDbConnProvider) {
+        genericDao = new GenericDao<>(JOB, JOB.ID, Job.class, jobDbConnProvider);
+        this.jobDbConnProvider = jobDbConnProvider;
     }
 
     @Override
@@ -91,7 +91,7 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
-        final List<Job> list = JooqUtil.contextResult(connectionProvider, context -> context
+        final List<Job> list = JooqUtil.contextResult(jobDbConnProvider, context -> context
                 .select()
                 .from(JOB)
                 .where(conditions)
@@ -106,7 +106,7 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
 
     @Override
     public int deleteOrphans() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(jobDbConnProvider, context -> context
                 .deleteFrom(JOB)
                 .where(JOB.ID.notIn(
                         context.select(JOB_NODE.JOB_ID)

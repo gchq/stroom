@@ -1,38 +1,37 @@
 ---
-activity:
-  connection:
-    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-    jdbcDriverUsername: "stroomuser"
-    jdbcDriverPassword: "stroompassword1"
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
-benchmark:
-  streamCount: 1000
-  recordCount: 10000
-  concurrentWriters: 10
-cluster:
-  clusterCallUseLocal: true
-  clusterCallReadTimeout: "30s"
-  clusterCallIgnoreSSLHostnameVerifier: true
-  clusterResponseTimeout: "30s"
-contentPackImport:
-  enabled: false
-core:
-  connection:
-    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-    jdbcDriverUsername: "stroomuser"
-    jdbcDriverPassword: "stroompassword1"
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
-data:
-  meta:
-    metaValueConfig: null
+appConfig:
+  activity:
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+  benchmark:
+    streamCount: 1000
+    recordCount: 10000
+    concurrentWriters: 10
+  cluster:
+    clusterCallUseLocal: true
+    clusterCallReadTimeout: "30s"
+    clusterCallIgnoreSSLHostnameVerifier: true
+    clusterResponseTimeout: "30s"
+  clusterLock:
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+  commonDbDetails:
     connection:
       jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
       jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
@@ -42,276 +41,566 @@ data:
       cachePrepStmts: true
       prepStmtCacheSize: 250
       prepStmtCacheSqlLimit: 2048
-  retention:
-    deleteBatchSize: 1000
-  store:
+  contentPackImport:
+    enabled: false
+  core:
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+  data:
+    meta:
+      metaValueConfig:
+        deleteAge: "30d"
+        deleteBatchSize: 1000
+        flushBatchSize: 1000
+        addAsync: true
+      db:
+        connection:
+          jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+          jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+          jdbcDriverUsername: "stroomuser"
+          jdbcDriverPassword: "stroompassword1"
+        connectionPool:
+          cachePrepStmts: true
+          prepStmtCacheSize: 250
+          prepStmtCacheSqlLimit: 2048
+    retention:
+      deleteBatchSize: 1000
+    store:
+      deletePurgeAge: "7d"
+      deleteBatchSize: 1000
+      fileSystemCleanBatchSize: 20
+      fileSystemCleanDeleteOut: false
+      fileSystemCleanOldAge: "1d"
+      db:
+        connection:
+          jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+          jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+          jdbcDriverUsername: "stroomuser"
+          jdbcDriverPassword: "stroompassword1"
+        connectionPool:
+          cachePrepStmts: true
+          prepStmtCacheSize: 250
+          prepStmtCacheSqlLimit: 2048
+    filesystemVolume:
+      volumeSelector: "RoundRobin"
+      createDefaultOnStart: true
+  dataSourceUrl:
+    index: "http://127.0.0.1:8080/api/stroom-index/v2"
+    solrIndex: "http://127.0.0.1:8080/api/stroom-solr-index/v2"
+    statisticStore: "http://127.0.0.1:8080/api/sqlstatistics/v2"
+    searchable: "http://127.0.0.1:8080/api/searchable/v2"
+    annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
+    elasticIndex: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
+  explorer:
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+  export:
+    enabled: false
+  feed:
+    unknownClassification: "UNKNOWN CLASSIFICATION"
+    feedNamePattern: "^[A-Z0-9_-]{3,}$"
+  index:
+    ramBufferSizeMB: 1024
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+    writer:
+      cache:
+        timeToLive: null
+        timeToIdle: null
+        minItems: 0
+        coreItems: 50
+        maxItems: 100
+  job:
+    enabled: true
+    executionInterval: "10s"
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+  lifecycle:
+    enabled: true
+  node:
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+    node: "tba"
+    status:
+      heapHistogram:
+        classNameMatchRegex: "^stroom\\..*$"
+        classNameReplacementRegex: "((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\\
+          $\\$Lambda\\$)[0-9]+\\/[0-9]+)"
+  path:
+    temp: "/tmp"
+  pipeline:
+    appender:
+      maxActiveDestinations: 100
+    parser:
+      secureProcessing: true
+    referenceData:
+      localDir: "${stroom.temp}/refDataOffHeapStore"
+      maxPutsBeforeCommit: 1000
+      maxReaders: 100
+      maxStoreSize: "50G"
+      purgeAge: "30d"
+      valueBufferCapacity: 1000
+      readAheadEnabled: true
+    xslt:
+      maxElements: 1000000
+  processor:
+    assignTasks: true
+    createTasks: true
+    deleteAge: "1d"
     deletePurgeAge: "7d"
     deleteBatchSize: 1000
-    fileSystemCleanBatchSize: 20
-    fileSystemCleanDeleteOut: false
-    fileSystemCleanOldAge: "1d"
-    connection:
-      jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-      jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-      jdbcDriverUsername: "stroomuser"
-      jdbcDriverPassword: "stroompassword1"
-    connectionPool:
-      cachePrepStmts: true
-      prepStmtCacheSize: 250
-      prepStmtCacheSqlLimit: 2048
-dataSourceUrl:
-  index: "http://127.0.0.1:8080/api/stroom-index/v2"
-  statisticStore: "http://127.0.0.1:8080/api/sqlstatistics/v2"
-  annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
-  elasticIndex: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
-explorer:
-  connection:
-    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-    jdbcDriverUsername: "stroomuser"
-    jdbcDriverPassword: "stroompassword1"
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
-export:
-  enabled: false
-index:
-  ramBufferSizeMB: 1024
-  writer:
-    cache:
-      timeToLive: null
-      timeToIdle: null
-      minItems: 0
-      coreItems: 50
-      maxItems: 100
-indexDb:
-  connection:
-    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-    jdbcDriverUsername: "stroomuser"
-    jdbcDriverPassword: "stroompassword1"
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
-job:
-  enabled: true
-  executionInterval: "10s"
-lifecycle:
-  enabled: true
-node:
-  node: "tba"
-  status:
-    heapHistogram:
-      classNameMatchRegex: "^stroom\\..*$"
-      classNameReplacementRegex: "((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\\
-        $\\$Lambda\\$)[0-9]+\\/[0-9]+)"
-path:
-  temp: null
-pipeline:
-  appender:
-    maxActiveDestinations: 100
-  parser:
-    secureProcessing: true
-  refdata:
-    localDir: "${stroom.temp}/refDataOffHeapStore"
-    maxPutsBeforeCommit: 1000
-    maxReaders: 100
-    maxStoreSize: "50G"
-    purgeAge: "30d"
-    valueBufferCapacity: 1000
-    readAheadEnabled: true
-  xslt:
-    maxElements: 1000000
-processor:
-  assignTasks: true
-  createTasks: true
-  deleteAge: "1d"
-  deletePurgeAge: "7d"
-  deleteBatchSize: 1000
-  fillTaskQueue: true
-  queueSize: 1000
-  databaseMultiInsertMaxBatchSize: 500
-  connection:
-    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-    jdbcDriverUsername: "stroomuser"
-    jdbcDriverPassword: "stroompassword1"
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
-properties:
-  connection:
-    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-    jdbcDriverUsername: "stroomuser"
-    jdbcDriverPassword: "stroompassword1"
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
-proxyAggregation:
-  proxyDir: "${stroom.temp}/proxy"
-  proxyThreads: 10
-  maxFilesPerAggregate: 10000
-  maxConcurrentMappedFiles: 100000
-  maxUncompressedFileSize: "1G"
-feed:
-  receiptPolicyUuid: null
-  bufferSize: 8192
-  unknownClassification: "UNKNOWN CLASSIFICATION"
-  feedNamePattern: "^[A-Z0-9_-]{3,}$"
-search:
-  maxStoredDataQueueSize: 1000
-  maxBooleanClauseCount: 1024
-  storeSize: "1000000,100,10,1"
-  extraction:
-    maxThreads: 4
-    maxThreadsPerTask: 2
-  shard:
-    maxDocIdQueueSize: 1000000
-    maxThreads: 4
-    maxThreadsPerTask: 2
-security:
-  authentication:
-    authenticationServiceUrl: null
-    authenticationRequired: true
-    apiToken: "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc"
-    authServicesBaseUrl: "http://auth-service:8099"
-    preventLogin: false
-    userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
-    durationToWarnBeforeExpiry: null
-    jwt:
-      jwtIssuer: "stroom"
-      enableTokenRevocationCheck: true
-securityDb:
-  connection:
-    jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-    jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-    jdbcDriverUsername: "stroomuser"
-    jdbcDriverPassword: "stroompassword1"
-  connectionPool:
-    cachePrepStmts: true
-    prepStmtCacheSize: 250
-    prepStmtCacheSqlLimit: 2048
-serviceDiscovery:
-  enabled: false
-  zookeeperUrl: "localhost:2181"
-  servicesHostNameOrIpAddress: "localhost"
-  servicesPort: 8080
-  curatorBaseSleepTimeMs: 5000
-  curatorMaxSleepTimeMs: 300000
-  curatorMaxRetries: 100
-  zookeeperBasePath: "/stroom-services"
-statistics:
-  sql:
-    docRefType: "StatisticStore"
-    statisticAggregationBatchSize: 1000000
-    maxProcessingAge: null
-    connection:
-      jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
-      jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
-      jdbcDriverUsername: "stroomuser"
-      jdbcDriverPassword: "stroompassword1"
-    connectionPool:
-      cachePrepStmts: true
-      prepStmtCacheSize: 250
-      prepStmtCacheSqlLimit: 2048
-    search:
-      storeSize: "1000000,100,10,1"
-      resultHandlerBatchSize: 5000
-      maxResults: 100000
-      fetchSize: 5000
-  hbase:
-    docRefType: "StroomStatsStore"
-    kafkaConfigUuid: null
-    eventsPerMessage: 100
-    kafkaTopics:
-      count: "statisticEvents-Count"
-      value: "statisticEvents-Value"
-  internal:
-    benchmarkCluster: []
-    cpu: []
-    eventsPerSecond: []
-    heapHistogramBytes: []
-    heapHistogramInstances: []
-    memory: []
-    metaDataStreamSize: []
-    metaDataStreamsReceived: []
-    pipelineStreamProcessor: []
-    streamTaskQueueSize: []
-    volumes: []
-queryHistory:
-  itemsRetention: 100
-  daysRetention: 365
-ui:
-  welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
-    \ systems.</p>"
-  aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
-    \ systems.</p>"
-  buildInfo:
-    upDate: null
-    buildDate: "TBD"
-    buildVersion: "TBD"
-  nodeName: null
-  maintenanceMessage: null
-  defaultMaxResults: "1000000,100,10,1"
-  helpUrl: null
-  namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
-  htmlTitle: "Stroom"
-  oncontextmenu: "return false;"
-  process:
-    defaultTimeLimit: 30
-    defaultRecordLimit: 1000000
-  theme:
-    backgroundAttachment: "scroll"
-    backgroundColor: "#1E88E5"
-    backgroundImage: "none"
-    backgroundPosition: "0 0"
-    backgroundRepeat: "repeat"
-    backgroundOpacity: "0"
-    tubeVisible: "hidden"
-    tubeOpacity: "0.6"
-    labelColours: "TEST1=#FF0000,TEST2=#FF9900"
-  query:
-    infoPopup:
-      enabled: false
-      title: "Please Provide Query Info"
-      validationRegex: "^[\\s\\S]{3,}$"
-  splash:
+    fillTaskQueue: true
+    queueSize: 1000
+    databaseMultiInsertMaxBatchSize: 500
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+  properties:
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+  proxyAggregation:
+    proxyDir: "${stroom.temp}/proxy"
+    proxyThreads: 10
+    maxFileScan: 100000
+    maxConcurrentMappedFiles: 100000
+    maxFilesPerAggregate: 10000
+    maxUncompressedFileSize: "1G"
+    buffferSize: 8192
+  receive:
+    receiptPolicyUuid: null
+    bufferSize: 8192
+    unknownClassification: "UNKNOWN CLASSIFICATION"
+    feedNamePattern: "^[A-Z0-9_-]{3,}$"
+  search:
+    maxStoredDataQueueSize: 1000
+    maxBooleanClauseCount: 1024
+    storeSize: "1000000,100,10,1"
+    extraction:
+      maxThreads: 4
+      maxThreadsPerTask: 2
+    shard:
+      maxDocIdQueueSize: 1000000
+      maxThreads: 4
+      maxThreadsPerTask: 2
+  searchable:
+    storeSize: "1000000,100,10,1"
+  security:
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+    authentication:
+      authenticationServiceUrl: null
+      authenticationRequired: true
+      verifySsl: false
+      apiToken: "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc"
+      authServicesBaseUrl: "http://auth-service:8099"
+      preventLogin: false
+      userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
+      durationToWarnBeforeExpiry: "30d"
+      jwt:
+        jwtIssuer: "stroom"
+        enableTokenRevocationCheck: true
+    authorisation:
+      maxDocumentPermissionCacheSize: 1000
+  serviceDiscovery:
     enabled: false
-    title: "Splash Screen"
-    body: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
+    zookeeperUrl: "localhost:2181"
+    servicesHostNameOrIpAddress: "localhost"
+    servicesPort: 8080
+    curatorBaseSleepTimeMs: 5000
+    curatorMaxSleepTimeMs: 300000
+    curatorMaxRetries: 100
+    zookeeperBasePath: "/stroom-services"
+  solrSearch:
+    maxStoredDataQueueSize: 1000
+    maxBooleanClauseCount: 1024
+    storeSize: "1000000,100,10,1"
+    extraction:
+      maxThreads: 4
+      maxThreadsPerTask: 2
+  statistics:
+    sql:
+      docRefType: "StatisticStore"
+      statisticAggregationBatchSize: 1000000
+      maxProcessingAge: null
+      db:
+        connection:
+          jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+          jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+          jdbcDriverUsername: "stroomuser"
+          jdbcDriverPassword: "stroompassword1"
+        connectionPool:
+          cachePrepStmts: true
+          prepStmtCacheSize: 250
+          prepStmtCacheSqlLimit: 2048
+      search:
+        storeSize: "1000000,100,10,1"
+        resultHandlerBatchSize: 5000
+        maxResults: 100000
+        fetchSize: 5000
+    hbase:
+      docRefType: "StroomStatsStore"
+      kafkaConfigUuid: null
+      eventsPerMessage: 100
+      kafkaTopics:
+        count: "statisticEvents-Count"
+        value: "statisticEvents-Value"
+    internal:
+      benchmarkCluster:
+      - type: "StatisticStore"
+        uuid: "946a88c6-a59a-11e6-bdc4-0242ac110002"
+        name: "Benchmark-Cluster Test"
+      - type: "StroomStatsStore"
+        uuid: "2503f703-5ce0-4432-b9d4-e3272178f47e"
+        name: "Benchmark-Cluster Test"
+      cpu:
+      - type: "StatisticStore"
+        uuid: "af08c4a7-ee7c-44e4-8f5e-e9c6be280434"
+        name: "CPU"
+      - type: "StroomStatsStore"
+        uuid: "1edfd582-5e60-413a-b91c-151bd544da47"
+        name: "CPU"
+      eventsPerSecond:
+      - type: "StatisticStore"
+        uuid: "a9936548-2572-448b-9d5b-8543052c4d92"
+        name: "EPS"
+      - type: "StroomStatsStore"
+        uuid: "cde67df0-0f77-45d3-b2c0-ee8bb7b3c9c6"
+        name: "EPS"
+      heapHistogramBytes:
+      - type: "StatisticStore"
+        uuid: "934a1600-b456-49bf-9aea-f1e84025febd"
+        name: "Heap Histogram Bytes"
+      - type: "StroomStatsStore"
+        uuid: "b0110ab4-ac25-4b73-b4f6-96f2b50b456a"
+        name: "Heap Histogram Bytes"
+      heapHistogramInstances:
+      - type: "StatisticStore"
+        uuid: "e4f243b8-2c70-4d6e-9d5a-16466bf8764f"
+        name: "Heap Histogram Instances"
+      - type: "StroomStatsStore"
+        uuid: "bdd933a4-4309-47fd-98f6-1bc2eb555f20"
+        name: "Heap Histogram Instances"
+      memory:
+      - type: "StatisticStore"
+        uuid: "77c09ccb-e251-4ca5-bca0-56a842654397"
+        name: "Memory"
+      - type: "StroomStatsStore"
+        uuid: "d8a7da4f-ef6d-47e0-b16a-af26367a2798"
+        name: "Memory"
+      metaDataStreamSize:
+      - type: "StatisticStore"
+        uuid: "946a8814-a59a-11e6-bdc4-0242ac110002"
+        name: "Meta Data-Stream Size"
+      - type: "StroomStatsStore"
+        uuid: "3b25d63b-5472-44d0-80e8-8eea94f40f14"
+        name: "Meta Data-Stream Size"
+      metaDataStreamsReceived:
+      - type: "StatisticStore"
+        uuid: "946a87bc-a59a-11e6-bdc4-0242ac110002"
+        name: "Meta Data-Streams Received"
+      - type: "StroomStatsStore"
+        uuid: "5535f493-29ae-4ee6-bba6-735aa3104136"
+        name: "Meta Data-Streams Received"
+      pipelineStreamProcessor:
+      - type: "StatisticStore"
+        uuid: "946a80fc-a59a-11e6-bdc4-0242ac110002"
+        name: "PipelineStreamProcessor"
+      - type: "StroomStatsStore"
+        uuid: "efd9bad4-0bab-460f-ae98-79e9717deeaf"
+        name: "PipelineStreamProcessor"
+      streamTaskQueueSize:
+      - type: "StatisticStore"
+        uuid: "946a7f0f-a59a-11e6-bdc4-0242ac110002"
+        name: "Stream Task Queue Size"
+      - type: "StroomStatsStore"
+        uuid: "4ce8d6e7-94be-40e1-8294-bf29dd089962"
+        name: "Stream Task Queue Size"
+      volumes:
+      - type: "StatisticStore"
+        uuid: "ac4d8d10-6f75-4946-9708-18b8cb42a5a3"
+        name: "Volumes"
+      - type: "StroomStatsStore"
+        uuid: "60f4f5f0-4cc3-42d6-8fe7-21a7cec30f8e"
+        name: "Volumes"
+  queryHistory:
+    itemsRetention: 100
+    daysRetention: 365
+    db:
+      connection:
+        jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+        jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+        jdbcDriverUsername: "stroomuser"
+        jdbcDriverPassword: "stroompassword1"
+      connectionPool:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimit: 2048
+  ui:
+    welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
+      \ multiple systems.</p>"
+    aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
       \ systems.</p>"
-    version: "v0.1"
-  activity:
+    buildInfo:
+      upDate: null
+      buildDate: "TBD"
+      buildVersion: "TBD"
+    nodeName: null
+    maintenanceMessage: null
+    defaultMaxResults: "1000000,100,10,1"
+    helpUrl: null
+    namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
+    htmlTitle: "Stroom"
+    oncontextmenu: "return false;"
+    process:
+      defaultTimeLimit: 30
+      defaultRecordLimit: 1000000
+    theme:
+      backgroundAttachment: "scroll"
+      backgroundColor: "#1E88E5"
+      backgroundImage: "none"
+      backgroundPosition: "0 0"
+      backgroundRepeat: "repeat"
+      backgroundOpacity: "0"
+      tubeVisible: "hidden"
+      tubeOpacity: "0.6"
+      labelColours: "TEST1=#FF0000,TEST2=#FF9900"
+    query:
+      infoPopup:
+        enabled: false
+        title: "Please Provide Query Info"
+        validationRegex: "^[\\s\\S]{3,}$"
+    splash:
+      enabled: false
+      title: "Splash Screen"
+      body: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
+        \ systems.</p>"
+      version: "v0.1"
+    activity:
+      enabled: false
+      chooseOnStartup: false
+      managerTitle: "Choose Activity"
+      editorTitle: "Edit Activity"
+      editorBody: "Activity Code:</br><input type=\"text\" name=\"code\"></input></br></br>Activity\
+        \ Description:</br><textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"\
+        description\" validation=\".{80,}\" validationMessage=\"The activity description\
+        \ must be at least 80 characters long.\" ></textarea>Explain what the activity\
+        \ is"
+    url:
+      ui: "http://IP_ADDRESS"
+      authenticationService: "http://auth-service:8099/authentication/v1"
+      users: "http://IP_ADDRESS/users"
+      apiKeys: "http://IP_ADDRESS/tokens"
+      indexVolumes: "http://IP_ADDRESS/s/indexing/volumes"
+      indexVolumeGroups: "http://IP_ADDRESS/s/indexing/groups"
+      userAuthorisation: "http://IP_ADDRESS/s/authorisationManager/false"
+      groupAuthorisation: "http://IP_ADDRESS/s/authorisationManager/true"
+      editDoc: "http://IP_ADDRESS/s/doc/"
+      changepassword: "http://IP_ADDRESS/changepassword"
+      kibana: null
+      trackers: null
+      annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
+      elastic: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
+      documentPermissions: "http://IP_ADDRESS/s/authorisationManager/document/"
+  volumes:
+    resilientReplicationCount: 1
+    preferLocalVolumes: false
+    volumeSelector: "RoundRobin"
+    createDefaultOnStart: true
+server: !<default>
+  maxThreads: 1024
+  minThreads: 8
+  maxQueuedRequests: 1024
+  idleThreadTimeout: "1 minute"
+  nofileSoftLimit: null
+  nofileHardLimit: null
+  gid: null
+  uid: null
+  user: null
+  group: null
+  umask: null
+  startsAsRoot: null
+  registerDefaultExceptionMappers: true
+  detailedJsonProcessingExceptionMapper: false
+  shutdownGracePeriod: "30 seconds"
+  allowedMethods:
+  - "GET"
+  - "POST"
+  - "PUT"
+  - "DELETE"
+  - "HEAD"
+  - "OPTIONS"
+  - "PATCH"
+  enableThreadNameFilter: true
+  applicationConnectors:
+  - !<http>
+    port: 8080
+    bindHost: null
+    inheritChannel: false
+    headerCacheSize: "512 bytes"
+    outputBufferSize: "32 kilobytes"
+    maxRequestHeaderSize: "8 kilobytes"
+    maxResponseHeaderSize: "8 kilobytes"
+    inputBufferSize: "8 kilobytes"
+    idleTimeout: "30 seconds"
+    blockingTimeout: null
+    minBufferPoolSize: "64 bytes"
+    bufferPoolIncrement: "1024 bytes"
+    maxBufferPoolSize: "64 kilobytes"
+    minRequestDataRate: 0
+    acceptorThreads:
+      empty: true
+      present: false
+    selectorThreads:
+      empty: true
+      present: false
+    acceptQueueSize: null
+    reuseAddress: true
+    soLingerTime: null
+    useServerHeader: false
+    useDateHeader: true
+    useForwardedHeaders: true
+    httpCompliance: "RFC7230"
+  adminConnectors:
+  - !<http>
+    port: 8081
+    bindHost: null
+    inheritChannel: false
+    headerCacheSize: "512 bytes"
+    outputBufferSize: "32 kilobytes"
+    maxRequestHeaderSize: "8 kilobytes"
+    maxResponseHeaderSize: "8 kilobytes"
+    inputBufferSize: "8 kilobytes"
+    idleTimeout: "30 seconds"
+    blockingTimeout: null
+    minBufferPoolSize: "64 bytes"
+    bufferPoolIncrement: "1024 bytes"
+    maxBufferPoolSize: "64 kilobytes"
+    minRequestDataRate: 0
+    acceptorThreads:
+      empty: true
+      present: false
+    selectorThreads:
+      empty: true
+      present: false
+    acceptQueueSize: null
+    reuseAddress: true
+    soLingerTime: null
+    useServerHeader: false
+    useDateHeader: true
+    useForwardedHeaders: true
+    httpCompliance: "RFC7230"
+  adminMaxThreads: 64
+  adminMinThreads: 1
+  applicationContextPath: "/"
+  adminContextPath: "/"
+  serverPush:
     enabled: false
-    chooseOnStartup: false
-    managerTitle: "Choose Activity"
-    editorTitle: "Edit Activity"
-    editorBody: "Activity Code:</br><input type=\"text\" name=\"code\"></input></br></br>Activity\
-      \ Description:</br><textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"\
-      description\"></textarea>Explain what the activity is"
-  url:
-    ui: null
-    authenticationService: "http://auth-service:8099/authentication/v1"
-    users: "http://IP_ADDRESS/users"
-    apiKeys: "http://IP_ADDRESS/tokens"
-    indexVolumes: "http://IP_ADDRESS/s/indexing/volumes"
-    indexVolumeGroups: "http://IP_ADDRESS/s/indexing/groups"
-    userAuthorisation: "http://IP_ADDRESS/s/authorisationManager/false"
-    groupAuthorisation: "http://IP_ADDRESS/s/authorisationManager/true"
-    editDoc: "http://IP_ADDRESS/s/doc/"
-    changepassword: "http://IP_ADDRESS/changepassword"
-    kibana: null
-    trackers: null
-    annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
-    elastic: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
-    documentPermissions: "http://IP_ADDRESS/s/authorisationManager/document/"
-volumes:
-  resilientReplicationCount: 1
-  preferLocalVolumes: false
-  volumeSelector: "RoundRobin"
-  createDefaultOnStart: true
+    associatePeriod: "4 seconds"
+    maxAssociations: 16
+    refererHosts: null
+    refererPorts: null
+  rootPath:
+    empty: true
+    present: false
+  requestLog: !<logback-access>
+    appenders:
+    - !<console>
+      threshold: "ALL"
+      logFormat: null
+      layout: null
+      timeZone: "UTC"
+      queueSize: 256
+      discardingThreshold: -1
+      includeCallerData: false
+      filterFactories: []
+      target: "STDOUT"
+  gzip:
+    enabled: true
+    minimumEntitySize: "256 bytes"
+    bufferSize: "8 kilobytes"
+    excludedUserAgentPatterns: []
+    compressedMimeTypes: null
+    includedMethods: null
+    deflateCompressionLevel: -1
+    gzipCompatibleInflation: true
+    syncFlush: false
+logging: !<default>
+  level: "INFO"
+  loggers: {}
+  appenders:
+  - !<console>
+    threshold: "ALL"
+    logFormat: null
+    layout: null
+    timeZone: "UTC"
+    queueSize: 256
+    discardingThreshold: -1
+    includeCallerData: false
+    filterFactories: []
+    target: "STDOUT"
+metrics:
+  frequency: "1 minute"
+  reporters: []

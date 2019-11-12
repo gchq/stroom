@@ -16,48 +16,109 @@
 
 package stroom.config.app;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
-import org.apache.commons.text.StringSubstitutor;
-import org.apache.commons.text.lookup.StringLookupFactory;
-import stroom.util.io.StreamUtil;
+import io.dropwizard.configuration.ConfigurationException;
+import io.dropwizard.configuration.ConfigurationFactory;
+import io.dropwizard.configuration.ConfigurationFactoryFactory;
+import io.dropwizard.configuration.ConfigurationSourceProvider;
+import io.dropwizard.configuration.DefaultConfigurationFactoryFactory;
+import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
+import io.dropwizard.configuration.FileConfigurationSourceProvider;
+import io.dropwizard.configuration.SubstitutingSourceProvider;
+import io.dropwizard.jackson.Jackson;
+import stroom.util.logging.LogUtil;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 
 public class YamlUtil {
+
     private YamlUtil() {
         // Utility
     }
 
-    public static AppConfig read(final InputStream inputStream) throws IOException {
-        final String string = StreamUtil.streamToString(inputStream, StandardCharsets.UTF_8);
-        final StringSubstitutor substitutor = new StringSubstitutor(StringLookupFactory.INSTANCE.environmentVariableStringLookup());
-        final String substituted = substitutor.replace(string);
-        final InputStream substitutedInputStream = new ByteArrayInputStream(substituted.getBytes(StandardCharsets.UTF_8));
-
-        final YAMLFactory yf = new YAMLFactory();
-        final ObjectMapper mapper = new ObjectMapper(yf);
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        final WrapperConfig config = mapper.readerFor(WrapperConfig.class).readValue(substitutedInputStream);
-        final AppConfig appConfig = config.getAppConfig();
-
-
-//        final YAMLFactory yf = new YAMLFactory();
-//        final ObjectMapper mapper = new ObjectMapper(yf);
-//        final AppConfig config = mapper.readerFor(AppConfig.class).readValue(inputStream);
-//        FieldMapper.copy(config, appConfig);
-
-        return appConfig;
+    public static AppConfig readAppConfig(final Path configFile) throws IOException {
+        return readConfig(configFile).getAppConfig();
     }
 
-    public static void write(final AppConfig appConfig, final OutputStream outputStream) throws IOException {
+    /**
+     * Reads a yaml file that matches the structure of a complete DropWizard {@link Config} object tree.
+     * @throws IOException
+     */
+    public static Config readConfig(final Path configFile) throws IOException {
+        final ConfigurationSourceProvider configurationSourceProvider = new SubstitutingSourceProvider(
+                new FileConfigurationSourceProvider(),
+                new EnvironmentVariableSubstitutor(false));
+
+        final ConfigurationFactoryFactory<Config> configurationFactoryFactory = new DefaultConfigurationFactoryFactory<>();
+
+        final ConfigurationFactory<Config> configurationFactory = configurationFactoryFactory
+                .create(
+                        Config.class,
+                        io.dropwizard.jersey.validation.Validators.newValidator(),
+                        Jackson.newObjectMapper(),
+                        "dw");
+
+        Config config = null;
+        try {
+            config = configurationFactory.build(configurationSourceProvider, configFile.toAbsolutePath().toString());
+        } catch (ConfigurationException e) {
+            throw new RuntimeException(LogUtil.message("Error parsing configuration from file {}",
+                    configFile.toAbsolutePath()), e);
+        }
+
+        return config;
+    }
+
+    /**
+     * Reads a yaml file that matches the structure of an {@link AppConfig} object tree without the
+     * DropWizard specific config.
+     * @throws IOException
+     */
+//    public static AppConfig readAppConfig(final Path appConfigFile, final boolean willFailOnUnknownProps) throws IOException {
+//
+//        final String string = Files.readString(appConfigFile, StandardCharsets.UTF_8);
+//        final StringSubstitutor substitutor = new StringSubstitutor(StringLookupFactory.INSTANCE.environmentVariableStringLookup());
+//        final String substituted = substitutor.replace(string);
+//        final InputStream substitutedInputStream = new ByteArrayInputStream(substituted.getBytes(StandardCharsets.UTF_8));
+//
+//        final YAMLFactory yf = new YAMLFactory();
+//        final ObjectMapper mapper = new ObjectMapper(yf);
+//        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+//
+////        final YAMLFactory yf = new YAMLFactory();
+////        final ObjectMapper mapper = new ObjectMapper(yf);
+////        final AppConfig config = mapper.readerFor(AppConfig.class).readValue(inputStream);
+////        FieldMapper.copy(config, appConfig);
+//
+//        return mapper.readerFor(AppConfig.class).readValue(substitutedInputStream);
+//    }
+
+    public static void writeConfig(final Config config, final OutputStream outputStream) throws IOException {
         final YAMLFactory yf = new YAMLFactory();
         final ObjectMapper mapper = new ObjectMapper(yf);
-        mapper.writeValue(outputStream, appConfig);
+        // wrap the AppConfig so that it sits at the right level
+        mapper.writeValue(outputStream, config);
+
+    }
+    public static void writeConfig(final AppConfig appConfig, final OutputStream outputStream) throws IOException {
+        Config config = new Config();
+        config.setAppConfig(appConfig);
+        writeConfig(config, outputStream);
+    }
+
+    public static void writeConfig(final Config config, final Path path) throws IOException {
+        final YAMLFactory yf = new YAMLFactory();
+        final ObjectMapper mapper = new ObjectMapper(yf);
+        // wrap the AppConfig so that it sits at the right level
+        mapper.writeValue(path.toFile(), config);
+    }
+
+    public static void writeConfig(final AppConfig appConfig, final Path path) throws IOException {
+        Config config = new Config();
+        config.setAppConfig(appConfig);
+        writeConfig(config, path);
     }
 }

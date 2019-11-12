@@ -33,13 +33,13 @@ public class StoredQueryHistoryCleanExecutor {
 
     private final TaskContext taskContext;
     private final StoredQueryDao storedQueryDao;
-    private final StoredQueryHistoryConfig queryHistoryConfig;
+    private final StoredQueryConfig storedQueryConfig;
 
     @Inject
-    public StoredQueryHistoryCleanExecutor(final TaskContext taskContext, final StoredQueryDao storedQueryDao, final StoredQueryHistoryConfig queryHistoryConfig) {
+    public StoredQueryHistoryCleanExecutor(final TaskContext taskContext, final StoredQueryDao storedQueryDao, final StoredQueryConfig storedQueryConfig) {
         this.taskContext = taskContext;
         this.storedQueryDao = storedQueryDao;
-        this.queryHistoryConfig = queryHistoryConfig;
+        this.storedQueryConfig = storedQueryConfig;
     }
 
     public void exec() {
@@ -49,8 +49,8 @@ public class StoredQueryHistoryCleanExecutor {
     public void clean(final boolean favourite) {
         info("Starting history clean task");
 
-        final int historyItemsRetention = queryHistoryConfig.getItemsRetention();
-        final int historyDaysRetention = queryHistoryConfig.getDaysRetention();
+        final int historyItemsRetention = storedQueryConfig.getItemsRetention();
+        final int historyDaysRetention = storedQueryConfig.getDaysRetention();
 
         final long oldestCrtMs = ZonedDateTime.now().minusDays(historyDaysRetention).toInstant().toEpochMilli();
 

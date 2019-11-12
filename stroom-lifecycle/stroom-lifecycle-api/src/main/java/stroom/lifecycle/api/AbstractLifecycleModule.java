@@ -42,7 +42,8 @@ public abstract class AbstractLifecycleModule extends AbstractModule {
 
         public <T extends Runnable> void to(final Class<T> runnableClass) {
             final StartupTask startupTask = new StartupTask(priority);
-            mapBinder.addBinding(startupTask).to(runnableClass);
+            mapBinder.addBinding(startupTask)
+                    .to(runnableClass);
         }
     }
 
@@ -62,7 +63,8 @@ public abstract class AbstractLifecycleModule extends AbstractModule {
 
         public <T extends Runnable> void to(final Class<T> runnableClass) {
             final ShutdownTask shutdownTask = new ShutdownTask(priority);
-            mapBinder.addBinding(shutdownTask).to(runnableClass);
+            mapBinder.addBinding(shutdownTask)
+                    .to(runnableClass);
         }
     }
 }

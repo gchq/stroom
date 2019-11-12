@@ -26,6 +26,7 @@ public class DBPersistenceModule extends AbstractModule {
     protected void configure() {
         bind(Persistence.class).to(DBPersistence.class);
 
-        Multibinder.newSetBinder(binder(), Clearable.class).addBinding().to(DBPersistence.class);
+        Multibinder.newSetBinder(binder(), Clearable.class)
+                .addBinding().to(DBPersistence.class);
     }
 }

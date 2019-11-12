@@ -2,7 +2,8 @@ package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.setup.Environment;
-import stroom.app.Config;
+import stroom.config.global.impl.AppConfigMonitor;
+import stroom.config.app.Config;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfigModule;
 import stroom.core.dispatch.DispatchModule;
@@ -13,13 +14,17 @@ import stroom.resource.impl.SessionResourceModule;
 import stroom.security.impl.SecurityContextModule;
 import stroom.util.guice.HealthCheckBinder;
 
+import java.nio.file.Path;
+
 public class AppModule extends AbstractModule {
     private final Config configuration;
     private final Environment environment;
+    private final Path configFile;
 
-    public AppModule(final Config configuration, final Environment environment) {
+    public AppModule(final Config configuration, final Environment environment, final Path configFile) {
         this.configuration = configuration;
         this.environment = environment;
+        this.configFile = configFile;
     }
 
     @Override
@@ -27,7 +32,7 @@ public class AppModule extends AbstractModule {
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
 
-        install(new AppConfigModule(configuration.getAppConfig()));
+        install(new AppConfigModule(configuration.getAppConfig(), configFile));
 
         install(new CoreModule());
         install(new LifecycleServiceModule());

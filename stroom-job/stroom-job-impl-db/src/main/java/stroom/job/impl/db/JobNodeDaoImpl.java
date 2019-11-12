@@ -71,14 +71,14 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
         return record;
     };
 
-    private final ConnectionProvider connectionProvider;
+    private final JobDbConnProvider jobDbConnProvider;
     private final GenericDao<JobNodeRecord, JobNode, Integer> genericDao;
 
     @Inject
-    JobNodeDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    JobNodeDaoImpl(final JobDbConnProvider jobDbConnProvider) {
+        this.jobDbConnProvider = jobDbConnProvider;
 
-        genericDao = new GenericDao<>(JOB_NODE, JOB_NODE.ID, JobNode.class, connectionProvider);
+        genericDao = new GenericDao<>(JOB_NODE, JOB_NODE.ID, JobNode.class, jobDbConnProvider);
         genericDao.setObjectToRecordMapper(JOB_NODE_TO_RECORD_MAPPER);
         genericDao.setRecordToObjectMapper(RECORD_TO_JOB_NODE_MAPPER);
     }
@@ -126,7 +126,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
-        final List<JobNode> list = JooqUtil.contextResult(connectionProvider, context -> context
+        final List<JobNode> list = JooqUtil.contextResult(jobDbConnProvider, context -> context
                 .select()
                 .from(JOB_NODE)
                 .join(JOB).on(JOB_NODE.JOB_ID.eq(JOB.ID))

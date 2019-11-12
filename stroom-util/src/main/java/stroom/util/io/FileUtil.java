@@ -82,6 +82,7 @@ public final class FileUtil {
             synchronized (FileUtil.class) {
                 if (tempDir == null) {
                     tempDir = getInitialTempDir();
+                    LOGGER.info("Setting FileUtil.tempDir to {}", tempDir.toAbsolutePath());
                 }
             }
         }
@@ -110,7 +111,13 @@ public final class FileUtil {
     }
 
     public static void setTempDir(final Path tempDir) {
-        FileUtil.tempDir = tempDir;
+        if (tempDir != null) {
+            if (FileUtil.tempDir == null
+                    || !tempDir.toAbsolutePath().normalize().equals(FileUtil.tempDir.toAbsolutePath().normalize())) {
+                LOGGER.info("Setting FileUtil.tempDir to {}", tempDir.toAbsolutePath().normalize());
+                FileUtil.tempDir = tempDir;
+            }
+        }
     }
 
     //    public static void useDevTempDir() {

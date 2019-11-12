@@ -1,9 +1,12 @@
 package stroom.job.impl;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.config.common.DbConfig;
+import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.IsConfig;
 import stroom.util.shared.ModelStringUtil;
@@ -11,14 +14,28 @@ import stroom.util.shared.ModelStringUtil;
 import javax.inject.Singleton;
 
 @Singleton
-public class JobSystemConfig implements IsConfig {
+public class JobSystemConfig implements IsConfig, HasDbConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobSystemConfig.class);
 
     private static final int ONE_SECOND = 1000;
     private static final long DEFAULT_INTERVAL = 10 * ONE_SECOND;
 
+    private DbConfig dbConfig;
     private boolean enabled = true;
     private String executionInterval = "10s";
+
+    public JobSystemConfig() {
+        this.dbConfig = new DbConfig();
+    }
+
+    @JsonProperty("db")
+    public DbConfig getDbConfig() {
+        return dbConfig;
+    }
+
+    public void setDbConfig(final DbConfig dbConfig) {
+        this.dbConfig = dbConfig;
+    }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Set this to false for development and testing purposes otherwise the Stroom will " +

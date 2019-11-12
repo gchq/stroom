@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
+import java.util.Comparator;
 import java.util.Set;
 
 public class RestResources {
@@ -22,10 +23,12 @@ public class RestResources {
 
     public void register() {
         LOGGER.info("Adding REST resources:");
-        restResources.forEach(restResource -> {
-            final String name = restResource.getClass().getName();
-            LOGGER.info("\t{}", name);
-            environment.jersey().register(restResource);
-        });
+        restResources.stream()
+                .sorted(Comparator.comparing(restResource -> restResource.getClass().getName()))
+                .forEach(restResource -> {
+                    final String name = restResource.getClass().getName();
+                    LOGGER.info("\t{}", name);
+                    environment.jersey().register(restResource);
+                });
     }
 }

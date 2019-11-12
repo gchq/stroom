@@ -1,21 +1,34 @@
 package stroom.config.global.impl;
 
 import com.google.inject.AbstractModule;
-import stroom.config.global.api.FetchGlobalConfigAction;
-import stroom.config.global.api.ListGlobalConfigAction;
-import stroom.config.global.api.UpdateGlobalConfigAction;
+import io.dropwizard.lifecycle.Managed;
+import stroom.config.global.shared.FetchGlobalConfigAction;
+import stroom.config.global.shared.FindGlobalConfigAction;
+import stroom.config.global.shared.UpdateGlobalConfigAction;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HealthCheckBinder;
+import stroom.util.shared.RestResource;
 
 public class GlobalConfigModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(ConfigMapper.class).toProvider(ConfigMapper.ConfigMapperFactory.class);
-        bind(ConfigInitialiser.class).asEagerSingleton();
+        bind(AppConfigMonitor.class).asEagerSingleton();
 
         TaskHandlerBinder.create(binder())
-                .bind(ListGlobalConfigAction.class, ListGlobalConfigHandler.class)
+                .bind(FindGlobalConfigAction.class, FindGlobalConfigHandler.class)
+//                .bind(ListGlobalConfigAction.class, ListGlobalConfigHandler.class)
                 .bind(FetchGlobalConfigAction.class, FetchGlobalConfigHandler.class)
                 .bind(UpdateGlobalConfigAction.class, UpdateGlobalConfigHandler.class);
+
+        HealthCheckBinder.create(binder())
+                .bind(AppConfigMonitor.class);
+
+        GuiceUtil.buildMultiBinder(binder(), Managed.class)
+                .addBinding(AppConfigMonitor.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(GlobalConfigResourceImpl.class);
     }
 
     @Override

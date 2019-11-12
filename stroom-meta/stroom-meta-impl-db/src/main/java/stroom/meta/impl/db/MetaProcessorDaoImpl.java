@@ -34,11 +34,11 @@ class MetaProcessorDaoImpl implements MetaProcessorDao {
     // TODO : @66 Replace with a proper cache.
     private final Map<String, Integer> cache = new ConcurrentHashMap<>();
 
-    private final ConnectionProvider connectionProvider;
+    private final MetaDbConnProvider metaDbConnProvider;
 
     @Inject
-    MetaProcessorDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    MetaProcessorDaoImpl(final MetaDbConnProvider metaDbConnProvider) {
+        this.metaDbConnProvider = metaDbConnProvider;
     }
 
     @Override
@@ -72,7 +72,7 @@ class MetaProcessorDaoImpl implements MetaProcessorDao {
     }
 
     private Optional<Integer> get(final String processorUuid) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(META_PROCESSOR.ID)
                 .from(META_PROCESSOR)
                 .where(META_PROCESSOR.PROCESSOR_UUID.eq(processorUuid))
@@ -80,7 +80,7 @@ class MetaProcessorDaoImpl implements MetaProcessorDao {
     }
 
     private Optional<Integer> create(final String processorUuid, final String pipelineUuid) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .insertInto(META_PROCESSOR, META_PROCESSOR.PROCESSOR_UUID, META_PROCESSOR.PIPELINE_UUID)
                 .values(processorUuid, pipelineUuid)
                 .onDuplicateKeyIgnore()
@@ -96,7 +96,7 @@ class MetaProcessorDaoImpl implements MetaProcessorDao {
     }
 
     private int deleteAll() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .delete(META_PROCESSOR)
                 .execute());
     }

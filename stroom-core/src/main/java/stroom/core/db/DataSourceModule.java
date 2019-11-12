@@ -21,9 +21,8 @@ import com.google.inject.Provides;
 import com.zaxxer.hikari.HikariConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
-import stroom.db.util.HikariUtil;
+import stroom.db.util.HikariConfigHolder;
+import stroom.db.util.HikariConfigHolderImpl;
 import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
@@ -39,14 +38,17 @@ import javax.sql.DataSource;
 public class DataSourceModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceModule.class);
     private static final String MODULE = "datasource-module";
+
     @Override
     protected void configure() {
+
+        bind(HikariConfigHolder.class).to(HikariConfigHolderImpl.class);
         // Force creation of connection provider so that legacy migration code executes.
         bind(DataSource.class).toProvider(DataSourceProvider.class).asEagerSingleton();
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
-                .addBinding(ConnectionProvider.class);
+                .addBinding(CoreDbConnectionProvider.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(FindSystemTableStatusAction.class, FindSystemTableStatusHandler.class);
@@ -54,14 +56,13 @@ public class DataSourceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    ConnectionProvider getConnectionProvider(final Provider<DbConfig> configProvider) {
+    CoreDbConnectionProvider getConnectionProvider(final Provider<CoreConfig> configProvider,
+                                                   final HikariConfigHolder hikariConfigHolder) {
         LOGGER.info("Creating connection provider for {}", MODULE);
-        final ConnectionConfig connectionConfig = configProvider.get().getConnectionConfig();
-        final ConnectionPoolConfig connectionPoolConfig = configProvider.get().getConnectionPoolConfig();
-        final HikariConfig config = HikariUtil.createConfig(connectionConfig, connectionPoolConfig);
-        final ConnectionProvider connectionProvider = new ConnectionProvider(config);
+        final HikariConfig config = hikariConfigHolder.getOrCreateHikariConfig(configProvider.get());
+        final CoreDbConnectionProvider coreDbConnectionProvider = new CoreDbConnectionProvider(config);
 //        flyway(connectionProvider);
-        return connectionProvider;
+        return coreDbConnectionProvider;
     }
 
     @Override

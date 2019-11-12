@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -64,6 +65,7 @@ public class Field implements Serializable {
     @JsonProperty("visible")
     private boolean visible = true;
     @XmlElement(name = "special")
+    @JsonProperty(value = "special")
     private boolean special = false;
 
     public Field() {

@@ -1,7 +1,7 @@
 package stroom.config.global.impl;
 
-import stroom.config.global.api.ConfigProperty;
-import stroom.config.global.api.UpdateGlobalConfigAction;
+import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.UpdateGlobalConfigAction;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;

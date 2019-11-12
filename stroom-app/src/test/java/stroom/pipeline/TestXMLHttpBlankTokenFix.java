@@ -19,7 +19,7 @@ package stroom.pipeline;
 
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import stroom.core.db.DbConfig;
+import stroom.core.db.CoreConfig;
 import stroom.docref.DocRef;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -62,7 +62,7 @@ class TestXMLHttpBlankTokenFix extends AbstractProcessIntegrationTest {
     private static final String XSLT_LOCATION = "XMLHttpBlankTokenFix/HttpProblem.xsl";
 
     @Inject
-    private DbConfig coreConfig;
+    private CoreConfig coreConfig;
     @Inject
     private Provider<PipelineFactory> pipelineFactoryProvider;
     @Inject

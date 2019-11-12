@@ -28,17 +28,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
-import stroom.db.util.DbUtil;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Query;
 import stroom.security.api.SecurityContext;
+import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.StoredQueryHistoryCleanExecutor;
-import stroom.storedquery.impl.StoredQueryHistoryConfig;
 import stroom.task.api.SimpleTaskContext;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.AuditUtil;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Sort.Direction;
@@ -69,13 +69,15 @@ class TestStoredQueryDao {
         Mockito.when(securityContext.getUserId()).thenReturn("testuser");
 
         // need an explicit teardown and setup of the DB before each test method
-        final ConnectionProvider connectionProvider = new StoredQueryDbModule().getConnectionProvider(StoredQueryConfig::new);
-        DbUtil.clearAllTables(connectionProvider.getConnection());
+        final StoredQueryDbConnProvider storedQueryDbConnProvider = DbTestUtil.getTestDbDatasource(
+                new StoredQueryDbModule(), new StoredQueryConfig());
 
-        storedQueryDao = new StoredQueryDaoImpl(connectionProvider);
+        DbTestUtil.clearAllTables(storedQueryDbConnProvider.getConnection());
+
+        storedQueryDao = new StoredQueryDaoImpl(storedQueryDbConnProvider);
         storedQueryDao.clear();
 
-        queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(new SimpleTaskContext(), storedQueryDao, new StoredQueryHistoryConfig());
+        queryHistoryCleanExecutor = new StoredQueryHistoryCleanExecutor(new SimpleTaskContext(), storedQueryDao, new StoredQueryConfig());
 
         dashboardRef = new DocRef("Dashboard", "8c1bc23c-f65c-413f-ba72-7538abf90b91", "Test Dashboard");
         indexRef = new DocRef("Index", "4a085071-1d1b-4c96-8567-82f6954584a4", "Test Index");
