@@ -12,7 +12,6 @@ import stroom.index.impl.IndexVolumeGroupDao;
 import java.util.function.Function;
 
 public class IndexDbModule extends AbstractFlyWayDbModule<IndexConfig, IndexDbConnProvider> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(IndexDbModule.class);
     private static final String MODULE = "stroom-index";
     private static final String FLYWAY_LOCATIONS = "stroom/index/impl/db/migration";
     private static final String FLYWAY_TABLE = "index_schema_history";
