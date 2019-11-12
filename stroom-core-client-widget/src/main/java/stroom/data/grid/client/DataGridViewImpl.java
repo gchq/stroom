@@ -239,67 +239,69 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             }
 
         } else if (Event.ONMOUSEDOWN == nativePreviewEvent.getTypeInt()) {
-            final ResizeHandle<R> resizeHandle = getResizeHandle();
-            final MoveHandle<R> moveHandle = getMoveHandle();
+            if ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                final ResizeHandle<R> resizeHandle = getResizeHandle();
+                final MoveHandle<R> moveHandle = getMoveHandle();
 
-            moveHeading = null;
+                moveHeading = null;
 
-            if (!isBusy()) {
-                if (!resizeHandle.isResizing() && MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
-                    resizeHandle.startResize(event);
+                if (!isBusy()) {
+                    final Heading heading = getHeading(event);
+                    if (headingListener != null) {
+                        headingListener.onMouseDown(event, heading);
+                    }
 
-                } else {
-                    if ((event.getButton() & NativeEvent.BUTTON_RIGHT) != 0) {
-                        if (headingListener != null) {
-                            final Heading heading = getHeading(event);
-                            headingListener.onContextMenu(event, heading);
+                    if (!resizeHandle.isResizing() && MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
+                        resizeHandle.startResize(event);
 
-                            // Detatch event preview handler.
+                    } else {
+                        moveHeading = heading;
+                    }
+                }
+
+                // Set the heading that the move handle will use.
+                moveHandle.setHeading(event, moveHeading);
+            }
+
+        } else if (Event.ONMOUSEUP == nativePreviewEvent.getTypeInt()) {
+            if ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                if (!isBusy()) {
+                    final ResizeHandle<R> resizeHandle = getResizeHandle();
+                    final MoveHandle<R> moveHandle = getMoveHandle();
+
+                    if (resizeHandle.isResizing()) {
+                        // Stop resizing.
+                        resizeHandle.endResize(event);
+
+                        // If the mouse is no longer over a viable handle then
+                        // remove it.
+                        final Heading heading = getHeading(event);
+                        if (!resizeHandle.update(event, heading)) {
+                            // Detach event preview handler.
                             resizeHandle.hide();
                             if (handlerRegistration != null) {
                                 handlerRegistration.removeHandler();
                                 handlerRegistration = null;
                             }
                         }
-                    } else if ((event.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                        final Heading heading = getHeading(event);
-                        moveHeading = heading;
-                    }
-                }
-            }
+                    } else if (moveHandle.isMoving()) {
+                        // Stop moving column.
+                        moveHandle.endMove(event);
+                    } else {
+                        if (headingListener != null) {
+                            final Heading heading = getHeading(event);
+                            headingListener.onMouseUp(event, heading);
 
-            // Set the heading that the move handle will use.
-            moveHandle.setHeading(event, moveHeading);
-
-        } else if (Event.ONMOUSEUP == nativePreviewEvent.getTypeInt()) {
-            if (!isBusy()) {
-                final ResizeHandle<R> resizeHandle = getResizeHandle();
-                final MoveHandle<R> moveHandle = getMoveHandle();
-
-                if (resizeHandle.isResizing()) {
-                    // Stop resizing.
-                    resizeHandle.endResize(event);
-
-                    // If the mouse is no longer over a viable handle then
-                    // remove it.
-                    final Heading heading = getHeading(event);
-                    if (!resizeHandle.update(event, heading)) {
-                        // Detatch event preview handler.
-                        resizeHandle.hide();
-                        if (handlerRegistration != null) {
-                            handlerRegistration.removeHandler();
-                            handlerRegistration = null;
+                            // Detach event preview handler.
+                            resizeHandle.hide();
                         }
                     }
-                } else if (moveHandle.isMoving()) {
-                    // Stop moving column.
-                    moveHandle.endMove(event);
                 }
-            }
 
-            // Set the heading that the move handle will use.
-            moveHeading = null;
-            moveHandle.setHeading(event, moveHeading);
+                // Set the heading that the move handle will use.
+                moveHeading = null;
+                moveHandle.setHeading(event, moveHeading);
+            }
 
         } else if (Event.ONMOUSEOUT == nativePreviewEvent.getTypeInt()) {
             final ResizeHandle<R> resizeHandle = getResizeHandle();
@@ -308,7 +310,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             // grid.
             if (!resizeHandle.isResizing() && moveHeading == null
                     && !MouseHelper.mouseIsOverElement(event, resizeHandle.getElement())) {
-                // Detatch event preview handler.
+                // Detach event preview handler.
                 resizeHandle.hide();
                 if (handlerRegistration != null) {
                     handlerRegistration.removeHandler();
@@ -321,7 +323,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     private boolean isBusy() {
         boolean busy = false;
         if (headingListener != null) {
-            busy = headingListener.isBusy();
+//            busy = headingListener.isBusy();
         }
         return busy;
     }
@@ -345,7 +347,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         final Element target = event.getEventTarget().cast();
         int childIndex = -1;
         Element th = target;
-        Element headerRow = null;
+        Element headerRow;
 
         // Get parent th.
         while (th != null && !"th".equalsIgnoreCase(th.getTagName())) {
@@ -665,7 +667,9 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     public interface HeadingListener {
-        void onContextMenu(NativeEvent event, Heading heading);
+        void onMouseDown(NativeEvent event, Heading heading);
+
+        void onMouseUp(NativeEvent event, Heading heading);
 
         void moveColumn(int fromIndex, int toIndex);
 

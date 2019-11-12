@@ -1,7 +1,6 @@
-package stroom.index.impl.rest;
+package stroom.index.impl.api;
 
 import stroom.index.impl.CreateVolumeDTO;
-import stroom.index.impl.IndexVolumeResource;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.impl.UpdateVolumeDTO;
 import stroom.index.shared.IndexVolume;

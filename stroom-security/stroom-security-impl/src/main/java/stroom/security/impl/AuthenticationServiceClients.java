@@ -64,6 +64,7 @@ class AuthenticationServiceClients {
 
         authServiceClient = new ApiClient();
         authServiceClient.setBasePath(securityConfig.getAuthServicesBaseUrl());
+        authServiceClient.setVerifyingSsl(securityConfig.isVerifySsl());
         authServiceClient.addDefaultHeader("Authorization", "Bearer " + securityConfig.getApiToken());
     }
 
@@ -103,7 +104,7 @@ class AuthenticationServiceClients {
         }
     }
 
-    private String createTokenForUser(String userId) throws ApiException {
+    String createTokenForUser(String userId) throws ApiException {
         CreateTokenRequest createTokenRequest = new CreateTokenRequest();
         createTokenRequest.setEnabled(true);
         createTokenRequest.setTokenType("api");

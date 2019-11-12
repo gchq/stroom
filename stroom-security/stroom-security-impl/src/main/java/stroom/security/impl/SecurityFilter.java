@@ -136,18 +136,14 @@ class SecurityFilter implements Filter {
     private void filter(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain)
             throws IOException, ServletException {
 
+        // We need to permit all CORS preflight requests. These use the OPTIONS method, so we'll let these through.
         if (request.getMethod().toUpperCase().equals(HttpMethod.OPTIONS)) {
-            // We need to allow CORS preflight requests
             chain.doFilter(request, response);
         } else {
-            // We need to distinguish between requests from an API client and from the UI.
-            // - If a request is from the UI and fails authentication then we need to redirect to the login page.
-            // - If a request is from an API client and fails authentication then we need to return HTTP 403 UNAUTHORIZED.
-            // - If a request is for clustercall.rpc then it's a back-channel stroom-to-stroom request and we want to
-            //   let it through. It is essential that port 8080 is not exposed and that any reverse-proxy
-            //   blocks requests that look like '.*clustercall.rpc$'.
             final String servletPath = request.getServletPath().toLowerCase();
 
+            // API requests (identified by '/api/' on the request path) need to be authenticated by a JWT.
+            // This makes the request REST-y, so failure returns HTTP 403 UNAUTHORIZED.
             if (isApiRequest(servletPath)) {
                 if (!config.isAuthenticationRequired()) {
                     authenticateAsAdmin(request, response, chain, false);
@@ -164,9 +160,12 @@ class SecurityFilter implements Filter {
                     continueAsUser(request, response, chain, userToken, userRef);
                 }
             } else if (shouldBypassAuthentication(servletPath)) {
+                // Some servet requests need to bypass authentication -- this happens if the servlet class
+                // is annotated with @Unauthenticated. E.g. the status servlet doesn't require authentication.
                 authenticateAsProcUser(request, response, chain, false);
             } else {
-                // Authenticate requests from the UI.
+                // We assume all other requests are from the UI, and instigate an OpenID authentication flow
+                // like the good relying party we are.
 
                 // Try and get an existing user ref from the session.
                 final User userRef = UserSessionUtil.get(request.getSession(false));

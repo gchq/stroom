@@ -47,6 +47,9 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+/**
+ * TODO JC: I'm not clear what currentVolumeList is for. Add comments?
+ */
 @Singleton
 @EntityEventHandler(type = FsVolumeService.ENTITY_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE})
 public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushable {

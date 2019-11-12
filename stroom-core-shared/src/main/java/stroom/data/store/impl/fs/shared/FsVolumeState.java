@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.util.shared.ModelStringUtil;
 
 /**
@@ -23,7 +24,6 @@ import stroom.util.shared.ModelStringUtil;
  */
 public class FsVolumeState {
     public static final String ENTITY_TYPE = "VolumeState";
-    private static final double ONE_HUNDRED = 100D;
     private int id;
     private int version;
     private Long bytesUsed;
@@ -100,10 +100,11 @@ public class FsVolumeState {
         this.updateTimeMs = updateTimeMs;
     }
 
+    @JsonIgnore
     public Long getPercentUsed() {
         Long percent = null;
         if (bytesUsed != null && bytesTotal != null) {
-            percent = Double.valueOf(((double) bytesUsed) / ((double) bytesTotal) * ONE_HUNDRED).longValue();
+            percent = Double.valueOf(((double) bytesUsed) / ((double) bytesTotal) * 100D).longValue();
         }
         return percent;
     }

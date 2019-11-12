@@ -6,6 +6,42 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1322** : Stroom now asks if you really want to leave site when stepping items are dirty. Also fixed `Save` and `Save All` menu items and dashboard param changes now correctly make a dashboard dirty.
+
+* Issue **#1320** : Fixed formatting of XML where trailing spaces were being removed from content surrounded by start and end tags (data content) which should not happen. 
+
+* Issue **#1321** : Make path relative in stroom distribution .zip.sha256 hash file.
+
+* The auth service now supports the use of HTTPS without certificate verification and adds additional logging.
+
+* Issue **gchq/stroom-auth#157** : Automatically refresh user's API key when it expires.
+
+* Issue **#1243** : Dashboard visualisations now link with similar functions available to dashboard tables, e.g. `link()`, `dashboard()`, `annotation()`, `stepping()`, `data()`.
+
+* Issue **#1316** : JSONParser now includes various parse options including handling comments. 
+
+* Issue **#48** : Added option to hide/show dashboard table columns.
+
+* Issue **#1315** : Improved health check for missing API key.
+
+* Updated stroom expression to v1.5.4 and added new field types. 
+
+* Issue **#1315** : Improved health check for missing API key.
+
+* Issue **#1314** : Fixed NPE thrown when logging caused when viewing docs that can't be found.
+
+* Issue **#1313** : Suggestion boxes now make suggestions immediately before the user even starts typing.
+
+* Issue **#1043** : Added feature to allow floating point numbers to be indexed.
+
+* Issue **#1312** : Dictionaries now change the entity name in the DB when renamed.
+
+* Issue **#1312** : Fixed read only behaviour of dictionary settings UI.
+
+* Issue **#67** : Table columns now display menu items on left click.
+
+* Uplift stroom-query to v2.2.4 to add better diagnostic logging.
+
 * Uplift Kafka client to v2.2.1.
 
 * Issue **#1293** : Add more static file types to allow nginx/browser caching on.

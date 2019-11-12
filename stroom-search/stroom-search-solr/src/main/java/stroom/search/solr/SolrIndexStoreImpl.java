@@ -17,7 +17,6 @@
 
 package stroom.search.solr;
 
-import com.google.common.base.Functions;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.schema.SchemaRequest.AddField;
@@ -154,13 +153,13 @@ public class SolrIndexStoreImpl implements SolrIndexStore {
                         existingFieldMap = document
                                 .getFields()
                                 .stream()
-                                .collect(Collectors.toMap(SolrIndexField::getFieldName, Functions.identity()));
+                                .collect(Collectors.toMap(SolrIndexField::getFieldName, Function.identity()));
                     }
 
                     List<SolrIndexField> solrFields = fetchSolrFields(solrClient, document.getCollection(), existingFieldMap);
 
                     // Which fields are missing from Solr?
-                    final Map<String, SolrIndexField> solrFieldMap = solrFields.stream().collect(Collectors.toMap(SolrIndexField::getFieldName, Functions.identity()));
+                    final Map<String, SolrIndexField> solrFieldMap = solrFields.stream().collect(Collectors.toMap(SolrIndexField::getFieldName, Function.identity()));
                     existingFieldMap.forEach((k, v) -> {
                         if (solrFieldMap.containsKey(k)) {
                             final SolrIndexField solrField = solrFieldMap.get(k);

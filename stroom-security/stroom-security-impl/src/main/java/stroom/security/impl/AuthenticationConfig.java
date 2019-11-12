@@ -12,6 +12,7 @@ import javax.inject.Singleton;
 public class AuthenticationConfig implements IsConfig {
     private String authenticationServiceUrl;
     private boolean authenticationRequired = true;
+    private boolean verifySsl;
     private String apiToken = "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc";
     private String authServicesBaseUrl = "http://auth-service:8099";
     private String durationToWarnBeforeExpiry = "30d";
@@ -36,6 +37,18 @@ public class AuthenticationConfig implements IsConfig {
 
     public void setAuthenticationRequired(final boolean authenticationRequired) {
         this.authenticationRequired = authenticationRequired;
+    }
+
+    @ReadOnly
+    @JsonPropertyDescription("If using HTTPS should we verify the server certs")
+    public boolean isVerifySsl() {
+        return verifySsl;
+    }
+
+    @ReadOnly
+    @JsonPropertyDescription("If using HTTPS should we verify the server certs")
+    public void setVerifySsl(final boolean verifySsl) {
+        this.verifySsl = verifySsl;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)

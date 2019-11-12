@@ -18,7 +18,8 @@
         },
         "group" : 0,
         "width" : 151,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "timestamp",
         "expression" : "floorHour(${timestamp})",
@@ -40,7 +41,8 @@
         },
         "group" : 0,
         "width" : 177,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "actual_download",
         "expression" : "average(${actual_download})",
@@ -48,17 +50,20 @@
           "type" : "GENERAL"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
-        "visible" : false
+        "visible" : false,
+        "special" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
         "width" : 200,
-        "visible" : false
+        "visible" : false,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",

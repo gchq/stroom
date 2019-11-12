@@ -13,7 +13,8 @@
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "New Field 1",
         "expression" : "${New Field 1}",
@@ -21,7 +22,8 @@
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "maxResults" : [ 1000000 ]
     }

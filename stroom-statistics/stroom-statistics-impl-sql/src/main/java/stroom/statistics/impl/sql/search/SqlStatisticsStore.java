@@ -1,7 +1,6 @@
 package stroom.statistics.impl.sql.search;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
@@ -271,7 +270,7 @@ public class SqlStatisticsStore implements Store {
                         entry.getKey(),
                         createCoprocessor(entry.getValue(), fieldIndexMap, paramMap)))
                 .filter(entry -> entry.getKey() != null)
-                .collect(ImmutableMap.toImmutableMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private void completeSearch() {

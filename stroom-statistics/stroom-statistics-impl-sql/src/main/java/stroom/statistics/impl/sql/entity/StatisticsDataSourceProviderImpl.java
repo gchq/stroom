@@ -19,7 +19,7 @@ package stroom.statistics.impl.sql.entity;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DateField;
-import stroom.datasource.api.v2.NumberField;
+import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -81,13 +81,13 @@ class StatisticsDataSourceProviderImpl implements StatisticsDataSourceProvider {
             }
         }
 
-        fields.add(new NumberField(StatisticStoreDoc.FIELD_NAME_COUNT, false, Collections.emptyList()));
+        fields.add(new LongField(StatisticStoreDoc.FIELD_NAME_COUNT, false, Collections.emptyList()));
 
         if (entity.getStatisticType().equals(StatisticType.VALUE)) {
-            fields.add(new NumberField(StatisticStoreDoc.FIELD_NAME_VALUE, false, Collections.emptyList()));
+            fields.add(new LongField(StatisticStoreDoc.FIELD_NAME_VALUE, false, Collections.emptyList()));
         }
 
-        fields.add(new NumberField(StatisticStoreDoc.FIELD_NAME_PRECISION_MS, false, Collections.emptyList()));
+        fields.add(new LongField(StatisticStoreDoc.FIELD_NAME_PRECISION_MS, false, Collections.emptyList()));
 
         // Filter fields.
         if (entity.getConfig() != null) {

@@ -119,6 +119,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private boolean initialised;
     private Timer autoRefreshTimer;
     private String lastUsedQueryInfo;
+    private boolean queryOnOpen;
 
     @Inject
     public QueryPresenter(final EventBus eventBus,
@@ -431,6 +432,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
+    public void setQueryOnOpen(final boolean queryOnOpen) {
+        this.queryOnOpen = queryOnOpen;
+    }
+
+    @Override
     public void start() {
         if (SearchModel.Mode.INACTIVE.equals(searchModel.getMode())) {
             queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
@@ -518,7 +524,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             initialised = true;
             // An auto search can only commence if the UI has fully loaded and the data source has also loaded from the server.
             final Automate automate = getAutomate();
-            if (automate.isOpen()) {
+            if (queryOnOpen || automate.isOpen()) {
                 run(true, false);
             }
         }

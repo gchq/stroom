@@ -17,7 +17,6 @@
 
 package stroom.search.solr;
 
-import com.google.common.base.Functions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -36,6 +35,7 @@ import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -65,7 +65,7 @@ class SolrIndexCacheImpl implements SolrIndexCache, EntityEvent.Handler, Clearab
                 throw new SolrIndexException("No index fields have been set for: " + k);
             }
 
-            final Map<String, SolrIndexField> fieldMap = fields.stream().collect(Collectors.toMap(SolrIndexField::getFieldName, Functions.identity()));
+            final Map<String, SolrIndexField> fieldMap = fields.stream().collect(Collectors.toMap(SolrIndexField::getFieldName, Function.identity()));
             return new CachedSolrIndex(loaded, fields, fieldMap);
         });
 

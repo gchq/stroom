@@ -26,6 +26,10 @@ public class NewUiDocRefPresenter extends DocumentEditPresenter<IFramePresenter.
     }
 
     @Override
+    public void save() {
+    }
+
+    @Override
     protected void onRead(final DocRef docRef,
                           final Doc entity) {
         clientPropertyCache.get().onSuccess(uiConfig -> {
