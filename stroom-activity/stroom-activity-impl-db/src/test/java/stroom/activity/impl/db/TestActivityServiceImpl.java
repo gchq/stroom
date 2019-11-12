@@ -53,10 +53,10 @@ class TestActivityServiceImpl {
         Mockito.when(securityContext.getUserId()).thenReturn("testUser");
         Mockito.when(securityContext.isLoggedIn()).thenReturn(true);
 
-        final ActivityDbConnectionProvider activityDbConnectionProvider = DbTestUtil.getTestDbDatasource(
+        final ActivityDbConnProvider activityDbConnProvider = DbTestUtil.getTestDbDatasource(
                 new ActivityDbModule(), new ActivityConfig());
 
-        final ActivityDao activityDao = new ActivityDaoImpl(activityDbConnectionProvider);
+        final ActivityDao activityDao = new ActivityDaoImpl(activityDbConnProvider);
         activityService = new ActivityServiceImpl(securityContext, activityDao);
     }
 

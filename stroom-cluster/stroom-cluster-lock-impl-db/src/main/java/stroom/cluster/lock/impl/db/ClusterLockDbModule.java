@@ -11,7 +11,7 @@ import stroom.util.shared.Clearable;
 
 import java.util.function.Function;
 
-public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockConfig, ClusterLockDbConnectionProvider> {
+public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockConfig, ClusterLockDbConnProvider> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockDbModule.class);
     private static final String MODULE = "stroom-cluster-lock";
     private static final String FLYWAY_LOCATIONS = "stroom/cluster/lock/impl/db/migration";
@@ -45,12 +45,12 @@ public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockConfi
     }
 
     @Override
-    public Function<HikariConfig, ClusterLockDbConnectionProvider> getConnectionProviderConstructor() {
-        return ClusterLockDbConnectionProvider::new;
+    public Function<HikariConfig, ClusterLockDbConnProvider> getConnectionProviderConstructor() {
+        return ClusterLockDbConnProvider::new;
     }
 
     @Override
-    public Class<ClusterLockDbConnectionProvider> getConnectionProviderType() {
-        return ClusterLockDbConnectionProvider.class;
+    public Class<ClusterLockDbConnProvider> getConnectionProviderType() {
+        return ClusterLockDbConnProvider.class;
     }
 }

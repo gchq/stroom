@@ -34,13 +34,13 @@ import java.util.stream.Collectors;
 import static stroom.activity.impl.db.jooq.tables.Activity.ACTIVITY;
 
 public class ActivityDaoImpl implements ActivityDao {
-    private final ActivityDbConnectionProvider activityDbConnectionProvider;
+    private final ActivityDbConnProvider activityDbConnProvider;
     private final GenericDao<ActivityRecord, Activity, Integer> genericDao;
 
     @Inject
-    ActivityDaoImpl(final ActivityDbConnectionProvider activityDbConnectionProvider) {
-        this.activityDbConnectionProvider = activityDbConnectionProvider;
-        genericDao = new GenericDao<>(ACTIVITY, ACTIVITY.ID, Activity.class, activityDbConnectionProvider);
+    ActivityDaoImpl(final ActivityDbConnProvider activityDbConnProvider) {
+        this.activityDbConnProvider = activityDbConnProvider;
+        genericDao = new GenericDao<>(ACTIVITY, ACTIVITY.ID, Activity.class, activityDbConnProvider);
     }
 
     @Override
@@ -66,7 +66,7 @@ public class ActivityDaoImpl implements ActivityDao {
 
     @Override
     public BaseResultList<Activity> find(final FindActivityCriteria criteria) {
-        List<Activity> list = JooqUtil.contextResult(activityDbConnectionProvider, context -> {
+        List<Activity> list = JooqUtil.contextResult(activityDbConnProvider, context -> {
             final Collection<Condition> conditions = JooqUtil.conditions(
                     Optional.ofNullable(criteria.getUserId()).map(ACTIVITY.USER_ID::eq),
                     JooqUtil.getStringCondition(ACTIVITY.JSON, criteria.getName()));

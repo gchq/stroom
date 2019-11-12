@@ -30,10 +30,10 @@ class TestDbClusterLock {
     @Test
     void test() throws InterruptedException {
 
-        final ClusterLockDbConnectionProvider clusterLockDbConnectionProvider = DbTestUtil.getTestDbDatasource(
+        final ClusterLockDbConnProvider clusterLockDbConnProvider = DbTestUtil.getTestDbDatasource(
                 new ClusterLockDbModule(), new ClusterLockConfig());
 
-        final DbClusterLock dbClusterLock = new DbClusterLock(clusterLockDbConnectionProvider);
+        final DbClusterLock dbClusterLock = new DbClusterLock(clusterLockDbConnProvider);
         final DbClusterLockThreads dbClusterLockThreads = new DbClusterLockThreads(dbClusterLock);
 
         final CountDownLatch countDownLatch = new CountDownLatch(2);

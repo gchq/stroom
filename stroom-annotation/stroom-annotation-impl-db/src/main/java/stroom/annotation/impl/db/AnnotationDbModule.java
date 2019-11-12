@@ -22,7 +22,7 @@ public class AnnotationDbModule extends AbstractFlyWayDbModule<AnnotationConfig,
     protected void configure() {
         install(new AnnotationModule());
 
-        bind(AnnotationDao.class).to(AnnotationDaoImpl.class).asEagerSingleton();
+        bind(AnnotationDao.class).to(AnnotationDaoImpl.class);
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
