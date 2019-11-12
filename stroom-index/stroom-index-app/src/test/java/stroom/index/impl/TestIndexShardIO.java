@@ -28,7 +28,6 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.search.impl.shard.IndexShardSearcher;
-import stroom.search.impl.shard.IndexShardSearcherImpl;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -131,7 +130,7 @@ class TestIndexShardIO {
             writer.close();
             assertThat(writer.getDocumentCount()).isEqualTo(i);
 
-            final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(idx1);
+            final IndexShardSearcher indexShardSearcher = new IndexShardSearcher(idx1);
             final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
             final IndexSearcher searcher = searcherManager.acquire();
             try {

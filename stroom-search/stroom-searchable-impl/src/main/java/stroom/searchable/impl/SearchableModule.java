@@ -19,7 +19,7 @@ package stroom.searchable.impl;
 import com.google.inject.AbstractModule;
 import stroom.explorer.api.ExplorerDecorator;
 import stroom.searchable.api.SearchableProvider;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
 
 public class SearchableModule extends AbstractModule {

@@ -16,10 +16,136 @@
 
 package stroom.util.task.taskqueue;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
-public interface TaskProducer extends Comparable<TaskProducer> {
-    Executor getExecutor();
+public abstract class TaskProducer implements Comparable<TaskProducer> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskProducer.class);
 
-    Runnable next();
+    private final long now = System.currentTimeMillis();
+
+    private final AtomicInteger threadsUsed = new AtomicInteger();
+
+    private final TaskExecutor taskExecutor;
+    private final int maxThreadsPerTask;
+    private final Executor executor;
+
+    private final AtomicBoolean finishedAddingTasks = new AtomicBoolean();
+    private final AtomicInteger tasksTotal = new AtomicInteger();
+    private final AtomicInteger tasksCompleted = new AtomicInteger();
+
+    public TaskProducer(final TaskExecutor taskExecutor,
+                        final int maxThreadsPerTask,
+                        final Executor executor) {
+        this.taskExecutor = taskExecutor;
+        this.maxThreadsPerTask = maxThreadsPerTask;
+        this.executor = executor;
+    }
+
+    /**
+     * Get the executor to use to execute the provided runnable.
+     *
+     * @return The executor for the task executor to use.
+     */
+    final Executor getExecutor() {
+        return executor;
+    }
+
+    /**
+     * Get the next task to execute or null if the producer has reached a concurrent execution limit or no further tasks
+     * are available.
+     *
+     * @return The next task to execute or null if no tasks are available at this time.
+     */
+    final Runnable next() {
+        Runnable runnable = null;
+
+        final int count = threadsUsed.incrementAndGet();
+        if (count > maxThreadsPerTask) {
+            threadsUsed.decrementAndGet();
+        } else {
+            final Runnable task = getNext();
+            if (task == null) {
+                threadsUsed.decrementAndGet();
+
+                // Auto detach if we are complete.
+                if (isComplete()) {
+                    detach();
+                }
+            } else {
+                runnable = () -> {
+                    try {
+                        task.run();
+                    } catch (final Throwable e) {
+                        LOGGER.debug(e.getMessage(), e);
+                    } finally {
+                        threadsUsed.decrementAndGet();
+                        incrementTasksCompleted();
+                    }
+                };
+            }
+        }
+
+        return runnable;
+    }
+
+    protected abstract Runnable getNext();
+
+    /**
+     * Test if this task producer will not issue any further tasks and that all of the tasks it has issued have completed processing.
+     *
+     * @return True if this producer will not issue any further tasks and that all of the tasks it has issued have completed processing.
+     */
+    protected boolean isComplete() {
+        return finishedAddingTasks.get() && getRemainingTasks() == 0;
+    }
+
+    protected void attach() {
+        taskExecutor.addProducer(this);
+    }
+
+    private void detach() {
+        taskExecutor.removeProducer(this);
+    }
+
+    protected void signalAvailable() {
+        taskExecutor.signalAll();
+    }
+
+    protected void finishedAddingTasks() {
+        this.finishedAddingTasks.set(true);
+    }
+
+    protected final int getTasksTotal() {
+        return tasksTotal.get();
+    }
+
+    protected final void setTasksTotal(int tasksTotal) {
+        this.tasksTotal.set(tasksTotal);
+    }
+
+    protected void incrementTasksTotal() {
+        tasksTotal.incrementAndGet();
+    }
+
+    final int getTasksCompleted() {
+        return tasksCompleted.get();
+    }
+
+    protected void incrementTasksCompleted() {
+        tasksCompleted.incrementAndGet();
+    }
+
+    public final int getRemainingTasks() {
+        return tasksTotal.get() - tasksCompleted.get();
+    }
+
+    @Override
+    public int compareTo(final TaskProducer o) {
+        return Long.compare(now, o.now);
+    }
 }

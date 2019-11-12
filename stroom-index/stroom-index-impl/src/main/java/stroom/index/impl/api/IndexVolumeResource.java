@@ -4,7 +4,7 @@ package stroom.index.impl.api;
 import io.swagger.annotations.Api;
 import stroom.index.impl.CreateVolumeDTO;
 import stroom.index.impl.UpdateVolumeDTO;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;

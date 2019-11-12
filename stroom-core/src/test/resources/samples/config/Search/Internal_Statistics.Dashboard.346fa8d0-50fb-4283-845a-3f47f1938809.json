@@ -13,7 +13,8 @@
           "type" : "GENERAL"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Node",
         "expression" : "${Node}",
@@ -21,7 +22,8 @@
           "type" : "GENERAL"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Statistic Value",
         "expression" : "${Statistic Value}",
@@ -29,7 +31,8 @@
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Date Time",
         "expression" : "${Date Time}",
@@ -37,7 +40,8 @@
           "type" : "DATE_TIME"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "maxResults" : [ 1000000 ]
     }
@@ -127,7 +131,8 @@
           "type" : "GENERAL"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Node",
         "expression" : "${Node}",
@@ -135,7 +140,8 @@
           "type" : "GENERAL"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Statistic Value",
         "expression" : "${Statistic Value}",
@@ -143,7 +149,8 @@
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Date Time",
         "expression" : "${Date Time}",
@@ -151,7 +158,8 @@
           "type" : "DATE_TIME"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "maxResults" : [ 1000000 ]
     }
@@ -212,7 +220,8 @@
           "type" : "GENERAL"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Node",
         "expression" : "${Node}",
@@ -220,7 +229,8 @@
           "type" : "GENERAL"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Statistic Value",
         "expression" : "${Statistic Value}",
@@ -228,7 +238,8 @@
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Date Time",
         "expression" : "${Date Time}",
@@ -236,7 +247,8 @@
           "type" : "DATE_TIME"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "maxResults" : [ 1000000 ]
     }
@@ -297,7 +309,8 @@
           "type" : "GENERAL"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Node",
         "expression" : "${Node}",
@@ -305,7 +318,8 @@
           "type" : "GENERAL"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Statistic Value",
         "expression" : "${Statistic Value}",
@@ -313,7 +327,8 @@
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Date Time",
         "expression" : "${Date Time}",
@@ -321,7 +336,8 @@
           "type" : "DATE_TIME"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       } ],
       "maxResults" : [ 1000000 ]
     }

@@ -21,7 +21,7 @@ import stroom.util.task.taskqueue.TaskExecutor;
 import javax.inject.Singleton;
 
 @Singleton
-public class ExtractionTaskExecutor extends TaskExecutor {
+class ExtractionTaskExecutor extends TaskExecutor {
     ExtractionTaskExecutor() {
         super("Extraction Task Executor");
     }

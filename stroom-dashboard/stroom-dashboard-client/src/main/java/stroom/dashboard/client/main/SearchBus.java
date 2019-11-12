@@ -26,7 +26,6 @@ import stroom.dashboard.shared.SearchBusPollAction;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.dispatch.client.RestService;
 import stroom.security.client.api.event.LogoutEvent;
 
 import java.util.HashMap;
@@ -40,7 +39,6 @@ public class SearchBus {
     private static final int QUICK_POLL_INTERVAL = 10;
 
     private final ClientDispatchAsync dispatcher;
-    private final RestService restService;
 
     private final Map<DashboardQueryKey, SearchModel> activeSearchMap = new HashMap<>();
     private final Timer pollingTimer;
@@ -49,9 +47,8 @@ public class SearchBus {
     private boolean polling;
 
     @Inject
-    public SearchBus(final EventBus eventBus, final ClientDispatchAsync dispatcher, final RestService restService) {
+    public SearchBus(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
         this.dispatcher = dispatcher;
-        this.restService = restService;
 
         pollingTimer = new Timer() {
             @Override

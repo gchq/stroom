@@ -1,0 +1,11 @@
+ext.moduleName = 'stroom.annotation.api'
+
+dependencies {
+    compile project(':stroom-core-shared')
+//    compile project(':stroom-util-shared')
+//    compile project(':stroom-index-shared')
+//    permitUnusedDeclared project(':stroom-index-shared') // not clear why it thinks this is unused
+//    compile project(':stroom-search:stroom-search-extraction')
+    
+    compile libs.stroomQueryApi
+}

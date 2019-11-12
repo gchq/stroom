@@ -14,7 +14,8 @@
         },
         "group" : 0,
         "width" : 112,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "AirCargoTons",
         "expression" : "sum(${AirCargoTons})",
@@ -26,17 +27,20 @@
           "type" : "GENERAL"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
-        "visible" : false
+        "visible" : false,
+        "special" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
         "width" : 200,
-        "visible" : false
+        "visible" : false,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",

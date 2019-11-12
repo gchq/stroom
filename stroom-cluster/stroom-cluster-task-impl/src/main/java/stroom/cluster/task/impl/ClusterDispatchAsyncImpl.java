@@ -166,7 +166,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
      *                     execution in the result of task failure.
      * @param success      Whether or not the remote task executed successfully.
      */
-    //This method is * executed by spring using a named bean/method, hence 'unused' suppression
+    //This method is * executed by Guice using a named bean/method, hence 'unused' suppression
     @SuppressWarnings({"unchecked", "unused"})
     public <R extends SharedObject> Boolean receiveResult(final ClusterTask<R> task,
                                                           final String targetNode,

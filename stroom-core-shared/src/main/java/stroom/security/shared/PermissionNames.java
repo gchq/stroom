@@ -24,6 +24,7 @@ public final class PermissionNames {
      * Administrators have UNRESTRICTED permission on SYSTEM
      */
     public static final String ADMINISTRATOR = "Administrator";
+    public static final String ANNOTATIONS = "Annotations";
     public static final String MANAGE_CACHE_PERMISSION = "Manage Cache";
     public static final String VIEW_DATA_PERMISSION = "Data - View";
     public static final String VIEW_DATA_WITH_PIPELINE_PERMISSION = "Data - View With Pipeline";
@@ -47,6 +48,7 @@ public final class PermissionNames {
 
     public static final String[] PERMISSIONS = new String[]{
             ADMINISTRATOR,
+            ANNOTATIONS,
             MANAGE_CACHE_PERMISSION,
             VIEW_DATA_PERMISSION,
             VIEW_DATA_WITH_PIPELINE_PERMISSION,

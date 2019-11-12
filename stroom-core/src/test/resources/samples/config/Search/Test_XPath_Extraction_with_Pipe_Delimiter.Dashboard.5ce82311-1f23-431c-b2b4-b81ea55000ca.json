@@ -10,47 +10,56 @@
         "name" : "User Id",
         "expression" : "${EventSource/User/Id}",
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "System Name",
         "expression" : "${EventSource/System/Name}",
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Event Type ID",
         "expression" : "${EventDetail/TypeId}",
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "All Users",
         "expression" : "${.//Id}",
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "EventTime",
         "expression" : "${EventTime}",
         "width" : 484,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "All Data",
         "expression" : "${.//Data}",
         "width" : 458,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "All Data Vals",
         "expression" : "${.//Data/@Value}",
         "width" : 362,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
-        "visible" : false
+        "visible" : false,
+        "special" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
         "width" : 200,
-        "visible" : false
+        "visible" : false,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",

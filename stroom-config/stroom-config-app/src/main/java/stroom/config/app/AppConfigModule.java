@@ -1,6 +1,8 @@
 package stroom.config.app;
 
 import com.google.inject.AbstractModule;
+import stroom.annotation.impl.AnnotationConfig;
+import stroom.annotation.impl.db.AnnotationDbConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
@@ -62,6 +64,8 @@ public class AppConfigModule extends AbstractModule {
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own
         bind(ActivityConfig.class).toInstance(appConfig.getUiConfig().getActivityConfig());
+        bind(AnnotationConfig.class).toInstance(appConfig.getAnnotationConfig());
+        bind(AnnotationDbConfig.class).toInstance(appConfig.getAnnotationDbConfig());
         bind(AppenderConfig.class).toInstance(appConfig.getPipelineConfig().getAppenderConfig());
         bind(AuthenticationConfig.class).toInstance(appConfig.getSecurityConfig().getAuthenticationConfig());
         bind(BenchmarkClusterConfig.class).toInstance(appConfig.getBenchmarkClusterConfig());

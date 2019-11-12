@@ -30,7 +30,7 @@ import stroom.meta.shared.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;

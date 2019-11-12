@@ -248,7 +248,7 @@ else
     ./local.yml.sh
 
     # Do the gradle build
-    # Use custom gwt compile jvm settings to avoid blowing the ram limit in 
+    # Use custom gwt compile jvm settings to avoid blowing the ram limit in
     # travis. At time of writing a sudo VM in travis has 7.5gb ram.
     # Each work will chew up the maxHeap value and we have to allow for
     # our docker services as well.
@@ -257,7 +257,7 @@ else
       -Pversion="${TRAVIS_TAG}" \
       -PgwtCompilerWorkers=2 \
       -PgwtCompilerMinHeap=50M \
-      -PgwtCompilerMaxHeap=1000M \
+      -PgwtCompilerMaxHeap=1G \
       clean \
       build \
       buildDistribution \

@@ -27,6 +27,7 @@ import stroom.about.client.presenter.AboutPresenter;
 import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
+import stroom.annotation.client.AnnotationModule;
 import stroom.cache.client.gin.CacheGinjector;
 import stroom.cache.client.gin.CacheModule;
 import stroom.content.client.presenter.ContentTabPanePresenter;
@@ -88,6 +89,7 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
 @GinModules({
         ActivityModule.class,
         AlertModule.class,
+        AnnotationModule.class,
         AppModule.class,
         CacheModule.class,
         ClientDispatchModule.class,

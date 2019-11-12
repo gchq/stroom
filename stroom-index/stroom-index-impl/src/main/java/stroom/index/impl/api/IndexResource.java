@@ -6,7 +6,7 @@ import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
 import stroom.importexport.api.OldDocumentData;
 import stroom.index.shared.IndexDoc;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.shared.DocRefs;
 
 import javax.ws.rs.Consumes;

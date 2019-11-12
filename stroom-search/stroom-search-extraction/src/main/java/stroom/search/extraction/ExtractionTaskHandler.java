@@ -43,6 +43,7 @@ import stroom.pipeline.state.MetaDataHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
+import stroom.search.coprocessor.Error;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.util.io.IgnoreCloseInputStream;
@@ -50,7 +51,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.Severity;
+import stroom.util.shared.StoredError;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -58,7 +59,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-public class ExtractionTaskHandler {
+class ExtractionTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskHandler.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ExtractionTaskHandler.class);
 
@@ -165,13 +166,17 @@ public class ExtractionTaskHandler {
             final AbstractSearchResultOutputFilter searchResultOutputFilter = getFilter(pipeline,
                     AbstractSearchResultOutputFilter.class);
 
-            searchResultOutputFilter.setup(task.getFieldIndexes(), task.getResultReceiver());
+            searchResultOutputFilter.setup(task.getReceiver().getFieldIndexMap(), task.getReceiver().getValuesConsumer());
 
             // Process the stream segments.
             processData(task.getStreamId(), task.getEventIds(), pipelineRef, pipeline);
 
         } catch (final RuntimeException e) {
-            error(e.getMessage(), e);
+            task.getReceiver().getErrorConsumer().accept(new Error(e.getMessage(), e));
+
+        } finally {
+            // Let the receiver know we have finished extracting data.
+            task.getReceiver().getCompletionCountConsumer().accept((long) task.getEventIds().length);
         }
     }
 
@@ -187,10 +192,11 @@ public class ExtractionTaskHandler {
      * Extract data from the segment list. Returns the total number of segments
      * that were successfully extracted.
      */
-    private long processData(final long streamId, final long[] eventIds, final DocRef pipelineRef,
+    private void processData(final long streamId, final long[] eventIds, final DocRef pipelineRef,
                              final Pipeline pipeline) {
         final ErrorReceiver errorReceiver = (severity, location, elementId, message, e) -> {
-            task.getErrorReceiver().log(severity, location, elementId, message, e);
+            final StoredError storedError = new StoredError(severity, location, elementId, message);
+            task.getReceiver().getErrorConsumer().accept(new Error(storedError.toString(), e));
             throw ProcessException.wrap(message, e);
         };
 
@@ -220,20 +226,18 @@ public class ExtractionTaskHandler {
                     } catch (final RuntimeException e) {
                         // Something went wrong extracting data from this
                         // stream.
-                        error("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(),
+                        throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(),
                                 e);
                     }
                 } catch (final IOException | RuntimeException e) {
                     // Something went wrong extracting data from this stream.
-                    error("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(), e);
+                    throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(), e);
                 }
             }
         } catch (final IOException | RuntimeException e) {
             // Something went wrong extracting data from this stream.
-            error("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(), e);
+            throw new ExtractionException("Unable to extract data from stream source with id: " + streamId + " - " + e.getMessage(), e);
         }
-
-        return count;
     }
 
     /**
@@ -275,9 +279,5 @@ public class ExtractionTaskHandler {
                 throw ExtractionException.wrap(e);
             }
         }
-    }
-
-    private void error(final String message, final Throwable t) {
-        task.getErrorReceiver().log(Severity.ERROR, null, null, message, t);
     }
 }

@@ -18,7 +18,8 @@
         },
         "group" : 0,
         "width" : 106,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Month",
         "expression" : "formatDate(floorMonth(${ReportPeriod}),'MM ','+0000')",
@@ -27,7 +28,8 @@
         },
         "group" : 0,
         "width" : 99,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "AirCargoTons",
         "expression" : "sum(${AirCargoTons})",
@@ -35,17 +37,20 @@
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
-        "visible" : false
+        "visible" : false,
+        "special" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
         "width" : 200,
-        "visible" : false
+        "visible" : false,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",

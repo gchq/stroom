@@ -14,7 +14,8 @@
         },
         "group" : 0,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "isp",
         "expression" : "${isp}",
@@ -23,7 +24,8 @@
         },
         "group" : 0,
         "width" : 229,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "isp_user",
         "expression" : "${isp_user}",
@@ -32,7 +34,8 @@
         },
         "group" : 0,
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "actual_download",
         "expression" : "average(${actual_download})",
@@ -40,17 +43,20 @@
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
-        "visible" : false
+        "visible" : false,
+        "special" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
         "width" : 200,
-        "visible" : false
+        "visible" : false,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",

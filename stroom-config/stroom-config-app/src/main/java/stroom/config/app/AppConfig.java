@@ -3,6 +3,8 @@ package stroom.config.app;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.activity.impl.db.ActivityConfig;
+import stroom.annotation.impl.AnnotationConfig;
+import stroom.annotation.impl.db.AnnotationDbConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
@@ -38,6 +40,8 @@ import javax.inject.Singleton;
 @Singleton
 public class AppConfig implements IsConfig {
     private ActivityConfig activityConfig;
+    private AnnotationConfig annotationConfig;
+    private AnnotationDbConfig annotationDbConfig;
     private BenchmarkClusterConfig benchmarkClusterConfig;
     private ClusterConfig clusterConfig;
     private ClusterLockConfig clusterLockConfig;
@@ -71,6 +75,8 @@ public class AppConfig implements IsConfig {
 
     public AppConfig() {
         this.activityConfig = new ActivityConfig();
+        this.annotationConfig = new AnnotationConfig();
+        this.annotationDbConfig = new AnnotationDbConfig();
         this.benchmarkClusterConfig = new BenchmarkClusterConfig();
         this.clusterConfig = new ClusterConfig();
         this.clusterLockConfig = new ClusterLockConfig();
@@ -104,7 +110,10 @@ public class AppConfig implements IsConfig {
     }
 
     @Inject
-    AppConfig(final BenchmarkClusterConfig benchmarkClusterConfig,
+    AppConfig(final ActivityConfig activityConfig,
+              final AnnotationConfig annotationConfig,
+              final AnnotationDbConfig annotationDbConfig,
+              final BenchmarkClusterConfig benchmarkClusterConfig,
               final ClusterConfig clusterConfig,
               final ClusterLockConfig clusterLockConfig,
               final ContentPackImportConfig contentPackImportConfig,
@@ -133,9 +142,10 @@ public class AppConfig implements IsConfig {
               final StatisticsConfig statisticsConfig,
               final StoredQueryHistoryConfig storedQueryHistoryConfig,
               final UiConfig uiConfig,
-              final VolumeConfig volumeConfig,
-              final ActivityConfig activityConfig ) {
+              final VolumeConfig volumeConfig) {
         this.activityConfig = activityConfig;
+        this.annotationConfig = annotationConfig;
+        this.annotationDbConfig = annotationDbConfig;
         this.benchmarkClusterConfig = benchmarkClusterConfig;
         this.clusterConfig = clusterConfig;
         this.clusterLockConfig = clusterLockConfig;
@@ -148,6 +158,7 @@ public class AppConfig implements IsConfig {
         this.indexConfig = indexConfig;
         this.indexDbConfig = indexDbConfig;
         this.jobSystemConfig = jobSystemConfig;
+        this.jobDbConfig = jobDbConfig;
         this.lifecycleConfig = lifecycleConfig;
         this.nodeConfig = nodeConfig;
         this.nodeDbConfig = nodeDbConfig;
@@ -174,6 +185,24 @@ public class AppConfig implements IsConfig {
 
     public void setActivityConfig(final ActivityConfig activityConfig) {
         this.activityConfig = activityConfig;
+    }
+
+    @JsonProperty("annotation")
+    public AnnotationConfig getAnnotationConfig() {
+        return annotationConfig;
+    }
+
+    public void setAnnotationConfig(final AnnotationConfig annotationConfig) {
+        this.annotationConfig = annotationConfig;
+    }
+
+    @JsonProperty("annotationDb")
+    public AnnotationDbConfig getAnnotationDbConfig() {
+        return annotationDbConfig;
+    }
+
+    public void setAnnotationDbConfig(final AnnotationDbConfig annotationDbConfig) {
+        this.annotationDbConfig = annotationDbConfig;
     }
 
     @JsonProperty("benchmark")

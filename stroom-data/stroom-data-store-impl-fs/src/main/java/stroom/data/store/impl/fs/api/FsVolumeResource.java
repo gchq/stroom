@@ -4,7 +4,7 @@ import io.swagger.annotations.Api;
 import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;

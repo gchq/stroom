@@ -13,7 +13,8 @@
           "type" : "DATE_TIME"
         },
         "width" : 168,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "connection_type",
         "expression" : "${connection_type}",
@@ -21,7 +22,8 @@
           "type" : "GENERAL"
         },
         "width" : 115,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "isp_user",
         "expression" : "${isp_user}",
@@ -29,7 +31,8 @@
           "type" : "GENERAL"
         },
         "width" : 69,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "actual_download",
         "expression" : "${actual_download}",
@@ -37,17 +40,20 @@
           "type" : "NUMBER"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
-        "visible" : false
+        "visible" : false,
+        "special" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
         "width" : 200,
-        "visible" : false
+        "visible" : false,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",

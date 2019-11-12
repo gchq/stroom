@@ -83,17 +83,6 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             final IndexStore indexStore,
             final SearchResponseCreatorManager searchResponseCreatorManager) {
 
-        // ADDED THIS SECTION TO TEST SPRING VALUE INJECTION.
-//        StroomProperties.setOverrideProperty(
-//                "stroom.search.impl.shard.concurrentTasks",
-//                Integer.toString(maxShardTasks),
-//                StroomProperties.Source.TEST);
-//
-//        StroomProperties.setOverrideProperty(
-//                "stroom.search.impl.extraction.concurrentTasks",
-//                Integer.toString(maxExtractionTasks),
-//                StroomProperties.Source.TEST);
-
         final DocRef indexRef = indexStore.list().get(0);
         final IndexDoc index = indexStore.readDocument(indexRef);
         assertThat(index).as("Index is null").isNotNull();

@@ -11,6 +11,9 @@ dependencies {
     compile libs.jackson_databind
     compile libs.javax_inject;
     compile libs.jaxb_api
+    compile libs.restygwt
+    compile libs.swagger_annotations
+    compile libs.ws_rs_api
 
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api

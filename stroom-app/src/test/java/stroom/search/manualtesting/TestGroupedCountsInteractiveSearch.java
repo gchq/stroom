@@ -56,7 +56,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-// This spring/junit configuration is copied from AbstractCoreIntegrationTest and StroomIntegrationTest
+// This junit configuration is copied from AbstractCoreIntegrationTest and StroomIntegrationTest
 // and it is so we can manually run tests using state from a previous run.
 class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestGroupedCountsInteractiveSearch.class);

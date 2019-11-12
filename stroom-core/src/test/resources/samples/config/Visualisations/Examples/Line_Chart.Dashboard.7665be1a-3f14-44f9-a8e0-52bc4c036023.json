@@ -17,7 +17,8 @@
           "type" : "DATE_TIME"
         },
         "width" : 200,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "CargoType",
         "expression" : "${CargoType}",
@@ -25,7 +26,8 @@
           "type" : "GENERAL"
         },
         "width" : 88,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Domestic_International",
         "expression" : "concat(${Domestic_International}, ' - ', ${Arrival_Departure})",
@@ -33,7 +35,8 @@
           "type" : "GENERAL"
         },
         "width" : 160,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "AirCargoTons",
         "expression" : "${AirCargoTons}",
@@ -41,17 +44,20 @@
           "type" : "NUMBER"
         },
         "width" : 107,
-        "visible" : true
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
         "width" : 200,
-        "visible" : false
+        "visible" : false,
+        "special" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
         "width" : 200,
-        "visible" : false
+        "visible" : false,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",

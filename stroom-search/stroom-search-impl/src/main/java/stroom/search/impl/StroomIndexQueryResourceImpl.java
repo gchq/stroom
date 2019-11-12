@@ -17,22 +17,31 @@
 package stroom.search.impl;
 
 import com.codahale.metrics.annotation.Timed;
+import io.swagger.annotations.ApiParam;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
 import stroom.index.impl.StroomIndexQueryResource;
 import stroom.index.shared.IndexDoc;
+import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
+import stroom.query.api.v2.TableResult;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
 import stroom.security.api.SecurityContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
+import java.util.stream.Collectors;
 
 public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
+    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StroomIndexQueryResource.class);
+
     private final SearchResponseCreatorManager searchResponseCreatorManager;
     private final IndexStore indexStore;
     private final SecurityContext securityContext;
@@ -64,7 +73,51 @@ public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
         final SearchResponseCreator searchResponseCreator = searchResponseCreatorManager.get(new SearchResponseCreatorCache.Key(request));
 
         //create a response from the data found so far, this could be complete/incomplete
-        return searchResponseCreator.create(request);
+        SearchResponse searchResponse = searchResponseCreator.create(request);
+
+        LAMBDA_LOGGER.trace(() ->
+                getResponseInfoForLogging(request, searchResponse));
+
+        return searchResponse;
+    }
+
+    private String getResponseInfoForLogging(@ApiParam("SearchRequest") final SearchRequest request, final SearchResponse searchResponse) {
+        String resultInfo;
+
+        if (searchResponse.getResults() != null) {
+            resultInfo = "\n" + searchResponse.getResults().stream()
+                    .map(result -> {
+                        if (result instanceof FlatResult) {
+                            FlatResult flatResult = (FlatResult) result;
+                            return LogUtil.message(
+                                    "  FlatResult - componentId: {}, size: {}, ",
+                                    flatResult.getComponentId(),
+                                    flatResult.getSize());
+                        } else if (result instanceof TableResult) {
+                            TableResult tableResult = (TableResult) result;
+                            return LogUtil.message(
+                                    "  TableResult - componentId: {}, rows: {}, totalResults: {}, " +
+                                            "resultRange: {}",
+                                    tableResult.getComponentId(),
+                                    tableResult.getRows().size(),
+                                    tableResult.getTotalResults(),
+                                    tableResult.getResultRange());
+                        } else {
+                            return "  Unknown type " + result.getClass().getName();
+                        }
+                    })
+                    .collect(Collectors.joining("\n"));
+        } else {
+            resultInfo = "null";
+        }
+
+        return LogUtil.message("Return search response, key: {}, result sets: {}, " +
+                        "complete: {}, errors: {}, results: {}",
+                request.getKey().toString(),
+                searchResponse.getResults(),
+                searchResponse.complete(),
+                searchResponse.getErrors(),
+                resultInfo);
     }
 
     @Timed

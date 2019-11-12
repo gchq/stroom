@@ -36,7 +36,7 @@ import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

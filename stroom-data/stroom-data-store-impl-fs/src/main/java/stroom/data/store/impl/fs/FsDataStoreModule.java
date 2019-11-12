@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.DataStoreMaintenanceService;
 import stroom.data.store.impl.fs.api.FsVolumeResource;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 

@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiParam;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.util.HasHealthCheck;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;

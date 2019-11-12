@@ -45,6 +45,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     private final Provider<SplashPresenter> splashPresenterProvider;
     private final CurrentActivity currentActivity;
     private User userRef;
+    private String apiToken;
     private Set<String> permissions;
 
     @Inject
@@ -60,6 +61,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
 
     public void clear() {
         this.userRef = null;
+        this.apiToken = null;
         this.permissions = null;
     }
 
@@ -71,6 +73,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
         clear();
         if (userAndPermissions != null) {
             this.userRef = userAndPermissions.getUser();
+            this.apiToken = userAndPermissions.getApiToken();
             this.permissions = userAndPermissions.getAppPermissionSet();
         }
 
@@ -93,6 +96,11 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
             return null;
         }
         return userRef.getName();
+    }
+
+    @Override
+    public String getApiToken() {
+        return apiToken;
     }
 
     @Override
