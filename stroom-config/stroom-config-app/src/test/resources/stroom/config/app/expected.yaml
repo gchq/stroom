@@ -11,6 +11,22 @@ appConfig:
         cachePrepStmts: true
         prepStmtCacheSize: 250
         prepStmtCacheSqlLimit: 2048
+  annotation:
+    statusValues:
+    - "New"
+    - "Assigned"
+    - "Closed"
+    createText: "Create Annotation"
+  annotationDb:
+    connection:
+      jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+      jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+      jdbcDriverUsername: "stroomuser"
+      jdbcDriverPassword: "stroompassword1"
+    connectionPool:
+      cachePrepStmts: true
+      prepStmtCacheSize: 250
+      prepStmtCacheSqlLimit: 2048
   benchmark:
     streamCount: 1000
     recordCount: 10000
@@ -231,6 +247,7 @@ appConfig:
     maxBooleanClauseCount: 1024
     storeSize: "1000000,100,10,1"
     extraction:
+      maxStoredDataQueueSize: 1000
       maxThreads: 4
       maxThreadsPerTask: 2
     shard:
@@ -278,6 +295,7 @@ appConfig:
     maxBooleanClauseCount: 1024
     storeSize: "1000000,100,10,1"
     extraction:
+      maxStoredDataQueueSize: 1000
       maxThreads: 4
       maxThreadsPerTask: 2
   statistics:

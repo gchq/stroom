@@ -16,7 +16,7 @@ public class PathConfig implements IsConfig {
     private String temp = null;
 
     public PathConfig() {
-        temp = System.getProperty("java.io.tmpdir");
+        temp = "/tmp";//System.getProperty("java.io.tmpdir");
     }
 
     @ReadOnly
