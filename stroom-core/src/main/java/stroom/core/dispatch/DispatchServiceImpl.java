@@ -85,7 +85,7 @@ public class DispatchServiceImpl extends RemoteServiceServlet implements Dispatc
     }
 
     @Override
-    public <R extends SharedObject> R exec(final Action<R> action) {
+    public <R extends SharedObject> R exec(final Action<R> action) throws EntityServiceException {
         final long startTime = System.currentTimeMillis();
 
         LOGGER.debug("exec() - >> {} {}", action.getClass().getName(), sessionIdProvider.get());

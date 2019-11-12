@@ -30,16 +30,16 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsVolumeState.FS_VOLUME_S
 public class FsVolumeDaoImpl implements FsVolumeDao {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeService.class);
 
-    private final ConnectionProvider connectionProvider;
+    private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
 
     @Inject
-    FsVolumeDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    FsVolumeDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider) {
+        this.fsDataStoreDbConnProvider = fsDataStoreDbConnProvider;
     }
 
     @Override
     public FsVolume create(final FsVolume fileVolume) {
-        return JooqUtil.contextResultWithOptimisticLocking(connectionProvider, (context) -> {
+        return JooqUtil.contextResultWithOptimisticLocking(fsDataStoreDbConnProvider, (context) -> {
                     final FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
                     volumeToRecord(fileVolume, record);
                     record.store();
@@ -49,7 +49,7 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
 
     @Override
     public FsVolume update(final FsVolume fileVolume) {
-        final FsVolume result = JooqUtil.contextResultWithOptimisticLocking(connectionProvider, (context) -> {
+        final FsVolume result = JooqUtil.contextResultWithOptimisticLocking(fsDataStoreDbConnProvider, (context) -> {
                 final FsVolumeRecord record = context.newRecord(FS_VOLUME, fileVolume);
                 volumeToRecord(fileVolume, record);
                 // This depends on there being a field named 'id' that is what we expect it to be.
@@ -64,7 +64,7 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
 
     @Override
     public int delete(final int id) {
-        return JooqUtil.transactionResult(connectionProvider, context -> {
+        return JooqUtil.transactionResult(fsDataStoreDbConnProvider, context -> {
             final Optional<Integer> stateIdOptional = context
                     .select(FS_VOLUME.FK_FS_VOLUME_STATE_ID)
                     .from(FS_VOLUME)
@@ -87,7 +87,7 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
 
     @Override
     public FsVolume fetch(final int id) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                 .select()
                 .from(FS_VOLUME)
                 .join(FS_VOLUME_STATE)
@@ -103,7 +103,7 @@ public class FsVolumeDaoImpl implements FsVolumeDao {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 volumeStatusCriteriaSetToCondition(FS_VOLUME.STATUS, criteria.getStatusSet()));
 
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                 .select()
                 .from(FS_VOLUME)
                 .join(FS_VOLUME_STATE)

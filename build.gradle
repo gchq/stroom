@@ -130,6 +130,7 @@ ext.versions = [
         mockito           : '2.23.4',
         rxjava            : '2.1.10',
         swagger           : '1.5.21',
+        test_containers   : '1.12.3',
         unirest           : '1.4.9',
         zookeeper         : '3.4.8', // Roughly pegged to the server version used by Cloudera, see links above. This version is forced below.
         zzDUMMYzz         : 'makes sorting easier'
@@ -260,8 +261,8 @@ ext.libs = [
         solrj                          : "org.apache.solr:solr-solrj:8.2.0",
         stax_api                       : "stax:stax-api:1.0.1",
         swagger_annotations            : "io.swagger:swagger-annotations:$versions.swagger",
-        test_containers                : "org.testcontainers:testcontainers:1.11.1",
-        test_containers_mysql          : "org.testcontainers:mysql:1.12.3",
+        test_containers                : "org.testcontainers:testcontainers:$versions.test_containers",
+        test_containers_mysql          : "org.testcontainers:mysql:$versions.test_containers",
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",
         vavr                           : "io.vavr:vavr:0.9.0",
         ws_rs_api                      : "javax.ws.rs:javax.ws.rs-api:2.1",

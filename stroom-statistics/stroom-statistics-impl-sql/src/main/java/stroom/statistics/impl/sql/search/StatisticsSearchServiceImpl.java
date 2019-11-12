@@ -11,7 +11,7 @@ import stroom.dashboard.expression.v1.ValDouble;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.statistics.impl.sql.ConnectionProvider;
+import stroom.statistics.impl.sql.SQLStatisticsDbConnProvider;
 import stroom.statistics.impl.sql.PreparedStatementUtil;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
 import stroom.statistics.impl.sql.SQLStatisticNames;
@@ -55,7 +55,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private static final String ALIASED_COUNT_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.COUNT;
     private static final String ALIASED_VALUE_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.VALUE;
 
-    private final ConnectionProvider connectionProvider;
+    private final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider;
     private final SearchConfig searchConfig;
     private final TaskContext taskContext;
 
@@ -69,10 +69,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     @SuppressWarnings("unused") // Called by DI
     @Inject
-    StatisticsSearchServiceImpl(final ConnectionProvider connectionProvider,
+    StatisticsSearchServiceImpl(final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider,
                                 final SearchConfig searchConfig,
                                 final TaskContext taskContext) {
-        this.connectionProvider = connectionProvider;
+        this.SQLStatisticsDbConnProvider = SQLStatisticsDbConnProvider;
         this.searchConfig = searchConfig;
         this.taskContext = taskContext;
     }
@@ -358,7 +358,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         // will have mode on each time.
         Flowable<Val[]> resultSetFlowable = Flowable
                 .using(
-                        () -> new PreparedStatementResourceHolder(connectionProvider, sql, searchConfig),
+                        () -> new PreparedStatementResourceHolder(SQLStatisticsDbConnProvider, sql, searchConfig),
                         factory -> {
                             LOGGER.debug("Converting factory to a flowable");
                             Preconditions.checkNotNull(factory);

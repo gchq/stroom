@@ -37,11 +37,11 @@ class MetaTypeDaoImpl implements MetaTypeDao {
     // TODO : @66 Replace with a proper cache.
     private final Map<String, Integer> cache = new ConcurrentHashMap<>();
 
-    private final ConnectionProvider connectionProvider;
+    private final MetaDbConnProvider metaDbConnProvider;
 
     @Inject
-    MetaTypeDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    MetaTypeDaoImpl(final MetaDbConnProvider metaDbConnProvider) {
+        this.metaDbConnProvider = metaDbConnProvider;
     }
 
     @Override
@@ -71,7 +71,7 @@ class MetaTypeDaoImpl implements MetaTypeDao {
     }
 
     private Optional<Integer> get(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(META_TYPE.ID)
                 .from(META_TYPE)
                 .where(META_TYPE.NAME.eq(name))
@@ -80,7 +80,7 @@ class MetaTypeDaoImpl implements MetaTypeDao {
 
     List<Integer> find(final String name) {
         final Condition condition = createCondition(META_TYPE.NAME, name);
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(META_TYPE.ID)
                 .from(META_TYPE)
                 .where(condition)
@@ -98,7 +98,7 @@ class MetaTypeDaoImpl implements MetaTypeDao {
     }
 
     private Optional<Integer> create(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .insertInto(META_TYPE, META_TYPE.NAME)
                 .values(name)
                 .onDuplicateKeyIgnore()
@@ -109,7 +109,7 @@ class MetaTypeDaoImpl implements MetaTypeDao {
 
     @Override
     public List<String> list() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(META_TYPE.NAME)
                 .from(META_TYPE)
                 .fetch(META_TYPE.NAME));
@@ -122,7 +122,7 @@ class MetaTypeDaoImpl implements MetaTypeDao {
     }
 
     private int deleteAll() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .delete(META_TYPE)
                 .execute());
     }

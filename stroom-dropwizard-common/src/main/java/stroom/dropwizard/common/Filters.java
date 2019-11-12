@@ -10,6 +10,7 @@ import stroom.util.guice.FilterInfo;
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
 import javax.servlet.Filter;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.Map;
 
@@ -29,20 +30,22 @@ public class Filters {
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
         LOGGER.info("Adding filters:");
-        filters.forEach((filterInfo, filter) -> {
-            final String name = filterInfo.getName();
-            final String url = filterInfo.getUrlPattern();
+        filters.entrySet().stream()
+                .sorted(Comparator.comparing(entry -> entry.getKey().getName()))
+                .forEach(entry -> {
+            final String name = entry.getKey().getName();
+            final String url = entry.getKey().getUrlPattern();
             LOGGER.info("\t{} -> {}", name, url);
 
-            final FilterHolder filterHolder = new FilterHolder(filter);
+            final FilterHolder filterHolder = new FilterHolder(entry.getValue());
             filterHolder.setName(name);
 
             servletContextHandler.addFilter(
                     filterHolder,
-                    filterInfo.getUrlPattern(),
+                    url,
                     EnumSet.of(DispatcherType.REQUEST));
 
-            filterInfo.getInitParameters().forEach(filterHolder::setInitParameter);
+            entry.getKey().getInitParameters().forEach(filterHolder::setInitParameter);
         });
     }
 }

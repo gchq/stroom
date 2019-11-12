@@ -21,9 +21,9 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import stroom.config.global.api.ConfigProperty;
-import stroom.config.global.api.FindGlobalConfigAction;
-import stroom.config.global.api.FindGlobalConfigCriteria;
+import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.FindGlobalConfigAction;
+import stroom.config.global.shared.FindGlobalConfigCriteria;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
@@ -57,9 +57,9 @@ public class ManageGlobalPropertyListPresenter
                 if (row == null) {
                     return null;
                 }
-                return row.getValue();
+                return row.getEffectiveValueMasked().orElse(null);
             }
-        }, "Value", 150);
+        }, "Effective Value", 150);
 
         getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
             @Override
@@ -83,13 +83,14 @@ public class ManageGlobalPropertyListPresenter
         getView().addEndColumn(new EndColumn<>());
 
 
-        this.dataProvider = new FindActionDataProvider(dispatcher, getView(),
-                new FindGlobalConfigAction(
-                        new FindGlobalConfigCriteria()));
+//        this.dataProvider = new FindActionDataProvider(dispatcher, getView(),
+//                new FindGlobalConfigAction(
+//                        new FindGlobalConfigCriteria()));
+        this.dataProvider = new FindActionDataProvider<>(dispatcher, getView(), new FindGlobalConfigAction());
 
 //        dataProvider = new EntityServiceFindActionDataProvider<>(dispatcher,
 //                getView());
-//        dataProvider.setCriteria(criteria);
+        dataProvider.setCriteria(new FindGlobalConfigCriteria());
 //        refresh();
     }
 

@@ -4,6 +4,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.config.common.ConnectionConfig;
 import stroom.db.util.DbUtil;
+import stroom.test.common.util.db.DbTestUtil;
 
 import java.sql.Connection;
 
@@ -21,7 +22,7 @@ class TestProcessingFilterMigration {
         final V6_0_0_9__ProcessingFilter filter = new V6_0_0_9__ProcessingFilter(false);
 
         final ConnectionConfig connectionConfig = new ConnectionConfig();
-        DbUtil.decorateConnectionConfig(connectionConfig);
+        DbTestUtil.applyTestContainersConfig(connectionConfig);
         DbUtil.validate(connectionConfig);
         try (final Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
             filter.migrate(conn);

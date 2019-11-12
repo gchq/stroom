@@ -51,12 +51,12 @@ class ProcessorTaskDeleteExecutorImpl extends AbstractBatchDeleteExecutor implem
     private static final String LOCK_NAME = "ProcessorTaskDeleteExecutor";
     private static final String TEMP_STRM_TASK_ID_TABLE = "TEMP_PROCESSOR_TASK_ID";
 
-    private final ConnectionProvider connectionProvider;
+    private final ProcessorDbConnProvider processorDbConnProvider;
     private final ProcessorFilterDao processorFilterDao;
     private final ProcessorTaskManager processorTaskManager;
 
     @Inject
-    ProcessorTaskDeleteExecutorImpl(final ConnectionProvider connectionProvider,
+    ProcessorTaskDeleteExecutorImpl(final ProcessorDbConnProvider processorDbConnProvider,
                                     final ClusterLockService clusterLockService,
                                     final ProcessorConfig processorConfig,
                                     final TaskContext taskContext,
@@ -64,11 +64,11 @@ class ProcessorTaskDeleteExecutorImpl extends AbstractBatchDeleteExecutor implem
                                     final ProcessorTaskManager processorTaskManager) {
         super(clusterLockService, taskContext, TASK_NAME, LOCK_NAME, processorConfig, TEMP_STRM_TASK_ID_TABLE);
 
-        this.connectionProvider = connectionProvider;
+        this.processorDbConnProvider = processorDbConnProvider;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskManager = processorTaskManager;
 
-        final BatchIdTransactionHelper batchIdTransactionHelper = new BatchIdTransactionHelper(connectionProvider, TEMP_STRM_TASK_ID_TABLE);
+        final BatchIdTransactionHelper batchIdTransactionHelper = new BatchIdTransactionHelper(processorDbConnProvider, TEMP_STRM_TASK_ID_TABLE);
         setBatchIdTransactionHelper(batchIdTransactionHelper);
     }
 
@@ -109,7 +109,7 @@ class ProcessorTaskDeleteExecutorImpl extends AbstractBatchDeleteExecutor implem
                 Optional.of(PROCESSOR_TASK.STATUS.in(TaskStatus.COMPLETE.getPrimitiveValue(), TaskStatus.FAILED.getPrimitiveValue())),
                 Optional.of(PROCESSOR_TASK.CREATE_TIME_MS.isNull().or(PROCESSOR_TASK.CREATE_TIME_MS.lessThan(age))));
 
-        return JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(processorDbConnProvider, context ->
                 context
                         .select(PROCESSOR_TASK.ID)
                         .from(PROCESSOR_TASK)

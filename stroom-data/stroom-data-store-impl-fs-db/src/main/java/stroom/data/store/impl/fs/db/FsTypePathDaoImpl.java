@@ -24,11 +24,11 @@ class FsTypePathDaoImpl implements FsTypePathDao {
     // TODO : @66 Replace with a proper cache.
     private final Map<String, String> cache = new ConcurrentHashMap<>();
 
-    private final ConnectionProvider connectionProvider;
+    private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
 
     @Inject
-    FsTypePathDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    FsTypePathDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider) {
+        this.fsDataStoreDbConnProvider = fsDataStoreDbConnProvider;
     }
 
     @Override
@@ -56,7 +56,7 @@ class FsTypePathDaoImpl implements FsTypePathDao {
             LOGGER.warn(LambdaLogUtil.message("A non standard feed name was found when registering a file path '{}'", name));
         }
 
-        JooqUtil.context(connectionProvider, context -> context
+        JooqUtil.context(fsDataStoreDbConnProvider, context -> context
                 .insertInto(FS_TYPE_PATH, FS_TYPE_PATH.NAME, FS_TYPE_PATH.PATH)
                 .values(name, path)
                 .onDuplicateKeyIgnore()
@@ -64,7 +64,7 @@ class FsTypePathDaoImpl implements FsTypePathDao {
     }
 
     private Optional<String> getPath(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                 .select(FS_TYPE_PATH.PATH)
                 .from(FS_TYPE_PATH)
                 .where(FS_TYPE_PATH.NAME.eq(name))
@@ -72,7 +72,7 @@ class FsTypePathDaoImpl implements FsTypePathDao {
     }
 
     private Optional<String> getName(final String path) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
                 .select(FS_TYPE_PATH.NAME)
                 .from(FS_TYPE_PATH)
                 .where(FS_TYPE_PATH.PATH.eq(path))

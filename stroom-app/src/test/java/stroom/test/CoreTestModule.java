@@ -11,6 +11,7 @@ import stroom.index.VolumeTestConfigModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -23,12 +24,41 @@ import java.nio.file.Paths;
 public class CoreTestModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(CoreTestModule.class);
 
+    private Path yamlConfigPath = null;
+    private AppConfig appConfig = null;
+    private boolean useTestContainers = true;
+
+    public CoreTestModule(final boolean useTestContainers) {
+        this.useTestContainers = useTestContainers;
+    }
+
+    public CoreTestModule(final Path yamlConfigPath) {
+        this.yamlConfigPath = yamlConfigPath;
+    }
+
+    public CoreTestModule(final AppConfig appConfig) {
+        this.appConfig = appConfig;
+    }
+
     @Override
     protected void configure() {
 
-        final AppConfig appConfig = getLocalAppConfig();
+        if (appConfig == null) {
+            appConfig = getLocalAppConfig();
+        } else {
+            LOGGER.info("Using supplied AppConfig object");
+            yamlConfigPath = Paths.get("DUMMY");
+        }
 
-        install(new AppConfigModule(appConfig));
+        if (useTestContainers) {
+            LOGGER.info("Setting up Test Containers DB config");
+            // By decorating the common config it should be applied to all DB conns
+            DbTestUtil.applyTestContainersConfig(appConfig.getCommonDbConfig().getConnectionConfig());
+        } else {
+            LOGGER.info("Not using test container DB connection config");
+        }
+
+        install(new AppConfigModule(appConfig, yamlConfigPath));
         install(new CoreModule());
         install(new ResourceModule());
         install(new stroom.cluster.impl.MockClusterModule());
@@ -38,7 +68,7 @@ public class CoreTestModule extends AbstractModule {
         install(new stroom.test.DatabaseTestControlModule());
     }
 
-    private static AppConfig getLocalAppConfig() {
+    private AppConfig getLocalAppConfig() {
         final AppConfig appConfig;// Load dev.yaml
         final String codeSourceLocation = CoreTestModule.class
                 .getProtectionDomain()
@@ -64,8 +94,10 @@ public class CoreTestModule extends AbstractModule {
 
         LOGGER.info("Using config from: " + FileUtil.getCanonicalPath(path));
 
-        try (final InputStream inputStream = Files.newInputStream(path)) {
-            appConfig = YamlUtil.read(inputStream);
+        this.yamlConfigPath = path;
+
+        try {
+            appConfig = YamlUtil.readAppConfig(path);
         } catch (final IOException e) {
             throw new UncheckedIOException("Error opening local.yml, try running local.yml.sh in the root of " +
                     "the repo to create one.", e);

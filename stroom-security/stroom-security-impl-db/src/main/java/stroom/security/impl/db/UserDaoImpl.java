@@ -51,13 +51,13 @@ public class UserDaoImpl implements UserDao {
         return record;
     };
 
-    private final ConnectionProvider connectionProvider;
+    private final SecurityDbConnProvider securityDbConnProvider;
     private final GenericDao<StroomUserRecord, User, Integer> genericDao;
 
     @Inject
-    public UserDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
-        genericDao = new GenericDao<>(STROOM_USER, STROOM_USER.ID, User.class, connectionProvider);
+    public UserDaoImpl(final SecurityDbConnProvider securityDbConnProvider) {
+        this.securityDbConnProvider = securityDbConnProvider;
+        genericDao = new GenericDao<>(STROOM_USER, STROOM_USER.ID, User.class, securityDbConnProvider);
         genericDao.setObjectToRecordMapper(USER_TO_RECORD_MAPPER);
         genericDao.setRecordToObjectMapper(RECORD_TO_USER_MAPPER);
     }
@@ -74,7 +74,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public User getByUuid(final String uuid) {
-        return JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.select().from(STROOM_USER)
                         .where(STROOM_USER.UUID.eq(uuid))
                         .fetchOptional()
@@ -84,7 +84,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public User getByName(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.select().from(STROOM_USER)
                         .where(STROOM_USER.NAME.eq(name))
                         .fetchOptional()
@@ -99,7 +99,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public void delete(final String uuid) {
-        JooqUtil.context(connectionProvider, context ->
+        JooqUtil.context(securityDbConnProvider, context ->
                 context.deleteFrom(STROOM_USER)
                         .where(STROOM_USER.UUID.eq(uuid))
                         .execute()
@@ -112,7 +112,7 @@ public class UserDaoImpl implements UserDao {
                 Optional.ofNullable(group).map(STROOM_USER.IS_GROUP::eq),
                 Optional.ofNullable(name).map(STROOM_USER.NAME::eq));
 
-        return JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.select().from(STROOM_USER)
                         .where(conditions)
                         .fetch()
@@ -123,7 +123,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public List<User> findUsersInGroup(final String groupUuid) {
-        return JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.select()
                         .from(STROOM_USER)
                         .join(STROOM_USER_GROUP)
@@ -138,7 +138,7 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public List<User> findGroupsForUser(final String userUuid) {
-        return JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.select()
                         .from(STROOM_USER)
                         .join(STROOM_USER_GROUP)
@@ -155,7 +155,7 @@ public class UserDaoImpl implements UserDao {
     public List<User> findGroupsForUserName(final String userName) {
         StroomUser userUser = STROOM_USER.as("userUser");
         StroomUser groupUser = STROOM_USER.as("groupUser");
-        return JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.select()
                         .from(groupUser)
                         // group users -> groups
@@ -175,7 +175,7 @@ public class UserDaoImpl implements UserDao {
     @Override
     public void addUserToGroup(final String userUuid,
                                final String groupUuid) {
-        JooqUtil.context(connectionProvider, context ->
+        JooqUtil.context(securityDbConnProvider, context ->
                 context.insertInto(STROOM_USER_GROUP)
                         .columns(STROOM_USER_GROUP.USER_UUID, STROOM_USER_GROUP.GROUP_UUID)
                         .values(userUuid, groupUuid)
@@ -186,7 +186,7 @@ public class UserDaoImpl implements UserDao {
     @Override
     public void removeUserFromGroup(final String userUuid,
                                     final String groupUuid) {
-        JooqUtil.context(connectionProvider, context ->
+        JooqUtil.context(securityDbConnProvider, context ->
                 context.deleteFrom(STROOM_USER_GROUP)
                         .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
                         .and(STROOM_USER_GROUP.GROUP_UUID.eq(groupUuid))

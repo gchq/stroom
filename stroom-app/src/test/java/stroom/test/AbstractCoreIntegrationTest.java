@@ -33,7 +33,7 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
         // Let all connections know that we are in testing mode.
         HikariUtil.setTesting(true);
 
-        injector = Guice.createInjector(new CoreTestModule());
+        injector = Guice.createInjector(new CoreTestModule(true));
 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();

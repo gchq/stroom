@@ -1,34 +1,30 @@
 package stroom.meta.impl.db;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
+import stroom.config.common.DbConfig;
+import stroom.config.common.HasDbConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class MetaServiceConfig implements IsConfig {
-    private ConnectionConfig connectionConfig = new ConnectionConfig();
-    private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
+public class MetaServiceConfig implements IsConfig, HasDbConfig {
+
+    private DbConfig dbConfig;
     private MetaValueConfig metaValueConfig;
 
-    @JsonProperty("connection")
-    public ConnectionConfig getConnectionConfig() {
-        return connectionConfig;
+    public MetaServiceConfig() {
+        this.dbConfig = new DbConfig();
+        this.metaValueConfig = new MetaValueConfig();
     }
 
-    public void setConnectionConfig(final ConnectionConfig connectionConfig) {
-        this.connectionConfig = connectionConfig;
+    @JsonProperty("db")
+    public DbConfig getDbConfig() {
+        return dbConfig;
     }
 
-    @JsonProperty("connectionPool")
-    public ConnectionPoolConfig getConnectionPoolConfig() {
-        return connectionPoolConfig;
-    }
-
-    public void setConnectionPoolConfig(final ConnectionPoolConfig connectionPoolConfig) {
-        this.connectionPoolConfig = connectionPoolConfig;
+    public void setDbConfig(final DbConfig dbConfig) {
+        this.dbConfig = dbConfig;
     }
 
     public MetaValueConfig getMetaValueConfig() {

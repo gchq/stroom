@@ -2,18 +2,17 @@ package stroom.processor.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
+import stroom.config.common.DbConfig;
+import stroom.config.common.HasDbConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @SuppressWarnings("unused")
 @Singleton
-public class ProcessorConfig implements BatchDeleteConfig, IsConfig {
-    private ConnectionConfig connectionConfig = new ConnectionConfig();
-    private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
+public class ProcessorConfig implements BatchDeleteConfig, IsConfig, HasDbConfig {
 
+    private DbConfig dbConfig;
     private boolean assignTasks = true;
     private boolean createTasks = true;
     private String deleteAge = "1d";
@@ -23,22 +22,17 @@ public class ProcessorConfig implements BatchDeleteConfig, IsConfig {
     private int queueSize = 1000;
     private int databaseMultiInsertMaxBatchSize = 500;
 
-    @JsonProperty("connection")
-    public ConnectionConfig getConnectionConfig() {
-        return connectionConfig;
+    public ProcessorConfig() {
+        this.dbConfig = new DbConfig();
     }
 
-    public void setConnectionConfig(final ConnectionConfig connectionConfig) {
-        this.connectionConfig = connectionConfig;
+    @JsonProperty("db")
+    public DbConfig getDbConfig() {
+        return dbConfig;
     }
 
-    @JsonProperty("connectionPool")
-    public ConnectionPoolConfig getConnectionPoolConfig() {
-        return connectionPoolConfig;
-    }
-
-    public void setConnectionPoolConfig(final ConnectionPoolConfig connectionPoolConfig) {
-        this.connectionPoolConfig = connectionPoolConfig;
+    public void setDbConfig(final DbConfig dbConfig) {
+        this.dbConfig = dbConfig;
     }
 
     @JsonPropertyDescription("Should the master node assign tasks to workers when tasks are requested?")
@@ -116,8 +110,7 @@ public class ProcessorConfig implements BatchDeleteConfig, IsConfig {
     @Override
     public String toString() {
         return "ProcessorConfig{" +
-                "connectionConfig=" + connectionConfig +
-                ", connectionPoolConfig=" + connectionPoolConfig +
+                "dbConfig=" + dbConfig +
                 ", assignTasks=" + assignTasks +
                 ", createTasks=" + createTasks +
                 ", deleteAge='" + deleteAge + '\'' +

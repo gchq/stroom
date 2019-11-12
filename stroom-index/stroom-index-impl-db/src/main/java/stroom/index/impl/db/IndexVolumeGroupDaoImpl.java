@@ -40,20 +40,20 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
         return record;
     };
 
-    private final ConnectionProvider connectionProvider;
+    private final IndexDbConnProvider indexDbConnProvider;
     private final GenericDao<IndexVolumeGroupRecord, IndexVolumeGroup, Integer> genericDao;
 
     @Inject
-    IndexVolumeGroupDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
-        genericDao = new GenericDao<>(INDEX_VOLUME_GROUP, INDEX_VOLUME_GROUP.ID, IndexVolumeGroup.class, connectionProvider);
+    IndexVolumeGroupDaoImpl(final IndexDbConnProvider indexDbConnProvider) {
+        this.indexDbConnProvider = indexDbConnProvider;
+        genericDao = new GenericDao<>(INDEX_VOLUME_GROUP, INDEX_VOLUME_GROUP.ID, IndexVolumeGroup.class, indexDbConnProvider);
         genericDao.setRecordToObjectMapper(RECORD_TO_INDEX_VOLUME_GROUP_MAPPER);
         genericDao.setObjectToRecordMapper(INDEX_VOLUME_GROUP_TO_RECORD_MAPPER);
     }
 
     @Override
     public IndexVolumeGroup getOrCreate(final IndexVolumeGroup indexVolumeGroup) {
-        Optional<Integer> optional = JooqUtil.contextResult(connectionProvider, context -> context
+        Optional<Integer> optional = JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .insertInto(INDEX_VOLUME_GROUP,
                         INDEX_VOLUME_GROUP.VERSION,
                         INDEX_VOLUME_GROUP.CREATE_USER,
@@ -86,7 +86,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
     @Override
     public IndexVolumeGroup get(final int id) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .select()
                 .from(INDEX_VOLUME_GROUP)
                 .where(INDEX_VOLUME_GROUP.ID.eq(id))
@@ -97,7 +97,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
     @Override
     public IndexVolumeGroup get(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .select()
                 .from(INDEX_VOLUME_GROUP)
                 .where(INDEX_VOLUME_GROUP.NAME.eq(name))
@@ -109,7 +109,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
     @Override
     public List<String> getNames() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .select(INDEX_VOLUME_GROUP.NAME)
                 .from(INDEX_VOLUME_GROUP)
                 .fetch(INDEX_VOLUME_GROUP.NAME));
@@ -117,7 +117,7 @@ class IndexVolumeGroupDaoImpl implements IndexVolumeGroupDao {
 
     @Override
     public List<IndexVolumeGroup> getAll() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .select()
                 .from(INDEX_VOLUME_GROUP)
                 .fetch()

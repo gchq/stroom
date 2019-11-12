@@ -53,7 +53,7 @@ public class PipelineConfig implements IsConfig {
         this.parserConfig = parserConfig;
     }
 
-    @JsonProperty("refdata")
+    @JsonProperty("referenceData")
     public RefDataStoreConfig getRefDataStoreConfig() {
         return refDataStoreConfig;
     }

@@ -56,7 +56,8 @@ public class RefDataStoreConfig implements IsConfig {
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The maximum size in bytes for the ref loader off heap store. There must be " +
-            "available space on the disk to accommodate this size. It can be larger than the amount of available RAM.")
+            "available space on the disk to accommodate this size. It can be larger than the amount of available RAM " +
+            "and will only be allocated as it is needed.")
     public String getMaxStoreSize() {
         return maxStoreSize;
     }

@@ -1,7 +1,7 @@
 package stroom.config.global.impl;
 
-import stroom.config.global.api.ConfigProperty;
-import stroom.config.global.api.ListGlobalConfigAction;
+import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.ListGlobalConfigAction;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
@@ -26,11 +26,11 @@ class ListGlobalConfigHandler extends AbstractTaskHandler<ListGlobalConfigAction
         if (task.getCriteria().getName() != null) {
             list = list.stream()
                     .filter(v -> task.getCriteria().getName().isMatch(v.getName()))
-                    .peek(v -> {
-                        if (v.isPassword()) {
-                            v.setValue("********************");
-                        }
-                    })
+//                    .peek(v -> {
+//                        if (v.isPassword()) {
+//                            v.setValue("********************");
+//                        }
+//                    })
                     .collect(Collectors.toList());
         }
 
