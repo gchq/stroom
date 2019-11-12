@@ -28,18 +28,20 @@ cd stroom_core/stroom_core-x.y.z
 ./start.sh
 ```
 
-For more details on the commands above and any prerequisites see [Running Stroom in Docker Containers](dev-guide/docker-running.md).
+For more details on the commands above and any prerequisites see [Running Stroom in Docker Containers](https://gchq.github.io/stroom-docs/dev-guide/docker-running.html).
+
+For the releases of the core Stroom product, see [Stroom releases](https://github.com/gchq/stroom/releases). For the releases of the docker application stacks, see [Stroom-Resources releases](https://github.com/gchq/stroom-resources/releases).
 
 ## Documentation
 
 The Stroom application spans several repositories but we've bundled all the documentation into the [`stroom-docs`](https://gchq.github.io/stroom-docs/) repository. 
 That's where to look if you want any of these:
 
-- [The main README.md](https://github.com/gchq/stroom-docs/blob/master/README.md)
-- [The quick-start guide](https://github.com/gchq/stroom-docs/blob/master/quick-start-guide/quick-start.md)
-- [The developer guide](https://github.com/gchq/stroom-docs/tree/master/dev-guide/)
-- [The install guide](https://github.com/gchq/stroom-docs/tree/master/install-guide)
-- [The user guide](https://github.com/gchq/stroom-docs/tree/master/user-guide)
+- [The main README.md](https://gchq.github.io/stroom-docs/)
+- [The quick-start guide](https://gchq.github.io/stroom-docs/quick-start-guide/quick-start.html)
+- [The developer guide](https://gchq.github.io/stroom-docs/dev-guide/)
+- [The install guide](https://gchq.github.io/stroom-docs/install-guide/stroom-6-installation.html)
+- [The user guide](https://gchq.github.io/stroom-docs/install-guide/stroom-6-installation.html)
 
 ## Contributing
 
@@ -49,24 +51,21 @@ If you'd like to make a contribution then the details for doing all of that are 
 
 Stroom and its associated libraries, services and content span several repositories:
 
-- [`stroom`](https://github.com/gchq/stroom)
-- [`stroom-agent`](https://github.com/gchq/stroom-agent)
-- [`stroom-annotations`](https://github.com/gchq/stroom-annotations)
-- [`stroom-auth`](https://github.com/gchq/stroom-auth)
-- [`stroom-clients`](https://github.com/gchq/stroom-clients)
-- [`stroom-content`](https://github.com/gchq/stroom-content)
-- [`stroom-docs`](https://github.com/gchq/stroom-docs)
-- [`stroom-expression`](https://github.com/gchq/stroom-expression)
-- [`stroom-headless`](https://github.com/gchq/stroom-headless)
-- [`stroom-js`](https://github.com/gchq/stroom-js)
-- [`stroom-proxy`](https://github.com/gchq/stroom-proxy)
-- [`stroom-query-elastic`](https://github.com/gchq/stroom-query-elastic)
-- [`stroom-query`](https://github.com/gchq/stroom-query)
-- [`stroom-resources`](https://github.com/gchq/stroom-resources)
-- [`stroom-stats`](https://github.com/gchq/stroom-stats)
-- [`stroom-visualisations-dev`](https://github.com/gchq/stroom-visualisations-dev)
-- [`event-logging-schema`](https://github.com/gchq/event-logging-schema)
-- [`event-logging`](https://github.com/gchq/event-logging)
+- [`stroom`](https://github.com/gchq/stroom) - The core Stroom application.
+- [`stroom-agent`](https://github.com/gchq/stroom-agent) - An application for capturing and sending log files to Stroom.
+- [`stroom-auth`](https://github.com/gchq/stroom-auth) - The OAuth2 authentication service used by Stroom.
+- [`stroom-clients`](https://github.com/gchq/stroom-clients) - Various client libraries for sending logs to Stroom.
+- [`stroom-content`](https://github.com/gchq/stroom-content) - Packaged content packs for import into Stroom.
+- [`stroom-docs`](https://github.com/gchq/stroom-docs) - Documentation for the Stroom family of products.
+- [`stroom-expression`](https://github.com/gchq/stroom-expression) - An expression library used in Stroom's dashboards and query API.
+- [`stroom-headless`](https://github.com/gchq/stroom-headless) - An example of how to run Stroom in headless mode from the command line.
+- [`stroom-proxy`](https://github.com/gchq/stroom-proxy) - An application that acts as a data receipt proxy for Stroom (Legacy v5 only).
+- [`stroom-query`](https://github.com/gchq/stroom-query) - A library for querying Stroom's data sources.
+- [`stroom-resources`](https://github.com/gchq/stroom-resources) - Configuration for orchestrating stroom in docker containers and released docker stacks.
+- [`stroom-stats`](https://github.com/gchq/stroom-stats) - An application for storing and querying aggregates of event data.
+- [`stroom-visualisations-dev`](https://github.com/gchq/stroom-visualisations-dev) - A set of visualisations for use in Stroom.
+- [`event-logging-schema`](https://github.com/gchq/event-logging-schema) - An XML Schema for describing auditable events.
+- [`event-logging`](https://github.com/gchq/event-logging) - A JAXB API for the `event-logging` XML Schema.
 
 ## Build Status
 
