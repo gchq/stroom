@@ -2,6 +2,8 @@ package stroom.annotation.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.config.common.DbConfig;
+import stroom.config.common.HasDbConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
@@ -9,14 +11,25 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
-public class AnnotationConfig implements IsConfig {
+public class AnnotationConfig implements IsConfig, HasDbConfig {
+    private DbConfig dbConfig;
     private List<String> statusValues = new ArrayList<>();
     private String createText = "Create Annotation";
 
     public AnnotationConfig() {
+        this.dbConfig = new DbConfig();
         statusValues.add("New");
         statusValues.add("Assigned");
         statusValues.add("Closed");
+    }
+
+    @JsonProperty("db")
+    public DbConfig getDbConfig() {
+        return dbConfig;
+    }
+
+    public void setDbConfig(final DbConfig dbConfig) {
+        this.dbConfig = dbConfig;
     }
 
     @JsonProperty("statusValues")
