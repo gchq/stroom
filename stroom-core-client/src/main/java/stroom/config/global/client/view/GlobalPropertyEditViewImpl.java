@@ -62,6 +62,8 @@ public final class GlobalPropertyEditViewImpl
     TickBox requireRestart;
     @UiField
     TickBox requireUiRestart;
+    @UiField
+    TickBox readOnly;
 
     private boolean password;
 //    private static volatile Resources RESOURCES;
@@ -85,6 +87,7 @@ public final class GlobalPropertyEditViewImpl
 
         requireRestart.setEnabled(false);
         requireUiRestart.setEnabled(false);
+        readOnly.setEnabled(false);
 
         useOverride.addValueChangeHandler(event -> {
             if (getUiHandlers() != null) {
@@ -179,6 +182,8 @@ public final class GlobalPropertyEditViewImpl
 
     @Override
     public void setEditable(final boolean edit) {
+        readOnly.setBooleanValue(!edit);
+
         databaseValue.setReadOnly(!edit);
         databaseValuePassword.setReadOnly(!edit);
         useOverride.setEnabled(edit);

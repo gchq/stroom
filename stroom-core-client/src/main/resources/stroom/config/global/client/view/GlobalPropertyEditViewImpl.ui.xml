@@ -101,5 +101,11 @@
                 <tickbox:TickBox ui:field="requireRestart"/>
             </g:customCell>
         </g:row>
+        <g:row>
+            <g:cell>Read Only:</g:cell>
+            <g:customCell>
+                <tickbox:TickBox ui:field="readOnly"/>
+            </g:customCell>
+        </g:row>
     </g:Grid>
 </ui:UiBinder> 
