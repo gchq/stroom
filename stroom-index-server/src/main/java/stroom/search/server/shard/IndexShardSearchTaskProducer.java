@@ -16,17 +16,13 @@
 
 package stroom.search.server.shard;
 
-import stroom.pipeline.server.errorhandler.ErrorReceiver;
-import stroom.search.extraction.CompletionStatus;
-import stroom.search.extraction.Values;
-import stroom.search.server.ClusterSearchTask;
+import stroom.search.coprocessor.Receiver;
 import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
-import stroom.search.server.shard.IndexShardSearchTask.ResultReceiver;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.ThreadPoolImpl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.Severity;
+import stroom.util.shared.HasTerminate;
 import stroom.util.shared.ThreadPool;
 import stroom.util.task.taskqueue.TaskExecutor;
 import stroom.util.task.taskqueue.TaskProducer;
@@ -35,12 +31,9 @@ import javax.inject.Provider;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
-public class IndexShardSearchTaskProducer extends TaskProducer {
+class IndexShardSearchTaskProducer extends TaskProducer {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
 
     static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
@@ -49,43 +42,34 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
             0,
             Integer.MAX_VALUE);
 
-    private final ClusterSearchTask clusterSearchTask;
-    private final LinkedBlockingQueue<Values> storedData;
-    private final ErrorReceiver errorReceiver;
-
     private final Queue<IndexShardSearchRunnable> taskQueue = new ConcurrentLinkedQueue<>();
     private final AtomicInteger tasksRequested = new AtomicInteger();
 
-    private final CompletionStatus completionStatus = new CompletionStatus("Search Index Shards");
-    private final AtomicLong count = completionStatus.getStatistic("count");
+    private final Tracker tracker;
+    private final HasTerminate hasTerminate;
 
-    public IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
-                                        final ClusterSearchTask clusterSearchTask,
-                                        final LinkedBlockingQueue<Values> storedData,
-                                        final List<Long> shards,
-                                        final IndexShardQueryFactory queryFactory,
-                                        final String[] fieldNames,
-                                        final ErrorReceiver errorReceiver,
-                                        final AtomicLong hitCount,
-                                        final int maxThreadsPerTask,
-                                        final ExecutorProvider executorProvider,
-                                        final Provider<IndexShardSearchTaskHandler> handlerProvider,
-                                        final CompletionStatus parentCompletionStatus) {
+    IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
+                                 final Receiver receiver,
+                                 final List<Long> shards,
+                                 final IndexShardQueryFactory queryFactory,
+                                 final String[] fieldNames,
+                                 final int maxThreadsPerTask,
+                                 final ExecutorProvider executorProvider,
+                                 final Provider<IndexShardSearchTaskHandler> handlerProvider,
+                                 final Tracker tracker,
+                                 final HasTerminate hasTerminate) {
         super(taskExecutor, maxThreadsPerTask, executorProvider.getExecutor(THREAD_POOL));
-        this.clusterSearchTask = clusterSearchTask;
-        this.storedData = storedData;
-        this.errorReceiver = errorReceiver;
-
-        parentCompletionStatus.addChild(completionStatus);
-
-        // Create a deque to capture stored data from the index that can be used by coprocessors.
-        final ResultReceiver resultReceiver = (shardId, values) -> putValues(values);
+        this.tracker = tracker;
+        this.hasTerminate = hasTerminate;
 
         for (final Long shard : shards) {
-            final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory, shard, fieldNames, resultReceiver, errorReceiver, hitCount);
+            final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory, shard, fieldNames, receiver, tracker);
             final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider);
             taskQueue.add(runnable);
         }
+    }
+
+    void process() {
         final int count = taskQueue.size();
         LOGGER.debug(() -> String.format("Queued %s index shard search tasks", count));
 
@@ -99,36 +83,19 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
         // We set this here so that any errors that might have occurred adding shard search tasks would prevent this producer having work to do.
         setTasksTotal(count);
 
-        // Let consumers now there will be no more tasks.
+        // Let consumers know there will be no more tasks.
         finishedAddingTasks();
     }
 
-    private void putValues(final Values values) {
-        try {
-            boolean stored = false;
-            while (!clusterSearchTask.isTerminated() && !stored) {
-                // Loop until item is added or we terminate.
-                stored = storedData.offer(values, 1, TimeUnit.SECONDS);
-            }
-        } catch (final InterruptedException e) {
-            // Continue to interrupt.
-            Thread.currentThread().interrupt();
-
-            error(e.getMessage(), e);
-        } catch (final RuntimeException e) {
-            error(e.getMessage(), e);
-        }
-    }
-
     protected boolean isComplete() {
-        return clusterSearchTask.isTerminated() || super.isComplete();
+        return hasTerminate.isTerminated() || super.isComplete();
     }
 
     @Override
     protected Runnable getNext() {
         IndexShardSearchRunnable task = null;
 
-        if (!clusterSearchTask.isTerminated()) {
+        if (!hasTerminate.isTerminated()) {
             // If there are no open shards that can be used for any tasks then just get the task at the head of the queue.
             task = taskQueue.poll();
             if (task != null) {
@@ -146,22 +113,14 @@ public class IndexShardSearchTaskProducer extends TaskProducer {
     @Override
     protected void incrementTasksCompleted() {
         super.incrementTasksCompleted();
-        count.incrementAndGet();
         checkCompletion();
     }
 
     private void checkCompletion() {
         if (isComplete()) {
-            // Set complete if not already done.
-            if (completionStatus.complete()) {
-                // Send terminal values.
-                putValues(Values.COMPLETE);
-            }
+            // Set complete.
+            tracker.complete();
         }
-    }
-
-    private void error(final String message, final Throwable t) {
-        errorReceiver.log(Severity.ERROR, null, null, message, t);
     }
 
     private static class IndexShardSearchRunnable implements Runnable {

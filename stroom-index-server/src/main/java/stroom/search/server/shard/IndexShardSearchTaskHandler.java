@@ -33,13 +33,13 @@ import stroom.index.server.IndexShardWriterCache;
 import stroom.index.server.LuceneVersionUtil;
 import stroom.index.shared.IndexShard;
 import stroom.node.server.StroomPropertyService;
-import stroom.search.extraction.Values;
+import stroom.search.coprocessor.Error;
+import stroom.search.coprocessor.Values;
 import stroom.search.server.SearchException;
 import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.Severity;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
 
@@ -53,7 +53,7 @@ import java.util.concurrent.TimeUnit;
 
 @Component
 @Scope(StroomScope.TASK)
-public class IndexShardSearchTaskHandler {
+class IndexShardSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskHandler.class);
 
     private final IndexShardWriterCache indexShardWriterCache;
@@ -78,7 +78,7 @@ public class IndexShardSearchTaskHandler {
     public VoidResult exec(final IndexShardSearchTask task) {
         LOGGER.logDurationIfDebugEnabled(
                 () -> {
-                    final Long indexShardId = task.getIndexShardId();
+                    final long indexShardId = task.getIndexShardId();
                     IndexShardSearcher indexShardSearcher = null;
 
                     try {
@@ -95,7 +95,7 @@ public class IndexShardSearchTaskHandler {
                                 throw new SearchException("Unable to find index shard with id = " + indexShardId);
                             }
 
-                            indexShardSearcher = new IndexShardSearcherImpl(indexShard, indexWriter);
+                            indexShardSearcher = new IndexShardSearcher(indexShard, indexWriter);
 
                             // Start searching.
                             searchShard(task, indexShardSearcher);
@@ -147,8 +147,7 @@ public class IndexShardSearchTaskHandler {
             final LinkedBlockingQueue<OptionalInt> docIdStore = new LinkedBlockingQueue<>(maxDocIdQueueSize);
 
             // Create a collector.
-            final IndexShardHitCollector collector = new IndexShardHitCollector(taskContext, docIdStore,
-                    task.getHitCount());
+            final IndexShardHitCollector collector = new IndexShardHitCollector(taskContext, docIdStore, task.getTracker());
 
             try {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
@@ -217,10 +216,10 @@ public class IndexShardSearchTaskHandler {
      * retrieved, only stream and event ids.
      */
     private void getStoredData(final IndexShardSearchTask task, final IndexSearcher searcher, final int docId) {
-        final String[] fieldNames = task.getFieldNames();
         try {
+            final String[] fieldNames = task.getFieldNames();
+            final Val[] values = new Val[fieldNames.length];
             final Document document = searcher.doc(docId);
-            Val[] values = null;
 
             for (int i = 0; i < fieldNames.length; i++) {
                 final String storedField = fieldNames[i];
@@ -232,20 +231,17 @@ public class IndexShardSearchTaskHandler {
                     if (value != null) {
                         final String trimmed = value.trim();
                         if (trimmed.length() > 0) {
-                            if (values == null) {
-                                values = new Val[fieldNames.length];
-                            }
                             values[i] = ValString.create(trimmed);
                         }
                     }
                 }
             }
 
-            if (values != null) {
-                task.getResultReceiver().receive(task.getIndexShardId(), new Values(values));
-            }
+            task.getReceiver().getValuesConsumer().accept(new Values(values));
+            task.getReceiver().getCompletionCountConsumer().accept(1L);
         } catch (final Exception e) {
             error(task, e.getMessage(), e);
+            task.getReceiver().getErrorConsumer().accept(new Error(e.getMessage(), e));
         }
     }
 
@@ -253,7 +249,7 @@ public class IndexShardSearchTaskHandler {
         if (task == null) {
             LOGGER.error(() -> message, t);
         } else {
-            task.getErrorReceiver().log(Severity.ERROR, null, null, message, t);
+            task.getReceiver().getErrorConsumer().accept(new Error(message, t));
         }
     }
 

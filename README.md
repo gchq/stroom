@@ -16,7 +16,6 @@ Stroom and its associated libraries, services and content span several repositor
 
 - [`stroom`](https://github.com/gchq/stroom)
 - [`stroom-agent`](https://github.com/gchq/stroom-agent)
-- [`stroom-annotations`](https://github.com/gchq/stroom-annotations)
 - [`stroom-auth`](https://github.com/gchq/stroom-auth)
 - [`stroom-clients`](https://github.com/gchq/stroom-clients)
 - [`stroom-content`](https://github.com/gchq/stroom-content)

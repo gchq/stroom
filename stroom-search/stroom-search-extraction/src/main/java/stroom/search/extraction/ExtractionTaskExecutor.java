@@ -23,8 +23,8 @@ import javax.inject.Singleton;
 
 @Component
 @Singleton
-public class ExtractionTaskExecutor extends TaskExecutor {
-    public ExtractionTaskExecutor() {
+class ExtractionTaskExecutor extends TaskExecutor {
+    ExtractionTaskExecutor() {
         super("Extraction Task Executor");
     }
 }

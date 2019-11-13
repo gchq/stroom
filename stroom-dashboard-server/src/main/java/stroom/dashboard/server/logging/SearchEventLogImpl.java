@@ -186,6 +186,8 @@ public class SearchEventLogImpl implements SearchEventLog {
             if (docRefInfo != null) {
                 return docRefInfo.getDocRef().getName();
             }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
         }
 
         return docRef.getName();

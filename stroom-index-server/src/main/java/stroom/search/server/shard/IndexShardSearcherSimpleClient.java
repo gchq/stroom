@@ -31,7 +31,6 @@ import stroom.index.server.IndexShardUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexShard;
-import stroom.search.server.MaxHitCollector;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.fs.serializable.RASegmentInputStream;
@@ -73,7 +72,7 @@ public class IndexShardSearcherSimpleClient extends AbstractCommandLineTool {
 
         for (final IndexShard indexShard : indexShardList) {
             try {
-                final IndexShardSearcher indexShardSearcher = new IndexShardSearcherImpl(indexShard);
+                final IndexShardSearcher indexShardSearcher = new IndexShardSearcher(indexShard);
                 System.out.println("");
                 System.out.println("Searching Index " + IndexShardUtil.getIndexPath(indexShard));
                 final MaxHitCollector docIdListCollector = new MaxHitCollector(Integer.MAX_VALUE);

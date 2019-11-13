@@ -20,21 +20,25 @@ package stroom.explorer.server;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.PermissionInheritance;
+import stroom.explorer.api.ExplorerDecorator;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
+import stroom.explorer.shared.StandardTagNames;
 import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.server.CollectionService;
 import stroom.util.shared.HasNodeState;
+import stroom.util.shared.HasNodeState.NodeState;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,18 +62,21 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
     private final ExplorerActionHandlersImpl explorerActionHandlers;
     private final SecurityContext securityContext;
     private final ExplorerEventLog explorerEventLog;
+    private final Provider<ExplorerDecorator> explorerDecoratorProvider;
 
     @Inject
     ExplorerServiceImpl(final ExplorerNodeService explorerNodeService,
                         final ExplorerTreeModel explorerTreeModel,
                         final ExplorerActionHandlersImpl explorerActionHandlers,
                         final SecurityContext securityContext,
-                        final ExplorerEventLog explorerEventLog) {
+                        final ExplorerEventLog explorerEventLog,
+                        final Provider<ExplorerDecorator> explorerDecoratorProvider) {
         this.explorerNodeService = explorerNodeService;
         this.explorerTreeModel = explorerTreeModel;
         this.explorerActionHandlers = explorerActionHandlers;
         this.securityContext = securityContext;
         this.explorerEventLog = explorerEventLog;
+        this.explorerDecoratorProvider = explorerDecoratorProvider;
     }
 
     @Override
@@ -105,6 +112,26 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
             result.setTemporaryOpenedItems(temporaryOpenItems);
         } else {
             addRoots(filteredModel, criteria.getOpenItems(), forcedOpenItems, criteria.getTemporaryOpenedItems(), result);
+        }
+
+        if (criteria.getFilter() != null &&
+                criteria.getFilter().getTags() != null &&
+                criteria.getFilter().getTags().contains(StandardTagNames.DATA_SOURCE)) {
+            final ExplorerDecorator explorerDecorator = explorerDecoratorProvider.get();
+            if (explorerDecorator != null) {
+                final List<DocRef> additionalDocRefs = explorerDecorator.list();
+                additionalDocRefs.forEach(docRef -> {
+                    final ExplorerNode node = new ExplorerNode(
+                            docRef.getType(),
+                            docRef.getUuid(),
+                            docRef.getName(),
+                            StandardTagNames.DATA_SOURCE);
+                    node.setNodeState(NodeState.LEAF);
+                    node.setDepth(1);
+                    node.setIconUrl(DocumentType.DOC_IMAGE_URL + "searchable.svg");
+                    result.getTreeStructure().add(result.getTreeStructure().getRoot(), node);
+                });
+            }
         }
 
         return result;

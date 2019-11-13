@@ -9,7 +9,6 @@ public class Config extends Configuration {
     private ProxyConfig proxyConfig;
     private String externalConfig = "~/.stroom/stroom.conf";
 
-
     @JsonProperty
     public String getMode() {
         return mode;

@@ -83,6 +83,20 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
+        // Annotation
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.annotation.statusValues")
+                .value("New,Assigned,Closed")
+                .description("The different status values that can be set on an annotation")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.annotation.createText")
+                .value("Create Annotation")
+                .description("The text to display to create an annotation")
+                .editable(true)
+                .build());
+
         // STREAM STORE 
         list.add(new GlobalProperty.Builder()
                 .name("stroom.streamstore.resilientReplicationCount")

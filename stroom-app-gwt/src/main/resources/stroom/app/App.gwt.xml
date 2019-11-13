@@ -18,6 +18,9 @@
 
     <inherits name='io.swagger.Swagger'/>
 
+    <!-- RestyGWT -->
+    <inherits name="org.fusesource.restygwt.RestyGWT"/>
+
     <!-- Other module inherits -->
     <inherits name='stroom.dispatch.Dispatch'/>
 
@@ -56,6 +59,7 @@
     <!--  Minimal -->
     <inherits name="stroom.about.About" />
     <inherits name="stroom.activity.Activity" />
+    <inherits name="stroom.annotation.Annotation" />
     <inherits name="stroom.alert.Alert" />
     <inherits name="stroom.apikeys.ApiKeys" />
     <inherits name="stroom.content.Content" />

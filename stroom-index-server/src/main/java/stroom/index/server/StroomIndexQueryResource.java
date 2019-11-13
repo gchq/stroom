@@ -90,7 +90,7 @@ public class StroomIndexQueryResource implements HasHealthCheck {
     public DataSource getDataSource(@ApiParam("DocRef") final DocRef docRef) {
         try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
             final Index index = indexService.loadByUuid(docRef.getUuid());
-            return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index));
+            return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext));
         }
     }
 

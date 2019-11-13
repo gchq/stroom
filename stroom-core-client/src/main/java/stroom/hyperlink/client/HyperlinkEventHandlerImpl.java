@@ -12,6 +12,8 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HandlerContainerImpl;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.ShowAnnotationEvent;
+import stroom.annotation.shared.Annotation;
 import stroom.core.client.ContentManager;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
@@ -165,6 +167,29 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     ShowDataEvent.fire(this, sourceLocation);
                     break;
                 }
+                case ANNOTATION: {
+                    final Long annotationId = getLongParam(href, "annotationId");
+                    final Long streamId = getLongParam(href, "streamId");
+                    final Long eventId = getLongParam(href, "eventId");
+                    final String title = getParam(href, "title");
+                    final String subject = getParam(href, "subject");
+                    final String status = getParam(href, "status");
+                    final String assignedTo = getParam(href, "assignedTo");
+                    final String comment = getParam(href, "comment");
+
+                    final Annotation annotation = new Annotation();
+                    annotation.setId(annotationId);
+                    annotation.setStreamId(streamId);
+                    annotation.setEventId(eventId);
+                    annotation.setTitle(title);
+                    annotation.setSubject(subject);
+                    annotation.setStatus(status);
+                    annotation.setAssignedTo(assignedTo);
+                    annotation.setComment(comment);
+
+                    ShowAnnotationEvent.fire(this, annotation);
+                    break;
+                }
                 default:
                     Window.open(href, "_blank", "");
             }
@@ -174,17 +199,33 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     }
 
     private long getParam(final String href, final String paramName, final long def) {
+        String value = getParam(href, paramName);
+        if (value == null || value.length() == 0) {
+            return def;
+        }
+        return Long.parseLong(value);
+    }
+
+    private Long getLongParam(final String href, final String paramName) {
+        String value = getParam(href, paramName);
+        if (value == null || value.length() == 0) {
+            return null;
+        }
+        return Long.valueOf(value);
+    }
+
+    private String getParam(final String href, final String paramName) {
         int start = href.indexOf(paramName + "=");
         if (start != -1) {
             start = start + (paramName + "=").length();
             int end = href.indexOf("&", start);
             if (end == -1) {
-                return Long.parseLong(href.substring(start));
+                return href.substring(start);
             } else {
-                return Long.parseLong(href.substring(start, end));
+                return href.substring(start, end);
             }
         }
-        return def;
+        return null;
     }
 
     @Override

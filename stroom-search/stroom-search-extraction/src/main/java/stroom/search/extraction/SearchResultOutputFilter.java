@@ -28,8 +28,10 @@ import stroom.pipeline.server.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.search.extraction.ExtractionTask.ResultReceiver;
+import stroom.search.coprocessor.Values;
 import stroom.util.spring.StroomScope;
+
+import java.util.function.Consumer;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
@@ -42,7 +44,7 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
     private static final String VALUE = "value";
 
     private FieldIndexMap fieldIndexes;
-    private ResultReceiver resultReceiver;
+    private Consumer<Values> consumer;
     private Val[] values;
 
     @Override
@@ -72,15 +74,15 @@ public class SearchResultOutputFilter extends AbstractXMLFilter {
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
-            resultReceiver.receive(new Values(values));
+            consumer.accept(new Values(values));
             values = null;
         }
 
         super.endElement(uri, localName, qName);
     }
 
-    public void setup(final FieldIndexMap fieldIndexes, final ResultReceiver resultReceiver) {
+    public void setup(final FieldIndexMap fieldIndexes, final Consumer<Values> consumer) {
         this.fieldIndexes = fieldIndexes;
-        this.resultReceiver = resultReceiver;
+        this.consumer = consumer;
     }
 }

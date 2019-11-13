@@ -33,6 +33,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.DocRefInfo;
 import stroom.security.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.streamstore.server.WordListProvider;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -51,7 +52,7 @@ import java.util.stream.Collectors;
 
 @Component
 @Singleton
-public class DictionaryStoreImpl implements DictionaryStore {
+public class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     private static final Logger LOGGER = LoggerFactory.getLogger(DictionaryStoreImpl.class);
 
     private final Store<DictionaryDoc> store;
@@ -279,6 +280,18 @@ public class DictionaryStoreImpl implements DictionaryStore {
     @Override
     public String getCombinedData(final DocRef docRef) {
         return doGetCombinedData(docRef, new HashSet<>());
+    }
+
+    @Override
+    public String[] getWords(final DocRef dictionaryRef) {
+//            return wordMap.computeIfAbsent(docRef, k -> {
+        final String words = getCombinedData(dictionaryRef);
+        if (words != null) {
+            return words.trim().split("\n");
+        }
+
+        return null;
+//            });
     }
 
     private String doGetCombinedData(final DocRef docRef, final Set<DocRef> visited) {

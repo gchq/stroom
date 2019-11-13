@@ -27,6 +27,7 @@ import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Sizes;
+import stroom.search.coprocessor.EventCoprocessorSettings;
 import stroom.task.cluster.ClusterResultCollectorCache;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;

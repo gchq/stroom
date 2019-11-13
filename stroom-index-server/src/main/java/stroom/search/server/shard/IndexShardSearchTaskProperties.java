@@ -22,14 +22,14 @@ import stroom.node.server.StroomPropertyService;
 import javax.inject.Inject;
 
 @Component
-public class IndexShardSearchTaskProperties {
+class IndexShardSearchTaskProperties {
     private static final int DEFAULT_MAX_THREADS = 4;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;
 
     private final StroomPropertyService propertyService;
 
     @Inject
-    public IndexShardSearchTaskProperties(final StroomPropertyService propertyService) {
+    IndexShardSearchTaskProperties(final StroomPropertyService propertyService) {
         this.propertyService = propertyService;
     }
 

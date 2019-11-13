@@ -40,6 +40,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import stroom.annotation.impl.db.spring.AnnotationConfiguration;
+import stroom.annotation.shared.AnnotationResource;
 import stroom.cluster.server.ClusterCallServiceRPC;
 import stroom.connectors.elastic.StroomElasticProducerFactoryService;
 import stroom.connectors.kafka.StroomKafkaProducerFactoryService;
@@ -81,11 +83,14 @@ import stroom.script.spring.ScriptConfiguration;
 import stroom.search.solr.SolrIndexConfiguration;
 import stroom.search.solr.search.StroomSolrIndexQueryResource;
 import stroom.search.spring.SearchConfiguration;
+import stroom.searchable.impl.SearchableResource;
+import stroom.searchable.impl.spring.SearchableConfiguration;
 import stroom.security.server.AuthorisationResource;
 import stroom.security.server.JWTService;
 import stroom.security.server.SecurityFilter;
 import stroom.security.server.SessionListListener;
 import stroom.security.server.SessionResource;
+import stroom.security.shared.UserResource;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.servicediscovery.ServiceDiscovererImpl;
@@ -329,6 +334,7 @@ public class App extends Application<Config> {
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomKafkaProducerFactoryService.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomElasticProducerFactoryService.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SqlStatisticsQueryResource.class);
+        SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, SearchableResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomIndexQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, StroomSolrIndexQueryResource.class);
         SpringUtil.addHealthCheck(environment.healthChecks(), applicationContext, DictionaryResource.class);
@@ -377,9 +383,12 @@ public class App extends Application<Config> {
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomSolrIndexQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, SearchableResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SessionResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, FeedStatusResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, AnnotationResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, UserResource.class);
 
         // Map exceptions to helpful HTTP responses
         environment.jersey().register(PermissionExceptionMapper.class);
@@ -436,6 +445,7 @@ public class App extends Application<Config> {
         applicationContext.getBeanFactory().registerSingleton("dwConfiguration", configuration);
         applicationContext.getBeanFactory().registerSingleton("dwEnvironment", environment);
         applicationContext.register(
+                AnnotationConfiguration.class,
                 ScopeConfiguration.class,
                 PersistenceConfiguration.class,
                 ServerComponentScanConfiguration.class,
@@ -452,6 +462,7 @@ public class App extends Application<Config> {
                 DashboardConfiguration.class,
                 MetaDataStatisticConfiguration.class,
                 StatisticsConfiguration.class,
+                SearchableConfiguration.class,
                 SecurityConfiguration.class,
                 RuleSetConfiguration.class
         );

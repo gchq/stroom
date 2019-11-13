@@ -223,7 +223,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             if (currentSearchModel.getIndexLoader().getIndexFieldNames() != null) {
                 for (final String indexFieldName : currentSearchModel.getIndexLoader().getIndexFieldNames()) {
                     final Field field = new Field(indexFieldName);
-                    field.setExpression(ParamUtil.makeParam(indexFieldName));
+                    final String fieldParam = ParamUtil.makeParam(indexFieldName);
+
+                    if (indexFieldName.startsWith("annotation:")) {
+                        field.setExpression("annotation(" + fieldParam + ", ${annotation:Id}, ${StreamId}, ${EventId})");
+                    } else {
+                        field.setExpression(fieldParam);
+                    }
+
                     final DataSourceFieldsMap indexFieldsMap = getIndexFieldsMap();
                     if (indexFieldsMap != null) {
                         final DataSourceField indexField = indexFieldsMap.get(indexFieldName);

@@ -31,6 +31,7 @@ import stroom.query.common.v2.Item;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.query.common.v2.TablePayload;
+import stroom.search.resultsender.NodeResult;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

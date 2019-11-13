@@ -6,8 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v6.0.19] - 2019-11-08
-
 * Issue **#1322** : Stroom now asks if you really want to leave site when stepping items are dirty. Also fixed `Save` and `Save All` menu items and dashboard param changes now correctly make a dashboard dirty.
 
 * Issue **#1320** : Fixed formatting of XML where trailing spaces were being removed from content surrounded by start and end tags (data content) which should not happen. 
@@ -17,6 +15,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * The auth service now supports the use of HTTPS without certificate verification and adds additional logging.
 
 * Issue **gchq/stroom-auth#157** : Automatically refresh user's API key when it expires.
+
+## [v6.1-beta.10] - 2019-11-05
 
 * Issue **#1243** : Dashboard visualisations now link with similar functions available to dashboard tables, e.g. `link()`, `dashboard()`, `annotation()`, `stepping()`, `data()`.
 
@@ -40,15 +40,39 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1312** : Fixed read only behaviour of dictionary settings UI.
 
+## [v6.1-beta.9] - 2019-10-31
+
+* Issue **#1300** : Multiple changes to annotations.
+
+* Issue **#1265** : Added `modulus()` function along with alias `mod()` and modulus operator `%`.
+
+* Issue **#1300** : Added `annotation()` link creation function, `currentUser()` alias for `param('currentUser()')` and additional link creation functions for `data()` and `stepping()`.
+
 * Issue **#67** : Table columns now display menu items on left click.
 
 * Uplift stroom-query to v2.2.4 to add better diagnostic logging.
+
+## [v6.1-beta.8] - 2019-10-23
 
 * Uplift Kafka client to v2.2.1.
 
 * Issue **#1293** : Add more static file types to allow nginx/browser caching on.
 
 * Issue **#1295** : Add authentication bypass for servlets such as /remoting, /status, /echo, etc.
+
+* Issue **#1297** : The UI now supplies API tokens to the backend for resource calls.
+
+* Issue **#1296** : Fixed NPE in StreamMapCreator caused when a stream can not be found.
+
+## [v6.1-beta.7] - 2019-10-16
+
+* Fixed some annotations issues.
+
+## [v6.1-beta.6] - 2019-10-15
+
+* Fixed dependencies.
+
+## [v6.1-beta.5] - 2019-10-14
 
 * Issue **#1288** : Streams now show the name of the pipeline used to create them even if the user doesn't have permission to see the pipeline.
 
@@ -1964,7 +1988,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.4...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.10...6.1
+[v6.1-beta.10]: https://github.com/gchq/stroom/compare/v6.1-beta.9...v6.1-beta.10
+[v6.1-beta.9]: https://github.com/gchq/stroom/compare/v6.1-beta.8...v6.1-beta.9
+[v6.1-beta.8]: https://github.com/gchq/stroom/compare/v6.1-beta.7...v6.1-beta.8
+[v6.1-beta.7]: https://github.com/gchq/stroom/compare/v6.1-beta.6...v6.1-beta.7
+[v6.1-beta.6]: https://github.com/gchq/stroom/compare/v6.1-beta.5...v6.1-beta.6
+[v6.1-beta.5]: https://github.com/gchq/stroom/compare/v6.1-beta.4...v6.1-beta.5
 [v6.1-beta.4]: https://github.com/gchq/stroom/compare/v6.1-beta.3...v6.1-beta.4
 [v6.1-beta.3]: https://github.com/gchq/stroom/compare/v6.1-beta.2...v6.1-beta.3
 [v6.1-beta.2]: https://github.com/gchq/stroom/compare/v6.1-beta.1...v6.1-beta.2

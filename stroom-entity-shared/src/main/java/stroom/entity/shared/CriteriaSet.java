@@ -148,7 +148,7 @@ public class CriteriaSet<T>
         return set.remove(id);
     }
 
-    protected Set<T> getSet() {
+    public Set<T> getSet() {
         return set;
     }
 
