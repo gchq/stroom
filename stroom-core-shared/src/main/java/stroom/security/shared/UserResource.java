@@ -25,48 +25,48 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public interface UserResource extends RestResource, DirectRestService {
     @GET
-    Response get(@QueryParam("name") String name,
-                 @QueryParam("isGroup") Boolean isGroup,
-                 @QueryParam("uuid") String uuid);
+    List<User> get(@QueryParam("name") String name,
+                   @QueryParam("isGroup") Boolean isGroup,
+                   @QueryParam("uuid") String uuid);
 
     @GET
     @Path("/{userUuid}")
-    Response get(@PathParam("userUuid") String userUuid);
+    User get(@PathParam("userUuid") String userUuid);
 
     @GET
     @Path("/usersInGroup/{groupUuid}")
-    Response findUsersInGroup(@PathParam("groupUuid") String groupUuid);
+    List<User> findUsersInGroup(@PathParam("groupUuid") String groupUuid);
 
     @GET
     @Path("/groupsForUserName/{userName}")
-    Response findGroupsForUserName(@PathParam("userName") String userName);
+    List<User> findGroupsForUserName(@PathParam("userName") String userName);
 
     @GET
     @Path("/groupsForUser/{userUuid}")
-    Response findGroupsForUser(@PathParam("userUuid") String userUuid);
+    List<User> findGroupsForUser(@PathParam("userUuid") String userUuid);
 
     @POST
     @Path("/create/{name}/{isGroup}")
-    Response create(@PathParam("name") String name,
-                    @PathParam("isGroup") Boolean isGroup);
+    User create(@PathParam("name") String name,
+                @PathParam("isGroup") Boolean isGroup);
 
     @DELETE
     @Path("/{uuid}")
-    Response deleteUser(@PathParam("uuid") String uuid);
+    void deleteUser(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{userName}/status")
-    Response setStatus(@PathParam("userName") String userName, @QueryParam("enabled") boolean status);
+    void setStatus(@PathParam("userName") String userName, @QueryParam("enabled") boolean status);
 
     @PUT
     @Path("/{userUuid}/{groupUuid}")
-    Response addUserToGroup(@PathParam("userUuid") String userUuid,
-                            @PathParam("groupUuid") String groupUuid);
+    void addUserToGroup(@PathParam("userUuid") String userUuid,
+                        @PathParam("groupUuid") String groupUuid);
 
     @DELETE
     @Path("/{userUuid}/{groupUuid}")
-    Response removeUserFromGroup(@PathParam("userUuid") String userUuid,
-                                 @PathParam("groupUuid") String groupUuid);
+    void removeUserFromGroup(@PathParam("userUuid") String userUuid,
+                             @PathParam("groupUuid") String groupUuid);
 
     @GET
     @Path("associates")
