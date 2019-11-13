@@ -7,6 +7,7 @@ import stroom.feed.MetaMapFactory;
 import stroom.feed.StroomHeaderArguments;
 import stroom.feed.StroomStreamException;
 import stroom.proxy.repo.StroomZipEntry;
+import stroom.util.cert.SSLUtil;
 import stroom.util.thread.ThreadUtil;
 
 import javax.net.ssl.SSLSocketFactory;

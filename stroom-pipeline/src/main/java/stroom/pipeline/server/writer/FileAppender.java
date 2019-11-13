@@ -142,4 +142,9 @@ public class FileAppender extends AbstractAppender {
     public void setSplitAggregatedStreams(final boolean splitAggregatedStreams) {
         super.setSplitAggregatedStreams(splitAggregatedStreams);
     }
+
+    @PipelineProperty(description = "Choose if you want to split individual records into separate output files.", defaultValue = "false")
+    public void setSplitRecords(final boolean splitRecords) {
+        super.setSplitRecords(splitRecords);
+    }
 }
