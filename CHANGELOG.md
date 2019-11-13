@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1324** : Improved logging and added SSL options for HTTPAppender.
+
 ## [v6.0.19] - 2019-11-08
 
 * Issue **#1322** : Stroom now asks if you really want to leave site when stepping items are dirty. Also fixed `Save` and `Save All` menu items and dashboard param changes now correctly make a dashboard dirty.
