@@ -30,7 +30,7 @@ public class DataPopupSupport {
         eventBus.addHandler(ShowDataEvent.getType(), e -> {
             final ClassificationWrappedDataPresenter dataPresenter = dataPresenterProvider.get();
             dataPresenter.fetchData(e.getSourceLocation());
-            final PopupSize popupSize = new PopupSize(650, 400, 650, 400, 1000, 1000, true);
+            final PopupSize popupSize = new PopupSize(800, 600, 800, 600, true);
             ShowPopupEvent.fire(dataPresenter, dataPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Data", null);
         });
     }
