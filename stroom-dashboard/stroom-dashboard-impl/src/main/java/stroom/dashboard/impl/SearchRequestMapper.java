@@ -183,7 +183,7 @@ public class SearchRequestMapper {
 
     private List<stroom.query.api.v2.Field> mapFields(final List<Field> fields) {
         if (fields == null || fields.size() == 0) {
-            return null;
+            return Collections.emptyList();
         }
 
         final List<stroom.query.api.v2.Field> list = new ArrayList<>(fields.size());

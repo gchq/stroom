@@ -17,17 +17,18 @@
 
 package stroom.search;
 
-
 import org.junit.jupiter.api.Test;
+import stroom.annotation.api.AnnotationDataSource;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexStore;
+import stroom.index.shared.IndexConstants;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.Field;
-import stroom.query.api.v2.Format;
+import stroom.query.api.v2.Format.Type;
 import stroom.query.api.v2.Query;
 import stroom.query.api.v2.Row;
 import stroom.query.api.v2.TableSettings;
@@ -403,7 +404,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
                         assertThat(values.size()).as("Incorrect number of hits found").isEqualTo(expectResultCount);
                         boolean found = false;
                         for (final Row hit : values) {
-                            final String str = hit.getValues().get(1);
+                            final String str = hit.getValues().get(2);
                             if ("2007-03-18T14:34:41.000Z".equals(str)) {
                                 found = true;
                             }
@@ -472,21 +473,31 @@ class TestInteractiveSearch extends AbstractSearchTest {
     }
 
     private TableSettings createTableSettings(final boolean extractValues) {
-        final Field idField = new Field.Builder()
-                .name("IdTreeNode")
-                .expression(ParamUtil.makeParam("StreamId"))
+        final Field streamIdField = new Field.Builder()
+                .name("Stream Id")
+                .expression(ParamUtil.makeParam(IndexConstants.STREAM_ID))
+                .build();
+
+        final Field eventIdField = new Field.Builder()
+                .name("Event Id")
+                .expression(ParamUtil.makeParam(IndexConstants.EVENT_ID))
                 .build();
 
         final Field timeField = new Field.Builder()
                 .name("Event Time")
                 .expression(ParamUtil.makeParam("EventTime"))
-                .format(Format.Type.DATE_TIME)
+                .format(Type.DATE_TIME)
+                .build();
+
+        final Field statusField = new Field.Builder()
+                .name("Status")
+                .expression(ParamUtil.makeParam(AnnotationDataSource.STATUS))
                 .build();
 
         final DocRef resultPipeline = commonIndexingTestHelper.getSearchResultPipeline();
         return new TableSettings(
                 null,
-                Arrays.asList(idField, timeField),
+                Arrays.asList(streamIdField, eventIdField, timeField, statusField),
                 extractValues,
                 resultPipeline,
                 null,

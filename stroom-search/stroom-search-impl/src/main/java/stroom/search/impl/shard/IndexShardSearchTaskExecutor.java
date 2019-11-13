@@ -21,7 +21,7 @@ import stroom.util.task.taskqueue.TaskExecutor;
 import javax.inject.Singleton;
 
 @Singleton
-public class IndexShardSearchTaskExecutor extends TaskExecutor {
+class IndexShardSearchTaskExecutor extends TaskExecutor {
     IndexShardSearchTaskExecutor() {
         super("Stroom Search Index Shard Task Executor");
     }

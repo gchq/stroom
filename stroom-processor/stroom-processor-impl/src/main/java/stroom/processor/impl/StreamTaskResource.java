@@ -30,7 +30,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Sort;

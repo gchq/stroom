@@ -231,7 +231,7 @@ class SearchableStore implements Store {
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
             // log the queue sizes in the payload map
-            if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(() -> {
                 final String contents = payloadMap.entrySet().stream()
                         .map(entry -> {
                             String key = entry.getKey() != null ? entry.getKey().toString() : "null";
@@ -250,8 +250,8 @@ class SearchableStore implements Store {
                             return key + ": " + size;
                         })
                         .collect(Collectors.joining(", "));
-                LOGGER.debug(LambdaLogUtil.message("payloadMap: [{}]", contents));
-            }
+                return LogUtil.message("payloadMap: [{}]", contents);
+            });
 
             // give the processed results to the collector, it will handle nulls
             resultHandler.handle(payloadMap);

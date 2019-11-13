@@ -28,7 +28,7 @@ import stroom.processor.shared.FindProcessorTaskSummaryAction;
 import stroom.processor.shared.ReprocessDataAction;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 

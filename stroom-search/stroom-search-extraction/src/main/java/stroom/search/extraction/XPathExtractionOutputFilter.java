@@ -25,15 +25,18 @@ import net.sf.saxon.tree.tiny.TinyTree;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
+import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
+import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
+import stroom.search.coprocessor.Values;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
@@ -41,6 +44,7 @@ import stroom.util.shared.Severity;
 import javax.inject.Inject;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.function.Consumer;
 
 import static stroom.index.shared.IndexConstants.EVENT_ID;
 import static stroom.index.shared.IndexConstants.STREAM_ID;
@@ -313,7 +317,7 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
 
                         values[field] = ValString.create(thisVal.toString());
                     }
-                    resultReceiver.receive(new Values(values));
+                    consumer.accept(new Values(values));
 
                 } catch (SaxonApiException ex) {
                     log(Severity.ERROR, "Unable to evaluate XPaths", ex);
@@ -415,5 +419,4 @@ public class XPathExtractionOutputFilter extends AbstractSearchResultOutputFilte
 //    public void setCreateJson(final boolean createJson) {
 //        this.createJson = createJson;
 //    }
-
 }

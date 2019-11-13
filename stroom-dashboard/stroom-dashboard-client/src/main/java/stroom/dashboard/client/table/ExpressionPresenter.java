@@ -145,6 +145,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createAggregateFunctons(item++, "Aggregate"));
         children.add(createCastFunctions(item++, "Cast"));
         children.add(createDateFunctions(item++, "Date"));
+        children.add(createLinkFunctions(item++, "Link"));
         children.add(createLogicFunctions(item++, "Logic"));
         children.add(createMathematicsFunctions(item++, "Mathematics"));
         children.add(createParamFunctions(item++, "Param"));
@@ -191,6 +192,17 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
     }
 
+    private Item createLinkFunctions(final int pos, final String func) {
+        final List<Item> children = new ArrayList<>();
+        int item = 0;
+        children.add(createFunction(item++, "annotation(text,annotationId,streamId,eventId,title,subject,status,assignedTo,comment)", "annotation("));
+        children.add(createFunction(item++, "dashboard(text,uuid,params)", "dashboard("));
+        children.add(createFunction(item++, "data(text,id,partNo,recordNo,lineFrom,colFrom,lineTo,colTo)", "data("));
+        children.add(createFunction(item++, "link(text,url,type)", "link("));
+        children.add(createFunction(item++, "stepping(text,id,partNo,recordNo)", "stepping("));
+        return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
+    }
+
     private Item createLogicFunctions(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
@@ -212,6 +224,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "divide($)", "divide("));
         children.add(createFunction(item++, "max($)", "max("));
         children.add(createFunction(item++, "min($)", "min("));
+        children.add(createFunction(item++, "modulus($)", "modulus("));
         children.add(createFunction(item++, "multiply($)", "multiply("));
         children.add(createFunction(item++, "negate($)", "negate("));
         children.add(createFunction(item++, "power($)", "power("));
@@ -224,6 +237,7 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
     private Item createParamFunctions(final int pos, final String func) {
         final List<Item> children = new ArrayList<>();
         int item = 0;
+        children.add(createFunction(item++, "currentUser()", "currentUser()"));
         children.add(createFunction(item++, "params()", "params()"));
         children.add(createFunction(item++, "param($)", "param("));
         return new SimpleParentMenuItem(pos, null, null, func, null, true, children);
@@ -255,7 +269,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         final List<Item> children = new ArrayList<>();
         int item = 0;
         children.add(createFunction(item++, "concat($,$)", "concat("));
-        children.add(createFunction(item++, "dashboard(text,uuid,params)", "dashboard("));
         children.add(createFunction(item++, "decode($,[search,replace]...,otherwise)", "decode("));
         children.add(createFunction(item++, "decodeUrl($)", "decodeUrl("));
         children.add(createFunction(item++, "encodeUrl($)", "encodeUrl("));
@@ -264,7 +277,6 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
         children.add(createFunction(item++, "include($,[regex...])", "include("));
         children.add(createFunction(item++, "indexOf($,string)", "indexOf("));
         children.add(createFunction(item++, "lastIndexOf($,string)", "lastIndexOf("));
-        children.add(createFunction(item++, "link(text,url,type)", "link("));
         children.add(createFunction(item++, "lowerCase($)", "lowerCase("));
         children.add(createFunction(item++, "match($,regex)", "match("));
         children.add(createFunction(item++, "replace($,regex,replacement)", "replace("));

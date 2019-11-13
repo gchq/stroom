@@ -157,6 +157,18 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                     .orElseThrow(() ->
                             new RuntimeException("No search provider found for '" + dataSourceRef.getType() + "' data source"));
 
+            // Add a param for `currentUser()`
+            if (searchRequest.getSearch() != null) {
+                Map<String, String> paramMap = searchRequest.getSearch().getParamMap();
+                if (paramMap != null) {
+                    paramMap = new HashMap<>(paramMap);
+                } else {
+                    paramMap= new HashMap<>();
+                }
+                paramMap.put("currentUser()", securityContext.getUserId());
+                searchRequest.getSearch().setParamMap(paramMap);
+            }
+
             stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
             stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
             result = new SearchResponseMapper().mapResponse(searchResponse);

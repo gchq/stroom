@@ -11,12 +11,15 @@ dependencies {
     compile libs.jackson_databind
     compile libs.javax_inject;
     compile libs.jaxb_api
+    compile libs.restygwt
     compile libs.slf4j_api
-    
+    compile libs.swagger_annotations
+    compile libs.ws_rs_api
+
     testCompile libs.assertj_core
     testCompile libs.jackson_core
     testCompile libs.junit_jupiter_api
-    
+
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation
     testRuntimeOnly libs.jaxb_runtime

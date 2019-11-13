@@ -98,7 +98,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
                                 throw new SearchException("Unable to find index shard with id = " + k.indexShardId);
                             }
 
-                            return new IndexShardSearcherImpl(indexShard, k.indexWriter);
+                            return new IndexShardSearcher(indexShard, k.indexWriter);
                         } catch (final RuntimeException e) {
                             LOGGER.error(e::getMessage, e);
                             throw e;
@@ -134,8 +134,8 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
     }
 
     private void destroy(final Key key, final Object value) {
-        if (value instanceof IndexShardSearcherImpl) {
-            final IndexShardSearcherImpl indexShardSearcher = (IndexShardSearcherImpl) value;
+        if (value instanceof IndexShardSearcher) {
+            final IndexShardSearcher indexShardSearcher = (IndexShardSearcher) value;
 
             closing.incrementAndGet();
             executor.execute(() -> {

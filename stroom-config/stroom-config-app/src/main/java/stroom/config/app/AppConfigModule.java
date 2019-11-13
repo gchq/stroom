@@ -67,7 +67,7 @@ public class AppConfigModule extends AbstractModule {
     /**
      * Intended for test use
      */
-    AppConfigModule( final Path configFile) {
+    AppConfigModule(final Path configFile) {
         try {
             this.appConfig = YamlUtil.readAppConfig(configFile);
             this.configFile = configFile;
@@ -99,6 +99,7 @@ public class AppConfigModule extends AbstractModule {
         // more easily see the tree structure
 
         bind(AppConfig::getActivityConfig, stroom.activity.impl.db.ActivityConfig.class);
+        bind(AppConfig::getAnnotationConfig, stroom.annotation.impl.AnnotationConfig.class);
         bind(AppConfig::getBenchmarkClusterConfig, BenchmarkClusterConfig.class);
         bind(AppConfig::getClusterConfig, ClusterConfig.class);
         bind(AppConfig::getClusterLockConfig, ClusterLockConfig.class);
@@ -138,7 +139,7 @@ public class AppConfigModule extends AbstractModule {
             bind(c, SearchConfig::getShardConfig, IndexShardSearchConfig.class);
         });
         bind(AppConfig::getSearchableConfig, SearchableConfig.class);
-        bind(AppConfig::getSecurityConfig, SecurityConfig.class, c-> {
+        bind(AppConfig::getSecurityConfig, SecurityConfig.class, c -> {
             bind(c, SecurityConfig::getAuthenticationConfig, AuthenticationConfig.class);
         });
         bind(AppConfig::getServiceDiscoveryConfig, ServiceDiscoveryConfig.class);

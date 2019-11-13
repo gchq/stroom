@@ -35,7 +35,7 @@ import stroom.security.shared.FetchUserAction;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.LogoutAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;

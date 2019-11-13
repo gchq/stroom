@@ -32,6 +32,7 @@ import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
+import stroom.search.resultsender.NodeResult;
 import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskContext;
@@ -215,14 +216,14 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
     private void waitForPendingWork() {
         LAMBDA_LOGGER.logDurationIfTraceEnabled(() -> {
-                    LOGGER.trace("No remaining nodes so wait for the result handler to clear any pending work");
-                    try {
-                        resultHandler.waitForPendingWork();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        LOGGER.debug("Thread interrupted waiting for resultHandler to finish pending work");
-                        // we will just let it complete as we have been interrupted
-                    }
+            LOGGER.trace("No remaining nodes so wait for the result handler to clear any pending work");
+            try {
+                resultHandler.waitForPendingWork();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                LOGGER.debug("Thread interrupted waiting for resultHandler to finish pending work");
+                // we will just let it complete as we have been interrupted
+            }
         }, "Waiting for resultHandler to finish pending work");
     }
 

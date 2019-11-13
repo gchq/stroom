@@ -18,59 +18,54 @@ package stroom.search.extraction;
 
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
-import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValString;
 import stroom.pipeline.factory.ConfigurableElement;
-import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
-import stroom.search.extraction.ExtractionTask.ResultReceiver;
+import stroom.search.coprocessor.Values;
 
 @ConfigurableElement(type = "SearchResultOutputFilter", category = Category.FILTER, roles = {
         PipelineElementType.ROLE_TARGET}, icon = ElementIcons.SEARCH)
-public class SearchResultOutputFilter  extends AbstractSearchResultOutputFilter {
+public class SearchResultOutputFilter extends AbstractSearchResultOutputFilter {
     private static final String RECORD = "record";
     private static final String DATA = "data";
     private static final String NAME = "name";
     private static final String VALUE = "value";
 
-
-    public SearchResultOutputFilter () {}
+    private Val[] values;
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
             throws SAXException {
-                if (DATA.equals(localName) && values != null) {
-                    String name = atts.getValue(NAME);
-                    String value = atts.getValue(VALUE);
-                    if (name != null && value != null) {
-                        name = name.trim();
-                        value = value.trim();
+        if (DATA.equals(localName) && values != null) {
+            String name = atts.getValue(NAME);
+            String value = atts.getValue(VALUE);
+            if (name != null && value != null) {
+                name = name.trim();
+                value = value.trim();
 
-                        if (name.length() > 0 && value.length() > 0) {
-                            final int fieldIndex = fieldIndexes.get(name);
-                            if (fieldIndex >= 0) {
-                                values[fieldIndex] = ValString.create(value);
-                            }
-                        }
+                if (name.length() > 0 && value.length() > 0) {
+                    final int fieldIndex = fieldIndexes.get(name);
+                    if (fieldIndex >= 0) {
+                        values[fieldIndex] = ValString.create(value);
                     }
-                } else if (RECORD.equals(localName)) {
-                    values = new Val[fieldIndexes.size()];
                 }
+            }
+        } else if (RECORD.equals(localName)) {
+            values = new Val[fieldIndexes.size()];
+        }
         super.startElement(uri, localName, qName, atts);
     }
 
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
         if (RECORD.equals(localName)) {
-            resultReceiver.receive(new Values(values));
+            consumer.accept(new Values(values));
             values = null;
         }
 
         super.endElement(uri, localName, qName);
     }
-
-
 }

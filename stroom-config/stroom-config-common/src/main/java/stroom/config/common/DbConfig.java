@@ -1,13 +1,11 @@
 package stroom.config.common;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.IsConfig;
 
 import java.util.Objects;
 
 public class DbConfig implements IsConfig {
-
     private ConnectionConfig connectionConfig;
     private ConnectionPoolConfig connectionPoolConfig;
 

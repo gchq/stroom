@@ -41,14 +41,13 @@ public class DataSourceModule extends AbstractModule {
 
     @Override
     protected void configure() {
-
         bind(HikariConfigHolder.class).to(HikariConfigHolderImpl.class);
         // Force creation of connection provider so that legacy migration code executes.
         bind(DataSource.class).toProvider(DataSourceProvider.class).asEagerSingleton();
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
-                .addBinding(CoreDbConnectionProvider.class);
+                .addBinding(CoreDbConnProvider.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(FindSystemTableStatusAction.class, FindSystemTableStatusHandler.class);
@@ -56,13 +55,13 @@ public class DataSourceModule extends AbstractModule {
 
     @Provides
     @Singleton
-    CoreDbConnectionProvider getConnectionProvider(final Provider<CoreConfig> configProvider,
-                                                   final HikariConfigHolder hikariConfigHolder) {
+    CoreDbConnProvider getConnectionProvider(final Provider<CoreConfig> configProvider,
+                                             final HikariConfigHolder hikariConfigHolder) {
         LOGGER.info("Creating connection provider for {}", MODULE);
         final HikariConfig config = hikariConfigHolder.getOrCreateHikariConfig(configProvider.get());
-        final CoreDbConnectionProvider coreDbConnectionProvider = new CoreDbConnectionProvider(config);
+        final CoreDbConnProvider coreDbConnProvider = new CoreDbConnProvider(config);
 //        flyway(connectionProvider);
-        return coreDbConnectionProvider;
+        return coreDbConnProvider;
     }
 
     @Override

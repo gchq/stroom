@@ -20,6 +20,7 @@ import stroom.cluster.task.api.ClusterTask;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
+import stroom.search.resultsender.NodeResult;
 import stroom.security.shared.UserToken;
 import stroom.task.shared.Task;
 

@@ -1,77 +1,51 @@
 package stroom.config.global.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.config.global.shared.ConfigProperty;
-import stroom.security.api.SecurityContext;
-import stroom.util.RestResource;
 
 import javax.inject.Inject;
-import javax.ws.rs.core.Response;
+import javax.ws.rs.NotFoundException;
+import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.core.Response.Status;
 import java.util.List;
 import java.util.Optional;
 
 public class GlobalConfigResourceImpl implements GlobalConfigResource {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigResourceImpl.class);
-
-    private final SecurityContext securityContext;
     private final GlobalConfigService globalConfigService;
 
     @Inject
-    GlobalConfigResourceImpl(final SecurityContext securityContext,
-                             final GlobalConfigService globalConfigService) {
-        this.securityContext = securityContext;
+    GlobalConfigResourceImpl(final GlobalConfigService globalConfigService) {
         this.globalConfigService = globalConfigService;
     }
 
     @Override
-    public Response getAllConfig() {
+    public List<ConfigProperty> getAllConfig() {
         try {
-            final List<ConfigProperty> configProperties = globalConfigService.list();
-            Response response = Response.ok(configProperties).build();
-            return response;
-        } catch (Exception e) {
-            return Response.serverError()
-                    .entity(RestResource.buildErrorResponse(e))
-                    .build();
+            return globalConfigService.list();
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(e.getMessage() != null ? e.getMessage() : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
         }
     }
 
     @Override
-    public Response getPropertyByName(final String propertyName) {
+    public ConfigProperty getPropertyByName(final String propertyName) {
         try {
             final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(propertyName);
+            return optConfigProperty.orElseThrow(NotFoundException::new);
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(e.getMessage() != null ? e.getMessage() : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
+        }
+    }
 
+    @Override
+    public String getYamlValueByName(final String propertyName) {
+        try {
+            final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(propertyName);
             return optConfigProperty
-                    .map(configProperty ->
-                            Response.ok().entity(configProperty).build())
-                    .orElseGet(() ->
-                            Response.status(Response.Status.NOT_FOUND).build());
-        } catch (Exception e) {
-            return Response.serverError()
-                    .entity(RestResource.buildErrorResponse(e))
-                    .build();
-        }
-    }
-
-    @Override
-    public Response getYamlValueByName(final String propertyName) {
-        try {
-            final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(propertyName);
-
-            Response response = optConfigProperty
                     .flatMap(configProperty ->
                             configProperty.getYamlOverrideValue().getValue())
-                    .map(configProperty ->
-                            Response.ok().entity(configProperty).build())
-                    .orElseGet(() ->
-                            Response.status(Response.Status.NOT_FOUND).build());
-            return response;
-        } catch (Exception e) {
-            return Response.serverError()
-                    .entity(RestResource.buildErrorResponse(e))
-                    .build();
+                    .orElseThrow(NotFoundException::new);
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(e.getMessage() != null ? e.getMessage() : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
         }
     }
 }

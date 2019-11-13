@@ -4,7 +4,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import stroom.security.impl.session.UserSessionUtil;
 import stroom.security.shared.User;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpSession;

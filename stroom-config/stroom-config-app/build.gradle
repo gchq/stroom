@@ -2,6 +2,10 @@ ext.moduleName = 'stroom.config.app'
 
 dependencies {
     compile project(':stroom-activity:stroom-activity-impl-db')
+    compile project(':stroom-annotation:stroom-annotation-impl')
+    compile project(':stroom-annotation:stroom-annotation-impl-db')
+    compile project(':stroom-core')
+    compile project(':stroom-core-shared')
     compile project(':stroom-cluster:stroom-cluster-api')
     compile project(':stroom-cluster:stroom-cluster-lock-impl-db')
     compile project(':stroom-config:stroom-config-common')

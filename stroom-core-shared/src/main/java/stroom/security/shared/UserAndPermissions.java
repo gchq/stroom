@@ -24,19 +24,25 @@ public class UserAndPermissions implements SharedObject {
     private static final long serialVersionUID = -174816031610623504L;
 
     private User userRef;
+    private String apiToken;
     private Set<String> appPermissionSet;
 
     public UserAndPermissions() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public UserAndPermissions(final User userRef, final Set<String> appPermissionSet) {
+    public UserAndPermissions(final User userRef, final String apiToken, final Set<String> appPermissionSet) {
         this.userRef = userRef;
+        this.apiToken = apiToken;
         this.appPermissionSet = appPermissionSet;
     }
 
     public User getUser() {
         return userRef;
+    }
+
+    public String getApiToken() {
+        return apiToken;
     }
 
     public Set<String> getAppPermissionSet() {

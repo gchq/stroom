@@ -24,6 +24,7 @@ import com.gwtplatform.mvp.client.proxy.PlaceManager;
 import stroom.activity.client.ActivityModule;
 import stroom.alert.client.gin.AlertGinjector;
 import stroom.alert.client.gin.AlertModule;
+import stroom.annotation.client.AnnotationModule;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.dashboard.client.main.DashboardMainPresenter;
 import stroom.dashboard.client.vis.gin.VisGinjector;
@@ -42,6 +43,7 @@ import stroom.widget.popup.client.gin.PopupModule;
         DashboardAppModule.class,
         PopupModule.class,
         ActivityModule.class,
+        AnnotationModule.class,
         AlertModule.class,
         SecurityModule.class,
         EntityModule.class,

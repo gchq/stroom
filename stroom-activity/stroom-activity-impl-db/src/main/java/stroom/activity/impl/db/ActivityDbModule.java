@@ -9,7 +9,7 @@ import stroom.db.util.AbstractFlyWayDbModule;
 
 import java.util.function.Function;
 
-public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityConfig, ActivityDbConnectionProvider> {
+public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityConfig, ActivityDbConnProvider> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ActivityDbModule.class);
     private static final String MODULE = "stroom-activity";
     private static final String FLYWAY_LOCATIONS = "stroom/activity/impl/db/migration";
@@ -39,12 +39,12 @@ public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityConfig, Act
     }
 
     @Override
-    public Function<HikariConfig, ActivityDbConnectionProvider> getConnectionProviderConstructor() {
-        return ActivityDbConnectionProvider::new;
+    public Function<HikariConfig, ActivityDbConnProvider> getConnectionProviderConstructor() {
+        return ActivityDbConnProvider::new;
     }
 
     @Override
-    public Class<ActivityDbConnectionProvider> getConnectionProviderType() {
-        return ActivityDbConnectionProvider.class;
+    public Class<ActivityDbConnProvider> getConnectionProviderType() {
+        return ActivityDbConnProvider.class;
     }
 }

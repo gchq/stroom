@@ -32,7 +32,7 @@ import stroom.search.solr.shared.FetchSolrTypesAction;
 import stroom.search.solr.shared.SolrConnectionTestAction;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 

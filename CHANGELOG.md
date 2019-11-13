@@ -38,6 +38,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1312** : Fixed read only behaviour of dictionary settings UI.
 
+* Issue **#1300** : Multiple changes to annotations.
+
+* Issue **#1265** : Added `modulus()` function along with alias `mod()` and modulus operator `%`.
+
+* Issue **#1300** : Added `annotation()` link creation function, `currentUser()` alias for `param('currentUser()')` and additional link creation functions for `data()` and `stepping()`.
+
 * Issue **#67** : Table columns now display menu items on left click.
 
 * Uplift stroom-query to v2.2.4 to add better diagnostic logging.
@@ -47,6 +53,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 * Issue **#1293** : Add more static file types to allow nginx/browser caching on.
 
 * Issue **#1295** : Add authentication bypass for servlets such as /remoting, /status, /echo, etc.
+
+* Issue **#1297** : The UI now supplies API tokens to the backend for resource calls.
+
+* Issue **#1296** : Fixed NPE in StreamMapCreator caused when a stream can not be found.
 
 ## [v7.0-beta.7] - 2019-10-23
 

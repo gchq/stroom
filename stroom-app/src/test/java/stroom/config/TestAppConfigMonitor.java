@@ -87,7 +87,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         LOGGER.debug("Modified file {}", devYamlCopyPath.toAbsolutePath());
 
         Instant startTime = Instant.now();
-        Instant timeOutTime = startTime.plusSeconds(5);
+        Instant timeOutTime = startTime.plusSeconds(60);
         while (!appConfig.getPathConfig().getTemp().equals(newPathValue) && Instant.now().isBefore(timeOutTime)) {
             LOGGER.debug("value {}", appConfig.getPathConfig().getTemp());
             grepFile.run();

@@ -25,7 +25,7 @@ import stroom.meta.shared.UpdateStatusAction;
 import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.ServletBinder;
 

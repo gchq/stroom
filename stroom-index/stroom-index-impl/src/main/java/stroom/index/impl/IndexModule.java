@@ -30,7 +30,7 @@ import stroom.index.impl.service.IndexShardServiceImpl;
 import stroom.index.impl.service.IndexVolumeGroupServiceImpl;
 import stroom.index.impl.service.IndexVolumeServiceImpl;
 import stroom.index.shared.IndexDoc;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
