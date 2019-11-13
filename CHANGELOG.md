@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0.20] - 2019-11-13
+
 * Issue **#1324** : Improved logging and added SSL options for HTTPAppender.
 
 ## [v6.0.19] - 2019-11-08
@@ -1967,7 +1969,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.19...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.20...6.0
+[v6.0.20]: https://github.com/gchq/stroom/compare/v6.0.19...v6.0.20
 [v6.0.19]: https://github.com/gchq/stroom/compare/v6.0.18...v6.0.19
 [v6.0.18]: https://github.com/gchq/stroom/compare/v6.0.17...v6.0.18
 [v6.0.17]: https://github.com/gchq/stroom/compare/v6.0.16...v6.0.17
