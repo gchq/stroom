@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1330** : Allow configuration of `Content-Type` in HTTPAppender.
+
 ## [v6.0.20] - 2019-11-13
 
 * Issue **#1324** : Improved logging and added SSL options for HTTPAppender.
