@@ -1,4 +1,4 @@
-package stroom.proxy.handler;
+package stroom.util.cert;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -19,12 +19,12 @@ public class SSLConfig {
      * The path to the keystore file that will be used for client authentication during forwarding
      */
     @JsonProperty
-    String getKeyStorePath() {
+    public String getKeyStorePath() {
         return keyStorePath;
     }
 
     @JsonProperty
-    void setKeyStorePath(final String keyStorePath) {
+    public void setKeyStorePath(final String keyStorePath) {
         this.keyStorePath = keyStorePath;
     }
 
@@ -32,12 +32,12 @@ public class SSLConfig {
      * The type of the keystore, e.g. JKS
      */
     @JsonProperty
-    String getKeyStoreType() {
+    public String getKeyStoreType() {
         return keyStoreType;
     }
 
     @JsonProperty
-    void setKeyStoreType(final String keyStoreType) {
+    public void setKeyStoreType(final String keyStoreType) {
         this.keyStoreType = keyStoreType;
     }
 
@@ -45,12 +45,12 @@ public class SSLConfig {
      * The password for the keystore
      */
     @JsonProperty
-    String getKeyStorePassword() {
+    public String getKeyStorePassword() {
         return keyStorePassword;
     }
 
     @JsonProperty
-    void setKeyStorePassword(final String keyStorePassword) {
+    public void setKeyStorePassword(final String keyStorePassword) {
         this.keyStorePassword = keyStorePassword;
     }
 
@@ -58,12 +58,12 @@ public class SSLConfig {
      * The path to the truststore file that will be used for client authentication during forwarding
      */
     @JsonProperty
-    String getTrustStorePath() {
+    public String getTrustStorePath() {
         return trustStorePath;
     }
 
     @JsonProperty
-    void setTrustStorePath(final String trustStorePath) {
+    public void setTrustStorePath(final String trustStorePath) {
         this.trustStorePath = trustStorePath;
     }
 
@@ -71,12 +71,12 @@ public class SSLConfig {
      * The type of the truststore, e.g. JKS
      */
     @JsonProperty
-    String getTrustStoreType() {
+    public String getTrustStoreType() {
         return trustStoreType;
     }
 
     @JsonProperty
-    void setTrustStoreType(final String trustStoreType) {
+    public void setTrustStoreType(final String trustStoreType) {
         this.trustStoreType = trustStoreType;
     }
 
@@ -84,12 +84,12 @@ public class SSLConfig {
      * The password for the truststore
      */
     @JsonProperty
-    String getTrustStorePassword() {
+    public String getTrustStorePassword() {
         return trustStorePassword;
     }
 
     @JsonProperty
-    void setTrustStorePassword(final String trustStorePassword) {
+    public void setTrustStorePassword(final String trustStorePassword) {
         this.trustStorePassword = trustStorePassword;
     }
 
@@ -98,12 +98,12 @@ public class SSLConfig {
      * If false any destination hostname will be permitted.
      */
     @JsonProperty
-    boolean isHostnameVerificationEnabled() {
+    public boolean isHostnameVerificationEnabled() {
         return isHostnameVerificationEnabled;
     }
 
     @JsonProperty
-    void setHostnameVerificationEnabled(final boolean hostnameVerificationEnabled) {
+    public void setHostnameVerificationEnabled(final boolean hostnameVerificationEnabled) {
         isHostnameVerificationEnabled = hostnameVerificationEnabled;
     }
 
@@ -111,12 +111,12 @@ public class SSLConfig {
      * The SSL protocol to use, e.g. TLSv1.2
      */
     @JsonProperty
-    String getSslProtocol() {
+    public String getSslProtocol() {
         return sslProtocol;
     }
 
     @JsonProperty
-    void setSslProtocol(final String sslProtocol) {
+    public void setSslProtocol(final String sslProtocol) {
         this.sslProtocol = sslProtocol;
     }
 }

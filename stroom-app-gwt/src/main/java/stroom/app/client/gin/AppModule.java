@@ -28,6 +28,7 @@ import stroom.about.client.presenter.AboutPresenter;
 import stroom.about.client.presenter.AboutPresenter.AboutProxy;
 import stroom.about.client.presenter.AboutPresenter.AboutView;
 import stroom.about.client.view.AboutViewImpl;
+import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.presenter.CorePresenter;
 import stroom.core.client.presenter.CorePresenter.CoreProxy;
 import stroom.core.client.presenter.CorePresenter.CoreView;
@@ -95,6 +96,7 @@ public class AppModule extends AbstractPresenterModule {
 
         // bind(CurrentUser.class).in(Singleton.class);
 
+        bind(HasSaveRegistry.class).asEagerSingleton();
         bind(LocationManager.class).asEagerSingleton();
         bind(ContentManager.class).asEagerSingleton();
 

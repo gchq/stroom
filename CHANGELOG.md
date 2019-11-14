@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0.20] - 2019-11-13
+
+* Issue **#1324** : Improved logging and added SSL options for HTTPAppender.
+
+## [v6.0.19] - 2019-11-08
+
+* Issue **#1322** : Stroom now asks if you really want to leave site when stepping items are dirty. Also fixed `Save` and `Save All` menu items and dashboard param changes now correctly make a dashboard dirty.
+
+* Issue **#1320** : Fixed formatting of XML where trailing spaces were being removed from content surrounded by start and end tags (data content) which should not happen. 
+
 * Issue **#1321** : Make path relative in stroom distribution .zip.sha256 hash file.
 
 ## [v6.0.18] - 2019-11-05
@@ -1959,7 +1969,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.18...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.20...6.0
+[v6.0.20]: https://github.com/gchq/stroom/compare/v6.0.19...v6.0.20
+[v6.0.19]: https://github.com/gchq/stroom/compare/v6.0.18...v6.0.19
 [v6.0.18]: https://github.com/gchq/stroom/compare/v6.0.17...v6.0.18
 [v6.0.17]: https://github.com/gchq/stroom/compare/v6.0.16...v6.0.17
 [v6.0.16]: https://github.com/gchq/stroom/compare/v6.0.15...v6.0.16

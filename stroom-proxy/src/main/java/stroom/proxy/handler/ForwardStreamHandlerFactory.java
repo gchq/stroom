@@ -7,27 +7,15 @@ import org.slf4j.LoggerFactory;
 import stroom.proxy.repo.ProxyRepositoryConfig;
 import stroom.util.BuildInfoUtil;
 import stroom.util.HasHealthCheck;
+import stroom.util.cert.SSLUtil;
 import stroom.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import javax.net.ssl.KeyManagerFactory;
-import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
-import javax.net.ssl.TrustManagerFactory;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.security.KeyManagementException;
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
-import java.security.UnrecoverableKeyException;
-import java.security.cert.CertificateException;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -73,7 +61,7 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
                         LOGGER.info("Configuring SSLSocketFactory for destination {}", config.getForwardUrl());
                         SSLSocketFactory sslSocketFactory = null;
                         if (config.getSslConfig() != null) {
-                            sslSocketFactory = createSslSocketFactory(config.getSslConfig());
+                            sslSocketFactory = SSLUtil.createSslSocketFactory(config.getSslConfig());
                         }
                         return new ForwardDestination(config, sslSocketFactory);
                     })
@@ -149,76 +137,6 @@ public class ForwardStreamHandlerFactory implements StreamHandlerFactory, HasHea
             resultBuilder.unhealthy();
         }
         return resultBuilder.build();
-    }
-
-    private SSLSocketFactory createSslSocketFactory(final SSLConfig sslConfig) {
-        Objects.requireNonNull(sslConfig);
-
-        KeyStore keyStore = null;
-        KeyStore trustStore = null;
-        final TrustManagerFactory trustManagerFactory;
-        final KeyManagerFactory keyManagerFactory;
-        final SSLContext sslContext;
-        InputStream inputStream;
-
-        // Load the keystore
-        if (sslConfig.getKeyStorePath() != null) {
-            try {
-                keyStore = KeyStore.getInstance(sslConfig.getKeyStoreType());
-                inputStream = new FileInputStream(sslConfig.getKeyStorePath());
-                LOGGER.info("Loading keystore {} of type {}", sslConfig.getKeyStorePath(), sslConfig.getKeyStoreType());
-                keyStore.load(inputStream, sslConfig.getKeyStorePassword().toCharArray());
-            } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
-                throw new RuntimeException(LambdaLogger.buildMessage("Error locating and loading keystore {} with type",
-                        sslConfig.getKeyStorePath(), sslConfig.getKeyStoreType()), e);
-            }
-        }
-
-        // Load the truststore
-        if (sslConfig.getTrustStorePath() != null) {
-            try {
-                trustStore = KeyStore.getInstance(sslConfig.getTrustStoreType());
-                inputStream = new FileInputStream(sslConfig.getTrustStorePath());
-                LOGGER.info("Loading truststore {} of type {}", sslConfig.getTrustStorePath(), sslConfig.getTrustStoreType());
-                trustStore.load(inputStream, sslConfig.getTrustStorePassword().toCharArray());
-            } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
-                throw new RuntimeException(LambdaLogger.buildMessage("Error locating and loading truststore {} with type",
-                        sslConfig.getTrustStorePath(), sslConfig.getTrustStoreType()), e);
-            }
-        }
-
-        try {
-            keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            if (keyStore != null) {
-                keyManagerFactory.init(keyStore, sslConfig.getKeyStorePassword().toCharArray());
-            }
-        } catch (NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error initialising KeyManagerFactory for keystore {}",
-                    sslConfig.getKeyStorePath()), e);
-        }
-
-        try {
-            trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            if (trustStore != null) {
-                trustManagerFactory.init(trustStore);
-            }
-        } catch (NoSuchAlgorithmException | KeyStoreException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage("Error initialising TrustManagerFactory for truststore {}",
-                    sslConfig.getTrustStorePath()), e);
-        }
-
-        try {
-            sslContext = SSLContext.getInstance(sslConfig.getSslProtocol());
-            sslContext.init(
-                    keyManagerFactory.getKeyManagers(),
-                    trustManagerFactory.getTrustManagers(),
-                    null);
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            throw new RuntimeException("Error initialising ssl context", e);
-        }
-
-        LOGGER.info("Creating ssl socket factory");
-        return sslContext.getSocketFactory();
     }
 
     public static String getUserAgentString(final String userAgentFromConfig) {

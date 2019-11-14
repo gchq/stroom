@@ -20,4 +20,6 @@ import com.gwtplatform.mvp.client.UiHandlers;
 
 public interface DashboardUiHandlers extends UiHandlers {
     void onParamsChanged(String params);
+
+    void onDirty();
 }
