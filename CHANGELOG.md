@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0.22] - 2019-11-15
+
 * Issue **#1333** : Improved resilience against XSS attacks.
 
 ## [v6.0.21] - 2019-11-14
@@ -1975,7 +1977,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.21...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.22...6.0
+[v6.0.22]: https://github.com/gchq/stroom/compare/v6.0.21...v6.0.22
 [v6.0.21]: https://github.com/gchq/stroom/compare/v6.0.20...v6.0.21
 [v6.0.20]: https://github.com/gchq/stroom/compare/v6.0.19...v6.0.20
 [v6.0.19]: https://github.com/gchq/stroom/compare/v6.0.18...v6.0.19
