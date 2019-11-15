@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1333** : Improved resilience against XSS attacks.
+
 ## [v6.0.21] - 2019-11-14
 
 * Issue **#1330** : Allow configuration of `Content-Type` in HTTPAppender.

@@ -242,8 +242,13 @@ var messageListener = function(event) {
   var host = window.location.host;
 
   // Stop this script being called from other domains.
-  if (origin.indexOf(host) === -1)
+  var eventLocation = document.createElement("a");
+  eventLocation.href = origin;
+  var eventHost = eventLocation.hostname;
+  if (eventHost != host) {
+    console.error("Ignoring event as host names do not match: scriptHost='" + host + "' eventHost='" + eventHost + "'");
     return;
+  }
 
   var json = JSON.parse(event.data);
 

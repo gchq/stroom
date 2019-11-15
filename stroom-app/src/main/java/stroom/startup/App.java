@@ -80,6 +80,7 @@ import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.server.AuthorisationResource;
+import stroom.security.server.ContentSecurityFilter;
 import stroom.security.server.JWTService;
 import stroom.security.server.SecurityFilter;
 import stroom.security.server.SessionListListener;
@@ -345,6 +346,9 @@ public class App extends Application<Config> {
                         CacheControlFilter.INIT_PARAM_KEY_CACHEABLE_PATH_REGEX, cacheablePathsRegex));
 
         registerSecurityFilter(applicationContext, servletContextHandler);
+
+        // Add web content security filter.
+        SpringUtil.addFilter(servletContextHandler, applicationContext, ContentSecurityFilter.class, "/*");
 
         // Add servlets
         SpringUtil.addServlet(servletContextHandler, applicationContext, StroomServlet.class, UI_PATH);
