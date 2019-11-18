@@ -1159,6 +1159,36 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
 
+        // Web content security.
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.security.web.content.securityPolicy")
+                .value("default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; frame-ancestors 'self';")
+                .description("The content security policy")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.security.web.content.typeOptions")
+                .value("nosniff")
+                .description("The content type options")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.security.web.content.frameOptions")
+                .value("sameorigin")
+                .description("The frame options")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.security.web.content.xssProtection")
+                .value("1; mode=block")
+                .description("XSS protection")
+                .editable(true)
+                .requireUiRestart(true)
+                .build());
+
         // Stroom-Stats
         list.add(new GlobalProperty.Builder()
                 .name("stroom.services.stroomStats.name")

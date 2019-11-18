@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1334** : Fix 404 when accessing `/stroom/resourcestore/........`, i.e. fix Tools->Export.
+
+* Issue **#1333** : Improved resilience against XSS attacks.
+
+* Issue **#1330** : Allow configuration of `Content-Type` in HTTPAppender.
+
 * Issue **#1327** : Improvements to annotations.
 
 * Issue **#1328** : Increased size of data window and removed max size restrictions.

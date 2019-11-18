@@ -74,6 +74,9 @@ public class HTTPAppender extends AbstractAppender {
     private boolean useJvmSslConfig = true;
     private final SSLConfig sslConfig = new SSLConfig();
 
+    private String requestMethod = "POST";
+    private String contentType = "application/json";
+
     @Inject
     public HTTPAppender(final ErrorReceiverProxy errorReceiverProxy,
                         final MetaDataHolder metaDataHolder) {
@@ -124,8 +127,8 @@ public class HTTPAppender extends AbstractAppender {
                 // connection.setReadTimeout(forwardTimeoutMs);
             }
 
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/audit");
+            connection.setRequestMethod(requestMethod);
+            connection.setRequestProperty("Content-Type", contentType);
             connection.setDoOutput(true);
             connection.setDoInput(true);
 
@@ -203,6 +206,9 @@ public class HTTPAppender extends AbstractAppender {
             LOGGER.debug(() -> "closeConnection() - header fields " + connection.getHeaderFields());
             try {
                 responseCode = StroomStreamException.checkConnectionResponse(connection);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+                throw e;
             } finally {
                 long bytes = 0;
                 if (byteCountOutputStream != null) {
@@ -335,5 +341,15 @@ public class HTTPAppender extends AbstractAppender {
     @PipelineProperty(description = "The SSL protocol to use", defaultValue = "TLSv1.2")
     public void setSslProtocol(final String sslProtocol) {
         sslConfig.setSslProtocol(sslProtocol);
+    }
+
+    @PipelineProperty(description = "The request method, e.g. POST", defaultValue = "POST")
+    public void setRequestMethod(String requestMethod) {
+        this.requestMethod = requestMethod;
+    }
+
+    @PipelineProperty(description = "The content type", defaultValue = "application/json")
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 }

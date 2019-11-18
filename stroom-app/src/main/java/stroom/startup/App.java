@@ -86,6 +86,7 @@ import stroom.search.spring.SearchConfiguration;
 import stroom.searchable.impl.SearchableResource;
 import stroom.searchable.impl.spring.SearchableConfiguration;
 import stroom.security.server.AuthorisationResource;
+import stroom.security.server.ContentSecurityFilter;
 import stroom.security.server.JWTService;
 import stroom.security.server.SecurityFilter;
 import stroom.security.server.SessionListListener;
@@ -355,6 +356,9 @@ public class App extends Application<Config> {
 
         registerSecurityFilter(applicationContext, servletContextHandler);
 
+        // Add web content security filter.
+        SpringUtil.addFilter(servletContextHandler, applicationContext, ContentSecurityFilter.class, "/*");
+
         // Add servlets
         SpringUtil.addServlet(servletContextHandler, applicationContext, StroomServlet.class, UI_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, DashboardServlet.class, DASHBOARD_PATH);
@@ -367,7 +371,7 @@ public class App extends Application<Config> {
         SpringUtil.addServlet(servletContextHandler, applicationContext, EchoServlet.class, ECHO_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, DebugServlet.class, DEBUG_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, SessionListServlet.class, SESSION_LIST_PATH);
-        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionResourceStoreImpl.class, RESOURCE_STORE_PATH + "+/*");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionResourceStoreImpl.class, RESOURCE_STORE_PATH + "/*");
         SpringUtil.addServlet(servletContextHandler, applicationContext, SpringRequestFactoryServlet.class, GWT_REQUEST_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, RemoteFeedServiceRPC.class, REMOTING_RPC_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, DATAFEED_PATH);

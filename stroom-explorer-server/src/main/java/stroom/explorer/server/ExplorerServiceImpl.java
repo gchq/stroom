@@ -17,7 +17,6 @@
 
 package stroom.explorer.server;
 
-import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 import stroom.entity.shared.PermissionInheritance;
 import stroom.explorer.api.ExplorerDecorator;
@@ -35,7 +34,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.streamstore.server.CollectionService;
 import stroom.util.shared.HasNodeState;
 import stroom.util.shared.HasNodeState.NodeState;
-import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -55,7 +53,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Component
-@Scope(StroomScope.PROTOTYPE)
 class ExplorerServiceImpl implements ExplorerService, CollectionService {
     private final ExplorerNodeService explorerNodeService;
     private final ExplorerTreeModel explorerTreeModel;

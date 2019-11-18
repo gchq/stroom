@@ -23,6 +23,8 @@ import org.springframework.context.annotation.FilterType;
 import stroom.node.server.StroomPropertyService;
 import stroom.security.server.AuthenticationService;
 import stroom.security.server.AuthenticationServiceClients;
+import stroom.security.server.ContentSecurityConfig;
+import stroom.security.server.ContentSecurityFilter;
 import stroom.security.server.JWTService;
 import stroom.security.server.SecurityConfig;
 import stroom.security.server.SecurityFilter;
@@ -66,5 +68,21 @@ public class SecurityConfiguration {
                 jwtService,
                 authenticationServiceClients,
                 authenticationService);
+    }
+
+    @Bean(name = "contentSecurityConfig")
+    public ContentSecurityConfig contentSecurityConfig(final StroomPropertyService stroomPropertyService) {
+        final ContentSecurityConfig config = new ContentSecurityConfig();
+        config.setContentSecurityPolicy(stroomPropertyService.getProperty("stroom.security.web.content.securityPolicy"));
+        config.setContentTypeOptions(stroomPropertyService.getProperty("stroom.security.web.content.typeOptions"));
+        config.setFrameOptions(stroomPropertyService.getProperty("stroom.security.web.content.frameOptions"));
+        config.setXssProtection(stroomPropertyService.getProperty("stroom.security.web.content.xssProtection"));
+        return config;
+    }
+
+    @Bean(name = "contentSecurityFilter")
+    public ContentSecurityFilter contentSecurityFilter(
+            final ContentSecurityConfig contentSecurityConfig) {
+        return new ContentSecurityFilter(contentSecurityConfig);
     }
 }
