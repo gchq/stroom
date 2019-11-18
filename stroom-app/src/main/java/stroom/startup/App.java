@@ -362,7 +362,7 @@ public class App extends Application<Config> {
         SpringUtil.addServlet(servletContextHandler, applicationContext, EchoServlet.class, ECHO_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, DebugServlet.class, DEBUG_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, SessionListServlet.class, SESSION_LIST_PATH);
-        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionResourceStoreImpl.class, RESOURCE_STORE_PATH + "+/*");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionResourceStoreImpl.class, RESOURCE_STORE_PATH + "/*");
         SpringUtil.addServlet(servletContextHandler, applicationContext, SpringRequestFactoryServlet.class, GWT_REQUEST_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, RemoteFeedServiceRPC.class, REMOTING_RPC_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, DATAFEED_PATH);

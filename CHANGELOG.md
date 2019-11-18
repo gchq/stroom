@@ -6,7 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.23] - 2019-11-18
+
+* Issue **#1334** : Fix 404 when accessing `/stroom/resourcestore/........`, i.e. fix Tools->Export.
+
+
 ## [v6.0.22] - 2019-11-15
+
 
 * Issue **#1333** : Improved resilience against XSS attacks.
 
@@ -14,9 +21,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1330** : Allow configuration of `Content-Type` in HTTPAppender.
 
+
 ## [v6.0.20] - 2019-11-13
 
 * Issue **#1324** : Improved logging and added SSL options for HTTPAppender.
+
 
 ## [v6.0.19] - 2019-11-08
 
@@ -26,11 +35,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1321** : Make path relative in stroom distribution .zip.sha256 hash file.
 
+
 ## [v6.0.18] - 2019-11-05
 
 * The auth service now supports the use of HTTPS without certificate verification and adds additional logging.
 
 * Issue **gchq/stroom-auth#157** : Automatically refresh user's API key when it expires.
+
 
 ## [v6.0.17] - 2019-11-04
 
@@ -1977,7 +1988,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.22...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.23...6.0
+[v6.0.23]: https://github.com/gchq/stroom/compare/v6.0.22...v6.0.23
 [v6.0.22]: https://github.com/gchq/stroom/compare/v6.0.21...v6.0.22
 [v6.0.21]: https://github.com/gchq/stroom/compare/v6.0.20...v6.0.21
 [v6.0.20]: https://github.com/gchq/stroom/compare/v6.0.19...v6.0.20
