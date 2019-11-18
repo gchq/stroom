@@ -105,6 +105,19 @@ public class AnnotationResourceImpl implements AnnotationResource, HasHealthChec
     }
 
     @Override
+    public List<String> getComment(final String filter) {
+        final List<String> values = annotationConfig.getStandardComments();
+        if (filter == null || filter.isEmpty()) {
+            return values;
+        }
+
+        return values
+                .stream()
+                .filter(value -> value.toLowerCase().contains(filter.toLowerCase()))
+                .collect(Collectors.toList());
+    }
+
+    @Override
     public Result getHealth() {
         return Result.healthy();
     }

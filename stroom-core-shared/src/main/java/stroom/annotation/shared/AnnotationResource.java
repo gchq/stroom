@@ -59,4 +59,13 @@ public interface AnnotationResource extends DirectRestService {
             value = "Gets a list of allowed statuses",
             response = Response.class)
     List<String> getStatus(@QueryParam("filter") String filter);
+
+    @GET
+    @Path("comment")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Gets a list of predefined comments",
+            response = Response.class)
+    List<String> getComment(@QueryParam("filter") String filter);
 }

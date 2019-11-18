@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1327** : Improvements to annotations.
+
 * Issue **#1328** : Increased size of data window and removed max size restrictions.
 
 * Issue **#1324** : Improved logging and added SSL options for HTTPAppender.

@@ -154,6 +154,10 @@ public class JWTService implements HasHealthCheck {
     }
 
     public String refreshTokenIfExpired(String jws) {
+        if (!authenticationRequired) {
+            return null;
+        }
+
         try {
             verifyToken(jws);
             return jws;

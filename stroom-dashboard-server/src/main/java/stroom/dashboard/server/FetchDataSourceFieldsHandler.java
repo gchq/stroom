@@ -30,12 +30,12 @@ import javax.inject.Inject;
 
 @TaskHandlerBean(task = FetchDataSourceFieldsAction.class)
 @Scope(value = StroomScope.TASK)
-class FetchExpressionFieldsHandler extends AbstractTaskHandler<FetchDataSourceFieldsAction, DataSourceFields> {
+class FetchDataSourceFieldsHandler extends AbstractTaskHandler<FetchDataSourceFieldsAction, DataSourceFields> {
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final SecurityContext securityContext;
 
     @Inject
-    FetchExpressionFieldsHandler(final DataSourceProviderRegistry dataSourceProviderRegistry, final SecurityContext securityContext) {
+    FetchDataSourceFieldsHandler(final DataSourceProviderRegistry dataSourceProviderRegistry, final SecurityContext securityContext) {
         this.dataSourceProviderRegistry = dataSourceProviderRegistry;
         this.securityContext = securityContext;
     }

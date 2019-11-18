@@ -15,6 +15,7 @@ dependencies {
     compile project(':stroom-util')
 //    compile project(':stroom-util-shared')
 
+    compile libs.commons_csv
     compile libs.dropwizard_metrics_healthchecks
     compile libs.eventLogging
     compile libs.guice4

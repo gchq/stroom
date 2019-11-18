@@ -88,12 +88,12 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         fieldNames = new ArrayList<>();
         fieldNames.add("");
 
-        if (component != null && component instanceof TablePresenter) {
+        if (component instanceof TablePresenter) {
             final TablePresenter tablePresenter = (TablePresenter) component;
             final List<Field> fields = tablePresenter.getSettings().getFields();
             if (fields != null && fields.size() > 0) {
                 for (final Field field : fields) {
-                    if (field.isVisible()) {
+                    if (!field.isSpecial()) {
                         fieldNames.add(field.getName());
                     }
                 }

@@ -3,6 +3,7 @@ package stroom.hyperlink.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -19,12 +20,12 @@ import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.node.client.ClientPropertyCache;
 import stroom.node.shared.ClientProperties;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.streamstore.client.presenter.ShowDataEvent;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Highlight;
-import stroom.pipeline.shared.SourceLocation;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.RenamePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -215,17 +216,22 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     }
 
     private String getParam(final String href, final String paramName) {
+        String value = null;
         int start = href.indexOf(paramName + "=");
         if (start != -1) {
             start = start + (paramName + "=").length();
             int end = href.indexOf("&", start);
             if (end == -1) {
-                return href.substring(start);
+                value = href.substring(start);
             } else {
-                return href.substring(start, end);
+                value = href.substring(start, end);
             }
         }
-        return null;
+        if (value != null) {
+            value = URL.decodeQueryString(value);
+        }
+
+        return value;
     }
 
     @Override

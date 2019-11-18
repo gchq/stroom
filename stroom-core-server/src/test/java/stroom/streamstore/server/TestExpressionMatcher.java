@@ -26,6 +26,7 @@ import stroom.streamstore.shared.StreamDataSource;
 import stroom.util.test.StroomJUnit4ClassRunner;
 import stroom.util.test.StroomUnitTest;
 
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -67,7 +68,7 @@ public class TestExpressionMatcher extends StroomUnitTest {
     }
 
     private void test(final Map<String, Object> attributeMap, final ExpressionOperator expression, final boolean outcome) {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), null, null);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(StreamDataSource.getFieldMap(), null, null, ZoneOffset.UTC.getId(), System.currentTimeMillis());
         Assert.assertEquals(outcome, expressionMatcher.match(attributeMap, expression));
     }
 

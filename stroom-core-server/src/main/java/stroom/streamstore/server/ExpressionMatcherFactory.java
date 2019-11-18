@@ -5,6 +5,7 @@ import stroom.datasource.api.v2.DataSourceField;
 import stroom.dictionary.server.DictionaryStore;
 
 import javax.inject.Inject;
+import java.time.ZoneOffset;
 import java.util.Map;
 
 @Component
@@ -19,6 +20,6 @@ public class ExpressionMatcherFactory {
     }
 
     public ExpressionMatcher create(final Map<String, DataSourceField> fieldMap) {
-        return new ExpressionMatcher(fieldMap, dictionaryStore, collectionService);
+        return new ExpressionMatcher(fieldMap, dictionaryStore, collectionService, ZoneOffset.UTC.getId(), System.currentTimeMillis());
     }
 }

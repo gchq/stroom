@@ -91,6 +91,12 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
+                .name("stroom.annotation.standardComments")
+                .value("")
+                .description("A comma separated list of standard comments that can be added to annotations")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
                 .name("stroom.annotation.createText")
                 .value("Create Annotation")
                 .description("The text to display to create an annotation")
