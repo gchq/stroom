@@ -12,6 +12,7 @@ dependencies {
 //    compile project(':stroom-util-shared')
 
     compile libs.stroomQueryApi
+    compile libs.stroomQueryCommon
 
 //    compile libs.dropwizard_jersey
     compile libs.flyway_core
