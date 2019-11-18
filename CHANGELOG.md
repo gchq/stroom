@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.1-beta.11] - 2019-11-18
+
 * Issue **#1334** : Fix 404 when accessing `/stroom/resourcestore/........`, i.e. fix Tools->Export.
 
 * Issue **#1333** : Improved resilience against XSS attacks.
@@ -2000,7 +2002,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.10...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.11...6.1
+[v6.1-beta.11]: https://github.com/gchq/stroom/compare/v6.1-beta.10...v6.1-beta.11
 [v6.1-beta.10]: https://github.com/gchq/stroom/compare/v6.1-beta.9...v6.1-beta.10
 [v6.1-beta.9]: https://github.com/gchq/stroom/compare/v6.1-beta.8...v6.1-beta.9
 [v6.1-beta.8]: https://github.com/gchq/stroom/compare/v6.1-beta.7...v6.1-beta.8
