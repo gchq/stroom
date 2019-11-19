@@ -56,8 +56,10 @@ public class CoreModule extends AbstractModule {
         install(new stroom.index.impl.IndexModule());
         install(new stroom.job.impl.db.JobDbModule());
         install(new stroom.job.impl.JobSystemModule());
-        install(new stroom.kafka.impl.KafkaConfigModule());
-        install(new stroom.kafka.pipeline.KafkaPipelineModule());
+//        install(new stroom.kafka.impl.KafkaConfigModule());
+        install(new stroom.kafkademo.impl.KafkaConfigModule());
+//        install(new stroom.kafka.pipeline.KafkaPipelineModule());
+        install(new stroom.kafkademo.pipeline.KafkaPipelineModule());
         install(new stroom.meta.impl.db.MetaDbModule());
         install(new stroom.meta.impl.MetaModule());
         install(new stroom.meta.impl.StreamAttributeMapResourceModule());
@@ -88,10 +90,10 @@ public class CoreModule extends AbstractModule {
         install(new stroom.security.impl.SecurityModule());
         install(new stroom.security.impl.session.SessionSecurityModule());
         install(new stroom.servicediscovery.impl.ServiceDiscoveryModule());
-        install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());
-        install(new stroom.statistics.impl.hbase.internal.InternalModule());
-        install(new stroom.statistics.impl.hbase.pipeline.StatisticsElementModule());
-        install(new stroom.statistics.impl.hbase.rollup.StroomStatsRollupModule());
+//        install(new stroom.statistics.impl.hbase.entity.StroomStatsStoreModule());
+//        install(new stroom.statistics.impl.hbase.internal.InternalModule());
+//        install(new stroom.statistics.impl.hbase.pipeline.StatisticsElementModule());
+//        install(new stroom.statistics.impl.hbase.rollup.StroomStatsRollupModule());
         install(new stroom.statistics.impl.InternalStatisticsModule());
         install(new stroom.statistics.impl.sql.entity.StatisticStoreModule());
         install(new stroom.statistics.impl.sql.internal.InternalModule());

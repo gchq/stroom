@@ -17,6 +17,9 @@
 package stroom.kafkademo.pipeline;
 
 import net.sf.saxon.event.ReceivingContentHandler;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.header.Headers;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -36,7 +39,11 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Stack;
 
@@ -51,15 +58,19 @@ import java.util.Stack;
 class StandardKafkaProducer extends AbstractXMLFilter {
 
     private static class KafkaMessageState{
-        public String partition = null;
+        public Integer partition = null;
         public String topic = null;
         public String key = null;
         public ArrayList<String> headerNames = new ArrayList();
         public ArrayList<String> headerVals = new ArrayList();
-        public String timestamp = null;
+        public Long timestamp = null;
         public String messageValue = null;
         public boolean inHeader = false;
         public String lastElement = null;
+
+        public boolean isInvalid(){
+            return whyInvalid() != null;
+        }
 
         public String whyInvalid (){
             if (topic == null)
@@ -90,6 +101,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
     private Locator locator = null;
 
     private DocRef configRef = null;
+    private KafkaProducer<String, String> kafkaProducer = null;
 
     @Inject
     StandardKafkaProducer(final ErrorReceiverProxy errorReceiverProxy,
@@ -130,6 +142,13 @@ class StandardKafkaProducer extends AbstractXMLFilter {
             System.out.println("Using config:");
             System.out.println(config.getData());
 
+            Optional <KafkaProducer<String,String>> optional = stroomKafkaProducerFactory.createProducer(configRef);
+            if (!optional.isPresent())
+            {
+                log(Severity.FATAL_ERROR, "Unable to create Kafka Producer using config " + config.getData(), null);
+                throw new LoggedException("Unable to create Kafka Producer using config " + configRef);
+            }
+            kafkaProducer = optional.get();
         } finally {
             super.startProcessing();
         }
@@ -137,6 +156,15 @@ class StandardKafkaProducer extends AbstractXMLFilter {
 
     private Random random = new Random();
     private int id = random.nextInt(99);
+
+    private static Long createTimestamp(String isoFormat){
+        try {
+            Instant instant = Instant.parse(isoFormat);
+            return instant.toEpochMilli();
+        }catch (DateTimeParseException ex){
+            return null;
+        }
+    }
 
     private KafkaMessageState state = null;
 
@@ -153,9 +181,18 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                 if (TOPIC_ATTRIBUTE_LOCAL_NAME.equals(attName)){
                     state.topic = atts.getValue(a);
                 } else if (TIMESTAMP_ATTRIBUTE_LOCAL_NAME.equals(attName)){
-                    state.timestamp = atts.getValue(a);
+                    Long timestamp = createTimestamp (atts.getValue(a));
+                    if (timestamp == null){
+                        log (Severity.ERROR, "Kafka timestamp must be in ISO 8601 format.  Got " + atts.getValue(a), null);
+                    }else{
+                        state.timestamp = timestamp;
+                    }
                 } else if (PARTITION_ATTRIBUTE_LOCAL_NAME.equals(attName)){
-                    state.partition = atts.getValue(a);
+                    try {
+                        state.partition = Integer.parseInt(atts.getValue(a));
+                    }catch (NumberFormatException ex){
+                        log (Severity.ERROR, "Kafka partition must be an integer.  Got " + atts.getValue(a), null);
+                    }
                 }
             }
         }
@@ -211,16 +248,28 @@ class StandardKafkaProducer extends AbstractXMLFilter {
     }
 
     private void createKafkaMessage(KafkaMessageState state) {
-        StringBuffer buffer = new StringBuffer();
-        buffer.append("Topic: " + state.topic);
-        buffer.append(" Timestamp: " + state.timestamp);
-        buffer.append(" Key: " + state.key);
-        for (int i = 0; i < state.headerNames.size(); i++) {
-            buffer.append(" Header " + state.headerNames.get(i) + " = " + state.headerVals.get(i));
-        }
-        buffer.append(" Value: " + state.messageValue);
 
-        System.out.println(buffer.toString());
+        if (state.isInvalid()) {
+            log(Severity.ERROR,"Badly formed Kafka message " + state.whyInvalid(), null);
+        } else {
+            ProducerRecord<String, String> record = new ProducerRecord<>(state.topic, state.partition,
+                    state.timestamp, state.key, state.messageValue);
+            Headers headers = record.headers();
+            for (int h=0; h < state.headerNames.size(); h++){
+                headers.add(state.headerNames.get(h), state.headerVals.get(h).getBytes(StandardCharsets.UTF_8));
+            }
+            StringBuffer buffer = new StringBuffer();
+            buffer.append("Writing to Kafka topic: " + state.topic);
+            buffer.append(" Timestamp: " + state.timestamp);
+            buffer.append(" Key: " + state.key);
+            for (int i = 0; i < state.headerNames.size(); i++) {
+                buffer.append(" Header " + state.headerNames.get(i) + " = " + state.headerVals.get(i));
+            }
+            buffer.append(" Value: " + state.messageValue);
+
+            log (Severity.INFO, buffer.toString(), null);
+            kafkaProducer.send(record);
+        }
     }
 
 

@@ -24,6 +24,5 @@ public class KafkaPipelineModule extends PipelineElementModule {
         bindElement(GenericKafkaProducerFilter.class);
         bindElement(KafkaAppender.class);
         bindElement(RollingKafkaAppender.class);
-        bindElement(StandardKafkaProducer.class);
     }
 }
