@@ -118,6 +118,7 @@ import stroom.visualisation.spring.VisualisationConfiguration;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+import javax.servlet.SessionCookieConfig;
 import javax.ws.rs.client.Client;
 import java.util.AbstractMap;
 import java.util.EnumSet;
@@ -195,8 +196,16 @@ public class App extends Application<Config> {
 //            new AssetsBundle("/ui", "/", "stroom", "ui").run(environment);
             startApp(configuration, environment);
         }
-    }
 
+        // Ensure the session cookie that provides JSESSIONID is secure.
+        final SessionCookieConfig sessionCookieConfig = environment
+                .getApplicationContext()
+                .getServletContext()
+                .getSessionCookieConfig();
+        sessionCookieConfig.setSecure(true);
+        sessionCookieConfig.setHttpOnly(true);
+        // TODO : Add `SameSite=Strict` when supported by JEE
+    }
 
     private void startProxy(final Config configuration, final Environment environment) {
 
