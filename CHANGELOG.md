@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.24] - 2019-11-19
+
 * Issue **#1335** : Made session cookie `Secure` and `HttpOnly`.
 
 
@@ -1990,7 +1993,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.23...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.24...6.0
+[v6.0.24]: https://github.com/gchq/stroom/compare/v6.0.23...v6.0.24
 [v6.0.23]: https://github.com/gchq/stroom/compare/v6.0.22...v6.0.23
 [v6.0.22]: https://github.com/gchq/stroom/compare/v6.0.21...v6.0.22
 [v6.0.21]: https://github.com/gchq/stroom/compare/v6.0.20...v6.0.21
