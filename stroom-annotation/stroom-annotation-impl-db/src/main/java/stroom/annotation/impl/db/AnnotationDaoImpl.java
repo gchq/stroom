@@ -31,9 +31,12 @@ import stroom.entity.shared.PageRequest;
 import stroom.entity.shared.Sort;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.common.v2.DateExpressionParser;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,12 +45,16 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static stroom.annotation.impl.db.jooq.tables.Annotation.ANNOTATION;
+import static stroom.annotation.impl.db.jooq.tables.AnnotationDataLink.ANNOTATION_DATA_LINK;
 import static stroom.annotation.impl.db.jooq.tables.AnnotationEntry.ANNOTATION_ENTRY;
 
 @Component
 class AnnotationDaoImpl implements AnnotationDao {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationDaoImpl.class);
+
     private static final Function<Record, Annotation> RECORD_TO_ANNOTATION_MAPPER = record -> {
         final Annotation annotation = new Annotation();
         annotation.setId(record.get(ANNOTATION.ID));
@@ -56,8 +63,6 @@ class AnnotationDaoImpl implements AnnotationDao {
         annotation.setCreateUser(record.get(ANNOTATION.CREATE_USER));
         annotation.setUpdateTime(record.get(ANNOTATION.UPDATE_TIME_MS));
         annotation.setUpdateUser(record.get(ANNOTATION.UPDATE_USER));
-        annotation.setStreamId(record.get(ANNOTATION.STREAM_ID));
-        annotation.setEventId(record.get(ANNOTATION.EVENT_ID));
         annotation.setTitle(record.get(ANNOTATION.TITLE));
         annotation.setSubject(record.get(ANNOTATION.SUBJECT));
         annotation.setStatus(record.get(ANNOTATION.STATUS));
@@ -101,8 +106,8 @@ class AnnotationDaoImpl implements AnnotationDao {
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(AnnotationDataSource.ID_FIELD, ANNOTATION.ID, Long::valueOf);
-        expressionMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION.STREAM_ID, Long::valueOf);
-        expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION.EVENT_ID, Long::valueOf);
+        expressionMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, Long::valueOf);
+        expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, Long::valueOf);
         expressionMapper.map(AnnotationDataSource.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, value -> getDate(AnnotationDataSource.CREATED_ON, value));
         expressionMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, value -> value);
         expressionMapper.map(AnnotationDataSource.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, value -> getDate(AnnotationDataSource.UPDATED_ON, value));
@@ -116,8 +121,8 @@ class AnnotationDaoImpl implements AnnotationDao {
 
         valueMapper = new ValueMapper();
         valueMapper.map(AnnotationDataSource.ID_FIELD, ANNOTATION.ID, ValLong::create);
-        valueMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION.STREAM_ID, ValLong::create);
-        valueMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION.EVENT_ID, ValLong::create);
+        valueMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, ValLong::create);
+        valueMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, ValLong::create);
         valueMapper.map(AnnotationDataSource.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, ValLong::create);
         valueMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, ValString::create);
         valueMapper.map(AnnotationDataSource.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, ValLong::create);
@@ -132,11 +137,13 @@ class AnnotationDaoImpl implements AnnotationDao {
 
     private long getDate(final String fieldName, final String value) {
         try {
-            // empty optional will be caught below
-            return DateExpressionParser.parse(value, ZoneOffset.UTC.getId(), System.currentTimeMillis()).get().toInstant().toEpochMilli();
+            final Optional<ZonedDateTime> optional = DateExpressionParser.parse(value, ZoneOffset.UTC.getId(), System.currentTimeMillis());
+
+            return optional.orElseThrow(() -> new RuntimeException("Expected a standard date value for field \"" + fieldName
+                    + "\" but was given string \"" + value + "\"")).toInstant().toEpochMilli();
         } catch (final Exception e) {
             throw new RuntimeException("Expected a standard date value for field \"" + fieldName
-                    + "\" but was given string \"" + value + "\"");
+                    + "\" but was given string \"" + value + "\"", e);
         }
     }
 
@@ -151,19 +158,8 @@ class AnnotationDaoImpl implements AnnotationDao {
                 .orElse(null));
     }
 
-    @Override
-    public Annotation get(final long streamId, final long eventId) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
-                .select()
-                .from(ANNOTATION)
-                .where(ANNOTATION.STREAM_ID.eq(streamId).and(ANNOTATION.EVENT_ID.eq(eventId)))
-                .fetchOptional()
-                .map(RECORD_TO_ANNOTATION_MAPPER)
-                .orElse(null));
-    }
-
     private Annotation get(final Annotation annotation) {
-        Annotation result = get(annotation.getStreamId(), annotation.getEventId());
+        final Annotation result = get(annotation.getId());
         if (result == null) {
             return annotation;
         }
@@ -180,12 +176,22 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     @Override
-    public AnnotationDetail getDetail(final long streamId, final long eventId) {
-        final Annotation annotation = get(streamId, eventId);
-        if (annotation == null) {
-            return null;
-        }
-        return getDetail(annotation);
+    public List<Annotation> getAnnotationsForEvents(final long streamId, final long eventId) {
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select()
+                .from(ANNOTATION)
+                .join(ANNOTATION_DATA_LINK).on(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(ANNOTATION.ID))
+                .where(ANNOTATION_DATA_LINK.STREAM_ID.eq(streamId).and(ANNOTATION_DATA_LINK.EVENT_ID.eq(eventId)))
+                .fetch()
+                .stream()
+                .map(RECORD_TO_ANNOTATION_MAPPER)
+                .collect(Collectors.toList()));
+    }
+
+    @Override
+    public List<AnnotationDetail> getAnnotationDetailsForEvents(final long streamId, final long eventId) {
+        final List<Annotation> list = getAnnotationsForEvents(streamId, eventId);
+        return list.stream().map(this::getDetail).collect(Collectors.toList());
     }
 
     private AnnotationDetail getDetail(final Annotation annotation) {
@@ -205,25 +211,26 @@ class AnnotationDaoImpl implements AnnotationDao {
         final long now = System.currentTimeMillis();
 
         // Create the parent annotation first if it hasn't been already.
-        Annotation parentAnnotation = get(request.getAnnotation());
-        if (parentAnnotation.getId() == null) {
-            parentAnnotation = request.getAnnotation();
-            parentAnnotation.setCreateTime(now);
-            parentAnnotation.setCreateUser(user);
-            parentAnnotation.setUpdateTime(now);
-            parentAnnotation.setUpdateUser(user);
-            parentAnnotation = create(parentAnnotation);
+        Annotation annotation = request.getAnnotation();
+        if (annotation.getId() == null) {
+            annotation = request.getAnnotation();
+            annotation.setCreateTime(now);
+            annotation.setCreateUser(user);
+            annotation.setUpdateTime(now);
+            annotation.setUpdateUser(user);
+            annotation = create(annotation);
 
             // Create change entries for all fields so we know what their initial values were.
-            createEntry(parentAnnotation.getId(), user, now, Annotation.TITLE, parentAnnotation.getTitle());
-            createEntry(parentAnnotation.getId(), user, now, Annotation.SUBJECT, parentAnnotation.getSubject());
-            createEntry(parentAnnotation.getId(), user, now, Annotation.STATUS, parentAnnotation.getStatus());
-            createEntry(parentAnnotation.getId(), user, now, Annotation.ASSIGNED_TO, parentAnnotation.getAssignedTo());
-            createEntry(parentAnnotation.getId(), user, now, Annotation.COMMENT, parentAnnotation.getComment());
+            createEntry(annotation.getId(), user, now, Annotation.TITLE, annotation.getTitle());
+            createEntry(annotation.getId(), user, now, Annotation.SUBJECT, annotation.getSubject());
+            createEntry(annotation.getId(), user, now, Annotation.STATUS, annotation.getStatus());
+            createEntry(annotation.getId(), user, now, Annotation.ASSIGNED_TO, annotation.getAssignedTo());
+            createEntry(annotation.getId(), user, now, Annotation.COMMENT, annotation.getComment());
 
+            createEventLink(annotation.getId(), request.getStreamId(), request.getEventId());
         } else {
             // Update parent if we need to.
-            final long annotationId = parentAnnotation.getId();
+            final long annotationId = annotation.getId();
             final Field<String> field = UPDATE_FIELD_MAP.get(request.getType());
 
             if (ANNOTATION.COMMENT.equals(field)) {
@@ -256,11 +263,11 @@ class AnnotationDaoImpl implements AnnotationDao {
             }
 
             // Create entry.
-            createEntry(parentAnnotation.getId(), user, now, request.getType(), request.getData());
+            createEntry(annotation.getId(), user, now, request.getType(), request.getData());
         }
 
         // Now select everything back to provide refreshed details.
-        return getDetail(parentAnnotation.getId());
+        return getDetail(annotation.getId());
     }
 
     private void createEntry(final long annotationId, final String user, final long now, final String type, final String data) {
@@ -298,8 +305,6 @@ class AnnotationDaoImpl implements AnnotationDao {
                         ANNOTATION.CREATE_TIME_MS,
                         ANNOTATION.UPDATE_USER,
                         ANNOTATION.UPDATE_TIME_MS,
-                        ANNOTATION.STREAM_ID,
-                        ANNOTATION.EVENT_ID,
                         ANNOTATION.TITLE,
                         ANNOTATION.SUBJECT,
                         ANNOTATION.STATUS,
@@ -311,8 +316,6 @@ class AnnotationDaoImpl implements AnnotationDao {
                         annotation.getCreateTime(),
                         annotation.getUpdateUser(),
                         annotation.getUpdateTime(),
-                        annotation.getStreamId(),
-                        annotation.getEventId(),
                         annotation.getTitle(),
                         annotation.getSubject(),
                         annotation.getStatus(),
@@ -329,6 +332,46 @@ class AnnotationDaoImpl implements AnnotationDao {
             annotation.setVersion(1);
             return annotation;
         }).orElse(get(annotation));
+    }
+
+    private void createEventLink(final long annotationId, final long streamId, final long eventId) {
+        try {
+            // Create event link.
+            final int count = JooqUtil.contextResult(connectionProvider, context -> context
+                    .insertInto(ANNOTATION_DATA_LINK,
+                            ANNOTATION_DATA_LINK.FK_ANNOTATION_ID,
+                            ANNOTATION_DATA_LINK.STREAM_ID,
+                            ANNOTATION_DATA_LINK.EVENT_ID)
+                    .values(annotationId,
+                            streamId,
+                            eventId)
+                    .onDuplicateKeyIgnore()
+                    .execute());
+
+            if (count != 1) {
+                throw new RuntimeException("Unable to create event link");
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
+    }
+
+    private void removeEventLink(final long annotationId, final long streamId, final long eventId) {
+        try {
+            // Remove event link.
+            final int count = JooqUtil.contextResult(connectionProvider, context -> context
+                    .deleteFrom(ANNOTATION_DATA_LINK)
+                    .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
+                    .and(ANNOTATION_DATA_LINK.STREAM_ID.eq(streamId))
+                    .and(ANNOTATION_DATA_LINK.EVENT_ID.eq(eventId))
+                    .execute());
+
+            if (count != 1) {
+                throw new RuntimeException("Unable to remove event link");
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
+        }
     }
 
     @Override

@@ -41,7 +41,7 @@ import stroom.annotation.impl.db.jooq.tables.records.AnnotationRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Annotation extends TableImpl<AnnotationRecord> {
 
-    private static final long serialVersionUID = 1891544340;
+    private static final long serialVersionUID = 659904452;
 
     /**
      * The reference instance of <code>stroom.annotation</code>
@@ -85,16 +85,6 @@ public class Annotation extends TableImpl<AnnotationRecord> {
      * The column <code>stroom.annotation.update_user</code>.
      */
     public final TableField<AnnotationRecord, String> UPDATE_USER = createField("update_user", org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
-
-    /**
-     * The column <code>stroom.annotation.stream_id</code>.
-     */
-    public final TableField<AnnotationRecord, Long> STREAM_ID = createField("stream_id", org.jooq.impl.SQLDataType.BIGINT, this, "");
-
-    /**
-     * The column <code>stroom.annotation.event_id</code>.
-     */
-    public final TableField<AnnotationRecord, Long> EVENT_ID = createField("event_id", org.jooq.impl.SQLDataType.BIGINT, this, "");
 
     /**
      * The column <code>stroom.annotation.title</code>.
@@ -172,7 +162,7 @@ public class Annotation extends TableImpl<AnnotationRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.ANNOTATION_PRIMARY, Indexes.ANNOTATION_STREAM_ID_EVENT_ID);
+        return Arrays.<Index>asList(Indexes.ANNOTATION_PRIMARY);
     }
 
     /**
@@ -196,7 +186,7 @@ public class Annotation extends TableImpl<AnnotationRecord> {
      */
     @Override
     public List<UniqueKey<AnnotationRecord>> getKeys() {
-        return Arrays.<UniqueKey<AnnotationRecord>>asList(Keys.KEY_ANNOTATION_PRIMARY, Keys.KEY_ANNOTATION_STREAM_ID_EVENT_ID);
+        return Arrays.<UniqueKey<AnnotationRecord>>asList(Keys.KEY_ANNOTATION_PRIMARY);
     }
 
     /**

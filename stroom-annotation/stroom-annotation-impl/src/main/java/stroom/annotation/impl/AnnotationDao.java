@@ -24,6 +24,7 @@ import stroom.dashboard.expression.v1.Val;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.ExpressionCriteria;
 
+import java.util.List;
 import java.util.function.Consumer;
 
 public interface AnnotationDao {
@@ -31,9 +32,9 @@ public interface AnnotationDao {
 
     AnnotationDetail getDetail(long annotationId);
 
-    Annotation get(long streamId, long eventId);
+    List<Annotation> getAnnotationsForEvents(long streamId, long eventId);
 
-    AnnotationDetail getDetail(long streamId, long eventId);
+    List<AnnotationDetail> getAnnotationDetailsForEvents(long streamId, long eventId);
 
     AnnotationDetail createEntry(CreateEntryRequest request, String user);
 

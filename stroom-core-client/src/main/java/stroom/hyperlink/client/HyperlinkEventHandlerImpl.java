@@ -180,15 +180,13 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
                     final Annotation annotation = new Annotation();
                     annotation.setId(annotationId);
-                    annotation.setStreamId(streamId);
-                    annotation.setEventId(eventId);
                     annotation.setTitle(title);
                     annotation.setSubject(subject);
                     annotation.setStatus(status);
                     annotation.setAssignedTo(assignedTo);
                     annotation.setComment(comment);
 
-                    ShowAnnotationEvent.fire(this, annotation);
+                    ShowAnnotationEvent.fire(this, annotation, streamId, eventId);
                     break;
                 }
                 default:

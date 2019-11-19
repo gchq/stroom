@@ -45,8 +45,6 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     static {
         VALUE_MAPPING.put(AnnotationDataSource.ID, annotation -> annotation.getId() == null ? ValNull.INSTANCE : ValLong.create(annotation.getId()));
-        VALUE_MAPPING.put(IndexConstants.STREAM_ID, annotation -> annotation.getStreamId() == null ? ValNull.INSTANCE : ValLong.create(annotation.getStreamId()));
-        VALUE_MAPPING.put(IndexConstants.EVENT_ID, annotation -> annotation.getEventId() == null ? ValNull.INSTANCE : ValLong.create(annotation.getEventId()));
         VALUE_MAPPING.put(AnnotationDataSource.CREATED_ON, annotation -> annotation.getCreateTime() == null ? ValNull.INSTANCE : ValLong.create(annotation.getCreateTime()));
         VALUE_MAPPING.put(AnnotationDataSource.CREATED_BY, annotation -> annotation.getCreateUser() == null ? ValNull.INSTANCE : ValString.create(annotation.getCreateUser()));
         VALUE_MAPPING.put(AnnotationDataSource.UPDATED_ON, annotation -> annotation.getUpdateTime() == null ? ValNull.INSTANCE : ValLong.create(annotation.getUpdateTime()));
@@ -63,8 +61,6 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     static {
         OBJECT_MAPPING.put(AnnotationDataSource.ID, Annotation::getId);
-        OBJECT_MAPPING.put(IndexConstants.STREAM_ID, Annotation::getStreamId);
-        OBJECT_MAPPING.put(IndexConstants.EVENT_ID, Annotation::getEventId);
         OBJECT_MAPPING.put(AnnotationDataSource.CREATED_ON, Annotation::getCreateTime);
         OBJECT_MAPPING.put(AnnotationDataSource.CREATED_BY, Annotation::getCreateUser);
         OBJECT_MAPPING.put(AnnotationDataSource.UPDATED_ON, Annotation::getUpdateTime);
@@ -124,7 +120,11 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
                 final Long streamId = getLong(values.getValues(), streamIdIndex);
                 final Long eventId = getLong(values.getValues(), eventIdIndex);
                 if (streamId != null && eventId != null) {
-                    annotation = annotationDao.get(streamId, eventId);
+                    List<Annotation> list = annotationDao.getAnnotationsForEvents(streamId, eventId);
+                    if (list.size() > 0) {
+                        // TODO : @66 Just use the first for filtering for now until we decide what it means to have multiple annotations against an event.
+                        annotation = list.get(0);
+                    }
                 }
             }
 

@@ -9,13 +9,17 @@ public class ShowAnnotationEvent extends GwtEvent<ShowAnnotationEvent.Handler> {
     private static Type<ShowAnnotationEvent.Handler> TYPE;
 
     private final Annotation annotation;
+    private final Long streamId;
+    private final Long eventId;
 
-    private ShowAnnotationEvent(final Annotation annotation) {
+    private ShowAnnotationEvent(final Annotation annotation, final Long streamId, final Long eventId) {
         this.annotation = annotation;
+        this.streamId = streamId;
+        this.eventId = eventId;
     }
 
-    public static void fire(final HasHandlers source, final Annotation annotation) {
-        source.fireEvent(new ShowAnnotationEvent(annotation));
+    public static void fire(final HasHandlers source, final Annotation annotation, final Long streamId, final Long eventId) {
+        source.fireEvent(new ShowAnnotationEvent(annotation, streamId, eventId));
     }
 
     public static Type<Handler> getType() {
@@ -37,6 +41,14 @@ public class ShowAnnotationEvent extends GwtEvent<ShowAnnotationEvent.Handler> {
 
     public Annotation getAnnotation() {
         return annotation;
+    }
+
+    public Long getStreamId() {
+        return streamId;
+    }
+
+    public Long getEventId() {
+        return eventId;
     }
 
     public interface Handler extends EventHandler {

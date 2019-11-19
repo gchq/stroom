@@ -17,6 +17,7 @@ import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.function.Consumer;
 
 @Component
@@ -71,7 +72,13 @@ public class AnnotationService implements Searchable {
 
     AnnotationDetail getDetail(Long streamId, Long eventId) {
         checkPermission();
-        return annotationDao.getDetail(streamId, eventId);
+        List<AnnotationDetail> list = annotationDao.getAnnotationDetailsForEvents(streamId, eventId);
+
+        // TODO : @66 Just use the first for filtering for now until we decide what it means to have multiple annotations against an event.
+        if (list.size() > 0) {
+            return list.get(0);
+        }
+        return null;
     }
 
     AnnotationDetail createEntry(final CreateEntryRequest request) {

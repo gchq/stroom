@@ -89,11 +89,14 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     private final ClientSecurityContext clientSecurityContext;
 
     private AnnotationDetail annotationDetail;
-    private Annotation sourceAnnotation;
+    private Long currentId;
+    private Long streamId;
+    private Long eventId;
     private String currentTitle;
     private String currentSubject;
     private String currentStatus;
     private String currentAssignedTo;
+    private String initialComment;
 
     @Inject
     public AnnotationEditPresenter(final EventBus eventBus,
@@ -193,28 +196,30 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         rest.onSuccess(this::read).call(annotationResource).createEntry(request);
     }
 
-    public void show(final Annotation annotation) {
+    public void show(final Annotation annotation, final Long streamId, final Long eventId) {
         boolean ok = true;
         if (annotation == null) {
             ok = false;
             AlertEvent.fireError(this, "No sample annotation has been provided to open the editor", null);
         } else if (annotation.getId() == null) {
-            if (annotation.getStreamId() == null) {
+            if (streamId == null) {
                 ok = false;
                 AlertEvent.fireError(this, "No stream id has been provided for the annotation", null);
-            } else if (annotation.getEventId() == null) {
+            } else if (eventId == null) {
                 ok = false;
                 AlertEvent.fireError(this, "No event id has been provided for the annotation", null);
             }
         }
 
         if (ok) {
-            this.sourceAnnotation = annotation;
-            readAnnotation(sourceAnnotation);
+            this.streamId = streamId;
+            this.eventId = eventId;
+            this.initialComment = annotation.getComment();
+            readAnnotation(annotation);
 
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             final Rest<AnnotationDetail> rest = restFactory.create();
-            rest.onSuccess(this::edit).call(annotationResource).get(annotation.getId(), annotation.getStreamId(), annotation.getEventId());
+            rest.onSuccess(this::edit).call(annotationResource).get(annotation.getId(), streamId, eventId);
         }
     }
 
@@ -223,8 +228,8 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
         // Set the initial comment if one has been provided and if this is a new annotation.
         if (annotationDetail == null || annotationDetail.getAnnotation() == null || annotationDetail.getAnnotation().getId() == null) {
-            if (sourceAnnotation.getComment() != null) {
-                getView().setComment(sourceAnnotation.getComment());
+            if (initialComment!= null) {
+                getView().setComment(initialComment);
             }
         }
 
@@ -534,6 +539,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     }
 
     private void readAnnotation(final Annotation annotation) {
+        currentId = annotation.getId();
         currentTitle = annotation.getTitle();
         currentSubject = annotation.getSubject();
         currentStatus = annotation.getStatus();
@@ -667,8 +673,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         final String comment = getView().getComment();
         if (comment != null && comment.length() > 0) {
             final Annotation annotation = new Annotation();
-            annotation.setStreamId(sourceAnnotation.getStreamId());
-            annotation.setEventId(sourceAnnotation.getEventId());
+            annotation.setId(currentId);
             annotation.setTitle(currentTitle);
             annotation.setSubject(currentSubject);
             annotation.setStatus(currentStatus);
@@ -676,7 +681,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
             annotation.setComment(comment);
             annotation.setHistory(comment);
 
-            final CreateEntryRequest request = new CreateEntryRequest(annotation, Annotation.COMMENT, comment);
+            final CreateEntryRequest request = new CreateEntryRequest(annotation, Annotation.COMMENT, comment, streamId, eventId);
             addEntry(request);
             getView().setComment("");
         } else {
