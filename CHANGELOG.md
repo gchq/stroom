@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1335** : Made session cookie `Secure` and `HttpOnly`.
+
 ## [v6.1-beta.12] - 2019-11-18
 
 * Fix build dependencies.
