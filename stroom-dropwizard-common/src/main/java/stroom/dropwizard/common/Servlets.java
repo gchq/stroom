@@ -74,7 +74,7 @@ public class Servlets {
                         } else {
                             fullPathSpec = ResourcePaths.buildAuthenticatedServletPath(servletPath);
                         }
-                        LOGGER.info("\t{} -> {}", name, fullPathSpec);
+                        LOGGER.info("\t{} => {}", name, fullPathSpec);
                         final ServletHolder servletHolder;
                         try {
                             servletHolder = new ServletHolder(name, (Servlet) servlet);
@@ -103,15 +103,38 @@ public class Servlets {
                 @Override
                 protected HealthCheck.Result check() {
                     // Decorate the existing health check results with the full path spec
+                    // as the servlet doesn't know its own full path
                     HealthCheck.Result result = ((HasHealthCheck) servlet).getHealth();
 
-                    if (result.getDetails().containsKey(SERVLET_PATH_KEY)) {
-                        LOGGER.warn("Overriding health check detail for {} {} in servlet {}",
-                                SERVLET_PATH_KEY,
-                                result.getDetails().get(SERVLET_PATH_KEY),
-                                name);
+                    HealthCheck.ResultBuilder builder = Result.builder();
+                    if (result.isHealthy()) {
+                        builder
+                                .healthy()
+                                .withMessage(result.getMessage())
+                                .withDetail(SERVLET_PATH_KEY, fullPathSpec)
+                                .build();
+                    } else {
+                        builder
+                                .unhealthy(result.getError())
+                                .withMessage(result.getMessage())
+                                .withDetail(SERVLET_PATH_KEY, fullPathSpec)
+                                .build();
                     }
-                    result.getDetails().put(SERVLET_PATH_KEY, fullPathSpec);
+                    builder
+                            .withMessage(result.getMessage())
+                            .withDetail(SERVLET_PATH_KEY, fullPathSpec);
+
+                    if (result.getDetails() != null) {
+                        if (result.getDetails().containsKey(SERVLET_PATH_KEY)) {
+                            LOGGER.warn("Overriding health check detail for {} {} in servlet {}",
+                                    SERVLET_PATH_KEY,
+                                    result.getDetails().get(SERVLET_PATH_KEY),
+                                    name);
+                        }
+                        result.getDetails().forEach(builder::withDetail);
+                    }
+
+                    result = builder.build();
 
                     return result;
                 }

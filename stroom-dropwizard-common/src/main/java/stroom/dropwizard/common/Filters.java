@@ -35,7 +35,7 @@ public class Filters {
                 .forEach(entry -> {
             final String name = entry.getKey().getName();
             final String url = entry.getKey().getUrlPattern();
-            LOGGER.info("\t{} -> {}", name, url);
+            LOGGER.info("\t{} => {}", name, url);
 
             final FilterHolder filterHolder = new FilterHolder(entry.getValue());
             filterHolder.setName(name);
