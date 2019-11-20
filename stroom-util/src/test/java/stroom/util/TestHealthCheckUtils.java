@@ -20,6 +20,10 @@ class TestHealthCheckUtils {
         root.put("yyy", "abc");
         root.put("abcPassword", "1234");
         root.put("passwordDEF", "1234");
+        root.put("aToken", "1234");
+        root.put("aLongerToken", "1234567890");
+        root.put("aApiKey", "1234");
+        root.put("aLongerApiKey", "1234567890");
 
         subMap.put("xxx", 1);
         subMap.put("yyy", "abc");
@@ -29,11 +33,15 @@ class TestHealthCheckUtils {
 
         HealthCheckUtils.maskPasswords(root);
 
-        Assertions.assertThat(root.get("abcPassword")).isEqualTo("***");
-        Assertions.assertThat(root.get("passwordDEF")).isEqualTo("***");
+        Assertions.assertThat(root.get("abcPassword")).isEqualTo("****");
+        Assertions.assertThat(root.get("passwordDEF")).isEqualTo("****");
+        Assertions.assertThat(root.get("aToken")).isEqualTo("****");
+        Assertions.assertThat(root.get("aLongerToken")).isEqualTo("1234****7890");
+        Assertions.assertThat(root.get("aApiKey")).isEqualTo("****");
+        Assertions.assertThat(root.get("aLongerApiKey")).isEqualTo("1234****7890");
 
-        Assertions.assertThat(((Map)root.get("submap")).get("abcPassword")).isEqualTo("***");
-        Assertions.assertThat(((Map)root.get("submap")).get("passwordDEF")).isEqualTo("***");
+        Assertions.assertThat(((Map)root.get("submap")).get("abcPassword")).isEqualTo("****");
+        Assertions.assertThat(((Map)root.get("submap")).get("passwordDEF")).isEqualTo("****");
 
         LOGGER.info("root map: {}", root);
         System.out.println(root.toString());

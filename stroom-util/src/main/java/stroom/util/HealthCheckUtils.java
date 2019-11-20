@@ -15,6 +15,7 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class HealthCheckUtils {
@@ -97,16 +98,33 @@ public class HealthCheckUtils {
     }
 
     /**
-     * Replaces any values with '***' if the key is a string and contains 'password'
+     * Replaces any values with '***' if the key is a string and contains 'password' or 'apikey' or 'token'
      */
     public static void maskPasswords(final Map<String, Object> map) {
         map.entrySet().forEach(entry -> {
             String key = entry.getKey();
-            if (key.toLowerCase().contains("password") && entry.getValue() instanceof String) {
-                LOGGER.debug("Masking entry with key {}", key);
-                map.put(key, "***");
+            if (entry.getValue() instanceof String) {
+                if (key.toLowerCase().contains("password")) {
+                    LOGGER.debug("Masking entry with key {}", key);
+                    map.put(key, "****");
+                } else if (key.toLowerCase().contains("apikey") || key.toLowerCase().contains("token")) {
+                    LOGGER.debug("Masking entry with key {}", key);
+                    String oldValue = (String) entry.getValue();
+                    if (oldValue.length() <= 8) {
+                        map.put(key, "****");
+                    } else {
+                        String newValue = oldValue.substring(0, 4) + "****" + oldValue.substring(oldValue.length() - 4);
+                        map.put(key, newValue);
+                    }
+                }
             } else if (entry.getValue() instanceof Map) {
                 maskPasswords((Map<String, Object>) entry.getValue());
+            } else if (entry.getValue() instanceof List) {
+                for (Object item : (List<Object>)entry.getValue()) {
+                    if (item instanceof Map) {
+                        maskPasswords((Map<String, Object>) item);
+                    }
+                }
             }
         });
     }
