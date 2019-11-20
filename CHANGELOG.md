@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v7.0-beta.8] - 2019-11-20
+
+* Change precedence order for config properties. YAML > database > default. Change UI to show effective value. Add hot loading of YAML file changes.
+
 * Issue **#1322** : Stroom now asks if you really want to leave site when stepping items are dirty. Also fixed `Save` and `Save All` menu items and dashboard param changes now correctly make a dashboard dirty.
 
 * Issue **#1320** : Fixed formatting of XML where trailing spaces were being removed from content surrounded by start and end tags (data content) which should not happen. 
@@ -1850,7 +1854,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.8...HEAD
+[v7.0-beta.8]: https://github.com/gchq/stroom/compare/v7.0-beta.7...v7.0-beta.8
 [v7.0-beta.7]: https://github.com/gchq/stroom/compare/v7.0-beta.6...v7.0-beta.7
 [v7.0-beta.6]: https://github.com/gchq/stroom/compare/v7.0-beta.5...v7.0-beta.6
 [v7.0-beta.5]: https://github.com/gchq/stroom/compare/v7.0-beta.4...v7.0-beta.5
