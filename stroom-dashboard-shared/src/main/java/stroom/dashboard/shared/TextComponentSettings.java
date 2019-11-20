@@ -24,12 +24,26 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "text", propOrder = {"tableId", "pipeline", "showAsHtml"})
+@XmlType(name = "text", propOrder = {"tableId", "streamIdField", "partNoField", "recordNoField", "lineFromField", "colFromField", "lineToField", "colToField", "pipeline", "showAsHtml"})
 public class TextComponentSettings extends ComponentSettings {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "tableId")
     private String tableId;
+    @XmlElement(name = "streamIdField")
+    private Field streamIdField;
+    @XmlElement(name = "partNoField")
+    private Field partNoField;
+    @XmlElement(name = "recordNoField")
+    private Field recordNoField;
+    @XmlElement(name = "lineFromField")
+    private Field lineFromField;
+    @XmlElement(name = "colFromField")
+    private Field colFromField;
+    @XmlElement(name = "lineToField")
+    private Field lineToField;
+    @XmlElement(name = "colToField")
+    private Field colToField;
     @XmlElement(name = "pipeline")
     private DocRef pipeline;
     @XmlElement(name = "showAsHtml")
@@ -45,6 +59,62 @@ public class TextComponentSettings extends ComponentSettings {
 
     public void setTableId(final String tableId) {
         this.tableId = tableId;
+    }
+
+    public Field getStreamIdField() {
+        return streamIdField;
+    }
+
+    public void setStreamIdField(final Field streamIdField) {
+        this.streamIdField = streamIdField;
+    }
+
+    public Field getPartNoField() {
+        return partNoField;
+    }
+
+    public void setPartNoField(final Field partNoField) {
+        this.partNoField = partNoField;
+    }
+
+    public Field getRecordNoField() {
+        return recordNoField;
+    }
+
+    public void setRecordNoField(final Field recordNoField) {
+        this.recordNoField = recordNoField;
+    }
+
+    public Field getLineFromField() {
+        return lineFromField;
+    }
+
+    public void setLineFromField(final Field lineFromField) {
+        this.lineFromField = lineFromField;
+    }
+
+    public Field getColFromField() {
+        return colFromField;
+    }
+
+    public void setColFromField(final Field colFromField) {
+        this.colFromField = colFromField;
+    }
+
+    public Field getLineToField() {
+        return lineToField;
+    }
+
+    public void setLineToField(final Field lineToField) {
+        this.lineToField = lineToField;
+    }
+
+    public Field getColToField() {
+        return colToField;
+    }
+
+    public void setColToField(final Field colToField) {
+        this.colToField = colToField;
     }
 
     public DocRef getPipeline() {

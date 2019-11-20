@@ -18,11 +18,13 @@ package stroom.dashboard.client.text;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.client.main.BasicSettingsTabPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.shared.PipelineEntity;
@@ -30,11 +32,13 @@ import stroom.query.api.v2.DocRef;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.EqualsBuilder;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class BasicTextSettingsPresenter
-        extends BasicSettingsTabPresenter<BasicTextSettingsPresenter.BasicTextSettingsView> {
+        extends BasicSettingsTabPresenter<BasicTextSettingsPresenter.BasicTextSettingsView> implements BasicTextSettingsUiHandlers {
     private final EntityDropDownPresenter pipelinePresenter;
+    private List<Component> tableList;
 
     @Inject
     public BasicTextSettingsPresenter(final EventBus eventBus, final BasicTextSettingsView view,
@@ -46,10 +50,45 @@ public class BasicTextSettingsPresenter
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         view.setPipelineView(pipelinePresenter.getView());
+        view.setUiHandlers(this);
     }
 
     private void setTableList(final List<Component> list) {
+        this.tableList = list;
         getView().setTableList(list);
+    }
+
+    @Override
+    public void onTableChange() {
+        updateFieldNames(getView().getTable());
+    }
+
+    private void updateFieldNames(final Component component) {
+        final List<Field> fields = new ArrayList<>();
+
+        if (component == null) {
+            if (tableList != null) {
+                tableList.forEach(this::addFieldNames);
+            }
+        } else {
+            addFieldNames(component);
+        }
+
+        getView().setFields(fields);
+    }
+
+    private void addFieldNames(final Component component) {
+        if (component instanceof TablePresenter) {
+            final TablePresenter tablePresenter = (TablePresenter) component;
+            final List<Field> fields = tablePresenter.getSettings().getFields();
+            if (fields != null && fields.size() > 0) {
+                for (final Field field : fields) {
+                    if (!field.isSpecial()) {
+                        fields.add(field);
+                    }
+                }
+            }
+        }
     }
 
     private DocRef getPipeline() {
@@ -77,6 +116,18 @@ public class BasicTextSettingsPresenter
 
         final TextComponentSettings settings = (TextComponentSettings) componentData.getSettings();
         setTableId(settings.getTableId());
+
+//        // Not sure we need to do this.
+//        updateFieldNames(getView().getTable());
+
+        getView().setStreamIdField(settings.getStreamIdField());
+        getView().setPartNoField(settings.getPartNoField());
+        getView().setRecordNoField(settings.getRecordNoField());
+        getView().setLineFromField(settings.getLineFromField());
+        getView().setColFromField(settings.getColFromField());
+        getView().setLineToField(settings.getLineToField());
+        getView().setColToField(settings.getColToField());
+
         setPipeline(settings.getPipeline());
         setShowAsHtml(settings.isShowAsHtml());
     }
@@ -87,6 +138,15 @@ public class BasicTextSettingsPresenter
 
         final TextComponentSettings settings = (TextComponentSettings) componentData.getSettings();
         settings.setTableId(getTableId());
+
+        settings.setStreamIdField(getView().getStreamIdField());
+        settings.setPartNoField(getView().getPartNoField());
+        settings.setRecordNoField(getView().getRecordNoField());
+        settings.setLineFromField(getView().getLineFromField());
+        settings.setColFromField(getView().getColFromField());
+        settings.setLineToField(getView().getLineToField());
+        settings.setColToField(getView().getColToField());
+
         settings.setPipeline(getPipeline());
         settings.setShowAsHtml(isShowAsHtml());
     }
@@ -120,12 +180,44 @@ public class BasicTextSettingsPresenter
         return !builder.isEquals();
     }
 
-    public interface BasicTextSettingsView extends BasicSettingsTabPresenter.SettingsView {
+    public interface BasicTextSettingsView extends
+            BasicSettingsTabPresenter.SettingsView,
+            HasUiHandlers<BasicTextSettingsUiHandlers> {
         void setTableList(List<Component> tableList);
 
         Component getTable();
 
         void setTable(Component table);
+
+        void setFields(List<Field> fields);
+
+        Field getStreamIdField();
+
+        void setStreamIdField(Field field);
+
+        Field getPartNoField();
+
+        void setPartNoField(Field field);
+
+        Field getRecordNoField();
+
+        void setRecordNoField(Field field);
+
+        Field getLineFromField();
+
+        void setLineFromField(Field field);
+
+        Field getColFromField();
+
+        void setColFromField(Field field);
+
+        Field getLineToField();
+
+        void setLineToField(Field field);
+
+        Field getColToField();
+
+        void setColToField(Field field);
 
         void setPipelineView(View view);
 

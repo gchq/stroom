@@ -14,20 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.dashboard.client.text;
 
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
-import stroom.dashboard.shared.Field;
+import com.gwtplatform.mvp.client.UiHandlers;
 
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class TableResult {
-    Field[] fields;
-    Row[] rows;
-    OffsetRange resultRange;
-    int totalResults;
-    String error;
-
-    public TableResult() {
-    }
+public interface BasicTextSettingsUiHandlers extends UiHandlers {
+    void onTableChange();
 }

@@ -73,6 +73,7 @@ public class SearchResponseMapper {
             final stroom.query.api.v2.TableResult tableResult = (stroom.query.api.v2.TableResult) result;
             final TableResult copy = new TableResult();
 
+            copy.setFields(tableResult.getFields());
             copy.setRows(tableResult.getRows());
             if (tableResult.getResultRange() != null) {
                 copy.setResultRange(new OffsetRange<>(tableResult.getResultRange().getOffset().intValue(), tableResult.getResultRange().getLength().intValue()));

@@ -29,9 +29,12 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.Components;
+import stroom.dashboard.client.table.Row;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.IndexConstants;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -243,12 +246,14 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         boolean updating = false;
 
         if (tablePresenter != null) {
-            final String streamId = tablePresenter.getSelectedStreamId();
-            final String eventId = tablePresenter.getSelectedEventId();
+            final List<Field> fields = tablePresenter.getCurrentFields();
+            final List<Row> selection = tablePresenter.getSelectedRows();
+            if (selection != null && selection.size() > 0) {
+                // Just use the first row.
+                final Row selected = selection.get(0);
+                currentStreamId = getLong(textSettings.getStreamIdField(), fields, selected);
+                currentEventId = getLong(textSettings.getRecordNoField(), fields, selected);
 
-            if (streamId != null && eventId != null) {
-                currentStreamId = getLong(streamId);
-                currentEventId = getLong(eventId);
                 currentHighlightStrings = tablePresenter.getHighlights();
 
                 if (currentStreamId != null && currentEventId != null) {
@@ -282,6 +287,29 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         if (!updating) {
             showData("", null, null, isHtml);
         }
+    }
+
+    private Long getLong(final Field field, List<Field> fields, final Row row) {
+        if (field != null && fields != null && row != null) {
+            int index = fields.indexOf(field);
+
+            if (index == -1 && field.getName() != null) {
+                // Try matching on name alone.
+                for (int i = 0; i < fields.size(); i++) {
+                    if (field.getName().equals(fields.get(i).getName())) {
+                        index = i;
+                        break;
+                    }
+                }
+            }
+
+            if (index != -1) {
+                if (row.values.length > index) {
+                    return getLong(row.values[index]);
+                }
+            }
+        }
+        return null;
     }
 
     private Long getLong(final String string) {
@@ -347,9 +375,16 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        super.read(componentData);
+    public void read(final ComponentConfig componentConfig) {
+        super.read(componentConfig);
         textSettings = getSettings();
+
+        if (textSettings.getStreamIdField() == null) {
+            textSettings.setStreamIdField(new Field(IndexConstants.STREAM_ID));
+        }
+        if (textSettings.getRecordNoField() == null) {
+            textSettings.setRecordNoField(new Field(IndexConstants.EVENT_ID));
+        }
     }
 
     @Override
@@ -378,10 +413,10 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     private TextComponentSettings getSettings() {
-        ComponentSettings settings = getComponentData().getSettings();
+        ComponentSettings settings = getComponentConfig().getSettings();
         if (!(settings instanceof TextComponentSettings)) {
             settings = createSettings();
-            getComponentData().setSettings(settings);
+            getComponentConfig().setSettings(settings);
         }
 
         return (TextComponentSettings) settings;

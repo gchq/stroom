@@ -26,9 +26,10 @@ import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.View;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.text.BasicTextSettingsPresenter.BasicTextSettingsView;
+import stroom.dashboard.shared.Field;
 import stroom.item.client.ItemListBox;
 import stroom.util.shared.HasDisplayValue;
 import stroom.widget.tickbox.client.view.TickBox;
@@ -36,8 +37,9 @@ import stroom.widget.tickbox.client.view.TickBox;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class BasicTextSettingsViewImpl extends ViewImpl implements BasicTextSettingsView {
+public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSettingsUiHandlers> implements BasicTextSettingsView {
     private static final HasDisplayValue ANY = () -> "Any";
+    private static final HasDisplayValue NONE = () -> "";
 
     private final Widget widget;
 
@@ -48,6 +50,20 @@ public class BasicTextSettingsViewImpl extends ViewImpl implements BasicTextSett
     @UiField
     ItemListBox<HasDisplayValue> table;
     @UiField
+    ItemListBox<HasDisplayValue> streamIdField;
+    @UiField
+    ItemListBox<HasDisplayValue> partNoField;
+    @UiField
+    ItemListBox<HasDisplayValue> recordNoField;
+    @UiField
+    ItemListBox<HasDisplayValue> lineFromField;
+    @UiField
+    ItemListBox<HasDisplayValue> colFromField;
+    @UiField
+    ItemListBox<HasDisplayValue> lineToField;
+    @UiField
+    ItemListBox<HasDisplayValue> colToField;
+    @UiField
     SimplePanel pipeline;
     @UiField
     TickBox showAsHtml;
@@ -55,6 +71,11 @@ public class BasicTextSettingsViewImpl extends ViewImpl implements BasicTextSett
     @Inject
     public BasicTextSettingsViewImpl(final Binder binder) {
         widget = binder.createAndBindUi(this);
+        table.addSelectionHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onTableChange();
+            }
+        });
     }
 
     @Override
@@ -106,6 +127,103 @@ public class BasicTextSettingsViewImpl extends ViewImpl implements BasicTextSett
         } else {
             this.table.setSelectedItem(table);
         }
+    }
+
+    @Override
+    public void setFields(final List<Field> fields) {
+        setFieldNames(fields, streamIdField);
+        setFieldNames(fields, partNoField);
+        setFieldNames(fields, recordNoField);
+        setFieldNames(fields, lineFromField);
+        setFieldNames(fields, colFromField);
+        setFieldNames(fields, lineToField);
+        setFieldNames(fields, colToField);
+    }
+
+    private void setFieldNames(final List<Field> fields, final ItemListBox<HasDisplayValue> ctrl) {
+        final HasDisplayValue selected = ctrl.getSelectedItem();
+        ctrl.clear();
+        ctrl.addItem(NONE);
+        final List<HasDisplayValue> newList = fields.stream().map(e -> (HasDisplayValue) e).collect(Collectors.toList());
+        ctrl.addItems(newList);
+        ctrl.setSelectedItem(selected);
+    }
+
+    @Override
+    public Field getStreamIdField() {
+        return getField(streamIdField);
+    }
+
+    @Override
+    public void setStreamIdField(final Field field) {
+        streamIdField.setSelectedItem(field);
+    }
+
+    @Override
+    public Field getPartNoField() {
+        return getField(partNoField);
+    }
+
+    @Override
+    public void setPartNoField(final Field field) {
+        partNoField.setSelectedItem(field);
+    }
+
+    @Override
+    public Field getRecordNoField() {
+        return getField(recordNoField);
+    }
+
+    @Override
+    public void setRecordNoField(final Field field) {
+        recordNoField.setSelectedItem(field);
+    }
+
+    @Override
+    public Field getLineFromField() {
+        return getField(lineFromField);
+    }
+
+    @Override
+    public void setLineFromField(final Field field) {
+        lineFromField.setSelectedItem(field);
+    }
+
+    @Override
+    public Field getColFromField() {
+        return getField(colFromField);
+    }
+
+    @Override
+    public void setColFromField(final Field field) {
+        colFromField.setSelectedItem(field);
+    }
+
+    @Override
+    public Field getLineToField() {
+        return getField(lineToField);
+    }
+
+    @Override
+    public void setLineToField(final Field field) {
+        lineToField.setSelectedItem(field);
+    }
+
+    @Override
+    public Field getColToField() {
+        return getField(colToField);
+    }
+
+    @Override
+    public void setColToField(final Field field) {
+        colToField.setSelectedItem(field);
+    }
+
+    private Field getField(final ItemListBox<HasDisplayValue> ctrl) {
+        if (ctrl.getSelectedItem() == null || NONE.equals(ctrl.getSelectedItem())) {
+            return null;
+        }
+        return (Field) ctrl.getSelectedItem();
     }
 
     @Override

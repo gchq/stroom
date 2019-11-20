@@ -16,6 +16,7 @@
 
 package stroom.dashboard.server;
 
+import stroom.query.api.v2.Field;
 import stroom.query.api.v2.Row;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
@@ -35,6 +36,9 @@ public class TableResult implements ComponentResult {
     private static final long serialVersionUID = -2964122512841756795L;
 
     @XmlElement
+    private List<Field> fields;
+
+    @XmlElement
     private List<Row> rows;
 
     @XmlElement
@@ -48,6 +52,14 @@ public class TableResult implements ComponentResult {
 
     public TableResult() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    public List<Field> getFields() {
+        return fields;
+    }
+
+    public void setFields(final List<Field> fields) {
+        this.fields = fields;
     }
 
     public List<Row> getRows() {

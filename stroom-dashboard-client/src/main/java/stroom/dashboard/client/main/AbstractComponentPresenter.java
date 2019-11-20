@@ -40,7 +40,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     private final Provider<?> settingsPresenterProvider;
     private TabLayout tabLayout;
     private Components components;
-    private ComponentConfig componentData;
+    private ComponentConfig componentConfig;
     private TabConfig tabConfig;
     private SettingsPresenter settingsPresenter;
 
@@ -66,24 +66,24 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        this.componentData = componentData;
+    public void read(final ComponentConfig componentConfig) {
+        this.componentConfig = componentConfig;
     }
 
     @Override
-    public void write(final ComponentConfig componentData) {
-        componentData.setType(this.componentData.getType());
-        componentData.setId(this.componentData.getId());
-        componentData.setName(this.componentData.getName());
-        componentData.setSettings(this.componentData.getSettings());
+    public void write(final ComponentConfig componentConfig) {
+        componentConfig.setType(this.componentConfig.getType());
+        componentConfig.setId(this.componentConfig.getId());
+        componentConfig.setName(this.componentConfig.getName());
+        componentConfig.setSettings(this.componentConfig.getSettings());
         if (settingsPresenter != null) {
-            settingsPresenter.write(componentData);
+            settingsPresenter.write(componentConfig);
         }
     }
 
     @Override
-    public ComponentConfig getComponentData() {
-        return componentData;
+    public ComponentConfig getComponentConfig() {
+        return componentConfig;
     }
 
     @Override
@@ -97,8 +97,8 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 if (ok) {
                     if (settingsPresenter.validate()) {
-                        final boolean dirty = settingsPresenter.isDirty(componentData);
-                        settingsPresenter.write(componentData);
+                        final boolean dirty = settingsPresenter.isDirty(componentConfig);
+                        settingsPresenter.write(componentConfig);
 
                         if (dirty) {
                             changeSettings();
@@ -118,7 +118,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
         };
 
         settingsPresenter.setComponents(components);
-        settingsPresenter.read(componentData);
+        settingsPresenter.read(componentConfig);
 
         final PopupSize popupSize = new PopupSize(400, 300, true);
         ShowPopupEvent.fire(this, settingsPresenter, PopupType.OK_CANCEL_DIALOG, popupSize, "Settings", uiHandlers);
@@ -150,12 +150,12 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
 
     @Override
     public String getId() {
-        return componentData.getId();
+        return componentConfig.getId();
     }
 
     @Override
     public String getDisplayValue() {
-        return componentData.getName() + " (" + componentData.getId() + ")";
+        return componentConfig.getName() + " (" + componentConfig.getId() + ")";
     }
 
     @Override
@@ -183,7 +183,7 @@ public abstract class AbstractComponentPresenter<V extends View> extends MyPrese
 
     @Override
     public String getLabel() {
-        return componentData.getName();
+        return componentConfig.getName();
     }
 
     @Override

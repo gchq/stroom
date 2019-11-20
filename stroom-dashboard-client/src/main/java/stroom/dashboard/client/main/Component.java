@@ -31,7 +31,7 @@ public interface Component extends TabData, Layer, HasDisplayValue {
 
     ComponentType getType();
 
-    ComponentConfig getComponentData();
+    ComponentConfig getComponentConfig();
 
     /**
      * Link components together.

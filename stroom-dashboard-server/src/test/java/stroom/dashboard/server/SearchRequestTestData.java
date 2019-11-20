@@ -31,7 +31,6 @@ import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.TimeZone;
 import stroom.entity.shared.SharedDocRef;
 import stroom.query.api.v2.DocRef;
-
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -62,15 +61,16 @@ public class SearchRequestTestData {
         expressionOperator.addOperator(new ExpressionOperator.Builder(ExpressionOperator.Op.AND).build());
         expressionOperator.addTerm("field2", ExpressionTerm.Condition.BETWEEN, "value2");
 
+        final String componentId = "componentSettingsMapKey";
         TableComponentSettings tableSettings = new TableComponentSettings();
         tableSettings.setQueryId("someQueryId");
-        tableSettings.addField(new Field("name1", "expression1",
+        tableSettings.addField(new Field("1", componentId, "name1", "expression1",
                 new Sort(1, Sort.SortDirection.ASCENDING),
                 new Filter("include1", "exclude1"),
                 new Format(
                         Format.Type.NUMBER,
                         new NumberFormatSettings(1, false)), 1, 200, true));
-        tableSettings.addField(new Field("name2", "expression2",
+        tableSettings.addField(new Field("2", componentId, "name2", "expression2",
                 new Sort(2, Sort.SortDirection.DESCENDING),
                 new Filter("include2", "exclude2"),
                 new Format(
@@ -83,7 +83,7 @@ public class SearchRequestTestData {
         tableSettings.setShowDetail(false);
 
         Map<String, ComponentSettings> componentSettingsMap = new HashMap<>();
-        componentSettingsMap.put("componentSettingsMapKey", tableSettings);
+        componentSettingsMap.put(componentId, tableSettings);
 
         Map<String, String> paramMap = new HashMap<>();
         paramMap.put("param1", "val1");

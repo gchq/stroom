@@ -21,9 +21,9 @@ import jsinterop.annotations.JsType;
 
 @JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
 public class Row {
-    String groupKey;
-    String[] values;
-    int depth;
+    public String groupKey;
+    public String[] values;
+    public int depth;
 
     public Row() {
     }

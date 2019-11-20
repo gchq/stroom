@@ -205,7 +205,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                 final QueryPresenter queryPresenter = (QueryPresenter) component;
                 currentSearchModel = queryPresenter.getSearchModel();
                 if (currentSearchModel != null) {
-                    currentSearchModel.addComponent(getComponentData().getId(), this);
+                    currentSearchModel.addComponent(getComponentConfig().getId(), this);
                 }
             }
         }
@@ -252,7 +252,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         if (currentSearchModel != null) {
             // Remove this component from the list of components the search
             // model expects to update.
-            currentSearchModel.removeComponent(getComponentData().getId());
+            currentSearchModel.removeComponent(getComponentConfig().getId());
             currentSearchModel = null;
         }
     }
@@ -502,8 +502,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        super.read(componentData);
+    public void read(final ComponentConfig componentConfig) {
+        super.read(componentConfig);
 
         visSettings = getSettings();
         visResultRequest.setVisDashboardSettings(visSettings);
@@ -542,10 +542,10 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
     @Override
     public VisComponentSettings getSettings() {
-        ComponentSettings settings = getComponentData().getSettings();
+        ComponentSettings settings = getComponentConfig().getSettings();
         if (!(settings instanceof VisComponentSettings)) {
             settings = createSettings();
-            getComponentData().setSettings(settings);
+            getComponentConfig().setSettings(settings);
         }
 
         return (VisComponentSettings) settings;

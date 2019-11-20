@@ -21,13 +21,10 @@ import com.google.gwt.cell.client.ValueUpdater;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.Format.Type;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
@@ -38,17 +35,15 @@ import java.util.Set;
 class TableCell extends AbstractCell<Row> {
     private static final Set<String> ENABLED_EVENTS = Collections.singleton("click");
 
-    private final HasHandlers hasHandlers;
+    private final TablePresenter tablePresenter;
     private final MultiSelectionModel<Row> selectionModel;
     private final Field field;
-    private final int pos;
 
-    TableCell(final HasHandlers hasHandlers, final MultiSelectionModel<Row> selectionModel, final Field field, final int pos) {
+    TableCell(final TablePresenter tablePresenter, final MultiSelectionModel<Row> selectionModel, final Field field, final int pos) {
         super(ENABLED_EVENTS);
-        this.hasHandlers = hasHandlers;
+        this.tablePresenter = tablePresenter;
         this.selectionModel = selectionModel;
         this.field = field;
-        this.pos = pos;
     }
 
     @Override
@@ -70,7 +65,7 @@ class TableCell extends AbstractCell<Row> {
                     final Hyperlink hyperlink = Hyperlink.create(link);
                     if (hyperlink != null) {
                         handled = true;
-                        HyperlinkEvent.fire(hasHandlers, hyperlink);
+                        HyperlinkEvent.fire(tablePresenter, hyperlink);
                     }
                 }
             }
@@ -100,7 +95,11 @@ class TableCell extends AbstractCell<Row> {
         if (row != null) {
             final String[] values = row.values;
             if (values != null) {
-                return values[pos];
+                final List<Field> fields = tablePresenter.getCurrentFields();
+                final int index = fields.indexOf(field);
+                if (index != -1 && values.length > index) {
+                    return values[index];
+                }
             }
         }
         return null;
@@ -122,7 +121,7 @@ class TableCell extends AbstractCell<Row> {
 //                            sb.appendEscaped(hyperlink.getText());
 //                        }
 //                    } else {
-                        sb.appendEscaped(hyperlink.getText());
+                    sb.appendEscaped(hyperlink.getText());
 //                    }
 
                     sb.appendHtmlConstant("</u>");
