@@ -84,6 +84,7 @@ import stroom.security.server.JWTService;
 import stroom.security.server.SecurityFilter;
 import stroom.security.server.SessionListListener;
 import stroom.security.server.SessionResource;
+import stroom.security.server.UserAppPermissionResource;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.servicediscovery.ServiceDiscovererImpl;
@@ -374,6 +375,7 @@ public class App extends Application<Config> {
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, UserAppPermissionResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SessionResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, FeedStatusResource.class);
 
