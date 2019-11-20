@@ -88,9 +88,9 @@ proxyConfig:
     forwardDestinations:
       - forwardUrl: "https://127.0.0.1/stroom/datafeeddirect"
         sslConfig:
-          keyStorePath: ${HOME}/dev/gchq/stroom-resources/dev-resources/certs/client/client.jks
+          keyStorePath: ../../../stroom-resources/dev-resources/certs/client/client.jks
           keyStorePassword: "password"
-          trustStorePath: ${HOME}/dev/gchq/stroom-resources/dev-resources/certs/certificate-authority/ca.jks
+          trustStorePath: ../../../stroom-resources/dev-resources/certs/certificate-authority/ca.jks
           trustStorePassword: "password"
           hostnameVerificationEnabled: true
       - forwardUrl: "http://127.0.0.1/stroom/datafeed"
@@ -126,10 +126,10 @@ proxyConfig:
       #    keyStorePath: /path/to/file
       #    keyStorePassword: changeit
       #    keyStoreType: JKS
-      keyStorePath: ${HOME}/dev/gchq/stroom-resources/dev-resources/certs/client/client.jks
+      keyStorePath: ../../../stroom-resources/dev-resources/certs/client/client.jks
       keyStorePassword: password
       keyStoreType: JKS
-      trustStorePath: ${HOME}/dev/gchq/stroom-resources/dev-resources/certs/server/ca.jks
+      trustStorePath: ../../../stroom-resources/dev-resources/certs/server/ca.jks
       trustStorePassword: password
       trustStoreType: JKS
       trustSelfSignedCertificates: false
