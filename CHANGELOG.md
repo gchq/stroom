@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0.25] - 2019-11-20
+
+* No Stroom changes for this release but important fixes elsewhere.
 
 ## [v6.0.24] - 2019-11-19
 
