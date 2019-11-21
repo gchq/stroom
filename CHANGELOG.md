@@ -6,12 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix SSL connection failure on remote feed staus check.
+
 * Remove ConfigServlet as the functionality is covered by ProxyConfigHealthCheck.
 
 * Fix password masking in ProxyConfigHealthCheck.
 
 * Change servlet path of ProxyStatusServlet from `/config` to `/status`.
-
 
 
 ## [v7.0-beta.8] - 2019-11-20
