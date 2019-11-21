@@ -28,7 +28,10 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
+import stroom.node.server.StroomPropertyService;
 import stroom.security.server.CertificateAuthenticationFilter;
+import stroom.security.server.ContentSecurityConfig;
+import stroom.security.server.ContentSecurityFilter;
 import stroom.util.config.StroomProperties;
 import stroom.util.logging.StroomLogger;
 import stroom.util.spring.StroomScope;
@@ -72,6 +75,22 @@ public class SecurityConfiguration {
         shiroFilter.getFilterChainDefinitionMap().put("/**/secure/**", "authc, roles[USER]");
         shiroFilter.getFilterChainDefinitionMap().put("/export", "certFilter");
         return (AbstractShiroFilter) shiroFilter.getObject();
+    }
+
+    @Bean(name = "contentSecurityConfig")
+    public ContentSecurityConfig contentSecurityConfig(final StroomPropertyService stroomPropertyService) {
+        final ContentSecurityConfig config = new ContentSecurityConfig();
+        config.setContentSecurityPolicy(stroomPropertyService.getProperty("stroom.security.web.content.securityPolicy"));
+        config.setContentTypeOptions(stroomPropertyService.getProperty("stroom.security.web.content.typeOptions"));
+        config.setFrameOptions(stroomPropertyService.getProperty("stroom.security.web.content.frameOptions"));
+        config.setXssProtection(stroomPropertyService.getProperty("stroom.security.web.content.xssProtection"));
+        return config;
+    }
+
+    @Bean(name = "contentSecurityFilter")
+    public ContentSecurityFilter contentSecurityFilter(
+            final ContentSecurityConfig contentSecurityConfig) {
+        return new ContentSecurityFilter(contentSecurityConfig);
     }
 
     @Bean(name = "mailSender")

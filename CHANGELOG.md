@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1333** : Improved resilience against XSS attacks.
+
 ## [v5.5.11] - 2019-08-01
 
 * Issue **#913** : BREAKING CHANGE - Back port change to FindReplaceFilter to cope with more complex conditions. Find and replacement strings are now Java escaped to allow for `\n` as a new line, therefore all previous find expressions and replacements using '\' must now use `\\`.
