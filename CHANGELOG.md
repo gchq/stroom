@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v7.0-beta.9] - 2019-11-20
+
 * Fix SSL connection failure on remote feed staus check.
 
 * Remove ConfigServlet as the functionality is covered by ProxyConfigHealthCheck.
@@ -1863,7 +1865,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.8...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.9...HEAD
+[v7.0-beta.9]: https://github.com/gchq/stroom/compare/v7.0-beta.8...v7.0-beta.9
 [v7.0-beta.8]: https://github.com/gchq/stroom/compare/v7.0-beta.7...v7.0-beta.8
 [v7.0-beta.7]: https://github.com/gchq/stroom/compare/v7.0-beta.6...v7.0-beta.7
 [v7.0-beta.6]: https://github.com/gchq/stroom/compare/v7.0-beta.5...v7.0-beta.6
