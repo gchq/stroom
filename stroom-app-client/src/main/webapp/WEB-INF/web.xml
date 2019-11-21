@@ -197,6 +197,10 @@
   <!-- Set the session timeout to 5 min .... system implements keep alive. -->
   <session-config>
     <session-timeout>5</session-timeout>
+    <cookie-config>
+      <http-only>true</http-only>
+      <!--<secure>true</secure>-->
+    </cookie-config>
   </session-config>
 
   <!-- Default page to serve -->

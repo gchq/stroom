@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1335** : Made session cookie `HttpOnly`.
+
 * Issue **#1333** : Improved resilience against XSS attacks.
 
 ## [v5.5.11] - 2019-08-01
