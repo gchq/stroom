@@ -6,9 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1341** : Added XSRF protection to GWT PRC requests.
+
+
 ## [v6.0.25] - 2019-11-20
 
 * No Stroom changes for this release but important fixes elsewhere.
+
 
 ## [v6.0.24] - 2019-11-19
 

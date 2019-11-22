@@ -16,7 +16,6 @@
 
 package stroom.dispatch.server;
 
-import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import com.google.gwt.user.server.rpc.SerializationPolicy;
 import com.google.gwt.user.server.rpc.SerializationPolicyLoader;
 import org.slf4j.Logger;
@@ -51,7 +50,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Component(DispatchServiceImpl.BEAN_NAME)
-public class DispatchServiceImpl extends RemoteServiceServlet implements DispatchService {
+public class DispatchServiceImpl extends XsrfProtectedServiceServlet implements DispatchService {
     public static final String BEAN_NAME = "dispatchService";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DispatchServiceImpl.class);
