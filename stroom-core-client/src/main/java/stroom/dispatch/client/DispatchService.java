@@ -17,9 +17,11 @@
 package stroom.dispatch.client;
 
 import com.google.gwt.user.client.rpc.RemoteService;
+import com.google.gwt.user.server.rpc.XsrfProtect;
 import stroom.dispatch.shared.Action;
 import stroom.util.shared.SharedObject;
 
 public interface DispatchService extends RemoteService {
+    @XsrfProtect
     <R extends SharedObject> R exec(Action<R> action) throws RuntimeException;
 }

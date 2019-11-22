@@ -21,8 +21,12 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.google.gwt.user.client.rpc.HasRpcToken;
+import com.google.gwt.user.client.rpc.RpcTokenException;
 import com.google.gwt.user.client.rpc.ServiceDefTarget;
 import com.google.gwt.user.client.rpc.StatusCodeException;
+import com.google.gwt.user.client.rpc.XsrfToken;
+import com.google.gwt.user.client.rpc.XsrfTokenServiceAsync;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
@@ -39,18 +43,24 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
 
     private final EventBus eventBus;
     private final DispatchServiceAsync dispatchService;
+    private final XsrfTokenServiceAsync xsrf;
     private final String applicationInstanceId;
+
+    private XsrfToken xsrfToken;
 
     @Inject
     public ClientDispatchAsyncImpl(final EventBus eventBus,
-                                   final DispatchServiceAsync dispatchService) {
+                                   final DispatchServiceAsync dispatchService,
+                                   final XsrfTokenServiceAsync xsrf) {
         this.eventBus = eventBus;
         this.dispatchService = dispatchService;
+        this.xsrf = xsrf;
         this.applicationInstanceId = RandomId.createDiscrimiator();
 
         final String endPointName = GWT.getModuleBaseURL() + "dispatch.rpc";
-        final ServiceDefTarget target = (ServiceDefTarget) dispatchService;
-        target.setServiceEntryPoint(endPointName);
+        ((ServiceDefTarget) dispatchService).setServiceEntryPoint(endPointName);
+
+        ((ServiceDefTarget) xsrf).setServiceEntryPoint(GWT.getModuleBaseURL() + "gwt/xsrf");
     }
 
     @Override
@@ -85,7 +95,57 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
         // Set the default behaviour of the future to show an error.
         future.onFailure(throwable -> AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable, null));
 
-        Scheduler.get().scheduleDeferred(() -> dispatchService.exec(action, new AsyncCallback<R>() {
+        Scheduler.get().scheduleDeferred(() -> getXSRFToken(action, message, showWorking, future));
+
+        return future;
+    }
+
+    private <R extends SharedObject> void getXSRFToken(final Action<R> action,
+                                                       final String message,
+                                                       final boolean showWorking,
+                                                       final FutureImpl<R> future) {
+        if (xsrfToken != null) {
+            ((HasRpcToken) dispatchService).setRpcToken(xsrfToken);
+            ((HasRpcToken) dispatchService).setRpcTokenExceptionHandler(e ->
+                    AlertEvent.fireError(ClientDispatchAsyncImpl.this, e.getMessage(), null));
+            dispatchAsync(action, message, showWorking, future);
+
+        } else {
+            xsrf.getNewXsrfToken(new AsyncCallback<XsrfToken>() {
+                public void onSuccess(XsrfToken token) {
+                    xsrfToken = token;
+
+                    // make XSRF protected RPC call
+                    ((HasRpcToken) dispatchService).setRpcToken(xsrfToken);
+                    ((HasRpcToken) dispatchService).setRpcTokenExceptionHandler(e ->
+                            AlertEvent.fireError(ClientDispatchAsyncImpl.this, e.getMessage(), null));
+                    dispatchAsync(action, message, showWorking, future);
+                }
+
+                public void onFailure(Throwable caught) {
+                    AlertEvent.fireError(ClientDispatchAsyncImpl.this, caught.getMessage(), null);
+
+                    try {
+                        throw caught;
+                    } catch (RpcTokenException e) {
+                        // Can be thrown for several reasons:
+                        //   - duplicate session cookie, which may be a sign of a cookie
+                        //     overwrite attack
+                        //   - XSRF token cannot be generated because session cookie isn't
+                        //     present
+                    } catch (Throwable e) {
+                        // unexpected
+                    }
+                }
+            });
+        }
+    }
+
+    private <R extends SharedObject> void dispatchAsync(final Action<R> action,
+                                                        final String message,
+                                                        final boolean showWorking,
+                                                        final FutureImpl<R> future) {
+        dispatchService.exec(action, new AsyncCallback<R>() {
             @Override
             public void onSuccess(final R result) {
                 if (showWorking) {
@@ -141,9 +201,7 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
                     AlertEvent.fireErrorFromException(ClientDispatchAsyncImpl.this, throwable2, null);
                 }
             }
-        }));
-
-        return future;
+        });
     }
 
     private void incrementTaskCount(final String message) {

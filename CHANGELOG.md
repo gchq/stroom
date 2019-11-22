@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1341** : Added XSRF protection to GWT PRC requests.
+
 * Issue **#1335** : Made session cookie `HttpOnly`.
 
 * Issue **#1333** : Improved resilience against XSS attacks.

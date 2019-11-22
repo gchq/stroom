@@ -27,6 +27,10 @@
     <param-name>log4jRefreshInterval</param-name>
     <param-value>10000</param-value>
   </context-param>
+  <context-param>
+    <param-name>gwt.xsrf.session_cookie_name</param-name>
+    <param-value>JSESSIONID</param-value>
+  </context-param>
 
   <!-- Spring Security filter -->
   <filter>
@@ -143,6 +147,13 @@
     </init-param>
     <load-on-startup>3</load-on-startup>
   </servlet>
+  <!-- GWT RPC XSRF -->
+  <servlet>
+    <servlet-name>xsrf</servlet-name>
+    <servlet-class>
+      com.google.gwt.user.server.rpc.XsrfTokenServiceServlet
+    </servlet-class>
+  </servlet>
 
   <!-- Deal with requests to the dispatch servlet -->
   <servlet-mapping>
@@ -192,6 +203,10 @@
   <servlet-mapping>
     <servlet-name>spring</servlet-name>
     <url-pattern>/gwtRequest</url-pattern>
+  </servlet-mapping>
+  <servlet-mapping>
+    <servlet-name>xsrf</servlet-name>
+    <url-pattern>/stroom/gwt/xsrf</url-pattern>
   </servlet-mapping>
 
   <!-- Set the session timeout to 5 min .... system implements keep alive. -->

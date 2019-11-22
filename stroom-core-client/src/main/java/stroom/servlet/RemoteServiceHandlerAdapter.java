@@ -20,7 +20,7 @@ import com.google.gwt.user.client.rpc.IncompatibleRemoteServiceException;
 import com.google.gwt.user.client.rpc.SerializationException;
 import com.google.gwt.user.server.rpc.RPC;
 import com.google.gwt.user.server.rpc.RPCRequest;
-import com.google.gwt.user.server.rpc.RemoteServiceServlet;
+import com.google.gwt.user.server.rpc.XsrfProtectedServiceServlet;
 import org.springframework.stereotype.Component;
 import org.springframework.web.HttpRequestHandler;
 import org.springframework.web.context.ServletContextAware;
@@ -39,7 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Enumeration;
 
 @Component
-public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements HandlerAdapter, ServletContextAware {
+public class RemoteServiceHandlerAdapter extends XsrfProtectedServiceServlet implements HandlerAdapter, ServletContextAware {
     private static final StroomLogger LOGGER = StroomLogger.getLogger(RemoteServiceHandlerAdapter.class);
     private static final long serialVersionUID = -7421136737990135393L;
     private static ThreadLocal<Object> handlerHolder = new ThreadLocal<>();
@@ -54,13 +54,13 @@ public class RemoteServiceHandlerAdapter extends RemoteServiceServlet implements
     }
 
     @Override
-    public ModelAndView handle(final HttpServletRequest request, final HttpServletResponse response,
-            final Object handler) throws Exception {
+    public ModelAndView handle(final HttpServletRequest request,
+                               final HttpServletResponse response,
+                               final Object handler) throws Exception {
         try {
             if (!ThreadScopeContextHolder.contextExists()) {
                 throw new IllegalStateException("ThreadScopeContext MUST EXIST");
             }
-
 
             httpServletRequestHolder.set(request);
             SessionListListener.setLastRequest(request);
