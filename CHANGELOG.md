@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.12] - 2019-11-22
+
 * Issue **#1341** : Added XSRF protection to GWT PRC requests.
 
 * Issue **#1335** : Made session cookie `HttpOnly`.
@@ -1002,7 +1004,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.11...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.12...HEAD
+[v5.5.12]: https://github.com/gchq/stroom/compare/v5.5.11...v5.5.12
 [v5.5.11]: https://github.com/gchq/stroom/compare/v5.5.10...v5.5.11
 [v5.5.10]: https://github.com/gchq/stroom/compare/v5.5.9...v5.5.10
 [v5.5.9]: https://github.com/gchq/stroom/compare/v5.5.8...v5.5.9
