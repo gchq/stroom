@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.26] - 2019-11-25
+
 * Issue **#1338** : Added new config options to control the maximum size of some caches: `stroom.pipeline.parser.maxPoolSize`, `stroom.pipeline.schema.maxPoolSize`, `stroom.pipeline.schema.maxPoolSize`, `stroom.pipeline.xslt.maxPoolSize`, `stroom.entity.maxCacheSize`, `stroom.referenceData.mapStore.maxCacheSize`.
 
 * Issue **#642** : Downloading query details now ignores hidden fields.
@@ -2006,7 +2009,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.25...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.26...6.0
+[v6.0.26]: https://github.com/gchq/stroom/compare/v6.0.25...v6.0.26
 [v6.0.25]: https://github.com/gchq/stroom/compare/v6.0.24...v6.0.25
 [v6.0.24]: https://github.com/gchq/stroom/compare/v6.0.23...v6.0.24
 [v6.0.23]: https://github.com/gchq/stroom/compare/v6.0.22...v6.0.23
