@@ -58,7 +58,10 @@ public final class MapStoreCache {
         this.internPool = internPool;
         this.securityContext = securityContext;
 
-        final long maximumSize = stroomPropertyService.getLongProperty(MAXIMUM_SIZE_PROPERTY, DEFAULT_MAXIMUM_SIZE);
+        long maximumSize = DEFAULT_MAXIMUM_SIZE;
+        if (stroomPropertyService != null) {
+            stroomPropertyService.getLongProperty(MAXIMUM_SIZE_PROPERTY, DEFAULT_MAXIMUM_SIZE);
+        }
 
         final CacheLoader<MapStoreCacheKey, MapStore> cacheLoader = CacheLoader.from(this::create);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
@@ -66,6 +69,12 @@ public final class MapStoreCache {
                 .expireAfterAccess(1, TimeUnit.HOURS);
         cache = cacheBuilder.build(cacheLoader);
         cacheManager.registerCache("Reference Data - Map Store Cache", cacheBuilder, cache);
+    }
+
+    // Used for testing.
+    MapStoreCache(final CacheManager cacheManager,
+                  final ReferenceDataLoader referenceDataLoader) {
+        this(cacheManager, referenceDataLoader, null, null, null);
     }
 
     public MapStore get(final MapStoreCacheKey key) {
