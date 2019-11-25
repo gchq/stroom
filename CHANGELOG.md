@@ -15,7 +15,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1337** : Fixed issue where downloading large numbers of search results in Excel format was exceeding maximum style count of 64000. 
 
-* Issue **#1341** : Added XSRF protection to GWT PRC requests.
+* Issue **#1341** : Added XSRF protection to GWT RPC requests.
 
 
 ## [v6.0.25] - 2019-11-20
