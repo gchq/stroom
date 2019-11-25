@@ -416,7 +416,7 @@ public class SecurityFilter implements Filter {
                 .path("/authenticate")
                 .queryParam(SCOPE, "openid")
                 .queryParam(RESPONSE_TYPE, "code")
-                .queryParam(CLIENT_ID, "stroom")
+                .queryParam(CLIENT_ID, config.getClientId())
                 .queryParam(REDIRECT_URL, redirectUrl)
                 .queryParam(STATE, state.getId())
                 .queryParam(NONCE, state.getNonce());
