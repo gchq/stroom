@@ -29,8 +29,8 @@ public abstract class AbstractEntityPool<K extends DocumentEntity, V> extends Ab
     private final DocumentPermissionCache documentPermissionCache;
     private final SecurityContext securityContext;
 
-    public AbstractEntityPool(final CacheManager cacheManager, final String name, final DocumentPermissionCache documentPermissionCache, final SecurityContext securityContext) {
-        super(cacheManager, name);
+    public AbstractEntityPool(final CacheManager cacheManager, final String name, final long maximumSize, final DocumentPermissionCache documentPermissionCache, final SecurityContext securityContext) {
+        super(cacheManager, name, maximumSize);
         this.documentPermissionCache = documentPermissionCache;
         this.securityContext = securityContext;
     }

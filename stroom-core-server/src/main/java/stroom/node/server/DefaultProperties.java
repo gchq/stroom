@@ -411,13 +411,7 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
 
-        // PIPELINE PROPERTIES 
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.pipeline.xslt.maxElements")
-                .value("1000000")
-                .description("The maximum number of elements that the XSLT filter will expect to receive before it errors. This protects Stroom from ruinning out of memory in cases where an appropriate XML splitter has not been used in a pipeline.")
-                .editable(true)
-                .build());
+        // PIPELINE PROPERTIES
         list.add(new GlobalProperty.Builder()
                 .name("stroom.pipeline.appender.maxActiveDestinations")
                 .value("100")
@@ -425,10 +419,37 @@ public class DefaultProperties {
                 .editable(true)
                 .build());
         list.add(new GlobalProperty.Builder()
+                .name("stroom.pipeline.parser.maxPoolSize")
+                .value("1000")
+                .description("The maximum size of the parser pool")
+                .editable(true)
+                .requireRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
                 .name("stroom.pipeline.parser.secureProcessing")
                 .value("true")
                 .description("Instructs the implementation to process XML securely. This may set limits on XML constructs to avoid conditions such as denial of service attacks.")
                 .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.pipeline.schema.maxPoolSize")
+                .value("1000")
+                .description("The maximum size of the XML schema pool")
+                .editable(true)
+                .requireRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.pipeline.xslt.maxElements")
+                .value("1000000")
+                .description("The maximum number of elements that the XSLT filter will expect to receive before it errors. This protects Stroom from ruinning out of memory in cases where an appropriate XML splitter has not been used in a pipeline.")
+                .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.pipeline.xslt.maxPoolSize")
+                .value("1000")
+                .description("The maximum size of the XSLT pool")
+                .editable(true)
+                .requireRestart(true)
                 .build());
 
         // MAIN DATA SOURCE 
@@ -699,6 +720,20 @@ public class DefaultProperties {
                 .value("^[A-Z0-9_-]{3,}$")
                 .description("The regex pattern for feed names")
                 .editable(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.entity.maxCacheSize")
+                .value("10000")
+                .description("The maximum size of the entity cache")
+                .editable(true)
+                .requireRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.referenceData.mapStore.maxCacheSize")
+                .value("100")
+                .description("The maximum size of the reference data map store cache")
+                .editable(true)
+                .requireRestart(true)
                 .build());
 
         // Welcome text 
