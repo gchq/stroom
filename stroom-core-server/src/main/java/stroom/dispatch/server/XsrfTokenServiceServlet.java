@@ -17,13 +17,16 @@ package stroom.dispatch.server;
 
 import com.google.gwt.user.client.rpc.XsrfToken;
 import com.google.gwt.user.client.rpc.XsrfTokenService;
-import com.google.gwt.user.server.rpc.RemoteServiceServlet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
-public class XsrfTokenServiceServlet extends RemoteServiceServlet implements XsrfTokenService {
+
+@Component(XsrfTokenServiceServlet.BEAN_NAME)
+public class XsrfTokenServiceServlet extends CustomRemoteServiceServlet implements XsrfTokenService {
+    public static final String BEAN_NAME = "xsrfTokenServiceServlet";
+
     private static final Logger LOGGER = LoggerFactory.getLogger(XsrfTokenServiceServlet.class);
-
 
     /**
      * Generates and returns new XSRF token.

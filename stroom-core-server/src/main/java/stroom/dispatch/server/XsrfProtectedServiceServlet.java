@@ -18,21 +18,42 @@ package stroom.dispatch.server;
 import com.google.gwt.user.client.rpc.RpcToken;
 import com.google.gwt.user.client.rpc.RpcTokenException;
 import com.google.gwt.user.client.rpc.XsrfToken;
+import com.google.gwt.user.server.Util;
 import com.google.gwt.user.server.rpc.AbstractXsrfProtectedServiceServlet;
+import com.google.gwt.user.server.rpc.NoXsrfProtect;
+import com.google.gwt.user.server.rpc.RPCRequest;
+import com.google.gwt.user.server.rpc.XsrfProtect;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 
-public class XsrfProtectedServiceServlet extends AbstractXsrfProtectedServiceServlet {
+public class XsrfProtectedServiceServlet extends CustomRemoteServiceServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(XsrfProtectedServiceServlet.class);
 
+    @Override
+    protected void onAfterRequestDeserialized(final RPCRequest rpcRequest) {
+        if (shouldValidateXsrfToken(rpcRequest.getMethod())) {
+            validateXsrfToken(rpcRequest.getRpcToken(), rpcRequest.getMethod());
+        }
+    }
+
+    /**
+     * Override this method to change default XSRF enforcement logic.
+     *
+     * @param method Method being invoked
+     * @return {@code true} if XSRF token should be verified, {@code false}
+     *         otherwise
+     */
+    private boolean shouldValidateXsrfToken(final Method method) {
+        return Util.isMethodXsrfProtected(method, XsrfProtect.class,
+                NoXsrfProtect.class, RpcToken.class);
+    }
     /**
      * Validates {@link XsrfToken} included with {@link RPCRequest} against XSRF
      * cookie.
      */
-    @Override
-    protected void validateXsrfToken(final RpcToken token, final Method method) throws RpcTokenException {
+    private void validateXsrfToken(final RpcToken token, final Method method) throws RpcTokenException {
         try {
             LOGGER.debug("Validating XSRF token");
             if (token == null) {

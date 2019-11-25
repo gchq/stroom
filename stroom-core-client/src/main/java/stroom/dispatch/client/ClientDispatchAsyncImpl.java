@@ -58,8 +58,8 @@ public class ClientDispatchAsyncImpl implements ClientDispatchAsync, HasHandlers
         this.xsrf = xsrf;
         this.applicationInstanceId = RandomId.createDiscrimiator();
 
-        ((ServiceDefTarget) dispatchService).setServiceEntryPoint(GWT.getModuleBaseURL() + "dispatch.rpc");
-        ((ServiceDefTarget) xsrf).setServiceEntryPoint(GWT.getModuleBaseURL() + "xsrf");
+        ((ServiceDefTarget) dispatchService).setServiceEntryPoint(GWT.getHostPageBaseURL() + "dispatch.rpc");
+        ((ServiceDefTarget) xsrf).setServiceEntryPoint(GWT.getHostPageBaseURL() + "xsrf");
     }
 
     @Override
