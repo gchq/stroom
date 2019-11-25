@@ -19,6 +19,7 @@ package stroom.cache.server;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
+import stroom.node.server.StroomPropertyService;
 import stroom.pool.AbstractPoolCache;
 import stroom.pool.PoolItem;
 import stroom.security.SecurityHelper;
@@ -35,12 +36,19 @@ import javax.inject.Inject;
 @EntityEventHandler(type = XMLSchema.ENTITY_TYPE)
 class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
         implements SchemaPool, EntityEvent.Handler {
+    private static final String MAXIMUM_SIZE_PROPERTY = "stroom.pipeline.schema.maxPoolSize";
+    private static final long DEFAULT_MAXIMUM_SIZE = 1000;
+
     private final SchemaLoader schemaLoader;
     private final SecurityContext securityContext;
 
     @Inject
-    SchemaPoolImpl(final CacheManager cacheManager, final SchemaLoader schemaLoader, final XMLSchemaCache xmlSchemaCache, final SecurityContext securityContext) {
-        super(cacheManager, "Schema Pool");
+    SchemaPoolImpl(final CacheManager cacheManager,
+                   final StroomPropertyService stroomPropertyService,
+                   final SchemaLoader schemaLoader,
+                   final XMLSchemaCache xmlSchemaCache,
+                   final SecurityContext securityContext) {
+        super(cacheManager, "Schema Pool", stroomPropertyService.getLongProperty(MAXIMUM_SIZE_PROPERTY, DEFAULT_MAXIMUM_SIZE));
         this.schemaLoader = schemaLoader;
         this.securityContext = securityContext;
         xmlSchemaCache.addClearHandler(this::clear);

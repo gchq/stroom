@@ -34,20 +34,18 @@ import java.util.concurrent.atomic.AtomicLong;
 public abstract class AbstractPoolCache<K, V> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPoolCache.class);
 
-    private static final int MAX_CACHE_ENTRIES = 1000;
-
     private final LoadingCache<PoolKey<K>, PoolItem<V>> cache;
     private final Map<K, LinkedBlockingDeque<PoolKey<K>>> keyMap = new ConcurrentHashMap<>();
 
     @SuppressWarnings("unchecked")
-    public AbstractPoolCache(final CacheManager cacheManager, final String name) {
+    public AbstractPoolCache(final CacheManager cacheManager, final String name, final long maximumSize) {
         final RemovalListener<PoolKey<K>, PoolItem<V>> removalListener = notification -> destroy(notification.getKey());
         final CacheLoader<PoolKey<K>, PoolItem<V>> cacheLoader = CacheLoader.from(k -> {
             final V value = internalCreateValue(k.getKey());
             return new PoolItem<>(k, value);
         });
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
+                .maximumSize(maximumSize)
                 .expireAfterAccess(10, TimeUnit.MINUTES)
                 .removalListener(removalListener);
         cache = cacheBuilder.build(cacheLoader);

@@ -29,6 +29,7 @@ import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.Clearable;
 import stroom.entity.shared.Entity;
 import stroom.entity.shared.SummaryDataRow;
+import stroom.node.server.StroomPropertyService;
 import stroom.util.cache.CacheManager;
 import stroom.util.cache.CacheUtil;
 
@@ -44,17 +45,24 @@ import java.util.concurrent.TimeUnit;
 public class CachingEntityManager implements StroomEntityManager, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(CachingEntityManager.class);
 
+    private static final String MAXIMUM_SIZE_PROPERTY = "stroom.entity.maxCacheSize";
+    private static final long DEFAULT_MAXIMUM_SIZE = 10000;
+
     private final StroomEntityManager stroomEntityManager;
 
     private Cache<Object, Optional<Object>> cache;
 
     @Inject
     @SuppressWarnings("unchecked")
-    public CachingEntityManager(final StroomEntityManager stroomEntityManager, final CacheManager cacheManager) {
+    public CachingEntityManager(final StroomEntityManager stroomEntityManager,
+                                final CacheManager cacheManager,
+                                final StroomPropertyService stroomPropertyService) {
         this.stroomEntityManager = stroomEntityManager;
 
+        final long maximumSize = stroomPropertyService.getLongProperty(MAXIMUM_SIZE_PROPERTY, DEFAULT_MAXIMUM_SIZE);
+
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(1000)
+                .maximumSize(maximumSize)
                 .expireAfterWrite(1, TimeUnit.MINUTES);
         cache = cacheBuilder.build();
         cacheManager.registerCache("Entity Cache", cacheBuilder, cache);

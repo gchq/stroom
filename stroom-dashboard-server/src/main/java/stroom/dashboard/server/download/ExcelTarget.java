@@ -34,6 +34,8 @@ import stroom.dashboard.shared.NumberFormatSettings;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 public class ExcelTarget implements SearchResultWriter.Target {
@@ -51,6 +53,9 @@ public class ExcelTarget implements SearchResultWriter.Target {
     private int colNum = 0;
     private int rowNum = 0;
 
+    private CellStyle headingStyle;
+    private Map<Field, Optional<CellStyle>> fieldStyles = new HashMap<>();
+
     public ExcelTarget(final OutputStream outputStream) {
         this.outputStream = outputStream;
     }
@@ -61,6 +66,12 @@ public class ExcelTarget implements SearchResultWriter.Target {
         // flushed to disk.
         wb = new SXSSFWorkbook(100);
         sh = wb.createSheet();
+
+        // Create a style for headings.
+        final Font headingFont = wb.createFont();
+        headingFont.setBold(true);
+        headingStyle = wb.createCellStyle();
+        headingStyle.setFont(headingFont);
     }
 
     @Override
@@ -89,12 +100,6 @@ public class ExcelTarget implements SearchResultWriter.Target {
 
     @Override
     public void writeHeading(final Field field, final String heading) {
-        // Create a style for headings.
-        final Font headingFont = wb.createFont();
-        headingFont.setBold(true);
-        final CellStyle headingStyle = wb.createCellStyle();
-        headingStyle.setFont(headingFont);
-
         final Cell cell = row.createCell(colNum++);
         cell.setCellType(CellType.STRING);
         cell.setCellValue(heading);
@@ -114,14 +119,12 @@ public class ExcelTarget implements SearchResultWriter.Target {
     private void setCellValue(final SXSSFWorkbook wb, final Cell cell, final Field field, final String value) {
         if (value != null) {
             if (field == null) {
-                general(wb, cell, value);
+                general(cell, value);
 
             } else {
                 Type type = Type.GENERAL;
-                FormatSettings settings = null;
                 if (field.getFormat() != null) {
                     type = field.getFormat().getType();
-                    settings = field.getFormat().getSettings();
                 }
 
                 switch (type) {
@@ -132,85 +135,49 @@ public class ExcelTarget implements SearchResultWriter.Target {
                         });
                         break;
                     case NUMBER:
-                        number(wb, cell, value, settings);
+                        number(cell, value, field);
                         break;
                     case DATE_TIME:
-                        dateTime(wb, cell, value, settings);
+                        dateTime(cell, value, field);
                         break;
                     default:
-                        general(wb, cell, value);
+                        general(cell, value);
                         break;
                 }
             }
         }
     }
 
-    private void general(final SXSSFWorkbook wb, final Cell cell, final String value) {
+    private void general(final Cell cell, final String value) {
         getText(value).ifPresent(cell::setCellValue);
     }
 
-    private void dateTime(final SXSSFWorkbook wb, final Cell cell, final String value, final FormatSettings settings) {
+    private void dateTime(final Cell cell, final String value, final Field field) {
         final Double dbl = TypeConverter.getDouble(value);
         if (dbl != null) {
             final long ms = dbl.longValue();
-
             final Date date = new Date(ms);
             cell.setCellValue(date);
             cell.setCellType(CellType.NUMERIC);
 
-            String pattern = "dd/mm/yyyy hh:mm:ss";
-
-            if (settings instanceof DateTimeFormatSettings) {
-                final DateTimeFormatSettings dateTimeFormatSettings = (DateTimeFormatSettings) settings;
-                if (dateTimeFormatSettings.getPattern() != null
-                        && dateTimeFormatSettings.getPattern().trim().length() > 0) {
-                    pattern = dateTimeFormatSettings.getPattern();
-                    pattern = pattern.replaceAll("'", "");
-                    pattern = pattern.replaceAll("\\.SSS", "");
-                }
-            }
-
-            final DataFormat df = wb.createDataFormat();
-            final CellStyle cs = wb.createCellStyle();
-            cs.setDataFormat(df.getFormat(pattern));
-            cell.setCellStyle(cs);
+            final Optional<CellStyle> fieldStyle = getFieldStyle(field);
+            fieldStyle.ifPresent(cell::setCellStyle);
 
         } else {
-            getText(value).ifPresent(cell::setCellValue);
+            general(cell, value);
         }
     }
 
-    private void number(final SXSSFWorkbook wb, final Cell cell, final String value, final FormatSettings settings) {
+    private void number(final Cell cell, final String value, final Field field) {
         final Double dbl = TypeConverter.getDouble(value);
         if (dbl != null) {
             cell.setCellValue(dbl);
             cell.setCellType(CellType.NUMERIC);
 
-            if (settings instanceof NumberFormatSettings) {
-                final NumberFormatSettings numberFormatSettings = (NumberFormatSettings) settings;
-                final StringBuilder sb = new StringBuilder();
-
-                if (Boolean.TRUE.equals(numberFormatSettings.getUseSeparator())) {
-                    sb.append("#,##0");
-                } else {
-                    sb.append("#");
-                }
-                if (numberFormatSettings.getDecimalPlaces() != null && numberFormatSettings.getDecimalPlaces() > 0) {
-                    sb.append(".");
-                    for (int i = 0; i < numberFormatSettings.getDecimalPlaces(); i++) {
-                        sb.append("0");
-                    }
-                }
-
-                final String pattern = sb.toString();
-
-                final DataFormat df = wb.createDataFormat();
-                final CellStyle cs = wb.createCellStyle();
-                cs.setDataFormat(df.getFormat(pattern));
-                cell.setCellStyle(cs);
-            }
+            final Optional<CellStyle> fieldStyle = getFieldStyle(field);
+            fieldStyle.ifPresent(cell::setCellStyle);
         } else {
-            getText(value).ifPresent(cell::setCellValue);
+            general(cell, value);
         }
     }
 
@@ -223,5 +190,72 @@ public class ExcelTarget implements SearchResultWriter.Target {
                         return text;
                     }
                 });
+    }
+
+    private Optional<CellStyle> getFieldStyle(final Field field) {
+        if (field == null) {
+            return Optional.empty();
+        }
+
+        return fieldStyles.computeIfAbsent(field, k -> {
+            CellStyle cs = null;
+
+            Type type = Type.GENERAL;
+            FormatSettings settings = null;
+            if (k.getFormat() != null) {
+                type = k.getFormat().getType();
+                settings = k.getFormat().getSettings();
+            }
+
+            switch (type) {
+                case TEXT:
+                    break;
+                case NUMBER:
+                    if (settings instanceof NumberFormatSettings) {
+                        final NumberFormatSettings numberFormatSettings = (NumberFormatSettings) settings;
+                        final StringBuilder sb = new StringBuilder();
+
+                        if (Boolean.TRUE.equals(numberFormatSettings.getUseSeparator())) {
+                            sb.append("#,##0");
+                        } else {
+                            sb.append("#");
+                        }
+                        if (numberFormatSettings.getDecimalPlaces() != null && numberFormatSettings.getDecimalPlaces() > 0) {
+                            sb.append(".");
+                            for (int i = 0; i < numberFormatSettings.getDecimalPlaces(); i++) {
+                                sb.append("0");
+                            }
+                        }
+
+                        final String pattern = sb.toString();
+
+                        final DataFormat df = wb.createDataFormat();
+                        cs = wb.createCellStyle();
+                        cs.setDataFormat(df.getFormat(pattern));
+                    }
+                    break;
+                case DATE_TIME:
+                    String pattern = "dd/mm/yyyy hh:mm:ss";
+
+                    if (settings instanceof DateTimeFormatSettings) {
+                        final DateTimeFormatSettings dateTimeFormatSettings = (DateTimeFormatSettings) settings;
+                        if (dateTimeFormatSettings.getPattern() != null
+                                && dateTimeFormatSettings.getPattern().trim().length() > 0) {
+                            pattern = dateTimeFormatSettings.getPattern();
+                            pattern = pattern.replaceAll("'", "");
+                            pattern = pattern.replaceAll("\\.SSS", "");
+                        }
+                    }
+
+                    final DataFormat df = wb.createDataFormat();
+                    cs = wb.createCellStyle();
+                    cs.setDataFormat(df.getFormat(pattern));
+                    break;
+                default:
+                    break;
+            }
+
+            return Optional.ofNullable(cs);
+        });
     }
 }
