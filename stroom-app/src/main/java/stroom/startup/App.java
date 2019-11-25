@@ -204,8 +204,8 @@ public class App extends Application<Config> {
                 .getApplicationContext()
                 .getServletContext()
                 .getSessionCookieConfig();
-        sessionCookieConfig.setSecure(true);
-        sessionCookieConfig.setHttpOnly(true);
+        sessionCookieConfig.setSecure(configuration.getSessionCookieConfig().isSecure());
+        sessionCookieConfig.setHttpOnly(configuration.getSessionCookieConfig().isHttpOnly());
         // TODO : Add `SameSite=Strict` when supported by JEE
     }
 
