@@ -44,6 +44,7 @@ import stroom.util.shared.ResourceKey;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -170,8 +171,7 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
 
     private void download(final List<stroom.dashboard.shared.Field> fields, final List<Row> rows, final Path file,
                           final DownloadSearchResultFileType fileType, final boolean sample, final int percent) {
-        try {
-            final OutputStream outputStream = Files.newOutputStream(file);
+        try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(file))) {
             SearchResultWriter.Target target = null;
 
             // Write delimited file.

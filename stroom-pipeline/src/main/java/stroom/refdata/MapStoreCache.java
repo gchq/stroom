@@ -22,6 +22,7 @@ import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.node.server.StroomPropertyService;
 import stroom.security.SecurityHelper;
 import stroom.security.SecurityContext;
 import stroom.util.cache.CacheManager;
@@ -38,7 +39,8 @@ import java.util.concurrent.TimeUnit;
 public final class MapStoreCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(MapStoreCache.class);
 
-    private static final int MAX_CACHE_ENTRIES = 100;
+    private static final String MAXIMUM_SIZE_PROPERTY = "stroom.referenceData.mapStore.maxCacheSize";
+    private static final long DEFAULT_MAXIMUM_SIZE = 100;
 
     private final LoadingCache<MapStoreCacheKey, MapStore> cache;
     private final ReferenceDataLoader referenceDataLoader;
@@ -50,14 +52,17 @@ public final class MapStoreCache {
     MapStoreCache(final CacheManager cacheManager,
                   final ReferenceDataLoader referenceDataLoader,
                   final MapStoreInternPool internPool,
-                  final SecurityContext securityContext) {
+                  final SecurityContext securityContext,
+                  final StroomPropertyService stroomPropertyService) {
         this.referenceDataLoader = referenceDataLoader;
         this.internPool = internPool;
         this.securityContext = securityContext;
 
+        final long maximumSize = stroomPropertyService.getLongProperty(MAXIMUM_SIZE_PROPERTY, DEFAULT_MAXIMUM_SIZE);
+
         final CacheLoader<MapStoreCacheKey, MapStore> cacheLoader = CacheLoader.from(this::create);
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
+                .maximumSize(maximumSize)
                 .expireAfterAccess(1, TimeUnit.HOURS);
         cache = cacheBuilder.build(cacheLoader);
         cacheManager.registerCache("Reference Data - Map Store Cache", cacheBuilder, cache);

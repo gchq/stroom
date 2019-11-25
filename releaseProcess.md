@@ -4,4 +4,4 @@
 `git commit -a -m "Updated version to v5.x.y"`
 `gp`
 `mvn clean install -U`
-Manually create a release in github, attaching the distribuition zip, tagging with the new version
+Manually create a release in github, attaching the distribution zip, tagging with the new version

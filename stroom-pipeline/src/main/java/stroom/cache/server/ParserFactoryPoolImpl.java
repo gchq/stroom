@@ -23,6 +23,7 @@ import org.xml.sax.ErrorHandler;
 import stroom.entity.server.DocumentPermissionCache;
 import stroom.entity.server.event.EntityEvent;
 import stroom.entity.server.event.EntityEventHandler;
+import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.DefaultLocationFactory;
 import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorHandlerAdaptor;
@@ -49,11 +50,18 @@ class ParserFactoryPoolImpl
         implements ParserFactoryPool, EntityEvent.Handler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ParserFactoryPool.class);
 
+    private static final String MAXIMUM_SIZE_PROPERTY = "stroom.pipeline.parser.maxPoolSize";
+    private static final long DEFAULT_MAXIMUM_SIZE = 1000;
+
     private final DSChooser dsChooser;
 
     @Inject
-    ParserFactoryPoolImpl(final CacheManager cacheManager, final DocumentPermissionCache documentPermissionCache, final SecurityContext securityContext, final DSChooser dsChooser) {
-        super(cacheManager, "Parser Factory Pool", documentPermissionCache, securityContext);
+    ParserFactoryPoolImpl(final CacheManager cacheManager,
+                          final StroomPropertyService stroomPropertyService,
+                          final DocumentPermissionCache documentPermissionCache,
+                          final SecurityContext securityContext,
+                          final DSChooser dsChooser) {
+        super(cacheManager, "Parser Factory Pool", stroomPropertyService.getLongProperty(MAXIMUM_SIZE_PROPERTY, DEFAULT_MAXIMUM_SIZE), documentPermissionCache, securityContext);
         this.dsChooser = dsChooser;
     }
 
