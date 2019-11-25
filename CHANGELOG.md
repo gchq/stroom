@@ -6,9 +6,22 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.26] - 2019-11-25
+
+* Issue **#1338** : Added new config options to control the maximum size of some caches: `stroom.pipeline.parser.maxPoolSize`, `stroom.pipeline.schema.maxPoolSize`, `stroom.pipeline.schema.maxPoolSize`, `stroom.pipeline.xslt.maxPoolSize`, `stroom.entity.maxCacheSize`, `stroom.referenceData.mapStore.maxCacheSize`.
+
+* Issue **#642** : Downloading query details now ignores hidden fields.
+
+* Issue **#1337** : Fixed issue where downloading large numbers of search results in Excel format was exceeding maximum style count of 64000. 
+
+* Issue **#1341** : Added XSRF protection to GWT RPC requests.
+
+
 ## [v6.0.25] - 2019-11-20
 
 * No Stroom changes for this release but important fixes elsewhere.
+
 
 ## [v6.0.24] - 2019-11-19
 
@@ -1996,7 +2009,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.25...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.26...6.0
+[v6.0.26]: https://github.com/gchq/stroom/compare/v6.0.25...v6.0.26
 [v6.0.25]: https://github.com/gchq/stroom/compare/v6.0.24...v6.0.25
 [v6.0.24]: https://github.com/gchq/stroom/compare/v6.0.23...v6.0.24
 [v6.0.23]: https://github.com/gchq/stroom/compare/v6.0.22...v6.0.23

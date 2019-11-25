@@ -35,7 +35,7 @@ public class TestMapStoreCache extends StroomUnitTest {
     public void testReferenceDataCache() {
         try (CacheManager cacheManager = new CacheManager()) {
             final ReferenceDataLoader referenceDataLoader = effectiveFeed -> MapStoreTestUtil.createMapStore();
-            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
+            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader);
 
             String eventString = null;
 
