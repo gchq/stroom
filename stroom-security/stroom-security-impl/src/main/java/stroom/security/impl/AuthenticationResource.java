@@ -25,13 +25,13 @@ public class AuthenticationResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationResource.class);
 
     private final SecurityContext securityContext;
-    private SecurityConfig config;
+    private final AuthenticationConfig config;
     private final AuthenticationServiceClients authenticationServiceClients;
 
     @Inject
     public AuthenticationResource(final SecurityContext securityContext,
                                   final AuthenticationServiceClients authenticationServiceClients,
-                                  final SecurityConfig config) {
+                                  final AuthenticationConfig config) {
         this.securityContext = securityContext;
         this.authenticationServiceClients = authenticationServiceClients;
         this.config = config;

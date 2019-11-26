@@ -23,6 +23,7 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
+import stroom.auth.service.api.model.IdTokenRequest;
 import stroom.security.api.AuthenticationService;
 import stroom.security.api.AuthenticationToken;
 import stroom.security.api.SecurityContext;
@@ -101,7 +102,7 @@ class SecurityFilter implements Filter {
         this.authenticationServiceClients = authenticationServiceClients;
         this.authenticationService = authenticationService;
         this.securityContext = securityContext;
-        
+
         if (!config.isAuthenticationRequired()) {
             LOGGER.warn("All authentication is disabled");
         }
