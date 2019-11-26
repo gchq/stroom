@@ -17,9 +17,14 @@
 package stroom.kafkademo.pipeline;
 
 import net.sf.saxon.event.ReceivingContentHandler;
+import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.header.Headers;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -84,6 +89,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         }
     }
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(StandardKafkaProducer.class);
 
     private static final String RECORD_ELEMENT_LOCAL_NAME = "kafkaRecord";
     private static final String HEADER_ELEMENT_LOCAL_NAME = "header";
@@ -149,8 +155,9 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                 throw new LoggedException("Unable to create Kafka Producer using config " + configRef);
             }
             kafkaProducer = optional.get();
-        } finally {
             super.startProcessing();
+        } catch(KafkaException ex) {
+            log(Severity.FATAL_ERROR, "Unable to create Kafka Producer using config " + configRef.getUuid(), ex);
         }
     }
 
@@ -268,7 +275,14 @@ class StandardKafkaProducer extends AbstractXMLFilter {
             buffer.append(" Value: " + state.messageValue);
 
             log (Severity.INFO, buffer.toString(), null);
-            kafkaProducer.send(record);
+            kafkaProducer.send(record, new Callback() {
+                public void onCompletion(RecordMetadata metadata, Exception e) {
+                    if(e != null) {
+                        log (Severity.ERROR, "Unable to send record to Kafka", e);
+                    } else {
+                        log (Severity.INFO, "Successfully sent record to Kafka", null);
+                    }
+                }});
         }
     }
 
@@ -281,6 +295,20 @@ class StandardKafkaProducer extends AbstractXMLFilter {
 
     private void log(final Severity severity, final String message, final Exception e) {
         errorReceiverProxy.log(severity, locationFactory.create(locator), getElementId(), message, e);
+        switch (severity){
+            case FATAL_ERROR:
+                LOGGER.error(message, e);
+                break;
+            case ERROR:
+                LOGGER.error(message, e);
+                break;
+            case WARNING:
+                LOGGER.warn(message, e);
+                break;
+            case INFO:
+                LOGGER.info(message,e);
+                break;
+        }
     }
 
 }
