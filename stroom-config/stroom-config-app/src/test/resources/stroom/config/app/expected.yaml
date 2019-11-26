@@ -26,6 +26,7 @@ appConfig:
     - "New"
     - "Assigned"
     - "Closed"
+    standardComments: []
     createText: "Create Annotation"
   benchmark:
     streamCount: 1000
@@ -189,6 +190,8 @@ appConfig:
       maxActiveDestinations: 100
     parser:
       secureProcessing: true
+      cache:
+        maximumSize: 1000
     referenceData:
       localDir: "${stroom.temp}/refDataOffHeapStore"
       maxPutsBeforeCommit: 1000
@@ -197,8 +200,13 @@ appConfig:
       purgeAge: "30d"
       valueBufferCapacity: 1000
       readAheadEnabled: true
+    xmlSchema:
+      cache:
+        maximumSize: 1000
     xslt:
       maxElements: 1000000
+      cache:
+        maximumSize: 1000
   processor:
     assignTasks: true
     createTasks: true
@@ -275,12 +283,21 @@ appConfig:
       authServicesBaseUrl: "http://auth-service:8099"
       preventLogin: false
       userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
+      clientId: null
+      clientSecret: null
       durationToWarnBeforeExpiry: "30d"
       jwt:
         jwtIssuer: "stroom"
         enableTokenRevocationCheck: true
     authorisation:
       maxDocumentPermissionCacheSize: 1000
+    webContent:
+      contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
+        \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
+        \ frame-ancestors 'self';"
+      contentTypeOptions: "nosniff"
+      frameOptions: "sameorigin"
+      xssProtection: "1; mode=block"
   serviceDiscovery:
     enabled: false
     zookeeperUrl: "localhost:2181"
@@ -290,6 +307,9 @@ appConfig:
     curatorMaxSleepTimeMs: 300000
     curatorMaxRetries: 100
     zookeeperBasePath: "/stroom-services"
+  sessionCookie:
+    secure: true
+    httpOnly: true
   solrSearch:
     maxStoredDataQueueSize: 1000
     maxBooleanClauseCount: 1024
