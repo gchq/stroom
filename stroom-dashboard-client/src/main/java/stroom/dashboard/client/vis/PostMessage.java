@@ -98,14 +98,14 @@ public class PostMessage {
     /*-{
     var listener = function(event) {
       var origin = event.origin;
-      var host = window.location.host;
+      var hostname = window.location.hostname;
 
       // Stop this script being called from other domains.
       var eventLocation = document.createElement("a");
       eventLocation.href = origin;
-      var eventHost = eventLocation.hostname;
-      if (eventHost != host) {
-        console.error("Ignoring event as host names do not match: scriptHost='" + host + "' eventHost='" + eventHost + "'");
+      var eventHostname = eventLocation.hostname;
+      if (eventHostname != hostname) {
+        console.error("Ignoring event as host names do not match: hostname='" + hostname + "' eventHostname='" + eventHostname + "'");
         return;
       }
 
