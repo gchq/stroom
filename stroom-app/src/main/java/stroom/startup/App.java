@@ -86,6 +86,7 @@ import stroom.search.solr.search.StroomSolrIndexQueryResource;
 import stroom.search.spring.SearchConfiguration;
 import stroom.searchable.impl.SearchableResource;
 import stroom.searchable.impl.spring.SearchableConfiguration;
+import stroom.security.server.AuthenticationResource;
 import stroom.security.server.AuthorisationResource;
 import stroom.security.server.ContentSecurityFilter;
 import stroom.security.server.JWTService;
@@ -393,17 +394,18 @@ public class App extends Application<Config> {
         SpringUtil.addServletListener(environment.servlets(), applicationContext, SessionListListener.class);
 
         // Add resources.
-        SpringUtil.addResource(environment.jersey(), applicationContext, ExportConfigResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, AnnotationResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, AuthenticationResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, DictionaryResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, ExportConfigResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, FeedStatusResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, RuleSetResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, SearchableResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, SessionResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomSolrIndexQueryResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, SearchableResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, SessionResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, FeedStatusResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, AnnotationResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, UserResource.class);
 
         // Map exceptions to helpful HTTP responses

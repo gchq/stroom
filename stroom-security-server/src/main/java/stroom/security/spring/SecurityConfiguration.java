@@ -54,6 +54,8 @@ public class SecurityConfiguration {
         securityConfig.setAuthenticationServiceUrl(stroomPropertyService.getProperty("stroom.auth.authentication.service.url"));
         securityConfig.setAdvertisedStroomUrl(stroomPropertyService.getProperty("stroom.advertisedUrl"));
         securityConfig.setAuthenticationRequired(stroomPropertyService.getBooleanProperty("stroom.authentication.required", true));
+        securityConfig.setClientId(stroomPropertyService.getProperty("stroom.auth.clientId"));
+        securityConfig.setClientSecret(stroomPropertyService.getProperty("stroom.auth.clientSecret"));
         return securityConfig;
     }
 
