@@ -24,8 +24,10 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.Format.Type;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
@@ -87,7 +89,7 @@ class TableCell extends AbstractCell<Row> {
             if (grouped) {
                 sb.appendHtmlConstant("<b>");
             }
-            append(value, sb);
+            append(value, sb, field);
             if (grouped) {
                 sb.appendHtmlConstant("</b>");
             }
@@ -104,14 +106,25 @@ class TableCell extends AbstractCell<Row> {
         return null;
     }
 
-    static void append(final String value, final SafeHtmlBuilder sb) {
+    static void append(final String value, final SafeHtmlBuilder sb, final Field field) {
         final List<Object> parts = getParts(value);
         parts.forEach(p -> {
             if (p instanceof Hyperlink) {
                 final Hyperlink hyperlink = (Hyperlink) p;
                 if (!hyperlink.getText().trim().isEmpty()) {
                     sb.appendHtmlConstant("<u link=\"" + hyperlink.toString() + "\">");
-                    sb.appendEscaped(hyperlink.getText());
+
+//                    if (field != null && field.getFormat() != null && field.getFormat().getType() == Type.DATE_TIME) {
+//                        try {
+//                            long l = Long.parseLong(hyperlink.getText());
+//                            sb.appendEscaped(ClientDateUtil.toISOString(l));
+//                        } catch (final RuntimeException e) {
+//                            sb.appendEscaped(hyperlink.getText());
+//                        }
+//                    } else {
+                        sb.appendEscaped(hyperlink.getText());
+//                    }
+
                     sb.appendHtmlConstant("</u>");
                 }
             } else {

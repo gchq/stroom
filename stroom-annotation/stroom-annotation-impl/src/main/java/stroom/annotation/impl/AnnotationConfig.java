@@ -7,6 +7,7 @@ import stroom.config.common.HasDbConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +15,7 @@ import java.util.List;
 public class AnnotationConfig implements IsConfig, HasDbConfig {
     private DbConfig dbConfig;
     private List<String> statusValues = new ArrayList<>();
+    private List<String> standardComments = new ArrayList<>();
     private String createText = "Create Annotation";
 
     public AnnotationConfig() {
@@ -40,6 +42,16 @@ public class AnnotationConfig implements IsConfig, HasDbConfig {
 
     public void setStatusValues(final List<String> statusValues) {
         this.statusValues = statusValues;
+    }
+
+    @JsonProperty("standardComments")
+    @JsonPropertyDescription("A comma separated list of standard comments that can be added to annotations")
+    public List<String> getStandardComments() {
+        return standardComments;
+    }
+
+    public void setStandardComments(final List<String> standardComments) {
+        this.standardComments = standardComments;
     }
 
     @JsonProperty("createText")

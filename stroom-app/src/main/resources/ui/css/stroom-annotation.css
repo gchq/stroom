@@ -102,7 +102,7 @@
 
 .annotationSetting {
     width: 100%;
-    padding-bottom: 10px;
+    padding: 5px 0;
 }
 
 .annotationSettingHeading {
@@ -141,6 +141,7 @@
 
 .annotationHistory {
     width: 100%;
+    height: 100%;
 }
 
 .annotationComment {
@@ -173,9 +174,15 @@
     color: #0366d6;
 }
 
-.annotationHistoryOuter {
+.annotationHistoryContainer {
+    display: flex;
+    flex-direction: column;
     width: 100%;
     height: 100%;
+}
+
+.annotationHistoryOuter {
+    flex-grow: 1;
     overflow: auto;
     padding-left: 10px;
     padding-bottom: 20px;
@@ -184,18 +191,19 @@
 .annotationHistoryInner {
     width: 100%;
     height: 100%;
-    border-left: 1px solid #C5CDE2;
 }
 
 .annotationHistoryLine {
     display: flex;
     flex-direction: row;
     width: 100%;
-    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-left: 1px solid #C5CDE2;
 }
 
 .annotationHistoryLineMargin {
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     width: 15px;
 }
@@ -215,6 +223,8 @@
 .annotationHistoryCommentHeader {
     width: 100%;
     padding :5px;
+    white-space: pre-wrap;
+    word-break: break-word;
     border-bottom: 1px solid #C5CDE2;
     background-color: #eee;
 }
@@ -222,10 +232,27 @@
 .annotationHistoryCommentBody {
     width: 100%;
     padding: 5px;
-    white-space: pre;
+    white-space: pre-wrap;
+    word-break: break-word;
 }
 
 .annotationHistoryItem {
     flex-grow: 1;
     padding: 5px;
+    white-space: pre-wrap;
+}
+
+.annotationHistoryText {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    opacity: 1;
+    z-index: -1;
+}
+
+.annotationHistoryCopyButton {
+    flex-grow: 0;
+    width: 200px;
+    margin-top: 10px;
+    align-self: flex-end;
 }

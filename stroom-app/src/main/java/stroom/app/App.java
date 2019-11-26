@@ -44,6 +44,7 @@ import stroom.util.logging.LogUtil;
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+import javax.servlet.SessionCookieConfig;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -133,6 +134,15 @@ public class App extends Application<Config> {
 
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
+
+        // Ensure the session cookie that provides JSESSIONID is secure.
+        final SessionCookieConfig sessionCookieConfig = environment
+                .getApplicationContext()
+                .getServletContext()
+                .getSessionCookieConfig();
+        sessionCookieConfig.setSecure(configuration.getAppConfig().getSessionCookieConfig().isSecure());
+        sessionCookieConfig.setHttpOnly(configuration.getAppConfig().getSessionCookieConfig().isHttpOnly());
+        // TODO : Add `SameSite=Strict` when supported by JEE
     }
 
     private static Path getYamlFileFromArgs(final String[] args) {

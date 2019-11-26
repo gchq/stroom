@@ -34,7 +34,6 @@ import javax.xml.parsers.SAXParserFactory;
 public final class SAXParserFactoryFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(SAXParserFactoryFactory.class);
 
-    static final String SECURE_PROCESSING_PROPERTY = "stroom.pipeline.parser.secureProcessing";
     private static final String DEFAULT_SAX_PARSER_FACTORY = "com.sun.org.apache.xerces.internal.jaxp.SAXParserFactoryImpl";
     private static final String IMP_USED = "The SAX Parser factory implementation being used is: ";
     private static final String END = "\".";

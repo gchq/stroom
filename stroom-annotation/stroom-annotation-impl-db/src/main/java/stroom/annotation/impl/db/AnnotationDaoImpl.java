@@ -29,8 +29,10 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Sort;
+import stroom.query.common.v2.DateExpressionParser;
 
 import javax.inject.Inject;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -99,9 +101,9 @@ class AnnotationDaoImpl implements AnnotationDao {
         expressionMapper.map(AnnotationDataSource.ID_FIELD, ANNOTATION.ID, Long::valueOf);
         expressionMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION.STREAM_ID, Long::valueOf);
         expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION.EVENT_ID, Long::valueOf);
-        expressionMapper.map(AnnotationDataSource.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, Long::valueOf);
+        expressionMapper.map(AnnotationDataSource.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, value -> getDate(AnnotationDataSource.CREATED_ON, value));
         expressionMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, value -> value);
-        expressionMapper.map(AnnotationDataSource.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, Long::valueOf);
+        expressionMapper.map(AnnotationDataSource.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, value -> getDate(AnnotationDataSource.UPDATED_ON, value));
         expressionMapper.map(AnnotationDataSource.UPDATED_BY_FIELD, ANNOTATION.UPDATE_USER, value -> value);
         expressionMapper.map(AnnotationDataSource.TITLE_FIELD, ANNOTATION.TITLE, value -> value);
         expressionMapper.map(AnnotationDataSource.SUBJECT_FIELD, ANNOTATION.SUBJECT, value -> value);
@@ -124,6 +126,16 @@ class AnnotationDaoImpl implements AnnotationDao {
         valueMapper.map(AnnotationDataSource.ASSIGNED_TO_FIELD, ANNOTATION.ASSIGNED_TO, ValString::create);
         valueMapper.map(AnnotationDataSource.COMMENT_FIELD, ANNOTATION.COMMENT, ValString::create);
         valueMapper.map(AnnotationDataSource.HISTORY_FIELD, ANNOTATION.HISTORY, ValString::create);
+    }
+
+    private long getDate(final String fieldName, final String value) {
+        try {
+            // empty optional will be caught below
+            return DateExpressionParser.parse(value, ZoneOffset.UTC.getId(), System.currentTimeMillis()).get().toInstant().toEpochMilli();
+        } catch (final Exception e) {
+            throw new RuntimeException("Expected a standard date value for field \"" + fieldName
+                    + "\" but was given string \"" + value + "\"");
+        }
     }
 
     @Override
@@ -200,6 +212,13 @@ class AnnotationDaoImpl implements AnnotationDao {
             parentAnnotation.setUpdateUser(user);
             parentAnnotation = create(parentAnnotation);
 
+            // Create change entries for all fields so we know what their initial values were.
+            createEntry(parentAnnotation.getId(), user, now, Annotation.TITLE, parentAnnotation.getTitle());
+            createEntry(parentAnnotation.getId(), user, now, Annotation.SUBJECT, parentAnnotation.getSubject());
+            createEntry(parentAnnotation.getId(), user, now, Annotation.STATUS, parentAnnotation.getStatus());
+            createEntry(parentAnnotation.getId(), user, now, Annotation.ASSIGNED_TO, parentAnnotation.getAssignedTo());
+            createEntry(parentAnnotation.getId(), user, now, Annotation.COMMENT, parentAnnotation.getComment());
+
         } else {
             // Update parent if we need to.
             final long annotationId = parentAnnotation.getId();
@@ -233,10 +252,17 @@ class AnnotationDaoImpl implements AnnotationDao {
                         .where(ANNOTATION.ID.eq(annotationId))
                         .execute());
             }
+
+            // Create entry.
+            createEntry(parentAnnotation.getId(), user, now, request.getType(), request.getData());
         }
 
+        // Now select everything back to provide refreshed details.
+        return getDetail(parentAnnotation.getId());
+    }
+
+    private void createEntry(final long annotationId, final String user, final long now, final String type, final String data) {
         // Create entry.
-        final long annotationId = parentAnnotation.getId();
         final int count = JooqUtil.contextResult(connectionProvider, context -> context
                 .insertInto(ANNOTATION_ENTRY,
                         ANNOTATION_ENTRY.VERSION,
@@ -253,16 +279,13 @@ class AnnotationDaoImpl implements AnnotationDao {
                         user,
                         now,
                         annotationId,
-                        request.getType(),
-                        request.getData())
+                        type,
+                        data)
                 .execute());
 
         if (count != 1) {
             throw new RuntimeException("Unable to create annotation entry");
         }
-
-        // Now select everything back to provide refreshed details.
-        return getDetail(annotationId);
     }
 
     private Annotation create(final Annotation annotation) {

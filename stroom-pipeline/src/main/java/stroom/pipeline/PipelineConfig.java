@@ -2,6 +2,7 @@ package stroom.pipeline;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.pipeline.destination.AppenderConfig;
+import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.store.RefDataStoreConfig;
 import stroom.util.shared.IsConfig;
@@ -15,12 +16,14 @@ public class PipelineConfig implements IsConfig {
     private AppenderConfig appenderConfig;
     private ParserConfig parserConfig;
     private RefDataStoreConfig refDataStoreConfig;
+    private XmlSchemaConfig xmlSchemaConfig;
     private XsltConfig xsltConfig;
 
     public PipelineConfig() {
         appenderConfig = new AppenderConfig();
         parserConfig = new ParserConfig();
         refDataStoreConfig = new RefDataStoreConfig();
+        xmlSchemaConfig = new XmlSchemaConfig();
         xsltConfig = new XsltConfig();
     }
 
@@ -28,10 +31,12 @@ public class PipelineConfig implements IsConfig {
     public PipelineConfig(final AppenderConfig appenderConfig,
                           final ParserConfig parserConfig,
                           final RefDataStoreConfig refDataStoreConfig,
+                          final XmlSchemaConfig xmlSchemaConfig,
                           final XsltConfig xsltConfig) {
         this.appenderConfig = appenderConfig;
         this.parserConfig = parserConfig;
         this.refDataStoreConfig = refDataStoreConfig;
+        this.xmlSchemaConfig = xmlSchemaConfig;
         this.xsltConfig = xsltConfig;
     }
 
@@ -60,6 +65,15 @@ public class PipelineConfig implements IsConfig {
 
     public void setRefDataStoreConfig(final RefDataStoreConfig refDataStoreConfig) {
         this.refDataStoreConfig = refDataStoreConfig;
+    }
+
+    @JsonProperty("xmlSchema")
+    public XmlSchemaConfig getXmlSchemaConfig() {
+        return xmlSchemaConfig;
+    }
+
+    public void setXmlSchemaConfig(final XmlSchemaConfig xmlSchemaConfig) {
+        this.xmlSchemaConfig = xmlSchemaConfig;
     }
 
     @JsonProperty("xslt")

@@ -28,6 +28,7 @@ import stroom.node.impl.NodeConfig;
 import stroom.node.impl.StatusConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.destination.AppenderConfig;
+import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.store.RefDataStoreConfig;
 import stroom.processor.impl.ProcessorConfig;
@@ -37,6 +38,7 @@ import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.search.solr.search.SolrSearchConfig;
 import stroom.searchable.impl.SearchableConfig;
 import stroom.security.impl.AuthenticationConfig;
+import stroom.security.impl.ContentSecurityConfig;
 import stroom.security.impl.SecurityConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.statistics.impl.InternalStatisticsConfig;
@@ -52,6 +54,7 @@ import stroom.ui.config.shared.UrlConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsConfig;
+import stroom.util.xml.ParserConfig;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -127,7 +130,9 @@ public class AppConfigModule extends AbstractModule {
         bind(AppConfig::getPathConfig, PathConfig.class);
         bind(AppConfig::getPipelineConfig, PipelineConfig.class, c -> {
             bind(c, PipelineConfig::getAppenderConfig, AppenderConfig.class);
+            bind(c, PipelineConfig::getParserConfig, ParserConfig.class);
             bind(c, PipelineConfig::getRefDataStoreConfig, RefDataStoreConfig.class);
+            bind(c, PipelineConfig::getXmlSchemaConfig, XmlSchemaConfig.class);
             bind(c, PipelineConfig::getXsltConfig, XsltConfig.class);
         });
         bind(AppConfig::getProcessorConfig, ProcessorConfig.class);
@@ -141,8 +146,10 @@ public class AppConfigModule extends AbstractModule {
         bind(AppConfig::getSearchableConfig, SearchableConfig.class);
         bind(AppConfig::getSecurityConfig, SecurityConfig.class, c -> {
             bind(c, SecurityConfig::getAuthenticationConfig, AuthenticationConfig.class);
+            bind(c, SecurityConfig::getContentSecurityConfig, ContentSecurityConfig.class);
         });
         bind(AppConfig::getServiceDiscoveryConfig, ServiceDiscoveryConfig.class);
+        bind(AppConfig::getSessionCookieConfig, SessionCookieConfig.class);
         bind(AppConfig::getSolrSearchConfig, SolrSearchConfig.class);
         bind(AppConfig::getStatisticsConfig, StatisticsConfig.class, c -> {
             bind(c, StatisticsConfig::getHbaseStatisticsConfig, HBaseStatisticsConfig.class);

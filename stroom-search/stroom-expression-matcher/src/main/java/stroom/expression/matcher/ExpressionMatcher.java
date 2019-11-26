@@ -27,8 +27,9 @@ import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.date.DateUtil;
+import stroom.query.common.v2.DateExpressionParser;
 
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -42,19 +43,27 @@ public class ExpressionMatcher {
     private final CollectionService collectionService;
     private final Map<DocRef, String[]> wordMap = new HashMap<>();
     private final Map<String, Pattern> patternMap = new HashMap<>();
+    private final String timeZoneId;
+    private final long nowEpochMilli;
 
     public ExpressionMatcher(final Map<String, AbstractField> fieldMap) {
         this.fieldMap = fieldMap;
         this.wordListProvider = null;
         this.collectionService = null;
+        this.timeZoneId = ZoneOffset.UTC.getId();
+        this.nowEpochMilli = System.currentTimeMillis();
     }
 
     public ExpressionMatcher(final Map<String, AbstractField> fieldMap,
                              final WordListProvider wordListProvider,
-                             final CollectionService collectionService) {
+                             final CollectionService collectionService,
+                             final String timeZoneId,
+                             final long nowEpochMilli) {
         this.fieldMap = fieldMap;
         this.wordListProvider = wordListProvider;
         this.collectionService = collectionService;
+        this.timeZoneId = timeZoneId;
+        this.nowEpochMilli = nowEpochMilli;
     }
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
@@ -206,6 +215,8 @@ public class ExpressionMatcher {
                     return isNumericIn(fieldName, termValue, attribute);
                 case IN_DICTIONARY:
                     return isInDictionary(fieldName, docRef, field, attribute);
+                case IN_FOLDER:
+                    return isInFolder(fieldName, docRef, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + field.getType() + " field type");
@@ -257,6 +268,8 @@ public class ExpressionMatcher {
                     return isDateIn(fieldName, termValue, attribute);
                 case IN_DICTIONARY:
                     return isInDictionary(fieldName, docRef, field, attribute);
+                case IN_FOLDER:
+                    return isInFolder(fieldName, docRef, field, attribute);
                 default:
                     throw new MatchException("Unexpected condition '" + condition.getDisplayValue() + "' for "
                             + field.getType() + " field type");
@@ -411,10 +424,10 @@ public class ExpressionMatcher {
             if (value instanceof Long) {
                 return (Long) value;
             }
-            return DateUtil.parseNormalDateTimeString(value.toString());
 
-//            return new DateExpressionParser().parse(value, timeZoneId, nowEpochMilli).toInstant().toEpochMilli();
-        } catch (final RuntimeException e) {
+            //empty optional will be caught below
+            return DateExpressionParser.parse(value.toString(), timeZoneId, nowEpochMilli).get().toInstant().toEpochMilli();
+        } catch (final Exception e) {
             throw new MatchException("Expected a standard date value for field \"" + fieldName
                     + "\" but was given string \"" + value + "\"");
         }
@@ -435,7 +448,7 @@ public class ExpressionMatcher {
             if (value instanceof Long) {
                 return (Long) value;
             }
-            return Long.valueOf(value.toString());
+            return Long.parseLong(value.toString());
         } catch (final NumberFormatException e) {
             throw new MatchException(
                     "Expected a numeric value for field \"" + fieldName + "\" but was given string \"" + value + "\"");

@@ -59,6 +59,8 @@ public class SecurityModule extends AbstractModule {
         bind(UserService.class).to(UserServiceImpl.class);
 
         FilterBinder.create(binder())
+                .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
+                        ContentSecurityFilter.class)
                 .bind(new FilterInfo(SecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
                         SecurityFilter.class);
 

@@ -20,6 +20,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.cache.RemovalListener;
+import stroom.util.xml.CacheConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
@@ -35,20 +36,18 @@ import java.util.concurrent.atomic.AtomicLong;
 public abstract class AbstractPoolCache<K, V> implements Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPoolCache.class);
 
-    private static final int MAX_CACHE_ENTRIES = 1000;
-
     private final LoadingCache<PoolKey<K>, PoolItem<V>> cache;
     private final Map<K, LinkedBlockingDeque<PoolKey<K>>> keyMap = new ConcurrentHashMap<>();
 
     @SuppressWarnings("unchecked")
-    public AbstractPoolCache(final CacheManager cacheManager, final String name) {
+    public AbstractPoolCache(final CacheManager cacheManager, final String name, final CacheConfig cacheConfig) {
         final RemovalListener<PoolKey<K>, PoolItem<V>> removalListener = notification -> destroy(notification.getKey());
         final CacheLoader<PoolKey<K>, PoolItem<V>> cacheLoader = CacheLoader.from(k -> {
             final V value = internalCreateValue(k.getKey());
             return new PoolItem<>(k, value);
         });
         final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
+                .maximumSize(cacheConfig.getMaximumSize())
                 .expireAfterAccess(10, TimeUnit.MINUTES)
                 .removalListener(removalListener);
         cache = cacheBuilder.build(cacheLoader);

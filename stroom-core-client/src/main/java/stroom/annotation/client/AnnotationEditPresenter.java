@@ -17,10 +17,14 @@
 package stroom.annotation.client;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
+import com.google.gwt.user.client.ui.Button;
+import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.HTML;
+import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.gwt.user.datepicker.client.CalendarUtil;
 import com.google.inject.Inject;
@@ -49,10 +53,31 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 
 public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditView> implements AnnotationEditUiHandlers {
+    private static final String EMPTY_VALUE = "'  '";
+
+    private static final String HISTORY_INNER_START = "<div class=\"annotationHistoryInner\">";
+    private static final String HISTORY_INNER_END = "</div>";
+    private static final String HISTORY_LINE_START = "<div class=\"annotationHistoryLine\">" +
+            "<div class=\"annotationHistoryLineMargin\">" +
+            "<div class=\"annotationHistoryLineMarker\"></div>" +
+            "</div>";
+    private static final String HISTORY_LINE_END = "</div>";
+    private static final String HISTORY_COMMENT_BORDER_START = "<div class=\"annotationHistoryCommentBorder\">";
+    private static final String HISTORY_COMMENT_BORDER_END = "</div>";
+    private static final String HISTORY_COMMENT_HEADER_START = "<div class=\"annotationHistoryCommentHeader\">";
+    private static final String HISTORY_COMMENT_HEADER_END = "</div>";
+    private static final String HISTORY_COMMENT_BODY_START = "<div class=\"annotationHistoryCommentBody\">";
+    private static final String HISTORY_COMMENT_BODY_END = "</div>";
+    private static final String HISTORY_ITEM_START = "<div class=\"annotationHistoryItem\">";
+    private static final String HISTORY_ITEM_END = "</div>";
+
     private static final long ONE_SECOND = 1000;
     private static final long ONE_MINUTE = ONE_SECOND * 60;
     private static final long ONE_HOUR = ONE_MINUTE * 60;
@@ -60,6 +85,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     private final RestFactory restFactory;
     private final ChooserPresenter statusPresenter;
     private final ChooserPresenter assignedToPresenter;
+    private final ChooserPresenter commentPresenter;
     private final ClientSecurityContext clientSecurityContext;
 
     private AnnotationDetail annotationDetail;
@@ -75,11 +101,13 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                                    final RestFactory restFactory,
                                    final ChooserPresenter statusPresenter,
                                    final ChooserPresenter assignedToPresenter,
+                                   final ChooserPresenter commentPresenter,
                                    final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.statusPresenter = statusPresenter;
         this.assignedToPresenter = assignedToPresenter;
+        this.commentPresenter = commentPresenter;
         this.clientSecurityContext = clientSecurityContext;
         getView().setUiHandlers(this);
     }
@@ -95,6 +123,10 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         registerHandler(assignedToPresenter.addDataSelectionHandler(e -> {
             final String selected = assignedToPresenter.getSelected();
             changeAssignedTo(selected, true);
+        }));
+        registerHandler(commentPresenter.addDataSelectionHandler(e -> {
+            final String selected = commentPresenter.getSelected();
+            changeComment(selected);
         }));
     }
 
@@ -148,6 +180,13 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         }
     }
 
+    private void changeComment(final String selected) {
+        if (selected != null && !Objects.equals(getView().getComment(), selected)) {
+            getView().setComment(getView().getComment() + selected);
+            HidePopupEvent.fire(this, commentPresenter, true, true);
+        }
+    }
+
     private void addEntry(final CreateEntryRequest request) {
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
         final Rest<AnnotationDetail> rest = restFactory.create();
@@ -155,15 +194,39 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     }
 
     public void show(final Annotation annotation) {
-        this.sourceAnnotation = annotation;
-        readAnnotation(sourceAnnotation);
-        final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-        final Rest<AnnotationDetail> rest = restFactory.create();
-        rest.onSuccess(this::edit).call(annotationResource).get(annotation.getId(), annotation.getStreamId(), annotation.getEventId());
+        boolean ok = true;
+        if (annotation == null) {
+            ok = false;
+            AlertEvent.fireError(this, "No sample annotation has been provided to open the editor", null);
+        } else if (annotation.getId() == null) {
+            if (annotation.getStreamId() == null) {
+                ok = false;
+                AlertEvent.fireError(this, "No stream id has been provided for the annotation", null);
+            } else if (annotation.getEventId() == null) {
+                ok = false;
+                AlertEvent.fireError(this, "No event id has been provided for the annotation", null);
+            }
+        }
+
+        if (ok) {
+            this.sourceAnnotation = annotation;
+            readAnnotation(sourceAnnotation);
+
+            final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
+            final Rest<AnnotationDetail> rest = restFactory.create();
+            rest.onSuccess(this::edit).call(annotationResource).get(annotation.getId(), annotation.getStreamId(), annotation.getEventId());
+        }
     }
 
     private void edit(final AnnotationDetail annotationDetail) {
         read(annotationDetail);
+
+        // Set the initial comment if one has been provided and if this is a new annotation.
+        if (annotationDetail == null || annotationDetail.getAnnotation() == null || annotationDetail.getAnnotation().getId() == null) {
+            if (sourceAnnotation.getComment() != null) {
+                getView().setComment(sourceAnnotation.getComment());
+            }
+        }
 
         final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
             @Override
@@ -215,50 +278,51 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
             final List<AnnotationEntry> entries = annotationDetail.getEntries();
             if (entries != null) {
-                final SafeHtmlBuilder builder = new SafeHtmlBuilder();
-                builder.appendHtmlConstant("<div class=\"annotationHistoryInner\">");
+                final Map<String, Optional<String>> currentValues = new HashMap<>();
+
+                final SafeHtmlBuilder html = new SafeHtmlBuilder();
+                final StringBuilder text = new StringBuilder();
+                html.appendHtmlConstant(HISTORY_INNER_START);
                 entries.forEach(entry -> {
-                    builder.appendHtmlConstant("<div class=\"annotationHistoryLine\">");
-                    builder.appendHtmlConstant("<div class=\"annotationHistoryLineMargin\"><div class=\"annotationHistoryLineMarker\"></div></div>");
-                    if (Annotation.COMMENT.equals(entry.getEntryType())) {
-                        builder.appendHtmlConstant("<div class=\"annotationHistoryCommentBorder\">");
-                        builder.appendHtmlConstant("<div class=\"annotationHistoryCommentHeader\">");
-                        builder.appendHtmlConstant("<b>");
-                        builder.appendEscaped(entry.getCreateUser());
-                        builder.appendHtmlConstant("</b>");
-                        builder.appendEscaped(" commented ");
-                        builder.append(getDurationLabel(entry.getCreateTime(), now));
-                        builder.appendHtmlConstant("</div>");
-                        builder.appendHtmlConstant("<div class=\"annotationHistoryCommentBody\">");
-                        builder.appendEscaped(entry.getData());
-                        builder.appendHtmlConstant("</div>");
-                        builder.appendHtmlConstant("</div>");
-                    } else {
-                        builder.appendHtmlConstant("<div class=\"annotationHistoryItem\">");
-                        builder.appendHtmlConstant("<b>");
-                        builder.appendEscaped(entry.getCreateUser());
-                        builder.appendHtmlConstant("</b>");
-                        builder.appendEscaped(" changed ");
-                        builder.appendEscaped(entry.getEntryType().toLowerCase());
-                        builder.appendEscaped(" to ");
-                        builder.appendHtmlConstant("<b>");
-                        if (entry.getData() != null && !entry.getData().trim().isEmpty()) {
-                            builder.appendEscaped(entry.getData());
-                        } else {
-                            builder.appendEscaped("'  '");
-                        }
-                        builder.appendHtmlConstant("</b> ");
-                        builder.append(getDurationLabel(entry.getCreateTime(), now));
-                        builder.appendHtmlConstant("</div>");
-                    }
-                    builder.appendHtmlConstant("</div>");
+                    final Optional<String> currentValue = currentValues.get(entry.getEntryType());
+
+                    addEntryText(text, entry, currentValue);
+                    addEntryHtml(html, entry, currentValue, now);
+
+                    // Remember the previous value.
+                    currentValues.put(entry.getEntryType(), Optional.ofNullable(entry.getData()));
                 });
 
-                builder.appendHtmlConstant("</div>");
+                html.appendHtmlConstant(HISTORY_INNER_END);
 
-                final HTML panel = new HTML(builder.toSafeHtml());
+                final HTML panel = new HTML(html.toSafeHtml());
                 panel.setStyleName("annotationHistoryOuter");
-                getView().setHistoryView(panel);
+
+                final TextArea textCopy = new TextArea();
+                textCopy.setStyleName("annotationHistoryText");
+                textCopy.setText(text.toString());
+
+                final Button copyToClipboard = new Button("Copy History");
+                copyToClipboard.addStyleName("annotationHistoryCopyButton");
+                copyToClipboard.addClickHandler(e -> {
+                    textCopy.setFocus(true);
+                    textCopy.selectAll();
+                    boolean success = copy();
+                    if (!success) {
+                        AlertEvent.fireError(AnnotationEditPresenter.this, "Unable to copy", null);
+                    }
+                });
+
+                final FlowPanel verticalPanel = new FlowPanel();
+                verticalPanel.setStyleName("annotationHistoryContainer");
+                verticalPanel.add(panel);
+                verticalPanel.add(textCopy);
+                verticalPanel.add(copyToClipboard);
+
+                getView().setHistoryView(verticalPanel);
+
+                // Scroll the history to the bottom after update.
+                Scheduler.get().scheduleDeferred(() -> panel.getElement().setScrollTop(panel.getElement().getScrollHeight()));
             }
 
         } else {
@@ -282,6 +346,191 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         if (currentSubject == null || currentSubject.trim().length() == 0) {
             changeSubject(null, false);
         }
+    }
+
+    private void addEntryText(final StringBuilder text, final AnnotationEntry entry, final Optional<String> currentValue) {
+        final String value = entry.getData();
+
+        if (Annotation.COMMENT.equals(entry.getEntryType())) {
+            text.append(ClientDateUtil.toISOString(entry.getCreateTime()));
+            text.append(", ");
+            text.append(entry.getCreateUser());
+            text.append(", commented ");
+            quote(text, value);
+            text.append("\n");
+
+        } else if (Annotation.ASSIGNED_TO.equals(entry.getEntryType())) {
+            if (currentValue != null && currentValue.isPresent()) {
+                text.append(ClientDateUtil.toISOString(entry.getCreateTime()));
+                text.append(", ");
+                text.append(entry.getCreateUser());
+                text.append(",");
+                if (entry.getCreateUser().equals(currentValue.get())) {
+                    text.append(" removed their assignment");
+                } else {
+                    text.append(" unassigned ");
+                    quote(text, currentValue.get());
+                }
+                text.append("\n");
+            }
+
+            if (value != null && value.trim().length() > 0) {
+                text.append(ClientDateUtil.toISOString(entry.getCreateTime()));
+                text.append(", ");
+                text.append(entry.getCreateUser());
+                text.append(",");
+
+                if (entry.getCreateUser().equals(value)) {
+                    text.append(" self-assigned this");
+                } else {
+                    text.append(" assigned ");
+                    quote(text, value);
+                }
+                text.append("\n");
+            }
+        } else {
+            text.append(ClientDateUtil.toISOString(entry.getCreateTime()));
+            text.append(", ");
+            text.append(entry.getCreateUser());
+            text.append(",");
+
+            if (currentValue != null && currentValue.isPresent()) {
+                text.append(" changed the ");
+            } else {
+                text.append(" set the ");
+            }
+            text.append(entry.getEntryType().toLowerCase());
+
+            if (currentValue != null && currentValue.isPresent()) {
+                text.append(" from ");
+                quote(text, currentValue.get());
+                text.append(" to ");
+                quote(text, value);
+            } else {
+                text.append(" to ");
+                quote(text, value);
+            }
+            text.append("\n");
+        }
+    }
+
+    private void addEntryHtml(final SafeHtmlBuilder html, final AnnotationEntry entry, final Optional<String> currentValue, final Date now) {
+        final String value = entry.getData();
+
+        if (Annotation.COMMENT.equals(entry.getEntryType())) {
+            html.appendHtmlConstant(HISTORY_LINE_START);
+            html.appendHtmlConstant(HISTORY_COMMENT_BORDER_START);
+            html.appendHtmlConstant(HISTORY_COMMENT_HEADER_START);
+            bold(html, entry.getCreateUser());
+            html.appendEscaped(" commented ");
+            html.append(getDurationLabel(entry.getCreateTime(), now));
+            html.appendHtmlConstant(HISTORY_COMMENT_HEADER_END);
+            html.appendHtmlConstant(HISTORY_COMMENT_BODY_START);
+            html.appendEscaped(entry.getData());
+            html.appendHtmlConstant(HISTORY_COMMENT_BODY_END);
+            html.appendHtmlConstant(HISTORY_COMMENT_BORDER_END);
+            html.appendHtmlConstant(HISTORY_LINE_END);
+        } else {
+            // Remember initial values but don't show them unless they change.
+            if (currentValue != null) {
+                if (Annotation.ASSIGNED_TO.equals(entry.getEntryType())) {
+                    if (currentValue.isPresent()) {
+                        html.appendHtmlConstant(HISTORY_LINE_START);
+                        html.appendHtmlConstant(HISTORY_ITEM_START);
+                        bold(html, entry.getCreateUser());
+                        if (entry.getCreateUser().equals(currentValue.get())) {
+                            html.appendEscaped(" removed their assignment");
+                        } else {
+                            html.appendEscaped(" unassigned ");
+                            bold(html, getValueString(currentValue.get()));
+                        }
+                        html.appendEscaped(" ");
+                        html.append(getDurationLabel(entry.getCreateTime(), now));
+                        html.appendHtmlConstant(HISTORY_ITEM_END);
+                        html.appendHtmlConstant(HISTORY_LINE_END);
+                    }
+
+                    if (value != null && value.trim().length() > 0) {
+                        html.appendHtmlConstant(HISTORY_LINE_START);
+                        html.appendHtmlConstant(HISTORY_ITEM_START);
+                        bold(html, entry.getCreateUser());
+                        if (entry.getCreateUser().equals(value)) {
+                            html.appendEscaped(" self-assigned this");
+                        } else {
+                            html.appendEscaped(" assigned ");
+                            bold(html, getValueString(value));
+                        }
+                        html.appendEscaped(" ");
+                        html.append(getDurationLabel(entry.getCreateTime(), now));
+                        html.appendHtmlConstant(HISTORY_ITEM_END);
+                        html.appendHtmlConstant(HISTORY_LINE_END);
+                    }
+
+                } else {
+                    html.appendHtmlConstant(HISTORY_LINE_START);
+                    html.appendHtmlConstant(HISTORY_ITEM_START);
+                    bold(html, entry.getCreateUser());
+                    if (currentValue.isPresent()) {
+                        html.appendEscaped(" changed the ");
+                    } else {
+                        html.appendEscaped(" set the ");
+                    }
+                    html.appendEscaped(entry.getEntryType().toLowerCase());
+                    html.appendEscaped(" ");
+
+                    if (currentValue.isPresent()) {
+                        del(html, getValueString(currentValue.get()));
+                        html.appendEscaped(" ");
+                        ins(html, getValueString(value));
+
+                    } else {
+                        html.appendEscaped(getValueString(value));
+                    }
+
+                    html.appendEscaped(" ");
+                    html.append(getDurationLabel(entry.getCreateTime(), now));
+                    html.appendHtmlConstant(HISTORY_ITEM_END);
+                    html.appendHtmlConstant(HISTORY_LINE_END);
+                }
+            }
+        }
+    }
+
+    private static native boolean copy() /*-{
+        return $doc.execCommand('copy');
+    }-*/;
+
+    private void bold(final SafeHtmlBuilder builder, final String value) {
+        builder.appendHtmlConstant("<b>");
+        builder.appendEscaped(value);
+        builder.appendHtmlConstant("</b>");
+    }
+
+    private void del(final SafeHtmlBuilder builder, final String value) {
+        builder.appendHtmlConstant("<del>");
+        builder.appendEscaped(value);
+        builder.appendHtmlConstant("</del>");
+    }
+
+    private void ins(final SafeHtmlBuilder builder, final String value) {
+        builder.appendHtmlConstant("<ins>");
+        builder.appendEscaped(value);
+        builder.appendHtmlConstant("</ins>");
+    }
+
+    private String getValueString(final String string) {
+        if (string != null && !string.trim().isEmpty()) {
+            return string;
+        }
+        return EMPTY_VALUE;
+    }
+
+    private void quote(final StringBuilder text, final String value) {
+        text.append("'");
+        if (value != null) {
+            text.append(value);
+        }
+        text.append("'");
     }
 
     private void readAnnotation(final Annotation annotation) {
@@ -392,6 +641,20 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
                 element.getAbsoluteTop() + element.getClientHeight() + 2);
         ShowPopupEvent.fire(this, assignedToPresenter, PopupType.POPUP, popupPosition, null, element);
+    }
+
+    @Override
+    public void showCommentChooser(final Element element) {
+        commentPresenter.setDataSupplier((filter, consumer) -> {
+            final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
+            final Rest<List<String>> rest = restFactory.create();
+            rest.onSuccess(consumer).call(annotationResource).getComment(filter);
+        });
+        commentPresenter.clearFilter();
+        commentPresenter.setSelected(getView().getComment());
+        final PopupPosition popupPosition = new PopupPosition(element.getAbsoluteLeft() - 1,
+                element.getAbsoluteTop() + element.getClientHeight() + 2);
+        ShowPopupEvent.fire(this, commentPresenter, PopupType.POPUP, popupPosition, null, element);
     }
 
     @Override

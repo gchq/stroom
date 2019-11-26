@@ -65,6 +65,7 @@ public class AppConfig implements IsConfig {
     private SearchableConfig searchableConfig;
     private SecurityConfig securityConfig;
     private ServiceDiscoveryConfig serviceDiscoveryConfig;
+    private SessionCookieConfig sessionCookieConfig;
     private SolrSearchConfig solrSearchConfig;
     private StatisticsConfig statisticsConfig;
     private StoredQueryConfig storedQueryConfig;
@@ -100,6 +101,7 @@ public class AppConfig implements IsConfig {
         this.solrSearchConfig = new SolrSearchConfig();
         this.securityConfig = new SecurityConfig();
         this.serviceDiscoveryConfig = new ServiceDiscoveryConfig();
+        this.sessionCookieConfig = new SessionCookieConfig();
         this.statisticsConfig = new StatisticsConfig();
         this.storedQueryConfig = new StoredQueryConfig();
         this.uiConfig = new UiConfig();
@@ -135,6 +137,7 @@ public class AppConfig implements IsConfig {
               final SolrSearchConfig solrSearchConfig,
               final SecurityConfig securityConfig,
               final ServiceDiscoveryConfig serviceDiscoveryConfig,
+              final SessionCookieConfig sessionCookieConfig,
               final StatisticsConfig statisticsConfig,
               final StoredQueryConfig storedQueryConfig,
               final UiConfig uiConfig,
@@ -167,6 +170,7 @@ public class AppConfig implements IsConfig {
         this.solrSearchConfig = solrSearchConfig;
         this.securityConfig = securityConfig;
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
+        this.sessionCookieConfig = sessionCookieConfig;
         this.statisticsConfig = statisticsConfig;
         this.storedQueryConfig = storedQueryConfig;
         this.uiConfig = uiConfig;
@@ -437,6 +441,16 @@ public class AppConfig implements IsConfig {
 
     public void setServiceDiscoveryConfig(final ServiceDiscoveryConfig serviceDiscoveryConfig) {
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
+    }
+
+    @JsonProperty("sessionCookie")
+    public SessionCookieConfig getSessionCookieConfig() {
+        return sessionCookieConfig;
+    }
+
+    @JsonProperty("sessionCookie")
+    public void setSessionCookieConfig(final SessionCookieConfig sessionCookieConfig) {
+        this.sessionCookieConfig = sessionCookieConfig;
     }
 
     @JsonProperty("statistics")

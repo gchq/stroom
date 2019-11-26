@@ -14,11 +14,14 @@
         .top {
         flex-shrink: 0;
         margin: 5px;
-        width: 233px;
         }
 
         .bottom {
         flex-grow: 1;
+        max-height: 400px;
+        max-width: 390px;
+        overflow-x: hidden;
+        overflow-y: auto;
         }
 
         .nameFilter {

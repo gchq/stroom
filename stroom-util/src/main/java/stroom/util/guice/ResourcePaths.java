@@ -22,6 +22,7 @@ public interface ResourcePaths {
     String SQL_STATISTICS = "/sqlstatistics";
 
     String DISPATCH_RPC_PATH = "/dispatch.rpc";
+    String XSRF_TOKEN_RPC_PATH = "/xsrf";
 
     String V1 = "/v1";
     String V2 = "/v2";

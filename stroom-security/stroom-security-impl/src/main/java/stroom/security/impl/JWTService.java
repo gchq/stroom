@@ -42,6 +42,7 @@ class JWTService implements HasHealthCheck {
 
     private PublicJsonWebKey jwk;
     private Duration durationToWarnBeforeExpiry = null;
+    private final boolean authenticationRequired;
     private final String apiKey;
     private final String authenticationServiceUrl;
     private final String authJwtIssuer;
@@ -57,6 +58,7 @@ class JWTService implements HasHealthCheck {
             this.durationToWarnBeforeExpiry = Duration.ofMillis(
                     ModelStringUtil.parseDurationString(securityConfig.getDurationToWarnBeforeExpiry()));
         }
+        this.authenticationRequired = securityConfig.isAuthenticationRequired();
         this.apiKey = securityConfig.getApiToken();
         this.authenticationServiceUrl = securityConfig.getAuthenticationServiceUrl();
         this.authJwtIssuer = jwtConfig.getJwtIssuer();
@@ -148,6 +150,10 @@ class JWTService implements HasHealthCheck {
     }
 
     public String refreshTokenIfExpired(String jws) {
+        if (!authenticationRequired) {
+            return null;
+        }
+
         try {
             verifyToken(jws);
             return jws;

@@ -93,6 +93,8 @@ appConfig:
   serviceDiscovery:
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
     servicesHostNameOrIpAddress: ${STROOM_ADVERTISED_URL:-localhost}
+  sessionCookie:
+    secure: false
   ui:
     # nodeName is set to appConfig.node.node in FetchUiConfigHandler
     nodeName: null

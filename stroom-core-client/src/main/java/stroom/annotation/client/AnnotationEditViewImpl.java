@@ -40,8 +40,9 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public interface Binder extends UiBinder<Widget, AnnotationEditViewImpl> {
     }
 
-    public static final SvgPreset CHANGE_STATUS = new SvgPreset("images/tree-open.svg", "Change Status", true);
-    public static final SvgPreset CHANGE_ASSIGNED_TO = new SvgPreset("images/tree-open.svg", "Change Assigned To", true);
+    private static final SvgPreset CHANGE_STATUS = new SvgPreset("images/tree-open.svg", "Change Status", true);
+    private static final SvgPreset CHANGE_ASSIGNED_TO = new SvgPreset("images/tree-open.svg", "Change Assigned To", true);
+    private static final SvgPreset CHOOSE_COMMENT = new SvgPreset("images/tree-open.svg", "Choose Comment", true);
 
     @UiField
     TextBox titleTextBox;
@@ -62,6 +63,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     @UiField
     Label assignYourself;
     @UiField
+    Label commentLabel;
+    @UiField(provided = true)
+    SvgButton commentIcon;
+    @UiField
     Button create;
     @UiField
     TextArea comment;
@@ -74,6 +79,7 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public AnnotationEditViewImpl(final Binder binder) {
         statusIcon = SvgButton.create(CHANGE_STATUS);
         assignedToIcon = SvgButton.create(CHANGE_ASSIGNED_TO);
+        commentIcon = SvgButton.create(CHOOSE_COMMENT);
         widget = binder.createAndBindUi(this);
         titleTextBox.getElement().setAttribute("placeholder", "Title");
         subjectTextBox.getElement().setAttribute("placeholder", "Subject");
@@ -92,8 +98,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void setTitle(final String title) {
         if (title == null || title.isEmpty()) {
             this.titleTextBox.setText("");
+            this.titleTextBox.setTitle("");
         } else {
             this.titleTextBox.setText(title);
+            this.titleTextBox.setTitle(title);
         }
     }
 
@@ -106,8 +114,10 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void setSubject(final String subject) {
         if (subject == null || subject.isEmpty()) {
             this.subjectTextBox.setText("");
+            this.subjectTextBox.setTitle("");
         } else {
             this.subjectTextBox.setText(subject);
+            this.subjectTextBox.setTitle(subject);
         }
     }
 
@@ -271,6 +281,20 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void onCreate(final ClickEvent e) {
         if (getUiHandlers() != null) {
             getUiHandlers().create();
+        }
+    }
+
+    @UiHandler("commentLabel")
+    public void onCommentLabel(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().showCommentChooser(commentLabel.getElement());
+        }
+    }
+
+    @UiHandler("commentIcon")
+    public void onCommentIcon(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().showCommentChooser(commentLabel.getElement());
         }
     }
 }

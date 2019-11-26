@@ -32,6 +32,12 @@
                         <button:SvgButton ui:field="assignedToIcon"/>
                     </g:FlowPanel>
                 </g:FlowPanel>
+                <g:FlowPanel addStyleNames="annotationSetting">
+                    <g:FlowPanel addStyleNames="annotationSettingHeading">
+                        <g:Label ui:field="commentLabel" styleName="annotationClickLabel" text="Comment:" width="100%" />
+                        <button:SvgButton ui:field="commentIcon"/>
+                    </g:FlowPanel>
+                </g:FlowPanel>
                 <g:FlowPanel styleName="annotationCommentContainer">
                     <g:TextArea ui:field="comment" styleName="annotationComment" tabIndex="3"/>
                     <g:SimplePanel ui:field="buttons" styleName="annotationButtons">

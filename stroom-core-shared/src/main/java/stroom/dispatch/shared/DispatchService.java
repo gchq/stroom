@@ -17,10 +17,12 @@
 package stroom.dispatch.shared;
 
 import com.google.gwt.user.client.rpc.RemoteService;
+import com.google.gwt.user.server.rpc.XsrfProtect;
 import stroom.docref.SharedObject;
 import stroom.task.shared.Action;
 import stroom.util.shared.EntityServiceException;
 
 public interface DispatchService extends RemoteService {
+    @XsrfProtect
     <R extends SharedObject> R exec(Action<R> action) throws EntityServiceException;
 }

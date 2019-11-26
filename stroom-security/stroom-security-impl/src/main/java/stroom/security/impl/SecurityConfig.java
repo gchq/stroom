@@ -10,15 +10,16 @@ import javax.inject.Singleton;
 
 @Singleton
 public class SecurityConfig implements IsConfig, HasDbConfig {
-
     private DbConfig dbConfig;
     private AuthenticationConfig authenticationConfig;
     private AuthorisationConfig authorisationConfig;
+    private ContentSecurityConfig contentSecurityConfig;
 
     public SecurityConfig() {
         this.authenticationConfig = new AuthenticationConfig();
         this.authorisationConfig = new AuthorisationConfig();
         this.dbConfig = new DbConfig();
+        this.contentSecurityConfig = new ContentSecurityConfig();
     }
 
     @JsonProperty("db")
@@ -56,12 +57,22 @@ public class SecurityConfig implements IsConfig, HasDbConfig {
         this.authorisationConfig = authorisationConfig;
     }
 
+    @JsonProperty("webContent")
+    public ContentSecurityConfig getContentSecurityConfig() {
+        return contentSecurityConfig;
+    }
+
+    public void setContentSecurityConfig(final ContentSecurityConfig contentSecurityConfig) {
+        this.contentSecurityConfig = contentSecurityConfig;
+    }
+
     @Override
     public String toString() {
         return "SecurityConfig{" +
                 "dbConfig=" + dbConfig +
                 ", authenticationConfig=" + authenticationConfig +
                 ", authorisationConfig=" + authorisationConfig +
+                ", webContent=" + contentSecurityConfig +
                 '}';
     }
 }

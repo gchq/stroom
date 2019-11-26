@@ -34,6 +34,7 @@ import stroom.security.api.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
+import stroom.util.xml.ParserConfig;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
@@ -50,10 +51,11 @@ class ParserFactoryPoolImpl
 
     @Inject
     ParserFactoryPoolImpl(final CacheManager cacheManager,
+                          final ParserConfig parserConfig,
                           final DocumentPermissionCache documentPermissionCache,
                           final SecurityContext securityContext,
                           final DSChooser dsChooser) {
-        super(cacheManager, "Parser Factory Pool", documentPermissionCache, securityContext);
+        super(cacheManager, "Parser Factory Pool", parserConfig.getCacheConfig(), documentPermissionCache, securityContext);
         this.dsChooser = dsChooser;
     }
 

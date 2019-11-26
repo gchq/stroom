@@ -26,6 +26,7 @@ public class DispatchModule extends AbstractModule {
         bind(DispatchService.class).to(DispatchServiceImpl.class);
 
         ServletBinder.create(binder())
-                .bind(DispatchServiceImpl.class);
+                .bind(DispatchServiceImpl.class)
+                .bind(XsrfTokenServiceServlet.class);
     }
 }

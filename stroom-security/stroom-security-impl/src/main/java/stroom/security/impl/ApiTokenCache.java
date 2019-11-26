@@ -46,9 +46,9 @@ public class ApiTokenCache {
                          final JWTService jwtService) {
         final CacheLoader<String, Optional<TokenAndExpiry>> cacheLoader = CacheLoader.from(userId -> {
             String token = authenticationServiceClients.getUsersApiToken(userId);
-            token = jwtService.refreshTokenIfExpired(token);
             if (token != null) {
                 try {
+                    token = jwtService.refreshTokenIfExpired(token);
                     final JwtClaims claims = jwtService.verifyToken(token);
                     return Optional.of(new TokenAndExpiry(token, claims.getExpirationTime().getValueInMillis()));
                 } catch (final MalformedClaimException | InvalidJwtException e) {

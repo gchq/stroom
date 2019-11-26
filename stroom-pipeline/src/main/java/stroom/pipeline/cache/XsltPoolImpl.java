@@ -28,6 +28,7 @@ import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.ErrorListenerAdaptor;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.StoredErrorReceiver;
+import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.xsltfunctions.StroomXsltFunctionLibrary;
@@ -53,11 +54,12 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
 
     @Inject
     XsltPoolImpl(final CacheManager cacheManager,
+                 final XsltConfig xsltConfig,
                  final DocumentPermissionCache documentPermissionCache,
                  final SecurityContext securityContext,
                  final URIResolver uriResolver,
                  final Provider<StroomXsltFunctionLibrary> stroomXsltFunctionLibraryProvider) {
-        super(cacheManager, "XSLT Pool", documentPermissionCache, securityContext);
+        super(cacheManager, "XSLT Pool", xsltConfig.getCacheConfig(), documentPermissionCache, securityContext);
         this.uriResolver = uriResolver;
         this.stroomXsltFunctionLibraryProvider = stroomXsltFunctionLibraryProvider;
     }

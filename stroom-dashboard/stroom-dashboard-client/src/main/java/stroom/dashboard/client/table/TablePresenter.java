@@ -231,7 +231,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     final String fieldParam = ParamUtil.makeParam(indexFieldName);
 
                     if (indexFieldName.startsWith("annotation:")) {
-                        field.setExpression("annotation(" + fieldParam + ", ${annotation:Id}, ${StreamId}, ${EventId})");
+                        final AbstractField dataSourceField = currentSearchModel.getIndexLoader().getDataSourceFieldsMap().get(indexFieldName);
+                        if (dataSourceField != null && FieldTypes.DATE.equals(dataSourceField.getType())) {
+                            field.setExpression("annotation(formatDate(" + fieldParam + "), ${annotation:Id}, ${StreamId}, ${EventId})");
+                        } else {
+                            field.setExpression("annotation(" + fieldParam + ", ${annotation:Id}, ${StreamId}, ${EventId})");
+                        }
                     } else {
                         field.setExpression(fieldParam);
                     }

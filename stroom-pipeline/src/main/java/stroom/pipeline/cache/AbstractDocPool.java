@@ -16,6 +16,7 @@
 
 package stroom.pipeline.cache;
 
+import stroom.util.xml.CacheConfig;
 import stroom.cache.api.CacheManager;
 import stroom.docstore.shared.Doc;
 import stroom.security.api.DocumentPermissionCache;
@@ -29,9 +30,10 @@ public abstract class AbstractDocPool<K extends Doc, V> extends AbstractPoolCach
 
     public AbstractDocPool(final CacheManager cacheManager,
                            final String name,
+                           final CacheConfig cacheConfig,
                            final DocumentPermissionCache documentPermissionCache,
                            final SecurityContext securityContext) {
-        super(cacheManager, name);
+        super(cacheManager, name, cacheConfig);
         this.documentPermissionCache = documentPermissionCache;
         this.securityContext = securityContext;
     }
