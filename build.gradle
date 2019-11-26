@@ -70,7 +70,7 @@ ext.versions = [
     eventLogging: 'v3.1.2_schema-v3.1.2',
     hadoopCommonShaded: 'v2.6.4-5',
     hadoopHdfsShaded: 'v2.6.4-4',
-    stroomAuth: 'v1.0-beta.8',
+    stroomAuth: 'v6.0.25-1', // Needed for the correct version of the client API
     stroomExpression: 'v1.5.5',
     stroomQuery: 'v2.2.7', //same version for both stroom-query-api and stroom-query-common
     stroomStats: 'v0.6.0-alpha.2',
