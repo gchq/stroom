@@ -17,6 +17,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.Map;
 
 @Api(
         value = "authorisation - /v1",
@@ -29,13 +30,19 @@ public class AuthorisationResource implements RestResource {
     private final SecurityContext securityContext;
     private final UserService userService;
 
+    private static final Map<String, UserStatus> STATUS_MAPPINGS = Map.of(
+            "locked", UserStatus.LOCKED,
+            "inactive", UserStatus.EXPIRED,
+            "active", UserStatus.ENABLED,
+            "enabled", UserStatus.ENABLED,
+            "disabled", UserStatus.DISABLED);
+
     @Inject
     public AuthorisationResource(final SecurityContext securityContext, UserService userService) {
         this.securityContext = securityContext;
         this.userService = userService;
     }
 
-    //TODO: Is this used?
     /**
      * Authenticates using JWT
      */
@@ -54,15 +61,21 @@ public class AuthorisationResource implements RestResource {
                 authorisationRequest.getPermission());
 
         return result
-                ? Response
-                .ok()
-                .build()
-                : Response
-                .status(Response.Status.UNAUTHORIZED)
-                .build();
+                ? Response.ok().build()
+                : Response.status(Response.Status.UNAUTHORIZED).build();
     }
 
-    //TODO Get rid of this and use UserResource instead
+    @POST
+    @Path("canManageUsers")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response canManageUsers(UserPermissionRequest userPermissionRequest) {
+        // TODO what happens if the permission is bad? What's the result of this method call and how should we handle it?
+        boolean result = securityContext.hasAppPermission(userPermissionRequest.getPermission());
+        // The user here will be the one logged in by the JWT.
+        return result ? Response.ok().build() : Response.status(Response.Status.UNAUTHORIZED).build();
+    }
+
     /**
      * This function is used by the Users UI to create a Stroom user for authorisation purposes.
      * It solves the problem of Users having to log in before they're available to assign permissions to.
@@ -73,7 +86,7 @@ public class AuthorisationResource implements RestResource {
     @Produces(MediaType.APPLICATION_JSON)
     public Response createUser(@QueryParam("id") String userId) {
         try {
-            User existingUser = userService.getUserByName(userId);
+            UserRef existingUser = userService.getUserByName(userId);
             if (existingUser == null) {
                 userService.createUser(userId);
             }
@@ -84,4 +97,28 @@ public class AuthorisationResource implements RestResource {
         }
     }
 
+    /**
+     * Updates the user's status
+     */
+    @GET
+    @Path("setUserStatus")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response setUserStatus(@QueryParam("userId") String userId, @QueryParam("status") String status) {
+        try {
+            UserStatus newUserStatus = STATUS_MAPPINGS.get(status);
+            User existingUser = userService.getUserByName(userId);
+            if (existingUser != null) {
+                User user = userService.loadByUuid(existingUser.getUuid());
+                user.updateStatus(newUserStatus);
+                userService.save(user);
+                return Response.ok().build();
+            } else {
+                return Response.status(Response.Status.NOT_FOUND).build();
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error("Unable to change user's status: {}", e.getMessage());
+            return Response.serverError().build();
+        }
+    }
 }

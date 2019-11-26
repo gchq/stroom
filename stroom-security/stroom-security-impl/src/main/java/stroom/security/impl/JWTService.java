@@ -49,11 +49,13 @@ class JWTService implements HasHealthCheck {
     private AuthenticationServiceClients authenticationServiceClients;
     private final boolean checkTokenRevocation;
     private Clock clock;
+    private String clientId;
 
     @Inject
     JWTService(final AuthenticationConfig securityConfig,
                final JwtConfig jwtConfig,
                final AuthenticationServiceClients authenticationServiceClients) {
+        this.clientId = securityConfig.getClientId();
         if (securityConfig.getDurationToWarnBeforeExpiry() != null) {
             this.durationToWarnBeforeExpiry = Duration.ofMillis(
                     ModelStringUtil.parseDurationString(securityConfig.getDurationToWarnBeforeExpiry()));
@@ -112,8 +114,9 @@ class JWTService implements HasHealthCheck {
 
     public boolean containsValidJws(ServletRequest request) {
         Optional<String> authHeader = getAuthHeader(request);
-        String jws;
+        boolean isValid = false;
         if (authHeader.isPresent()) {
+            String jws;
             String bearerString = authHeader.get();
 
             if (bearerString.startsWith(BEARER)) {
@@ -123,30 +126,30 @@ class JWTService implements HasHealthCheck {
                 jws = bearerString;
             }
             LOGGER.debug("Found auth header in request. It looks like this: {}", jws);
-        } else {
-            // If there's no token then we've nothing to do.
-            return false;
-        }
 
-        try {
-            if (checkTokenRevocation) {
-                LOGGER.debug("Checking token revocation status in remote auth service...");
-                AuthenticationToken authenticationToken = checkToken(jws);
-                return authenticationToken.getUserId() != null;
-            } else {
+            try {
                 LOGGER.debug("Verifying token...");
                 JwtClaims jwtClaims = verifyToken(jws);
-                return jwtClaims != null;
-            }
+                boolean isVerified = jwtClaims != null;
+                boolean isRevoked = false;
+                if (checkTokenRevocation) {
+                    LOGGER.debug("Checking token revocation status in remote auth service...");
+                    AuthenticationToken authenticationToken = checkToken(jws);
+                    isRevoked =  authenticationToken.getUserId() == null;
+                }
 
-        } catch (final InvalidJwtException | RuntimeException e) {
-            LOGGER.error("Unable to verify token:", e.getMessage(), e);
-            // If we get an exception verifying the token then we need to log the message
-            // and continue as if the token wasn't provided.
-            // TODO: decide if this should be handled by an exception and how
-            return false;
+                isValid = isVerified && !isRevoked;
+
+            } catch (Exception e) {
+                LOGGER.error("Unable to verify token:", e.getMessage(), e);
+                isValid = false;
+            }
+        } else {
+            // If there's no token then we'll consider it invalid;
+            isValid = false;
         }
 
+        return isValid;
     }
 
     public String refreshTokenIfExpired(String jws) {
@@ -242,6 +245,7 @@ class JWTService implements HasHealthCheck {
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
                 .setRequireSubject() // the JWT must have a subject claim
                 .setVerificationKey(this.jwk.getPublicKey()) // verify the signature with the public key
+                .setExpectedAudience(clientId)
                 .setRelaxVerificationKeyValidation() // relaxes key length requirement
                 .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
                         new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here

@@ -19,6 +19,8 @@ public class AuthenticationConfig implements IsConfig {
     private JwtConfig jwtConfig = new JwtConfig();
     private boolean preventLogin;
     private String userNamePattern = "^[a-zA-Z0-9_-]{3,}$";
+    private String clientId;
+    private String clientSecret;
 
     @JsonPropertyDescription("The URL of the authentication service")
     public String getAuthenticationServiceUrl() {
@@ -105,6 +107,22 @@ public class AuthenticationConfig implements IsConfig {
 
     public void setUserNamePattern(final String userNamePattern) {
         this.userNamePattern = userNamePattern;
+    }
+
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public String getClientSecret() {
+        return clientSecret;
+    }
+
+    public void setClientSecret(String clientSecret) {
+        this.clientSecret = clientSecret;
     }
 
     @Override

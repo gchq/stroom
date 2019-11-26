@@ -390,7 +390,7 @@ class SecurityFilter implements Filter {
                 .path("/authenticate")
                 .queryParam(SCOPE, "openid")
                 .queryParam(RESPONSE_TYPE, "code")
-                .queryParam(CLIENT_ID, "stroom")
+                .queryParam(CLIENT_ID, config.getClientId())
                 .queryParam(REDIRECT_URL, redirectUrl)
                 .queryParam(STATE, state.getId())
                 .queryParam(NONCE, state.getNonce());
@@ -426,7 +426,11 @@ class SecurityFilter implements Filter {
 
         try {
             String sessionId = session.getId();
-            final String idToken = authenticationServiceClients.newAuthenticationApi().getIdToken(accessCode);
+            IdTokenRequest idTokenRequest = new IdTokenRequest()
+                    .clientId(config.getClientId())
+                    .clientSecret(config.getClientSecret())
+                    .accessCode(accessCode);
+            final String idToken = authenticationServiceClients.newAuthenticationApi().getIdToken(idTokenRequest);
             final JwtClaims jwtClaimsOptional = jwtService.verifyToken(idToken);
             final String nonce = (String) jwtClaimsOptional.getClaimsMap().get("nonce");
             final boolean match = nonce.equals(state.getNonce());
