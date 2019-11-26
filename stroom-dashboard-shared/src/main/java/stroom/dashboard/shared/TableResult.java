@@ -14,10 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.server;
+package stroom.dashboard.shared;
 
-import stroom.query.api.v2.Field;
-import stroom.query.api.v2.Row;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.OffsetRange;

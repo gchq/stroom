@@ -16,14 +16,22 @@
 
 package stroom.dashboard.server;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.springframework.stereotype.Component;
-import stroom.dashboard.server.VisResult.Store;
+import stroom.dashboard.shared.ComponentResult;
+import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Format.Type;
+import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.query.api.v2.Field;
+import stroom.dashboard.shared.TableResult;
+import stroom.dashboard.shared.VisResult;
+import stroom.dashboard.shared.VisResult.Store;
 import stroom.query.api.v2.FlatResult;
 import stroom.query.api.v2.Result;
-import stroom.util.json.JsonUtil;
 import stroom.util.shared.OffsetRange;
 
 import java.util.ArrayList;
@@ -45,7 +53,7 @@ public class SearchResponseMapper {
 
         if (searchResponse.getResults() != null) {
             for (final Result result : searchResponse.getResults()) {
-                copy.addResult(result.getComponentId(), JsonUtil.writeValueAsString(mapResult(result)));
+                copy.addResult(result.getComponentId(), mapResult(result));
             }
         }
 
@@ -71,10 +79,11 @@ public class SearchResponseMapper {
 
         if (result instanceof stroom.query.api.v2.TableResult) {
             final stroom.query.api.v2.TableResult tableResult = (stroom.query.api.v2.TableResult) result;
+
             final TableResult copy = new TableResult();
 
-            copy.setFields(tableResult.getFields());
-            copy.setRows(tableResult.getRows());
+            copy.setFields(mapFields(tableResult.getFields()));
+            copy.setRows(mapRows(tableResult.getRows()));
             if (tableResult.getResultRange() != null) {
                 copy.setResultRange(new OffsetRange<>(tableResult.getResultRange().getOffset().intValue(), tableResult.getResultRange().getLength().intValue()));
             }
@@ -84,12 +93,30 @@ public class SearchResponseMapper {
             return copy;
         } else if (result instanceof FlatResult) {
             final FlatResult visResult = (FlatResult) result;
-            final VisResult copy = mapVisResult(visResult);
-
-            return copy;
+            return mapVisResult(visResult);
         }
 
         return null;
+    }
+
+    private List<Field> mapFields(final List<stroom.query.api.v2.Field> fields) {
+        final List<Field> copy = new ArrayList<>();
+        if (fields != null) {
+            for (final stroom.query.api.v2.Field field : fields) {
+                final Field item = new Field(
+                        field.getId(),
+                        field.getName(),
+                        field.getExpression(),
+                        null,
+                        null,
+                        null,
+                        null,
+                        -1,
+                        true);
+                copy.add(item);
+            }
+        }
+        return copy;
     }
 
     private List<Row> mapRows(final List<stroom.query.api.v2.Row> rows) {
@@ -104,19 +131,19 @@ public class SearchResponseMapper {
     }
 
     private VisResult mapVisResult(final FlatResult visResult) {
-        Store store = null;
+        String json = null;
         String error = visResult.getError();
 
         if (error == null) {
             try {
-                final List<Field> fields = visResult.getStructure();
+                final List<stroom.query.api.v2.Field> fields = visResult.getStructure();
                 if (fields != null && visResult.getValues() != null) {
                     int valueOffset = 0;
 
                     final Map<Integer, List<String>> typeMap = new HashMap<>();
                     final Map<Integer, List<String>> sortDirectionMap = new HashMap<>();
                     int maxDepth = 0;
-                    for (final Field field : fields) {
+                    for (final stroom.query.api.v2.Field field : fields) {
                         // Ignore key and depth fields.
                         if (field.getName() != null && field.getName().startsWith(":")) {
                             valueOffset++;
@@ -175,9 +202,10 @@ public class SearchResponseMapper {
                         map.computeIfAbsent(row.get(0), k -> new ArrayList<>()).add(row);
                     }
 
-                    store = getStore(null, map, types, sortDirections, valueCount, maxDepth, 0);
+                    final Store store = getStore(null, map, types, sortDirections, valueCount, maxDepth, 0);
+                    json = getMapper(false).writeValueAsString(store);
                 }
-            } catch (final RuntimeException e) {
+            } catch (final JsonProcessingException | RuntimeException e) {
                 error = e.getMessage();
                 if (error == null || error.trim().length() == 0) {
                     error = e.getClass().getSimpleName();
@@ -185,7 +213,18 @@ public class SearchResponseMapper {
             }
         }
 
-        return new VisResult(store, visResult.getSize(), error);
+        return new VisResult(json, visResult.getSize(), error);
+    }
+
+    private ObjectMapper getMapper(final boolean indent) {
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.WRITE_NULL_MAP_VALUES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, indent);
+        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+        // Enabling default typing adds type information where it would otherwise be ambiguous, i.e. for abstract classes
+//        mapper.enableDefaultTyping();
+        return mapper;
     }
 
     private Store getStore(final Object key,

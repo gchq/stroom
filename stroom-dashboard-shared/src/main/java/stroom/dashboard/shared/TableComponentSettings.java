@@ -83,7 +83,6 @@ public class TableComponentSettings extends ComponentSettings {
         }
 
         Objects.requireNonNull(field.getId(), "Field id is null");
-        Objects.requireNonNull(field.getComponentId(), "Field component id is null");
 
         fields.add(field);
     }

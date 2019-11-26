@@ -26,14 +26,12 @@ import java.io.Serializable;
 import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "field", propOrder = {"id", "componentId", "name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})
+@XmlType(name = "field", propOrder = {"id", "name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})
 public class Field implements Serializable, HasDisplayValue {
     private static final long serialVersionUID = 7327802315955158337L;
 
     @XmlElement(name = "id")
     private String id;
-    @XmlElement(name = "componentId")
-    private String componentId;
     @XmlElement(name = "name")
     private String name;
     @XmlElement(name = "expression")
@@ -62,7 +60,6 @@ public class Field implements Serializable, HasDisplayValue {
     }
 
     public Field(final String id,
-                 final String componentId,
                  final String name,
                  final String expression,
                  final Sort sort,
@@ -72,7 +69,6 @@ public class Field implements Serializable, HasDisplayValue {
                  final int width,
                  final boolean visible) {
         this.id = id;
-        this.componentId = componentId;
         this.name = name;
         this.expression = expression;
         this.sort = sort;
@@ -89,14 +85,6 @@ public class Field implements Serializable, HasDisplayValue {
 
     public void setId(final String id) {
         this.id = id;
-    }
-
-    public String getComponentId() {
-        return componentId;
-    }
-
-    public void setComponentId(final String componentId) {
-        this.componentId = componentId;
     }
 
     public String getName() {
@@ -182,19 +170,17 @@ public class Field implements Serializable, HasDisplayValue {
         if (o == null || getClass() != o.getClass()) return false;
         final Field field = (Field) o;
 
-        return Objects.equals(id, field.id) &&
-                Objects.equals(componentId, field.componentId);
+        return Objects.equals(id, field.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, componentId);
+        return Objects.hash(id);
     }
 
     public Field copy() {
         final Field field = new Field();
         field.id = id;
-        field.componentId = componentId;
         field.name = name;
         field.expression = expression;
         field.sort = sort;

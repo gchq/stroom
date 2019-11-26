@@ -57,7 +57,7 @@ public class SearchResponse implements SharedObject {
     private boolean complete;
 
     @XmlElement
-    private Map<String, String> results;
+    private Map<String, ComponentResult> results;
 
     public SearchResponse() {
         // Default constructor necessary for GWT serialisation.
@@ -96,11 +96,11 @@ public class SearchResponse implements SharedObject {
         return builder.toString();
     }
 
-    public Map<String, String> getResults() {
+    public Map<String, ComponentResult> getResults() {
         return results;
     }
 
-    public void addResult(final String componentId, final String result) {
+    public void addResult(final String componentId, final ComponentResult result) {
         if (results == null) {
             results = new HashMap<>();
         }

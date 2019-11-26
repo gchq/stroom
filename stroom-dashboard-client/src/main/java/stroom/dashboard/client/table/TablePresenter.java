@@ -41,6 +41,7 @@ import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TablePresenter.TableView;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Dashboard;
@@ -51,9 +52,11 @@ import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Format;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.IndexConstants;
+import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.TableComponentSettings;
+import stroom.dashboard.shared.TableResult;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -72,6 +75,7 @@ import stroom.security.client.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.RandomId;
 import stroom.util.shared.Expander;
+import stroom.util.shared.OffsetRange;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -82,7 +86,6 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -164,7 +167,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         final String[] parts = value.split(",");
                         final int[] arr = new int[parts.length];
                         for (int i = 0; i < arr.length; i++) {
-                            arr[i] = Integer.valueOf(parts[i].trim());
+                            arr[i] = Integer.parseInt(parts[i].trim());
                         }
                         maxResults = arr;
                     }
@@ -317,10 +320,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private String createRandomFieldId() {
-        String id = RandomId.createId(5);
+        String id = getComponentConfig().getId() + "|" + RandomId.createId(5);
         // Make sure we don't duplicate ids.
         while (usedFieldIds.contains(id)) {
-            id = RandomId.createId(5);
+            id = getComponentConfig().getId() + "|" + RandomId.createId(5);
         }
         usedFieldIds.add(id);
         return id;
@@ -395,7 +398,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
-    public void setData(final String json) {
+    public void setData(final ComponentResult componentResult) {
         ignoreRangeChange = true;
 
         try {
@@ -403,20 +406,20 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             lastExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
             currentExpanderColumnWidth = MIN_EXPANDER_COL_WIDTH;
 
-            if (json != null) {
+            if (componentResult != null) {
                 // Don't refresh the table unless the results have changed.
-                final TableResult tableResult = JsonUtil.decode(json);
+                final TableResult tableResult = (TableResult) componentResult;
 
-                currentFields = Arrays.asList(tableResult.fields);
-                final Row[] values = tableResult.rows;
-                final OffsetRange valuesRange = tableResult.resultRange;
+                currentFields = tableResult.getFields();
+                final List<Row> values = tableResult.getRows();
+                final OffsetRange<Integer> valuesRange = tableResult.getResultRange();
 
                 // Only set data in the table if we have got some results and
                 // they have changed.
-                if (valuesRange.offset == 0 || values.length > 0) {
+                if (valuesRange.getOffset() == 0 || values.size() > 0) {
                     updateColumns();
-                    dataGrid.setRowData(valuesRange.offset, Arrays.asList(values));
-                    dataGrid.setRowCount(tableResult.totalResults, true);
+                    dataGrid.setRowData(valuesRange.getOffset(), values);
+                    dataGrid.setRowCount(tableResult.getTotalResults(), true);
                 }
 
                 // Enable download of current results.
@@ -447,27 +450,27 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     return null;
                 }
 
-                if (row.depth < maxDepth) {
+                if (row.getDepth() < maxDepth) {
                     // Set the width of the expander column if it needs to be
                     // made wider.
-                    final int width = 16 + (row.depth * 10);
+                    final int width = 16 + (row.getDepth() * 10);
                     if (width > currentExpanderColumnWidth) {
                         currentExpanderColumnWidth = width;
                         lastExpanderColumnWidth = width;
                         dataGrid.setColumnWidth(this, width, Unit.PX);
                     }
 
-                    final boolean open = tableResultRequest.isGroupOpen(row.groupKey);
-                    return new Expander(row.depth, open, false);
-                } else if (row.depth > 0) {
-                    return new Expander(row.depth, false, true);
+                    final boolean open = tableResultRequest.isGroupOpen(row.getGroupKey());
+                    return new Expander(row.getDepth(), open, false);
+                } else if (row.getDepth() > 0) {
+                    return new Expander(row.getDepth(), false, true);
                 }
 
                 return null;
             }
         };
         column.setFieldUpdater((index, result, value) -> {
-            tableResultRequest.setGroupOpen(result.groupKey, !value.isExpanded());
+            tableResultRequest.setGroupOpen(result.getGroupKey(), !value.isExpanded());
             refresh();
         });
         dataGrid.addColumn(column, "<br/>", lastExpanderColumnWidth);
@@ -579,7 +582,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             if (indexField != null) {
                 final Field field = new Field(indexFieldName);
                 field.setId(indexFieldName);
-                field.setComponentId(getComponentConfig().getId());
                 field.setExpression(ParamUtil.makeParam(indexFieldName));
                 field.setVisible(false);
                 field.setSpecial(true);
@@ -679,7 +681,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 } else {
                     usedFieldIds.add(field.getId());
                 }
-                field.setComponentId(componentConfig.getId());
             });
         }
 
@@ -793,7 +794,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             if (field != null) {
                 HidePopupEvent.fire(TablePresenter.this, presenter);
                 field.setId(createRandomFieldId());
-                field.setComponentId(getComponentConfig().getId());
                 fieldsManager.addField(field);
             }
         }

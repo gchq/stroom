@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.Row;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -80,7 +81,7 @@ class TableCell extends AbstractCell<Row> {
     public void render(final Context context, final Row row, final SafeHtmlBuilder sb) {
         final String value = getValue(row);
         if (value != null) {
-            final boolean grouped = field.getGroup() != null && field.getGroup() >= row.depth;
+            final boolean grouped = field.getGroup() != null && field.getGroup() >= row.getDepth();
             if (grouped) {
                 sb.appendHtmlConstant("<b>");
             }
@@ -93,12 +94,12 @@ class TableCell extends AbstractCell<Row> {
 
     private String getValue(final Row row) {
         if (row != null) {
-            final String[] values = row.values;
+            final List<String> values = row.getValues();
             if (values != null) {
                 final List<Field> fields = tablePresenter.getCurrentFields();
                 final int index = fields.indexOf(field);
-                if (index != -1 && values.length > index) {
-                    return values[index];
+                if (index != -1 && values.size() > index) {
+                    return values.get(index);
                 }
             }
         }

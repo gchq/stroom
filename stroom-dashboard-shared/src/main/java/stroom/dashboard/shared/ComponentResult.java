@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.dashboard.shared;
 
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
-import stroom.dashboard.shared.Field;
+import java.io.Serializable;
 
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class TableResult {
-    Field[] fields;
-    Row[] rows;
-    OffsetRange resultRange;
-    int totalResults;
-    String error;
-
-    public TableResult() {
-    }
+public interface ComponentResult extends Serializable {
 }

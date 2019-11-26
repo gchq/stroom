@@ -26,6 +26,7 @@ import stroom.dashboard.shared.Dashboard;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
 import stroom.dashboard.shared.DownloadSearchResultsAction;
+import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.datasource.DataSourceProvider;
@@ -154,7 +155,7 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
             }
 
             final TableResultRequest tableResultRequest = (TableResultRequest) componentResultRequest;
-            final List<stroom.dashboard.shared.Field> fields = tableResultRequest.getTableSettings().getFields();
+            final List<Field> fields = tableResultRequest.getTableSettings().getFields();
             final List<Row> rows = tableResult.getRows();
 
             download(fields, rows, file, action.getFileType(), action.isSample(), action.getPercent());
@@ -168,7 +169,7 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
         return new ResourceGeneration(resourceKey, new ArrayList<>());
     }
 
-    private void download(final List<stroom.dashboard.shared.Field> fields, final List<Row> rows, final Path file,
+    private void download(final List<Field> fields, final List<Row> rows, final Path file,
                           final DownloadSearchResultFileType fileType, final boolean sample, final int percent) {
         try {
             final OutputStream outputStream = Files.newOutputStream(file);

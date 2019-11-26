@@ -29,12 +29,12 @@ import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
 import stroom.dashboard.client.main.Components;
-import stroom.dashboard.client.table.Row;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.IndexConstants;
+import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -304,8 +304,8 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
             }
 
             if (index != -1) {
-                if (row.values.length > index) {
-                    return getLong(row.values[index]);
+                if (row.getValues().size() > index) {
+                    return getLong(row.getValues().get(index));
                 }
             }
         }
