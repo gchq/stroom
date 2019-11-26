@@ -50,6 +50,7 @@ import stroom.dictionary.server.DictionaryResource;
 import stroom.dictionary.server.DictionaryStore;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.spring.DictionaryConfiguration;
+import stroom.dispatch.server.XsrfTokenServiceServlet;
 import stroom.dispatch.shared.DispatchService;
 import stroom.entity.server.SpringRequestFactoryServlet;
 import stroom.entity.server.util.ConnectionUtil;
@@ -79,7 +80,9 @@ import stroom.ruleset.spring.RuleSetConfiguration;
 import stroom.script.server.ScriptServlet;
 import stroom.script.spring.ScriptConfiguration;
 import stroom.search.spring.SearchConfiguration;
+import stroom.security.server.AuthenticationResource;
 import stroom.security.server.AuthorisationResource;
+import stroom.security.server.ContentSecurityFilter;
 import stroom.security.server.JWTService;
 import stroom.security.server.SecurityFilter;
 import stroom.security.server.SessionListListener;
@@ -118,6 +121,7 @@ import stroom.visualisation.spring.VisualisationConfiguration;
 
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
+import javax.servlet.SessionCookieConfig;
 import javax.ws.rs.client.Client;
 import java.util.AbstractMap;
 import java.util.EnumSet;
@@ -148,6 +152,7 @@ public class App extends Application<Config> {
     private static final String SESSION_LIST_PATH = ResourcePaths.ROOT_PATH + "/sessionList";
     private static final String STATUS_PATH = ResourcePaths.ROOT_PATH + "/status";
     private static final String UI_PATH = ResourcePaths.ROOT_PATH + "/ui";
+    private static final String XSRF_TOKEN_RPC_PATH = ResourcePaths.ROOT_PATH + "/xsrf";
 
     private static String configPath;
 
@@ -195,8 +200,16 @@ public class App extends Application<Config> {
 //            new AssetsBundle("/ui", "/", "stroom", "ui").run(environment);
             startApp(configuration, environment);
         }
-    }
 
+        // Ensure the session cookie that provides JSESSIONID is secure.
+        final SessionCookieConfig sessionCookieConfig = environment
+                .getApplicationContext()
+                .getServletContext()
+                .getSessionCookieConfig();
+        sessionCookieConfig.setSecure(configuration.getSessionCookieConfig().isSecure());
+        sessionCookieConfig.setHttpOnly(configuration.getSessionCookieConfig().isHttpOnly());
+        // TODO : Add `SameSite=Strict` when supported by JEE
+    }
 
     private void startProxy(final Config configuration, final Environment environment) {
 
@@ -347,6 +360,9 @@ public class App extends Application<Config> {
 
         registerSecurityFilter(applicationContext, servletContextHandler);
 
+        // Add web content security filter.
+        SpringUtil.addFilter(servletContextHandler, applicationContext, ContentSecurityFilter.class, "/*");
+
         // Add servlets
         SpringUtil.addServlet(servletContextHandler, applicationContext, StroomServlet.class, UI_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, DashboardServlet.class, DASHBOARD_PATH);
@@ -359,25 +375,30 @@ public class App extends Application<Config> {
         SpringUtil.addServlet(servletContextHandler, applicationContext, EchoServlet.class, ECHO_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, DebugServlet.class, DEBUG_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, SessionListServlet.class, SESSION_LIST_PATH);
-        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionResourceStoreImpl.class, RESOURCE_STORE_PATH + "+/*");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, SessionResourceStoreImpl.class, RESOURCE_STORE_PATH + "/*");
         SpringUtil.addServlet(servletContextHandler, applicationContext, SpringRequestFactoryServlet.class, GWT_REQUEST_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, RemoteFeedServiceRPC.class, REMOTING_RPC_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, DATAFEED_PATH);
         SpringUtil.addServlet(servletContextHandler, applicationContext, DataFeedServlet.class, DATAFEED_PATH + "/*");
+        SpringUtil.addServlet(servletContextHandler, applicationContext, XsrfTokenServiceServlet.class, XSRF_TOKEN_RPC_PATH);
 
         // Add session listeners.
         SpringUtil.addServletListener(environment.servlets(), applicationContext, SessionListListener.class);
 
         // Add resources.
-        SpringUtil.addResource(environment.jersey(), applicationContext, ExportConfigResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, AuthenticationResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, DictionaryResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, ExportConfigResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, FeedStatusResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, RuleSetResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, AuthorisationResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, UserAppPermissionResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SessionResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, FeedStatusResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
+        SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
 
         // Map exceptions to helpful HTTP responses
         environment.jersey().register(PermissionExceptionMapper.class);
@@ -400,6 +421,7 @@ public class App extends Application<Config> {
                 .put(makeBypassAuthInitParam(ECHO_PATH, false))
                 .put(makeBypassAuthInitParam(DEBUG_PATH, false))
                 .put(makeBypassAuthInitParam(REMOTING_RPC_PATH, false))
+                .put(makeBypassAuthInitParam(XSRF_TOKEN_RPC_PATH, false))
                 .build();
 
         SpringUtil.addFilter(servletContextHandler, applicationContext, SecurityFilter.class, "/*", initParams);

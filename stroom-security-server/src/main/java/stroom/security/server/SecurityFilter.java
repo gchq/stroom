@@ -23,10 +23,12 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
+import stroom.auth.service.api.model.IdTokenRequest;
 import stroom.feed.server.UserAgentSessionUtil;
 import stroom.security.UserTokenUtil;
 import stroom.security.server.exception.AuthenticationException;
 import stroom.security.shared.UserRef;
+import stroom.servicediscovery.ResourcePaths;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -69,6 +71,7 @@ public class SecurityFilter implements Filter {
     public static String BYPASS_PARAM_PREFIX = "bypassRegex";
     public static String DISPATCH_PATH_REGEX_PARAM = "dispatchPathRegex";
     public static String API_PATH_REGEX_PARAM = "apiPathRegex";
+    public static String PUBLIC_API_PATH_REGEX = "\\/api.*\\/noauth\\/.*"; // E.g. /api/authentication/v1/noauth/exchange
 
     private static final String IGNORE_URI_REGEX = "ignoreUri";
 
@@ -99,6 +102,7 @@ public class SecurityFilter implements Filter {
 //    private Pattern pattern = null;
     private List<Pattern> bypassPatterns = new ArrayList<>();
     private Pattern apiPathPattern;
+    private Pattern publicApiPathPattern;
     private Pattern dispatchPathPattern;
 
     public SecurityFilter(
@@ -136,6 +140,7 @@ public class SecurityFilter implements Filter {
                 apiPathPattern = Pattern.compile(value);
             }
         }
+        publicApiPathPattern = Pattern.compile(PUBLIC_API_PATH_REGEX);
         Objects.requireNonNull(dispatchPathPattern);
         Objects.requireNonNull(apiPathPattern);
     }
@@ -181,8 +186,11 @@ public class SecurityFilter implements Filter {
             //   let it through. It is essential that port 8080 is not exposed and that any reverse-proxy
             //   blocks requests that look like '.*clustercall.rpc$'.
             final String servletPath = request.getServletPath().toLowerCase();
-
-            if (isApiRequest(servletPath)) {
+            final String fullPath = request.getRequestURI().toLowerCase();
+            if(isPublicApiRequest(fullPath)) {
+                authenticateAsProcUser(request, response, chain, false);
+            }
+            else if (isApiRequest(servletPath)) {
                 LOGGER.debug("API request");
                 if (!config.isAuthenticationRequired()) {
                     authenticateAsAdmin(request, response, chain, false);
@@ -228,6 +236,10 @@ public class SecurityFilter implements Filter {
                         pattern.matcher(servletPath).matches());
         LOGGER.debug("shouldBypassNormalAuthentication({}) result {}", servletPath, result);
         return result;
+    }
+
+    private boolean isPublicApiRequest(String servletPath) {
+        return publicApiPathPattern != null && publicApiPathPattern.matcher(servletPath).matches();
     }
 
     private boolean isApiRequest(String servletPath) {
@@ -404,7 +416,7 @@ public class SecurityFilter implements Filter {
                 .path("/authenticate")
                 .queryParam(SCOPE, "openid")
                 .queryParam(RESPONSE_TYPE, "code")
-                .queryParam(CLIENT_ID, "stroom")
+                .queryParam(CLIENT_ID, config.getClientId())
                 .queryParam(REDIRECT_URL, redirectUrl)
                 .queryParam(STATE, state.getId())
                 .queryParam(NONCE, state.getNonce());
@@ -440,7 +452,11 @@ public class SecurityFilter implements Filter {
 
         try {
             String sessionId = session.getId();
-            final String idToken = authenticationServiceClients.newAuthenticationApi().getIdToken(accessCode);
+            IdTokenRequest idTokenRequest = new IdTokenRequest()
+                .clientId(config.getClientId())
+                .clientSecret(config.getClientSecret())
+                .accessCode(accessCode);
+            final String idToken = authenticationServiceClients.newAuthenticationApi().getIdToken(idTokenRequest);
             final JwtClaims jwtClaimsOptional = jwtService.verifyToken(idToken);
             final String nonce = (String) jwtClaimsOptional.getClaimsMap().get("nonce");
             final boolean match = nonce.equals(state.getNonce());

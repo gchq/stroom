@@ -19,6 +19,7 @@ package stroom.feed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.proxy.StroomStatusCode;
+import stroom.util.io.StreamUtil;
 
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -87,43 +88,79 @@ public class StroomStreamException extends RuntimeException {
     }
 
     public static int checkConnectionResponse(final HttpURLConnection connection) {
-        int responseCode = -1;
-        int stroomStatus = -1;
+        int responseCode;
         try {
             responseCode = connection.getResponseCode();
-            final String responseMessage = connection.getResponseMessage();
-
-            stroomStatus = connection.getHeaderFieldInt(StroomHeaderArguments.STROOM_STATUS, -1);
-
-            if (responseCode == 200) {
-                readAndCloseStream(connection.getInputStream());
-            } else {
-                readAndCloseStream(connection.getErrorStream());
-            }
-
             if (responseCode != 200) {
-                if (stroomStatus != -1) {
-                    throw new StroomStreamException(StroomStatusCode.getStroomStatusCode(stroomStatus), responseMessage);
-                } else {
-                    throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, responseMessage);
+                final String message = getMessage(connection);
+
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("Connection response " + responseCode + ": " + message);
                 }
+
+                final int stroomStatus = connection.getHeaderFieldInt(StroomHeaderArguments.STROOM_STATUS, -1);
+                if (stroomStatus != -1) {
+                    throw new StroomStreamException(StroomStatusCode.getStroomStatusCode(stroomStatus), message);
+                } else {
+                    throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, message);
+                }
+            } else if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Connection response " + responseCode + ": " + getMessage(connection));
             }
         } catch (final IOException ioEx) {
-            throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, ioEx.getMessage());
+            LOGGER.debug(ioEx.getMessage(), ioEx);
+            throw new StroomStreamException(StroomStatusCode.UNKNOWN_ERROR, ioEx.getMessage() != null ? ioEx.getMessage() : ioEx.toString());
         }
         return responseCode;
     }
 
-    private static void readAndCloseStream(final InputStream inputStream) {
-        byte[] BUFFER = new byte[1024];
+    private static String getMessage(final HttpURLConnection connection) {
+        String responseMessage = null;
+        String inputMessage = null;
+        String errorMessage = null;
+
+        try {
+            responseMessage = connection.getResponseMessage();
+        } catch (final RuntimeException | IOException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+
+        try {
+            inputMessage = readAndCloseStream(connection.getInputStream());
+        } catch (final RuntimeException | IOException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+
+        try {
+            errorMessage = readAndCloseStream(connection.getErrorStream());
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
+        }
+
+        final StringBuilder sb = new StringBuilder();
+        if (responseMessage != null) {
+            sb.append(responseMessage);
+        }
+        if (inputMessage != null) {
+            sb.append(" ");
+            sb.append(inputMessage);
+        }
+        if (errorMessage != null) {
+            sb.append(" ");
+            sb.append(errorMessage);
+        }
+        return sb.toString().trim();
+    }
+
+    private static String readAndCloseStream(final InputStream inputStream) {
         try {
             if (inputStream != null) {
-                while (inputStream.read(BUFFER) > 0) {
-                }
-                inputStream.close();
+                return StreamUtil.streamToString(inputStream);
             }
-        } catch (final IOException ioex) {
+        } catch (final RuntimeException e) {
+            LOGGER.debug(e.getMessage(), e);
         }
+        return null;
     }
 
     public static int sendErrorResponse(final HttpServletResponse httpServletResponse, Exception exception) {

@@ -6,9 +6,47 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.26] - 2019-11-25
+
+* Issue **#1338** : Added new config options to control the maximum size of some caches: `stroom.pipeline.parser.maxPoolSize`, `stroom.pipeline.schema.maxPoolSize`, `stroom.pipeline.schema.maxPoolSize`, `stroom.pipeline.xslt.maxPoolSize`, `stroom.entity.maxCacheSize`, `stroom.referenceData.mapStore.maxCacheSize`.
+
+* Issue **#642** : Downloading query details now ignores hidden fields.
+
+* Issue **#1337** : Fixed issue where downloading large numbers of search results in Excel format was exceeding maximum style count of 64000. 
+
+* Issue **#1341** : Added XSRF protection to GWT RPC requests.
+
+
+## [v6.0.25] - 2019-11-20
+
+* No Stroom changes for this release but important fixes elsewhere.
+
+
+## [v6.0.24] - 2019-11-19
+
+* Issue **#1335** : Made session cookie `Secure` and `HttpOnly`.
+
+
+## [v6.0.23] - 2019-11-18
+
+* Issue **#1334** : Fix 404 when accessing `/stroom/resourcestore/........`, i.e. fix Tools->Export.
+
+
+## [v6.0.22] - 2019-11-15
+
+
+* Issue **#1333** : Improved resilience against XSS attacks.
+
+## [v6.0.21] - 2019-11-14
+
+* Issue **#1330** : Allow configuration of `Content-Type` in HTTPAppender.
+
+
 ## [v6.0.20] - 2019-11-13
 
 * Issue **#1324** : Improved logging and added SSL options for HTTPAppender.
+
 
 ## [v6.0.19] - 2019-11-08
 
@@ -18,11 +56,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1321** : Make path relative in stroom distribution .zip.sha256 hash file.
 
+
 ## [v6.0.18] - 2019-11-05
 
 * The auth service now supports the use of HTTPS without certificate verification and adds additional logging.
 
 * Issue **gchq/stroom-auth#157** : Automatically refresh user's API key when it expires.
+
 
 ## [v6.0.17] - 2019-11-04
 
@@ -1969,7 +2009,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.20...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.26...6.0
+[v6.0.26]: https://github.com/gchq/stroom/compare/v6.0.25...v6.0.26
+[v6.0.25]: https://github.com/gchq/stroom/compare/v6.0.24...v6.0.25
+[v6.0.24]: https://github.com/gchq/stroom/compare/v6.0.23...v6.0.24
+[v6.0.23]: https://github.com/gchq/stroom/compare/v6.0.22...v6.0.23
+[v6.0.22]: https://github.com/gchq/stroom/compare/v6.0.21...v6.0.22
+[v6.0.21]: https://github.com/gchq/stroom/compare/v6.0.20...v6.0.21
 [v6.0.20]: https://github.com/gchq/stroom/compare/v6.0.19...v6.0.20
 [v6.0.19]: https://github.com/gchq/stroom/compare/v6.0.18...v6.0.19
 [v6.0.18]: https://github.com/gchq/stroom/compare/v6.0.17...v6.0.18

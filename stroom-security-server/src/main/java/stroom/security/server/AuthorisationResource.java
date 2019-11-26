@@ -69,12 +69,8 @@ public class AuthorisationResource {
             authorisationRequest.getPermission());
 
         return result
-            ? Response
-            .ok()
-            .build()
-            : Response
-            .status(Response.Status.UNAUTHORIZED)
-            .build();
+            ? Response .ok() .build()
+            : Response .status(Response.Status.UNAUTHORIZED) .build();
     }
 
     @POST

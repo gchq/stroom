@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.entity.server.DocumentPermissionCache;
+import stroom.node.server.StroomPropertyService;
 import stroom.pipeline.server.DefaultLocationFactory;
 import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.ErrorListenerAdaptor;
@@ -52,16 +53,20 @@ import java.util.List;
 class XSLTPoolImpl extends AbstractEntityPool<XSLT, StoredXsltExecutable> implements XSLTPool {
     private static final Logger LOGGER = LoggerFactory.getLogger(XSLTPoolImpl.class);
 
+    private static final String MAXIMUM_SIZE_PROPERTY = "stroom.pipeline.xslt.maxPoolSize";
+    private static final long DEFAULT_MAXIMUM_SIZE = 1000;
+
     private final URIResolver uriResolver;
     private final StroomBeanStore beanStore;
 
     @Inject
     XSLTPoolImpl(final CacheManager cacheManager,
+            final StroomPropertyService stroomPropertyService,
                  final DocumentPermissionCache documentPermissionCache,
                  final SecurityContext securityContext,
                  final URIResolver uriResolver,
                  final StroomBeanStore beanStore) {
-        super(cacheManager, "XSLT Pool", documentPermissionCache, securityContext);
+        super(cacheManager, "XSLT Pool", stroomPropertyService.getLongProperty(MAXIMUM_SIZE_PROPERTY, DEFAULT_MAXIMUM_SIZE), documentPermissionCache, securityContext);
         this.uriResolver = uriResolver;
         this.beanStore = beanStore;
     }

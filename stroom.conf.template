@@ -45,6 +45,8 @@ stroom.uiPath=/stroom/ui?prompt=login
 
 stroom.auth.jwt.issuer=stroom
 stroom.auth.jwt.enableTokenRevocationCheck=true
+stroom.auth.clientId=PZnJr8kHRKqnlJRQThSI
+stroom.auth.clientSecret=OtzHiAWLj8QWcwO2IxXmqxpzE2pyg0pMKCghR2aU
 stroom.auth.services.url=https://IP_ADDRESS/api/auth
 stroom.auth.authentication.service.url=https://IP_ADDRESS/api/auth/authentication/v1
 
