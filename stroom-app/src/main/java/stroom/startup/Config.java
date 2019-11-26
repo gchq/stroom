@@ -5,9 +5,20 @@ import io.dropwizard.Configuration;
 import stroom.proxy.guice.ProxyConfig;
 
 public class Config extends Configuration {
+    private SessionCookieConfig sessionCookieConfig = new SessionCookieConfig();
     private String mode;
     private ProxyConfig proxyConfig;
     private String externalConfig = "~/.stroom/stroom.conf";
+
+    @JsonProperty("sessionCookie")
+    public SessionCookieConfig getSessionCookieConfig() {
+        return sessionCookieConfig;
+    }
+
+    @JsonProperty("sessionCookie")
+    public void setSessionCookieConfig(final SessionCookieConfig sessionCookieConfig) {
+        this.sessionCookieConfig = sessionCookieConfig;
+    }
 
     @JsonProperty
     public String getMode() {

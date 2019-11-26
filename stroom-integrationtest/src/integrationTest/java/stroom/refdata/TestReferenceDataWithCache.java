@@ -97,7 +97,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 }
             };
             final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
-            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
+            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader);
             referenceData.setEffectiveStreamCache(effectiveStreamCache);
             referenceData.setMapStorePool(mapStoreCache);
 
@@ -179,7 +179,7 @@ public class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
                 }
             };
             final ReferenceDataLoader referenceDataLoader = effectiveFeed -> new MapStoreImpl();
-            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader, null, null);
+            final MapStoreCache mapStoreCache = new MapStoreCache(cacheManager, referenceDataLoader);
             data.setEffectiveStreamCache(effectiveStreamCache);
             data.setMapStorePool(mapStoreCache);
 
