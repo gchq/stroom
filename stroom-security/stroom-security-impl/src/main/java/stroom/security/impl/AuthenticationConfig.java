@@ -121,7 +121,9 @@ public class AuthenticationConfig implements IsConfig {
     }
 
     public static class JwtConfig implements IsConfig {
-        private String jwtIssuer= "stroom";
+
+        private String jwtIssuer = "stroom";
+        private String clientId = null;
         private boolean enableTokenRevocationCheck = true;
 
         @RequiresRestart(RequiresRestart.RestartScope.UI)
@@ -132,6 +134,16 @@ public class AuthenticationConfig implements IsConfig {
 
         public void setJwtIssuer(final String jwtIssuer) {
             this.jwtIssuer = jwtIssuer;
+        }
+
+        @RequiresRestart(RequiresRestart.RestartScope.UI)
+        @JsonPropertyDescription("The issuer to expect when verifying JWTs.")
+        public String getClientId() {
+            return clientId;
+        }
+
+        public void setClientId(final String clientId) {
+            this.clientId = clientId;
         }
 
         @RequiresRestart(RequiresRestart.RestartScope.UI)

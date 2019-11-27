@@ -240,6 +240,7 @@ class JWTService implements HasHealthCheck {
                 .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
                         new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
                                 AlgorithmIdentifiers.RSA_USING_SHA256))
+                .setExpectedAudience("PZnJr8kHRKqnlJRQThSI") // TODO WIP, pull from config
                 .setExpectedIssuer(authJwtIssuer);
         return builder.build();
     }
