@@ -99,14 +99,6 @@ public class BasicTextSettingsPresenter
         pipelinePresenter.setSelectedEntityReference(pipeline);
     }
 
-    private boolean isShowAsHtml() {
-        return getView().isShowAsHtml();
-    }
-
-    private void setShowAsHtml(final boolean showAsHtml) {
-        getView().setShowAsHtml(showAsHtml);
-    }
-
     @Override
     public void read(final ComponentConfig componentData) {
         super.read(componentData);
@@ -129,7 +121,8 @@ public class BasicTextSettingsPresenter
         getView().setColToField(settings.getColToField());
 
         setPipeline(settings.getPipeline());
-        setShowAsHtml(settings.isShowAsHtml());
+        getView().setShowAsHtml(settings.isShowAsHtml());
+        getView().setShowStepping(settings.isShowStepping());
     }
 
     @Override
@@ -148,7 +141,8 @@ public class BasicTextSettingsPresenter
         settings.setColToField(getView().getColToField());
 
         settings.setPipeline(getPipeline());
-        settings.setShowAsHtml(isShowAsHtml());
+        settings.setShowAsHtml(getView().isShowAsHtml());
+        settings.setShowStepping(getView().isShowStepping());
     }
 
     private String getTableId() {
@@ -174,8 +168,16 @@ public class BasicTextSettingsPresenter
 
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(settings.getTableId(), getTableId());
+        builder.appendSuper(Field.equalsId(settings.getStreamIdField(), getView().getStreamIdField()));
+        builder.appendSuper(Field.equalsId(settings.getPartNoField(), getView().getPartNoField()));
+        builder.appendSuper(Field.equalsId(settings.getRecordNoField(), getView().getRecordNoField()));
+        builder.appendSuper(Field.equalsId(settings.getLineFromField(), getView().getLineFromField()));
+        builder.appendSuper(Field.equalsId(settings.getColFromField(), getView().getColFromField()));
+        builder.appendSuper(Field.equalsId(settings.getLineToField(), getView().getLineToField()));
+        builder.appendSuper(Field.equalsId(settings.getColToField(), getView().getColToField()));
         builder.append(settings.getPipeline(), getPipeline());
-        builder.append(settings.isShowAsHtml(), isShowAsHtml());
+        builder.append(settings.isShowAsHtml(), getView().isShowAsHtml());
+        builder.append(settings.isShowStepping(), getView().isShowStepping());
 
         return !builder.isEquals();
     }
@@ -224,5 +226,9 @@ public class BasicTextSettingsPresenter
         boolean isShowAsHtml();
 
         void setShowAsHtml(boolean showAsHtml);
+
+        boolean isShowStepping();
+
+        void setShowStepping(boolean showStepping);
     }
 }

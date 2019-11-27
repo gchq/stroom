@@ -199,4 +199,14 @@ public class Field implements Serializable, HasDisplayValue {
 
         return field;
     }
+
+    public static boolean equalsId(final Field lhs, final Field rhs) {
+        if (lhs == null && rhs == null) {
+            return true;
+        }
+        if (lhs != null && rhs != null) {
+            return Objects.equals(lhs.id, rhs.id);
+        }
+        return false;
+    }
 }

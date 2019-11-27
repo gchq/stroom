@@ -105,6 +105,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         Scheduler.get().scheduleDeferred(() -> {
             // Determine if we should show tha play button.
             playButtonVisible = !isHtml
+                    && textSettings.isShowStepping()
                     && securityContext.hasAppPermission(PipelineEntity.STEPPING_PERMISSION);
 
             // Show the play button if we have fetched input data.

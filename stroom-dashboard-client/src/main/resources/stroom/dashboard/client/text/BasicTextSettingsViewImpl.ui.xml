@@ -76,5 +76,11 @@
                 <v:TickBox ui:field="showAsHtml"/>
             </g:customCell>
         </g:row>
+        <g:row>
+            <g:cell>Show Stepping:</g:cell>
+            <g:customCell>
+                <v:TickBox ui:field="showStepping"/>
+            </g:customCell>
+        </g:row>
     </g:Grid>
 </ui:UiBinder> 

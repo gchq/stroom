@@ -67,6 +67,8 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
     SimplePanel pipeline;
     @UiField
     TickBox showAsHtml;
+    @UiField
+    TickBox showStepping;
 
     @Inject
     public BasicTextSettingsViewImpl(final Binder binder) {
@@ -242,6 +244,16 @@ public class BasicTextSettingsViewImpl extends ViewWithUiHandlers<BasicTextSetti
     @Override
     public void setShowAsHtml(final boolean showAsHtml) {
         this.showAsHtml.setBooleanValue(showAsHtml);
+    }
+
+    @Override
+    public boolean isShowStepping() {
+        return this.showStepping.getBooleanValue();
+    }
+
+    @Override
+    public void setShowStepping(final boolean showStepping) {
+        this.showStepping.setBooleanValue(showStepping);
     }
 
     public void onResize() {
