@@ -17,64 +17,21 @@
 package stroom.dashboard.client.table;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.EventTarget;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Row;
 import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 class TableCell extends AbstractCell<Row> {
-    private static final Set<String> ENABLED_EVENTS = Collections.singleton("click");
-
     private final TablePresenter tablePresenter;
-    private final MultiSelectionModel<Row> selectionModel;
     private final Field field;
 
-    TableCell(final TablePresenter tablePresenter, final MultiSelectionModel<Row> selectionModel, final Field field, final int pos) {
-        super(ENABLED_EVENTS);
+    TableCell(final TablePresenter tablePresenter, final Field field) {
         this.tablePresenter = tablePresenter;
-        this.selectionModel = selectionModel;
         this.field = field;
-    }
-
-    @Override
-    public void onBrowserEvent(final Context context, final Element parent, final Row row,
-                               final NativeEvent event, final ValueUpdater<Row> valueUpdater) {
-        super.onBrowserEvent(context, parent, row, event, valueUpdater);
-        final String value = getValue(row);
-
-        boolean handled = false;
-        if (value != null && "click".equals(event.getType())) {
-            final EventTarget eventTarget = event.getEventTarget();
-            if (!Element.is(eventTarget)) {
-                return;
-            }
-            final Element element = eventTarget.cast();
-            if (element.hasTagName("u")) {
-                final String link = element.getAttribute("link");
-                if (link != null) {
-                    final Hyperlink hyperlink = Hyperlink.create(link);
-                    if (hyperlink != null) {
-                        handled = true;
-                        HyperlinkEvent.fire(tablePresenter, hyperlink);
-                    }
-                }
-            }
-        }
-
-        if (!handled) {
-            selectionModel.setSelected(row);
-        }
     }
 
     @Override

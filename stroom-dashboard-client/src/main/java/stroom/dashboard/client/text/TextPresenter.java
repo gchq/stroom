@@ -248,7 +248,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         if (tablePresenter != null) {
             final List<Field> fields = tablePresenter.getCurrentFields();
             final List<Row> selection = tablePresenter.getSelectedRows();
-            if (selection != null && selection.size() > 0) {
+            if (selection != null && selection.size() == 1) {
                 // Just use the first row.
                 final Row selected = selection.get(0);
                 currentStreamId = getLong(textSettings.getStreamIdField(), fields, selected);

@@ -16,47 +16,73 @@
 
 package stroom.widget.util.client;
 
-import com.google.gwt.event.shared.HandlerRegistration;
-
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 
-public interface MultiSelectionModel<T> {
-    Selection<T> getSelection();
+public class Selection<T> {
+    private final Deque<T> selectedItems;
 
-    void setSelection(Selection<T> selection);
+    public Selection() {
+        selectedItems = new ArrayDeque<>();
+    }
+
+    public Selection(final Selection<T> selection) {
+        this.selectedItems = new ArrayDeque<>(selection.selectedItems);
+    }
 
     /**
      * Get a list of all selected items.
      */
-    List<T> getSelectedItems();
+    public List<T> getSelectedItems() {
+        return new ArrayList<>(selectedItems);
+    }
 
     /**
      * Tests if the specified item is selected.
      */
-    boolean isSelected(final T item);
+    public boolean isSelected(final T item) {
+        return selectedItems.contains(item);
+    }
 
     /**
      * Sets the selected state of the specified item.
      */
-    void setSelected(T item, boolean selected);
+    public void setSelected(final T item, final boolean selected) {
+        if (item != null) {
+            selectedItems.remove(item);
+            if (selected) {
+                selectedItems.addFirst(item);
+            }
+        }
+    }
 
     /**
      * Gets the most recently selected item or only selected item if an item is selected, null otherwise.
      */
-    T getSelected();
+    public T getSelected() {
+        return selectedItems.peekFirst();
+    }
 
     /**
      * Sets the specified item as the only selected item, i.e. clears the current selection and sets a single item selected.
      */
-    void setSelected(final T item);
+    public void setSelected(final T item) {
+        selectedItems.clear();
+        if (item != null) {
+            selectedItems.add(item);
+        }
+    }
 
     /**
      * Clears all selected items.
      */
-    void clear();
+    public void clear() {
+        selectedItems.clear();
+    }
 
-    /**
-     * Add a handler to listen to selection actions on the multi selection model.
-     */
-    HandlerRegistration addSelectionHandler(MultiSelectEvent.Handler handler);
+    public int size() {
+        return selectedItems.size();
+    }
 }

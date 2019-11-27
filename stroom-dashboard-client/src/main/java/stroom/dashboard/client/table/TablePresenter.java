@@ -188,6 +188,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 refresh();
             }
         }));
+        registerHandler(dataGrid.addHyperlinkHandler(event -> getEventBus().fireEvent(event)));
         registerHandler(addFieldButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 onAddField(event);
@@ -481,8 +482,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         existingColumns.add(column);
     }
 
-    private void addColumn(final Field field, final int pos) {
-        final TableCell cell = new TableCell(this, dataGrid.getSelectionModel(), field, pos);
+    private void addColumn(final Field field) {
+        final TableCell cell = new TableCell(this, field);
         final Column<Row, Row> column = new Column<Row, Row>(cell) {
             @Override
             public Row getValue(final Row row) {
@@ -582,7 +583,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         tableSettings.getFields().removeIf(Field::isSpecial);
     }
 
-    private int ensureSpecialField(final String indexFieldName) {
+    private void ensureSpecialField(final String indexFieldName) {
         // Now add new hidden field.
         final DataSourceFieldsMap dataSourceFieldsMap = getIndexFieldsMap();
         if (dataSourceFieldsMap != null) {
@@ -596,8 +597,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 tableSettings.addField(field);
             }
         }
-
-        return tableSettings.getFields().size() - 1;
     }
 
     private DataSourceFieldsMap getIndexFieldsMap() {
@@ -662,13 +661,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         }
 
         // Add fields as columns.
-        int i = 0;
         for (final Field field : fields) {
-            final int pos = i++;
-
             // Only include the field if it is supposed to be visible.
             if (field.isVisible()) {
-                addColumn(field, pos);
+                addColumn(field);
             }
         }
 
@@ -755,7 +751,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         return currentFields;
     }
 
-    public List<String> getCurrentFieldIds() {
+    List<String> getCurrentFieldIds() {
         return currentFieldIds;
     }
 

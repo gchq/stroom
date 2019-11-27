@@ -43,6 +43,7 @@ import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectEvent.Handler;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
 
 import java.util.List;
@@ -228,39 +229,42 @@ public class ExplorerTree extends AbstractExplorerTree {
         doSelect(selection, new SelectionType(false, false));
     }
 
-    protected void doSelect(final ExplorerNode selection, final SelectionType selectionType) {
-        if (selection == null) {
+    protected void doSelect(final ExplorerNode row, final SelectionType selectionType) {
+        final Selection<ExplorerNode> selection = selectionModel.getSelection();
+
+        if (row == null) {
             multiSelectStart = null;
-            selectionModel.clear();
+            selection.clear();
         } else if (selectionType.isAllowMultiSelect() && selectionType.isShiftPressed() && multiSelectStart != null) {
             // If control isn't pressed as well as shift then we are selecting a new range so clear.
             if (!selectionType.isControlPressed()) {
-                selectionModel.clear();
+                selection.clear();
             }
 
             final int index1 = rows.indexOf(multiSelectStart);
-            final int index2 = rows.indexOf(selection);
+            final int index2 = rows.indexOf(row);
             if (index1 != -1 && index2 != -1) {
                 final int start = Math.min(index1, index2);
                 final int end = Math.max(index1, index2);
                 for (int i = start; i <= end; i++) {
-                    selectionModel.setSelected(rows.get(i), true);
+                    selection.setSelected(rows.get(i), true);
                 }
             } else if (selectionType.isControlPressed()) {
-                multiSelectStart = selection;
-                selectionModel.setSelected(selection, !selectionModel.isSelected(selection));
+                multiSelectStart = row;
+                selection.setSelected(row, !selection.isSelected(row));
             } else {
-                multiSelectStart = selection;
-                selectionModel.setSelected(selection);
+                multiSelectStart = row;
+                selection.setSelected(row);
             }
         } else if (selectionType.isAllowMultiSelect() && selectionType.isControlPressed()) {
-            multiSelectStart = selection;
-            selectionModel.setSelected(selection, !selectionModel.isSelected(selection));
+            multiSelectStart = row;
+            selection.setSelected(row, !selection.isSelected(row));
         } else {
-            multiSelectStart = selection;
-            selectionModel.setSelected(selection);
+            multiSelectStart = row;
+            selection.setSelected(row);
         }
 
+        selectionModel.setSelection(selection);
         MultiSelectEvent.fire(ExplorerTree.this, selectionType);
     }
 
