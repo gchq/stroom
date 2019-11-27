@@ -21,18 +21,18 @@ import org.xml.sax.Locator;
 import java.io.IOException;
 import java.io.Reader;
 
-public class DS3Reader extends CharBuffer implements Locator {
+public class DS3Reader extends CharBuffer implements DSLocator {
     private final int initialSize;
     private final int capacity;
     private final int halfCapacity;
 
     private Reader reader;
     private boolean eof;
-    private int lineNo;
-    private int colNo;
+    private int lineNo = 1;
+    private int colNo = 0;
 
-    private int currentLineNo;
-    private int currentColNo;
+    private int currentLineNo = 1;
+    private int currentColNo = 0;
 
     public DS3Reader(final Reader reader, final int initialSize, final int capacity) {
         super(initialSize);
@@ -58,9 +58,9 @@ public class DS3Reader extends CharBuffer implements Locator {
         offset = 0;
         length = 0;
         lineNo = 1;
-        colNo = 1;
+        colNo = 0;
         currentLineNo = 1;
-        currentColNo = 1;
+        currentColNo = 0;
         eof = false;
     }
 
@@ -132,7 +132,7 @@ public class DS3Reader extends CharBuffer implements Locator {
             final char c = buffer[offset + i];
             if (c == '\n') {
                 currentLineNo++;
-                currentColNo = 1;
+                currentColNo = 0;
             } else {
                 currentColNo++;
             }
@@ -151,30 +151,26 @@ public class DS3Reader extends CharBuffer implements Locator {
     }
 
     @Override
-    public int getColumnNumber() {
-        return colNo;
-    }
-
-    @Override
     public int getLineNumber() {
         return lineNo;
     }
 
-    public int getCurrentLineNumber() {
-        return currentLineNo;
-    }
-
-    public int getCurrentColumnNumber() {
-        return currentColNo;
-    }
-
     @Override
-    public String getPublicId() {
-        return null;
+    public int getColumnNumber() {
+        return colNo;
     }
 
-    @Override
-    public String getSystemId() {
-        return null;
+    public Locator getRecordEndLocator() {
+        return new DefaultLocator() {
+            @Override
+            public int getLineNumber() {
+                return currentLineNo;
+            }
+
+            @Override
+            public int getColumnNumber() {
+                return currentColNo;
+            }
+        };
     }
 }
