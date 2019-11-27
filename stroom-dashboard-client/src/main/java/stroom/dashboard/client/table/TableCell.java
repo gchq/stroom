@@ -96,8 +96,8 @@ class TableCell extends AbstractCell<Row> {
         if (row != null) {
             final List<String> values = row.getValues();
             if (values != null) {
-                final List<Field> fields = tablePresenter.getCurrentFields();
-                final int index = fields.indexOf(field);
+                final List<String> fieldIds = tablePresenter.getCurrentFieldIds();
+                final int index = fieldIds.indexOf(field.getId());
                 if (index != -1 && values.size() > index) {
                     return values.get(index);
                 }

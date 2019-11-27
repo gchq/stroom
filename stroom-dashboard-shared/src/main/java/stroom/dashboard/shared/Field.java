@@ -183,9 +183,15 @@ public class Field implements Serializable, HasDisplayValue {
         field.id = id;
         field.name = name;
         field.expression = expression;
-        field.sort = sort;
-        field.filter = filter;
-        field.format = format;
+        if (sort != null) {
+            field.sort = sort.copy();
+        }
+        if (filter != null) {
+            field.filter = filter.copy();
+        }
+        if (format != null) {
+            field.format = format.copy();
+        }
         field.group = group;
         field.width = width;
         field.visible = visible;

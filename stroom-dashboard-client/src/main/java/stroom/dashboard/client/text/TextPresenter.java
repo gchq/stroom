@@ -291,7 +291,17 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     private Long getLong(final Field field, List<Field> fields, final Row row) {
         if (field != null && fields != null && row != null) {
-            int index = fields.indexOf(field);
+            int index = -1;
+
+            if (index == -1 && field.getId() != null) {
+                // Try matching on id alone.
+                for (int i = 0; i < fields.size(); i++) {
+                    if (field.getId().equals(fields.get(i).getId())) {
+                        index = i;
+                        break;
+                    }
+                }
+            }
 
             if (index == -1 && field.getName() != null) {
                 // Try matching on name alone.

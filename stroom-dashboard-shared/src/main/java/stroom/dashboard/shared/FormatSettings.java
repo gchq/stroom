@@ -20,4 +20,6 @@ import stroom.util.shared.SharedObject;
 
 public interface FormatSettings extends SharedObject {
     boolean isDefault();
+
+    FormatSettings copy();
 }

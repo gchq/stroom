@@ -118,6 +118,13 @@ public class Format implements Serializable {
                 '}';
     }
 
+    public Format copy() {
+        if (settings != null) {
+            return new Format(type, settings.copy(), wrap);
+        }
+        return new Format(type, null, wrap);
+    }
+
     public enum Type implements HasDisplayValue {
         GENERAL("General"), NUMBER("Number"), DATE_TIME("Date Time"), TEXT("Text");
 

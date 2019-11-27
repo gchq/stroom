@@ -92,6 +92,10 @@ public class Sort implements Serializable {
         return builder.toString();
     }
 
+    public Sort copy() {
+        return new Sort(order, direction);
+    }
+
     public enum SortDirection implements HasDisplayValue {
         ASCENDING("Ascending"), DESCENDING("Descending");
 

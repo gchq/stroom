@@ -92,6 +92,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
         implements HasDirtyHandlers, ResultComponent {
@@ -121,6 +122,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private int[] maxResults = TableComponentSettings.DEFAULT_MAX_RESULTS;
     private Set<String> usedFieldIds = new HashSet<>();
     private List<Field> currentFields = Collections.emptyList();
+    private List<String> currentFieldIds = Collections.emptyList();
 
     @Inject
     public TablePresenter(final EventBus eventBus,
@@ -339,7 +341,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
                             final TableResultRequest tableResultRequest = new TableResultRequest(0, Integer.MAX_VALUE);
-                            tableResultRequest.setTableSettings(TablePresenter.this.tableSettings);
+                            tableResultRequest.setTableSettings(TablePresenter.this.tableResultRequest.getTableSettings());
                             tableResultRequest.setFetch(Fetch.ALL);
 
                             final Map<String, ComponentResultRequest> requestMap = new HashMap<>();
@@ -381,6 +383,9 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     @Override
     public void startSearch() {
+        tableResultRequest.setTableSettings(tableSettings.copy());
+        currentFields = tableResultRequest.getTableSettings().getFields();
+        currentFieldIds = currentFields.stream().map(Field::getId).collect(Collectors.toList());
     }
 
     @Override
@@ -410,14 +415,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 // Don't refresh the table unless the results have changed.
                 final TableResult tableResult = (TableResult) componentResult;
 
-                currentFields = tableResult.getFields();
                 final List<Row> values = tableResult.getRows();
                 final OffsetRange<Integer> valuesRange = tableResult.getResultRange();
 
                 // Only set data in the table if we have got some results and
                 // they have changed.
                 if (valuesRange.getOffset() == 0 || values.size() > 0) {
-                    updateColumns();
+//                    updateColumns();
                     dataGrid.setRowData(valuesRange.getOffset(), values);
                     dataGrid.setRowCount(tableResult.getTotalResults(), true);
                 }
@@ -570,6 +574,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         updateColumns();
     }
 
+    private void removeInvisibleFields() {
+        tableSettings.getFields().removeIf(f -> !f.isVisible());
+    }
+
     private void removeSpecialFields() {
         tableSettings.getFields().removeIf(Field::isSpecial);
     }
@@ -604,8 +612,18 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     void updateColumns() {
         final List<Field> fields = tableSettings.getFields();
 
-        // First remove existing special fields.
-        removeSpecialFields();
+        // Are there any special fields?
+        final long specialFieldCount = tableSettings.getFields()
+                .stream()
+                .filter(Field::isSpecial)
+                .count();
+        if (specialFieldCount == 0) {
+            // If we don't yet have any special fields then remove all invisible fields.
+            removeInvisibleFields();
+        } else {
+            // First remove existing special fields.
+            removeSpecialFields();
+        }
 
         // Now make sure special fields exist for stream id and event id and get
         // their result index.
@@ -684,7 +702,6 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             });
         }
 
-        tableResultRequest.setTableSettings(tableSettings);
         fieldsManager.setTableSettings(tableSettings);
     }
 
@@ -736,6 +753,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
     public List<Field> getCurrentFields() {
         return currentFields;
+    }
+
+    public List<String> getCurrentFieldIds() {
+        return currentFieldIds;
     }
 
     public List<Row> getSelectedRows() {
