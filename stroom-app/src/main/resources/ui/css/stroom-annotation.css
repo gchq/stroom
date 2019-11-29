@@ -67,7 +67,7 @@
 }
 
 .annotationTextBox {
-    opacity: 0.6;
+    opacity: 0.8;
     border: 1px solid transparent;
     border-radius: 5px;
     cursor: pointer;
@@ -75,11 +75,11 @@
 
 .annotationTextBox:focus {
     border-color: #C5CDE2;
-    opacity: 0.9 !important;
+    opacity: 1 !important;
  }
 
 .annotationTextBox:hover {
-    opacity: 0.9;
+    opacity: 1;
  }
 
 
@@ -113,10 +113,10 @@
 
 .annotationClickLabel {
     flex-grow: 0;
-    font-weight: bold;
+    font-weight: 500;
     width: 90px;
     padding-right: 5px;
-    opacity: 0.6;
+    opacity: 0.9;
     transition: opacity 0.5s linear;
     -webkit-transition: opacity 0.5s linear;
     -moz-transition: opacity 0.5s linear;
@@ -124,7 +124,8 @@
 }
 
 .annotationClickLabel:hover {
-    opacity: 0.9;
+    opacity: 1;
+    text-decoration: underline;
 }
 
 .annotationLabel {
