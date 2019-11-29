@@ -39,6 +39,8 @@ public class BasicTextSettingsPresenter
         extends BasicSettingsTabPresenter<BasicTextSettingsPresenter.BasicTextSettingsView> implements BasicTextSettingsUiHandlers {
     private final EntityDropDownPresenter pipelinePresenter;
     private List<Component> tableList;
+    private boolean ignoreTableChange;
+    private final List<Field> allFields = new ArrayList<>();
 
     @Inject
     public BasicTextSettingsPresenter(final EventBus eventBus, final BasicTextSettingsView view,
@@ -54,8 +56,10 @@ public class BasicTextSettingsPresenter
     }
 
     private void setTableList(final List<Component> list) {
+        ignoreTableChange = true;
         this.tableList = list;
         getView().setTableList(list);
+        ignoreTableChange = false;
     }
 
     @Override
@@ -64,27 +68,28 @@ public class BasicTextSettingsPresenter
     }
 
     private void updateFieldNames(final Component component) {
-        final List<Field> fields = new ArrayList<>();
-
-        if (component == null) {
-            if (tableList != null) {
-                tableList.forEach(this::addFieldNames);
+        if (!ignoreTableChange) {
+            allFields.clear();
+            if (component == null) {
+                if (tableList != null) {
+                    tableList.forEach(c -> addFieldNames(c, allFields));
+                }
+            } else {
+                addFieldNames(component, allFields);
             }
-        } else {
-            addFieldNames(component);
-        }
 
-        getView().setFields(fields);
+            getView().setFields(allFields);
+        }
     }
 
-    private void addFieldNames(final Component component) {
+    private void addFieldNames(final Component component, final List<Field> allFields) {
         if (component instanceof TablePresenter) {
             final TablePresenter tablePresenter = (TablePresenter) component;
             final List<Field> fields = tablePresenter.getSettings().getFields();
             if (fields != null && fields.size() > 0) {
                 for (final Field field : fields) {
                     if (!field.isSpecial()) {
-                        fields.add(field);
+                        allFields.add(field);
                     }
                 }
             }
@@ -109,8 +114,16 @@ public class BasicTextSettingsPresenter
         final TextComponentSettings settings = (TextComponentSettings) componentData.getSettings();
         setTableId(settings.getTableId());
 
-//        // Not sure we need to do this.
-//        updateFieldNames(getView().getTable());
+        updateFieldNames(getView().getTable());
+
+        // Make some best matches for fields.
+        settings.setStreamIdField(getClosestField(settings.getStreamIdField()));
+        settings.setPartNoField(getClosestField(settings.getPartNoField()));
+        settings.setRecordNoField(getClosestField(settings.getRecordNoField()));
+        settings.setLineFromField(getClosestField(settings.getLineFromField()));
+        settings.setColFromField(getClosestField(settings.getColFromField()));
+        settings.setLineToField(getClosestField(settings.getLineToField()));
+        settings.setColToField(getClosestField(settings.getColToField()));
 
         getView().setStreamIdField(settings.getStreamIdField());
         getView().setPartNoField(settings.getPartNoField());
@@ -123,6 +136,27 @@ public class BasicTextSettingsPresenter
         setPipeline(settings.getPipeline());
         getView().setShowAsHtml(settings.isShowAsHtml());
         getView().setShowStepping(settings.isShowStepping());
+    }
+
+    private Field getClosestField(final Field field) {
+        if (field == null) {
+            return null;
+        }
+        Field bestMatch = null;
+        for (final Field f : allFields) {
+            if (f.getId().equals(field.getId())) {
+                bestMatch = f;
+                break;
+            } else if (bestMatch == null && f.getName().equals(field.getName())) {
+                bestMatch = f;
+            }
+        }
+
+        if (bestMatch == null) {
+            return field;
+        }
+
+        return bestMatch;
     }
 
     @Override
