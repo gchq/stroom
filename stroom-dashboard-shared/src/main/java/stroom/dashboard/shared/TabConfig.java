@@ -25,12 +25,15 @@ import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "tab", propOrder = {"id", "settings"})
+@XmlType(name = "tab", propOrder = {"id", "visible", "settings"})
 public class TabConfig implements SharedObject {
     private static final long serialVersionUID = -2105048053435792675L;
 
     @XmlElement(name = "id")
     private String id;
+
+    @XmlElement(name = "visible")
+    private boolean visible = true;
 
     @XmlElements({@XmlElement(name = "query", type = QueryComponentSettings.class),
             @XmlElement(name = "table", type = TableComponentSettings.class),
@@ -50,6 +53,14 @@ public class TabConfig implements SharedObject {
 
     public void setId(final String id) {
         this.id = id;
+    }
+
+    public boolean isVisible() {
+        return visible;
+    }
+
+    public void setVisible(final boolean visible) {
+        this.visible = visible;
     }
 
     public ComponentSettings getSettings() {

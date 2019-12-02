@@ -19,7 +19,7 @@
 	left: 0px;
 	top: 2px;
 	cursor: pointer;
-    opacity: 0.9;
+    opacity: 0.8;
     transition: opacity 0.5s linear;
     -webkit-transition: opacity 0.5s linear;
     -moz-transition: opacity 0.5s linear;
@@ -27,6 +27,7 @@
 }
 
 .linkTab.selected {
+    opacity: 1;
 }
 
 .linkTab:hover {
@@ -35,8 +36,6 @@
 }
 
 .linkTab .background {
-	padding-left: 5px;
-	padding-right: 5px;
 	cursor: pointer;
 	white-space: nowrap;
 	font-weight: 500;
@@ -51,7 +50,6 @@
 	cursor: pointer;
 	text-decoration: inherit;
 	white-space: nowrap;
-	padding-left: 5px;
 }
 
 .linkTab.selected .label {

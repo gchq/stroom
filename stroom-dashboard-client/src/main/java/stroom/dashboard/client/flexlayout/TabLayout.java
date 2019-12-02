@@ -35,7 +35,7 @@ import stroom.widget.tab.client.view.LayerContainerImpl;
 import stroom.widget.tab.client.view.LinkTabBar;
 
 public class TabLayout extends Composite implements RequiresResize, ProvidesResize {
-    private final TabLayoutConfig tabLayoutData;
+    private final TabLayoutConfig tabLayoutConfig;
     private final FlexLayoutChangeHandler changeHandler;
     private final FlowPanel panel;
     private final FlowPanel contentOuter;
@@ -51,8 +51,8 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
     private boolean tabsVisible = true;
 
-    public TabLayout(final TabLayoutConfig tabLayoutData, final FlexLayoutChangeHandler changeHandler) {
-        this.tabLayoutData = tabLayoutData;
+    public TabLayout(final TabLayoutConfig tabLayoutConfig, final FlexLayoutChangeHandler changeHandler) {
+        this.tabLayoutConfig = tabLayoutConfig;
         this.changeHandler = changeHandler;
 
         panel = new FlowPanel();
@@ -106,7 +106,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
             final TabData selected = event.getSelectedItem();
             selectTab(selected);
             final int index = tabBar.getTabs().indexOf(selected);
-            getTabLayoutData().setSelected(index);
+            getTabLayoutConfig().setSelected(index);
             changeHandler.onDirty();
         }));
 
@@ -182,8 +182,8 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         return tabBar;
     }
 
-    public TabLayoutConfig getTabLayoutData() {
-        return tabLayoutData;
+    public TabLayoutConfig getTabLayoutConfig() {
+        return tabLayoutConfig;
     }
 
     public void setTabVisibility(final TabVisibility tabVisibility) {
