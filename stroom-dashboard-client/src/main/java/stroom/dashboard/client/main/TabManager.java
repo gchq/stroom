@@ -181,7 +181,7 @@ public class TabManager {
     }
 
     private Item createSettingsMenu(final TabConfig tabConfig) {
-        return new IconMenuItem(1, SvgPresets.SETTINGS, SvgPresets.SETTINGS, "Settings", null, true, () -> showSettings(tabConfig));
+        return new IconMenuItem(1, SvgPresets.SETTINGS, SvgPresets.SETTINGS_BLUE, "Settings", null, true, () -> showSettings(tabConfig));
     }
 
     private Item createHideMenu(final TabLayoutConfig tabLayoutConfig, final TabConfig tabConfig) {
