@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#260** : You can now hide dashboard tabs.
 
+* Issue **#1332** : The text pane can now be configured to show source data.
+
 * Issue **#1311** : Improved source location tracking.
 
 * Issue **#1338** : Added new config options to control the maximum size of some caches: `stroom.pipeline.parser.maxPoolSize`, `stroom.pipeline.schema.maxPoolSize`, `stroom.pipeline.schema.maxPoolSize`, `stroom.pipeline.xslt.maxPoolSize`, `stroom.entity.maxCacheSize`, `stroom.referenceData.mapStore.maxCacheSize`.
