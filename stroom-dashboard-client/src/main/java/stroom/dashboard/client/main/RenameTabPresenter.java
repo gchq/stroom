@@ -62,7 +62,7 @@ public class RenameTabPresenter extends MyPresenterWidget<RenameTabView> impleme
         getView().getName().setText(componentConfig.getName());
 
         final PopupSize popupSize = new PopupSize(250, 78, 250, 78, 1000, 78, true);
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Rename Field", this);
+        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, "Rename Tab", this);
         getView().focus();
     }
 
