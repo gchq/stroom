@@ -87,7 +87,7 @@ appConfig:
     authentication:
       authenticationServiceUrl: ${STROOM_AUTHENTICATION_SERVICE_URL:-https://<<<IP_ADDRESS>>>/api/auth/authentication/v1}
       authenticationRequired: true
-      apiToken: ${STROOM_SECURITY_API_TOKEN:-eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6InN0cm9vbSIsInNpZCI6bnVsbH0.k0Ssb43GCdTunAMeM26fIulYKNUuPUaJJk6GxDmzCPb7kVPwEtdfBSrtwazfEFM97dnmvURkLqs-DAZTXhhf-0VqQx4hkwcCHf83eVptWTy-lufIhQo6FCM223c9ONIhl6CPqknWh9Bo3vFNrNJoKz5Zw2T_iCcQhi2WGjd_tjTG7VbibTIpH3lPQDw1IBD2nMsEqACJSk3IaFe0GYcrAEMwsjj3sjAwByMbj5DJvo_DJbAuzUwS5IVpASEENen5Xd3wALLirrraUfED1OY0G56Ttcwl3uQ2s-grZXBM4JCiIurlWR5iNtNwoPUsZsyMju4FMSXt3Ur1NIpD7XKJlg}
+      apiToken: ${STROOM_SECURITY_API_TOKEN:-eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1Nzc4NzY4NzcsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIiwiYXVkIjoiUFpuSnI4a0hSS3FubEpSUVRoU0kiLCJzaWQiOiJub2RlMDF3dWk1Z3hycWs4aTA1NWdzN212bXBzbTYwIiwibm9uY2UiOiJkYWRlNzM3ZjMxNTE3MmY4YjIxZGU0NGNlZmM4Zjk0N2E1ZmZlZjAxNzE1MmViYThkNGM3ZDRlMDk0M2MwMjIxIiwic3RhdGUiOiIifQ.tGh4dBhj1XmLhLr36YFlbRALHX8RkVkEK8pi5BXT7YIZWxiRZ360ALJK1a7q2JYv99q_Fztx8PV8uzqH91T3ipZ0lbxRufqWIeluAUjQqf4uYGFb9TIKW7KMKT0alBfeU4O_peLM3BuYd5mSTwE19vtiVR0Bp-1XAdqljsCy4b8pKJ3w1i9v-_IeOQ-j0PAX_sZXkRZ2PZ9JgiENZPBzm9Yd2VtbP3_aSsReh7jzeEGLl-INASHi8S_bo6SwL-nGW2bHPeIedfRsjWpVBMLalGempJJ40dqODc7YMH9Proh6IxWQ9KH2GAVZzaxDH4KDRAvOqlCnw79ETsE9iFahtw}
       authServicesBaseUrl: ${STROOM_AUTH_SERVICES_URL:-http://<<<IP_ADDRESS>>>/api/auth}
       preventLogin: false #TODO
       clientId: ${STROOM_AUTH_CLIENT_ID:-PZnJr8kHRKqnlJRQThSI}
