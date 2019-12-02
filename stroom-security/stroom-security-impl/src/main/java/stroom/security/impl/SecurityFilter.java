@@ -57,6 +57,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * <p>
@@ -77,6 +78,7 @@ class SecurityFilter implements Filter {
     private static final String PROMPT = "prompt";
     private static final String ACCESS_CODE = "accessCode";
     private static final String NO_AUTH_PATH = ResourcePaths.ROOT_PATH + ResourcePaths.NO_AUTH_PATH + "/";
+    public static String PUBLIC_API_PATH_REGEX = "\\/api.*\\/noauth\\/.*"; // E.g. /api/authentication/v1/noauth/exchange
 
     private static final Set<String> RESERVED_PARAMS = Set.of(
             SCOPE, RESPONSE_TYPE, CLIENT_ID, REDIRECT_URL, STATE, NONCE, PROMPT, ACCESS_CODE);
@@ -87,6 +89,7 @@ class SecurityFilter implements Filter {
     private final AuthenticationServiceClients authenticationServiceClients;
     private final AuthenticationService authenticationService;
     private final SecurityContext securityContext;
+    private final Pattern publicApiPathPattern;
 
     @Inject
     SecurityFilter(
@@ -106,6 +109,7 @@ class SecurityFilter implements Filter {
         if (!config.isAuthenticationRequired()) {
             LOGGER.warn("All authentication is disabled");
         }
+        publicApiPathPattern = Pattern.compile(PUBLIC_API_PATH_REGEX);
     }
 
     @Override
@@ -142,10 +146,11 @@ class SecurityFilter implements Filter {
             chain.doFilter(request, response);
         } else {
             final String servletPath = request.getServletPath().toLowerCase();
-
-            // API requests (identified by '/api/' on the request path) need to be authenticated by a JWT.
-            // This makes the request REST-y, so failure returns HTTP 403 UNAUTHORIZED.
-            if (isApiRequest(servletPath)) {
+            final String fullPath = request.getRequestURI().toLowerCase();
+            if(isPublicApiRequest(fullPath)) {
+                authenticateAsProcUser(request, response, chain, false);
+            }
+            else if (isApiRequest(servletPath)) {
                 if (!config.isAuthenticationRequired()) {
                     authenticateAsAdmin(request, response, chain, false);
                 } else {
@@ -200,6 +205,10 @@ class SecurityFilter implements Filter {
                 }
             }
         }
+    }
+
+    private boolean isPublicApiRequest(String servletPath) {
+        return publicApiPathPattern != null && publicApiPathPattern.matcher(servletPath).matches();
     }
 
     private boolean isApiRequest(String servletPath) {
