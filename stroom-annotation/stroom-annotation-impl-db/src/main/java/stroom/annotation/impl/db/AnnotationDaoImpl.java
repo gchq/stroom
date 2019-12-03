@@ -106,8 +106,8 @@ class AnnotationDaoImpl implements AnnotationDao {
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(AnnotationDataSource.ID_FIELD, ANNOTATION.ID, Long::valueOf);
-        expressionMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, Long::valueOf);
-        expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, Long::valueOf);
+//        expressionMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, Long::valueOf);
+//        expressionMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, Long::valueOf);
         expressionMapper.map(AnnotationDataSource.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, value -> getDate(AnnotationDataSource.CREATED_ON, value));
         expressionMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, value -> value);
         expressionMapper.map(AnnotationDataSource.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, value -> getDate(AnnotationDataSource.UPDATED_ON, value));
@@ -121,8 +121,8 @@ class AnnotationDaoImpl implements AnnotationDao {
 
         valueMapper = new ValueMapper();
         valueMapper.map(AnnotationDataSource.ID_FIELD, ANNOTATION.ID, ValLong::create);
-        valueMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, ValLong::create);
-        valueMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, ValLong::create);
+//        valueMapper.map(AnnotationDataSource.STREAM_ID_FIELD, ANNOTATION_DATA_LINK.STREAM_ID, ValLong::create);
+//        valueMapper.map(AnnotationDataSource.EVENT_ID_FIELD, ANNOTATION_DATA_LINK.EVENT_ID, ValLong::create);
         valueMapper.map(AnnotationDataSource.CREATED_ON_FIELD, ANNOTATION.CREATE_TIME_MS, ValLong::create);
         valueMapper.map(AnnotationDataSource.CREATED_BY_FIELD, ANNOTATION.CREATE_USER, ValString::create);
         valueMapper.map(AnnotationDataSource.UPDATED_ON_FIELD, ANNOTATION.UPDATE_TIME_MS, ValLong::create);
@@ -227,7 +227,8 @@ class AnnotationDaoImpl implements AnnotationDao {
             createEntry(annotation.getId(), user, now, Annotation.ASSIGNED_TO, annotation.getAssignedTo());
             createEntry(annotation.getId(), user, now, Annotation.COMMENT, annotation.getComment());
 
-            createEventLink(annotation.getId(), request.getStreamId(), request.getEventId());
+            final long annotationId = annotation.getId();
+            request.getLinkedEvents().forEach(eventID -> createEventLink(annotationId, eventID.getStreamId(), eventID.getEventId()));
         } else {
             // Update parent if we need to.
             final long annotationId = annotation.getId();

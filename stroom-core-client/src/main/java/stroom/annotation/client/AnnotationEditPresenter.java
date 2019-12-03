@@ -39,6 +39,7 @@ import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.EventId;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.ClientSecurityContext;
@@ -90,8 +91,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
     private AnnotationDetail annotationDetail;
     private Long currentId;
-    private Long streamId;
-    private Long eventId;
+    private List<EventId> linkedEvents;
     private String currentTitle;
     private String currentSubject;
     private String currentStatus;
@@ -196,30 +196,24 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         rest.onSuccess(this::read).call(annotationResource).createEntry(request);
     }
 
-    public void show(final Annotation annotation, final Long streamId, final Long eventId) {
+    public void show(final Annotation annotation, final List<EventId> linkedEvents) {
         boolean ok = true;
         if (annotation == null) {
             ok = false;
             AlertEvent.fireError(this, "No sample annotation has been provided to open the editor", null);
-        } else if (annotation.getId() == null) {
-            if (streamId == null) {
-                ok = false;
-                AlertEvent.fireError(this, "No stream id has been provided for the annotation", null);
-            } else if (eventId == null) {
-                ok = false;
-                AlertEvent.fireError(this, "No event id has been provided for the annotation", null);
-            }
+        } else if (annotation.getId() == null && (linkedEvents == null || linkedEvents.size() == 0)) {
+            ok = false;
+            AlertEvent.fireError(this, "No stream id has been provided for the annotation", null);
         }
 
         if (ok) {
-            this.streamId = streamId;
-            this.eventId = eventId;
+            this.linkedEvents = linkedEvents;
             this.initialComment = annotation.getComment();
             readAnnotation(annotation);
 
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             final Rest<AnnotationDetail> rest = restFactory.create();
-            rest.onSuccess(this::edit).call(annotationResource).get(annotation.getId(), streamId, eventId);
+            rest.onSuccess(this::edit).call(annotationResource).get(annotation.getId());
         }
     }
 
@@ -260,7 +254,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         if (annotationDetail == null) {
             return "Create Annotation";
         }
-        return "Edit Annotation";
+        return "Edit Annotation #" + annotationDetail.getAnnotation().getId();
     }
 
     private void hide() {
@@ -681,7 +675,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
             annotation.setComment(comment);
             annotation.setHistory(comment);
 
-            final CreateEntryRequest request = new CreateEntryRequest(annotation, Annotation.COMMENT, comment, streamId, eventId);
+            final CreateEntryRequest request = new CreateEntryRequest(annotation, Annotation.COMMENT, comment, linkedEvents);
             addEntry(request);
             getView().setComment("");
         } else {

@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 @Component
@@ -69,6 +70,7 @@ public class ExtractionDecoratorFactory {
                            final String[] storedFields,
                            final Coprocessors coprocessors,
                            final Query query,
+                           final AtomicLong totalResults,
                            final HasTerminate hasTerminate) {
         // Update config for extraction task executor.
         extractionTaskExecutor.setMaxThreads(extractionTaskProperties.getMaxThreads());

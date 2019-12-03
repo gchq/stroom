@@ -31,6 +31,9 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.ShowAnnotationEvent;
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.EventId;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
@@ -72,6 +75,7 @@ import stroom.node.shared.ClientProperties;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.query.shared.v2.ParamUtil;
 import stroom.security.client.ClientSecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.util.client.RandomId;
 import stroom.util.shared.Expander;
@@ -105,6 +109,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final List<HandlerRegistration> searchModelHandlerRegistrations = new ArrayList<>();
     private final ButtonView addFieldButton;
     private final ButtonView downloadButton;
+    private final ButtonView annotateButton;
     private final Provider<FieldAddPresenter> fieldAddPresenterProvider;
     private final DownloadPresenter downloadPresenter;
     private final ClientDispatchAsync dispatcher;
@@ -158,6 +163,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         downloadButton = dataGrid.addButton(SvgPresets.DOWNLOAD);
         downloadButton.setVisible(securityContext.hasAppPermission(Dashboard.DOWNLOAD_SEARCH_RESULTS_PERMISSION));
 
+        // Annotate
+        annotateButton = dataGrid.addButton(SvgPresets.ANNOTATE);
+        annotateButton.setVisible(securityContext.hasAppPermission(PermissionNames.ANNOTATIONS));
+        annotateButton.setEnabled(false);
+
         fieldsManager = new FieldsManager(this, menuListPresenter, renameFieldPresenterProvider, expressionPresenterProvider, formatPresenter,
                 filterPresenter);
         dataGrid.setHeadingListener(fieldsManager);
@@ -180,7 +190,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(dataGrid.getSelectionModel().addSelectionHandler(event -> getComponents().fireComponentChangeEvent(this)));
+        registerHandler(dataGrid.getSelectionModel().addSelectionHandler(event -> {
+            enableAnnotate();
+            getComponents().fireComponentChangeEvent(this);
+        }));
         registerHandler(dataGrid.addRangeChangeHandler(event -> {
             final com.google.gwt.view.client.Range range = event.getNewRange();
             tableResultRequest.setRange(range.getStart(), range.getLength());
@@ -208,6 +221,12 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                 } else {
                     download();
                 }
+            }
+        }));
+
+        registerHandler(annotateButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                onAnnotate(event);
             }
         }));
     }
@@ -380,6 +399,66 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         popupUiHandlers);
             }
         }
+    }
+
+    private void enableAnnotate() {
+        final List<EventId> idList = getIdFieldIndexes();
+        final boolean enabled = idList.size() > 0;
+        annotateButton.setEnabled(enabled);
+    }
+
+    private void onAnnotate(final ClickEvent e) {
+        final List<EventId> idList = getIdFieldIndexes();
+        if (idList.size() > 0) {
+            final Annotation annotation = new Annotation();
+            ShowAnnotationEvent.fire(this, annotation, idList);
+
+        } else {
+            AlertEvent.fireWarn(this, "You need to select some rows to annotate", null);
+        }
+    }
+
+    private List<EventId> getIdFieldIndexes() {
+        final List<EventId> idList = new ArrayList<>();
+        final List<Row> selectedItems = dataGrid.getSelectionModel().getSelectedItems();
+        if (selectedItems != null && selectedItems.size() > 0) {
+            int streamIdIndex = -1;
+            int eventIdIndex = -1;
+            int i = 0;
+            for (final Field field : currentFields) {
+                if (streamIdIndex == -1 && field.getName().equals(IndexConstants.STREAM_ID)) {
+                    streamIdIndex = i;
+                } else if (eventIdIndex == -1 && field.getName().equals(IndexConstants.EVENT_ID)) {
+                    eventIdIndex = i;
+                }
+                i++;
+            }
+
+            if (streamIdIndex != -1 && eventIdIndex != -1) {
+                for (final Row row : selectedItems) {
+                    final Long streamId = getLong(row.getValues(), streamIdIndex);
+                    final Long eventId = getLong(row.getValues(), eventIdIndex);
+                    if (streamId != null && eventId != null) {
+                        idList.add(new EventId(streamId, eventId));
+                    }
+                }
+            }
+        }
+        return idList;
+    }
+
+    private Long getLong(List<String> values, int index) {
+        if (values != null && values.size() > index) {
+            final String value = values.get(index);
+            if (value != null) {
+                try {
+                    return Long.parseLong(value);
+                } catch (final NumberFormatException e) {
+                    // Ignore.
+                }
+            }
+        }
+        return null;
     }
 
     @Override

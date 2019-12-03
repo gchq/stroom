@@ -30,8 +30,8 @@ public interface AnnotationDataSource {
     String HISTORY = ANNOTATION_FIELD_PREFIX + "History";
 
     DataSourceField ID_FIELD = new DataSourceField.Builder().name(ID).type(DataSourceFieldType.ID_FIELD).queryable(true).build();
-    DataSourceField STREAM_ID_FIELD = new DataSourceField.Builder().name(IndexConstants.STREAM_ID).type(DataSourceFieldType.ID_FIELD).queryable(true).build();
-    DataSourceField EVENT_ID_FIELD = new DataSourceField.Builder().name(IndexConstants.EVENT_ID).type(DataSourceFieldType.ID_FIELD).queryable(true).build();
+//    DataSourceField STREAM_ID_FIELD = new DataSourceField.Builder().name(IndexConstants.STREAM_ID).type(DataSourceFieldType.ID_FIELD).queryable(true).build();
+//    DataSourceField EVENT_ID_FIELD = new DataSourceField.Builder().name(IndexConstants.EVENT_ID).type(DataSourceFieldType.ID_FIELD).queryable(true).build();
     DataSourceField CREATED_ON_FIELD = new DataSourceField.Builder().name(CREATED_ON).type(DataSourceFieldType.DATE_FIELD).queryable(true).build();
     DataSourceField CREATED_BY_FIELD = new DataSourceField.Builder().name(CREATED_BY).type(DataSourceFieldType.TEXT_FIELD).queryable(true).build();
     DataSourceField UPDATED_ON_FIELD = new DataSourceField.Builder().name(UPDATED_ON).type(DataSourceFieldType.DATE_FIELD).queryable(true).build();
@@ -45,8 +45,8 @@ public interface AnnotationDataSource {
 
     List<DataSourceField> FIELDS = Arrays.asList(
             ID_FIELD,
-            STREAM_ID_FIELD,
-            EVENT_ID_FIELD,
+//            STREAM_ID_FIELD,
+//            EVENT_ID_FIELD,
             CREATED_ON_FIELD,
             CREATED_BY_FIELD,
             UPDATED_ON_FIELD,

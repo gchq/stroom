@@ -48,10 +48,10 @@ public class AnnotationResourceImpl implements AnnotationResource, HasHealthChec
     }
 
     @Override
-    public AnnotationDetail get(final Long annotationId, final Long streamId, final Long eventId) {
+    public AnnotationDetail get(final Long annotationId) {
         AnnotationDetail annotationDetail = null;
 
-        if (annotationId != null) {
+//        if (annotationId != null) {
             LOGGER.info(() -> "Getting annotation " + annotationId);
             try {
                 annotationDetail = annotationService.getDetail(annotationId);
@@ -61,17 +61,17 @@ public class AnnotationResourceImpl implements AnnotationResource, HasHealthChec
             } catch (final RuntimeException e) {
                 documentEventLog.view("Annotation " + annotationId, e);
             }
-        } else {
-            LOGGER.info(() -> "Getting annotation " + streamId + ":" + eventId);
-            try {
-                annotationDetail = annotationService.getDetail(streamId, eventId);
-                if (annotationDetail != null) {
-                    documentEventLog.view(annotationDetail, null);
-                }
-            } catch (final RuntimeException e) {
-                documentEventLog.view("Annotation " + streamId + ":" + eventId, e);
-            }
-        }
+//        } else {
+//            LOGGER.info(() -> "Getting annotation " + streamId + ":" + eventId);
+//            try {
+//                annotationDetail = annotationService.getDetail(streamId, eventId);
+//                if (annotationDetail != null) {
+//                    documentEventLog.view(annotationDetail, null);
+//                }
+//            } catch (final RuntimeException e) {
+//                documentEventLog.view("Annotation " + streamId + ":" + eventId, e);
+//            }
+//        }
 
         return annotationDetail;
     }

@@ -41,9 +41,7 @@ public interface AnnotationResource extends DirectRestService {
     @ApiOperation(
             value = "Gets an annotation",
             response = Response.class)
-    AnnotationDetail get(@QueryParam("annotationId") Long annotationId,
-                         @QueryParam("streamId") Long streamId,
-                         @QueryParam("eventId") Long eventId);
+    AnnotationDetail get(@QueryParam("annotationId") Long annotationId);
 
     @POST
     @Path("")

@@ -21,6 +21,7 @@ public final class SvgPresets {
     public static final SvgPreset ABOUT = new SvgPreset("images/oo.svg", "About", true);
     public static final SvgPreset ADD = new SvgPreset("images/add.svg", "Add", true);
     public static final SvgPreset ALERT = new SvgPreset("images/alert.svg", "Alert", true);
+    public static final SvgPreset ANNOTATE = new SvgPreset("images/edit.svg", "Annotate", false);
     public static final SvgPreset CLEAR = new SvgPreset("images/clear.svg", "Clear", false);
     public static final SvgPreset CLOSE = new SvgPreset("images/close.svg", "Close", false);
     public static final SvgPreset COPY = new SvgPreset("images/copy.svg", "Copy", false);

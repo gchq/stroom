@@ -15,6 +15,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.ShowAnnotationEvent;
 import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.EventId;
 import stroom.core.client.ContentManager;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
@@ -33,6 +34,8 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Singleton
@@ -186,7 +189,12 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                     annotation.setAssignedTo(assignedTo);
                     annotation.setComment(comment);
 
-                    ShowAnnotationEvent.fire(this, annotation, streamId, eventId);
+                    final List<EventId> linkedEvents = new ArrayList<>();
+                    if (streamId != null && eventId != null) {
+                        linkedEvents.add(new EventId(streamId, eventId));
+                    }
+
+                    ShowAnnotationEvent.fire(this, annotation, linkedEvents);
                     break;
                 }
                 default:
