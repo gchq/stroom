@@ -129,4 +129,10 @@ public class DispatchServiceImpl extends XsrfProtectedServiceServlet implements 
             throw ex;
         }
     }
+
+    @Override
+    public void log(final String message, final Throwable t) {
+        LOGGER.warn(getServletName() + ": " + message);
+        LOGGER.debug(getServletName() + ": " + message, t);
+    }
 }

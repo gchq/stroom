@@ -67,7 +67,7 @@ public class XsrfProtectedServiceServlet extends CustomRemoteServiceServlet {
                 throw new RpcTokenException("Invalid XSRF token");
             }
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
             throw e;
         }
     }
