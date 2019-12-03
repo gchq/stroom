@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -256,4 +256,13 @@
     width: 200px;
     margin-top: 10px;
     align-self: flex-end;
+}
+
+.showLinkedEvents {
+    display: inline-block;
+    color: #0366d6;
+    cursor: pointer;
+    text-decoration: underline;
+    text-align: right;
+    padding-bottom: 10px;
 }

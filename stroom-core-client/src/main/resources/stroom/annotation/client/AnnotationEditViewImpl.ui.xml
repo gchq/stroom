@@ -46,6 +46,7 @@
                 </g:FlowPanel>
             </g:FlowPanel>
             <g:FlowPanel styleName="annotationRight">
+                <g:Label ui:field="showLinkedEvents" styleName="showLinkedEvents" text="Show Linked Events"/>
                 <v:ResizeSimplePanel ui:field="history" styleName="annotationHistory"/>
             </g:FlowPanel>
         </g:FlowPanel>

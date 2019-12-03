@@ -87,6 +87,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     private final ChooserPresenter statusPresenter;
     private final ChooserPresenter assignedToPresenter;
     private final ChooserPresenter commentPresenter;
+    private final LinkedEventPresenter linkedEventPresenter;
     private final ClientSecurityContext clientSecurityContext;
 
     private AnnotationDetail annotationDetail;
@@ -105,12 +106,14 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                                    final ChooserPresenter statusPresenter,
                                    final ChooserPresenter assignedToPresenter,
                                    final ChooserPresenter commentPresenter,
+                                   final LinkedEventPresenter linkedEventPresenter,
                                    final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.statusPresenter = statusPresenter;
         this.assignedToPresenter = assignedToPresenter;
         this.commentPresenter = commentPresenter;
+        this.linkedEventPresenter = linkedEventPresenter;
         this.clientSecurityContext = clientSecurityContext;
         getView().setUiHandlers(this);
     }
@@ -222,7 +225,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
         // Set the initial comment if one has been provided and if this is a new annotation.
         if (annotationDetail == null || annotationDetail.getAnnotation() == null || annotationDetail.getAnnotation().getId() == null) {
-            if (initialComment!= null) {
+            if (initialComment != null) {
                 getView().setComment(initialComment);
             }
         }
@@ -680,6 +683,15 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
             getView().setComment("");
         } else {
             AlertEvent.fireWarn(this, "Please enter a comment", null);
+        }
+    }
+
+    @Override
+    public void showLinkedEvents() {
+        if (annotationDetail.getAnnotation() != null && annotationDetail.getAnnotation().getId() != null) {
+            linkedEventPresenter.edit(annotationDetail.getAnnotation());
+        } else {
+            AlertEvent.fireError(this, "The annotation must be created before events are linked", null);
         }
     }
 

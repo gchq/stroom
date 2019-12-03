@@ -16,6 +16,8 @@ import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.EventLink;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
@@ -373,6 +375,29 @@ class AnnotationDaoImpl implements AnnotationDao {
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
         }
+    }
+
+    @Override
+    public List<EventId> getLinkedEvents(final Long annotationId) {
+        return JooqUtil.contextResult(connectionProvider, context -> context
+                .select(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
+                .from(ANNOTATION_DATA_LINK)
+                .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
+                .orderBy(ANNOTATION_DATA_LINK.STREAM_ID, ANNOTATION_DATA_LINK.EVENT_ID)
+                .fetch()
+                .map(r -> new EventId(r.get(ANNOTATION_DATA_LINK.STREAM_ID), r.get(ANNOTATION_DATA_LINK.EVENT_ID))));
+    }
+
+    @Override
+    public List<EventId> link(final EventLink eventLink) {
+        createEventLink(eventLink.getAnnotationId(), eventLink.getEventId().getStreamId(), eventLink.getEventId().getEventId());
+        return getLinkedEvents(eventLink.getAnnotationId());
+    }
+
+    @Override
+    public List<EventId> unlink(final EventLink eventLink) {
+        removeEventLink(eventLink.getAnnotationId(), eventLink.getEventId().getStreamId(), eventLink.getEventId().getEventId());
+        return getLinkedEvents(eventLink.getAnnotationId());
     }
 
     @Override

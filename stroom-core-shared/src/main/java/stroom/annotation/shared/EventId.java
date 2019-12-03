@@ -16,7 +16,20 @@ public class EventId {
         return streamId;
     }
 
+    public void setStreamId(final long streamId) {
+        this.streamId = streamId;
+    }
+
     public long getEventId() {
         return eventId;
+    }
+
+    public void setEventId(final long eventId) {
+        this.eventId = eventId;
+    }
+
+    @Override
+    public String toString() {
+        return streamId + ":" + eventId;
     }
 }

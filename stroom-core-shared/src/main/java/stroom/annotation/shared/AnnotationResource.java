@@ -66,4 +66,31 @@ public interface AnnotationResource extends DirectRestService {
             value = "Gets a list of predefined comments",
             response = Response.class)
     List<String> getComment(@QueryParam("filter") String filter);
+
+    @GET
+    @Path("linkedEvents")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Gets a list of events linked to this annotation",
+            response = Response.class)
+    List<EventId> getLinkedEvents(@QueryParam("annotationId") Long annotationId);
+
+    @POST
+    @Path("link")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Links an annotation to an event",
+            response = Response.class)
+    List<EventId> link(EventLink eventLink);
+
+    @POST
+    @Path("unlink")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Unlinks an annotation from an event",
+            response = Response.class)
+    List<EventId> unlink(EventLink eventLink);
 }

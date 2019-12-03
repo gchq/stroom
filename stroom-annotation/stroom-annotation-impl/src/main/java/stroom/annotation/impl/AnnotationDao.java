@@ -18,8 +18,9 @@ package stroom.annotation.impl;
 
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.AnnotationDetail;
-import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.EventLink;
 import stroom.dashboard.expression.v1.Val;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.ExpressionCriteria;
@@ -37,6 +38,12 @@ public interface AnnotationDao {
     List<AnnotationDetail> getAnnotationDetailsForEvents(long streamId, long eventId);
 
     AnnotationDetail createEntry(CreateEntryRequest request, String user);
+
+    List<EventId> getLinkedEvents(Long annotationId);
+
+    List<EventId> link(EventLink eventLink);
+
+    List<EventId> unlink(EventLink eventLink);
 
     void search(ExpressionCriteria criteria, DataSourceField[] fields, Consumer<Val[]> consumer);
 }

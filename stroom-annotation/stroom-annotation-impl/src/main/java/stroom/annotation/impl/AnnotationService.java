@@ -4,6 +4,8 @@ import org.springframework.stereotype.Component;
 import stroom.annotation.api.AnnotationDataSource;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.EventLink;
 import stroom.dashboard.expression.v1.Val;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceField;
@@ -84,6 +86,21 @@ public class AnnotationService implements Searchable {
     AnnotationDetail createEntry(final CreateEntryRequest request) {
         checkPermission();
         return annotationDao.createEntry(request, securityContext.getUserId());
+    }
+
+    List<EventId> getLinkedEvents(final Long annotationId) {
+        checkPermission();
+        return annotationDao.getLinkedEvents(annotationId);
+    }
+
+    List<EventId> link(final EventLink eventLink) {
+        checkPermission();
+        return annotationDao.link(eventLink);
+    }
+
+    List<EventId> unlink(final EventLink eventLink) {
+        checkPermission();
+        return annotationDao.unlink(eventLink);
     }
 
     private void checkPermission() {

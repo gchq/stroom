@@ -17,8 +17,10 @@
 package stroom.annotation.client;
 
 import com.gwtplatform.mvp.client.gin.AbstractPresenterModule;
+import stroom.annotation.client.AddEventLinkPresenter.AddEventLinkView;
 import stroom.annotation.client.AnnotationEditPresenter.AnnotationEditView;
 import stroom.annotation.client.ChooserPresenter.ChooserView;
+import stroom.annotation.client.LinkedEventPresenter.LinkedEventView;
 
 public class AnnotationModule extends AbstractPresenterModule {
     @Override
@@ -26,5 +28,7 @@ public class AnnotationModule extends AbstractPresenterModule {
         bind(AnnotationEditSupport.class).asEagerSingleton();
         bindPresenterWidget(AnnotationEditPresenter.class, AnnotationEditView.class, AnnotationEditViewImpl.class);
         bindPresenterWidget(ChooserPresenter.class, ChooserView.class, ChooserViewImpl.class);
+        bindPresenterWidget(LinkedEventPresenter.class, LinkedEventView.class, LinkedEventViewImpl.class);
+        bindPresenterWidget(AddEventLinkPresenter.class, AddEventLinkView.class, AddEventLinkViewImpl.class);
     }
 }
