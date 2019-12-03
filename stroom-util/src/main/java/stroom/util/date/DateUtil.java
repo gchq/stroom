@@ -29,12 +29,12 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 
 public final class DateUtil {
-    public static final int DATE_LENGTH = "2000-01-01T00:00:00.000Z".length();
-    public static final java.time.format.DateTimeFormatter NORMAL_STROOM_TIME_FORMATTER = java.time.format.DateTimeFormatter
+    private static final int DATE_LENGTH = "2000-01-01T00:00:00.000Z".length();
+    private static final java.time.format.DateTimeFormatter NORMAL_STROOM_TIME_FORMATTER = java.time.format.DateTimeFormatter
             .ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXX");
-    public static final long MIN_MS = 1000 * 60;
-    public static final long HOUR_MS = MIN_MS * 60;
-    public static final long DAY_MS = HOUR_MS * 24;
+    private static final long MIN_MS = 1000 * 60;
+    private static final long HOUR_MS = MIN_MS * 60;
+    private static final long DAY_MS = HOUR_MS * 24;
     private static final Logger LOGGER = LoggerFactory.getLogger(DateUtil.class);
     private static final String NULL = "NULL";
     private static final java.time.format.DateTimeFormatter FILE_TIME_STROOM_TIME_FORMATTER = java.time.format.DateTimeFormatter
@@ -154,7 +154,7 @@ public final class DateUtil {
      * @throws IllegalArgumentException if date does not parse
      */
     public static long parseNormalDateTimeString(final String date) {
-        if (date == null || date.length() != DATE_LENGTH) {
+        if (!looksLikeDate(date)) {
             throw new IllegalArgumentException("Unable to parse date: \"" + date + '"');
         }
 
@@ -174,7 +174,7 @@ public final class DateUtil {
      * @throws IllegalArgumentException if date does not parse
      */
     public static long parseFileDateTimeString(final String date) {
-        if (date == null || date.length() != DATE_LENGTH) {
+        if (!looksLikeDate(date)) {
             throw new IllegalArgumentException("Unable to parse date: \"" + date + '"');
         }
 
@@ -187,7 +187,7 @@ public final class DateUtil {
     }
 
     public static long parseUnknownString(final String date) {
-        if (date == null || date.length() != DATE_LENGTH) {
+        if (!looksLikeDate(date)) {
             Long.parseLong(date);
         }
 
@@ -201,5 +201,9 @@ public final class DateUtil {
             // and get it as a long.
             return Long.parseLong(date);
         }
+    }
+
+    public static boolean looksLikeDate(final String date) {
+        return date != null && date.length() == DATE_LENGTH && date.charAt(date.length() - 1) == 'Z';
     }
 }
