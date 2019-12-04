@@ -27,6 +27,7 @@ import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
 import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.StreamHolder;
+import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Highlight;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
@@ -38,7 +39,12 @@ import java.util.Set;
 @Component
 @Scope(value = StroomScope.TASK)
 public class SteppingController {
+    private static final Highlight DEFAULT_HIGHLIGHT = new Highlight(
+            new DefaultLocation(1, 0),
+            new DefaultLocation(1, 0));
+
     private final Set<ElementMonitor> monitors = new HashSet<>();
+
     @Resource
     private StreamHolder streamHolder;
     @Resource
@@ -125,7 +131,10 @@ public class SteppingController {
         }
 
         // Figure out what the highlighted portion of the input stream should be.
-        final Highlight highlight = locationHolder.getCurrentLocation().getHighlight();
+        Highlight highlight = DEFAULT_HIGHLIGHT;
+        if (locationHolder != null && locationHolder.getCurrentLocation() != null) {
+            highlight = locationHolder.getCurrentLocation().getHighlight();
+        }
 
         // First we need to check that the record is ok WRT the location of the
         // record, i.e. is it after the last record found if stepping forward
