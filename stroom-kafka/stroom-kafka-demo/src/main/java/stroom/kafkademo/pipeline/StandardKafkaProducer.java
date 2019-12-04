@@ -91,6 +91,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StandardKafkaProducer.class);
 
+    private static final String RECORDS_ELEMENT_LOCAL_NAME = "kafkaRecords";
     private static final String RECORD_ELEMENT_LOCAL_NAME = "kafkaRecord";
     private static final String HEADER_ELEMENT_LOCAL_NAME = "header";
     private static final String KEY_ELEMENT_LOCAL_NAME = "key";
@@ -242,7 +243,8 @@ class StandardKafkaProducer extends AbstractXMLFilter {
 
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-        state.lastElement = null;
+        if (state != null)
+            state.lastElement = null;
 
         if (HEADER_ELEMENT_LOCAL_NAME.equals(localName)){
             state.inHeader = false;
@@ -274,13 +276,13 @@ class StandardKafkaProducer extends AbstractXMLFilter {
             }
             buffer.append(" Value: " + state.messageValue);
 
-            log (Severity.INFO, buffer.toString(), null);
+//            log (Severity.INFO, buffer.toString(), null);
             kafkaProducer.send(record, new Callback() {
                 public void onCompletion(RecordMetadata metadata, Exception e) {
                     if(e != null) {
                         log (Severity.ERROR, "Unable to send record to Kafka", e);
                     } else {
-                        log (Severity.INFO, "Successfully sent record to Kafka", null);
+//                        log (Severity.INFO, "Successfully sent record to Kafka", null);
                     }
                 }});
         }
