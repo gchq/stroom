@@ -5,10 +5,21 @@ import io.dropwizard.Configuration;
 import stroom.proxy.guice.ProxyConfig;
 
 public class Config extends Configuration {
+    public static boolean superDevMode;
     private SessionCookieConfig sessionCookieConfig = new SessionCookieConfig();
     private String mode;
     private ProxyConfig proxyConfig;
     private String externalConfig = "~/.stroom/stroom.conf";
+
+    @JsonProperty("superDevMode")
+    public boolean isSuperDevMode() {
+        return superDevMode;
+    }
+
+    @JsonProperty("superDevMode")
+    public void setSuperDevMode(final boolean superDevMode) {
+        Config.superDevMode = superDevMode;
+    }
 
     @JsonProperty("sessionCookie")
     public SessionCookieConfig getSessionCookieConfig() {

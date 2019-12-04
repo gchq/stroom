@@ -121,6 +121,7 @@ import stroom.statistics.server.sql.search.SqlStatisticsQueryResource;
 import stroom.statistics.spring.StatisticsConfiguration;
 import stroom.util.HealthCheckUtils;
 import stroom.util.config.StroomProperties;
+import stroom.util.config.StroomProperties.Source;
 import stroom.util.db.DbUtil;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.visualisation.spring.VisualisationConfiguration;
@@ -320,6 +321,12 @@ public class App extends Application<Config> {
     }
 
     private void startApp(final Config configuration, final Environment environment) {
+        // Add some stuff to make GWT SuperDevMode easier to use.
+        if (configuration.isSuperDevMode()) {
+            StroomProperties.setOverrideProperty("stroom.authentication.required", "false", Source.TEST);
+            StroomProperties.setOverrideProperty("stroom.security.web.content.securityPolicy", "", Source.TEST);
+        }
+
         // Get the external config.
         StroomProperties.setExternalConfigPath(configuration.getExternalConfig(), configPath);
 
