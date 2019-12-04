@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change local.yml.sh to also look for ip in /sbin
 
 ## [v7.0-beta.11] - 2019-12-04
 
