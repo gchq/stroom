@@ -232,7 +232,7 @@ class AnnotationDaoImpl implements AnnotationDao {
             createEntry(annotation.getId(), user, now, Annotation.COMMENT, annotation.getComment());
 
             final long annotationId = annotation.getId();
-            request.getLinkedEvents().forEach(eventID -> createEventLink(annotationId, eventID.getStreamId(), eventID.getEventId()));
+            request.getLinkedEvents().forEach(eventID -> createEventLink(annotationId, eventID, user, now));
         } else {
             // Update parent if we need to.
             final long annotationId = annotation.getId();
@@ -339,7 +339,7 @@ class AnnotationDaoImpl implements AnnotationDao {
         }).orElse(get(annotation));
     }
 
-    private void createEventLink(final long annotationId, final long streamId, final long eventId) {
+    private void createEventLink(final long annotationId, final EventId eventId, final String user, final long now) {
         try {
             // Create event link.
             final int count = JooqUtil.contextResult(connectionProvider, context -> context
@@ -348,32 +348,40 @@ class AnnotationDaoImpl implements AnnotationDao {
                             ANNOTATION_DATA_LINK.STREAM_ID,
                             ANNOTATION_DATA_LINK.EVENT_ID)
                     .values(annotationId,
-                            streamId,
-                            eventId)
+                            eventId.getStreamId(),
+                            eventId.getEventId())
                     .onDuplicateKeyIgnore()
                     .execute());
 
             if (count != 1) {
                 throw new RuntimeException("Unable to create event link");
             }
+
+            // Record this link.
+            createEntry(annotationId, user, now, Annotation.LINK, eventId.toString());
+
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
         }
     }
 
-    private void removeEventLink(final long annotationId, final long streamId, final long eventId) {
+    private void removeEventLink(final long annotationId, final EventId eventId, final String user, final long now) {
         try {
             // Remove event link.
             final int count = JooqUtil.contextResult(connectionProvider, context -> context
                     .deleteFrom(ANNOTATION_DATA_LINK)
                     .where(ANNOTATION_DATA_LINK.FK_ANNOTATION_ID.eq(annotationId))
-                    .and(ANNOTATION_DATA_LINK.STREAM_ID.eq(streamId))
-                    .and(ANNOTATION_DATA_LINK.EVENT_ID.eq(eventId))
+                    .and(ANNOTATION_DATA_LINK.STREAM_ID.eq(eventId.getStreamId()))
+                    .and(ANNOTATION_DATA_LINK.EVENT_ID.eq(eventId.getEventId()))
                     .execute());
 
             if (count != 1) {
                 throw new RuntimeException("Unable to remove event link");
             }
+
+            // Record this link.
+            createEntry(annotationId, user, now, Annotation.UNLINK, eventId.toString());
+
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
         }
@@ -391,14 +399,16 @@ class AnnotationDaoImpl implements AnnotationDao {
     }
 
     @Override
-    public List<EventId> link(final EventLink eventLink) {
-        createEventLink(eventLink.getAnnotationId(), eventLink.getEventId().getStreamId(), eventLink.getEventId().getEventId());
+    public List<EventId> link(final EventLink eventLink, final String user) {
+        final long now = System.currentTimeMillis();
+        createEventLink(eventLink.getAnnotationId(), eventLink.getEventId(), user, now);
         return getLinkedEvents(eventLink.getAnnotationId());
     }
 
     @Override
-    public List<EventId> unlink(final EventLink eventLink) {
-        removeEventLink(eventLink.getAnnotationId(), eventLink.getEventId().getStreamId(), eventLink.getEventId().getEventId());
+    public List<EventId> unlink(final EventLink eventLink, final String user) {
+        final long now = System.currentTimeMillis();
+        removeEventLink(eventLink.getAnnotationId(), eventLink.getEventId(), user, now);
         return getLinkedEvents(eventLink.getAnnotationId());
     }
 

@@ -361,6 +361,16 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
             quote(text, value);
             text.append("\n");
 
+        } else if (Annotation.LINK.equals(entry.getEntryType()) || Annotation.UNLINK.equals(entry.getEntryType())) {
+            text.append(ClientDateUtil.toISOString(entry.getCreateTime()));
+            text.append(", ");
+            text.append(entry.getCreateUser());
+            text.append(", ");
+            text.append(entry.getEntryType().toLowerCase());
+            text.append("ed ");
+            quote(text, value);
+            text.append("\n");
+
         } else if (Annotation.ASSIGNED_TO.equals(entry.getEntryType())) {
             if (currentValue != null && currentValue.isPresent()) {
                 text.append(ClientDateUtil.toISOString(entry.getCreateTime()));
@@ -432,6 +442,20 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
             html.appendHtmlConstant(HISTORY_COMMENT_BODY_END);
             html.appendHtmlConstant(HISTORY_COMMENT_BORDER_END);
             html.appendHtmlConstant(HISTORY_LINE_END);
+
+        } else if (Annotation.LINK.equals(entry.getEntryType()) || Annotation.UNLINK.equals(entry.getEntryType())) {
+            html.appendHtmlConstant(HISTORY_LINE_START);
+            html.appendHtmlConstant(HISTORY_ITEM_START);
+            bold(html, entry.getCreateUser());
+            html.appendEscaped(" ");
+            html.appendEscaped(entry.getEntryType().toLowerCase());
+            html.appendEscaped("ed ");
+            bold(html, entry.getData());
+            html.appendEscaped(" ");
+            html.append(getDurationLabel(entry.getCreateTime(), now));
+            html.appendHtmlConstant(HISTORY_ITEM_END);
+            html.appendHtmlConstant(HISTORY_LINE_END);
+
         } else {
             // Remember initial values but don't show them unless they change.
             if (currentValue != null) {

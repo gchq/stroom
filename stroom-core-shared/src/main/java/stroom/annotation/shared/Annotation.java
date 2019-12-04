@@ -6,6 +6,8 @@ public class Annotation {
     public static final String COMMENT = "Comment";
     public static final String STATUS = "Status";
     public static final String ASSIGNED_TO = "Assigned";
+    public static final String LINK = "Link";
+    public static final String UNLINK = "Unlink";
 
     private Long id;
     private Integer version;

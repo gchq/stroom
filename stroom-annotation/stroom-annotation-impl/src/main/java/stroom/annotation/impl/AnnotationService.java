@@ -74,17 +74,6 @@ public class AnnotationService implements Searchable {
         return annotationDao.getDetail(annotationId);
     }
 
-    AnnotationDetail getDetail(Long streamId, Long eventId) {
-        checkPermission();
-        List<AnnotationDetail> list = annotationDao.getAnnotationDetailsForEvents(streamId, eventId);
-
-        // TODO : @66 Just use the first for filtering for now until we decide what it means to have multiple annotations against an event.
-        if (list.size() > 0) {
-            return list.get(0);
-        }
-        return null;
-    }
-
     AnnotationDetail createEntry(final CreateEntryRequest request) {
         checkPermission();
         return annotationDao.createEntry(request, securityContext.getUserId());
@@ -97,12 +86,12 @@ public class AnnotationService implements Searchable {
 
     List<EventId> link(final EventLink eventLink) {
         checkPermission();
-        return annotationDao.link(eventLink);
+        return annotationDao.link(eventLink, securityContext.getUserId());
     }
 
     List<EventId> unlink(final EventLink eventLink) {
         checkPermission();
-        return annotationDao.unlink(eventLink);
+        return annotationDao.unlink(eventLink, securityContext.getUserId());
     }
 
     Integer setStatus(SetStatusRequest request) {

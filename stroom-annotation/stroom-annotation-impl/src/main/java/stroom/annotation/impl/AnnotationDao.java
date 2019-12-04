@@ -43,9 +43,9 @@ public interface AnnotationDao {
 
     List<EventId> getLinkedEvents(Long annotationId);
 
-    List<EventId> link(EventLink eventLink);
+    List<EventId> link(EventLink eventLink, String user);
 
-    List<EventId> unlink(EventLink eventLink);
+    List<EventId> unlink(EventLink eventLink, String user);
 
     Integer setStatus(SetStatusRequest request, String user);
 
