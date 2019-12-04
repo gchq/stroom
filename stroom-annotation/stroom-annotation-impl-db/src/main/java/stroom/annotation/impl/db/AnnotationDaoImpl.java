@@ -18,6 +18,8 @@ import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
+import stroom.annotation.shared.SetAssignedToRequest;
+import stroom.annotation.shared.SetStatusRequest;
 import stroom.dashboard.expression.v1.Val;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
@@ -398,6 +400,41 @@ class AnnotationDaoImpl implements AnnotationDao {
     public List<EventId> unlink(final EventLink eventLink) {
         removeEventLink(eventLink.getAnnotationId(), eventLink.getEventId().getStreamId(), eventLink.getEventId().getEventId());
         return getLinkedEvents(eventLink.getAnnotationId());
+    }
+
+    @Override
+    public Integer setStatus(final SetStatusRequest request, final String user) {
+        return changeFields(request.getAnnotationIdList(), user, Annotation.STATUS, ANNOTATION.STATUS, request.getStatus());
+    }
+
+    @Override
+    public Integer setAssignedTo(final SetAssignedToRequest request, final String user) {
+        return changeFields(request.getAnnotationIdList(), user, Annotation.ASSIGNED_TO, ANNOTATION.ASSIGNED_TO, request.getAssignedTo());
+    }
+
+    private Integer changeFields(final List<Long> annotationIdList, final String user, final String type, final Field<String> field, final String value) {
+        final long now = System.currentTimeMillis();
+        int count = 0;
+        for (final Long annotationId : annotationIdList) {
+            try {
+                changeField(annotationId, now, user, type, field, value);
+                count++;
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+            }
+        }
+        return count;
+    }
+
+    private void changeField(final long annotationId, final long now, final String user, final String type, final Field<String> field, final String value) {
+        JooqUtil.context(connectionProvider, context -> context
+                .update(ANNOTATION)
+                .set(field, value)
+                .set(ANNOTATION.UPDATE_USER, user)
+                .set(ANNOTATION.UPDATE_TIME_MS, now)
+                .where(ANNOTATION.ID.eq(annotationId))
+                .execute());
+        createEntry(annotationId, user, now, type, value);
     }
 
     @Override

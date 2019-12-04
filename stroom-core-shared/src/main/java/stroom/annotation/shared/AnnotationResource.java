@@ -93,4 +93,22 @@ public interface AnnotationResource extends DirectRestService {
             value = "Unlinks an annotation from an event",
             response = Response.class)
     List<EventId> unlink(EventLink eventLink);
+
+    @POST
+    @Path("setStatus")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Bulk action to set the status for several annotations",
+            response = Response.class)
+    Integer setStatus(SetStatusRequest request);
+
+    @POST
+    @Path("setAssignedTo")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Bulk action to set the assignment for several annotations",
+            response = Response.class)
+    Integer setAssignedTo(SetAssignedToRequest request);
 }

@@ -6,6 +6,8 @@ import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
+import stroom.annotation.shared.SetAssignedToRequest;
+import stroom.annotation.shared.SetStatusRequest;
 import stroom.dashboard.expression.v1.Val;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceField;
@@ -101,6 +103,16 @@ public class AnnotationService implements Searchable {
     List<EventId> unlink(final EventLink eventLink) {
         checkPermission();
         return annotationDao.unlink(eventLink);
+    }
+
+    Integer setStatus(SetStatusRequest request) {
+        checkPermission();
+        return annotationDao.setStatus(request, securityContext.getUserId());
+    }
+
+    Integer setAssignedTo(SetAssignedToRequest request) {
+        checkPermission();
+        return annotationDao.setAssignedTo(request, securityContext.getUserId());
     }
 
     private void checkPermission() {

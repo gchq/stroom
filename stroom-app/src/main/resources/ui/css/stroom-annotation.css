@@ -158,6 +158,10 @@
     padding-top: 10px;
 }
 
+.annotationDropDownIcon {
+    margin-top: -2px;
+}
+
 .annotationAssignYourself {
     display: inline-block;
     color: #0366d6;

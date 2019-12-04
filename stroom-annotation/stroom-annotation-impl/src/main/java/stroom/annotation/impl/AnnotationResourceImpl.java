@@ -23,6 +23,8 @@ import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
+import stroom.annotation.shared.SetAssignedToRequest;
+import stroom.annotation.shared.SetStatusRequest;
 import stroom.logging.DocumentEventLog;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
@@ -132,6 +134,16 @@ public class AnnotationResourceImpl implements AnnotationResource, HasHealthChec
     @Override
     public List<EventId> unlink(final EventLink eventLink) {
         return annotationService.unlink(eventLink);
+    }
+
+    @Override
+    public Integer setStatus(final SetStatusRequest request) {
+        return annotationService.setStatus(request);
+    }
+
+    @Override
+    public Integer setAssignedTo(final SetAssignedToRequest request) {
+        return annotationService.setAssignedTo(request);
     }
 
     @Override

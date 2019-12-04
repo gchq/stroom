@@ -31,8 +31,6 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.annotation.client.ShowAnnotationEvent;
-import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.core.client.LocationManager;
@@ -112,6 +110,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final ButtonView annotateButton;
     private final Provider<FieldAddPresenter> fieldAddPresenterProvider;
     private final DownloadPresenter downloadPresenter;
+    private final AnnotationManager annotationManager;
     private final ClientDispatchAsync dispatcher;
     private final TimeZones timeZones;
     private final FieldsManager fieldsManager;
@@ -142,6 +141,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final Provider<FieldAddPresenter> fieldAddPresenterProvider,
                           final Provider<TableSettingsPresenter> settingsPresenterProvider,
                           final DownloadPresenter downloadPresenter,
+                          final AnnotationManager annotationManager,
                           final ClientDispatchAsync dispatcher,
                           final ClientPropertyCache clientPropertyCache,
                           final TimeZones timeZones) {
@@ -149,6 +149,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.locationManager = locationManager;
         this.fieldAddPresenterProvider = fieldAddPresenterProvider;
         this.downloadPresenter = downloadPresenter;
+        this.annotationManager = annotationManager;
         this.dispatcher = dispatcher;
         this.timeZones = timeZones;
         this.dataGrid = new DataGridViewImpl<>(true, true);
@@ -226,7 +227,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
         registerHandler(annotateButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                onAnnotate(event);
+                annotationManager.showAnnotationMenu(event.getNativeEvent(), currentFields, dataGrid.getSelectionModel().getSelectedItems());
             }
         }));
     }
@@ -402,64 +403,11 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     private void enableAnnotate() {
-        final List<EventId> idList = getIdFieldIndexes();
+        final List<EventId> idList = annotationManager.getEventIdList(currentFields, dataGrid.getSelectionModel().getSelectedItems());
         final boolean enabled = idList.size() > 0;
         annotateButton.setEnabled(enabled);
     }
 
-    private void onAnnotate(final ClickEvent e) {
-        final List<EventId> idList = getIdFieldIndexes();
-        if (idList.size() > 0) {
-            final Annotation annotation = new Annotation();
-            ShowAnnotationEvent.fire(this, annotation, idList);
-
-        } else {
-            AlertEvent.fireWarn(this, "You need to select some rows to annotate", null);
-        }
-    }
-
-    private List<EventId> getIdFieldIndexes() {
-        final List<EventId> idList = new ArrayList<>();
-        final List<Row> selectedItems = dataGrid.getSelectionModel().getSelectedItems();
-        if (selectedItems != null && selectedItems.size() > 0) {
-            int streamIdIndex = -1;
-            int eventIdIndex = -1;
-            int i = 0;
-            for (final Field field : currentFields) {
-                if (streamIdIndex == -1 && field.getName().equals(IndexConstants.STREAM_ID)) {
-                    streamIdIndex = i;
-                } else if (eventIdIndex == -1 && field.getName().equals(IndexConstants.EVENT_ID)) {
-                    eventIdIndex = i;
-                }
-                i++;
-            }
-
-            if (streamIdIndex != -1 && eventIdIndex != -1) {
-                for (final Row row : selectedItems) {
-                    final Long streamId = getLong(row.getValues(), streamIdIndex);
-                    final Long eventId = getLong(row.getValues(), eventIdIndex);
-                    if (streamId != null && eventId != null) {
-                        idList.add(new EventId(streamId, eventId));
-                    }
-                }
-            }
-        }
-        return idList;
-    }
-
-    private Long getLong(List<String> values, int index) {
-        if (values != null && values.size() > index) {
-            final String value = values.get(index);
-            if (value != null) {
-                try {
-                    return Long.parseLong(value);
-                } catch (final NumberFormatException e) {
-                    // Ignore.
-                }
-            }
-        }
-        return null;
-    }
 
     @Override
     public void startSearch() {

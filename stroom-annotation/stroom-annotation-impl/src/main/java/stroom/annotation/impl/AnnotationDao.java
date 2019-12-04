@@ -21,6 +21,8 @@ import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.CreateEntryRequest;
 import stroom.annotation.shared.EventId;
 import stroom.annotation.shared.EventLink;
+import stroom.annotation.shared.SetAssignedToRequest;
+import stroom.annotation.shared.SetStatusRequest;
 import stroom.dashboard.expression.v1.Val;
 import stroom.datasource.api.v2.DataSourceField;
 import stroom.entity.shared.ExpressionCriteria;
@@ -44,6 +46,10 @@ public interface AnnotationDao {
     List<EventId> link(EventLink eventLink);
 
     List<EventId> unlink(EventLink eventLink);
+
+    Integer setStatus(SetStatusRequest request, String user);
+
+    Integer setAssignedTo(SetAssignedToRequest request, String user);
 
     void search(ExpressionCriteria criteria, DataSourceField[] fields, Consumer<Val[]> consumer);
 }

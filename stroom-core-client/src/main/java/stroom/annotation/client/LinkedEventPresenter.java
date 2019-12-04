@@ -40,6 +40,9 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
 
     private Annotation annotation;
 
+    private List<EventId> currentData;
+    private EventId nextSelection;
+
     @Inject
     public LinkedEventPresenter(final EventBus eventBus,
                                 final LinkedEventView view,
@@ -77,16 +80,29 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
             if (eventId != null) {
                 final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
                 final Rest<List<EventId>> rest = restFactory.create();
-                rest.onSuccess(this::setData).call(annotationResource).link(new EventLink(annotation.getId(), eventId));
+                rest.onSuccess(this::setData)
+                        .call(annotationResource)
+                        .link(new EventLink(annotation.getId(), eventId));
             }
         })));
 
         registerHandler(removeEventButton.addClickHandler(e -> {
             final EventId selected = eventList.getSelectionModel().getSelected();
             if (selected != null) {
+
+                nextSelection = null;
+                if (currentData != null && currentData.size() > 1) {
+                    int index = currentData.indexOf(selected);
+                    index--;
+                    index = Math.max(0, index);
+                    nextSelection = currentData.get(index);
+                }
+
                 final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
                 final Rest<List<EventId>> rest = restFactory.create();
-                rest.onSuccess(this::setData).call(annotationResource).unlink(new EventLink(annotation.getId(), selected));
+                rest.onSuccess(this::setData)
+                        .call(annotationResource)
+                        .unlink(new EventLink(annotation.getId(), selected));
             }
         }));
     }
@@ -106,9 +122,25 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
     }
 
     private void setData(final List<EventId> data) {
-        eventList.getSelectionModel().clear();
+        this.currentData = data;
         eventList.setRowData(0, data);
         eventList.setRowCount(data.size());
+
+        // Change the selection if we need to.
+        if (data.size() > 0) {
+            final EventId currentSelection = eventList.getSelectionModel().getSelected();
+            if (nextSelection != null && data.contains(nextSelection)) {
+                eventList.getSelectionModel().setSelected(nextSelection);
+            } else if (currentSelection == null) {
+                eventList.getSelectionModel().setSelected(data.get(0));
+            } else if (!data.contains(currentSelection)) {
+                eventList.getSelectionModel().setSelected(data.get(0));
+            }
+        } else {
+            eventList.getSelectionModel().clear();
+        }
+        nextSelection = null;
+
         onSelection();
     }
 

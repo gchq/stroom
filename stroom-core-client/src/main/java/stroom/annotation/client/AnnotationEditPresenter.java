@@ -688,7 +688,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
     @Override
     public void showLinkedEvents() {
-        if (annotationDetail.getAnnotation() != null && annotationDetail.getAnnotation().getId() != null) {
+        if (annotationDetail != null && annotationDetail.getAnnotation() != null && annotationDetail.getAnnotation().getId() != null) {
             linkedEventPresenter.edit(annotationDetail.getAnnotation());
         } else {
             AlertEvent.fireError(this, "The annotation must be created before events are linked", null);
