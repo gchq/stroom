@@ -30,6 +30,20 @@ public class EventId {
         this.eventId = eventId;
     }
 
+    public static EventId parse(final String string) {
+        if (string != null && !string.isEmpty()) {
+            final String[] parts = string.split(":");
+            if (parts.length == 2) {
+                try {
+                    return new EventId(Long.parseLong(parts[0]), Long.parseLong(parts[1]));
+                } catch (final NumberFormatException e) {
+                    // Ignore.
+                }
+            }
+        }
+        return null;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;

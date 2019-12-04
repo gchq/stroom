@@ -21,12 +21,15 @@ import stroom.streamstore.client.presenter.ColumnSizeConstants;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
+import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
     private final RestFactory restFactory;
@@ -42,6 +45,8 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
 
     private List<EventId> currentData;
     private EventId nextSelection;
+    private boolean dirty;
+    private Consumer<Boolean> consumer;
 
     @Inject
     public LinkedEventPresenter(final EventBus eventBus,
@@ -78,6 +83,8 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
 
         registerHandler(addEventButton.addClickHandler(e -> addEventLinkPresenter.show(eventId -> {
             if (eventId != null) {
+                dirty = true;
+
                 final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
                 final Rest<List<EventId>> rest = restFactory.create();
                 rest.onSuccess(this::setData)
@@ -89,6 +96,7 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         registerHandler(removeEventButton.addClickHandler(e -> {
             final EventId selected = eventList.getSelectionModel().getSelected();
             if (selected != null) {
+                dirty = true;
 
                 nextSelection = null;
                 if (currentData != null && currentData.size() > 1) {
@@ -107,8 +115,10 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         }));
     }
 
-    public void edit(final Annotation annotation) {
+    public void edit(final Annotation annotation, final Consumer<Boolean> consumer) {
         this.annotation = annotation;
+        this.consumer = consumer;
+        dirty = false;
 
         final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
         final Rest<List<EventId>> rest = restFactory.create();
@@ -118,7 +128,17 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
     private void show(final List<EventId> data) {
         setData(data);
         final PopupSize popupSize = new PopupSize(800, 600, 800, 600, true);
-        ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, popupSize, "Linked Events", null);
+        ShowPopupEvent.fire(this, this, PopupType.CLOSE_DIALOG, popupSize, "Linked Events", new PopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                HidePopupEvent.fire(LinkedEventPresenter.this, LinkedEventPresenter.this);
+            }
+
+            @Override
+            public void onHide(final boolean autoClose, final boolean ok) {
+                consumer.accept(dirty);
+            }
+        });
     }
 
     private void setData(final List<EventId> data) {
@@ -154,6 +174,10 @@ public class LinkedEventPresenter extends MyPresenterWidget<LinkedEventView> {
         }
 
         removeEventButton.setEnabled(selected != null);
+    }
+
+    public boolean isDirty() {
+        return dirty;
     }
 
     public interface LinkedEventView extends View {

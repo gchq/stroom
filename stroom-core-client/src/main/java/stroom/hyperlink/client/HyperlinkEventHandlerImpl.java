@@ -161,13 +161,19 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                 }
                 case DATA: {
                     final long id = getParam(href, "id", -1);
-                    final long partNo = getParam(href, "partNo", 0);
+                    final long partNo = getParam(href, "partNo", 1);
                     final long recordNo = getParam(href, "recordNo", 0);
-                    final int lineFrom = (int) getParam(href, "lineFrom", 1);
-                    final int colFrom = (int) getParam(href, "colFrom", 0);
-                    final int lineTo = (int) getParam(href, "lineTo", 1);
-                    final int colTo = (int) getParam(href, "colTo", 0);
-                    final SourceLocation sourceLocation = new SourceLocation(id, null, partNo, recordNo, new Highlight(new DefaultLocation(lineFrom, colFrom), new DefaultLocation(lineTo, colTo)));
+                    final int lineFrom = (int) getParam(href, "lineFrom", -1);
+                    final int colFrom = (int) getParam(href, "colFrom", -1);
+                    final int lineTo = (int) getParam(href, "lineTo", -1);
+                    final int colTo = (int) getParam(href, "colTo", -1);
+
+                    Highlight highlight = null;
+                    if (lineFrom != -1 && colFrom != -1 && lineTo != -1 && colTo != -1) {
+                        highlight = new Highlight(new DefaultLocation(lineFrom, colFrom), new DefaultLocation(lineTo, colTo));
+                    }
+
+                    final SourceLocation sourceLocation = new SourceLocation(id, null, partNo, recordNo, highlight);
                     ShowDataEvent.fire(this, sourceLocation);
                     break;
                 }

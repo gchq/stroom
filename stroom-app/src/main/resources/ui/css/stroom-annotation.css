@@ -172,7 +172,6 @@
 }
 
 .annotationDurationLabel {
-    cursor: pointer;
 }
 
 .annotationDurationLabel:hover {
@@ -245,6 +244,10 @@
     flex-grow: 1;
     padding: 5px;
     white-space: pre-wrap;
+}
+
+.annotationHistoryItem u {
+    cursor: pointer;
 }
 
 .annotationHistoryText {

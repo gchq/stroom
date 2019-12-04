@@ -35,6 +35,7 @@ import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.StepLocation;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.Stream;
@@ -46,7 +47,6 @@ import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.util.shared.Severity;
 import stroom.util.shared.SharedList;
-import stroom.pipeline.shared.SourceLocation;
 import stroom.widget.tab.client.presenter.LayerContainer;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
@@ -91,6 +91,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private BeginSteppingHandler beginSteppingHandler;
     private boolean steppingSource;
     private boolean formatOnLoad;
+    private boolean ignoreActions;
 
     @Inject
     public DataPresenter(final EventBus eventBus, final DataView view, final TextPresenter textPresenter,
@@ -259,12 +260,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             this.currentChildStreamType = highlightChildStreamType;
             streamTypeOffsetRangeMap.clear();
             markerListPresenter.resetExpandedSeverities();
-//            currentStreamRange = new OffsetRange<>(sourceLocation.getStreamNo() - 1, 1L);
-//            currentPageRange = new OffsetRange<>((long) sourceLocation.getHighlight().getFrom().getLineNo() - 1, 1L);
-//            streamTypeOffsetRangeMap.clear();
-//            markerListPresenter.resetExpandedSeverities();
 
-//            fetchData(false, highlightStreamId, highlightChildStreamType);
             update(false);
         } else {
             refreshHighlights(lastResult);
@@ -283,17 +279,19 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     public void update(final boolean fireEvents) {
-        final Severity[] expandedSeverities = markerListPresenter.getExpandedSeverities();
+        if (!ignoreActions) {
+            final Severity[] expandedSeverities = markerListPresenter.getExpandedSeverities();
 
-        final FetchDataAction action = new FetchDataAction();
-        action.setStreamId(currentStreamId);
-        action.setStreamRange(currentPartRange);
-        action.setPageRange(currentRecordRange);
-        action.setChildStreamType(currentChildStreamType);
-        action.setMarkerMode(errorMarkerMode);
-        action.setExpandedSeverities(expandedSeverities);
-        action.setFireEvents(fireEvents);
-        doFetch(action, fireEvents);
+            final FetchDataAction action = new FetchDataAction();
+            action.setStreamId(currentStreamId);
+            action.setStreamRange(currentPartRange);
+            action.setPageRange(currentRecordRange);
+            action.setChildStreamType(currentChildStreamType);
+            action.setMarkerMode(errorMarkerMode);
+            action.setExpandedSeverities(expandedSeverities);
+            action.setFireEvents(fireEvents);
+            doFetch(action, fireEvents);
+        }
     }
 
     private void doFetch(final FetchDataAction action, final boolean fireEvents) {
@@ -341,6 +339,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void setPageResponse(final AbstractFetchDataResult result, final boolean fireEvents) {
+        ignoreActions = true;
         this.lastResult = result;
 
         if (result == null || result.getStreamType() == null || steppingSource) {
@@ -382,6 +381,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             refresh(result);
             updateTabs(null, null);
         }
+        ignoreActions = false;
     }
 
     private void updateTabs(final StreamType streamType, final List<StreamType> availableChildStreamTypes) {
@@ -649,7 +649,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
 
         public void updateRowData(final int start, final int length) {
-            visibleRange = new Range(start, visibleRange.getLength());
+            visibleRange = new Range(start, length);
             RangeChangeEvent.fire(this, new Range(start, length));
         }
 
