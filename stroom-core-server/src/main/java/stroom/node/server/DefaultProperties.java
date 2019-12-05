@@ -1151,7 +1151,7 @@ public class DefaultProperties {
                 .build());
         list.add(new GlobalProperty.Builder()
                 .name("stroom.security.apiToken")
-                .value("eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDUxMzc5NzEsInN1YiI6InN0YXRzU2VydmljZVVzZXIiLCJpc3MiOiJzdHJvb20iLCJzaWQiOm51bGx9.O2w_ewq1In3-C1DBLNPPVybpjDxffSxEf8E-34N6kXzxOwiwpog45VcHVrWUp6jFo-bs2ccyYw99jE6tqFpXn2HUaBs5DZ48yN5Ctqie4QTt99cuIW1tGKMW54c7qtdOZpKfMnByR9f_I73FCpgMiBP_i-oAoFryjS69zplBM6DrjWPFy8VcOeSon2kGUgN7LLhhoZZHG1d5NwdomJpzhG4lm4POkZVGB5znvM3NwiNDkePqkQNpfcm9O6FsunUgBuis7kqQzFr7Qjjhmb3oE2Y3fRlcSWX1uX8qJZhn8VA5DR2J4J2E3XFF9NkZNYmnvEcEEQ6i0USjR_LHPpGJdw")
+                .value("eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6InN0cm9vbSIsInNpZCI6bnVsbH0.k0Ssb43GCdTunAMeM26fIulYKNUuPUaJJk6GxDmzCPb7kVPwEtdfBSrtwazfEFM97dnmvURkLqs-DAZTXhhf-0VqQx4hkwcCHf83eVptWTy-lufIhQo6FCM223c9ONIhl6CPqknWh9Bo3vFNrNJoKz5Zw2T_iCcQhi2WGjd_tjTG7VbibTIpH3lPQDw1IBD2nMsEqACJSk3IaFe0GYcrAEMwsjj3sjAwByMbj5DJvo_DJbAuzUwS5IVpASEENen5Xd3wALLirrraUfED1OY0G56Ttcwl3uQ2s-grZXBM4JCiIurlWR5iNtNwoPUsZsyMju4FMSXt3Ur1NIpD7XKJlg")
                 .description("The API token Stroom will use to authenticate itself when accessing other services")
                 .editable(true)
                 .requireUiRestart(true)
@@ -1179,6 +1179,21 @@ public class DefaultProperties {
                 .name("stroom.authentication.required")
                 .value("true")
                 .description("Choose whether Stroom requires authenticated access")
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.auth.clientId")
+                .value("PZnJr8kHRKqnlJRQThSI")
+                .description("The client id shared with the auth service")
+                .editable(true)
+                .requireRestart(true)
+                .build());
+        list.add(new GlobalProperty.Builder()
+                .name("stroom.auth.clientSecret")
+                .value("OtzHiAWLj8QWcwO2IxXmqxpzE2pyg0pMKCghR2aU")
+                .description("The client secret shared with the auth service")
+                .editable(true)
+                .requireRestart(true)
+                .password(true)
                 .build());
 
         // Authorisation
