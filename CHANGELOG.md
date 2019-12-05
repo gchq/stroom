@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change stroom.conf.sh to also look for ip in /sbin
+
 
 ## [v6.0.26] - 2019-11-25
 
