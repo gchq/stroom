@@ -6,7 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Change stroom.conf.sh to also look for ip in /sbin
+
+## [v6.0.27] - 2019-12-05
+
+* Updated API key to include audience and added client id and secret.
+
+* Change `stroom.conf.sh` to also look for ip in `/sbin`
 
 
 ## [v6.0.26] - 2019-11-25
@@ -53,13 +58,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1243** : Dashboard visualisations now link with similar functions available to dashboard tables, e.g. `link()`, `dashboard()`, `annotation()`, `stepping()`, `data()`.
 
-* Issue **#1316** : JSONParser now includes various parse options including handling comments. 
+* Issue **#1316** : JSONParser now includes various parse options including handling comments.
 
 * Issue **#48** : Added option to hide/show dashboard table columns.
 
 * Issue **#1315** : Improved health check for missing API key.
 
-* Updated stroom expression to v1.5.4 and added new field types. 
+* Updated stroom expression to v1.5.4 and added new field types.
 
 * Issue **#1315** : Improved health check for missing API key.
 
@@ -172,7 +177,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1246** : Removed elastic search document type, menu items and filter.
 
-* Issue **#1247** : Added XSLT functions (`source`, `sourceId`, `partNo`, `recordNo`, `lineFrom`, `colFrom`, `lineTo`, `colTo`) to determine the current source location so it can be embedded in a cooked event. Events containing raw source location info can be made into links in dashboard tables or the text pane so that a user can see raw source data or jump directly to stepping that raw record. 
+* Issue **#1247** : Added XSLT functions (`source`, `sourceId`, `partNo`, `recordNo`, `lineFrom`, `colFrom`, `lineTo`, `colTo`) to determine the current source location so it can be embedded in a cooked event. Events containing raw source location info can be made into links in dashboard tables or the text pane so that a user can see raw source data or jump directly to stepping that raw record.
 
 
 ## [v6.1-beta.3] - 2019-08-21
