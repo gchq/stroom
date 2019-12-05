@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.1-beta.13] - 2019-12-05
+
 * Issue **#260** : You can now hide dashboard tabs.
 
 * Issue **#1332** : The text pane can now be configured to show source data.
@@ -2022,7 +2024,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.12...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.13...6.1
+[v6.1-beta.13]: https://github.com/gchq/stroom/compare/v6.1-beta.12...v6.1-beta.13
 [v6.1-beta.12]: https://github.com/gchq/stroom/compare/v6.1-beta.11...v6.1-beta.12
 [v6.1-beta.11]: https://github.com/gchq/stroom/compare/v6.1-beta.10...v6.1-beta.11
 [v6.1-beta.10]: https://github.com/gchq/stroom/compare/v6.1-beta.9...v6.1-beta.10
