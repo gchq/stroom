@@ -94,7 +94,7 @@
 					<xs:sequence>
 						<xs:element name="tag" type="s:TagType" maxOccurs="unbounded">
 							<xs:annotation>
-								<xs:documentation>Tags/data are used to optionally further refine the statistic</xs:documentation>
+								<xs:documentation>Tags/values are used to optionally further refine the statistic</xs:documentation>
 							</xs:annotation>
 						</xs:element>
 					</xs:sequence>
