@@ -6,7 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Change stroom.conf.sh to also look for ip in /sbin
+
+## [v6.0.27] - 2019-12-05
+
+* Updated API key to include audience and added client id and secret.
+
+* Change `stroom.conf.sh` to also look for ip in `/sbin`
 
 
 ## [v6.0.26] - 2019-11-25
@@ -2011,7 +2016,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.26...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.27...6.0
+[v6.0.27]: https://github.com/gchq/stroom/compare/v6.0.26...v6.0.27
 [v6.0.26]: https://github.com/gchq/stroom/compare/v6.0.25...v6.0.26
 [v6.0.25]: https://github.com/gchq/stroom/compare/v6.0.24...v6.0.25
 [v6.0.24]: https://github.com/gchq/stroom/compare/v6.0.23...v6.0.24
