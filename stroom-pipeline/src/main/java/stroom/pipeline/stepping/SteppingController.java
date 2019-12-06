@@ -16,7 +16,6 @@
 
 package stroom.pipeline.stepping;
 
-import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -27,6 +26,7 @@ import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.MetaHolder;
 import stroom.task.api.TaskContext;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Highlight;
 
 import javax.inject.Inject;
@@ -35,10 +35,13 @@ import java.util.Set;
 
 @PipelineScoped
 public class SteppingController {
+    private static final Highlight DEFAULT_HIGHLIGHT = new Highlight(
+            new DefaultLocation(1, 0),
+            new DefaultLocation(1, 0));
+
     private final Set<ElementMonitor> monitors = new HashSet<>();
 
     private final MetaHolder metaHolder;
-    private final LocationFactoryProxy locationFactory;
     private final SteppingResponseCache steppingResponseCache;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationHolder locationHolder;
@@ -53,12 +56,10 @@ public class SteppingController {
 
     @Inject
     SteppingController(final MetaHolder metaHolder,
-                       final LocationFactoryProxy locationFactory,
                        final SteppingResponseCache steppingResponseCache,
                        final ErrorReceiverProxy errorReceiverProxy,
                        final LocationHolder locationHolder) {
         this.metaHolder = metaHolder;
-        this.locationFactory = locationFactory;
         this.steppingResponseCache = steppingResponseCache;
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationHolder = locationHolder;
@@ -132,7 +133,10 @@ public class SteppingController {
         }
 
         // Figure out what the highlighted portion of the input stream should be.
-        final Highlight highlight = locationHolder.getCurrentLocation().getHighlight();
+        Highlight highlight = DEFAULT_HIGHLIGHT;
+        if (locationHolder != null && locationHolder.getCurrentLocation() != null) {
+            highlight = locationHolder.getCurrentLocation().getHighlight();
+        }
 
         // First we need to check that the record is ok WRT the location of the
         // record, i.e. is it after the last record found if stepping forward
