@@ -15,6 +15,7 @@ import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
 import stroom.annotation.impl.db.jooq.tables.Annotation;
+import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
 import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
 
 
@@ -31,7 +32,7 @@ import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = -1594444845;
+    private static final long serialVersionUID = -1406523640;
 
     /**
      * The reference instance of <code>stroom</code>
@@ -42,6 +43,11 @@ public class Stroom extends SchemaImpl {
      * The table <code>stroom.annotation</code>.
      */
     public final Annotation ANNOTATION = stroom.annotation.impl.db.jooq.tables.Annotation.ANNOTATION;
+
+    /**
+     * The table <code>stroom.annotation_data_link</code>.
+     */
+    public final AnnotationDataLink ANNOTATION_DATA_LINK = stroom.annotation.impl.db.jooq.tables.AnnotationDataLink.ANNOTATION_DATA_LINK;
 
     /**
      * The table <code>stroom.annotation_entry</code>.
@@ -74,6 +80,7 @@ public class Stroom extends SchemaImpl {
     private final List<Table<?>> getTables0() {
         return Arrays.<Table<?>>asList(
             Annotation.ANNOTATION,
+            AnnotationDataLink.ANNOTATION_DATA_LINK,
             AnnotationEntry.ANNOTATION_ENTRY);
     }
 }

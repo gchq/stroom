@@ -97,9 +97,9 @@ ext.versions = [
         hadoopCommonShaded: 'v2.6.4-5',
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v7.0-beta.4', // Needed for the correct version of the client API
-        stroomExpression  : 'v3.0.2',
+        stroomExpression  : 'v3.0.3',
         stroomProxyApi    : 'v5.1.2',
-        stroomQuery       : 'v4.0-beta.42', // same version for stroom-docref, stroom-query-api and stroom-query-common
+        stroomQuery       : 'v4.0-beta.44', // same version for stroom-docref, stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
@@ -234,7 +234,6 @@ ext.libs = [
         jooq_codegen                   : "org.jooq:jooq-codegen:$versions.jooq",
         jooq_meta                      : "org.jooq:jooq-meta:$versions.jooq",
         jose4j                         : "org.bitbucket.b_c:jose4j:0.6.4",
-        jsinterop_annotations          : "com.google.jsinterop:jsinterop-annotations:1.0.1",
         jsr173_api                     : "javax.xml.bind:jsr173_api:1.0",
         jul_to_slf4j                   : "org.slf4j:jul-to-slf4j", // version controlled by DW BOM
         junit_jupiter_api              : "org.junit.jupiter:junit-jupiter-api:$versions.junit_jupiter",

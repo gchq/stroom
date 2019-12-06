@@ -95,6 +95,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private BeginSteppingHandler beginSteppingHandler;
     private boolean steppingSource;
     private boolean formatOnLoad;
+    private boolean ignoreActions;
 
     @Inject
     public DataPresenter(final EventBus eventBus, final DataView view, final TextPresenter textPresenter,
@@ -176,6 +177,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             actionQueue.clear();
         }
         setPageResponse(null, fireEvents);
+        currentMetaId = null;
     }
 
     @Override
@@ -200,55 +202,59 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     public void fetchData(final SourceLocation sourceLocation) {
         this.highlights = new ArrayList<>();
-        this.highlights.add(sourceLocation.getHighlight());
+
+        if (sourceLocation.getHighlight() != null) {
+            this.highlights.add(sourceLocation.getHighlight());
+        }
 
         this.highlightId = sourceLocation.getId();
         this.highlightPartNo = sourceLocation.getPartNo();
         this.highlightChildDataType = sourceLocation.getChildType();
 
-        // Set the source type that will be used when the page source is shown.
         // Make sure the right page is shown when the source is displayed.
         final long oldPartNo = currentDataRange.getOffset() + 1;
-        long newPartNo = oldPartNo;
-        final long oldPageOffset = currentPageRange.getOffset();
-        final long pageLength = currentPageRange.getLength();
-        int lineNo = 0;
+        long newPartNo = highlightPartNo;
 
-        // If we have a source highlight then use it.
+        final long oldRecordOffset = currentPageRange.getOffset();
+
+        long recordLength = currentPageRange.getLength();
+
+        // If we have a source highlight then use it
+        int lineNo = 0;
         if (highlights != null && highlights.size() > 0) {
             final Highlight highlight = highlights.get(0);
-            newPartNo = highlightPartNo;
             lineNo = highlight.getFrom().getLineNo();
         }
 
-        final long page = lineNo / pageLength;
-        long newPageOffset = oldPageOffset % pageLength;
-        final long tmp = page * pageLength;
-        if (tmp + newPageOffset < lineNo) {
-            // We can show this page.
-            newPageOffset = tmp + newPageOffset;
+        long newRecordOffset;
+        if (sourceLocation.getHighlight() == null && sourceLocation.getRecordNo() != -1) {
+            recordLength = 1L;
+            newRecordOffset = sourceLocation.getRecordNo() - 1;
         } else {
-            // We need to show the page before.
-            newPageOffset = tmp - pageLength + newPageOffset;
+            final long page = lineNo / recordLength;
+            newRecordOffset = oldRecordOffset % recordLength;
+            final long tmp = page * recordLength;
+            if (tmp + newRecordOffset < lineNo) {
+                // We can show this page.
+                newRecordOffset = tmp + newRecordOffset;
+            } else {
+                // We need to show the page before.
+                newRecordOffset = tmp - recordLength + newRecordOffset;
+            }
         }
 
         // Update the stream source.
         if (!EqualsUtil.isEquals(currentMetaId, highlightId)
                 || !EqualsUtil.isEquals(currentChildDataType, highlightChildDataType) || oldPartNo != newPartNo
-                || oldPageOffset != newPageOffset) {
+                || oldRecordOffset != newRecordOffset) {
             currentDataRange = new OffsetRange<>(newPartNo - 1, 1L);
-            currentPageRange = new OffsetRange<>(newPageOffset, pageLength);
+            currentPageRange = new OffsetRange<>(newRecordOffset, recordLength);
 
             this.currentMetaId = highlightId;
             this.currentChildDataType = highlightChildDataType;
             dataTypeOffsetRangeMap.clear();
             markerListPresenter.resetExpandedSeverities();
-//            currentStreamRange = new OffsetRange<>(sourceLocation.getStreamNo() - 1, 1L);
-//            currentPageRange = new OffsetRange<>((long) sourceLocation.getHighlight().getFrom().getLineNo() - 1, 1L);
-//            streamTypeOffsetRangeMap.clear();
-//            markerListPresenter.resetExpandedSeverities();
 
-//            fetchData(false, highlightStreamId, highlightChildStreamType);
             update(false);
         } else {
             refreshHighlights(lastResult);
@@ -277,17 +283,19 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     public void update(final boolean fireEvents) {
-        final Severity[] expandedSeverities = markerListPresenter.getExpandedSeverities();
+        if (!ignoreActions) {
+            final Severity[] expandedSeverities = markerListPresenter.getExpandedSeverities();
 
-        final FetchDataAction action = new FetchDataAction();
-        action.setStreamId(currentMetaId);
-        action.setStreamRange(currentDataRange);
-        action.setPageRange(currentPageRange);
-        action.setChildStreamType(currentChildDataType);
-        action.setMarkerMode(errorMarkerMode);
-        action.setExpandedSeverities(expandedSeverities);
-        action.setFireEvents(fireEvents);
-        doFetch(action, fireEvents);
+            final FetchDataAction action = new FetchDataAction();
+            action.setStreamId(currentMetaId);
+            action.setStreamRange(currentDataRange);
+            action.setPageRange(currentPageRange);
+            action.setChildStreamType(currentChildDataType);
+            action.setMarkerMode(errorMarkerMode);
+            action.setExpandedSeverities(expandedSeverities);
+            action.setFireEvents(fireEvents);
+            doFetch(action, fireEvents);
+        }
     }
 
     private void doFetch(final FetchDataAction action, final boolean fireEvents) {
@@ -335,6 +343,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void setPageResponse(final AbstractFetchDataResult result, final boolean fireEvents) {
+        ignoreActions = true;
         this.lastResult = result;
 
         if (result == null || result.getStreamType() == null || steppingSource) {
@@ -376,6 +385,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             refresh(result);
             updateTabs(null, null);
         }
+        ignoreActions = false;
     }
 
     private void updateTabs(final String streamType, final List<String> availableChildStreamTypes) {
@@ -643,7 +653,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
 
         public void updateRowData(final int start, final int length) {
-            visibleRange = new Range(start, visibleRange.getLength());
+            visibleRange = new Range(start, length);
             RangeChangeEvent.fire(this, new Range(start, length));
         }
 

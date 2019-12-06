@@ -28,6 +28,7 @@ public class LinkTab extends AbstractTab {
     private final Element background;
     private final Element label;
     private final Element hotspot;
+
     public LinkTab(final String text) {
         if (resources == null) {
             resources = GWT.create(Resources.class);

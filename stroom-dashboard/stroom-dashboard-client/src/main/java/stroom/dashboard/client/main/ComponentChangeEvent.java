@@ -31,7 +31,7 @@ public class ComponentChangeEvent extends GwtEvent<ComponentChangeEvent.Handler>
     }
 
     public static <T> void fire(final HasHandlers source, final Component component) {
-        source.fireEvent(new ComponentChangeEvent(component.getComponentData().getId(), component));
+        source.fireEvent(new ComponentChangeEvent(component.getComponentConfig().getId(), component));
     }
 
     public static Type<Handler> getType() {

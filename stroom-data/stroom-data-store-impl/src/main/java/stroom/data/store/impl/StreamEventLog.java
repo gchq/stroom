@@ -222,7 +222,7 @@ public class StreamEventLog {
     }
 
     private void appendOperator(final List<BaseAdvancedQueryItem> items, final ExpressionOperator expressionOperator) {
-        if (expressionOperator != null && expressionOperator.getEnabled()) {
+        if (expressionOperator != null && expressionOperator.isEnabled()) {
             BaseAdvancedQueryOperator operator = null;
             switch (expressionOperator.getOp()) {
                 case AND:
@@ -240,7 +240,7 @@ public class StreamEventLog {
 
             if (expressionOperator.getChildren() != null) {
                 for (final ExpressionItem item : expressionOperator.getChildren()) {
-                    if (item.getEnabled()) {
+                    if (item.isEnabled()) {
                         if (item instanceof ExpressionOperator) {
                             appendOperator(operator.getAdvancedQueryItems(), (ExpressionOperator) item);
                         } else if (item instanceof ExpressionTerm) {

@@ -85,7 +85,7 @@ public class SearchExpressionQueryBuilder {
     }
 
     private Query getQuery(final ExpressionItem item, final Set<String> terms) {
-        if (item.enabled()) {
+        if (item.isEnabled()) {
             if (item instanceof ExpressionTerm) {
                 // Create queries for single terms.
                 final ExpressionTerm term = (ExpressionTerm) item;
@@ -517,9 +517,9 @@ public class SearchExpressionQueryBuilder {
     }
 
     private boolean hasChildren(final ExpressionOperator operator) {
-        if (operator != null && operator.enabled() && operator.getChildren() != null) {
+        if (operator != null && operator.isEnabled() && operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
-                if (child.enabled()) {
+                if (child.isEnabled()) {
                     if (child instanceof ExpressionOperator) {
                         final ExpressionOperator childOperator = (ExpressionOperator) child;
                         if (hasChildren(childOperator)) {

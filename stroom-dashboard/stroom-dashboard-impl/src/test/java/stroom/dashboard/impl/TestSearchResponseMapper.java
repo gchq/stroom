@@ -40,8 +40,9 @@ class TestSearchResponseMapper {
     }
 
     private SearchResponse getSearchResponse() {
+        final List<Field> fields = Collections.singletonList(new Field.Builder().id("test").name("test").expression("${test}").build());
         final List<Row> rows = Collections.singletonList(new Row("groupKey", Arrays.asList("test"), 5));
-        final TableResult tableResult = new TableResult("table-1234", rows, new OffsetRange(1, 2), 1, "tableResultError");
+        final TableResult tableResult = new TableResult("table-1234", fields, rows, new OffsetRange(1, 2), 1, "tableResultError");
         return new SearchResponse(Arrays.asList("highlight1", "highlight2"), Arrays.asList(tableResult, getVisResult1()), Arrays.asList("some error"), false);
     }
 

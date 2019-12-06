@@ -23,7 +23,6 @@ dependencies {
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jaxb_api
-    compile libs.jsinterop_annotations
     
     testCompile libs.assertj_core
     testCompile libs.junit_jupiter_api

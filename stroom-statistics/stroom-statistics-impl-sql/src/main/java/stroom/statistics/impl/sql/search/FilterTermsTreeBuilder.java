@@ -59,7 +59,7 @@ public class FilterTermsTreeBuilder {
     private static PrintableNode convertNode(final ExpressionItem oldNode, final Set<String> fieldBlackList) {
         PrintableNode newNode = null;
 
-        if (oldNode.getEnabled()) {
+        if (oldNode.isEnabled()) {
             if (oldNode instanceof ExpressionTerm) {
                 final ExpressionTerm termNode = (ExpressionTerm) oldNode;
                 if (termNode.getValue() != null && termNode.getValue().length() > 0) {

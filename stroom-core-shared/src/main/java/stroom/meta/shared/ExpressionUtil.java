@@ -60,9 +60,9 @@ public final class ExpressionUtil {
     }
 
     private static void addTerms(final ExpressionOperator expressionOperator, final Collection<AbstractField> fields, final List<ExpressionTerm> terms) {
-        if (expressionOperator != null && expressionOperator.enabled() && !Op.NOT.equals(expressionOperator.getOp())) {
+        if (expressionOperator != null && expressionOperator.isEnabled() && !Op.NOT.equals(expressionOperator.getOp())) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
-                if (item.enabled()) {
+                if (item.isEnabled()) {
                     if (item instanceof ExpressionTerm) {
                         final ExpressionTerm expressionTerm = (ExpressionTerm) item;
                         if ((fields == null || fields.stream()
@@ -84,7 +84,7 @@ public final class ExpressionUtil {
             return null;
         }
 
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(operator.enabled(), operator.getOp());
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(operator.isEnabled(), operator.getOp());
         operator.getChildren().forEach(item -> {
             if (item instanceof ExpressionOperator) {
                 builder.addOperator(copyOperator((ExpressionOperator) item));

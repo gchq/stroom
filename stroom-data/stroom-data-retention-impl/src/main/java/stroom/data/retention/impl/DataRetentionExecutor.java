@@ -122,7 +122,7 @@ public class DataRetentionExecutor {
             // Also make sure we create a list of rules that are enabled and have at least one enabled term.
             if (rules != null) {
                 rules.forEach(rule -> {
-                    if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().getEnabled()) {
+                    if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().isEnabled()) {
 //                        final Set<String> fields = new HashSet<>();
 //                        addToFieldSet(rule, fields);
 //                        if (fields.size() > 0) {
@@ -373,7 +373,7 @@ public class DataRetentionExecutor {
 
             // Also make sure we create a list of rules that are enabled and have at least one enabled term.
             rules.forEach(rule -> {
-                if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().getEnabled()) {
+                if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().isEnabled()) {
                     final Set<AbstractField> fields = new HashSet<>();
 //                    addToFieldSet(rule, fields);
                     if (fields.size() > 0) {

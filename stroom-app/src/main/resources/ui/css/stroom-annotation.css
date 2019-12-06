@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@
 }
 
 .annotationTextBox {
-    opacity: 0.6;
+    opacity: 0.8;
     border: 1px solid transparent;
     border-radius: 5px;
     cursor: pointer;
@@ -75,11 +75,11 @@
 
 .annotationTextBox:focus {
     border-color: #C5CDE2;
-    opacity: 0.9 !important;
+    opacity: 1 !important;
  }
 
 .annotationTextBox:hover {
-    opacity: 0.9;
+    opacity: 1;
  }
 
 
@@ -113,10 +113,10 @@
 
 .annotationClickLabel {
     flex-grow: 0;
-    font-weight: bold;
+    font-weight: 500;
     width: 90px;
     padding-right: 5px;
-    opacity: 0.6;
+    opacity: 0.9;
     transition: opacity 0.5s linear;
     -webkit-transition: opacity 0.5s linear;
     -moz-transition: opacity 0.5s linear;
@@ -124,7 +124,8 @@
 }
 
 .annotationClickLabel:hover {
-    opacity: 0.9;
+    opacity: 1;
+    text-decoration: underline;
 }
 
 .annotationLabel {
@@ -157,6 +158,10 @@
     padding-top: 10px;
 }
 
+.annotationDropDownIcon {
+    margin-top: -2px;
+}
+
 .annotationAssignYourself {
     display: inline-block;
     color: #0366d6;
@@ -167,7 +172,6 @@
 }
 
 .annotationDurationLabel {
-    cursor: pointer;
 }
 
 .annotationDurationLabel:hover {
@@ -242,6 +246,10 @@
     white-space: pre-wrap;
 }
 
+.annotationHistoryItem u {
+    cursor: pointer;
+}
+
 .annotationHistoryText {
     position: absolute;
     top: 0px;
@@ -255,4 +263,13 @@
     width: 200px;
     margin-top: 10px;
     align-self: flex-end;
+}
+
+.showLinkedEvents {
+    display: inline-block;
+    color: #0366d6;
+    cursor: pointer;
+    text-decoration: underline;
+    text-align: right;
+    padding-bottom: 10px;
 }

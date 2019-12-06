@@ -4,7 +4,6 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DateField;
 import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.TextField;
-import stroom.index.shared.IndexConstants;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,8 +29,8 @@ public interface AnnotationDataSource {
     String HISTORY = ANNOTATION_FIELD_PREFIX + "History";
 
     AbstractField ID_FIELD = new IdField(ID);
-    AbstractField STREAM_ID_FIELD = new IdField(IndexConstants.STREAM_ID);
-    AbstractField EVENT_ID_FIELD = new IdField(IndexConstants.EVENT_ID);
+//    AbstractField STREAM_ID_FIELD = new IdField(IndexConstants.STREAM_ID);
+//    AbstractField EVENT_ID_FIELD = new IdField(IndexConstants.EVENT_ID);
     AbstractField CREATED_ON_FIELD = new DateField(CREATED_ON);
     AbstractField CREATED_BY_FIELD = new TextField(CREATED_BY);
     AbstractField UPDATED_ON_FIELD = new DateField(UPDATED_ON);
@@ -45,8 +44,8 @@ public interface AnnotationDataSource {
 
     List<AbstractField> FIELDS = Arrays.asList(
             ID_FIELD,
-            STREAM_ID_FIELD,
-            EVENT_ID_FIELD,
+//            STREAM_ID_FIELD,
+//            EVENT_ID_FIELD,
             CREATED_ON_FIELD,
             CREATED_BY_FIELD,
             UPDATED_ON_FIELD,

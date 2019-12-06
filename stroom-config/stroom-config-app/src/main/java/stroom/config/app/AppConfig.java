@@ -38,6 +38,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class AppConfig implements IsConfig {
+    private boolean superDevMode;
     private ActivityConfig activityConfig;
     private AnnotationConfig annotationConfig;
     private BenchmarkClusterConfig benchmarkClusterConfig;
@@ -175,6 +176,16 @@ public class AppConfig implements IsConfig {
         this.storedQueryConfig = storedQueryConfig;
         this.uiConfig = uiConfig;
         this.volumeConfig = volumeConfig;
+    }
+
+    @JsonProperty("activity")
+    public boolean isSuperDevMode() {
+        return superDevMode;
+    }
+
+    @JsonProperty("activity")
+    public void setSuperDevMode(final boolean superDevMode) {
+        this.superDevMode = superDevMode;
     }
 
     @JsonProperty("activity")

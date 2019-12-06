@@ -47,6 +47,14 @@ public class DateTimeFormatSettings implements FormatSettings {
     @JsonProperty("timeZone")
     private TimeZone timeZone;
 
+    public DateTimeFormatSettings() {
+    }
+
+    public DateTimeFormatSettings(final String pattern, final TimeZone timeZone) {
+        this.pattern = pattern;
+        this.timeZone = timeZone;
+    }
+
     public String getPattern() {
         return pattern;
     }
@@ -97,5 +105,10 @@ public class DateTimeFormatSettings implements FormatSettings {
                 "pattern='" + pattern + '\'' +
                 ", timeZone=" + timeZone +
                 '}';
+    }
+
+    @Override
+    public FormatSettings copy() {
+        return new DateTimeFormatSettings(pattern, timeZone);
     }
 }

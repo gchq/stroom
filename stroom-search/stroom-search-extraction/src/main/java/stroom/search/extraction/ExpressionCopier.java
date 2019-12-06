@@ -48,13 +48,13 @@ public class ExpressionCopier {
     public static ExpressionOperator.Builder createOperatorBuilder(final ExpressionOperator expressionOperator) {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder();
         builder.op(expressionOperator.getOp());
-        builder.enabled(expressionOperator.enabled());
+        builder.enabled(expressionOperator.isEnabled());
         return builder;
     }
 
     public static ExpressionTerm.Builder createTermBuilder(final ExpressionTerm expressionTerm) {
         final ExpressionTerm.Builder builder = new ExpressionTerm.Builder();
-        builder.enabled(expressionTerm.getEnabled());
+        builder.enabled(expressionTerm.isEnabled());
         builder.field(expressionTerm.getField());
         builder.condition(expressionTerm.getCondition());
         builder.value(expressionTerm.getValue());

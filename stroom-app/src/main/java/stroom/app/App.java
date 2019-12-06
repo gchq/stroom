@@ -96,6 +96,12 @@ public class App extends Application<Config> {
     @Override
     public void run(final Config configuration, final Environment environment) {
         LOGGER.info("Using application configuration file {}", configFile.toAbsolutePath().normalize());
+
+        if (configuration.getAppConfig().isSuperDevMode()) {
+            configuration.getAppConfig().getSecurityConfig().getAuthenticationConfig().setAuthenticationRequired(false);
+            configuration.getAppConfig().getSecurityConfig().getContentSecurityConfig().setContentSecurityPolicy("");
+        }
+
         // Add useful logging setup.
         registerLogConfiguration(environment);
 

@@ -68,14 +68,14 @@ public class ExpressionMatcher {
 
     public boolean match(final Map<String, Object> attributeMap, final ExpressionItem item) {
         // If the initial item is null or not enabled then don't match.
-        if (item == null || !item.enabled()) {
+        if (item == null || !item.isEnabled()) {
             return false;
         }
         return matchItem(attributeMap, item);
     }
 
     private boolean matchItem(final Map<String, Object> attributeMap, final ExpressionItem item) {
-        if (!item.enabled()) {
+        if (!item.isEnabled()) {
             // If the child item is not enabled then return and keep trying to match with other parts of the expression.
             return true;
         }

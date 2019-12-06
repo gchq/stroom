@@ -11,6 +11,7 @@ import org.jooq.OrderField;
 import org.jooq.impl.Internal;
 
 import stroom.annotation.impl.db.jooq.tables.Annotation;
+import stroom.annotation.impl.db.jooq.tables.AnnotationDataLink;
 import stroom.annotation.impl.db.jooq.tables.AnnotationEntry;
 
 
@@ -32,7 +33,8 @@ public class Indexes {
     // -------------------------------------------------------------------------
 
     public static final Index ANNOTATION_PRIMARY = Indexes0.ANNOTATION_PRIMARY;
-    public static final Index ANNOTATION_STREAM_ID_EVENT_ID = Indexes0.ANNOTATION_STREAM_ID_EVENT_ID;
+    public static final Index ANNOTATION_DATA_LINK_FK_ANNOTATION_ID_STREAM_ID_EVENT_ID = Indexes0.ANNOTATION_DATA_LINK_FK_ANNOTATION_ID_STREAM_ID_EVENT_ID;
+    public static final Index ANNOTATION_DATA_LINK_PRIMARY = Indexes0.ANNOTATION_DATA_LINK_PRIMARY;
     public static final Index ANNOTATION_ENTRY_ANNOTATION_ENTRY_FK_ANNOTATION_ID = Indexes0.ANNOTATION_ENTRY_ANNOTATION_ENTRY_FK_ANNOTATION_ID;
     public static final Index ANNOTATION_ENTRY_PRIMARY = Indexes0.ANNOTATION_ENTRY_PRIMARY;
 
@@ -42,7 +44,8 @@ public class Indexes {
 
     private static class Indexes0 {
         public static Index ANNOTATION_PRIMARY = Internal.createIndex("PRIMARY", Annotation.ANNOTATION, new OrderField[] { Annotation.ANNOTATION.ID }, true);
-        public static Index ANNOTATION_STREAM_ID_EVENT_ID = Internal.createIndex("stream_id_event_id", Annotation.ANNOTATION, new OrderField[] { Annotation.ANNOTATION.STREAM_ID, Annotation.ANNOTATION.EVENT_ID }, true);
+        public static Index ANNOTATION_DATA_LINK_FK_ANNOTATION_ID_STREAM_ID_EVENT_ID = Internal.createIndex("fk_annotation_id_stream_id_event_id", AnnotationDataLink.ANNOTATION_DATA_LINK, new OrderField[] { AnnotationDataLink.ANNOTATION_DATA_LINK.FK_ANNOTATION_ID, AnnotationDataLink.ANNOTATION_DATA_LINK.STREAM_ID, AnnotationDataLink.ANNOTATION_DATA_LINK.EVENT_ID }, true);
+        public static Index ANNOTATION_DATA_LINK_PRIMARY = Internal.createIndex("PRIMARY", AnnotationDataLink.ANNOTATION_DATA_LINK, new OrderField[] { AnnotationDataLink.ANNOTATION_DATA_LINK.ID }, true);
         public static Index ANNOTATION_ENTRY_ANNOTATION_ENTRY_FK_ANNOTATION_ID = Internal.createIndex("annotation_entry_fk_annotation_id", AnnotationEntry.ANNOTATION_ENTRY, new OrderField[] { AnnotationEntry.ANNOTATION_ENTRY.FK_ANNOTATION_ID }, false);
         public static Index ANNOTATION_ENTRY_PRIMARY = Internal.createIndex("PRIMARY", AnnotationEntry.ANNOTATION_ENTRY, new OrderField[] { AnnotationEntry.ANNOTATION_ENTRY.ID }, true);
     }

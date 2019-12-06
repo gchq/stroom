@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.dashboard.shared;
 
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
+import java.io.Serializable;
 
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class Row {
-    String groupKey;
-    String[] values;
-    int depth;
-
-    public Row() {
-    }
+public interface ComponentResult extends Serializable {
 }

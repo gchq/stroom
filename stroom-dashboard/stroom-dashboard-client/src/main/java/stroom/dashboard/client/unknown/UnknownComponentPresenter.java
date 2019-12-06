@@ -41,8 +41,8 @@ public class UnknownComponentPresenter extends AbstractComponentPresenter<HTMLVi
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        super.read(componentData);
-        getView().setHTML("<div style=\"padding:5px\">Unknown component type: " + componentData.getType() + "</div>");
+    public void read(final ComponentConfig componentConfig) {
+        super.read(componentConfig);
+        getView().setHTML("<div style=\"padding:5px\">Unknown component type: " + componentConfig.getType() + "</div>");
     }
 }

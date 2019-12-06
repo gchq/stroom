@@ -78,7 +78,7 @@ public abstract class _V07_00_00_ExpressionItem implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         stroom.query.api.v2.ExpressionItem that = (stroom.query.api.v2.ExpressionItem) o;
-        return Objects.equals(getEnabled(), that.getEnabled());
+        return Objects.equals(getEnabled(), that.isEnabled());
     }
 
     @Override

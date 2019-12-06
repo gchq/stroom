@@ -21,22 +21,22 @@ class HyperlinkTest {
         testLinks.put("[Orange](__orange-ui__){DIALOG}", new Hyperlink.Builder()
                 .text("Orange")
                 .href("http://colors/orange")
-                .type(HyperlinkType.DIALOG)
+                .type(HyperlinkType.DIALOG.name().toLowerCase())
                 .build());
         testLinks.put("[Blue](__colors-ui__/get?id=blue){STROOM_TAB}", new Hyperlink.Builder()
                 .text("Blue")
                 .href("http://colors/get?id=blue")
-                .type(HyperlinkType.TAB)
+                .type(HyperlinkType.TAB.name().toLowerCase())
                 .build());
         testLinks.put("[Magenta](__shades-shop__?id=kinda%20purple){STROOM_TAB}", new Hyperlink.Builder()
                 .text("Magenta")
                 .href("http://shades.com/shop/item?id=kinda%20purple")
-                .type(HyperlinkType.TAB)
+                .type(HyperlinkType.TAB.name().toLowerCase())
                 .build());
         testLinks.put("[First](http//some-url/First){BROWSER_TAB}", new Hyperlink.Builder()
                 .text("First")
                 .href("http//some-url/First")
-                .type(HyperlinkType.BROWSER)
+                .type(HyperlinkType.BROWSER.name().toLowerCase())
                 .build());
 
 //        // When

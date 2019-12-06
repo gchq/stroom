@@ -37,11 +37,9 @@ public final class TypeConverter {
         }
 
         final String string = obj.toString();
-        if (string.length() == DATE_LENGTH) {
-            try {
-                return (double) DateUtil.parseNormalDateTimeString(string);
-            } catch (final RuntimeException e) {
-            }
+        try {
+            return (double) DateUtil.parseNormalDateTimeString(string);
+        } catch (final RuntimeException e) {
         }
 
         try {

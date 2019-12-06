@@ -67,3 +67,9 @@
 .splitterAcross {
 	cursor: col-resize;
 }
+
+.selected {
+    text-decoration: underline;
+    cursor: pointer;
+}
+

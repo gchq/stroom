@@ -57,7 +57,7 @@ public class ExpressionMapper implements Function<ExpressionItem, Condition> {
 
     @Override
     public Condition apply(final ExpressionItem item) {
-        if (item == null || !item.enabled()) {
+        if (item == null || !item.isEnabled()) {
             return null;
         }
 

@@ -42,7 +42,7 @@ public class ElasticPlugin extends Plugin {
                             final Hyperlink hyperlink = new Builder()
                                     .text("Elastic Search")
                                     .href(elasticUiUrl)
-                                    .type(HyperlinkType.BROWSER)
+                                    .type(HyperlinkType.BROWSER.name().toLowerCase())
                                     .icon(SvgPresets.ELASTIC_SEARCH)
                                     .build();
                             HyperlinkEvent.fire(this, hyperlink);

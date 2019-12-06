@@ -48,12 +48,16 @@ public class DashboardLayoutPresenter extends MyPresenterWidget<DashboardLayoutP
         getView().setTabVisibility(tabVisibility);
     }
 
+    public void setTabManager(final TabManager tabManager) {
+        getView().setTabManager(tabManager);
+    }
+
     public void setFlexLayoutChangeHandler(final FlexLayoutChangeHandler changeHandler) {
         getView().setFlexLayoutChangeHandler(changeHandler);
     }
 
-    public void closeTab(final TabConfig tabData) {
-        getView().closeTab(tabData);
+    public void closeTab(final TabConfig tabConfig) {
+        getView().closeTab(tabConfig);
     }
 
     public PositionAndSize getPositionAndSize(final Object object) {
@@ -69,7 +73,9 @@ public class DashboardLayoutPresenter extends MyPresenterWidget<DashboardLayoutP
 
         void setTabVisibility(TabVisibility tabVisibility);
 
-        void closeTab(TabConfig tabData);
+        void setTabManager(TabManager tabManager);
+
+        void closeTab(TabConfig tabConfig);
 
         void setFlexLayoutChangeHandler(FlexLayoutChangeHandler flexLayoutChangeHandler);
 

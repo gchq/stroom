@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#260** : You can now hide dashboard tabs.
+
+* Issue **#1332** : The text pane can now be configured to show source data.
+
+* Issue **#1311** : Improved source location tracking.
+
 
 ## [v7.0-beta.10] - 2019-12-04
 

@@ -301,7 +301,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 //
 //    private void addChildren(final ExpressionOperator.Builder builder, final ExpressionOperator parent) {
 //        for (final ExpressionItem item : parent.getChildren()) {
-//            if (item.enabled()) {
+//            if (item.isEnabled()) {
 //                if (item instanceof ExpressionOperator) {
 //                    final ExpressionOperator expressionOperator = (ExpressionOperator) item;
 //                    final ExpressionOperator.Builder child = new ExpressionOperator.Builder(Op.OR);

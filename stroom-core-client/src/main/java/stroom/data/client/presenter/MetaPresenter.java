@@ -380,11 +380,11 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     }
 
     private static void getTerms(final ExpressionOperator expressionOperator, final AbstractField field, final Set<String> terms) {
-        if (expressionOperator.getEnabled()) {
+        if (expressionOperator.isEnabled()) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
-                if (item.getEnabled()) {
+                if (item.isEnabled()) {
                     if (item instanceof ExpressionTerm) {
-                        if (field.equals(((ExpressionTerm) item).getField())) {
+                        if (field.getName().equals(((ExpressionTerm) item).getField())) {
                             terms.add(((ExpressionTerm) item).getValue());
                         }
                     } else if (item instanceof ExpressionOperator) {

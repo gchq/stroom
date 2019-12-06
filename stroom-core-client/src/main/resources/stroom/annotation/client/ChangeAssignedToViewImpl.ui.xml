@@ -1,0 +1,15 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:button="urn:import:stroom.widget.button.client">
+    <g:FlowPanel addStyleNames="annotationSetting">
+        <g:FlowPanel addStyleNames="annotationSettingHeading">
+            <g:Label ui:field="assignedToLabel" styleName="annotationClickLabel" text="Assigned To:"/>
+            <g:Label ui:field="assignedTo" styleName="annotationLabel"/>
+            <g:Label ui:field="assignYourself" styleName="annotationAssignYourself">Assign Yourself
+            </g:Label>
+            <button:SvgButton ui:field="assignedToIcon" addStyleNames="annotationDropDownIcon"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>
+

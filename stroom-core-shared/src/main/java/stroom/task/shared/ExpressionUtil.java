@@ -77,9 +77,9 @@ public final class ExpressionUtil {
     }
 
     private static void addTerms(final ExpressionOperator expressionOperator, final String field, final List<ExpressionTerm> terms) {
-        if (expressionOperator != null && expressionOperator.enabled() && !Op.NOT.equals(expressionOperator.getOp())) {
+        if (expressionOperator != null && expressionOperator.isEnabled() && !Op.NOT.equals(expressionOperator.getOp())) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
-                if (item.enabled()) {
+                if (item.isEnabled()) {
                     if (item instanceof ExpressionTerm) {
                         final ExpressionTerm expressionTerm = (ExpressionTerm) item;
                         if ((field == null || field.equals(expressionTerm.getField())) && expressionTerm.getValue() != null && expressionTerm.getValue().length() > 0) {

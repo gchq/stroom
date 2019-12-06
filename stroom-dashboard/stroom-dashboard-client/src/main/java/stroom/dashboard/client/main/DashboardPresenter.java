@@ -62,6 +62,7 @@ import stroom.util.client.RandomId;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -100,6 +101,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                               final DashboardLayoutPresenter layoutPresenter,
                               final Provider<ComponentAddPresenter> addPresenterProvider,
                               final Components components,
+                              final MenuListPresenter menuListPresenter,
+                              final Provider<RenameTabPresenter> renameTabPresenterProvider,
                               final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
                               final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
@@ -107,6 +110,9 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         this.addPresenterProvider = addPresenterProvider;
         this.components = components;
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
+
+        final TabManager tabManager = new TabManager(components, menuListPresenter, renameTabPresenterProvider, this);
+        layoutPresenter.setTabManager(tabManager);
 
         saveButton = addButtonLeft(SvgPresets.SAVE);
         saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
@@ -371,11 +377,11 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     @Override
-    public void requestTabClose(final TabConfig tabData) {
+    public void requestTabClose(final TabConfig tabConfig) {
         ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {
             if (ok) {
-                layoutPresenter.closeTab(tabData);
-                components.remove(tabData.getId(), true);
+                layoutPresenter.closeTab(tabConfig);
+                components.remove(tabConfig.getId(), true);
             }
         });
     }
@@ -508,10 +514,10 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                     componentPresenter.link();
                 }
 
-                final TabConfig tabData = new TabConfig();
-                tabData.setId(id);
+                final TabConfig tabConfig = new TabConfig();
+                tabConfig.setId(id);
 
-                final TabLayoutConfig tabLayoutData = new TabLayoutConfig(tabData);
+                final TabLayoutConfig tabLayoutConfig = new TabLayoutConfig(tabConfig);
 
                 // Choose where to put the new component in the layout data.
                 LayoutConfig layoutData = layoutPresenter.getLayoutData();
@@ -519,20 +525,20 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                     // There is no existing layout so add the new item as a
                     // single item layout.
 
-                    layoutData = tabLayoutData;
+                    layoutData = tabLayoutConfig;
 
                 } else if (layoutData instanceof TabLayoutConfig) {
                     // If the layout is a single item then replace it with a
                     // split layout.
                     layoutData = new SplitLayoutConfig(Direction.DOWN.getDimension(),
-                            layoutData, tabLayoutData);
+                            layoutData, tabLayoutConfig);
                 } else {
                     // If the layout is already a split then add a new component
                     // to the split.
                     final SplitLayoutConfig parent = (SplitLayoutConfig) layoutData;
 
                     // Add the new component.
-                    parent.add(tabLayoutData);
+                    parent.add(tabLayoutConfig);
 
                     // Fix the heights of the components to fit the new
                     // component in.

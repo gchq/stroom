@@ -60,7 +60,7 @@ public class TrackersPlugin extends NodeToolsPlugin {
                                 final Hyperlink hyperlink = new Builder()
                                         .text("Stream Tasks")
                                         .href(stroomUi)
-                                        .type(HyperlinkType.TAB)
+                                        .type(HyperlinkType.TAB.name().toLowerCase())
                                         .icon(icon)
                                         .build();
                                 HyperlinkEvent.fire(this, hyperlink);

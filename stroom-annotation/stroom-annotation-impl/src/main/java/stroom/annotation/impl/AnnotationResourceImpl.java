@@ -20,6 +20,10 @@ import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.EventLink;
+import stroom.annotation.shared.SetAssignedToRequest;
+import stroom.annotation.shared.SetStatusRequest;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
@@ -47,30 +51,30 @@ public class AnnotationResourceImpl implements AnnotationResource, RestResource,
     }
 
     @Override
-    public AnnotationDetail get(final Long annotationId, final Long streamId, final Long eventId) {
+    public AnnotationDetail get(final Long annotationId) {
         AnnotationDetail annotationDetail = null;
 
-        if (annotationId != null) {
-            LOGGER.info(() -> "Getting annotation " + annotationId);
-            try {
-                annotationDetail = annotationService.getDetail(annotationId);
-                if (annotationDetail != null) {
-                    documentEventLog.view(annotationDetail, null);
-                }
-            } catch (final RuntimeException e) {
-                documentEventLog.view("Annotation " + annotationId, e);
+//        if (annotationId != null) {
+        LOGGER.info(() -> "Getting annotation " + annotationId);
+        try {
+            annotationDetail = annotationService.getDetail(annotationId);
+            if (annotationDetail != null) {
+                documentEventLog.view(annotationDetail, null);
             }
-        } else {
-            LOGGER.info(() -> "Getting annotation " + streamId + ":" + eventId);
-            try {
-                annotationDetail = annotationService.getDetail(streamId, eventId);
-                if (annotationDetail != null) {
-                    documentEventLog.view(annotationDetail, null);
-                }
-            } catch (final RuntimeException e) {
-                documentEventLog.view("Annotation " + streamId + ":" + eventId, e);
-            }
+        } catch (final RuntimeException e) {
+            documentEventLog.view("Annotation " + annotationId, e);
         }
+//        } else {
+//            LOGGER.info(() -> "Getting annotation " + streamId + ":" + eventId);
+//            try {
+//                annotationDetail = annotationService.getDetail(streamId, eventId);
+//                if (annotationDetail != null) {
+//                    documentEventLog.view(annotationDetail, null);
+//                }
+//            } catch (final RuntimeException e) {
+//                documentEventLog.view("Annotation " + streamId + ":" + eventId, e);
+//            }
+//        }
 
         return annotationDetail;
     }
@@ -114,6 +118,31 @@ public class AnnotationResourceImpl implements AnnotationResource, RestResource,
                 .stream()
                 .filter(value -> value.toLowerCase().contains(filter.toLowerCase()))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventId> getLinkedEvents(final Long annotationId) {
+        return annotationService.getLinkedEvents(annotationId);
+    }
+
+    @Override
+    public List<EventId> link(final EventLink eventLink) {
+        return annotationService.link(eventLink);
+    }
+
+    @Override
+    public List<EventId> unlink(final EventLink eventLink) {
+        return annotationService.unlink(eventLink);
+    }
+
+    @Override
+    public Integer setStatus(final SetStatusRequest request) {
+        return annotationService.setStatus(request);
+    }
+
+    @Override
+    public Integer setAssignedTo(final SetAssignedToRequest request) {
+        return annotationService.setAssignedTo(request);
     }
 
     @Override

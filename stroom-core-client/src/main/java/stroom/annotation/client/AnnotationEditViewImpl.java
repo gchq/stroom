@@ -72,6 +72,8 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     TextArea comment;
     @UiField
     ResizeSimplePanel history;
+    @UiField
+    Label showLinkedEvents;
 
     private final Widget widget;
 
@@ -295,6 +297,13 @@ public class AnnotationEditViewImpl extends ViewWithUiHandlers<AnnotationEditUiH
     public void onCommentIcon(final ClickEvent e) {
         if (getUiHandlers() != null) {
             getUiHandlers().showCommentChooser(commentLabel.getElement());
+        }
+    }
+
+    @UiHandler("showLinkedEvents")
+    public void onShowLinkedEvents(final ClickEvent e) {
+        if (getUiHandlers() != null) {
+            getUiHandlers().showLinkedEvents();
         }
     }
 }

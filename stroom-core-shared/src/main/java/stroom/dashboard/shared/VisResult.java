@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.impl;
+package stroom.dashboard.shared;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class VisResult implements ComponentResult {
     private static final long serialVersionUID = 3826654996795750099L;
 
-    private Store store;
+    private String jsonData;
     private long dataPoints;
     private String error;
 
@@ -29,14 +29,14 @@ public class VisResult implements ComponentResult {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public VisResult(final Store store, final long dataPoints, final String error) {
-        this.store = store;
+    public VisResult(final String jsonData, final long dataPoints, final String error) {
+        this.jsonData = jsonData;
         this.dataPoints = dataPoints;
         this.error = error;
     }
 
-    public Store getStore() {
-        return store;
+    public String getJsonData() {
+        return jsonData;
     }
 
     public String getError() {
@@ -49,15 +49,15 @@ public class VisResult implements ComponentResult {
     }
 
     public static class Store {
-        Object key;
-        Object[] values;
-        Double[] min;
-        Double[] max;
-        Double[] sum;
-        String[] types;
-        String[] sortDirections;
-        String keyType;
-        String keySortDirection;
+        public Object key;
+        public Object[] values;
+        public Double[] min;
+        public Double[] max;
+        public Double[] sum;
+        public String[] types;
+        public String[] sortDirections;
+        public String keyType;
+        public String keySortDirection;
 
         @JsonProperty("key")
         public Object getKey() {

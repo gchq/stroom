@@ -22,7 +22,7 @@ import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 
 public final class DateUtil {
-    public static final int DATE_LENGTH = "2000-01-01T00:00:00.000Z".length();
+    private static final int DATE_LENGTH = "2000-01-01T00:00:00.000Z".length();
     private static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
     private static final DateTimeFormatter NORMAL_STROOM_TIME_FORMATTER = DateTimeFormatter.ofPattern(DEFAULT_PATTERN);
     private static final DateTimeFormatter FILE_TIME_STROOM_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH'#'mm'#'ss,SSSXX");
@@ -79,7 +79,7 @@ public final class DateUtil {
             throw new IllegalArgumentException("Unable to parse null date");
         }
 
-        if (date.length() != DATE_LENGTH) {
+        if (!looksLikeDate(date)) {
             throw new IllegalArgumentException("Unable to parse date: \"" + date + '"');
         }
 
@@ -99,7 +99,7 @@ public final class DateUtil {
             throw new IllegalArgumentException("Unable to parse null date");
         }
 
-        if (date.length() != DATE_LENGTH) {
+        if (!looksLikeDate(date)) {
             throw new IllegalArgumentException("Unable to parse date: \"" + date + '"');
         }
 
@@ -112,8 +112,8 @@ public final class DateUtil {
             throw new IllegalArgumentException("Unable to parse null date");
         }
 
-        if (date.length() != DATE_LENGTH) {
-            return Long.parseLong(date);
+        if (!looksLikeDate(date)) {
+            Long.parseLong(date);
         }
 
         try {
@@ -126,5 +126,9 @@ public final class DateUtil {
             // and get it as a long.
             return Long.parseLong(date);
         }
+    }
+
+    public static boolean looksLikeDate(final String date) {
+        return date != null && date.length() == DATE_LENGTH && date.charAt(date.length() - 1) == 'Z';
     }
 }

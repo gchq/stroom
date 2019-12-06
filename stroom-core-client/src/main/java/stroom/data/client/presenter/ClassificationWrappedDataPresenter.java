@@ -42,6 +42,11 @@ public class ClassificationWrappedDataPresenter extends ClassificationWrapperPre
         this.sourceLocation = sourceLocation;
     }
 
+    public void clear() {
+        dataPresenter.clear();
+        this.sourceLocation = null;
+    }
+
     @Override
     public void beginStepping(final long streamId, final String childStreamType) {
         BeginPipelineSteppingEvent.fire(this, streamId, null, childStreamType, new StepLocation(streamId, sourceLocation.getPartNo(), sourceLocation.getRecordNo()), null);

@@ -73,7 +73,7 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
 
                     for (int k = 0; k < 2; k++) {
                         final String type = "table";
-                        final String id = type + "_" + String.valueOf(System.currentTimeMillis());
+                        final String id = type + "_" + System.currentTimeMillis();
 
                         final ComponentConfig componentData = new ComponentConfig();
                         componentData.setType(type);
@@ -82,10 +82,10 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
                         componentData.setSettings(visSettings);
                         components.add(componentData);
 
-                        final TabConfig tabData = new TabConfig();
-                        tabData.setId(id);
+                        final TabConfig tabConfig = new TabConfig();
+                        tabConfig.setId(id);
 
-                        tablayout.add(tabData);
+                        tablayout.add(tabConfig);
                     }
                 }
             }

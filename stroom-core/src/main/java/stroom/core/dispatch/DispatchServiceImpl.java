@@ -116,4 +116,10 @@ public class DispatchServiceImpl extends XsrfProtectedServiceServlet implements 
     public Set<String> getPathSpecs() {
         return PATH_SPECS;
     }
+
+    @Override
+    public void log(final String message, final Throwable t) {
+        LOGGER.warn(getServletName() + ": " + message);
+        LOGGER.debug(getServletName() + ": " + message, t);
+    }
 }

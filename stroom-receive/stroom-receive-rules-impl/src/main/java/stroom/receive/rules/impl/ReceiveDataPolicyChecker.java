@@ -90,7 +90,7 @@ class ReceiveDataPolicyChecker {
                 final Set<String> fieldSet = new HashSet<>();
                 final List<ReceiveDataRule> activeRules = new ArrayList<>();
                 dataReceiptPolicy.getRules().forEach(rule -> {
-                    if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
+                    if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().isEnabled()) {
                         final Set<String> set = new HashSet<>();
                         addToFieldSet(rule, set);
                         if (set.size() > 0) {

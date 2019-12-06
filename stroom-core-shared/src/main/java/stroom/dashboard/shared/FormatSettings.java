@@ -36,4 +36,6 @@ import javax.xml.bind.annotation.XmlSeeAlso;
 })
 public interface FormatSettings extends SharedObject {
     boolean isDefault();
+
+    FormatSettings copy();
 }

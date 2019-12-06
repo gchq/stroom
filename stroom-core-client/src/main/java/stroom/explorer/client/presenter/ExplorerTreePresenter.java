@@ -87,8 +87,8 @@ public class ExplorerTreePresenter
 
         explorerTree = new ExplorerTree(dispatcher, true) {
             @Override
-            protected void doSelect(final ExplorerNode selection, final SelectionType selectionType) {
-                super.doSelect(selection, selectionType);
+            protected void doSelect(final ExplorerNode row, final SelectionType selectionType) {
+                super.doSelect(row, selectionType);
                 getView().setDeleteEnabled(explorerTree.getSelectionModel().getSelectedItems().size() > 0);
             }
         };

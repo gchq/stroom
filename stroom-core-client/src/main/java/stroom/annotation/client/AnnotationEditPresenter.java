@@ -39,9 +39,13 @@ import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.AnnotationEntry;
 import stroom.annotation.shared.AnnotationResource;
 import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.EventId;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.HyperlinkEvent;
+import stroom.hyperlink.client.HyperlinkType;
 import stroom.security.shared.UserResource;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -86,14 +90,17 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     private final ChooserPresenter statusPresenter;
     private final ChooserPresenter assignedToPresenter;
     private final ChooserPresenter commentPresenter;
+    private final LinkedEventPresenter linkedEventPresenter;
     private final ClientSecurityContext clientSecurityContext;
 
     private AnnotationDetail annotationDetail;
-    private Annotation sourceAnnotation;
+    private Long currentId;
+    private List<EventId> linkedEvents;
     private String currentTitle;
     private String currentSubject;
     private String currentStatus;
     private String currentAssignedTo;
+    private String initialComment;
 
     @Inject
     public AnnotationEditPresenter(final EventBus eventBus,
@@ -102,12 +109,14 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                                    final ChooserPresenter statusPresenter,
                                    final ChooserPresenter assignedToPresenter,
                                    final ChooserPresenter commentPresenter,
+                                   final LinkedEventPresenter linkedEventPresenter,
                                    final ClientSecurityContext clientSecurityContext) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.statusPresenter = statusPresenter;
         this.assignedToPresenter = assignedToPresenter;
         this.commentPresenter = commentPresenter;
+        this.linkedEventPresenter = linkedEventPresenter;
         this.clientSecurityContext = clientSecurityContext;
         getView().setUiHandlers(this);
     }
@@ -193,28 +202,24 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         rest.onSuccess(this::read).call(annotationResource).createEntry(request);
     }
 
-    public void show(final Annotation annotation) {
+    public void show(final Annotation annotation, final List<EventId> linkedEvents) {
         boolean ok = true;
         if (annotation == null) {
             ok = false;
             AlertEvent.fireError(this, "No sample annotation has been provided to open the editor", null);
-        } else if (annotation.getId() == null) {
-            if (annotation.getStreamId() == null) {
-                ok = false;
-                AlertEvent.fireError(this, "No stream id has been provided for the annotation", null);
-            } else if (annotation.getEventId() == null) {
-                ok = false;
-                AlertEvent.fireError(this, "No event id has been provided for the annotation", null);
-            }
+        } else if (annotation.getId() == null && (linkedEvents == null || linkedEvents.size() == 0)) {
+            ok = false;
+            AlertEvent.fireError(this, "No stream id has been provided for the annotation", null);
         }
 
         if (ok) {
-            this.sourceAnnotation = annotation;
-            readAnnotation(sourceAnnotation);
+            this.linkedEvents = linkedEvents;
+            this.initialComment = annotation.getComment();
+            readAnnotation(annotation);
 
             final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
             final Rest<AnnotationDetail> rest = restFactory.create();
-            rest.onSuccess(this::edit).call(annotationResource).get(annotation.getId(), annotation.getStreamId(), annotation.getEventId());
+            rest.onSuccess(this::edit).call(annotationResource).get(annotation.getId());
         }
     }
 
@@ -223,8 +228,8 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
         // Set the initial comment if one has been provided and if this is a new annotation.
         if (annotationDetail == null || annotationDetail.getAnnotation() == null || annotationDetail.getAnnotation().getId() == null) {
-            if (sourceAnnotation.getComment() != null) {
-                getView().setComment(sourceAnnotation.getComment());
+            if (initialComment != null) {
+                getView().setComment(initialComment);
             }
         }
 
@@ -255,7 +260,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         if (annotationDetail == null) {
             return "Create Annotation";
         }
-        return "Edit Annotation";
+        return "Edit Annotation #" + annotationDetail.getAnnotation().getId();
     }
 
     private void hide() {
@@ -263,8 +268,6 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     }
 
     private void read(final AnnotationDetail annotationDetail) {
-        final Date now = new Date();
-
         if (annotationDetail != null) {
             if (this.annotationDetail == null) {
                 // If this is an existing annotation then change the dialog caption.
@@ -276,8 +279,36 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
             readAnnotation(annotationDetail.getAnnotation());
 
+            updateHistory(annotationDetail);
+
+        } else {
+            getView().setButtonText("Create");
+        }
+
+        if (currentStatus == null) {
+            final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
+            final Rest<List<String>> rest = restFactory.create();
+            rest.onSuccess(values -> {
+                if (currentStatus == null && values != null && values.size() > 0) {
+                    changeStatus(values.get(0), false);
+                }
+            }).call(annotationResource).getStatus(null);
+        }
+
+        if (currentTitle == null || currentTitle.trim().length() == 0) {
+            changeTitle(null, false);
+        }
+
+        if (currentSubject == null || currentSubject.trim().length() == 0) {
+            changeSubject(null, false);
+        }
+    }
+
+    private void updateHistory(final AnnotationDetail annotationDetail) {
+        if (annotationDetail != null) {
             final List<AnnotationEntry> entries = annotationDetail.getEntries();
             if (entries != null) {
+                final Date now = new Date();
                 final Map<String, Optional<String>> currentValues = new HashMap<>();
 
                 final SafeHtmlBuilder html = new SafeHtmlBuilder();
@@ -297,6 +328,19 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
 
                 final HTML panel = new HTML(html.toSafeHtml());
                 panel.setStyleName("annotationHistoryOuter");
+                panel.addMouseDownHandler(e -> {
+                    // If the user has clicked on a link then consume the event.
+                    final Element target = e.getNativeEvent().getEventTarget().cast();
+                    if (target.hasTagName("u")) {
+                        final String link = target.getAttribute("link");
+                        if (link != null) {
+                            final Hyperlink hyperlink = Hyperlink.create(link);
+                            if (hyperlink != null) {
+                                HyperlinkEvent.fire(this, hyperlink);
+                            }
+                        }
+                    }
+                });
 
                 final TextArea textCopy = new TextArea();
                 textCopy.setStyleName("annotationHistoryText");
@@ -324,27 +368,6 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
                 // Scroll the history to the bottom after update.
                 Scheduler.get().scheduleDeferred(() -> panel.getElement().setScrollTop(panel.getElement().getScrollHeight()));
             }
-
-        } else {
-            getView().setButtonText("Create");
-        }
-
-        if (currentStatus == null) {
-            final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
-            final Rest<List<String>> rest = restFactory.create();
-            rest.onSuccess(values -> {
-                if (currentStatus == null && values != null && values.size() > 0) {
-                    changeStatus(values.get(0), false);
-                }
-            }).call(annotationResource).getStatus(null);
-        }
-
-        if (currentTitle == null || currentTitle.trim().length() == 0) {
-            changeTitle(null, false);
-        }
-
-        if (currentSubject == null || currentSubject.trim().length() == 0) {
-            changeSubject(null, false);
         }
     }
 
@@ -356,6 +379,16 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
             text.append(", ");
             text.append(entry.getCreateUser());
             text.append(", commented ");
+            quote(text, value);
+            text.append("\n");
+
+        } else if (Annotation.LINK.equals(entry.getEntryType()) || Annotation.UNLINK.equals(entry.getEntryType())) {
+            text.append(ClientDateUtil.toISOString(entry.getCreateTime()));
+            text.append(", ");
+            text.append(entry.getCreateUser());
+            text.append(", ");
+            text.append(entry.getEntryType().toLowerCase());
+            text.append("ed ");
             quote(text, value);
             text.append("\n");
 
@@ -430,6 +463,20 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
             html.appendHtmlConstant(HISTORY_COMMENT_BODY_END);
             html.appendHtmlConstant(HISTORY_COMMENT_BORDER_END);
             html.appendHtmlConstant(HISTORY_LINE_END);
+
+        } else if (Annotation.LINK.equals(entry.getEntryType()) || Annotation.UNLINK.equals(entry.getEntryType())) {
+            html.appendHtmlConstant(HISTORY_LINE_START);
+            html.appendHtmlConstant(HISTORY_ITEM_START);
+            bold(html, entry.getCreateUser());
+            html.appendEscaped(" ");
+            html.appendEscaped(entry.getEntryType().toLowerCase());
+            html.appendEscaped("ed ");
+            link(html, entry.getData());
+            html.appendEscaped(" ");
+            html.append(getDurationLabel(entry.getCreateTime(), now));
+            html.appendHtmlConstant(HISTORY_ITEM_END);
+            html.appendHtmlConstant(HISTORY_LINE_END);
+
         } else {
             // Remember initial values but don't show them unless they change.
             if (currentValue != null) {
@@ -518,6 +565,23 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         builder.appendHtmlConstant("</ins>");
     }
 
+    private void link(final SafeHtmlBuilder builder, final String value) {
+        final EventId eventId = EventId.parse(value);
+        if (eventId != null) {
+            // Create a data link.
+            final Hyperlink hyperlink = new Hyperlink.Builder()
+                    .text(value)
+                    .href("?id=" + eventId.getStreamId() + "&partNo=1&recordNo=" + eventId.getEventId())
+                    .type(HyperlinkType.DATA.name().toLowerCase())
+                    .build();
+            if (!hyperlink.getText().trim().isEmpty()) {
+                builder.appendHtmlConstant("<b><u link=\"" + hyperlink.toString() + "\">" + value + "</u></b>");
+            }
+        } else {
+            bold(builder, value);
+        }
+    }
+
     private String getValueString(final String string) {
         if (string != null && !string.trim().isEmpty()) {
             return string;
@@ -534,6 +598,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
     }
 
     private void readAnnotation(final Annotation annotation) {
+        currentId = annotation.getId();
         currentTitle = annotation.getTitle();
         currentSubject = annotation.getSubject();
         currentStatus = annotation.getStatus();
@@ -667,8 +732,7 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
         final String comment = getView().getComment();
         if (comment != null && comment.length() > 0) {
             final Annotation annotation = new Annotation();
-            annotation.setStreamId(sourceAnnotation.getStreamId());
-            annotation.setEventId(sourceAnnotation.getEventId());
+            annotation.setId(currentId);
             annotation.setTitle(currentTitle);
             annotation.setSubject(currentSubject);
             annotation.setStatus(currentStatus);
@@ -676,11 +740,26 @@ public class AnnotationEditPresenter extends MyPresenterWidget<AnnotationEditVie
             annotation.setComment(comment);
             annotation.setHistory(comment);
 
-            final CreateEntryRequest request = new CreateEntryRequest(annotation, Annotation.COMMENT, comment);
+            final CreateEntryRequest request = new CreateEntryRequest(annotation, Annotation.COMMENT, comment, linkedEvents);
             addEntry(request);
             getView().setComment("");
         } else {
             AlertEvent.fireWarn(this, "Please enter a comment", null);
+        }
+    }
+
+    @Override
+    public void showLinkedEvents() {
+        if (annotationDetail != null && annotationDetail.getAnnotation() != null && annotationDetail.getAnnotation().getId() != null) {
+            linkedEventPresenter.edit(annotationDetail.getAnnotation(), refresh -> {
+                if (refresh) {
+                    final AnnotationResource annotationResource = GWT.create(AnnotationResource.class);
+                    final Rest<AnnotationDetail> rest = restFactory.create();
+                    rest.onSuccess(this::updateHistory).call(annotationResource).get(annotationDetail.getAnnotation().getId());
+                }
+            });
+        } else {
+            AlertEvent.fireError(this, "The annotation must be created before events are linked", null);
         }
     }
 

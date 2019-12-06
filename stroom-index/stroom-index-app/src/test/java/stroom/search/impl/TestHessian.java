@@ -65,6 +65,7 @@ class TestHessian {
         final Field field = new Field(
                 "test",
                 "test",
+                "test",
                 new Sort(1, SortDirection.DESCENDING),
                 new Filter("in", "out"),
                 new Format(new DateTimeFormat("format",
