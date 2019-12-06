@@ -14,17 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.dashboard.client.text;
 
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
+import com.gwtplatform.mvp.client.UiHandlers;
 
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class Row {
-    String groupKey;
-    String[] values;
-    int depth;
-
-    public Row() {
-    }
+public interface BasicTextSettingsUiHandlers extends UiHandlers {
+    void onTableChange();
 }

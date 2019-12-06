@@ -6,6 +6,8 @@ public class Annotation {
     public static final String COMMENT = "Comment";
     public static final String STATUS = "Status";
     public static final String ASSIGNED_TO = "Assigned";
+    public static final String LINK = "Link";
+    public static final String UNLINK = "Unlink";
 
     private Long id;
     private Integer version;
@@ -13,8 +15,6 @@ public class Annotation {
     private String createUser;
     private Long updateTime;
     private String updateUser;
-    private Long streamId;
-    private Long eventId;
     private String title;
     private String subject;
     private String status;
@@ -73,22 +73,6 @@ public class Annotation {
         this.updateUser = updateUser;
     }
 
-    public Long getStreamId() {
-        return streamId;
-    }
-
-    public void setStreamId(final Long streamId) {
-        this.streamId = streamId;
-    }
-
-    public Long getEventId() {
-        return eventId;
-    }
-
-    public void setEventId(final Long eventId) {
-        this.eventId = eventId;
-    }
-
     public String getTitle() {
         return title;
     }
@@ -139,13 +123,6 @@ public class Annotation {
 
     @Override
     public String toString() {
-        if (id != null) {
-            return String.valueOf(id);
-        }
-        if (streamId != null && eventId != null) {
-            return streamId + ":" + eventId;
-        }
-
-        return null;
+        return "id=" + id;
     }
 }

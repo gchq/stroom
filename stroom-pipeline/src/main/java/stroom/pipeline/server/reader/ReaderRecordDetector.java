@@ -68,7 +68,7 @@ public class ReaderRecordDetector extends FilterReader {
 
             try {
                 // Tell the controller that this is the end of a record.
-                if (controller.endRecord(null, currentStepNo)) {
+                if (controller.endRecord(currentStepNo)) {
                     end = true;
                     return -1;
                 }

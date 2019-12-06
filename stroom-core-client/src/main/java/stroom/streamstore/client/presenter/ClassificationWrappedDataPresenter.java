@@ -18,10 +18,10 @@ package stroom.streamstore.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.streamstore.shared.StreamType;
-import stroom.pipeline.shared.SourceLocation;
 
 public class ClassificationWrappedDataPresenter extends ClassificationWrapperPresenter implements BeginSteppingHandler {
     private final DataPresenter dataPresenter;
@@ -41,6 +41,11 @@ public class ClassificationWrappedDataPresenter extends ClassificationWrapperPre
     public void fetchData(final SourceLocation sourceLocation) {
         dataPresenter.fetchData(sourceLocation);
         this.sourceLocation = sourceLocation;
+    }
+
+    public void clear() {
+        dataPresenter.clear();
+        this.sourceLocation = null;
     }
 
     @Override

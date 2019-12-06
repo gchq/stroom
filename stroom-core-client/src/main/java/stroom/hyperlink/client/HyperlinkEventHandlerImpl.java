@@ -15,6 +15,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.annotation.client.ShowAnnotationEvent;
 import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.EventId;
 import stroom.core.client.ContentManager;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
@@ -33,6 +34,8 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Singleton
@@ -158,13 +161,19 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                 }
                 case DATA: {
                     final long id = getParam(href, "id", -1);
-                    final long partNo = getParam(href, "partNo", 0);
+                    final long partNo = getParam(href, "partNo", 1);
                     final long recordNo = getParam(href, "recordNo", 0);
-                    final int lineFrom = (int) getParam(href, "lineFrom", 1);
-                    final int colFrom = (int) getParam(href, "colFrom", 0);
-                    final int lineTo = (int) getParam(href, "lineTo", 1);
-                    final int colTo = (int) getParam(href, "colTo", 0);
-                    final SourceLocation sourceLocation = new SourceLocation(id, null, partNo, recordNo, new Highlight(new DefaultLocation(lineFrom, colFrom), new DefaultLocation(lineTo, colTo)));
+                    final int lineFrom = (int) getParam(href, "lineFrom", -1);
+                    final int colFrom = (int) getParam(href, "colFrom", -1);
+                    final int lineTo = (int) getParam(href, "lineTo", -1);
+                    final int colTo = (int) getParam(href, "colTo", -1);
+
+                    Highlight highlight = null;
+                    if (lineFrom != -1 && colFrom != -1 && lineTo != -1 && colTo != -1) {
+                        highlight = new Highlight(new DefaultLocation(lineFrom, colFrom), new DefaultLocation(lineTo, colTo));
+                    }
+
+                    final SourceLocation sourceLocation = new SourceLocation(id, null, partNo, recordNo, highlight);
                     ShowDataEvent.fire(this, sourceLocation);
                     break;
                 }
@@ -180,15 +189,18 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
 
                     final Annotation annotation = new Annotation();
                     annotation.setId(annotationId);
-                    annotation.setStreamId(streamId);
-                    annotation.setEventId(eventId);
                     annotation.setTitle(title);
                     annotation.setSubject(subject);
                     annotation.setStatus(status);
                     annotation.setAssignedTo(assignedTo);
                     annotation.setComment(comment);
 
-                    ShowAnnotationEvent.fire(this, annotation);
+                    final List<EventId> linkedEvents = new ArrayList<>();
+                    if (streamId != null && eventId != null) {
+                        linkedEvents.add(new EventId(streamId, eventId));
+                    }
+
+                    ShowAnnotationEvent.fire(this, annotation, linkedEvents);
                     break;
                 }
                 default:

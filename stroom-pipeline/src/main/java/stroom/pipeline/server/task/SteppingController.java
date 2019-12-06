@@ -18,7 +18,6 @@ package stroom.pipeline.server.task;
 
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
-import org.xml.sax.Locator;
 import stroom.pipeline.server.LocationFactoryProxy;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
@@ -26,13 +25,12 @@ import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
+import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.StreamHolder;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Highlight;
-import stroom.util.shared.Location;
 import stroom.util.spring.StroomScope;
 import stroom.util.task.TaskMonitor;
-import stroom.xml.converter.ds3.DS3Reader;
 
 import javax.annotation.Resource;
 import java.util.HashSet;
@@ -41,7 +39,12 @@ import java.util.Set;
 @Component
 @Scope(value = StroomScope.TASK)
 public class SteppingController {
+    private static final Highlight DEFAULT_HIGHLIGHT = new Highlight(
+            new DefaultLocation(1, 0),
+            new DefaultLocation(1, 0));
+
     private final Set<ElementMonitor> monitors = new HashSet<>();
+
     @Resource
     private StreamHolder streamHolder;
     @Resource
@@ -50,14 +53,14 @@ public class SteppingController {
     private SteppingResponseCache steppingResponseCache;
     @Resource
     private ErrorReceiverProxy errorReceiverProxy;
+    @Resource
+    private LocationHolder locationHolder;
+
     private String streamInfo;
     private SteppingTask request;
     private StepLocation stepLocation;
     private StepLocation foundLocation;
     private RecordDetector recordDetector;
-
-    private Location currentStartLocation;
-    private Location currentEndLocation;
 
     private TaskMonitor taskMonitor;
 
@@ -86,24 +89,7 @@ public class SteppingController {
     }
 
     public void resetSourceLocation() {
-        currentStartLocation = locationFactory.create();
-        currentEndLocation = locationFactory.create();
-    }
-
-    public void moveSourceLocation(final Locator locator) {
-        if (locator != null) {
-            if (locator instanceof DS3Reader) {
-                final DS3Reader reader = (DS3Reader) locator;
-                currentStartLocation = locationFactory.create(currentEndLocation.getLineNo(),
-                        currentEndLocation.getColNo());
-                currentEndLocation = locationFactory.create(reader.getCurrentLineNumber(),
-                        reader.getCurrentColumnNumber());
-            } else {
-                currentStartLocation = locationFactory.create(currentEndLocation.getLineNo(),
-                        currentEndLocation.getColNo());
-                currentEndLocation = locationFactory.create(locator.getLineNumber(), locator.getColumnNumber());
-            }
-        }
+        locationHolder.reset();
     }
 
     public TaskMonitor getTaskMonitor() {
@@ -132,7 +118,7 @@ public class SteppingController {
      *
      * @return True if the step detector should terminate stepping.
      */
-    public boolean endRecord(final Locator locator, final long currentRecordNo) {
+    public boolean endRecord(final long currentRecordNo) {
         // Get the current stream number.
         final long currentStreamNo = streamHolder.getStreamNo();
 
@@ -144,11 +130,11 @@ public class SteppingController {
             getTaskMonitor().info("Processing stream - {} : [{}:{}]", streamInfo, currentStreamNo, currentRecordNo);
         }
 
-        // Move source location.
-        moveSourceLocation(locator);
-
         // Figure out what the highlighted portion of the input stream should be.
-        final Highlight highlight = createHighlight();
+        Highlight highlight = DEFAULT_HIGHLIGHT;
+        if (locationHolder != null && locationHolder.getCurrentLocation() != null) {
+            highlight = locationHolder.getCurrentLocation().getHighlight();
+        }
 
         // First we need to check that the record is ok WRT the location of the
         // record, i.e. is it after the last record found if stepping forward
@@ -201,19 +187,6 @@ public class SteppingController {
         return StepType.BACKWARD.equals(request.getStepType()) && stepLocation != null
                 && currentStreamNo == stepLocation.getPartNo() && currentRecordNo >= stepLocation.getRecordNo() - 1;
 
-    }
-
-    Highlight createHighlight() {
-        // Record the current source location.
-        final Location start = locationFactory.create(currentStartLocation.getLineNo(), currentStartLocation.getColNo());
-        final Location end = locationFactory.create(currentEndLocation.getLineNo(), currentEndLocation.getColNo());
-
-        final int startLineNo = start.getLineNo() > 1 ? start.getLineNo() : 1;
-        final int startColNo = start.getColNo() > 1 ? start.getColNo() : 1;
-        final int endLineNo = end.getLineNo() > 1 ? end.getLineNo() : 1;
-        final int endColNo = end.getColNo() > 1 ? end.getColNo() : 1;
-
-        return new Highlight(new DefaultLocation(startLineNo, startColNo), new DefaultLocation(endLineNo, endColNo));
     }
 
     StepData createStepData(final Highlight highlight) {

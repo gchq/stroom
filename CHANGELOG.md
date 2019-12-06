@@ -6,15 +6,19 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-
-## [v6.0.27] - 2019-12-05
+## [v6.1-beta.14] - 2019-12-05
 
 * Updated API key to include audience and added client id and secret.
 
 * Change `stroom.conf.sh` to also look for ip in `/sbin`
 
+## [v6.1-beta.13] - 2019-12-05
 
-## [v6.0.26] - 2019-11-25
+* Issue **#260** : You can now hide dashboard tabs.
+
+* Issue **#1332** : The text pane can now be configured to show source data.
+
+* Issue **#1311** : Improved source location tracking.
 
 * Issue **#1338** : Added new config options to control the maximum size of some caches: `stroom.pipeline.parser.maxPoolSize`, `stroom.pipeline.schema.maxPoolSize`, `stroom.pipeline.schema.maxPoolSize`, `stroom.pipeline.xslt.maxPoolSize`, `stroom.entity.maxCacheSize`, `stroom.referenceData.mapStore.maxCacheSize`.
 
@@ -2026,7 +2030,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.12...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.14...6.1
+[v6.1-beta.14]: https://github.com/gchq/stroom/compare/v6.1-beta.13...v6.1-beta.14
+[v6.1-beta.13]: https://github.com/gchq/stroom/compare/v6.1-beta.12...v6.1-beta.13
 [v6.1-beta.12]: https://github.com/gchq/stroom/compare/v6.1-beta.11...v6.1-beta.12
 [v6.1-beta.11]: https://github.com/gchq/stroom/compare/v6.1-beta.10...v6.1-beta.11
 [v6.1-beta.10]: https://github.com/gchq/stroom/compare/v6.1-beta.9...v6.1-beta.10

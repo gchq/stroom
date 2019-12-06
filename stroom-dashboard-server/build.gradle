@@ -28,6 +28,7 @@ dependencies {
     compile libs.eventLogging
     compile libs.guava
     compile libs.jackson_annotations
+    compile libs.jackson_core
     compile libs.jackson_databind
     compile libs.javax_inject
     compile libs.javax_servlet_api

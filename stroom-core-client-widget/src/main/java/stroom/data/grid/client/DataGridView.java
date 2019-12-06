@@ -26,6 +26,7 @@ import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.HasRows;
 import com.gwtplatform.mvp.client.View;
 import stroom.data.grid.client.DataGridViewImpl.HeadingListener;
+import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -60,6 +61,8 @@ public interface DataGridView<R> extends View, HasRows {
     void redrawHeaders();
 
     void setHeadingListener(HeadingListener headingListener);
+
+    HandlerRegistration addHyperlinkHandler(HyperlinkEvent.Handler handler);
 
     void setRefreshing(boolean refreshing);
 

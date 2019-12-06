@@ -192,6 +192,7 @@ public class SearchRequestMapper {
         final List<stroom.query.api.v2.Field> list = new ArrayList<>(fields.size());
         for (final Field field : fields) {
             final stroom.query.api.v2.Field.Builder builder = new stroom.query.api.v2.Field.Builder()
+                    .id(field.getId())
                     .name(field.getName())
                     .expression(field.getExpression())
                     .sort(mapSort(field.getSort()))

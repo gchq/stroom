@@ -19,19 +19,41 @@ package stroom.widget.util.client;
 import com.google.gwt.user.cellview.client.HasSelection;
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<T> implements MultiSelectionModel<T>, HasSelection<T> {
-    private final Deque<T> selectedItems = new ArrayDeque<>();
+    private Selection<T> selection = new Selection<>();
     private final Set<T> changes = new HashSet<>();
 
     public MultiSelectionModelImpl() {
         super(null);
+    }
+
+    @Override
+    public Selection<T> getSelection() {
+        return new Selection<T>(selection);
+    }
+
+    @Override
+    public void setSelection(final Selection<T> selection) {
+        selection.getSelectedItems().forEach(selected -> {
+            if (!this.selection.isSelected(selected)) {
+                changes.add(selected);
+            }
+        });
+        this.selection.getSelectedItems().forEach(selected -> {
+            if (!selection.isSelected(selected)) {
+                changes.add(selected);
+            }
+        });
+        this.selection = selection;
+
+        if (changes.size() > 0) {
+            fireSelectionChangeEvent();
+            fireChange();
+        }
     }
 
     /**
@@ -39,7 +61,7 @@ public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<
      */
     @Override
     public List<T> getSelectedItems() {
-        return new ArrayList<>(selectedItems);
+        return selection.getSelectedItems();
     }
 
     /**
@@ -47,7 +69,7 @@ public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<
      */
     @Override
     public boolean isSelected(final T item) {
-        return selectedItems.contains(item);
+        return selection.isSelected(item);
     }
 
     /**
@@ -57,10 +79,7 @@ public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<
     public void setSelected(final T item, final boolean selected) {
         if (item != null) {
             final boolean currentlySelected = isSelected(item);
-            selectedItems.remove(item);
-            if (selected) {
-                selectedItems.addFirst(item);
-            }
+            selection.setSelected(item, selected);
             if (currentlySelected != selected) {
                 changes.add(item);
                 fireSelectionChangeEvent();
@@ -74,7 +93,7 @@ public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<
      */
     @Override
     public T getSelected() {
-        return selectedItems.peekFirst();
+        return selection.getSelected();
     }
 
     /**
@@ -87,17 +106,18 @@ public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<
 
         } else {
             final boolean currentlySelected = isSelected(item);
-            if (!currentlySelected || selectedItems.size() != 1) {
+            if (!currentlySelected || selection.size() != 1) {
+                List<T> items = selection.getSelectedItems();
+
                 // Mark changes.
                 if (currentlySelected) {
-                    selectedItems.stream().filter(t -> !t.equals(item)).forEach(changes::add);
+                    items.stream().filter(t -> !t.equals(item)).forEach(changes::add);
                 } else {
-                    changes.addAll(selectedItems);
+                    changes.addAll(items);
                     changes.add(item);
                 }
 
-                selectedItems.clear();
-                selectedItems.add(item);
+                selection.setSelected(item);
 
                 fireSelectionChangeEvent();
                 fireChange();
@@ -110,9 +130,9 @@ public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<
      */
     @Override
     public void clear() {
-        if (selectedItems.size() > 0) {
-            changes.addAll(selectedItems);
-            selectedItems.clear();
+        if (selection.size() > 0) {
+            changes.addAll(selection.getSelectedItems());
+            selection.clear();
             fireSelectionChangeEvent();
             fireChange();
         }

@@ -24,21 +24,21 @@ public class Hyperlink {
     }
 
     public static Hyperlink create(final String value, final int pos) {
-            Hyperlink hyperlink = null;
+        Hyperlink hyperlink = null;
 
-            int index = pos;
-            final String text = nextToken(value, index, '[', ']');
-            if (text != null) {
-                index = index + text.length() + 2;
-                final String href = nextToken(value, index, '(', ')');
-                if (href != null) {
-                    index = index + href.length() + 2;
-                    final String type = nextToken(value, index, '{', '}');
-                    hyperlink = new Builder().text(text).href(href).type(type).build();
-                }
+        int index = pos;
+        final String text = nextToken(value, index, '[', ']');
+        if (text != null) {
+            index = index + text.length() + 2;
+            final String href = nextToken(value, index, '(', ')');
+            if (href != null) {
+                index = index + href.length() + 2;
+                final String type = nextToken(value, index, '{', '}');
+                hyperlink = new Builder().text(text).href(href).type(type).build();
             }
+        }
 
-            return hyperlink;
+        return hyperlink;
     }
 
     private static String nextToken(final String value, final int pos, final char startChar, final char endChar) {
@@ -140,11 +140,6 @@ public class Hyperlink {
 
         public Builder type(final String type) {
             this.instance.type = type;
-            return this;
-        }
-
-        public Builder type(final HyperlinkType type) {
-            this.instance.type = type.name().toLowerCase();
             return this;
         }
 

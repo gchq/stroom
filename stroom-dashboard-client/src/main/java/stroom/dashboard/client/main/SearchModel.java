@@ -18,6 +18,7 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TimeZones;
+import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
@@ -301,8 +302,8 @@ public class SearchModel {
             final String componentId = entry.getKey();
             final ResultComponent resultComponent = entry.getValue();
             if (result.getResults() != null && result.getResults().containsKey(componentId)) {
-                final String json = result.getResults().get(componentId);
-                resultComponent.setData(json);
+                final ComponentResult componentResult = result.getResults().get(componentId);
+                resultComponent.setData(componentResult);
             }
 
             if (result.isComplete()) {

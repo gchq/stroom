@@ -96,4 +96,9 @@ public class NumberFormatSettings implements FormatSettings {
                 ", useSeparator=" + useSeparator +
                 '}';
     }
+
+    @Override
+    public FormatSettings copy() {
+        return new NumberFormatSettings(decimalPlaces, useSeparator);
+    }
 }

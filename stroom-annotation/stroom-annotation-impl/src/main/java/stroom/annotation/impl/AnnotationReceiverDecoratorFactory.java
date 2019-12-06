@@ -24,6 +24,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -45,8 +47,6 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     static {
         VALUE_MAPPING.put(AnnotationDataSource.ID, annotation -> annotation.getId() == null ? ValNull.INSTANCE : ValLong.create(annotation.getId()));
-        VALUE_MAPPING.put(IndexConstants.STREAM_ID, annotation -> annotation.getStreamId() == null ? ValNull.INSTANCE : ValLong.create(annotation.getStreamId()));
-        VALUE_MAPPING.put(IndexConstants.EVENT_ID, annotation -> annotation.getEventId() == null ? ValNull.INSTANCE : ValLong.create(annotation.getEventId()));
         VALUE_MAPPING.put(AnnotationDataSource.CREATED_ON, annotation -> annotation.getCreateTime() == null ? ValNull.INSTANCE : ValLong.create(annotation.getCreateTime()));
         VALUE_MAPPING.put(AnnotationDataSource.CREATED_BY, annotation -> annotation.getCreateUser() == null ? ValNull.INSTANCE : ValString.create(annotation.getCreateUser()));
         VALUE_MAPPING.put(AnnotationDataSource.UPDATED_ON, annotation -> annotation.getUpdateTime() == null ? ValNull.INSTANCE : ValLong.create(annotation.getUpdateTime()));
@@ -63,8 +63,6 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
     static {
         OBJECT_MAPPING.put(AnnotationDataSource.ID, Annotation::getId);
-        OBJECT_MAPPING.put(IndexConstants.STREAM_ID, Annotation::getStreamId);
-        OBJECT_MAPPING.put(IndexConstants.EVENT_ID, Annotation::getEventId);
         OBJECT_MAPPING.put(AnnotationDataSource.CREATED_ON, Annotation::getCreateTime);
         OBJECT_MAPPING.put(AnnotationDataSource.CREATED_BY, Annotation::getCreateUser);
         OBJECT_MAPPING.put(AnnotationDataSource.UPDATED_ON, Annotation::getUpdateTime);
@@ -111,37 +109,48 @@ class AnnotationReceiverDecoratorFactory implements AnnotationsDecoratorFactory 
 
         final Annotation defaultAnnotation = createDefaultAnnotation();
 
-        final Consumer<Values> valuesConsumer = values -> {
-            Annotation annotation = null;
+        final Consumer<Values> valuesConsumer = v -> {
+            final List<Annotation> annotations = new ArrayList<>();
             if (annotationIdIndex != null) {
-                final Long annotationId = getLong(values.getValues(), annotationIdIndex);
+                final Long annotationId = getLong(v.getValues(), annotationIdIndex);
                 if (annotationId != null) {
-                    annotation = annotationDao.get(annotationId);
+                    annotations.add(annotationDao.get(annotationId));
                 }
             }
 
-            if (annotation == null) {
-                final Long streamId = getLong(values.getValues(), streamIdIndex);
-                final Long eventId = getLong(values.getValues(), eventIdIndex);
+            if (annotations.size() == 0) {
+                final Long streamId = getLong(v.getValues(), streamIdIndex);
+                final Long eventId = getLong(v.getValues(), eventIdIndex);
                 if (streamId != null && eventId != null) {
-                    annotation = annotationDao.get(streamId, eventId);
+                    final List<Annotation> list = annotationDao.getAnnotationsForEvents(streamId, eventId);
+                    annotations.addAll(list);
                 }
             }
 
-            if (annotation == null) {
-                annotation = defaultAnnotation;
+            if (annotations.size() == 0) {
+                annotations.add(defaultAnnotation);
             }
 
             // Filter based on annotation.
-            try {
-                if (filter == null || filter.apply(annotation)) {
-                    for (final String field : usedFields) {
-                        setValue(values.getValues(), fieldIndexMap, field, annotation);
+            Values values = v;
+            for (final Annotation annotation : annotations) {
+                try {
+                    if (filter == null || filter.apply(annotation)) {
+                        // If we have more that one annotation then copy the original values into a new values object for each new row.
+                        if (annotations.size() > 1) {
+                            final Val[] copy = Arrays.copyOf(v.getValues(), v.getValues().length);
+                            values = new Values(copy);
+                        }
+
+                        for (final String field : usedFields) {
+                            setValue(values.getValues(), fieldIndexMap, field, annotation);
+                        }
+
+                        receiver.getValuesConsumer().accept(values);
                     }
-                    receiver.getValuesConsumer().accept(values);
+                } catch (final RuntimeException e) {
+                    LOGGER.debug(e::getMessage, e);
                 }
-            } catch (final RuntimeException e) {
-                LOGGER.debug(e::getMessage, e);
             }
         };
 

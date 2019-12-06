@@ -20,4 +20,6 @@ dependencies {
     compile project(':stroom-util-shared')
 
     compile libs.hibernate_jpa_api
+    compile libs.jackson_annotations
+    compile libs.swagger_annotations
 }

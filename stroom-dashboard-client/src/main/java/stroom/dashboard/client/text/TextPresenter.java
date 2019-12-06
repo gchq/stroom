@@ -32,6 +32,9 @@ import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
+import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.IndexConstants;
+import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.editor.client.presenter.EditorPresenter;
@@ -42,6 +45,7 @@ import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.ClientSecurityContext;
@@ -49,6 +53,7 @@ import stroom.streamstore.shared.Stream;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.EqualsUtil;
 import stroom.util.shared.Highlight;
+import stroom.util.shared.OffsetRange;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -65,7 +70,8 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     private List<FetchDataAction> fetchDataQueue;
     private Timer delayedFetchDataTimer;
     private Long currentStreamId;
-    private Long currentEventId;
+    private Long currentPartNo;
+    private Long currentRecordNo;
     private Set<String> currentHighlightStrings;
     private boolean playButtonVisible;
 
@@ -102,6 +108,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         Scheduler.get().scheduleDeferred(() -> {
             // Determine if we should show tha play button.
             playButtonVisible = !isHtml
+                    && textSettings.isShowStepping()
                     && securityContext.hasAppPermission(PipelineEntity.STEPPING_PERMISSION);
 
             // Show the play button if we have fetched input data.
@@ -236,36 +243,78 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     private void update(final TablePresenter tablePresenter) {
-        currentStreamId = null;
-        currentEventId = null;
-        currentHighlightStrings = null;
-
         boolean updating = false;
 
-        if (tablePresenter != null) {
-            final String streamId = tablePresenter.getSelectedStreamId();
-            final String eventId = tablePresenter.getSelectedEventId();
+        final String permissionCheck = checkPermissions();
+        if (permissionCheck != null) {
+            isHtml = false;
+            showData(permissionCheck, null, null, isHtml);
+            updating = true;
 
-            if (streamId != null && eventId != null) {
-                currentStreamId = getLong(streamId);
-                currentEventId = getLong(eventId);
-                currentHighlightStrings = tablePresenter.getHighlights();
+        } else {
+            currentStreamId = null;
+            currentPartNo = null;
+            currentRecordNo = null;
+            currentHighlightStrings = null;
 
-                if (currentStreamId != null && currentEventId != null) {
-                    final String permissionCheck = checkPermissions();
-                    if (permissionCheck != null) {
-                        isHtml = false;
-                        showData(permissionCheck, null, null, isHtml);
-                        updating = true;
+            if (tablePresenter != null) {
+                final List<Field> fields = tablePresenter.getCurrentFields();
+                final List<Row> selection = tablePresenter.getSelectedRows();
+                if (selection != null && selection.size() == 1) {
+                    // Just use the first row.
+                    final Row selected = selection.get(0);
+                    currentStreamId = getLong(textSettings.getStreamIdField(), fields, selected);
+                    currentPartNo = getLong(textSettings.getPartNoField(), fields, selected);
+                    currentRecordNo = getLong(textSettings.getRecordNoField(), fields, selected);
+                    final Long currentLineFrom = getLong(textSettings.getLineFromField(), fields, selected);
+                    final Long currentColFrom = getLong(textSettings.getColFromField(), fields, selected);
+                    final Long currentLineTo = getLong(textSettings.getLineToField(), fields, selected);
+                    final Long currentColTo = getLong(textSettings.getColToField(), fields, selected);
 
-                    } else {
+                    if (currentStreamId != null) {
+                        Highlight highlight = null;
+                        if (currentLineFrom != null && currentColFrom != null && currentLineTo != null && currentColTo != null) {
+                            highlight = new Highlight(
+                                    new DefaultLocation(currentLineFrom.intValue(), currentColFrom.intValue()),
+                                    new DefaultLocation(currentLineTo.intValue(), currentColTo.intValue()));
+                        }
+                        final SourceLocation sourceLocation = new SourceLocation(
+                                currentStreamId,
+                                null,
+                                currentPartNo != null ? currentPartNo : 1,
+                                currentRecordNo != null ? currentRecordNo : 1,
+                                highlight);
+
+                        currentHighlightStrings = tablePresenter.getHighlights();
+
+                        OffsetRange<Long> currentStreamRange = new OffsetRange<>(sourceLocation.getPartNo() - 1, 1L);
+                        OffsetRange<Long> currentPageRange;
+
+                        // If we have a source highlight then use it.
+                        if (highlight != null) {
+                            currentPageRange = new OffsetRange<>(highlight.getFrom().getLineNo() - 1L, (long) highlight.getTo().getLineNo() - highlight.getFrom().getLineNo());
+                        } else {
+                            currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L);
+                        }
+
                         FetchDataAction fetchDataAction;
                         if (textSettings.getPipeline() != null) {
-                            fetchDataAction = new FetchDataWithPipelineAction(currentStreamId, currentEventId,
-                                    textSettings.getPipeline(), textSettings.isShowAsHtml());
+                            final FetchDataWithPipelineAction action = new FetchDataWithPipelineAction();
+                            action.setStreamId(currentStreamId);
+                            action.setStreamRange(currentStreamRange);
+                            action.setPageRange(currentPageRange);
+                            action.setChildStreamType(null);
+                            action.setPipeline(textSettings.getPipeline());
+                            action.setShowAsHtml(textSettings.isShowAsHtml());
+                            fetchDataAction = action;
                         } else {
-                            fetchDataAction = new FetchDataAction(currentStreamId, currentEventId,
-                                    textSettings.isShowAsHtml());
+                            final FetchDataAction action = new FetchDataAction();
+                            action.setStreamId(currentStreamId);
+                            action.setStreamRange(currentStreamRange);
+                            action.setPageRange(currentPageRange);
+                            action.setChildStreamType(null);
+                            action.setShowAsHtml(textSettings.isShowAsHtml());
+                            fetchDataAction = action;
                         }
 
                         ensureFetchDataQueue();
@@ -282,6 +331,39 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         if (!updating) {
             showData("", null, null, isHtml);
         }
+    }
+
+    private Long getLong(final Field field, List<Field> fields, final Row row) {
+        if (field != null && fields != null && row != null) {
+            int index = -1;
+
+            if (index == -1 && field.getId() != null) {
+                // Try matching on id alone.
+                for (int i = 0; i < fields.size(); i++) {
+                    if (field.getId().equals(fields.get(i).getId())) {
+                        index = i;
+                        break;
+                    }
+                }
+            }
+
+            if (index == -1 && field.getName() != null) {
+                // Try matching on name alone.
+                for (int i = 0; i < fields.size(); i++) {
+                    if (field.getName().equals(fields.get(i).getName())) {
+                        index = i;
+                        break;
+                    }
+                }
+            }
+
+            if (index != -1) {
+                if (row.getValues().size() > index) {
+                    return getLong(row.getValues().get(index));
+                }
+            }
+        }
+        return null;
     }
 
     private Long getLong(final String string) {
@@ -347,9 +429,16 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        super.read(componentData);
+    public void read(final ComponentConfig componentConfig) {
+        super.read(componentConfig);
         textSettings = getSettings();
+
+        if (textSettings.getStreamIdField() == null) {
+            textSettings.setStreamIdField(new Field(IndexConstants.STREAM_ID));
+        }
+        if (textSettings.getRecordNoField() == null) {
+            textSettings.setRecordNoField(new Field(IndexConstants.EVENT_ID));
+        }
     }
 
     @Override
@@ -378,10 +467,10 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
     }
 
     private TextComponentSettings getSettings() {
-        ComponentSettings settings = getComponentData().getSettings();
+        ComponentSettings settings = getComponentConfig().getSettings();
         if (!(settings instanceof TextComponentSettings)) {
             settings = createSettings();
-            getComponentData().setSettings(settings);
+            getComponentConfig().setSettings(settings);
         }
 
         return (TextComponentSettings) settings;
@@ -393,7 +482,7 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     @Override
     public void beginStepping() {
-        BeginPipelineSteppingEvent.fire(this, currentStreamId, null, null, new StepLocation(currentStreamId, 1, currentEventId), null);
+        BeginPipelineSteppingEvent.fire(this, currentStreamId, null, null, new StepLocation(currentStreamId, currentPartNo, currentRecordNo), null);
     }
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {

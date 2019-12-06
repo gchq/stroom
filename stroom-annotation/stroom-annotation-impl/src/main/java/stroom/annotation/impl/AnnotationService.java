@@ -4,6 +4,10 @@ import org.springframework.stereotype.Component;
 import stroom.annotation.api.AnnotationDataSource;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.CreateEntryRequest;
+import stroom.annotation.shared.EventId;
+import stroom.annotation.shared.EventLink;
+import stroom.annotation.shared.SetAssignedToRequest;
+import stroom.annotation.shared.SetStatusRequest;
 import stroom.dashboard.expression.v1.Val;
 import stroom.datasource.api.v2.DataSource;
 import stroom.datasource.api.v2.DataSourceField;
@@ -17,6 +21,7 @@ import stroom.security.SecurityContext;
 import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;
+import java.util.List;
 import java.util.function.Consumer;
 
 @Component
@@ -69,14 +74,34 @@ public class AnnotationService implements Searchable {
         return annotationDao.getDetail(annotationId);
     }
 
-    AnnotationDetail getDetail(Long streamId, Long eventId) {
-        checkPermission();
-        return annotationDao.getDetail(streamId, eventId);
-    }
-
     AnnotationDetail createEntry(final CreateEntryRequest request) {
         checkPermission();
         return annotationDao.createEntry(request, securityContext.getUserId());
+    }
+
+    List<EventId> getLinkedEvents(final Long annotationId) {
+        checkPermission();
+        return annotationDao.getLinkedEvents(annotationId);
+    }
+
+    List<EventId> link(final EventLink eventLink) {
+        checkPermission();
+        return annotationDao.link(eventLink, securityContext.getUserId());
+    }
+
+    List<EventId> unlink(final EventLink eventLink) {
+        checkPermission();
+        return annotationDao.unlink(eventLink, securityContext.getUserId());
+    }
+
+    Integer setStatus(SetStatusRequest request) {
+        checkPermission();
+        return annotationDao.setStatus(request, securityContext.getUserId());
+    }
+
+    Integer setAssignedTo(SetAssignedToRequest request) {
+        checkPermission();
+        return annotationDao.setAssignedTo(request, securityContext.getUserId());
     }
 
     private void checkPermission() {

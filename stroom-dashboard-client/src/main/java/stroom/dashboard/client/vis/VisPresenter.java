@@ -37,13 +37,14 @@ import stroom.dashboard.client.main.Components;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
-import stroom.dashboard.client.table.JsonUtil;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
+import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.dashboard.shared.VisComponentSettings;
+import stroom.dashboard.shared.VisResult;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.query.api.v2.DocRef;
@@ -201,11 +202,11 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
         if (queryId != null) {
             final Component component = getComponents().get(queryId);
-            if (component != null && component instanceof QueryPresenter) {
+            if (component instanceof QueryPresenter) {
                 final QueryPresenter queryPresenter = (QueryPresenter) component;
                 currentSearchModel = queryPresenter.getSearchModel();
                 if (currentSearchModel != null) {
-                    currentSearchModel.addComponent(getComponentData().getId(), this);
+                    currentSearchModel.addComponent(getComponentConfig().getId(), this);
                 }
             }
         }
@@ -252,22 +253,22 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         if (currentSearchModel != null) {
             // Remove this component from the list of components the search
             // model expects to update.
-            currentSearchModel.removeComponent(getComponentData().getId());
+            currentSearchModel.removeComponent(getComponentConfig().getId());
             currentSearchModel = null;
         }
     }
 
     @Override
-    public void setData(final String json) {
+    public void setData(final ComponentResult componentResult) {
         try {
             if (visSettings != null && visSettings.getVisualisation() != null) {
-                if (json != null) {
-                    final VisResult visResult = JsonUtil.decode(json);
+                if (componentResult != null) {
+                    final VisResult visResult = (VisResult) componentResult;
 
                     currentSettings = getJSONSettings();
-                    currentData = (JavaScriptObject) visResult.store;//getJSONData(visResult);
+                    currentData = getJSONData(visResult);
                     if (currentError == null) {
-                        currentError = visResult.error;
+                        currentError = visResult.getError();
                     }
                 }
 
@@ -310,17 +311,17 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         }
     }
 
-//    private JavaScriptObject getJSONData(final VisResult visResult) {
-//        JavaScriptObject data = null;
-//
-//        // Turn JSON result text into an object.
-//        final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(visResult.getJSON()));
-//        if (dataObject != null) {
-//            data = dataObject.getJavaScriptObject();
-//        }
-//
-//        return data;
-//    }
+    private JavaScriptObject getJSONData(final VisResult visResult) {
+        JavaScriptObject data = null;
+
+        // Turn JSON result text into an object.
+        final JSONObject dataObject = JSONUtil.getObject(JSONUtil.parse(visResult.getJsonData()));
+        if (dataObject != null) {
+            data = dataObject.getJavaScriptObject();
+        }
+
+        return data;
+    }
 
     private JavaScriptObject getJSONSettings() {
         JavaScriptObject settings = null;
@@ -502,8 +503,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        super.read(componentData);
+    public void read(final ComponentConfig componentConfig) {
+        super.read(componentConfig);
 
         visSettings = getSettings();
         visResultRequest.setVisDashboardSettings(visSettings);
@@ -542,10 +543,10 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
     @Override
     public VisComponentSettings getSettings() {
-        ComponentSettings settings = getComponentData().getSettings();
+        ComponentSettings settings = getComponentConfig().getSettings();
         if (!(settings instanceof VisComponentSettings)) {
             settings = createSettings();
-            getComponentData().setSettings(settings);
+            getComponentConfig().setSettings(settings);
         }
 
         return (VisComponentSettings) settings;

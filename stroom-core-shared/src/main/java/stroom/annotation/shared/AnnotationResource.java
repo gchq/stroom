@@ -41,9 +41,7 @@ public interface AnnotationResource extends DirectRestService {
     @ApiOperation(
             value = "Gets an annotation",
             response = Response.class)
-    AnnotationDetail get(@QueryParam("annotationId") Long annotationId,
-                         @QueryParam("streamId") Long streamId,
-                         @QueryParam("eventId") Long eventId);
+    AnnotationDetail get(@QueryParam("annotationId") Long annotationId);
 
     @POST
     @Path("")
@@ -68,4 +66,49 @@ public interface AnnotationResource extends DirectRestService {
             value = "Gets a list of predefined comments",
             response = Response.class)
     List<String> getComment(@QueryParam("filter") String filter);
+
+    @GET
+    @Path("linkedEvents")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Gets a list of events linked to this annotation",
+            response = Response.class)
+    List<EventId> getLinkedEvents(@QueryParam("annotationId") Long annotationId);
+
+    @POST
+    @Path("link")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Links an annotation to an event",
+            response = Response.class)
+    List<EventId> link(EventLink eventLink);
+
+    @POST
+    @Path("unlink")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Unlinks an annotation from an event",
+            response = Response.class)
+    List<EventId> unlink(EventLink eventLink);
+
+    @POST
+    @Path("setStatus")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Bulk action to set the status for several annotations",
+            response = Response.class)
+    Integer setStatus(SetStatusRequest request);
+
+    @POST
+    @Path("setAssignedTo")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Bulk action to set the assignment for several annotations",
+            response = Response.class)
+    Integer setAssignedTo(SetAssignedToRequest request);
 }

@@ -35,6 +35,7 @@ import stroom.pipeline.shared.FetchDataAction;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.PipelineEntity;
+import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.StepLocation;
 import stroom.security.client.ClientSecurityContext;
 import stroom.streamstore.shared.Stream;
@@ -46,7 +47,6 @@ import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.util.shared.Severity;
 import stroom.util.shared.SharedList;
-import stroom.pipeline.shared.SourceLocation;
 import stroom.widget.tab.client.presenter.LayerContainer;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
@@ -74,8 +74,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private Long currentStreamId;
     private StreamType currentStreamType;
     private StreamType currentChildStreamType;
-    private OffsetRange<Long> currentStreamRange = new OffsetRange<>(0L, 1L);
-    private OffsetRange<Long> currentPageRange = new OffsetRange<>(0L, 100L);
+    private OffsetRange<Long> currentPartRange = new OffsetRange<>(0L, 1L);
+    private OffsetRange<Long> currentRecordRange = new OffsetRange<>(0L, 100L);
     private AbstractFetchDataResult lastResult;
     private List<FetchDataAction> actionQueue;
     private Timer delayedFetchDataTimer;
@@ -91,6 +91,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private BeginSteppingHandler beginSteppingHandler;
     private boolean steppingSource;
     private boolean formatOnLoad;
+    private boolean ignoreActions;
 
     @Inject
     public DataPresenter(final EventBus eventBus, final DataView view, final TextPresenter textPresenter,
@@ -172,6 +173,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             actionQueue.clear();
         }
         setPageResponse(null, fireEvents);
+        currentStreamId = null;
     }
 
     @Override
@@ -182,12 +184,12 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void fetchDataForCurrentStreamNo(final StreamType childStreamType) {
-        currentStreamRange = new OffsetRange<>(currentStreamRange.getOffset(), 1L);
+        currentPartRange = new OffsetRange<>(currentPartRange.getOffset(), 1L);
 
-        streamTypeOffsetRangeMap.put(currentChildStreamType, currentPageRange);
-        currentPageRange = streamTypeOffsetRangeMap.get(childStreamType);
-        if (currentPageRange == null) {
-            currentPageRange = new OffsetRange<>(0L, 100L);
+        streamTypeOffsetRangeMap.put(currentChildStreamType, currentRecordRange);
+        currentRecordRange = streamTypeOffsetRangeMap.get(childStreamType);
+        if (currentRecordRange == null) {
+            currentRecordRange = new OffsetRange<>(0L, 100L);
         }
 
         this.currentChildStreamType = childStreamType;
@@ -197,8 +199,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     public void fetchData(final boolean fireEvents, final Long streamId, final StreamType childStreamType) {
         this.currentStreamId = streamId;
         this.currentChildStreamType = childStreamType;
-        currentStreamRange = new OffsetRange<>(0L, 1L);
-        currentPageRange = new OffsetRange<>(0L, 100L);
+        currentPartRange = new OffsetRange<>(0L, 1L);
+        currentRecordRange = new OffsetRange<>(0L, 100L);
         streamTypeOffsetRangeMap.clear();
         markerListPresenter.resetExpandedSeverities();
         update(fireEvents);
@@ -206,55 +208,59 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
     public void fetchData(final SourceLocation sourceLocation) {
         this.highlights = new ArrayList<>();
-        this.highlights.add(sourceLocation.getHighlight());
+
+        if (sourceLocation.getHighlight() != null) {
+            this.highlights.add(sourceLocation.getHighlight());
+        }
 
         this.highlightId = sourceLocation.getId();
         this.highlightPartNo = sourceLocation.getPartNo();
         this.highlightChildStreamType = sourceLocation.getChildType();
 
-        // Set the source type that will be used when the page source is shown.
         // Make sure the right page is shown when the source is displayed.
-        final long oldPartNo = currentStreamRange.getOffset() + 1;
-        long newPartNo = oldPartNo;
-        final long oldPageOffset = currentPageRange.getOffset();
-        final long pageLength = currentPageRange.getLength();
-        int lineNo = 0;
+        final long oldPartNo = currentPartRange.getOffset() + 1;
+        long newPartNo = highlightPartNo;
 
-        // If we have a source highlight then use it.
+        final long oldRecordOffset = currentRecordRange.getOffset();
+
+        long recordLength = currentRecordRange.getLength();
+
+        // If we have a source highlight then use it
+        int lineNo = 0;
         if (highlights != null && highlights.size() > 0) {
             final Highlight highlight = highlights.get(0);
-            newPartNo = highlightPartNo;
             lineNo = highlight.getFrom().getLineNo();
         }
 
-        final long page = lineNo / pageLength;
-        long newPageOffset = oldPageOffset % pageLength;
-        final long tmp = page * pageLength;
-        if (tmp + newPageOffset < lineNo) {
-            // We can show this page.
-            newPageOffset = tmp + newPageOffset;
+        long newRecordOffset;
+        if (sourceLocation.getHighlight() == null && sourceLocation.getRecordNo() != -1) {
+            recordLength = 1L;
+            newRecordOffset = sourceLocation.getRecordNo() - 1;
         } else {
-            // We need to show the page before.
-            newPageOffset = tmp - pageLength + newPageOffset;
+            final long page = lineNo / recordLength;
+            newRecordOffset = oldRecordOffset % recordLength;
+            final long tmp = page * recordLength;
+            if (tmp + newRecordOffset < lineNo) {
+                // We can show this page.
+                newRecordOffset = tmp + newRecordOffset;
+            } else {
+                // We need to show the page before.
+                newRecordOffset = tmp - recordLength + newRecordOffset;
+            }
         }
 
         // Update the stream source.
         if (!EqualsUtil.isEquals(currentStreamId, highlightId)
                 || !EqualsUtil.isEquals(currentChildStreamType, highlightChildStreamType) || oldPartNo != newPartNo
-                || oldPageOffset != newPageOffset) {
-            currentStreamRange = new OffsetRange<>(newPartNo - 1, 1L);
-            currentPageRange = new OffsetRange<>(newPageOffset, pageLength);
+                || oldRecordOffset != newRecordOffset) {
+            currentPartRange = new OffsetRange<>(newPartNo - 1, 1L);
+            currentRecordRange = new OffsetRange<>(newRecordOffset, recordLength);
 
             this.currentStreamId = highlightId;
             this.currentChildStreamType = highlightChildStreamType;
             streamTypeOffsetRangeMap.clear();
             markerListPresenter.resetExpandedSeverities();
-//            currentStreamRange = new OffsetRange<>(sourceLocation.getStreamNo() - 1, 1L);
-//            currentPageRange = new OffsetRange<>((long) sourceLocation.getHighlight().getFrom().getLineNo() - 1, 1L);
-//            streamTypeOffsetRangeMap.clear();
-//            markerListPresenter.resetExpandedSeverities();
 
-//            fetchData(false, highlightStreamId, highlightChildStreamType);
             update(false);
         } else {
             refreshHighlights(lastResult);
@@ -265,25 +271,27 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     public void fetchData(final Stream stream) {
         this.currentStreamId = stream.getId();
         this.currentStreamType = stream.getStreamType();
-        currentStreamRange = new OffsetRange<>(0L, 1L);
-        currentPageRange = new OffsetRange<>(0L, 100L);
+        currentPartRange = new OffsetRange<>(0L, 1L);
+        currentRecordRange = new OffsetRange<>(0L, 100L);
         streamTypeOffsetRangeMap.clear();
         markerListPresenter.resetExpandedSeverities();
         update(true);
     }
 
     public void update(final boolean fireEvents) {
-        final Severity[] expandedSeverities = markerListPresenter.getExpandedSeverities();
+        if (!ignoreActions) {
+            final Severity[] expandedSeverities = markerListPresenter.getExpandedSeverities();
 
-        final FetchDataAction action = new FetchDataAction();
-        action.setStreamId(currentStreamId);
-        action.setStreamRange(currentStreamRange);
-        action.setPageRange(currentPageRange);
-        action.setChildStreamType(currentChildStreamType);
-        action.setMarkerMode(errorMarkerMode);
-        action.setExpandedSeverities(expandedSeverities);
-        action.setFireEvents(fireEvents);
-        doFetch(action, fireEvents);
+            final FetchDataAction action = new FetchDataAction();
+            action.setStreamId(currentStreamId);
+            action.setStreamRange(currentPartRange);
+            action.setPageRange(currentRecordRange);
+            action.setChildStreamType(currentChildStreamType);
+            action.setMarkerMode(errorMarkerMode);
+            action.setExpandedSeverities(expandedSeverities);
+            action.setFireEvents(fireEvents);
+            doFetch(action, fireEvents);
+        }
     }
 
     private void doFetch(final FetchDataAction action, final boolean fireEvents) {
@@ -331,6 +339,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     }
 
     private void setPageResponse(final AbstractFetchDataResult result, final boolean fireEvents) {
+        ignoreActions = true;
         this.lastResult = result;
 
         if (result == null || result.getStreamType() == null || steppingSource) {
@@ -372,6 +381,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             refresh(result);
             updateTabs(null, null);
         }
+        ignoreActions = false;
     }
 
     private void updateTabs(final StreamType streamType, final List<StreamType> availableChildStreamTypes) {
@@ -513,10 +523,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         // Set the source type that will be used when the page source is shown.
         // Make sure the right page is shown when the source is displayed.
-        final long oldStreamNo = currentStreamRange.getOffset() + 1;
+        final long oldStreamNo = currentPartRange.getOffset() + 1;
         long newStreamNo = oldStreamNo;
-        final long oldPageOffset = currentPageRange.getOffset();
-        final long pageLength = currentPageRange.getLength();
+        final long oldPageOffset = currentRecordRange.getOffset();
+        final long pageLength = currentRecordRange.getLength();
         int lineNo = 0;
 
         // If we have a source highlight then use it.
@@ -541,8 +551,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         if (!EqualsUtil.isEquals(currentStreamId, highlightId)
                 || !EqualsUtil.isEquals(currentChildStreamType, highlightChildStreamType) || oldStreamNo != newStreamNo
                 || oldPageOffset != newPageOffset) {
-            currentStreamRange = new OffsetRange<>(newStreamNo - 1, 1L);
-            currentPageRange = new OffsetRange<>(newPageOffset, pageLength);
+            currentPartRange = new OffsetRange<>(newStreamNo - 1, 1L);
+            currentRecordRange = new OffsetRange<>(newPageOffset, pageLength);
 
             fetchData(false, highlightId, highlightChildStreamType);
         } else {
@@ -639,7 +649,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         }
 
         public void updateRowData(final int start, final int length) {
-            visibleRange = new Range(start, visibleRange.getLength());
+            visibleRange = new Range(start, length);
             RangeChangeEvent.fire(this, new Range(start, length));
         }
 
@@ -658,8 +668,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public void setVisibleRange(final Range range) {
-            currentStreamRange = new OffsetRange<>((long) streamRows.visibleRange.getStart(), 1L);
-            currentPageRange = new OffsetRange<>((long) range.getStart(), (long) range.getLength());
+            currentPartRange = new OffsetRange<>((long) streamRows.visibleRange.getStart(), 1L);
+            currentRecordRange = new OffsetRange<>((long) range.getStart(), (long) range.getLength());
             update(false);
         }
     }
@@ -671,8 +681,8 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
 
         @Override
         public void setVisibleRange(final Range range) {
-            currentStreamRange = new OffsetRange<>((long) range.getStart(), 1L);
-            currentPageRange = new OffsetRange<>(0L, 100L);
+            currentPartRange = new OffsetRange<>((long) range.getStart(), 1L);
+            currentRecordRange = new OffsetRange<>(0L, 100L);
             update(false);
         }
     }

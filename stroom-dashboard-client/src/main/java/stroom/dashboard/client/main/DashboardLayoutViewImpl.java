@@ -74,8 +74,13 @@ public class DashboardLayoutViewImpl extends ViewImpl implements DashboardLayout
     }
 
     @Override
-    public void closeTab(final TabConfig tabData) {
-        layout.closeTab(tabData);
+    public void setTabManager(final TabManager tabManager) {
+        layout.setTabManager(tabManager);
+    }
+
+    @Override
+    public void closeTab(final TabConfig tabConfig) {
+        layout.closeTab(tabConfig);
     }
 
     @Override

@@ -21,6 +21,10 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import java.util.List;
 
 public interface MultiSelectionModel<T> {
+    Selection<T> getSelection();
+
+    void setSelection(Selection<T> selection);
+
     /**
      * Get a list of all selected items.
      */

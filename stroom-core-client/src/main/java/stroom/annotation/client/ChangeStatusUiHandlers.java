@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.client.table;
+package stroom.annotation.client;
 
-import jsinterop.annotations.JsPackage;
-import jsinterop.annotations.JsType;
+import com.google.gwt.dom.client.Element;
+import com.gwtplatform.mvp.client.UiHandlers;
 
-@JsType(isNative = true, namespace = JsPackage.GLOBAL, name = "Object")
-public class TableResult {
-    Row[] rows;
-    OffsetRange resultRange;
-    int totalResults;
-    String error;
-
-    public TableResult() {
-    }
+public interface ChangeStatusUiHandlers extends UiHandlers {
+    void showStatusChooser(Element element);
 }

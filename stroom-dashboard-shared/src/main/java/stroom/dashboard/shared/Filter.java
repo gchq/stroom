@@ -91,4 +91,8 @@ public class Filter implements Serializable {
         builder.append("excludes", excludes);
         return builder.toString();
     }
+
+    public Filter copy() {
+        return new Filter(includes, excludes);
+    }
 }

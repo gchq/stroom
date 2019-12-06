@@ -138,7 +138,7 @@ public class ProxyRepositoryManager implements HasHealthCheck {
                         // the rollCron property which creates a scheduler.
                         if (this.scheduler != null) {
                             // Looks like a date
-                            if (baseName.length() == DateUtil.DATE_LENGTH) {
+                            if (DateUtil.looksLikeDate(baseName)) {
                                 long millis = -1;
                                 try {
                                     // Is this directory name an ISO 8601 compliant date?

@@ -329,18 +329,6 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
             for (; i < length() && !found; i++) {
                 final byte c = byteAt(i);
 
-                // Remember the previous line and column numbers in case we need to go back to them.
-                final int previousLineNo = lineNo;
-                final int previousColNo = colNo;
-
-                // Advance the line or column number.
-                if (c == '\n') {
-                    lineNo++;
-                    colNo = 0;
-                } else {
-                    colNo++;
-                }
-
                 if (!inRecord) {
                     if (lineNo > lineFrom ||
                             (lineNo >= lineFrom && colNo >= colFrom)) {
@@ -354,15 +342,21 @@ public class ReaderRecorder extends AbstractIOElement implements TakesInput, Tak
                         inRecord = false;
                         found = true;
                         advance = i;
-
-                        // We won't be consuming the current char so revert to the previous line and column numbers.
-                        lineNo = previousLineNo;
-                        colNo = previousColNo;
                     }
                 }
 
                 if (inRecord) {
                     consumer.accept(c);
+                }
+
+                // Advance the line or column number if we haven't found the record.
+                if (!found) {
+                    if (c == '\n') {
+                        lineNo++;
+                        colNo = 0;
+                    } else {
+                        colNo++;
+                    }
                 }
             }
 

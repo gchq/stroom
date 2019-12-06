@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.dashboard.shared;
+package stroom.annotation.client;
 
-public interface HasFieldRef {
-    Field getRefField();
+import com.google.gwt.dom.client.Element;
+import com.gwtplatform.mvp.client.UiHandlers;
+
+public interface ChangeAssignedToUiHandlers extends UiHandlers {
+    void showAssignedToChooser(Element element);
+
+    void assignYourself();
 }

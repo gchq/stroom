@@ -4,18 +4,23 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.EventId;
+
+import java.util.List;
 
 public class ShowAnnotationEvent extends GwtEvent<ShowAnnotationEvent.Handler> {
     private static Type<ShowAnnotationEvent.Handler> TYPE;
 
     private final Annotation annotation;
+    private final List<EventId> linkedEvents;
 
-    private ShowAnnotationEvent(final Annotation annotation) {
+    private ShowAnnotationEvent(final Annotation annotation, final List<EventId> linkedEvents) {
         this.annotation = annotation;
+        this.linkedEvents = linkedEvents;
     }
 
-    public static void fire(final HasHandlers source, final Annotation annotation) {
-        source.fireEvent(new ShowAnnotationEvent(annotation));
+    public static void fire(final HasHandlers source, final Annotation annotation, final List<EventId> linkedEvents) {
+        source.fireEvent(new ShowAnnotationEvent(annotation, linkedEvents));
     }
 
     public static Type<Handler> getType() {
@@ -37,6 +42,10 @@ public class ShowAnnotationEvent extends GwtEvent<ShowAnnotationEvent.Handler> {
 
     public Annotation getAnnotation() {
         return annotation;
+    }
+
+    public List<EventId> getLinkedEvents() {
+        return linkedEvents;
     }
 
     public interface Handler extends EventHandler {

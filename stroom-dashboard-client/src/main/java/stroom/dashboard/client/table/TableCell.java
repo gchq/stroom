@@ -17,75 +17,28 @@
 package stroom.dashboard.client.table;
 
 import com.google.gwt.cell.client.AbstractCell;
-import com.google.gwt.cell.client.ValueUpdater;
-import com.google.gwt.dom.client.Element;
-import com.google.gwt.dom.client.EventTarget;
-import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.Format.Type;
+import stroom.dashboard.shared.Row;
 import stroom.hyperlink.client.Hyperlink;
-import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.widget.customdatebox.client.ClientDateUtil;
-import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 class TableCell extends AbstractCell<Row> {
-    private static final Set<String> ENABLED_EVENTS = Collections.singleton("click");
-
-    private final HasHandlers hasHandlers;
-    private final MultiSelectionModel<Row> selectionModel;
+    private final TablePresenter tablePresenter;
     private final Field field;
-    private final int pos;
 
-    TableCell(final HasHandlers hasHandlers, final MultiSelectionModel<Row> selectionModel, final Field field, final int pos) {
-        super(ENABLED_EVENTS);
-        this.hasHandlers = hasHandlers;
-        this.selectionModel = selectionModel;
+    TableCell(final TablePresenter tablePresenter, final Field field) {
+        this.tablePresenter = tablePresenter;
         this.field = field;
-        this.pos = pos;
-    }
-
-    @Override
-    public void onBrowserEvent(final Context context, final Element parent, final Row row,
-                               final NativeEvent event, final ValueUpdater<Row> valueUpdater) {
-        super.onBrowserEvent(context, parent, row, event, valueUpdater);
-        final String value = getValue(row);
-
-        boolean handled = false;
-        if (value != null && "click".equals(event.getType())) {
-            final EventTarget eventTarget = event.getEventTarget();
-            if (!Element.is(eventTarget)) {
-                return;
-            }
-            final Element element = eventTarget.cast();
-            if (element.hasTagName("u")) {
-                final String link = element.getAttribute("link");
-                if (link != null) {
-                    final Hyperlink hyperlink = Hyperlink.create(link);
-                    if (hyperlink != null) {
-                        handled = true;
-                        HyperlinkEvent.fire(hasHandlers, hyperlink);
-                    }
-                }
-            }
-        }
-
-        if (!handled) {
-            selectionModel.setSelected(row);
-        }
     }
 
     @Override
     public void render(final Context context, final Row row, final SafeHtmlBuilder sb) {
         final String value = getValue(row);
         if (value != null) {
-            final boolean grouped = field.getGroup() != null && field.getGroup() >= row.depth;
+            final boolean grouped = field.getGroup() != null && field.getGroup() >= row.getDepth();
             if (grouped) {
                 sb.appendHtmlConstant("<b>");
             }
@@ -98,9 +51,13 @@ class TableCell extends AbstractCell<Row> {
 
     private String getValue(final Row row) {
         if (row != null) {
-            final String[] values = row.values;
+            final List<String> values = row.getValues();
             if (values != null) {
-                return values[pos];
+                final List<String> fieldIds = tablePresenter.getCurrentFieldIds();
+                final int index = fieldIds.indexOf(field.getId());
+                if (index != -1 && values.size() > index) {
+                    return values.get(index);
+                }
             }
         }
         return null;
@@ -122,7 +79,7 @@ class TableCell extends AbstractCell<Row> {
 //                            sb.appendEscaped(hyperlink.getText());
 //                        }
 //                    } else {
-                        sb.appendEscaped(hyperlink.getText());
+                    sb.appendEscaped(hyperlink.getText());
 //                    }
 
                     sb.appendHtmlConstant("</u>");

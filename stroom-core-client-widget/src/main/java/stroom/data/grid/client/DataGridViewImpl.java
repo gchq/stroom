@@ -51,6 +51,8 @@ import com.google.gwt.view.client.Range;
 import com.google.gwt.view.client.RangeChangeEvent.Handler;
 import com.gwtplatform.mvp.client.ViewImpl;
 import stroom.data.pager.client.Pager;
+import stroom.hyperlink.client.Hyperlink;
+import stroom.hyperlink.client.HyperlinkEvent;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
@@ -58,6 +60,7 @@ import stroom.widget.util.client.DoubleSelectTest;
 import stroom.widget.util.client.MultiSelectEvent;
 import stroom.widget.util.client.MultiSelectionModel;
 import stroom.widget.util.client.MultiSelectionModelImpl;
+import stroom.widget.util.client.Selection;
 import stroom.widget.util.client.SelectionType;
 
 import java.util.ArrayList;
@@ -471,6 +474,11 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
     }
 
     @Override
+    public HandlerRegistration addHyperlinkHandler(final HyperlinkEvent.Handler handler) {
+        return dataGrid.addHandler(handler, HyperlinkEvent.getType());
+    }
+
+    @Override
     public int getRowCount() {
         return dataGrid.getRowCount();
     }
@@ -599,41 +607,43 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
         return dataGrid.getRowElement(row);
     }
 
-    protected void doSelect(final R selection, final SelectionType selectionType) {
-        if (selection == null) {
+    private void doSelect(final R row, final SelectionType selectionType) {
+        final Selection<R> selection = selectionModel.getSelection();
+
+        if (row == null) {
             multiSelectStart = null;
-            selectionModel.clear();
+            selection.clear();
         } else if (selectionType.isAllowMultiSelect() && selectionType.isShiftPressed() && multiSelectStart != null) {
             // If control isn't pressed as well as shift then we are selecting a new range so clear.
             if (!selectionType.isControlPressed()) {
-                selectionModel.clear();
+                selection.clear();
             }
 
             List<R> rows = dataGrid.getVisibleItems();
             final int index1 = rows.indexOf(multiSelectStart);
-            final int index2 = rows.indexOf(selection);
+            final int index2 = rows.indexOf(row);
             if (index1 != -1 && index2 != -1) {
                 final int start = Math.min(index1, index2);
                 final int end = Math.max(index1, index2);
                 for (int i = start; i <= end; i++) {
-                    selectionModel.setSelected(rows.get(i), true);
+                    selection.setSelected(rows.get(i), true);
                 }
             } else if (selectionType.isControlPressed()) {
-                multiSelectStart = selection;
-                selectionModel.setSelected(selection, !selectionModel.isSelected(selection));
+                multiSelectStart = row;
+                selection.setSelected(row, !selection.isSelected(row));
             } else {
-                multiSelectStart = selection;
-                selectionModel.setSelected(selection);
+                multiSelectStart = row;
+                selection.setSelected(row);
             }
         } else if (selectionType.isAllowMultiSelect() && selectionType.isControlPressed()) {
-            multiSelectStart = selection;
-            selectionModel.setSelected(selection, !selectionModel.isSelected(selection));
+            multiSelectStart = row;
+            selection.setSelected(row, !selection.isSelected(row));
         } else {
-            multiSelectStart = selection;
-            selectionModel.setSelected(selection);
+            multiSelectStart = row;
+            selection.setSelected(row);
         }
 
-        MultiSelectEvent.fire(dataGrid, selectionType);
+        selectionModel.setSelection(selection);
     }
 
     @Override
@@ -757,23 +767,37 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             final String type = nativeEvent.getType();
 
 
-            if ("click".equals(type)) {
+            if ("mousedown".equals(type)) {
                 // Find out if the cell consumes this event because if it does then we won't use it to select the row.
                 boolean consumed = false;
 
                 String parentTag = null;
                 Element target = event.getNativeEvent().getEventTarget().cast();
-                if (target != null && target.getParentElement() != null) {
+                if (target.getParentElement() != null) {
                     parentTag = target.getParentElement().getTagName();
                 }
 
-                // Since all of the controls we care about will not have interactive elements that are direct children
-                // of the td we can assume that the cell will not consume the event if the parent of the target is the td.
-                if (!"td".equalsIgnoreCase(parentTag)) {
-                    final Cell<?> cell = dataGrid.getColumn(event.getColumn()).getCell();
-                    if (cell != null && cell.getConsumedEvents() != null) {
-                        if (cell.getConsumedEvents().contains("click") || cell.getConsumedEvents().contains("mousedown") || cell.getConsumedEvents().contains("mouseup")) {
+                // If the user has clicked on a link then consume the event.
+                if (target.hasTagName("u")) {
+                    final String link = target.getAttribute("link");
+                    if (link != null) {
+                        final Hyperlink hyperlink = Hyperlink.create(link);
+                        if (hyperlink != null) {
                             consumed = true;
+                            HyperlinkEvent.fire(dataGrid, hyperlink);
+                        }
+                    }
+                }
+
+                if (!consumed) {
+                    // Since all of the controls we care about will not have interactive elements that are direct children
+                    // of the td we can assume that the cell will not consume the event if the parent of the target is the td.
+                    if (!"td".equalsIgnoreCase(parentTag)) {
+                        final Cell<?> cell = dataGrid.getColumn(event.getColumn()).getCell();
+                        if (cell != null && cell.getConsumedEvents() != null) {
+                            if (cell.getConsumedEvents().contains("click") || cell.getConsumedEvents().contains("mousedown") || cell.getConsumedEvents().contains("mouseup")) {
+                                consumed = true;
+                            }
                         }
                     }
                 }
@@ -782,10 +806,10 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                     // We set focus here so that we can use the keyboard to navigate once we have focus.
                     dataGrid.setFocus(true);
 
-                    final R selectedItem = event.getValue();
-                    if (selectedItem != null && (nativeEvent.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                        final boolean doubleClick = doubleClickTest.test(selectedItem);
-                        doSelect(selectedItem, new SelectionType(doubleClick, false, allowMultiSelect, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));
+                    final R row = event.getValue();
+                    if (row != null && (nativeEvent.getButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                        final boolean doubleClick = doubleClickTest.test(row);
+                        doSelect(row, new SelectionType(doubleClick, false, allowMultiSelect, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));
                     }
                 }
             }

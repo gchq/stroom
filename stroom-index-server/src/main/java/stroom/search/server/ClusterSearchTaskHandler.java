@@ -167,7 +167,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                 final AtomicLong allDocumentCount = new AtomicLong();
                 final Receiver rootReceiver = new ReceiverImpl(null, this, allDocumentCount::addAndGet, null);
-                final Receiver extractionReceiver = extractionDecoratorFactory.create(rootReceiver, task.getStoredFields(), coprocessors, query, hasTerminate);
+                final Receiver extractionReceiver = extractionDecoratorFactory.create(rootReceiver, task.getStoredFields(), coprocessors, query, allDocumentCount, hasTerminate);
 
                 // Search all index shards.
                 final ExpressionFilter expressionFilter = new ExpressionFilter.Builder()
