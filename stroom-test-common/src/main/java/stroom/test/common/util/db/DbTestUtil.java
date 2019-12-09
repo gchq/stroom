@@ -112,14 +112,15 @@ public class DbTestUtil {
             while (!path.getFileName().toString().equals("stroom-test-common")) {
                 path = path.getParent();
             }
-            path = path.resolve("src").resolve("test").resolve("resources").resolve("embedmysql");
+            path = path.getParent().resolve("embedmysql");
             path = path.toAbsolutePath();
 
-            LOGGER.info(LambdaLogUtil.message("Test resources dir = {}", path.toAbsolutePath().toString()));
+            final String dir = path.toString();
+            LOGGER.info(LambdaLogUtil.message("Embedded MySQL dir = {}", dir));
 
             final DownloadConfig downloadConfig = DownloadConfig.aDownloadConfig()
 //                        .withProxy(aHttpProxy("remote.host", 8080))
-                    .withCacheDir(path.toString())
+                    .withCacheDir(dir)
                     .build();
 
             final MysqldConfig config = MysqldConfig.aMysqldConfig(Version.v5_5_52)
@@ -174,7 +175,8 @@ public class DbTestUtil {
                 final String classPath = Pattern.quote(c.getName().replaceAll("\\.", "/") + ".class");
                 packageRoot = thisClass.replaceAll(classPath, "");
                 packageRoot = packageRoot.replaceAll("!/$", "");
-                packageRoot = packageRoot.replaceAll("^file:", "");
+                packageRoot = packageRoot.replaceAll("[^/\\\\]*$", "");
+                packageRoot = packageRoot.replaceAll("^[^/\\\\]*", "");
             } catch (Exception e) {
                 packageRoot = Paths.get(c.getProtectionDomain().getCodeSource().getLocation().toURI())
                         .toAbsolutePath().toString();
