@@ -86,7 +86,7 @@ class TestStoredQueryDao {
         refQuery.setName("Ref query");
         refQuery.setDashboardUuid(dashboardRef.getUuid());
         refQuery.setComponentId(QUERY_COMPONENT);
-        refQuery.setQuery(new Query(indexRef, new ExpressionOperator(null, Op.AND, Collections.emptyList())));
+        refQuery.setQuery(new Query(indexRef, new ExpressionOperator(true, Op.AND, Collections.emptyList())));
         AuditUtil.stamp(securityContext.getUserId(), refQuery);
         storedQueryDao.create(refQuery);
 
@@ -141,10 +141,8 @@ class TestStoredQueryDao {
                 "      \"type\" : \"term\",\n" +
                 "      \"field\" : \"Some field\",\n" +
                 "      \"condition\" : \"EQUALS\",\n" +
-                "      \"value\" : \"Some value\",\n" +
-                "      \"enabled\" : true\n" +
-                "    } ],\n" +
-                "    \"enabled\" : true\n" +
+                "      \"value\" : \"Some value\"\n" +
+                "    } ]\n" +
                 "  }\n" +
                 "}";
         assertThat(actual).isEqualTo(expected);

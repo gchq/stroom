@@ -178,12 +178,12 @@ public class AppConfig implements IsConfig {
         this.volumeConfig = volumeConfig;
     }
 
-    @JsonProperty("activity")
+    @JsonProperty("superDevMode")
     public boolean isSuperDevMode() {
         return superDevMode;
     }
 
-    @JsonProperty("activity")
+    @JsonProperty("superDevMode")
     public void setSuperDevMode(final boolean superDevMode) {
         this.superDevMode = superDevMode;
     }
