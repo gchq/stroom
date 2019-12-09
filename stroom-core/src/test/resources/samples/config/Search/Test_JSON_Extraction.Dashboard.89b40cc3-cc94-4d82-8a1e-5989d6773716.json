@@ -35,8 +35,7 @@
         "type" : "Pipeline",
         "uuid" : "13143179-b494-4146-ac4b-9a6010cada89",
         "name" : "JSON extraction"
-      },
-      "maxResults" : [ 1000000 ]
+      }
     }
   }, {
     "type" : "query",
@@ -58,29 +57,18 @@
           "value" : "2019-09-11T00:00:00.000Z"
         } ]
       },
-      "automate" : {
-        "open" : false,
-        "refresh" : false,
-        "refreshInterval" : "10s"
-      }
+      "automate" : { }
     }
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : {
-      "width" : 200,
-      "height" : 200
-    },
+    "preferredSize" : { },
     "dimension" : 1,
     "children" : [ {
       "type" : "tabLayout",
-      "preferredSize" : {
-        "width" : 200,
-        "height" : 200
-      },
+      "preferredSize" : { },
       "tabs" : [ {
-        "id" : "query-JT8D7",
-        "visible" : true
+        "id" : "query-JT8D7"
       } ],
       "selected" : 0,
       "visibleTabCount" : 1,
@@ -88,17 +76,14 @@
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 378
       },
       "tabs" : [ {
-        "id" : "table-IIO1T",
-        "visible" : true
+        "id" : "table-IIO1T"
       } ],
       "selected" : 0,
       "visibleTabCount" : 1,
       "allTabCount" : 1
     } ]
-  },
-  "tabVisibility" : "SHOW_ALL"
+  }
 }

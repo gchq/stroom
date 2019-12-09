@@ -30,7 +30,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 public class StatisticStoreDoc extends Doc implements StatisticStore {
     public static final String DOCUMENT_TYPE = "StatisticStore";
 

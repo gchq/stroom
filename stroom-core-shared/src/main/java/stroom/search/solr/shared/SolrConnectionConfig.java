@@ -1,5 +1,7 @@
 package stroom.search.solr.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 
@@ -13,6 +15,7 @@ import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"useZk", "instanceType", "solrUrls", "zkHosts", "zkPath"})
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "connection")
 @XmlType(name = "SolrConnectionConfig", propOrder = {"useZk", "instanceType", "solrUrls", "zkHosts", "zkPath"})
 public class SolrConnectionConfig implements Serializable {

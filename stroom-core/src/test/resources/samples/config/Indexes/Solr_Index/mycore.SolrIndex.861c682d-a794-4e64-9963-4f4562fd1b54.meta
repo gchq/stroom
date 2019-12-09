@@ -3,8 +3,6 @@
   "name" : "mycore",
   "version" : "f21d8c78-98c4-42e8-889f-4014912cbe64",
   "connection" : {
-    "useZk" : false,
-    "instanceType" : "SINGLE_NOOE",
     "solrUrls" : [ "http://localhost:8983/solr/mycore" ],
     "zkHosts" : [ "" ],
     "zkPath" : ""

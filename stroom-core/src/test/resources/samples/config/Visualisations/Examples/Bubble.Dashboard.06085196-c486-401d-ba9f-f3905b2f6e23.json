@@ -47,8 +47,7 @@
         "type" : "Pipeline",
         "uuid" : "03064900-4fe9-4c57-bcaf-5a755c5c75d7",
         "name" : "BROADBAND_SPEED_TESTS-EXTRACTION"
-      },
-      "maxResults" : [ 1000000 ]
+      }
     }
   }, {
     "type" : "query",
@@ -71,9 +70,7 @@
         } ]
       },
       "automate" : {
-        "open" : true,
-        "refresh" : false,
-        "refreshInterval" : "10s"
+        "open" : true
       }
     }
   }, {
@@ -93,18 +90,13 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : {
-      "width" : 200,
-      "height" : 200
-    },
+    "preferredSize" : { },
     "dimension" : 1,
     "children" : [ {
       "type" : "splitLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 146
       },
-      "dimension" : 0,
       "children" : [ {
         "type" : "tabLayout",
         "preferredSize" : {
@@ -112,8 +104,7 @@
           "height" : 76
         },
         "tabs" : [ {
-          "id" : "query-JT8D7",
-          "visible" : true
+          "id" : "query-JT8D7"
         } ],
         "selected" : 0,
         "visibleTabCount" : 1,
@@ -121,12 +112,10 @@
       }, {
         "type" : "tabLayout",
         "preferredSize" : {
-          "width" : 883,
-          "height" : 200
+          "width" : 883
         },
         "tabs" : [ {
-          "id" : "table-IIO1T",
-          "visible" : true
+          "id" : "table-IIO1T"
         } ],
         "selected" : 0,
         "visibleTabCount" : 1,
@@ -135,17 +124,14 @@
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 898
       },
       "tabs" : [ {
-        "id" : "vis-BX59A",
-        "visible" : true
+        "id" : "vis-BX59A"
       } ],
       "selected" : 0,
       "visibleTabCount" : 1,
       "allTabCount" : 1
     } ]
-  },
-  "tabVisibility" : "SHOW_ALL"
+  }
 }

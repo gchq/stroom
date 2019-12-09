@@ -10,8 +10,7 @@
         "name" : "connection_type",
         "expression" : "${connection_type}",
         "sort" : {
-          "order" : 0,
-          "direction" : "ASCENDING"
+          "order" : 0
         },
         "format" : {
           "type" : "GENERAL"
@@ -28,10 +27,7 @@
       }, {
         "name" : "timestamp",
         "expression" : "floorHour(${timestamp})",
-        "sort" : {
-          "order" : 1,
-          "direction" : "ASCENDING"
-        },
+        "sort" : { },
         "format" : {
           "type" : "DATE_TIME",
           "settings" : {
@@ -40,8 +36,7 @@
             "timeZone" : {
               "use" : "UTC",
               "id" : "Europe/London"
-            },
-            "default" : true
+            }
           }
         },
         "group" : 0,
@@ -89,9 +84,7 @@
         } ]
       },
       "automate" : {
-        "open" : true,
-        "refresh" : false,
-        "refreshInterval" : "10s"
+        "open" : true
       }
     }
   }, {
@@ -111,27 +104,20 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : {
-      "width" : 200,
-      "height" : 200
-    },
+    "preferredSize" : { },
     "dimension" : 1,
     "children" : [ {
       "type" : "splitLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 112
       },
-      "dimension" : 0,
       "children" : [ {
         "type" : "tabLayout",
         "preferredSize" : {
-          "width" : 782,
-          "height" : 200
+          "width" : 782
         },
         "tabs" : [ {
-          "id" : "query-JT8D7",
-          "visible" : true
+          "id" : "query-JT8D7"
         } ],
         "selected" : 0,
         "visibleTabCount" : 1,
@@ -139,12 +125,10 @@
       }, {
         "type" : "tabLayout",
         "preferredSize" : {
-          "width" : 555,
-          "height" : 200
+          "width" : 555
         },
         "tabs" : [ {
-          "id" : "table-IIO1T",
-          "visible" : true
+          "id" : "table-IIO1T"
         } ],
         "selected" : 0,
         "visibleTabCount" : 1,
@@ -153,17 +137,14 @@
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 932
       },
       "tabs" : [ {
-        "id" : "vis-G5GO9",
-        "visible" : true
+        "id" : "vis-G5GO9"
       } ],
       "selected" : 0,
       "visibleTabCount" : 1,
       "allTabCount" : 1
     } ]
-  },
-  "tabVisibility" : "SHOW_ALL"
+  }
 }

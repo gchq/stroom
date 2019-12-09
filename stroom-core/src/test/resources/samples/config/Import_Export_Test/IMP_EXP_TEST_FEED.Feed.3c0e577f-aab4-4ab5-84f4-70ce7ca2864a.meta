@@ -8,6 +8,5 @@
   "encoding" : "UTF-8",
   "contextEncoding" : "UTF-8",
   "reference" : true,
-  "streamType" : "Raw Events",
-  "status" : "RECEIVE"
+  "streamType" : "Raw Reference"
 }

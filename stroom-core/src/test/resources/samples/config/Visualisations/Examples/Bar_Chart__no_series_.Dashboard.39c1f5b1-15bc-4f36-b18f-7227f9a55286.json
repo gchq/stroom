@@ -10,8 +10,7 @@
         "name" : "Year",
         "expression" : "formatDate(floorYear(${ReportPeriod}), 'yyyy ', '+0000')",
         "sort" : {
-          "order" : 0,
-          "direction" : "ASCENDING"
+          "order" : 0
         },
         "format" : {
           "type" : "TEXT"
@@ -45,8 +44,7 @@
         "type" : "Pipeline",
         "uuid" : "a7fed513-fb9c-4530-802f-54ef65e80589",
         "name" : "LAX_CARGO_VOLUME-EXTRACTION"
-      },
-      "maxResults" : [ 1000000 ]
+      }
     }
   }, {
     "type" : "query",
@@ -69,9 +67,7 @@
         } ]
       },
       "automate" : {
-        "open" : true,
-        "refresh" : false,
-        "refreshInterval" : "10s"
+        "open" : true
       }
     }
   }, {
@@ -91,18 +87,13 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : {
-      "width" : 200,
-      "height" : 200
-    },
+    "preferredSize" : { },
     "dimension" : 1,
     "children" : [ {
       "type" : "splitLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 146
       },
-      "dimension" : 0,
       "children" : [ {
         "type" : "tabLayout",
         "preferredSize" : {
@@ -110,8 +101,7 @@
           "height" : 99
         },
         "tabs" : [ {
-          "id" : "query-JT8D7",
-          "visible" : true
+          "id" : "query-JT8D7"
         } ],
         "selected" : 0,
         "visibleTabCount" : 1,
@@ -119,12 +109,10 @@
       }, {
         "type" : "tabLayout",
         "preferredSize" : {
-          "width" : 764,
-          "height" : 200
+          "width" : 764
         },
         "tabs" : [ {
-          "id" : "table-IIO1T",
-          "visible" : true
+          "id" : "table-IIO1T"
         } ],
         "selected" : 0,
         "visibleTabCount" : 1,
@@ -133,17 +121,14 @@
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 871
       },
       "tabs" : [ {
-        "id" : "vis-BX59A",
-        "visible" : true
+        "id" : "vis-BX59A"
       } ],
       "selected" : 0,
       "visibleTabCount" : 1,
       "allTabCount" : 1
     } ]
-  },
-  "tabVisibility" : "SHOW_ALL"
+  }
 }

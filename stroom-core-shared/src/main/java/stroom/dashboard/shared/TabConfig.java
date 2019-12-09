@@ -33,7 +33,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"id", "visible", "settings"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "tab")
 @XmlType(name = "tab", propOrder = {"id", "visible", "settings"})
 public class TabConfig implements SharedObject {

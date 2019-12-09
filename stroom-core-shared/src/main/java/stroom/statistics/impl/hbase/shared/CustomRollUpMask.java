@@ -34,7 +34,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "customRollUpMask")
 @JsonPropertyOrder({"rolledUpTagPosition"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 public class CustomRollUpMask implements HasDisplayValue, SharedObject {
 
     private static final long serialVersionUID = -7146872949794428854L;

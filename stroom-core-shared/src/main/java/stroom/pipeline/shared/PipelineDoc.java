@@ -30,7 +30,7 @@ import java.util.Objects;
  * This entity is used to persist pipeline configuration.
  */
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "parentPipeline"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 public class PipelineDoc extends Doc {
     private static final long serialVersionUID = 4519634323788508083L;
 

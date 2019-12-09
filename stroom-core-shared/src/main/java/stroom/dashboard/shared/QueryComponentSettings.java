@@ -31,7 +31,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"dataSource", "expression", "automate"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "query")
 @XmlType(name = "QueryComponentSettings", propOrder = {"dataSource", "expression", "automate"})
 public class QueryComponentSettings extends ComponentSettings {

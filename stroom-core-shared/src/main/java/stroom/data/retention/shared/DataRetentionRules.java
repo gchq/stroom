@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "rules"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "DataRetentionPolicy", propOrder = {"rules"})
 @XmlRootElement(name = "dataRetentionPolicy")

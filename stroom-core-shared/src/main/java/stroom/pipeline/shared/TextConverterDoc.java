@@ -27,7 +27,7 @@ import stroom.util.shared.HasData;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "converterType"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 public class TextConverterDoc extends Doc implements HasData {
     private static final long serialVersionUID = 4519634323788508083L;
 

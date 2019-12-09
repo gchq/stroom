@@ -58,8 +58,7 @@
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
         "name" : "Example extraction"
-      },
-      "maxResults" : [ 1000000 ]
+      }
     }
   }, {
     "type" : "vis",
@@ -77,20 +76,15 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : {
-      "width" : 200,
-      "height" : 200
-    },
+    "preferredSize" : { },
     "dimension" : 1,
     "children" : [ {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 122
       },
       "tabs" : [ {
-        "id" : "query-MRGPM",
-        "visible" : true
+        "id" : "query-MRGPM"
       } ],
       "selected" : 0,
       "visibleTabCount" : 1,
@@ -98,12 +92,10 @@
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 258
       },
       "tabs" : [ {
-        "id" : "table-78LF4",
-        "visible" : true
+        "id" : "table-78LF4"
       } ],
       "selected" : 0,
       "visibleTabCount" : 1,
@@ -111,17 +103,14 @@
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 604
       },
       "tabs" : [ {
-        "id" : "vis-SPSCW",
-        "visible" : true
+        "id" : "vis-SPSCW"
       } ],
       "selected" : 0,
       "visibleTabCount" : 1,
       "allTabCount" : 1
     } ]
-  },
-  "tabVisibility" : "SHOW_ALL"
+  }
 }

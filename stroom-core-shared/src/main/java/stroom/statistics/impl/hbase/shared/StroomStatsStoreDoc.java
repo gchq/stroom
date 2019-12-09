@@ -28,7 +28,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 public class StroomStatsStoreDoc extends Doc {
     private static final long serialVersionUID = -1667372785365881297L;
 

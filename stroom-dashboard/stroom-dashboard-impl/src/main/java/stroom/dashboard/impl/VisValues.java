@@ -27,7 +27,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 @JsonPropertyOrder({"fields", "limit"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlType(name = "VisValues", propOrder = {"fields", "limit"})
 public class VisValues implements Serializable {
     private static final long serialVersionUID = 1272545271946712570L;

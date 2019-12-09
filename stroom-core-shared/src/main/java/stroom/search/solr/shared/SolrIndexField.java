@@ -34,7 +34,6 @@ import java.util.Objects;
  * Wrapper for index field info
  * </p>
  */
-@JsonInclude(Include.NON_DEFAULT)
 @JsonPropertyOrder({
         "fieldUse",
         "fieldName",
@@ -56,6 +55,7 @@ import java.util.Objects;
         "sortMissingFirst",
         "sortMissingLast"
 })
+@JsonInclude(Include.NON_DEFAULT)
 public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexField>, Serializable {
     private static final long serialVersionUID = 3100770758821157580L;
 

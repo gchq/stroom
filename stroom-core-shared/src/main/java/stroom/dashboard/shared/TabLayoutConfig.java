@@ -35,7 +35,7 @@ import java.util.stream.Collectors;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"preferredSize", "tabs", "selected"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "tabLayout")
 @XmlType(name = "TabLayoutConfig", propOrder = {"preferredSize", "tabs", "selected"})
 public class TabLayoutConfig extends LayoutConfig {

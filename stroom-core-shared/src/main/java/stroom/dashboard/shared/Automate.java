@@ -30,7 +30,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"open", "refresh", "refreshInterval"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "automate")
 @XmlType(name = "Automate", propOrder = {"open", "refresh", "refreshInterval"})
 public class Automate implements SharedObject {

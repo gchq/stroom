@@ -36,7 +36,7 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "settings", "wrap"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "format")
 @XmlType(name = "Format", propOrder = {"type", "settings", "wrap"})
 public class Format implements Serializable {

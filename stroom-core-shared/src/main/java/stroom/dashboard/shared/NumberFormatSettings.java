@@ -32,7 +32,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"decimalPlaces", "useSeparator"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "numberFormatSettings")
 @XmlType(name = "NumberFormatSettings", propOrder = {"decimalPlaces", "useSeparator"})
 public class NumberFormatSettings implements FormatSettings {

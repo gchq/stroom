@@ -4,9 +4,7 @@
   "name" : "Imp_exp_test_statistics",
   "version" : "af2fb14d-0b59-4d5b-9de4-2b0d3a23aab9",
   "description" : "My description",
-  "statisticType" : "COUNT",
   "rollUpType" : "CUSTOM",
-  "precision" : 3600000,
   "enabled" : true,
   "config" : {
     "fields" : [ {

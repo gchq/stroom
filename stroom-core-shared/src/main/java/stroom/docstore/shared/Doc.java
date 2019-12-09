@@ -25,7 +25,7 @@ import stroom.docref.SharedObject;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 public class Doc implements SharedObject {
     private static final long serialVersionUID = -7268601402378907741L;
 

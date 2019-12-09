@@ -28,7 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "properties"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 public class KafkaConfigDoc extends Doc {
     private static final long serialVersionUID = 4519634323788508083L;
 

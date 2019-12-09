@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -31,6 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @JsonPropertyOrder({"groupKey", "values", "depth"})
+@JsonInclude(Include.NON_DEFAULT)
 @XmlType(name = "Row", propOrder = {"groupKey", "values", "depth"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A row of data in a result set")
