@@ -74,7 +74,13 @@ public class V07_00_00_012__Dictionary extends BaseJavaMigration {
                     // Update the meta record.
                     final byte[] newData = newDataMap.remove("meta");
                     try (final PreparedStatement ps = context.getConnection().prepareStatement(
-                            "UPDATE doc SET (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?) WHERE id = ?")) {
+                            "UPDATE doc SET " +
+                                    "type = ?, " +
+                                    "uuid = ?, " +
+                                    "name = ?, " +
+                                    "ext = ?, " +
+                                    "data = ? " +
+                                    "WHERE id = ?")) {
                         ps.setString(1, type);
                         ps.setString(2, uuid);
                         ps.setString(3, name);

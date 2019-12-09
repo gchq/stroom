@@ -13,8 +13,11 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.app.YamlUtil;
 import stroom.config.common.CommonDbConfig;
+import stroom.config.common.ConnectionConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.test.CoreTestModule;
+import stroom.test.common.util.db.DbTestUtil;
+import stroom.test.common.util.db.TestDbModule;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsConfig;
@@ -45,7 +48,6 @@ class TestAppConfigModule {
 
     @Test
     void testCommonDbConfig() throws IOException {
-
         Path devYamlPath = getDevYamlPath();
 
         LOGGER.debug("dev yaml path: {}", devYamlPath.toAbsolutePath());
@@ -60,6 +62,7 @@ class TestAppConfigModule {
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {
+                install(new TestDbModule());
                 install(new CoreTestModule(modifiedConfig.getAppConfig()));
             }
         });
@@ -82,6 +85,12 @@ class TestAppConfigModule {
                     }
                 })
                 .forEach(hasDbConfig -> {
+                    final ConnectionConfig connectionConfig = DbTestUtil.getOrCreateConfig();
+                    if (connectionConfig != null) {
+                        DbTestUtil.applyConfig(connectionConfig, hasDbConfig.getDbConfig().getConnectionConfig());
+                        DbTestUtil.applyConfig(connectionConfig, commonDbConfig.getConnectionConfig());
+                    }
+
                     Assertions.assertThat(hasDbConfig.getDbConfig().getConnectionConfig())
                             .isEqualTo(commonDbConfig.getConnectionConfig());
                     Assertions.assertThat(hasDbConfig.getDbConfig().getConnectionPoolConfig())

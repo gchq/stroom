@@ -25,21 +25,19 @@ public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_Con
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractFlyWayDbModule.class);
 
-    public abstract String getFlyWayTableName();
+    protected abstract String getFlyWayTableName();
 
-    public abstract String getFlyWayLocation();
+    protected abstract String getFlyWayLocation();
 
-    public abstract String getModuleName();
+    protected abstract String getModuleName();
 
-    public abstract Function<HikariConfig, T_ConnProvider> getConnectionProviderConstructor();
+    protected abstract Function<HikariConfig, T_ConnProvider> getConnectionProviderConstructor();
 
-    public abstract Class<T_ConnProvider> getConnectionProviderType();
+    protected abstract Class<T_ConnProvider> getConnectionProviderType();
 
     @Override
     protected void configure() {
         super.configure();
-
-        bind(HikariConfigHolder.class).to(HikariConfigHolderImpl.class);
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)

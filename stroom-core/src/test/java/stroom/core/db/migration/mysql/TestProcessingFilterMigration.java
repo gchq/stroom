@@ -22,7 +22,7 @@ class TestProcessingFilterMigration {
         final V6_0_0_9__ProcessingFilter filter = new V6_0_0_9__ProcessingFilter(false);
 
         final ConnectionConfig connectionConfig = new ConnectionConfig();
-        DbTestUtil.applyTestContainersConfig(connectionConfig);
+        DbTestUtil.applyEmbeddedDbConfig(connectionConfig);
         DbUtil.validate(connectionConfig);
         try (final Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
             filter.migrate(conn);

@@ -9,11 +9,6 @@ import stroom.index.impl.IndexVolumeGroupDao;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.util.AuditUtil;
 
-import java.util.List;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -72,7 +67,6 @@ class TestIndexVolumeGroupDaoImpl {
         final var deletedGroup = indexVolumeGroupDao.get(group.getId());
         assertThat(deletedGroup).isNull();
     }
-
 
 
     @Test

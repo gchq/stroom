@@ -18,7 +18,9 @@ package stroom.test;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import stroom.db.util.DbModule;
 import stroom.task.api.TaskManager;
+import stroom.test.common.util.db.TestDbModule;
 
 /**
  * A main() method for pre-loading the stroom database with content and data for manual testing
@@ -40,9 +42,8 @@ import stroom.task.api.TaskManager;
 public final class SetupSampleData {
 
     public static void main(final String[] args) {
-
         // We are running stroom so want to use a proper db
-        final Injector injector = Guice.createInjector(new CoreTestModule(false));
+        final Injector injector = Guice.createInjector(new DbModule(), new CoreTestModule());
 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();

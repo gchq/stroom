@@ -7,6 +7,7 @@ import stroom.config.app.Config;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfigModule;
 import stroom.core.dispatch.DispatchModule;
+import stroom.db.util.DbModule;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
@@ -34,6 +35,7 @@ public class AppModule extends AbstractModule {
 
         install(new AppConfigModule(configuration.getAppConfig(), configFile));
 
+        install(new DbModule());
         install(new CoreModule());
         install(new LifecycleServiceModule());
         install(new LifecycleModule());

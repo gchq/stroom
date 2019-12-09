@@ -7,38 +7,52 @@ import stroom.app.guice.CoreModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.YamlUtil;
+import stroom.db.util.DbModule;
 import stroom.index.VolumeTestConfigModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.mock.MockSecurityContextModule;
-import stroom.test.common.util.db.DbTestUtil;
+import stroom.test.common.util.db.TestDbModule;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class CoreTestModule extends AbstractModule {
     private static final Logger LOGGER = LoggerFactory.getLogger(CoreTestModule.class);
 
-    private Path yamlConfigPath = null;
-    private AppConfig appConfig = null;
-    private boolean useTestContainers = true;
+    private Path yamlConfigPath;
+    private AppConfig appConfig;
 
-    public CoreTestModule(final boolean useTestContainers) {
-        this.useTestContainers = useTestContainers;
-    }
-
-    public CoreTestModule(final Path yamlConfigPath) {
-        this.yamlConfigPath = yamlConfigPath;
+    public CoreTestModule() {
     }
 
     public CoreTestModule(final AppConfig appConfig) {
         this.appConfig = appConfig;
     }
+
+//    private CoreTestModule(final AppConfig appConfig, final AbstractModule dbModule) {
+//        this.appConfig = appConfig;
+//        install(dbModule);
+//    }
+//
+//    public static CoreTestModule withRegularDb(final AppConfig appConfig) {
+//        return new CoreTestModule(appConfig, new DbModule());
+//    }
+//
+//    public static CoreTestModule withRegularDb() {
+//        return new CoreTestModule(null, new DbModule());
+//    }
+//
+//    public static CoreTestModule withEmbeddedTestDb(final AppConfig appConfig) {
+//        return new CoreTestModule(appConfig, new TestDbModule());
+//    }
+//
+//    public static CoreTestModule withEmbeddedTestDb() {
+//        return new CoreTestModule(null, new TestDbModule());
+//    }
 
     @Override
     protected void configure() {
@@ -48,14 +62,6 @@ public class CoreTestModule extends AbstractModule {
         } else {
             LOGGER.info("Using supplied AppConfig object");
             yamlConfigPath = Paths.get("DUMMY");
-        }
-
-        if (useTestContainers) {
-            LOGGER.info("Setting up Test Containers DB config");
-            // By decorating the common config it should be applied to all DB conns
-            DbTestUtil.applyTestContainersConfig(appConfig.getCommonDbConfig().getConnectionConfig());
-        } else {
-            LOGGER.info("Not using test container DB connection config");
         }
 
         install(new AppConfigModule(appConfig, yamlConfigPath));

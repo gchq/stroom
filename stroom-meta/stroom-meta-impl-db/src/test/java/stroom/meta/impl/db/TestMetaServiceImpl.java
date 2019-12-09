@@ -18,6 +18,7 @@ import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.test.common.util.db.TestDbModule;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
@@ -38,7 +39,8 @@ class TestMetaServiceImpl {
                 new MockClusterLockModule(),
                 new MockSecurityContextModule(),
                 new MockCollectionModule(),
-                new MockWordListProviderModule())
+                new MockWordListProviderModule(),
+                new TestDbModule())
                 .injectMembers(this);
         // Delete everything
         cleanup.clear();

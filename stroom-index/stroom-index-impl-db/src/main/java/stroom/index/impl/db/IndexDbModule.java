@@ -1,8 +1,6 @@
 package stroom.index.impl.db;
 
 import com.zaxxer.hikari.HikariConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexShardDao;
@@ -25,27 +23,27 @@ public class IndexDbModule extends AbstractFlyWayDbModule<IndexConfig, IndexDbCo
     }
 
     @Override
-    public String getFlyWayTableName() {
+    protected String getFlyWayTableName() {
         return FLYWAY_TABLE;
     }
 
     @Override
-    public String getModuleName() {
+    protected String getModuleName() {
         return MODULE;
     }
 
     @Override
-    public String getFlyWayLocation() {
+    protected String getFlyWayLocation() {
         return FLYWAY_LOCATIONS;
     }
 
     @Override
-    public Function<HikariConfig, IndexDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<HikariConfig, IndexDbConnProvider> getConnectionProviderConstructor() {
         return IndexDbConnProvider::new;
     }
 
     @Override
-    public Class<IndexDbConnProvider> getConnectionProviderType() {
+    protected Class<IndexDbConnProvider> getConnectionProviderType() {
         return IndexDbConnProvider.class;
     }
 }

@@ -12,6 +12,7 @@ dependencies {
     compile libs.guice4
     compile libs.junit_jupiter_api
     compile libs.slf4j_api
+    compile libs.wix_embedded_mysql
 
     // The following logging libs are needed when running junits outside dropwizard
     runtimeOnly libs.jcl_over_slf4j

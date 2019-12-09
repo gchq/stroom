@@ -27,21 +27,18 @@ public class DataSourceProvider implements Provider<DataSource> {
     private static final String FLYWAY_LOCATIONS = "stroom/core/db/migration/mysql";
     private static final String FLYWAY_TABLE = "schema_version";
 
-    private final Provider<CoreConfig> configProvider;
-    private final HikariConfigHolder hikariConfigHolder;
-    private volatile DataSource dataSource;
+    private final DataSource dataSource;
 
     @Inject
     DataSourceProvider(final Provider<CoreConfig> configProvider,
                        final HikariConfigHolder hikariConfigHolder) {
-        this.configProvider = configProvider;
-        this.hikariConfigHolder = hikariConfigHolder;
-    }
-
-    private DataSource dataSource() {
+        // Create a data source.
         LOGGER.info("Creating connection provider for {}", MODULE);
         final HikariConfig config = hikariConfigHolder.getOrCreateHikariConfig(configProvider.get());
-        return new HikariDataSource(config);
+        dataSource = new HikariDataSource(config);
+
+        // Run flyway migrations.
+        flyway(dataSource);
     }
 
     private Flyway flyway(final DataSource dataSource) {
@@ -140,13 +137,13 @@ public class DataSourceProvider implements Provider<DataSource> {
 
         if (version != null && !usingFlyWay) {
             if (version.getMajor() == 4 && version.getMinor() == 0 && version.getPatch() >= 60) {
-                // If Stroom is currently at v4.0.60+ then tell FlyWay to baseline at that version.
+            // If Stroom is currently at v4.0.60+ then tell FlyWay to baseline at that version.
                 baselineVersionAsString = "4.0.60";
-            } else {
-                final String message = "The current Stroom version cannot be upgraded to v5+. You must be on v4.0.60 or later.";
-                LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
-                throw new RuntimeException(message);
-            }
+        } else {
+            final String message = "The current Stroom version cannot be upgraded to v5+. You must be on v4.0.60 or later.";
+            LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
+            throw new RuntimeException(message);
+        }
         }
 
         FluentConfiguration configuration = Flyway.configure()
@@ -180,24 +177,6 @@ public class DataSourceProvider implements Provider<DataSource> {
 
     @Override
     public DataSource get() {
-        if (dataSource == null) {
-            synchronized (this) {
-                if (dataSource == null) {
-                    // Create a data source.
-                    final DataSource ds = dataSource();
-                    // Run flyway migrations.
-                    flyway(ds);
-
-                    // Assign.
-                    dataSource = ds;
-                }
-            }
-        }
-
         return dataSource;
     }
-
-//    private C3P0Config getC3P0Config() {
-//        return new C3P0Config("stroom.db.connectionPool.", propertyService);
-//    }
 }

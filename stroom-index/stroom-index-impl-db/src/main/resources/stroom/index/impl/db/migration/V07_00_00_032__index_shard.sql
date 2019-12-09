@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS index_shard (
 --
 -- Copy data into the index table
 --
-DROP PROCEDURE IF EXISTS copy_index_shard;;
+DROP PROCEDURE IF EXISTS copy_index_shard;
 DELIMITER //
 CREATE PROCEDURE copy_index_shard ()
 BEGIN

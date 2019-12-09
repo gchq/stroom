@@ -31,6 +31,7 @@ dependencies {
     testCompile project(':stroom-dictionary:stroom-dictionary-mock')
     testCompile project(':stroom-explorer:stroom-collection-mock')
     testCompile project(':stroom-security:stroom-security-mock')
+    testCompile project(':stroom-test-common')
 
     testCompile libs.assertj_core
 
@@ -45,6 +46,4 @@ dependencies {
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
-    testRuntimeOnly libs.test_containers
-    testRuntimeOnly libs.test_containers_mysql
 }

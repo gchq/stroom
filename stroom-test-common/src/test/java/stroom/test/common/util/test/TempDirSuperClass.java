@@ -1,4 +1,4 @@
-package stroom.util.test.common;
+package stroom.test.common.util.test;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;

@@ -1,8 +1,6 @@
 package stroom.node.impl.db;
 
 import com.zaxxer.hikari.HikariConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.node.impl.NodeConfig;
 import stroom.node.impl.NodeDao;
@@ -10,7 +8,6 @@ import stroom.node.impl.NodeDao;
 import java.util.function.Function;
 
 public class NodeDbModule extends AbstractFlyWayDbModule<NodeConfig, NodeDbConnProvider> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(NodeDbModule.class);
     private static final String MODULE = "stroom-node";
     private static final String FLYWAY_LOCATIONS = "stroom/node/impl/db/migration";
     private static final String FLYWAY_TABLE = "node_schema_history";
@@ -34,27 +31,27 @@ public class NodeDbModule extends AbstractFlyWayDbModule<NodeConfig, NodeDbConnP
     }
 
     @Override
-    public String getFlyWayTableName() {
+    protected String getFlyWayTableName() {
         return FLYWAY_TABLE;
     }
 
     @Override
-    public String getModuleName() {
+    protected String getModuleName() {
         return MODULE;
     }
 
     @Override
-    public String getFlyWayLocation() {
+    protected String getFlyWayLocation() {
         return FLYWAY_LOCATIONS;
     }
 
     @Override
-    public Function<HikariConfig, NodeDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<HikariConfig, NodeDbConnProvider> getConnectionProviderConstructor() {
         return NodeDbConnProvider::new;
     }
 
     @Override
-    public Class<NodeDbConnProvider> getConnectionProviderType() {
+    protected Class<NodeDbConnProvider> getConnectionProviderType() {
         return NodeDbConnProvider.class;
     }
 }
