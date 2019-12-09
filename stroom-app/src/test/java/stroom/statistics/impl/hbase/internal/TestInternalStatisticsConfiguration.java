@@ -1,6 +1,5 @@
 package stroom.statistics.impl.hbase.internal;
 
-
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +18,6 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestInternalStatisticsConfiguration extends AbstractCoreIntegrationTest {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestInternalStatisticsConfiguration.class);
 
     @Inject

@@ -17,8 +17,6 @@
 package stroom.data.store.impl.fs.db;
 
 import com.zaxxer.hikari.HikariConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.data.store.impl.fs.DataVolumeDao;
 import stroom.data.store.impl.fs.FsFeedPathDao;
@@ -30,7 +28,6 @@ import stroom.db.util.AbstractFlyWayDbModule;
 import java.util.function.Function;
 
 public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreServiceConfig, FsDataStoreDbConnProvider> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(FsDataStoreDbModule.class);
     private static final String MODULE = "stroom-data-store";
     private static final String FLYWAY_LOCATIONS = "stroom/data/store/impl/fs/db/migration";
     private static final String FLYWAY_TABLE = "fs_schema_history";
@@ -46,27 +43,27 @@ public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreService
     }
 
     @Override
-    public String getFlyWayTableName() {
+    protected String getFlyWayTableName() {
         return FLYWAY_TABLE;
     }
 
     @Override
-    public String getModuleName() {
+    protected String getModuleName() {
         return MODULE;
     }
 
     @Override
-    public String getFlyWayLocation() {
+    protected String getFlyWayLocation() {
         return FLYWAY_LOCATIONS;
     }
 
     @Override
-    public Function<HikariConfig, FsDataStoreDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<HikariConfig, FsDataStoreDbConnProvider> getConnectionProviderConstructor() {
         return FsDataStoreDbConnProvider::new;
     }
 
     @Override
-    public Class<FsDataStoreDbConnProvider> getConnectionProviderType() {
+    protected Class<FsDataStoreDbConnProvider> getConnectionProviderType() {
         return FsDataStoreDbConnProvider.class;
     }
 }

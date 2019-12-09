@@ -179,8 +179,6 @@ dependencies {
     testRuntimeOnly libs.javax_el
     testRuntimeOnly libs.jaxb_runtime
     testRuntimeOnly libs.junit_jupiter_engine
-    testRuntimeOnly libs.test_containers
-    testRuntimeOnly libs.test_containers_mysql
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jcl_over_slf4j

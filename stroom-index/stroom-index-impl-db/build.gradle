@@ -27,6 +27,4 @@ dependencies {
     testCompile libs.mockito_core
 
     testRuntimeOnly libs.junit_jupiter_engine
-    testRuntimeOnly libs.test_containers
-    testRuntimeOnly libs.test_containers_mysql
 }

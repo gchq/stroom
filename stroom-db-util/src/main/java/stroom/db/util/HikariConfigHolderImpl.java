@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentMap;
  * It assumes that db config and pools cannot be changed at runtime
  */
 @Singleton
-public class HikariConfigHolderImpl implements HikariConfigHolder {
+class HikariConfigHolderImpl implements HikariConfigHolder {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HikariConfigHolderImpl.class);
 

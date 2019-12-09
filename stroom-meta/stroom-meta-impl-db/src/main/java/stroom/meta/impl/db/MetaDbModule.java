@@ -1,13 +1,10 @@
 package stroom.meta.impl.db;
 
 import com.zaxxer.hikari.HikariConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.meta.impl.MetaDao;
 import stroom.meta.impl.MetaFeedDao;
 import stroom.meta.impl.MetaKeyDao;
-import stroom.meta.impl.MetaModule;
 import stroom.meta.impl.MetaProcessorDao;
 import stroom.meta.impl.MetaTypeDao;
 import stroom.meta.impl.MetaValueDao;
@@ -17,7 +14,6 @@ import stroom.util.shared.Clearable;
 import java.util.function.Function;
 
 public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, MetaDbConnProvider> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(MetaModule.class);
     private static final String MODULE = "stroom-meta";
     private static final String FLYWAY_LOCATIONS = "stroom/meta/impl/db/migration";
     private static final String FLYWAY_TABLE = "meta_schema_history";
@@ -37,27 +33,27 @@ public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, Meta
     }
 
     @Override
-    public String getFlyWayTableName() {
+    protected String getFlyWayTableName() {
         return FLYWAY_TABLE;
     }
 
     @Override
-    public String getModuleName() {
+    protected String getModuleName() {
         return MODULE;
     }
 
     @Override
-    public String getFlyWayLocation() {
+    protected String getFlyWayLocation() {
         return FLYWAY_LOCATIONS;
     }
 
     @Override
-    public Function<HikariConfig, MetaDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<HikariConfig, MetaDbConnProvider> getConnectionProviderConstructor() {
         return MetaDbConnProvider::new;
     }
 
     @Override
-    public Class<MetaDbConnProvider> getConnectionProviderType() {
+    protected Class<MetaDbConnProvider> getConnectionProviderType() {
         return MetaDbConnProvider.class;
     }
 }

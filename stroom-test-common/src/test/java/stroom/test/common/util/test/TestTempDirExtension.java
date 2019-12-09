@@ -1,7 +1,6 @@
-package stroom.util.test.common;
+package stroom.test.common.util.test;
 
 import org.junit.jupiter.api.Test;
-import stroom.test.common.util.test.TempDir;
 
 import java.nio.file.Path;
 

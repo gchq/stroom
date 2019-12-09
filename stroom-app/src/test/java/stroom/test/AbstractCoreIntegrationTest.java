@@ -22,6 +22,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import stroom.db.util.HikariUtil;
 import stroom.task.api.TaskManager;
+import stroom.test.common.util.db.TestDbModule;
 import stroom.test.common.util.test.TempDir;
 
 import java.nio.file.Path;
@@ -33,7 +34,7 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
         // Let all connections know that we are in testing mode.
         HikariUtil.setTesting(true);
 
-        injector = Guice.createInjector(new CoreTestModule(true));
+        injector = Guice.createInjector(new TestDbModule(), new CoreTestModule());
 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();

@@ -33,5 +33,7 @@ CREATE TABLE IF NOT EXISTS index_volume (
   status_ms                 bigint(20) DEFAULT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY node_name_path (index_volume_group_name, node_name, path),
-  CONSTRAINT index_volume_group_link_fk_group_name FOREIGN KEY (index_volume_group_name) REFERENCES index_volume_group (name)
+  -- The FK between index volume and index volume group is the name. The name can change, so we need to explicitly allow
+  -- cascading. For an update we'll just cascade the the change down, for a delete we'll delete the index volume.
+  CONSTRAINT index_volume_group_link_fk_group_name FOREIGN KEY (index_volume_group_name) REFERENCES index_volume_group (name) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;

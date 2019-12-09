@@ -1,8 +1,6 @@
 package stroom.processor.impl.db;
 
 import com.zaxxer.hikari.HikariConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorDao;
@@ -16,7 +14,6 @@ import stroom.util.shared.Clearable;
 import java.util.function.Function;
 
 public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorConfig, ProcessorDbConnProvider> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorDbModule.class);
     private static final String MODULE = "stroom-processor";
     private static final String FLYWAY_LOCATIONS = "stroom/processor/impl/db/migration";
     private static final String FLYWAY_TABLE = "processor_schema_history";
@@ -35,27 +32,27 @@ public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorConfig, P
     }
 
     @Override
-    public String getFlyWayTableName() {
+    protected String getFlyWayTableName() {
         return FLYWAY_TABLE;
     }
 
     @Override
-    public String getModuleName() {
+    protected String getModuleName() {
         return MODULE;
     }
 
     @Override
-    public String getFlyWayLocation() {
+    protected String getFlyWayLocation() {
         return FLYWAY_LOCATIONS;
     }
 
     @Override
-    public Function<HikariConfig, ProcessorDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<HikariConfig, ProcessorDbConnProvider> getConnectionProviderConstructor() {
         return ProcessorDbConnProvider::new;
     }
 
     @Override
-    public Class<ProcessorDbConnProvider> getConnectionProviderType() {
+    protected Class<ProcessorDbConnProvider> getConnectionProviderType() {
         return ProcessorDbConnProvider.class;
     }
 }

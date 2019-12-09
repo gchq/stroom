@@ -24,6 +24,7 @@ import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.test.common.util.db.TestDbModule;
 
 import javax.inject.Inject;
 
@@ -42,7 +43,8 @@ class TestMetaTypeDaoImpl {
                 new MockClusterLockModule(),
                 new MockSecurityContextModule(),
                 new MockCollectionModule(),
-                new MockWordListProviderModule())
+                new MockWordListProviderModule(),
+                new TestDbModule())
                 .injectMembers(this);
         // Delete everything`
         cleanup.clear();
