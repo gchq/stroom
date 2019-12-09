@@ -148,14 +148,11 @@
   } ],
   "retentionExpression" : {
     "type" : "operator",
-    "op" : "AND",
     "children" : [ {
       "type" : "term",
       "field" : "EventTime",
       "condition" : "LESS_THAN",
-      "value" : "now() - 3M",
-      "enabled" : true
-    } ],
-    "enabled" : true
+      "value" : "now() - 3M"
+    } ]
   }
 }

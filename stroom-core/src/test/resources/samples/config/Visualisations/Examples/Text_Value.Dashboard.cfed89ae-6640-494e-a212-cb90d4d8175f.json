@@ -16,20 +16,14 @@
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 0,
-        "width" : 200,
-        "visible" : true,
-        "special" : false
+        "group" : 0
       }, {
         "name" : "isp_user",
         "expression" : "${isp_user}",
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 0,
-        "width" : 200,
-        "visible" : true,
-        "special" : false
+        "group" : 0
       }, {
         "name" : "Count",
         "expression" : "count()",
@@ -39,22 +33,15 @@
         },
         "format" : {
           "type" : "NUMBER"
-        },
-        "width" : 200,
-        "visible" : true,
-        "special" : false
+        }
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "width" : 200,
-        "visible" : false,
-        "special" : false
+        "visible" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
-        "width" : 200,
-        "visible" : false,
-        "special" : false
+        "visible" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
@@ -76,19 +63,16 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "timestamp",
           "condition" : "BETWEEN",
-          "value" : "2016-02-01T00:00:00.000Z,2016-04-01T00:00:00.000Z",
-          "enabled" : true
+          "value" : "2016-02-01T00:00:00.000Z,2016-04-01T00:00:00.000Z"
         }, {
           "type" : "term",
           "field" : "isp_user",
           "condition" : "EQUALS",
-          "value" : "*",
-          "enabled" : true
+          "value" : "*"
         }, {
           "type" : "operator",
           "op" : "NOT",
@@ -99,26 +83,20 @@
               "type" : "term",
               "field" : "isp_user",
               "condition" : "EQUALS",
-              "value" : "comcast",
-              "enabled" : true
+              "value" : "comcast"
             }, {
               "type" : "term",
               "field" : "isp_user",
               "condition" : "EQUALS",
-              "value" : "centurylink",
-              "enabled" : true
+              "value" : "centurylink"
             }, {
               "type" : "term",
               "field" : "isp_user",
               "condition" : "EQUALS",
-              "value" : "unknown",
-              "enabled" : true
-            } ],
-            "enabled" : true
-          } ],
-          "enabled" : true
-        } ],
-        "enabled" : true
+              "value" : "unknown"
+            } ]
+          } ]
+        } ]
       },
       "automate" : {
         "open" : true,
@@ -162,9 +140,12 @@
           "height" : 99
         },
         "tabs" : [ {
-          "id" : "query-JT8D7"
+          "id" : "query-JT8D7",
+          "visible" : true
         } ],
-        "selected" : 0
+        "selected" : 0,
+        "visibleTabCount" : 1,
+        "allTabCount" : 1
       }, {
         "type" : "tabLayout",
         "preferredSize" : {
@@ -172,9 +153,12 @@
           "height" : 200
         },
         "tabs" : [ {
-          "id" : "table-IIO1T"
+          "id" : "table-IIO1T",
+          "visible" : true
         } ],
-        "selected" : 0
+        "selected" : 0,
+        "visibleTabCount" : 1,
+        "allTabCount" : 1
       } ]
     }, {
       "type" : "tabLayout",
@@ -183,9 +167,12 @@
         "height" : 871
       },
       "tabs" : [ {
-        "id" : "vis-BX59A"
+        "id" : "vis-BX59A",
+        "visible" : true
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     } ]
   },
   "tabVisibility" : "SHOW_ALL"

@@ -30,13 +30,14 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"id", "name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "field")
 @XmlType(name = "Field", propOrder = {"id", "name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})
 public class Field implements Serializable, HasDisplayValue {
@@ -180,6 +181,8 @@ public class Field implements Serializable, HasDisplayValue {
         this.special = special;
     }
 
+    @JsonIgnore
+    @XmlTransient
     @Override
     public String getDisplayValue() {
         return name;

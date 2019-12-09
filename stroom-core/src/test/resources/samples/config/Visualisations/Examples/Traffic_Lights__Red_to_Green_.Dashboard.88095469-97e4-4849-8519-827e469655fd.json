@@ -13,9 +13,7 @@
           "type" : "GENERAL"
         },
         "group" : 0,
-        "width" : 112,
-        "visible" : true,
-        "special" : false
+        "width" : 112
       }, {
         "name" : "AirCargoTons",
         "expression" : "sum(${AirCargoTons})",
@@ -25,22 +23,15 @@
         },
         "format" : {
           "type" : "GENERAL"
-        },
-        "width" : 200,
-        "visible" : true,
-        "special" : false
+        }
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "width" : 200,
-        "visible" : false,
-        "special" : false
+        "visible" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
-        "width" : 200,
-        "visible" : false,
-        "special" : false
+        "visible" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
@@ -62,15 +53,12 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "DataExtractDate",
           "condition" : "BETWEEN",
-          "value" : "2000-10-01T00:00:00.000Z,2018-12-14T00:00:00.000Z",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "2000-10-01T00:00:00.000Z,2018-12-14T00:00:00.000Z"
+        } ]
       },
       "automate" : {
         "open" : true,
@@ -114,9 +102,12 @@
           "height" : 76
         },
         "tabs" : [ {
-          "id" : "query-JT8D7"
+          "id" : "query-JT8D7",
+          "visible" : true
         } ],
-        "selected" : 0
+        "selected" : 0,
+        "visibleTabCount" : 1,
+        "allTabCount" : 1
       }, {
         "type" : "tabLayout",
         "preferredSize" : {
@@ -124,9 +115,12 @@
           "height" : 200
         },
         "tabs" : [ {
-          "id" : "table-IIO1T"
+          "id" : "table-IIO1T",
+          "visible" : true
         } ],
-        "selected" : 0
+        "selected" : 0,
+        "visibleTabCount" : 1,
+        "allTabCount" : 1
       } ]
     }, {
       "type" : "tabLayout",
@@ -135,9 +129,12 @@
         "height" : 869
       },
       "tabs" : [ {
-        "id" : "vis-BX59A"
+        "id" : "vis-BX59A",
+        "visible" : true
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     } ]
   },
   "tabVisibility" : "SHOW_ALL"

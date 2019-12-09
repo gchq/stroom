@@ -24,6 +24,7 @@ import stroom.util.shared.Highlight;
 import stroom.util.shared.Location;
 import stroom.pipeline.xml.converter.ds3.DSLocator;
 
+import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,6 +42,7 @@ public class LocationHolder implements Holder {
     private Location currentStartLocation;
     private Location currentEndLocation;
 
+    @Inject
     public LocationHolder(final MetaHolder metaHolder) {
         this.metaHolder = metaHolder;
         reset();
