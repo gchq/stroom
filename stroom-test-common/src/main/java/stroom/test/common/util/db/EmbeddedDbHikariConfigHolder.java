@@ -8,7 +8,7 @@ import stroom.db.util.HikariUtil;
 class EmbeddedDbHikariConfigHolder implements HikariConfigHolder {
     @Override
     public HikariConfig getOrCreateHikariConfig(final HasDbConfig config) {
-//        DbTestUtil.applyConfig(DbTestUtil.getOrCreateConfig(), config.getDbConfig().getConnectionConfig());
+        DbTestUtil.applyConfig(DbTestUtil.getOrCreateConfig(), config.getDbConfig().getConnectionConfig());
         return HikariUtil.createConfig(config);
     }
 }
