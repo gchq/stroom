@@ -33,7 +33,7 @@ import java.sql.SQLException;
 
 public class V07_00_00_02__query extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_02__query.class);
-    private static JAXBContext jaxbContext;
+    private JAXBContext jaxbContext;
 
     @Override
     public void migrate(final Context context) throws Exception {
@@ -70,7 +70,7 @@ public class V07_00_00_02__query extends BaseJavaMigration {
         }
     }
 
-    private static JAXBContext getContext() {
+    private JAXBContext getContext() {
         if (jaxbContext == null) {
             try {
                 jaxbContext = JAXBContext.newInstance(Query.class);

@@ -45,12 +45,4 @@ public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest 
         injector.injectMembers(this);
         super.before(testInfo, tempDir);
     }
-
-    /**
-     * For use when you need to get an instance of a custom scoped class, e.g.
-     * {@link stroom.pipeline.scope.PipelineScope}
-     */
-    protected Injector getInjector() {
-        return injector;
-    }
 }

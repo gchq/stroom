@@ -55,6 +55,7 @@ import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Range;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -116,6 +117,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineStore pipelineStore;
 
+    @Inject
+    private Provider<RefDataStoreHolder> refDataStoreHolderProvider;
+
     @BeforeEach
     void setup() throws IOException {
 
@@ -149,10 +153,6 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
         if (Files.isDirectory(dbDir)) {
             FileUtil.deleteDir(dbDir);
         }
-    }
-
-    private RefDataStoreHolder getRefDataStoreHolder() {
-        return getInjector().getInstance(RefDataStoreHolder.class);
     }
 
     @Test
@@ -189,7 +189,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         null,
                         mockDocumentPermissionCache,
                         mockReferenceDataLoader,
-                        getRefDataStoreHolder(),
+                        refDataStoreHolderProvider.get(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
                         new MockSecurityContext());
@@ -402,7 +402,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         null,
                         mockDocumentPermissionCache,
                         mockReferenceDataLoader,
-                        getRefDataStoreHolder(),
+                        refDataStoreHolderProvider.get(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
                         new MockSecurityContext());
@@ -475,7 +475,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         null,
                         mockDocumentPermissionCache,
                         mockReferenceDataLoader,
-                        getRefDataStoreHolder(),
+                        refDataStoreHolderProvider.get(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
                         new MockSecurityContext());

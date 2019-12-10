@@ -49,7 +49,7 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     private CommonIndexingTestHelper commonIndexingTestHelper;
 
     @Override
-    protected boolean doSingleSetup() {
+    protected boolean onAfterSetup() {
         commonIndexingTestHelper.setup();
         return true;
     }

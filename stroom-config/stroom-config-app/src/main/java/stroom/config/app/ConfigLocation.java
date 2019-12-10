@@ -9,7 +9,6 @@ import java.util.Objects;
  */
 @Singleton
 public class ConfigLocation {
-
     private final Path configFilePath;
 
     public ConfigLocation(final Path configFilePath) {

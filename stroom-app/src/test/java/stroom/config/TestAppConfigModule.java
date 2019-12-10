@@ -9,12 +9,21 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.app.guice.CoreModule;
 import stroom.config.app.AppConfig;
+import stroom.config.app.AppConfigModule;
+import stroom.config.app.AppConfigModule.ConfigHolder;
 import stroom.config.app.Config;
 import stroom.config.app.YamlUtil;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.config.global.impl.ConfigMapper;
+import stroom.config.global.impl.GlobalConfigModule;
+import stroom.index.VolumeTestConfigModule;
+import stroom.meta.statistics.impl.MockMetaStatisticsModule;
+import stroom.resource.impl.ResourceModule;
+import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.CoreTestModule;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.db.TestDbModule;
@@ -34,12 +43,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 class TestAppConfigModule {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfigModule.class);
     private static final String MODIFIED_JDBC_DRIVER = "modified.jdbc.driver";
     private final static String STROOM_PACKAGE_PREFIX = "stroom.";
-
-//    private final Path tmpDir = FileUtil.createTempDir(this.getClass().getSimpleName());
 
     @AfterEach
     void afterEach() {
@@ -62,13 +68,25 @@ class TestAppConfigModule {
         Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {
-                install(new TestDbModule());
-                install(new CoreTestModule(modifiedConfig.getAppConfig()));
+                install(new AppConfigModule(new ConfigHolder() {
+                    @Override
+                    public AppConfig getAppConfig() {
+                        return modifiedConfig.getAppConfig();
+                    }
+
+                    @Override
+                    public Path getConfigFile() {
+                        return devYamlPath;
+                    }
+                }));
             }
         });
 
         AppConfig appConfig = injector.getInstance(AppConfig.class);
         CommonDbConfig commonDbConfig = injector.getInstance(CommonDbConfig.class);
+
+        // Force mapping of common db properties.
+        ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
 
         Assertions.assertThat(commonDbConfig.getConnectionPoolConfig().getPrepStmtCacheSize())
                 .isEqualTo(newValue);
@@ -85,12 +103,6 @@ class TestAppConfigModule {
                     }
                 })
                 .forEach(hasDbConfig -> {
-                    final ConnectionConfig connectionConfig = DbTestUtil.getOrCreateConfig();
-                    if (connectionConfig != null) {
-                        DbTestUtil.applyConfig(connectionConfig, hasDbConfig.getDbConfig().getConnectionConfig());
-                        DbTestUtil.applyConfig(connectionConfig, commonDbConfig.getConnectionConfig());
-                    }
-
                     Assertions.assertThat(hasDbConfig.getDbConfig().getConnectionConfig())
                             .isEqualTo(commonDbConfig.getConnectionConfig());
                     Assertions.assertThat(hasDbConfig.getDbConfig().getConnectionPoolConfig())

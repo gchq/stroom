@@ -1,8 +1,6 @@
 package stroom.config.app;
 
 import com.google.inject.AbstractModule;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.config.common.CommonDbConfig;
@@ -52,48 +50,29 @@ import stroom.ui.config.shared.ThemeConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UrlConfig;
 import stroom.util.io.PathConfig;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsConfig;
 import stroom.util.xml.ParserConfig;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class AppConfigModule extends AbstractModule {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigModule.class);
+    private final ConfigHolder configHolder;
 
-    private final AppConfig appConfig;
-    private final Path configFile;
-
-    /**
-     * Intended for test use
-     */
-    AppConfigModule(final Path configFile) {
-        try {
-            this.appConfig = YamlUtil.readAppConfig(configFile);
-            this.configFile = configFile;
-        } catch (IOException e) {
-            throw new RuntimeException(LogUtil.message("Error loading config file {}", configFile.toAbsolutePath()), e);
-        }
-    }
-
-    public AppConfigModule(final AppConfig appConfig, final Path configFile) {
-        this.appConfig = appConfig;
-        this.configFile = configFile;
+    public AppConfigModule(final ConfigHolder configHolder) {
+        this.configHolder = configHolder;
     }
 
     @Override
     protected void configure() {
-
         // Bind the de-serialised yaml config to a singleton AppConfig object, whose parts
         // can be injected all over the app.
-        bind(AppConfig.class).toInstance(appConfig);
+        bind(AppConfig.class).toInstance(configHolder.getAppConfig());
 
         // Holder for the location of the yaml config file so the AppConfigMonitor can
         // get hold of it via guice
-        bind(ConfigLocation.class).toInstance(new ConfigLocation(configFile));
+        bind(ConfigLocation.class).toInstance(new ConfigLocation(configHolder.getConfigFile()));
 
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own.
@@ -173,14 +152,14 @@ public class AppConfigModule extends AbstractModule {
     private <T extends IsConfig> void bind(
             final Function<AppConfig, T> getter,
             final Class<T> clazz) {
-        bind(appConfig, getter, clazz, null);
+        bind(configHolder.getAppConfig(), getter, clazz, null);
     }
 
     private <T extends IsConfig> void bind(
             final Function<AppConfig, T> getter,
             final Class<T> clazz,
             final Consumer<T> childConfigConsumer) {
-        bind(appConfig, getter, clazz, childConfigConsumer);
+        bind(configHolder.getAppConfig(), getter, clazz, childConfigConsumer);
     }
 
     private <X extends IsConfig, T extends IsConfig> void bind(
@@ -203,4 +182,9 @@ public class AppConfigModule extends AbstractModule {
         }
     }
 
+    public interface ConfigHolder {
+        AppConfig getAppConfig();
+
+        Path getConfigFile();
+    }
 }

@@ -214,7 +214,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     public Set<DocRef> listDocuments() {
         final List<DocRef> list = list();
         return list.stream()
-                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ) && securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ))
+                .filter(this::canRead)
                 .collect(Collectors.toSet());
     }
 
@@ -222,7 +222,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     public Map<DocRef, Set<DocRef>> getDependencies() {
         final List<DocRef> list = list();
         return list.stream()
-                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ) && securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ))
+                .filter(this::canRead)
                 .map(d -> {
                     // We need to read the document to get the name.
                     DocRef docRef = null;
@@ -237,6 +237,10 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toMap(Function.identity(), d -> Collections.emptySet()));
+    }
+
+    private boolean canRead(final DocRef docRef) {
+        return securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ);
     }
 
     @Override
@@ -510,7 +514,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                             return Optional.of(DocRefUtil.create(doc));
                         }
                     } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
+                        LOGGER.debug(e.getMessage(), e);
                     }
 
                     return Optional.empty();

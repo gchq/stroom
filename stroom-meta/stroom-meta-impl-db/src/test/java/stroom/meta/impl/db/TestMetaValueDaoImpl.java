@@ -60,7 +60,8 @@ class TestMetaValueDaoImpl {
                 new MockSecurityContextModule(),
                 new MockCollectionModule(),
                 new MockWordListProviderModule(),
-                new TestDbModule())
+                new TestDbModule(),
+                new MetaTestModule())
                 .injectMembers(this);
         metaValueConfig.setAddAsync(false);
         // Delete everything

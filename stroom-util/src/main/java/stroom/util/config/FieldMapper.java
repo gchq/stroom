@@ -13,13 +13,13 @@ import java.util.Objects;
 public class FieldMapper {
     private static final Logger LOGGER = LoggerFactory.getLogger(FieldMapper.class);
 
-    public static enum CopyOptions {
+    public enum CopyOptions {
 
         /**
          * If the source is null don't set the dest to null. Default is to set dest to source
          * even if source is null.
          */
-        DONT_COPY_NULLS;
+        DONT_COPY_NULLS
     }
 
     /**

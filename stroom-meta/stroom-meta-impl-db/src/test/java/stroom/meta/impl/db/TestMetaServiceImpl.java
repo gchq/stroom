@@ -40,7 +40,8 @@ class TestMetaServiceImpl {
                 new MockSecurityContextModule(),
                 new MockCollectionModule(),
                 new MockWordListProviderModule(),
-                new TestDbModule())
+                new TestDbModule(),
+                new MetaTestModule())
                 .injectMembers(this);
         // Delete everything
         cleanup.clear();

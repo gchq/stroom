@@ -98,7 +98,7 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
     }
 
     //    @Override
-    protected boolean doSingleSetup() {
+    protected boolean onAfterSetup() {
 
         List<Path> dataFiles = new ArrayList<>();
 //        if (!Files.exists(dataFile)) {
@@ -218,6 +218,6 @@ class TestGroupedCountsInteractiveSearch extends AbstractCoreIntegrationTest {
         commonTestControl.teardown();
         commonTestControl.setup();
 
-        doSingleSetup();
+        onAfterSetup();
     }
 }

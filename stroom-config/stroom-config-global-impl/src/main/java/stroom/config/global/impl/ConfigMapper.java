@@ -89,7 +89,6 @@ public class ConfigMapper {
 
     @Inject
     public ConfigMapper(final AppConfig appConfig) {
-
         LOGGER.debug("Initialising ConfigMapper with class {}", appConfig.getClass().getName());
 
         this.appConfig = appConfig;

@@ -43,8 +43,9 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private final KafkaProducerFactory stroomKafkaProducerFactory;
     private final HBaseStatisticsConfig internalStatisticsConfig;
     private final String docRefType;
-    private final JAXBContext jaxbContext;
     private final DatatypeFactory datatypeFactory;
+
+    private  JAXBContext jaxbContext;
 
     @Inject
     StroomStatsInternalStatisticsService(final KafkaProducerFactory stroomKafkaProducerFactory,
@@ -52,13 +53,6 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
         this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.internalStatisticsConfig = internalStatisticsConfig;
         this.docRefType = internalStatisticsConfig.getDocRefType();
-
-        try {
-            this.jaxbContext = JAXBContext.newInstance(Statistics.class);
-        } catch (JAXBException e) {
-            throw new RuntimeException(String.format("Unable to create JAXBContext for class %s",
-                    STATISTICS_CLASS.getCanonicalName()), e);
-        }
 
         try {
             this.datatypeFactory = DatatypeFactory.newInstance();
@@ -195,6 +189,15 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
 
     private Marshaller getMarshaller() {
         try {
+            if (jaxbContext == null) {
+                try {
+                    jaxbContext = JAXBContext.newInstance(Statistics.class);
+                } catch (JAXBException e) {
+                    throw new RuntimeException(String.format("Unable to create JAXBContext for class %s",
+                            STATISTICS_CLASS.getCanonicalName()), e);
+                }
+            }
+
             Marshaller marshaller = jaxbContext.createMarshaller();
             marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.FALSE);
             marshaller.setProperty(Marshaller.JAXB_ENCODING, StandardCharsets.UTF_8.name());

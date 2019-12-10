@@ -23,14 +23,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.security.api.SecurityContext;
 import stroom.test.common.util.test.StroomTest;
 import stroom.test.common.util.test.TempDir;
 import stroom.test.common.util.test.TempDirExtension;
-import stroom.test.common.util.test.TestState;
-import stroom.test.common.util.test.TestState.State;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
@@ -40,24 +35,30 @@ import java.nio.file.Path;
  */
 @ExtendWith(TempDirExtension.class)
 public abstract class StroomIntegrationTest implements StroomTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomIntegrationTest.class);
-
-    private static final boolean TEAR_DOWN_DATABASE_BETWEEEN_TESTS = true;
-    private static boolean XML_SCHEMAS_DOWNLOADED = false;
+//    private static final Logger LOGGER = LoggerFactory.getLogger(StroomIntegrationTest.class);
+//
+//    private static final boolean TEAR_DOWN_DATABASE_BETWEEEN_TESTS = true;
+//    private static boolean XML_SCHEMAS_DOWNLOADED = false;
 
     private Path testTempDir;
 
+//    @Inject
+//    private CommonTestControl commonTestControl;
+//    @Inject
+//    private ContentImportService contentImportService;
+//    @Inject
+//    private SecurityContext securityContext;
+
+
     @Inject
-    private CommonTestControl commonTestControl;
-    @Inject
-    private ContentImportService contentImportService;
-    @Inject
-    private SecurityContext securityContext;
+    private IntegrationTestSetupUtil integrationTestSetupUtil;
 
     @BeforeAll
     public static void beforeClass() {
-        final State state = TestState.getState();
-        state.reset();
+        IntegrationTestSetupUtil.reset();
+
+//        final State state = TestState.getState();
+//        state.reset();
     }
 
     @AfterAll
@@ -65,8 +66,10 @@ public abstract class StroomIntegrationTest implements StroomTest {
     }
 
     private static int getTestCount() {
-        final State state = TestState.getState();
-        return state.getClassTestCount();
+        return IntegrationTestSetupUtil.getTestCount();
+
+//        final State state = TestState.getState();
+//        return state.getClassTestCount();
     }
 
     protected void onBefore() {
@@ -80,33 +83,40 @@ public abstract class StroomIntegrationTest implements StroomTest {
      */
     @BeforeEach
     void before(final TestInfo testInfo, @TempDir final Path tempDir) {
-        securityContext.asProcessingUser(() -> {
-            LOGGER.info(String.format("Started test: %s::%s", testInfo.getTestClass().get().getName(), testInfo.getDisplayName()));
+        if (tempDir == null) {
+            throw new NullPointerException("Temp dir is null");
+        }
+        this.testTempDir = tempDir;
+        integrationTestSetupUtil.cleanup(this::onAfterSetup);
+        onBefore();
 
-            final State state = TestState.getState();
-            state.incrementTestCount();
-
-            if (tempDir == null) {
-                throw new NullPointerException("Temp dir is null");
-            }
-            this.testTempDir = tempDir;
-
-            // Setup the database if this is the first test running for this test
-            // class or if we always want to recreate the DB between tests.
-            if (teardownEnabled() && (TEAR_DOWN_DATABASE_BETWEEEN_TESTS || getTestCount() == 1)) {
-                if (!state.isDoneSetup()) {
-                    LOGGER.info("before() - commonTestControl.setup()");
-                    commonTestControl.teardown();
-                    commonTestControl.setup();
-
-                    // Some test classes only want the DB to be created once so they
-                    // return true here.
-                    state.setDoneSetup(doSingleSetup());
-                }
-            }
-
-            onBefore();
-        });
+//        securityContext.asProcessingUser(() -> {
+//            LOGGER.info(String.format("Started test: %s::%s", testInfo.getTestClass().get().getName(), testInfo.getDisplayName()));
+//
+//            final State state = TestState.getState();
+//            state.incrementTestCount();
+//
+//            if (tempDir == null) {
+//                throw new NullPointerException("Temp dir is null");
+//            }
+//            this.testTempDir = tempDir;
+//
+//            // Setup the database if this is the first test running for this test
+//            // class or if we always want to recreate the DB between tests.
+//            if (teardownEnabled() && (TEAR_DOWN_DATABASE_BETWEEEN_TESTS || getTestCount() == 1)) {
+//                if (!state.isDoneSetup()) {
+//                    LOGGER.info("before() - commonTestControl.setup()");
+//                    commonTestControl.teardown();
+//                    commonTestControl.setup();
+//
+//                    // Some test classes only want the DB to be created once so they
+//                    // return true here.
+//                    state.setDoneSetup(doSingleSetup());
+//                }
+//            }
+//
+//            onBefore();
+//        });
     }
 
     /**
@@ -123,7 +133,7 @@ public abstract class StroomIntegrationTest implements StroomTest {
      * should override this method, perform their one time setup task and then
      * return true.
      */
-    protected boolean doSingleSetup() {
+    protected boolean onAfterSetup() {
         return false;
     }
 
@@ -138,42 +148,46 @@ public abstract class StroomIntegrationTest implements StroomTest {
      * Remove all entities from the database and reinitialise required entities.
      */
     public final void clean(final boolean force) {
-        // Only bother to clean the database if we have run at least one test in
-        // this test class.
-        if (force || getTestCount() > 1) {
-            teardown(force);
-            setup(force);
-        }
+        integrationTestSetupUtil.clean(force);
+
+//        // Only bother to clean the database if we have run at least one test in
+//        // this test class.
+//        if (force || getTestCount() > 1) {
+//            teardown(force);
+//            setup(force);
+//        }
     }
 
-    /**
-     * Initialise required database entities.
-     */
-    private void setup(final boolean force) {
-        // Only bother to manually setup the database if we have run at least
-        // one test in this test class.
-        if (force || getTestCount() > 1) {
-            commonTestControl.setup();
-        }
-    }
+//    /**
+//     * Initialise required database entities.
+//     */
+//    private void setup(final boolean force) {
+//        // Only bother to manually setup the database if we have run at least
+//        // one test in this test class.
+//        if (force || getTestCount() > 1) {
+//            commonTestControl.setup();
+//        }
+//    }
 
     public void importSchemas(final boolean force) {
-        if (force || !XML_SCHEMAS_DOWNLOADED) {
-            contentImportService.importStandardPacks();
-            XML_SCHEMAS_DOWNLOADED = true;
-        }
-    }
+        integrationTestSetupUtil.importSchemas(force);
 
-    /**
-     * Remove all entities from the database.
-     */
-    private void teardown(final boolean force) {
-        // Only bother to tear down the database if we have run at least one
-        // test in this test class.
-        if (force || getTestCount() > 1) {
-            commonTestControl.teardown();
-        }
+//        if (force || !XML_SCHEMAS_DOWNLOADED) {
+//            contentImportService.importStandardPacks();
+//            XML_SCHEMAS_DOWNLOADED = true;
+//        }
     }
+//
+//    /**
+//     * Remove all entities from the database.
+//     */
+//    private void teardown(final boolean force) {
+//        // Only bother to tear down the database if we have run at least one
+//        // test in this test class.
+//        if (force || getTestCount() > 1) {
+//            commonTestControl.teardown();
+//        }
+//    }
 
     @Override
     public Path getCurrentTestDir() {
@@ -181,6 +195,6 @@ public abstract class StroomIntegrationTest implements StroomTest {
     }
 
     protected boolean teardownEnabled() {
-        return true;
+        return integrationTestSetupUtil.teardownEnabled();
     }
 }

@@ -62,7 +62,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
     private TaskManager taskManager;
 
     @Override
-    protected boolean doSingleSetup() {
+    protected boolean onAfterSetup() {
         commonIndexingTestHelper.setup();
         return true;
     }

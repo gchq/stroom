@@ -2,7 +2,8 @@ package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.setup.Environment;
-import stroom.config.global.impl.AppConfigMonitor;
+import stroom.config.app.AppConfig;
+import stroom.config.app.AppConfigModule.ConfigHolder;
 import stroom.config.app.Config;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfigModule;
@@ -20,12 +21,12 @@ import java.nio.file.Path;
 public class AppModule extends AbstractModule {
     private final Config configuration;
     private final Environment environment;
-    private final Path configFile;
+    private final ConfigHolder configHolder;
 
     public AppModule(final Config configuration, final Environment environment, final Path configFile) {
         this.configuration = configuration;
         this.environment = environment;
-        this.configFile = configFile;
+        configHolder = new ConfigHolderImpl(configuration.getAppConfig(), configFile);
     }
 
     @Override
@@ -33,7 +34,7 @@ public class AppModule extends AbstractModule {
         bind(Config.class).toInstance(configuration);
         bind(Environment.class).toInstance(environment);
 
-        install(new AppConfigModule(configuration.getAppConfig(), configFile));
+        install(new AppConfigModule(configHolder));
 
         install(new DbModule());
         install(new CoreModule());
@@ -53,5 +54,25 @@ public class AppModule extends AbstractModule {
 
         HealthCheckBinder.create(binder())
                 .bind(LogLevelInspector.class);
+    }
+
+    private static class ConfigHolderImpl implements AppConfigModule.ConfigHolder {
+        private final AppConfig appConfig;
+        private final Path path;
+
+        ConfigHolderImpl(final AppConfig appConfig, final Path path) {
+            this.appConfig = appConfig;
+            this.path = path;
+        }
+
+        @Override
+        public AppConfig getAppConfig() {
+            return appConfig;
+        }
+
+        @Override
+        public Path getConfigFile() {
+            return path;
+        }
     }
 }

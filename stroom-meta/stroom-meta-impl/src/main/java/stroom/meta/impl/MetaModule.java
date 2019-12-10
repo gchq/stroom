@@ -12,7 +12,6 @@ public class MetaModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(MetaService.class).to(MetaServiceImpl.class);
-        bind(MetaSecurityFilter.class).to(MetaSecurityFilterImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
