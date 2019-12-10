@@ -20,13 +20,9 @@ public class JobSystemConfig implements IsConfig, HasDbConfig {
     private static final int ONE_SECOND = 1000;
     private static final long DEFAULT_INTERVAL = 10 * ONE_SECOND;
 
-    private DbConfig dbConfig;
+    private DbConfig dbConfig = new DbConfig();
     private boolean enabled = true;
     private String executionInterval = "10s";
-
-    public JobSystemConfig() {
-        this.dbConfig = new DbConfig();
-    }
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {

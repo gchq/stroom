@@ -5,22 +5,14 @@ import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.shared.IsConfig;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class SecurityConfig implements IsConfig, HasDbConfig {
-    private DbConfig dbConfig;
-    private AuthenticationConfig authenticationConfig;
-    private AuthorisationConfig authorisationConfig;
-    private ContentSecurityConfig contentSecurityConfig;
-
-    public SecurityConfig() {
-        this.authenticationConfig = new AuthenticationConfig();
-        this.authorisationConfig = new AuthorisationConfig();
-        this.dbConfig = new DbConfig();
-        this.contentSecurityConfig = new ContentSecurityConfig();
-    }
+    private DbConfig dbConfig = new DbConfig();
+    private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
+    private AuthorisationConfig authorisationConfig = new AuthorisationConfig();
+    private ContentSecurityConfig contentSecurityConfig = new ContentSecurityConfig();
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {
@@ -29,14 +21,6 @@ public class SecurityConfig implements IsConfig, HasDbConfig {
 
     public void setDbConfig(final DbConfig dbConfig) {
         this.dbConfig = dbConfig;
-    }
-
-    @Inject
-    SecurityConfig(final AuthenticationConfig authenticationConfig,
-                   final AuthorisationConfig authorisationConfig) {
-        this.authenticationConfig = authenticationConfig;
-        this.authorisationConfig = authorisationConfig;
-        this.dbConfig = new DbConfig();
     }
 
     @JsonProperty("authentication")

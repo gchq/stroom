@@ -7,7 +7,6 @@ import javax.inject.Singleton;
 
 @Singleton
 public class HeapHistogramConfig implements IsConfig {
-
     private String classNameMatchRegex = "^stroom\\..*$";
     private String classNameReplacementRegex = "((?<=\\$Proxy)[0-9]+|(?<=\\$\\$)[0-9a-f]+|(?<=\\$\\$Lambda\\$)[0-9]+\\/[0-9]+)";
     private String jMapExecutable = "jmap";

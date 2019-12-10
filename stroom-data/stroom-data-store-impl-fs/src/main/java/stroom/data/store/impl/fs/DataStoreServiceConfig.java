@@ -10,17 +10,12 @@ import javax.inject.Singleton;
 
 @Singleton
 public class DataStoreServiceConfig implements IsConfig, HasDbConfig {
-
-    private DbConfig dbConfig;
+    private DbConfig dbConfig = new DbConfig();
     private String deletePurgeAge = "7d";
     private int deleteBatchSize = 1000;
     private int fileSystemCleanBatchSize = 20;
     private boolean fileSystemCleanDeleteOut;
     private String fileSystemCleanOldAge = "1d";
-
-    public DataStoreServiceConfig() {
-        this.dbConfig = new DbConfig();
-    }
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {

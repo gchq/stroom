@@ -11,8 +11,7 @@ import javax.inject.Singleton;
 @SuppressWarnings("unused")
 @Singleton
 public class ProcessorConfig implements BatchDeleteConfig, IsConfig, HasDbConfig {
-
-    private DbConfig dbConfig;
+    private DbConfig dbConfig = new DbConfig();
     private boolean assignTasks = true;
     private boolean createTasks = true;
     private String deleteAge = "1d";
@@ -21,10 +20,6 @@ public class ProcessorConfig implements BatchDeleteConfig, IsConfig, HasDbConfig
     private boolean fillTaskQueue = true;
     private int queueSize = 1000;
     private int databaseMultiInsertMaxBatchSize = 500;
-
-    public ProcessorConfig() {
-        this.dbConfig = new DbConfig();
-    }
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {

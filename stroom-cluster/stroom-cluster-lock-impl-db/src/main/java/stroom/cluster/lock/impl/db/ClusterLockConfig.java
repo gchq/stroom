@@ -9,12 +9,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ClusterLockConfig implements IsConfig, HasDbConfig {
-
-    private DbConfig dbConfig;
-
-    public ClusterLockConfig() {
-        this.dbConfig = new DbConfig();
-    }
+    private DbConfig dbConfig = new DbConfig();
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {

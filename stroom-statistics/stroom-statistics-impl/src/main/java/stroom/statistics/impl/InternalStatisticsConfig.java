@@ -17,7 +17,6 @@ import java.util.function.Function;
 
 @Singleton
 public class InternalStatisticsConfig implements IsConfig {
-
     private static final Map<InternalStatisticKey, Function<InternalStatisticsConfig, List<DocRef>>>
             KEY_TO_DOC_REFS_GETTER_MAP = new EnumMap<>(InternalStatisticKey.class);
 

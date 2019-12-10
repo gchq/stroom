@@ -7,19 +7,17 @@ import stroom.config.common.HasDbConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
 public class AnnotationConfig implements IsConfig, HasDbConfig {
-    private DbConfig dbConfig;
+    private DbConfig dbConfig = new DbConfig();
     private List<String> statusValues = new ArrayList<>();
     private List<String> standardComments = new ArrayList<>();
     private String createText = "Create Annotation";
 
     public AnnotationConfig() {
-        this.dbConfig = new DbConfig();
         statusValues.add("New");
         statusValues.add("Assigned");
         statusValues.add("Closed");

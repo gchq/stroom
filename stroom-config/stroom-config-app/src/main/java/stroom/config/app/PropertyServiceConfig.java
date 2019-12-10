@@ -9,12 +9,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class PropertyServiceConfig implements IsConfig, HasDbConfig {
-
-    private DbConfig dbConfig;
-
-    public PropertyServiceConfig() {
-        this.dbConfig = new DbConfig();
-    }
+    private DbConfig dbConfig = new DbConfig();
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {

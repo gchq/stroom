@@ -6,7 +6,6 @@ import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.util.shared.IsConfig;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
@@ -22,20 +21,8 @@ public class SearchConfig implements IsConfig {
     private int maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
     private int maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
     private String storeSize = "1000000,100,10,1";
-    private ExtractionConfig extractionConfig;
-    private IndexShardSearchConfig shardConfig;
-
-    public SearchConfig() {
-        this.extractionConfig = new ExtractionConfig();
-        this.shardConfig = new IndexShardSearchConfig();
-    }
-
-    @Inject
-    public SearchConfig(final ExtractionConfig extractionConfig,
-                        final IndexShardSearchConfig shardConfig) {
-        this.extractionConfig = extractionConfig;
-        this.shardConfig = shardConfig;
-    }
+    private ExtractionConfig extractionConfig = new ExtractionConfig();
+    private IndexShardSearchConfig shardConfig = new IndexShardSearchConfig();
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {

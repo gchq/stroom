@@ -9,14 +9,8 @@ import javax.inject.Singleton;
 
 @Singleton
 public class MetaServiceConfig implements IsConfig, HasDbConfig {
-
-    private DbConfig dbConfig;
-    private MetaValueConfig metaValueConfig;
-
-    public MetaServiceConfig() {
-        this.dbConfig = new DbConfig();
-        this.metaValueConfig = new MetaValueConfig();
-    }
+    private DbConfig dbConfig = new DbConfig();
+    private MetaValueConfig metaValueConfig = new MetaValueConfig();
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {

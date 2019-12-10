@@ -9,12 +9,10 @@ import javax.inject.Singleton;
 
 @Singleton
 public class QueryConfig implements SharedObject, IsConfig {
-
-    private InfoPopupConfig infoPopupConfig;
+    private InfoPopupConfig infoPopupConfig = new InfoPopupConfig();
 
     public QueryConfig() {
         // Default constructor necessary for GWT serialisation.
-        this.infoPopupConfig = new InfoPopupConfig();
     }
 
     @Inject

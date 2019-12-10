@@ -7,7 +7,6 @@ import javax.inject.Singleton;
 
 @Singleton
 public class IndexShardSearchConfig implements IsConfig {
-
     private static final int DEFAULT_MAX_THREADS = 4;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;
 

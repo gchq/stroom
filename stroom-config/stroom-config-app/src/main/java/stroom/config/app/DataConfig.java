@@ -7,7 +7,6 @@ import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.meta.impl.db.MetaServiceConfig;
 import stroom.util.shared.IsConfig;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
@@ -16,20 +15,6 @@ public class DataConfig implements IsConfig {
     private DataRetentionConfig dataRetentionConfig = new DataRetentionConfig();
     private DataStoreServiceConfig dataStoreServiceConfig = new DataStoreServiceConfig();
     private FsVolumeConfig fsVolumeConfig = new FsVolumeConfig();
-
-    public DataConfig() {
-    }
-
-    @Inject
-    DataConfig(final MetaServiceConfig metaServiceConfig,
-               final DataRetentionConfig dataRetentionConfig,
-               final DataStoreServiceConfig dataStoreServiceConfig,
-               final FsVolumeConfig fsVolumeConfig) {
-        this.metaServiceConfig = metaServiceConfig;
-        this.dataRetentionConfig = dataRetentionConfig;
-        this.dataStoreServiceConfig = dataStoreServiceConfig;
-        this.fsVolumeConfig = fsVolumeConfig;
-    }
 
     @JsonProperty("meta")
     public MetaServiceConfig getMetaServiceConfig() {

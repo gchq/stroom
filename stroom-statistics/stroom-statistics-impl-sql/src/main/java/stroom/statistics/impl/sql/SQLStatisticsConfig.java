@@ -7,27 +7,15 @@ import stroom.config.common.HasDbConfig;
 import stroom.statistics.impl.sql.search.SearchConfig;
 import stroom.util.shared.IsConfig;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class SQLStatisticsConfig implements IsConfig, HasDbConfig {
-    private DbConfig dbConfig;
+    private DbConfig dbConfig = new DbConfig();
     private String docRefType = "StatisticStore";
-    private SearchConfig searchConfig;
+    private SearchConfig searchConfig = new SearchConfig();
     private int statisticAggregationBatchSize = 1000000;
     private String maxProcessingAge;
-
-    public SQLStatisticsConfig() {
-        searchConfig = new SearchConfig();
-        this.dbConfig = new DbConfig();
-    }
-
-    @Inject
-    public SQLStatisticsConfig(final SearchConfig searchConfig) {
-        this.searchConfig = searchConfig;
-        this.dbConfig = new DbConfig();
-    }
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {

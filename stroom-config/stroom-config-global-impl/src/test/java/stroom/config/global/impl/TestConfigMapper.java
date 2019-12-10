@@ -515,7 +515,6 @@ class TestConfigMapper {
 //    }
 
     public static class TestConfig extends AppConfig {
-
         private String stringProp = "initial value";
         private List<String> stringListProp = new ArrayList<>();
         private List<Integer> intListProp = new ArrayList<>();
@@ -633,7 +632,6 @@ class TestConfigMapper {
 
 
     public static class TestPrimitiveConfig implements IsConfig {
-
         private boolean booleanProp = false;
         private int intProp = 123;
         private long longProp = 123L;
@@ -682,7 +680,6 @@ class TestConfigMapper {
     }
 
     public static class TestBoxedConfig implements IsConfig {
-
         private Boolean booleanProp = false;
         private Integer intProp = 123;
         private Long longProp = 123L;

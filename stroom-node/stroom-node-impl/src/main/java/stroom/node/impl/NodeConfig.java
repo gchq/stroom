@@ -7,24 +7,13 @@ import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.IsConfig;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class NodeConfig implements IsConfig, HasDbConfig {
-    private DbConfig dbConfig;
+    private DbConfig dbConfig = new DbConfig();
     private String nodeName = "tba";
-    private StatusConfig statusConfig;
-
-    public NodeConfig() {
-        this.statusConfig = new StatusConfig();
-        this.dbConfig = new DbConfig();
-    }
-
-    @Inject
-    public NodeConfig(final StatusConfig statusConfig) {
-        this.statusConfig = statusConfig;
-    }
+    private StatusConfig statusConfig = new StatusConfig();
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {

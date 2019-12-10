@@ -8,37 +8,15 @@ import stroom.pipeline.refdata.store.RefDataStoreConfig;
 import stroom.util.shared.IsConfig;
 import stroom.util.xml.ParserConfig;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class PipelineConfig implements IsConfig {
-    private AppenderConfig appenderConfig;
-    private ParserConfig parserConfig;
-    private RefDataStoreConfig refDataStoreConfig;
-    private XmlSchemaConfig xmlSchemaConfig;
-    private XsltConfig xsltConfig;
-
-    public PipelineConfig() {
-        appenderConfig = new AppenderConfig();
-        parserConfig = new ParserConfig();
-        refDataStoreConfig = new RefDataStoreConfig();
-        xmlSchemaConfig = new XmlSchemaConfig();
-        xsltConfig = new XsltConfig();
-    }
-
-    @Inject
-    public PipelineConfig(final AppenderConfig appenderConfig,
-                          final ParserConfig parserConfig,
-                          final RefDataStoreConfig refDataStoreConfig,
-                          final XmlSchemaConfig xmlSchemaConfig,
-                          final XsltConfig xsltConfig) {
-        this.appenderConfig = appenderConfig;
-        this.parserConfig = parserConfig;
-        this.refDataStoreConfig = refDataStoreConfig;
-        this.xmlSchemaConfig = xmlSchemaConfig;
-        this.xsltConfig = xsltConfig;
-    }
+    private AppenderConfig appenderConfig = new AppenderConfig();
+    private ParserConfig parserConfig = new ParserConfig();
+    private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
+    private XmlSchemaConfig xmlSchemaConfig = new XmlSchemaConfig();
+    private XsltConfig xsltConfig = new XsltConfig();
 
     @JsonProperty("appender")
     public AppenderConfig getAppenderConfig() {

@@ -6,5 +6,4 @@ package stroom.util.shared;
  * are expected to be (de)serialised from/to YAML configuration files.
  */
 public interface IsConfig {
-
 }

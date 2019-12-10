@@ -10,14 +10,9 @@ import javax.inject.Singleton;
 
 @Singleton
 public class StoredQueryConfig implements IsConfig, HasDbConfig {
-
     private int itemsRetention = 100;
     private int daysRetention = 365;
-    private DbConfig dbConfig;
-
-    public StoredQueryConfig() {
-        this.dbConfig = new DbConfig();
-    }
+    private DbConfig dbConfig = new DbConfig();
 
     @JsonPropertyDescription("The maximum number of query history items that will be retained")
     public int getItemsRetention() {

@@ -6,18 +6,12 @@ import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
-import javax.swing.text.html.Option;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Optional;
 
 @Singleton
 public class PathConfig implements IsConfig {
-    private String temp = null;
-
-    public PathConfig() {
-        temp = "/tmp";//System.getProperty("java.io.tmpdir");
-    }
+    private String temp = "/tmp";//System.getProperty("java.io.tmpdir");
 
     @ReadOnly
     @JsonPropertyDescription("Temp folder to write stuff to. Should only be set per node in application property file")

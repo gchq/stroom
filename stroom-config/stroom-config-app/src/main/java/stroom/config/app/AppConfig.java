@@ -33,150 +33,44 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.shared.IsConfig;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class AppConfig implements IsConfig {
     private boolean superDevMode;
-    private ActivityConfig activityConfig;
-    private AnnotationConfig annotationConfig;
-    private BenchmarkClusterConfig benchmarkClusterConfig;
-    private ClusterConfig clusterConfig;
-    private ClusterLockConfig clusterLockConfig;
-    private CommonDbConfig commonDbConfig;
-    private ContentPackImportConfig contentPackImportConfig;
-    private CoreConfig coreConfig;
-    private DataConfig dataConfig;
-    private DataSourceUrlConfig dataSourceUrlConfig;
-    private ExplorerConfig explorerConfig;
-    private ExportConfig exportConfig;
-    private FeedConfig feedConfig;
-    private IndexConfig indexConfig;
-    private JobSystemConfig jobSystemConfig;
-    private LifecycleConfig lifecycleConfig;
-    private NodeConfig nodeConfig;
-    private PathConfig pathConfig;
-    private PipelineConfig pipelineConfig;
-    private ProcessorConfig processorConfig;
-    private PropertyServiceConfig propertyServiceConfig;
-    private ProxyAggregationConfig proxyAggregationConfig;
-    private ReceiveDataConfig receiveDataConfig;
-    private SearchConfig searchConfig;
-    private SearchableConfig searchableConfig;
-    private SecurityConfig securityConfig;
-    private ServiceDiscoveryConfig serviceDiscoveryConfig;
-    private SessionCookieConfig sessionCookieConfig;
-    private SolrSearchConfig solrSearchConfig;
-    private StatisticsConfig statisticsConfig;
-    private StoredQueryConfig storedQueryConfig;
-    private UiConfig uiConfig;
-    private VolumeConfig volumeConfig;
-
-    public AppConfig() {
-        this.activityConfig = new ActivityConfig();
-        this.annotationConfig = new AnnotationConfig();
-        this.benchmarkClusterConfig = new BenchmarkClusterConfig();
-        this.clusterConfig = new ClusterConfig();
-        this.clusterLockConfig = new ClusterLockConfig();
-        this.commonDbConfig = new CommonDbConfig();
-        this.contentPackImportConfig = new ContentPackImportConfig();
-        this.coreConfig = new CoreConfig();
-        this.dataConfig = new DataConfig();
-        this.dataSourceUrlConfig = new DataSourceUrlConfig();
-        this.explorerConfig = new ExplorerConfig();
-        this.exportConfig = new ExportConfig();
-        this.feedConfig = new FeedConfig();
-        this.indexConfig = new IndexConfig();
-        this.jobSystemConfig = new JobSystemConfig();
-        this.lifecycleConfig = new LifecycleConfig();
-        this.nodeConfig = new NodeConfig();
-        this.pathConfig = new PathConfig();
-        this.pipelineConfig = new PipelineConfig();
-        this.processorConfig = new ProcessorConfig();
-        this.propertyServiceConfig = new PropertyServiceConfig();
-        this.proxyAggregationConfig = new ProxyAggregationConfig();
-        this.receiveDataConfig = new ReceiveDataConfig();
-        this.searchConfig = new SearchConfig();
-        this.searchableConfig = new SearchableConfig();
-        this.solrSearchConfig = new SolrSearchConfig();
-        this.securityConfig = new SecurityConfig();
-        this.serviceDiscoveryConfig = new ServiceDiscoveryConfig();
-        this.sessionCookieConfig = new SessionCookieConfig();
-        this.statisticsConfig = new StatisticsConfig();
-        this.storedQueryConfig = new StoredQueryConfig();
-        this.uiConfig = new UiConfig();
-        this.volumeConfig = new VolumeConfig();
-    }
-
-    @Inject
-    AppConfig(final ActivityConfig activityConfig,
-              final AnnotationConfig annotationConfig,
-              final BenchmarkClusterConfig benchmarkClusterConfig,
-              final ClusterConfig clusterConfig,
-              final ClusterLockConfig clusterLockConfig,
-              final ContentPackImportConfig contentPackImportConfig,
-              final CommonDbConfig commonDbConfig,
-              final CoreConfig coreConfig,
-              final DataConfig dataConfig,
-              final DataSourceUrlConfig dataSourceUrlConfig,
-              final ExplorerConfig explorerConfig,
-              final ExportConfig exportConfig,
-              final FeedConfig feedConfig,
-              final IndexConfig indexConfig,
-              final JobSystemConfig jobSystemConfig,
-              final LifecycleConfig lifecycleConfig,
-              final NodeConfig nodeConfig,
-              final PathConfig pathConfig,
-              final PipelineConfig pipelineConfig,
-              final ProcessorConfig processorConfig,
-              final PropertyServiceConfig propertyServiceConfig,
-              final ProxyAggregationConfig proxyAggregationConfig,
-              final ReceiveDataConfig receiveDataConfig,
-              final SearchConfig searchConfig,
-              final SearchableConfig searchableConfig,
-              final SolrSearchConfig solrSearchConfig,
-              final SecurityConfig securityConfig,
-              final ServiceDiscoveryConfig serviceDiscoveryConfig,
-              final SessionCookieConfig sessionCookieConfig,
-              final StatisticsConfig statisticsConfig,
-              final StoredQueryConfig storedQueryConfig,
-              final UiConfig uiConfig,
-              final VolumeConfig volumeConfig) {
-        this.activityConfig = activityConfig;
-        this.annotationConfig = annotationConfig;
-        this.benchmarkClusterConfig = benchmarkClusterConfig;
-        this.clusterConfig = clusterConfig;
-        this.clusterLockConfig = clusterLockConfig;
-        this.contentPackImportConfig = contentPackImportConfig;
-        this.commonDbConfig = commonDbConfig;
-        this.coreConfig = coreConfig;
-        this.dataConfig = dataConfig;
-        this.dataSourceUrlConfig = dataSourceUrlConfig;
-        this.explorerConfig = explorerConfig;
-        this.exportConfig = exportConfig;
-        this.feedConfig = feedConfig;
-        this.indexConfig = indexConfig;
-        this.jobSystemConfig = jobSystemConfig;
-        this.lifecycleConfig = lifecycleConfig;
-        this.nodeConfig = nodeConfig;
-        this.pathConfig = pathConfig;
-        this.pipelineConfig = pipelineConfig;
-        this.processorConfig = processorConfig;
-        this.propertyServiceConfig = propertyServiceConfig;
-        this.proxyAggregationConfig = proxyAggregationConfig;
-        this.receiveDataConfig = receiveDataConfig;
-        this.searchConfig = searchConfig;
-        this.searchableConfig = searchableConfig;
-        this.solrSearchConfig = solrSearchConfig;
-        this.securityConfig = securityConfig;
-        this.serviceDiscoveryConfig = serviceDiscoveryConfig;
-        this.sessionCookieConfig = sessionCookieConfig;
-        this.statisticsConfig = statisticsConfig;
-        this.storedQueryConfig = storedQueryConfig;
-        this.uiConfig = uiConfig;
-        this.volumeConfig = volumeConfig;
-    }
+    private ActivityConfig activityConfig = new ActivityConfig();
+    private AnnotationConfig annotationConfig = new AnnotationConfig();
+    private BenchmarkClusterConfig benchmarkClusterConfig = new BenchmarkClusterConfig();
+    private ClusterConfig clusterConfig = new ClusterConfig();
+    private ClusterLockConfig clusterLockConfig = new ClusterLockConfig();
+    private CommonDbConfig commonDbConfig = new CommonDbConfig();
+    private ContentPackImportConfig contentPackImportConfig = new ContentPackImportConfig();
+    private CoreConfig coreConfig = new CoreConfig();
+    private DataConfig dataConfig = new DataConfig();
+    private DataSourceUrlConfig dataSourceUrlConfig = new DataSourceUrlConfig();
+    private ExplorerConfig explorerConfig = new ExplorerConfig();
+    private ExportConfig exportConfig = new ExportConfig();
+    private FeedConfig feedConfig = new FeedConfig();
+    private IndexConfig indexConfig = new IndexConfig();
+    private JobSystemConfig jobSystemConfig = new JobSystemConfig();
+    private LifecycleConfig lifecycleConfig = new LifecycleConfig();
+    private NodeConfig nodeConfig = new NodeConfig();
+    private PathConfig pathConfig = new PathConfig();
+    private PipelineConfig pipelineConfig = new PipelineConfig();
+    private ProcessorConfig processorConfig = new ProcessorConfig();
+    private PropertyServiceConfig propertyServiceConfig = new PropertyServiceConfig();
+    private ProxyAggregationConfig proxyAggregationConfig = new ProxyAggregationConfig();
+    private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
+    private SearchConfig searchConfig = new SearchConfig();
+    private SearchableConfig searchableConfig = new SearchableConfig();
+    private SecurityConfig securityConfig = new SecurityConfig();
+    private ServiceDiscoveryConfig serviceDiscoveryConfig = new ServiceDiscoveryConfig();
+    private SessionCookieConfig sessionCookieConfig = new SessionCookieConfig();
+    private SolrSearchConfig solrSearchConfig = new SolrSearchConfig();
+    private StatisticsConfig statisticsConfig = new StatisticsConfig();
+    private StoredQueryConfig storedQueryConfig = new StoredQueryConfig();
+    private UiConfig uiConfig = new UiConfig();
+    private VolumeConfig volumeConfig = new VolumeConfig();
 
     @JsonProperty("superDevMode")
     public boolean isSuperDevMode() {

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.util.shared.IsConfig;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
@@ -21,16 +20,7 @@ public class SolrSearchConfig implements IsConfig {
     private int maxStoredDataQueueSize = DEFAULT_MAX_STORED_DATA_QUEUE_SIZE;
     private int maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
     private String storeSize = "1000000,100,10,1";
-    private ExtractionConfig extractionConfig;
-
-    public SolrSearchConfig() {
-        this.extractionConfig = new ExtractionConfig();
-    }
-
-    @Inject
-    public SolrSearchConfig(final ExtractionConfig extractionConfig) {
-        this.extractionConfig = extractionConfig;
-    }
+    private ExtractionConfig extractionConfig = new ExtractionConfig();
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {

@@ -9,12 +9,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ActivityConfig implements IsConfig, HasDbConfig {
-
-    private DbConfig dbConfig;
-
-    public ActivityConfig() {
-        this.dbConfig = new DbConfig();
-    }
+    private DbConfig dbConfig = new DbConfig();
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {

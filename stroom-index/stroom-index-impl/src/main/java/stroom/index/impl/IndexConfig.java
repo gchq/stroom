@@ -10,15 +10,9 @@ import javax.inject.Singleton;
 
 @Singleton
 public class IndexConfig implements IsConfig, HasDbConfig {
-
-    private DbConfig dbConfig;
+    private DbConfig dbConfig = new DbConfig();
     private int ramBufferSizeMB = 1024;
-    private IndexWriterConfig indexWriterConfig;
-
-    public IndexConfig() {
-        this.dbConfig = new DbConfig();
-        this.indexWriterConfig = new IndexWriterConfig();
-    }
+    private IndexWriterConfig indexWriterConfig = new IndexWriterConfig();
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {
