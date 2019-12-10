@@ -51,6 +51,7 @@ class TestAppConfigModule {
 
         // Modify the value on the common connection pool so it gets applied to all other config objects
         final Config modifiedConfig = YamlUtil.readConfig(devYamlPath);
+        modifiedConfig.getAppConfig().getCommonDbConfig().getConnectionPoolConfig().setPrepStmtCacheSize(250);
         int currentValue = modifiedConfig.getAppConfig().getCommonDbConfig().getConnectionPoolConfig().getPrepStmtCacheSize();
         int newValue = currentValue + 1000;
 
