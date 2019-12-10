@@ -8,7 +8,7 @@ import org.flywaydb.core.api.configuration.FluentConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.db.util.HikariConfigHolder;
+import stroom.db.util.HikariConfigFactory;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;
@@ -31,10 +31,10 @@ public class DataSourceProvider implements Provider<DataSource> {
 
     @Inject
     DataSourceProvider(final Provider<CoreConfig> configProvider,
-                       final HikariConfigHolder hikariConfigHolder) {
+                       final HikariConfigFactory hikariConfigFactory) {
         // Create a data source.
         LOGGER.info("Creating connection provider for {}", MODULE);
-        final HikariConfig config = hikariConfigHolder.getOrCreateHikariConfig(configProvider.get());
+        final HikariConfig config = hikariConfigFactory.create(configProvider.get());
         dataSource = new HikariDataSource(config);
 
         // Run flyway migrations.

@@ -21,7 +21,7 @@ import com.google.inject.Provides;
 import com.zaxxer.hikari.HikariConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.db.util.HikariConfigHolder;
+import stroom.db.util.HikariConfigFactory;
 import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
@@ -55,9 +55,9 @@ public class DataSourceModule extends AbstractModule {
     @Provides
     @Singleton
     CoreDbConnProvider getConnectionProvider(final Provider<CoreConfig> configProvider,
-                                             final HikariConfigHolder hikariConfigHolder) {
+                                             final HikariConfigFactory hikariConfigFactory) {
         LOGGER.info("Creating connection provider for {}", MODULE);
-        final HikariConfig config = hikariConfigHolder.getOrCreateHikariConfig(configProvider.get());
+        final HikariConfig config = hikariConfigFactory.create(configProvider.get());
         final CoreDbConnProvider coreDbConnProvider = new CoreDbConnProvider(config);
 //        flyway(connectionProvider);
         return coreDbConnProvider;

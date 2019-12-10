@@ -6,6 +6,6 @@ public class DbModule extends AbstractModule {
     @Override
     protected void configure() {
         super.configure();
-        bind(HikariConfigHolder.class).to(HikariConfigHolderImpl.class);
+        bind(HikariConfigFactory.class).to(HikariConfigFactoryImpl.class);
     }
 }

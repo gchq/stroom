@@ -16,26 +16,25 @@
 
 package stroom.test;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
+import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
+import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.test.common.util.test.TempDir;
 
+import javax.inject.Inject;
 import java.nio.file.Path;
 
-
+@ExtendWith(GuiceExtension.class)
+@IncludeModule(MockServiceModule.class)
 public abstract class AbstractProcessIntegrationTest extends StroomIntegrationTest {
-    private static final Injector injector;
-
-    static {
-        injector = Guice.createInjector(new MockServiceModule());
-    }
+    @Inject
+    private IntegrationTestSetupUtil integrationTestSetupUtil;
 
     @BeforeEach
     void before(final TestInfo testInfo, @TempDir final Path tempDir) {
-        injector.injectMembers(this);
         super.before(testInfo, tempDir);
-        super.importSchemas(true);
+        integrationTestSetupUtil.importSchemas(true);
     }
 }

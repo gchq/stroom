@@ -67,10 +67,6 @@ public class MockServiceModule extends AbstractModule {
         install(new stroom.test.MockTestControlModule());
         install(new MockServletModule());
         install(new MockXmlSchemaModule());
-//        install(new stroom.document.DocumentModule());
-//        install(new stroom.entity.MockEntityModule());
-//        install(new stroom.properties.mock.MockPropertyModule());
-//        install(new stroom.servlet.MockServletModule());
 
         final UserService mockUserService = mock(UserService.class);
         when(mockUserService.loadByUuid(any())).then((Answer<User>) invocation -> {

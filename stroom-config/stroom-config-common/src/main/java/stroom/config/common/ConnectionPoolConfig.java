@@ -16,15 +16,21 @@
 
 package stroom.config.common;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.IsConfig;
 
 import java.util.Objects;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class ConnectionPoolConfig implements IsConfig {
     private boolean cachePrepStmts = true;
     private int prepStmtCacheSize = 250;
     private int prepStmtCacheSqlLimit = 2048;
+    private Long idleTimeout;
+    private Long maxLifetime;
+    private Integer maxPoolSize;
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     public boolean isCachePrepStmts() {
@@ -53,6 +59,58 @@ public class ConnectionPoolConfig implements IsConfig {
         this.prepStmtCacheSqlLimit = prepStmtCacheSqlLimit;
     }
 
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    public Long getIdleTimeout() {
+        return idleTimeout;
+    }
+
+    public void setIdleTimeout(final Long idleTimeout) {
+        this.idleTimeout = idleTimeout;
+    }
+
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    public Long getMaxLifetime() {
+        return maxLifetime;
+    }
+
+    public void setMaxLifetime(final Long maxLifetime) {
+        this.maxLifetime = maxLifetime;
+    }
+
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    public Integer getMaxPoolSize() {
+        return maxPoolSize;
+    }
+
+    public void setMaxPoolSize(final Integer maxPoolSize) {
+        this.maxPoolSize = maxPoolSize;
+    }
+
+//    @Override
+//    public boolean equals(final Object o) {
+//        if (this == o) return true;
+//        if (o == null || getClass() != o.getClass()) return false;
+//        final ConnectionPoolConfig that = (ConnectionPoolConfig) o;
+//        return cachePrepStmts == that.cachePrepStmts &&
+//                prepStmtCacheSize == that.prepStmtCacheSize &&
+//                prepStmtCacheSqlLimit == that.prepStmtCacheSqlLimit;
+//    }
+//
+//    @Override
+//    public int hashCode() {
+//        return Objects.hash(cachePrepStmts, prepStmtCacheSize, prepStmtCacheSqlLimit);
+//    }
+//
+//    @Override
+//    public String toString() {
+//        return "ConnectionPoolConfig{" +
+//                "cachePrepStmts=" + cachePrepStmts +
+//                ", prepStmtCacheSize=" + prepStmtCacheSize +
+//                ", prepStmtCacheSqlLimit=" + prepStmtCacheSqlLimit +
+//                '}';
+//    }
+
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) return true;
@@ -60,23 +118,17 @@ public class ConnectionPoolConfig implements IsConfig {
         final ConnectionPoolConfig that = (ConnectionPoolConfig) o;
         return cachePrepStmts == that.cachePrepStmts &&
                 prepStmtCacheSize == that.prepStmtCacheSize &&
-                prepStmtCacheSqlLimit == that.prepStmtCacheSqlLimit;
+                prepStmtCacheSqlLimit == that.prepStmtCacheSqlLimit &&
+                Objects.equals(idleTimeout, that.idleTimeout) &&
+                Objects.equals(maxLifetime, that.maxLifetime) &&
+                Objects.equals(maxPoolSize, that.maxPoolSize);
     }
 
     @Override
     public int hashCode() {
-
-        return Objects.hash(cachePrepStmts, prepStmtCacheSize, prepStmtCacheSqlLimit);
+        return Objects.hash(cachePrepStmts, prepStmtCacheSize, prepStmtCacheSqlLimit, idleTimeout, maxLifetime, maxPoolSize);
     }
 
-    @Override
-    public String toString() {
-        return "ConnectionPoolConfig{" +
-                "cachePrepStmts=" + cachePrepStmts +
-                ", prepStmtCacheSize=" + prepStmtCacheSize +
-                ", prepStmtCacheSqlLimit=" + prepStmtCacheSqlLimit +
-                '}';
-    }
     public static class Builder {
         private final ConnectionPoolConfig instance;
 
@@ -92,10 +144,12 @@ public class ConnectionPoolConfig implements IsConfig {
             this.instance.setCachePrepStmts(value);
             return this;
         }
+
         public Builder withPrepStmtCacheSize(final int value) {
             this.instance.setPrepStmtCacheSize(value);
             return this;
         }
+
         public Builder withPrepStmtCacheSqlLimit(final int value) {
             this.instance.setPrepStmtCacheSqlLimit(value);
             return this;

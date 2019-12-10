@@ -1,12 +1,12 @@
 package stroom.test.common.util.db;
 
 import com.google.inject.AbstractModule;
-import stroom.db.util.HikariConfigHolder;
+import stroom.db.util.HikariConfigFactory;
 
 public class TestDbModule extends AbstractModule {
     @Override
     protected void configure() {
         super.configure();
-        bind(HikariConfigHolder.class).to(EmbeddedDbHikariConfigHolder.class);
+        bind(HikariConfigFactory.class).to(EmbeddedDbHikariConfigFactory.class);
     }
 }

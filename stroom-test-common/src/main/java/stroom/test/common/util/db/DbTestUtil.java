@@ -13,7 +13,7 @@ import com.wix.mysql.distribution.Version;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
-import stroom.db.util.HikariConfigHolder;
+import stroom.db.util.HikariConfigFactory;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -54,7 +54,7 @@ public class DbTestUtil {
     public static <T_Config extends HasDbConfig, T_ConnProvider extends DataSource> T_ConnProvider getTestDbDatasource(
             final AbstractFlyWayDbModule<T_Config, T_ConnProvider> dbModule,
             final T_Config config) {
-        return dbModule.getConnectionProvider(() -> config, new EmbeddedDbHikariConfigHolder());
+        return dbModule.getConnectionProvider(() -> config, new EmbeddedDbHikariConfigFactory());
     }
 
     public static Injector overrideModuleWithTestDatabase(final AbstractModule sourceModule) {
@@ -63,7 +63,7 @@ public class DbTestUtil {
                     @Override
                     protected void configure() {
                         super.configure();
-                        bind(HikariConfigHolder.class).toInstance(new EmbeddedDbHikariConfigHolder());
+                        bind(HikariConfigFactory.class).toInstance(new EmbeddedDbHikariConfigFactory());
                     }
                 }));
     }

@@ -19,19 +19,17 @@ import java.util.concurrent.ConcurrentMap;
  * It assumes that db config and pools cannot be changed at runtime
  */
 @Singleton
-class HikariConfigHolderImpl implements HikariConfigHolder {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(HikariConfigHolderImpl.class);
+class HikariConfigFactoryImpl implements HikariConfigFactory {
+    private static final Logger LOGGER = LoggerFactory.getLogger(HikariConfigFactoryImpl.class);
 
     private final ConcurrentMap<DbConfig, HikariConfigWrapper> dbConfigToHikariConfigMap = new ConcurrentHashMap<>();
 
-    public HikariConfigHolderImpl() {
+    public HikariConfigFactoryImpl() {
         LOGGER.debug("Initialising {}", this.getClass().getSimpleName());
     }
 
     @Override
-    public HikariConfig getOrCreateHikariConfig(final HasDbConfig config) {
-
+    public HikariConfig create(final HasDbConfig config) {
         String requestingConfigClass = config.getClass().getSimpleName();
         LOGGER.debug("Getting Hikari database config for {}, current map size {}",
                 requestingConfigClass, dbConfigToHikariConfigMap.size());

@@ -69,10 +69,11 @@ class MetaValueDaoImpl implements MetaValueDao {
     @Override
     public void addAttributes(final Meta meta, final AttributeMap attributes) {
         attributes.forEach((k, v) -> {
-            try {
-                final Long longValue = Long.valueOf(v);
-                final Optional<Integer> optional = metaKeyService.getIdForName(k);
-                optional.ifPresent(keyId -> {
+            final Optional<Integer> optional = metaKeyService.getIdForName(k);
+            optional.ifPresent(keyId -> {
+                try {
+                    final Long longValue = Long.valueOf(v);
+
                     MetaValRecord record = new MetaValRecord();
                     record.setCreateTime(meta.getCreateMs());
                     record.setMetaId(meta.getId());
@@ -84,10 +85,10 @@ class MetaValueDaoImpl implements MetaValueDao {
                     } else {
                         insertRecords(Collections.singletonList(record));
                     }
-                });
-            } catch (final NumberFormatException e) {
-                LOGGER.debug(e.getMessage(), e);
-            }
+                } catch (final NumberFormatException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                }
+            });
         });
     }
 

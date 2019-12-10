@@ -47,10 +47,10 @@ public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_Con
     @Provides
     @Singleton
     public T_ConnProvider getConnectionProvider(final Provider<T_Config> configProvider,
-                                                final HikariConfigHolder hikariConfigHolder) {
+                                                final HikariConfigFactory hikariConfigFactory) {
         LOGGER.info("Creating connection provider for {}", getModuleName());
 
-        final HikariConfig config = hikariConfigHolder.getOrCreateHikariConfig(configProvider.get());
+        final HikariConfig config = hikariConfigFactory.create(configProvider.get());
         // We could do this with reflection and getConnectionProviderType but sacrifices type safety
         T_ConnProvider connectionProvider = getConnectionProviderConstructor().apply(config);
 

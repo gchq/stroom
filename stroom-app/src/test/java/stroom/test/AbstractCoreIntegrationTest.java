@@ -16,33 +16,13 @@
 
 package stroom.test;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.TestInfo;
-import stroom.db.util.HikariUtil;
-import stroom.task.api.TaskManager;
+import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
+import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
+import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.test.common.util.db.TestDbModule;
-import stroom.test.common.util.test.TempDir;
 
-import java.nio.file.Path;
-
+@ExtendWith(GuiceExtension.class)
+@IncludeModule(TestDbModule.class)
+@IncludeModule(CoreTestModule.class)
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
-    private static final Injector injector;
-
-    static {
-        // Let all connections know that we are in testing mode.
-        HikariUtil.setTesting(true);
-
-        injector = Guice.createInjector(new TestDbModule(), new CoreTestModule());
-
-        // Start task manager
-        injector.getInstance(TaskManager.class).startup();
-    }
-
-    @BeforeEach
-    void before(final TestInfo testInfo, @TempDir final Path tempDir) {
-        injector.injectMembers(this);
-        super.before(testInfo, tempDir);
-    }
 }
