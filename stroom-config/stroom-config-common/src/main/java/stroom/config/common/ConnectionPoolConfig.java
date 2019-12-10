@@ -25,37 +25,37 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_DEFAULT)
 public class ConnectionPoolConfig implements IsConfig {
-    private boolean cachePrepStmts = true;
-    private int prepStmtCacheSize = 250;
-    private int prepStmtCacheSqlLimit = 2048;
+    private Boolean cachePrepStmts;
+    private Integer prepStmtCacheSize;
+    private Integer prepStmtCacheSqlLimit;
     private Long idleTimeout;
     private Long maxLifetime;
     private Integer maxPoolSize;
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    public boolean isCachePrepStmts() {
+    public Boolean getCachePrepStmts() {
         return cachePrepStmts;
     }
 
-    public void setCachePrepStmts(final boolean cachePrepStmts) {
+    public void setCachePrepStmts(final Boolean cachePrepStmts) {
         this.cachePrepStmts = cachePrepStmts;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    public int getPrepStmtCacheSize() {
+    public Integer getPrepStmtCacheSize() {
         return prepStmtCacheSize;
     }
 
-    public void setPrepStmtCacheSize(final int prepStmtCacheSize) {
+    public void setPrepStmtCacheSize(final Integer prepStmtCacheSize) {
         this.prepStmtCacheSize = prepStmtCacheSize;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    public int getPrepStmtCacheSqlLimit() {
+    public Integer getPrepStmtCacheSqlLimit() {
         return prepStmtCacheSqlLimit;
     }
 
-    public void setPrepStmtCacheSqlLimit(final int prepStmtCacheSqlLimit) {
+    public void setPrepStmtCacheSqlLimit(final Integer prepStmtCacheSqlLimit) {
         this.prepStmtCacheSqlLimit = prepStmtCacheSqlLimit;
     }
 

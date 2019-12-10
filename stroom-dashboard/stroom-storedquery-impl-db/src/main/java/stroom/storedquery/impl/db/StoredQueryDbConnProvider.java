@@ -1,10 +1,11 @@
 package stroom.storedquery.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import stroom.db.util.DataSourceProxy;
 
-class StoredQueryDbConnProvider extends HikariDataSource {
-    StoredQueryDbConnProvider(final HikariConfig configuration) {
-        super(configuration);
+import javax.sql.DataSource;
+
+class StoredQueryDbConnProvider extends DataSourceProxy {
+    StoredQueryDbConnProvider(final DataSource dataSource) {
+        super(dataSource);
     }
 }

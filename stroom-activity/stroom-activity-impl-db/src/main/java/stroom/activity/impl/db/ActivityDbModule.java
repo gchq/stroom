@@ -1,10 +1,10 @@
 package stroom.activity.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.activity.impl.ActivityDao;
 import stroom.activity.impl.ActivityModule;
 import stroom.db.util.AbstractFlyWayDbModule;
 
+import javax.sql.DataSource;
 import java.util.function.Function;
 
 public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityConfig, ActivityDbConnProvider> {
@@ -36,7 +36,7 @@ public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityConfig, Act
     }
 
     @Override
-    protected Function<HikariConfig, ActivityDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<DataSource, ActivityDbConnProvider> getConnectionProviderConstructor() {
         return ActivityDbConnProvider::new;
     }
 

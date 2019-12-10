@@ -1,10 +1,11 @@
 package stroom.job.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import stroom.db.util.DataSourceProxy;
 
-class JobDbConnProvider extends HikariDataSource {
-    JobDbConnProvider(final HikariConfig configuration) {
-        super(configuration);
+import javax.sql.DataSource;
+
+class JobDbConnProvider extends DataSourceProxy {
+    JobDbConnProvider(final DataSource dataSource) {
+        super(dataSource);
     }
 }

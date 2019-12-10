@@ -1,11 +1,11 @@
 package stroom.job.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.job.impl.JobDao;
 import stroom.job.impl.JobNodeDao;
 import stroom.job.impl.JobSystemConfig;
 
+import javax.sql.DataSource;
 import java.util.function.Function;
 
 public class JobDbModule extends AbstractFlyWayDbModule<JobSystemConfig, JobDbConnProvider> {
@@ -36,7 +36,7 @@ public class JobDbModule extends AbstractFlyWayDbModule<JobSystemConfig, JobDbCo
     }
 
     @Override
-    protected Function<HikariConfig, JobDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<DataSource, JobDbConnProvider> getConnectionProviderConstructor() {
         return JobDbConnProvider::new;
     }
 

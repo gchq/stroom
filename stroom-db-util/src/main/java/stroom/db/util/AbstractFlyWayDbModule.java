@@ -2,7 +2,6 @@ package stroom.db.util;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
@@ -17,7 +16,7 @@ import javax.sql.DataSource;
 import java.util.function.Function;
 
 /**
- * @param <T_Config> A config class that implements {@link HasDbConfig}
+ * @param <T_Config>       A config class that implements {@link HasDbConfig}
  * @param <T_ConnProvider> A class that extends {@link HikariDataSource}
  */
 public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_ConnProvider extends DataSource>
@@ -31,7 +30,7 @@ public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_Con
 
     protected abstract String getModuleName();
 
-    protected abstract Function<HikariConfig, T_ConnProvider> getConnectionProviderConstructor();
+    protected abstract Function<DataSource, T_ConnProvider> getConnectionProviderConstructor();
 
     protected abstract Class<T_ConnProvider> getConnectionProviderType();
 
@@ -47,14 +46,15 @@ public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_Con
     @Provides
     @Singleton
     public T_ConnProvider getConnectionProvider(final Provider<T_Config> configProvider,
-                                                final HikariConfigFactory hikariConfigFactory) {
+                                                final DataSourceFactory dataSourceFactory) {
         LOGGER.info("Creating connection provider for {}", getModuleName());
 
-        final HikariConfig config = hikariConfigFactory.create(configProvider.get());
-        // We could do this with reflection and getConnectionProviderType but sacrifices type safety
-        T_ConnProvider connectionProvider = getConnectionProviderConstructor().apply(config);
+        final DataSource dataSource = dataSourceFactory.create(configProvider.get());
 
-        runFlywayMigration(connectionProvider);
+        // We could do this with reflection and getConnectionProviderType but sacrifices type safety
+        T_ConnProvider connectionProvider = getConnectionProviderConstructor().apply(dataSource);
+
+        runFlywayMigration(dataSource);
 
         return connectionProvider;
     }

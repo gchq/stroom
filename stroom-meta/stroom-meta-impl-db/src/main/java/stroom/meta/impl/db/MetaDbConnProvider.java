@@ -1,10 +1,11 @@
 package stroom.meta.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import stroom.db.util.DataSourceProxy;
 
-public class MetaDbConnProvider extends HikariDataSource {
-    MetaDbConnProvider(final HikariConfig configuration) {
-        super(configuration);
+import javax.sql.DataSource;
+
+public class MetaDbConnProvider extends DataSourceProxy {
+    MetaDbConnProvider(final DataSource dataSource) {
+        super(dataSource);
     }
 }

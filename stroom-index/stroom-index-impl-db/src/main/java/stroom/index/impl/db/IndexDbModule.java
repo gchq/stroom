@@ -1,12 +1,12 @@
 package stroom.index.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
 
+import javax.sql.DataSource;
 import java.util.function.Function;
 
 public class IndexDbModule extends AbstractFlyWayDbModule<IndexConfig, IndexDbConnProvider> {
@@ -38,7 +38,7 @@ public class IndexDbModule extends AbstractFlyWayDbModule<IndexConfig, IndexDbCo
     }
 
     @Override
-    protected Function<HikariConfig, IndexDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<DataSource, IndexDbConnProvider> getConnectionProviderConstructor() {
         return IndexDbConnProvider::new;
     }
 

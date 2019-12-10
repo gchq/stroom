@@ -1,10 +1,11 @@
 package stroom.cluster.lock.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import stroom.db.util.DataSourceProxy;
 
-class ClusterLockDbConnProvider extends HikariDataSource {
-    ClusterLockDbConnProvider(final HikariConfig configuration) {
-        super(configuration);
+import javax.sql.DataSource;
+
+class ClusterLockDbConnProvider extends DataSourceProxy {
+    ClusterLockDbConnProvider(final DataSource dataSource) {
+        super(dataSource);
     }
 }

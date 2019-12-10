@@ -16,10 +16,10 @@
 
 package stroom.statistics.impl.sql;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.task.api.TaskHandlerBinder;
 
+import javax.sql.DataSource;
 import java.util.function.Function;
 
 public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsConfig, SQLStatisticsDbConnProvider> {
@@ -53,7 +53,7 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
     }
 
     @Override
-    protected Function<HikariConfig, SQLStatisticsDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<DataSource, SQLStatisticsDbConnProvider> getConnectionProviderConstructor() {
         return SQLStatisticsDbConnProvider::new;
     }
 

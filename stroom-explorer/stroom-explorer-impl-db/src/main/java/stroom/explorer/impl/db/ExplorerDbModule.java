@@ -1,9 +1,9 @@
 package stroom.explorer.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.explorer.impl.ExplorerTreeDao;
 
+import javax.sql.DataSource;
 import java.util.function.Function;
 
 public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerConfig, ExplorerDbConnProvider> {
@@ -34,7 +34,7 @@ public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerConfig, Exp
     }
 
     @Override
-    protected Function<HikariConfig, ExplorerDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<DataSource, ExplorerDbConnProvider> getConnectionProviderConstructor() {
         return ExplorerDbConnProvider::new;
     }
 

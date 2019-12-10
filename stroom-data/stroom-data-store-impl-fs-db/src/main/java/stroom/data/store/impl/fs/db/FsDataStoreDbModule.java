@@ -16,7 +16,6 @@
 
 package stroom.data.store.impl.fs.db;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.data.store.impl.fs.DataVolumeDao;
 import stroom.data.store.impl.fs.FsFeedPathDao;
@@ -25,6 +24,7 @@ import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeStateDao;
 import stroom.db.util.AbstractFlyWayDbModule;
 
+import javax.sql.DataSource;
 import java.util.function.Function;
 
 public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreServiceConfig, FsDataStoreDbConnProvider> {
@@ -58,7 +58,7 @@ public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreService
     }
 
     @Override
-    protected Function<HikariConfig, FsDataStoreDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<DataSource, FsDataStoreDbConnProvider> getConnectionProviderConstructor() {
         return FsDataStoreDbConnProvider::new;
     }
 

@@ -1,12 +1,12 @@
 package stroom.security.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.SecurityConfig;
 import stroom.security.impl.UserDao;
 
+import javax.sql.DataSource;
 import java.util.function.Function;
 
 public class SecurityDbModule extends AbstractFlyWayDbModule<SecurityConfig, SecurityDbConnProvider> {
@@ -38,7 +38,7 @@ public class SecurityDbModule extends AbstractFlyWayDbModule<SecurityConfig, Sec
     }
 
     @Override
-    protected Function<HikariConfig, SecurityDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<DataSource, SecurityDbConnProvider> getConnectionProviderConstructor() {
         return SecurityDbConnProvider::new;
     }
 

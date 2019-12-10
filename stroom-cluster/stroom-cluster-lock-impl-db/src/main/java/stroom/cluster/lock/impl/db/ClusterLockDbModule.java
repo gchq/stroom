@@ -1,12 +1,12 @@
 package stroom.cluster.lock.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
+import javax.sql.DataSource;
 import java.util.function.Function;
 
 public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockConfig, ClusterLockDbConnProvider> {
@@ -42,7 +42,7 @@ public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockConfi
     }
 
     @Override
-    protected Function<HikariConfig, ClusterLockDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<DataSource, ClusterLockDbConnProvider> getConnectionProviderConstructor() {
         return ClusterLockDbConnProvider::new;
     }
 

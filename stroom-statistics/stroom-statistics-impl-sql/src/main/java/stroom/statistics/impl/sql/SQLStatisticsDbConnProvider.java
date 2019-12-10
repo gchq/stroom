@@ -1,10 +1,11 @@
 package stroom.statistics.impl.sql;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import stroom.db.util.DataSourceProxy;
 
-public class SQLStatisticsDbConnProvider extends HikariDataSource {
-    SQLStatisticsDbConnProvider(final HikariConfig configuration) {
-        super(configuration);
+import javax.sql.DataSource;
+
+public class SQLStatisticsDbConnProvider extends DataSourceProxy {
+    SQLStatisticsDbConnProvider(final DataSource dataSource) {
+        super(dataSource);
     }
 }

@@ -1,10 +1,11 @@
 package stroom.config.global.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import stroom.db.util.DataSourceProxy;
 
-class GlobalConfigDbConnProvider extends HikariDataSource {
-    GlobalConfigDbConnProvider(final HikariConfig configuration) {
-        super(configuration);
+import javax.sql.DataSource;
+
+class GlobalConfigDbConnProvider extends DataSourceProxy {
+    GlobalConfigDbConnProvider(final DataSource dataSource) {
+        super(dataSource);
     }
 }

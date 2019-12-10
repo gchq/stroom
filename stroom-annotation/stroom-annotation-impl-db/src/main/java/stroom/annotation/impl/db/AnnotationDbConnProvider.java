@@ -1,10 +1,11 @@
 package stroom.annotation.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import stroom.db.util.DataSourceProxy;
 
-class AnnotationDbConnProvider extends HikariDataSource {
-    AnnotationDbConnProvider(final HikariConfig configuration) {
-        super(configuration);
+import javax.sql.DataSource;
+
+class AnnotationDbConnProvider extends DataSourceProxy {
+    AnnotationDbConnProvider(final DataSource dataSource) {
+        super(dataSource);
     }
 }

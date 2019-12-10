@@ -9,24 +9,15 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.app.guice.CoreModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.AppConfigModule.ConfigHolder;
 import stroom.config.app.Config;
 import stroom.config.app.YamlUtil;
 import stroom.config.common.CommonDbConfig;
-import stroom.config.common.ConnectionConfig;
+import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
-import stroom.config.global.impl.ConfigMapper;
-import stroom.config.global.impl.GlobalConfigModule;
-import stroom.index.VolumeTestConfigModule;
-import stroom.meta.statistics.impl.MockMetaStatisticsModule;
-import stroom.resource.impl.ResourceModule;
-import stroom.security.mock.MockSecurityContextModule;
-import stroom.test.CoreTestModule;
-import stroom.test.common.util.db.DbTestUtil;
-import stroom.test.common.util.db.TestDbModule;
+import stroom.db.util.DbUtil;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsConfig;
@@ -85,9 +76,6 @@ class TestAppConfigModule {
         AppConfig appConfig = injector.getInstance(AppConfig.class);
         CommonDbConfig commonDbConfig = injector.getInstance(CommonDbConfig.class);
 
-        // Force mapping of common db properties.
-        ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
-
         Assertions.assertThat(commonDbConfig.getConnectionPoolConfig().getPrepStmtCacheSize())
                 .isEqualTo(newValue);
 
@@ -103,11 +91,15 @@ class TestAppConfigModule {
                     }
                 })
                 .forEach(hasDbConfig -> {
-                    Assertions.assertThat(hasDbConfig.getDbConfig().getConnectionConfig())
+                    final DbConfig mergedConfig = new DbConfig();
+                    DbUtil.copyConfig(commonDbConfig, mergedConfig);
+                    DbUtil.copyConfig(hasDbConfig.getDbConfig(), mergedConfig);
+
+                    Assertions.assertThat(mergedConfig.getConnectionConfig())
                             .isEqualTo(commonDbConfig.getConnectionConfig());
-                    Assertions.assertThat(hasDbConfig.getDbConfig().getConnectionPoolConfig())
+                    Assertions.assertThat(mergedConfig.getConnectionPoolConfig())
                             .isEqualTo(commonDbConfig.getConnectionPoolConfig());
-                    Assertions.assertThat(hasDbConfig.getDbConfig().getConnectionPoolConfig().getPrepStmtCacheSize())
+                    Assertions.assertThat(mergedConfig.getConnectionPoolConfig().getPrepStmtCacheSize())
                             .isEqualTo(newValue);
                 });
     }

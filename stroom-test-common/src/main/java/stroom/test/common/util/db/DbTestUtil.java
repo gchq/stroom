@@ -1,19 +1,15 @@
 package stroom.test.common.util.db;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.util.Modules;
 import com.wix.mysql.EmbeddedMysql;
 import com.wix.mysql.config.Charset;
 import com.wix.mysql.config.DownloadConfig;
 import com.wix.mysql.config.MysqldConfig;
 import com.wix.mysql.config.SchemaConfig;
 import com.wix.mysql.distribution.Version;
+import stroom.config.common.CommonDbConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
-import stroom.db.util.HikariConfigFactory;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -49,38 +45,13 @@ public class DbTestUtil {
 
     /**
      * Gets aan embedded DB datasource for use in tests that don't use guice injection
-     *
      */
     public static <T_Config extends HasDbConfig, T_ConnProvider extends DataSource> T_ConnProvider getTestDbDatasource(
             final AbstractFlyWayDbModule<T_Config, T_ConnProvider> dbModule,
             final T_Config config) {
-        return dbModule.getConnectionProvider(() -> config, new EmbeddedDbHikariConfigFactory());
+        return dbModule.getConnectionProvider(() -> config, new EmbeddedDbDataSourceFactory(new CommonDbConfig()));
     }
 
-    public static Injector overrideModuleWithTestDatabase(final AbstractModule sourceModule) {
-        return Guice.createInjector(Modules.override(sourceModule)
-                .with(new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        super.configure();
-                        bind(HikariConfigFactory.class).toInstance(new EmbeddedDbHikariConfigFactory());
-                    }
-                }));
-    }
-
-    public static void applyEmbeddedDbConfig(final ConnectionConfig connectionConfig) {
-        final ConnectionConfig config = getOrCreateConfig();
-        if (config != null) {
-            applyConfig(config, connectionConfig);
-        }
-    }
-
-    public static void applyConfig(final ConnectionConfig from, final ConnectionConfig to) {
-        to.setJdbcDriverClassName(from.getJdbcDriverClassName());
-        to.setJdbcDriverUrl(from.getJdbcDriverUrl());
-        to.setJdbcDriverUsername(from.getJdbcDriverUsername());
-        to.setJdbcDriverPassword(from.getJdbcDriverPassword());
-    }
 
     public static synchronized ConnectionConfig getOrCreateConfig() {
         if (currentConfig == null) {

@@ -1,6 +1,5 @@
 package stroom.annotation.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.annotation.impl.AnnotationDao;
 import stroom.annotation.impl.AnnotationModule;
@@ -42,7 +41,7 @@ public class AnnotationDbModule extends AbstractFlyWayDbModule<AnnotationConfig,
     }
 
     @Override
-    protected Function<HikariConfig, AnnotationDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<DataSource, AnnotationDbConnProvider> getConnectionProviderConstructor() {
         return AnnotationDbConnProvider::new;
     }
 

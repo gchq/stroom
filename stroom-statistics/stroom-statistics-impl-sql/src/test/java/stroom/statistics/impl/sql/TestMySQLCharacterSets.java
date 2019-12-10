@@ -57,8 +57,7 @@ class TestMySQLCharacterSets {
     }
 
     private static Connection getConnection() throws SQLException {
-        final ConnectionConfig connectionConfig = new ConnectionConfig();
-        DbTestUtil.applyEmbeddedDbConfig(connectionConfig);
+        final ConnectionConfig connectionConfig = DbTestUtil.getOrCreateConfig();
         DbUtil.validate(connectionConfig);
         return DbUtil.getSingleConnection(connectionConfig);
     }

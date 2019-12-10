@@ -1,10 +1,11 @@
 package stroom.data.store.impl.fs.db;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
+import stroom.db.util.DataSourceProxy;
 
-class FsDataStoreDbConnProvider extends HikariDataSource {
-    FsDataStoreDbConnProvider(final HikariConfig configuration) {
-        super(configuration);
+import javax.sql.DataSource;
+
+class FsDataStoreDbConnProvider extends DataSourceProxy {
+    FsDataStoreDbConnProvider(final DataSource dataSource) {
+        super(dataSource);
     }
 }

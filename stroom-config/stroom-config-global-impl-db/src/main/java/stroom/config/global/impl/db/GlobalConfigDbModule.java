@@ -1,11 +1,11 @@
 package stroom.config.global.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.config.app.PropertyServiceConfig;
 import stroom.config.global.impl.ConfigPropertyDao;
 import stroom.config.global.impl.GlobalConfigModule;
 import stroom.db.util.AbstractFlyWayDbModule;
 
+import javax.sql.DataSource;
 import java.util.function.Function;
 
 public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyServiceConfig, GlobalConfigDbConnProvider> {
@@ -37,7 +37,7 @@ public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyService
     }
 
     @Override
-    protected Function<HikariConfig, GlobalConfigDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<DataSource, GlobalConfigDbConnProvider> getConnectionProviderConstructor() {
         return GlobalConfigDbConnProvider::new;
     }
 

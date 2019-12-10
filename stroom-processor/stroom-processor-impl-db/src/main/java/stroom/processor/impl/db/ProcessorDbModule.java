@@ -1,6 +1,5 @@
 package stroom.processor.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorDao;
@@ -11,6 +10,7 @@ import stroom.processor.impl.ProcessorTaskDeleteExecutor;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
+import javax.sql.DataSource;
 import java.util.function.Function;
 
 public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorConfig, ProcessorDbConnProvider> {
@@ -47,7 +47,7 @@ public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorConfig, P
     }
 
     @Override
-    protected Function<HikariConfig, ProcessorDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<DataSource, ProcessorDbConnProvider> getConnectionProviderConstructor() {
         return ProcessorDbConnProvider::new;
     }
 

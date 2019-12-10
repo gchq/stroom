@@ -26,9 +26,6 @@ import com.google.common.base.Splitter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
-import stroom.config.common.CommonDbConfig;
-import stroom.config.common.DbConfig;
-import stroom.config.common.HasDbConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.docref.DocRef;
 import stroom.util.config.FieldMapper;
@@ -109,7 +106,7 @@ public class ConfigMapper {
             throw new RuntimeException(LogUtil.message("Unable to call constructor on class {}",
                     appConfig.getClass().getName()), e);
         }
-        
+
         // Now add in any values from the yaml
         updateConfigFromYaml(appConfig);
     }
@@ -120,10 +117,6 @@ public class ConfigMapper {
      * It will also apply common database config to all other database config objects.
      */
     void updateConfigFromYaml(final AppConfig newAppConfig) {
-
-        // Allow the use of a single set of DB conn details that get applied to all, unless they override it
-        applyCommonDbConfig(newAppConfig);
-
         synchronized (this) {
             if (System.identityHashCode(newAppConfig) != System.identityHashCode(appConfig)) {
                 // We have been passed a different object to our instance appConfig so copy all
@@ -173,7 +166,7 @@ public class ConfigMapper {
     ConfigProperty decorateDbConfigProperty(final ConfigProperty dbConfigProperty) {
         Objects.requireNonNull(dbConfigProperty);
 
-         final String fullPath = dbConfigProperty.getName();
+        final String fullPath = dbConfigProperty.getName();
 
         synchronized (this) {
             ConfigProperty globalConfigProperty = getGlobalProperty(fullPath)
@@ -239,7 +232,7 @@ public class ConfigMapper {
                 }
             } else {
                 // This is not expected
-                throw  new RuntimeException(LogUtil.message(
+                throw new RuntimeException(LogUtil.message(
                         "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
                         valueType.getName(),
                         IsConfig.class.getSimpleName()));
@@ -353,13 +346,13 @@ public class ConfigMapper {
     private static String getDataTypeName(final Type type) {
         try {
             if (type instanceof Class) {
-                final Class<?> valueClass = (Class) type;
+                final Class<?> valueClass = (Class<?>) type;
                 String dataTypeName;
 
                 if (valueClass.equals(int.class)) {
                     dataTypeName = "Integer";
                 } else if (valueClass.equals(Enum.class)) {
-                        dataTypeName = "Enumeration";
+                    dataTypeName = "Enumeration";
                 } else if (valueClass.equals(List.class) || valueClass.equals(Map.class)) {
                     dataTypeName = CaseFormat.LOWER_CAMEL.to(CaseFormat.UPPER_CAMEL, valueClass.getSimpleName()) + " of ";
                 } else {
@@ -413,7 +406,7 @@ public class ConfigMapper {
                 } else if (value instanceof DocRef) {
                     return docRefToString((DocRef) value, availableDelimiters);
                 } else if (value instanceof Enum) {
-                    return enumToString((Enum) value);
+                    return enumToString((Enum<?>) value);
                 } else {
                     return value.toString();
                 }
@@ -474,7 +467,7 @@ public class ConfigMapper {
                 // determine the type of the list items
                 Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
                 return stringToList(value, itemType);
-    //        } else if (type.isAssignableFrom(Map.class)) {
+                //        } else if (type.isAssignableFrom(Map.class)) {
             } else if (Map.class.isAssignableFrom(type)) {
                 // determine the types of the keys and values
                 Class<?> keyType = getDataType(getGenericTypes(genericType).get(0));
@@ -558,7 +551,7 @@ public class ConfigMapper {
                 + ")";
     }
 
-    private static String enumToString(final Enum enumInstance) {
+    private static String enumToString(final Enum<?> enumInstance) {
         return enumInstance.name();
     }
 
@@ -634,11 +627,11 @@ public class ConfigMapper {
         }
     }
 
-    private static Enum stringToEnum(final String serialisedForm, final Class<?> type) {
+    private static Enum<?> stringToEnum(final String serialisedForm, final Class<?> type) {
         return Enum.valueOf((Class<Enum>) type, serialisedForm.toUpperCase());
     }
 
-    private static Class getDataType(Class clazz) {
+    private static Class<?> getDataType(Class<?> clazz) {
         if (clazz.isPrimitive()) {
             return clazz;
         }
@@ -650,9 +643,9 @@ public class ConfigMapper {
         return clazz;
     }
 
-    private static Class getDataType(Type type) {
+    private static Class<?> getDataType(Type type) {
         if (type instanceof Class) {
-            return getDataType((Class) type);
+            return getDataType((Class<?>) type);
         } else if (type instanceof ParameterizedType) {
             ParameterizedType pt = (ParameterizedType) type;
             return getDataType(pt.getRawType());
@@ -688,77 +681,6 @@ public class ConfigMapper {
         return chosenDelimiter;
     }
 
-    private static void applyCommonDbConfig(AppConfig appConfig) {
-        LOGGER.debug("applyCommonDbConfig() called");
-
-        // get an object with the hard coded defaults
-        final DbConfig defaultConfig = new DbConfig();
-        final DbConfig commonConfig = appConfig.getCommonDbConfig();
-
-        if (!defaultConfig.equals(commonConfig)) {
-            LOGGER.info("Common database config is non-default so will be used as fall-back configuration");
-
-            scanMethodsForDbConfig(appConfig, commonConfig, defaultConfig, "");
-        } else {
-            LOGGER.debug("commonConfig matches default so nothing to do");
-        }
-    }
-
-    private static void scanMethodsForDbConfig(final IsConfig configObject,
-                                               final DbConfig commonConfig,
-                                               final DbConfig defaultConfig,
-                                               String path) {
-        if (!path.isEmpty()) {
-            path += ".";
-        }
-        path = path + configObject.getClass().getSimpleName();
-
-        // find all getters that return a class that implements HasDbConfig
-        for (Method method : configObject.getClass().getMethods()) {
-            if (method.getName().startsWith("get")) {
-//                LOGGER.info("method {} {}", method.getName(), method.getReturnType());
-
-                if (HasDbConfig.class.isAssignableFrom(method.getReturnType())) {
-                    try {
-                        final HasDbConfig serviceConfig = (HasDbConfig) method.invoke(configObject);
-                        applyCommonDbConfig(defaultConfig, commonConfig, serviceConfig, path);
-                    } catch (IllegalAccessException | InvocationTargetException e) {
-                        throw new RuntimeException(LogUtil.message("Unable to invoke method {}", method.getName()));
-                    }
-                } else {
-                    // Not a HasDbConfig so see if it is a child config object that we can recurse into
-                    if (IsConfig.class.isAssignableFrom(method.getReturnType())) {
-                        try {
-                            final IsConfig childConfigObject = (IsConfig) method.invoke(configObject);
-                            scanMethodsForDbConfig(childConfigObject, commonConfig, defaultConfig, path);
-                        } catch (IllegalAccessException | InvocationTargetException e) {
-                            throw new RuntimeException(LogUtil.message("Unable to invoke method {}", method.getName()));
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private static void applyCommonDbConfig(final DbConfig defaultConfig,
-                                            final DbConfig commonConfig,
-                                            final HasDbConfig serviceConfig,
-                                            String path) {
-
-        path += "." + serviceConfig.getClass().getSimpleName();
-        final DbConfig serviceDbConfig = serviceConfig.getDbConfig();
-
-        if (defaultConfig.equals(serviceDbConfig)) {
-            // The service specific config has default values for its db config
-            // so apply all the common values.
-            LOGGER.info("Overwriting default {} with {}",
-                    path, AppConfig.class.getSimpleName() + "." + CommonDbConfig.class.getSimpleName());
-            FieldMapper.copy(commonConfig, serviceDbConfig, FieldMapper.CopyOptions.DONT_COPY_NULLS);
-        } else {
-            LOGGER.debug("{} has custom DB config so leaving it as is", path);
-        }
-    }
-
     public static class UnknownPropertyException extends RuntimeException {
         /**
          * Constructs a new runtime exception with the specified detail message.
@@ -772,22 +694,22 @@ public class ConfigMapper {
             super(message);
         }
 
-        /**
-         * Constructs a new runtime exception with the specified detail message and
-         * cause.  <p>Note that the detail message associated with
-         * {@code cause} is <i>not</i> automatically incorporated in
-         * this runtime exception's detail message.
-         *
-         * @param message the detail message (which is saved for later retrieval
-         *                by the {@link #getMessage()} method).
-         * @param cause   the cause (which is saved for later retrieval by the
-         *                {@link #getCause()} method).  (A {@code null} value is
-         *                permitted, and indicates that the cause is nonexistent or
-         *                unknown.)
-         * @since 1.4
-         */
-        UnknownPropertyException(final String message, final Throwable cause) {
-            super(message, cause);
-        }
-    };
+//        /**
+//         * Constructs a new runtime exception with the specified detail message and
+//         * cause.  <p>Note that the detail message associated with
+//         * {@code cause} is <i>not</i> automatically incorporated in
+//         * this runtime exception's detail message.
+//         *
+//         * @param message the detail message (which is saved for later retrieval
+//         *                by the {@link #getMessage()} method).
+//         * @param cause   the cause (which is saved for later retrieval by the
+//         *                {@link #getCause()} method).  (A {@code null} value is
+//         *                permitted, and indicates that the cause is nonexistent or
+//         *                unknown.)
+//         * @since 1.4
+//         */
+//        UnknownPropertyException(final String message, final Throwable cause) {
+//            super(message, cause);
+//        }
+    }
 }

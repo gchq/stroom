@@ -1,6 +1,5 @@
 package stroom.meta.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.meta.impl.MetaDao;
 import stroom.meta.impl.MetaFeedDao;
@@ -11,6 +10,7 @@ import stroom.meta.impl.MetaValueDao;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
+import javax.sql.DataSource;
 import java.util.function.Function;
 
 public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, MetaDbConnProvider> {
@@ -48,7 +48,7 @@ public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, Meta
     }
 
     @Override
-    protected Function<HikariConfig, MetaDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<DataSource, MetaDbConnProvider> getConnectionProviderConstructor() {
         return MetaDbConnProvider::new;
     }
 

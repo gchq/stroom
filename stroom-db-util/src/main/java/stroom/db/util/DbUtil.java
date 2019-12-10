@@ -4,6 +4,8 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
+import stroom.config.common.DbConfig;
 import stroom.util.logging.LogUtil;
 
 import java.sql.Connection;
@@ -11,8 +13,6 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.Arrays;
-import java.util.List;
 
 public class DbUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(DbUtil.class);
@@ -21,6 +21,47 @@ public class DbUtil {
     private static final int ACCESS_DENIED_BAD_DATABASE = 1044;
 
     private DbUtil() {
+    }
+
+    public static void copyConfig(final DbConfig from, final DbConfig to) {
+        copyConnectionConfig(from.getConnectionConfig(), to.getConnectionConfig());
+        copyConnectionPoolConfig(from.getConnectionPoolConfig(), to.getConnectionPoolConfig());
+    }
+
+    public static void copyConnectionConfig(final ConnectionConfig from, final ConnectionConfig to) {
+        if (from.getJdbcDriverClassName() != null) {
+            to.setJdbcDriverClassName(from.getJdbcDriverClassName());
+        }
+        if (from.getJdbcDriverUrl() != null) {
+            to.setJdbcDriverUrl(from.getJdbcDriverUrl());
+        }
+        if (from.getJdbcDriverUsername() != null) {
+            to.setJdbcDriverUsername(from.getJdbcDriverUsername());
+        }
+        if (from.getJdbcDriverPassword() != null) {
+            to.setJdbcDriverPassword(from.getJdbcDriverPassword());
+        }
+    }
+
+    public static void copyConnectionPoolConfig(final ConnectionPoolConfig from, final ConnectionPoolConfig to) {
+        if (from.getCachePrepStmts() != null) {
+            to.setCachePrepStmts(from.getCachePrepStmts());
+        }
+        if (from.getPrepStmtCacheSize() != null) {
+            to.setPrepStmtCacheSize(from.getPrepStmtCacheSize());
+        }
+        if (from.getPrepStmtCacheSqlLimit() != null) {
+            to.setPrepStmtCacheSqlLimit(from.getPrepStmtCacheSqlLimit());
+        }
+        if (from.getIdleTimeout() != null) {
+            to.setIdleTimeout(from.getIdleTimeout());
+        }
+        if (from.getMaxLifetime() != null) {
+            to.setMaxLifetime(from.getMaxLifetime());
+        }
+        if (from.getMaxPoolSize() != null) {
+            to.setMaxPoolSize(from.getMaxPoolSize());
+        }
     }
 
     public static void validate(final ConnectionConfig connectionConfig) {

@@ -21,8 +21,7 @@ class TestProcessingFilterMigration {
     void testMigrateOnDockerImage() throws Exception {
         final V6_0_0_9__ProcessingFilter filter = new V6_0_0_9__ProcessingFilter(false);
 
-        final ConnectionConfig connectionConfig = new ConnectionConfig();
-        DbTestUtil.applyEmbeddedDbConfig(connectionConfig);
+        final ConnectionConfig connectionConfig = DbTestUtil.getOrCreateConfig();
         DbUtil.validate(connectionConfig);
         try (final Connection conn = DbUtil.getSingleConnection(connectionConfig)) {
             filter.migrate(conn);

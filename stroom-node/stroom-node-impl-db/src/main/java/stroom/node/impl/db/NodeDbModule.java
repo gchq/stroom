@@ -1,10 +1,10 @@
 package stroom.node.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.node.impl.NodeConfig;
 import stroom.node.impl.NodeDao;
 
+import javax.sql.DataSource;
 import java.util.function.Function;
 
 public class NodeDbModule extends AbstractFlyWayDbModule<NodeConfig, NodeDbConnProvider> {
@@ -46,7 +46,7 @@ public class NodeDbModule extends AbstractFlyWayDbModule<NodeConfig, NodeDbConnP
     }
 
     @Override
-    protected Function<HikariConfig, NodeDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<DataSource, NodeDbConnProvider> getConnectionProviderConstructor() {
         return NodeDbConnProvider::new;
     }
 

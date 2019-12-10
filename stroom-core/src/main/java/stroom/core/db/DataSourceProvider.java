@@ -1,14 +1,12 @@
 package stroom.core.db;
 
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.db.util.HikariConfigFactory;
+import stroom.db.util.DataSourceFactory;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;
@@ -31,11 +29,10 @@ public class DataSourceProvider implements Provider<DataSource> {
 
     @Inject
     DataSourceProvider(final Provider<CoreConfig> configProvider,
-                       final HikariConfigFactory hikariConfigFactory) {
+                       final DataSourceFactory dataSourceFactory) {
         // Create a data source.
         LOGGER.info("Creating connection provider for {}", MODULE);
-        final HikariConfig config = hikariConfigFactory.create(configProvider.get());
-        dataSource = new HikariDataSource(config);
+        dataSource = dataSourceFactory.create(configProvider.get());
 
         // Run flyway migrations.
         flyway(dataSource);
@@ -137,13 +134,13 @@ public class DataSourceProvider implements Provider<DataSource> {
 
         if (version != null && !usingFlyWay) {
             if (version.getMajor() == 4 && version.getMinor() == 0 && version.getPatch() >= 60) {
-            // If Stroom is currently at v4.0.60+ then tell FlyWay to baseline at that version.
+                // If Stroom is currently at v4.0.60+ then tell FlyWay to baseline at that version.
                 baselineVersionAsString = "4.0.60";
-        } else {
-            final String message = "The current Stroom version cannot be upgraded to v5+. You must be on v4.0.60 or later.";
-            LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
-            throw new RuntimeException(message);
-        }
+            } else {
+                final String message = "The current Stroom version cannot be upgraded to v5+. You must be on v4.0.60 or later.";
+                LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
+                throw new RuntimeException(message);
+            }
         }
 
         FluentConfiguration configuration = Flyway.configure()

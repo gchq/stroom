@@ -1,12 +1,12 @@
 package stroom.storedquery.impl.db;
 
-import com.zaxxer.hikari.HikariConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
+import javax.sql.DataSource;
 import java.util.function.Function;
 
 public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryConfig, StoredQueryDbConnProvider> {
@@ -39,7 +39,7 @@ public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryConfi
     }
 
     @Override
-    protected Function<HikariConfig, StoredQueryDbConnProvider> getConnectionProviderConstructor() {
+    protected Function<DataSource, StoredQueryDbConnProvider> getConnectionProviderConstructor() {
         return StoredQueryDbConnProvider::new;
     }
 
