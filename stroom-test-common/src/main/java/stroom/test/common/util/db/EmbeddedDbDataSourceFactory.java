@@ -19,10 +19,10 @@ class EmbeddedDbDataSourceFactory extends DataSourceFactoryImpl {
     protected DbConfig mergeConfig(final DbConfig dbConfig) {
         final DbConfig mergedConfig = super.mergeConfig(dbConfig);
 
-        // Set the connection pool values for testing.
-        mergedConfig.getConnectionPoolConfig().setIdleTimeout(1000L);
-        mergedConfig.getConnectionPoolConfig().setMaxLifetime(1000L);
-        mergedConfig.getConnectionPoolConfig().setMaxPoolSize(2);
+//        // Set the connection pool values for testing.
+//        mergedConfig.getConnectionPoolConfig().setIdleTimeout(1000L);
+//        mergedConfig.getConnectionPoolConfig().setMaxLifetime(1000L);
+//        mergedConfig.getConnectionPoolConfig().setMaxPoolSize(2);
 
         DbUtil.copyConnectionConfig(DbTestUtil.getOrCreateConfig(), mergedConfig.getConnectionConfig());
 

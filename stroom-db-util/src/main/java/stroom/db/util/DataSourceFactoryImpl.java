@@ -19,7 +19,7 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceFactoryImpl.class);
 
     private final CommonDbConfig commonDbConfig;
-    private final Map<DbConfig, DataSource> dataSourceMap = new ConcurrentHashMap<>();
+    private static final Map<DbConfig, DataSource> DATA_SOURCE_MAP = new ConcurrentHashMap<>();
 
     @Inject
     public DataSourceFactoryImpl(final CommonDbConfig commonDbConfig) {
@@ -34,7 +34,7 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
         final DbConfig mergedConfig = mergeConfig(dbConfig);
 
         // Get a data source from a map to limit connections where connection details are common.
-        return dataSourceMap.computeIfAbsent(mergedConfig, k -> {
+        return DATA_SOURCE_MAP.computeIfAbsent(mergedConfig, k -> {
             final HikariConfig hikariConfig = HikariUtil.createConfig(k);
             return new HikariDataSource(hikariConfig);
         });
