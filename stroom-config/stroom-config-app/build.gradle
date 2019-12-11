@@ -16,6 +16,7 @@ dependencies {
     compile project(':stroom-dashboard:stroom-storedquery-impl-db')
     compile project(':stroom-data:stroom-data-retention-impl')
     compile project(':stroom-data:stroom-data-store-impl-fs')
+    compile project(':stroom-docstore:stroom-docstore-impl-db')
     compile project(':stroom-explorer:stroom-explorer-impl-db')
     compile project(':stroom-feed:stroom-feed-impl')
     compile project(':stroom-importexport:stroom-importexport-impl')

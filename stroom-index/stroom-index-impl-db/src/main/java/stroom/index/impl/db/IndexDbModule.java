@@ -1,13 +1,13 @@
 package stroom.index.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 import stroom.index.impl.IndexConfig;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;
 
 import javax.sql.DataSource;
-import java.util.function.Function;
 
 public class IndexDbModule extends AbstractFlyWayDbModule<IndexConfig, IndexDbConnProvider> {
     private static final String MODULE = "stroom-index";
@@ -38,12 +38,18 @@ public class IndexDbModule extends AbstractFlyWayDbModule<IndexConfig, IndexDbCo
     }
 
     @Override
-    protected Function<DataSource, IndexDbConnProvider> getConnectionProviderConstructor() {
-        return IndexDbConnProvider::new;
+    protected Class<IndexDbConnProvider> getConnectionProviderType() {
+        return IndexDbConnProvider.class;
     }
 
     @Override
-    protected Class<IndexDbConnProvider> getConnectionProviderType() {
-        return IndexDbConnProvider.class;
+    protected IndexDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements IndexDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }

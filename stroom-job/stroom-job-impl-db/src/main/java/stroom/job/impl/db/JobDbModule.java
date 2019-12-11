@@ -1,12 +1,12 @@
 package stroom.job.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 import stroom.job.impl.JobDao;
 import stroom.job.impl.JobNodeDao;
 import stroom.job.impl.JobSystemConfig;
 
 import javax.sql.DataSource;
-import java.util.function.Function;
 
 public class JobDbModule extends AbstractFlyWayDbModule<JobSystemConfig, JobDbConnProvider> {
     private static final String MODULE = "stroom-job";
@@ -36,12 +36,18 @@ public class JobDbModule extends AbstractFlyWayDbModule<JobSystemConfig, JobDbCo
     }
 
     @Override
-    protected Function<DataSource, JobDbConnProvider> getConnectionProviderConstructor() {
-        return JobDbConnProvider::new;
+    protected Class<JobDbConnProvider> getConnectionProviderType() {
+        return JobDbConnProvider.class;
     }
 
     @Override
-    protected Class<JobDbConnProvider> getConnectionProviderType() {
-        return JobDbConnProvider.class;
+    protected JobDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements JobDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }

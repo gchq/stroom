@@ -23,9 +23,9 @@ import stroom.data.store.impl.fs.FsTypePathDao;
 import stroom.data.store.impl.fs.FsVolumeDao;
 import stroom.data.store.impl.fs.FsVolumeStateDao;
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 
 import javax.sql.DataSource;
-import java.util.function.Function;
 
 public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreServiceConfig, FsDataStoreDbConnProvider> {
     private static final String MODULE = "stroom-data-store";
@@ -58,12 +58,18 @@ public class FsDataStoreDbModule extends AbstractFlyWayDbModule<DataStoreService
     }
 
     @Override
-    protected Function<DataSource, FsDataStoreDbConnProvider> getConnectionProviderConstructor() {
-        return FsDataStoreDbConnProvider::new;
+    protected Class<FsDataStoreDbConnProvider> getConnectionProviderType() {
+        return FsDataStoreDbConnProvider.class;
     }
 
     @Override
-    protected Class<FsDataStoreDbConnProvider> getConnectionProviderType() {
-        return FsDataStoreDbConnProvider.class;
+    protected FsDataStoreDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements FsDataStoreDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }

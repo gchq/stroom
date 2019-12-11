@@ -54,6 +54,8 @@ appConfig:
     searchable: "http://127.0.0.1:8080/api/searchable/v2"
     annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
     elasticIndex: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
+  docstore:
+    db: {}
   explorer:
     db: {}
   export:

@@ -3,9 +3,9 @@ package stroom.activity.impl.db;
 import stroom.activity.impl.ActivityDao;
 import stroom.activity.impl.ActivityModule;
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 
 import javax.sql.DataSource;
-import java.util.function.Function;
 
 public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityConfig, ActivityDbConnProvider> {
     private static final String MODULE = "stroom-activity";
@@ -36,12 +36,18 @@ public class ActivityDbModule extends AbstractFlyWayDbModule<ActivityConfig, Act
     }
 
     @Override
-    protected Function<DataSource, ActivityDbConnProvider> getConnectionProviderConstructor() {
-        return ActivityDbConnProvider::new;
+    protected Class<ActivityDbConnProvider> getConnectionProviderType() {
+        return ActivityDbConnProvider.class;
     }
 
     @Override
-    protected Class<ActivityDbConnProvider> getConnectionProviderType() {
-        return ActivityDbConnProvider.class;
+    protected ActivityDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements ActivityDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }

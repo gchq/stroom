@@ -12,6 +12,7 @@ import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.data.retention.impl.DataRetentionConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
+import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
@@ -95,6 +96,7 @@ public class AppConfigModule extends AbstractModule {
             bind(c, DataConfig::getMetaServiceConfig, MetaServiceConfig.class);
         });
         bind(AppConfig::getDataSourceUrlConfig, DataSourceUrlConfig.class);
+        bind(AppConfig::getDocStoreConfig, DocStoreConfig.class);
         bind(AppConfig::getExplorerConfig, ExplorerConfig.class);
         bind(AppConfig::getExportConfig, ExportConfig.class);
         bind(AppConfig::getFeedConfig, FeedConfig.class);

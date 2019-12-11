@@ -39,7 +39,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestSQLStatisticFlushTaskHandler.class);
 
     @Inject
-    private SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider;
+    private SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider;
     @Inject
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
     @Inject
@@ -177,7 +177,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
     private int getRowCount() throws SQLException {
         int count;
-        try (final Connection connection = SQLStatisticsDbConnProvider.getConnection()) {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();
@@ -189,7 +189,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
     }
 
     private void deleteRows() throws SQLException {
-        try (final Connection connection = SQLStatisticsDbConnProvider.getConnection()) {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("delete from " + SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)) {
                 preparedStatement.execute();
             }

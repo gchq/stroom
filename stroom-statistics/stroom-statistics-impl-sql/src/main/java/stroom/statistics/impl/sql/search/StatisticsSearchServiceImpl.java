@@ -44,7 +44,6 @@ import java.util.stream.Collectors;
         //called by DI
 //TODO rename to StatisticsDatabaseSearchServiceImpl
 class StatisticsSearchServiceImpl implements StatisticsSearchService {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
 

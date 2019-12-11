@@ -4,9 +4,9 @@ import stroom.config.app.PropertyServiceConfig;
 import stroom.config.global.impl.ConfigPropertyDao;
 import stroom.config.global.impl.GlobalConfigModule;
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 
 import javax.sql.DataSource;
-import java.util.function.Function;
 
 public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyServiceConfig, GlobalConfigDbConnProvider> {
     private static final String MODULE = "stroom-config";
@@ -37,12 +37,18 @@ public class GlobalConfigDbModule extends AbstractFlyWayDbModule<PropertyService
     }
 
     @Override
-    protected Function<DataSource, GlobalConfigDbConnProvider> getConnectionProviderConstructor() {
-        return GlobalConfigDbConnProvider::new;
+    protected Class<GlobalConfigDbConnProvider> getConnectionProviderType() {
+        return GlobalConfigDbConnProvider.class;
     }
 
     @Override
-    protected Class<GlobalConfigDbConnProvider> getConnectionProviderType() {
-        return GlobalConfigDbConnProvider.class;
+    protected GlobalConfigDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements GlobalConfigDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }

@@ -34,9 +34,6 @@ import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Period;
 
 import javax.inject.Inject;
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -48,52 +45,48 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
     private MetaService metaService;
     @Inject
     private DictionaryStore dictionaryStore;
-    @Inject
-    private DataSource dataSource;
 
     @Test
-    void testRowCount() throws SQLException {
-        try (final Connection connection = dataSource.getConnection()) {
-            final String feedName = FileSystemTestUtil.getUniqueTestString();
+    void testRowCount() {
+        final String feedName = FileSystemTestUtil.getUniqueTestString();
 
-            final long now = System.currentTimeMillis();
-            final long timeOutsideRetentionPeriod = now - TimeUnit.DAYS.toMillis(RETENTION_PERIOD_DAYS)
-                    - TimeUnit.MINUTES.toMillis(1);
+        final long now = System.currentTimeMillis();
+        final long timeOutsideRetentionPeriod = now - TimeUnit.DAYS.toMillis(RETENTION_PERIOD_DAYS)
+                - TimeUnit.MINUTES.toMillis(1);
 
-            LOGGER.info("now: %s", DateUtil.createNormalDateTimeString(now));
-            LOGGER.info("timeOutsideRetentionPeriod: %s", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
+        LOGGER.info("now: %s", DateUtil.createNormalDateTimeString(now));
+        LOGGER.info("timeOutsideRetentionPeriod: %s", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
-            final Meta metaInsideRetention = metaService.create(
-                    new MetaProperties.Builder()
-                            .feedName(feedName)
-                            .typeName(StreamTypeNames.RAW_EVENTS)
-                            .createMs(now)
-                            .statusMs(now)
-                            .build());
+        final Meta metaInsideRetention = metaService.create(
+                new MetaProperties.Builder()
+                        .feedName(feedName)
+                        .typeName(StreamTypeNames.RAW_EVENTS)
+                        .createMs(now)
+                        .statusMs(now)
+                        .build());
 
-            final Meta metaOutsideRetention = metaService.create(
-                    new MetaProperties.Builder()
-                            .feedName(feedName)
-                            .typeName(StreamTypeNames.RAW_EVENTS)
-                            .createMs(timeOutsideRetentionPeriod)
-                            .statusMs(now)
-                            .build());
+        final Meta metaOutsideRetention = metaService.create(
+                new MetaProperties.Builder()
+                        .feedName(feedName)
+                        .typeName(StreamTypeNames.RAW_EVENTS)
+                        .createMs(timeOutsideRetentionPeriod)
+                        .statusMs(now)
+                        .build());
 
-            // Streams are locked initially so unlock.
-            metaService.updateStatus(metaInsideRetention, Status.LOCKED, Status.UNLOCKED);
-            metaService.updateStatus(metaOutsideRetention, Status.LOCKED, Status.UNLOCKED);
+        // Streams are locked initially so unlock.
+        metaService.updateStatus(metaInsideRetention, Status.LOCKED, Status.UNLOCKED);
+        metaService.updateStatus(metaOutsideRetention, Status.LOCKED, Status.UNLOCKED);
 
-            dumpStreams();
+        dumpStreams();
 
-            // run the stream retention task which should 'delete' one stream
-            final Period ageRange = new Period(null, timeOutsideRetentionPeriod + 1);
+        // run the stream retention task which should 'delete' one stream
+        final Period ageRange = new Period(null, timeOutsideRetentionPeriod + 1);
 
-            // TODO : @66 Re-implement finding streams for data retention
+        // TODO : @66 Re-implement finding streams for data retention
 //            try (final DataRetentionStreamFinder dataRetentionStreamFinder = new DataRetentionStreamFinder(connection, dictionaryStore)) {
 //                final long count = dataRetentionStreamFinder.getRowCount(ageRange, Collections.singleton(StreamDataSource.ID));
 //                assertThat(count).isEqualTo(1);
 //            }
-        }
     }
 
     private void dumpStreams() {

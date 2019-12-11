@@ -1,13 +1,13 @@
 package stroom.storedquery.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 import javax.sql.DataSource;
-import java.util.function.Function;
 
 public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryConfig, StoredQueryDbConnProvider> {
     private static final String MODULE = "stroom-storedquery";
@@ -39,12 +39,18 @@ public class StoredQueryDbModule extends AbstractFlyWayDbModule<StoredQueryConfi
     }
 
     @Override
-    protected Function<DataSource, StoredQueryDbConnProvider> getConnectionProviderConstructor() {
-        return StoredQueryDbConnProvider::new;
+    protected Class<StoredQueryDbConnProvider> getConnectionProviderType() {
+        return StoredQueryDbConnProvider.class;
     }
 
     @Override
-    protected Class<StoredQueryDbConnProvider> getConnectionProviderType() {
-        return StoredQueryDbConnProvider.class;
+    protected StoredQueryDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements StoredQueryDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }

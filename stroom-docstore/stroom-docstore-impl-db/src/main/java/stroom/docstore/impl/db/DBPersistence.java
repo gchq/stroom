@@ -28,7 +28,7 @@ public class DBPersistence implements Persistence, Clearable {
     private final DataSource dataSource;
 
     @Inject
-    DBPersistence(final DataSource dataSource) {
+    DBPersistence(final DocStoreDbConnProvider dataSource) {
         this.dataSource = dataSource;
     }
 

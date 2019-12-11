@@ -1,11 +1,11 @@
 package stroom.node.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 import stroom.node.impl.NodeConfig;
 import stroom.node.impl.NodeDao;
 
 import javax.sql.DataSource;
-import java.util.function.Function;
 
 public class NodeDbModule extends AbstractFlyWayDbModule<NodeConfig, NodeDbConnProvider> {
     private static final String MODULE = "stroom-node";
@@ -46,12 +46,18 @@ public class NodeDbModule extends AbstractFlyWayDbModule<NodeConfig, NodeDbConnP
     }
 
     @Override
-    protected Function<DataSource, NodeDbConnProvider> getConnectionProviderConstructor() {
-        return NodeDbConnProvider::new;
+    protected Class<NodeDbConnProvider> getConnectionProviderType() {
+        return NodeDbConnProvider.class;
     }
 
     @Override
-    protected Class<NodeDbConnProvider> getConnectionProviderType() {
-        return NodeDbConnProvider.class;
+    protected NodeDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements NodeDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }

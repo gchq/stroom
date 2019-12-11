@@ -1,6 +1,7 @@
 package stroom.meta.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 import stroom.meta.impl.MetaDao;
 import stroom.meta.impl.MetaFeedDao;
 import stroom.meta.impl.MetaKeyDao;
@@ -11,7 +12,6 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 import javax.sql.DataSource;
-import java.util.function.Function;
 
 public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, MetaDbConnProvider> {
     private static final String MODULE = "stroom-meta";
@@ -48,12 +48,18 @@ public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, Meta
     }
 
     @Override
-    protected Function<DataSource, MetaDbConnProvider> getConnectionProviderConstructor() {
-        return MetaDbConnProvider::new;
+    protected Class<MetaDbConnProvider> getConnectionProviderType() {
+        return MetaDbConnProvider.class;
     }
 
     @Override
-    protected Class<MetaDbConnProvider> getConnectionProviderType() {
-        return MetaDbConnProvider.class;
+    protected MetaDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements MetaDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }

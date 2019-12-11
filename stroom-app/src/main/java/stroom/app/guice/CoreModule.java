@@ -1,6 +1,7 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
+import stroom.core.db.CoreDbModule;
 import stroom.receive.common.RemoteFeedModule;
 import stroom.searchable.impl.SearchableModule;
 
@@ -15,7 +16,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.cluster.task.impl.ClusterTaskModule());
         install(new stroom.config.global.impl.db.GlobalConfigDbModule());
         install(new stroom.core.dataprocess.PipelineStreamTaskModule());
-        install(new stroom.core.db.DataSourceModule());
+        install(new CoreDbModule());
         install(new stroom.core.document.DocumentModule());
         install(new stroom.core.entity.cluster.EntityClusterModule());
         install(new stroom.core.entity.event.EntityClusterTaskModule());

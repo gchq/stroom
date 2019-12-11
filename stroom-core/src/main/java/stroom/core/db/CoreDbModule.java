@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package stroom.core.db;
 
 import org.flywaydb.core.Flyway;
@@ -6,39 +22,48 @@ import org.flywaydb.core.api.configuration.FluentConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.db.util.DataSourceFactory;
+import stroom.db.util.AbstractDataSourceProviderModule;
+import stroom.db.util.DataSourceProxy;
+import stroom.node.shared.FindSystemTableStatusAction;
+import stroom.task.api.TaskHandlerBinder;
+import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
-import javax.inject.Singleton;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-@Singleton
-public class DataSourceProvider implements Provider<DataSource> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataSourceProvider.class);
+/**
+ * Configures anything related to persistence, e.g. transaction management, the
+ * entity manager factory, data sources.
+ */
+public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, CoreDbConnProvider> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CoreDbModule.class);
+
     private static final String MODULE = "stroom-core";
     private static final String FLYWAY_LOCATIONS = "stroom/core/db/migration/mysql";
     private static final String FLYWAY_TABLE = "schema_version";
 
-    private final DataSource dataSource;
+    @Override
+    protected void configure() {
+        super.configure();
 
-    @Inject
-    DataSourceProvider(final Provider<CoreConfig> configProvider,
-                       final DataSourceFactory dataSourceFactory) {
-        // Create a data source.
-        LOGGER.info("Creating connection provider for {}", MODULE);
-        dataSource = dataSourceFactory.create(configProvider.get());
+        // Force creation of connection provider so that legacy migration code executes.
+        bind(ForceMigration.class).asEagerSingleton();
 
-        // Run flyway migrations.
-        flyway(dataSource);
+        // MultiBind the connection provider so we can see status for all databases.
+        GuiceUtil.buildMultiBinder(binder(), DataSource.class)
+                .addBinding(CoreDbConnProvider.class);
+
+        TaskHandlerBinder.create(binder())
+                .bind(FindSystemTableStatusAction.class, FindSystemTableStatusHandler.class);
     }
 
-    private Flyway flyway(final DataSource dataSource) {
+    @Override
+    protected void performMigration(final DataSource dataSource) {
         String baselineVersionAsString = null;
         Version version = null;
         boolean usingFlyWay = false;
@@ -157,8 +182,6 @@ public class DataSourceProvider implements Provider<DataSource> {
             flyway.baseline();
         }
         migrateDatabase(flyway);
-
-        return flyway;
     }
 
     private void migrateDatabase(final Flyway flyway) {
@@ -173,7 +196,29 @@ public class DataSourceProvider implements Provider<DataSource> {
     }
 
     @Override
-    public DataSource get() {
-        return dataSource;
+    protected String getModuleName() {
+        return MODULE;
+    }
+
+    @Override
+    protected Class<CoreDbConnProvider> getConnectionProviderType() {
+        return CoreDbConnProvider.class;
+    }
+
+    @Override
+    protected CoreDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements CoreDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
+    }
+
+    private static class ForceMigration {
+        @Inject
+        ForceMigration(final CoreDbConnProvider provider) {
+        }
     }
 }

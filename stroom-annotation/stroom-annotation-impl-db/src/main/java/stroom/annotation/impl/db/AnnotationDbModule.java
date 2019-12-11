@@ -4,10 +4,10 @@ import stroom.annotation.impl.AnnotationConfig;
 import stroom.annotation.impl.AnnotationDao;
 import stroom.annotation.impl.AnnotationModule;
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 import stroom.util.guice.GuiceUtil;
 
 import javax.sql.DataSource;
-import java.util.function.Function;
 
 public class AnnotationDbModule extends AbstractFlyWayDbModule<AnnotationConfig, AnnotationDbConnProvider> {
     private static final String MODULE = "stroom-annotation";
@@ -41,12 +41,18 @@ public class AnnotationDbModule extends AbstractFlyWayDbModule<AnnotationConfig,
     }
 
     @Override
-    protected Function<DataSource, AnnotationDbConnProvider> getConnectionProviderConstructor() {
-        return AnnotationDbConnProvider::new;
+    protected Class<AnnotationDbConnProvider> getConnectionProviderType() {
+        return AnnotationDbConnProvider.class;
     }
 
     @Override
-    protected Class<AnnotationDbConnProvider> getConnectionProviderType() {
-        return AnnotationDbConnProvider.class;
+    protected AnnotationDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements AnnotationDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }

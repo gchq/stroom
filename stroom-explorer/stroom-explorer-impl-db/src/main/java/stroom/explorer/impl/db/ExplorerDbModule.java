@@ -1,10 +1,10 @@
 package stroom.explorer.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 import stroom.explorer.impl.ExplorerTreeDao;
 
 import javax.sql.DataSource;
-import java.util.function.Function;
 
 public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerConfig, ExplorerDbConnProvider> {
     private static final String MODULE = "stroom-explorer";
@@ -34,12 +34,18 @@ public class ExplorerDbModule extends AbstractFlyWayDbModule<ExplorerConfig, Exp
     }
 
     @Override
-    protected Function<DataSource, ExplorerDbConnProvider> getConnectionProviderConstructor() {
-        return ExplorerDbConnProvider::new;
+    protected Class<ExplorerDbConnProvider> getConnectionProviderType() {
+        return ExplorerDbConnProvider.class;
     }
 
     @Override
-    protected Class<ExplorerDbConnProvider> getConnectionProviderType() {
-        return ExplorerDbConnProvider.class;
+    protected ExplorerDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements ExplorerDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }

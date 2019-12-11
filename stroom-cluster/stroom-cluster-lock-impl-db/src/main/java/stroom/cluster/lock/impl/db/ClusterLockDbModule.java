@@ -2,12 +2,12 @@ package stroom.cluster.lock.impl.db;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 import javax.sql.DataSource;
-import java.util.function.Function;
 
 public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockConfig, ClusterLockDbConnProvider> {
     private static final String MODULE = "stroom-cluster-lock";
@@ -42,12 +42,18 @@ public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockConfi
     }
 
     @Override
-    protected Function<DataSource, ClusterLockDbConnProvider> getConnectionProviderConstructor() {
-        return ClusterLockDbConnProvider::new;
+    protected Class<ClusterLockDbConnProvider> getConnectionProviderType() {
+        return ClusterLockDbConnProvider.class;
     }
 
     @Override
-    protected Class<ClusterLockDbConnProvider> getConnectionProviderType() {
-        return ClusterLockDbConnProvider.class;
+    protected ClusterLockDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements ClusterLockDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }

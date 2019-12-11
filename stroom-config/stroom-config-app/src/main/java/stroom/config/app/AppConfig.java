@@ -12,6 +12,7 @@ import stroom.core.db.CoreConfig;
 import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
+import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
 import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
@@ -48,6 +49,7 @@ public class AppConfig implements IsConfig {
     private CoreConfig coreConfig = new CoreConfig();
     private DataConfig dataConfig = new DataConfig();
     private DataSourceUrlConfig dataSourceUrlConfig = new DataSourceUrlConfig();
+    private DocStoreConfig docStoreConfig = new DocStoreConfig();
     private ExplorerConfig explorerConfig = new ExplorerConfig();
     private ExportConfig exportConfig = new ExportConfig();
     private FeedConfig feedConfig = new FeedConfig();
@@ -174,6 +176,15 @@ public class AppConfig implements IsConfig {
 
     public void setDataSourceUrlConfig(final DataSourceUrlConfig dataSourceUrlConfig) {
         this.dataSourceUrlConfig = dataSourceUrlConfig;
+    }
+
+    @JsonProperty("docstore")
+    public DocStoreConfig getDocStoreConfig() {
+        return docStoreConfig;
+    }
+
+    public void setDocStoreConfig(final DocStoreConfig docStoreConfig) {
+        this.docStoreConfig = docStoreConfig;
     }
 
     @JsonProperty("explorer")

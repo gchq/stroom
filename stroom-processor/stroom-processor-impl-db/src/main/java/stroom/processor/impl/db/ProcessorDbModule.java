@@ -1,6 +1,7 @@
 package stroom.processor.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.ProcessorFilterDao;
@@ -11,7 +12,6 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
 import javax.sql.DataSource;
-import java.util.function.Function;
 
 public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorConfig, ProcessorDbConnProvider> {
     private static final String MODULE = "stroom-processor";
@@ -47,12 +47,18 @@ public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorConfig, P
     }
 
     @Override
-    protected Function<DataSource, ProcessorDbConnProvider> getConnectionProviderConstructor() {
-        return ProcessorDbConnProvider::new;
+    protected Class<ProcessorDbConnProvider> getConnectionProviderType() {
+        return ProcessorDbConnProvider.class;
     }
 
     @Override
-    protected Class<ProcessorDbConnProvider> getConnectionProviderType() {
-        return ProcessorDbConnProvider.class;
+    protected ProcessorDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements ProcessorDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }

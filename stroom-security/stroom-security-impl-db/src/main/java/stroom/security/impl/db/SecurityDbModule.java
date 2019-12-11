@@ -1,13 +1,13 @@
 package stroom.security.impl.db;
 
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 import stroom.security.impl.AppPermissionDao;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.SecurityConfig;
 import stroom.security.impl.UserDao;
 
 import javax.sql.DataSource;
-import java.util.function.Function;
 
 public class SecurityDbModule extends AbstractFlyWayDbModule<SecurityConfig, SecurityDbConnProvider> {
     private static final String MODULE = "stroom-security";
@@ -38,12 +38,18 @@ public class SecurityDbModule extends AbstractFlyWayDbModule<SecurityConfig, Sec
     }
 
     @Override
-    protected Function<DataSource, SecurityDbConnProvider> getConnectionProviderConstructor() {
-        return SecurityDbConnProvider::new;
+    protected Class<SecurityDbConnProvider> getConnectionProviderType() {
+        return SecurityDbConnProvider.class;
     }
 
     @Override
-    protected Class<SecurityDbConnProvider> getConnectionProviderType() {
-        return SecurityDbConnProvider.class;
+    protected SecurityDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements SecurityDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }

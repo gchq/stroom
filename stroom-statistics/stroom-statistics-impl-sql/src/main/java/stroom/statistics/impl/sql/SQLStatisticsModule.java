@@ -17,10 +17,10 @@
 package stroom.statistics.impl.sql;
 
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 import stroom.task.api.TaskHandlerBinder;
 
 import javax.sql.DataSource;
-import java.util.function.Function;
 
 public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsConfig, SQLStatisticsDbConnProvider> {
     private static final String MODULE = "stroom-statistics";
@@ -53,12 +53,18 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
     }
 
     @Override
-    protected Function<DataSource, SQLStatisticsDbConnProvider> getConnectionProviderConstructor() {
-        return SQLStatisticsDbConnProvider::new;
+    protected Class<SQLStatisticsDbConnProvider> getConnectionProviderType() {
+        return SQLStatisticsDbConnProvider.class;
     }
 
     @Override
-    protected Class<SQLStatisticsDbConnProvider> getConnectionProviderType() {
-        return SQLStatisticsDbConnProvider.class;
+    protected SQLStatisticsDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements SQLStatisticsDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }
