@@ -37,7 +37,7 @@ public class ProcessorTaskDataSource {
     public static final DocRefField PIPELINE_UUID = new DocRefField(PipelineDoc.DOCUMENT_TYPE, "Pipeline");
     public static final IdField PROCESSOR_FILTER_ID = new IdField("Processor Filter Id");
     public static final IdField PROCESSOR_ID = new IdField("Processor Id");
-    //    public static final String FEED_UUID = "Feed";
+    public static final TextField FEED_NAME = new TextField("Feed");
     public static final TextField STATUS = new TextField("Status");
     public static final IdField TASK_ID = new IdField("Task Id");
 
@@ -49,7 +49,7 @@ public class ProcessorTaskDataSource {
         FIELDS.add(PIPELINE_UUID);
         FIELDS.add(PROCESSOR_FILTER_ID);
         FIELDS.add(PROCESSOR_ID);
-//        FIELDS.add(DataSourceUtil.createDocRefField(FEED_UUID, FeedDoc.DOCUMENT_TYPE);
+        FIELDS.add(FEED_NAME);
         FIELDS.add(STATUS);
         FIELDS.add(TASK_ID);
         FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));

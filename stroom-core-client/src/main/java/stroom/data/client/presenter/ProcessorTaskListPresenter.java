@@ -75,6 +75,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                 TooltipUtil.addRowData(html, "Start Time", toDateString(row.getStartTimeMs()));
                 TooltipUtil.addRowData(html, "End Time", toDateString(row.getEndTimeMs()));
                 TooltipUtil.addRowData(html, "Node", row.getNodeName());
+                TooltipUtil.addRowData(html, "Feed", row.getFeedName());
 
                 // TODO : @66 REINSTATE STREAM DETAILS FOR A TASK
 
@@ -140,6 +141,17 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
                         }
                     }
                 }, "Node", 100);
+        getView()
+                .addColumn(new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_FEED, true) {
+                    @Override
+                    public String getValue(final ProcessorTask row) {
+                        if (row.getFeedName() != null) {
+                            return row.getFeedName();
+                        } else {
+                            return "";
+                        }
+                    }
+                }, "Feed", 100);
         getView().addColumn(new OrderByColumn<ProcessorTask, String>(new TextCell(), ProcessorTaskDataSource.FIELD_PRIORITY, false) {
             @Override
             public String getValue(final ProcessorTask row) {

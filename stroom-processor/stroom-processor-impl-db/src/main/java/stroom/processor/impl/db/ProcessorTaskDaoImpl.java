@@ -69,6 +69,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 
 import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
+import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCESSOR_FILTER_TRACKER;
 import static stroom.processor.impl.db.jooq.tables.ProcessorNode.PROCESSOR_NODE;
@@ -107,6 +108,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             PROCESSOR_TASK.STATUS,
             PROCESSOR_TASK.START_TIME_MS,
             PROCESSOR_TASK.FK_PROCESSOR_NODE_ID,
+            PROCESSOR_TASK.FK_PROCESSOR_FEED_ID,
             PROCESSOR_TASK.META_ID,
             PROCESSOR_TASK.DATA,
             PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID};
@@ -139,6 +141,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
     private final NodeInfo nodeInfo;
     private final ProcessorNodeCache processorNodeCache;
+    private final ProcessorFeedCache processorFeedCache;
     private final ClusterLockService clusterLockService;
     private final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao;
     private final ProcessorConfig processorConfig;
@@ -152,6 +155,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     @Inject
     ProcessorTaskDaoImpl(final NodeInfo nodeInfo,
                          final ProcessorNodeCache processorNodeCache,
+                         final ProcessorFeedCache processorFeedCache,
                          final ClusterLockService clusterLockService,
                          final ProcessorFilterTrackerDaoImpl processorFilterTrackerDao,
                          final ProcessorConfig processorConfig,
@@ -160,6 +164,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                          final ExpressionMapperFactory expressionMapperFactory) {
         this.nodeInfo = nodeInfo;
         this.processorNodeCache = processorNodeCache;
+        this.processorFeedCache = processorFeedCache;
         this.clusterLockService = clusterLockService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
         this.processorConfig = processorConfig;
@@ -174,6 +179,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             }
             record.set(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID, processorTask.getProcessorFilter().getId());
             record.set(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID, processorNodeCache.getOrCreate(processorTask.getNodeName()));
+            record.set(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID, processorFeedCache.getOrCreate(processorTask.getFeedName()));
             return record;
         });
         this.genericDao.setRecordToObjectMapper(new RecordToProcessorTaskMapper());
@@ -197,10 +203,10 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         expressionMapper.map(ProcessorTaskDataSource.CREATE_TIME_MS, PROCESSOR_TASK.CREATE_TIME_MS, Long::valueOf);
         expressionMapper.map(ProcessorTaskDataSource.META_ID, PROCESSOR_TASK.META_ID, Long::valueOf);
         expressionMapper.map(ProcessorTaskDataSource.NODE_NAME, PROCESSOR_NODE.NAME, value -> value);
+        expressionMapper.map(ProcessorTaskDataSource.FEED_NAME, PROCESSOR_FEED.NAME, value -> value);
         expressionMapper.map(ProcessorTaskDataSource.PIPELINE_UUID, PROCESSOR.PIPELINE_UUID, value -> value);
         expressionMapper.map(ProcessorTaskDataSource.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, Integer::valueOf);
         expressionMapper.map(ProcessorTaskDataSource.PROCESSOR_ID, PROCESSOR.ID, Integer::valueOf);
-//        expressionMapper.map(ProcessorTaskDataSource.FEED_UUID, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorTaskDataSource.STATUS, PROCESSOR_TASK.STATUS, value -> TaskStatus.valueOf(value.toUpperCase()).getPrimitiveValue());
         expressionMapper.map(ProcessorTaskDataSource.TASK_ID, PROCESSOR_TASK.ID, Long::valueOf);
 
@@ -209,6 +215,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         valueMapper.map(ProcessorTaskDataSource.CREATE_TIME_MS, PROCESSOR_TASK.CREATE_TIME_MS, ValLong::create);
         valueMapper.map(ProcessorTaskDataSource.META_ID, PROCESSOR_TASK.META_ID, ValLong::create);
         valueMapper.map(ProcessorTaskDataSource.NODE_NAME, PROCESSOR_NODE.NAME, ValString::create);
+        valueMapper.map(ProcessorTaskDataSource.FEED_NAME, PROCESSOR_FEED.NAME, ValString::create);
         valueMapper.map(ProcessorTaskDataSource.PIPELINE_UUID, PROCESSOR.PIPELINE_UUID, ValString::create);
         valueMapper.map(ProcessorTaskDataSource.PROCESSOR_FILTER_ID, PROCESSOR_FILTER.ID, ValInteger::create);
         valueMapper.map(ProcessorTaskDataSource.STATUS, PROCESSOR_TASK.STATUS, v -> ValString.create(TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(v).getDisplayValue()));
@@ -418,26 +425,27 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                         streamIdRange = InclusiveRange.extend(streamIdRange, meta.getId());
                         streamMsRange = InclusiveRange.extend(streamMsRange, meta.getCreateMs());
 
-                        final Object[] BindValues = new Object[PROCESSOR_TASK_COLUMNS.length];
+                        final Object[] bindValues = new Object[PROCESSOR_TASK_COLUMNS.length];
 
-                        BindValues[0] = 1; //version
-                        BindValues[1] = streamTaskCreateMs; //create_ms
-                        BindValues[2] = TaskStatus.UNPROCESSED.getPrimitiveValue(); //stat
-                        BindValues[3] = streamTaskCreateMs; //stat_ms
+                        bindValues[0] = 1; //version
+                        bindValues[1] = streamTaskCreateMs; //create_ms
+                        bindValues[2] = TaskStatus.UNPROCESSED.getPrimitiveValue(); //stat
+                        bindValues[3] = streamTaskCreateMs; //stat_ms
 
                         if (Status.UNLOCKED.equals(meta.getStatus())) {
                             // If the stream is unlocked then take ownership of the
                             // task, i.e. set the node to this node.
-                            BindValues[4] = nodeId; //fk_node_id
+                            bindValues[4] = nodeId; //fk_node_id
                             availableTasksCreated++;
                         }
-                        BindValues[5] = meta.getId(); //fk_strm_id
+                        bindValues[5] = processorFeedCache.getOrCreate(meta.getFeedName());
+                        bindValues[6] = meta.getId(); //fk_strm_id
                         if (eventRangeData != null && !eventRangeData.isEmpty()) {
-                            BindValues[6] = eventRangeData; //dat
+                            bindValues[7] = eventRangeData; //dat
                         }
-                        BindValues[7] = filter.getId(); //fk_strm_proc_filt_id
+                        bindValues[8] = filter.getId(); //fk_strm_proc_filt_id
 
-                        batchBindStep.bind(BindValues);
+                        batchBindStep.bind(bindValues);
 
                         // Execute insert if we have reached batch size.
                         if (rowCount >= processorConfig.getDatabaseMultiInsertMaxBatchSize()) {
@@ -843,6 +851,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private ProcessorTask decorate(final ProcessorTask result, final ProcessorTask original) {
         result.setNodeName(original.getNodeName());
+        result.setFeedName(original.getFeedName());
         result.setProcessorFilter(original.getProcessorFilter());
         return result;
     }
@@ -864,6 +873,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .select()
                 .from(PROCESSOR_TASK)
                 .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
+                .leftOuterJoin(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
                 .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
                 .join(PROCESSOR_FILTER_TRACKER).on(PROCESSOR_FILTER.FK_PROCESSOR_FILTER_TRACKER_ID.eq(PROCESSOR_FILTER_TRACKER.ID))
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
@@ -900,13 +910,15 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
         final List<ProcessorTaskSummary> list = JooqUtil.contextResult(processorDbConnProvider, context -> context
                 .select(
+                        PROCESSOR_FEED.NAME,
                         PROCESSOR.PIPELINE_UUID,
                         PROCESSOR_FILTER.PRIORITY,
                         PROCESSOR_TASK.STATUS,
                         COUNT
                 )
                 .from(PROCESSOR_TASK)
-                .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
+//                .leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID))
+                .join(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID))
                 .join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID))
                 .join(PROCESSOR).on(PROCESSOR_FILTER.FK_PROCESSOR_ID.eq(PROCESSOR.ID))
                 .where(condition)
@@ -914,13 +926,12 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                 .orderBy(orderFields)
                 .fetch()
                 .map(record -> {
+                    final String feed = record.get(PROCESSOR_FEED.NAME);
                     final String pipelineUuid = record.get(PROCESSOR.PIPELINE_UUID);
                     final int priority = record.get(PROCESSOR_FILTER.PRIORITY);
                     final TaskStatus status = TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(PROCESSOR_TASK.STATUS));
                     final int count = record.get(COUNT);
-
-                    // TODO : @66 Do something about the fact that feed is missing from processor tasks.
-                    return new ProcessorTaskSummary(new DocRef("Pipeline", pipelineUuid), null, priority, status, count);
+                    return new ProcessorTaskSummary(new DocRef("Pipeline", pipelineUuid), feed, priority, status, count);
                 }));
 
         return BaseResultList.createUnboundedList(list);
@@ -931,6 +942,8 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final List<AbstractField> fieldList = Arrays.asList(fields);
         final int nodeTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskDataSource.NODE_NAME);
         final boolean nodeValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskDataSource.NODE_NAME));
+        final int feedTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskDataSource.FEED_NAME);
+        final boolean feedValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskDataSource.FEED_NAME));
         final int pipelineTermCount = ExpressionUtil.termCount(criteria.getExpression(), ProcessorTaskDataSource.PIPELINE_UUID);
         final boolean pipelineValueExists = fieldList.stream().anyMatch(Predicate.isEqual(ProcessorTaskDataSource.PIPELINE_UUID));
 
@@ -952,6 +965,9 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
             var select = context.select(dbFields).from(PROCESSOR_TASK);
             if (nodeTermCount > 0 || nodeValueExists) {
                 select = select.leftOuterJoin(PROCESSOR_NODE).on(PROCESSOR_TASK.FK_PROCESSOR_NODE_ID.eq(PROCESSOR_NODE.ID));
+            }
+            if (feedTermCount > 0 || feedValueExists) {
+                select = select.leftOuterJoin(PROCESSOR_FEED).on(PROCESSOR_TASK.FK_PROCESSOR_FEED_ID.eq(PROCESSOR_FEED.ID));
             }
             if (pipelineTermCount > 0 || pipelineValueExists) {
                 select = select.join(PROCESSOR_FILTER).on(PROCESSOR_TASK.FK_PROCESSOR_FILTER_ID.eq(PROCESSOR_FILTER.ID));

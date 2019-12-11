@@ -28,7 +28,8 @@ public class ProcessorDbModule extends AbstractFlyWayDbModule<ProcessorConfig, P
         bind(ProcessorFilterTrackerDao.class).to(ProcessorFilterTrackerDaoImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
-                .addBinding(ProcessorNodeCache.class);
+                .addBinding(ProcessorNodeCache.class)
+                .addBinding(ProcessorFeedCache.class);
     }
 
     @Override
