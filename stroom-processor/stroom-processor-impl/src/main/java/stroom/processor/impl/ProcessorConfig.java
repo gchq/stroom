@@ -30,7 +30,10 @@ public class ProcessorConfig implements BatchDeleteConfig, IsConfig, HasDbConfig
             .maximumSize(1000L)
             .expireAfterAccess(10, TimeUnit.SECONDS)
             .build();
-
+    private CacheConfig processorNodeCache = new CacheConfig.Builder()
+            .maximumSize(1000L)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {
@@ -129,6 +132,14 @@ public class ProcessorConfig implements BatchDeleteConfig, IsConfig, HasDbConfig
         this.processorFilterCache = processorFilterCache;
     }
 
+    public CacheConfig getProcessorNodeCache() {
+        return processorNodeCache;
+    }
+
+    public void setProcessorNodeCache(final CacheConfig processorNodeCache) {
+        this.processorNodeCache = processorNodeCache;
+    }
+
     @Override
     public String toString() {
         return "ProcessorConfig{" +
@@ -143,6 +154,7 @@ public class ProcessorConfig implements BatchDeleteConfig, IsConfig, HasDbConfig
                 ", databaseMultiInsertMaxBatchSize=" + databaseMultiInsertMaxBatchSize +
                 ", processorCache=" + processorCache +
                 ", processorFilterCache=" + processorFilterCache +
+                ", processorNodeCache=" + processorNodeCache +
                 '}';
     }
 }

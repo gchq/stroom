@@ -1,6 +1,9 @@
 package stroom.data.store.impl.fs.db;
 
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.ICache;
 import stroom.data.store.impl.fs.FsFeedPathDao;
+import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.db.util.JooqUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
@@ -8,9 +11,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath.FS_FEED_PATH;
 
@@ -21,33 +22,32 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsFeedPath.FS_FEED_PATH;
 class FsFeedPathDaoImpl implements FsFeedPathDao {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsFeedPathDaoImpl.class);
 
-    // TODO : @66 Replace with a proper cache.
-    private final Map<String, String> cache = new ConcurrentHashMap<>();
+    private static final String CACHE_NAME = "Feed Path Cache";
 
+    private final ICache<String, String> cache;
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
 
     @Inject
-    FsFeedPathDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider) {
+    FsFeedPathDaoImpl(final FsDataStoreDbConnProvider fsDataStoreDbConnProvider,
+                      final CacheManager cacheManager,
+                      final FsVolumeConfig fsVolumeConfig) {
         this.fsDataStoreDbConnProvider = fsDataStoreDbConnProvider;
+        cache = cacheManager.create(CACHE_NAME, fsVolumeConfig::getFeedPathCache, this::load);
+    }
+
+    private String load(final String name) {
+        // Try and get the existing id from the DB.
+        return getPath(name)
+                .or(() -> {
+                    createPath(name);
+                    return getPath(name);
+                })
+                .orElseThrow();
     }
 
     @Override
     public String getOrCreatePath(final String name) {
-        // Try and get the id from the cache.
-        return Optional.ofNullable(cache.get(name))
-                .or(() -> {
-                    // Try and get the existing id from the DB.
-                    return getPath(name)
-                            .or(() -> {
-                                createPath(name);
-                                return getPath(name);
-                            })
-                            .map(path -> {
-                                // Cache for next time.
-                                cache.put(name, path);
-                                return path;
-                            });
-                }).orElseThrow();
+        return cache.get(name);
     }
 
     private void createPath(final String name) {

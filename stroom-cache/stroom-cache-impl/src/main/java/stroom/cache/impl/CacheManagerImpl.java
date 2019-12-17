@@ -63,6 +63,8 @@ public class CacheManagerImpl implements CacheManager {
         final CacheConfig cacheConfig = cacheConfigSupplier.get();
 
         final Caffeine cacheBuilder = Caffeine.newBuilder();
+        cacheBuilder.recordStats();
+
         if (cacheConfig.getMaximumSize() != null) {
             cacheBuilder.maximumSize(cacheConfig.getMaximumSize());
         }
@@ -212,11 +214,6 @@ public class CacheManagerImpl implements CacheManager {
             throw new RuntimeException("A cache called '" + alias + "' already exists");
         }
 
-        replaceCache(alias, cacheBuilder, cache);
-    }
-
-    //    @Override
-    public void replaceCache(final String alias, final Caffeine cacheBuilder, final Cache cache) {
         final CacheHolder existing = caches.put(alias, new CacheHolder(cacheBuilder, cache));
         if (existing != null) {
             CacheUtil.clear(existing.getCache());

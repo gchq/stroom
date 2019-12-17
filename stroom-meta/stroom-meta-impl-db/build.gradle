@@ -5,6 +5,7 @@ dependencies {
 //    compile project(':stroom-cluster:stroom-cluster-lock-mock')
 //    compile project(':stroom-config:stroom-config-common')
 //    compile project(':stroom-core-shared')
+    compile project(':stroom-cache:stroom-cache-api')
     compile project(':stroom-meta:stroom-meta-impl')
     compile project(':stroom-meta:stroom-meta-impl-db-jooq')
     compile project(':stroom-meta:stroom-meta-api')
