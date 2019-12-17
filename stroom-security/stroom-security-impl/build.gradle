@@ -16,6 +16,7 @@ dependencies {
     compile libs.stroomAuthApi
     compile libs.stroomDocRef
 
+    compile libs.caffeine
     compile libs.commons_lang
     compile libs.dropwizard_metrics_healthchecks
     compile libs.eventLogging
