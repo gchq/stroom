@@ -38,11 +38,11 @@ public final class ExpressionUtil {
         return builder.build();
     }
 
-//    public static ExpressionOperator createFeedExpression(final Feed feed) {
-//        return new ExpressionOperator.Builder(Op.AND)
-//                .addDocRefTerm(ProcessorTaskDataSource.FEED, Condition.IS_DOC_REF, DocRefUtil.create(feed))
-//                .build();
-//    }
+    public static ExpressionOperator createFeedExpression(final String feedName) {
+        return new ExpressionOperator.Builder(Op.AND)
+                .addTerm(ProcessorTaskDataSource.FEED_NAME, Condition.EQUALS, feedName)
+                .build();
+    }
 
     public static ExpressionOperator createPipelineExpression(final PipelineDoc pipelineEntity) {
         return new ExpressionOperator.Builder(Op.AND)

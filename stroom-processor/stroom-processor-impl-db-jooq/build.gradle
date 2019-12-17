@@ -47,6 +47,7 @@ if (getPropertyOrDefault(propNameJooqGeneration, "false") == "true") {
                         includes = "" +
                                 "processor|" +
                                 "processor_node|" +
+                                "processor_feed|" +
                                 "processor_filter|" +
                                 "processor_filter_tracker|" +
                                 "processor_task"

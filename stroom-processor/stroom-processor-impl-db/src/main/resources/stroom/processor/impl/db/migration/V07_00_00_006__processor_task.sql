@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS processor_task (
   version                   int(11) NOT NULL,
   fk_processor_filter_id    int(11) NOT NULL,
   fk_processor_node_id      int(11) DEFAULT NULL,
+  fk_processor_feed_id      int(11) DEFAULT NULL,
   create_time_ms            bigint(20) DEFAULT NULL,
   start_time_ms             bigint(20) DEFAULT NULL,
   end_time_ms               bigint(20) DEFAULT NULL,
@@ -13,10 +14,12 @@ CREATE TABLE IF NOT EXISTS processor_task (
   PRIMARY KEY               (id),
   KEY processor_task_fk_processor_filter_id (fk_processor_filter_id),
   KEY processor_task_fk_processor_node_id (fk_processor_node_id),
+  KEY processor_task_fk_processor_feed_id (fk_processor_feed_id),
   KEY processor_task_status_idx (status),
   KEY processor_task_meta_id_idx (meta_id),
   CONSTRAINT processor_task_fk_processor_filter_id FOREIGN KEY (fk_processor_filter_id) REFERENCES processor_filter (id),
-  CONSTRAINT processor_task_fk_processor_node_id FOREIGN KEY (fk_processor_node_id) REFERENCES processor_node (id)
+  CONSTRAINT processor_task_fk_processor_node_id FOREIGN KEY (fk_processor_node_id) REFERENCES processor_node (id),
+  CONSTRAINT processor_task_fk_processor_feed_id FOREIGN KEY (fk_processor_feed_id) REFERENCES processor_feed (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP PROCEDURE IF EXISTS copy_processor_task;

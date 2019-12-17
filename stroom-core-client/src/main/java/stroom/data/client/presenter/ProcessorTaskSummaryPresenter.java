@@ -89,7 +89,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
                 new OrderByColumn<ProcessorTaskSummary, String>(new TextCell(), ProcessorTaskDataSource.FIELD_FEED, true) {
                     @Override
                     public String getValue(final ProcessorTaskSummary row) {
-                        return row.getFeed().getName();
+                        return row.getFeed();
                     }
                 }, "Feed", 250);
 
@@ -145,9 +145,9 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         dataProvider.setCriteria(criteria);
     }
 
-    private void setFeed(final FeedDoc feed) {
-//        criteria.setExpression(ExpressionUtil.createFeedExpression(feed));
-//        dataProvider.setCriteria(criteria);
+    private void setFeed(final String feed) {
+        criteria.setExpression(ExpressionUtil.createFeedExpression(feed));
+        dataProvider.setCriteria(criteria);
     }
 
     private void setFolder(final DocRef folder) {
@@ -165,7 +165,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         if (entity instanceof PipelineDoc) {
             setPipeline((PipelineDoc) entity);
         } else if (entity instanceof FeedDoc) {
-            setFeed((FeedDoc) entity);
+            setFeed(((FeedDoc) entity).getName());
         } else if (docRef != null) {
             setFolder(docRef);
         } else {

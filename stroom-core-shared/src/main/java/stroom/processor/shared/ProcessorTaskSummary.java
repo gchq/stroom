@@ -25,7 +25,7 @@ public class ProcessorTaskSummary implements SharedObject {
     private static final long serialVersionUID = 5631193345714122209L;
 
     private DocRef pipeline;
-    private DocRef feed;
+    private String feed;
     private int priority;
     private TaskStatus status;
     private long count;
@@ -33,7 +33,7 @@ public class ProcessorTaskSummary implements SharedObject {
     public ProcessorTaskSummary() {
     }
 
-    public ProcessorTaskSummary(final DocRef pipeline, final DocRef feed, final int priority, final TaskStatus status, final long count) {
+    public ProcessorTaskSummary(final DocRef pipeline, final String feed, final int priority, final TaskStatus status, final long count) {
         this.pipeline = pipeline;
         this.feed = feed;
         this.priority = priority;
@@ -45,7 +45,7 @@ public class ProcessorTaskSummary implements SharedObject {
         return pipeline;
     }
 
-    public DocRef getFeed() {
+    public String getFeed() {
         return feed;
     }
 
