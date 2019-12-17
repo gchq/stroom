@@ -27,7 +27,7 @@ public final class AuthenticationStateSessionUtil {
     public static AuthenticationState create(final HttpServletRequest request, final String url) {
         final String stateId = createRandomString(8);
         final String nonce = createRandomString(20);
-        final AuthenticationState state = new AuthenticationState(stateId, url, nonce);comm
+        final AuthenticationState state = new AuthenticationState(stateId, url, nonce);
 
         Cache<String, AuthenticationState> cache = getOrCreateCache(request);
         cache.put(stateId, state);
