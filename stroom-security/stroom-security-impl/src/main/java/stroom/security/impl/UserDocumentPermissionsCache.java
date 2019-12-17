@@ -16,11 +16,8 @@
 
 package stroom.security.impl;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
 import stroom.security.impl.event.AddPermissionEvent;
 import stroom.security.impl.event.ClearDocumentPermissionsEvent;
 import stroom.security.impl.event.ClearUserPermissionsEvent;
@@ -31,39 +28,28 @@ import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 @PermissionChangeEventHandler
 public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handler, Clearable {
     private static final String CACHE_NAME = "User Document Permissions Cache";
 
-    private final AuthorisationConfig authorisationConfig;
-
-    private final CacheManager cacheManager;
-    private final DocumentPermissionDao documentPermissionDao;
-
-    private volatile Integer lastMaximumSize;
-    private volatile LoadingCache<String, UserDocumentPermissions> cache;
+    private final ICache<String, UserDocumentPermissions> cache;
 
     @Inject
     public UserDocumentPermissionsCache(final CacheManager cacheManager,
                                         final DocumentPermissionDao documentPermissionDao,
                                         final AuthorisationConfig authorisationConfig) {
-        this.cacheManager = cacheManager;
-        this.documentPermissionDao = documentPermissionDao;
-        this.authorisationConfig = authorisationConfig;
+        cache = cacheManager.create(CACHE_NAME, authorisationConfig::getUserDocumentPermissionsCache, documentPermissionDao::getPermissionsForUser);
     }
 
     UserDocumentPermissions get(final String userUuid) {
-        return getCache().getUnchecked(userUuid);
+        return cache.get(userUuid);
     }
 
     @Override
     public void clear() {
-        if (cache != null) {
-            CacheUtil.clear(cache);
-        }
+        cache.clear();
     }
 
     @Override
@@ -71,21 +57,17 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
         if (cache != null) {
             if (event instanceof AddPermissionEvent) {
                 final AddPermissionEvent addPermissionEvent = (AddPermissionEvent) event;
-                final UserDocumentPermissions userDocumentPermissions = getCache().asMap().get(addPermissionEvent.getUserUuid());
-                if (userDocumentPermissions != null) {
-                    userDocumentPermissions.addPermission(addPermissionEvent.getDocUuid(), addPermissionEvent.getPermission());
-                }
+                cache.getOptional(addPermissionEvent.getUserUuid()).ifPresent(userDocumentPermissions ->
+                        userDocumentPermissions.addPermission(addPermissionEvent.getDocUuid(), addPermissionEvent.getPermission()));
 
             } else if (event instanceof RemovePermissionEvent) {
                 final RemovePermissionEvent removePermissionEvent = (RemovePermissionEvent) event;
-                final UserDocumentPermissions userDocumentPermissions = getCache().asMap().get(removePermissionEvent.getUserUuid());
-                if (userDocumentPermissions != null) {
-                    userDocumentPermissions.removePermission(removePermissionEvent.getDocUuid(), removePermissionEvent.getPermission());
-                }
+                cache.getOptional(removePermissionEvent.getUserUuid()).ifPresent(userDocumentPermissions ->
+                        userDocumentPermissions.removePermission(removePermissionEvent.getDocUuid(), removePermissionEvent.getPermission()));
 
             } else if (event instanceof ClearDocumentPermissionsEvent) {
                 final ClearDocumentPermissionsEvent clearDocumentPermissionsEvent = (ClearDocumentPermissionsEvent) event;
-                getCache().asMap().values().forEach(userDocumentPermissions -> {
+                cache.values().forEach(userDocumentPermissions -> {
                     if (userDocumentPermissions != null) {
                         userDocumentPermissions.clearDocumentPermissions(clearDocumentPermissionsEvent.getDocUuid());
                     }
@@ -93,38 +75,8 @@ public class UserDocumentPermissionsCache implements PermissionChangeEvent.Handl
 
             } else if (event instanceof ClearUserPermissionsEvent) {
                 final ClearUserPermissionsEvent clearUserPermissionsEvent = (ClearUserPermissionsEvent) event;
-                getCache().invalidate(clearUserPermissionsEvent.getUserUuid());
+                cache.invalidate(clearUserPermissionsEvent.getUserUuid());
             }
-        }
-    }
-
-    private int getMaximumSize() {
-        return authorisationConfig.getMaxDocumentPermissionCacheSize();
-    }
-
-    private LoadingCache<String, UserDocumentPermissions> getCache() {
-        if (lastMaximumSize == null || lastMaximumSize != getMaximumSize()) {
-            createCache();
-        }
-        return cache;
-    }
-
-    @SuppressWarnings("unchecked")
-    private synchronized void createCache() {
-        final int maximumSize = getMaximumSize();
-        if (lastMaximumSize == null || lastMaximumSize != maximumSize) {
-            final CacheLoader<String, UserDocumentPermissions> cacheLoader = CacheLoader.from(documentPermissionDao::getPermissionsForUser);
-            final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                    .maximumSize(maximumSize)
-                    .expireAfterAccess(10, TimeUnit.MINUTES);
-            final LoadingCache<String, UserDocumentPermissions> cache = cacheBuilder.build(cacheLoader);
-            if (lastMaximumSize == null) {
-                cacheManager.registerCache(CACHE_NAME, cacheBuilder, cache);
-            } else {
-                cacheManager.replaceCache(CACHE_NAME, cacheBuilder, cache);
-            }
-            lastMaximumSize = maximumSize;
-            this.cache = cache;
         }
     }
 }

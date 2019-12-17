@@ -16,52 +16,45 @@
 
 package stroom.security.impl;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
 import stroom.security.api.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
+import java.util.Objects;
 
 @Singleton
 class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable {
-    private static final int MAX_CACHE_ENTRIES = 1000;
+    private static final String CACHE_NAME = "Document Permission Cache";
 
     private final SecurityContext securityContext;
-    private final LoadingCache<DocumentPermission, Boolean> cache;
+    private final ICache<DocumentPermission, Boolean> cache;
 
     @Inject
-    @SuppressWarnings("unchecked")
     DocumentPermissionCacheImpl(final CacheManager cacheManager,
-                                final SecurityContext securityContext) {
+                                final SecurityContext securityContext,
+                                final AuthorisationConfig authorisationConfig) {
         this.securityContext = securityContext;
-
-        final CacheLoader<DocumentPermission, Boolean> cacheLoader = CacheLoader.from(k ->
-                securityContext.insecureResult(() ->
-                        securityContext.hasDocumentPermission(k.documentType, k.documentUuid, k.permission)));
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterWrite(10, TimeUnit.MINUTES);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("Document Permission Cache", cacheBuilder, cache);
+        cache = cacheManager.create(CACHE_NAME, authorisationConfig::getDocumentPermissionCache, this::create);
     }
 
+    private boolean create(final DocumentPermission k) {
+        return securityContext.insecureResult(() ->
+                securityContext.hasDocumentPermission(k.documentType, k.documentUuid, k.permission));
+    }
 
     @Override
     public boolean hasDocumentPermission(final String documentType, final String documentUuid, final String permission) {
         final DocumentPermission documentPermission = new DocumentPermission(securityContext.getUserId(), documentType, documentUuid, permission);
-        return cache.getUnchecked(documentPermission);
+        return cache.get(documentPermission);
     }
 
     @Override
     public void clear() {
-        CacheUtil.clear(cache);
+        cache.clear();
     }
 
     private static class DocumentPermission {
@@ -81,24 +74,16 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
         public boolean equals(final Object o) {
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
-
             final DocumentPermission that = (DocumentPermission) o;
-
-            if (userId != null ? !userId.equals(that.userId) : that.userId != null) return false;
-            if (documentType != null ? !documentType.equals(that.documentType) : that.documentType != null)
-                return false;
-            if (documentUuid != null ? !documentUuid.equals(that.documentUuid) : that.documentUuid != null)
-                return false;
-            return permission != null ? permission.equals(that.permission) : that.permission == null;
+            return Objects.equals(userId, that.userId) &&
+                    Objects.equals(documentType, that.documentType) &&
+                    Objects.equals(documentUuid, that.documentUuid) &&
+                    Objects.equals(permission, that.permission);
         }
 
         @Override
         public int hashCode() {
-            int result = userId != null ? userId.hashCode() : 0;
-            result = 31 * result + (documentType != null ? documentType.hashCode() : 0);
-            result = 31 * result + (documentUuid != null ? documentUuid.hashCode() : 0);
-            result = 31 * result + (permission != null ? permission.hashCode() : 0);
-            return result;
+            return Objects.hash(userId, documentType, documentUuid, permission);
         }
     }
 }

@@ -18,49 +18,62 @@ package stroom.statistics.impl.sql.search;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.ICache;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
+import stroom.query.common.v2.SearchResponseCreatorCache.Key;
 import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.query.common.v2.Store;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+@SuppressWarnings("unused") //Used by DI
 @Singleton
-@SuppressWarnings("unused") // used by DI
-public class SqlStatisticsSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
-
+class SqlStatisticsSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsSearchResponseCreatorManager.class);
 
-    private final SearchResponseCreatorCache cache;
+    private static final String CACHE_NAME = "SQL Statistics Search Result Creators";
+
+    private final SqlStatisticStoreFactory storeFactory;
+    private final ICache<Key, SearchResponseCreator> cache;
 
     @Inject
-    public SqlStatisticsSearchResponseCreatorManager(
-            final SqlStatisticsInMemorySearchResponseCreatorCacheFactory cacheFactory,
-            final SqlStatisticStoreFactory storeFactory) {
-
-        // Create a cache using the supplied cacheFactory, providing it the storeFactory for it
-        // to use when creating new cache entries
-        this.cache = cacheFactory.create(storeFactory);
+    public SqlStatisticsSearchResponseCreatorManager(final CacheManager cacheManager,
+                                                     final SearchConfig searchConfig,
+                                                     final SqlStatisticStoreFactory storeFactory) {
+        this.storeFactory = storeFactory;
+        cache = cacheManager.create(CACHE_NAME, searchConfig::getSearchResultCache, this::create, this::destroy);
     }
 
-    /**
-     * Get a {@link SearchResponseCreator} from the cache or create one if it doesn't exist
-     */
+    private SearchResponseCreator create(SearchResponseCreatorCache.Key key) {
+        try {
+            LOGGER.debug("Creating new store for key {}", key);
+            final Store store = storeFactory.create(key.getSearchRequest());
+            return new SearchResponseCreator(store);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    private void destroy(final Key key, final SearchResponseCreator value) {
+        value.destroy();
+    }
+
+    @Override
     public SearchResponseCreator get(final SearchResponseCreatorCache.Key key) {
-        LOGGER.debug("get called for key {}", key);
         return cache.get(key);
     }
 
-    /**
-     * Remove an entry from the cache, this will also terminate any running search for that entry
-     */
+    @Override
     public void remove(final SearchResponseCreatorCache.Key key) {
-        LOGGER.debug("remove called for key {}", key);
-
         cache.remove(key);
     }
 
+    @Override
     public void evictExpiredElements() {
         cache.evictExpiredElements();
     }

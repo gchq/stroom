@@ -110,7 +110,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             streamSet.add(EFFECTIVE_STREAM_3);
 
             try (final CacheManager cacheManager = new CacheManagerImpl()) {
-                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
+                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null, new ReferenceDataConfig()) {
                     @Override
                     public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -218,7 +218,7 @@ class TestReferenceDataWithCache extends AbstractCoreIntegrationTest {
             streamSet.add(effectiveStream);
 
             try (final CacheManager cacheManager = new CacheManagerImpl()) {
-                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
+                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null, new ReferenceDataConfig()) {
                     @Override
                     public TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;

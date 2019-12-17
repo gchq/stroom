@@ -27,6 +27,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.test.StroomUnitTest;
+import stroom.util.cache.CacheConfig;
 import stroom.util.date.DateUtil;
 
 import java.time.Instant;
@@ -79,7 +80,8 @@ class TestEffectiveStreamPool extends StroomUnitTest {
             final EffectiveStreamCache effectiveStreamPool = new EffectiveStreamCache(cacheManager,
                     metaService,
                     new EffectiveStreamInternPool(),
-                    new MockSecurityContext());
+                    new MockSecurityContext(),
+                    new ReferenceDataConfig());
 
             assertThat(effectiveStreamPool.size()).as("No pooled times yet").isEqualTo(0);
             assertThat(findEffectiveStreamSourceCount).as("No calls to the database yet").isEqualTo(0);
@@ -126,13 +128,18 @@ class TestEffectiveStreamPool extends StroomUnitTest {
         final InnerStreamMetaService mockStore = new InnerStreamMetaService();
 
         try (CacheManager cacheManager = new CacheManagerImpl()) {
+            final ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
+            referenceDataConfig.setEffectiveStreamCache(new CacheConfig.Builder()
+                    .maximumSize(1000L)
+                    .expireAfterWrite(100, TimeUnit.MILLISECONDS)
+                    .build());
+
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
                     cacheManager,
                     mockStore,
                     new EffectiveStreamInternPool(),
                     new MockSecurityContext(),
-                    100,
-                    TimeUnit.MILLISECONDS);
+                    referenceDataConfig);
 
             assertThat(effectiveStreamCache.size()).as("No pooled times yet").isEqualTo(0);
             assertThat(mockStore.getCallCount()).as("No calls to the database yet").isEqualTo(0);

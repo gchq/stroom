@@ -1,11 +1,8 @@
 package stroom.elastic.impl;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import org.eclipse.jetty.http.HttpStatus;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
 import stroom.docref.DocRef;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.query.audit.client.DocRefResourceHttpClient;
@@ -17,46 +14,40 @@ import stroom.util.shared.Clearable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.core.Response;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class ElasticIndexConfigCacheImpl implements ElasticIndexConfigCache, Clearable {
-    private static final int MAX_CACHE_ENTRIES = 100;
-
-    private final LoadingCache<DocRef, ElasticIndexConfigDoc> cache;
+    private static final String CACHE_NAME = "Elastic Index Config Cache";
 
     private final DocRefResourceHttpClient<ElasticIndexConfigDoc> docRefHttpClient;
     private final SecurityContext securityContext;
+    private final ICache<DocRef, ElasticIndexConfigDoc> cache;
 
     @Inject
     ElasticIndexConfigCacheImpl(final CacheManager cacheManager,
                                 final SecurityContext securityContext,
-                                final UiConfig uiConfig) {
+                                final UiConfig uiConfig,
+                                final ElasticConfig elasticConfig) {
         docRefHttpClient = new DocRefResourceHttpClient<>(uiConfig.getUrlConfig().getElastic());
         this.securityContext = securityContext;
+        cache = cacheManager.create(CACHE_NAME, elasticConfig::getElasticIndexConfigCache, this::create);
+    }
 
-        final CacheLoader<DocRef, ElasticIndexConfigDoc> cacheLoader = CacheLoader.from(k -> {
-            try {
-                final Response response = docRefHttpClient.get(serviceUser(), k.getUuid());
+    private ElasticIndexConfigDoc create(final DocRef docRef) {
+        try {
+            final Response response = docRefHttpClient.get(serviceUser(), docRef.getUuid());
 
-                if (response.getStatus() != HttpStatus.OK_200) {
-                    final String msg = String.format("Invalid status returned by Elastic Explorer Service: %d - %s ",
-                            response.getStatus(),
-                            response.readEntity(String.class));
-                    throw new RuntimeException(msg);
-                }
-
-                return response.readEntity(ElasticIndexConfigDoc.class);
-            } catch (final RuntimeException e) {
-                throw new LoggedException(String.format("Failed to retrieve elastic index config for %s", k.getUuid()), e);
+            if (response.getStatus() != HttpStatus.OK_200) {
+                final String msg = String.format("Invalid status returned by Elastic Explorer Service: %d - %s ",
+                        response.getStatus(),
+                        response.readEntity(String.class));
+                throw new RuntimeException(msg);
             }
-        });
 
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(10, TimeUnit.MINUTES);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("Elastic Index Config Cache", cacheBuilder, cache);
+            return response.readEntity(ElasticIndexConfigDoc.class);
+        } catch (final RuntimeException e) {
+            throw new LoggedException(String.format("Failed to retrieve elastic index config for %s", docRef.getUuid()), e);
+        }
     }
 
     private ServiceUser serviceUser() {
@@ -68,7 +59,7 @@ public class ElasticIndexConfigCacheImpl implements ElasticIndexConfigCache, Cle
 
     @Override
     public ElasticIndexConfigDoc get(final DocRef key) {
-        return cache.getUnchecked(key);
+        return cache.get(key);
     }
 
     @Override
@@ -78,6 +69,6 @@ public class ElasticIndexConfigCacheImpl implements ElasticIndexConfigCache, Cle
 
     @Override
     public void clear() {
-        CacheUtil.clear(cache);
+        cache.clear();
     }
 }

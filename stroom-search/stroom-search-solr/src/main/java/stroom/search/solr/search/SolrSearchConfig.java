@@ -2,10 +2,12 @@ package stroom.search.solr.search;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.cache.CacheConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class SolrSearchConfig implements IsConfig {
@@ -21,6 +23,10 @@ public class SolrSearchConfig implements IsConfig {
     private int maxBooleanClauseCount = DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT;
     private String storeSize = "1000000,100,10,1";
     private ExtractionConfig extractionConfig = new ExtractionConfig();
+    private CacheConfig searchResultCache = new CacheConfig.Builder()
+            .maximumSize(10000L)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index shard and queued prior to further processing")
     public int getMaxStoredDataQueueSize() {
@@ -58,12 +64,22 @@ public class SolrSearchConfig implements IsConfig {
         this.extractionConfig = extractionConfig;
     }
 
+    public CacheConfig getSearchResultCache() {
+        return searchResultCache;
+    }
+
+    public void setSearchResultCache(final CacheConfig searchResultCache) {
+        this.searchResultCache = searchResultCache;
+    }
+
     @Override
     public String toString() {
-        return "SearchConfig{" +
+        return "SolrSearchConfig{" +
                 "maxStoredDataQueueSize=" + maxStoredDataQueueSize +
                 ", maxBooleanClauseCount=" + maxBooleanClauseCount +
                 ", storeSize='" + storeSize + '\'' +
+                ", extractionConfig=" + extractionConfig +
+                ", searchResultCache=" + searchResultCache +
                 '}';
     }
 }

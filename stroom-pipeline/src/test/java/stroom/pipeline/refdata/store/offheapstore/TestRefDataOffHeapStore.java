@@ -32,7 +32,7 @@ import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.store.RefDataStoreConfig;
+import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
 import stroom.pipeline.refdata.store.RefDataValue;
@@ -94,7 +94,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     @Inject
     private RefDataStoreFactory refDataStoreFactory;
 
-    private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
+    private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private Injector injector;
     private RefDataStore refDataStore;
 
@@ -103,7 +103,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     }
 
     void setDbMaxSizeProperty(final long sizeInBytes) {
-        refDataStoreConfig.setMaxStoreSize(Long.toString(sizeInBytes));
+        referenceDataConfig.setMaxStoreSize(Long.toString(sizeInBytes));
     }
 
     @BeforeEach
@@ -112,7 +112,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
-        refDataStoreConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
+        referenceDataConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
 
         setDbMaxSizeProperty();
 
@@ -120,7 +120,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(RefDataStoreConfig.class).toInstance(refDataStoreConfig);
+                        bind(ReferenceDataConfig.class).toInstance(referenceDataConfig);
                         install(new RefDataStoreModule());
                         install(new PipelineScopeModule());
                     }
@@ -149,7 +149,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
     @Test
     void testNoReadAhead() {
-        getRefDataStoreConfig().setReadAheadEnabled(false);
+        getReferenceDataConfig().setReadAheadEnabled(false);
 
         // ensure loading and reading works with the NOREADAHEAD flag set
         bulkLoadAndAssert(true, 100);
@@ -487,7 +487,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         bulkLoadAndAssert(refStreamDefinitions, false, 1000);
 
-        getRefDataStoreConfig().setPurgeAge("0ms");
+        getReferenceDataConfig().setPurgeAge("0ms");
 
         assertThat(refDataStore.getProcessingInfoEntryCount()).isEqualTo(2);
         assertThat(refDataStore.getKeyValueEntryCount()).isGreaterThan(0);
@@ -1192,11 +1192,11 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
     }
 
-    protected RefDataStoreConfig getRefDataStoreConfig() {
-        return refDataStoreConfig;
+    protected ReferenceDataConfig getReferenceDataConfig() {
+        return referenceDataConfig;
     }
 
     protected void setPurgeAgeProperty(final String purgeAge) {
-        refDataStoreConfig.setPurgeAge(purgeAge);
+        referenceDataConfig.setPurgeAge(purgeAge);
     }
 }

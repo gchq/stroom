@@ -8,6 +8,7 @@ dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-cluster:stroom-cluster-api')
     compile project(':stroom-cluster:stroom-cluster-lock-impl-db')
+    compile project(':stroom-cluster:stroom-cluster-task-impl')
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-core')
     compile project(':stroom-core-shared')

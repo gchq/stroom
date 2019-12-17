@@ -146,9 +146,9 @@ class TestConfigMapper {
         AppConfig appConfig = getAppConfig();
 
         // simulate dropwiz setting a prop from the yaml
-        String initialValue = appConfig.getPipelineConfig().getRefDataStoreConfig().getLocalDir();
+        String initialValue = appConfig.getPipelineConfig().getReferenceDataConfig().getLocalDir();
         String newValue = initialValue + "xxx";
-        appConfig.getPipelineConfig().getRefDataStoreConfig().setLocalDir(newValue);
+        appConfig.getPipelineConfig().getReferenceDataConfig().setLocalDir(newValue);
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
@@ -172,9 +172,9 @@ class TestConfigMapper {
         AppConfig appConfig = getAppConfig();
 
         // simulate a prop not being defined in the yaml
-        String initialValue = appConfig.getPipelineConfig().getRefDataStoreConfig().getLocalDir();
+        String initialValue = appConfig.getPipelineConfig().getReferenceDataConfig().getLocalDir();
         String newYamlValue = null;
-        appConfig.getPipelineConfig().getRefDataStoreConfig().setLocalDir(newYamlValue);
+        appConfig.getPipelineConfig().getReferenceDataConfig().setLocalDir(newYamlValue);
 
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
@@ -216,7 +216,7 @@ class TestConfigMapper {
     void update_boolean() throws IOException, ConfigurationException {
         AppConfig appConfig = getAppConfig();
 
-        BooleanSupplier getter = () -> appConfig.getPipelineConfig().getRefDataStoreConfig().isReadAheadEnabled();
+        BooleanSupplier getter = () -> appConfig.getPipelineConfig().getReferenceDataConfig().isReadAheadEnabled();
         boolean initialValue = getter.getAsBoolean();
         boolean newValue = !initialValue;
         String fullPath = "stroom.pipeline.referenceData.readAheadEnabled";
@@ -233,7 +233,7 @@ class TestConfigMapper {
     void update_int() throws IOException, ConfigurationException {
         AppConfig appConfig = getAppConfig();
 
-        IntSupplier getter = () -> appConfig.getPipelineConfig().getRefDataStoreConfig().getMaxPutsBeforeCommit();
+        IntSupplier getter = () -> appConfig.getPipelineConfig().getReferenceDataConfig().getMaxPutsBeforeCommit();
         int initialValue = getter.getAsInt();
         int newValue = initialValue + 1;
         String fullPath = "stroom.pipeline.referenceData.maxPutsBeforeCommit";

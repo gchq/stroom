@@ -3,11 +3,13 @@ package stroom.config.app;
 import com.google.inject.AbstractModule;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
+import stroom.cluster.task.impl.ClusterTaskConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.db.CoreConfig;
 import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
+import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.data.retention.impl.DataRetentionConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
@@ -29,11 +31,12 @@ import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.destination.AppenderConfig;
 import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
-import stroom.pipeline.refdata.store.RefDataStoreConfig;
+import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
+import stroom.search.solr.SolrConfig;
 import stroom.search.solr.search.SolrSearchConfig;
 import stroom.searchable.impl.SearchableConfig;
 import stroom.security.impl.AuthenticationConfig;
@@ -86,9 +89,11 @@ public class AppConfigModule extends AbstractModule {
         bind(AppConfig::getBenchmarkClusterConfig, BenchmarkClusterConfig.class);
         bind(AppConfig::getClusterConfig, ClusterConfig.class);
         bind(AppConfig::getClusterLockConfig, ClusterLockConfig.class);
+        bind(AppConfig::getClusterTaskConfig, ClusterTaskConfig.class);
         bind(AppConfig::getCommonDbConfig, CommonDbConfig.class);
         bind(AppConfig::getContentPackImportConfig, ContentPackImportConfig.class);
         bind(AppConfig::getCoreConfig, CoreConfig.class);
+        bind(AppConfig::getDashboardConfig, DashboardConfig.class);
         bind(AppConfig::getDataConfig, DataConfig.class, c -> {
             bind(c, DataConfig::getDataRetentionConfig, DataRetentionConfig.class);
             bind(c, DataConfig::getDataStoreServiceConfig, DataStoreServiceConfig.class);
@@ -112,7 +117,7 @@ public class AppConfigModule extends AbstractModule {
         bind(AppConfig::getPipelineConfig, PipelineConfig.class, c -> {
             bind(c, PipelineConfig::getAppenderConfig, AppenderConfig.class);
             bind(c, PipelineConfig::getParserConfig, ParserConfig.class);
-            bind(c, PipelineConfig::getRefDataStoreConfig, RefDataStoreConfig.class);
+            bind(c, PipelineConfig::getReferenceDataConfig, ReferenceDataConfig.class);
             bind(c, PipelineConfig::getXmlSchemaConfig, XmlSchemaConfig.class);
             bind(c, PipelineConfig::getXsltConfig, XsltConfig.class);
         });
@@ -131,7 +136,9 @@ public class AppConfigModule extends AbstractModule {
         });
         bind(AppConfig::getServiceDiscoveryConfig, ServiceDiscoveryConfig.class);
         bind(AppConfig::getSessionCookieConfig, SessionCookieConfig.class);
-        bind(AppConfig::getSolrSearchConfig, SolrSearchConfig.class);
+        bind(AppConfig::getSolrConfig, SolrConfig.class, c -> {
+            bind(c, SolrConfig::getSolrSearchConfig, SolrSearchConfig.class);
+        });
         bind(AppConfig::getStatisticsConfig, StatisticsConfig.class, c -> {
             bind(c, StatisticsConfig::getHbaseStatisticsConfig, HBaseStatisticsConfig.class);
             bind(c, StatisticsConfig::getInternalStatisticsConfig, InternalStatisticsConfig.class);

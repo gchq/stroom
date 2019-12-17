@@ -16,14 +16,11 @@
 
 package stroom.config.common;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.IsConfig;
 
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
 public class ConnectionPoolConfig implements IsConfig {
     private Boolean cachePrepStmts;
     private Integer prepStmtCacheSize;

@@ -16,40 +16,31 @@
 
 package stroom.security.impl;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
-// TODO watch for changes somehow, it used to use the generic entity event handler stuff
+// TODO @66 watch for changes somehow, it used to use the generic entity event handler stuff
 public class UserAppPermissionsCache implements Clearable {
-    private static final int MAX_CACHE_ENTRIES = 1000;
+    private static final String CACHE_NAME = "User App Permissions Cache";
 
-    private final LoadingCache<User, UserAppPermissions> cache;
+    private final ICache<User, UserAppPermissions> cache;
 
     @Inject
-    @SuppressWarnings("unchecked")
     UserAppPermissionsCache(final CacheManager cacheManager,
+                            final AuthorisationConfig authorisationConfig,
                             final UserAppPermissionService userAppPermissionService) {
-        final CacheLoader<User, UserAppPermissions> cacheLoader = CacheLoader.from(userAppPermissionService::getPermissionsForUser);
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(30, TimeUnit.MINUTES);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("User App Permissions Cache", cacheBuilder, cache);
+        cache = cacheManager.create(CACHE_NAME, authorisationConfig::getUserAppPermissionsCache, userAppPermissionService::getPermissionsForUser);
     }
 
     UserAppPermissions get(final User key) {
-        return cache.getUnchecked(key);
+        return cache.get(key);
     }
 
     void remove(final User userRef) {
@@ -58,6 +49,6 @@ public class UserAppPermissionsCache implements Clearable {
 
     @Override
     public void clear() {
-        CacheUtil.clear(cache);
+        cache.clear();
     }
 }

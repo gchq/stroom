@@ -1,4 +1,4 @@
-package stroom.cache.api;
+package stroom.cache.impl;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;

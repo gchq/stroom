@@ -16,14 +16,10 @@
 
 package stroom.statistics.impl.sql.entity;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.entity.shared.EntityAction;
@@ -32,6 +28,7 @@ import stroom.entity.shared.EntityEventHandler;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionException;
+import stroom.statistics.impl.sql.SQLStatisticsConfig;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.shared.Clearable;
 
@@ -39,7 +36,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -58,24 +55,27 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
     private final StatisticStoreStore statisticStoreStore;
     private final CacheManager cacheManager;
     private final SecurityContext securityContext;
+    private final SQLStatisticsConfig sqlStatisticsConfig;
 
-    private volatile LoadingCache<String, Optional<StatisticStoreDoc>> cacheByName;
-    private volatile LoadingCache<DocRef, Optional<StatisticStoreDoc>> cacheByRef;
+    private volatile ICache<String, Optional<StatisticStoreDoc>> cacheByName;
+    private volatile ICache<DocRef, Optional<StatisticStoreDoc>> cacheByRef;
 
     @Inject
     StatisticsDataSourceCacheImpl(final StatisticStoreStore statisticStoreStore,
                                   final CacheManager cacheManager,
-                                  final SecurityContext securityContext) {
+                                  final SecurityContext securityContext,
+                                  final SQLStatisticsConfig sqlStatisticsConfig) {
         this.statisticStoreStore = statisticStoreStore;
         this.cacheManager = cacheManager;
         this.securityContext = securityContext;
+        this.sqlStatisticsConfig = sqlStatisticsConfig;
     }
 
-    private LoadingCache<String, Optional<StatisticStoreDoc>> getCacheByName() {
+    private ICache<String, Optional<StatisticStoreDoc>> getCacheByName() {
         if (cacheByName == null) {
             synchronized (this) {
                 if (cacheByName == null) {
-                    final CacheLoader<String, Optional<StatisticStoreDoc>> cacheLoader = CacheLoader.from(k -> {
+                    final Function<String, Optional<StatisticStoreDoc>> cacheLoader = k -> {
                         if (k == null) {
                             return Optional.empty();
                         }
@@ -92,7 +92,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
 
                             return Optional.empty();
                         });
-                    });
+                    };
                     cacheByName = createCache(STATISTICS_DATA_SOURCE_CACHE_NAME_BY_NAME, cacheLoader);
                 }
             }
@@ -100,13 +100,13 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
         return cacheByName;
     }
 
-    private LoadingCache<DocRef, Optional<StatisticStoreDoc>> getCacheByRef() {
+    private ICache<DocRef, Optional<StatisticStoreDoc>> getCacheByRef() {
         if (cacheByRef == null) {
             synchronized (this) {
                 if (cacheByRef == null) {
-                    final CacheLoader<DocRef, Optional<StatisticStoreDoc>> cacheLoader = CacheLoader.from(k ->
+                    final Function<DocRef, Optional<StatisticStoreDoc>> cacheLoader = k ->
                             securityContext.asProcessingUserResult(() ->
-                                    Optional.ofNullable(statisticStoreStore.readDocument(k))));
+                                    Optional.ofNullable(statisticStoreStore.readDocument(k)));
                     cacheByRef = createCache(STATISTICS_DATA_SOURCE_CACHE_NAME_BY_ID, cacheLoader);
                 }
             }
@@ -114,14 +114,8 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
         return cacheByRef;
     }
 
-    @SuppressWarnings("unchecked")
-    private <K, V> LoadingCache<K, V> createCache(final String name, final CacheLoader<K, V> cacheLoader) {
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(100)
-                .expireAfterWrite(10, TimeUnit.MINUTES);
-        final LoadingCache<K, V> cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache(name, cacheBuilder, cache);
-        return cache;
+    private <K, V> ICache<K, V> createCache(final String name, final Function<K, V> cacheLoader) {
+        return cacheManager.create(name, sqlStatisticsConfig::getDataSourceCache, cacheLoader);
     }
 
     private boolean permissionFilter(final StatisticStoreDoc entity) {
@@ -134,7 +128,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
     @Override
     public StatisticStoreDoc getStatisticsDataSource(final DocRef docRef) {
         return getCacheByRef()
-                .getUnchecked(docRef)
+                .get(docRef)
                 .filter(this::permissionFilter)
                 .orElse(null);
     }
@@ -142,7 +136,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
     @Override
     public StatisticStoreDoc getStatisticsDataSource(final String statisticName) {
         return getCacheByName()
-                .getUnchecked(statisticName)
+                .get(statisticName)
                 .filter(this::permissionFilter)
                 .orElse(null);
     }
@@ -150,18 +144,18 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
     @Override
     public void onChange(final EntityEvent event) {
         try {
-            final Cache<String, Optional<StatisticStoreDoc>> cacheByEngineName = getCacheByName();
-            final Cache<DocRef, Optional<StatisticStoreDoc>> cacheByRef = getCacheByRef();
+            final ICache<String, Optional<StatisticStoreDoc>> cacheByEngineName = getCacheByName();
+            final ICache<DocRef, Optional<StatisticStoreDoc>> cacheByRef = getCacheByRef();
 
             final EntityAction entityAction = event.getAction();
 
             if (EntityAction.UPDATE.equals(entityAction) ||
                     EntityAction.DELETE.equals(entityAction) ||
                     EntityAction.CREATE.equals(entityAction)) {
-                final Optional<StatisticStoreDoc> optional = cacheByRef.getIfPresent(event.getDocRef());
+                final Optional<Optional<StatisticStoreDoc>> optional = cacheByRef.getOptional(event.getDocRef());
 
-                if (optional != null && optional.isPresent()) {
-                    final StatisticStoreDoc statisticStoreEntity = optional.get();
+                if (optional.isPresent() && optional.get().isPresent()) {
+                    final StatisticStoreDoc statisticStoreEntity = optional.get().get();
 
                     // found it in one cache so remove from both
                     cacheByRef.invalidate(event.getDocRef());
@@ -171,9 +165,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
                     // try again in the nameEngine cache
 
                     // not very efficient but we shouldn't have that many entities
-                    // in the cache and deletes will not happen
-                    // very
-                    // often.
+                    // in the cache and deletes will not happen very often.
                     cacheByEngineName.asMap().forEach((k, v) -> {
                         try {
                             if (v.isPresent()) {
@@ -199,10 +191,10 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
     @Override
     public void clear() {
         if (cacheByName != null) {
-            CacheUtil.clear(cacheByName);
+            cacheByName.clear();
         }
         if (cacheByRef != null) {
-            CacheUtil.clear(cacheByRef);
+            cacheByRef.clear();
         }
     }
 }

@@ -16,63 +16,60 @@
 
 package stroom.security.impl;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
+import stroom.cache.api.ICache;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class ApiTokenCache {
     private static final Logger LOGGER = LoggerFactory.getLogger(ApiTokenCache.class);
+    private static final String CACHE_NAME = "API Token Cache";
 
-    private static final int MAX_CACHE_ENTRIES = 10000;
-
-    private final LoadingCache<String, Optional<TokenAndExpiry>> cache;
+    private final AuthenticationServiceClients authenticationServiceClients;
+    private final JWTService jwtService;
+    private final ICache<String, Optional<TokenAndExpiry>> cache;
 
     @Inject
-    @SuppressWarnings("unchecked")
     public ApiTokenCache(final CacheManager cacheManager,
+                         final AuthenticationConfig authenticationConfig,
                          final AuthenticationServiceClients authenticationServiceClients,
                          final JWTService jwtService) {
-        final CacheLoader<String, Optional<TokenAndExpiry>> cacheLoader = CacheLoader.from(userId -> {
-            String token = authenticationServiceClients.getUsersApiToken(userId);
-            if (token != null) {
-                try {
-                    token = jwtService.refreshTokenIfExpired(token);
-                    final JwtClaims claims = jwtService.verifyToken(token);
-                    return Optional.of(new TokenAndExpiry(token, claims.getExpirationTime().getValueInMillis()));
-                } catch (final MalformedClaimException | InvalidJwtException e) {
-                    LOGGER.warn(e.getMessage());
-                }
-            }
+        this.authenticationServiceClients = authenticationServiceClients;
+        this.jwtService = jwtService;
+        cache = cacheManager.create(CACHE_NAME, authenticationConfig::getApiTokenCache, this::create);
+    }
 
-            return Optional.empty();
-        });
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterWrite(30, TimeUnit.MINUTES);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("API Token Cache", cacheBuilder, cache);
+    private Optional<TokenAndExpiry> create(final String userId) {
+        String token = authenticationServiceClients.getUsersApiToken(userId);
+        if (token != null) {
+            try {
+                token = jwtService.refreshTokenIfExpired(token);
+                final JwtClaims claims = jwtService.verifyToken(token);
+                return Optional.of(new TokenAndExpiry(token, claims.getExpirationTime().getValueInMillis()));
+            } catch (final MalformedClaimException | InvalidJwtException e) {
+                LOGGER.warn(e.getMessage());
+            }
+        }
+
+        return Optional.empty();
     }
 
     String get(final String userId) {
-        Optional<TokenAndExpiry> optional = cache.getUnchecked(userId);
+        Optional<TokenAndExpiry> optional = cache.get(userId);
         if (optional.isPresent()) {
             final long oldTime = System.currentTimeMillis() - 60000;
             if (optional.get().getExpiryMs() < oldTime) {
                 LOGGER.debug("Removing cached token for '{}' as it has expired", userId);
                 remove(userId);
-                optional = cache.getUnchecked(userId);
+                optional = cache.get(userId);
             }
         } else {
             remove(userId);

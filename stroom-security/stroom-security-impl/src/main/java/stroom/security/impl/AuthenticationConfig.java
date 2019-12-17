@@ -2,11 +2,13 @@ package stroom.security.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class AuthenticationConfig implements IsConfig {
@@ -21,6 +23,11 @@ public class AuthenticationConfig implements IsConfig {
     private String userNamePattern = "^[a-zA-Z0-9_-]{3,}$";
     private String clientId;
     private String clientSecret;
+
+    private CacheConfig apiTokenCache = new CacheConfig.Builder()
+            .maximumSize(10000L)
+            .expireAfterWrite(30, TimeUnit.MINUTES)
+            .build();
 
     @JsonPropertyDescription("The URL of the authentication service")
     public String getAuthenticationServiceUrl() {
@@ -123,6 +130,14 @@ public class AuthenticationConfig implements IsConfig {
 
     public void setClientSecret(String clientSecret) {
         this.clientSecret = clientSecret;
+    }
+
+    public CacheConfig getApiTokenCache() {
+        return apiTokenCache;
+    }
+
+    public void setApiTokenCache(final CacheConfig apiTokenCache) {
+        this.apiTokenCache = apiTokenCache;
     }
 
     @Override

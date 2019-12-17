@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2019 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package stroom.cache.api;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import stroom.util.cache.CacheConfig;
 
-import java.util.Map;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 public interface CacheManager extends AutoCloseable {
-    void registerCache(String alias, CacheBuilder cacheBuilder, Cache cache);
+    <K, V> ICache<K, V> create(String name, Supplier<CacheConfig> cacheConfigSupplier);
 
-    void replaceCache(String alias, CacheBuilder cacheBuilder, Cache cache);
+    <K, V> ICache<K, V> create(String name, Supplier<CacheConfig> cacheConfigSupplier, Function<K, V> loadFunction);
 
-    Map<String, CacheHolder> getCaches();
+    <K, V> ICache<K, V> create(String name, Supplier<CacheConfig> cacheConfigSupplier, Function<K, V> loadFunction, BiConsumer<K, V> removalNotificationConsumer);
 
     void close();
 }

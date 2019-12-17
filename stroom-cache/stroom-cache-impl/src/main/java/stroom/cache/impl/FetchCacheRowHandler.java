@@ -16,7 +16,6 @@
 
 package stroom.cache.impl;
 
-import stroom.cache.api.CacheManager;
 import stroom.cache.shared.CacheRow;
 import stroom.cache.shared.FetchCacheRowAction;
 import stroom.security.api.SecurityContext;
@@ -30,13 +29,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 class FetchCacheRowHandler extends AbstractTaskHandler<FetchCacheRowAction, ResultList<CacheRow>> {
-    private final CacheManager cacheManager;
+    private final CacheManagerImpl cacheManager;
     private final SecurityContext securityContext;
 
     @Inject
-    FetchCacheRowHandler(final CacheManager cacheManager,
+    FetchCacheRowHandler(final CacheManagerImpl cacheManager,
                          final SecurityContext securityContext) {
         this.cacheManager = cacheManager;
         this.securityContext = securityContext;

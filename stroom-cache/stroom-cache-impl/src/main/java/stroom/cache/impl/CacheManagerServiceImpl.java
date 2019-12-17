@@ -18,9 +18,6 @@ package stroom.cache.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cache.api.CacheHolder;
-import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.util.shared.BaseResultList;
@@ -40,10 +37,10 @@ import java.util.stream.Collectors;
 class CacheManagerServiceImpl implements CacheManagerService, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(CacheManagerServiceImpl.class);
 
-    private final CacheManager cacheManager;
+    private final CacheManagerImpl cacheManager;
 
     @Inject
-    CacheManagerServiceImpl(final CacheManager cacheManager) {
+    CacheManagerServiceImpl(final CacheManagerImpl cacheManager) {
         this.cacheManager = cacheManager;
     }
 

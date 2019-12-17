@@ -36,7 +36,7 @@ import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.store.RefDataStoreConfig;
+import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
@@ -113,7 +113,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private final ValueStore valueStore;
     private final MapDefinitionUIDStore mapDefinitionUIDStore;
 
-    private final RefDataStoreConfig refDataStoreConfig;
+    private final ReferenceDataConfig referenceDataConfig;
     private final Map<String, LmdbDb> databaseMap = new HashMap<>();
 
     // For synchronising access to the data belonging to a MapDefinition
@@ -123,7 +123,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     @Inject
     RefDataOffHeapStore(
-            final RefDataStoreConfig refDataStoreConfig,
+            final ReferenceDataConfig referenceDataConfig,
             final ByteBufferPool byteBufferPool,
             final KeyValueStoreDb.Factory keyValueStoreDbFactory,
             final ValueStoreDb.Factory valueStoreDbFactory,
@@ -133,14 +133,14 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             final MapUidReverseDb.Factory mapUidReverseDbFactory,
             final ProcessingInfoDb.Factory processingInfoDbFactory) {
 
-        this.refDataStoreConfig = refDataStoreConfig;
+        this.referenceDataConfig = referenceDataConfig;
         this.dbDir = getStoreDir();
-        this.maxSize = refDataStoreConfig.getMaxStoreSizeBytes();
-        this.maxReaders = refDataStoreConfig.getMaxReaders();
-        this.maxPutsBeforeCommit = refDataStoreConfig.getMaxPutsBeforeCommit();
-        this.valueBufferCapacity = refDataStoreConfig.getValueBufferCapacity();
+        this.maxSize = referenceDataConfig.getMaxStoreSizeBytes();
+        this.maxReaders = referenceDataConfig.getMaxReaders();
+        this.maxPutsBeforeCommit = referenceDataConfig.getMaxPutsBeforeCommit();
+        this.valueBufferCapacity = referenceDataConfig.getValueBufferCapacity();
 
-        this.lmdbEnvironment = createEnvironment(refDataStoreConfig);
+        this.lmdbEnvironment = createEnvironment(referenceDataConfig);
 
         // create all the databases
         this.keyValueStoreDb = keyValueStoreDbFactory.create(lmdbEnvironment);
@@ -169,7 +169,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         this.refStreamDefStripedReentrantLock = Striped.lazyWeakLock(100);
     }
 
-    private Env<ByteBuffer> createEnvironment(final RefDataStoreConfig refDataStoreConfig) {
+    private Env<ByteBuffer> createEnvironment(final ReferenceDataConfig referenceDataConfig) {
         LOGGER.info(
                 "Creating RefDataOffHeapStore environment with [maxSize: {}, dbDir {}, maxReaders {}, " +
                         "maxPutsBeforeCommit {}, valueBufferCapacity {}, isReadAheadEnabled {}]",
@@ -178,7 +178,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                 maxReaders,
                 maxPutsBeforeCommit,
                 FileUtils.byteCountToDisplaySize(valueBufferCapacity),
-                refDataStoreConfig.isReadAheadEnabled());
+                referenceDataConfig.isReadAheadEnabled());
 
         // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
         // Instead you need to create a new bytebuffer for the value and put that. If you want faster writes
@@ -192,7 +192,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         // set it larger than the amount of free space on the filesystem.
 
         final EnvFlags[] envFlags;
-        if (refDataStoreConfig.isReadAheadEnabled()) {
+        if (referenceDataConfig.isReadAheadEnabled()) {
             envFlags = new EnvFlags[0];
         } else {
             envFlags = new EnvFlags[]{EnvFlags.MDB_NORDAHEAD};
@@ -751,7 +751,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     private PooledByteBuffer getAccessTimeCutOffBuffer(final long nowEpocMs) {
 
-        long purgeAgeMs = refDataStoreConfig.getPurgeAgeMs();
+        long purgeAgeMs = referenceDataConfig.getPurgeAgeMs();
         long purgeCutOff = getPurgeCutOffEpochMs(nowEpocMs, purgeAgeMs);
 
         LOGGER.info("Using purge duration {}, cut off {}, now {}",
@@ -776,9 +776,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .withDetail("Path", dbDir.toAbsolutePath().toString())
                     .withDetail("Environment max size", ModelStringUtil.formatIECByteSizeString(maxSize))
                     .withDetail("Environment current size", ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
-                    .withDetail("Purge age", refDataStoreConfig.getPurgeAge())
+                    .withDetail("Purge age", referenceDataConfig.getPurgeAge())
                     .withDetail("Purge cut off", Instant.ofEpochMilli(
-                            getPurgeCutOffEpochMs(refDataStoreConfig.getPurgeAgeMs())).toString())
+                            getPurgeCutOffEpochMs(referenceDataConfig.getPurgeAgeMs())).toString())
                     .withDetail("Max readers", maxReaders)
                     .withDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
                     .withDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1().toString())
@@ -818,7 +818,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     private Path getStoreDir() {
-        String storeDirStr = PathCreator.replaceSystemProperties(refDataStoreConfig.getLocalDir());
+        String storeDirStr = PathCreator.replaceSystemProperties(referenceDataConfig.getLocalDir());
         Path storeDir;
         if (storeDirStr == null) {
             LOGGER.info("Off heap store dir is not set, falling back to {}", FileUtil.getTempDir());

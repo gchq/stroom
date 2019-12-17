@@ -22,11 +22,11 @@ import stroom.util.shared.Clearable;
 public interface IndexShardSearcherCache extends Clearable {
     IndexShardSearcher get(Long indexShardId);
 
-    boolean isCached(Long indexShardId);
-
-    long getMaxOpenShards();
-
-    void setMaxOpenShards(long maxOpenShards);
+//    boolean isCached(Long indexShardId);
+//
+//    long getMaxOpenShards();
+//
+//    void setMaxOpenShards(long maxOpenShards);
 
     void refresh();
 }

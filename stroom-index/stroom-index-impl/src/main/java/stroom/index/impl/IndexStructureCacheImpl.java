@@ -17,11 +17,8 @@
 
 package stroom.index.impl;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
 import stroom.docref.DocRef;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
@@ -32,48 +29,45 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class IndexStructureCacheImpl implements IndexStructureCache, Clearable {
-    private static final int MAX_CACHE_ENTRIES = 100;
+    private static final String CACHE_NAME = "Index Config Cache";
 
-    private final LoadingCache<DocRef, IndexStructure> cache;
+    private final IndexStore indexStore;
+    private final ICache<DocRef, IndexStructure> cache;
 
     @Inject
-    @SuppressWarnings("unchecked")
     IndexStructureCacheImpl(final CacheManager cacheManager,
-                            final IndexStore indexStore) {
-        final CacheLoader<DocRef, IndexStructure> cacheLoader = CacheLoader.from(k -> {
-            if (k == null) {
-                throw new NullPointerException("Null key supplied");
-            }
+                            final IndexStore indexStore,
+                            final IndexConfig indexConfig) {
+        this.indexStore = indexStore;
+        cache = cacheManager.create(CACHE_NAME, indexConfig::getIndexStructureCache, this::create);
+    }
 
-            final IndexDoc loaded = indexStore.readDocument(k);
-            if (loaded == null) {
-                throw new NullPointerException("No index can be found for: " + k);
-            }
+    private IndexStructure create(final DocRef docRef) {
+        if (docRef == null) {
+            throw new NullPointerException("Null key supplied");
+        }
 
-            // Create a map of index fields keyed by name.
-            List<IndexField> indexFields = loaded.getFields();
-            if (indexFields == null) {
-                indexFields = new ArrayList<>();
-            }
+        final IndexDoc loaded = indexStore.readDocument(docRef);
+        if (loaded == null) {
+            throw new NullPointerException("No index can be found for: " + docRef);
+        }
 
-            final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(indexFields);
-            return new IndexStructure(loaded, indexFields, indexFieldsMap);
-        });
+        // Create a map of index fields keyed by name.
+        List<IndexField> indexFields = loaded.getFields();
+        if (indexFields == null) {
+            indexFields = new ArrayList<>();
+        }
 
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterWrite(10, TimeUnit.MINUTES);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("Index Config Cache", cacheBuilder, cache);
+        final IndexFieldsMap indexFieldsMap = new IndexFieldsMap(indexFields);
+        return new IndexStructure(loaded, indexFields, indexFieldsMap);
     }
 
     @Override
     public IndexStructure get(final DocRef key) {
-        return cache.getUnchecked(key);
+        return cache.get(key);
     }
 
     @Override
@@ -83,6 +77,6 @@ public class IndexStructureCacheImpl implements IndexStructureCache, Clearable {
 
     @Override
     public void clear() {
-        CacheUtil.clear(cache);
+        cache.clear();
     }
 }

@@ -59,7 +59,7 @@ class XsltPoolImpl extends AbstractDocPool<XsltDoc, StoredXsltExecutable> implem
                  final SecurityContext securityContext,
                  final URIResolver uriResolver,
                  final Provider<StroomXsltFunctionLibrary> stroomXsltFunctionLibraryProvider) {
-        super(cacheManager, "XSLT Pool", xsltConfig.getCacheConfig(), documentPermissionCache, securityContext);
+        super(cacheManager, "XSLT Pool", xsltConfig::getCacheConfig, documentPermissionCache, securityContext);
         this.uriResolver = uriResolver;
         this.stroomXsltFunctionLibraryProvider = stroomXsltFunctionLibraryProvider;
     }
