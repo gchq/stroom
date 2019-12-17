@@ -37,15 +37,19 @@ import stroom.pipeline.PipelineStore;
 import stroom.processor.api.JobNames;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorExpressionUtil;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.api.InternalStatisticEvent;
+import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.AsyncExecutorHelper;
 import stroom.task.api.ExecutorProvider;
@@ -58,7 +62,9 @@ import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class BenchmarkClusterExecutor extends AbstractBenchmark {
@@ -66,15 +72,16 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private static final int TIME_OUT = 1000 * 60 * 20;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(BenchmarkClusterExecutor.class);
-//    private static final String ROOT_TEST_NAME = "Benchmark-Cluster Test";
+    //    private static final String ROOT_TEST_NAME = "Benchmark-Cluster Test";
     private static final String EPS = "EPS";
     private static final String ERROR = "Error";
     private static final String BENCHMARK_REFERENCE = "BENCHMARK-REFERENCE";
     private static final String BENCHMARK_EVENTS = "BENCHMARK-EVENTS";
 
     private final PipelineStore pipelineStore;
-    private final ProcessorFilterService processorFilterService;
     private final ProcessorService streamProcessorService;
+    private final ProcessorFilterService processorFilterService;
+    private final ProcessorTaskService processorTaskService;
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final MetaService metaService;
     private final JobManager jobManager;
@@ -94,8 +101,9 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              final MetaService metaService,
                              final TaskContext taskContext,
                              final PipelineStore pipelineStore,
-                             final ProcessorFilterService processorFilterService,
                              final ProcessorService streamProcessorService,
+                             final ProcessorFilterService processorFilterService,
+                             final ProcessorTaskService processorTaskService,
                              final ClusterDispatchAsyncHelper dispatchHelper,
                              final JobManager jobManager,
                              final ExecutorProvider executorProvider,
@@ -103,8 +111,9 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              final BenchmarkClusterConfig benchmarkClusterConfig) {
         super(streamStore, metaService, taskContext);
         this.pipelineStore = pipelineStore;
-        this.processorFilterService = processorFilterService;
         this.streamProcessorService = streamProcessorService;
+        this.processorFilterService = processorFilterService;
+        this.processorTaskService = processorTaskService;
         this.dispatchHelper = dispatchHelper;
         this.metaService = metaService;
         this.jobManager = jobManager;
@@ -433,54 +442,34 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // }
 
     private void recordTranslationStats(final String feedName, final Period processPeriod) {
-        // // Flush out the attributes as we need these for the stats
-        // dispatchHelper.execAsync(new FlushServiceClusterTask(null, null,
-        // "Flush stream attribute values",
-        // StreamAttributeValueFlush.class));
-
-        final ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName)
-                .addTerm(MetaFields.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
-                .addOperator(new ExpressionOperator.Builder(Op.OR)
-                        .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.EVENTS)
-                        .addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, StreamTypeNames.REFERENCE)
-                        .build())
-                .build();
-
-        final FindMetaCriteria criteria = new FindMetaCriteria(expression);
-        final List<MetaRow> rows = metaService.findRows(criteria);
-
         final long nowMs = System.currentTimeMillis();
+        final Map<String, Stat> stats = new HashMap<>();
+
+        final ExpressionOperator taskExpression = new ExpressionOperator.Builder(Op.AND)
+                .addTerm(ProcessorTaskDataSource.FEED_NAME, Condition.EQUALS, feedName)
+                .addTerm(ProcessorTaskDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
+                .build();
+        final List<ProcessorTask> processorTasks = processorTaskService.find(new ExpressionCriteria(taskExpression));
+        processorTasks.stream().forEach(task -> {
+            final List<MetaRow> metaList = metaService.findRows(FindMetaCriteria.createFromId(task.getMetaId()));
+
+            if (metaList != null && metaList.size() == 1) {
+                final MetaRow meta = metaList.get(0);
+                final Stat stat = stats.computeIfAbsent(task.getNodeName(), k -> new Stat());
+                stat.nodeWritten += getLong(meta, MetaFields.REC_WRITE.getName());
+                stat.nodeError += getLong(meta, MetaFields.REC_ERROR.getName());
+                checkPeriod(stat.nodePeriod, meta);
+            }
+        });
 
         final List<InternalStatisticEvent> statisticEventList = new ArrayList<>();
+        stats.forEach((node, stat) -> {
+            Map<String, String> tags = Map.of("Node", node, "Feed", feedName, "Type", EPS);
+            statisticEventList.add(InternalStatisticEvent.createValueStat(InternalStatisticKey.BENCHMARK_CLUSTER, nowMs, tags, (double) toEPS(stat.nodeWritten, stat.nodePeriod)));
 
-        // TODO : @66 LOOK AT PROCESSOR TASKS TO ESTABLISH NODE
-
-//            long nodeWritten = 0;
-//            long nodeError = 0;
-//            final Period nodePeriod = new Period();
-//
-
-//            for (final StreamDataRow processedStream : processedStreams) {
-//                if (node.getName().equals(processedStream.getAttributeValue(StreamDataSource.NODE))) {
-//                    nodeWritten += getLong(processedStream, StreamDataSource.REC_WRITE);
-//                    nodeError += getLong(processedStream, StreamDataSource.REC_ERROR);
-//
-//                    checkPeriod(nodePeriod, processedStream);
-//                }
-//            }
-//
-//            Map<String, String> tags = Map.of("Node", nodeName, "Feed", feedName, "Type", EPS);
-//            statisticEventList.add(InternalStatisticEvent.createValueStat(InternalStatisticKey.BENCHMARK_CLUSTER, nowMs, tags, (double) toEPS(nodeWritten, nodePeriod)));
-//
-//            tags = Map.of("Node", nodeName, "Feed", feedName, "Type", ERROR);
-//            statisticEventList.add(InternalStatisticEvent.createValueStat(InternalStatisticKey.BENCHMARK_CLUSTER, nowMs, tags, (double) toEPS(nodeError, nodePeriod)));
-
-        final Period clusterPeriod = new Period();
-
-        for (final MetaRow row : rows) {
-            checkPeriod(clusterPeriod, row);
-        }
+            tags = Map.of("Node", node, "Feed", feedName, "Type", ERROR);
+            statisticEventList.add(InternalStatisticEvent.createValueStat(InternalStatisticKey.BENCHMARK_CLUSTER, nowMs, tags, (double) toEPS(stat.nodeError, stat.nodePeriod)));
+        });
 
         statistics.putEvents(statisticEventList);
     }
@@ -869,4 +858,12 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // return fileReadBPS;
     // }
     // }
+
+    private static class Stat {
+        long nodeWritten = 0;
+        long nodeError = 0;
+        final Period nodePeriod = new Period();
+
+
+    }
 }
