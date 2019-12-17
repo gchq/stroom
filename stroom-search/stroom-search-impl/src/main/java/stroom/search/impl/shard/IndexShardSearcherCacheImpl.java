@@ -16,7 +16,6 @@
 
 package stroom.search.impl.shard;
 
-import com.google.common.cache.RemovalNotification;
 import org.apache.lucene.index.IndexWriter;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
@@ -122,10 +121,10 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
 //        final Key key = new Key(indexShardId, indexWriter);
 //        return getCache().optionalGet(key).isPresent();
 //    }
-
-    private void destroy(RemovalNotification<Key, IndexShardSearcher> notification) {
-        destroy(notification.getKey(), notification.getValue());
-    }
+//
+//    private void destroy(RemovalNotification<Key, IndexShardSearcher> notification) {
+//        destroy(notification.getKey(), notification.getValue());
+//    }
 
     private void destroy(final Key key, final Object value) {
         if (value instanceof IndexShardSearcher) {

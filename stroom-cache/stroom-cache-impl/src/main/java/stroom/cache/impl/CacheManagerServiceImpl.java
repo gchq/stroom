@@ -53,7 +53,7 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
         // Trim the list to the specified range.
         if (pageRequest.getLength() != null && pageRequest.getLength() < list.size()) {
             int from = 0;
-            int to = 0;
+            int to;
             if (pageRequest.getOffset() != null) {
                 from = pageRequest.getOffset().intValue();
             }
@@ -91,14 +91,14 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
 
                 if (cacheHolder != null) {
                     final Map<String, String> map = new HashMap<>();
-                    map.put("Entries", String.valueOf(cacheHolder.getCache().size()));
+                    map.put("Entries", String.valueOf(cacheHolder.getCache().estimatedSize()));
                     addEntries(map, cacheHolder.getCacheBuilder().toString());
                     addEntries(map, cacheHolder.getCache().stats().toString());
 
                     map.forEach((k, v) -> {
                         if (k.startsWith("Expire")) {
                             try {
-                                final long nanos = Long.valueOf(v);
+                                final long nanos = Long.parseLong(v);
                                 map.put(k, ModelStringUtil.formatDurationString(nanos / 1000000, true));
 
                             } catch (final RuntimeException e) {

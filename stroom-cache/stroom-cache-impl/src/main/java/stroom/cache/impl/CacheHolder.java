@@ -1,18 +1,18 @@
 package stroom.cache.impl;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 
 public class CacheHolder {
-    private final CacheBuilder cacheBuilder;
+    private final Caffeine cacheBuilder;
     private final Cache cache;
 
-    public CacheHolder(final CacheBuilder cacheBuilder, final Cache cache) {
+    public CacheHolder(final Caffeine cacheBuilder, final Cache cache) {
         this.cacheBuilder = cacheBuilder;
         this.cache = cache;
     }
 
-    public CacheBuilder getCacheBuilder() {
+    public Caffeine getCacheBuilder() {
         return cacheBuilder;
     }
 

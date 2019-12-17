@@ -16,11 +16,11 @@
 
 package stroom.cache.impl;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.cache.RemovalListener;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.CacheLoader;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
+import com.github.benmanes.caffeine.cache.RemovalListener;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.util.cache.CacheConfig;
@@ -62,7 +62,7 @@ public class CacheManagerImpl implements CacheManager {
     public <K, V> ICache<K, V> create(final String name, final Supplier<CacheConfig> cacheConfigSupplier, final Function<K, V> loadFunction, final BiConsumer<K, V> removalNotificationConsumer) {
         final CacheConfig cacheConfig = cacheConfigSupplier.get();
 
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder();
+        final Caffeine cacheBuilder = Caffeine.newBuilder();
         if (cacheConfig.getMaximumSize() != null) {
             cacheBuilder.maximumSize(cacheConfig.getMaximumSize());
         }
@@ -73,22 +73,22 @@ public class CacheManagerImpl implements CacheManager {
             cacheBuilder.expireAfterWrite(cacheConfig.getExpireAfterWrite(), TimeUnit.MILLISECONDS);
         }
         if (removalNotificationConsumer != null) {
-            final RemovalListener<K, V> removalListener = notification -> {
-                LOGGER.debug(() -> "Removal notification for key " + notification.getKey() + ", value " + notification.getValue() + ", cause " + notification.getCause());
-                removalNotificationConsumer.accept(notification.getKey(), notification.getValue());
+            final RemovalListener<K, V> removalListener = (key, value, cause) -> {
+                LOGGER.debug(() -> "Removal notification for key " + key + ", value " + value + ", cause " + cause);
+                removalNotificationConsumer.accept(key, value);
             };
             cacheBuilder.removalListener(removalListener);
         }
 
         if (loadFunction != null) {
-            final CacheLoader<K, V> cacheLoader = CacheLoader.from(loadFunction::apply);
+            final CacheLoader<K, V> cacheLoader = loadFunction::apply;
             final LoadingCache<K, V> cache = cacheBuilder.build(cacheLoader);
             registerCache(name, cacheBuilder, cache);
 
             return new ICache<K, V>() {
                 @Override
                 public V get(final K key) {
-                    return cache.getUnchecked(key);
+                    return cache.get(key);
                 }
 
                 @Override
@@ -129,7 +129,7 @@ public class CacheManagerImpl implements CacheManager {
 
                 @Override
                 public long size() {
-                    return cache.size();
+                    return cache.estimatedSize();
                 }
 
                 @Override
@@ -187,7 +187,7 @@ public class CacheManagerImpl implements CacheManager {
 
                 @Override
                 public long size() {
-                    return cache.size();
+                    return cache.estimatedSize();
                 }
 
                 @Override
@@ -207,7 +207,7 @@ public class CacheManagerImpl implements CacheManager {
 //    }
 
     //    @Override
-    public void registerCache(final String alias, final CacheBuilder cacheBuilder, final Cache cache) {
+    public void registerCache(final String alias, final Caffeine cacheBuilder, final Cache cache) {
         if (caches.containsKey(alias)) {
             throw new RuntimeException("A cache called '" + alias + "' already exists");
         }
@@ -216,7 +216,7 @@ public class CacheManagerImpl implements CacheManager {
     }
 
     //    @Override
-    public void replaceCache(final String alias, final CacheBuilder cacheBuilder, final Cache cache) {
+    public void replaceCache(final String alias, final Caffeine cacheBuilder, final Cache cache) {
         final CacheHolder existing = caches.put(alias, new CacheHolder(cacheBuilder, cache));
         if (existing != null) {
             CacheUtil.clear(existing.getCache());
