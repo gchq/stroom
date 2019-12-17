@@ -1,5 +1,6 @@
 package stroom.meta.impl.db;
 
+import stroom.cache.api.CacheManager;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.meta.impl.MetaDao;
@@ -21,6 +22,9 @@ public class MetaDbModule extends AbstractFlyWayDbModule<MetaServiceConfig, Meta
     @Override
     protected void configure() {
         super.configure();
+
+        requireBinding(CacheManager.class);
+
         bind(MetaFeedDao.class).to(MetaFeedDaoImpl.class);
         bind(MetaTypeDao.class).to(MetaTypeDaoImpl.class);
         bind(MetaProcessorDao.class).to(MetaProcessorDaoImpl.class);
