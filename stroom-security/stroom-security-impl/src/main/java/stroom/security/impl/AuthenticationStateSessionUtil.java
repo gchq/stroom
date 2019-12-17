@@ -1,7 +1,7 @@
 package stroom.security.impl;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import stroom.util.servlet.UserAgentSessionUtil;
 
 import javax.servlet.http.HttpServletRequest;
@@ -27,7 +27,7 @@ public final class AuthenticationStateSessionUtil {
     public static AuthenticationState create(final HttpServletRequest request, final String url) {
         final String stateId = createRandomString(8);
         final String nonce = createRandomString(20);
-        final AuthenticationState state = new AuthenticationState(stateId, url, nonce);
+        final AuthenticationState state = new AuthenticationState(stateId, url, nonce);comm
 
         Cache<String, AuthenticationState> cache = getOrCreateCache(request);
         cache.put(stateId, state);
@@ -55,7 +55,7 @@ public final class AuthenticationStateSessionUtil {
             synchronized (session) {
                 cache = (Cache) session.getAttribute(AUTHENTICATION_STATE_SESSION_ATTRIBUTE);
                 if (cache == null) {
-                    cache = CacheBuilder.newBuilder()
+                    cache = Caffeine.newBuilder()
                             .maximumSize(100)
                             .expireAfterWrite(1, TimeUnit.MINUTES)
                             .build();

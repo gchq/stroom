@@ -5,9 +5,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.statistics.impl.sql.search.SearchConfig;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class SQLStatisticsConfig implements IsConfig, HasDbConfig {
@@ -16,6 +18,10 @@ public class SQLStatisticsConfig implements IsConfig, HasDbConfig {
     private SearchConfig searchConfig = new SearchConfig();
     private int statisticAggregationBatchSize = 1000000;
     private String maxProcessingAge;
+    private CacheConfig dataSourceCache = new CacheConfig.Builder()
+            .maximumSize(100L)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {
@@ -60,6 +66,14 @@ public class SQLStatisticsConfig implements IsConfig, HasDbConfig {
 
     public void setMaxProcessingAge(final String maxProcessingAge) {
         this.maxProcessingAge = maxProcessingAge;
+    }
+
+    public CacheConfig getDataSourceCache() {
+        return dataSourceCache;
+    }
+
+    public void setDataSourceCache(final CacheConfig dataSourceCache) {
+        this.dataSourceCache = dataSourceCache;
     }
 
     @Override

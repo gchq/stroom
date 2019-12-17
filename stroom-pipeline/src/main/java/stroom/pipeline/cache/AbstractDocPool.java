@@ -16,13 +16,15 @@
 
 package stroom.pipeline.cache;
 
-import stroom.util.xml.CacheConfig;
 import stroom.cache.api.CacheManager;
 import stroom.docstore.shared.Doc;
 import stroom.security.api.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.PermissionException;
+
+import java.util.function.Supplier;
 
 public abstract class AbstractDocPool<K extends Doc, V> extends AbstractPoolCache<K, V> implements Pool<K, V> {
     private final DocumentPermissionCache documentPermissionCache;
@@ -30,10 +32,10 @@ public abstract class AbstractDocPool<K extends Doc, V> extends AbstractPoolCach
 
     public AbstractDocPool(final CacheManager cacheManager,
                            final String name,
-                           final CacheConfig cacheConfig,
+                           final Supplier<CacheConfig> cacheConfigSupplier,
                            final DocumentPermissionCache documentPermissionCache,
                            final SecurityContext securityContext) {
-        super(cacheManager, name, cacheConfig);
+        super(cacheManager, name, cacheConfigSupplier);
         this.documentPermissionCache = documentPermissionCache;
         this.securityContext = securityContext;
     }
@@ -54,12 +56,8 @@ public abstract class AbstractDocPool<K extends Doc, V> extends AbstractPoolCach
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    protected V internalCreateValue(final Object key) {
-        return securityContext.asProcessingUserResult(() -> {
-            final K doc = (K) key;
-            return createValue(doc);
-        });
+    protected V internalCreateValue(final K key) {
+        return securityContext.asProcessingUserResult(() -> createValue(key));
     }
 
     protected abstract V createValue(final K key);

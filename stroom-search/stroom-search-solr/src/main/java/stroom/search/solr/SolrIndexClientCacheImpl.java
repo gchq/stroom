@@ -17,12 +17,9 @@
 
 package stroom.search.solr;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import org.apache.solr.client.solrj.SolrClient;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
 import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -32,47 +29,38 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.IdentityHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
-
 
 @Singleton
 public class SolrIndexClientCacheImpl implements SolrIndexClientCache, Clearable {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SolrIndexClientCacheImpl.class);
+    private static final String CACHE_NAME = "Solr Client Cache";
 
-    private static final int MAX_CACHE_ENTRIES = 100;
-
-    private final LoadingCache<SolrConnectionConfig, SolrClient> cache;
-
+    private final ICache<SolrConnectionConfig, SolrClient> cache;
     private final IdentityHashMap<SolrClient, State> useMap = new IdentityHashMap<>();
 
     @Inject
-    @SuppressWarnings("unchecked")
-    SolrIndexClientCacheImpl(final CacheManager cacheManager) {
-        final CacheLoader<SolrConnectionConfig, SolrClient> cacheLoader = CacheLoader.from(k -> {
-            if (k == null) {
-                throw new NullPointerException("Null key supplied");
-            }
-            return new SolrClientFactory().create(k);
-        });
+    SolrIndexClientCacheImpl(final CacheManager cacheManager, final SolrConfig solrConfig) {
+        cache = cacheManager.create(CACHE_NAME, solrConfig::getIndexClientCache, this::create, this::destroy);
+    }
 
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterWrite(10, TimeUnit.MINUTES)
-                .removalListener(entry -> {
-                    synchronized (this) {
-                        final SolrClient client = (SolrClient) entry.getValue();
-                        final State state = useMap.get(client);
-                        state.stale = true;
-                        if (state.useCount == 0) {
-                            close(client);
-                            useMap.remove(client);
-                        }
-                    }
-                });
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("Solr Client Cache", cacheBuilder, cache);
+    private SolrClient create(SolrConnectionConfig solrConnectionConfig) {
+        if (solrConnectionConfig == null) {
+            throw new NullPointerException("Null key supplied");
+        }
+        return new SolrClientFactory().create(solrConnectionConfig);
+    }
+
+    private void destroy(final SolrConnectionConfig key, final SolrClient value) {
+        synchronized (this) {
+            final State state = useMap.get(value);
+            state.stale = true;
+            if (state.useCount == 0) {
+                close(value);
+                useMap.remove(value);
+            }
+        }
     }
 
     @Override
@@ -96,7 +84,7 @@ public class SolrIndexClientCacheImpl implements SolrIndexClientCache, Clearable
     }
 
     private SolrClient borrowClient(final SolrConnectionConfig key) {
-        final SolrClient solrClient = cache.getUnchecked(key);
+        final SolrClient solrClient = cache.get(key);
         synchronized (this) {
             useMap.computeIfAbsent(solrClient, k -> new State()).increment();
         }
@@ -124,7 +112,7 @@ public class SolrIndexClientCacheImpl implements SolrIndexClientCache, Clearable
 
     @Override
     public void clear() {
-        CacheUtil.clear(cache);
+        cache.clear();
     }
 
     private static class State {

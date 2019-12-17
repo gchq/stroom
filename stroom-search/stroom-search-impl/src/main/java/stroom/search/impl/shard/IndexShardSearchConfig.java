@@ -1,9 +1,11 @@
 package stroom.search.impl.shard;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class IndexShardSearchConfig implements IsConfig {
@@ -13,6 +15,14 @@ public class IndexShardSearchConfig implements IsConfig {
     private int maxDocIdQueueSize = 1000000;
     private int maxThreads = DEFAULT_MAX_THREADS;
     private int maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
+    private CacheConfig searchResultCache = new CacheConfig.Builder()
+            .maximumSize(10000L)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
+    private CacheConfig indexShardSearcherCache = new CacheConfig.Builder()
+            .maximumSize(2L)
+            .expireAfterAccess(1, TimeUnit.MINUTES)
+            .build();
 
     @JsonPropertyDescription("The maximum number of doc ids that will be queued ready for stored data to be retrieved from the index shard")
     public int getMaxDocIdQueueSize() {
@@ -41,12 +51,30 @@ public class IndexShardSearchConfig implements IsConfig {
         this.maxThreadsPerTask = maxThreadsPerTask;
     }
 
+    public CacheConfig getSearchResultCache() {
+        return searchResultCache;
+    }
+
+    public void setSearchResultCache(final CacheConfig searchResultCache) {
+        this.searchResultCache = searchResultCache;
+    }
+
+    public CacheConfig getIndexShardSearcherCache() {
+        return indexShardSearcherCache;
+    }
+
+    public void setIndexShardSearcherCache(final CacheConfig indexShardSearcherCache) {
+        this.indexShardSearcherCache = indexShardSearcherCache;
+    }
+
     @Override
     public String toString() {
         return "IndexShardSearchConfig{" +
                 "maxDocIdQueueSize=" + maxDocIdQueueSize +
                 ", maxThreads=" + maxThreads +
                 ", maxThreadsPerTask=" + maxThreadsPerTask +
+                ", searchResultCache=" + searchResultCache +
+                ", indexShardSearcherCache=" + indexShardSearcherCache +
                 '}';
     }
 }

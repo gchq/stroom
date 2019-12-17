@@ -23,6 +23,7 @@ import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.util.ByteSizeUnit;
 import stroom.util.pipeline.scope.PipelineScopeModule;
@@ -37,7 +38,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
     protected Injector injector;
     @Inject
     private RefDataStoreFactory refDataStoreFactory;
-    private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
+    private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
 
     @Override
     protected long getMaxSizeBytes() {
@@ -50,7 +51,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
 
         LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
-        refDataStoreConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
+        referenceDataConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
 
         setDbMaxSizeProperty();
 
@@ -58,7 +59,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(RefDataStoreConfig.class).toInstance(refDataStoreConfig);
+                        bind(ReferenceDataConfig.class).toInstance(referenceDataConfig);
                         install(new RefDataStoreModule());
                         install(new PipelineScopeModule());
                     }
@@ -67,16 +68,16 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
         refDataStore = refDataStoreFactory.getOffHeapStore();
     }
 
-    protected RefDataStoreConfig getRefDataStoreConfig() {
-        return refDataStoreConfig;
+    protected ReferenceDataConfig getReferenceDataConfig() {
+        return referenceDataConfig;
     }
 
     protected void setDbMaxSizeProperty(final long sizeInBytes) {
-        refDataStoreConfig.setMaxStoreSize(Long.toString(sizeInBytes));
+        referenceDataConfig.setMaxStoreSize(Long.toString(sizeInBytes));
     }
 
     protected void setPurgeAgeProperty(final String purgeAge) {
-        refDataStoreConfig.setPurgeAge(purgeAge);
+        referenceDataConfig.setPurgeAge(purgeAge);
     }
 
     protected void setDbMaxSizeProperty() {

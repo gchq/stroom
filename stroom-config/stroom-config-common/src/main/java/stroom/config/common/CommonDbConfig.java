@@ -1,13 +1,10 @@
 package stroom.config.common;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-@JsonInclude(Include.NON_DEFAULT)
 public class CommonDbConfig extends DbConfig implements IsConfig {
     private static final String DEFAULT_JDBC_DRIVER_CLASS_NAME = "com.mysql.cj.jdbc.Driver";
     private static final String DEFAULT_JDBC_DRIVER_URL = "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8";

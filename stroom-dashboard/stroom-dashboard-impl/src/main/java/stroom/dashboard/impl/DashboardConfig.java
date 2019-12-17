@@ -1,0 +1,30 @@
+package stroom.dashboard.impl;
+
+import stroom.util.cache.CacheConfig;
+import stroom.util.shared.IsConfig;
+
+import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
+
+@Singleton
+public class DashboardConfig implements IsConfig {
+    private CacheConfig activeQueriesCache = new CacheConfig.Builder()
+            .maximumSize(100L)
+            .expireAfterAccess(1, TimeUnit.MINUTES)
+            .build();
+
+    public CacheConfig getActiveQueriesCache() {
+        return activeQueriesCache;
+    }
+
+    public void setActiveQueriesCache(final CacheConfig activeQueriesCache) {
+        this.activeQueriesCache = activeQueriesCache;
+    }
+
+    @Override
+    public String toString() {
+        return "DashboardConfig{" +
+                "activeQueriesCache=" + activeQueriesCache +
+                '}';
+    }
+}

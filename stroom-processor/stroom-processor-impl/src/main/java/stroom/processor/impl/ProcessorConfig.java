@@ -4,9 +4,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unused")
 @Singleton
@@ -20,6 +22,18 @@ public class ProcessorConfig implements BatchDeleteConfig, IsConfig, HasDbConfig
     private boolean fillTaskQueue = true;
     private int queueSize = 1000;
     private int databaseMultiInsertMaxBatchSize = 500;
+    private CacheConfig processorCache = new CacheConfig.Builder()
+            .maximumSize(1000L)
+            .expireAfterAccess(10, TimeUnit.SECONDS)
+            .build();
+    private CacheConfig processorFilterCache = new CacheConfig.Builder()
+            .maximumSize(1000L)
+            .expireAfterAccess(10, TimeUnit.SECONDS)
+            .build();
+    private CacheConfig processorNodeCache = new CacheConfig.Builder()
+            .maximumSize(1000L)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
 
     @JsonProperty("db")
     public DbConfig getDbConfig() {
@@ -102,6 +116,30 @@ public class ProcessorConfig implements BatchDeleteConfig, IsConfig, HasDbConfig
         this.databaseMultiInsertMaxBatchSize = databaseMultiInsertMaxBatchSize;
     }
 
+    public CacheConfig getProcessorCache() {
+        return processorCache;
+    }
+
+    public void setProcessorCache(final CacheConfig processorCache) {
+        this.processorCache = processorCache;
+    }
+
+    public CacheConfig getProcessorFilterCache() {
+        return processorFilterCache;
+    }
+
+    public void setProcessorFilterCache(final CacheConfig processorFilterCache) {
+        this.processorFilterCache = processorFilterCache;
+    }
+
+    public CacheConfig getProcessorNodeCache() {
+        return processorNodeCache;
+    }
+
+    public void setProcessorNodeCache(final CacheConfig processorNodeCache) {
+        this.processorNodeCache = processorNodeCache;
+    }
+
     @Override
     public String toString() {
         return "ProcessorConfig{" +
@@ -114,6 +152,9 @@ public class ProcessorConfig implements BatchDeleteConfig, IsConfig, HasDbConfig
                 ", fillTaskQueue=" + fillTaskQueue +
                 ", queueSize=" + queueSize +
                 ", databaseMultiInsertMaxBatchSize=" + databaseMultiInsertMaxBatchSize +
+                ", processorCache=" + processorCache +
+                ", processorFilterCache=" + processorFilterCache +
+                ", processorNodeCache=" + processorNodeCache +
                 '}';
     }
 }

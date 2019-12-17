@@ -6,11 +6,13 @@ import stroom.activity.impl.db.ActivityConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
+import stroom.cluster.task.impl.ClusterTaskConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.db.CoreConfig;
 import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
+import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
@@ -25,7 +27,7 @@ import stroom.node.impl.NodeConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.search.impl.SearchConfig;
-import stroom.search.solr.search.SolrSearchConfig;
+import stroom.search.solr.SolrConfig;
 import stroom.searchable.impl.SearchableConfig;
 import stroom.security.impl.SecurityConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
@@ -44,9 +46,11 @@ public class AppConfig implements IsConfig {
     private BenchmarkClusterConfig benchmarkClusterConfig = new BenchmarkClusterConfig();
     private ClusterConfig clusterConfig = new ClusterConfig();
     private ClusterLockConfig clusterLockConfig = new ClusterLockConfig();
+    private ClusterTaskConfig clusterTaskConfig = new ClusterTaskConfig();
     private CommonDbConfig commonDbConfig = new CommonDbConfig();
     private ContentPackImportConfig contentPackImportConfig = new ContentPackImportConfig();
     private CoreConfig coreConfig = new CoreConfig();
+    private DashboardConfig dashboardConfig = new DashboardConfig();
     private DataConfig dataConfig = new DataConfig();
     private DataSourceUrlConfig dataSourceUrlConfig = new DataSourceUrlConfig();
     private DocStoreConfig docStoreConfig = new DocStoreConfig();
@@ -68,7 +72,7 @@ public class AppConfig implements IsConfig {
     private SecurityConfig securityConfig = new SecurityConfig();
     private ServiceDiscoveryConfig serviceDiscoveryConfig = new ServiceDiscoveryConfig();
     private SessionCookieConfig sessionCookieConfig = new SessionCookieConfig();
-    private SolrSearchConfig solrSearchConfig = new SolrSearchConfig();
+    private SolrConfig solrConfig = new SolrConfig();
     private StatisticsConfig statisticsConfig = new StatisticsConfig();
     private StoredQueryConfig storedQueryConfig = new StoredQueryConfig();
     private UiConfig uiConfig = new UiConfig();
@@ -129,6 +133,15 @@ public class AppConfig implements IsConfig {
         this.clusterLockConfig = clusterLockConfig;
     }
 
+    @JsonProperty("clusterTask")
+    public ClusterTaskConfig getClusterTaskConfig() {
+        return clusterTaskConfig;
+    }
+
+    public void setClusterTaskConfig(final ClusterTaskConfig clusterTaskConfig) {
+        this.clusterTaskConfig = clusterTaskConfig;
+    }
+
     @JsonProperty("commonDbDetails")
     @JsonPropertyDescription("Defines a set of common database connection details to use if no connection details are " +
             "defined for a service area in stroom, e.g. core or config")
@@ -157,6 +170,15 @@ public class AppConfig implements IsConfig {
 
     public void setCoreConfig(final CoreConfig coreConfig) {
         this.coreConfig = coreConfig;
+    }
+
+    @JsonProperty("dashboard")
+    public DashboardConfig getDashboardConfig() {
+        return dashboardConfig;
+    }
+
+    public void setDashboardConfig(final DashboardConfig dashboardConfig) {
+        this.dashboardConfig = dashboardConfig;
     }
 
     @JsonProperty("data")
@@ -332,13 +354,13 @@ public class AppConfig implements IsConfig {
         this.searchableConfig = searchableConfig;
     }
 
-    @JsonProperty("solrSearch")
-    public SolrSearchConfig getSolrSearchConfig() {
-        return solrSearchConfig;
+    @JsonProperty("solr")
+    public SolrConfig getSolrConfig() {
+        return solrConfig;
     }
 
-    public void setSolrSearchConfig(final SolrSearchConfig solrSearchConfig) {
-        this.solrSearchConfig = solrSearchConfig;
+    public void setSolrConfig(final SolrConfig solrConfig) {
+        this.solrConfig = solrConfig;
     }
 
     @JsonProperty("security")

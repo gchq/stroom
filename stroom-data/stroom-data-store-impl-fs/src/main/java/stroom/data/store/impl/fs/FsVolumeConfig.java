@@ -1,10 +1,12 @@
 package stroom.data.store.impl.fs;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class FsVolumeConfig implements IsConfig {
@@ -12,6 +14,15 @@ public class FsVolumeConfig implements IsConfig {
 //    private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";
     private boolean createDefaultOnStart = true;
+
+    private CacheConfig feedPathCache = new CacheConfig.Builder()
+            .maximumSize(1000L)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
+    private CacheConfig typePathCache = new CacheConfig.Builder()
+            .maximumSize(1000L)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
 
 //    @JsonPropertyDescription("Set to determine how many volume locations will be used to store a single stream")
 //    public int getResilientReplicationCount() {
@@ -53,6 +64,22 @@ public class FsVolumeConfig implements IsConfig {
 
     public void setCreateDefaultOnStart(final boolean createDefaultOnStart) {
         this.createDefaultOnStart = createDefaultOnStart;
+    }
+
+    public CacheConfig getFeedPathCache() {
+        return feedPathCache;
+    }
+
+    public void setFeedPathCache(final CacheConfig feedPathCache) {
+        this.feedPathCache = feedPathCache;
+    }
+
+    public CacheConfig getTypePathCache() {
+        return typePathCache;
+    }
+
+    public void setTypePathCache(final CacheConfig typePathCache) {
+        this.typePathCache = typePathCache;
     }
 
     @Override

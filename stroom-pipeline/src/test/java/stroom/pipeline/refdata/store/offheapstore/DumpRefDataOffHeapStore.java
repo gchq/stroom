@@ -6,7 +6,7 @@ import com.google.inject.Injector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.store.RefDataStoreConfig;
+import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
 import stroom.util.io.PathConfig;
@@ -48,14 +48,14 @@ public class DumpRefDataOffHeapStore {
 
         PathConfig pathConfig = new PathConfig();
         String tempDirStr = pathConfig.getTemp();
-        RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
-        refDataStoreConfig.setLocalDir(storeDir.toAbsolutePath().toString());
+        ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
+        referenceDataConfig.setLocalDir(storeDir.toAbsolutePath().toString());
 
         Injector injector = Guice.createInjector(
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(RefDataStoreConfig.class).toInstance(refDataStoreConfig);
+                        bind(ReferenceDataConfig.class).toInstance(referenceDataConfig);
                         install(new RefDataStoreModule());
                         install(new PipelineScopeModule());
                     }

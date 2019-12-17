@@ -1,40 +1,52 @@
-/*
- * Copyright 2017 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package stroom.search.solr.search;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.ICache;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
+import stroom.query.common.v2.SearchResponseCreatorCache.Key;
 import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.query.common.v2.Store;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
-@SuppressWarnings("unused") // used by DI
+@SuppressWarnings("unused") //Used by DI
 @Singleton
-public class SolrSearchResponseCreatorManager implements SearchResponseCreatorManager {
-    private final SearchResponseCreatorCache cache;
+public class SolrSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SolrSearchResponseCreatorManager.class);
+
+    private static final String CACHE_NAME = "Solr Search Result Creators";
+
+    private final SolrSearchStoreFactory storeFactory;
+    private final ICache<Key, SearchResponseCreator> cache;
 
     @Inject
-    SolrSearchResponseCreatorManager(
-            final SolrInMemorySearchResponseCreatorCacheFactory cacheFactory,
-            final SolrSearchStoreFactory storeFactory) {
+    public SolrSearchResponseCreatorManager(final CacheManager cacheManager,
+                                            final SolrSearchConfig solrSearchConfig,
+                                            final SolrSearchStoreFactory storeFactory) {
+        this.storeFactory = storeFactory;
+        cache = cacheManager.create(CACHE_NAME, solrSearchConfig::getSearchResultCache, this::create, this::destroy);
+    }
 
-        SearchResponseCreatorCache cache = cacheFactory.create(storeFactory);
-        this.cache = cache;
+    private SearchResponseCreator create(SearchResponseCreatorCache.Key key) {
+        try {
+            LOGGER.debug("Creating new store for key {}", key);
+            final Store store = storeFactory.create(key.getSearchRequest());
+            return new SearchResponseCreator(store);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    private void destroy(final Key key, final SearchResponseCreator value) {
+        if (value != null) {
+            value.destroy();
+        }
     }
 
     @Override
@@ -50,5 +62,10 @@ public class SolrSearchResponseCreatorManager implements SearchResponseCreatorMa
     @Override
     public void evictExpiredElements() {
         cache.evictExpiredElements();
+    }
+
+    @Override
+    public void clear() {
+        cache.clear();
     }
 }

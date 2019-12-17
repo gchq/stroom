@@ -2,9 +2,33 @@
 appConfig:
   superDevMode: false
   activity:
-    db: {}
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+        jdbcDriverPassword: null
+      connectionPool:
+        cachePrepStmts: null
+        prepStmtCacheSize: null
+        prepStmtCacheSqlLimit: null
+        idleTimeout: null
+        maxLifetime: null
+        maxPoolSize: null
   annotation:
-    db: {}
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+        jdbcDriverPassword: null
+      connectionPool:
+        cachePrepStmts: null
+        prepStmtCacheSize: null
+        prepStmtCacheSqlLimit: null
+        idleTimeout: null
+        maxLifetime: null
+        maxPoolSize: null
     statusValues:
     - "New"
     - "Assigned"
@@ -21,12 +45,58 @@ appConfig:
     clusterCallIgnoreSSLHostnameVerifier: true
     clusterResponseTimeout: "30s"
   clusterLock:
-    db: {}
-  commonDbDetails: {}
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+        jdbcDriverPassword: null
+      connectionPool:
+        cachePrepStmts: null
+        prepStmtCacheSize: null
+        prepStmtCacheSqlLimit: null
+        idleTimeout: null
+        maxLifetime: null
+        maxPoolSize: null
+  clusterTask:
+    clusterResultCollectorCache:
+      maximumSize: 1000000
+      expireAfterAccess: 60000
+      expireAfterWrite: null
+  commonDbDetails:
+    connection:
+      jdbcDriverClassName: "com.mysql.cj.jdbc.Driver"
+      jdbcDriverUrl: "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8"
+      jdbcDriverUsername: "stroomuser"
+      jdbcDriverPassword: "stroompassword1"
+    connectionPool:
+      cachePrepStmts: null
+      prepStmtCacheSize: null
+      prepStmtCacheSqlLimit: null
+      idleTimeout: null
+      maxLifetime: null
+      maxPoolSize: null
   contentPackImport:
     enabled: false
   core:
-    db: {}
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+        jdbcDriverPassword: null
+      connectionPool:
+        cachePrepStmts: null
+        prepStmtCacheSize: null
+        prepStmtCacheSqlLimit: null
+        idleTimeout: null
+        maxLifetime: null
+        maxPoolSize: null
+  dashboard:
+    activeQueriesCache:
+      maximumSize: 100
+      expireAfterAccess: 60000
+      expireAfterWrite: null
   data:
     meta:
       metaValueConfig:
@@ -34,7 +104,19 @@ appConfig:
         deleteBatchSize: 1000
         flushBatchSize: 1000
         addAsync: true
-      db: {}
+      db:
+        connection:
+          jdbcDriverClassName: null
+          jdbcDriverUrl: null
+          jdbcDriverUsername: null
+          jdbcDriverPassword: null
+        connectionPool:
+          cachePrepStmts: null
+          prepStmtCacheSize: null
+          prepStmtCacheSqlLimit: null
+          idleTimeout: null
+          maxLifetime: null
+          maxPoolSize: null
     retention:
       deleteBatchSize: 1000
     store:
@@ -43,7 +125,19 @@ appConfig:
       fileSystemCleanBatchSize: 20
       fileSystemCleanDeleteOut: false
       fileSystemCleanOldAge: "1d"
-      db: {}
+      db:
+        connection:
+          jdbcDriverClassName: null
+          jdbcDriverUrl: null
+          jdbcDriverUsername: null
+          jdbcDriverPassword: null
+        connectionPool:
+          cachePrepStmts: null
+          prepStmtCacheSize: null
+          prepStmtCacheSqlLimit: null
+          idleTimeout: null
+          maxLifetime: null
+          maxPoolSize: null
     filesystemVolume:
       volumeSelector: "RoundRobin"
       createDefaultOnStart: true
@@ -55,17 +149,61 @@ appConfig:
     annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
     elasticIndex: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
   docstore:
-    db: {}
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+        jdbcDriverPassword: null
+      connectionPool:
+        cachePrepStmts: null
+        prepStmtCacheSize: null
+        prepStmtCacheSqlLimit: null
+        idleTimeout: null
+        maxLifetime: null
+        maxPoolSize: null
   explorer:
-    db: {}
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+        jdbcDriverPassword: null
+      connectionPool:
+        cachePrepStmts: null
+        prepStmtCacheSize: null
+        prepStmtCacheSqlLimit: null
+        idleTimeout: null
+        maxLifetime: null
+        maxPoolSize: null
   export:
     enabled: false
   feed:
     unknownClassification: "UNKNOWN CLASSIFICATION"
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
+    feedDocCache:
+      maximumSize: 1000
+      expireAfterAccess: 10000
+      expireAfterWrite: null
   index:
     ramBufferSizeMB: 1024
-    db: {}
+    indexStructureCache:
+      maximumSize: 100
+      expireAfterAccess: null
+      expireAfterWrite: 10000
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+        jdbcDriverPassword: null
+      connectionPool:
+        cachePrepStmts: null
+        prepStmtCacheSize: null
+        prepStmtCacheSqlLimit: null
+        idleTimeout: null
+        maxLifetime: null
+        maxPoolSize: null
     writer:
       cache:
         timeToLive: null
@@ -76,11 +214,35 @@ appConfig:
   job:
     enabled: true
     executionInterval: "10s"
-    db: {}
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+        jdbcDriverPassword: null
+      connectionPool:
+        cachePrepStmts: null
+        prepStmtCacheSize: null
+        prepStmtCacheSqlLimit: null
+        idleTimeout: null
+        maxLifetime: null
+        maxPoolSize: null
   lifecycle:
     enabled: true
   node:
-    db: {}
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+        jdbcDriverPassword: null
+      connectionPool:
+        cachePrepStmts: null
+        prepStmtCacheSize: null
+        prepStmtCacheSqlLimit: null
+        idleTimeout: null
+        maxLifetime: null
+        maxPoolSize: null
     node: "tba"
     status:
       heapHistogram:
@@ -90,12 +252,18 @@ appConfig:
   path:
     temp: "/tmp"
   pipeline:
+    pipelineDataCache:
+      maximumSize: 1000
+      expireAfterAccess: 600000
+      expireAfterWrite: null
     appender:
       maxActiveDestinations: 100
     parser:
       secureProcessing: true
       cache:
         maximumSize: 1000
+        expireAfterAccess: 600000
+        expireAfterWrite: null
     referenceData:
       localDir: "${stroom.temp}/refDataOffHeapStore"
       maxPutsBeforeCommit: 1000
@@ -103,14 +271,22 @@ appConfig:
       maxStoreSize: "50G"
       purgeAge: "30d"
       valueBufferCapacity: 1000
+      effectiveStreamCache:
+        maximumSize: 1000
+        expireAfterAccess: 600000
+        expireAfterWrite: null
       readAheadEnabled: true
     xmlSchema:
       cache:
         maximumSize: 1000
+        expireAfterAccess: 600000
+        expireAfterWrite: null
     xslt:
       maxElements: 1000000
       cache:
         maximumSize: 1000
+        expireAfterAccess: 600000
+        expireAfterWrite: null
   processor:
     assignTasks: true
     createTasks: true
@@ -120,9 +296,41 @@ appConfig:
     fillTaskQueue: true
     queueSize: 1000
     databaseMultiInsertMaxBatchSize: 500
-    db: {}
+    processorCache:
+      maximumSize: 1000
+      expireAfterAccess: 10000
+      expireAfterWrite: null
+    processorFilterCache:
+      maximumSize: 1000
+      expireAfterAccess: 10000
+      expireAfterWrite: null
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+        jdbcDriverPassword: null
+      connectionPool:
+        cachePrepStmts: null
+        prepStmtCacheSize: null
+        prepStmtCacheSqlLimit: null
+        idleTimeout: null
+        maxLifetime: null
+        maxPoolSize: null
   properties:
-    db: {}
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+        jdbcDriverPassword: null
+      connectionPool:
+        cachePrepStmts: null
+        prepStmtCacheSize: null
+        prepStmtCacheSqlLimit: null
+        idleTimeout: null
+        maxLifetime: null
+        maxPoolSize: null
   proxyAggregation:
     proxyDir: "${stroom.temp}/proxy"
     proxyThreads: 10
@@ -148,10 +356,34 @@ appConfig:
       maxDocIdQueueSize: 1000000
       maxThreads: 4
       maxThreadsPerTask: 2
+      searchResultCache:
+        maximumSize: 10000
+        expireAfterAccess: 600000
+        expireAfterWrite: null
+      indexShardSearcherCache:
+        maximumSize: 2
+        expireAfterAccess: 60000
+        expireAfterWrite: null
   searchable:
     storeSize: "1000000,100,10,1"
+    searchResultCache:
+      maximumSize: 10000
+      expireAfterAccess: 600000
+      expireAfterWrite: null
   security:
-    db: {}
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+        jdbcDriverPassword: null
+      connectionPool:
+        cachePrepStmts: null
+        prepStmtCacheSize: null
+        prepStmtCacheSqlLimit: null
+        idleTimeout: null
+        maxLifetime: null
+        maxPoolSize: null
     authentication:
       authenticationServiceUrl: null
       authenticationRequired: true
@@ -162,12 +394,35 @@ appConfig:
       userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
       clientId: null
       clientSecret: null
+      apiTokenCache:
+        maximumSize: 10000
+        expireAfterAccess: null
+        expireAfterWrite: 1800000
       durationToWarnBeforeExpiry: "30d"
       jwt:
         jwtIssuer: "stroom"
         enableTokenRevocationCheck: true
     authorisation:
-      maxDocumentPermissionCacheSize: 1000
+      userGroupsCache:
+        maximumSize: 1000
+        expireAfterAccess: 1800000
+        expireAfterWrite: null
+      userAppPermissionsCache:
+        maximumSize: 1000
+        expireAfterAccess: 1800000
+        expireAfterWrite: null
+      userCache:
+        maximumSize: 1000
+        expireAfterAccess: 1800000
+        expireAfterWrite: null
+      userDocumentPermissionsCache:
+        maximumSize: 1000
+        expireAfterAccess: 600000
+        expireAfterWrite: null
+      documentPermissionCache:
+        maximumSize: 1000
+        expireAfterAccess: 600000
+        expireAfterWrite: null
     webContent:
       contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
         \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
@@ -187,25 +442,58 @@ appConfig:
   sessionCookie:
     secure: true
     httpOnly: true
-  solrSearch:
-    maxStoredDataQueueSize: 1000
-    maxBooleanClauseCount: 1024
-    storeSize: "1000000,100,10,1"
-    extraction:
+  solr:
+    indexClientCache:
+      maximumSize: 100
+      expireAfterAccess: 600000
+      expireAfterWrite: null
+    indexCache:
+      maximumSize: 100
+      expireAfterAccess: null
+      expireAfterWrite: 600000
+    search:
       maxStoredDataQueueSize: 1000
-      maxThreads: 4
-      maxThreadsPerTask: 2
+      maxBooleanClauseCount: 1024
+      storeSize: "1000000,100,10,1"
+      searchResultCache:
+        maximumSize: 10000
+        expireAfterAccess: 600000
+        expireAfterWrite: null
+      extraction:
+        maxStoredDataQueueSize: 1000
+        maxThreads: 4
+        maxThreadsPerTask: 2
   statistics:
     sql:
       docRefType: "StatisticStore"
       statisticAggregationBatchSize: 1000000
       maxProcessingAge: null
-      db: {}
+      dataSourceCache:
+        maximumSize: 100
+        expireAfterAccess: 600000
+        expireAfterWrite: null
+      db:
+        connection:
+          jdbcDriverClassName: null
+          jdbcDriverUrl: null
+          jdbcDriverUsername: null
+          jdbcDriverPassword: null
+        connectionPool:
+          cachePrepStmts: null
+          prepStmtCacheSize: null
+          prepStmtCacheSqlLimit: null
+          idleTimeout: null
+          maxLifetime: null
+          maxPoolSize: null
       search:
         storeSize: "1000000,100,10,1"
         resultHandlerBatchSize: 5000
         maxResults: 100000
         fetchSize: 5000
+        searchResultCache:
+          maximumSize: 10000
+          expireAfterAccess: 600000
+          expireAfterWrite: null
     hbase:
       docRefType: "StroomStatsStore"
       kafkaConfigUuid: null
@@ -294,7 +582,19 @@ appConfig:
   queryHistory:
     itemsRetention: 100
     daysRetention: 365
-    db: {}
+    db:
+      connection:
+        jdbcDriverClassName: null
+        jdbcDriverUrl: null
+        jdbcDriverUsername: null
+        jdbcDriverPassword: null
+      connectionPool:
+        cachePrepStmts: null
+        prepStmtCacheSize: null
+        prepStmtCacheSqlLimit: null
+        idleTimeout: null
+        maxLifetime: null
+        maxPoolSize: null
   ui:
     welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
       \ multiple systems.</p>"

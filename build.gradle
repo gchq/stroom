@@ -147,6 +147,7 @@ ext.libs = [
         aopalliance                    : "aopalliance:aopalliance:1.0",
         assertj_core                   : "org.assertj:assertj-core:3.10.0",
         c3p0                           : "com.mchange:c3p0:0.9.5.2",
+        caffeine                       : "com.github.ben-manes.caffeine:caffeine:2.8.0",
         commons_codec                  : "commons-codec:commons-codec:1.11",
         commons_compress               : "org.apache.commons:commons-compress:1.18",
         commons_csv                    : "org.apache.commons:commons-csv:1.7",

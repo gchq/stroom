@@ -55,7 +55,7 @@ class ParserFactoryPoolImpl
                           final DocumentPermissionCache documentPermissionCache,
                           final SecurityContext securityContext,
                           final DSChooser dsChooser) {
-        super(cacheManager, "Parser Factory Pool", parserConfig.getCacheConfig(), documentPermissionCache, securityContext);
+        super(cacheManager, "Parser Factory Pool", parserConfig::getCacheConfig, documentPermissionCache, securityContext);
         this.dsChooser = dsChooser;
     }
 

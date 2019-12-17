@@ -1,15 +1,17 @@
-package stroom.pipeline.refdata.store;
+package stroom.pipeline.refdata;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.IsConfig;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class RefDataStoreConfig implements IsConfig {
+public class ReferenceDataConfig implements IsConfig {
     private static final int MAX_READERS_DEFAULT = 100;
     private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 1000;
     private static final int VALUE_BUFFER_CAPACITY_DEFAULT_VALUE = 1000;
@@ -21,6 +23,10 @@ public class RefDataStoreConfig implements IsConfig {
     private String purgeAge = "30d";
     private int valueBufferCapacity = VALUE_BUFFER_CAPACITY_DEFAULT_VALUE;
     private boolean isReadAheadEnabled = true;
+    private CacheConfig effectiveStreamCache = new CacheConfig.Builder()
+            .maximumSize(1000L)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The full directory path to use for storing the reference data store. It MUST be on " +
@@ -110,6 +116,14 @@ public class RefDataStoreConfig implements IsConfig {
 
     public void setReadAheadEnabled(final boolean isReadAheadEnabled) {
         this.isReadAheadEnabled = isReadAheadEnabled;
+    }
+
+    public CacheConfig getEffectiveStreamCache() {
+        return effectiveStreamCache;
+    }
+
+    public void setEffectiveStreamCache(final CacheConfig effectiveStreamCache) {
+        this.effectiveStreamCache = effectiveStreamCache;
     }
 
     @Override

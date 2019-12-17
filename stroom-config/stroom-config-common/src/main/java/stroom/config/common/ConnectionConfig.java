@@ -16,15 +16,12 @@
 
 package stroom.config.common;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.IsConfig;
 
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
 public class ConnectionConfig implements IsConfig {
     private String jdbcDriverClassName;
     private String jdbcDriverUrl;
