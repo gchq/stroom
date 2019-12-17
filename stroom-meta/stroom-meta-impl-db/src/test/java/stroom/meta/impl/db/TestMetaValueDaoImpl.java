@@ -21,6 +21,7 @@ import com.google.inject.Guice;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
@@ -60,6 +61,7 @@ class TestMetaValueDaoImpl {
                 new MockSecurityContextModule(),
                 new MockCollectionModule(),
                 new MockWordListProviderModule(),
+                new CacheModule(),
                 new TestDbModule(),
                 new MetaTestModule())
                 .injectMembers(this);
