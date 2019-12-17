@@ -20,9 +20,10 @@ import com.google.inject.AbstractModule;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.DataStoreMaintenanceService;
 import stroom.data.store.impl.fs.api.FsVolumeResource;
-import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.ServletBinder;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.RestResource;
 
 public class FsDataStoreModule extends AbstractModule {
     @Override
@@ -34,6 +35,9 @@ public class FsDataStoreModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(FsVolumeResource.class);
+
+        ServletBinder.create(binder())
+                .bind(EchoServlet.class);
     }
 
     @Override

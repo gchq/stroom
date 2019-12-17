@@ -58,7 +58,6 @@ public class ServletModule extends AbstractModule {
                 .bind(ReceiveDataServlet.class)
                 .bind(ReceiveDataServlet.class)
                 .bind(DebugServlet.class)
-                .bind(EchoServlet.class)
                 .bind(StatusServlet.class);
     }
 

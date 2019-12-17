@@ -14,16 +14,17 @@
  * limitations under the License.
  */
 
-package stroom.core.servlet;
+package stroom.data.store.impl.fs;
 
+import stroom.util.io.StreamUtil;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.Unauthenticated;
 
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Set;
 
 @Unauthenticated
@@ -33,11 +34,11 @@ public class EchoServlet extends HttpServlet implements IsServlet {
     private static final Set<String> PATH_SPECS = Set.of("/echo");
 
     @Override
-    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        // TODO : @66 DO WE REALLY WANT TO SUPPORT ECHO TO DECODE BGZIP?
-//        final InputStream is = new BlockGZIPInputStream(req.getInputStream());
-//        resp.setStatus(200);
-//        StreamUtil.streamToStream(is, resp.getOutputStream());
+    protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws IOException {
+        try (final InputStream is = new BlockGZIPInputStream(req.getInputStream())) {
+            resp.setStatus(200);
+            StreamUtil.streamToStream(is, resp.getOutputStream());
+        }
     }
 
     @Override
