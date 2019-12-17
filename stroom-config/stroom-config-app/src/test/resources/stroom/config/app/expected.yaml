@@ -104,6 +104,18 @@ appConfig:
         deleteBatchSize: 1000
         flushBatchSize: 1000
         addAsync: true
+      metaFeedCache:
+        maximumSize: 1000
+        expireAfterAccess: 600000
+        expireAfterWrite: null
+      metaProcessorCache:
+        maximumSize: 1000
+        expireAfterAccess: 600000
+        expireAfterWrite: null
+      metaTypeCache:
+        maximumSize: 1000
+        expireAfterAccess: 600000
+        expireAfterWrite: null
       db:
         connection:
           jdbcDriverClassName: null
@@ -141,6 +153,14 @@ appConfig:
     filesystemVolume:
       volumeSelector: "RoundRobin"
       createDefaultOnStart: true
+      feedPathCache:
+        maximumSize: 1000
+        expireAfterAccess: 600000
+        expireAfterWrite: null
+      typePathCache:
+        maximumSize: 1000
+        expireAfterAccess: 600000
+        expireAfterWrite: null
   dataSourceUrl:
     index: "http://127.0.0.1:8080/api/stroom-index/v2"
     solrIndex: "http://127.0.0.1:8080/api/stroom-solr-index/v2"
@@ -303,6 +323,10 @@ appConfig:
     processorFilterCache:
       maximumSize: 1000
       expireAfterAccess: 10000
+      expireAfterWrite: null
+    processorNodeCache:
+      maximumSize: 1000
+      expireAfterAccess: 600000
       expireAfterWrite: null
     db:
       connection:
