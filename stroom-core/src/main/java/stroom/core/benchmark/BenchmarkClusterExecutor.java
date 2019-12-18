@@ -442,36 +442,38 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     // }
 
     private void recordTranslationStats(final String feedName, final Period processPeriod) {
-        final long nowMs = System.currentTimeMillis();
-        final Map<String, Stat> stats = new HashMap<>();
+        if (statistics != null) {
+            final long nowMs = System.currentTimeMillis();
+            final Map<String, Stat> stats = new HashMap<>();
 
-        final ExpressionOperator taskExpression = new ExpressionOperator.Builder(Op.AND)
-                .addTerm(ProcessorTaskDataSource.FEED_NAME, Condition.EQUALS, feedName)
-                .addTerm(ProcessorTaskDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
-                .build();
-        final List<ProcessorTask> processorTasks = processorTaskService.find(new ExpressionCriteria(taskExpression));
-        processorTasks.stream().forEach(task -> {
-            final List<MetaRow> metaList = metaService.findRows(FindMetaCriteria.createFromId(task.getMetaId()));
+            final ExpressionOperator taskExpression = new ExpressionOperator.Builder(Op.AND)
+                    .addTerm(ProcessorTaskDataSource.FEED_NAME, Condition.EQUALS, feedName)
+                    .addTerm(ProcessorTaskDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
+                    .build();
+            final List<ProcessorTask> processorTasks = processorTaskService.find(new ExpressionCriteria(taskExpression));
+            processorTasks.stream().forEach(task -> {
+                final List<MetaRow> metaList = metaService.findRows(FindMetaCriteria.createFromId(task.getMetaId()));
 
-            if (metaList != null && metaList.size() == 1) {
-                final MetaRow meta = metaList.get(0);
-                final Stat stat = stats.computeIfAbsent(task.getNodeName(), k -> new Stat());
-                stat.nodeWritten += getLong(meta, MetaFields.REC_WRITE.getName());
-                stat.nodeError += getLong(meta, MetaFields.REC_ERROR.getName());
-                checkPeriod(stat.nodePeriod, meta);
-            }
-        });
+                if (metaList != null && metaList.size() == 1) {
+                    final MetaRow meta = metaList.get(0);
+                    final Stat stat = stats.computeIfAbsent(task.getNodeName(), k -> new Stat());
+                    stat.nodeWritten += getLong(meta, MetaFields.REC_WRITE.getName());
+                    stat.nodeError += getLong(meta, MetaFields.REC_ERROR.getName());
+                    checkPeriod(stat.nodePeriod, meta);
+                }
+            });
 
-        final List<InternalStatisticEvent> statisticEventList = new ArrayList<>();
-        stats.forEach((node, stat) -> {
-            Map<String, String> tags = Map.of("Node", node, "Feed", feedName, "Type", EPS);
-            statisticEventList.add(InternalStatisticEvent.createValueStat(InternalStatisticKey.BENCHMARK_CLUSTER, nowMs, tags, (double) toEPS(stat.nodeWritten, stat.nodePeriod)));
+            final List<InternalStatisticEvent> statisticEventList = new ArrayList<>();
+            stats.forEach((node, stat) -> {
+                Map<String, String> tags = Map.of("Node", node, "Feed", feedName, "Type", EPS);
+                statisticEventList.add(InternalStatisticEvent.createValueStat(InternalStatisticKey.BENCHMARK_CLUSTER, nowMs, tags, (double) toEPS(stat.nodeWritten, stat.nodePeriod)));
 
-            tags = Map.of("Node", node, "Feed", feedName, "Type", ERROR);
-            statisticEventList.add(InternalStatisticEvent.createValueStat(InternalStatisticKey.BENCHMARK_CLUSTER, nowMs, tags, (double) toEPS(stat.nodeError, stat.nodePeriod)));
-        });
+                tags = Map.of("Node", node, "Feed", feedName, "Type", ERROR);
+                statisticEventList.add(InternalStatisticEvent.createValueStat(InternalStatisticKey.BENCHMARK_CLUSTER, nowMs, tags, (double) toEPS(stat.nodeError, stat.nodePeriod)));
+            });
 
-        statistics.putEvents(statisticEventList);
+            statistics.putEvents(statisticEventList);
+        }
     }
 
     private void checkPeriod(final Period period, final MetaRow row) {
