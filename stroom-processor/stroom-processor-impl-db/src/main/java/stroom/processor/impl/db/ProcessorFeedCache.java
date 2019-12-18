@@ -17,47 +17,53 @@
 
 package stroom.processor.impl.db;
 
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.ICache;
 import stroom.db.util.JooqUtil;
+import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorFeedRecord;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
 
 @Singleton
 class ProcessorFeedCache implements Clearable {
-    // TODO : @66 Replace with a proper cache.
-    private final Map<String, Integer> cache = new ConcurrentHashMap<>();
+    private static final String CACHE_NAME = "Processor Feed Cache";
 
+    private final ICache<String, Integer> cache;
     private final ProcessorDbConnProvider processorDbConnProvider;
 
     @Inject
-    ProcessorFeedCache(final ProcessorDbConnProvider processorDbConnProvider) {
+    ProcessorFeedCache(final ProcessorDbConnProvider processorDbConnProvider,
+                       final CacheManager cacheManager,
+                       final ProcessorConfig processorConfig) {
         this.processorDbConnProvider = processorDbConnProvider;
+        cache = cacheManager.create(CACHE_NAME, processorConfig::getProcessorFeedCache, this::load);
     }
 
-    //    @Override
-    public Integer getOrCreate(final String name) {
-        // Try and get the id from the cache.
-        return Optional.ofNullable(cache.get(name))
+    private int load(final String name) {
+        // Try and get the existing id from the DB.
+        return get(name)
                 .or(() -> {
-                    // Try and get the existing id from the DB.
-                    return get(name)
+                    // The id isn't in the DB so create it.
+                    return create(name)
                             .or(() -> {
-                                create(name);
+                                // If the id is still null then this may be because the create method failed
+                                // due to the name having been inserted into the DB by another thread prior
+                                // to us calling create and the DB preventing duplicate names.
+                                // Assuming this is the case, try and get the id from the DB one last time.
                                 return get(name);
-                            })
-                            .map(path -> {
-                                // Cache for next time.
-                                cache.put(name, path);
-                                return path;
                             });
-                }).orElseThrow();
+                })
+                .orElseThrow();
+    }
+
+    public Integer getOrCreate(final String name) {
+        return cache.get(name);
     }
 
 //    @Override
