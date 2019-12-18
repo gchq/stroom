@@ -328,6 +328,10 @@ appConfig:
       maximumSize: 1000
       expireAfterAccess: 600000
       expireAfterWrite: null
+    processorFeedCache:
+      maximumSize: 1000
+      expireAfterAccess: 600000
+      expireAfterWrite: null
     db:
       connection:
         jdbcDriverClassName: null
