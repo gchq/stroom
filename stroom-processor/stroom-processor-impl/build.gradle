@@ -30,6 +30,7 @@ dependencies {
     compile libs.stroomQueryApi
 
     // 3rd party libs
+    compile libs.commons_lang
     compile libs.dropwizard_metrics_healthchecks
     compile libs.flyway_core
     compile libs.guice4
