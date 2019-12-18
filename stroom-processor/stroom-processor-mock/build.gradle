@@ -15,7 +15,6 @@ dependencies {
 //    compile project(':stroom-lifecycle:stroom-lifecycle-api')
 //    compile project(':stroom-meta:stroom-meta-api')
 //    compile project(':stroom-node:stroom-node-api')
-//    compile project(':stroom-pipeline') // TODO : @66 REMOVE DEPENDENCY ON IMPL
     compile project(':stroom-processor:stroom-processor-api')
 //    compile project(':stroom-search:stroom-search-api')
 //    compile project(':stroom-search:stroom-searchable-api')
