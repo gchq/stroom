@@ -12,7 +12,6 @@ import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
 class TestYamlUtil {
     static final String EXPECTED_YAML_FILE_NAME = "expected.yaml";
 
