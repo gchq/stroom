@@ -19,18 +19,26 @@ package stroom.security.impl;
 import stroom.docref.DocRef;
 import stroom.security.shared.User;
 
-public final class DocRefUtil {
+final class UserDocRefUtil {
     public static final String USER = "User";
 
-    private DocRefUtil() {
+    private UserDocRefUtil() {
         // Utility class.
     }
 
-    public static DocRef create(final User user) {
+    static DocRef createDocRef(final User user) {
         if (user == null) {
             return null;
         }
 
         return new DocRef(USER, user.getUuid(), user.getName());
+    }
+
+    static User createUser(final DocRef docRef) {
+        if (docRef == null || !USER.equals(docRef.getType())) {
+            return null;
+        }
+
+        return new User.Builder().uuid(docRef.getUuid()).name(docRef.getName()).build();
     }
 }

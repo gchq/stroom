@@ -22,12 +22,7 @@ import stroom.security.shared.UserAppPermissions;
 import java.util.Set;
 
 public interface UserAppPermissionService {
-    default UserAppPermissions getPermissionsForUser(User userRef) {
-        final Set<String> permissionNames = getPermissionNamesForUser(userRef.getUuid());
-        final Set<String> allNames = getAllPermissionNames();
-
-        return new UserAppPermissions(userRef, allNames, permissionNames);
-    }
+    UserAppPermissions getPermissionsForUser(User userRef);
 
     Set<String> getPermissionNamesForUser(String userUuid);
 
@@ -38,5 +33,4 @@ public interface UserAppPermissionService {
     void addPermission(String userUuid, String permission);
 
     void removePermission(String userUuid, String permission);
-
 }

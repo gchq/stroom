@@ -35,12 +35,12 @@ import stroom.security.shared.FetchUserAction;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.LogoutAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.shared.RestResource;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HealthCheckBinder;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.RestResource;
 
 import javax.servlet.http.HttpSessionListener;
 
@@ -88,6 +88,7 @@ public class SecurityModule extends AbstractModule {
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(UserGroupsCache.class);
+        entityEventHandlerBinder.addBinding().to(UserAppPermissionsCache.class);
 
         final Multibinder<PermissionChangeEvent.Handler> permissionChangeEventHandlerBinder = Multibinder.newSetBinder(binder(), PermissionChangeEvent.Handler.class);
         permissionChangeEventHandlerBinder.addBinding().to(UserDocumentPermissionsCache.class);
