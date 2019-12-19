@@ -22,9 +22,11 @@ import static stroom.data.store.impl.fs.db.jooq.tables.FsTypePath.FS_TYPE_PATH;
 class FsTypePathDaoImpl implements FsTypePathDao {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsTypePathDaoImpl.class);
 
-    private static final String CACHE_NAME = "Type Path Cache";
+    private static final String NAME_TO_PATH_CACHE_NAME = "Name To Path Cache";
+    private static final String PATH_TO_NAME_CACHE_NAME = "Path To Name Cache";
 
-    private final ICache<String, String> cache;
+    private final ICache<String, String> nameToPathCache;
+    private final ICache<String, String> pathToNameCache;
     private final FsDataStoreDbConnProvider fsDataStoreDbConnProvider;
 
     @Inject
@@ -32,22 +34,34 @@ class FsTypePathDaoImpl implements FsTypePathDao {
                       final CacheManager cacheManager,
                       final FsVolumeConfig fsVolumeConfig) {
         this.fsDataStoreDbConnProvider = fsDataStoreDbConnProvider;
-        cache = cacheManager.create(CACHE_NAME, fsVolumeConfig::getTypePathCache, this::load);
-    }
-
-    private String load(final String name) {
-        // Try and get the existing id from the DB.
-        return getPath(name)
-                .or(() -> {
-                    createPath(name);
-                    return getPath(name);
-                })
-                .orElseThrow();
+        nameToPathCache = cacheManager.create(NAME_TO_PATH_CACHE_NAME, fsVolumeConfig::getTypePathCache, this::loadPath);
+        pathToNameCache = cacheManager.create(PATH_TO_NAME_CACHE_NAME, fsVolumeConfig::getTypePathCache, this::loadName);
     }
 
     @Override
     public String getOrCreatePath(final String name) {
-        return cache.get(name);
+        return nameToPathCache.get(name);
+    }
+
+    @Override
+    public String getType(final String path) {
+        return pathToNameCache.get(path);
+    }
+
+    private String loadPath(final String typeName) {
+        // Try and get the existing id from the DB.
+        return getPath(typeName)
+                .or(() -> {
+                    createPath(typeName);
+                    return getPath(typeName);
+                })
+                .orElseThrow();
+    }
+
+    private String loadName(final String path) {
+        // Try and get the existing id from the DB.
+        return getName(path)
+                .orElseThrow(() -> new RuntimeException("Unable to get type name from path"));
     }
 
     private void createPath(final String name) {
@@ -77,20 +91,5 @@ class FsTypePathDaoImpl implements FsTypePathDao {
                 .from(FS_TYPE_PATH)
                 .where(FS_TYPE_PATH.PATH.eq(path))
                 .fetchOptional(FS_TYPE_PATH.NAME));
-    }
-
-    @Override
-    public String getType(final String path) {
-        // Try and get the id from the cache.
-        return Optional.ofNullable(cache.get(path))
-                .or(() -> {
-                    // Try and get the existing id from the DB.
-                    return getName(path)
-                            .map(name -> {
-                                // Cache for next time.
-                                cache.put(path, name);
-                                return name;
-                            });
-                }).orElseThrow(() -> new RuntimeException("Unable to get type from path"));
     }
 }

@@ -66,6 +66,14 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
         });
     }
 
+    @Override
+    public int delete(final List<Long> metaIdList) {
+        return JooqUtil.contextResult(fsDataStoreDbConnProvider, context -> context
+                .deleteFrom(FS_META_VOLUME)
+                .where(FS_META_VOLUME.META_ID.in(metaIdList))
+                .execute());
+    }
+
     class DataVolumeImpl implements DataVolume {
         private final long streamId;
         private final String volumePath;

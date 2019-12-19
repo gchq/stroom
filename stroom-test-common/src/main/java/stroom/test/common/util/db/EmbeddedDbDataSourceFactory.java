@@ -24,7 +24,9 @@ class EmbeddedDbDataSourceFactory extends DataSourceFactoryImpl {
 //        mergedConfig.getConnectionPoolConfig().setMaxLifetime(1000L);
 //        mergedConfig.getConnectionPoolConfig().setMaxPoolSize(2);
 
-        DbUtil.copyConnectionConfig(DbTestUtil.getOrCreateConfig(), mergedConfig.getConnectionConfig());
+        if (DbTestUtil.isUseEmbeddedDb()) {
+            DbUtil.copyConnectionConfig(DbTestUtil.getOrCreateEmbeddedConnectionConfig(), mergedConfig.getConnectionConfig());
+        }
 
         return mergedConfig;
     }

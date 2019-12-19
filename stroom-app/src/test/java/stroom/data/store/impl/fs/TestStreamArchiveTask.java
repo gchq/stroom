@@ -18,7 +18,6 @@
 package stroom.data.store.impl.fs;
 
 
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.data.retention.impl.DataRetentionExecutor;
 import stroom.data.shared.StreamTypeNames;
@@ -52,7 +51,6 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 // TODO : @66 Decide what needs to be done with deletion of old data rows
 
-@Disabled
 class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     private static final int HIGHER_REPLICATION_COUNT = 2;
     private static final int SIXTY = 60;
@@ -76,7 +74,7 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     @Inject
     private DataRetentionExecutor streamRetentionExecutor;
     @Inject
-    private StreamDeleteExecutor streamDeleteExecutor;
+    private PhysicalDeleteExecutor physicalDeleteExecutor;
 
     private int initialReplicationCount = 1;
 

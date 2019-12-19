@@ -26,7 +26,9 @@ public interface MetaDao extends Clearable {
 
     int updateStatus(FindMetaCriteria criteria, Status newStatus, Status currentStatus, long statusTime);
 
-    int delete(FindMetaCriteria criteria);
+//    int delete(FindMetaCriteria criteria);
+
+    int delete(List<Long> metaIdList);
 
     int getLockCount();
 }

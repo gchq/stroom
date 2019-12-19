@@ -30,4 +30,6 @@ public interface MetaValueDao extends Clearable, Flushable {
     List<MetaRow> decorateDataWithAttributes(List<Meta> list);
 
     void deleteOldValues();
+
+    int delete(List<Long> metaIdList);
 }

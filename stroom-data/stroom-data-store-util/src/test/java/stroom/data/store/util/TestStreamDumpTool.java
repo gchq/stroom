@@ -31,7 +31,7 @@ import stroom.data.store.api.TargetUtil;
 import stroom.meta.impl.db.MetaDbConnProvider;
 import stroom.meta.shared.MetaProperties;
 import stroom.test.common.util.db.DbTestUtil;
-import stroom.test.common.util.db.TestDbModule;
+import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.test.common.util.test.TempDir;
 import stroom.test.common.util.test.TempDirExtension;
@@ -58,7 +58,7 @@ class TestStreamDumpTool {
 
     @BeforeEach
     void setup() {
-        final Injector injector = Guice.createInjector(new TestDbModule(), new ToolModule());
+        final Injector injector = Guice.createInjector(new DbTestModule(), new ToolModule());
         injector.injectMembers(this);
 
         Mockito.when(toolInjector.getInjector())

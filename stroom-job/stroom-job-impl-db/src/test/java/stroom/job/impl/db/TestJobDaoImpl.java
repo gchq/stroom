@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.Job;
 import stroom.security.mock.MockSecurityContextModule;
-import stroom.test.common.util.db.TestDbModule;
+import stroom.test.common.util.db.DbTestModule;
 import stroom.util.AuditUtil;
 
 import java.util.List;
@@ -28,7 +28,7 @@ class TestJobDaoImpl {
         Guice.createInjector(
                 new JobDbModule(),
                 new MockSecurityContextModule(),
-                new TestDbModule())
+                new DbTestModule())
                 .injectMembers(this);
         cleanup();
     }

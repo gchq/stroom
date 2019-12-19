@@ -51,6 +51,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 /**
  * API used by the tasks to interface to the stream store under the bonnet.
@@ -83,20 +84,21 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
     }
 
     List<Path> findAllStreamFile(final Meta meta) {
-        final DataVolume streamVolume = dataVolumeService.findDataVolume(meta.getId());
-        final List<Path> results = new ArrayList<>();
-        final Path rootFile = fileSystemStreamPathHelper.getRootPath(streamVolume.getVolumePath(),
-                meta, meta.getTypeName());
-        if (Files.isRegularFile(rootFile)) {
-            results.add(rootFile);
-            results.addAll(fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile));
+        final DataVolume dataVolume = dataVolumeService.findDataVolume(meta.getId());
+        if (dataVolume != null) {
+            final Path rootFile = fileSystemStreamPathHelper.getRootPath(dataVolume.getVolumePath(), meta, meta.getTypeName());
+            final List<Path> results = new ArrayList<>();
+            if (Files.isRegularFile(rootFile)) {
+                results.add(rootFile);
+                results.addAll(fileSystemStreamPathHelper.findAllDescendantStreamFileList(rootFile));
+            }
+            return results;
         }
 
-        return results;
+        return Collections.emptyList();
     }
 
     @Override
-    // @Transactional
     public ScanVolumePathResult scanVolumePath(final FsVolume volume,
                                                final boolean doDelete,
                                                final String repoPath,
@@ -169,7 +171,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
 
             // If we haven't found any streams then give up.
             if (matchingStreams.size() > 0) {
-                // OK we have build up a list of files located in the directory
+                // OK we have built up a list of files located in the directory
                 // Now see what is there as per the database.
                 final FindDataVolumeCriteria criteria = new FindDataVolumeCriteria();
 
@@ -205,10 +207,12 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
     private BaseResultList<Meta> findMatchingStreams(final String repoPath) {
         try {
             // We need to find streams that match the repo path.
-            final ExpressionOperator expression = pathToStreamExpression(repoPath);
-            final FindMetaCriteria criteria = new FindMetaCriteria(expression);
-            criteria.setPageRequest(new PageRequest(0L, 1000));
-            return metaService.find(criteria);
+            final Optional<ExpressionOperator> optional = pathToStreamExpression(repoPath);
+            return optional.map(expression -> {
+                final FindMetaCriteria criteria = new FindMetaCriteria(expression);
+                criteria.setPageRequest(new PageRequest(0L, 1000));
+                return metaService.find(criteria);
+            }).orElseGet(() -> BaseResultList.createUnboundedList(Collections.emptyList()));
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
             LOGGER.warn(e.getMessage());
@@ -223,62 +227,56 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
      * @param repoPath The repository path to create the expression from.
      * @return An expression that can be used to query the stream meta service.
      */
-    private ExpressionOperator pathToStreamExpression(final String repoPath) {
-        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-
+    private Optional<ExpressionOperator> pathToStreamExpression(final String repoPath) {
         final String[] parts = repoPath.split("/");
 
-        if (parts.length > 0 && parts[0].length() > 0) {
+        if (parts.length < 4) {
+            // Not a stream path
+            return Optional.empty();
+        }
+
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+        try {
             final String streamTypeName = fileSystemTypePaths.getType(parts[0]);
             builder.addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, streamTypeName);
-        }
-        if (parts.length >= 4) {
-            try {
-                final String fromDateString = parts[1] + "-" + parts[2] + "-" + parts[3];
-                final LocalDate localDate = LocalDate.parse(fromDateString, DateTimeFormatter.ISO_LOCAL_DATE);
-                final String toDateString = localDate.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE);
 
-                builder.addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, fromDateString + "T00:00:00.000Z");
-                builder.addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN, toDateString + "T00:00:00.000Z");
+            final String fromDateString = parts[1] + "-" + parts[2] + "-" + parts[3];
+            final LocalDate localDate = LocalDate.parse(fromDateString, DateTimeFormatter.ISO_LOCAL_DATE);
+            final String toDateString = localDate.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE);
 
-            } catch (final RuntimeException e) {
-                // Not a stream path
-                throw new RuntimeException("Not a valid repository path");
+            builder.addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, fromDateString + "T00:00:00.000Z");
+            builder.addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN, toDateString + "T00:00:00.000Z");
+
+            final StringBuilder numberPart = new StringBuilder();
+            for (int i = 4; i < parts.length; i++) {
+                numberPart.append(parts[i]);
             }
-        }
 
-        final StringBuilder numberPart = new StringBuilder();
-        for (int i = 4; i < parts.length; i++) {
-            numberPart.append(parts[i]);
-        }
+            long fromId = 1L;
+            if (numberPart.length() > 0) {
+                try {
+                    final long dirNumber = Long.parseLong(numberPart.toString());
 
-        long fromId = 1L;
+                    // E.g. 001/110 would contain numbers 1,110,000 to 1,110,999
+                    // 001/111 would contain numbers 1,111,000 to 1,111,999
+                    fromId = dirNumber * 1000L;
 
-
-//        if (parts.length == 4) {
-//            init(1L, 1000L);
-//        }
-
-        if (numberPart.length() > 0) {
-            try {
-                final long dirNumber = Long.valueOf(numberPart.toString());
-
-                // E.g. 001/110 would contain numbers 1,110,000 to 1,110,999
-                // 001/111 would contain numbers 1,111,000 to 1,111,999
-                fromId = dirNumber * 1000L;
-
-            } catch (final RuntimeException e) {
-                // Not a stream path
-                throw new RuntimeException("Not a valid repository path '" + repoPath + "'");
+                } catch (final RuntimeException e) {
+                    // Not a stream path
+                    throw new RuntimeException("Not a valid repository path '" + repoPath + "'");
+                }
             }
+
+            long toId = fromId + 1000L;
+
+            builder.addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, fromId);
+            builder.addTerm(MetaFields.ID, Condition.LESS_THAN, toId);
+
+            return Optional.of(builder.build());
+        } catch (final RuntimeException e) {
+            // Not a stream path
+            throw new RuntimeException("Not a valid repository path");
         }
-
-        long toId = fromId + 1000L;
-
-        builder.addTerm(MetaFields.ID, Condition.GREATER_THAN_OR_EQUAL_TO, fromId);
-        builder.addTerm(MetaFields.ID, Condition.LESS_THAN, toId);
-
-        return builder.build();
     }
 
     private void buildFilesKeyedByBaseName(final ScanVolumePathResult result,
@@ -368,12 +366,14 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                 }
             } else {
                 // Case 2 - match
-                for (final String file : files) {
-                    LOGGER.debug("processDirectory() - {}/{} belongs to stream {}",
-                            directory,
-                            file,
-                            md.getStreamId()
-                    );
+                if (LOGGER.isDebugEnabled()) {
+                    for (final String file : files) {
+                        LOGGER.debug("processDirectory() - {}/{} belongs to stream {}",
+                                directory,
+                                file,
+                                md.getStreamId()
+                        );
+                    }
                 }
             }
         }

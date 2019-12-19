@@ -417,12 +417,20 @@ class MetaDaoImpl implements MetaDao {
                 });
     }
 
+//    @Override
+//    public int delete(final FindMetaCriteria criteria) {
+//        final Condition condition = createCondition(criteria);
+//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+//                .deleteFrom(meta)
+//                .where(condition)
+//                .execute());
+//    }
+
     @Override
-    public int delete(final FindMetaCriteria criteria) {
-        final Condition condition = createCondition(criteria);
+    public int delete(final List<Long> metaIdList) {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .deleteFrom(meta)
-                .where(condition)
+                .where(meta.ID.in(metaIdList))
                 .execute());
     }
 

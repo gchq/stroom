@@ -52,18 +52,15 @@ public class DbTestUtil {
         return dbModule.getConnectionProvider(() -> config, new EmbeddedDbDataSourceFactory(new CommonDbConfig()));
     }
 
-
-    public static synchronized ConnectionConfig getOrCreateConfig() {
+    public static synchronized ConnectionConfig getOrCreateEmbeddedConnectionConfig() {
         if (currentConfig == null) {
-            if (isUseEmbeddedDb()) {
-                currentConfig = createEmbeddedDbConfig();
-            }
+            currentConfig = createEmbeddedDbConfig();
         }
 
         return currentConfig;
     }
 
-    public static boolean isUseEmbeddedDb() {
+    static boolean isUseEmbeddedDb() {
         String useTestContainersEnvVarVal = System.getenv(USE_TEST_CONTAINERS_ENV_VAR);
         // This env var allows a dev to use their own stroom-resources DB instead of test containers.
         // This is useful when debugging a test that needs to access the DB as test containers has to
@@ -71,7 +68,7 @@ public class DbTestUtil {
         return (useTestContainersEnvVarVal == null || !useTestContainersEnvVarVal.toLowerCase().equals("false"));
     }
 
-    public static ConnectionConfig createEmbeddedDbConfig() {
+    private static ConnectionConfig createEmbeddedDbConfig() {
         final ConnectionConfig connectionConfig = new ConnectionConfig();
         try {
             final String schemaName = "stroom";

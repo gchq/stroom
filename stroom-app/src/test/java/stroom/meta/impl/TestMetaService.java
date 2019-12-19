@@ -45,7 +45,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.User;
 import stroom.test.AppConfigTestModule;
 import stroom.test.IntegrationTestSetupUtil;
-import stroom.test.common.util.db.TestDbModule;
+import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.test.TempDirExtension;
 
 import javax.inject.Inject;
@@ -55,7 +55,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(GuiceExtension.class)
-@IncludeModule(TestDbModule.class)
+@IncludeModule(DbTestModule.class)
 @IncludeModule(AppConfigTestModule.class)
 @IncludeModule(CoreModule.class)
 @IncludeModule(ResourceModule.class)

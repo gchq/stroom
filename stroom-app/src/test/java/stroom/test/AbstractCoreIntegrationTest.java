@@ -19,10 +19,10 @@ package stroom.test;
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.extension.ExtendWith;
-import stroom.test.common.util.db.TestDbModule;
+import stroom.test.common.util.db.DbTestModule;
 
 @ExtendWith(GuiceExtension.class)
-@IncludeModule(TestDbModule.class)
+@IncludeModule(DbTestModule.class)
 @IncludeModule(CoreTestModule.class)
 public abstract class AbstractCoreIntegrationTest extends StroomIntegrationTest {
 }

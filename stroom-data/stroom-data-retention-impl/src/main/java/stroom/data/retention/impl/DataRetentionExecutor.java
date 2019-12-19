@@ -206,7 +206,6 @@ public class DataRetentionExecutor {
                 .addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(period.getFromMs()))
                 .addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(period.getToMs()));
 
-
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
         findMetaCriteria.setExpression(outer.build());
         findMetaCriteria.obtainPageRequest().setLength(batchSize);

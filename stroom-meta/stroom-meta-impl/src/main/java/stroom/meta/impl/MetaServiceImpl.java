@@ -329,11 +329,11 @@ public class MetaServiceImpl implements MetaService, Searchable {
         return builder;
     }
 
-    public int delete(final FindMetaCriteria criteria) {
-        final ExpressionOperator secureExpression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.DELETE);
-        criteria.setExpression(secureExpression);
-        return metaDao.delete(criteria);
-    }
+//    public int delete(final FindMetaCriteria criteria) {
+//        final ExpressionOperator secureExpression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.DELETE);
+//        criteria.setExpression(secureExpression);
+//        return metaDao.delete(criteria);
+//    }
 
     @Override
     public Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {

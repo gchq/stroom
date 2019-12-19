@@ -2,7 +2,7 @@ package stroom.index.impl.db;
 
 import com.google.inject.AbstractModule;
 import stroom.security.api.SecurityContext;
-import stroom.test.common.util.db.TestDbModule;
+import stroom.test.common.util.db.DbTestModule;
 
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -12,7 +12,7 @@ class TestModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new TestDbModule());
+        install(new DbTestModule());
 
         // Create a test security context
         final SecurityContext securityContext = mock(SecurityContext.class);

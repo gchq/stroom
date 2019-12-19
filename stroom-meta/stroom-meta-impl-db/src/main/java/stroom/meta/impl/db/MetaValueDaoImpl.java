@@ -379,6 +379,14 @@ class MetaValueDaoImpl implements MetaValueDao {
     }
 
     @Override
+    public int delete(final List<Long> metaIdList) {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                .deleteFrom(META_VAL)
+                .where(META_VAL.META_ID.in(metaIdList))
+                .execute());
+    }
+
+    @Override
     public void clear() {
         queue.clear();
         deleteAll();
