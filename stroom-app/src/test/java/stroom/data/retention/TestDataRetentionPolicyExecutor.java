@@ -20,7 +20,7 @@ package stroom.data.retention;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.data.retention.impl.DataRetentionExecutor;
+import stroom.data.retention.impl.DataRetentionPolicyExecutor;
 import stroom.data.retention.impl.DataRetentionRulesService;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
@@ -47,15 +47,15 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionExecutor.class);
+class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionPolicyExecutor.class);
 
     private static final int RETENTION_PERIOD_DAYS = 1;
 
     @Inject
     private MetaService metaService;
     @Inject
-    private DataRetentionExecutor dataRetentionExecutor;
+    private DataRetentionPolicyExecutor dataRetentionPolicyExecutor;
     @Inject
     private DataRetentionRulesService dataRetentionRulesService;
 
@@ -106,7 +106,7 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
         Long lastStatusMsForever = foreverMeta.getStatusMs();
 
         // run the stream retention task which should 'delete' one stream
-        dataRetentionExecutor.exec();
+        dataRetentionPolicyExecutor.exec();
 
         metaInsideRetention = metaService.getMeta(metaInsideRetention.getId(), true);
         metaOutsideRetention = metaService.getMeta(metaOutsideRetention.getId(), true);
@@ -130,7 +130,7 @@ class TestDataRetentionExecutor extends AbstractCoreIntegrationTest {
 
         // run the task again, but this time no changes should be made as the
         // one outside the retention period is already 'deleted'
-        dataRetentionExecutor.exec();
+        dataRetentionPolicyExecutor.exec();
 
         metaInsideRetention = metaService.getMeta(metaInsideRetention.getId(), true);
         metaOutsideRetention = metaService.getMeta(metaOutsideRetention.getId(), true);

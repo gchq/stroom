@@ -27,8 +27,8 @@ import javax.inject.Inject;
 
 //import stroom.entity.util.PeriodUtil;
 
-public class DataRetentionExecutor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionExecutor.class);
+public class FeedDataRetentionExecutor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(FeedDataRetentionExecutor.class);
 
     private static final String LOCK_NAME = "StreamRetentionExecutor";
     private static final int DELETE_STREAM_BATCH_SIZE = 1000;
@@ -38,15 +38,15 @@ public class DataRetentionExecutor {
     private final ClusterLockService clusterLockService;
 
     @Inject
-    DataRetentionExecutor(final MetaService metaService,
-                          final TaskContext taskContext,
-                          final ClusterLockService clusterLockService) {
+    FeedDataRetentionExecutor(final MetaService metaService,
+                              final TaskContext taskContext,
+                              final ClusterLockService clusterLockService) {
         this.metaService = metaService;
         this.taskContext = taskContext;
         this.clusterLockService = clusterLockService;
     }
 
-    // TODO : @66 Reimplement
+    // TODO : @66 Reimplement feed based data retention???
     public void exec() {
 //        final LogExecutionTime logExecutionTime = new LogExecutionTime();
 //        LOGGER.info("Stream Retention Executor - start");

@@ -12,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 package stroom.data.retention.impl;
@@ -27,11 +26,9 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
-import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
@@ -66,11 +63,8 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
-/**
- * Factory for creating stream clean tasks.
- */
-public class DataRetentionExecutor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionExecutor.class);
+public class DataRetentionPolicyExecutor {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionPolicyExecutor.class);
 
     private static final String LOCK_NAME = "DataRetentionExecutor";
 
@@ -82,11 +76,11 @@ public class DataRetentionExecutor {
     private final AtomicBoolean running = new AtomicBoolean();
 
     @Inject
-    DataRetentionExecutor(final TaskContext taskContext,
-                          final ClusterLockService clusterLockService,
-                          final Provider<DataRetentionRules> dataRetentionRulesProvider,
-                          final DataRetentionConfig policyConfig,
-                          final MetaService metaService) {
+    DataRetentionPolicyExecutor(final TaskContext taskContext,
+                                final ClusterLockService clusterLockService,
+                                final Provider<DataRetentionRules> dataRetentionRulesProvider,
+                                final DataRetentionConfig policyConfig,
+                                final MetaService metaService) {
         this.taskContext = taskContext;
         this.clusterLockService = clusterLockService;
         this.dataRetentionRulesProvider = dataRetentionRulesProvider;
@@ -217,8 +211,6 @@ public class DataRetentionExecutor {
         }
     }
 
-
-
     private Map<Period, Set<DataRetentionRule>> getRulesByPeriod(final List<DataRetentionRule> activeRules, final long nowMs, final long elapsedTime) {
         // Get effective minimum meta creation times for each rule.
         final Map<Long, Set<DataRetentionRule>> minCreationTimeMap = getMinCreationTimeMap(activeRules, nowMs);
@@ -325,7 +317,7 @@ public class DataRetentionExecutor {
             try {
                 final Path path = FileUtil.getTempDir().resolve(FILE_NAME);
                 if (Files.isRegularFile(path)) {
-                    final String data = new String(Files.readAllBytes(path), StreamUtil.DEFAULT_CHARSET);
+                    final String data = Files.readString(path, StreamUtil.DEFAULT_CHARSET);
                     return XMLMarshallerUtil.unmarshal(getContext(), Tracker.class, data);
                 }
             } catch (final IOException e) {
@@ -338,7 +330,7 @@ public class DataRetentionExecutor {
             try {
                 final String data = XMLMarshallerUtil.marshal(getContext(), this);
                 final Path path = FileUtil.getTempDir().resolve(FILE_NAME);
-                Files.write(path, data.getBytes(StreamUtil.DEFAULT_CHARSET));
+                Files.writeString(path, data, StreamUtil.DEFAULT_CHARSET);
             } catch (final IOException e) {
                 LOGGER.error(e.getMessage(), e);
             }

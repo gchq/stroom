@@ -17,22 +17,27 @@
 
 package stroom.data.store.impl.fs;
 
-
 import org.junit.jupiter.api.Test;
-import stroom.data.retention.impl.DataRetentionExecutor;
+import stroom.data.retention.impl.DataRetentionPolicyExecutor;
+import stroom.data.retention.impl.DataRetentionRulesService;
+import stroom.data.retention.shared.DataRetentionRule;
+import stroom.data.retention.shared.DataRetentionRules;
+import stroom.data.retention.shared.TimeUnit;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.docref.DocRef;
-import stroom.feed.api.FeedStore;
-import stroom.feed.shared.FeedDoc;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.MockTask;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
@@ -40,6 +45,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -49,10 +55,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  * <p>
  * Create some old files and make sure they get archived.
  */
-// TODO : @66 Decide what needs to be done with deletion of old data rows
-
-class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
-    private static final int HIGHER_REPLICATION_COUNT = 2;
+class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
+    private static final int REPLICATION_COUNT = 1;
     private static final int SIXTY = 60;
     private static final int FIFTY_FIVE = 55;
     private static final int FIFTY = 50;
@@ -63,25 +67,27 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
     private Store streamStore;
     @Inject
     private DataVolumeService dataVolumeService;
-    @Inject
-    private FeedStore feedStore;
+//    @Inject
+//    private FeedStore feedStore;
     @Inject
     private FsCleanExecutor fileSystemCleanTaskExecutor;
     @Inject
     private NodeInfo nodeInfo;
-    //    @Inject
-//    private ProcessorTaskManagerImpl processorTaskManager;
     @Inject
-    private DataRetentionExecutor streamRetentionExecutor;
+    private DataRetentionRulesService dataRetentionRulesService;
+    @Inject
+    private DataRetentionPolicyExecutor dataRetentionPolicyExecutor;
     @Inject
     private PhysicalDeleteExecutor physicalDeleteExecutor;
+    @Inject
+    private DataStoreServiceConfig dataStoreServiceConfig;
 
     private int initialReplicationCount = 1;
 
     @Override
     protected void onBefore() {
         initialReplicationCount = volumeConfig.getResilientReplicationCount();
-        volumeConfig.setResilientReplicationCount(HIGHER_REPLICATION_COUNT);
+        volumeConfig.setResilientReplicationCount(REPLICATION_COUNT);
     }
 
     @Override
@@ -91,6 +97,8 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 
     @Test
     void testCheckArchive() throws IOException {
+        dataStoreServiceConfig.setFileSystemCleanOldAge("0s");
+        dataStoreServiceConfig.setDeletePurgeAge("0s");
         fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         final ZonedDateTime oldDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(SIXTY);
@@ -98,10 +106,9 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
 
         // Write a file 2 files ... on we leave locked and the other not locked
         final String feedName = FileSystemTestUtil.getUniqueTestString();
-        final DocRef feedRef = feedStore.createDocument(feedName);
-        final FeedDoc feedDoc = feedStore.readDocument(feedRef);
-        feedDoc.setRetentionDayAge(FIFTY_FIVE);
-        feedStore.writeDocument(feedDoc);
+//        final DocRef feedRef = feedStore.createDocument(feedName);
+
+        setupDataRetentionRules(feedName);
 
         final MetaProperties oldFile = new MetaProperties.Builder()
                 .feedName(feedName)
@@ -126,36 +133,43 @@ class TestStreamArchiveTask extends AbstractCoreIntegrationTest {
             TargetUtil.write(newFileTarget, "MyTest");
         }
 
-//        // Now we have added some data create some associated stream tasks.
-//        // TODO : At some point we need to change deletion to delete streams and
-//        // not tasks. Tasks should be deleted if an associated source stream is
-//        // deleted if they exist, however currently streams are only deleted if
-//        // their associated task exists which would prevent us from deleting
-//        // streams that have no task associated with them.
-//        processorTaskManager.createTasks(new SimpleTaskContext());
-
         List<DataVolume> oldVolumeList = dataVolumeService
                 .find(FindDataVolumeCriteria.create(oldFileMeta));
-        assertThat(oldVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
+        assertThat(oldVolumeList.size()).as("Expecting 1 stream volumes").isEqualTo(REPLICATION_COUNT);
 
         List<DataVolume> newVolumeList = dataVolumeService
                 .find(FindDataVolumeCriteria.create(newFileMeta));
-        assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
+        assertThat(newVolumeList.size()).as("Expecting 1 stream volumes").isEqualTo(REPLICATION_COUNT);
 
-        streamRetentionExecutor.exec();
-//        streamDeleteExecutor.delete(System.currentTimeMillis());
+        dataRetentionPolicyExecutor.exec();
+        physicalDeleteExecutor.exec();
 
         // Test Again
         oldVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(oldFileMeta));
         assertThat(oldVolumeList.size()).as("Expecting 0 stream volumes").isEqualTo(0);
 
         newVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(newFileMeta));
-        assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
+        assertThat(newVolumeList.size()).as("Expecting 1 stream volumes").isEqualTo(REPLICATION_COUNT);
 
         // Test they are
         oldVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(oldFileMeta));
         assertThat(oldVolumeList.size()).as("Expecting 0 stream volumes").isEqualTo(0);
         newVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(newFileMeta));
-        assertThat(newVolumeList.size()).as("Expecting 2 stream volumes").isEqualTo(HIGHER_REPLICATION_COUNT);
+        assertThat(newVolumeList.size()).as("Expecting 1 stream volumes").isEqualTo(REPLICATION_COUNT);
+    }
+
+    private void setupDataRetentionRules(final String feedName) {
+        final DocRef docRef = dataRetentionRulesService.createDocument("test");
+        DataRetentionRules dataRetentionRules = dataRetentionRulesService.readDocument(docRef);
+
+        final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
+        builder.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, feedName);
+        final DataRetentionRule rule = createRule(1, builder.build(), FIFTY_FIVE, TimeUnit.DAYS);
+        dataRetentionRules.setRules(Collections.singletonList(rule));
+        dataRetentionRulesService.writeDocument(dataRetentionRules);
+    }
+
+    private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final TimeUnit timeUnit) {
+        return new DataRetentionRule(num, System.currentTimeMillis(), "rule " + num, true, expression, age, timeUnit, false);
     }
 }
