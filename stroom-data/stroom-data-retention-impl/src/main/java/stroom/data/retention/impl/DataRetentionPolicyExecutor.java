@@ -16,8 +16,6 @@
 
 package stroom.data.retention.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
@@ -30,6 +28,8 @@ import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Period;
 import stroom.util.xml.XMLMarshallerUtil;
@@ -57,10 +57,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class DataRetentionPolicyExecutor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataRetentionPolicyExecutor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataRetentionPolicyExecutor.class);
 
     private static final String LOCK_NAME = "DataRetentionExecutor";
 
@@ -87,14 +88,14 @@ public class DataRetentionPolicyExecutor {
     public void exec() {
         if (running.compareAndSet(false, true)) {
             try {
-                info("Starting data retention process");
+                info(() -> "Starting data retention process");
                 clusterLockService.tryLock(LOCK_NAME, () -> {
                     try {
                         final LogExecutionTime logExecutionTime = new LogExecutionTime();
                         process();
-                        info("Finished data retention process in " + logExecutionTime);
+                        info(() -> "Finished data retention process in " + logExecutionTime);
                     } catch (final RuntimeException e) {
-                        LOGGER.error(e.getMessage(), e);
+                        LOGGER.error(e::getMessage, e);
                     }
                 });
             } finally {
@@ -177,7 +178,7 @@ public class DataRetentionPolicyExecutor {
     }
 
     private void processPeriod(final Period period, final List<DataRetentionRule> rules, final int batchSize) {
-        info("" +
+        info(() -> "" +
                 "Considering stream retention for streams created " +
                 "between " +
                 DateUtil.createNormalDateTimeString(period.getFromMs()) +
@@ -189,7 +190,8 @@ public class DataRetentionPolicyExecutor {
         int count = -1;
         while (count != 0 && !Thread.currentThread().isInterrupted()) {
             count = metaService.updateStatus(findMetaCriteria, Status.DELETED);
-            LOGGER.info("Marked " + count + " items as deleted");
+            final String message = "Marked " + count + " items as deleted";
+            LOGGER.info(() -> message);
         }
     }
 
@@ -252,9 +254,9 @@ public class DataRetentionPolicyExecutor {
 //        }
 //    }
 
-    private void info(final String info) {
-        LOGGER.info(info);
-        taskContext.info(info);
+    private void info(final Supplier<String> messageSupplier) {
+        LOGGER.info(messageSupplier);
+        taskContext.info(messageSupplier);
     }
 
     @XmlAccessorType(XmlAccessType.FIELD)
@@ -303,7 +305,7 @@ public class DataRetentionPolicyExecutor {
                     return XMLMarshallerUtil.unmarshal(getContext(), Tracker.class, data);
                 }
             } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(e::getMessage, e);
             }
             return null;
         }
@@ -314,7 +316,7 @@ public class DataRetentionPolicyExecutor {
                 final Path path = FileUtil.getTempDir().resolve(FILE_NAME);
                 Files.writeString(path, data, StreamUtil.DEFAULT_CHARSET);
             } catch (final IOException e) {
-                LOGGER.error(e.getMessage(), e);
+                LOGGER.error(e::getMessage, e);
             }
         }
 
@@ -323,7 +325,7 @@ public class DataRetentionPolicyExecutor {
                 try {
                     jaxbContext = JAXBContext.newInstance(Tracker.class);
                 } catch (final JAXBException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error(e::getMessage, e);
                     throw new RuntimeException(e.getMessage());
                 }
             }

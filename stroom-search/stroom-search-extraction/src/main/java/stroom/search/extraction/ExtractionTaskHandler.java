@@ -113,7 +113,7 @@ class ExtractionTaskHandler {
                         taskContext.setName("Extraction");
                         if (!Thread.currentThread().isInterrupted()) {
                             final String streamId = String.valueOf(task.getStreamId());
-                            taskContext.info("Extracting " + task.getEventIds().length + " records from stream " + streamId);
+                            taskContext.info(() -> "Extracting " + task.getEventIds().length + " records from stream " + streamId);
 
                             extract(task);
                         }

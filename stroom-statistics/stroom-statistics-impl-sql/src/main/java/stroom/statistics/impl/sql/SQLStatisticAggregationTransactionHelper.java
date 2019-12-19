@@ -174,7 +174,7 @@ public class SQLStatisticAggregationTransactionHelper {
         final LogExecutionTime time = new LogExecutionTime();
         final String trace = buildSQLTrace(sql, args);
 
-        taskContext.info("{}\n {}", prefix, trace);
+        taskContext.info(() -> prefix + "\n " + trace);
 
         final int count = ConnectionUtil.executeUpdate(connection, sql, args);
 
@@ -187,7 +187,7 @@ public class SQLStatisticAggregationTransactionHelper {
         final LogExecutionTime time = new LogExecutionTime();
         final String trace = buildSQLTrace(sql, args);
 
-        taskContext.info("{}\n {}", prefix, trace);
+        taskContext.info(() -> prefix + "\n " + trace);
 
         final long result = ConnectionUtil.executeQueryLongResult(connection, sql, args);
 
@@ -331,7 +331,7 @@ public class SQLStatisticAggregationTransactionHelper {
                             final long aggregateToMs) throws SQLException {
         int count;
         final LogExecutionTime time = new LogExecutionTime();
-        taskContext.info("{}\n {}", prefix, SPROC_STAGE1_UPSERT);
+        taskContext.info(() -> prefix + "\n " + SPROC_STAGE1_UPSERT);
 
         LOGGER.debug(">>> {}", SPROC_STAGE1_UPSERT);
         try (final CallableStatement stmt = connection.prepareCall(SPROC_STAGE1_UPSERT)) {
@@ -368,7 +368,7 @@ public class SQLStatisticAggregationTransactionHelper {
                             final long aggregateToMs) throws SQLException {
         int count;
         final LogExecutionTime time = new LogExecutionTime();
-        taskContext.info("{}\n {}", prefix, SPROC_STAGE2_UPSERT);
+        taskContext.info(() -> prefix + "\n " + SPROC_STAGE2_UPSERT);
 
         LOGGER.debug(">>> {}", SPROC_STAGE2_UPSERT);
         try (final CallableStatement stmt = connection.prepareCall(SPROC_STAGE2_UPSERT)) {

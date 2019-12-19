@@ -14,13 +14,13 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.lang.JoseException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
 import stroom.security.api.AuthenticationToken;
 import stroom.security.impl.AuthenticationConfig.JwtConfig;
 import stroom.util.HasHealthCheck;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
@@ -35,7 +35,7 @@ import java.util.Optional;
 
 @Singleton
 class JWTService implements HasHealthCheck {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JWTService.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JWTService.class);
 
     private static final String BEARER = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
@@ -87,7 +87,7 @@ class JWTService implements HasHealthCheck {
             String jwkAsJson = fetchNewPublicKey();
             jwk = RsaJsonWebKey.Factory.newPublicJwk(jwkAsJson);
         } catch (JoseException | ApiException e) {
-            LOGGER.error("Unable to fetch the remote authentication service's public key!", e);
+            LOGGER.error(() -> "Unable to fetch the remote authentication service's public key!", e);
         }
     }
 
@@ -104,9 +104,9 @@ class JWTService implements HasHealthCheck {
             final ApiKeyApi apiKeyApi = authenticationServiceClients.newApiKeyApi();
             return apiKeyApi.getPublicKey();
         } catch (final ApiException | RuntimeException e) {
-            LOGGER.error("Error fetching new public API key from URL '" + authenticationServiceUrl + "'.");
+            LOGGER.error(() -> "Error fetching new public API key from URL '" + authenticationServiceUrl + "'.");
             if (authenticationServiceUrl != null && authenticationServiceUrl.toLowerCase().contains("https")) {
-                LOGGER.error("Are you sure you want to use HTTPS? IF so you will need to configure the trust store or disable SSL verification with 'stroom.auth.services.verifyingSsl=false'");
+                LOGGER.error(() -> "Are you sure you want to use HTTPS? IF so you will need to configure the trust store or disable SSL verification with 'stroom.auth.services.verifyingSsl=false'");
             }
             throw e;
         }
@@ -114,7 +114,7 @@ class JWTService implements HasHealthCheck {
 
     public boolean containsValidJws(ServletRequest request) {
         Optional<String> authHeader = getAuthHeader(request);
-        boolean isValid = false;
+        boolean isValid;
         if (authHeader.isPresent()) {
             String jws;
             String bearerString = authHeader.get();
@@ -125,23 +125,23 @@ class JWTService implements HasHealthCheck {
             } else {
                 jws = bearerString;
             }
-            LOGGER.debug("Found auth header in request. It looks like this: {}", jws);
+            LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jws);
 
             try {
-                LOGGER.debug("Verifying token...");
+                LOGGER.debug(() -> "Verifying token...");
                 JwtClaims jwtClaims = verifyToken(jws);
                 boolean isVerified = jwtClaims != null;
                 boolean isRevoked = false;
                 if (checkTokenRevocation) {
-                    LOGGER.debug("Checking token revocation status in remote auth service...");
+                    LOGGER.debug(() -> "Checking token revocation status in remote auth service...");
                     AuthenticationToken authenticationToken = checkToken(jws);
-                    isRevoked =  authenticationToken.getUserId() == null;
+                    isRevoked = authenticationToken.getUserId() == null;
                 }
 
                 isValid = isVerified && !isRevoked;
 
             } catch (Exception e) {
-                LOGGER.error("Unable to verify token:", e.getMessage(), e);
+                LOGGER.error(() -> "Unable to verify token:" + e.getMessage(), e);
                 isValid = false;
             }
         } else {
@@ -164,15 +164,15 @@ class JWTService implements HasHealthCheck {
             try {
                 JwtClaims claims = e.getJwtContext().getJwtClaims();
                 if (claims.getExpirationTime().getValueInMillis() < Instant.now().toEpochMilli()) {
-                    LOGGER.info("The API key for user '{}' has expired. An API key is required, i.e. for queries. Creating a new one.", claims.getSubject());
-                    String newJws = authenticationServiceClients.createTokenForUser(claims.getSubject());
-                    return newJws;
+                    final String subject = claims.getSubject();
+                    LOGGER.info(() -> "The API key for user '" + subject + "' has expired. An API key is required, i.e. for queries. Creating a new one.");
+                    return authenticationServiceClients.createTokenForUser(claims.getSubject());
                 } else {
                     return jws;
                 }
             } catch (MalformedClaimException | ApiException innerEx) {
                 String error = "Unable to get new token! The error was: " + innerEx.getMessage();
-                LOGGER.error(error);
+                LOGGER.error(() -> error);
                 throw new RuntimeException(error, innerEx);
             }
         }
@@ -189,21 +189,21 @@ class JWTService implements HasHealthCheck {
             } else {
                 jws = Optional.of(bearerString);
             }
-            LOGGER.debug("Found auth header in request. It looks like this: {}", jws);
+            LOGGER.debug(() -> "Found auth header in request. It looks like this: " + bearerString);
         }
         return jws;
     }
 
     private AuthenticationToken checkToken(String token) {
         try {
-            LOGGER.debug("Checking with the Authentication Service that a token is valid.");
+            LOGGER.debug(() -> "Checking with the Authentication Service that a token is valid.");
             String usersEmail = authenticationServiceClients.newAuthenticationApi().verifyToken(token);
             return new AuthenticationToken(usersEmail, token);
         } catch (ApiException e) {
             String message = String.format(
                     "Unable to verify token remotely! Message was: %s. HTTP response code was: %s. Response body was: %s",
                     e.getMessage(), e.getCode(), e.getResponseBody());
-            LOGGER.debug(message);
+            LOGGER.debug(() -> message);
             throw new RuntimeException(message, e);
         }
     }
@@ -212,7 +212,7 @@ class JWTService implements HasHealthCheck {
         try {
             return toClaims(token);
         } catch (InvalidJwtException e) {
-            LOGGER.warn("Unable to verify token! I'm going to refresh the verification key and try again.");
+            LOGGER.warn(() -> "Unable to verify token! I'm going to refresh the verification key and try again.");
             updatePublicJsonWebKey();
             return toClaims(token);
         }

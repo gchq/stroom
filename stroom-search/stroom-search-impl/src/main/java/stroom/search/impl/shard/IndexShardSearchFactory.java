@@ -99,7 +99,7 @@ public class IndexShardSearchFactory {
         try {
             // Wait until we finish.
             while (!Thread.currentThread().isInterrupted() && (!tracker.isCompleted())) {
-                taskContext.info(
+                taskContext.info(() ->
                         "Searching... " +
                                 "found " + tracker.getHitCount() + " hits");
                 Thread.sleep(1000);

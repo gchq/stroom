@@ -134,7 +134,7 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
             executor.execute(() -> {
                 try {
                     taskContext.setName("Closing searcher");
-                    taskContext.info("Closing searcher for index shard " + key.indexShardId);
+                    taskContext.info(() -> "Closing searcher for index shard " + key.indexShardId);
 
                     indexShardSearcher.destroy();
                 } finally {

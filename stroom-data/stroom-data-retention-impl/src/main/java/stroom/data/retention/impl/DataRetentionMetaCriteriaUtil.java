@@ -26,9 +26,13 @@ public final class DataRetentionMetaCriteriaUtil {
 
         final Builder outer = new ExpressionOperator.Builder(Op.AND)
                 .addOperator(new ExpressionOperator.Builder(Op.NOT).addOperator(inner.build()).build())
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                .addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(period.getFromMs()))
-                .addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(period.getToMs()));
+                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
+        if (period.getFromMs() != null) {
+            outer.addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(period.getFromMs()));
+        }
+        if (period.getToMs() != null) {
+            outer.addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(period.getToMs()));
+        }
 
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
         findMetaCriteria.setExpression(outer.build());

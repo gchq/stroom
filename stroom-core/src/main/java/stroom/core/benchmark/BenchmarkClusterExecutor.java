@@ -125,7 +125,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
     public void exec(final Task<?> task) {
         this.task = task;
-        info("Starting benchmark");
+        info(() -> "Starting benchmark");
 
         // Find out what translation jobs are enabled and how many tasks are
         // possible across the cluster. If execution of no tasks are possible
@@ -265,7 +265,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                 final int count = i;
                 asyncTaskHelper.fork(() -> {
                     taskContext.setName("WriteBenchmarkData");
-                    taskContext.info("Writing benchmark data");
+                    taskContext.info(() -> "Writing benchmark data");
                     final Meta meta = writeData(feedName, streamTypeName, data);
 
                     rangeLock.lock();
@@ -280,7 +280,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                         rangeLock.unlock();
                     }
 
-                    infoInterval("Written Stream {}/{}", count, streamCount);
+                    infoInterval(() -> "Written Stream " + count + "/" + streamCount);
                 });
             }
             asyncTaskHelper.join();
@@ -349,7 +349,8 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                         completedTaskCount = streams.size();
                     }
 
-                    info("Completed {}/{} translation tasks", completedTaskCount, benchmarkClusterConfig.getStreamCount());
+                    final int count = completedTaskCount;
+                    info(() -> "Completed " + count + "/" + benchmarkClusterConfig.getStreamCount() + " translation tasks");
 
                     if (completedTaskCount >= benchmarkClusterConfig.getStreamCount()) {
                         complete = true;

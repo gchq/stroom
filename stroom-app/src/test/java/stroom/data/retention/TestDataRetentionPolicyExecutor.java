@@ -18,8 +18,6 @@ package stroom.data.retention;
 
 
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.retention.impl.DataRetentionPolicyExecutor;
 import stroom.data.retention.impl.DataRetentionRulesService;
 import stroom.data.retention.shared.DataRetentionRule;
@@ -39,6 +37,8 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
@@ -48,7 +48,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionPolicyExecutor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDataRetentionPolicyExecutor.class);
 
     private static final int RETENTION_PERIOD_DAYS = 1;
 
@@ -68,8 +68,8 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
         final long timeOutsideRetentionPeriod = now - java.util.concurrent.TimeUnit.DAYS.toMillis(RETENTION_PERIOD_DAYS)
                 - java.util.concurrent.TimeUnit.MINUTES.toMillis(1);
 
-        LOGGER.info("now: %s", DateUtil.createNormalDateTimeString(now));
-        LOGGER.info("timeOutsideRetentionPeriod: %s", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
+        LOGGER.info(() -> "now: " + DateUtil.createNormalDateTimeString(now));
+        LOGGER.info(() -> "timeOutsideRetentionPeriod: " + DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
         // save two streams, one inside retention period, one outside
         final DataRetentionRule rule1 = createRule(1,
@@ -173,9 +173,14 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
         assertThat(list.size()).isEqualTo(3);
 
         for (final Meta meta : list) {
-            LOGGER.info("meta: %s, createMs: %s, statusMs: %s, status: %s", meta,
-                    DateUtil.createNormalDateTimeString(meta.getCreateMs()),
-                    DateUtil.createNormalDateTimeString(meta.getStatusMs()), meta.getStatus());
+            LOGGER.info(() -> "meta: " +
+                    meta +
+                    ", createMs:" +
+                    DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
+                    ", statusMs: " +
+                    DateUtil.createNormalDateTimeString(meta.getStatusMs()) +
+                    ", status: " +
+                    meta.getStatus());
         }
     }
 }

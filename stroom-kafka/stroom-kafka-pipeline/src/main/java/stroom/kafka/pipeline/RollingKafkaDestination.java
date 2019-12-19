@@ -1,9 +1,9 @@
 package stroom.kafka.pipeline;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.util.io.ByteCountOutputStream;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.scheduler.SimpleCron;
 
 import java.io.ByteArrayOutputStream;
@@ -13,7 +13,7 @@ import java.util.Collections;
 import java.util.function.Consumer;
 
 public class RollingKafkaDestination extends RollingDestination {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RollingKafkaDestination.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RollingKafkaDestination.class);
 
     private final KafkaProducer stroomKafkaProducer;
 
@@ -74,13 +74,13 @@ public class RollingKafkaDestination extends RollingDestination {
 
     private Throwable wrapRollException(final Throwable e) {
         logOnlyExceptionHandler.accept(e);
-        LOGGER.debug("Unable to send record to Kafka with topic/key %s/%s", topic, recordKey, e);
-        String msg = String.format(
-                "Unable to send record to Kafka with topic/key %s/%s, due to: %s (enable DEBUG for full stacktrace)",
-                topic,
-                recordKey,
-                e.getMessage());
-        LOGGER.error(msg);
-        return new IOException(msg);
+        final String shortMessage = "Unable to send record to Kafka with topic/key " + topic + "/" + recordKey;
+        final String longMessage = shortMessage +
+                ", due to: " +
+                e.getMessage() +
+                " (enable DEBUG for full stacktrace)";
+        LOGGER.debug(() -> shortMessage, e);
+        LOGGER.error(() -> longMessage);
+        return new IOException(longMessage);
     }
 }

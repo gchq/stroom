@@ -184,7 +184,7 @@ public class SqlStatisticsStore implements Store {
 
         LOGGER.debug("Starting search with key {}", searchKey);
         taskContext.setName(TASK_NAME);
-        taskContext.info("Sql Statistics search " + searchKey + " - running query");
+        taskContext.info(() -> "Sql Statistics search " + searchKey + " - running query");
 
         final LongAdder counter = new LongAdder();
         // subscribe to the flowable, mapping each resultSet to a String[]
@@ -227,7 +227,7 @@ public class SqlStatisticsStore implements Store {
 
                                 processPayloads(resultHandler, coprocessorMap);
                                 taskContext.setName(TASK_NAME);
-                                taskContext.info(searchKey +
+                                taskContext.info(() -> searchKey +
                                         " - running database query (" + counter.longValue() + " rows fetched)");
                                 nextProcessPayloadsTime.set(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
                                 countSinceLastSend.set(0);
@@ -244,7 +244,7 @@ public class SqlStatisticsStore implements Store {
                             // completed our window so create and pass on a payload for the
                             // data we have gathered so far
                             processPayloads(resultHandler, coprocessorMap);
-                            taskContext.info(searchKey + " - complete");
+                            taskContext.info(() -> searchKey + " - complete");
                             completeSearch();
 
                             LAMBDA_LOGGER.debug(() ->

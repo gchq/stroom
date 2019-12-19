@@ -57,7 +57,6 @@ import java.io.IOException;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.XML)
 public class XMLWriter extends AbstractWriter implements XMLFilter {
-
     public static final Logger LOGGER = LoggerFactory.getLogger(XMLWriter.class);
 
     private final LocationFactory locationFactory;
@@ -446,7 +445,7 @@ public class XMLWriter extends AbstractWriter implements XMLFilter {
             stringWriter.flush();
             charBuffer = stringWriter.getBuffer();
         } catch (final RuntimeException e) {
-            LOGGER.warn("Ignoring error %s", e.getMessage());
+            LOGGER.warn("Ignoring error {}", e.getMessage());
         }
         return charBuffer != null ? charBuffer.toString() : "";
     }

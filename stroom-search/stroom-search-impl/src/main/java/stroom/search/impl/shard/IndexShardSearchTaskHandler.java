@@ -78,7 +78,7 @@ public class IndexShardSearchTaskHandler {
                     try {
                         taskContext.setName("Search Index Shard");
                         if (!Thread.currentThread().isInterrupted()) {
-                            taskContext.info("Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
+                            taskContext.info(() -> "Searching shard " + task.getShardNumber() + " of " + task.getShardTotal() + " (id="
                                     + task.getIndexShardId() + ")");
 
 
@@ -100,7 +100,7 @@ public class IndexShardSearchTaskHandler {
 
                     } finally {
                         taskContext.setName("Closing searcher");
-                        taskContext.info("Closing searcher for index shard " + indexShardId);
+                        taskContext.info(() -> "Closing searcher for index shard " + indexShardId);
                         if (indexShardSearcher != null) {
                             indexShardSearcher.destroy();
                         }

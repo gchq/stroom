@@ -54,6 +54,7 @@ import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Sort.Direction;
@@ -671,7 +672,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                             if (modified != null) {
                                 queue.add(modified);
                                 count++;
-                                taskContext.info("Adding {}/{} non owned Tasks", count, size);
+                                taskContext.info(LambdaLogUtil.message("Adding {}/{} non owned Tasks", count, size));
                             }
 
                             if (Thread.currentThread().isInterrupted()) {

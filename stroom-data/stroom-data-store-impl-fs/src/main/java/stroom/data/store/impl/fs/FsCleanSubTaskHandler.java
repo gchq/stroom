@@ -52,7 +52,7 @@ class FsCleanSubTaskHandler extends AbstractTaskHandler<FsCleanSubTask, VoidResu
     @Override
     public VoidResult exec(final FsCleanSubTask task) {
         return securityContext.secureResult(() -> {
-            taskContext.info("Cleaning: {} - {}", task.getVolume().getPath(), task.getPath());
+            taskContext.info(() -> "Cleaning: " + task.getVolume().getPath() + " - " + task.getPath());
 
             if (Thread.currentThread().isInterrupted()) {
                 LOGGER.info("exec() - Been asked to Quit");

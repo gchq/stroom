@@ -1,8 +1,6 @@
 package stroom.statistics.impl.hbase.internal;
 
 import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.kafka.pipeline.KafkaProducer;
 import stroom.kafka.pipeline.KafkaProducerFactory;
@@ -14,6 +12,8 @@ import stroom.stats.schema.v4.ObjectFactory;
 import stroom.stats.schema.v4.Statistics;
 import stroom.stats.schema.v4.TagType;
 import stroom.util.collections.BatchingIterator;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
@@ -36,7 +36,7 @@ import java.util.function.Consumer;
 @SuppressWarnings("unused")
 class StroomStatsInternalStatisticsService implements InternalStatisticsService {
     private static final String STATISTICS_SCHEMA_VERSION = "4.0.0";
-    private static final Logger LOGGER = LoggerFactory.getLogger(StroomStatsInternalStatisticsService.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomStatsInternalStatisticsService.class);
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
 
@@ -45,7 +45,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private final String docRefType;
     private final DatatypeFactory datatypeFactory;
 
-    private  JAXBContext jaxbContext;
+    private JAXBContext jaxbContext;
 
     @Inject
     StroomStatsInternalStatisticsService(final KafkaProducerFactory stroomKafkaProducerFactory,

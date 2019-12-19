@@ -29,7 +29,6 @@ import stroom.task.shared.Task;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 
@@ -39,10 +38,10 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /**
  * Task to clean the stream store.
@@ -97,9 +96,8 @@ class FsCleanExecutor {
         return asyncTaskHelper;
     }
 
-    private void logInfo(final Object... args) {
-        Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
-        taskContext.info(args);
+    private void logInfo(final Supplier<String> messageSupplier) {
+        taskContext.info(messageSupplier);
     }
 
     public void exec(final Task<?> task) {
@@ -113,8 +111,8 @@ class FsCleanExecutor {
         // Load the node.
         asyncTaskHelper = new AsyncTaskHelper<>(null, taskContext, taskManager, batchSize);
 
-        logInfo(LogUtil.message("Starting file system clean task. oldAge = {}",
-                ModelStringUtil.formatDurationString(oldAge)));
+        logInfo(() -> "Starting file system clean task. oldAge = " +
+                ModelStringUtil.formatDurationString(oldAge));
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
@@ -167,23 +165,22 @@ class FsCleanExecutor {
                     }
 
                     if (Thread.currentThread().isInterrupted()) {
-                        logInfo("Stopping file system clean task.");
+                        logInfo(() -> "Stopping file system clean task.");
                         asyncTaskHelper.clear();
                     }
 
-                    final StringBuilder trace = new StringBuilder();
 
                     for (final FsVolume volume : volumeList) {
                         final FsCleanProgress taskProgress = taskProgressMap.get(volume);
 
-                        trace.append(volume.getPath());
-                        trace.append(" (Scan Dir/File ");
-                        trace.append(taskProgress.getScanDirCount());
-                        trace.append("/");
-                        trace.append(taskProgress.getScanFileCount());
-                        trace.append(", Del ");
-                        trace.append(taskProgress.getScanDeleteCount());
-                        trace.append(") ");
+                        logInfo(() -> volume.getPath() +
+                                " (Scan Dir/File " +
+                                taskProgress.getScanDirCount() +
+                                "/" +
+                                taskProgress.getScanFileCount() +
+                                ", Del " +
+                                taskProgress.getScanDeleteCount() +
+                                ") ");
 
                         String line;
                         try {
@@ -198,13 +195,12 @@ class FsCleanExecutor {
                             taskContext.terminate();
                         }
                     }
-                    logInfo(trace.toString());
                 }
             }
         } finally {
             printWriterMap.values().forEach(CloseableUtil::closeLogAndIgnoreException);
         }
 
-        logInfo(LogUtil.message("start() - Completed file system clean task in {}", logExecutionTime));
+        logInfo(() -> "start() - Completed file system clean task in " + logExecutionTime);
     }
 }

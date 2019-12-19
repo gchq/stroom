@@ -75,7 +75,7 @@ class SearchableStore implements Store {
         searchKey = searchRequest.getKey().toString();
         LOGGER.debug(LambdaLogUtil.message("Starting search with key {}", searchKey));
         taskContext.setName(TASK_NAME);
-        taskContext.info("DB search " + searchKey + " - running query");
+        taskContext.info(() -> "DB search " + searchKey + " - running query");
 
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
         Preconditions.checkNotNull(coprocessorSettingsMap);
@@ -153,7 +153,7 @@ class SearchableStore implements Store {
 
                     processPayloads(resultHandler, coprocessorMap);
                     taskContext.setName(TASK_NAME);
-                    taskContext.info(searchKey +
+                    taskContext.info(() -> searchKey +
                             " - running database query (" + counter.longValue() + " rows fetched)");
                     nextProcessPayloadsTime.set(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
                     countSinceLastSend.set(0);
@@ -166,7 +166,7 @@ class SearchableStore implements Store {
             // completed our window so create and pass on a payload for the
             // data we have gathered so far
             processPayloads(resultHandler, coprocessorMap);
-            taskContext.info(searchKey + " - complete");
+            taskContext.info(() -> searchKey + " - complete");
             LOGGER.debug(() -> "completeSearch called");
             completionState.complete();
 

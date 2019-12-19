@@ -22,6 +22,7 @@ import stroom.util.shared.HasTerminate;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 class TaskThread implements HasTerminate {
     private final Task<?> task;
@@ -29,7 +30,7 @@ class TaskThread implements HasTerminate {
 
     private final Set<TaskThread> children = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private volatile boolean terminate;
-    private volatile Object[] info;
+    private volatile Supplier<String> messageSupplier;
     private volatile String name;
 
     private volatile Thread thread;
@@ -49,8 +50,6 @@ class TaskThread implements HasTerminate {
         }
     }
 
-    //
-//    @Override
     boolean isTerminated() {
         final Thread thread = this.thread;
         if (thread != null) {
@@ -72,15 +71,6 @@ class TaskThread implements HasTerminate {
 
         interrupt();
     }
-
-//    boolean isInterrupted() {
-//        try {
-//            return this.thread.isInterrupted();
-//        } catch (final NullPointerException e) {
-//            // Ignore.
-//        }
-//        return false;
-//    }
 
     private synchronized void interrupt() {
         final Thread thread = this.thread;
@@ -126,11 +116,15 @@ class TaskThread implements HasTerminate {
     }
 
     public String getInfo() {
-        return LoggerUtil.buildMessage(info);
+        final Supplier<String> messageSupplier = this.messageSupplier;
+        if (messageSupplier != null) {
+            return messageSupplier.get();
+        }
+        return "";
     }
 
-    public void info(final Object... args) {
-        this.info = args;
+    public void info(final Supplier<String> messageSupplier) {
+        this.messageSupplier = messageSupplier;
     }
 
     public synchronized void addChild(final TaskThread taskThread) {

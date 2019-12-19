@@ -30,6 +30,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Supplier;
 
 @Singleton
 public class SolrIndexOptimiseExecutor {
@@ -58,7 +59,7 @@ public class SolrIndexOptimiseExecutor {
         taskContext.setName(TASK_NAME);
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        info("Start");
+        info(() -> "Start");
         clusterLockService.tryLock(LOCK_NAME, () -> {
             try {
                 if (!Thread.currentThread().isInterrupted()) {
@@ -66,7 +67,7 @@ public class SolrIndexOptimiseExecutor {
                     if (docRefs != null) {
                         docRefs.forEach(this::performRetention);
                     }
-                    info("Finished in " + logExecutionTime);
+                    info(() -> "Finished in " + logExecutionTime);
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
@@ -81,7 +82,7 @@ public class SolrIndexOptimiseExecutor {
                 if (solrIndexDoc != null) {
                     solrIndexClientCache.context(solrIndexDoc.getSolrConnectionConfig(), solrClient -> {
                         try {
-                            info("Optimising '" + solrIndexDoc.getName() + "'");
+                            info(() -> "Optimising '" + solrIndexDoc.getName() + "'");
                             solrClient.optimize(solrIndexDoc.getCollection());
                         } catch (final SolrServerException | IOException e) {
                             LOGGER.error(e::getMessage, e);
@@ -94,8 +95,8 @@ public class SolrIndexOptimiseExecutor {
         }
     }
 
-    private void info(final String message) {
+    private void info(final Supplier<String> message) {
         taskContext.info(message);
-        LOGGER.info(() -> message);
+        LOGGER.info(message);
     }
 }

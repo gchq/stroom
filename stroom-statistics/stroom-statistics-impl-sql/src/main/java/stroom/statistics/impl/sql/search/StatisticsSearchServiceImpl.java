@@ -11,10 +11,10 @@ import stroom.dashboard.expression.v1.ValDouble;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.statistics.impl.sql.SQLStatisticsDbConnProvider;
 import stroom.statistics.impl.sql.PreparedStatementUtil;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
 import stroom.statistics.impl.sql.SQLStatisticNames;
+import stroom.statistics.impl.sql.SQLStatisticsDbConnProvider;
 import stroom.statistics.impl.sql.SqlBuilder;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
@@ -364,10 +365,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                             PreparedStatement ps = factory.getPreparedStatement();
                             return Flowable.generate(
                                     () -> {
-                                        final String message = String.format("Executing query %s", sql.toString());
+                                        final Supplier<String> message = () -> "Executing query " + sql.toString();
                                         taskContext.setName(SqlStatisticsStore.TASK_NAME);
                                         taskContext.info(message);
-                                        LAMBDA_LOGGER.debug(() -> message);
+                                        LAMBDA_LOGGER.debug(message);
 
                                         try {
                                             return ps.executeQuery();
@@ -383,7 +384,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
                                         //advance the resultSet, if it is a row emit it, else finish the flow
                                         // TODO prob needs to change in 6.1
-                                        if (Thread.currentThread().isInterrupted() || Thread.currentThread().isInterrupted()) {
+                                        if (Thread.currentThread().isInterrupted()) {
                                             LOGGER.debug("Task is terminated/interrupted, calling onComplete");
                                             emitter.onComplete();
                                         } else {

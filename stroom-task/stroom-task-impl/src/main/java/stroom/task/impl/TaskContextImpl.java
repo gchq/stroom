@@ -18,6 +18,8 @@ package stroom.task.impl;
 
 import stroom.task.api.TaskContext;
 
+import java.util.function.Supplier;
+
 class TaskContextImpl implements TaskContext {
     @Override
     public void setName(final String name) {
@@ -25,8 +27,8 @@ class TaskContextImpl implements TaskContext {
     }
 
     @Override
-    public void info(final Object... args) {
-        CurrentTaskState.info(args);
+    public void info(final Supplier<String> messageSupplier) {
+        CurrentTaskState.info(messageSupplier);
     }
 
     @Override

@@ -140,7 +140,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         // will not execute it if the parent task is terminated.
         final GenericServerTask outerTask = GenericServerTask.create(null, task.getUserToken(), "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
         outerTask.setRunnable(() -> {
-            taskContext.info(task.getSearchName() + " - terminating child tasks");
+            taskContext.info(() -> task.getSearchName() + " - terminating child tasks");
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
             findTaskCriteria.addAncestorId(task.getId());
             final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(task.getUserToken(), "Terminate: " + task.getTaskName(), findTaskCriteria, false);

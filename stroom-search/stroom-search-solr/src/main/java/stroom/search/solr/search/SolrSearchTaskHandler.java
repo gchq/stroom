@@ -88,7 +88,7 @@ public class SolrSearchTaskHandler {
                             throw new RuntimeException("Interrupted");
                         }
 
-                        taskContext.info("Searching Solr index");
+                        taskContext.info(() -> "Searching Solr index");
 
                         // Start searching.
                         searchShard(task);

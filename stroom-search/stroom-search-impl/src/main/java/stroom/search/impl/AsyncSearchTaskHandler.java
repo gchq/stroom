@@ -98,7 +98,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // Get the nodes that we are going to send the search request
                     // to.
                     final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-                    taskContext.info(task.getSearchName() + " - initialising");
+                    taskContext.info(() -> task.getSearchName() + " - initialising");
                     final Query query = task.getQuery();
 
                     // Reload the index.
@@ -167,7 +167,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                         dispatchAsyncProvider.get().execAsync(clusterSearchTask, resultCollector, sourceNode,
                                 Collections.singleton(node));
                     });
-                    taskContext.info(task.getSearchName() + " - searching...");
+                    taskContext.info(() -> task.getSearchName() + " - searching...");
 
                     // Await completion.
                     resultCollector.awaitCompletion();
@@ -180,7 +180,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // Continue to interrupt this thread.
                     Thread.currentThread().interrupt();
                 } finally {
-                    taskContext.info(task.getSearchName() + " - complete");
+                    taskContext.info(() -> task.getSearchName() + " - complete");
 
                     // Make sure we try and terminate any child tasks on worker
                     // nodes if we need to.
@@ -191,7 +191,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                     // We need to wait here for the client to keep getting results if
                     // this is an interactive search.
-                    taskContext.info(task.getSearchName() + " - staying alive for UI requests");
+                    taskContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
                 }
             }
 
@@ -208,7 +208,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         // will not execute it if the parent task is terminated.
         final GenericServerTask outerTask = GenericServerTask.create(null, task.getUserToken(), "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
         outerTask.setRunnable(() -> {
-            taskContext.info(task.getSearchName() + " - terminating child tasks");
+            taskContext.info(() -> task.getSearchName() + " - terminating child tasks");
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
             findTaskCriteria.addAncestorId(task.getId());
             final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(task.getUserToken(), "Terminate: " + task.getTaskName(), findTaskCriteria, false);

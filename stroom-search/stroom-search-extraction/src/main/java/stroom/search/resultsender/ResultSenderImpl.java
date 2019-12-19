@@ -56,7 +56,7 @@ class ResultSenderImpl implements ResultSender {
 
             if (!isTerminated()) {
                 taskContext.setName("Search Result Sender");
-                taskContext.info("Creating search result");
+                taskContext.info(() -> "Creating search result");
 
                 // Produce payloads for each coprocessor.
                 final Map<CoprocessorKey, Payload> payloadMap = coprocessors.createPayloads();
@@ -74,7 +74,7 @@ class ResultSenderImpl implements ResultSender {
                     final NodeResult result = new NodeResult(payloadMap, errorsSnapshot, complete);
 
                     // Give the result to the callback.
-                    taskContext.info("Sending search result");
+                    taskContext.info(() -> "Sending search result");
                     consumer.accept(result);
                 }
             }

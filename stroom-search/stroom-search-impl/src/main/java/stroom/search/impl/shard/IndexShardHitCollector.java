@@ -18,17 +18,18 @@ package stroom.search.impl.shard;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.SimpleCollector;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.pipeline.errorhandler.TerminatedException;
 import stroom.task.api.TaskContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
 import java.util.OptionalInt;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Supplier;
 
 class IndexShardHitCollector extends SimpleCollector {
-    private static final Logger LOGGER = LoggerFactory.getLogger(IndexShardHitCollector.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardHitCollector.class);
 
     private final TaskContext taskContext;
     //an empty optional is used as a marker to indicate no more items will be added
@@ -43,7 +44,7 @@ class IndexShardHitCollector extends SimpleCollector {
         this.taskContext = taskContext;
         this.hitCount = hitCount;
 
-        provideInfo("Searching...");
+        info(() -> "Searching...");
     }
 
     @Override
@@ -59,24 +60,24 @@ class IndexShardHitCollector extends SimpleCollector {
 
         try {
             docIdStore.put(OptionalInt.of(docId));
-            provideInfo("Found " + hitCount.getHitCount() + " hits");
+            info(() -> "Found " + hitCount.getHitCount() + " hits");
         } catch (final InterruptedException e) {
             // Continue to interrupt.
-            provideInfo("Quitting...");
+            info(() -> "Quitting...");
             Thread.currentThread().interrupt();
-            LOGGER.debug(e.getMessage(), e);
+            LOGGER.debug(e::getMessage, e);
             throw new TerminatedException();
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.error(e::getMessage, e);
         }
 
         // Add to the hit count.
         hitCount.incrementHitCount();
     }
 
-    private void provideInfo(final String message) {
+    private void info(final Supplier<String> message) {
         taskContext.info(message);
-        LOGGER.debug(message);
+        LOGGER.info(message);
     }
 
     @Override

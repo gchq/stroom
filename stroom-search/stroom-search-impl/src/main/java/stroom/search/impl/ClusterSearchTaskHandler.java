@@ -85,7 +85,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             sendingDataCompletionState.complete();
 
             if (!Thread.currentThread().isInterrupted()) {
-                taskContext.info("Initialising...");
+                taskContext.info(() -> "Initialising...");
 
                 this.task = task;
                 final stroom.query.api.v2.Query query = task.getQuery();
@@ -132,7 +132,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
 
                 // Now we must wait for results to be sent to the requesting node.
                 try {
-                    taskContext.info("Sending final results");
+                    taskContext.info(() -> "Sending final results");
                     while (!Thread.currentThread().isInterrupted() && !sendingDataCompletionState.isComplete()) {
                         sendingDataCompletionState.await(1, TimeUnit.SECONDS);
                     }
@@ -148,7 +148,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private void search(final ClusterSearchTask task,
                         final stroom.query.api.v2.Query query,
                         final Coprocessors coprocessors) {
-        taskContext.info("Searching...");
+        taskContext.info(() -> "Searching...");
         LOGGER.debug(() -> "Incoming search request:\n" + query.getExpression().toString());
 
         try {
@@ -168,10 +168,7 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                 long extractionCount = getMinExtractions(coprocessors.getSet());
                 long documentCount = allDocumentCount.get();
                 while (!Thread.currentThread().isInterrupted() && extractionCount < documentCount) {
-                    taskContext.info(
-                            "Searching... " +
-                                    "found " + documentCount + " documents" +
-                                    " performed " + extractionCount + " extractions");
+                    log(documentCount, extractionCount);
 
                     Thread.sleep(1000);
 
@@ -189,6 +186,13 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
             Thread.currentThread().interrupt();
             throw SearchException.wrap(pEx);
         }
+    }
+
+    private void log(final long documentCount, final long extractionCount) {
+        taskContext.info(() ->
+                "Searching... " +
+                        "found " + documentCount + " documents" +
+                        " performed " + extractionCount + " extractions");
     }
 
     private long getMinExtractions(final Set<NewCoprocessor> coprocessorConsumers) {

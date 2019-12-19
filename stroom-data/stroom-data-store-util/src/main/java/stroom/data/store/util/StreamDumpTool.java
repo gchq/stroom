@@ -33,7 +33,6 @@ import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.BufferFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Sort.Direction;
 
@@ -41,6 +40,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
@@ -129,10 +129,8 @@ public class StreamDumpTool extends AbstractCommandLineTool {
 
         final TaskContext taskContext = new SimpleTaskContext() {
             @Override
-            public void info(final Object... args) {
-                final Object[] otherArgs = new Object[args.length - 1];
-                System.arraycopy(args, 1, otherArgs, 0, otherArgs.length);
-                System.out.println(LogUtil.message((String) args[0], otherArgs));
+            public void info(final Supplier<String> messageSupplier) {
+                System.out.println(messageSupplier.get());
             }
         };
         final Store streamStore = injector.getInstance(Store.class);

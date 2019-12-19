@@ -149,7 +149,7 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
             } else {
                 executorProvider.getExecutor().execute(() -> {
                     taskContext.setName("Get Active Nodes");
-                    taskContext.info("Getting active nodes");
+                    taskContext.info(()->"Getting active nodes");
 
                     try {
                         // We call the API like this rather than using the

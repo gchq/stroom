@@ -17,8 +17,6 @@
 
 package stroom.job.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.job.api.ScheduledJob;
 import stroom.job.api.TaskConsumer;
@@ -30,6 +28,8 @@ import stroom.job.shared.JobNode.JobType;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
@@ -43,7 +43,7 @@ import java.util.Set;
 
 @Singleton
 class JobBootstrap {
-    private static final Logger LOGGER = LoggerFactory.getLogger(JobBootstrap.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobBootstrap.class);
     private static final String LOCK_NAME = "JobNodeService";
 
     private final JobDao jobDao;
@@ -72,10 +72,10 @@ class JobBootstrap {
     }
 
     void startup() {
-        LOGGER.info("startup()");
+        LOGGER.info(() -> "startup()");
 
         // Lock the cluster so only 1 node at a time can call the following code.
-        LOGGER.trace("Locking the cluster");
+        LOGGER.trace(() -> "Locking the cluster");
         securityContext.asProcessingUser(() -> clusterLockService.lock(LOCK_NAME, () -> {
             final String nodeName = nodeInfo.getThisNodeName();
 
@@ -116,8 +116,7 @@ class JobBootstrap {
                 // Add the job node to the DB if it isn't there already.
                 JobNode existingJobNode = existingJobMap.get(scheduledJob.getName());
                 if (existingJobNode == null) {
-                    LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
-                            newJobNode.getNodeName());
+                    LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() + "' for node '" + newJobNode.getNodeName() + "'");
                     AuditUtil.stamp(securityContext.getUserId(), newJobNode);
                     jobNodeDao.create(newJobNode);
                     existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
@@ -151,8 +150,7 @@ class JobBootstrap {
                     newJobNode.setEnabled(false);
                     newJobNode.setJobType(JobType.DISTRIBUTED);
 
-                    LOGGER.info("Adding JobNode '{}' for node '{}'", newJobNode.getJob().getName(),
-                            newJobNode.getNodeName());
+                    LOGGER.info(() -> "Adding JobNode '" + newJobNode.getJob().getName() + "' for node '" + newJobNode.getNodeName() + "'");
                     AuditUtil.stamp(securityContext.getUserId(), newJobNode);
                     jobNodeDao.create(newJobNode);
                     existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
@@ -161,7 +159,7 @@ class JobBootstrap {
 
             existingJobList.stream().filter(jobNode -> !validJobNames.contains(jobNode.getJob().getName()))
                     .forEach(jobNode -> {
-                        LOGGER.info("Removing old job node {} ", jobNode.getJob().getName());
+                        LOGGER.info(() -> "Removing old job node " + jobNode.getJob().getName());
                         jobNodeDao.delete(jobNode.getId());
                     });
 //
@@ -174,7 +172,7 @@ class JobBootstrap {
 //
 //                final Long deleteCount = this.entityManager.executeNativeUpdate(sql);
             if (deleteCount > 0) {
-                LOGGER.info("Removed {} orphan jobs", deleteCount);
+                LOGGER.info(() -> "Removed " + deleteCount + " orphan jobs");
             }
         }));
     }
@@ -262,12 +260,12 @@ class JobBootstrap {
             // Update the job description if we need to.
             if (job.getDescription() != null && !job.getDescription().equals(result.getDescription())) {
                 result.setDescription(job.getDescription());
-                LOGGER.info("Updating Job     '%s'", job.getName());
+                LOGGER.info(() -> "Updating Job     '" + job.getName() + "'");
                 AuditUtil.stamp(securityContext.getUserId(), result);
                 result = jobDao.update(result);
             }
         } else {
-            LOGGER.info("Adding Job     '{}'", job.getName());
+            LOGGER.info(() -> "Adding Job     '" + job.getName() + "'");
             AuditUtil.stamp(securityContext.getUserId(), job);
             result = jobDao.create(job);
         }

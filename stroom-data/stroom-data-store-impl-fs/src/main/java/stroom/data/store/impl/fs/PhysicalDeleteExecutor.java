@@ -186,7 +186,7 @@ public class PhysicalDeleteExecutor {
 
     private void info(final Supplier<String> message) throws InterruptedException {
         try {
-            taskContext.info(message.get());
+            taskContext.info(message);
             LOGGER.debug(message);
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);

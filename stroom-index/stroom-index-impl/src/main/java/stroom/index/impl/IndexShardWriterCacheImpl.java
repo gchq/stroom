@@ -370,7 +370,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         return exec.exec(() -> {
             try {
                 taskContext.setName("Flushing writer");
-                taskContext.info("Flushing writer for index shard " + indexShardWriter.getIndexShardId());
+                taskContext.info(() -> "Flushing writer for index shard " + indexShardWriter.getIndexShardId());
 
                 // Flush the shard.
                 indexShardWriter.flush();
@@ -405,7 +405,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                 LOGGER.trace(() -> "Closing " + indexShardId + " - " + indexShardKey.toString());
 
                                 taskContext.setName("Closing writer");
-                                taskContext.info("Closing writer for index shard " + indexShardId);
+                                taskContext.info(() -> "Closing writer for index shard " + indexShardId);
 
                                 // Close the shard.
                                 indexShardWriter.close();

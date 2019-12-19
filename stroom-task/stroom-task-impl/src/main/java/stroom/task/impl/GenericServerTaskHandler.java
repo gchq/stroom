@@ -23,7 +23,7 @@ class GenericServerTaskHandler extends AbstractTaskHandler<GenericServerTask, Vo
     @Override
     public VoidResult exec(final GenericServerTask task) {
         return securityContext.secureResult(() -> {
-            taskContext.info(task.getMessage());
+            taskContext.info(task::getMessage);
             task.getRunnable().run();
             return VoidResult.INSTANCE;
         });
