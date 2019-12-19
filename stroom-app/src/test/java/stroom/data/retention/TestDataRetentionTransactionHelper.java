@@ -18,8 +18,7 @@ package stroom.data.retention;
 
 
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.data.retention.impl.DataRetentionMetaCriteriaUtil;
 import stroom.data.shared.StreamTypeNames;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.meta.shared.FindMetaCriteria;
@@ -30,17 +29,21 @@ import stroom.meta.shared.Status;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Period;
 
 import javax.inject.Inject;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestDataRetentionTransactionHelper.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestDataRetentionTransactionHelper.class);
     private static final int RETENTION_PERIOD_DAYS = 1;
+
     @Inject
     private MetaService metaService;
     @Inject
@@ -54,8 +57,8 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
         final long timeOutsideRetentionPeriod = now - TimeUnit.DAYS.toMillis(RETENTION_PERIOD_DAYS)
                 - TimeUnit.MINUTES.toMillis(1);
 
-        LOGGER.info("now: %s", DateUtil.createNormalDateTimeString(now));
-        LOGGER.info("timeOutsideRetentionPeriod: %s", DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
+        LOGGER.info(() -> "now: " + DateUtil.createNormalDateTimeString(now));
+        LOGGER.info(() -> "timeOutsideRetentionPeriod: " + DateUtil.createNormalDateTimeString(timeOutsideRetentionPeriod));
 
         final Meta metaInsideRetention = metaService.create(
                 new MetaProperties.Builder()
@@ -82,11 +85,9 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
         // run the stream retention task which should 'delete' one stream
         final Period ageRange = new Period(null, timeOutsideRetentionPeriod + 1);
 
-        // TODO : @66 Re-implement finding streams for data retention
-//            try (final DataRetentionStreamFinder dataRetentionStreamFinder = new DataRetentionStreamFinder(connection, dictionaryStore)) {
-//                final long count = dataRetentionStreamFinder.getRowCount(ageRange, Collections.singleton(StreamDataSource.ID));
-//                assertThat(count).isEqualTo(1);
-//            }
+        final FindMetaCriteria findMetaCriteria = DataRetentionMetaCriteriaUtil.createCriteria(ageRange, Collections.emptyList(), 100);
+        final BaseResultList<Meta> list = metaService.find(findMetaCriteria);
+        assertThat(list.size()).isEqualTo(1);
     }
 
     private void dumpStreams() {
@@ -95,9 +96,14 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
         assertThat(list.size()).isEqualTo(2);
 
         for (final Meta meta : list) {
-            LOGGER.info("meta: %s, createMs: %s, statusMs: %s, status: %s", meta,
-                    DateUtil.createNormalDateTimeString(meta.getCreateMs()),
-                    DateUtil.createNormalDateTimeString(meta.getStatusMs()), meta.getStatus());
+            LOGGER.info(() -> "meta: " +
+                    meta +
+                    ", createMs:" +
+                    DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
+                    ", statusMs: " +
+                    DateUtil.createNormalDateTimeString(meta.getStatusMs()) +
+                    ", status: " +
+                    meta.getStatus());
         }
     }
 }

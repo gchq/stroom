@@ -18,6 +18,7 @@ package stroom.data.store.impl;
 
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
+import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.FetchFullMetaInfoAction;
 import stroom.meta.shared.FullMetaInfoResult;
 import stroom.meta.shared.FullMetaInfoResult.Entry;
@@ -76,9 +77,9 @@ class FetchFullMetaInfoHandler extends AbstractTaskHandler<FetchFullMetaInfoActi
         // Add additional data retention information.
         ruleDecorator.addMatchingRetentionRuleInfo(meta, attributeMap);
 
-        entries.add(new Entry(StreamAttributeMapRetentionRuleDecorator.RETENTION_AGE, attributeMap.get(StreamAttributeMapRetentionRuleDecorator.RETENTION_AGE)));
-        entries.add(new Entry(StreamAttributeMapRetentionRuleDecorator.RETENTION_UNTIL, attributeMap.get(StreamAttributeMapRetentionRuleDecorator.RETENTION_UNTIL)));
-        entries.add(new Entry(StreamAttributeMapRetentionRuleDecorator.RETENTION_RULE, attributeMap.get(StreamAttributeMapRetentionRuleDecorator.RETENTION_RULE)));
+        entries.add(new Entry(DataRetentionFields.RETENTION_AGE, attributeMap.get(DataRetentionFields.RETENTION_AGE)));
+        entries.add(new Entry(DataRetentionFields.RETENTION_UNTIL, attributeMap.get(DataRetentionFields.RETENTION_UNTIL)));
+        entries.add(new Entry(DataRetentionFields.RETENTION_RULE, attributeMap.get(DataRetentionFields.RETENTION_RULE)));
 
         return entries;
     }
@@ -104,36 +105,8 @@ class FetchFullMetaInfoHandler extends AbstractTaskHandler<FetchFullMetaInfoActi
                 sortedKeys.forEach(key -> entries.add(new Entry(key, attributeMap.get(key))));
                 sections.add(new Section("Attributes", entries));
 
-
-//            try {
-//                final List<String> keys = new ArrayList<>(row.getAttributeKeySet());
-//
-//                Collections.sort(keys);
-//
-//                for (final String key : keys) {
-//                    if (!key.equals(StreamAttributeConstants.RETENTION_AGE) &&
-//                            !key.equals(StreamAttributeConstants.RETENTION_UNTIL) &&
-//                            !key.equals(StreamAttributeConstants.RETENTION_RULE)) {
-//                        TooltipUtil.addRowData(html, key, row.formatAttribute(key));
-//                    }
-//                }
-//            } catch (final RuntimeException e) {
-//                html.append(e.getMessage());
-//            }
-//
-//            if (row.getFileNameList() != null) {
-//                TooltipUtil.addBreak(html);
-//                TooltipUtil.addHeading(html, "Files");
-//                for (final String file : row.getFileNameList()) {
-//                    TooltipUtil.addRowData(html, file);
-//                }
-//            }
-
-
                 // Add additional data retention information.
                 sections.add(new Section("Retention", getDataRententionEntries(meta, attributeMap)));
-
-
             }
         } catch (final IOException e) {
             throw new RuntimeException(e.getMessage(), e);

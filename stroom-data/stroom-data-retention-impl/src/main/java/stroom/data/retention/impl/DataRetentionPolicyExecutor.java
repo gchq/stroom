@@ -26,10 +26,6 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
-import stroom.query.api.v2.ExpressionOperator;
-import stroom.query.api.v2.ExpressionOperator.Builder;
-import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
@@ -120,7 +116,7 @@ public class DataRetentionPolicyExecutor {
 //                        final Set<String> fields = new HashSet<>();
 //                        addToFieldSet(rule, fields);
 //                        if (fields.size() > 0) {
-                            activeRules.add(rule);
+                        activeRules.add(rule);
 //                        }
                     }
                 });
@@ -188,21 +184,7 @@ public class DataRetentionPolicyExecutor {
                 " and " +
                 DateUtil.createNormalDateTimeString(period.getToMs()));
 
-        // Ignore rules if none are active.
-        final Builder inner = new ExpressionOperator.Builder(Op.OR);
-        for (final DataRetentionRule rule : rules) {
-            inner.addOperator(rule.getExpression());
-        }
-
-        final Builder outer = new ExpressionOperator.Builder(Op.AND)
-                .addOperator(new ExpressionOperator.Builder(Op.NOT).addOperator(inner.build()).build())
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue())
-                .addTerm(MetaFields.CREATE_TIME, Condition.GREATER_THAN_OR_EQUAL_TO, DateUtil.createNormalDateTimeString(period.getFromMs()))
-                .addTerm(MetaFields.CREATE_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(period.getToMs()));
-
-        final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
-        findMetaCriteria.setExpression(outer.build());
-        findMetaCriteria.obtainPageRequest().setLength(batchSize);
+        final FindMetaCriteria findMetaCriteria = DataRetentionMetaCriteriaUtil.createCriteria(period, rules, batchSize);
 
         int count = -1;
         while (count != 0 && !Thread.currentThread().isInterrupted()) {

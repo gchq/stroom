@@ -283,7 +283,6 @@ class MetaValueDaoImpl implements MetaValueDao {
 //        return stroomEntityManager.executeNativeQueryResultList(sql);
     }
 
-
     /**
      * @return The oldest data attribute that we should keep
      */
@@ -318,7 +317,7 @@ class MetaValueDaoImpl implements MetaValueDao {
                     metaKeyService.getNameForId(keyId).ifPresent(name -> {
                         final long dataId = r.get(META_VAL.META_ID);
                         final String value = String.valueOf(r.get(META_VAL.VAL));
-                        rowMap.computeIfAbsent(dataId, k -> new MetaRow()).addAttribute(name, value);
+                        rowMap.computeIfAbsent(dataId, k -> new MetaRow()).getAttributes().put(name, value);
                     });
                 })
         );
