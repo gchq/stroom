@@ -241,6 +241,15 @@ runShadow {
     args 'server', '../local.yml'
 }
 
+// Run the DB migrations then exit
+task migrate(type: JavaExec) {
+    dependsOn ':stroom-config:stroom-config-app:compileJava'
+
+    classpath = sourceSets.main.runtimeClasspath
+    main = mainClassName
+    args 'migrate', '../local.yml'
+}
+
 def stroomDockerBuildDir = "${projectDir}/docker/build"
 
 clean {

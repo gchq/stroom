@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add `migrate` command line argument to run just the DB migrations.
+
 * Updated API key to include audience and added client id and secret.
 
 * Change `stroom.conf.sh` to also look for ip in `/sbin`
