@@ -6,13 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.13] - 2019-12-24
+
 * Add `migrate` command line argument to run just the DB migrations.
 
 * Updated API key to include audience and added client id and secret.
 
 * Change `stroom.conf.sh` to also look for ip in `/sbin`
-
-## [v6.1-beta.13] - 2019-12-05
 
 * Issue **#260** : You can now hide dashboard tabs.
 
@@ -1921,7 +1922,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.13...HEAD
+[v7.0-beta.13]: https://github.com/gchq/stroom/compare/v7.0-beta.12...v7.0-beta.13
 [v7.0-beta.12]: https://github.com/gchq/stroom/compare/v7.0-beta.11...v7.0-beta.12
 [v7.0-beta.11]: https://github.com/gchq/stroom/compare/v7.0-beta.10...v7.0-beta.11
 [v7.0-beta.10]: https://github.com/gchq/stroom/compare/v7.0-beta.9...v7.0-beta.10
