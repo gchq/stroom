@@ -107,11 +107,17 @@ info() {
 #}
 
 check_is_configured() {
+  if [ ! -e "${PATH_TO_CONFIG}" ]; then
+    error "Config file ${PATH_TO_CONFIG} does not exist${NC}"
+    exit 1
+  fi
+
   local IP_ADDRESS_TAG="IP_ADDRESS"
-  local STROOM_CONF_PATH="config/stroom.conf"
-  if grep -q "${IP_ADDRESS_TAG}" "${STROOM_CONF_PATH}"; then
+  if grep -q "${IP_ADDRESS_TAG}" "${PATH_TO_CONFIG}"; then
     echo 
-    error "It looks like you haven't configured IP addresses in ${BLUE}config/stroom.conf${NC}. You need to replace all instances of ${BLUE}IP_ADDRESS${NC} before Stroom can start."
+    error "It looks like you haven't configured IP addresses in" \
+      "${BLUE}${PATH_TO_CONFIG}${NC}.\nYou need to replace all instances" \
+      "of ${BLUE}IP_ADDRESS${NC} before Stroom can start."
     exit 1
   fi
 }
@@ -124,7 +130,8 @@ check_start_is_not_erroring() {
   if [ -f "${SCRIPT_LOG_LOCATION}" ]; then
     if grep -q "${LOG_ERROR_PATTERN}" "${SCRIPT_LOG_LOCATION}"; then
       echo -e
-      error "It looks like you have a problem with something in ${BLUE}config/config.yml${NC}. Look in ${BLUE}logs/start.sh.log${NC} for the details.${NC}"
+      error "It looks like you have a problem with something in ${BLUE}config/config.yml${NC}.\n" \
+        "Look in ${BLUE}logs/start.sh.log${NC} for the details.${NC}"
       exit 1
     fi
   fi
@@ -140,7 +147,9 @@ determine_host_address() {
 
   if [[ ! "${ip}" =~ ^[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}$ ]]; then
     echo
-    echo -e "${RED}ERROR${NC} IP address [${GREEN}${ip}${NC}] is not valid, try setting '${BLUE}STROOM_RESOURCES_ADVERTISED_HOST=x.x.x.x${NC}' in ${BLUE}local.env${NC}" >&2
+    echo -e "${RED}ERROR${NC} IP address [${GREEN}${ip}${NC}] is not valid,\n" \
+      "try setting '${BLUE}STROOM_RESOURCES_ADVERTISED_HOST=x.x.x.x${NC}'" \
+      "in ${BLUE}local.env${NC}" >&2
     exit 1
   fi
 

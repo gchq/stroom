@@ -49,12 +49,17 @@ public class DbMigrationCommand extends ConfiguredCommand<Config> {
         final AppModule appModule = new AppModule(config, configFile);
 
         LOGGER.debug("Creating injector");
-        final Injector injector = Guice.createInjector(appModule);
+        try {
+            final Injector injector = Guice.createInjector(appModule);
 
-        // Force guice to get all datasource instances from the multibinder
-        // so the migration will be run for each stroom module
-        // Relies on all db modules adding an entry to the multibinder
-        injector.getInstance(Key.get(GuiceUtil.setOf(DataSource.class)));
+            // Force guice to get all datasource instances from the multibinder
+            // so the migration will be run for each stroom module
+            // Relies on all db modules adding an entry to the multibinder
+            injector.getInstance(Key.get(GuiceUtil.setOf(DataSource.class)));
+        } catch (Exception e) {
+            LOGGER.error("Error running DB migrations",e);
+            System.exit(1);
+        }
 
         LOGGER.info("DB migrations complete");
     }
