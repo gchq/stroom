@@ -156,7 +156,7 @@ check_or_create_pid_file() {
       if ps -p "${PID}" > /dev/null # Check if the PID is a running process
       then
         warn "Stroom is already running (pid: ${BLUE}$PID${NC}). Use" \
-          "{BLUE}restart.sh${NC} if you want to start it."
+          "${BLUE}restart.sh${NC} if you want to start it."
         # echo -e "${RED}Warning:${NC} ${GREEN}Stroom${NC} is already running (pid: ${BLUE}$PID${NC}). Use ${BLUE}restart.sh${NC} if you want to start it."
       else 
         warn "There was an instance of Stroom running but it looks like"\

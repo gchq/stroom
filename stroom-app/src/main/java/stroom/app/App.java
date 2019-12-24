@@ -29,6 +29,7 @@ import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.app.commands.DbMigrationCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.Config;
 import stroom.dropwizard.common.Filters;
@@ -91,6 +92,10 @@ public class App extends Application<Config> {
                 bootstrap.getConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false)));
         bootstrap.addBundle(new AssetsBundle("/ui", ResourcePaths.ROOT_PATH, "index.html", "ui"));
+
+        // Add a DW Command so we can run the full migration without running the
+        // http server
+        bootstrap.addCommand(new DbMigrationCommand(configFile));
     }
 
     @Override

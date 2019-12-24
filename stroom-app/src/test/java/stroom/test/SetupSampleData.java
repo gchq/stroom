@@ -36,7 +36,7 @@ import stroom.task.api.TaskManager;
  * stroom-core/src/test/resources/samples. The content in this folder should NOT duplicate any content
  * that is available in content packs.
  *
- * The content packs that get downlaoded (for auto import) are defined in the root build.gradle file.
+ * The content packs that get downloaded (for auto import) are defined in the root build.gradle file.
  */
 public final class SetupSampleData {
 
