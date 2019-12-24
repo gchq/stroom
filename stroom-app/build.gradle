@@ -335,13 +335,13 @@ task copySupportingFiles(type: Copy) {
     from 'src/dist'
     into releaseBuildDir 
 
-//    doLast {
-//        // stroom.conf is a sym-link so it seems to go into the zip with +x perms
-//        // which we don't want
-//        exec {
-//            commandLine 'chmod', '644', "${releaseBuildDir}/config/stroom.conf"
-//        }
-//    }
+    doLast {
+        // This is a sym-link so it seems to go into the zip with +x perms
+        // which we don't want
+        exec {
+            commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        }
+    }
 }
 
 import de.undercouch.gradle.tasks.download.Download
