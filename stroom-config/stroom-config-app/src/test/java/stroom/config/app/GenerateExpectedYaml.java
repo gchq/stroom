@@ -12,6 +12,13 @@ public class GenerateExpectedYaml {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GenerateExpectedYaml.class);
 
+    private static final String HEADER =
+        "# This file is generated based on all the default configuration values that are built into stroom.\n" +
+        "# It serves as an example of the structure of the full configuration tree.\n" +
+        "# If any configuration item is not explicitly set then these defaults will be used instead.\n" +
+        "# Some configuration items are expected to set, e.g. appConfig.commonDbDetails.connection.jdbcDriverUrl,\n" +
+        "# but most can be left with their default values.";
+
     /**
      * Builds a fresh config object tree with all the hard coded default values
      * and generates the yaml serialised form of it, saving the result to the
@@ -42,13 +49,8 @@ public class GenerateExpectedYaml {
         String outputStr;
         if (args.length > 0) {
             // called for a specific output location so add a header
-            final String comment = "# This file contains all the default configuration values that are built into stroom.\n" +
-                    "# It serves as an example of the structure of the full configuration tree.\n" +
-                    "# If any configuration item is not explicitly set then the default will be used instead.\n" +
-                    "# Some configuration items are expected to set, e.g. appConfig.commonDbDetails.connection.jdbcDriverUrl,\n" +
-                    "# but most can be left with their default values.";
 
-            outputStr = generatedYaml.replace("---", "---\n" + comment);
+            outputStr = generatedYaml.replace("---", "---\n" + HEADER);
         } else {
             // called manually for TestYamlUtil so don't modify the content else it will break the test
             outputStr = generatedYaml;
