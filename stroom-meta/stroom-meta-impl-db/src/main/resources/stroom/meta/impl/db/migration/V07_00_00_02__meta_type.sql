@@ -38,4 +38,4 @@ DELIMITER ;
 CALL copy_meta_type();
 DROP PROCEDURE copy_meta_type;
 
-SET SQL_NOTES=@SQL_NOTES;
+SET SQL_NOTES=@OLD_SQL_NOTES;

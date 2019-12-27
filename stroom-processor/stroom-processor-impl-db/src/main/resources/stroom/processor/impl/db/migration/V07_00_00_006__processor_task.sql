@@ -54,4 +54,4 @@ CALL copy_processor_task();
 DROP PROCEDURE copy_processor_task;
 
 
-SET SQL_NOTES=@SQL_NOTES;
+SET SQL_NOTES=@OLD_SQL_NOTES;

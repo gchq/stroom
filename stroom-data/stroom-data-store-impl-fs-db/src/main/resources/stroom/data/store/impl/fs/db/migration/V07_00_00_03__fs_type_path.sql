@@ -46,4 +46,4 @@ DELIMITER ;
 CALL copy_fs_type_path();
 DROP PROCEDURE copy_fs_type_path;
 
-SET SQL_NOTES=@SQL_NOTES;
+SET SQL_NOTES=@OLD_SQL_NOTES;

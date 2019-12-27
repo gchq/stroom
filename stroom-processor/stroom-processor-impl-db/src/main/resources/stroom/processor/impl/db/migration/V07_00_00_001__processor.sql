@@ -62,4 +62,4 @@ DELIMITER ;
 CALL copy_processor();
 DROP PROCEDURE copy_processor;
 
-SET SQL_NOTES=@SQL_NOTES;
+SET SQL_NOTES=@OLD_SQL_NOTES;

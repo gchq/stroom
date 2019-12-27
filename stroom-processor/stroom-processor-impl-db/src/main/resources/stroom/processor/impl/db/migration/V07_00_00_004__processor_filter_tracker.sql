@@ -67,4 +67,4 @@ CALL copy_processor_filter_tracker();
 DROP PROCEDURE copy_processor_filter_tracker;
 
 
-SET SQL_NOTES=@SQL_NOTES;
+SET SQL_NOTES=@OLD_SQL_NOTES;

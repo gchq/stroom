@@ -41,4 +41,4 @@ CREATE TABLE IF NOT EXISTS index_volume (
   CONSTRAINT index_volume_group_link_fk_group_name FOREIGN KEY (index_volume_group_name) REFERENCES index_volume_group (name) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-SET SQL_NOTES=@SQL_NOTES;
+SET SQL_NOTES=@OLD_SQL_NOTES;

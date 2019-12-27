@@ -46,4 +46,4 @@ DELIMITER ;
 CALL copy_meta_processor();
 DROP PROCEDURE copy_meta_processor;
 
-SET SQL_NOTES=@SQL_NOTES;
+SET SQL_NOTES=@OLD_SQL_NOTES;
