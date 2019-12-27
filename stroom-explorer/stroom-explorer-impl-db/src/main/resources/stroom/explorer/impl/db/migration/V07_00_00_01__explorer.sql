@@ -1,3 +1,6 @@
+-- Stop NOTE level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
 --
 -- Create the explorer tables
 --
@@ -52,3 +55,5 @@ END//
 DELIMITER ;
 CALL copy_explorer();
 DROP PROCEDURE copy_explorer;
+
+SET SQL_NOTES=@OLD_SQL_NOTES;

@@ -1,3 +1,6 @@
+-- Stop NOTE level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
 --
 -- Create the node table
 --
@@ -42,3 +45,5 @@ END//
 DELIMITER ;
 CALL copy_node();
 DROP PROCEDURE copy_node;
+
+SET SQL_NOTES=@OLD_SQL_NOTES;

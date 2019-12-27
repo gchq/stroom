@@ -1,3 +1,6 @@
+-- Stop NOTE level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
 CREATE TABLE IF NOT EXISTS index_volume_group (
   id                    int(11) NOT NULL AUTO_INCREMENT,
   version               int(11) NOT NULL,
@@ -37,3 +40,5 @@ CREATE TABLE IF NOT EXISTS index_volume (
   -- cascading. For an update we'll just cascade the the change down, for a delete we'll delete the index volume.
   CONSTRAINT index_volume_group_link_fk_group_name FOREIGN KEY (index_volume_group_name) REFERENCES index_volume_group (name) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+SET SQL_NOTES=@OLD_SQL_NOTES;

@@ -1,3 +1,6 @@
+-- Stop NOTE level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
 --
 -- Create the meta_type table
 --
@@ -34,3 +37,5 @@ END//
 DELIMITER ;
 CALL copy_meta_type();
 DROP PROCEDURE copy_meta_type;
+
+SET SQL_NOTES=@OLD_SQL_NOTES;

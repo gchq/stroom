@@ -1,3 +1,13 @@
+-- Stop NOTE level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
+-- NOTE This is pretty much a copy of V4_0_60 in stroom v6, but as schema_version has
+-- been renamed to statistics_schema_history, flyway will know nothing of the previous
+-- schema. Thus we can start afresh with everything written to copy with the object already
+-- existing. Renamed to V7_00_00_001 to avoid the confusion of a V4 script running in
+-- a v6 =>> v7 migration.
+
+
 -- Create the SQL_STAT_ tables for the New SQL stats process.  These are duplicates of the legacy tables (STAT_KEY, STAT_VAL and STAT_VAL_SRC)
 
 --
@@ -9,10 +19,12 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_KEY (
   NAME 				varchar(766) NOT NULL,
   UNIQUE 			(NAME)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+SET SQL_NOTES=@OLD_SQL_NOTES;
 
 --
 -- Table structure for table sql_stat_val
 --
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 CREATE TABLE IF NOT EXISTS SQL_STAT_VAL (
   TIME_MS				bigint(20) NOT NULL,
   PRES					tinyint(4) NOT NULL,
@@ -23,11 +35,14 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_VAL (
   PRIMARY KEY (FK_SQL_STAT_KEY_ID, TIME_MS, VAL_TP, PRES),
   CONSTRAINT 			SQL_STAT_VAL_FK_STAT_KEY_ID FOREIGN KEY (FK_SQL_STAT_KEY_ID) REFERENCES SQL_STAT_KEY (ID)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+SET SQL_NOTES=@OLD_SQL_NOTES;
 
 --
 -- Create an index if it doesn't exist
 --
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 DROP PROCEDURE IF EXISTS createIndex;
+SET SQL_NOTES=@OLD_SQL_NOTES;
 DELIMITER //
 CREATE PROCEDURE createIndex ()
 BEGIN
@@ -44,6 +59,7 @@ DROP PROCEDURE createIndex;
 --
 -- Table structure for table sql_stat_val_src
 --
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 CREATE TABLE IF NOT EXISTS SQL_STAT_VAL_SRC (
   TIME_MS			bigint(20) NOT NULL,
   NAME 				varchar(766) NOT NULL,
@@ -51,11 +67,14 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_VAL_SRC (
   VAL				bigint(20) NOT NULL,
   PROCESSING        bit(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+SET SQL_NOTES=@OLD_SQL_NOTES;
 
 --
 -- Create an index if it doesn't exist
 --
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 DROP PROCEDURE IF EXISTS createIndex;
+SET SQL_NOTES=@OLD_SQL_NOTES;
 DELIMITER //
 CREATE PROCEDURE createIndex ()
 BEGIN
@@ -68,3 +87,5 @@ CALL createIndex();
 DROP PROCEDURE createIndex;
 
 --CREATE INDEX SQL_STAT_VAL_SRC_PROCESSING_TIME_MS ON SQL_STAT_VAL_SRC (PROCESSING, TIME_MS);
+
+SET SQL_NOTES=@OLD_SQL_NOTES;

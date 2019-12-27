@@ -1,3 +1,6 @@
+-- Stop NOTE level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
 --
 -- Rename the old ACTIVITY table
 --
@@ -67,3 +70,5 @@ END//
 DELIMITER ;
 CALL copy_activity();
 DROP PROCEDURE copy_activity;
+
+SET SQL_NOTES=@OLD_SQL_NOTES;
