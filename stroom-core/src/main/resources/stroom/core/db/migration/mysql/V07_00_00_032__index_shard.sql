@@ -1,3 +1,6 @@
+-- Stop NOTE level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
 CREATE TABLE IF NOT EXISTS index_shard (
   id                    bigint(20) NOT NULL AUTO_INCREMENT,
   node_name             varchar(255) NOT NULL,
@@ -52,3 +55,5 @@ END//
 DELIMITER ;
 CALL copy_index_shard();
 DROP PROCEDURE copy_index_shard;
+
+SET SQL_NOTES=@SQL_NOTES;

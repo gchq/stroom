@@ -1,3 +1,6 @@
+-- Stop NOTE level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
 --
 -- Create the meta_feed table
 --
@@ -34,3 +37,5 @@ END//
 DELIMITER ;
 CALL copy_meta_feed();
 DROP PROCEDURE copy_meta_feed;
+
+SET SQL_NOTES=@SQL_NOTES;

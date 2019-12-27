@@ -1,3 +1,6 @@
+-- Stop NOTE level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
 --
 -- Create the permission tables
 --
@@ -148,3 +151,5 @@ END//
 DELIMITER ;
 CALL copy_security();
 DROP PROCEDURE copy_security;
+
+SET SQL_NOTES=@SQL_NOTES;

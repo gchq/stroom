@@ -1,3 +1,6 @@
+-- Stop NOTE level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
 --
 -- Rename the old QUERY table
 --
@@ -70,3 +73,5 @@ END//
 DELIMITER ;
 CALL copy_query();
 DROP PROCEDURE copy_query;
+
+SET SQL_NOTES=@SQL_NOTES;

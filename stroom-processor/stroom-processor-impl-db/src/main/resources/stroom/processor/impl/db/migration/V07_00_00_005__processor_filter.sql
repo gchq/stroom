@@ -1,3 +1,6 @@
+-- Stop NOTE level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
 
 --Create Table: CREATE TABLE `STRM_PROC_FILT` (
 --  `ID` int(11) NOT NULL AUTO_INCREMENT,
@@ -71,3 +74,5 @@ END//
 DELIMITER ;
 CALL copy_processor_filter();
 DROP PROCEDURE copy_processor_filter;
+
+SET SQL_NOTES=@SQL_NOTES;

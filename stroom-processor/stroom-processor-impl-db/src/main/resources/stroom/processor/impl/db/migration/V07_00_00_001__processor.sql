@@ -1,3 +1,4 @@
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 --Create Table: CREATE TABLE `STRM_PROC` (
 --  `ID` int(11) NOT NULL AUTO_INCREMENT,
 --  `VER` tinyint(4) NOT NULL,
@@ -61,3 +62,4 @@ DELIMITER ;
 CALL copy_processor();
 DROP PROCEDURE copy_processor;
 
+SET SQL_NOTES=@SQL_NOTES;

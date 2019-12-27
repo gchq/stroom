@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Change docker image to allow us to pass in the dropwizard command to run, e.g. server|migrate.
 
+* Stop MySQL outputing Note level warnings during migration about things that don't exist when we expect them not to.
+
 
 ## [v7.0-beta.13] - 2019-12-24
 

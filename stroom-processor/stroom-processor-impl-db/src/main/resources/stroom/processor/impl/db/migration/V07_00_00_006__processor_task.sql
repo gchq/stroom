@@ -1,3 +1,6 @@
+-- Stop NOTE level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
 CREATE TABLE IF NOT EXISTS processor_task (
   id                        bigint(20) NOT NULL AUTO_INCREMENT,
   version                   int(11) NOT NULL,
@@ -50,3 +53,5 @@ DELIMITER ;
 CALL copy_processor_task();
 DROP PROCEDURE copy_processor_task;
 
+
+SET SQL_NOTES=@SQL_NOTES;

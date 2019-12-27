@@ -1,3 +1,6 @@
+-- Stop NOTE level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
 --
 -- Create the fs_type_path table
 --
@@ -42,3 +45,5 @@ END//
 DELIMITER ;
 CALL copy_fs_type_path();
 DROP PROCEDURE copy_fs_type_path;
+
+SET SQL_NOTES=@SQL_NOTES;

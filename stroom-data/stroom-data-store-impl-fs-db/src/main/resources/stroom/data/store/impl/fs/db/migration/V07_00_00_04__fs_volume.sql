@@ -1,3 +1,6 @@
+-- Stop NOTE level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
 --
 -- Create the fs_volume_state table
 --
@@ -98,3 +101,5 @@ END//
 DELIMITER ;
 CALL copy_fs_volume();
 DROP PROCEDURE copy_fs_volume;
+
+SET SQL_NOTES=@SQL_NOTES;
