@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Change docker image to allow us to pass in the dropwizard command to run, e.g. server|migrate.
+
 
 ## [v7.0-beta.13] - 2019-12-24
 
