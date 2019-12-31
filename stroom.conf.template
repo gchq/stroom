@@ -51,7 +51,7 @@ stroom.auth.services.url=https://IP_ADDRESS/api/auth
 stroom.auth.authentication.service.url=https://IP_ADDRESS/api/auth/authentication/v1
 
 stroom.users.ui.url=https://IP_ADDRESS/s/users
-stroom.apikeys.ui.url=https://IP_ADDRESS/s/tokens
+stroom.apikeys.ui.url=https://IP_ADDRESS/s/apiKeys
 stroom.changepassword.url=https://IP_ADDRESS/s/changepassword
 
 # Service discovery

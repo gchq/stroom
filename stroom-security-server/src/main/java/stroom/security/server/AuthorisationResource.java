@@ -61,12 +61,9 @@ public class AuthorisationResource {
     @ApiOperation(
         value = "Submit a request to verify if the user has the requested permission on a 'document'",
         response = Response.class)
-    public Response isAuthorised(@ApiParam("AuthorisationRequest") final AuthorisationRequest authorisationRequest) {
+    public Response isAuthorised(@ApiParam("permission") final String permission) {
 
-        boolean result = securityContext.hasDocumentPermission(
-            authorisationRequest.getDocRef().getType(),
-            authorisationRequest.getDocRef().getUuid(),
-            authorisationRequest.getPermission());
+        boolean result = securityContext.hasAppPermission(permission);
 
         return result
             ? Response .ok() .build()
@@ -74,10 +71,10 @@ public class AuthorisationResource {
     }
 
     @POST
-    @Path("canManageUsers")
+    @Path("hasPermission")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response canManageUsers(UserPermissionRequest userPermissionRequest) {
+    public Response hasPermission(UserPermissionRequest userPermissionRequest) {
         // TODO what happens if the permission is bad? What's the result of this method call and how should we handle it?
         boolean result = securityContext.hasAppPermission(userPermissionRequest.getPermission());
         // The user here will be the one logged in by the JWT.
