@@ -61,12 +61,9 @@ public class AuthorisationResource {
     @ApiOperation(
         value = "Submit a request to verify if the user has the requested permission on a 'document'",
         response = Response.class)
-    public Response isAuthorised(@ApiParam("AuthorisationRequest") final AuthorisationRequest authorisationRequest) {
+    public Response isAuthorised(@ApiParam("permission") final String permission) {
 
-        boolean result = securityContext.hasDocumentPermission(
-            authorisationRequest.getDocRef().getType(),
-            authorisationRequest.getDocRef().getUuid(),
-            authorisationRequest.getPermission());
+        boolean result = securityContext.hasAppPermission(permission);
 
         return result
             ? Response .ok() .build()
