@@ -12,9 +12,9 @@ import java.util.Map;
 import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
 
 @SuppressWarnings("unused") // used by FlyWay
-public class V07_00_00_03__docref_serialisation extends BaseJavaMigration {
+public class V07_00_00_003__docref_serialisation extends BaseJavaMigration {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_03__docref_serialisation.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_003__docref_serialisation.class);
 
     /**
      * Executes this migration. The execution will automatically take place within a transaction, when the underlying

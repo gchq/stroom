@@ -31,8 +31,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class V07_00_00_02__query extends BaseJavaMigration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_02__query.class);
+public class V07_00_00_002__query extends BaseJavaMigration {
+    private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_002__query.class);
     private JAXBContext jaxbContext;
 
     @Override

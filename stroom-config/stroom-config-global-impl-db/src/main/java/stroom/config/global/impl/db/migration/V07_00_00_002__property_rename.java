@@ -17,9 +17,9 @@ import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
 
 @SuppressWarnings("unused")
         // used by FlyWay
-public class V07_00_00_02__property_rename extends BaseJavaMigration {
+public class V07_00_00_002__property_rename extends BaseJavaMigration {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_02__property_rename.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_002__property_rename.class);
 
     // Pkg private so we can access it for testing
     static final Map<String, String> FROM_TO_MAP = new HashMap<>();
