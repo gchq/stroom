@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Update `stroom.security.apiToken` in stroom.conf.template to the new token with added client id and secret
+
 ## [v6.1-beta.14] - 2019-12-05
 
 * Updated API key to include audience and added client id and secret.
