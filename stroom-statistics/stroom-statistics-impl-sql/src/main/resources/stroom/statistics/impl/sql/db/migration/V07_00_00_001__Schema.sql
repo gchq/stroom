@@ -52,8 +52,7 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_VAL (
       REFERENCES SQL_STAT_KEY (ID)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-CALL create_statistics_index(
-    database(),
+CALL statistics_create_index_v1(
     'SQL_STAT_VAL',
     'SQL_STAT_VAL_TIME_MS',
     false,
@@ -70,8 +69,7 @@ CREATE TABLE IF NOT EXISTS SQL_STAT_VAL_SRC (
   PROCESSING        bit(1) NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-CALL create_statistics_index(
-    database(),
+CALL statistics_create_index_v1(
     'SQL_STAT_VAL_SRC',
     'SQL_STAT_VAL_SRC_PROCESSING_TIME_MS',
     false,
