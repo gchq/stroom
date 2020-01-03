@@ -29,7 +29,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class V07_00_00_012__Dictionary extends BaseJavaMigration {
+public class V07_00_00_003__Dictionary extends BaseJavaMigration {
 
     @Override
     public void migrate(final Context context) throws Exception {

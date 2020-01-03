@@ -18,22 +18,30 @@ package stroom.core.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
-import stroom.core.db.migration._V07_00_00.doc.feed._V07_00_00_FeedDoc;
-import stroom.core.db.migration._V07_00_00.doc.feed._V07_00_00_FeedSerialiser;
+import stroom.core.db.migration._V07_00_00.doc.script._V07_00_00_ScriptDoc;
+import stroom.core.db.migration._V07_00_00.doc.script._V07_00_00_ScriptSerialiser;
+import stroom.core.db.migration._V07_00_00.docref._V07_00_00_DocRef;
+import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_DocRefs;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-public class V07_00_00_026__Feed extends BaseJavaMigration {
+public class V07_00_00_008__Script extends BaseJavaMigration {
+
     @Override
     public void migrate(final Context context) throws Exception {
-        final _V07_00_00_FeedSerialiser serialiser = new _V07_00_00_FeedSerialiser();
+        Connection connection = context.getConnection();
 
-        try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "SELECT f.CRT_MS, f.CRT_USER, f.UPD_MS, f.UPD_USER, f.NAME, f.UUID, f.DESCRIP, st.NAME, f.CLS, f.ENC, f.CTX_ENC, f.STAT, f.RETEN_DAY_AGE, f.REF FROM FD f LEFT OUTER JOIN STRM_TP st ON (st.ID = f.FK_STRM_TP_ID)")) {
+        final _V07_00_00_ScriptSerialiser serialiser = new _V07_00_00_ScriptSerialiser();
+
+        try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, DEP, DAT FROM SCRIPT")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);
@@ -43,16 +51,11 @@ public class V07_00_00_026__Feed extends BaseJavaMigration {
                     final String name = resultSet.getString(5);
                     final String uuid = resultSet.getString(6);
                     final String descrip = resultSet.getString(7);
-                    final String streamTypeName = resultSet.getString(8);
-                    final String classification = resultSet.getString(9);
-                    final String encoding = resultSet.getString(10);
-                    final String contextEncoding = resultSet.getString(11);
-                    final byte status = resultSet.getByte(12);
-                    final Integer retentionDayAge = resultSet.getInt(13);
-                    final boolean reference = resultSet.getBoolean(14);
+                    final String dep = resultSet.getString(8);
+                    final String dat = resultSet.getString(9);
 
-                    final _V07_00_00_FeedDoc document = new _V07_00_00_FeedDoc();
-                    document.setType(_V07_00_00_FeedDoc.DOCUMENT_TYPE);
+                    final _V07_00_00_ScriptDoc document = new _V07_00_00_ScriptDoc();
+                    document.setType(_V07_00_00_ScriptDoc.DOCUMENT_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());
@@ -61,22 +64,22 @@ public class V07_00_00_026__Feed extends BaseJavaMigration {
                     document.setCreateUser(crtUser);
                     document.setUpdateUser(updUser);
                     document.setDescription(descrip);
-                    document.setStreamType(streamTypeName);
+                    document.setData(dat);
 
-                    document.setClassification(classification);
-                    document.setEncoding(encoding);
-                    document.setContextEncoding(contextEncoding);
-                    document.setStatus(_V07_00_00_FeedDoc._V07_00_00_FeedStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(status));
-                    document.setRetentionDayAge(retentionDayAge);
-                    document.setReference(reference);
+                    final _V07_00_00_DocRefs docRefs = serialiser.getDocRefsFromLegacyXML(dep);
+                    if (docRefs != null) {
+                        final List<_V07_00_00_DocRef> dependencies = new ArrayList<>(docRefs.getDoc());
+                        dependencies.sort(_V07_00_00_DocRef::compareTo);
+                        document.setDependencies(dependencies);
+                    }
 
                     final Map<String, byte[]> dataMap = serialiser.write(document);
 
                     // Add the records.
                     dataMap.forEach((k, v) -> {
-                        try (final PreparedStatement ps = context.getConnection().prepareStatement(
+                        try (final PreparedStatement ps = connection.prepareStatement(
                                 "INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
-                            ps.setString(1, _V07_00_00_FeedDoc.DOCUMENT_TYPE);
+                            ps.setString(1, _V07_00_00_ScriptDoc.DOCUMENT_TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
                             ps.setString(4, k);

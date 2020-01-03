@@ -18,8 +18,10 @@ package stroom.core.db.migration.mysql;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
-import stroom.core.db.migration._V07_00_00.doc.xmlschema._V07_00_00_XmlSchemaDoc;
-import stroom.core.db.migration._V07_00_00.doc.xmlschema._V07_00_00_XmlSchemaSerialiser;
+import stroom.core.db.migration._V07_00_00.doc.textconverter._V07_00_00_OldTextConverter;
+import stroom.core.db.migration._V07_00_00.doc.textconverter._V07_00_00_TextConverterDoc;
+import stroom.core.db.migration._V07_00_00.doc.textconverter._V07_00_00_TextConverterDoc.TextConverterType;
+import stroom.core.db.migration._V07_00_00.doc.textconverter._V07_00_00_TextConverterSerialiser;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -27,14 +29,14 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
 
-public class V07_00_00_014__XmlSchema extends BaseJavaMigration {
+public class V07_00_00_004__TextConverter extends BaseJavaMigration {
 
     @Override
     public void migrate(final Context context) throws Exception {
-        final _V07_00_00_XmlSchemaSerialiser serialiser = new _V07_00_00_XmlSchemaSerialiser();
+        final _V07_00_00_TextConverterSerialiser serialiser = new _V07_00_00_TextConverterSerialiser();
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, DAT, DEPRC, SCHEMA_GRP, NS, SYSTEM_ID FROM XML_SCHEMA")) {
+                "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, CONV_TP, DAT FROM TXT_CONV")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);
@@ -44,14 +46,11 @@ public class V07_00_00_014__XmlSchema extends BaseJavaMigration {
                     final String name = resultSet.getString(5);
                     final String uuid = resultSet.getString(6);
                     final String descrip = resultSet.getString(7);
-                    final String dat = resultSet.getString(8);
-                    final boolean deprc = resultSet.getBoolean(9);
-                    final String schemaGrp = resultSet.getString(10);
-                    final String ns = resultSet.getString(11);
-                    final String systemId = resultSet.getString(12);
+                    final byte convTp = resultSet.getByte(8);
+                    final String dat = resultSet.getString(9);
 
-                    final _V07_00_00_XmlSchemaDoc document = new _V07_00_00_XmlSchemaDoc();
-                    document.setType(_V07_00_00_XmlSchemaDoc.DOCUMENT_TYPE);
+                    final _V07_00_00_TextConverterDoc document = new _V07_00_00_TextConverterDoc();
+                    document.setType(_V07_00_00_TextConverterDoc.DOCUMENT_TYPE);
                     document.setUuid(uuid);
                     document.setName(name);
                     document.setVersion(UUID.randomUUID().toString());
@@ -60,11 +59,13 @@ public class V07_00_00_014__XmlSchema extends BaseJavaMigration {
                     document.setCreateUser(crtUser);
                     document.setUpdateUser(updUser);
                     document.setDescription(descrip);
+
+                    final _V07_00_00_OldTextConverter._V07_00_00_TextConverterType converterType = _V07_00_00_OldTextConverter._V07_00_00_TextConverterType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(convTp);
+                    if (converterType != null) {
+                        document.setConverterType(TextConverterType.valueOf(converterType.name()));
+                    }
+
                     document.setData(dat);
-                    document.setDeprecated(deprc);
-                    document.setSchemaGroup(schemaGrp);
-                    document.setNamespaceURI(ns);
-                    document.setSystemId(systemId);
 
                     final Map<String, byte[]> dataMap = serialiser.write(document);
 
@@ -72,7 +73,7 @@ public class V07_00_00_014__XmlSchema extends BaseJavaMigration {
                     dataMap.forEach((k, v) -> {
                         try (final PreparedStatement ps = context.getConnection().prepareStatement(
                                 "INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
-                            ps.setString(1, _V07_00_00_XmlSchemaDoc.DOCUMENT_TYPE);
+                            ps.setString(1, _V07_00_00_TextConverterDoc.DOCUMENT_TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
                             ps.setString(4, k);
