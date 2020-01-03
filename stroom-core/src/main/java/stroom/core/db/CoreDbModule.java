@@ -72,7 +72,10 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
         try (final Connection connection = dataSource.getConnection()) {
             try {
                 try (final Statement statement = connection.createStatement()) {
-                    try (final ResultSet resultSet = statement.executeQuery("SELECT version FROM schema_version ORDER BY installed_rank DESC")) {
+                    try (final ResultSet resultSet = statement.executeQuery(
+                            "SELECT version " +
+                                "FROM schema_version " +
+                                "ORDER BY installed_rank DESC")) {
                         if (resultSet.next()) {
                             usingFlyWay = true;
 
@@ -104,7 +107,17 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
             if (version == null) {
                 try {
                     try (final Statement statement = connection.createStatement()) {
-                        try (final ResultSet resultSet = statement.executeQuery("SELECT VER_MAJ, VER_MIN, VER_PAT FROM STROOM_VER ORDER BY VER_MAJ DESC, VER_MIN DESC, VER_PAT DESC LIMIT 1")) {
+                        try (final ResultSet resultSet = statement.executeQuery(
+                                "SELECT " +
+                                        "VER_MAJ, " +
+                                        "VER_MIN, " +
+                                        "VER_PAT " +
+                                    "FROM STROOM_VER " +
+                                    "ORDER BY " +
+                                        "VER_MAJ DESC, " +
+                                        "VER_MIN DESC, " +
+                                        "VER_PAT DESC " +
+                                    "LIMIT 1")) {
                             if (resultSet.next()) {
                                 version = new Version(resultSet.getInt(1), resultSet.getInt(2), resultSet.getInt(3));
                                 LOGGER.info("Found STROOM_VER.VER_MAJ/VER_MIN/VER_PAT " + version);
@@ -120,7 +133,10 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
             if (version == null) {
                 try {
                     try (final Statement statement = connection.createStatement()) {
-                        try (final ResultSet resultSet = statement.executeQuery("SELECT ID FROM FD LIMIT 1")) {
+                        try (final ResultSet resultSet = statement.executeQuery(
+                                "SELECT ID " +
+                                    "FROM FD " +
+                                    "LIMIT 1")) {
                             if (resultSet.next()) {
                                 version = new Version(2, 0, 0);
                             }
@@ -135,7 +151,10 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
             if (version == null) {
                 try {
                     try (final Statement statement = connection.createStatement()) {
-                        try (final ResultSet resultSet = statement.executeQuery("SELECT ID FROM FEED LIMIT 1")) {
+                        try (final ResultSet resultSet = statement.executeQuery(
+                                "SELECT ID " +
+                                    "FROM FEED " +
+                                    "LIMIT 1")) {
                             if (resultSet.next()) {
                                 version = new Version(2, 0, 0);
                             }
@@ -162,7 +181,9 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
                 // If Stroom is currently at v4.0.60+ then tell FlyWay to baseline at that version.
                 baselineVersionAsString = "4.0.60";
             } else {
-                final String message = "The current Stroom version cannot be upgraded to v5+. You must be on v4.0.60 or later.";
+                final String message =
+                        "The current Stroom version cannot be upgraded to v5+. " +
+                            "You must be on v4.0.60 or later.";
                 LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
                 throw new RuntimeException(message);
             }
@@ -185,14 +206,28 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
     }
 
     private void migrateDatabase(final Flyway flyway) {
-        LOGGER.info("Applying Flyway migrations to {} in {} from {}", MODULE, FLYWAY_TABLE, FLYWAY_LOCATIONS);
-        try {
-            flyway.migrate();
-        } catch (FlywayException e) {
-            LOGGER.error("Error migrating {} database", MODULE, e);
-            throw e;
+        int pendingMigrations = flyway.info().pending().length;
+
+        if (pendingMigrations > 0) {
+            try {
+                LOGGER.info("Applying {} Flyway DB migration(s) to {} in table {} from {}",
+                        pendingMigrations,
+                        MODULE,
+                        FLYWAY_TABLE,
+                        FLYWAY_LOCATIONS);
+                flyway.migrate();
+                LOGGER.info("Completed Flyway DB migration for {} in table {}",
+                        getModuleName(),
+                        FLYWAY_TABLE);
+            } catch (FlywayException e) {
+                LOGGER.error("Error migrating {} database", MODULE, e);
+                throw e;
+            }
+        } else {
+            LOGGER.info("No pending Flyway DB migration(s) for {} in {}",
+                    MODULE,
+                    FLYWAY_LOCATIONS);
         }
-        LOGGER.info("Completed Flyway migrations for {} in {}", MODULE, FLYWAY_TABLE);
     }
 
     @Override
