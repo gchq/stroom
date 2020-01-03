@@ -14,8 +14,24 @@
 -- limitations under the License.
 -- ------------------------------------------------------------------------
 
-ALTER TABLE IDX_VOL ADD COLUMN IDX_UUID varchar(255) default NULL;
-UPDATE IDX_VOL iv SET iv.IDX_UUID = (SELECT i.UUID FROM IDX i WHERE i.ID = iv.FK_IDX_ID);
-ALTER TABLE IDX_VOL DROP FOREIGN KEY VOL_FK_IDX_ID;
+-- stop note level warnings about objects (not)? existing
+set @old_sql_notes=@@sql_notes, sql_notes=0;
+
+CALL core_add_column_v1('IDX_VOL', 'IDX_UUID', 'varchar(255) default NULL');
+
+-- idempotent
+UPDATE IDX_VOL iv
+SET iv.IDX_UUID = (
+    SELECT i.UUID
+    FROM IDX i
+    WHERE i.ID = iv.FK_IDX_ID);
+
+CALL core_drop_constraint_v1('IDX_VOL', 'VOL_FK_IDX_ID', 'FOREIGN KEY');
+
+-- idempotent
 ALTER TABLE IDX_VOL DROP PRIMARY KEY, ADD PRIMARY KEY(FK_VOL_ID, IDX_UUID);
-ALTER TABLE IDX_VOL DROP COLUMN FK_IDX_ID;
+
+CALL core_drop_column_v1('IDX_VOL', 'FK_IDX_ID');
+
+-- Reset to the original value
+SET SQL_NOTES=@OLD_SQL_NOTES;

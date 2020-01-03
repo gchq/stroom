@@ -14,7 +14,21 @@
 -- limitations under the License.
 -- ------------------------------------------------------------------------
 
-ALTER TABLE IDX_SHRD ADD COLUMN IDX_UUID varchar(255) default NULL;
-UPDATE IDX_SHRD shard SET shard.IDX_UUID = (SELECT ind.UUID FROM IDX ind WHERE ind.ID = shard.FK_IDX_ID);
-ALTER TABLE IDX_SHRD DROP FOREIGN KEY IDX_SHRD_FK_IDX_ID;
-ALTER TABLE IDX_SHRD CHANGE FK_IDX_ID OLD_IDX_ID int(11) default NULL;
+-- stop note level warnings about objects (not)? existing
+set @old_sql_notes=@@sql_notes, sql_notes=0;
+
+CALL core_add_column_v1('IDX_SHRD', 'IDX_UUID', 'varchar(255) default NULL');
+
+-- idempotent
+UPDATE IDX_SHRD shard
+SET shard.IDX_UUID = (
+    SELECT ind.UUID
+    FROM IDX ind
+    WHERE ind.ID = shard.FK_IDX_ID);
+
+CALL core_drop_constraint_v1('IDX_SHRD', 'FOREIGN KEY', 'IDX_SHRD_FK_IDX_ID');
+
+CALL core_rename_column_v1('IDX_SHRD', 'FK_IDX_ID', 'OLD_IDX_ID', 'int(11) default NULL');
+
+-- Reset to the original value
+SET SQL_NOTES=@OLD_SQL_NOTES;

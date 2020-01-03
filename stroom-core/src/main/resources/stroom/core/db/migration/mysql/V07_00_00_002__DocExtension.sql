@@ -14,10 +14,21 @@
 -- limitations under the License.
 -- ------------------------------------------------------------------------
 
-ALTER TABLE doc MODIFY COLUMN data LONGBLOB;
-ALTER TABLE doc DROP INDEX type;
-ALTER TABLE doc ADD COLUMN ext varchar(255) DEFAULT NULL;
-ALTER TABLE doc ADD CONSTRAINT type_uuid_ext UNIQUE (type, uuid, ext);
-UPDATE doc SET ext = "meta";
+-- stop note level warnings about objects (not)? existing
+set @old_sql_notes=@@sql_notes, sql_notes=0;
 
-CREATE INDEX doc_type_uuid_ext_idx ON doc (type, uuid, ext);
+-- idempotent
+ALTER TABLE doc MODIFY COLUMN data LONGBLOB;
+
+CALL core_drop_constraint_v1('doc', 'type', 'INDEX');
+
+CALL core_add_column_v1('doc', 'ext', 'varchar(255) DEFAULT NULL');
+
+-- idempotent
+UPDATE doc
+SET ext = "meta";
+
+CALL core_create_index_v1('doc', 'doc_type_uuid_ext_idx', true, 'type, uuid, ext');
+
+-- Reset to the original value
+SET SQL_NOTES=@OLD_SQL_NOTES;

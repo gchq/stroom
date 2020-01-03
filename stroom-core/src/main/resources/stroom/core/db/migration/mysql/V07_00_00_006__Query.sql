@@ -14,6 +14,17 @@
 -- limitations under the License.
 -- ------------------------------------------------------------------------
 
-ALTER TABLE QUERY ADD COLUMN DASH_UUID varchar(255) DEFAULT NULL;
-UPDATE QUERY INNER JOIN DASH ON (QUERY.DASH_ID = DASH.ID) SET QUERY.DASH_UUID = DASH.UUID;
-ALTER TABLE QUERY DROP COLUMN DASH_ID
+-- stop note level warnings about objects (not)? existing
+SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+
+CALL core_add_column_v1('QUERY', 'DASH_UUID', 'varchar(255) default NULL');
+
+-- idempotent
+UPDATE QUERY
+INNER JOIN DASH ON (QUERY.DASH_ID = DASH.ID)
+SET QUERY.DASH_UUID = DASH.UUID;
+
+CALL core_drop_column_v1('QUERY', 'DASH_ID');
+
+-- Reset to the original value
+SET SQL_NOTES=@OLD_SQL_NOTES;
