@@ -19,7 +19,9 @@ CREATE TABLE IF NOT EXISTS index_shard (
   PRIMARY KEY (id),
   KEY index_shard_fk_volume_id (fk_volume_id),
   KEY index_shard_index_uuid (index_uuid),
-  CONSTRAINT index_shard_fk_volume_id FOREIGN KEY (fk_volume_id) REFERENCES index_volume (id)
+  CONSTRAINT index_shard_fk_volume_id
+      FOREIGN KEY (fk_volume_id)
+      REFERENCES index_volume (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
@@ -36,8 +38,36 @@ BEGIN
         -- Copy data into the table, use ID predicate to make it re-runnable
         --
         INSERT
-        INTO index_shard (id, node_name, fk_volume_id, index_uuid, commit_document_count, commit_duration_ms, commit_ms, document_count, file_size, status, index_version, partition_name, partition_from_ms, partition_to_ms)
-        SELECT s.ID, n.NAME, s.FK_VOL_ID, s.IDX_UUID, s.CMT_DOC_CT, s.CMT_DUR_MS, s.CMT_MS, s.DOC_CT, s.FILE_SZ, s.STAT, s.IDX_VER, s.PART, s.PART_FROM_MS, s.PART_TO_MS
+        INTO index_shard (
+            id,
+            node_name,
+            fk_volume_id,
+            index_uuid,
+            commit_document_count,
+            commit_duration_ms,
+            commit_ms,
+            document_count,
+            file_size,
+            status,
+            index_version,
+            partition_name,
+            partition_from_ms,
+            partition_to_ms)
+        SELECT
+            s.ID,
+            n.NAME,
+            s.FK_VOL_ID,
+            s.IDX_UUID,
+            s.CMT_DOC_CT,
+            s.CMT_DUR_MS,
+            s.CMT_MS,
+            s.DOC_CT,
+            s.FILE_SZ,
+            s.STAT,
+            s.IDX_VER,
+            s.PART,
+            s.PART_FROM_MS,
+            s.PART_TO_MS
         FROM IDX_SHRD s
         INNER JOIN ND n ON (n.ID = s.FK_ND_ID)
         WHERE s.ID > (SELECT COALESCE(MAX(id), 0) FROM index_shard)
