@@ -47,7 +47,9 @@ CREATE TABLE IF NOT EXISTS fs_volume (
   PRIMARY KEY       (id),
   UNIQUE KEY		path (path),
   KEY fs_volume_fk_fs_volume_state_id (fk_fs_volume_state_id),
-  CONSTRAINT fs_volume_fk_fs_volume_state_id FOREIGN KEY (fk_fs_volume_state_id) REFERENCES fs_volume_state (id)
+  CONSTRAINT fs_volume_fk_fs_volume_state_id
+    FOREIGN KEY (fk_fs_volume_state_id)
+    REFERENCES fs_volume_state (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
