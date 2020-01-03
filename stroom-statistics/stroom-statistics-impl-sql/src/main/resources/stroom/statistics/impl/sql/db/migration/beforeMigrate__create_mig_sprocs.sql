@@ -1,10 +1,10 @@
 -- stop note level warnings about objects (not)? existing
-set @old_sql_notes=@@sql_notes, sql_notes=0;
+SET @old_sql_notes=@@sql_notes, sql_notes=0;
 
-DROP PROCEDURE IF EXISTS create_docstore_index;
+DROP PROCEDURE IF EXISTS create_statistics_index;
 
 DELIMITER $$
-CREATE PROCEDURE create_docstore_index
+CREATE PROCEDURE create_statistics_index
 (
     given_database varchar(64),
     given_table varchar(64),
