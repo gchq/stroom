@@ -337,7 +337,6 @@ public class ConfigMapper {
                     default:
                         throw new RuntimeException("Should never get here");
                 }
-                configProperty.setEditable(false);
             }
         }
         configProperty.setDataTypeName(getDataTypeName(prop.getValueType()));
