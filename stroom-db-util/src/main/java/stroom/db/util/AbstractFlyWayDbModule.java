@@ -35,15 +35,27 @@ public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_Con
                 .baselineOnMigrate(true)
                 .load();
 
-        LOGGER.info("Applying Flyway migrations to {} in {} from {}",
-                getModuleName(), getFlyWayTableName(), getFlyWayLocation());
-        try {
-            flyway.migrate();
-        } catch (FlywayException e) {
-            LOGGER.error("Error migrating {} database", getModuleName(), e);
-            throw e;
+        int pendingMigrations = flyway.info().pending().length;
+
+        if (pendingMigrations > 0) {
+            try {
+                LOGGER.info("Applying {} Flyway DB migration(s) to {} in table {} from {}",
+                        pendingMigrations,
+                        getModuleName(),
+                        getFlyWayTableName(),
+                        getFlyWayLocation());
+                flyway.migrate();
+                LOGGER.info("Completed Flyway DB migration for {} in table {}",
+                        getModuleName(),
+                        getFlyWayTableName());
+            } catch (FlywayException e) {
+                LOGGER.error("Error migrating {} database", getModuleName(), e);
+                throw e;
+            }
+        } else {
+            LOGGER.info("No pending Flyway DB migration(s) for {} in {}",
+                    getModuleName(),
+                    getFlyWayLocation());
         }
-        LOGGER.info("Completed Flyway migrations for {} in {}",
-                getModuleName(), getFlyWayTableName());
     }
 }

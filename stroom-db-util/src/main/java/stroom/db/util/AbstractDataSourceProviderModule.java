@@ -46,7 +46,6 @@ public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbCon
         final DataSource dataSource = dataSourceFactory.create(configProvider.get());
 
         if (!COMPLETED_MIGRATIONS.contains(getModuleName())) {
-            LOGGER.info(() -> "Running migration for " + getModuleName());
             performMigration(dataSource);
             COMPLETED_MIGRATIONS.add(getModuleName());
         }

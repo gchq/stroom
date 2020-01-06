@@ -14,17 +14,22 @@
 -- limitations under the License.
 -- ------------------------------------------------------------------------
 
--- Stop NOTE level warnings about objects (not)? existing
+-- stop note level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
---
--- Create the processor_feed table
---
-CREATE TABLE IF NOT EXISTS processor_feed (
-  id      int(11) NOT NULL AUTO_INCREMENT,
-  name    varchar(255) NOT NULL,
-  PRIMARY KEY (id),
-  UNIQUE  KEY name (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CALL core_add_column_v1(
+    'QUERY',
+    'DASH_UUID',
+    'varchar(255) default NULL');
 
+-- idempotent
+UPDATE QUERY
+INNER JOIN DASH ON (QUERY.DASH_ID = DASH.ID)
+SET QUERY.DASH_UUID = DASH.UUID;
+
+CALL core_drop_column_v1(
+    'QUERY',
+    'DASH_ID');
+
+-- Reset to the original value
 SET SQL_NOTES=@OLD_SQL_NOTES;

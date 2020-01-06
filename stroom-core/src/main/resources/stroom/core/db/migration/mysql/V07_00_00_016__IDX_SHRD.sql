@@ -14,17 +14,31 @@
 -- limitations under the License.
 -- ------------------------------------------------------------------------
 
--- Stop NOTE level warnings about objects (not)? existing
-SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+-- stop note level warnings about objects (not)? existing
+set @old_sql_notes=@@sql_notes, sql_notes=0;
 
---
--- Create the processor_feed table
---
-CREATE TABLE IF NOT EXISTS processor_feed (
-  id      int(11) NOT NULL AUTO_INCREMENT,
-  name    varchar(255) NOT NULL,
-  PRIMARY KEY (id),
-  UNIQUE  KEY name (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+CALL core_add_column_v1(
+    'IDX_SHRD',
+    'IDX_UUID',
+    'varchar(255) default NULL');
 
+-- idempotent
+UPDATE IDX_SHRD shard
+SET shard.IDX_UUID = (
+    SELECT ind.UUID
+    FROM IDX ind
+    WHERE ind.ID = shard.FK_IDX_ID);
+
+CALL core_drop_constraint_v1(
+    'IDX_SHRD',
+    'IDX_SHRD_FK_IDX_ID',
+    'FOREIGN KEY');
+
+CALL core_rename_column_v1(
+    'IDX_SHRD',
+    'FK_IDX_ID',
+    'OLD_IDX_ID',
+    'int(11) default NULL');
+
+-- Reset to the original value
 SET SQL_NOTES=@OLD_SQL_NOTES;

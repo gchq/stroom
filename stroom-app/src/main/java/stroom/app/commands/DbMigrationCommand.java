@@ -57,10 +57,10 @@ public class DbMigrationCommand extends ConfiguredCommand<Config> {
             // Relies on all db modules adding an entry to the multibinder
             injector.getInstance(Key.get(GuiceUtil.setOf(DataSource.class)));
         } catch (Exception e) {
-            LOGGER.error("Error running DB migrations",e);
+            LOGGER.error("Error running DB migrations", e);
             System.exit(1);
         }
 
-        LOGGER.info("DB migrations complete");
+        LOGGER.info("DB migration complete");
     }
 }

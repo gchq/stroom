@@ -18,9 +18,9 @@
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 --
--- Create the processor_node table
+-- Create the meta_feed table
 --
-CREATE TABLE IF NOT EXISTS processor_node (
+CREATE TABLE IF NOT EXISTS meta_feed (
   id 				    int(11) NOT NULL AUTO_INCREMENT,
   name				    varchar(255) NOT NULL,
   PRIMARY KEY           (id),
@@ -28,30 +28,30 @@ CREATE TABLE IF NOT EXISTS processor_node (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Copy node name into the processor_node table
+-- Copy meta into the meta_feed table
 --
-DROP PROCEDURE IF EXISTS copy_processor_node;
+DROP PROCEDURE IF EXISTS copy_meta_feed;
 DELIMITER //
-CREATE PROCEDURE copy_processor_node ()
+CREATE PROCEDURE copy_meta_feed ()
 BEGIN
-  IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'ND' > 0) THEN
-    INSERT INTO processor_node (id, name)
+  IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'FD' > 0) THEN
+    INSERT INTO meta_feed (id, name)
     SELECT ID, NAME
-    FROM ND
-    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor_node)
+    FROM FD
+    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta_feed)
     ORDER BY ID;
 
     -- Work out what to set our auto_increment start value to
-    SELECT CONCAT('ALTER TABLE processor_node AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+    SELECT CONCAT('ALTER TABLE meta_feed AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
     INTO @alter_table_sql
-    FROM processor_node;
+    FROM meta_feed;
 
     PREPARE alter_table_stmt FROM @alter_table_sql;
     EXECUTE alter_table_stmt;
   END IF;
 END//
 DELIMITER ;
-CALL copy_processor_node();
-DROP PROCEDURE copy_processor_node;
+CALL copy_meta_feed();
+DROP PROCEDURE copy_meta_feed;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;

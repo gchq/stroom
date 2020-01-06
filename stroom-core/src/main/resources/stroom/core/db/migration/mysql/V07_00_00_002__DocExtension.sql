@@ -14,17 +14,31 @@
 -- limitations under the License.
 -- ------------------------------------------------------------------------
 
--- Stop NOTE level warnings about objects (not)? existing
-SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
+-- stop note level warnings about objects (not)? existing
+set @old_sql_notes=@@sql_notes, sql_notes=0;
 
---
--- Create the processor_feed table
---
-CREATE TABLE IF NOT EXISTS processor_feed (
-  id      int(11) NOT NULL AUTO_INCREMENT,
-  name    varchar(255) NOT NULL,
-  PRIMARY KEY (id),
-  UNIQUE  KEY name (name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+-- idempotent
+ALTER TABLE doc MODIFY COLUMN data LONGBLOB;
 
+CALL core_drop_constraint_v1(
+    'doc',
+    'type',
+    'INDEX');
+
+CALL core_add_column_v1(
+    'doc',
+    'ext',
+    'varchar(255) DEFAULT NULL');
+
+-- idempotent
+UPDATE doc
+SET ext = "meta";
+
+CALL core_create_index_v1(
+    'doc',
+    'doc_type_uuid_ext_idx',
+    true,
+    'type, uuid, ext');
+
+-- Reset to the original value
 SET SQL_NOTES=@OLD_SQL_NOTES;

@@ -4,8 +4,13 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 DELIMITER //
 
 DROP PROCEDURE IF EXISTS `stage1Upsert` //
-CREATE PROCEDURE `stage1Upsert`
-    (IN p_sqlPrecision tinyint(4), IN p_precision tinyint(4), IN p_valueType tinyint(4), IN p_aggregateToMs bigint(20), OUT p_rowCount int)
+
+CREATE PROCEDURE `stage1Upsert` (
+    IN p_sqlPrecision tinyint(4),
+    IN p_precision tinyint(4),
+    IN p_valueType tinyint(4),
+    IN p_aggregateToMs bigint(20),
+    OUT p_rowCount int)
 BEGIN
     CREATE TEMPORARY TABLE TEMP_AGG AS (
         SELECT
@@ -13,8 +18,8 @@ BEGIN
             SSVT.TIME_MS_RND as TIME_MS,
             SSVT.PRES as PRES,
             SSVT.VAL_TP as VAL_TP,
-            COALESCE(SSVT.VAL,0) + COALESCE(SSV.VAL, 0) as VAL,
-            COALESCE(SSVT.CT,0) + COALESCE(SSV.CT, 0) as CT
+            COALESCE(SSVT.VAL, 0) + COALESCE(SSV.VAL, 0) as VAL,
+            COALESCE(SSVT.CT, 0) + COALESCE(SSV.CT, 0) as CT
         FROM (
             SELECT
                 ROUND(SSVS.TIME_MS, p_sqlPrecision) AS TIME_MS_RND,
@@ -27,10 +32,14 @@ BEGIN
             JOIN SQL_STAT_KEY SSK ON (SSK.NAME = SSVS.NAME)
             WHERE SSVS.TIME_MS < p_aggregateToMs
             AND SSVS.VAL_TP = p_valueType
-               AND SSVS.PROCESSING = 1
-               GROUP BY FK_SQL_STAT_KEY_ID, TIME_MS_RND, SSVS.VAL_TP, PRES
-               HAVING COUNT(*) > 0
-            ) SSVT
+            AND SSVS.PROCESSING = 1
+            GROUP BY
+                FK_SQL_STAT_KEY_ID,
+                TIME_MS_RND,
+                SSVS.VAL_TP,
+                PRES
+            HAVING COUNT(*) > 0
+        ) SSVT
         LEFT JOIN SQL_STAT_VAL SSV ON (
            SSV.FK_SQL_STAT_KEY_ID = SSVT.FK_SQL_STAT_KEY_ID AND
            SSV.TIME_MS = SSVT.TIME_MS_RND AND
@@ -38,14 +47,20 @@ BEGIN
         )
     );
 
-    INSERT INTO SQL_STAT_VAL (FK_SQL_STAT_KEY_ID, TIME_MS, PRES, VAL_TP, VAL, CT)
+    INSERT INTO SQL_STAT_VAL (
+        FK_SQL_STAT_KEY_ID,
+        TIME_MS,
+        PRES,
+        VAL_TP,
+        VAL,
+        CT)
     SELECT
-       TEMP_AGG.FK_SQL_STAT_KEY_ID,
-       TEMP_AGG.TIME_MS,
-       TEMP_AGG.PRES,
-       TEMP_AGG.VAL_TP,
-       TEMP_AGG.VAL,
-       TEMP_AGG.CT
+        TEMP_AGG.FK_SQL_STAT_KEY_ID,
+        TEMP_AGG.TIME_MS,
+        TEMP_AGG.PRES,
+        TEMP_AGG.VAL_TP,
+        TEMP_AGG.VAL,
+        TEMP_AGG.CT
     FROM TEMP_AGG
     WHERE TEMP_AGG.CT > 0
     ON DUPLICATE KEY UPDATE
@@ -58,8 +73,14 @@ BEGIN
 END //
 
 DROP PROCEDURE IF EXISTS `stage2Upsert` //
-CREATE PROCEDURE `stage2Upsert`
-    (IN p_targetPrecision tinyint(4), IN p_targetSqlPrecision tinyint(4), IN p_lastPrecision tinyint(4), IN p_valueType tinyint(4), IN p_aggregateToMs bigint(20), OUT p_rowCount int)
+
+CREATE PROCEDURE `stage2Upsert` (
+    IN p_targetPrecision tinyint(4),
+    IN p_targetSqlPrecision tinyint(4),
+    IN p_lastPrecision tinyint(4),
+    IN p_valueType tinyint(4),
+    IN p_aggregateToMs bigint(20),
+    OUT p_rowCount int)
 BEGIN
     CREATE TEMPORARY TABLE TEMP_AGG AS (
         SELECT
@@ -88,10 +109,18 @@ BEGIN
             AND SSVN.PRES = p_lastPrecision  -- old PRES
             AND SSVN.VAL_TP = p_valueType
         ) ROUNDED
-        GROUP BY ROUNDED.FK_SQL_STAT_KEY_ID, ROUNDED.TIME_MS
+        GROUP BY
+            ROUNDED.FK_SQL_STAT_KEY_ID,
+            ROUNDED.TIME_MS
     );
 
-    INSERT INTO SQL_STAT_VAL (FK_SQL_STAT_KEY_ID, TIME_MS, PRES, VAL_TP, VAL, CT)
+    INSERT INTO SQL_STAT_VAL (
+        FK_SQL_STAT_KEY_ID,
+        TIME_MS,
+        PRES,
+        VAL_TP,
+        VAL,
+        CT)
     SELECT
         TEMP_AGG.FK_SQL_STAT_KEY_ID,
         TEMP_AGG.TIME_MS,

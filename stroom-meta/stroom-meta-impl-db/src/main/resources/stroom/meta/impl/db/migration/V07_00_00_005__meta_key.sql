@@ -18,40 +18,41 @@
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 --
--- Create the processor_node table
+-- Create the meta_key table
 --
-CREATE TABLE IF NOT EXISTS processor_node (
-  id 				    int(11) NOT NULL AUTO_INCREMENT,
-  name				    varchar(255) NOT NULL,
-  PRIMARY KEY           (id),
-  UNIQUE KEY            name (name)
+CREATE TABLE IF NOT EXISTS meta_key (
+  id 				int(11) NOT NULL AUTO_INCREMENT,
+  name 		        varchar(100) NOT NULL,
+  field_type 		tinyint(4) NOT NULL,
+  PRIMARY KEY       (id),
+  UNIQUE KEY		name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Copy node name into the processor_node table
+-- Copy data into the meta_key table
 --
-DROP PROCEDURE IF EXISTS copy_processor_node;
+DROP PROCEDURE IF EXISTS copy_meta_key;
 DELIMITER //
-CREATE PROCEDURE copy_processor_node ()
+CREATE PROCEDURE copy_meta_key ()
 BEGIN
-  IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'ND' > 0) THEN
-    INSERT INTO processor_node (id, name)
-    SELECT ID, NAME
-    FROM ND
-    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor_node)
+  IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_ATR_KEY' > 0) THEN
+    INSERT INTO meta_key (id, name, field_type)
+    SELECT ID, NAME, FLD_TP
+    FROM STRM_ATR_KEY
+    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta_key)
     ORDER BY ID;
 
     -- Work out what to set our auto_increment start value to
-    SELECT CONCAT('ALTER TABLE processor_node AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+    SELECT CONCAT('ALTER TABLE meta_key AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
     INTO @alter_table_sql
-    FROM processor_node;
+    FROM meta_key;
 
     PREPARE alter_table_stmt FROM @alter_table_sql;
     EXECUTE alter_table_stmt;
   END IF;
 END//
 DELIMITER ;
-CALL copy_processor_node();
-DROP PROCEDURE copy_processor_node;
+CALL copy_meta_key();
+DROP PROCEDURE copy_meta_key;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;

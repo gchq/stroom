@@ -18,40 +18,48 @@
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 --
--- Create the processor_node table
+-- Create the fs_type_path table
 --
-CREATE TABLE IF NOT EXISTS processor_node (
-  id 				    int(11) NOT NULL AUTO_INCREMENT,
-  name				    varchar(255) NOT NULL,
-  PRIMARY KEY           (id),
-  UNIQUE KEY            name (name)
+CREATE TABLE IF NOT EXISTS fs_type_path (
+  id 				int(11) NOT NULL AUTO_INCREMENT,
+  name 		        varchar(255) NOT NULL,
+  path 		        varchar(255) NOT NULL,
+  PRIMARY KEY       (id),
+  UNIQUE KEY		name (name)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
--- Copy node name into the processor_node table
+-- Copy data into the fs_type_path table
 --
-DROP PROCEDURE IF EXISTS copy_processor_node;
+DROP PROCEDURE IF EXISTS copy_fs_type_path;
 DELIMITER //
-CREATE PROCEDURE copy_processor_node ()
+CREATE PROCEDURE copy_fs_type_path ()
 BEGIN
-  IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'ND' > 0) THEN
-    INSERT INTO processor_node (id, name)
-    SELECT ID, NAME
-    FROM ND
-    WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor_node)
-    ORDER BY ID;
+  IF EXISTS (
+      SELECT TABLE_NAME
+      FROM INFORMATION_SCHEMA.TABLES
+      WHERE TABLE_NAME = 'STRM_TP') THEN
+
+    SET @insert_sql=''
+        ' INSERT INTO fs_type_path (id, name, path)'
+        ' SELECT ID, NAME, PATH'
+        ' FROM STRM_TP'
+        ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM fs_type_path)'
+        ' ORDER BY ID;';
+    PREPARE insert_stmt FROM @insert_sql;
+    EXECUTE insert_stmt;
 
     -- Work out what to set our auto_increment start value to
-    SELECT CONCAT('ALTER TABLE processor_node AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+    SELECT CONCAT('ALTER TABLE fs_type_path AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
     INTO @alter_table_sql
-    FROM processor_node;
+    FROM fs_type_path;
 
     PREPARE alter_table_stmt FROM @alter_table_sql;
     EXECUTE alter_table_stmt;
   END IF;
 END//
 DELIMITER ;
-CALL copy_processor_node();
-DROP PROCEDURE copy_processor_node;
+CALL copy_fs_type_path();
+DROP PROCEDURE copy_fs_type_path;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
