@@ -26,7 +26,7 @@ SET shard.IDX_UUID = (
     FROM IDX ind
     WHERE ind.ID = shard.FK_IDX_ID);
 
-CALL core_drop_constraint_v1('IDX_SHRD', 'FOREIGN KEY', 'IDX_SHRD_FK_IDX_ID');
+CALL core_drop_constraint_v1('IDX_SHRD', 'IDX_SHRD_FK_IDX_ID', 'FOREIGN KEY');
 
 CALL core_rename_column_v1('IDX_SHRD', 'FK_IDX_ID', 'OLD_IDX_ID', 'int(11) default NULL');
 
