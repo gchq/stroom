@@ -12,7 +12,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -61,10 +60,10 @@ public class TestListDbMigrations {
                 .map(Tuple2::_1))
                 .mapToInt(String::length)
                 .max()
-                .getAsInt();
+                .orElse(60);
 
         migrations.entrySet().stream()
-                .sorted(Comparator.comparing(Map.Entry::getKey))
+                .sorted(Map.Entry.comparingByKey())
                 .forEach(entry -> {
                     stringBuilder
                             .append(MAGENTA)
