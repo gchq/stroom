@@ -65,6 +65,8 @@ textarea {
 	border: solid 1px #c5cde2;
 	resize: none;
 	height: 80px;
+	/* To ensure we get a pointer for the scrollbar */
+	cursor: auto;
 }
 
 img {
@@ -559,6 +561,20 @@ td {
 	height: 80px;
 }
 
+.gwt-TextArea-readonly {
+  color: #666;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.gwt-TextBox-readonly {
+  color: #666;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.gwt-PasswordTextBox-readonly {
+  color: #666;
+  background-color: rgba(255, 255, 255, 0.5);
+}
 
 /* .gwt-TextBox,.gwt-PasswordTextBox,.gwt-TextArea,.gwt-DateBox,.stroom-DropDownTree { */
 /* 	padding: 1px; */
