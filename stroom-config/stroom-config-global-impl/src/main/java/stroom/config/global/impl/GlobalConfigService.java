@@ -121,6 +121,8 @@ class GlobalConfigService {
     private List<ConfigProperty> list(final Predicate<ConfigProperty> filter) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
             // Ensure the global config properties are up to date with the db values
+            // TODO This is not ideal as each time the filter is changed we hit the db to
+            //   update the config props.
             updateConfigFromDb();
 
             return configMapper.getGlobalProperties().stream()
