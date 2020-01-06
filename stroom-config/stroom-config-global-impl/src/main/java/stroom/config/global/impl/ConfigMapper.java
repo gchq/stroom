@@ -53,6 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
@@ -68,7 +69,7 @@ import java.util.stream.StreamSupport;
 public class ConfigMapper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigMapper.class);
 
-    private static final List<String> DELIMITERS = List.of(
+    private static final Set<String> DELIMITERS = Set.of(
             "|", ":", ";", ",", "!", "/", "\\", "#", "@", "~", "-", "_", "=", "+", "?");
     private static final String ROOT_PROPERTY_PATH = "stroom";
     private static final String DOCREF_PREFIX = "docRef(";
@@ -395,6 +396,13 @@ public class ConfigMapper {
         return convertToString(value, availableDelimiters);
     }
 
+    static void validateDelimiter(final char delimiter) {
+        if (!DELIMITERS.contains(String.valueOf(delimiter))) {
+            throw new RuntimeException(LogUtil.message("{} is not a valid delimiter, use one of {}",
+                    delimiter, DELIMITERS));
+        }
+    }
+
     private static String convertToString(final Object value, final List<String> availableDelimiters) {
         if (value != null) {
             if (isSupportedPropertyType(value.getClass())) {
@@ -561,6 +569,8 @@ public class ConfigMapper {
             }
 
             String delimiter = String.valueOf(serialisedForm.charAt(0));
+            validateDelimiter(serialisedForm.charAt(0));
+
             String delimitedValue = serialisedForm.substring(1);
 
             return StreamSupport.stream(Splitter.on(delimiter).split(delimitedValue).spliterator(), false)
@@ -579,7 +589,9 @@ public class ConfigMapper {
             final Class<V> valueType) {
 
         final String entryDelimiter = String.valueOf(serialisedForm.charAt(0));
+        validateDelimiter(serialisedForm.charAt(0));
         final String keyValueDelimiter = String.valueOf(serialisedForm.charAt(1));
+        validateDelimiter(serialisedForm.charAt(1));
 
         // now remove the delimiters from our value
         final String delimitedValue = serialisedForm.substring(2);
@@ -608,6 +620,8 @@ public class ConfigMapper {
 
         try {
             final String delimiter = String.valueOf(serialisedForm.charAt(0));
+            validateDelimiter(serialisedForm.charAt(0));
+
             String delimitedValue = serialisedForm.substring(1);
 
             delimitedValue = delimitedValue.replace(DOCREF_PREFIX, "");

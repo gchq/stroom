@@ -11,6 +11,7 @@ import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.FileConfigurationSourceProvider;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.jackson.Jackson;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -460,6 +461,20 @@ class TestConfigMapper {
                 .isFalse();
         assertThat(configProperty.getEffectiveValue().orElseThrow())
                 .isEqualTo(defaultValue);
+    }
+
+
+    @Test
+    void testValidateDelimiter_bad() {
+        Assertions.assertThrows(RuntimeException.class, () -> {
+            ConfigMapper.validateDelimiter('a');
+        });
+    }
+
+    @Test
+    void testValidateDelimiter_good() {
+        // Will throw an exception if bad
+        ConfigMapper.validateDelimiter('|');
     }
 
     private AppConfig getAppConfig() {
