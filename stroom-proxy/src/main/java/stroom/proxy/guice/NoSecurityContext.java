@@ -40,6 +40,12 @@ public class NoSecurityContext implements SecurityContext {
     }
 
     @Override
+    public void setApiToken(String user, String token) {
+
+    }
+
+
+    @Override
     public boolean isLoggedIn() {
         return true;
     }

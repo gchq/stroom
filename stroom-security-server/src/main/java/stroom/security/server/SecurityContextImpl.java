@@ -38,6 +38,7 @@ import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import javax.persistence.RollbackException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -53,13 +54,14 @@ class SecurityContextImpl implements SecurityContext {
     private static final String USER = "user";
     private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", INTERNAL, false, true);
 
+    private final Map<String, String> tokensByUser = new HashMap();
+
     private final UserDocumentPermissionsCache userDocumentPermissionsCache;
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final UserCache userCache;
     private final DocumentPermissionService documentPermissionService;
     private final DocumentTypePermissions documentTypePermissions;
-    private final ApiTokenCache apiTokenCache;
 
     @Inject
     SecurityContextImpl(
@@ -68,15 +70,13 @@ class SecurityContextImpl implements SecurityContext {
             final UserAppPermissionsCache userAppPermissionsCache,
             final UserCache userCache,
             final DocumentPermissionService documentPermissionService,
-            final DocumentTypePermissions documentTypePermissions,
-            final ApiTokenCache apiTokenCache) {
+            final DocumentTypePermissions documentTypePermissions) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCache = userCache;
         this.documentPermissionService = documentPermissionService;
         this.documentTypePermissions = documentTypePermissions;
-        this.apiTokenCache = apiTokenCache;
     }
 
     @Override
@@ -147,7 +147,12 @@ class SecurityContextImpl implements SecurityContext {
 
     @Override
     public String getApiToken() {
-        return apiTokenCache.get(getUserId());
+        return tokensByUser.get(getUserId());
+    }
+
+    @Override
+    public void setApiToken(String user, String token) {
+        tokensByUser.put(user, token);
     }
 
     @Override

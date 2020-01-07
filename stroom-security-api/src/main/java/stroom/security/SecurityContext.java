@@ -46,6 +46,11 @@ public interface SecurityContext {
     String getApiToken();
 
     /**
+     * Sets an API token string for the specified user.
+     */
+    void setApiToken(String user, String token);
+
+    /**
      * Check if the user associated with this security context is logged in.
      *
      * @return True if the user is logged in.
