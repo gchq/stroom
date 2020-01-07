@@ -25,10 +25,10 @@ import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.model.IdTokenRequest;
 import stroom.feed.server.UserAgentSessionUtil;
+import stroom.security.SecurityContext;
 import stroom.security.UserTokenUtil;
 import stroom.security.server.exception.AuthenticationException;
 import stroom.security.shared.UserRef;
-import stroom.servicediscovery.ResourcePaths;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -46,8 +46,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URI;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -97,6 +95,7 @@ public class SecurityFilter implements Filter {
     private final SecurityConfig config;
     private final JWTService jwtService;
     private final AuthenticationServiceClients authenticationServiceClients;
+    private SecurityContext securityContext;
     private final AuthenticationService authenticationService;
 
 //    private Pattern pattern = null;
@@ -109,10 +108,12 @@ public class SecurityFilter implements Filter {
             final SecurityConfig config,
             final JWTService jwtService,
             final AuthenticationServiceClients authenticationServiceClients,
-            final AuthenticationService authenticationService) {
+            final AuthenticationService authenticationService,
+            final SecurityContext securityContext ) {
         this.config = config;
         this.jwtService = jwtService;
         this.authenticationServiceClients = authenticationServiceClients;
+        this.securityContext = securityContext;
         this.authenticationService = authenticationService;
     }
 
@@ -335,6 +336,7 @@ public class SecurityFilter implements Filter {
                     UserAgentSessionUtil.set(request);
 
                     final AuthenticationToken token = createUIToken(session, state, accessCode);
+                    securityContext.setApiToken(token.getUserId(), token.getJws());
                     final UserRef userRef = authenticationService.getUserRef(token);
 
                     if (userRef != null) {
@@ -492,6 +494,7 @@ public class SecurityFilter implements Filter {
         boolean isAuthenticatedApiRequest = jwtService.containsValidJws(request);
         if (isAuthenticatedApiRequest) {
             final AuthenticationToken token = createAPIToken(request);
+            securityContext.setApiToken(token.getUserId(), token.getJws());
             userRef = authenticationService.getUserRef(token);
         }
 
