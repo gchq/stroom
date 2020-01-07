@@ -7,6 +7,7 @@ import stroom.annotation.impl.AnnotationConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.cluster.task.impl.ClusterTaskConfig;
+import stroom.config.common.ApiGatewayConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.db.CoreConfig;
@@ -43,6 +44,7 @@ public class AppConfig implements IsConfig {
     private boolean superDevMode;
     private ActivityConfig activityConfig = new ActivityConfig();
     private AnnotationConfig annotationConfig = new AnnotationConfig();
+    private ApiGatewayConfig apiGatewayConfig = new ApiGatewayConfig();
     private BenchmarkClusterConfig benchmarkClusterConfig = new BenchmarkClusterConfig();
     private ClusterConfig clusterConfig = new ClusterConfig();
     private ClusterLockConfig clusterLockConfig = new ClusterLockConfig();
@@ -104,6 +106,15 @@ public class AppConfig implements IsConfig {
 
     public void setAnnotationConfig(final AnnotationConfig annotationConfig) {
         this.annotationConfig = annotationConfig;
+    }
+
+    @JsonProperty("apiGateway")
+    public ApiGatewayConfig getApiGatewayConfig() {
+        return apiGatewayConfig;
+    }
+
+    void setApiGatewayConfig(final ApiGatewayConfig apiGatewayConfig) {
+        this.apiGatewayConfig = apiGatewayConfig;
     }
 
     @JsonProperty("benchmark")

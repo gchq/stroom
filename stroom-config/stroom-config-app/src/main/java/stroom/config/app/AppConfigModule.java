@@ -72,20 +72,22 @@ public class AppConfigModule extends AbstractModule {
     protected void configure() {
         // Bind the de-serialised yaml config to a singleton AppConfig object, whose parts
         // can be injected all over the app.
-        bind(AppConfig.class).toInstance(configHolder.getAppConfig());
+        bind(AppConfig.class) .toInstance(configHolder.getAppConfig());
 
         // Holder for the location of the yaml config file so the AppConfigMonitor can
         // get hold of it via guice
-        bind(ConfigLocation.class).toInstance(new ConfigLocation(configHolder.getConfigFile()));
+        bind(ConfigLocation.class)
+            .toInstance(new ConfigLocation(configHolder.getConfigFile()));
 
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own.
         // This allows gradle modules to know nothing about the other modules.
         // Our bind method has the arguments in the reverse way to guice so we can
-        // more easily see the tree structure
+        // more easily see the tree structure. Each config pojo must implement IsConfig
 
         bind(AppConfig::getActivityConfig, stroom.activity.impl.db.ActivityConfig.class);
         bind(AppConfig::getAnnotationConfig, stroom.annotation.impl.AnnotationConfig.class);
+        bind(AppConfig::getApiGatewayConfig, stroom.config.common.ApiGatewayConfig.class);
         bind(AppConfig::getBenchmarkClusterConfig, BenchmarkClusterConfig.class);
         bind(AppConfig::getClusterConfig, ClusterConfig.class);
         bind(AppConfig::getClusterLockConfig, ClusterLockConfig.class);

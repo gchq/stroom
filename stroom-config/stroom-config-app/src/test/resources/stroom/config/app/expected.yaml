@@ -39,6 +39,10 @@ appConfig:
     - "Closed"
     standardComments: []
     createText: "Create Annotation"
+  apiGateway:
+    hostName: null
+    scheme: "https"
+    port: null
   benchmark:
     streamCount: 1000
     recordCount: 10000
