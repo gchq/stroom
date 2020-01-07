@@ -59,6 +59,8 @@ logging:
 
 appConfig:
   superDevMode: true
+  apiGateway:
+    hostname: ${API_GATEWAY_HOST:-<<<IP_ADDRESS>>>}
   commonDbDetails:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}

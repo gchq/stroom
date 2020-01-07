@@ -84,6 +84,8 @@ logging:
       #    logFormat: "%-6level [%d{\"yyyy-MM-dd\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 appConfig:
+  apiGateway:
+    hostname: ${API_GATEWAY_HOST:-<<<IP_ADDRESS>>>}
   commonDbDetails:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}
