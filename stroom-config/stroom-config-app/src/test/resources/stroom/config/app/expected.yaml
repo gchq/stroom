@@ -12,8 +12,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   annotation:
     db:
@@ -26,8 +28,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
     statusValues:
     - "New"
@@ -55,8 +59,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   clusterTask:
     clusterResultCollectorCache:
@@ -73,8 +79,10 @@ appConfig:
       cachePrepStmts: null
       prepStmtCacheSize: null
       prepStmtCacheSqlLimit: null
+      connectionTimeout: null
       idleTimeout: null
       maxLifetime: null
+      minimumIdle: null
       maxPoolSize: null
   contentPackImport:
     enabled: false
@@ -89,8 +97,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   dashboard:
     activeQueriesCache:
@@ -126,8 +136,10 @@ appConfig:
           cachePrepStmts: null
           prepStmtCacheSize: null
           prepStmtCacheSqlLimit: null
+          connectionTimeout: null
           idleTimeout: null
           maxLifetime: null
+          minimumIdle: null
           maxPoolSize: null
     retention:
       deleteBatchSize: 1000
@@ -147,8 +159,10 @@ appConfig:
           cachePrepStmts: null
           prepStmtCacheSize: null
           prepStmtCacheSqlLimit: null
+          connectionTimeout: null
           idleTimeout: null
           maxLifetime: null
+          minimumIdle: null
           maxPoolSize: null
     filesystemVolume:
       volumeSelector: "RoundRobin"
@@ -179,8 +193,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   explorer:
     db:
@@ -193,8 +209,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   export:
     enabled: false
@@ -221,8 +239,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
     writer:
       cache:
@@ -244,8 +264,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   lifecycle:
     enabled: true
@@ -260,8 +282,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
     node: "tba"
     status:
@@ -342,8 +366,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   properties:
     db:
@@ -356,8 +382,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   proxyAggregation:
     proxyDir: "${stroom.temp}/proxy"
@@ -409,8 +437,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
     authentication:
       authenticationServiceUrl: null
@@ -510,8 +540,10 @@ appConfig:
           cachePrepStmts: null
           prepStmtCacheSize: null
           prepStmtCacheSqlLimit: null
+          connectionTimeout: null
           idleTimeout: null
           maxLifetime: null
+          minimumIdle: null
           maxPoolSize: null
       search:
         storeSize: "1000000,100,10,1"
@@ -620,8 +652,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   ui:
     welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
