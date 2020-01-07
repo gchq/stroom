@@ -50,7 +50,7 @@ public class ManageGlobalPropertyListPresenter
                 }
                 return row.getName();
             }
-        }, "Name", 200);
+        }, "Name", 350);
         getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
             @Override
             public String getValue(final ConfigProperty row) {
@@ -69,7 +69,7 @@ public class ManageGlobalPropertyListPresenter
                 }
                 return row.getSource().getName();
             }
-        }, "Source", 150);
+        }, "Source", 75);
 
         getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
             @Override
@@ -79,7 +79,7 @@ public class ManageGlobalPropertyListPresenter
                 }
                 return row.getDescription();
             }
-        }, "Description", 300);
+        }, "Description", 400);
         getView().addEndColumn(new EndColumn<>());
 
 
