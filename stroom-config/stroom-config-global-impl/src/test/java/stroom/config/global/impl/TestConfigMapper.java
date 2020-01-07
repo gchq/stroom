@@ -467,14 +467,88 @@ class TestConfigMapper {
     @Test
     void testValidateDelimiter_bad() {
         Assertions.assertThrows(RuntimeException.class, () -> {
-            ConfigMapper.validateDelimiter('a');
+            ConfigMapper.validateDelimiter("xxxx", 0, "first", "dummy example");
         });
     }
 
     @Test
     void testValidateDelimiter_good() {
         // Will throw an exception if bad
-        ConfigMapper.validateDelimiter('|');
+        ConfigMapper.validateDelimiter("|a|b|c", 0, "first", "dummy example");
+    }
+
+    @Test
+    void testValidateStringValue_list_good1() {
+        doValidateStringValueTest("stroom.stringListProp", "|item1|item2|item3", true);
+    }
+
+    @Test
+    void testValidateStringValue_list_good2() {
+        doValidateStringValueTest("stroom.stringListProp", "", true);
+    }
+
+    @Test
+    void testValidateStringValue_list_good3() {
+        doValidateStringValueTest("stroom.stringListProp", "#item1", true);
+    }
+
+    @Test
+    void testValidateStringValue_list_bad() {
+        doValidateStringValueTest("stroom.stringListProp", "item1|item2|item3", false);
+    }
+
+    @Test
+    void testValidateStringValue_map_good() {
+        doValidateStringValueTest("stroom.stringLongMapProp", "@#key1#123@key2#456", true);
+    }
+
+    @Test
+    void testValidateStringValue_map_bad() {
+        // $ not valid delimiter
+        doValidateStringValueTest("stroom.stringLongMapProp", "@$key1$123@key2$456", false);
+    }
+
+    @Test
+    void testValidateStringValue_docRefList_good() {
+        doValidateStringValueTest("stroom.docRefListProp", ",|docRef(type1|uuid1|name1),|docRef(type1|uuid1|name1)", true);
+    }
+
+    @Test
+    void testValidateStringValue_docRefList_bad() {
+        // $ not valid delimiter
+        doValidateStringValueTest("stroom.docRefListProp", ",$docRef(type1$uuid1$name1),$docRef(type1$uuid1$name1)", false);
+    }
+
+    @Test
+    void testValidateStringValue_docRef_good() {
+        doValidateStringValueTest("stroom.docRefProp", ",docRef(type1,uuid1,name1)", true);
+    }
+
+    @Test
+    void testValidateStringValue_docRef_bad1() {
+        // $ not valid delimiter
+        doValidateStringValueTest("stroom.docRefProp", "docRef(type1,uuid1,name1)", false);
+    }
+
+    @Test
+    void testValidateStringValue_docRef_bad2() {
+        // $ not valid delimiter
+        doValidateStringValueTest("stroom.docRefProp", ",docRef(type1,uuid1)", false);
+    }
+
+
+    private void doValidateStringValueTest(final String path, final String value, boolean shouldValidate) {
+        TestConfig testConfig = new TestConfig();
+        ConfigMapper configMapper = new ConfigMapper(testConfig);
+
+        if (shouldValidate) {
+            configMapper.validateStringValue(path, value);
+        } else {
+            Assertions.assertThrows(RuntimeException.class, () -> {
+                // no leading delimiter
+                configMapper.validateStringValue(path, value);
+            });
+        }
     }
 
     private AppConfig getAppConfig() {

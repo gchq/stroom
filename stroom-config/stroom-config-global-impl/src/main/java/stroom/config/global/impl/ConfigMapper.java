@@ -49,6 +49,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -69,10 +70,18 @@ import java.util.stream.StreamSupport;
 public class ConfigMapper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigMapper.class);
 
-    private static final Set<String> DELIMITERS = Set.of(
+    // In order of preference
+    private static final List<String> VALID_DELIMITERS_LIST = List.of(
             "|", ":", ";", ",", "!", "/", "\\", "#", "@", "~", "-", "_", "=", "+", "?");
+    private static final Set<String> VALID_DELIMITERS_SET = new HashSet<>(VALID_DELIMITERS_LIST);
+
     private static final String ROOT_PROPERTY_PATH = "stroom";
     private static final String DOCREF_PREFIX = "docRef(";
+    public static final String LIST_EXAMPLE = "|item1|item2|item3";
+    public static final String MAP_EXAMPLE = "|:key1:value1|:key2:value2|:key3:value3";
+    public static final String DOCREF_EXAMPLE = "|,"
+        + DOCREF_PREFIX
+        + "StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)";
 
     // The guice bound appConfig
     private final AppConfig appConfig;
@@ -83,7 +92,6 @@ public class ConfigMapper {
 
     // A map of property accessor objects keyed on the fully qualified prop path (i.e. stroom.path.temp)
     private final Map<String, Prop> propertyMap = new HashMap<>();
-
 
     @Inject
     public ConfigMapper(final AppConfig appConfig) {
@@ -102,8 +110,16 @@ public class ConfigMapper {
             final AppConfig vanillaObject = appConfig.getClass().getDeclaredConstructor().newInstance();
             // Pass in an empty hashmap because we are not parsing the actual guice bound appConfig. We are only
             // populating the globalPropertiesMap so the passed hashmap is thrown away.
-            addConfigObjectMethods(vanillaObject, ROOT_PROPERTY_PATH, new HashMap<>(), this::defaultValuePropertyConsumer);
-        } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            addConfigObjectMethods(
+                vanillaObject,
+                ROOT_PROPERTY_PATH,
+                new HashMap<>(),
+                this::defaultValuePropertyConsumer);
+
+        } catch (InstantiationException
+            | IllegalAccessException
+            | InvocationTargetException
+            | NoSuchMethodException e) {
             throw new RuntimeException(LogUtil.message("Unable to call constructor on class {}",
                     appConfig.getClass().getName()), e);
         }
@@ -375,7 +391,8 @@ public class ConfigMapper {
                 return "";
             }
         } catch (Exception e) {
-            throw new RuntimeException(LogUtil.message("Error getting type name for {}: {}", type, e.getMessage()));
+            throw new RuntimeException(LogUtil.message(
+                "Error getting type name for {}: {}", type, e.getMessage()));
         }
     }
 
@@ -392,18 +409,31 @@ public class ConfigMapper {
 
     // pkg private for testing
     static String convertToString(final Object value) {
-        List<String> availableDelimiters = new ArrayList<>(DELIMITERS);
+        List<String> availableDelimiters = new ArrayList<>(VALID_DELIMITERS_LIST);
         return convertToString(value, availableDelimiters);
     }
 
-    static void validateDelimiter(final char delimiter) {
-        if (!DELIMITERS.contains(String.valueOf(delimiter))) {
-            throw new RuntimeException(LogUtil.message("{} is not a valid delimiter, use one of {}",
-                    delimiter, DELIMITERS));
+    static void validateDelimiter(final String serialisedForm,
+                                  final int delimiterPosition,
+                                  final String positionName,
+                                  final String exampleText) {
+        if (serialisedForm.length() < delimiterPosition + 1) {
+            throw new RuntimeException(LogUtil.message("Delimiter position {} is out of bounds for {}",
+                delimiterPosition, serialisedForm));
+        }
+        final String delimiter = String.valueOf(serialisedForm.charAt(delimiterPosition));
+
+        if (!VALID_DELIMITERS_SET.contains(delimiter)) {
+            throw new RuntimeException(LogUtil.message(
+                "[{}] does not contain a valid delimiter as its {} character. " +
+                    "Valid delimiters are [{}]. " +
+                    "For example [{}]",
+                serialisedForm, positionName, String.join("", VALID_DELIMITERS_LIST), exampleText));
         }
     }
 
-    private static String convertToString(final Object value, final List<String> availableDelimiters) {
+    private static String convertToString(final Object value,
+                                          final List<String> availableDelimiters) {
         if (value != null) {
             if (isSupportedPropertyType(value.getClass())) {
                 if (value instanceof List) {
@@ -418,7 +448,8 @@ public class ConfigMapper {
                     return value.toString();
                 }
             } else {
-                throw new RuntimeException(LogUtil.message("Value [{}] of type {}, is not a supported type",
+                throw new RuntimeException(LogUtil.message(
+                    "Value [{}] of type {}, is not a supported type",
                         value, value.getClass().getName()));
             }
         } else {
@@ -486,20 +517,24 @@ public class ConfigMapper {
                 return stringToEnum(value, type);
             }
         } catch (Exception e) {
-            // Don't include the original exception else gwt uses the msg of the original which is
-            // not very user friendly. Enable debug to see the stack
-            LOGGER.debug(LogUtil.message("Unable to convert value [{}] to type {} due to: {}",
+            // Don't include the original exception else gwt uses the msg of the
+            // original which is not very user friendly. Enable debug to see the stack
+            LOGGER.debug(LogUtil.message(
+                "Unable to convert value [{}] to type {} due to: {}",
                     value, genericType, e.getMessage()), e);
-            throw new RuntimeException(LogUtil.message("Unable to convert value [{}] to type {} due to: {}",
+            throw new RuntimeException(LogUtil.message(
+                "Unable to convert value [{}] to type {} due to: {}",
                     value, getDataTypeName(genericType), e.getMessage()));
         }
 
         LOGGER.error("Unable to convert value [{}] of type [{}] to an Object", value, type);
-        throw new RuntimeException(LogUtil.message("Type [{}] is not supported for value [{}]", genericType, value));
+        throw new RuntimeException(LogUtil.message(
+            "Type [{}] is not supported for value [{}]", genericType, value));
     }
 
 
-    private static String listToString(final List<?> list, final List<String> availableDelimiters) {
+    private static String listToString(final List<?> list,
+                                       final List<String> availableDelimiters) {
 
         if (list.isEmpty()) {
             return "";
@@ -546,40 +581,56 @@ public class ConfigMapper {
                 .collect(Collectors.joining(entryDelimiter));
     }
 
-    private static String docRefToString(final DocRef docRef, final List<String> availableDelimiters) {
-        String allText = String.join("", docRef.getType(), docRef.getUuid(), docRef.getName());
+    private static String docRefToString(final DocRef docRef,
+                                         final List<String> availableDelimiters) {
+        String allText = String.join(
+            "", docRef.getType(), docRef.getUuid(), docRef.getName());
         String delimiter = getDelimiter(allText, availableDelimiters);
 
         // prefix the delimited form with the delimiter so when we deserialise
         // we know what the delimiter is
         return delimiter
-                + "docRef("
-                + String.join(delimiter, docRef.getType(), docRef.getUuid(), docRef.getName())
-                + ")";
+            + "docRef("
+            + String.join(
+                delimiter,
+                docRef.getType(),
+                docRef.getUuid(),
+                docRef.getName())
+            + ")";
     }
 
     private static String enumToString(final Enum<?> enumInstance) {
         return enumInstance.name();
     }
 
-    private static <T> List<T> stringToList(final String serialisedForm, final Class<T> type) {
-        try {
-            if (serialisedForm == null || serialisedForm.isEmpty()) {
-                return Collections.emptyList();
-            }
+    private static <T> List<T> stringToList(final String serialisedForm,
+                                            final Class<T> type) {
+        if (serialisedForm == null || serialisedForm.isEmpty()) {
+            return Collections.emptyList();
+        } else {
+            final String delimiter = String.valueOf(serialisedForm.charAt(0));
+            validateDelimiter(
+                serialisedForm,
+                0,
+                "first",
+                LIST_EXAMPLE);
 
-            String delimiter = String.valueOf(serialisedForm.charAt(0));
-            validateDelimiter(serialisedForm.charAt(0));
+            try {
 
-            String delimitedValue = serialisedForm.substring(1);
+                String delimitedValue = serialisedForm.substring(1);
 
-            return StreamSupport.stream(Splitter.on(delimiter).split(delimitedValue).spliterator(), false)
+                return StreamSupport.stream(
+                    Splitter
+                        .on(delimiter)
+                        .split(delimitedValue)
+                        .spliterator(), false)
                     .map(str -> convertToObject(str, type))
                     .map(type::cast)
                     .collect(Collectors.toList());
-        } catch (Exception e) {
-            throw new RuntimeException(LogUtil.message(
+            } catch (Exception e) {
+                throw new RuntimeException(LogUtil.message(
                     "Error de-serialising a List<?> from [{}]", serialisedForm), e);
+            }
         }
     }
 
@@ -588,39 +639,53 @@ public class ConfigMapper {
             final Class<K> keyType,
             final Class<V> valueType) {
 
-        final String entryDelimiter = String.valueOf(serialisedForm.charAt(0));
-        validateDelimiter(serialisedForm.charAt(0));
-        final String keyValueDelimiter = String.valueOf(serialisedForm.charAt(1));
-        validateDelimiter(serialisedForm.charAt(1));
+        if (serialisedForm == null || serialisedForm.isEmpty()) {
+            return Collections.emptyMap();
+        } else {
 
-        // now remove the delimiters from our value
-        final String delimitedValue = serialisedForm.substring(2);
+            final String entryDelimiter = String.valueOf(serialisedForm.charAt(0));
+            validateDelimiter(serialisedForm,0,"first", MAP_EXAMPLE);
 
-        return StreamSupport.stream(Splitter.on(entryDelimiter).split(delimitedValue).spliterator(), false)
+            final String keyValueDelimiter = String.valueOf(serialisedForm.charAt(1));
+            validateDelimiter(serialisedForm,1,"second", MAP_EXAMPLE);
+
+            // now remove the delimiters from our value
+            final String delimitedValue = serialisedForm.substring(2);
+
+            return StreamSupport.stream(
+                Splitter
+                    .on(entryDelimiter)
+                    .split(delimitedValue)
+                    .spliterator(), false)
                 .map(keyValueStr -> {
-                    final List<String> parts = Splitter.on(keyValueDelimiter).splitToList(keyValueStr);
+                    final List<String> parts = Splitter.on(keyValueDelimiter)
+                        .splitToList(keyValueStr);
 
                     if (parts.size() < 1 || parts.size() > 2) {
-                        throw new RuntimeException(LogUtil.message("Too many parts [{}] in value [{}], whole value [{}]",
-                                parts.size(), keyValueStr, serialisedForm));
+                        throw new RuntimeException(LogUtil.message(
+                            "Too many parts [{}] in value [{}], whole value [{}]",
+                            parts.size(), keyValueStr, serialisedForm));
                     }
 
-                    String keyStr = parts.get(0);
-                    String valueStr = parts.size() == 1 ? null : parts.get(1);
+                    final String keyStr = parts.get(0);
+                    final String valueStr = parts.size() == 1 ? null : parts.get(1);
 
-                    K key = keyType.cast(convertToObject(keyStr, keyType));
-                    V value = valueStr != null ? valueType.cast(convertToObject(valueStr, valueType)) : null;
+                    final K key = keyType.cast(convertToObject(keyStr, keyType));
+                    final V value = valueStr != null
+                        ? valueType.cast(convertToObject(valueStr, valueType))
+                        : null;
 
                     return Map.entry(key, value);
                 })
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        }
     }
 
     private static DocRef stringToDocRef(final String serialisedForm) {
 
         try {
             final String delimiter = String.valueOf(serialisedForm.charAt(0));
-            validateDelimiter(serialisedForm.charAt(0));
+            validateDelimiter(serialisedForm, 0, "first", DOCREF_EXAMPLE);
 
             String delimitedValue = serialisedForm.substring(1);
 
@@ -628,6 +693,10 @@ public class ConfigMapper {
             delimitedValue = delimitedValue.replace(")", "");
 
             final List<String> parts = Splitter.on(delimiter).splitToList(delimitedValue);
+            if (parts.size() != 3) {
+                throw new RuntimeException(LogUtil.message(
+                    "Expecting three parts to a docRef: type, UUID and name. Found {}", parts.size()));
+            }
 
             return new DocRef.Builder()
                     .type(parts.get(0))
@@ -636,7 +705,7 @@ public class ConfigMapper {
                     .build();
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message(
-                    "Error de-serialising a docRef from [{}]", serialisedForm), e);
+                    "Error de-serialising a docRef from [{}] due to: {}", serialisedForm, e.getMessage()), e);
         }
     }
 
@@ -682,9 +751,10 @@ public class ConfigMapper {
         }
     }
 
-    private static String getDelimiter(final String allText, final List<String> availableDelimiters) {
+    private static String getDelimiter(final String allText,
+                                       final List<String> availableDelimiters) {
         // find the first delimiter that does not appear in the text
-        String chosenDelimiter = availableDelimiters.stream()
+        final String chosenDelimiter = availableDelimiters.stream()
                 .filter(delimiter -> !allText.contains(delimiter))
                 .findFirst()
                 .orElseThrow(() ->
