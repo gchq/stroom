@@ -5,6 +5,10 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.DbConfig;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 public class HikariUtil {
     private HikariUtil() {
         // Utility class.
@@ -22,39 +26,41 @@ public class HikariUtil {
         return create(connectionConfig, connectionPoolConfig);
     }
 
-    private static HikariConfig create(final ConnectionConfig connectionConfig, final ConnectionPoolConfig connectionPoolConfig) {
+    private static HikariConfig create(final ConnectionConfig connectionConfig,
+                                       final ConnectionPoolConfig connectionPoolConfig) {
         final HikariConfig config = new HikariConfig();
 
-        if (connectionPoolConfig.getIdleTimeout() != null) {
-            config.setIdleTimeout(connectionPoolConfig.getIdleTimeout());
-        }
-        if (connectionPoolConfig.getMaxLifetime() != null) {
-            config.setMaxLifetime(connectionPoolConfig.getMaxLifetime());
-        }
-        if (connectionPoolConfig.getMaxPoolSize() != null) {
-            config.setMaximumPoolSize(connectionPoolConfig.getMaxPoolSize());
-        }
+        // Pool properties
+        setPoolProp(connectionPoolConfig::getConnectionTimeout, config::setConnectionTimeout, Long::longValue);
+        setPoolProp(connectionPoolConfig::getIdleTimeout, config::setIdleTimeout, Long::longValue);
+        setPoolProp(connectionPoolConfig::getMaxLifetime, config::setMaxLifetime, Long::longValue);
+        setPoolProp(connectionPoolConfig::getMinimumIdle, config::setMinimumIdle, Integer::intValue);
+        setPoolProp(connectionPoolConfig::getMaxPoolSize, config::setMaximumPoolSize, Integer::intValue);
 
-        if (connectionConfig.getJdbcDriverUrl() != null) {
-            config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
-        }
-        if (connectionConfig.getJdbcDriverUsername() != null) {
-            config.setUsername(connectionConfig.getJdbcDriverUsername());
-        }
-        if (connectionConfig.getJdbcDriverPassword() != null) {
-            config.setPassword(connectionConfig.getJdbcDriverPassword());
-        }
+        setPoolProp(connectionConfig::getJdbcDriverUrl, config::setJdbcUrl, Function.identity());
+        setPoolProp(connectionConfig::getJdbcDriverUsername, config::setUsername, Function.identity());
+        setPoolProp(connectionConfig::getJdbcDriverPassword, config::setPassword, Function.identity());
 
-        if (connectionPoolConfig.getCachePrepStmts() != null) {
-            config.addDataSourceProperty("cachePrepStmts", String.valueOf(connectionPoolConfig.getCachePrepStmts()));
-        }
-        if (connectionPoolConfig.getPrepStmtCacheSize() != null) {
-            config.addDataSourceProperty("prepStmtCacheSize", String.valueOf(connectionPoolConfig.getPrepStmtCacheSize()));
-        }
-        if (connectionPoolConfig.getPrepStmtCacheSqlLimit() != null) {
-            config.addDataSourceProperty("prepStmtCacheSqlLimit", String.valueOf(connectionPoolConfig.getPrepStmtCacheSqlLimit()));
-        }
+        // JDBC Driver properties
+        setPoolProp(connectionPoolConfig::getCachePrepStmts,
+            val -> config.addDataSourceProperty("cachePrepStmts", val),
+            String::valueOf);
+        setPoolProp(connectionPoolConfig::getPrepStmtCacheSize,
+            val -> config.addDataSourceProperty("prepStmtCacheSize", val),
+            String::valueOf);
+        setPoolProp(connectionPoolConfig::getPrepStmtCacheSqlLimit,
+            val -> config.addDataSourceProperty("prepStmtCacheSqlLimit", val),
+            String::valueOf);
 
         return config;
+    }
+
+    private static <T1, T2> void setPoolProp(final Supplier<T1> source,
+                                             final Consumer<T2> dest,
+                                             final Function<T1, T2> typeMapper) {
+        final T1 sourceValue = source.get();
+        if (sourceValue != null) {
+            dest.accept(typeMapper.apply(sourceValue));
+        }
     }
 }

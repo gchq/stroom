@@ -43,7 +43,7 @@ public class AnnotationConfig implements IsConfig, HasDbConfig {
     }
 
     @JsonProperty("standardComments")
-    @JsonPropertyDescription("A comma separated list of standard comments that can be added to annotations")
+    @JsonPropertyDescription("A list of standard comments that can be added to annotations")
     public List<String> getStandardComments() {
         return standardComments;
     }

@@ -25,7 +25,7 @@ public class NodeConfig implements IsConfig, HasDbConfig {
     }
 
     @ReadOnly
-    @JsonPropertyDescription("Should only be set per node in application property file")
+    @JsonPropertyDescription("Should only be set per node in the application YAML config file")
     @JsonProperty("node")
     public String getNodeName() {
         return nodeName;

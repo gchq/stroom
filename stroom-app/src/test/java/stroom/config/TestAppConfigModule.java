@@ -17,7 +17,7 @@ import stroom.config.app.YamlUtil;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
-import stroom.db.util.DbUtil;
+import stroom.util.config.FieldMapper;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsConfig;
@@ -93,8 +93,8 @@ class TestAppConfigModule {
                 })
                 .forEach(hasDbConfig -> {
                     final DbConfig mergedConfig = new DbConfig();
-                    DbUtil.copyConfig(commonDbConfig, mergedConfig);
-                    DbUtil.copyConfig(hasDbConfig.getDbConfig(), mergedConfig);
+                    FieldMapper.copy(commonDbConfig, mergedConfig, FieldMapper.CopyOptions.DONT_COPY_NULLS);
+                    FieldMapper.copy(hasDbConfig.getDbConfig(), mergedConfig, FieldMapper.CopyOptions.DONT_COPY_NULLS);
 
                     Assertions.assertThat(mergedConfig.getConnectionConfig())
                             .isEqualTo(commonDbConfig.getConnectionConfig());

@@ -144,7 +144,8 @@ public class AppConfig implements IsConfig {
 
     @JsonProperty("commonDbDetails")
     @JsonPropertyDescription("Defines a set of common database connection details to use if no connection details are " +
-            "defined for a service area in stroom, e.g. core or config")
+            "defined for a service area in stroom, e.g. core or config. This means you can have all service areas " +
+            "running in a single database, have each in their own database or a mixture.")
     public CommonDbConfig getCommonDbConfig() {
         return commonDbConfig;
     }

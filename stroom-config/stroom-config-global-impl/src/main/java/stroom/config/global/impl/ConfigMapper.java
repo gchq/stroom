@@ -296,7 +296,7 @@ public class ConfigMapper {
         updatePropertyFromConfigAnnotations(configProperty, defaultProp);
 
         if (defaultValueAsStr == null) {
-            LOGGER.debug("Property {} has no default value", fullPath);
+            LOGGER.trace("Property {} has no default value", fullPath);
         }
 
         globalPropertiesMap.put(fullPath, configProperty);

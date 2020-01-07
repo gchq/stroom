@@ -3,7 +3,7 @@ package stroom.test.common.util.db;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.DbConfig;
 import stroom.db.util.DataSourceFactoryImpl;
-import stroom.db.util.DbUtil;
+import stroom.util.config.FieldMapper;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -25,7 +25,10 @@ class EmbeddedDbDataSourceFactory extends DataSourceFactoryImpl {
 //        mergedConfig.getConnectionPoolConfig().setMaxPoolSize(2);
 
         if (DbTestUtil.isUseEmbeddedDb()) {
-            DbUtil.copyConnectionConfig(DbTestUtil.getOrCreateEmbeddedConnectionConfig(), mergedConfig.getConnectionConfig());
+            FieldMapper.copy(
+                DbTestUtil.getOrCreateEmbeddedConnectionConfig(),
+                mergedConfig.getConnectionConfig(),
+                FieldMapper.CopyOptions.DONT_COPY_NULLS);
         }
 
         return mergedConfig;

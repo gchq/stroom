@@ -16,8 +16,8 @@ public class FieldMapper {
     public enum CopyOptions {
 
         /**
-         * If the source is null don't set the dest to null. Default is to set dest to source
-         * even if source is null.
+         * If the source is null don't set the dest to null.
+         * Default is to set dest to source if the source is null.
          */
         DONT_COPY_NULLS
     }
