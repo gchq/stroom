@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1347** : Added `http-call` method to XSLT.
+
 * Update `stroom.security.apiToken` in stroom.conf.template to the new token with added client id and secret
 
 
