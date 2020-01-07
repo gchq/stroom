@@ -20,9 +20,9 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -39,7 +39,7 @@ public final class GlobalPropertyEditViewImpl
     @UiField
     Grid grid;
     @UiField
-    TextBox name;
+    Label name;
     @UiField
     TextArea description;
     @UiField
@@ -55,9 +55,9 @@ public final class GlobalPropertyEditViewImpl
     @UiField
     TextArea effectiveValue;
     @UiField
-    TextBox dataType;
+    Label dataType;
     @UiField
-    TextBox source;
+    Label source;
     @UiField
     TickBox requireRestart;
     @UiField
@@ -77,13 +77,10 @@ public final class GlobalPropertyEditViewImpl
         setPasswordStyle(false);
         setEditable(false);
 
-        name.setReadOnly(true);
         description.setReadOnly(true);
-        source.setReadOnly(true);
         defaultValue.setReadOnly(true);
         yamlValue.setReadOnly(true);
         effectiveValue.setReadOnly(true);
-        dataType.setReadOnly(true);
 
         requireRestart.setEnabled(false);
         requireUiRestart.setEnabled(false);
@@ -192,43 +189,13 @@ public final class GlobalPropertyEditViewImpl
         if (edit) {
             databaseValue.setReadOnly(!useOverride.getBooleanValue());
             databaseValuePassword.setReadOnly(!useOverride.getBooleanValue());
-//            if (useOverride.getBooleanValue()) {
-//                databaseValue.removeStyleName(RESOURCES.style().readonlyText());
-//                databaseValuePassword.removeStyleName(RESOURCES.style().readonlyText());
-//            } else {
-//                databaseValue.addStyleName(RESOURCES.style().readonlyText());
-//                databaseValuePassword.addStyleName(RESOURCES.style().readonlyText());
-//            }
         }
-//        if (edit) {
-//            databaseValue.removeStyleName("never-editable");
-//            databaseValuePassword.removeStyleName("never-editable");
-//        } else {
-//            databaseValue.setStyleName("never-editable");
-//            databaseValuePassword.setStyleName("never-editable");
-//        }
     }
 
     @Override
     public void setUseOverride(final boolean useOverride) {
         this.useOverride.setBooleanValue(useOverride);
     }
-
-//    public interface Style extends CssResource {
-//        String max();
-//        String textArea();
-//        String reducedHeight();
-//        String readonlyText();
-//    }
-//
-//    public interface Resources extends ClientBundle {
-//        ImageResource filterActive();
-//
-//        ImageResource filterInactive();
-//
-//        @Source("globalpropertyedit.css")
-//        GlobalPropertyEditViewImpl.Style style();
-//    }
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {
     }

@@ -17,7 +17,8 @@
 /* Scrollbar */
 ::-webkit-scrollbar {
 	width: 12px;
-	background: #fff;
+	/* Use transparent background so it looks better with non-white readonly text areas */
+	background: rgb(0,0,0,0);
 }
 
 ::-webkit-scrollbar:horizontal {
@@ -30,7 +31,8 @@
 
 /* Corner */
 ::-webkit-scrollbar-corner {
-	background: #fff;
+	/* Use transparent background so it looks better with non-white readonly text areas */
+	background: rgb(0,0,0,0);
 }
 
 /* Thumb */
