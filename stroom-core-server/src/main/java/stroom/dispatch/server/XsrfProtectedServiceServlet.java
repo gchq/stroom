@@ -19,7 +19,6 @@ import com.google.gwt.user.client.rpc.RpcToken;
 import com.google.gwt.user.client.rpc.RpcTokenException;
 import com.google.gwt.user.client.rpc.XsrfToken;
 import com.google.gwt.user.server.Util;
-import com.google.gwt.user.server.rpc.AbstractXsrfProtectedServiceServlet;
 import com.google.gwt.user.server.rpc.NoXsrfProtect;
 import com.google.gwt.user.server.rpc.RPCRequest;
 import com.google.gwt.user.server.rpc.XsrfProtect;
@@ -60,7 +59,7 @@ public class XsrfProtectedServiceServlet extends CustomRemoteServiceServlet {
                 throw new RpcTokenException("XSRF token missing");
             }
 
-            final String expectedToken = SessionHashUtil.createSessionHash(getThreadLocalRequest());
+            final String expectedToken = XsrfHashUtil.createSessionHash(getThreadLocalRequest());
             final XsrfToken xsrfToken = (XsrfToken) token;
 
             if (!expectedToken.equals(xsrfToken.getToken())) {

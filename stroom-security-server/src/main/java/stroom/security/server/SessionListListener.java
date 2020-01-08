@@ -29,8 +29,8 @@ import stroom.security.ProcessingUserIdentity;
 import stroom.security.shared.UserIdentity;
 import stroom.servlet.SessionDetails;
 import stroom.servlet.SessionListService;
+import stroom.task.server.ExtendedFindTaskCriteria;
 import stroom.task.server.TaskManager;
-import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.spring.StroomBeanStore;
 import stroom.util.task.TaskIdFactory;
@@ -86,7 +86,7 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
             // Manually set the id as we are invoking a UI Action Task
             // directly
             final String sessionId = event.getSession().getId();
-            final FindTaskCriteria criteria = new FindTaskCriteria();
+            final ExtendedFindTaskCriteria criteria = new ExtendedFindTaskCriteria();
             criteria.setSessionId(sessionId);
             final TerminateTaskProgressAction action = new TerminateTaskProgressAction(
                     "Terminate session: " + sessionId, criteria, false);
@@ -113,7 +113,6 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
                 sessionDetails.setUserName(userIdentity.getId());
             }
 
-            sessionDetails.setId(httpSession.getId());
             sessionDetails.setCreateMs(httpSession.getCreationTime());
             sessionDetails.setLastAccessedMs(httpSession.getLastAccessedTime());
             sessionDetails.setLastAccessedAgent(UserAgentSessionUtil.get(httpSession));

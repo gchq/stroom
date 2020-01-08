@@ -593,10 +593,9 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
         iter.forEachRemaining(taskThread -> {
             final Task<?> task = taskThread.getTask();
 
-            final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskThread, task);
-
             // Only add this task progress if it matches the supplied criteria.
-            if (findTaskProgressCriteria == null || findTaskProgressCriteria.matches(taskProgress)) {
+            if (findTaskProgressCriteria.isMatch(task)) {
+                final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskThread, task);
                 taskProgressList.add(taskProgress);
             }
         });
@@ -608,7 +607,6 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
         final TaskProgress taskProgress = new TaskProgress();
         taskProgress.setId(task.getId());
         taskProgress.setTaskName(taskThread.getName());
-        taskProgress.setSessionId(task.getUserIdentity().getSessionId());
         taskProgress.setUserName(task.getUserIdentity().getId());
         taskProgress.setThreadName(taskThread.getThreadName());
         taskProgress.setTaskInfo(taskThread.getInfo());
@@ -672,7 +670,6 @@ class TaskManagerImpl implements TaskManager, SupportsCriteriaLogging<FindTaskPr
 
     @Override
     public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindTaskProgressCriteria criteria) {
-        CriteriaLoggingUtil.appendStringTerm(items, "sessionId", criteria.getSessionId());
         if (!Strings.isNullOrEmpty(criteria.getNameFilter())) {
             CriteriaLoggingUtil.appendStringTerm(items, "name", criteria.getNameFilter());
         }

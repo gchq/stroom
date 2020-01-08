@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1353** : Removed session identities from tasks.
+
 * Issue **#1352** : Removed internal API token.
 
 * Issue **#1347** : Added `http-call` method to XSLT.

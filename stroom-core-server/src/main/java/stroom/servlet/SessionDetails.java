@@ -25,7 +25,6 @@ public class SessionDetails implements SharedObject {
     private Long createMs;
     private Long lastAccessedMs;
     private String lastAccessedAgent;
-    private String id;
     private String nodeName;
 
     public String getUserName() {
@@ -50,14 +49,6 @@ public class SessionDetails implements SharedObject {
 
     public void setLastAccessedMs(Long lastAccessedMs) {
         this.lastAccessedMs = lastAccessedMs;
-    }
-
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
     }
 
     public String getNodeName() {

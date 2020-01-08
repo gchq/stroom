@@ -21,14 +21,14 @@ stroom.jpaDialect=org.hibernate.dialect.MySQLInnoDBDialect
 
 # Stroom database properties
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
-stroom.jdbcDriverClassName=com.mysql.jdbc.Driver
+stroom.jdbcDriverClassName=com.mysql.cj.jdbc.Driver
 stroom.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
 stroom.jdbcDriverUsername=stroomuser
 stroom.jdbcDriverPassword=stroompassword1
 
 # SQL Statistics database properties
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-stroom.statistics.sql.jdbcDriverClassName=com.mysql.jdbc.Driver
+stroom.statistics.sql.jdbcDriverClassName=com.mysql.cj.jdbc.Driver
 stroom.statistics.sql.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3307/stats?useUnicode=yes&characterEncoding=UTF-8
 stroom.statistics.sql.jdbcDriverUsername=statsuser
 stroom.statistics.sql.jdbcDriverPassword=stroompassword1

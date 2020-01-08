@@ -161,7 +161,6 @@ public class TaskManagerListPresenter
                     }
                 }
 
-                TooltipUtil.addRowData(html, "Session Id", row.getSessionId());
                 TooltipUtil.addRowData(html, row.getTaskInfo());
 
                 tooltipPresenter.setHTML(html.toString());

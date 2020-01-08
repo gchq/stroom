@@ -173,9 +173,6 @@ abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedOb
         if (checkName(taskProgress.getUserName(), name)) {
             return true;
         }
-        if (checkName(taskProgress.getSessionId(), name)) {
-            return true;
-        }
         if (checkName(taskProgress.getTaskInfo(), name)) {
             return true;
         }
