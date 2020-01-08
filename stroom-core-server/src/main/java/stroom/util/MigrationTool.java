@@ -48,7 +48,7 @@ public class MigrationTool {
         update = !Boolean.FALSE.toString().equalsIgnoreCase(map.get("update"));
 
         if (clazz == null) {
-            clazz = "com.mysql.jdbc.Driver";
+            clazz = "com.mysql.cj.jdbc.Driver";
         }
 
         if (url == null || username == null || password == null || script == null) {

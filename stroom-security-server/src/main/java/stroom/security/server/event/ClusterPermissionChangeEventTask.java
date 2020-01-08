@@ -26,7 +26,7 @@ public class ClusterPermissionChangeEventTask extends ClusterTask<VoidResult> {
     private final PermissionChangeEvent event;
 
     public ClusterPermissionChangeEventTask(final Task<?> parentTask, final PermissionChangeEvent event) {
-        super(parentTask.getUserToken(), "PermissionChangeEvent");
+        super(parentTask.getUserIdentity(), "PermissionChangeEvent");
         this.event = event;
     }
 

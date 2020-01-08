@@ -68,13 +68,16 @@ public class QueryServiceImpl extends DocumentEntityServiceImpl<QueryEntity, Fin
 
     @Override
     public QueryEntity create(final String name) throws RuntimeException {
-        try (final SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
-            final QueryEntity entity = super.create(name);
-            // Create the initial user permissions for this new document.
-            securityContext.addDocumentPermissions(null, null, entity.getType(), entity.getUuid(), true);
+        QueryEntity entity;
 
-            return entity;
+        // We have to create the item as a processing user as query creation is not controlled by folder permissions.
+        try (final SecurityHelper securityHelper = SecurityHelper.processingUser(securityContext)) {
+            entity = super.create(name);
         }
+
+        // Create the initial user permissions for this new document.
+        securityContext.addDocumentPermissions(null, null, entity.getType(), entity.getUuid(), true);
+        return entity;
     }
 
     @Override

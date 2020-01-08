@@ -128,7 +128,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
             sb.append("'");
             final String message = sb.toString();
 
-            final GenericServerTask clusterCallTask = GenericServerTask.create(sourceTask, clusterTask.getUserToken(), "Cluster call", message);
+            final GenericServerTask clusterCallTask = GenericServerTask.create(sourceTask, clusterTask.getUserIdentity(), "Cluster call", message);
             // Create a runnable so we can execute the remote call
             // asynchronously.
             clusterCallTask.setRunnable(() -> {
@@ -217,7 +217,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                         sb.append("'");
                         final String message = sb.toString();
 
-                        final GenericServerTask genericServerTask = GenericServerTask.create(sourceTask, task.getUserToken(), "Cluster result", message);
+                        final GenericServerTask genericServerTask = GenericServerTask.create(sourceTask, task.getUserIdentity(), "Cluster result", message);
                         genericServerTask.setRunnable(() -> {
                             final LogExecutionTime logExecutionTime = new LogExecutionTime();
                             try {

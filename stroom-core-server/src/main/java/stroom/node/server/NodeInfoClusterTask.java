@@ -17,12 +17,13 @@
 package stroom.node.server;
 
 import stroom.node.shared.NodeInfoResult;
+import stroom.security.shared.UserIdentity;
 import stroom.task.cluster.ClusterTask;
 
 public class NodeInfoClusterTask extends ClusterTask<NodeInfoResult> {
     private static final long serialVersionUID = -2205811554553456872L;
 
-    public NodeInfoClusterTask(final String userToken) {
-        super(userToken, "Node Info Cluster Task");
+    public NodeInfoClusterTask(final UserIdentity userIdentity) {
+        super(userIdentity, "Node Info Cluster Task");
     }
 }

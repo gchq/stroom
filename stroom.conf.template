@@ -21,23 +21,20 @@ stroom.jpaDialect=org.hibernate.dialect.MySQLInnoDBDialect
 
 # Stroom database properties
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~
-stroom.jdbcDriverClassName=com.mysql.jdbc.Driver
+stroom.jdbcDriverClassName=com.mysql.cj.jdbc.Driver
 stroom.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3307/stroom?useUnicode=yes&characterEncoding=UTF-8
 stroom.jdbcDriverUsername=stroomuser
 stroom.jdbcDriverPassword=stroompassword1
 
 # SQL Statistics database properties
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-stroom.statistics.sql.jdbcDriverClassName=com.mysql.jdbc.Driver
+stroom.statistics.sql.jdbcDriverClassName=com.mysql.cj.jdbc.Driver
 stroom.statistics.sql.jdbcDriverUrl=jdbc:mysql://IP_ADDRESS:3307/stats?useUnicode=yes&characterEncoding=UTF-8
 stroom.statistics.sql.jdbcDriverUsername=statsuser
 stroom.statistics.sql.jdbcDriverPassword=stroompassword1
 
 # Security
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-stroom.security.apiToken=eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6InN0cm9vbSIsImF1ZCI6IlBabkpyOGtIUktxbmxKUlFUaFNJIn0.qT5jdPWBpN9me0L3OqUT0VFT2mvVX9mCp0gPFyTVg8DkFTPLLYIuXjOslvrllJDBbqefEtqS9OwQs3RmRnZxror676stTP6JHN76YqJWj2yJYyJGuggbXjZnfTiZGO3SOxl5FP4nmRRvPxA3XqV9kippKBpHfqm5RuTpFTU8uses2iaHFm7lY4zXmKDmwVizXybBQBtpxrBNQkeQjQyg7UFkpsRO8-PmIdbTldRhGlud5VpntwI1_ahwOzK-einUJQOWrcOBmXAMPRYBI6tSLT1xS_c5XpFX1Rxoj3FGjI-Myqp_2Nt_lZuQ3h-0Qh8WkZMnWQ76G7CKawXzRAwd7Q
-stroom.security.apiToken.durationToWarnBeforeExpiry=10m
-
 #  Change this to HTTP and visit directly if you want to run GWT Super Dev Mode
 stroom.advertisedUrl=https://IP_ADDRESS
 #  This is appended to stroom.advertisedUrl to get the full address of Stroom's UI

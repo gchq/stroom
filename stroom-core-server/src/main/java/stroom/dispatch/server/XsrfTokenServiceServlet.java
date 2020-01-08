@@ -43,7 +43,7 @@ public class XsrfTokenServiceServlet extends CustomRemoteServiceServlet implemen
     private String generateTokenValue() {
         try {
             LOGGER.debug("Generating XSRF token");
-            return SessionHashUtil.createSessionHash(getThreadLocalRequest());
+            return XsrfHashUtil.createSessionHash(getThreadLocalRequest());
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
             throw e;

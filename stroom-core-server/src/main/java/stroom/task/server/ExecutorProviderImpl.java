@@ -19,8 +19,9 @@ package stroom.task.server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import stroom.security.ProcessingUserIdentity;
 import stroom.security.SecurityContext;
-import stroom.security.UserTokenUtil;
+import stroom.security.shared.UserIdentity;
 import stroom.util.shared.Task;
 import stroom.util.shared.ThreadPool;
 
@@ -43,31 +44,31 @@ class ExecutorProviderImpl implements ExecutorProvider {
     @Override
     public Executor getExecutor() {
         final Task<?> parentTask = CurrentTaskState.currentTask();
-        return new ExecutorImpl(taskManager, null, parentTask, getUserToken(parentTask), getTaskName(parentTask, "Generic Task"));
+        return new ExecutorImpl(taskManager, null, parentTask, getUserIdentity(parentTask), getTaskName(parentTask, "Generic Task"));
     }
 
     @Override
     public Executor getExecutor(final ThreadPool threadPool) {
         final Task<?> parentTask = CurrentTaskState.currentTask();
-        return new ExecutorImpl(taskManager, threadPool, parentTask, getUserToken(parentTask), threadPool.getName());
+        return new ExecutorImpl(taskManager, threadPool, parentTask, getUserIdentity(parentTask), threadPool.getName());
     }
 
-    private String getUserToken(final Task<?> parentTask) {
-        if (parentTask != null && parentTask.getUserToken() != null) {
-            return parentTask.getUserToken();
+    private UserIdentity getUserIdentity(final Task<?> parentTask) {
+        if (parentTask != null && parentTask.getUserIdentity() != null) {
+            return parentTask.getUserIdentity();
         }
 
         try {
-            final String userId = securityContext.getUserId();
-            if (userId != null) {
-                return UserTokenUtil.create(securityContext.getUserId(), null);
+            final UserIdentity userIdentity = securityContext.getUserIdentity();
+            if (userIdentity != null) {
+                return userIdentity;
             }
         } catch (final RuntimeException e) {
             LOGGER.debug("Error getting user id", e);
         }
 
         LOGGER.debug("Using internal processing user");
-        return UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN;
+        return ProcessingUserIdentity.INSTANCE;
     }
 
     private String getTaskName(final Task<?> parentTask, final String defaultName) {
@@ -82,20 +83,20 @@ class ExecutorProviderImpl implements ExecutorProvider {
         private final TaskManager taskManager;
         private final ThreadPool threadPool;
         private final Task<?> parentTask;
-        private final String userToken;
+        private final UserIdentity userIdentity;
         private final String taskName;
 
-        ExecutorImpl(final TaskManager taskManager, final ThreadPool threadPool, final Task<?> parentTask, final String userToken, final String taskName) {
+        ExecutorImpl(final TaskManager taskManager, final ThreadPool threadPool, final Task<?> parentTask, final UserIdentity userIdentity, final String taskName) {
             this.taskManager = taskManager;
             this.threadPool = threadPool;
             this.parentTask = parentTask;
-            this.userToken = userToken;
+            this.userIdentity = userIdentity;
             this.taskName = taskName;
         }
 
         @Override
         public void execute(final Runnable command) {
-            taskManager.execAsync(parentTask, userToken, taskName, command, threadPool);
+            taskManager.execAsync(parentTask, userIdentity, taskName, command, threadPool);
         }
     }
 }

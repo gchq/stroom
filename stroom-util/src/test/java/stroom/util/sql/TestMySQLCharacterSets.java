@@ -177,7 +177,7 @@ public class TestMySQLCharacterSets {
     }
 
     private Connection getConnection() throws SQLException {
-        final String driverClassname = "com.mysql.jdbc.Driver";
+        final String driverClassname = "com.mysql.cj.jdbc.Driver";
         final String driverUrl = "jdbc:mysql://localhost/stroom";
         final String driverUsername = System.getProperty("user.name");
         final String driverPassword = "password";

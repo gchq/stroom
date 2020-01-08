@@ -20,10 +20,10 @@ import org.springframework.context.annotation.Scope;
 import stroom.security.Insecure;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
-import stroom.security.UserTokenUtil;
 import stroom.security.server.exception.AuthenticationException;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.UserAndPermissions;
+import stroom.security.shared.UserIdentity;
 import stroom.security.shared.UserRef;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -50,14 +50,21 @@ public class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUse
 
     @Override
     public UserAndPermissions exec(final FetchUserAndPermissionsAction task) {
-        final UserRef userRef = CurrentUserState.currentUserRef();
+        final UserIdentity userIdentity = CurrentUserState.current();
+        if (userIdentity == null) {
+            return null;
+        }
+        UserRef userRef = null;
+        if (userIdentity instanceof UserIdentityImpl) {
+            userRef = ((UserIdentityImpl) userIdentity).getUserRef();
+        }
         if (userRef == null) {
             return null;
         }
 
         final boolean preventLogin = StroomProperties.getBooleanProperty(PREVENT_LOGIN_PROPERTY, false);
         if (preventLogin) {
-            try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, UserTokenUtil.create(userRef.getName(), null))) {
+            try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, userIdentity)) {
                 if (!securityContext.isAdmin()) {
                     throw new AuthenticationException("Stroom is down for maintenance. Please try again later.");
                 }

@@ -28,7 +28,6 @@ import java.util.List;
 
 public interface UserService extends EntityService<User>, FindService<User, FindUserCriteria>, HasLoadByUuid<User>, ProvidesNamePattern {
     String ADMIN_USER_NAME = "admin";
-    String STROOM_SERVICE_USER_NAME = "stroomServiceUser";
 
     UserRef getUserByName(String name);
 
