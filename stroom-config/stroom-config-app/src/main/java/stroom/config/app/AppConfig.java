@@ -35,13 +35,16 @@ import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
+import stroom.util.shared.ConfigValidationResults;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
 public class AppConfig implements IsConfig {
+
     private boolean superDevMode;
+    private boolean haltBootOnConfigValidationFailure = true;
     private ActivityConfig activityConfig = new ActivityConfig();
     private AnnotationConfig annotationConfig = new AnnotationConfig();
     private ApiGatewayConfig apiGatewayConfig = new ApiGatewayConfig();
@@ -88,6 +91,15 @@ public class AppConfig implements IsConfig {
     @JsonProperty("superDevMode")
     public void setSuperDevMode(final boolean superDevMode) {
         this.superDevMode = superDevMode;
+    }
+
+    @JsonProperty("haltBootOnConfigValidationFailure")
+    public boolean isHaltBootOnConfigValidationFailure() {
+        return haltBootOnConfigValidationFailure;
+    }
+
+    public void setHaltBootOnConfigValidationFailure(final boolean haltBootOnConfigValidationFailure) {
+        this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
     }
 
     @JsonProperty("activity")
@@ -431,4 +443,10 @@ public class AppConfig implements IsConfig {
         this.volumeConfig = volumeConfig;
     }
 
+    @Override
+    public ConfigValidationResults validateConfig() {
+        return ConfigValidationResults.builder(this)
+            .addWarningWhen(superDevMode, "TODO", "Super Dev Mode should only be used in development")
+            .build();
+    }
 }

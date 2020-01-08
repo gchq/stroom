@@ -6,4 +6,12 @@ package stroom.util.shared;
  * are expected to be (de)serialised from/to YAML configuration files.
  */
 public interface IsConfig {
+
+    /**
+     * Perform any validation tests and return the results of all tests.
+     * If not implemented a healthy result will be returned.
+     */
+    default ConfigValidationResults validateConfig() {
+        return ConfigValidationResults.healthy();
+    }
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.ReadOnly;
+import stroom.util.shared.ConfigValidationResults;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
@@ -49,5 +50,12 @@ public class NodeConfig implements IsConfig, HasDbConfig {
         return "NodeConfig{" +
                 "nodeName='" + nodeName + '\'' +
                 '}';
+    }
+
+    @Override
+    public ConfigValidationResults validateConfig() {
+        return ConfigValidationResults.builder(this)
+            .addErrorWhenEmpty(nodeName, "node")
+            .build();
     }
 }

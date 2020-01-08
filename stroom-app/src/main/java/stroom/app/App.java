@@ -31,7 +31,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.app.commands.DbMigrationCommand;
 import stroom.app.guice.AppModule;
+import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
+import stroom.config.global.impl.ConfigMapper;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -41,6 +43,7 @@ import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.util.guice.ResourcePaths;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ConfigValidationResults;
 
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
@@ -51,6 +54,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.function.Consumer;
 
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
@@ -125,6 +129,8 @@ public class App extends Application<Config> {
         final Injector injector = Guice.createInjector(appModule);
         injector.injectMembers(this);
 
+        validateAppConfig(injector, configuration.getAppConfig());
+
         // Add health checks
         healthChecks.register();
 
@@ -154,6 +160,41 @@ public class App extends Application<Config> {
         sessionCookieConfig.setSecure(configuration.getAppConfig().getSessionCookieConfig().isSecure());
         sessionCookieConfig.setHttpOnly(configuration.getAppConfig().getSessionCookieConfig().isHttpOnly());
         // TODO : Add `SameSite=Strict` when supported by JEE
+    }
+
+    private void validateAppConfig(final Injector injector, final AppConfig appConfig) {
+        final ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
+        LOGGER.info("Validating application configuration file {}",
+            configFile.toAbsolutePath().normalize().toString());
+        final ConfigValidationResults configValidationResults = configMapper.validateConfiguration();
+
+        for (final ConfigValidationResults.ValidationMessage validationMessage : configValidationResults.getValidationMessages()) {
+            ConfigValidationResults.Severity severity = validationMessage.getSeverity();
+            final Consumer<String> logFunc = severity.equals(ConfigValidationResults.Severity.ERROR)
+                ? LOGGER::error
+                : LOGGER::warn;
+
+            final String path = configMapper.getBasePath(validationMessage.getConfigInstance());
+            final String fullpath = path + "." + validationMessage.getPropertyName();
+            logFunc.accept(LogUtil.message("Config validation {} at {} - {}",
+                severity.getLongName(),
+                fullpath,
+                validationMessage.getMessage()));
+        }
+        LOGGER.info("Completed validation of application configuration file {}, errors: {}, warnings: {}",
+            configFile.toAbsolutePath().normalize().toString(),
+            configValidationResults.getErrorCount(),
+            configValidationResults.getWarningCount());
+        
+        if (!appConfig.isHaltBootOnConfigValidationFailure()) {
+            LOGGER.warn("");
+        }
+
+        if (configValidationResults.hasErrors() && appConfig.isHaltBootOnConfigValidationFailure()) {
+            LOGGER.error("Application configuration file {} has {} error(s). Stopping Stroom.",
+                configFile.toAbsolutePath().toString(), configValidationResults.getErrorCount());
+            System.exit(1);
+        }
     }
 
     private static Path getYamlFileFromArgs(final String[] args) {
