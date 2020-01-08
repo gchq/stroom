@@ -199,6 +199,11 @@ class GlobalConfigService {
     public ConfigProperty update(final ConfigProperty configProperty) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
 
+            //TODO Need to validate the property value so we don't store a bad value
+            //  Need to use the full path to get the Prop object then from that get the
+            //  parent object then call validate on that.  Need a mechanism of only validating
+            // the prop of interest and not the whole lot.
+
             LAMBDA_LOGGER.debug(LambdaLogUtil.message(
                     "Saving property [{}] with new database value [{}]",
                     configProperty.getName(), configProperty.getDatabaseOverrideValue()));
