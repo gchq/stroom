@@ -25,8 +25,8 @@ import org.springframework.stereotype.Component;
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.BaseResultList;
 import stroom.feed.server.UserAgentSessionUtil;
-import stroom.security.UserTokenUtil;
-import stroom.security.shared.UserRef;
+import stroom.security.ProcessingUserIdentity;
+import stroom.security.shared.UserIdentity;
 import stroom.servlet.SessionDetails;
 import stroom.servlet.SessionListService;
 import stroom.task.server.TaskManager;
@@ -90,7 +90,7 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
             criteria.setSessionId(sessionId);
             final TerminateTaskProgressAction action = new TerminateTaskProgressAction(
                     "Terminate session: " + sessionId, criteria, false);
-            action.setUserToken(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN);
+            action.setUserIdentity(ProcessingUserIdentity.INSTANCE);
             action.setId(TaskIdFactory.create());
 
             final TaskManager taskManager = getTaskManager();
@@ -108,9 +108,9 @@ public class SessionListListener implements HttpSessionListener, SessionListServ
         for (final HttpSession httpSession : sessionMap.values()) {
             final SessionDetails sessionDetails = new SessionDetails();
 
-            final UserRef user = UserRefSessionUtil.get(httpSession);
-            if (user != null) {
-                sessionDetails.setUserName(user.getName());
+            final UserIdentity userIdentity = UserIdentitySessionUtil.get(httpSession);
+            if (userIdentity != null) {
+                sessionDetails.setUserName(userIdentity.getId());
             }
 
             sessionDetails.setId(httpSession.getId());

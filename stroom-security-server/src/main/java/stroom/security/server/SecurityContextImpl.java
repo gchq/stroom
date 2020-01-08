@@ -26,12 +26,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.TransactionException;
 import stroom.query.api.v2.DocRef;
 import stroom.security.Insecure;
+import stroom.security.ProcessingUserIdentity;
 import stroom.security.SecurityContext;
 import stroom.security.server.exception.AuthenticationException;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.UserAppPermissions;
+import stroom.security.shared.UserIdentity;
 import stroom.security.shared.UserRef;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.util.spring.StroomScope;
@@ -40,6 +42,7 @@ import javax.inject.Inject;
 import javax.persistence.RollbackException;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -48,10 +51,6 @@ import java.util.Set;
 @Scope(value = StroomScope.SINGLETON, proxyMode = ScopedProxyMode.INTERFACES)
 class SecurityContextImpl implements SecurityContext {
     private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
-    private static final String INTERNAL = "INTERNAL";
-    private static final String SYSTEM = "system";
-    private static final String USER = "user";
-    private static final UserRef INTERNAL_PROCESSING_USER = new UserRef(User.ENTITY_TYPE, "0", INTERNAL, false, true);
 
     private final UserDocumentPermissionsCache userDocumentPermissionsCache;
     private final UserGroupsCache userGroupsCache;
@@ -59,7 +58,6 @@ class SecurityContextImpl implements SecurityContext {
     private final UserCache userCache;
     private final DocumentPermissionService documentPermissionService;
     private final DocumentTypePermissions documentTypePermissions;
-    private final ApiTokenCache apiTokenCache;
 
     @Inject
     SecurityContextImpl(
@@ -68,91 +66,52 @@ class SecurityContextImpl implements SecurityContext {
             final UserAppPermissionsCache userAppPermissionsCache,
             final UserCache userCache,
             final DocumentPermissionService documentPermissionService,
-            final DocumentTypePermissions documentTypePermissions,
-            final ApiTokenCache apiTokenCache) {
+            final DocumentTypePermissions documentTypePermissions) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCache = userCache;
         this.documentPermissionService = documentPermissionService;
         this.documentTypePermissions = documentTypePermissions;
-        this.apiTokenCache = apiTokenCache;
     }
 
     @Override
-    public void pushUser(final String token) {
-        UserRef userRef = null;
-
-        if (token != null) {
-            final String[] parts = token.split("\\|", -1);
-            if (parts.length < 3) {
-                LOGGER.error("Unexpected token format '" + token + "'");
-                throw new AuthenticationException("Unexpected token format '" + token + "'");
-            }
-
-            final String type = parts[0];
-            final String name = parts[1];
-            final String jSessionId = parts[2];
-
-            if (SYSTEM.equals(type)) {
-                if (INTERNAL.equals(name)) {
-                    userRef = INTERNAL_PROCESSING_USER;
-                } else {
-                    LOGGER.error("Unexpected system user '" + name + "'");
-                    throw new AuthenticationException("Unexpected system user '" + name + "'");
-                }
-            } else if (USER.equals(type)) {
-                if (name.length() > 0) {
-                    final Optional<UserRef> optional = userCache.get(name);
-                    if (!optional.isPresent()) {
-                        final String message = "Unable to push user '" + name + "' as user is unknown";
-                        LOGGER.error(message);
-                        throw new AuthenticationException(message);
-                    } else {
-                        userRef = optional.get();
-                    }
-                }
-            } else {
-                LOGGER.error("Unexpected token type '" + type + "'");
-                throw new AuthenticationException("Unexpected token type '" + type + "'");
-            }
-        }
-
-        CurrentUserState.pushUserRef(userRef);
+    public void pushUser(final UserIdentity userIdentity) {
+        CurrentUserState.push(userIdentity);
     }
 
     @Override
-    public String popUser() {
-        final UserRef userRef = CurrentUserState.popUserRef();
-
-        if (userRef != null) {
-            return userRef.getName();
-        }
-
-        return null;
-    }
-
-    private UserRef getUserRef() {
-        return CurrentUserState.currentUserRef();
+    public UserIdentity popUser() {
+        return CurrentUserState.pop();
     }
 
     @Override
     public String getUserId() {
-        final UserRef userRef = getUserRef();
-        if (userRef == null) {
+        final UserIdentity userIdentity = getUserIdentity();
+        if (userIdentity == null) {
             return null;
         }
-        return userRef.getName();
+        return userIdentity.getId();
     }
 
     @Override
-    public String getApiToken() {
-        return apiTokenCache.get(getUserId());
+    public UserIdentity getUserIdentity() {
+        return CurrentUserState.current();
+    }
+
+    @Override
+    public UserIdentity createIdentity(final String userId) {
+        Objects.requireNonNull(userId, "Null user id provided");
+        final Optional<UserRef> optional = userCache.get(userId);
+        if (!optional.isPresent()) {
+            throw new AuthenticationException("Unable to find user with id=" + userId);
+        }
+        return new UserIdentityImpl(optional.get(), userId, null, null);
     }
 
     @Override
     public boolean isLoggedIn() {
-        return getUserRef() != null;
+        return getUserIdentity() != null;
     }
 
     @Override
@@ -170,23 +129,31 @@ class SecurityContextImpl implements SecurityContext {
         CurrentUserState.restorePermissions();
     }
 
+    private UserRef getUserRef(final UserIdentity userIdentity) {
+        if (!(userIdentity instanceof UserIdentityImpl)) {
+            throw new AuthenticationException("Expecting a real user identity");
+        }
+        return ((UserIdentityImpl) userIdentity).getUserRef();
+    }
+
     @Override
     @Insecure
     public boolean hasAppPermission(final String permission) {
         // Get the current user.
-        final UserRef userRef = getUserRef();
+        final UserIdentity userIdentity = getUserIdentity();
 
         // If there is no logged in user then throw an exception.
-        if (userRef == null) {
+        if (userIdentity == null) {
             throw new AuthenticationException("No user is currently logged in");
         }
 
         // If the user is the internal processing user then they automatically have permission.
-        if (INTERNAL_PROCESSING_USER.equals(userRef)) {
+        if (ProcessingUserIdentity.INSTANCE.equals(userIdentity)) {
             return true;
         }
 
         // See if the user has permission.
+        final UserRef userRef = getUserRef(userIdentity);
         boolean result = hasAppPermission(userRef, permission);
 
         // If the user doesn't have the requested permission see if they are an admin.
@@ -231,10 +198,10 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         // Get the current user.
-        final UserRef userRef = getUserRef();
+        final UserIdentity userIdentity = getUserIdentity();
 
         // If there is no logged in user then throw an exception.
-        if (userRef == null) {
+        if (userIdentity == null) {
             throw new AuthenticationException("No user is currently logged in");
         }
 
@@ -244,6 +211,7 @@ class SecurityContextImpl implements SecurityContext {
             perm = DocumentPermissionNames.USE;
         }
 
+        final UserRef userRef = getUserRef(userIdentity);
         return hasDocumentPermission(userRef, documentUuid, perm);
     }
 
@@ -276,10 +244,10 @@ class SecurityContextImpl implements SecurityContext {
     @Override
     public void clearDocumentPermissions(final String documentType, final String documentUuid) {
         // Get the current user.
-        final UserRef userRef = getUserRef();
+        final UserIdentity userIdentity = getUserIdentity();
 
         // If no user is present then don't create permissions.
-        if (userRef != null) {
+        if (userIdentity != null) {
             if (hasDocumentPermission(documentType, documentUuid, DocumentPermissionNames.OWNER)) {
                 final DocRef docRef = new DocRef(documentType, documentUuid);
                 documentPermissionService.clearDocumentPermissions(docRef);
@@ -290,16 +258,17 @@ class SecurityContextImpl implements SecurityContext {
     @Override
     public void addDocumentPermissions(final String sourceType, final String sourceUuid, final String documentType, final String documentUuid, final boolean owner) {
         // Get the current user.
-        final UserRef userRef = getUserRef();
+        final UserIdentity userIdentity = getUserIdentity();
 
         // If no user is present then don't create permissions.
-        if (userRef != null) {
+        if (userIdentity != null) {
             if (owner || hasDocumentPermission(documentType, documentUuid, DocumentPermissionNames.OWNER)) {
                 final DocRef docRef = new DocRef(documentType, documentUuid);
 
                 if (owner) {
                     // Make the current user the owner of the new document.
                     try {
+                        final UserRef userRef = getUserRef(userIdentity);
                         documentPermissionService.addPermission(userRef, docRef, DocumentPermissionNames.OWNER);
                     } catch (final RollbackException | TransactionException e) {
                         LOGGER.debug(e.getMessage(), e);

@@ -24,7 +24,7 @@ import stroom.query.api.v2.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
-import stroom.security.UserTokenUtil;
+import stroom.security.shared.UserIdentity;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -53,7 +53,7 @@ class ActiveQueries {
             final DashboardQueryKey queryKey = entry.getKey();
             final ActiveQuery activeQuery = entry.getValue();
             if (keys == null || !keys.contains(queryKey)) {
-                try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, UserTokenUtil.create(activeQuery.getUserId(), null))) {
+                try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, activeQuery.getUserIdentity())) {
                     // Terminate the associated search task.
                     Boolean success = dataSourceProviderRegistry.getDataSourceProvider(activeQuery.getDocRef())
                             .map(provider -> provider.destroy(new QueryKey(queryKey.getUuid())))
@@ -78,11 +78,11 @@ class ActiveQueries {
     }
 
     ActiveQuery addNewQuery(final DashboardQueryKey queryKey, final DocRef docRef) {
-        final String userId = securityContext.getUserId();
-        if (userId == null) {
+        final UserIdentity userIdentity = securityContext.getUserIdentity();
+        if (userIdentity == null) {
             throw new RuntimeException("No user is currently logged in");
         }
-        final ActiveQuery activeQuery = new ActiveQuery(docRef, userId);
+        final ActiveQuery activeQuery = new ActiveQuery(docRef, userIdentity);
         final ActiveQuery existing = activeQueries.put(queryKey, activeQuery);
         if (existing != null) {
             throw new RuntimeException(

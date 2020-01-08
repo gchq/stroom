@@ -9,7 +9,6 @@ import org.jose4j.jwk.RsaJsonWebKey;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.MalformedClaimException;
-import org.jose4j.jwt.NumericDate;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
@@ -20,17 +19,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
+import stroom.security.server.exception.AuthenticationException;
+import stroom.security.shared.UserRef;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 @Component
@@ -41,8 +39,6 @@ public class JWTService implements HasHealthCheck {
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
     private PublicJsonWebKey jwk;
-    private Duration durationToWarnBeforeExpiry = null;
-    private final String apiKey;
     private final String authenticationServiceUrl;
     private final String authJwtIssuer;
     private AuthenticationServiceClients authenticationServiceClients;
@@ -56,16 +52,10 @@ public class JWTService implements HasHealthCheck {
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.services.url')}") final String authenticationServiceUrl,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.issuer')}") final String authJwtIssuer,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.clientId')}") final String clientId,
-            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken.durationToWarnBeforeExpiry')}") final String durationToWarnBeforeExpiry,
-            @NotNull @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken')}") final String apiKey,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.auth.jwt.enabletokenrevocationcheck')}") final boolean enableTokenRevocationCheck,
             @NotNull @Value("#{propertyConfigurer.getProperty('stroom.authentication.required')}") final boolean authenticationRequired,
             final AuthenticationServiceClients authenticationServiceClients) {
         this.clientId = clientId;
-        if (durationToWarnBeforeExpiry != null) {
-            this.durationToWarnBeforeExpiry = Duration.ofMillis(ModelStringUtil.parseDurationString(durationToWarnBeforeExpiry));
-        }
-        this.apiKey = apiKey;
         this.authenticationServiceUrl = authenticationServiceUrl;
         this.authJwtIssuer = authJwtIssuer;
         this.authenticationServiceClients = authenticationServiceClients;
@@ -117,44 +107,32 @@ public class JWTService implements HasHealthCheck {
         }
     }
 
-    public boolean containsValidJws(ServletRequest request) {
-        Optional<String> authHeader = getAuthHeader(request);
-        boolean isValid = false;
-        if (authHeader.isPresent()) {
-            String jws;
-            String bearerString = authHeader.get();
+    public Optional<String> getUserId(final Optional<String> optionalJws) {
+        final String jws = optionalJws.orElseThrow(() -> new AuthenticationException("Unable to get JWS"));
+        LOGGER.debug("Found auth header in request. It looks like this: {}", jws);
 
-            if (bearerString.startsWith(BEARER)) {
-                // This chops out 'Bearer' so we get just the token.
-                jws = bearerString.substring(BEARER.length());
-            } else {
-                jws = bearerString;
+        try {
+            LOGGER.debug("Verifying token...");
+            final JwtClaims jwtClaims = verifyToken(jws);
+            boolean isVerified = jwtClaims != null;
+            boolean isRevoked = false;
+            if (checkTokenRevocation) {
+                LOGGER.debug("Checking token revocation status in remote auth service...");
+                final String userId = getUserIdFromToken(jws);
+                isRevoked = userId == null;
             }
-            LOGGER.debug("Found auth header in request. It looks like this: {}", jws);
 
-            try {
-                LOGGER.debug("Verifying token...");
-                JwtClaims jwtClaims = verifyToken(jws);
-                boolean isVerified = jwtClaims != null;
-                boolean isRevoked = false;
-                if (checkTokenRevocation) {
-                    LOGGER.debug("Checking token revocation status in remote auth service...");
-                    AuthenticationToken authenticationToken = checkToken(jws);
-                    isRevoked =  authenticationToken.getUserId() == null;
-                }
-
-                isValid = isVerified && !isRevoked;
-
-            } catch (Exception e) {
-                LOGGER.error("Unable to verify token:", e.getMessage(), e);
-                isValid = false;
+            if (isVerified && !isRevoked) {
+                return Optional.ofNullable(jwtClaims.getSubject());
             }
-        } else {
-            // If there's no token then we'll consider it invalid;
-            isValid = false;
+
+        } catch (Exception e) {
+            LOGGER.error("Unable to verify token: " + e.getMessage(), e);
+            LOGGER.warn(e.getMessage());
+            throw new AuthenticationException(e.getMessage(), e);
         }
 
-        return isValid;
+        return Optional.empty();
     }
 
     public String refreshTokenIfExpired(String jws) {
@@ -179,27 +157,25 @@ public class JWTService implements HasHealthCheck {
         }
     }
 
-    public Optional<String> getJws(ServletRequest request) {
-        Optional<String> authHeader = getAuthHeader(request);
-        Optional<String> jws = Optional.empty();
-        if (authHeader.isPresent()) {
-            String bearerString = authHeader.get();
+    public Optional<String> getJws(final ServletRequest request) {
+        final Optional<String> authHeader = getAuthHeader(request);
+        return authHeader.map(bearerString -> {
+            String jws;
             if (bearerString.startsWith(BEARER)) {
                 // This chops out 'Bearer' so we get just the token.
-                jws = Optional.of(bearerString.substring(BEARER.length()));
+                jws = bearerString.substring(BEARER.length());
             } else {
-                jws = Optional.of(bearerString);
+                jws = bearerString;
             }
             LOGGER.debug("Found auth header in request. It looks like this: {}", jws);
-        }
-        return jws;
+            return jws;
+        });
     }
 
-    private AuthenticationToken checkToken(String token) {
+    private String getUserIdFromToken(final String token) {
         try {
             LOGGER.debug("Checking with the Authentication Service that a token is valid.");
-            String usersEmail = authenticationServiceClients.newAuthenticationApi().verifyToken(token);
-            return new AuthenticationToken(usersEmail, token);
+            return authenticationServiceClients.newAuthenticationApi().verifyToken(token);
         } catch (ApiException e) {
             String message = String.format(
                     "Unable to verify token remotely! Message was: %s. HTTP response code was: %s. Response body was: %s",
@@ -209,7 +185,7 @@ public class JWTService implements HasHealthCheck {
         }
     }
 
-    public JwtClaims verifyToken(String token) throws InvalidJwtException {
+    public JwtClaims verifyToken(final String token) throws InvalidJwtException {
         try {
             return toClaims(token);
         } catch (InvalidJwtException e) {
@@ -219,12 +195,12 @@ public class JWTService implements HasHealthCheck {
         }
     }
 
-    private static Optional<String> getAuthHeader(ServletRequest request) {
+    private static Optional<String> getAuthHeader(final ServletRequest request) {
         HttpServletRequest httpServletRequest = (HttpServletRequest) request;
         return (getAuthHeader(httpServletRequest));
     }
 
-    private static Optional<String> getAuthHeader(HttpServletRequest httpServletRequest) {
+    private static Optional<String> getAuthHeader(final HttpServletRequest httpServletRequest) {
         String authHeader = httpServletRequest.getHeader(AUTHORIZATION_HEADER);
         return Strings.isNullOrEmpty(authHeader) ? Optional.empty() : Optional.of(authHeader);
     }
@@ -260,7 +236,6 @@ public class JWTService implements HasHealthCheck {
         // Defaults to healthy
         HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder().healthy();
         this.checkHealthForJwkRetrieval(resultBuilder);
-        this.checkHealthForApiKey(resultBuilder);
         return resultBuilder.build();
     }
 
@@ -281,39 +256,5 @@ public class JWTService implements HasHealthCheck {
             resultBuilder.unhealthy();
         }
 
-    }
-
-    private void checkHealthForApiKey(HealthCheck.ResultBuilder resultBuilder) {
-        final String KEY = "expiry_warning";
-
-        try {
-            if (this.apiKey == null || this.apiKey.trim().isEmpty()) {
-                resultBuilder.withDetail(KEY, "'stroom.security.apiToken' is not defined!");
-                resultBuilder.unhealthy();
-
-            } else if (this.durationToWarnBeforeExpiry == null) {
-                resultBuilder.withDetail(KEY, "'stroom.security.apiToken.durationToWarnBeforeExpiry' is not defined! You will not be warned when Stroom's API key is about to expire!");
-                resultBuilder.unhealthy();
-
-            } else {
-                final JwtClaims claims = verifyToken(this.apiKey);
-                final NumericDate expiration = claims.getExpirationTime();
-                if (expiration == null) {
-                    // This isn't about health, it's just a warning.
-                    resultBuilder.withDetail(KEY, "Warning: Stroom's API key has no expiration. It would be more secure to use a key which does expire.");
-                } else {
-                    final Instant expiresOn = Instant.ofEpochMilli(expiration.getValueInMillis());
-                    final Instant now = Instant.now(clock);
-                    final long minutesUntilExpiry = ChronoUnit.MINUTES.between(now, expiresOn);
-                    if (minutesUntilExpiry < this.durationToWarnBeforeExpiry.toMinutes()) {
-                        resultBuilder.withDetail(KEY, String.format("Stroom's API key expires soon! It expires on %s", expiresOn.toString()));
-                        resultBuilder.unhealthy();
-                    }
-                }
-            }
-        } catch (final MalformedClaimException | InvalidJwtException e) {
-            resultBuilder.withDetail(KEY, e.getMessage());
-            resultBuilder.unhealthy();
-        }
     }
 }

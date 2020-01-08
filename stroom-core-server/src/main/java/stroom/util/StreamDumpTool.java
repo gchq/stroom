@@ -26,7 +26,7 @@ import stroom.headless.HeadlessConfiguration;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.UserTokenUtil;
+import stroom.security.ProcessingUserIdentity;
 import stroom.spring.PersistenceConfiguration;
 import stroom.spring.ScopeConfiguration;
 import stroom.spring.ServerConfiguration;
@@ -123,7 +123,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         final FeedService feedService = (FeedService) appContext.getBean("cachedFeedService");
         final StreamTypeService streamTypeService = (StreamTypeService) appContext.getBean("cachedStreamTypeService");
 
-        new TaskScopeRunnable(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, null, null, null, null)) {
+        new TaskScopeRunnable(new StreamDownloadTask(ProcessingUserIdentity.INSTANCE, null, null, null, null)) {
             @Override
             protected void exec() {
                 final StreamDownloadTaskHandler streamDownloadTaskHandler = appContext.getBean(StreamDownloadTaskHandler.class);
@@ -192,7 +192,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         streamDownloadSettings.setMaxFileSize(ModelStringUtil.parseIECByteSizeString("2G"));
         streamDownloadSettings.setMaxFileParts(10000L);
 
-        final StreamDownloadTask streamDownloadTask = new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, criteria, dir, format, streamDownloadSettings);
+        final StreamDownloadTask streamDownloadTask = new StreamDownloadTask(ProcessingUserIdentity.INSTANCE, criteria, dir, format, streamDownloadSettings);
         streamDownloadTaskHandler.exec(streamDownloadTask);
 
         System.out.println("Finished dumping streams");

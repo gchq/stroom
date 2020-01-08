@@ -16,18 +16,20 @@
 
 package stroom.security;
 
+import stroom.security.shared.UserIdentity;
+
 public class SecurityHelper implements AutoCloseable {
     private volatile SecurityContext securityContext;
     private final Action action;
 
-    private SecurityHelper(final SecurityContext securityContext, final Action action, final String userToken) {
+    private SecurityHelper(final SecurityContext securityContext, final Action action, final UserIdentity userIdentity) {
         this.securityContext = securityContext;
         this.action = action;
 
         if (securityContext != null) {
             switch (action) {
                 case AS_USER:
-                    securityContext.pushUser(userToken);
+                    securityContext.pushUser(userIdentity);
                     break;
                 case ELEVATE:
                     securityContext.elevatePermissions();
@@ -36,12 +38,12 @@ public class SecurityHelper implements AutoCloseable {
         }
     }
 
-    public static SecurityHelper asUser(SecurityContext securityContext, final String userToken) {
-        return new SecurityHelper(securityContext, Action.AS_USER, userToken);
+    public static SecurityHelper asUser(SecurityContext securityContext, final UserIdentity userIdentity) {
+        return new SecurityHelper(securityContext, Action.AS_USER, userIdentity);
     }
 
     public static SecurityHelper processingUser(SecurityContext securityContext) {
-        return asUser(securityContext, UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN);
+        return asUser(securityContext, ProcessingUserIdentity.INSTANCE);
     }
 
     public static SecurityHelper elevate(SecurityContext securityContext) {

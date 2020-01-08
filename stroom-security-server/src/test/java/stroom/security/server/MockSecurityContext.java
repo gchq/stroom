@@ -19,29 +19,37 @@ package stroom.security.server;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import stroom.security.SecurityContext;
+import stroom.security.shared.UserIdentity;
 import stroom.security.spring.SecurityConfiguration;
 
 @Component
 @Profile(SecurityConfiguration.MOCK_SECURITY)
 public class MockSecurityContext implements SecurityContext {
+    private static final AdminUserIdentity ADMIN_USER_IDENTITY = new AdminUserIdentity();
+
     @Override
-    public void pushUser(final String name) {
+    public void pushUser(final UserIdentity userIdentity) {
         // Do nothing.
     }
 
     @Override
-    public String popUser() {
+    public UserIdentity popUser() {
         return null;
     }
 
     @Override
     public String getUserId() {
-        return UserServiceImpl.ADMIN_USER_NAME;
+        return getUserIdentity().getId();
     }
 
     @Override
-    public String getApiToken() {
-        return null;
+    public UserIdentity getUserIdentity() {
+        return ADMIN_USER_IDENTITY;
+    }
+
+    @Override
+    public UserIdentity createIdentity(final String userId) {
+        return ADMIN_USER_IDENTITY;
     }
 
     @Override
@@ -78,5 +86,22 @@ public class MockSecurityContext implements SecurityContext {
 
     @Override
     public void addDocumentPermissions(final String sourceType, final String sourceUuid, final String documentType, final String documentUuid, final boolean owner) {
+    }
+
+    private static class AdminUserIdentity implements UserIdentity {
+        @Override
+        public String getId() {
+            return "admin";
+        }
+
+        @Override
+        public String getJws() {
+            return null;
+        }
+
+        @Override
+        public String getSessionId() {
+            return null;
+        }
     }
 }

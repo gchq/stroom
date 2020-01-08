@@ -1150,20 +1150,6 @@ public class DefaultProperties {
                 .requireUiRestart(true)
                 .build());
         list.add(new GlobalProperty.Builder()
-                .name("stroom.security.apiToken")
-                .value("eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6InN0cm9vbSIsInNpZCI6bnVsbH0.k0Ssb43GCdTunAMeM26fIulYKNUuPUaJJk6GxDmzCPb7kVPwEtdfBSrtwazfEFM97dnmvURkLqs-DAZTXhhf-0VqQx4hkwcCHf83eVptWTy-lufIhQo6FCM223c9ONIhl6CPqknWh9Bo3vFNrNJoKz5Zw2T_iCcQhi2WGjd_tjTG7VbibTIpH3lPQDw1IBD2nMsEqACJSk3IaFe0GYcrAEMwsjj3sjAwByMbj5DJvo_DJbAuzUwS5IVpASEENen5Xd3wALLirrraUfED1OY0G56Ttcwl3uQ2s-grZXBM4JCiIurlWR5iNtNwoPUsZsyMju4FMSXt3Ur1NIpD7XKJlg")
-                .description("The API token Stroom will use to authenticate itself when accessing other services")
-                .editable(true)
-                .requireUiRestart(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
-                .name("stroom.security.apitoken.durationToWarnBeforeExpiry")
-                .value("30d")
-                .description("The API token Stroom will use to authenticate itself when accessing other services")
-                .editable(true)
-                .requireUiRestart(true)
-                .build());
-        list.add(new GlobalProperty.Builder()
                 .name("stroom.security.userNamePattern")
                 .value("^[a-zA-Z0-9_-]{3,}$")
                 .description("The regex pattern for user names")

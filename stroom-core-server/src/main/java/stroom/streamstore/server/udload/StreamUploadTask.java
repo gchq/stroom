@@ -17,6 +17,7 @@
 package stroom.streamstore.server.udload;
 
 import stroom.query.api.v2.DocRef;
+import stroom.security.shared.UserIdentity;
 import stroom.util.shared.VoidResult;
 import stroom.util.task.ServerTask;
 
@@ -33,10 +34,10 @@ public class StreamUploadTask extends ServerTask<VoidResult> {
     public StreamUploadTask() {
     }
 
-    public StreamUploadTask(final String userToken, final String fileName, final Path file,
+    public StreamUploadTask(final UserIdentity userIdentity, final String fileName, final Path file,
                             final DocRef feed, final DocRef streamType, final Long effectiveMs,
                             final String metaData) {
-        super(null, userToken);
+        super(null, userIdentity);
         this.fileName = fileName;
         this.file = file;
         this.feed = feed;

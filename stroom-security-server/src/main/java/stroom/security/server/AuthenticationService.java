@@ -19,5 +19,5 @@ package stroom.security.server;
 import stroom.security.shared.UserRef;
 
 public interface AuthenticationService {
-    UserRef getUserRef(AuthenticationToken token);
+    UserRef getUserRef(String userId);
 }

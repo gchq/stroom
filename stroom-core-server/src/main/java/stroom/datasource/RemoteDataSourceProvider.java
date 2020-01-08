@@ -27,6 +27,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.security.SecurityContext;
+import stroom.security.shared.UserIdentity;
 import stroom.util.logging.LambdaLogger;
 
 import javax.servlet.http.HttpServletResponse;
@@ -91,12 +92,15 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
             final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
 
-            final String usersApiKey = securityContext.getApiToken();
-            if (usersApiKey == null) {
-                LOGGER.debug("The API key is null for user '{}'", securityContext.getUserId());
+            final UserIdentity userIdentity = securityContext.getUserIdentity();
+            if (userIdentity == null) {
+                throw new RuntimeException("No authentication token present");
+            }
+            if (userIdentity.getJws() == null) {
+                LOGGER.debug("The API key is null for user '{}'", userIdentity.getId());
             }
 
-            invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + usersApiKey);
+            invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + userIdentity.getJws());
             final Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
 
             switch (response.getStatus()) {
@@ -110,7 +114,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
                         msg.append(", ");
                         msg.append(docRef);
                     }
-                    throw new PermissionException(securityContext.getUserId(),msg.toString());
+                    throw new PermissionException(securityContext.getUserId(), msg.toString());
                 default:
                     throw new RuntimeException(LambdaLogger.buildMessage("Error {} sending request {} to {}: {}",
                             response.getStatus(),
