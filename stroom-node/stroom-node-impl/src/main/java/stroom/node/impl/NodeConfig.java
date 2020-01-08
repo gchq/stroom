@@ -12,6 +12,10 @@ import javax.inject.Singleton;
 
 @Singleton
 public class NodeConfig implements IsConfig, HasDbConfig {
+
+    public static final String PROP_NAME_NODE = "node";
+    public static final String PROP_NAME_STATUS = "status";
+
     private DbConfig dbConfig = new DbConfig();
     private String nodeName = "tba";
     private StatusConfig statusConfig = new StatusConfig();
@@ -27,7 +31,7 @@ public class NodeConfig implements IsConfig, HasDbConfig {
 
     @ReadOnly
     @JsonPropertyDescription("Should only be set per node in the application YAML config file")
-    @JsonProperty("node")
+    @JsonProperty(PROP_NAME_NODE)
     public String getNodeName() {
         return nodeName;
     }
@@ -36,7 +40,7 @@ public class NodeConfig implements IsConfig, HasDbConfig {
         this.nodeName = nodeName;
     }
 
-    @JsonProperty("status")
+    @JsonProperty(PROP_NAME_STATUS)
     public StatusConfig getStatusConfig() {
         return statusConfig;
     }

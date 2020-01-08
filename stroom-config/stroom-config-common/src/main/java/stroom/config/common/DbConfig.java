@@ -6,23 +6,29 @@ import stroom.util.shared.IsConfig;
 import java.util.Objects;
 
 public class DbConfig implements IsConfig {
+
+    public static final String PROP_NAME_CONNECTION = "connection";
+    public static final String PROP_NAME_CONNECTION_POOL = "connectionPool";
+
     private ConnectionConfig connectionConfig = new ConnectionConfig();
     private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
 
-    @JsonProperty("connection")
+    @JsonProperty(PROP_NAME_CONNECTION)
     public ConnectionConfig getConnectionConfig() {
         return connectionConfig;
     }
 
+    @SuppressWarnings("unused")
     public void setConnectionConfig(final ConnectionConfig connectionConfig) {
         this.connectionConfig = connectionConfig;
     }
 
-    @JsonProperty("connectionPool")
+    @JsonProperty(PROP_NAME_CONNECTION_POOL)
     public ConnectionPoolConfig getConnectionPoolConfig() {
         return connectionPoolConfig;
     }
 
+    @SuppressWarnings("unused")
     public void setConnectionPoolConfig(final ConnectionPoolConfig connectionPoolConfig) {
         this.connectionPoolConfig = connectionPoolConfig;
     }

@@ -16,6 +16,7 @@
 
 package stroom.config.common;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.IsConfig;
@@ -23,6 +24,11 @@ import stroom.util.shared.IsConfig;
 import java.util.Objects;
 
 public class ConnectionConfig implements IsConfig {
+
+    public static final String PROP_NAME_JDBC_DRIVER_CLASS_NAME = "jdbcDriverClassName";
+    public static final String PROP_NAME_JDBC_DRIVER_URL = "jdbcDriverUrl";
+    public static final String PROP_NAME_JDBC_DRIVER_USERNAME = "jdbcDriverUsername";
+    public static final String PROP_NAME_JDBC_DRIVER_PASSWORD = "jdbcDriverPassword";
     private static final String COMMON_DESCRIPTION = "Should only be set in the application YAML config file. " +
         "Connection details can be set in one place using 'stroom.commonDbDetails.*', individually for each " +
         "service area or a mixture of the two.";
@@ -35,6 +41,7 @@ public class ConnectionConfig implements IsConfig {
     @ReadOnly
     @JsonPropertyDescription("The class name for the JDBC database connection, e.g. com.mysql.cj.jdbc.Driver. "
         + COMMON_DESCRIPTION)
+    @JsonProperty(PROP_NAME_JDBC_DRIVER_CLASS_NAME)
     public String getJdbcDriverClassName() {
         return jdbcDriverClassName;
     }
@@ -47,6 +54,7 @@ public class ConnectionConfig implements IsConfig {
     @JsonPropertyDescription("The URL for the JDBC database connection, e.g. " +
         "jdbc:mysql://some-host:3306/db-name?useUnicode=yes&characterEncoding=UTF-8. "
         + COMMON_DESCRIPTION)
+    @JsonProperty(PROP_NAME_JDBC_DRIVER_URL)
     public String getJdbcDriverUrl() {
         return jdbcDriverUrl;
     }
@@ -58,6 +66,7 @@ public class ConnectionConfig implements IsConfig {
     @ReadOnly
     @JsonPropertyDescription("The username to connect to the database with. "
         + COMMON_DESCRIPTION)
+    @JsonProperty(PROP_NAME_JDBC_DRIVER_USERNAME)
     public String getJdbcDriverUsername() {
         return jdbcDriverUsername;
     }
@@ -69,6 +78,7 @@ public class ConnectionConfig implements IsConfig {
     @ReadOnly
     @JsonPropertyDescription("The password to connect to the database with. "
         + COMMON_DESCRIPTION)
+    @JsonProperty(PROP_NAME_JDBC_DRIVER_PASSWORD)
     public String getJdbcDriverPassword() {
         return jdbcDriverPassword;
     }

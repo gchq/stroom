@@ -1,6 +1,7 @@
 ---
 appConfig:
   superDevMode: false
+  haltBootOnConfigValidationFailure: true
   activity:
     db:
       connection:
@@ -40,7 +41,7 @@ appConfig:
     standardComments: []
     createText: "Create Annotation"
   apiGateway:
-    hostName: null
+    hostname: null
     scheme: "https"
     port: null
   benchmark:
@@ -452,6 +453,10 @@ appConfig:
       verifySsl: false
       apiToken: "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc"
       authServicesBaseUrl: "http://auth-service:8099"
+      durationToWarnBeforeExpiry: "30d"
+      jwt:
+        jwtIssuer: "stroom"
+        enableTokenRevocationCheck: true
       preventLogin: false
       userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
       clientId: null
@@ -460,10 +465,6 @@ appConfig:
         maximumSize: 10000
         expireAfterAccess: null
         expireAfterWrite: 1800000
-      durationToWarnBeforeExpiry: "30d"
-      jwt:
-        jwtIssuer: "stroom"
-        enableTokenRevocationCheck: true
     authorisation:
       userGroupsCache:
         maximumSize: 1000

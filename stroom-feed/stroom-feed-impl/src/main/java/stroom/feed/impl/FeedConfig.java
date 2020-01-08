@@ -1,7 +1,9 @@
 package stroom.feed.impl;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
+import stroom.util.shared.ConfigValidationResults;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
@@ -9,6 +11,10 @@ import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class FeedConfig implements IsConfig {
+
+    public static final String PROP_NAME_FEED_NAME_PATTERN = "feedNamePattern";
+    public static final String PROP_NAME_FEED_DOC_CACHE = "feedDocCache";
+
     private String unknownClassification = "UNKNOWN CLASSIFICATION";
     private String feedNamePattern = "^[A-Z0-9_-]{3,}$";
     private CacheConfig feedDocCache = new CacheConfig.Builder()
@@ -26,18 +32,22 @@ public class FeedConfig implements IsConfig {
     }
 
     @JsonPropertyDescription("The regex pattern for feed names")
+    @JsonProperty(PROP_NAME_FEED_NAME_PATTERN)
     public String getFeedNamePattern() {
         return feedNamePattern;
     }
 
+    @SuppressWarnings("unused")
     public void setFeedNamePattern(final String feedNamePattern) {
         this.feedNamePattern = feedNamePattern;
     }
 
+    @JsonProperty(PROP_NAME_FEED_DOC_CACHE)
     public CacheConfig getFeedDocCache() {
         return feedDocCache;
     }
 
+    @SuppressWarnings("unused")
     public void setFeedDocCache(final CacheConfig feedDocCache) {
         this.feedDocCache = feedDocCache;
     }
@@ -49,5 +59,12 @@ public class FeedConfig implements IsConfig {
                 ", feedNamePattern='" + feedNamePattern + '\'' +
                 ", feedDocCache=" + feedDocCache +
                 '}';
+    }
+
+    @Override
+    public ConfigValidationResults validateConfig() {
+        return ConfigValidationResults.builder(this)
+            .addErrorWhenPatternInvalid(feedNamePattern, PROP_NAME_FEED_NAME_PATTERN)
+            .build();
     }
 }

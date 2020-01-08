@@ -9,6 +9,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class SecurityConfig implements IsConfig, HasDbConfig {
+
     private DbConfig dbConfig = new DbConfig();
     private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
     private AuthorisationConfig authorisationConfig = new AuthorisationConfig();

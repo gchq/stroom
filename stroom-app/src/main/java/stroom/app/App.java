@@ -129,6 +129,10 @@ public class App extends Application<Config> {
         final Injector injector = Guice.createInjector(appModule);
         injector.injectMembers(this);
 
+        // TODO
+        //   As this relies on ConfigMapper it needs to happen after all the guice binding is done.
+        //   We could do it before if we instantiate our our own ConfigMapper and later bind that instance.
+        //   Then we could validate the various DB conn/pool props.
         validateAppConfig(injector, configuration.getAppConfig());
 
         // Add health checks
@@ -176,13 +180,12 @@ public class App extends Application<Config> {
 
             final String path = configMapper.getBasePath(validationMessage.getConfigInstance());
             final String fullpath = path + "." + validationMessage.getPropertyName();
-            logFunc.accept(LogUtil.message("Config validation {} at {} - {}",
+            logFunc.accept(LogUtil.message("  Validation {} for {} - {}",
                 severity.getLongName(),
                 fullpath,
                 validationMessage.getMessage()));
         }
-        LOGGER.info("Completed validation of application configuration file {}, errors: {}, warnings: {}",
-            configFile.toAbsolutePath().normalize().toString(),
+        LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
             configValidationResults.getErrorCount(),
             configValidationResults.getWarningCount());
         
@@ -191,8 +194,8 @@ public class App extends Application<Config> {
         }
 
         if (configValidationResults.hasErrors() && appConfig.isHaltBootOnConfigValidationFailure()) {
-            LOGGER.error("Application configuration file {} has {} error(s). Stopping Stroom.",
-                configFile.toAbsolutePath().toString(), configValidationResults.getErrorCount());
+            LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom anyway, set {} to false",
+                configMapper.getFullPath(appConfig, AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
     }

@@ -106,9 +106,6 @@ class SecurityFilter implements Filter {
         this.authenticationService = authenticationService;
         this.securityContext = securityContext;
 
-        if (!config.isAuthenticationRequired()) {
-            LOGGER.warn("All authentication is disabled");
-        }
         publicApiPathPattern = Pattern.compile(PUBLIC_API_PATH_REGEX);
     }
 

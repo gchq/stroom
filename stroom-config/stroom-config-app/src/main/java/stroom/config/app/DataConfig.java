@@ -11,43 +11,53 @@ import javax.inject.Singleton;
 
 @Singleton
 public class DataConfig implements IsConfig {
+
+    public static final String PROP_NAME_META = "meta";
+    public static final String PROP_NAME_RETENTION = "retention";
+    public static final String PROP_NAME_STORE = "store";
+    public static final String PROP_NAME_FILESYSTEM_VOLUME = "filesystemVolume";
+
     private MetaServiceConfig metaServiceConfig = new MetaServiceConfig();
     private DataRetentionConfig dataRetentionConfig = new DataRetentionConfig();
     private DataStoreServiceConfig dataStoreServiceConfig = new DataStoreServiceConfig();
     private FsVolumeConfig fsVolumeConfig = new FsVolumeConfig();
 
-    @JsonProperty("meta")
+    @JsonProperty(PROP_NAME_META)
     public MetaServiceConfig getMetaServiceConfig() {
         return metaServiceConfig;
     }
 
+    @SuppressWarnings("unused")
     public void setMetaServiceConfig(final MetaServiceConfig metaServiceConfig) {
         this.metaServiceConfig = metaServiceConfig;
     }
 
-    @JsonProperty("retention")
+    @JsonProperty(PROP_NAME_RETENTION)
     public DataRetentionConfig getDataRetentionConfig() {
         return dataRetentionConfig;
     }
 
+    @SuppressWarnings("unused")
     public void setDataRetentionConfig(final DataRetentionConfig dataRetentionConfig) {
         this.dataRetentionConfig = dataRetentionConfig;
     }
 
-    @JsonProperty("store")
+    @JsonProperty(PROP_NAME_STORE)
     public DataStoreServiceConfig getDataStoreServiceConfig() {
         return dataStoreServiceConfig;
     }
 
+    @SuppressWarnings("unused")
     public void setDataStoreServiceConfig(final DataStoreServiceConfig dataStoreServiceConfig) {
         this.dataStoreServiceConfig = dataStoreServiceConfig;
     }
 
-    @JsonProperty("filesystemVolume")
+    @JsonProperty(PROP_NAME_FILESYSTEM_VOLUME)
     public FsVolumeConfig getFsVolumeConfig() {
         return fsVolumeConfig;
     }
 
+    @SuppressWarnings("unused")
     public void setFsVolumeConfig(final FsVolumeConfig fsVolumeConfig) {
         this.fsVolumeConfig = fsVolumeConfig;
     }

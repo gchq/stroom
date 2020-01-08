@@ -176,6 +176,10 @@ public class ConfigMapper {
         return path;
     }
 
+    public String getFullPath(final IsConfig config, final String propertyName) {
+        return getBasePath(config) + "." + propertyName;
+    }
+
     Collection<ConfigProperty> getGlobalProperties() {
         return globalPropertiesMap.values();
     }
