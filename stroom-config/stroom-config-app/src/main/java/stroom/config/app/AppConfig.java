@@ -166,7 +166,7 @@ public class AppConfig implements IsConfig {
         return apiGatewayConfig;
     }
 
-    void setApiGatewayConfig(final ApiGatewayConfig apiGatewayConfig) {
+    public void setApiGatewayConfig(final ApiGatewayConfig apiGatewayConfig) {
         this.apiGatewayConfig = apiGatewayConfig;
     }
 
