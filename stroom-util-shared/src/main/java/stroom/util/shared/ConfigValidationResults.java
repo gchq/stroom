@@ -3,8 +3,6 @@ package stroom.util.shared;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
 
 public class ConfigValidationResults {
@@ -245,8 +243,9 @@ public class ConfigValidationResults {
                 addMessage(severity, propertyName, "No value has been supplied");
             } else {
                 if (!value.matches(pattern)) {
-                    addMessage(severity, propertyName, String.format("Value [%s] does not match regex [%s]",
-                        value, pattern));
+//                    addMessage(severity, propertyName, String.format("Value [%s] does not match regex [%s]",
+//                        value, pattern));
+                    addMessage(severity, propertyName, "Value [" + value + "] does not match regex [" + pattern + "]");
                 }
             }
             return this;
@@ -255,12 +254,12 @@ public class ConfigValidationResults {
         private Builder addMessageWhenPatternInvalid(final Severity severity,
                                                      final String pattern,
                                                      final String propertyName) {
-            try {
-                Pattern.compile(pattern);
-            } catch (PatternSyntaxException e) {
-                addMessage(severity, propertyName, String.format("Regex pattern [%s] is not valid. %s",
-                    pattern, e.getMessage()));
-            }
+//            try {
+//                Pattern.compile(pattern);
+//            } catch (PatternSyntaxException e) {
+//                addMessage(severity, propertyName, String.format("Regex pattern [%s] is not valid. %s",
+//                    pattern, e.getMessage()));
+//            }
             return this;
         }
 
@@ -270,8 +269,9 @@ public class ConfigValidationResults {
             try {
                 ModelStringUtil.parseDurationString(duration);
             } catch (NumberFormatException e) {
-                addMessage(severity, propertyName, String.format("Duration string [%s] is not valid. %s",
-                    duration, e.getMessage()));
+//                addMessage(severity, propertyName, String.format("Duration string [%s] is not valid. %s",
+//                    duration, e.getMessage()));
+                addMessage(severity, propertyName, "Duration string [" + duration + "] is not valid. " + e.getMessage());
             }
             return this;
         }
