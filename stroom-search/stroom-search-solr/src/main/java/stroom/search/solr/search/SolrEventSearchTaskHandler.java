@@ -75,7 +75,7 @@ class SolrEventSearchTaskHandler extends AbstractTaskHandler<SolrEventSearchTask
 
         // Create an asynchronous search task.
         final String searchName = "Event Search";
-        final SolrAsyncSearchTask asyncSearchTask = new SolrAsyncSearchTask(task, task.getUserToken(), searchName,
+        final SolrAsyncSearchTask asyncSearchTask = new SolrAsyncSearchTask(task, task.getUserIdentity(), searchName,
                 query, task.getResultSendFrequency(), coprocessorMap, null, nowEpochMilli);
 
         // Create a collector to store search results.

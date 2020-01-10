@@ -20,7 +20,7 @@ import org.springframework.context.annotation.Scope;
 import stroom.logging.AuthenticationEventLog;
 import stroom.security.Insecure;
 import stroom.security.shared.LogoutAction;
-import stroom.security.shared.UserRef;
+import stroom.security.shared.UserIdentity;
 import stroom.servlet.HttpServletRequestHolder;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
@@ -46,14 +46,14 @@ public class LogoutHandler extends AbstractTaskHandler<LogoutAction, VoidResult>
     @Override
     public VoidResult exec(final LogoutAction task) {
         final HttpSession session = httpServletRequestHolder.get().getSession(false);
-        final UserRef userRef = UserRefSessionUtil.get(session);
+        final UserIdentity userIdentity = UserIdentitySessionUtil.get(session);
         if (session != null) {
             // Invalidate the current user session
             session.invalidate();
         }
-        if (userRef != null) {
+        if (userIdentity != null) {
             // Create an event for logout
-            eventLog.logoff(userRef.getName());
+            eventLog.logoff(userIdentity.getId());
         }
 
         return new VoidResult();

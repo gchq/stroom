@@ -52,17 +52,12 @@ public class AuthenticationServiceClients {
 
     @Inject
     public AuthenticationServiceClients(
-            @Value("#{propertyConfigurer.getProperty('stroom.security.apiToken')}") final String ourApiToken,
             @Value("#{propertyConfigurer.getProperty('stroom.auth.services.url')}") final String authServiceUrl,
             @Value("#{propertyConfigurer.getProperty('stroom.auth.services.verifyingSsl')}") final Boolean verifyingSsl,
             @Value("#{propertyConfigurer.getProperty('stroom.authentication.required')}") final String authRequired) {
 
         enableAuth = !"false".equals(authRequired);
         if (enableAuth) {
-            if (Strings.isNullOrEmpty(ourApiToken)) {
-                throw new RuntimeException("Missing API key! Please configure using 'stroom.security.apiToken'");
-            }
-
             if (Strings.isNullOrEmpty(authServiceUrl)) {
                 throw new RuntimeException("Missing auth service URL! Please configure using 'stroom.auth.services.url'");
             }
@@ -71,7 +66,6 @@ public class AuthenticationServiceClients {
         authServiceClient = new ApiClient();
         authServiceClient.setBasePath(authServiceUrl);
         authServiceClient.setVerifyingSsl(verifyingSsl != null && verifyingSsl);
-        authServiceClient.addDefaultHeader("Authorization", "Bearer " + ourApiToken);
     }
 
     AuthenticationApi newAuthenticationApi() {

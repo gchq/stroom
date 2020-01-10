@@ -49,7 +49,7 @@ class CacheClearHandler extends AbstractTaskHandler<CacheClearAction, VoidResult
         criteria.getName().setString(action.getCacheName());
 
         final FindClearServiceClusterTask<FindCacheInfoCriteria> clusterTask = new FindClearServiceClusterTask<>(
-                action.getUserToken(), action.getTaskName(), StroomCacheManager.class, criteria);
+                action.getUserIdentity(), action.getTaskName(), StroomCacheManager.class, criteria);
 
         if (action.getNode() != null) {
             dispatchHelper.execAsync(clusterTask, action.getNode());

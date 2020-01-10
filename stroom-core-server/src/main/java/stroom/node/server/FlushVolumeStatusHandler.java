@@ -37,7 +37,7 @@ public class FlushVolumeStatusHandler extends AbstractTaskHandler<FlushVolumeSta
 
     @Override
     public VoidResult exec(final FlushVolumeStatusAction action) {
-        final FlushServiceClusterTask clusterTask = new FlushServiceClusterTask(action.getUserToken(), action.getTaskName(), VolumeService.class);
+        final FlushServiceClusterTask clusterTask = new FlushServiceClusterTask(action.getUserIdentity(), action.getTaskName(), VolumeService.class);
 
         dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);
         return new VoidResult();

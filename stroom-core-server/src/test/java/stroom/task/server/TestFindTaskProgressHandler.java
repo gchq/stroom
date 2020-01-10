@@ -140,7 +140,6 @@ public class TestFindTaskProgressHandler {
             parent.setTaskName("parent task " + i);
             parent.setThreadName("thread");
             parent.setUserName(user);
-            parent.setSessionId("session1");
 
             totalMap.put(parent.getId(), parent);
 
@@ -156,7 +155,6 @@ public class TestFindTaskProgressHandler {
                 child.setTaskName("child task " + i + ":" + j);
                 child.setThreadName("thread");
                 child.setUserName(user);
-                child.setSessionId("session1");
 
                 totalMap.put(child.getId(), child);
             }

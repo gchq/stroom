@@ -16,7 +16,8 @@
 
 package stroom.util.task;
 
-import stroom.security.UserTokenUtil;
+import stroom.security.ProcessingUserIdentity;
+import stroom.security.shared.UserIdentity;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.SimpleThreadPool;
@@ -27,32 +28,32 @@ import stroom.util.shared.ThreadPool;
 public abstract class ServerTask<R> implements Task<R>, HasMonitor {
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(2);
     private final TaskId id;
-    private final String userToken;
+    private final UserIdentity userIdentity;
     private final MonitorImpl monitor;
     private volatile String taskName;
 
     public ServerTask() {
         this.id = TaskIdFactory.create();
-        this.userToken = UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN;
+        this.userIdentity = ProcessingUserIdentity.INSTANCE;
         this.monitor = new MonitorImpl();
     }
 
     public ServerTask(final Task<?> parentTask) {
-        this(parentTask, parentTask.getUserToken());
+        this(parentTask, parentTask.getUserIdentity());
     }
 
-    public ServerTask(final Task<?> parentTask, final String userToken) {
+    public ServerTask(final Task<?> parentTask, final UserIdentity userIdentity) {
         if (parentTask == null) {
             this.id = TaskIdFactory.create();
         } else {
             this.id = TaskIdFactory.create(parentTask.getId());
         }
-        this.userToken = userToken;
+        this.userIdentity = userIdentity;
 
         // Rather than remember the parent task I just grab the parent monitor.
         // This avoids some Hessian serialisation issues that can occur
         // unexpectedly when sending parent tasks across the wire.
-        if (parentTask != null && parentTask instanceof HasMonitor) {
+        if (parentTask instanceof HasMonitor) {
             final HasMonitor hasMonitor = (HasMonitor) parentTask;
             this.monitor = new MonitorImpl(hasMonitor.getMonitor());
         } else {
@@ -99,8 +100,8 @@ public abstract class ServerTask<R> implements Task<R>, HasMonitor {
     }
 
     @Override
-    public String getUserToken() {
-        return userToken;
+    public UserIdentity getUserIdentity() {
+        return userIdentity;
     }
 
     @Override

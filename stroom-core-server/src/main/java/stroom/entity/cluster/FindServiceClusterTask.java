@@ -18,6 +18,7 @@ package stroom.entity.cluster;
 
 import stroom.entity.shared.BaseCriteria;
 import stroom.entity.shared.ResultList;
+import stroom.security.shared.UserIdentity;
 import stroom.task.cluster.ClusterTask;
 import stroom.util.shared.SharedObject;
 
@@ -27,9 +28,9 @@ public class FindServiceClusterTask<C extends BaseCriteria, E extends SharedObje
     private final Class<?> beanClass;
     private final C criteria;
 
-    public FindServiceClusterTask(final String userToken, final String taskName,
+    public FindServiceClusterTask(final UserIdentity userIdentity, final String taskName,
                                   final Class<?> beanClass, final C criteria) {
-        super(userToken, taskName);
+        super(userIdentity, taskName);
         this.beanClass = beanClass;
         this.criteria = criteria;
     }

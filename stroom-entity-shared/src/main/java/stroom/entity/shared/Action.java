@@ -16,6 +16,7 @@
 
 package stroom.entity.shared;
 
+import stroom.security.shared.UserIdentity;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.SimpleThreadPool;
 import stroom.util.shared.Task;
@@ -31,7 +32,7 @@ public abstract class Action<R extends SharedObject> implements Task<R>, Seriali
     boolean terminate;
     private TaskId id;
     private String applicationInstanceId;
-    private String userToken;
+    private UserIdentity userIdentity;
 
     @Override
     public void terminate() {
@@ -52,12 +53,12 @@ public abstract class Action<R extends SharedObject> implements Task<R>, Seriali
     }
 
     @Override
-    public String getUserToken() {
-        return userToken;
+    public UserIdentity getUserIdentity() {
+        return userIdentity;
     }
 
-    public void setUserToken(final String userToken) {
-        this.userToken = userToken;
+    public void setUserIdentity(final UserIdentity userIdentity) {
+        this.userIdentity = userIdentity;
     }
 
     @Override

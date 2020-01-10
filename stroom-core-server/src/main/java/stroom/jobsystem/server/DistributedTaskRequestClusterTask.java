@@ -27,7 +27,7 @@ class DistributedTaskRequestClusterTask extends ClusterTask<DistributedTaskReque
     private final DistributedRequiredTask[] requiredTasks;
 
     DistributedTaskRequestClusterTask(final Task<?> parentTask, final String taskName, final Node node, final DistributedRequiredTask[] requiredTasks) {
-        super(parentTask.getUserToken(), taskName);
+        super(parentTask.getUserIdentity(), taskName);
         this.node = node;
         this.requiredTasks = requiredTasks;
     }

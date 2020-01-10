@@ -20,7 +20,6 @@ import stroom.entity.shared.HasIsConstrained;
 import stroom.util.shared.SharedObject;
 import stroom.util.shared.Task;
 import stroom.util.shared.TaskId;
-import stroom.util.shared.UserTokenUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -30,10 +29,13 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
 
     private Set<TaskId> ancestorIdSet;
     private Set<TaskId> idSet;
-    private String sessionId;
 
     public FindTaskCriteria() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    public Set<TaskId> getAncestorIdSet() {
+        return ancestorIdSet;
     }
 
     public void addAncestorId(final TaskId ancestorId) {
@@ -41,6 +43,10 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
             ancestorIdSet = new HashSet<>();
         }
         ancestorIdSet.add(ancestorId);
+    }
+
+    public Set<TaskId> getIdSet() {
+        return idSet;
     }
 
     public void addId(final TaskId id) {
@@ -51,14 +57,9 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
         addAncestorId(id);
     }
 
-    public void setSessionId(final String sessionId) {
-        this.sessionId = sessionId;
-    }
-
     @Override
     public boolean isConstrained() {
-        return (ancestorIdSet != null && ancestorIdSet.size() > 0) || (idSet != null && idSet.size() > 0)
-                || sessionId != null;
+        return (ancestorIdSet != null && ancestorIdSet.size() > 0) || (idSet != null && idSet.size() > 0);
     }
 
     public boolean isMatch(final Task<?> task) {
@@ -71,11 +72,6 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
         }
         if (idSet != null && idSet.size() > 0) {
             if (idSet.contains(task.getId())) {
-                return true;
-            }
-        }
-        if (sessionId != null) {
-            if (sessionId.equals(UserTokenUtil.getSessionId(task.getUserToken()))) {
                 return true;
             }
         }
@@ -100,11 +96,6 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
                 sb.append(", ");
             }
         }
-        if (sessionId != null) {
-            sb.append("Session Id: ");
-            sb.append(sessionId);
-        }
-
         return sb.toString();
     }
 }

@@ -16,20 +16,22 @@
 
 package stroom.security;
 
+import stroom.security.shared.UserIdentity;
+
 public interface SecurityContext {
     /**
      * Temporarily set a different user to perform an action.
      *
      * @param token The user token to push.
      */
-    void pushUser(String token);
+    void pushUser(UserIdentity userIdentity);
 
     /**
      * Remove a temporary user from the stack.
      *
      * @return The removed user.
      */
-    String popUser();
+    UserIdentity popUser();
 
     /**
      * Get the id of the user associated with this security context.
@@ -38,12 +40,15 @@ public interface SecurityContext {
      */
     String getUserId();
 
+
+    UserIdentity createIdentity(String userId);
+
     /**
-     * Gets an API token string for the current user.
+     * Gets teh identity of the current user.
      *
-     * @return An API token string for the current user.
+     * @return The identity of the current user.
      */
-    String getApiToken();
+    UserIdentity getUserIdentity();
 
     /**
      * Check if the user associated with this security context is logged in.

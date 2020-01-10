@@ -31,7 +31,6 @@ import stroom.search.server.EventRefs;
 import stroom.search.server.EventSearchTask;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
-import stroom.security.UserTokenUtil;
 import stroom.statistics.internal.InternalStatisticEvent;
 import stroom.statistics.internal.InternalStatisticsReceiver;
 import stroom.streamstore.server.OldFindStreamCriteria;
@@ -511,7 +510,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
             if (loadedFilter != null) {
 
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
-                try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, UserTokenUtil.create(loadedFilter.getCreateUser(), null))) {
+                try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, securityContext.createIdentity(loadedFilter.getCreateUser()))) {
                     LOGGER.debug("createTasksForFilter() - streamProcessorFilter {}", loadedFilter.toString());
 
                     // Only try and create tasks if the processor is enabled.
@@ -769,7 +768,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         tracker.setStatus("Searching...");
         final StreamProcessorFilterTracker updatedTracker = streamTaskTransactionHelper.saveTracker(tracker);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.create(filter.getUpdateUser(), null), query,
+        final EventSearchTask eventSearchTask = new EventSearchTask(securityContext.createIdentity(filter.getUpdateUser()), query,
                 minEvent, maxEvent, maxStreams, maxEvents, maxEventsPerStream, POLL_INTERVAL_MS);
         taskManager.execAsync(eventSearchTask, new TaskCallbackAdaptor<EventRefs>() {
             @Override

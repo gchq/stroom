@@ -17,15 +17,16 @@
 package stroom.dashboard.server;
 
 import stroom.query.api.v2.DocRef;
+import stroom.security.shared.UserIdentity;
 
 class ActiveQuery {
     private final DocRef docRef;
-    private final String userId;
+    private final UserIdentity userIdentity;
     private final long creationTime;
 
-    ActiveQuery(final DocRef docRef, final String userId) {
+    ActiveQuery(final DocRef docRef, final UserIdentity userIdentity) {
         this.docRef = docRef;
-        this.userId = userId;
+        this.userIdentity = userIdentity;
         this.creationTime = System.currentTimeMillis();
     }
 
@@ -33,8 +34,8 @@ class ActiveQuery {
         return docRef;
     }
 
-    String getUserId() {
-        return userId;
+    UserIdentity getUserIdentity() {
+        return userIdentity;
     }
 
     long getCreationTime() {
@@ -45,7 +46,7 @@ class ActiveQuery {
     public String toString() {
         return "ActiveQuery{" +
                 "docRef=" + docRef +
-                ", userId=" + userId +
+                ", userIdentity=" + userIdentity +
                 ", creationTime=" + creationTime +
                 '}';
     }

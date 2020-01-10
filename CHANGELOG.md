@@ -6,7 +6,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Update `stroom.security.apiToken` in stroom.conf.template to the new token with added client id and secret
+* Issue **#1353** : Removed session identities from tasks.
+
+* Issue **#1352** : Removed internal API token.
+
+* Issue **#1347** : Added `http-call` method to XSLT.
 
 ## [v6.1-beta.14] - 2019-12-05
 

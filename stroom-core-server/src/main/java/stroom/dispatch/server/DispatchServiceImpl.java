@@ -27,8 +27,6 @@ import stroom.entity.shared.EntityServiceException;
 import stroom.entity.shared.PermissionException;
 import stroom.feed.server.UserAgentSessionUtil;
 import stroom.security.SecurityContext;
-import stroom.security.UserTokenUtil;
-import stroom.servlet.HttpServletRequestHolder;
 import stroom.task.server.TaskHandlerBean;
 import stroom.task.server.TaskHandlerBeanRegistry;
 import stroom.task.server.TaskManager;
@@ -51,32 +49,30 @@ public class DispatchServiceImpl extends XsrfProtectedServiceServlet implements 
     private final TaskHandlerBeanRegistry taskHandlerBeanRegistry;
     private final TaskManager taskManager;
     private final SecurityContext securityContext;
-    private final transient HttpServletRequestHolder httpServletRequestHolder;
 
     @Inject
-    public DispatchServiceImpl(final TaskHandlerBeanRegistry taskHandlerBeanRegistry, final TaskManager taskManager,
-                               final SecurityContext securityContext, final HttpServletRequestHolder httpServletRequestHolder) {
+    public DispatchServiceImpl(final TaskHandlerBeanRegistry taskHandlerBeanRegistry,
+                               final TaskManager taskManager,
+                               final SecurityContext securityContext) {
         this.taskHandlerBeanRegistry = taskHandlerBeanRegistry;
         this.taskManager = taskManager;
         this.securityContext = securityContext;
-        this.httpServletRequestHolder = httpServletRequestHolder;
     }
 
     @Override
     public <R extends SharedObject> R exec(final Action<R> action) throws RuntimeException {
         final long startTime = System.currentTimeMillis();
 
-        LOGGER.debug("exec() - >> {} {}", action.getClass().getName(), httpServletRequestHolder);
+        LOGGER.debug("exec() - >> {}", action.getClass().getName());
 
         final TaskHandlerBean taskHandlerBean = taskHandlerBeanRegistry.getTaskHandlerBean(action);
 
         if (taskHandlerBean == null) {
             throw new EntityServiceException("No handler for " + action.getClass(), null, false);
         }
-        final String userName = securityContext.getUserId();
         // Set the id before we can execute this action.
         action.setId(TaskIdFactory.create());
-        action.setUserToken(UserTokenUtil.create(userName, httpServletRequestHolder.getSessionId()));
+        action.setUserIdentity(securityContext.getUserIdentity());
 
         try {
             final Action<R> processedAction = processAction(action);

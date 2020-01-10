@@ -16,6 +16,7 @@
 
 package stroom.entity.cluster;
 
+import stroom.security.shared.UserIdentity;
 import stroom.task.cluster.ClusterTask;
 import stroom.util.shared.VoidResult;
 
@@ -24,9 +25,9 @@ public class FlushServiceClusterTask extends ClusterTask<VoidResult> {
 
     private Class<?> beanClass;
 
-    public FlushServiceClusterTask(final String userToken, final String taskName,
+    public FlushServiceClusterTask(final UserIdentity userIdentity, final String taskName,
                                    final Class<?> beanClass) {
-        super(userToken, taskName);
+        super(userIdentity, taskName);
         this.beanClass = beanClass;
     }
 

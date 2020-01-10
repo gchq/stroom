@@ -37,7 +37,6 @@ import stroom.search.solr.SolrIndexConfiguration;
 import stroom.search.spring.SearchConfiguration;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
-import stroom.security.UserTokenUtil;
 import stroom.security.server.DocumentPermissionService;
 import stroom.security.server.UserService;
 import stroom.security.shared.DocumentPermissionNames;
@@ -154,14 +153,14 @@ public class TestExplorerTreePerformance extends StroomIntegrationTest {
             documentPermissionService.addPermission(userGroup, lastChild.get().getDocRef(), DocumentPermissionNames.READ);
 
             LOGGER.logDurationIfInfoEnabled(() -> {
-                try (final SecurityHelper sh = SecurityHelper.asUser(securityContext, UserTokenUtil.create(user.getName(), null))) {
+                try (final SecurityHelper sh = SecurityHelper.asUser(securityContext, securityContext.createIdentity(user.getName()))) {
                     // See what we get back with a user with limited permissions.
                     expandTree(findExplorerNodeCriteria, 3);
                 }
             }, "Expand all as user with empty cache");
 
             LOGGER.logDurationIfInfoEnabled(() -> {
-                try (final SecurityHelper sh = SecurityHelper.asUser(securityContext, UserTokenUtil.create(user.getName(), null))) {
+                try (final SecurityHelper sh = SecurityHelper.asUser(securityContext, securityContext.createIdentity(user.getName()))) {
                     // See what we get back with a user with limited permissions.
                     expandTree(findExplorerNodeCriteria, 3);
                 }

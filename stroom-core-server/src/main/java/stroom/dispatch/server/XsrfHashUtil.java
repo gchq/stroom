@@ -9,10 +9,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.nio.charset.StandardCharsets;
 
-final class SessionHashUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SessionHashUtil.class);
+final class XsrfHashUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(XsrfHashUtil.class);
 
-    private SessionHashUtil() {
+    private XsrfHashUtil() {
         // Utility class.
     }
 

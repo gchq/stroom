@@ -217,6 +217,22 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("http-call")
+                .library(this)
+                .delegateClass(HttpCall.class)
+                .minArgs(1)
+                .maxArgs(5)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING,
+                        SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_STRING,
+                        SequenceType.OPTIONAL_STRING
+                })
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("json-to-xml")
                 .library(this)
                 .delegateClass(JsonToXml.class)
@@ -245,6 +261,7 @@ public class StroomXSLTFunctionLibrary {
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("link")
                 .library(this)
+                .delegateClass(Link.class)
                 .minArgs(1)
                 .maxArgs(3)
                 .argTypes(new SequenceType[]{
@@ -252,7 +269,6 @@ public class StroomXSLTFunctionLibrary {
                         SequenceType.OPTIONAL_STRING,
                         SequenceType.OPTIONAL_STRING
                 })
-                .delegateClass(Link.class)
                 .resultType(SequenceType.OPTIONAL_STRING)
                 .build());
 

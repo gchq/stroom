@@ -42,7 +42,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.security.UserTokenUtil;
+import stroom.security.ProcessingUserIdentity;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
 import stroom.streamstore.server.StreamTarget;
@@ -375,7 +375,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         streamCriteria.setExpression(expression);
         streamCriteria.obtainSelectedIdSet().setMatchAll(Boolean.TRUE);
 
-        final SteppingTask action = new SteppingTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN);
+        final SteppingTask action = new SteppingTask(ProcessingUserIdentity.INSTANCE);
         action.setPipeline(DocRefUtil.create(pipelineEntity));
         action.setCriteria(streamCriteria);
 

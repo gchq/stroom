@@ -20,6 +20,7 @@ import stroom.query.api.v2.Query;
 import stroom.search.server.AbstractSearchTask;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
+import stroom.security.shared.UserIdentity;
 
 public class SolrEventSearchTask extends AbstractSearchTask<EventRefs> {
     private final EventRef minEvent;
@@ -30,10 +31,10 @@ public class SolrEventSearchTask extends AbstractSearchTask<EventRefs> {
 
     private final int resultSendFrequency;
 
-    public SolrEventSearchTask(final String userToken,
+    public SolrEventSearchTask(final UserIdentity userIdentity,
                                final Query query, final EventRef minEvent, final EventRef maxEvent, final long maxStreams,
                                final long maxEvents, final long maxEventsPerStream, final int resultSendFrequency) {
-        super(null, userToken, query);
+        super(null, userIdentity, query);
         this.minEvent = minEvent;
         this.maxEvent = maxEvent;
         this.maxStreams = maxStreams;

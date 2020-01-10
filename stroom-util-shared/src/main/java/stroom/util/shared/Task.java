@@ -16,6 +16,8 @@
 
 package stroom.util.shared;
 
+import stroom.security.shared.UserIdentity;
+
 /**
  * Interface to all tasks.
  */
@@ -24,7 +26,7 @@ public interface Task<R> extends HasTerminate {
 
     String getTaskName();
 
-    String getUserToken();
+    UserIdentity getUserIdentity();
 
     ThreadPool getThreadPool();
 }
