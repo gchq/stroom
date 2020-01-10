@@ -222,19 +222,22 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
      */
     @Override
     public void refresh() {
-        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-
-        getCache().asMap().values().forEach(v -> {
-            if (v != null) {
-                try {
-                    v.getSearcherManager().maybeRefresh();
-                } catch (final IOException e) {
-                    LOGGER.error(e::getMessage, e);
+        final ICache<Key, IndexShardSearcher> cache = getCache();
+        if (cache != null) {
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+            cache.asMap().values().forEach(v -> {
+                if (v != null) {
+                    try {
+                        v.getSearcherManager().maybeRefresh();
+                    } catch (final IOException e) {
+                        LOGGER.error(e::getMessage, e);
+                    }
                 }
-            }
-        });
-
-        LOGGER.debug(() -> "refresh() - Completed in " + logExecutionTime);
+            });
+            LOGGER.debug(() -> "refresh() - Completed in " + logExecutionTime);
+        } else {
+            LOGGER.debug(() -> "Cache is null");
+        }
     }
 
     public static class Key {
