@@ -11,18 +11,18 @@ public class ConfigValidationResults {
 
     private static final ConfigValidationResults HEALTHY_INSTANCE = new ConfigValidationResults(Collections.emptyList());
 
-    private final List<ValidationMessage> validationMessages;
+    private final List<ConfigValidationMessage> configValidationMessages;
 
-    private ConfigValidationResults(final List<ValidationMessage> validationMessages) {
-        this.validationMessages = validationMessages;
+    private ConfigValidationResults(final List<ConfigValidationMessage> configValidationMessages) {
+        this.configValidationMessages = configValidationMessages;
     }
 
     public static ConfigValidationResults healthy() {
         return HEALTHY_INSTANCE;
     }
 
-    public List<ValidationMessage> getValidationMessages() {
-        return validationMessages;
+    public List<ConfigValidationMessage> getConfigValidationMessages() {
+        return configValidationMessages;
     }
 
     public boolean hasErrors() {
@@ -41,11 +41,11 @@ public class ConfigValidationResults {
         return getCountBySeverity(Severity.WARN);
     }
 
-    public List<ValidationMessage> getErrors() {
+    public List<ConfigValidationMessage> getErrors() {
         return getBySeverity(Severity.ERROR);
     }
 
-    public List<ValidationMessage> getWarnings() {
+    public List<ConfigValidationMessage> getWarnings() {
         return getBySeverity(Severity.WARN);
     }
 
@@ -66,37 +66,37 @@ public class ConfigValidationResults {
     }
 
     private boolean hasMessagesWithSeverity(final Severity severity) {
-        if (validationMessages.isEmpty()) {
+        if (configValidationMessages.isEmpty()) {
             return false;
         }
-        return validationMessages.stream()
-            .anyMatch(validationMessage ->
-                validationMessage.getSeverity().equals(severity));
+        return configValidationMessages.stream()
+            .anyMatch(configValidationMessage ->
+                configValidationMessage.getSeverity().equals(severity));
     }
 
-    private List<ValidationMessage> getBySeverity(final Severity severity) {
-        if (validationMessages.isEmpty()) {
+    private List<ConfigValidationMessage> getBySeverity(final Severity severity) {
+        if (configValidationMessages.isEmpty()) {
             return Collections.emptyList();
         }
-        return validationMessages.stream()
-            .filter(validationMessage ->
-                validationMessage.getSeverity().equals(severity))
+        return configValidationMessages.stream()
+            .filter(configValidationMessage ->
+                configValidationMessage.getSeverity().equals(severity))
             .collect(Collectors.toList());
     }
 
     private long getCountBySeverity(final Severity severity) {
-        if (validationMessages.isEmpty()) {
+        if (configValidationMessages.isEmpty()) {
             return 0;
         }
-        return validationMessages.stream()
-            .filter(validationMessage ->
-                validationMessage.getSeverity().equals(severity))
+        return configValidationMessages.stream()
+            .filter(configValidationMessage ->
+                configValidationMessage.getSeverity().equals(severity))
             .count();
     }
 
     public static class Builder {
 
-        private final List<ValidationMessage> validationMessages = new ArrayList<>();
+        private final List<ConfigValidationMessage> configValidationMessages = new ArrayList<>();
         private final IsConfig config;
 
         public Builder(final IsConfig config) {
@@ -198,10 +198,10 @@ public class ConfigValidationResults {
         }
 
         public ConfigValidationResults build() {
-            if (validationMessages.isEmpty()) {
+            if (configValidationMessages.isEmpty()) {
                 return ConfigValidationResults.healthy();
             } else {
-                return new ConfigValidationResults(validationMessages);
+                return new ConfigValidationResults(configValidationMessages);
             }
         }
 
@@ -279,80 +279,27 @@ public class ConfigValidationResults {
         private void addMessage(final Severity severity,
                                 final String propertyName,
                                 final String message) {
-            validationMessages.add(
-                new ValidationMessage(severity, config, propertyName, message));
+            configValidationMessages.add(
+                new ConfigValidationMessage(severity, config, propertyName, message));
         }
     }
 
 
     public static class Aggregator {
 
-        private final List<ValidationMessage> validationMessages = new ArrayList<>();
+        private final List<ConfigValidationMessage> configValidationMessages = new ArrayList<>();
 
         public Aggregator addAll(final ConfigValidationResults configValidationResults) {
-            validationMessages.addAll(configValidationResults.getValidationMessages());
+            configValidationMessages.addAll(configValidationResults.getConfigValidationMessages());
             return this;
         }
 
         public ConfigValidationResults aggregate() {
-            if (validationMessages.isEmpty()) {
+            if (configValidationMessages.isEmpty()) {
                 return ConfigValidationResults.healthy();
             } else {
-                return new ConfigValidationResults(validationMessages);
+                return new ConfigValidationResults(configValidationMessages);
             }
-        }
-    }
-
-    public static class ValidationMessage {
-        private final Severity severity;
-        private final IsConfig config;
-        private final String propertyName;
-        private final String message;
-
-        private ValidationMessage(final Severity severity,
-                                  final IsConfig config,
-                                  final String propertyName,
-                                  final String message) {
-            this.severity = severity;
-            this.config = config;
-            this.propertyName = propertyName;
-            this.message = message;
-        }
-
-        public static ValidationMessage error(final IsConfig config,
-                                              final String propertyName,
-                                              final String message) {
-            return new ValidationMessage(
-                Severity.ERROR,
-                config,
-                propertyName,
-                message);
-        }
-
-        public static ValidationMessage warn(final IsConfig config,
-                                             final String propertyName,
-                                             final String message) {
-            return new ValidationMessage(
-                Severity.WARN,
-                config,
-                propertyName,
-                message);
-        }
-
-        public Severity getSeverity() {
-            return severity;
-        }
-
-        public IsConfig getConfigInstance() {
-            return config;
-        }
-
-        public String getPropertyName() {
-            return propertyName;
-        }
-
-        public String getMessage() {
-            return message;
         }
     }
 

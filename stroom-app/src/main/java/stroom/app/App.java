@@ -43,6 +43,7 @@ import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.util.guice.ResourcePaths;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ConfigValidationMessage;
 import stroom.util.shared.ConfigValidationResults;
 
 import javax.inject.Inject;
@@ -172,18 +173,18 @@ public class App extends Application<Config> {
             configFile.toAbsolutePath().normalize().toString());
         final ConfigValidationResults configValidationResults = configMapper.validateConfiguration();
 
-        for (final ConfigValidationResults.ValidationMessage validationMessage : configValidationResults.getValidationMessages()) {
-            ConfigValidationResults.Severity severity = validationMessage.getSeverity();
+        for (final ConfigValidationMessage configValidationMessage : configValidationResults.getConfigValidationMessages()) {
+            ConfigValidationResults.Severity severity = configValidationMessage.getSeverity();
             final Consumer<String> logFunc = severity.equals(ConfigValidationResults.Severity.ERROR)
                 ? LOGGER::error
                 : LOGGER::warn;
 
-            final String path = configMapper.getBasePath(validationMessage.getConfigInstance());
-            final String fullpath = path + "." + validationMessage.getPropertyName();
+            final String path = configMapper.getBasePath(configValidationMessage.getConfigInstance());
+            final String fullpath = path + "." + configValidationMessage.getPropertyName();
             logFunc.accept(LogUtil.message("  Validation {} for {} - {}",
                 severity.getLongName(),
                 fullpath,
-                validationMessage.getMessage()));
+                configValidationMessage.getMessage()));
         }
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
             configValidationResults.getErrorCount(),
