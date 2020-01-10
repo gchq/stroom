@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.1-beta.15] - 2020-01-10
+
 * Issue **#1353** : Removed session identities from tasks.
 
 * Issue **#1352** : Removed internal API token.
@@ -2036,7 +2038,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.14...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.15...6.1
+[v6.1-beta.15]: https://github.com/gchq/stroom/compare/v6.1-beta.14...v6.1-beta.15
 [v6.1-beta.14]: https://github.com/gchq/stroom/compare/v6.1-beta.13...v6.1-beta.14
 [v6.1-beta.13]: https://github.com/gchq/stroom/compare/v6.1-beta.12...v6.1-beta.13
 [v6.1-beta.12]: https://github.com/gchq/stroom/compare/v6.1-beta.11...v6.1-beta.12
