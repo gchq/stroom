@@ -173,6 +173,7 @@ ext.libs = [
         dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks", // version controlled by DW BOM
         dropwizard_servlets            : "io.dropwizard:dropwizard-servlets", // version controlled by DW BOM
         dropwizard_testing             : "io.dropwizard:dropwizard-testing", // version controlled by DW BOM
+        dropwizard_validation          : "io.dropwizard:dropwizard-validation", // version controlled by DW BOM
         fast_infoset                   : "com.sun.xml.fastinfoset:FastInfoset:1.2.12",
         flyway_core                    : "org.flywaydb:flyway-core:5.2.4",
         gin                            : "com.google.gwt.inject:gin:2.1.2",
@@ -252,6 +253,9 @@ ext.libs = [
         stax_api                       : "stax:stax-api:1.0.1",
         swagger_annotations            : "io.swagger:swagger-annotations:$versions.swagger",
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",
+        validation_api                 : "javax.validation:validation-api:2.0.1.Final",
+        //hibernate_validator            : "org.hibernate:hibernate-validator", // version controlled by DW BOM
+        //hibernate_validator            : "org.hibernate:hibernate-validator:6.1.0.Final",
         vavr                           : "io.vavr:vavr:0.9.0",
         wix_embedded_mysql             : "com.wix:wix-embedded-mysql:4.6.1",
         ws_rs_api                      : "javax.ws.rs:javax.ws.rs-api:2.1",

@@ -3,6 +3,7 @@ package stroom.ui.config.shared;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.docref.SharedObject;
 import stroom.util.shared.IsConfig;
+import stroom.util.shared.ValidRegex;
 
 import javax.inject.Singleton;
 
@@ -34,6 +35,7 @@ public class InfoPopupConfig implements SharedObject, IsConfig {
         this.title = title;
     }
 
+    @ValidRegex
     @JsonPropertyDescription("A regex used to validate query info.")
     public String getValidationRegex() {
         return validationRegex;

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.docref.SharedObject;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsConfig;
+import stroom.util.shared.ValidRegex;
 
 import javax.inject.Singleton;
 
@@ -137,6 +138,7 @@ public class UiConfig implements SharedObject, IsConfig {
         this.queryConfig = queryConfig;
     }
 
+    @ValidRegex
     @JsonPropertyDescription("The regex pattern for entity names")
     public String getNamePattern() {
         return namePattern;

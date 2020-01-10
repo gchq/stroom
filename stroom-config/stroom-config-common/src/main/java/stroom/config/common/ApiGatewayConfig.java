@@ -99,7 +99,10 @@ public class ApiGatewayConfig implements IsConfig {
     public ConfigValidationResults validateConfig() {
         return ConfigValidationResults.builder(this)
             .addErrorWhenEmpty(hostname, PROP_NAME_HOST_NAME)
-            .addErrorWhen(port < 1 || port > 65535, PROP_NAME_PORT, "Port must be in the range 1-65535")
+            .addErrorWhen(
+                port != null && (port < 1 || port > 65535),
+                PROP_NAME_PORT,
+                "Port must be in the range 1-65535")
             .addErrorWhenNoRegexMatch(scheme, "^https?$", PROP_NAME_SCHEME)
             .build();
     }

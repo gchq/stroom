@@ -9,6 +9,7 @@ import stroom.util.shared.ConfigValidationResults;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
+import javax.validation.constraints.NotNull;
 
 @Singleton
 public class NodeConfig implements IsConfig, HasDbConfig {
@@ -29,6 +30,7 @@ public class NodeConfig implements IsConfig, HasDbConfig {
         this.dbConfig = dbConfig;
     }
 
+    @NotNull
     @ReadOnly
     @JsonPropertyDescription("Should only be set per node in the application YAML config file")
     @JsonProperty(PROP_NAME_NODE)

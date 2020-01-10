@@ -2,6 +2,7 @@ package stroom.config.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonRootName;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.cluster.api.ClusterConfig;
@@ -37,9 +38,13 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.shared.ConfigValidationResults;
 import stroom.util.shared.IsConfig;
+import stroom.util.shared.ValidationSeverity;
 
 import javax.inject.Singleton;
+import javax.validation.Valid;
+import javax.validation.constraints.AssertFalse;
 
+@JsonRootName("stroom")
 @Singleton
 public class AppConfig implements IsConfig {
 
@@ -125,6 +130,9 @@ public class AppConfig implements IsConfig {
     private VolumeConfig volumeConfig = new VolumeConfig();
 
     @JsonProperty(PROP_NAME_SUPER_DEV_MODE)
+    @AssertFalse(
+        message = "Super Dev Mode is enabled. This should only be used in development",
+        payload = ValidationSeverity.Warning.class)
     public boolean isSuperDevMode() {
         return superDevMode;
     }
@@ -328,6 +336,7 @@ public class AppConfig implements IsConfig {
         this.lifecycleConfig = lifecycleConfig;
     }
 
+    @Valid
     @JsonProperty(PROP_NAME_NODE)
     public NodeConfig getNodeConfig() {
         return nodeConfig;
@@ -465,6 +474,7 @@ public class AppConfig implements IsConfig {
         this.statisticsConfig = statisticsConfig;
     }
 
+    @Valid
     @JsonProperty(PROP_NAME_UI)
     public UiConfig getUiConfig() {
         return uiConfig;
@@ -486,8 +496,7 @@ public class AppConfig implements IsConfig {
     @Override
     public ConfigValidationResults validateConfig() {
         return ConfigValidationResults.builder(this)
-            .addWarningWhen(superDevMode, PROP_NAME_SUPER_DEV_MODE, "Super Dev Mode is enabled. " +
-                "This should only be used in development")
+            .addWarningWhen(superDevMode, PROP_NAME_SUPER_DEV_MODE, "Super Dev Mode is enabled. This should only be used in development")
             .build();
     }
 }

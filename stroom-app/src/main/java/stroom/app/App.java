@@ -45,16 +45,20 @@ import stroom.util.guice.ResourcePaths;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ConfigValidationMessage;
 import stroom.util.shared.ConfigValidationResults;
+import stroom.util.shared.ValidationSeverity;
 
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.SessionCookieConfig;
+import javax.validation.ConstraintViolation;
+import javax.validation.Validator;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.Set;
 import java.util.function.Consumer;
 
 public class App extends Application<Config> {
@@ -168,7 +172,66 @@ public class App extends Application<Config> {
     }
 
     private void validateAppConfig(final Injector injector, final AppConfig appConfig) {
+
         final ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
+        final Validator validator = injector.getInstance(Validator.class);
+
+        //TODO remove
+        appConfig.getNodeConfig().setNodeName(null);
+        appConfig.getUiConfig().setNamePattern("(bad regex");
+
+        LOGGER.info("Validating application configuration file {}",
+            configFile.toAbsolutePath().normalize().toString());
+        final Set<ConstraintViolation<AppConfig>> constraintViolations = validator.validate(appConfig);
+
+        int errorCount = 0;
+        int warningCount = 0;
+
+        for (final ConstraintViolation<AppConfig> constraintViolation : constraintViolations) {
+//            LOGGER.info(constraintViolation.toString());
+            boolean isWarning = constraintViolation.getConstraintDescriptor()
+                .getPayload()
+                .contains(ValidationSeverity.Warning.class);
+
+            final Consumer<String> logFunc;
+            final String severityStr;
+            if (isWarning) {
+                warningCount++;
+                logFunc = LOGGER::warn;
+                severityStr = "warning";
+            } else {
+                errorCount++;
+                logFunc = LOGGER::error;
+                severityStr = "error";
+            }
+
+//            LOGGER.info("  stroom.{} [{}] - {}",
+//                constraintViolation.getPropertyPath(),
+//                constraintViolation.getInvalidValue(),
+//                constraintViolation.getMessage());
+
+            logFunc.accept(LogUtil.message("  Validation {} for stroom.{} [{}] - {}",
+                severityStr,
+                constraintViolation.getPropertyPath(),
+                constraintViolation.getInvalidValue(),
+                constraintViolation.getMessage()));
+        }
+        LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
+            errorCount,
+            warningCount);
+
+
+        if (errorCount > 0 && appConfig.isHaltBootOnConfigValidationFailure()) {
+            LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid configuration, set {} to false. This is not advised!",
+                configMapper.getFullPath(appConfig, AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
+            System.exit(1);
+        }
+
+       LOGGER.info("------------------------------------------------------------");
+        
+        
+        
+        
         LOGGER.info("Validating application configuration file {}",
             configFile.toAbsolutePath().normalize().toString());
         final ConfigValidationResults configValidationResults = configMapper.validateConfiguration();
