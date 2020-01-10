@@ -58,7 +58,6 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.receive.common.StroomStreamProcessor;
-import stroom.security.api.UserTokenUtil;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -398,7 +397,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         findMetaCriteria.setExpression(expression);
         findMetaCriteria.obtainSelectedIdSet().setMatchAll(Boolean.TRUE);
 
-        final SteppingTask action = new SteppingTask(UserTokenUtil.processingUser());
+        final SteppingTask action = new SteppingTask();
         action.setPipeline(pipelineRef);
         action.setCriteria(findMetaCriteria);
 

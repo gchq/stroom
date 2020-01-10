@@ -20,13 +20,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dispatch.shared.DispatchService;
 import stroom.docref.SharedObject;
-import stroom.security.api.SecurityContext;
-import stroom.security.api.UserTokenUtil;
 import stroom.task.api.TaskHandler;
 import stroom.task.api.TaskIdFactory;
 import stroom.task.api.TaskManager;
 import stroom.task.impl.TaskHandlerRegistry;
 import stroom.task.shared.Action;
+import stroom.task.shared.Task;
 import stroom.util.EntityServiceExceptionUtil;
 import stroom.util.guice.ResourcePaths;
 import stroom.util.servlet.SessionIdProvider;
@@ -50,17 +49,14 @@ public class DispatchServiceImpl extends XsrfProtectedServiceServlet implements 
 
     private final TaskHandlerRegistry taskHandlerBeanRegistry;
     private final TaskManager taskManager;
-    private final SecurityContext securityContext;
     private final SessionIdProvider sessionIdProvider;
 
     @Inject
     public DispatchServiceImpl(final TaskHandlerRegistry taskHandlerBeanRegistry,
                                final TaskManager taskManager,
-                               final SecurityContext securityContext,
                                final SessionIdProvider sessionIdProvider) {
         this.taskHandlerBeanRegistry = taskHandlerBeanRegistry;
         this.taskManager = taskManager;
-        this.securityContext = securityContext;
         this.sessionIdProvider = sessionIdProvider;
     }
 
@@ -70,14 +66,13 @@ public class DispatchServiceImpl extends XsrfProtectedServiceServlet implements 
 
         LOGGER.debug("exec() - >> {} {}", action.getClass().getName(), sessionIdProvider.get());
 
-        final TaskHandler taskHandlerBean = taskHandlerBeanRegistry.findHandler(action);
+        final TaskHandler<Task<R>, R> taskHandlerBean = taskHandlerBeanRegistry.findHandler(action);
         if (taskHandlerBean == null) {
             throw new EntityServiceException("No handler for " + action.getClass(), null, false);
         }
-        final String userName = securityContext.getUserId();
+
         // Set the id before we can execute this action.
         action.setId(TaskIdFactory.create());
-        action.setUserToken(UserTokenUtil.create(userName, sessionIdProvider.get()));
 
         try {
             final R r = taskManager.exec(action);

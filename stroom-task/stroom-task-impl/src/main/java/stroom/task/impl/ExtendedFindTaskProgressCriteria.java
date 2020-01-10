@@ -16,23 +16,29 @@
 
 package stroom.task.impl;
 
-import stroom.cluster.task.api.ClusterTask;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
-import stroom.util.shared.ResultList;
 
-public class FindTaskProgressClusterTask extends ClusterTask<ResultList<TaskProgress>> {
-    private static final long serialVersionUID = -5285569438944240375L;
+import java.util.Comparator;
 
-    private FindTaskProgressCriteria criteria;
+class ExtendedFindTaskProgressCriteria extends FindTaskProgressCriteria implements Comparator<TaskProgress> {
+    private static final long serialVersionUID = 2014515855795611224L;
 
-    public FindTaskProgressClusterTask(final String taskName,
-                                       final FindTaskProgressCriteria criteria) {
-        super(taskName);
-        this.criteria = criteria;
+    private String sessionId;
+
+    public String getSessionId() {
+        return sessionId;
     }
 
-    public FindTaskProgressCriteria getCriteria() {
-        return criteria;
+    public void setSessionId(final String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    @Override
+    public boolean isMatch(final String sessionId) {
+        if (!super.isMatch(sessionId)) {
+            return false;
+        }
+        return this.sessionId == null || this.sessionId.equals(sessionId);
     }
 }

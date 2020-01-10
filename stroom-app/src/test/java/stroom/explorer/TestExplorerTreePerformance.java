@@ -33,7 +33,6 @@ import stroom.explorer.shared.FindExplorerNodeCriteria;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.resource.impl.MockResourceModule;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserTokenUtil;
 import stroom.security.impl.DocumentPermissionServiceImpl;
 import stroom.security.impl.SecurityContextModule;
 import stroom.security.impl.UserService;
@@ -120,14 +119,14 @@ class TestExplorerTreePerformance {
             documentPermissionService.addPermission(lastChild.get().getDocRef().getUuid(), userGroup.getUuid(), DocumentPermissionNames.READ);
 
             LOGGER.logDurationIfInfoEnabled(() -> {
-                securityContext.asUser(UserTokenUtil.create(user.getName(), null), () -> {
+                securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
                     // See what we get back with a user with limited permissions.
                     expandTree(findExplorerNodeCriteria, 3);
                 });
             }, "Expand all as user with empty cache");
 
             LOGGER.logDurationIfInfoEnabled(() -> {
-                securityContext.asUser(UserTokenUtil.create(user.getName(), null), () -> {
+                securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
                     // See what we get back with a user with limited permissions.
                     expandTree(findExplorerNodeCriteria, 3);
                 });

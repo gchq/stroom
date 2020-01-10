@@ -17,7 +17,6 @@
 
 package stroom.task.api;
 
-import stroom.security.shared.UserToken;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.Task;
@@ -76,7 +75,7 @@ public interface TaskManager extends FindService<TaskProgress, FindTaskProgressC
      */
     <R> void execAsync(Task<R> task, TaskCallback<R> callback, ThreadPool threadPool);
 
-    void execAsync(Task<?> parentTask, UserToken userToken, String taskName, Runnable runnable, ThreadPool threadPool);
+    void execAsync(Task<?> parentTask, String taskName, Runnable runnable, ThreadPool threadPool);
 
     /**
      * Get a currently executing task by id.
@@ -90,6 +89,7 @@ public interface TaskManager extends FindService<TaskProgress, FindTaskProgressC
 
     /**
      * Terminate a task by task id.
+     *
      * @param taskId The id of the task to terminate.
      */
     void terminate(TaskId taskId);

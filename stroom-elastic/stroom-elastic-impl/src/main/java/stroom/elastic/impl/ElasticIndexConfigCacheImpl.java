@@ -52,7 +52,7 @@ public class ElasticIndexConfigCacheImpl implements ElasticIndexConfigCache, Cle
 
     private ServiceUser serviceUser() {
         return new ServiceUser.Builder()
-                .jwt(securityContext.getApiToken())
+                .jwt(securityContext.getUserIdentity().getJws())
                 .name(securityContext.getUserId())
                 .build();
     }

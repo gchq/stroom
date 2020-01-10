@@ -1,7 +1,6 @@
 package stroom.security.impl;
 
-import stroom.security.shared.User;
-import stroom.security.shared.UserToken;
+import stroom.security.api.UserIdentity;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
@@ -13,13 +12,13 @@ final class CurrentUserState {
         // Utility.
     }
 
-    static void push(final UserToken userToken, final User userRef) {
+    static void push(final UserIdentity userIdentity) {
         final Deque<State> deque = THREAD_LOCAL.get();
         final State state = deque.peek();
         if (state != null) {
-            deque.push(new State(userToken, userRef, state.isElevatePermissions()));
+            deque.push(new State(userIdentity, state.isElevatePermissions()));
         } else {
-            deque.push(new State(userToken, userRef, false));
+            deque.push(new State(userIdentity, false));
         }
     }
 
@@ -28,11 +27,20 @@ final class CurrentUserState {
         deque.pop();
     }
 
+    static UserIdentity current() {
+        final Deque<State> deque = THREAD_LOCAL.get();
+        final State state = deque.peek();
+        if (state != null) {
+            return state.userIdentity;
+        }
+        return null;
+    }
+
     static void elevatePermissions() {
         final Deque<State> deque = THREAD_LOCAL.get();
         final State state = deque.peek();
         if (state != null) {
-            deque.push(new State(state.getUserToken(), state.getUser(), true));
+            deque.push(new State(state.getUserIdentity(), true));
         } else {
             throw new IllegalStateException("Attempt to elevate permissions without a current user");
         }
@@ -43,25 +51,6 @@ final class CurrentUserState {
         deque.pop();
     }
 
-
-    static UserToken currentUserToken() {
-        final Deque<State> deque = THREAD_LOCAL.get();
-        final State state = deque.peek();
-        if (state != null) {
-            return state.getUserToken();
-        }
-        return null;
-    }
-
-    static User currentUser() {
-        final Deque<State> deque = THREAD_LOCAL.get();
-        final State state = deque.peek();
-        if (state != null) {
-            return state.getUser();
-        }
-        return null;
-    }
-
     static boolean isElevatePermissions() {
         final Deque<State> deque = THREAD_LOCAL.get();
         final State state = deque.peek();
@@ -69,22 +58,16 @@ final class CurrentUserState {
     }
 
     private static class State {
-        private final UserToken userToken;
-        private final User userRef;
+        private final UserIdentity userIdentity;
         private final boolean elevatePermissions;
 
-        private State(final UserToken userToken, final User userRef, final boolean elevatePermissions) {
-            this.userToken = userToken;
-            this.userRef = userRef;
+        private State(final UserIdentity userIdentity, final boolean elevatePermissions) {
+            this.userIdentity = userIdentity;
             this.elevatePermissions = elevatePermissions;
         }
 
-        UserToken getUserToken() {
-            return userToken;
-        }
-
-        User getUser() {
-            return userRef;
+        UserIdentity getUserIdentity() {
+            return userIdentity;
         }
 
         boolean isElevatePermissions() {

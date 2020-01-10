@@ -35,8 +35,6 @@ import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQu
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserTokenUtil;
-import stroom.security.shared.UserToken;
 import stroom.task.api.TaskManager;
 import stroom.ui.config.shared.UiConfig;
 
@@ -96,11 +94,9 @@ class SolrSearchStoreFactory implements StoreFactory {
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
 
         // Create an asynchronous search task.
-        final UserToken userToken = UserTokenUtil.create(securityContext.getUserId());
         final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
         final SolrAsyncSearchTask asyncSearchTask = new SolrAsyncSearchTask(
                 null,
-                userToken,
                 searchName,
                 query,
                 SEND_INTERACTIVE_SEARCH_RESULT_FREQUENCY,

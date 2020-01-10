@@ -36,22 +36,8 @@ public class FindTaskProgressCriteria extends BaseCriteria implements Comparator
     public static final String FIELD_AGE = "Age";
     public static final String FIELD_INFO = "Info";
 
-    private FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
-    private String sessionId;
     private Set<TaskProgress> expandedTasks;
     private String nameFilter;
-
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public void setSessionId(final String sessionId) {
-        this.sessionId = sessionId;
-    }
-
-    public FindTaskCriteria getFindTaskCriteria() {
-        return findTaskCriteria;
-    }
 
     public String getNameFilter() {
         return nameFilter;
@@ -59,16 +45,6 @@ public class FindTaskProgressCriteria extends BaseCriteria implements Comparator
 
     public void setNameFilter(final String nameFilter) {
         this.nameFilter = nameFilter;
-    }
-
-    public boolean matches(final TaskProgress taskProgress) {
-        boolean match = true;
-        if (sessionId != null) {
-            if (!sessionId.equals(taskProgress.getSessionId())) {
-                match = false;
-            }
-        }
-        return match;
     }
 
     @Override
@@ -153,5 +129,9 @@ public class FindTaskProgressCriteria extends BaseCriteria implements Comparator
                 }
             }
         }
+    }
+
+    public boolean isMatch(final String sessionId) {
+        return true;
     }
 }

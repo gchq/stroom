@@ -76,7 +76,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                 if (LOGGER.isDebugEnabled()) {
                     final StringBuilder sb = new StringBuilder(
                             "Only the following search queries should be active for session '");
-                    sb.append(action.getUserToken());
+                    sb.append(activeQueriesManager.createKey(securityContext.getUserIdentity(), action.getApplicationInstanceId()));
                     sb.append("'\n");
                     for (final DashboardQueryKey queryKey : action.getSearchActionMap().keySet()) {
                         sb.append("\t");
@@ -85,8 +85,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                     LOGGER.debug(sb.toString());
                 }
 
-                final String searchSessionId = action.getUserToken() + "_" + action.getApplicationInstanceId();
-                final ActiveQueries activeQueries = activeQueriesManager.get(searchSessionId);
+                final ActiveQueries activeQueries = activeQueriesManager.get(securityContext.getUserIdentity(), action.getApplicationInstanceId());
                 final Map<DashboardQueryKey, SearchResponse> searchResultMap = new HashMap<>();
 
 //            // Fix query keys so they have session and user info.

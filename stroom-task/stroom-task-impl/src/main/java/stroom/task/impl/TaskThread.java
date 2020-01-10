@@ -16,6 +16,7 @@
 
 package stroom.task.impl;
 
+import stroom.security.api.UserIdentity;
 import stroom.task.shared.Task;
 import stroom.util.shared.HasTerminate;
 
@@ -26,6 +27,7 @@ import java.util.function.Supplier;
 
 class TaskThread implements HasTerminate {
     private final Task<?> task;
+    private final UserIdentity userIdentity;
     private final long submitTimeMs = System.currentTimeMillis();
 
     private final Set<TaskThread> children = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -35,15 +37,30 @@ class TaskThread implements HasTerminate {
 
     private volatile Thread thread;
 
-    TaskThread(final Task<?> task) {
+    TaskThread(final Task<?> task, final UserIdentity userIdentity) {
         this.task = task;
+        this.userIdentity = userIdentity;
     }
 
-    public Task<?> getTask() {
+    Task<?> getTask() {
         return task;
     }
 
-    public synchronized void setThread(final Thread thread) {
+    String getUserId() {
+        if (userIdentity != null) {
+            return userIdentity.getId();
+        }
+        return null;
+    }
+
+    String getSessionId() {
+        if (userIdentity != null) {
+            return userIdentity.getSessionId();
+        }
+        return null;
+    }
+
+    synchronized void setThread(final Thread thread) {
         this.thread = thread;
         if (terminate) {
             interrupt();
@@ -72,7 +89,7 @@ class TaskThread implements HasTerminate {
         interrupt();
     }
 
-    private synchronized void interrupt() {
+    synchronized void interrupt() {
         final Thread thread = this.thread;
         if (thread != null) {
             thread.interrupt();
@@ -99,7 +116,7 @@ class TaskThread implements HasTerminate {
         return submitTimeMs;
     }
 
-    public String getName() {
+    String getName() {
         String name = this.name;
         if (name == null) {
             name = task.getTaskName();
@@ -111,11 +128,11 @@ class TaskThread implements HasTerminate {
         return name;
     }
 
-    public void setName(final String name) {
+    void setName(final String name) {
         this.name = name;
     }
 
-    public String getInfo() {
+    String getInfo() {
         final Supplier<String> messageSupplier = this.messageSupplier;
         if (messageSupplier != null) {
             return messageSupplier.get();
@@ -123,22 +140,22 @@ class TaskThread implements HasTerminate {
         return "";
     }
 
-    public void info(final Supplier<String> messageSupplier) {
+    void info(final Supplier<String> messageSupplier) {
         this.messageSupplier = messageSupplier;
     }
 
-    public synchronized void addChild(final TaskThread taskThread) {
+    synchronized void addChild(final TaskThread taskThread) {
         children.add(taskThread);
         if (terminate) {
             taskThread.terminate();
         }
     }
 
-    public void removeChild(final TaskThread taskThread) {
+    void removeChild(final TaskThread taskThread) {
         children.remove(taskThread);
     }
 
-    public Set<TaskThread> getChildren() {
+    Set<TaskThread> getChildren() {
         return children;
     }
 

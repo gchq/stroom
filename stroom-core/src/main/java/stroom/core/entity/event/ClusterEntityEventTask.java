@@ -18,7 +18,6 @@ package stroom.core.entity.event;
 
 import stroom.cluster.task.api.ClusterTask;
 import stroom.entity.shared.EntityEvent;
-import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
 
 public class ClusterEntityEventTask extends ClusterTask<VoidResult> {
@@ -26,8 +25,8 @@ public class ClusterEntityEventTask extends ClusterTask<VoidResult> {
 
     private final EntityEvent entityEvent;
 
-    public ClusterEntityEventTask(final Task<?> parentTask, final EntityEvent entityEvent) {
-        super(parentTask.getUserToken(), "EntityEvent");
+    public ClusterEntityEventTask(final EntityEvent entityEvent) {
+        super("EntityEvent");
         this.entityEvent = entityEvent;
     }
 
