@@ -82,7 +82,8 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
             synchronized (this) {
                 result = cache;
                 if (result == null) {
-                    this.cache = cacheManager.create(CACHE_NAME, indexShardSearchConfig::getIndexShardSearcherCache, this::create, this::destroy);
+                    result = cacheManager.create(CACHE_NAME, indexShardSearchConfig::getIndexShardSearcherCache, this::create, this::destroy);
+                    cache = result;
                 }
             }
         }
