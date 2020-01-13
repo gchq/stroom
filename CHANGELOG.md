@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1352** : Fixed Hessian serialisation of user identities on tasks.
+
 
 ## [v6.0.28] - 2020-01-08
 

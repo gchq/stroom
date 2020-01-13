@@ -1,6 +1,8 @@
 package stroom.search.server;
 
+import com.caucho.hessian.io.Hessian2Input;
 import com.caucho.hessian.io.Hessian2Output;
+import org.junit.Assert;
 import org.junit.Test;
 import stroom.dashboard.expression.v1.Generator;
 import stroom.dashboard.expression.v1.StaticValueFunction;
@@ -32,7 +34,9 @@ import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.query.common.v2.TablePayload;
 import stroom.security.ProcessingUserIdentity;
+import stroom.security.shared.UserIdentity;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Arrays;
@@ -120,6 +124,21 @@ public class TestHessian {
 
         out.writeObject(nodeResult);
         out.close();
+    }
+
+    @Test
+    public void testUserIdentity() throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        Hessian2Output out = new Hessian2Output(baos);
+
+        out.writeObject(ProcessingUserIdentity.INSTANCE);
+        out.close();
+
+        Hessian2Input in = new Hessian2Input(new ByteArrayInputStream(baos.toByteArray()));
+        final Object o = in.readObject(UserIdentity.class);
+        in.close();
+
+        Assert.assertTrue(ProcessingUserIdentity.INSTANCE.equals(o));
     }
 
     private Generator getGenerator(final String string) {
