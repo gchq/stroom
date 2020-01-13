@@ -46,4 +46,15 @@ public final class ProcessingUserIdentity implements UserIdentity {
     public String toString() {
         return getId();
     }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        return o instanceof ProcessingUserIdentity;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
+    }
 }
