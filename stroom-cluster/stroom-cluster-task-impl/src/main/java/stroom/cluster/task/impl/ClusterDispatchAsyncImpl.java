@@ -27,6 +27,7 @@ import stroom.cluster.task.api.ClusterResultCollector;
 import stroom.cluster.task.api.ClusterTask;
 import stroom.cluster.task.api.CollectorId;
 import stroom.docref.SharedObject;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskManager;
 import stroom.task.impl.CurrentTaskState;
@@ -56,14 +57,17 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     private final TaskManager taskManager;
     private final ClusterResultCollectorCacheImpl collectorCache;
     private final ClusterCallService clusterCallService;
+    private final SecurityContext securityContext;
 
     @Inject
     ClusterDispatchAsyncImpl(final TaskManager taskManager,
                              final ClusterResultCollectorCacheImpl collectorCache,
-                             final ClusterCallServiceRemote clusterCallService) {
+                             final ClusterCallServiceRemote clusterCallService,
+                             final SecurityContext securityContext) {
         this.taskManager = taskManager;
         this.collectorCache = collectorCache;
         this.clusterCallService = clusterCallService;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -130,12 +134,12 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                     clusterTask.getTaskName() +
                     "'";
 
-            final GenericServerTask clusterCallTask = GenericServerTask.create(sourceTask, clusterTask.getUserToken(), "Cluster call", message);
+            final GenericServerTask clusterCallTask = GenericServerTask.create(sourceTask, "Cluster call", message);
             // Create a runnable so we can execute the remote call
             // asynchronously.
             clusterCallTask.setRunnable(() -> {
                 try {
-                    clusterCallService.call(sourceNode, targetNode, ClusterWorkerImpl.SERVICE_NAME,
+                    clusterCallService.call(sourceNode, targetNode, securityContext.getUserIdentity(), ClusterWorkerImpl.SERVICE_NAME,
                             ClusterWorkerImpl.EXEC_ASYNC_METHOD, ClusterWorkerImpl.EXEC_ASYNC_METHOD_ARGS,
                             new Object[]{clusterTask, sourceNode, sourceTaskId, collectorId});
                 } catch (final RuntimeException e) {
@@ -221,7 +225,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                         sb.append("'");
                         final String message = sb.toString();
 
-                        final GenericServerTask genericServerTask = GenericServerTask.create(sourceTask, task.getUserToken(), "Cluster result", message);
+                        final GenericServerTask genericServerTask = GenericServerTask.create(sourceTask, "Cluster result", message);
                         genericServerTask.setRunnable(() -> {
                             final LogExecutionTime logExecutionTime = new LogExecutionTime();
                             try {

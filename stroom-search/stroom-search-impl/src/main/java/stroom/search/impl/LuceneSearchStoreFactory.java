@@ -36,8 +36,6 @@ import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.search.impl.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserTokenUtil;
-import stroom.security.shared.UserToken;
 import stroom.ui.config.shared.UiConfig;
 
 import javax.inject.Inject;
@@ -98,11 +96,9 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
 
         // Create an asynchronous search task.
-        final UserToken userToken = UserTokenUtil.create(securityContext.getUserId());
         final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
         final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
                 null,
-                userToken,
                 searchName,
                 query,
                 nodeName,

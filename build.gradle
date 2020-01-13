@@ -241,6 +241,7 @@ ext.libs = [
         mockito_junit_jupiter          : "org.mockito:mockito-junit-jupiter:$versions.mockito",
         mysql_connector_java           : "mysql:mysql-connector-java:8.0.15",
         objenesis                      : "org.objenesis:objenesis", // version controlled by DW BOM
+        okhttp                         : "com.squareup.okhttp3:okhttp:4.3.0",
         poi                            : "org.apache.poi:poi:3.17",
         poi_ooxml                      : "org.apache.poi:poi-ooxml:3.17",
         reactivestreams                : "org.reactivestreams:reactive-streams:1.0.2", //used by rxjava

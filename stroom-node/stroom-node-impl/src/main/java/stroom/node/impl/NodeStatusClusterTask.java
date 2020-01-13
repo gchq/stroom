@@ -18,12 +18,11 @@ package stroom.node.impl;
 
 import stroom.cluster.task.api.ClusterTask;
 import stroom.node.shared.NodeStatusResult;
-import stroom.security.shared.UserToken;
 
 class NodeStatusClusterTask extends ClusterTask<NodeStatusResult> {
     private static final long serialVersionUID = -2205811554553456872L;
 
-    NodeStatusClusterTask(final UserToken userToken) {
-        super(userToken, "Node Info Cluster Task");
+    NodeStatusClusterTask() {
+        super("Node Info Cluster Task");
     }
 }

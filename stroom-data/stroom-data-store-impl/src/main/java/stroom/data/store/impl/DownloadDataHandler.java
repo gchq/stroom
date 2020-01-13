@@ -62,8 +62,7 @@ class DownloadDataHandler extends AbstractTaskHandler<DownloadDataAction, Resour
                 }
 
                 final DataDownloadSettings settings = new DataDownloadSettings();
-                taskManager.exec(new DataDownloadTask(action.getUserToken(), action.getCriteria(),
-                        file.getParent(), fileName, settings));
+                taskManager.exec(new DataDownloadTask(action.getCriteria(), file.getParent(), fileName, settings));
 
                 streamEventLog.exportStream(action.getCriteria(), null);
 

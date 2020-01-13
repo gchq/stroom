@@ -155,7 +155,6 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
         // stroom.search.impl.shard.maxThreadsPerTask
         // stroom.search.storeSize
 
-        FROM_TO_MAP.put("stroom.security.apitoken", "stroom.security.authentication.apiToken");
         FROM_TO_MAP.put("stroom.security.userNamePattern", "stroom.security.authentication.userNamePattern");
         FROM_TO_MAP.put("stroom.serviceDiscovery.curator.baseSleepTimeMs", "stroom.serviceDiscovery.curatorBaseSleepTimeMs");
         FROM_TO_MAP.put("stroom.serviceDiscovery.curator.maxRetries", "stroom.serviceDiscovery.curatorMaxRetries");

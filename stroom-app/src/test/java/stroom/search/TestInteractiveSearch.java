@@ -36,7 +36,6 @@ import stroom.query.shared.v2.ParamUtil;
 import stroom.search.api.EventRef;
 import stroom.search.api.EventRefs;
 import stroom.search.impl.EventSearchTask;
-import stroom.security.api.UserTokenUtil;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskManager;
 
@@ -438,7 +437,7 @@ class TestInteractiveSearch extends AbstractSearchTest {
 
         final CountDownLatch complete = new CountDownLatch(1);
 
-        final EventSearchTask eventSearchTask = new EventSearchTask(UserTokenUtil.processingUser(), query,
+        final EventSearchTask eventSearchTask = new EventSearchTask(query,
                 new EventRef(1, 1), new EventRef(Long.MAX_VALUE, Long.MAX_VALUE), 1000, 1000, 1000, 100);
         final AtomicReference<EventRefs> results = new AtomicReference<>();
         taskManager.execAsync(eventSearchTask, new TaskCallback<EventRefs>() {

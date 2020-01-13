@@ -17,25 +17,18 @@
 package stroom.dashboard.impl;
 
 import stroom.docref.DocRef;
-import stroom.security.shared.UserToken;
 
 class ActiveQuery {
     private final DocRef docRef;
-    private final UserToken userToken;
     private final long creationTime;
 
-    ActiveQuery(final DocRef docRef, final UserToken userToken) {
+    ActiveQuery(final DocRef docRef) {
         this.docRef = docRef;
-        this.userToken = userToken;
         this.creationTime = System.currentTimeMillis();
     }
 
     DocRef getDocRef() {
         return docRef;
-    }
-
-    UserToken getUserToken() {
-        return userToken;
     }
 
     long getCreationTime() {
@@ -46,7 +39,6 @@ class ActiveQuery {
     public String toString() {
         return "ActiveQuery{" +
                 "docRef=" + docRef +
-                ", userToken=" + userToken +
                 ", creationTime=" + creationTime +
                 '}';
     }

@@ -21,7 +21,6 @@ import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.DefaultClusterResultCollector;
 import stroom.cluster.task.api.TargetType;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserTokenUtil;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
@@ -44,10 +43,10 @@ class SessionListHandler extends AbstractTaskHandler<SessionListTask, ResultList
 
     @Override
     public ResultList<SessionDetails> exec(final SessionListTask action) {
-        return securityContext.insecureResult(() -> {
+        return securityContext.asProcessingUserResult(() -> {
             final DefaultClusterResultCollector<ResultList<SessionDetails>> collector = dispatchHelper
                     .execAsync(
-                            new SessionListClusterTask(UserTokenUtil.processingUser(), "Get session list"),
+                            new SessionListClusterTask("Get session list"),
                             TargetType.ACTIVE);
 
             final ArrayList<SessionDetails> rtnList = new ArrayList<>();

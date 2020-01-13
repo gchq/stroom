@@ -61,8 +61,7 @@ class SearchableTaskProgress implements Searchable {
     @Override
     public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
         securityContext.secure(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
-            final FindTaskProgressClusterTask clusterTask = new FindTaskProgressClusterTask(
-                    securityContext.getUserToken(), "Search Task Progress", new FindTaskProgressCriteria());
+            final FindTaskProgressClusterTask clusterTask = new FindTaskProgressClusterTask("Search Task Progress", new FindTaskProgressCriteria());
             final DefaultClusterResultCollector<ResultList<TaskProgress>> collector = dispatchHelper
                     .execAsync(clusterTask, TargetType.ACTIVE);
 
@@ -75,7 +74,6 @@ class SearchableTaskProgress implements Searchable {
                     .flatMap(List::stream)
                     .map(taskProgress -> {
                         final Map<String, Object> attributeMap = new HashMap<>();
-                        attributeMap.put(TaskManagerFields.FIELD_SESSION_ID, taskProgress.getSessionId());
                         attributeMap.put(TaskManagerFields.FIELD_NODE, taskProgress.getNodeName());
                         attributeMap.put(TaskManagerFields.FIELD_NAME, taskProgress.getTaskName());
                         attributeMap.put(TaskManagerFields.FIELD_USER, taskProgress.getUserName());

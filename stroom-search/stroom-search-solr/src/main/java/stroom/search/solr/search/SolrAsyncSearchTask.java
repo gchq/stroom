@@ -19,7 +19,6 @@ package stroom.search.solr.search;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.security.shared.UserToken;
 import stroom.task.api.ServerTask;
 import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
@@ -39,15 +38,14 @@ public class SolrAsyncSearchTask extends ServerTask<VoidResult> implements Seria
 
     private volatile transient SolrSearchResultCollector resultCollector;
 
-    SolrAsyncSearchTask(final Task<?> parentTask,
-                        final UserToken userToken,
-                        final String searchName,
-                        final Query query,
-                        final int resultSendFrequency,
-                        final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
-                        final String dateTimeLocale,
-                        final long now) {
-        super(parentTask, userToken);
+    public SolrAsyncSearchTask(final Task<?> parentTask,
+                               final String searchName,
+                               final Query query,
+                               final int resultSendFrequency,
+                               final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
+                               final String dateTimeLocale,
+                               final long now) {
+        super(parentTask);
         this.searchName = searchName;
         this.query = query;
         this.resultSendFrequency = resultSendFrequency;
