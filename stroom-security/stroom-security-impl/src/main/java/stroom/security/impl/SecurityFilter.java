@@ -24,9 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.model.IdTokenRequest;
-import stroom.security.api.AuthenticationService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.shared.User;
 import stroom.ui.config.shared.UiConfig;
@@ -84,7 +84,7 @@ class SecurityFilter implements Filter {
     private final UiConfig uiConfig;
     private final JWTService jwtService;
     private final AuthenticationServiceClients authenticationServiceClients;
-    private final AuthenticationService authenticationService;
+    private final UserCache userCache;
     private final SecurityContext securityContext;
     private final Pattern publicApiPathPattern;
 
@@ -94,13 +94,13 @@ class SecurityFilter implements Filter {
             final UiConfig uiConfig,
             final JWTService jwtService,
             final AuthenticationServiceClients authenticationServiceClients,
-            final AuthenticationService authenticationService,
+            final UserCache userCache,
             final SecurityContext securityContext) {
         this.config = config;
         this.uiConfig = uiConfig;
         this.jwtService = jwtService;
         this.authenticationServiceClients = authenticationServiceClients;
-        this.authenticationService = authenticationService;
+        this.userCache = userCache;
         this.securityContext = securityContext;
 
         if (!config.isAuthenticationRequired()) {
@@ -160,7 +160,7 @@ class SecurityFilter implements Filter {
             } else if (isApiRequest(servletPath)) {
                 LOGGER.debug("API request");
                 if (!config.isAuthenticationRequired()) {
-                    authenticateAsProcUser(request, response, chain, false);
+                    authenticateAsAdmin(request, response, chain, false);
                 } else {
                     // Authenticate requests to the API.
                     final UserIdentity token = loginAPI(request, response);
@@ -180,7 +180,7 @@ class SecurityFilter implements Filter {
                     continueAsUser(request, response, chain, userIdentity);
 
                 } else if (!config.isAuthenticationRequired()) {
-                    authenticateAsProcUser(request, response, chain, true);
+                    authenticateAsAdmin(request, response, chain, true);
 
                 } else {
                     // If the session doesn't have a user ref then attempt login.
@@ -216,6 +216,14 @@ class SecurityFilter implements Filter {
 
     private boolean shouldBypassAuthentication(String servletPath) {
         return servletPath.startsWith(NO_AUTH_PATH);
+    }
+
+    private void authenticateAsAdmin(final HttpServletRequest request,
+                                     final HttpServletResponse response,
+                                     final FilterChain chain,
+                                     final boolean useSession) throws IOException, ServletException {
+
+        bypassAuthentication(request, response, chain, useSession, securityContext.createIdentity(User.ADMIN_USER_NAME));
     }
 
     private void authenticateAsProcUser(final HttpServletRequest request,
@@ -411,7 +419,8 @@ class SecurityFilter implements Filter {
             if (match) {
                 LOGGER.info("User is authenticated for sessionId " + sessionId);
                 final String userId = jwtClaims.getSubject();
-                final User user = authenticationService.getUser(userId);
+                final Optional<User> optionalUser = userCache.get(userId);
+                final User user = optionalUser.orElseThrow(() -> new AuthenticationException("Unable to find user: " + userId));
                 token = new UserIdentityImpl(user, userId, jws, sessionId);
 
             } else {
@@ -464,7 +473,8 @@ class SecurityFilter implements Filter {
             }
 
             final String userId = optionalUserId.get();
-            final User user = authenticationService.getUser(userId);
+            final Optional<User> optionalUser = userCache.get(userId);
+            final User user = optionalUser.orElseThrow(() -> new AuthenticationException("Unable to find user: " + userId));
             token = new UserIdentityImpl(user, userId, optionalJws.get(), sessionId);
         } else {
             LOGGER.error("Cannot get a valid JWS for API request!");

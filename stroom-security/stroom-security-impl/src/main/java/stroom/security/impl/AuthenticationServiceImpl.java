@@ -19,12 +19,13 @@ package stroom.security.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.api.AuthenticationService;
-import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
+import stroom.util.AuditUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.UUID;
 
 @Singleton
 class AuthenticationServiceImpl implements AuthenticationService {
@@ -33,18 +34,15 @@ class AuthenticationServiceImpl implements AuthenticationService {
     private static final String ADMINISTRATORS = "Administrators";
     private static final int GET_USER_ATTEMPTS = 2;
 
-    private final UserService userService;
-    private final UserAppPermissionService userAppPermissionService;
-    private final SecurityContext securityContext;
+    private final UserDao userDao;
+    private final AppPermissionDao appPermissionDao;
 
     @Inject
     AuthenticationServiceImpl(
-            final UserService userService,
-            final UserAppPermissionService userAppPermissionService,
-            final SecurityContext securityContext) {
-        this.userService = userService;
-        this.userAppPermissionService = userAppPermissionService;
-        this.securityContext = securityContext;
+            final UserDao userDao,
+            final AppPermissionDao appPermissionDao) {
+        this.userDao = userDao;
+        this.appPermissionDao = appPermissionDao;
     }
 
     @Override
@@ -68,7 +66,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
                 // some way of sensibly referencing the user and something to attach permissions to.
                 // We need to elevate the user because no one is currently logged in.
                 try {
-                    user = securityContext.asProcessingUserResult(() -> userService.createUser(userId));
+                    user = create(userId, false);
                 } catch (final Exception e) {
                     final String msg = String.format("Could not create user, this is attempt %d", attempts);
                     if (attempts == 0) {
@@ -87,11 +85,21 @@ class AuthenticationServiceImpl implements AuthenticationService {
         return user;
     }
 
+    private User create(final String name, final boolean isGroup) {
+        User user = new User();
+        AuditUtil.stamp("AuthenticationServiceImpl", user);
+        user.setUuid(UUID.randomUUID().toString());
+        user.setName(name);
+        user.setGroup(isGroup);
+
+        return userDao.create(user);
+    }
+
     private User loadUserByUsername(final String username) {
         User userRef;
 
         try {
-            userRef = userService.getUserByName(username);
+            userRef = userDao.getByName(username);
             if (userRef == null) {
                 // The requested system user does not exist.
                 if (User.ADMIN_USER_NAME.equals(username)) {
@@ -108,26 +116,24 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private User createOrRefreshUser(final String name) {
-        return securityContext.asProcessingUserResult(() -> {
-            User userRef = userService.getUserByName(name);
-            if (userRef == null) {
-                if (User.ADMIN_USER_NAME.equals(name)) {
-                    LOGGER.info("Creating user {}", name);
-                }
-
-                userRef = userService.createUser(name);
-
-                final User userGroup = createOrRefreshAdminUserGroup();
-                try {
-                    userService.addUserToGroup(userRef.getUuid(), userGroup.getUuid());
-                } catch (final RuntimeException e) {
-                    // Expected.
-                    LOGGER.debug(e.getMessage());
-                }
+        User userRef = userDao.getByName(name);
+        if (userRef == null) {
+            if (User.ADMIN_USER_NAME.equals(name)) {
+                LOGGER.info("Creating user {}", name);
             }
 
-            return userRef;
-        });
+            userRef = create(name, false);
+
+            final User userGroup = createOrRefreshAdminUserGroup();
+            try {
+                userDao.addUserToGroup(userRef.getUuid(), userGroup.getUuid());
+            } catch (final RuntimeException e) {
+                // Expected.
+                LOGGER.debug(e.getMessage());
+            }
+        }
+
+        return userRef;
     }
 
     /**
@@ -140,21 +146,19 @@ class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private User createOrRefreshAdminUserGroup(final String userGroupName) {
-        return securityContext.asProcessingUserResult(() -> {
-            final User existing = userService.getUserByName(userGroupName);
-            if (existing != null) {
-                return existing;
-            }
+        final User existing = userDao.getByName(userGroupName);
+        if (existing != null) {
+            return existing;
+        }
 
-            final User newUserGroup = userService.createUserGroup(userGroupName);
-            try {
-                userAppPermissionService.addPermission(newUserGroup.getUuid(), PermissionNames.ADMINISTRATOR);
-            } catch (final RuntimeException e) {
-                // Expected.
-                LOGGER.debug(e.getMessage());
-            }
+        final User newUserGroup = create(userGroupName, true);
+        try {
+            appPermissionDao.addPermission(newUserGroup.getUuid(), PermissionNames.ADMINISTRATOR);
+        } catch (final RuntimeException e) {
+            // Expected.
+            LOGGER.debug(e.getMessage());
+        }
 
-            return newUserGroup;
-        });
+        return newUserGroup;
     }
 }
