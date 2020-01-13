@@ -17,6 +17,7 @@
 package stroom.task.cluster;
 
 import stroom.entity.shared.BaseResultList;
+import stroom.security.shared.UserIdentity;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TaskProgress;
 
@@ -26,9 +27,9 @@ public class TerminateTaskClusterTask extends ClusterTask<BaseResultList<TaskPro
     private final FindTaskCriteria criteria;
     private final boolean kill;
 
-    public TerminateTaskClusterTask(final String userToken, final String taskName,
+    public TerminateTaskClusterTask(final UserIdentity userIdentity, final String taskName,
                                     final FindTaskCriteria criteria, final boolean kill) {
-        super(userToken, taskName);
+        super(userIdentity, taskName);
         this.criteria = criteria;
         this.kill = kill;
     }

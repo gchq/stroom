@@ -23,6 +23,7 @@ dependencies {
     compile libs.guava
     compile libs.hibernate_jpa_api
     compile libs.commons_lang
+    compile libs.okhttp
     compile libs.saxon_he
     compile libs.jackson_core
     compile libs.xml_apis

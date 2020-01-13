@@ -31,7 +31,6 @@ public class TaskProgress implements SharedObject, TreeRow {
     private TaskId id;
     private String taskName;
     private String taskInfo;
-    private String sessionId;
     private String userName;
     private String threadName;
 
@@ -96,14 +95,6 @@ public class TaskProgress implements SharedObject, TreeRow {
 
     public void setSubmitTimeMs(final long submitTimeMs) {
         this.submitTimeMs = submitTimeMs;
-    }
-
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public void setSessionId(final String sessionId) {
-        this.sessionId = sessionId;
     }
 
     public String getUserName() {

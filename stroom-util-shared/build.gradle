@@ -1,4 +1,6 @@
 dependencies {
+    compile project(':stroom-security-api')
+
     testCompile libs.hamcrest_core
     testCompile libs.junit
 

@@ -1,6 +1,6 @@
 package stroom.security.server;
 
-import stroom.security.shared.UserRef;
+import stroom.security.shared.UserIdentity;
 import stroom.util.thread.Link;
 
 final class CurrentUserState {
@@ -10,7 +10,7 @@ final class CurrentUserState {
         // Utility.
     }
 
-    static void pushUserRef(final UserRef userRef) {
+    static void push(final UserIdentity userIdentity) {
         final Link<State> link = THREAD_LOCAL.get();
 
         boolean elevatePermissions = false;
@@ -18,19 +18,19 @@ final class CurrentUserState {
             elevatePermissions = link.getObject().isElevatePermissions();
         }
 
-        THREAD_LOCAL.set(new Link<>(new State(userRef, elevatePermissions), link));
+        THREAD_LOCAL.set(new Link<>(new State(userIdentity, elevatePermissions), link));
     }
 
-    static UserRef popUserRef() {
+    static UserIdentity pop() {
         final Link<State> link = THREAD_LOCAL.get();
         THREAD_LOCAL.set(link.getParent());
-        return link.getObject().getUserRef();
+        return link.getObject().getUserIdentity();
     }
 
-    static UserRef currentUserRef() {
+    static UserIdentity current() {
         final Link<State> link = THREAD_LOCAL.get();
         if (link != null) {
-            return link.getObject().getUserRef();
+            return link.getObject().getUserIdentity();
         }
         return null;
     }
@@ -38,12 +38,12 @@ final class CurrentUserState {
     static void elevatePermissions() {
         final Link<State> link = THREAD_LOCAL.get();
 
-        UserRef userRef = null;
+        UserIdentity token = null;
         if (link != null) {
-            userRef = link.getObject().getUserRef();
+            token = link.getObject().getUserIdentity();
         }
 
-        THREAD_LOCAL.set(new Link<>(new State(userRef, true), link));
+        THREAD_LOCAL.set(new Link<>(new State(token, true), link));
     }
 
     static void restorePermissions() {
@@ -57,16 +57,16 @@ final class CurrentUserState {
     }
 
     private static class State {
-        private final UserRef userRef;
+        private final UserIdentity userIdentity;
         private final boolean elevatePermissions;
 
-        public State(final UserRef userRef, final boolean elevatePermissions) {
-            this.userRef = userRef;
+        public State(final UserIdentity userIdentity, final boolean elevatePermissions) {
+            this.userIdentity = userIdentity;
             this.elevatePermissions = elevatePermissions;
         }
 
-        public UserRef getUserRef() {
-            return userRef;
+        UserIdentity getUserIdentity() {
+            return userIdentity;
         }
 
         boolean isElevatePermissions() {

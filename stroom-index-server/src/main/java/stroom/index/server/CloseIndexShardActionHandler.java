@@ -42,7 +42,7 @@ class CloseIndexShardActionHandler extends AbstractTaskHandler<CloseIndexShardAc
     @Override
     public VoidResult exec(final CloseIndexShardAction action) {
         final FindCloseServiceClusterTask<FindIndexShardCriteria> clusterTask = new FindCloseServiceClusterTask<>(
-                action.getUserToken(), action.getTaskName(), IndexShardManager.class,
+                action.getUserIdentity(), action.getTaskName(), IndexShardManager.class,
                 action.getCriteria());
 
         dispatchHelper.execAsync(clusterTask, TargetType.ACTIVE);

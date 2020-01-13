@@ -45,7 +45,7 @@ import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.server.AuthenticationService;
-import stroom.security.server.AuthenticationToken;
+import stroom.security.server.UserService;
 import stroom.statistics.server.sql.datasource.FindStatisticsEntityCriteria;
 import stroom.statistics.server.sql.datasource.StatisticStoreEntityService;
 import stroom.statistics.server.stroomstats.entity.FindStroomStatsStoreEntityCriteria;
@@ -163,7 +163,7 @@ public final class SetupSampleDataBean {
     public void run(final boolean shutdown) throws IOException {
         // Ensure admin user exists.
         LOGGER.info("Creating admin user");
-        authenticationService.getUserRef(new AuthenticationToken("admin", null));
+        authenticationService.getUserRef(UserService.ADMIN_USER_NAME);
 
 //        createRandomExplorerNode(null, "", 0, 2);
 
@@ -374,8 +374,8 @@ public final class SetupSampleDataBean {
             final DataLoader dataLoader = new DataLoader(feedService, streamStore);
             long startTime = System.currentTimeMillis();
 
-                // Then load event data.
-                dataLoader.read(exampleDataDir, false, startTime);
+            // Then load event data.
+            dataLoader.read(exampleDataDir, false, startTime);
         } else {
             LOGGER.info("Directory {} doesn't exist so skipping", exampleDataDir);
         }

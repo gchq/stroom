@@ -6,7 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Update `stroom.security.apiToken` in stroom.conf.template to the new token with added client id and secret
+
+## [v6.0.28] - 2020-01-08
+
+* Issue **#1353** : Removed session identities from tasks.
+
+* Issue **#1352** : Removed internal API token.
+
+* Issue **#1347** : Added `http-call` method to XSLT.
 
 
 ## [v6.0.27] - 2019-12-05
@@ -2018,7 +2025,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.27...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.28...6.0
+[v6.0.28]: https://github.com/gchq/stroom/compare/v6.0.27...v6.0.28
 [v6.0.27]: https://github.com/gchq/stroom/compare/v6.0.26...v6.0.27
 [v6.0.26]: https://github.com/gchq/stroom/compare/v6.0.25...v6.0.26
 [v6.0.25]: https://github.com/gchq/stroom/compare/v6.0.24...v6.0.25

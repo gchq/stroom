@@ -22,7 +22,7 @@ import stroom.entity.shared.DocRefUtil;
 import stroom.feed.shared.Feed;
 import stroom.proxy.repo.StroomZipFile;
 import stroom.proxy.repo.StroomZipFileType;
-import stroom.security.UserTokenUtil;
+import stroom.security.ProcessingUserIdentity;
 import stroom.streamstore.server.StreamAttributeValueFlush;
 import stroom.streamstore.server.StreamSource;
 import stroom.streamstore.server.StreamStore;
@@ -72,7 +72,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         String format = file.getFileName().toString();
         format = format.substring(0, format.indexOf("."));
-        taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, getCurrentTestDir(), format, streamDownloadSettings));
+        taskManager.exec(new StreamDownloadTask(ProcessingUserIdentity.INSTANCE, findStreamCriteria, getCurrentTestDir(), format, streamDownloadSettings));
 
         Assert.assertEquals(2, streamStore.find(findStreamCriteria).size());
 
@@ -83,7 +83,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         Assert.assertFalse(stroomZipFile.containsEntry("001", StroomZipFileType.Meta));
         stroomZipFile.close();
 
-        taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, DocRefUtil.create(feed),
+        taskManager.exec(new StreamUploadTask(ProcessingUserIdentity.INSTANCE, "test.zip", file, DocRefUtil.create(feed),
                 DocRefUtil.create(StreamType.RAW_EVENTS), null, null));
 
         Assert.assertEquals(4, streamStore.find(findStreamCriteria).size());
@@ -98,7 +98,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".dat");
         Files.write(file, "TEST".getBytes());
 
-        taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.dat", file, DocRefUtil.create(feed),
+        taskManager.exec(new StreamUploadTask(ProcessingUserIdentity.INSTANCE, "test.dat", file, DocRefUtil.create(feed),
                 DocRefUtil.create(StreamType.RAW_EVENTS), null, "Tom:One\nJames:Two\n"));
 
         Assert.assertEquals(1, streamStore.find(findStreamCriteria).size());
@@ -150,7 +150,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         String format = file.getFileName().toString();
         format = format.substring(0, format.indexOf("."));
-        taskManager.exec(new StreamDownloadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, findStreamCriteria, getCurrentTestDir(), format, streamDownloadSettings));
+        taskManager.exec(new StreamDownloadTask(ProcessingUserIdentity.INSTANCE, findStreamCriteria, getCurrentTestDir(), format, streamDownloadSettings));
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
         Assert.assertTrue(stroomZipFile.containsEntry("001_1", StroomZipFileType.Manifest));
@@ -164,7 +164,7 @@ public class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegration
 
         final String extraMeta = "Z:ALL\n";
 
-        taskManager.exec(new StreamUploadTask(UserTokenUtil.INTERNAL_PROCESSING_USER_TOKEN, "test.zip", file, DocRefUtil.create(feed),
+        taskManager.exec(new StreamUploadTask(ProcessingUserIdentity.INSTANCE, "test.zip", file, DocRefUtil.create(feed),
                 DocRefUtil.create(StreamType.RAW_EVENTS), null, extraMeta));
 
         final List<Stream> streamList = streamStore.find(findStreamCriteria);

@@ -17,6 +17,7 @@
 dependencies {
     compile libs.stroomQueryApi
 
+    compile project(':stroom-security-api')
     compile project(':stroom-util-shared')
 
     compile libs.hibernate_jpa_api

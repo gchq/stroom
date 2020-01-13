@@ -63,7 +63,7 @@ abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedOb
             criteria.setPageRequest(new PageRequest());
 
             final FindServiceClusterTask<FindTaskProgressCriteria, TaskProgress> clusterTask = new FindServiceClusterTask<>(
-                    action.getUserToken(), action.getTaskName(), TaskManager.class, criteria);
+                    action.getUserIdentity(), action.getTaskName(), TaskManager.class, criteria);
             final DefaultClusterResultCollector<ResultList<TaskProgress>> collector = dispatchHelper
                     .execAsync(clusterTask, TargetType.ACTIVE);
 
@@ -171,9 +171,6 @@ abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedOb
             return true;
         }
         if (checkName(taskProgress.getUserName(), name)) {
-            return true;
-        }
-        if (checkName(taskProgress.getSessionId(), name)) {
             return true;
         }
         if (checkName(taskProgress.getTaskInfo(), name)) {

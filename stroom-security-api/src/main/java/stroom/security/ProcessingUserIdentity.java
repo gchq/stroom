@@ -14,18 +14,36 @@
  * limitations under the License.
  */
 
-package stroom.jobsystem.server;
+package stroom.security;
 
-import stroom.jobsystem.shared.JobNode;
-import stroom.jobsystem.shared.JobNodeInfo;
 import stroom.security.shared.UserIdentity;
-import stroom.task.cluster.ClusterTask;
-import stroom.util.shared.SharedMap;
 
-public class JobNodeInfoClusterTask extends ClusterTask<SharedMap<JobNode, JobNodeInfo>> {
-    private static final long serialVersionUID = 3242415690833883484L;
+public final class ProcessingUserIdentity implements UserIdentity {
+    private static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
 
-    public JobNodeInfoClusterTask(final UserIdentity userIdentity) {
-        super(userIdentity, "JobNodeInfoClusterTask");
+    public static final UserIdentity INSTANCE = new ProcessingUserIdentity();
+
+    private ProcessingUserIdentity() {
+        // Utility class.
+    }
+
+    @Override
+    public String getId() {
+        return INTERNAL_PROCESSING_USER;
+    }
+
+    @Override
+    public String getJws() {
+        return null;
+    }
+
+    @Override
+    public String getSessionId() {
+        return null;
+    }
+
+    @Override
+    public String toString() {
+        return getId();
     }
 }

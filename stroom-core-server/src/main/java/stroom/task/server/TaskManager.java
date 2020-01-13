@@ -19,6 +19,7 @@ package stroom.task.server;
 
 import stroom.entity.server.FindService;
 import stroom.entity.shared.BaseResultList;
+import stroom.security.shared.UserIdentity;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
@@ -75,7 +76,7 @@ public interface TaskManager extends FindService<TaskProgress, FindTaskProgressC
      */
     <R> void execAsync(Task<R> task, TaskCallback<R> callback, ThreadPool threadPool);
 
-    void execAsync(Task<?> parentTask, String userToken, String taskName, Runnable runnable, ThreadPool threadPool);
+    void execAsync(Task<?> parentTask, UserIdentity userIdentity, String taskName, Runnable runnable, ThreadPool threadPool);
 
     /**
      * Get a currently executing task by id.

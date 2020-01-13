@@ -16,6 +16,7 @@
 
 package stroom.streamstore.server.udload;
 
+import stroom.security.shared.UserIdentity;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.util.task.ServerTask;
 
@@ -30,12 +31,12 @@ public class StreamDownloadTask extends ServerTask<StreamDownloadResult> {
     public StreamDownloadTask() {
     }
 
-    public StreamDownloadTask(final String userToken,
+    public StreamDownloadTask(final UserIdentity userIdentity,
                               final FindStreamCriteria criteria,
                               final Path outputDir,
                               final String format,
                               final StreamDownloadSettings settings) {
-        super(null, userToken);
+        super(null, userIdentity);
         this.criteria = criteria;
         this.outputDir = outputDir;
         this.format = format;

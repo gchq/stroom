@@ -52,15 +52,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         this.securityContext = securityContext;
 
         createOrRefreshAdminUser();
-        createOrRefreshStroomServiceUser();
     }
 
     private static final int GET_USER_ATTEMPTS = 2;
 
     @Override
     @Insecure
-    public UserRef getUserRef(final AuthenticationToken token) {
-        if (token == null || token.getUserId() == null || token.getUserId().trim().length() == 0) {
+    public UserRef getUserRef(final String userId) {
+        if (userId == null || userId.trim().length() == 0) {
             return null;
         }
 
@@ -71,7 +70,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         UserRef userRef = null;
 
         while (userRef == null) {
-            userRef = loadUserByUsername(token.getUserId());
+            userRef = loadUserByUsername(userId);
 
             if (userRef == null) {
                 // At this point the user has been authenticated using JWT.
@@ -79,7 +78,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 // some way of sensibly referencing the user and something to attach permissions to.
                 // We need to elevate the user because no one is currently logged in.
                 try (SecurityHelper sh = SecurityHelper.processingUser(securityContext)) {
-                    userRef = userService.createUser(token.getUserId());
+                    userRef = userService.createUser(userId);
                 } catch (final PersistenceException e) {
                     final String msg = String.format("Could not create user, this is attempt %d", attempts);
                     if (attempts == 0) {
@@ -128,13 +127,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      */
     public UserRef createOrRefreshAdminUser() {
         return createOrRefreshUser(UserService.ADMIN_USER_NAME);
-    }
-
-    /**
-     * @return a new stroom service user in the admin group
-     */
-    public UserRef createOrRefreshStroomServiceUser() {
-        return createOrRefreshUser(UserService.STROOM_SERVICE_USER_NAME);
     }
 
     private UserRef createOrRefreshUser(String name) {

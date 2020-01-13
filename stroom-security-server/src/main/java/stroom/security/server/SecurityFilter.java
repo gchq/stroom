@@ -25,10 +25,9 @@ import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.model.IdTokenRequest;
 import stroom.feed.server.UserAgentSessionUtil;
-import stroom.security.UserTokenUtil;
-import stroom.security.server.exception.AuthenticationException;
+import stroom.security.ProcessingUserIdentity;
+import stroom.security.shared.UserIdentity;
 import stroom.security.shared.UserRef;
-import stroom.servicediscovery.ResourcePaths;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -46,8 +45,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URI;
-import java.time.Duration;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -99,7 +96,7 @@ public class SecurityFilter implements Filter {
     private final AuthenticationServiceClients authenticationServiceClients;
     private final AuthenticationService authenticationService;
 
-//    private Pattern pattern = null;
+    //    private Pattern pattern = null;
     private List<Pattern> bypassPatterns = new ArrayList<>();
     private Pattern apiPathPattern;
     private Pattern publicApiPathPattern;
@@ -187,29 +184,28 @@ public class SecurityFilter implements Filter {
             //   blocks requests that look like '.*clustercall.rpc$'.
             final String servletPath = request.getServletPath().toLowerCase();
             final String fullPath = request.getRequestURI().toLowerCase();
-            if(isPublicApiRequest(fullPath)) {
+            if (isPublicApiRequest(fullPath)) {
                 authenticateAsProcUser(request, response, chain, false);
-            }
-            else if (isApiRequest(servletPath)) {
+            } else if (isApiRequest(servletPath)) {
                 LOGGER.debug("API request");
                 if (!config.isAuthenticationRequired()) {
-                    authenticateAsAdmin(request, response, chain, false);
+                    authenticateAsProcUser(request, response, chain, false);
                 } else {
                     // Authenticate requests to the API.
-                    final UserRef userRef = loginAPI(request, response);
-                    continueAsUser(request, response, chain, userRef);
+                    final UserIdentityImpl token = loginAPI(request, response);
+                    continueAsUser(request, response, chain, token);
                 }
             } else if (shouldBypassNormalAuthentication(servletPath)) {
                 authenticateAsProcUser(request, response, chain, false);
             } else {
                 // Authenticate requests from the UI.
 
-                // Try and get an existing user ref from the session.
-                final UserRef userRef = UserRefSessionUtil.get(request.getSession(false));
-                if (userRef != null) {
-                    continueAsUser(request, response, chain, userRef);
+                // Try and get an existing authentication token from the session.
+                final UserIdentity token = UserIdentitySessionUtil.get(request.getSession(false));
+                if (token != null) {
+                    continueAsUser(request, response, chain, token);
                 } else if (!config.isAuthenticationRequired()) {
-                    authenticateAsAdmin(request, response, chain, true);
+                    authenticateAsProcUser(request, response, chain, true);
                 } else {
                     // If the session doesn't have a user ref then attempt login.
                     final boolean loggedIn = loginUI(request, response);
@@ -250,20 +246,11 @@ public class SecurityFilter implements Filter {
         return dispatchPathPattern != null && dispatchPathPattern.matcher(servletPath).matches();
     }
 
-    private void authenticateAsAdmin(final HttpServletRequest request,
-                                     final HttpServletResponse response,
-                                     final FilterChain chain,
-                                     final boolean useSession) throws IOException, ServletException {
-
-        bypassAuthentication(request, response, chain, useSession, UserService.ADMIN_USER_NAME);
-    }
-
     private void authenticateAsProcUser(final HttpServletRequest request,
                                         final HttpServletResponse response,
                                         final FilterChain chain,
                                         final boolean useSession) throws IOException, ServletException {
-
-        bypassAuthentication(request, response, chain, useSession, UserTokenUtil.getInternalProcessingUserId());
+        bypassAuthentication(request, response, chain, useSession, ProcessingUserIdentity.INSTANCE);
     }
 
 
@@ -271,36 +258,30 @@ public class SecurityFilter implements Filter {
                                       final HttpServletResponse response,
                                       final FilterChain chain,
                                       final boolean useSession,
-                                      final String userId) throws IOException, ServletException {
+                                      final UserIdentity userIdentity) throws IOException, ServletException {
         LAMBDA_LOGGER.debug(() ->
                 LambdaLogger.buildMessage("Authenticating as user {} for request {}",
-                        userId, request.getRequestURI()));
-
-        final AuthenticationToken token = new AuthenticationToken(userId, null);
-
-        final UserRef userRef = authenticationService.getUserRef(token);
-        if (userRef != null) {
-            if (useSession) {
-                // Set the user ref in the session.
-                UserRefSessionUtil.set(request.getSession(true), userRef);
-            }
-            continueAsUser(request, response, chain, userRef);
+                        userIdentity, request.getRequestURI()));
+        if (useSession) {
+            // Set the user ref in the session.
+            UserIdentitySessionUtil.set(request.getSession(true), userIdentity);
         }
+        continueAsUser(request, response, chain, userIdentity);
     }
 
     private void continueAsUser(final HttpServletRequest request,
                                 final HttpServletResponse response,
                                 final FilterChain chain,
-                                final UserRef userRef)
+                                final UserIdentity userIdentity)
             throws IOException, ServletException {
-        if (userRef != null) {
+        if (userIdentity != null) {
             // If the session already has a reference to a user then continue the chain as that user.
             try {
-                CurrentUserState.pushUserRef(userRef);
+                CurrentUserState.push(userIdentity);
 
                 chain.doFilter(request, response);
             } finally {
-                CurrentUserState.popUserRef();
+                CurrentUserState.pop();
             }
         }
     }
@@ -334,13 +315,10 @@ public class SecurityFilter implements Filter {
 
                     UserAgentSessionUtil.set(request);
 
-                    final AuthenticationToken token = createUIToken(session, state, accessCode);
-                    final UserRef userRef = authenticationService.getUserRef(token);
-
-                    if (userRef != null) {
-                        // Set the user ref in the session.
-                        UserRefSessionUtil.set(session, userRef);
-
+                    final UserIdentityImpl token = createUIToken(session, state, accessCode);
+                    if (token != null) {
+                        // Set the token in the session.
+                        UserIdentitySessionUtil.set(session, token);
                         loggedIn = true;
                     }
 
@@ -447,22 +425,24 @@ public class SecurityFilter implements Filter {
      * This method must create the token.
      * It does this by enacting the OpenId exchange of accessCode for idToken.
      */
-    private AuthenticationToken createUIToken(final HttpSession session, final AuthenticationState state, final String accessCode) {
-        AuthenticationToken token = null;
+    private UserIdentityImpl createUIToken(final HttpSession session, final AuthenticationState state, final String accessCode) {
+        UserIdentityImpl token = null;
 
         try {
             String sessionId = session.getId();
             IdTokenRequest idTokenRequest = new IdTokenRequest()
-                .clientId(config.getClientId())
-                .clientSecret(config.getClientSecret())
-                .accessCode(accessCode);
-            final String idToken = authenticationServiceClients.newAuthenticationApi().getIdToken(idTokenRequest);
-            final JwtClaims jwtClaimsOptional = jwtService.verifyToken(idToken);
-            final String nonce = (String) jwtClaimsOptional.getClaimsMap().get("nonce");
+                    .clientId(config.getClientId())
+                    .clientSecret(config.getClientSecret())
+                    .accessCode(accessCode);
+            final String jws = authenticationServiceClients.newAuthenticationApi().getIdToken(idTokenRequest);
+            final JwtClaims jwtClaims = jwtService.verifyToken(jws);
+            final String nonce = (String) jwtClaims.getClaimsMap().get("nonce");
             final boolean match = nonce.equals(state.getNonce());
             if (match) {
                 LOGGER.info("User is authenticated for sessionId " + sessionId);
-                token = new AuthenticationToken(jwtClaimsOptional.getSubject(), idToken);
+                final String userId = jwtClaims.getSubject();
+                final UserRef userRef = authenticationService.getUserRef(userId);
+                token = new UserIdentityImpl(userRef, userId, jws, sessionId);
 
             } else {
                 // If the nonces don't match we need to redirect to log in again.
@@ -485,42 +465,39 @@ public class SecurityFilter implements Filter {
         return token;
     }
 
-    private UserRef loginAPI(final HttpServletRequest request, final HttpServletResponse response) {
-        UserRef userRef = null;
-
+    private UserIdentityImpl loginAPI(final HttpServletRequest request, final HttpServletResponse response) {
         // Authenticate requests from an API client
-        boolean isAuthenticatedApiRequest = jwtService.containsValidJws(request);
-        if (isAuthenticatedApiRequest) {
-            final AuthenticationToken token = createAPIToken(request);
-            userRef = authenticationService.getUserRef(token);
-        }
+        final UserIdentityImpl authenticationToken = createAPIToken(request);
 
-        if (userRef == null) {
+        if (authenticationToken == null) {
             LOGGER.debug("API request is unauthorised.");
             response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
         }
 
-        return userRef;
+        return authenticationToken;
     }
 
     /**
      * This method creates a token for the API auth flow.
      */
-    private AuthenticationToken createAPIToken(final HttpServletRequest request) {
-        AuthenticationToken token = null;
+    private UserIdentityImpl createAPIToken(final HttpServletRequest request) {
+        UserIdentityImpl token = null;
 
-        try {
-            if (jwtService.containsValidJws(request)) {
-                final Optional<String> optionalJws = jwtService.getJws(request);
-                final String jws = optionalJws.orElseThrow(() -> new AuthenticationException("Unable to get JWS"));
-                final JwtClaims jwtClaims = jwtService.verifyToken(jws);
-                token = new AuthenticationToken(jwtClaims.getSubject(), optionalJws.get());
-            } else {
-                LOGGER.error("Cannot get a valid JWS for API request!");
+        final Optional<String> optionalJws = jwtService.getJws(request);
+        final Optional<String> optionalUserId = jwtService.getUserId(optionalJws);
+
+        if (optionalUserId.isPresent()) {
+            String sessionId = null;
+            final HttpSession session = request.getSession(false);
+            if (session != null) {
+                sessionId = session.getId();
             }
-        } catch (final MalformedClaimException | InvalidJwtException e) {
-            LOGGER.warn(e.getMessage());
-            throw new AuthenticationException(e.getMessage(), e);
+
+            final String userId = optionalUserId.get();
+            final UserRef userRef = authenticationService.getUserRef(userId);
+            token = new UserIdentityImpl(userRef, userId, optionalJws.get(), sessionId);
+        } else {
+            LOGGER.error("Cannot get a valid JWS for API request!");
         }
 
         return token;

@@ -32,7 +32,6 @@ import stroom.task.cluster.DefaultClusterResultCollector;
 import stroom.task.cluster.TargetNodeSetFactory.TargetType;
 import stroom.task.server.AbstractTaskHandler;
 import stroom.task.server.TaskHandlerBean;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
@@ -60,7 +59,7 @@ class FetchNodeInfoHandler extends AbstractTaskHandler<FetchNodeInfoAction, Resu
         // Get pings back from all enabled nodes in the cluster.
         // Wait up to 5 seconds to get responses from each node.
         final DefaultClusterResultCollector<NodeInfoResult> collector = dispatchHelper
-                .execAsync(new NodeInfoClusterTask(action.getUserToken()), 5, TimeUnit.SECONDS, TargetType.ENABLED);
+                .execAsync(new NodeInfoClusterTask(action.getUserIdentity()), 5, TimeUnit.SECONDS, TargetType.ENABLED);
 
         final ClusterState clusterState = clusterNodeManager.getQuickClusterState();
         final Node masterNode = clusterState.getMasterNode();

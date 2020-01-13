@@ -17,26 +17,34 @@
 package stroom.proxy.guice;
 
 import stroom.security.SecurityContext;
+import stroom.security.shared.UserIdentity;
 
 public class NoSecurityContext implements SecurityContext {
+    private static final AdminUserIdentity ADMIN_USER_IDENTITY = new AdminUserIdentity();
+
     @Override
-    public void pushUser(final String name) {
+    public void pushUser(final UserIdentity userIdentity) {
         // Do nothing.
     }
 
     @Override
-    public String popUser() {
+    public UserIdentity popUser() {
         return null;
     }
 
     @Override
     public String getUserId() {
-        return "admin";
+        return getUserIdentity().getId();
     }
 
     @Override
-    public String getApiToken() {
-        return null;
+    public UserIdentity getUserIdentity() {
+        return ADMIN_USER_IDENTITY;
+    }
+
+    @Override
+    public UserIdentity createIdentity(final String userId) {
+        return ADMIN_USER_IDENTITY;
     }
 
     @Override
@@ -73,5 +81,22 @@ public class NoSecurityContext implements SecurityContext {
 
     @Override
     public void addDocumentPermissions(final String sourceType, final String sourceUuid, final String documentType, final String documentUuid, final boolean owner) {
+    }
+
+    private static class AdminUserIdentity implements UserIdentity {
+        @Override
+        public String getId() {
+            return "admin";
+        }
+
+        @Override
+        public String getJws() {
+            return null;
+        }
+
+        @Override
+        public String getSessionId() {
+            return null;
+        }
     }
 }

@@ -42,16 +42,16 @@ class FindUserTaskProgressHandler
 
     @Override
     public BaseResultList<TaskProgress> exec(final FindUserTaskProgressAction action) {
-        final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
+        final ExtendedFindTaskProgressCriteria criteria = new ExtendedFindTaskProgressCriteria();
         criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
         criteria.setSessionId(getSessionId());
         return doExec(action, criteria);
     }
 
     private String getSessionId() {
-        if (httpServletRequestHolder == null) {
-            return null;
+        if (httpServletRequestHolder != null) {
+            return httpServletRequestHolder.getSessionId();
         }
-        return httpServletRequestHolder.getSessionId();
+        return null;
     }
 }
