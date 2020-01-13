@@ -16,8 +16,6 @@
 
 package stroom.task.shared;
 
-import stroom.security.shared.UserToken;
-
 /**
  * Interface to all tasks.
  */
@@ -25,8 +23,6 @@ public interface Task<R> {
     TaskId getId();
 
     String getTaskName();
-
-    UserToken getUserToken();
 
     ThreadPool getThreadPool();
 

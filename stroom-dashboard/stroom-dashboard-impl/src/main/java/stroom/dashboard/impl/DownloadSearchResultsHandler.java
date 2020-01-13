@@ -87,8 +87,7 @@ class DownloadSearchResultsHandler extends AbstractTaskHandler<DownloadSearchRes
             final Search search = searchRequest.getSearch();
 
             try {
-                final String searchSessionId = action.getUserToken() + "_" + action.getApplicationInstanceId();
-                final ActiveQueries activeQueries = activeQueriesManager.get(searchSessionId);
+                final ActiveQueries activeQueries = activeQueriesManager.get(securityContext.getUserIdentity(), action.getApplicationInstanceId());
 
                 // Make sure we have active queries for all current UI queries.
                 // Note: This also ensures that the active query cache is kept alive

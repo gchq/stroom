@@ -20,13 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.api.AuthenticationService;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserTokenUtil;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.List;
 
 @Singleton
 class AuthenticationServiceImpl implements AuthenticationService {
@@ -59,18 +57,18 @@ class AuthenticationServiceImpl implements AuthenticationService {
         // The first one will succeed, but the others may clash. So we retrieve/create the user
         // in a loop to allow the failures caused by the race to be absorbed without failure
         int attempts = 0;
-        User userRef = null;
+        User user = null;
 
-        while (userRef == null) {
-            userRef = loadUserByUsername(userId);
+        while (user == null) {
+            user = loadUserByUsername(userId);
 
-            if (userRef == null) {
+            if (user == null) {
                 // At this point the user has been authenticated using JWT.
                 // If the user doesn't exist in the DB then we need to create them an account here, so Stroom has
                 // some way of sensibly referencing the user and something to attach permissions to.
                 // We need to elevate the user because no one is currently logged in.
                 try {
-                    userRef = securityContext.asProcessingUserResult(() -> userService.createUser(userId));
+                    user = securityContext.asProcessingUserResult(() -> userService.createUser(userId));
                 } catch (final Exception e) {
                     final String msg = String.format("Could not create user, this is attempt %d", attempts);
                     if (attempts == 0) {
@@ -86,7 +84,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
             }
         }
 
-        return userRef;
+        return user;
     }
 
     private User loadUserByUsername(final String username) {
@@ -96,7 +94,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
             userRef = userService.getUserByName(username);
             if (userRef == null) {
                 // The requested system user does not exist.
-                if (List.of(User.ADMIN_USER_NAME, UserTokenUtil.processingUser()).contains(username)) {
+                if (User.ADMIN_USER_NAME.equals(username)) {
                     userRef = createOrRefreshUser(User.ADMIN_USER_NAME);
                 }
             }
@@ -109,7 +107,7 @@ class AuthenticationServiceImpl implements AuthenticationService {
         return userRef;
     }
 
-    private User createOrRefreshUser(String name) {
+    private User createOrRefreshUser(final String name) {
         return securityContext.asProcessingUserResult(() -> {
             User userRef = userService.getUserByName(name);
             if (userRef == null) {

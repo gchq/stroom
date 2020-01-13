@@ -18,6 +18,7 @@ package stroom.security.impl.session;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.security.api.UserIdentity;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.BaseResultList;
@@ -55,12 +56,11 @@ class SessionListListener implements HttpSessionListener, SessionListService {
         for (final HttpSession httpSession : sessionMap.values()) {
             final SessionDetails sessionDetails = new SessionDetails();
 
-            final Object user = UserSessionUtil.get(httpSession);
-            if (user != null) {
-                sessionDetails.setUserName(user.toString());
+            final UserIdentity userIdentity = UserIdentitySessionUtil.get(httpSession);
+            if (userIdentity != null) {
+                sessionDetails.setUserName(userIdentity.getId());
             }
 
-            sessionDetails.setId(httpSession.getId());
             sessionDetails.setCreateMs(httpSession.getCreationTime());
             sessionDetails.setLastAccessedMs(httpSession.getLastAccessedTime());
             sessionDetails.setLastAccessedAgent(UserAgentSessionUtil.get(httpSession));
@@ -74,5 +74,4 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     public BaseCriteria createCriteria() {
         return null;
     }
-
 }

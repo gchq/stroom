@@ -26,6 +26,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 
@@ -91,12 +92,18 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
             final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
 
-            final String usersApiKey = securityContext.getApiToken();
-            if (usersApiKey == null) {
-                LOGGER.debug("The API key is null for user '{}'", securityContext.getUserId());
+            String jws = null;
+            final UserIdentity userIdentity = securityContext.getUserIdentity();
+            if (userIdentity == null) {
+                LOGGER.debug("No user is currently logged in");
+            } else {
+                jws = userIdentity.getJws();
+                if (jws == null) {
+                    LOGGER.debug("The JWS is null for user '{}'", userIdentity.getId());
+                }
             }
 
-            invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + usersApiKey);
+            invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + jws);
             final Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
 
             switch (response.getStatus()) {
@@ -110,7 +117,7 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
                         msg.append(", ");
                         msg.append(docRef);
                     }
-                    throw new PermissionException(securityContext.getUserId(),msg.toString());
+                    throw new PermissionException(securityContext.getUserId(), msg.toString());
                 default:
                     throw new RuntimeException(LogUtil.message("Error {} sending request {} to {}: {}",
                             response.getStatus(),

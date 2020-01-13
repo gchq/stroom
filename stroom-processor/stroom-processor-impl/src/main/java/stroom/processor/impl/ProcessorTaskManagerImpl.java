@@ -46,7 +46,6 @@ import stroom.search.api.EventRef;
 import stroom.search.api.EventRefs;
 import stroom.search.api.EventSearch;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserTokenUtil;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
@@ -483,7 +482,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             optionalProcessorFilter.ifPresent(loadedFilter -> {
 
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
-                securityContext.asUser(UserTokenUtil.create(loadedFilter.getCreateUser()), () -> {
+                securityContext.asUser(securityContext.createIdentity(loadedFilter.getCreateUser()), () -> {
                     LOGGER.debug("createTasksForFilter() - processorFilter {}", loadedFilter.toString());
 
                     // Only try and create tasks if the processor is enabled.
@@ -762,7 +761,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         final ProcessorFilterTracker updatedTracker = processorFilterTrackerDao.update(tracker);
 
         final Long maxMetaId = metaService.getMaxId();
-        eventSearch.search(filter.getUpdateUser(),
+        eventSearch.search(
                 query,
                 minEvent,
                 maxEvent,

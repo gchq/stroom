@@ -17,7 +17,7 @@
 package stroom.security.impl;
 
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserTokenUtil;
+import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.User;
@@ -43,22 +43,25 @@ class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPer
 
     @Override
     public UserAndPermissions exec(final FetchUserAndPermissionsAction task) {
-        return securityContext.insecureResult(() -> {
-            final User userRef = CurrentUserState.currentUser();
-            if (userRef == null) {
-                return null;
-            }
+        final UserIdentity userIdentity = CurrentUserState.current();
+        if (userIdentity == null) {
+            return null;
+        }
+        User user = null;
+        if (userIdentity instanceof UserIdentityImpl) {
+            user = ((UserIdentityImpl) userIdentity).getUser();
+        }
+        if (user == null) {
+            return null;
+        }
 
-            final boolean preventLogin = securityConfig.isPreventLogin();
-            if (preventLogin) {
-                securityContext.asUser(UserTokenUtil.create(userRef.getName()), () -> {
-                    if (!securityContext.isAdmin()) {
-                        throw new AuthenticationException("Stroom is down for maintenance. Please try again later.");
-                    }
-                });
+        final boolean preventLogin = securityConfig.isPreventLogin();
+        if (preventLogin) {
+            if (!securityContext.isAdmin()) {
+                throw new AuthenticationException("Stroom is down for maintenance. Please try again later.");
             }
+        }
 
-            return new UserAndPermissions(userRef, securityContext.getApiToken(), userAndPermissionsHelper.get(userRef));
-        });
+        return new UserAndPermissions(user, securityContext.getUserIdentity().getJws(), userAndPermissionsHelper.get(user));
     }
 }

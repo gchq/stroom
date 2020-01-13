@@ -58,7 +58,7 @@ class DispatchPermissionChangeEventTaskHandler extends AbstractTaskHandler<Dispa
                 // Only send the event to remote nodes and not this one.
                 targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {
                     // Send the entity event.
-                    final ClusterPermissionChangeEventTask clusterEntityEventTask = new ClusterPermissionChangeEventTask(task, task.getEvent());
+                    final ClusterPermissionChangeEventTask clusterEntityEventTask = new ClusterPermissionChangeEventTask(task.getEvent());
                     dispatchHelper.execAsync(clusterEntityEventTask, targetNode);
                 });
             } catch (final NullClusterStateException | NodeNotFoundException e) {

@@ -20,6 +20,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
@@ -51,8 +52,12 @@ class ActiveQueriesManager implements Clearable {
         value.destroy();
     }
 
-    public ActiveQueries get(final String key) {
-        return cache.get(key);
+    public ActiveQueries get(final UserIdentity userIdentity, final String applicationInstanceId) {
+        return cache.get(createKey(userIdentity, applicationInstanceId));
+    }
+
+    public String createKey(final UserIdentity userIdentity, final String applicationInstanceId) {
+        return userIdentity.getId() + "_" + userIdentity.getSessionId() + "_" + applicationInstanceId;
     }
 
     @Override

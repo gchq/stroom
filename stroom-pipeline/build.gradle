@@ -44,6 +44,7 @@ dependencies {
     compile libs.jsr173_api
     compile libs.kryo
     compile libs.lmdbjava
+    compile libs.okhttp
     compile libs.saxon_he
     compile libs.slf4j_api
     compile libs.stroomDocRef

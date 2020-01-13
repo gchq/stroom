@@ -36,7 +36,6 @@ import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
-import stroom.security.api.UserTokenUtil;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
@@ -81,7 +80,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
 
         String format = file.getFileName().toString();
         format = format.substring(0, format.indexOf("."));
-        taskManager.exec(new DataDownloadTask(UserTokenUtil.processingUser(), findMetaCriteria, getCurrentTestDir(), format, streamDownloadSettings));
+        taskManager.exec(new DataDownloadTask(findMetaCriteria, getCurrentTestDir(), format, streamDownloadSettings));
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(entryCount);
 
@@ -95,7 +94,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         }
         stroomZipFile.close();
 
-        taskManager.exec(new StreamUploadTask(UserTokenUtil.processingUser(), "test.zip", file, feedName,
+        taskManager.exec(new StreamUploadTask("test.zip", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, null));
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(entryCount * 2);
@@ -110,7 +109,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         final Path file = Files.createTempFile(getCurrentTestDir(), "TestStreamDownloadTaskHandler", ".dat");
         Files.write(file, "TEST".getBytes());
 
-        taskManager.exec(new StreamUploadTask(UserTokenUtil.processingUser(), "test.dat", file, feedName,
+        taskManager.exec(new StreamUploadTask("test.dat", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, "Tom:One\nJames:Two\n"));
 
         assertThat(metaService.find(findMetaCriteria).size()).isEqualTo(1);
@@ -155,7 +154,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
 
         String format = file.getFileName().toString();
         format = format.substring(0, format.indexOf("."));
-        taskManager.exec(new DataDownloadTask(UserTokenUtil.processingUser(), findMetaCriteria, getCurrentTestDir(), format, streamDownloadSettings));
+        taskManager.exec(new DataDownloadTask(findMetaCriteria, getCurrentTestDir(), format, streamDownloadSettings));
 
         final StroomZipFile stroomZipFile = new StroomZipFile(file);
         assertThat(stroomZipFile.containsEntry("001_1", StroomZipFileType.Manifest)).isTrue();
@@ -169,7 +168,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
 
         final String extraMeta = "Z:ALL\n";
 
-        taskManager.exec(new StreamUploadTask(UserTokenUtil.processingUser(), "test.zip", file, feedName,
+        taskManager.exec(new StreamUploadTask("test.zip", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, extraMeta));
 
         final List<Meta> streamList = metaService.find(findMetaCriteria);

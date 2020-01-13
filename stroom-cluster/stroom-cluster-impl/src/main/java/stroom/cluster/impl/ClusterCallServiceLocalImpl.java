@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.cluster.api.ClusterCallServiceLocal;
 import stroom.cluster.api.ServiceName;
 import stroom.node.api.NodeInfo;
-import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.EntityServiceException;
 
@@ -40,42 +40,37 @@ class ClusterCallServiceLocalImpl implements ClusterCallServiceLocal {
 
     private final Map<ServiceName, Provider<Object>> serviceMap;
     private final NodeInfo nodeInfo;
-    private final SecurityContext securityContext;
 
     @Inject
     ClusterCallServiceLocalImpl(final Map<ServiceName, Provider<Object>> serviceMap,
-                                final NodeInfo nodeInfo,
-                                final SecurityContext securityContext) {
+                                final NodeInfo nodeInfo) {
         this.serviceMap = serviceMap;
         this.nodeInfo = nodeInfo;
-        this.securityContext = securityContext;
     }
 
     @Override
-    public Object call(final String sourceNode, final String targetNode, final ServiceName serviceName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
-        return securityContext.insecureResult(() -> {
-            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+    public Object call(final String sourceNode, final String targetNode, final UserIdentity userIdentity, final ServiceName serviceName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
+        final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-            final String thisNodeName = nodeInfo.getThisNodeName();
-            if (!targetNode.equals(thisNodeName)) {
-                throw new EntityServiceException("Something wrong with routing rules as we have just had a request for "
-                        + targetNode + " when we are " + thisNodeName);
+        final String thisNodeName = nodeInfo.getThisNodeName();
+        if (!targetNode.equals(thisNodeName)) {
+            throw new EntityServiceException("Something wrong with routing rules as we have just had a request for "
+                    + targetNode + " when we are " + thisNodeName);
+        }
+
+        try {
+            final Provider<Object> serviceProvider = serviceMap.get(serviceName);
+            final Object service = serviceProvider.get();
+            final Method method = service.getClass().getMethod(methodName, parameterTypes);
+
+            return method.invoke(service, args);
+        } catch (final NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        } finally {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug(ClusterCallUtil.logString("call() - remoting ", sourceNode, targetNode, serviceName,
+                        methodName, logExecutionTime.getDuration()));
             }
-
-            try {
-                final Provider<Object> serviceProvider = serviceMap.get(serviceName);
-                final Object service = serviceProvider.get();
-                final Method method = service.getClass().getMethod(methodName, parameterTypes);
-
-                return method.invoke(service, args);
-            } catch (final NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-                throw new RuntimeException(e.getMessage(), e);
-            } finally {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug(ClusterCallUtil.logString("call() - remoting ", sourceNode, targetNode, serviceName,
-                            methodName, logExecutionTime.getDuration()));
-                }
-            }
-        });
+        }
     }
 }

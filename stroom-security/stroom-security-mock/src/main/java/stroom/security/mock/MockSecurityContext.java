@@ -17,25 +17,26 @@
 package stroom.security.mock;
 
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.User;
-import stroom.security.shared.UserToken;
+import stroom.security.api.UserIdentity;
 
 import java.util.function.Supplier;
 
 public class MockSecurityContext implements SecurityContext {
+    private static final AdminUserIdentity ADMIN_USER_IDENTITY = new AdminUserIdentity();
+
     @Override
     public String getUserId() {
-        return User.ADMIN_USER_NAME;
+        return getUserIdentity().getId();
     }
 
     @Override
-    public UserToken getUserToken() {
-        return null;
+    public UserIdentity getUserIdentity() {
+        return ADMIN_USER_IDENTITY;
     }
 
     @Override
-    public String getApiToken() {
-        return null;
+    public UserIdentity createIdentity(final String userId) {
+        return ADMIN_USER_IDENTITY;
     }
 
     @Override
@@ -59,12 +60,12 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
-    public <T> T asUserResult(final UserToken userToken, final Supplier<T> supplier) {
+    public <T> T asUserResult(final UserIdentity userIdentity, final Supplier<T> supplier) {
         return supplier.get();
     }
 
     @Override
-    public void asUser(final UserToken userToken, final Runnable runnable) {
+    public void asUser(final UserIdentity userIdentity, final Runnable runnable) {
         runnable.run();
     }
 
@@ -116,5 +117,22 @@ public class MockSecurityContext implements SecurityContext {
     @Override
     public <T> T insecureResult(final Supplier<T> supplier) {
         return supplier.get();
+    }
+
+    private static class AdminUserIdentity implements UserIdentity {
+        @Override
+        public String getId() {
+            return "admin";
+        }
+
+        @Override
+        public String getJws() {
+            return null;
+        }
+
+        @Override
+        public String getSessionId() {
+            return null;
+        }
     }
 }

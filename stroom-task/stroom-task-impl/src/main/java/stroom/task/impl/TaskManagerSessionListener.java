@@ -18,10 +18,9 @@ package stroom.task.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.api.UserTokenUtil;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskIdFactory;
 import stroom.task.api.TaskManager;
-import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TerminateTaskProgressAction;
 
 import javax.inject.Inject;
@@ -35,10 +34,13 @@ class TaskManagerSessionListener implements HttpSessionListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskManagerSessionListener.class);
 
     private final Provider<TaskManager> taskManagerProvider;
+    private final SecurityContext securityContext;
 
     @Inject
-    TaskManagerSessionListener(final Provider<TaskManager> taskManagerProvider) {
+    TaskManagerSessionListener(final Provider<TaskManager> taskManagerProvider,
+                               final SecurityContext securityContext) {
         this.taskManagerProvider = taskManagerProvider;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -50,16 +52,17 @@ class TaskManagerSessionListener implements HttpSessionListener {
         try {
             final TaskManager taskManager = getTaskManager();
             if (taskManager != null) {
-                // Manually set the id as we are invoking a UI Action Task
-                // directly
-                final String sessionId = event.getSession().getId();
-                final FindTaskCriteria criteria = new FindTaskCriteria();
-                criteria.setSessionId(sessionId);
-                final TerminateTaskProgressAction action = new TerminateTaskProgressAction(
-                        "Terminate session: " + sessionId, criteria, false);
-                action.setUserToken(UserTokenUtil.processingUser());
-                action.setId(TaskIdFactory.create());
-                taskManager.exec(action);
+                securityContext.asProcessingUser(() -> {
+                    // Manually set the id as we are invoking a UI Action Task
+                    // directly
+                    final String sessionId = event.getSession().getId();
+                    final ExtendedFindTaskCriteria criteria = new ExtendedFindTaskCriteria();
+                    criteria.setSessionId(sessionId);
+                    final TerminateTaskProgressAction action = new TerminateTaskProgressAction(
+                            "Terminate session: " + sessionId, criteria, false);
+                    action.setId(TaskIdFactory.create());
+                    taskManager.exec(action);
+                });
             }
         } catch (final RuntimeException e) {
             LOGGER.error("sessionDestroyed()", e);

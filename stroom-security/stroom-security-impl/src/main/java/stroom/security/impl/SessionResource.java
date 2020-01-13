@@ -2,8 +2,10 @@ package stroom.security.impl;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import stroom.security.impl.session.UserSessionUtil;
-import stroom.security.shared.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.security.api.UserIdentity;
+import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -25,7 +27,7 @@ import javax.ws.rs.core.Response;
 @Path("/session/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class SessionResource implements RestResource {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(SessionResource.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SessionResource.class);
 
     private final AuthenticationEventLog eventLog;
 
@@ -47,14 +49,14 @@ public class SessionResource implements RestResource {
         // TODO : We need to lookup the auth session in our user sessions
 
         final HttpSession session = SessionMap.getSession(authSessionId);
-        final User userRef = UserSessionUtil.get(session);
+        final UserIdentity userIdentity = UserIdentitySessionUtil.get(session);
         if (session != null) {
             // Invalidate the current user session
             session.invalidate();
         }
-        if (userRef != null) {
+        if (userIdentity != null) {
             // Create an event for logout
-            eventLog.logoff(userRef.getName());
+            eventLog.logoff(userIdentity.getId());
         }
 
         return Response.status(Response.Status.OK).entity("Logout successful").build();

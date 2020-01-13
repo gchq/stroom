@@ -37,7 +37,6 @@ import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.resource.impl.ResourceModule;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserTokenUtil;
 import stroom.security.impl.DocumentPermissionServiceImpl;
 import stroom.security.impl.SecurityContextModule;
 import stroom.security.impl.UserService;
@@ -108,7 +107,7 @@ class TestMetaService {
             documentPermissionService.addPermission(docref2.getUuid(), user.getUuid(), DocumentPermissionNames.USE);
             documentPermissionService.addPermission(docref3.getUuid(), user.getUuid(), DocumentPermissionNames.READ);
 
-            securityContext.asUser(UserTokenUtil.create(user.getName()), () -> {
+            securityContext.asUser(securityContext.createIdentity(user.getName()), () -> {
                 final Optional<ExpressionOperator> useExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.USE);
                 final Optional<ExpressionOperator> readExpression = metaSecurityFilter.getExpression(DocumentPermissionNames.READ);
 

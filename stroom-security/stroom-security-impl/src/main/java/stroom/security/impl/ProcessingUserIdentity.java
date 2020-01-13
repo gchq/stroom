@@ -14,14 +14,36 @@
  * limitations under the License.
  */
 
-package stroom.cluster.api;
+package stroom.security.impl;
 
 import stroom.security.api.UserIdentity;
 
-/**
- * Low-level API to generically call any cluster service
- */
-public interface ClusterCallService {
-    Object call(String sourceNode, String targetNode, UserIdentity userIdentity, ServiceName serviceName, String methodName, Class<?>[] parameterTypes,
-                Object[] args);
+final class ProcessingUserIdentity implements UserIdentity {
+    private static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
+
+    public static final UserIdentity INSTANCE = new ProcessingUserIdentity();
+
+    private ProcessingUserIdentity() {
+        // Utility class.
+    }
+
+    @Override
+    public String getId() {
+        return INTERNAL_PROCESSING_USER;
+    }
+
+    @Override
+    public String getJws() {
+        return null;
+    }
+
+    @Override
+    public String getSessionId() {
+        return null;
+    }
+
+    @Override
+    public String toString() {
+        return getId();
+    }
 }

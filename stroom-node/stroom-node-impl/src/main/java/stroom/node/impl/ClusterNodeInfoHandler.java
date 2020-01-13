@@ -51,7 +51,8 @@ class ClusterNodeInfoHandler extends AbstractTaskHandler<ClusterNodeInfoAction, 
             final String targetNode = action.getNodeName();
 
             try {
-                return (ClusterNodeInfo) clusterCallService.call(sourceNode, targetNode, ClusterNodeManager.SERVICE_NAME,
+                return (ClusterNodeInfo) clusterCallService.call(sourceNode, targetNode,
+                        securityContext.getUserIdentity(), ClusterNodeManager.SERVICE_NAME,
                         ClusterNodeManager.GET_CLUSTER_NODE_INFO_METHOD, new Class[]{}, new Object[]{});
             } catch (final RuntimeException e) {
                 throw EntityServiceExceptionUtil.create(e);

@@ -58,8 +58,7 @@ class FetchCacheNodeRowHandler extends AbstractTaskHandler<FetchCacheNodeRowActi
 
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.setName(new StringCriteria(action.getCacheName(), null));
-            final FetchCacheNodeRowClusterTask task = new FetchCacheNodeRowClusterTask(
-                    action.getUserToken(), "Find cache info", criteria);
+            final FetchCacheNodeRowClusterTask task = new FetchCacheNodeRowClusterTask("Find cache info", criteria);
             final DefaultClusterResultCollector<ResultList<CacheInfo>> collector = dispatchHelper.execAsync(task,
                     TargetType.ACTIVE);
 
