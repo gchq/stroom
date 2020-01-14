@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1-beta.16] - 2020-01-14
+
 * Issue **#1352** : Fixed Hessian serialisation of user identities on tasks.
 
 
@@ -2041,7 +2044,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.15...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.16...6.1
+[v6.1-beta.16]: https://github.com/gchq/stroom/compare/v6.1-beta.15...v6.1-beta.16
 [v6.1-beta.15]: https://github.com/gchq/stroom/compare/v6.1-beta.14...v6.1-beta.15
 [v6.1-beta.14]: https://github.com/gchq/stroom/compare/v6.1-beta.13...v6.1-beta.14
 [v6.1-beta.13]: https://github.com/gchq/stroom/compare/v6.1-beta.12...v6.1-beta.13
