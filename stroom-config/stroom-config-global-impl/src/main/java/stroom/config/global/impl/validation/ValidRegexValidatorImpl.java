@@ -1,5 +1,6 @@
 package stroom.config.global.impl.validation;
 
+import stroom.util.shared.ValidRegex;
 import stroom.util.shared.ValidRegexValidator;
 
 import javax.validation.ConstraintValidatorContext;
@@ -7,6 +8,22 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class ValidRegexValidatorImpl implements ValidRegexValidator {
+
+    /**
+     * Initializes the validator in preparation for
+     * {@link #isValid(Object, ConstraintValidatorContext)} calls.
+     * The constraint annotation for a given constraint declaration
+     * is passed.
+     * <p/>
+     * This method is guaranteed to be called before any use of this instance for
+     * validation.
+     *
+     * @param constraintAnnotation annotation instance for a given constraint declaration
+     */
+    @Override
+    public void initialize(final ValidRegex constraintAnnotation) {
+
+    }
 
     /**
      * Implements the validation logic.
