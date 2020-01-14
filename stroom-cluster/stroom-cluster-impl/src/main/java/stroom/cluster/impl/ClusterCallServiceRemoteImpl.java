@@ -26,6 +26,7 @@ import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.api.ServiceName;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
+import stroom.security.api.UserIdentity;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -105,7 +106,7 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
     }
 
     @Override
-    public Object call(final String sourceNode, final String targetNode, final ServiceName serviceName, final String methodName,
+    public Object call(final String sourceNode, final String targetNode, final UserIdentity userIdentity, final ServiceName serviceName, final String methodName,
                        final java.lang.Class<?>[] parameterTypes, final Object[] args) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         Object result;
@@ -145,7 +146,7 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
             }
 
             try {
-                result = api.call(sourceNode, targetNode, serviceName, methodName, parameterTypes, args);
+                result = api.call(sourceNode, targetNode, userIdentity, serviceName, methodName, parameterTypes, args);
             } catch (final HessianRuntimeException e) {
                 final String details = getCallDetails(sourceNode, targetNode, serviceName, methodName, args);
                 if (e.getCause() != null && e.getCause() instanceof ConnectException) {

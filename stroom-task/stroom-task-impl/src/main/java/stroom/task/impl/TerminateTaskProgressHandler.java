@@ -45,7 +45,7 @@ class TerminateTaskProgressHandler extends AbstractTaskHandler<TerminateTaskProg
     @Override
     public VoidResult exec(final TerminateTaskProgressAction action) {
         return securityContext.secureResult(() -> {
-            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(action.getUserToken(), action.getTaskName(), action.getCriteria(), action.isKill());
+            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(action.getTaskName(), action.getCriteria(), action.isKill());
             if (action.getCriteria() != null && action.getCriteria().isConstrained()) {
                 // Terminate matching tasks.
                 dispatchHelper.execAsync(terminateTask, TargetType.ACTIVE);

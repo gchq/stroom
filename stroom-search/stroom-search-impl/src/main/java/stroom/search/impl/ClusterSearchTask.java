@@ -21,7 +21,6 @@ import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.search.resultsender.NodeResult;
-import stroom.security.shared.UserToken;
 import stroom.task.shared.Task;
 
 import java.util.List;
@@ -41,7 +40,6 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
     private final long now;
 
     public ClusterSearchTask(final Task<?> parentTask,
-                             final UserToken userToken,
                              final String taskName,
                              final Query query,
                              final List<Long> shards,
@@ -51,7 +49,7 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
                              final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
                              final String dateTimeLocale,
                              final long now) {
-        super(userToken, taskName);
+        super(taskName);
         this.parentTask = parentTask;
         this.query = query;
         this.shards = shards;

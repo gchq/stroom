@@ -17,15 +17,13 @@
 package stroom.search.impl;
 
 import stroom.query.api.v2.Query;
-import stroom.security.shared.UserToken;
 import stroom.task.api.ServerTask;
 import stroom.task.shared.Task;
 
 abstract class AbstractSearchTask<R> extends ServerTask<R> {
     private final Query query;
 
-    AbstractSearchTask(final Task<?> parentTask, final UserToken userToken, final Query query) {
-        super(null, userToken);
+    AbstractSearchTask(final Task<?> parentTask, final Query query) {
         this.query = query;
     }
 

@@ -29,6 +29,7 @@ import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.app.commands.DbMigrationCommand;
 import stroom.app.guice.AppModule;
 import stroom.config.app.Config;
 import stroom.dropwizard.common.Filters;
@@ -91,6 +92,10 @@ public class App extends Application<Config> {
                 bootstrap.getConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false)));
         bootstrap.addBundle(new AssetsBundle("/ui", ResourcePaths.ROOT_PATH, "index.html", "ui"));
+
+        // Add a DW Command so we can run the full migration without running the
+        // http server
+        bootstrap.addCommand(new DbMigrationCommand(configFile));
     }
 
     @Override
@@ -160,10 +165,17 @@ public class App extends Application<Config> {
                 Path yamlFile = Path.of(arg);
                 if (Files.isRegularFile(yamlFile)) {
                     return yamlFile;
+                } else {
+                    // NOTE if you are getting here while running in IJ then you have probable not run
+                    // local.yaml.sh
+                    throw new IllegalArgumentException(LogUtil.message(
+                            "YAML config file [{}] from arguments [{}] is not a valid file.\n" +
+                            "You need to supply a valid stroom configuration YAML file.",
+                            yamlFile, Arrays.asList(args)));
                 }
             }
         }
-        throw new RuntimeException(LogUtil.message("Could not extract YAML config file from arguments [{}]",
+        throw new IllegalArgumentException(LogUtil.message("Could not extract YAML config file from arguments [{}]",
                 Arrays.asList(args)));
     }
 

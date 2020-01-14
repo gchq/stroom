@@ -1,9 +1,14 @@
 package stroom.util.guice;
 
 import com.google.inject.Binder;
+import com.google.inject.TypeLiteral;
 import com.google.inject.multibindings.Multibinder;
+import com.google.inject.util.Types;
 
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class GuiceUtil {
     private GuiceUtil() {
@@ -38,4 +43,18 @@ public class GuiceUtil {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> TypeLiteral<Set<T>> setOf(Class<T> type) {
+        return (TypeLiteral<Set<T>>) TypeLiteral.get(Types.setOf(type));
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <K, V> TypeLiteral<Map<K, V>> mapOf(Class<K> keyType, Class<V> valueType) {
+        return (TypeLiteral<Map<K, V>>)TypeLiteral.get(Types.mapOf(keyType, valueType));
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> TypeLiteral<List<T>> listOf(Class<T> type) {
+        return (TypeLiteral<List<T>>)TypeLiteral.get(Types.listOf(type));
+    }
 }

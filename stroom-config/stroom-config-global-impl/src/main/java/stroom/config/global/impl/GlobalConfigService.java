@@ -44,7 +44,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-@Singleton // Needs to be singleton to prevent initialise being called multiple times
+@Singleton
+        // Needs to be singleton to prevent initialise being called multiple times
 class GlobalConfigService {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigService.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigService.class);
@@ -121,6 +122,8 @@ class GlobalConfigService {
     private List<ConfigProperty> list(final Predicate<ConfigProperty> filter) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
             // Ensure the global config properties are up to date with the db values
+            // TODO This is not ideal as each time the filter is changed we hit the db to
+            //   update the config props.
             updateConfigFromDb();
 
             return configMapper.getGlobalProperties().stream()
@@ -173,7 +176,7 @@ class GlobalConfigService {
         // TODO need to run this periodically and cache it, else we have to wait too long
         //   for all nodes to answer
         final DefaultClusterResultCollector<NodeConfigResult> collector = dispatchHelper
-                .execAsync(new NodeConfigClusterTask(securityContext.getUserToken()),
+                .execAsync(new NodeConfigClusterTask(),
                         5,
                         TimeUnit.SECONDS,
                         TargetType.ENABLED);

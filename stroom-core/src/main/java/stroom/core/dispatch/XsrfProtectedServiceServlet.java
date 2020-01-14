@@ -60,7 +60,7 @@ public class XsrfProtectedServiceServlet extends CustomRemoteServiceServlet {
                 throw new RpcTokenException("XSRF token missing");
             }
 
-            final String expectedToken = SessionHashUtil.createSessionHash(getThreadLocalRequest());
+            final String expectedToken = XsrfHashUtil.createSessionHash(getThreadLocalRequest());
             final XsrfToken xsrfToken = (XsrfToken) token;
 
             if (!expectedToken.equals(xsrfToken.getToken())) {

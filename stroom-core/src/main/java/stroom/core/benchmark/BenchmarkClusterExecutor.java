@@ -94,8 +94,6 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private volatile Long minStreamId = null;
     private volatile Long maxStreamId = null;
 
-    private Task<?> task;
-
     @Inject
     BenchmarkClusterExecutor(final Store streamStore,
                              final MetaService metaService,
@@ -124,7 +122,6 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     }
 
     public void exec(final Task<?> task) {
-        this.task = task;
         info(() -> "Starting benchmark");
 
         // Find out what translation jobs are enabled and how many tasks are
@@ -180,7 +177,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
             if (!isTerminated()) {
                 LOGGER.info("Starting cluster benchmark");
 
-                dispatchHelper.execAsync(new ClearServiceClusterTask(task, null), TargetType.ACTIVE);
+                dispatchHelper.execAsync(new ClearServiceClusterTask(null), TargetType.ACTIVE);
 
                 final List<DocRef> referencePipelines = pipelineStore.findByName(BENCHMARK_REFERENCE);
                 final List<DocRef> eventsPipelines = pipelineStore.findByName(BENCHMARK_EVENTS);
@@ -452,7 +449,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                     .addTerm(ProcessorTaskDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
                     .build();
             final List<ProcessorTask> processorTasks = processorTaskService.find(new ExpressionCriteria(taskExpression));
-            processorTasks.stream().forEach(task -> {
+            processorTasks.forEach(task -> {
                 final List<MetaRow> metaList = metaService.findRows(FindMetaCriteria.createFromId(task.getMetaId()));
 
                 if (metaList != null && metaList.size() == 1) {

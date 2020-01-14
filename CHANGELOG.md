@@ -6,11 +6,24 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1353** : Removed session identities from tasks.
+
+* Issue **#1352** : Removed internal API token.
+
+* Issue **#1347** : Added `http-call` method to XSLT.
+
+* Change docker image to allow us to pass in the dropwizard command to run, e.g. server|migrate.
+
+* Stop MySQL outputing Note level warnings during migration about things that don't exist when we expect them not to.
+
+
+## [v7.0-beta.13] - 2019-12-24
+
+* Add `migrate` command line argument to run just the DB migrations.
+
 * Updated API key to include audience and added client id and secret.
 
 * Change `stroom.conf.sh` to also look for ip in `/sbin`
-
-## [v6.1-beta.13] - 2019-12-05
 
 * Issue **#260** : You can now hide dashboard tabs.
 
@@ -1919,7 +1932,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.13...HEAD
+[v7.0-beta.13]: https://github.com/gchq/stroom/compare/v7.0-beta.12...v7.0-beta.13
 [v7.0-beta.12]: https://github.com/gchq/stroom/compare/v7.0-beta.11...v7.0-beta.12
 [v7.0-beta.11]: https://github.com/gchq/stroom/compare/v7.0-beta.10...v7.0-beta.11
 [v7.0-beta.10]: https://github.com/gchq/stroom/compare/v7.0-beta.9...v7.0-beta.10

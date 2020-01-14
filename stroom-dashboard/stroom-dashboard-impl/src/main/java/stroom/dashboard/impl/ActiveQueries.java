@@ -23,7 +23,6 @@ import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.UserToken;
 
 import java.util.Iterator;
 import java.util.Map.Entry;
@@ -52,7 +51,7 @@ class ActiveQueries {
             final DashboardQueryKey queryKey = entry.getKey();
             final ActiveQuery activeQuery = entry.getValue();
             if (keys == null || !keys.contains(queryKey)) {
-                final Boolean success = securityContext.asUserResult(activeQuery.getUserToken(), () -> dataSourceProviderRegistry.getDataSourceProvider(activeQuery.getDocRef())
+                final Boolean success = securityContext.asProcessingUserResult(() -> dataSourceProviderRegistry.getDataSourceProvider(activeQuery.getDocRef())
                         .map(provider -> provider.destroy(new QueryKey(queryKey.getUuid())))
                         .orElseGet(() -> {
                             LOGGER.warn("Unable to destroy query with key {} as provider {} cannot be found",
@@ -74,11 +73,7 @@ class ActiveQueries {
     }
 
     ActiveQuery addNewQuery(final DashboardQueryKey queryKey, final DocRef docRef) {
-        final UserToken userToken = securityContext.getUserToken();
-        if (userToken == null) {
-            throw new RuntimeException("No user is currently logged in");
-        }
-        final ActiveQuery activeQuery = new ActiveQuery(docRef, userToken);
+        final ActiveQuery activeQuery = new ActiveQuery(docRef);
         final ActiveQuery existing = activeQueries.put(queryKey, activeQuery);
         if (existing != null) {
             throw new RuntimeException(

@@ -46,7 +46,6 @@ class CacheClearHandler extends AbstractTaskHandler<CacheClearAction, VoidResult
             criteria.getName().setString(action.getCacheName());
 
             final CacheClearClusterTask clusterTask = new CacheClearClusterTask(
-                    action.getUserToken(),
                     action.getTaskName(),
                     criteria);
 

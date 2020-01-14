@@ -157,7 +157,7 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
                         // discover call (cyclic dependency).
                         // clusterCallServiceRemote will call getThisNode but
                         // that's OK as we have worked it out above.
-                        clusterCallServiceRemote.call(thisNodeName, nodeName, ClusterNodeManager.SERVICE_NAME,
+                        clusterCallServiceRemote.call(thisNodeName, nodeName, securityContext.getUserIdentity(), ClusterNodeManager.SERVICE_NAME,
                                 ClusterNodeManager.PING_METHOD, new Class<?>[]{String.class},
                                 new Object[]{thisNodeName});
                         addEnabledActiveNode(clusterState, nodeName);

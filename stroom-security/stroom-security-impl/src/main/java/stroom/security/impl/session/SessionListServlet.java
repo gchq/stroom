@@ -28,7 +28,6 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
@@ -70,8 +69,7 @@ class SessionListServlet extends HttpServlet implements IsServlet {
     }
 
     @Override
-    protected void doGet(final HttpServletRequest request, final HttpServletResponse response)
-            throws IOException {
+    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
         response.setContentType("text/html");
 
         final List<List<String>> table = new ArrayList<>();
@@ -79,23 +77,12 @@ class SessionListServlet extends HttpServlet implements IsServlet {
         final SessionListTask sessionListTask = new SessionListTask();
         final List<SessionDetails> sessionDetailsList = taskManager.exec(sessionListTask);
 
-        final HttpSession httpSession = request.getSession(false);
-
         for (final SessionDetails sessionDetails : sessionDetailsList) {
-            String prefix = "";
-            String suffix = "";
-            if (httpSession != null) {
-                if (httpSession.getId().equals(sessionDetails.getId())) {
-                    prefix = "<b>";
-                    suffix = "</b>";
-                }
-            }
             final ArrayList<String> row = new ArrayList<>();
             row.add(DateUtil.createNormalDateTimeString(sessionDetails.getLastAccessedMs()));
             row.add(DateUtil.createNormalDateTimeString(sessionDetails.getCreateMs()));
             row.add(sessionDetails.getUserName());
             row.add(sessionDetails.getNodeName());
-            row.add(prefix + sessionDetails.getId() + suffix);
             row.add("<span class=\"agent\">" + sessionDetails.getLastAccessedAgent() + "</span>");
             table.add(row);
         }
@@ -106,7 +93,7 @@ class SessionListServlet extends HttpServlet implements IsServlet {
                 "<html><head><link type=\"text/css\" href=\"css/SessionList.css\" rel=\"stylesheet\" /></head><body>");
         response.getWriter().write("<table>");
         response.getWriter().write(
-                "<thead><tr><th>Last Accessed</th><th>Created</th><th>User Id</th><th>Node</th><th>Session Id</th><th>Agent</th></tr></thead>");
+                "<thead><tr><th>Last Accessed</th><th>Created</th><th>User Id</th><th>Node</th><th>Agent</th></tr></thead>");
 
         for (final List<String> row : table) {
             response.getWriter().write("<tr>");

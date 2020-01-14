@@ -127,7 +127,6 @@ public class ProxyModule extends AbstractModule {
                 .bind(DebugServlet.class)
                 .bind(ProxyStatusServlet.class)
                 .bind(ProxyWelcomeServlet.class)
-                .bind(ReceiveDataServlet.class)
                 .bind(ReceiveDataServlet.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)

@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.UserToken;
+import stroom.security.api.UserIdentity;
 import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskCallbackAdaptor;
@@ -334,14 +334,15 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
     }
 
     @Override
-    public void execAsync(final Task<?> parentTask, final UserToken userToken, final String taskName, final Runnable runnable, ThreadPool threadPool) {
-        if (userToken == null) {
+    public void execAsync(final Task<?> parentTask, final String taskName, final Runnable runnable, ThreadPool threadPool) {
+        final UserIdentity userIdentity = securityContext.getUserIdentity();
+        if (userIdentity == null) {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Task has null user token: " + taskName);
+                LOGGER.debug("Null user identity: " + taskName);
             }
         }
 
-        final GenericServerTask task = GenericServerTask.create(parentTask, userToken, taskName, null);
+        final GenericServerTask task = GenericServerTask.create(parentTask, taskName, null);
         if (threadPool == null) {
             threadPool = task.getThreadPool();
         }
@@ -373,7 +374,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
 
             final Thread currentThread = Thread.currentThread();
             final String oldThreadName = currentThread.getName();
-            final TaskThread taskThread = new TaskThread(task);
+            final TaskThread taskThread = new TaskThread(task, userIdentity);
 
             currentThread.setName(oldThreadName + " - " + task.getClass().getSimpleName());
             try {
@@ -383,7 +384,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 }
                 currentTasks.put(task.getId(), taskThread);
 
-                securityContext.asUser(userToken, () -> {
+                securityContext.asUser(userIdentity, () -> {
                     CurrentTaskState.pushState(taskThread);
                     try {
                         LOGGER.debug("doExec() - exec >> '{}' {}", task.getClass().getName(), task);
@@ -447,19 +448,19 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
             parentTaskThread = currentTasks.get(task.getParentTask().getId());
         }
 
+        final UserIdentity userIdentity = securityContext.getUserIdentity();
+        if (userIdentity == null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Null user identity: " + task.getClass().getSimpleName());
+            }
+        }
+
         final Thread currentThread = Thread.currentThread();
         final String oldThreadName = currentThread.getName();
-        final TaskThread taskThread = new TaskThread(task);
+        final TaskThread taskThread = new TaskThread(task, userIdentity);
 
         currentThread.setName(oldThreadName + " - " + task.getClass().getSimpleName());
         try {
-            UserToken userToken = task.getUserToken();
-            if (userToken == null) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("Task has null user token: " + task.getClass().getSimpleName());
-                }
-            }
-
             // Make sure this thread is not interrupted.
             if (Thread.interrupted()) {
                 LOGGER.warn("This thread was previously interrupted");
@@ -475,20 +476,18 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 throw new TaskTerminatedException(stop.get());
             }
 
-            securityContext.asUser(userToken, () -> {
-                CurrentTaskState.pushState(taskThread);
-                try {
-                    // Get the task handler that will deal with this task.
-                    final TaskHandler<Task<R>, R> taskHandler = taskHandlerRegistry.findHandler(task);
+            CurrentTaskState.pushState(taskThread);
+            try {
+                // Get the task handler that will deal with this task.
+                final TaskHandler<Task<R>, R> taskHandler = taskHandlerRegistry.findHandler(task);
 
-                    LOGGER.debug("doExec() - exec >> '{}' {}", task.getClass().getName(), task);
-                    taskHandler.exec(task, callback);
-                    LOGGER.debug("doExec() - exec << '{}' {}", task.getClass().getName(), task);
+                LOGGER.debug("doExec() - exec >> '{}' {}", task.getClass().getName(), task);
+                taskHandler.exec(task, callback);
+                LOGGER.debug("doExec() - exec << '{}' {}", task.getClass().getName(), task);
 
-                } finally {
-                    CurrentTaskState.popState();
-                }
-            });
+            } finally {
+                CurrentTaskState.popState();
+            }
         } finally {
             currentTasks.remove(task.getId());
             if (parentTaskThread != null) {
@@ -518,7 +517,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
 
                 // Terminate it?
                 if (kill || !taskThread.isTerminated()) {
-                    if (criteria.isMatch(task)) {
+                    if (criteria.isMatch(task, taskThread.getSessionId())) {
                         terminateList.add(taskThread);
                     }
                 }
@@ -575,7 +574,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
             final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskThread, task);
 
             // Only add this task progress if it matches the supplied criteria.
-            if (findTaskProgressCriteria == null || findTaskProgressCriteria.matches(taskProgress)) {
+            if (findTaskProgressCriteria == null || findTaskProgressCriteria.isMatch(taskThread.getSessionId())) {
                 taskProgressList.add(taskProgress);
             }
         });
@@ -587,8 +586,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
         final TaskProgress taskProgress = new TaskProgress();
         taskProgress.setId(task.getId());
         taskProgress.setTaskName(taskThread.getName());
-        taskProgress.setSessionId(task.getUserToken().getSessionId());
-        taskProgress.setUserName(task.getUserToken().getUserId());
+        taskProgress.setUserName(taskThread.getUserId());
         taskProgress.setThreadName(taskThread.getThreadName());
         taskProgress.setTaskInfo(taskThread.getInfo());
         taskProgress.setSubmitTimeMs(taskThread.getSubmitTimeMs());
