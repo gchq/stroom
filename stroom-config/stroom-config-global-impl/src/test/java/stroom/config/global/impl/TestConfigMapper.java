@@ -23,6 +23,8 @@ import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsConfig;
 
 import java.io.IOException;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -536,6 +538,22 @@ class TestConfigMapper {
         doValidateStringValueTest("stroom.docRefProp", ",docRef(type1,uuid1)", false);
     }
 
+    @Test
+    void testValidateStringValue_path_good() {
+        // $ not valid delimiter
+        doValidateStringValueTest("stroom.pathProp", "/h/j/k/l", true);
+    }
+
+    @Test
+    void testValidateStringValue_duration_good() {
+        doValidateStringValueTest("stroom.durationProp", "P1DT1M", true);
+    }
+
+    @Test
+    void testValidateStringValue_duration_bad() {
+        doValidateStringValueTest("stroom.durationProp", "1D", false);
+    }
+
 
     private void doValidateStringValueTest(final String path, final String value, boolean shouldValidate) {
         TestConfig testConfig = new TestConfig();
@@ -614,6 +632,9 @@ class TestConfigMapper {
                 new DocRef("MyType2", "56068221-1a7d-486c-9fa7-af8b98733e53", "MyDocRef2"));
         private State stateProp = State.OFF;
         private List<State> stateListProp = List.of(State.ON, State.IN_BETWEEN);
+        private Path pathProp = Path.of("/a/b/c/d");
+        private Duration durationProp = Duration.ofMinutes(5);
+
         // sub-configs
         private TestPrimitiveConfig testPrimitiveConfig = new TestPrimitiveConfig();
         private TestBoxedConfig testBoxedConfig = new TestBoxedConfig();
@@ -712,6 +733,24 @@ class TestConfigMapper {
 
         public void setStateListProp(final List<State> stateListProp) {
             this.stateListProp = stateListProp;
+        }
+
+
+
+        public Path getPathProp() {
+            return pathProp;
+        }
+
+        public Duration getDurationProp() {
+            return durationProp;
+        }
+
+        public void setPathProp(final Path pathProp) {
+            this.pathProp = pathProp;
+        }
+
+        public void setDurationProp(final Duration durationProp) {
+            this.durationProp = durationProp;
         }
 
         public enum State {
@@ -814,5 +853,10 @@ class TestConfigMapper {
         public void setShortProp(final Short shortProp) {
             this.shortProp = shortProp;
         }
+    }
+
+    public static class TestOtherTypesConfig implements IsConfig {
+
+
     }
 }

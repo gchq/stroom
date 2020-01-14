@@ -45,6 +45,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -352,10 +354,12 @@ public class ConfigMapper {
                 type.equals(boolean.class) ||
                 type.equals(Character.class) ||
                 type.equals(char.class) ||
+                type.equals(Duration.class) ||
                 List.class.isAssignableFrom(type) ||
                 Map.class.isAssignableFrom(type) ||
                 DocRef.class.isAssignableFrom(type) ||
-                Enum.class.isAssignableFrom(type);
+                Enum.class.isAssignableFrom(type) ||
+                Path.class.isAssignableFrom(type);
 
         LOGGER.trace("isSupportedPropertyType({}), returning: {}", type, isSupported);
         return isSupported;
@@ -533,6 +537,8 @@ public class ConfigMapper {
                 return Boolean.valueOf(value);
             } else if ((type.equals(Character.class) || type.equals(char.class)) && value.length() > 0) {
                 return value.charAt(0);
+            } else if (type.equals(Duration.class)) {
+                return Duration.parse(value);
             } else if (List.class.isAssignableFrom(type)) {
                 // determine the type of the list items
                 Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
@@ -547,6 +553,8 @@ public class ConfigMapper {
                 return stringToDocRef(value);
             } else if (Enum.class.isAssignableFrom(type)) {
                 return stringToEnum(value, type);
+            } else if (Path.class.isAssignableFrom(type)) {
+                return Path.of(value);
             }
         } catch (Exception e) {
             // Don't include the original exception else gwt uses the msg of the

@@ -54,6 +54,7 @@ import stroom.ui.config.shared.ThemeConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UrlConfig;
 import stroom.util.io.PathConfig;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsConfig;
 import stroom.util.xml.ParserConfig;
 
@@ -187,13 +188,25 @@ public class AppConfigModule extends AbstractModule {
             final Class<T> clazz,
             final Consumer<T> childConfigConsumer) {
 
+        if (parentObject == null) {
+            throw new RuntimeException(LogUtil.message("Unable to bind config to {} as the parent is null. " +
+                    "You may have an empty branch in your config YAML file.",
+                clazz.getCanonicalName()));
+        }
 
-        // Get the config instance
-        T configInstance = configGetter.apply(parentObject);
+        try {
+            // Get the config instance
+            T configInstance = configGetter.apply(parentObject);
 
-        bind(clazz).toInstance(configInstance);
-        if (childConfigConsumer != null) {
-            childConfigConsumer.accept(configInstance);
+            bind(clazz).toInstance(configInstance);
+            if (childConfigConsumer != null) {
+                childConfigConsumer.accept(configInstance);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error binding getter on object {} to class {}",
+                parentObject.getClass().getCanonicalName(),
+                clazz.getCanonicalName()),
+                e);
         }
     }
 

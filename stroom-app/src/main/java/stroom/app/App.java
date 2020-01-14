@@ -34,6 +34,7 @@ import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
 import stroom.config.global.impl.ConfigMapper;
+import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -43,23 +44,16 @@ import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
 import stroom.util.guice.ResourcePaths;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.ConfigValidationMessage;
-import stroom.util.shared.ConfigValidationResults;
-import stroom.util.shared.ValidationSeverity;
 
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
 import javax.servlet.SessionCookieConfig;
-import javax.validation.ConstraintViolation;
-import javax.validation.Validator;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.EnumSet;
-import java.util.Set;
-import java.util.function.Consumer;
 
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
@@ -132,13 +126,14 @@ public class App extends Application<Config> {
 
         final AppModule appModule = new AppModule(configuration, environment, configFile);
         final Injector injector = Guice.createInjector(appModule);
-        injector.injectMembers(this);
 
-        // TODO
-        //   As this relies on ConfigMapper it needs to happen after all the guice binding is done.
-        //   We could do it before if we instantiate our our own ConfigMapper and later bind that instance.
-        //   Then we could validate the various DB conn/pool props.
+        // Ideally we would do the validation before all the guice binding but the validation
+        // relies on ConfigMapper and the various custom validator impls being injected by guice.
+        // As long as we do this as the first thing after the injector is created then it is
+        // only eager singletons that will have been spun up.
         validateAppConfig(injector, configuration.getAppConfig());
+
+        injector.injectMembers(this);
 
         // Add health checks
         healthChecks.register();
@@ -173,92 +168,23 @@ public class App extends Application<Config> {
 
     private void validateAppConfig(final Injector injector, final AppConfig appConfig) {
 
+        // Inject this way rather than using injectMembers so we can avoid instantiating
+        // too many classes before running our validation
         final ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
-        final Validator validator = injector.getInstance(Validator.class);
-
-        //TODO remove
-        appConfig.getNodeConfig().setNodeName(null);
-        appConfig.getUiConfig().setNamePattern("(bad regex");
+        final ConfigValidator configValidator = injector.getInstance(ConfigValidator.class);
 
         LOGGER.info("Validating application configuration file {}",
             configFile.toAbsolutePath().normalize().toString());
-        final Set<ConstraintViolation<AppConfig>> constraintViolations = validator.validate(appConfig);
 
-        int errorCount = 0;
-        int warningCount = 0;
+        ConfigValidator.Result result = configValidator.validate(appConfig);
 
-        for (final ConstraintViolation<AppConfig> constraintViolation : constraintViolations) {
-//            LOGGER.info(constraintViolation.toString());
-            boolean isWarning = constraintViolation.getConstraintDescriptor()
-                .getPayload()
-                .contains(ValidationSeverity.Warning.class);
-
-            final Consumer<String> logFunc;
-            final String severityStr;
-            if (isWarning) {
-                warningCount++;
-                logFunc = LOGGER::warn;
-                severityStr = "warning";
-            } else {
-                errorCount++;
-                logFunc = LOGGER::error;
-                severityStr = "error";
-            }
-
-//            LOGGER.info("  stroom.{} [{}] - {}",
-//                constraintViolation.getPropertyPath(),
-//                constraintViolation.getInvalidValue(),
-//                constraintViolation.getMessage());
-
-            logFunc.accept(LogUtil.message("  Validation {} for stroom.{} [{}] - {}",
-                severityStr,
-                constraintViolation.getPropertyPath(),
-                constraintViolation.getInvalidValue(),
-                constraintViolation.getMessage()));
-        }
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
-            errorCount,
-            warningCount);
+            result.getErrorCount(),
+            result.getWarningCount());
 
-
-        if (errorCount > 0 && appConfig.isHaltBootOnConfigValidationFailure()) {
-            LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid configuration, set {} to false. This is not advised!",
-                configMapper.getFullPath(appConfig, AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
-            System.exit(1);
-        }
-
-       LOGGER.info("------------------------------------------------------------");
-        
-        
-        
-        
-        LOGGER.info("Validating application configuration file {}",
-            configFile.toAbsolutePath().normalize().toString());
-        final ConfigValidationResults configValidationResults = configMapper.validateConfiguration();
-
-        for (final ConfigValidationMessage configValidationMessage : configValidationResults.getConfigValidationMessages()) {
-            ConfigValidationResults.Severity severity = configValidationMessage.getSeverity();
-            final Consumer<String> logFunc = severity.equals(ConfigValidationResults.Severity.ERROR)
-                ? LOGGER::error
-                : LOGGER::warn;
-
-            final String path = configMapper.getBasePath(configValidationMessage.getConfigInstance());
-            final String fullpath = path + "." + configValidationMessage.getPropertyName();
-            logFunc.accept(LogUtil.message("  Validation {} for {} - {}",
-                severity.getLongName(),
-                fullpath,
-                configValidationMessage.getMessage()));
-        }
-        LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
-            configValidationResults.getErrorCount(),
-            configValidationResults.getWarningCount());
-        
-        if (!appConfig.isHaltBootOnConfigValidationFailure()) {
-            LOGGER.warn("");
-        }
-
-        if (configValidationResults.hasErrors() && appConfig.isHaltBootOnConfigValidationFailure()) {
-            LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom anyway, set {} to false",
+        if (result.getErrorCount() > 0 && appConfig.isHaltBootOnConfigValidationFailure()) {
+            LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid " +
+                    "configuration, set {} to false. This is not advised!",
                 configMapper.getFullPath(appConfig, AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }

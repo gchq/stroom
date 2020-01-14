@@ -7,8 +7,10 @@ import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.ConfigValidationResults;
 import stroom.util.shared.IsConfig;
+import stroom.util.shared.ValidationSeverity;
 
 import javax.inject.Singleton;
+import javax.validation.constraints.AssertTrue;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
@@ -57,6 +59,9 @@ public class AuthenticationConfig implements IsConfig {
     @JsonProperty(PROP_NAME_AUTHENTICATION_REQUIRED)
     @JsonPropertyDescription("Choose whether Stroom requires authenticated access. " +
         "Only intended for use in development or testing.")
+    @AssertTrue(
+        message = "All authentication is disabled. This should only be used in development or test environments.",
+        payload = ValidationSeverity.Warning.class)
     public boolean isAuthenticationRequired() {
         return authenticationRequired;
     }

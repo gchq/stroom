@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.shared.ConfigValidationResults;
 import stroom.util.shared.IsConfig;
 
+import javax.validation.constraints.Min;
 import java.util.concurrent.TimeUnit;
 
 public class CacheConfig implements IsConfig {
@@ -27,6 +28,7 @@ public class CacheConfig implements IsConfig {
 
     @JsonPropertyDescription("The maximum number of entries in the cache")
     @JsonProperty(PROP_NAME_MAXIMUM_SIZE)
+    @Min(0)
     public Long getMaximumSize() {
         return maximumSize;
     }
