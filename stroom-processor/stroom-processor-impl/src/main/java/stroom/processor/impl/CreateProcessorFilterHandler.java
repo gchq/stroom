@@ -23,33 +23,32 @@ import stroom.processor.shared.CreateProcessorFilterAction;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 
-public class CreateProcessorHandler extends AbstractTaskHandler<CreateProcessorFilterAction, ProcessorFilter> {
+public class CreateProcessorFilterHandler extends AbstractTaskHandler<CreateProcessorFilterAction, ProcessorFilter> {
     private final ProcessorFilterService processorFilterService;
     private final SecurityContext securityContext;
 
     @Inject
-    CreateProcessorHandler(final ProcessorFilterService processorFilterService,
-                           final SecurityContext securityContext) {
+    CreateProcessorFilterHandler(final ProcessorFilterService processorFilterService,
+                                 final SecurityContext securityContext) {
         this.processorFilterService = processorFilterService;
         this.securityContext = securityContext;
     }
 
     @Override
     public ProcessorFilter exec(final CreateProcessorFilterAction action) {
-        ProcessorFilter result = securityContext.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () ->
-                securityContext.useAsReadResult(() ->
-                        processorFilterService.create(action.getPipeline(), action.getQueryData(), action.getPriority(), action.isEnabled())));
-
         // If the user doesn't have read permissions on the pipeline then return null.
         if (!securityContext.hasDocumentPermission(PipelineDoc.DOCUMENT_TYPE, action.getPipeline().getUuid(), DocumentPermissionNames.READ)) {
-            result = null;
+            throw new PermissionException("You do not have permission to create this processor filter");
         }
 
-        return result;
+        return securityContext.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () ->
+                securityContext.useAsReadResult(() ->
+                        processorFilterService.create(action.getPipeline(), action.getQueryData(), action.getPriority(), action.isEnabled())));
     }
 }

@@ -101,7 +101,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         if (selectionModel != null) {
             final Item selectedItem = selectionModel.getSelectedObject();
             if (selectedItem != null) {
-                selectedItem.setEnabled(!selectedItem.enabled());
+                selectedItem.setEnabled(!selectedItem.isEnabled());
 
                 fireDirty();
 

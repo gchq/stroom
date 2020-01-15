@@ -638,7 +638,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private String getEnableDisableText() {
         final stroom.query.client.Item selectedItem = getSelectedItem();
-        if (selectedItem != null && !selectedItem.enabled()) {
+        if (selectedItem != null && !selectedItem.isEnabled()) {
             return "Enable";
         }
         return "Disable";
