@@ -6,14 +6,14 @@ import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.util.cache.CacheConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.xml.ParserConfig;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class PipelineConfig extends IsConfig {
+public class PipelineConfig extends AbstractConfig {
     private AppenderConfig appenderConfig = new AppenderConfig();
     private ParserConfig parserConfig = new ParserConfig();
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();

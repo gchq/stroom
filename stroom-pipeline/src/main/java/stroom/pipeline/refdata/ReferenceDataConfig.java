@@ -4,14 +4,14 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class ReferenceDataConfig extends IsConfig {
+public class ReferenceDataConfig extends AbstractConfig {
     private static final int MAX_READERS_DEFAULT = 100;
     private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 1000;
     private static final int VALUE_BUFFER_CAPACITY_DEFAULT_VALUE = 1000;

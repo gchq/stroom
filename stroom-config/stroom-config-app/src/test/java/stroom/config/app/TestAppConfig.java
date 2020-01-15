@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.config.PropertyUtil;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import java.lang.reflect.Field;
 
@@ -34,7 +34,7 @@ class TestAppConfig {
                 LOGGER.debug("{}Field {} : {} {}",
                         indent, field.getName(), fieldClass.getSimpleName(), fieldClass.getAnnotations());
 
-                Assertions.assertThat(IsConfig.class)
+                Assertions.assertThat(AbstractConfig.class)
                         .isAssignableFrom(fieldClass);
 
                 // This field is another config object so recurs into it

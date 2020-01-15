@@ -1,12 +1,12 @@
 package stroom.dashboard.impl.datasource;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class DataSourceUrlConfig extends IsConfig {
+public class DataSourceUrlConfig extends AbstractConfig {
     private String index = "http://127.0.0.1:8080/api/stroom-index/v2";
     private String solrIndex = "http://127.0.0.1:8080/api/stroom-solr-index/v2";
     private String statisticStore = "http://127.0.0.1:8080/api/sqlstatistics/v2";

@@ -7,7 +7,7 @@ import stroom.docref.DocRef;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 import java.util.EnumMap;
@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 @Singleton
-public class InternalStatisticsConfig extends IsConfig {
+public class InternalStatisticsConfig extends AbstractConfig {
     private static final Map<InternalStatisticKey, Function<InternalStatisticsConfig, List<DocRef>>>
             KEY_TO_DOC_REFS_GETTER_MAP = new EnumMap<>(InternalStatisticKey.class);
 

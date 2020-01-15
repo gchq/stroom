@@ -20,11 +20,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import java.util.Objects;
 
-public class ConnectionConfig extends IsConfig {
+public class ConnectionConfig extends AbstractConfig {
 
     public static final String PROP_NAME_JDBC_DRIVER_CLASS_NAME = "jdbcDriverClassName";
     public static final String PROP_NAME_JDBC_DRIVER_URL = "jdbcDriverUrl";

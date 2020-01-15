@@ -3,13 +3,13 @@ package stroom.data.store.impl.fs;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class FsVolumeConfig extends IsConfig {
+public class FsVolumeConfig extends AbstractConfig {
 //    private int resilientReplicationCount = 1;
 //    private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";

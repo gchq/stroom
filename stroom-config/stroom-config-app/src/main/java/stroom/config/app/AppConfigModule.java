@@ -55,7 +55,7 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UrlConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.xml.ParserConfig;
 
 import java.nio.file.Path;
@@ -162,27 +162,27 @@ public class AppConfigModule extends AbstractModule {
 
     }
 
-    private <T extends IsConfig> void bindConfig(
+    private <T extends AbstractConfig> void bindConfig(
             final Function<AppConfig, T> configGetter,
             final Class<T> clazz) {
         bindConfig(configHolder.getAppConfig(), configGetter, clazz, null);
     }
 
-    private <T extends IsConfig> void bindConfig(
+    private <T extends AbstractConfig> void bindConfig(
             final Function<AppConfig, T> configGetter,
             final Class<T> clazz,
             final Consumer<T> childConfigConsumer) {
         bindConfig(configHolder.getAppConfig(), configGetter, clazz, childConfigConsumer);
     }
 
-    private <X extends IsConfig, T extends IsConfig> void bindConfig(
+    private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
             final X parentObject,
             final Function<X, T> configGetter,
             final Class<T> clazz) {
         bindConfig(parentObject, configGetter, clazz, null);
     }
 
-    private <X extends IsConfig, T extends IsConfig> void bindConfig(
+    private <X extends AbstractConfig, T extends AbstractConfig> void bindConfig(
             final X parentObject,
             final Function<X, T> configGetter,
             final Class<T> clazz,

@@ -1,12 +1,12 @@
 package stroom.node.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class StatusConfig extends IsConfig {
+public class StatusConfig extends AbstractConfig {
     private HeapHistogramConfig heapHistogramConfig = new HeapHistogramConfig();
 
     @JsonProperty("heapHistogram")

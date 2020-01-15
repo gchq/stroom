@@ -2,12 +2,12 @@ package stroom.util.cache;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.validation.constraints.Min;
 import java.util.concurrent.TimeUnit;
 
-public class CacheConfig extends IsConfig {
+public class CacheConfig extends AbstractConfig {
 
     public static final String PROP_NAME_MAXIMUM_SIZE = "maximumSize";
     public static final String PROP_NAME_EXPIRE_AFTER_ACCESS = "expireAfterAccess";

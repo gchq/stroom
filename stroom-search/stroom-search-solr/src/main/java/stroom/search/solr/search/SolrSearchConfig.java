@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.search.extraction.ExtractionConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class SolrSearchConfig extends IsConfig {
+public class SolrSearchConfig extends AbstractConfig {
     /**
      * We don't want to collect more than 10k doc's data into the queue by
      * default. When the queue is full the index shard data tasks will pause

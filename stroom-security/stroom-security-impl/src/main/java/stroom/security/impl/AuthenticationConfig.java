@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ValidRegex;
 import stroom.util.shared.ValidationSeverity;
 
@@ -15,7 +15,7 @@ import javax.validation.constraints.NotNull;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class AuthenticationConfig extends IsConfig {
+public class AuthenticationConfig extends AbstractConfig {
 
     public static final String PROP_NAME_AUTHENTICATION_REQUIRED = "authenticationRequired";
     public static final String PROP_NAME_VERIFY_SSL = "verifySsl";
@@ -196,7 +196,7 @@ public class AuthenticationConfig extends IsConfig {
                 '}';
     }
 
-    public static class JwtConfig extends IsConfig {
+    public static class JwtConfig extends AbstractConfig {
 
         public static final String PROP_NAME_JWT_ISSUER = "jwtIssuer";
         public static final String PROP_NAME_ENABLE_TOKEN_REVOCATION_CHECK = "enableTokenRevocationCheck";

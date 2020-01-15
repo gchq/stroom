@@ -11,7 +11,7 @@ import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.util.HasHealthCheck;
 import stroom.util.config.FieldMapper;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -176,7 +176,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
 
                     AtomicInteger updateCount = new AtomicInteger(0);
                     final FieldMapper.UpdateAction updateAction = (destParent, prop, sourcePropValue, destPropValue) -> {
-                        final String fullPath = ((IsConfig)destParent).getFullPath(prop.getName());
+                        final String fullPath = ((AbstractConfig)destParent).getFullPath(prop.getName());
                         LOGGER.info("  Updating config value of {} from [{}] to [{}]",
                             fullPath, destPropValue, sourcePropValue);
                         updateCount.incrementAndGet();

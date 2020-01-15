@@ -20,7 +20,7 @@ import stroom.config.common.HasDbConfig;
 import stroom.util.config.FieldMapper;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -117,7 +117,7 @@ class TestAppConfigModule {
 
         Predicate<Class<?>> classFilter = clazz -> {
 
-            return !clazz.equals(IsConfig.class) && !clazz.equals(AppConfig.class);
+            return !clazz.equals(AbstractConfig.class) && !clazz.equals(AppConfig.class);
         };
 
         LOGGER.info("Finding all IsConfig classes");
@@ -129,7 +129,7 @@ class TestAppConfigModule {
                 .filter(classInfo -> packageNameFilter.test(classInfo.getPackageName()))
                 .map(ClassPath.ClassInfo::load)
                 .filter(classFilter)
-                .filter(IsConfig.class::isAssignableFrom)
+                .filter(AbstractConfig.class::isAssignableFrom)
                 .peek(clazz -> {
                     LOGGER.debug(clazz.getSimpleName());
                 })

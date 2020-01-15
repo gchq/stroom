@@ -36,7 +36,7 @@ import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ValidationSeverity;
 
 import javax.inject.Singleton;
@@ -45,7 +45,7 @@ import javax.validation.constraints.AssertFalse;
 
 @JsonRootName(AppConfig.NAME)
 @Singleton
-public class AppConfig extends IsConfig {
+public class AppConfig extends AbstractConfig {
 
     public static final String NAME = "stroom";
 

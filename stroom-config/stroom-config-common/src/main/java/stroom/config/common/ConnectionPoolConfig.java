@@ -18,11 +18,11 @@ package stroom.config.common;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import java.util.Objects;
 
-public class ConnectionPoolConfig extends IsConfig {
+public class ConnectionPoolConfig extends AbstractConfig {
 
     public static final String COMMON_CONN_POOL_DESC = "See " +
         "https://github.com/brettwooldridge/HikariCP for further " +

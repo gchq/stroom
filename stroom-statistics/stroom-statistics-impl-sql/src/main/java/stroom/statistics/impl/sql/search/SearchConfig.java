@@ -2,13 +2,13 @@ package stroom.statistics.impl.sql.search;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class SearchConfig extends IsConfig {
+public class SearchConfig extends AbstractConfig {
     private static final int DEFAULT_ROWS_IN_BATCH = 5_000;
 
     private String storeSize = "1000000,100,10,1";

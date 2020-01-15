@@ -3,14 +3,14 @@ package stroom.feed.impl;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ValidRegex;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class FeedConfig extends IsConfig {
+public class FeedConfig extends AbstractConfig {
 
     public static final String PROP_NAME_FEED_NAME_PATTERN = "feedNamePattern";
     public static final String PROP_NAME_FEED_DOC_CACHE = "feedDocCache";

@@ -5,12 +5,12 @@ import stroom.data.retention.impl.DataRetentionConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
 import stroom.data.store.impl.fs.FsVolumeConfig;
 import stroom.meta.impl.db.MetaServiceConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class DataConfig extends IsConfig {
+public class DataConfig extends AbstractConfig {
     public static final String NAME = "data";
     
 

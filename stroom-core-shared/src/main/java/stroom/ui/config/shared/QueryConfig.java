@@ -2,13 +2,13 @@ package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.SharedObject;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class QueryConfig extends IsConfig implements SharedObject {
+public class QueryConfig extends AbstractConfig implements SharedObject {
     private InfoPopupConfig infoPopupConfig = new InfoPopupConfig();
 
     public QueryConfig() {

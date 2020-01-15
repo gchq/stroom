@@ -1,7 +1,5 @@
 package stroom.config.common;
 
-import stroom.util.shared.IsConfig;
-
 import javax.inject.Singleton;
 
 @Singleton

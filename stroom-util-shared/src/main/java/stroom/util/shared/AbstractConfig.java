@@ -8,7 +8,7 @@ import java.util.StringJoiner;
  * This includes AppConfig and the classes that sit beneath it.  Implementing classes
  * are expected to be (de)serialised from/to YAML configuration files.
  */
-public abstract class IsConfig {
+public abstract class AbstractConfig {
 
     // Held in part form to reduce memory overhead as some parts will be used
     // many times over all the config objects

@@ -3,7 +3,7 @@ package stroom.config.common;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
@@ -11,7 +11,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.Objects;
 
-public class ApiGatewayConfig extends IsConfig {
+public class ApiGatewayConfig extends AbstractConfig {
 
     public static final String PROP_NAME_HOST_NAME = "hostname";
     public static final String PROP_NAME_SCHEME = "scheme";

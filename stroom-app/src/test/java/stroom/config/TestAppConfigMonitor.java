@@ -10,9 +10,12 @@ import stroom.config.global.impl.AppConfigMonitor;
 import stroom.config.app.ConfigLocation;
 import stroom.config.app.YamlUtil;
 import stroom.config.global.impl.ConfigMapper;
+import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.FileUtil;
 
+import javax.validation.Validation;
+import javax.validation.Validator;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -71,12 +74,16 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         final AppConfig appConfig = YamlUtil.readAppConfig(devYamlCopyPath);
         final ConfigMapper configMapper = new ConfigMapper(appConfig);
         final ConfigLocation configLocation = new ConfigLocation(devYamlCopyPath);
+        // The default validator knows nothing of our custom validation annotations but that is
+        // fine for this test
+        final Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
+        final ConfigValidator configValidator = new ConfigValidator(configMapper, validator);
 
         Assertions.assertThat(appConfig.getPathConfig().getTemp())
                 .isNotEqualTo(newPathValue);
 
-        final AppConfigMonitor appConfigMonitor = new AppConfigMonitor(appConfig, configLocation, configMapper, configValidator);
-
+        final AppConfigMonitor appConfigMonitor = new AppConfigMonitor(
+            appConfig, configLocation, configMapper, configValidator);
 
         // start watching the file for changes
         appConfigMonitor.start();

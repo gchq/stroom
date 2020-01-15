@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.global.impl.ConfigMapper;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ValidationSeverity;
 
 import javax.inject.Inject;
@@ -22,7 +22,7 @@ public class ConfigValidator {
     private final Validator validator;
 
     @Inject
-    ConfigValidator(final ConfigMapper configMapper, final Validator validator) {
+    public ConfigValidator(final ConfigMapper configMapper, final Validator validator) {
         this.configMapper = configMapper;
         this.validator = validator;
     }
@@ -30,19 +30,19 @@ public class ConfigValidator {
     /**
      * Default validation that logs errors/warnings to the logger.
      */
-    public Result validate(final IsConfig config) {
+    public Result validate(final AbstractConfig config) {
         return validate(config, this::logConstraintViolation);
     }
 
-    public Result validate(final IsConfig config,
-                           final BiConsumer<ConstraintViolation<IsConfig>, ValidationSeverity> constraintViolationConsumer) {
+    public Result validate(final AbstractConfig config,
+                           final BiConsumer<ConstraintViolation<AbstractConfig>, ValidationSeverity> constraintViolationConsumer) {
 
-        final Set<ConstraintViolation<IsConfig>> constraintViolations = validator.validate(config);
+        final Set<ConstraintViolation<AbstractConfig>> constraintViolations = validator.validate(config);
 
         int errorCount = 0;
         int warningCount = 0;
 
-        for (final ConstraintViolation<IsConfig> constraintViolation : constraintViolations) {
+        for (final ConstraintViolation<AbstractConfig> constraintViolation : constraintViolations) {
             LOGGER.debug("constraintViolation - prop: {}, value: [{}], object: {}",
                 constraintViolation.getPropertyPath().toString(),
                 constraintViolation.getInvalidValue(),
@@ -62,7 +62,7 @@ public class ConfigValidator {
         return new Result(errorCount, warningCount);
     }
 
-    private void logConstraintViolation(final ConstraintViolation<IsConfig> constraintViolation,
+    private void logConstraintViolation(final ConstraintViolation<AbstractConfig> constraintViolation,
                                         final ValidationSeverity severity) {
 
         final Consumer<String> logFunc;
@@ -79,7 +79,7 @@ public class ConfigValidator {
         for (javax.validation.Path.Node node : constraintViolation.getPropertyPath()) {
             propName = node.getName();
         }
-        IsConfig config = (IsConfig) constraintViolation.getLeafBean();
+        AbstractConfig config = (AbstractConfig) constraintViolation.getLeafBean();
 
         final String path = config.getFullPath(propName);
 

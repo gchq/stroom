@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class MetaServiceConfig extends IsConfig implements HasDbConfig {
+public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private MetaValueConfig metaValueConfig = new MetaValueConfig();
     private CacheConfig metaFeedCache = new CacheConfig.Builder()

@@ -3,14 +3,14 @@ package stroom.util.io;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.ReadOnly;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Singleton
-public class PathConfig extends IsConfig {
+public class PathConfig extends AbstractConfig {
     private String temp = "/tmp";//System.getProperty("java.io.tmpdir");
 
     @ReadOnly

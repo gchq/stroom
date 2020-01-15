@@ -8,13 +8,13 @@ import org.slf4j.LoggerFactory;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class JobSystemConfig extends IsConfig implements HasDbConfig {
+public class JobSystemConfig extends AbstractConfig implements HasDbConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobSystemConfig.class);
 
     private static final int ONE_SECOND = 1000;

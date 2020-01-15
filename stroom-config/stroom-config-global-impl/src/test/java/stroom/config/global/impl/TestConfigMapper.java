@@ -20,7 +20,7 @@ import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -759,7 +759,7 @@ class TestConfigMapper {
     }
 
 
-    public static class TestPrimitiveConfig extends IsConfig {
+    public static class TestPrimitiveConfig extends AbstractConfig {
         private boolean booleanProp = false;
         private int intProp = 123;
         private long longProp = 123L;
@@ -807,7 +807,7 @@ class TestConfigMapper {
         }
     }
 
-    public static class TestBoxedConfig extends IsConfig {
+    public static class TestBoxedConfig extends AbstractConfig {
         private Boolean booleanProp = false;
         private Integer intProp = 123;
         private Long longProp = 123L;
@@ -855,7 +855,7 @@ class TestConfigMapper {
         }
     }
 
-    public static class TestOtherTypesConfig extends IsConfig {
+    public static class TestOtherTypesConfig extends AbstractConfig {
 
 
     }

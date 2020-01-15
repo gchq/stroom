@@ -1,12 +1,12 @@
 package stroom.index.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class IndexWriterConfig extends IsConfig {
+public class IndexWriterConfig extends AbstractConfig {
     private CacheConfig cacheConfig;
 
     public IndexWriterConfig() {

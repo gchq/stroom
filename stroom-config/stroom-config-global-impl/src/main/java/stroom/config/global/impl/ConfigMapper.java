@@ -35,7 +35,7 @@ import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -217,7 +217,7 @@ public class ConfigMapper {
         }
     }
 
-    private void addConfigObjectMethods(final IsConfig config,
+    private void addConfigObjectMethods(final AbstractConfig config,
                                         final String path,
                                         final Map<String, Prop> propertyMap,
                                         final BiConsumer<String, Prop> propConsumer) {
@@ -253,10 +253,10 @@ public class ConfigMapper {
 
                 // Now let the consumer do something to it
                 propConsumer.accept(fullPath, prop);
-            } else if (IsConfig.class.isAssignableFrom(valueType)) {
+            } else if (AbstractConfig.class.isAssignableFrom(valueType)) {
                 // This must be a branch, i.e. config object so recurse into that
                 if (value != null) {
-                    IsConfig childConfigObject = (IsConfig) value;
+                    AbstractConfig childConfigObject = (AbstractConfig) value;
                     addConfigObjectMethods(
                         childConfigObject, fullPath, propertyMap, propConsumer);
                 }
@@ -265,7 +265,7 @@ public class ConfigMapper {
                 throw new RuntimeException(LogUtil.message(
                         "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
                         valueType.getName(),
-                        IsConfig.class.getSimpleName()));
+                        AbstractConfig.class.getSimpleName()));
             }
 
         });
