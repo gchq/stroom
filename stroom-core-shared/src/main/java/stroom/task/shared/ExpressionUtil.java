@@ -38,11 +38,11 @@ public final class ExpressionUtil {
         return builder.build();
     }
 
-//    public static ExpressionOperator createFeedExpression(final Feed feed) {
-//        return new ExpressionOperator.Builder(Op.AND)
-//                .addDocRefTerm(ProcessorTaskDataSource.FEED, Condition.IS_DOC_REF, DocRefUtil.create(feed))
-//                .build();
-//    }
+    public static ExpressionOperator createFeedExpression(final String feedName) {
+        return new ExpressionOperator.Builder(Op.AND)
+                .addTerm(ProcessorTaskDataSource.FEED_NAME, Condition.EQUALS, feedName)
+                .build();
+    }
 
     public static ExpressionOperator createPipelineExpression(final PipelineDoc pipelineEntity) {
         return new ExpressionOperator.Builder(Op.AND)
@@ -77,9 +77,9 @@ public final class ExpressionUtil {
     }
 
     private static void addTerms(final ExpressionOperator expressionOperator, final String field, final List<ExpressionTerm> terms) {
-        if (expressionOperator != null && expressionOperator.enabled() && !Op.NOT.equals(expressionOperator.getOp())) {
+        if (expressionOperator != null && expressionOperator.isEnabled() && !Op.NOT.equals(expressionOperator.getOp())) {
             for (final ExpressionItem item : expressionOperator.getChildren()) {
-                if (item.enabled()) {
+                if (item.isEnabled()) {
                     if (item instanceof ExpressionTerm) {
                         final ExpressionTerm expressionTerm = (ExpressionTerm) item;
                         if ((field == null || field.equals(expressionTerm.getField())) && expressionTerm.getValue() != null && expressionTerm.getValue().length() > 0) {

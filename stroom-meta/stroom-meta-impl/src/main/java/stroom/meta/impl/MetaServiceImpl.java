@@ -54,7 +54,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     private final MetaFeedDao metaFeedDao;
     private final MetaTypeDao metaTypeDao;
     private final MetaValueDao metaValueDao;
-    private final MetaSecurityFilter metaSecurityFilter;
+    private final Optional<MetaSecurityFilter> metaSecurityFilter;
     private final SecurityContext securityContext;
 
     @Inject
@@ -62,7 +62,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                     final MetaFeedDao metaFeedDao,
                     final MetaTypeDao metaTypeDao,
                     final MetaValueDao metaValueDao,
-                    final MetaSecurityFilter metaSecurityFilter,
+                    final Optional<MetaSecurityFilter> metaSecurityFilter,
                     final SecurityContext securityContext) {
         this.metaDao = metaDao;
         this.metaFeedDao = metaFeedDao;
@@ -312,7 +312,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private Builder copyExpression(final ExpressionOperator expressionOperator, final Set<String> excludedFields) {
-        final Builder builder = new Builder(expressionOperator.getEnabled(), expressionOperator.getOp());
+        final Builder builder = new Builder(expressionOperator.isEnabled(), expressionOperator.getOp());
         if (expressionOperator.getChildren() != null) {
             expressionOperator.getChildren().forEach(expressionItem -> {
                 if (expressionItem instanceof ExpressionTerm) {
@@ -329,11 +329,11 @@ public class MetaServiceImpl implements MetaService, Searchable {
         return builder;
     }
 
-    public int delete(final FindMetaCriteria criteria) {
-        final ExpressionOperator secureExpression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.DELETE);
-        criteria.setExpression(secureExpression);
-        return metaDao.delete(criteria);
-    }
+//    public int delete(final FindMetaCriteria criteria) {
+//        final ExpressionOperator secureExpression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.DELETE);
+//        criteria.setExpression(secureExpression);
+//        return metaDao.delete(criteria);
+//    }
 
     @Override
     public Set<Meta> findEffectiveData(final EffectiveMetaDataCriteria criteria) {
@@ -517,19 +517,21 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private ExpressionOperator addPermissionConstraints(final ExpressionOperator expression, final String permission) {
-        final ExpressionOperator filter = metaSecurityFilter.getExpression(permission).orElse(null);
+        return metaSecurityFilter.map(msf -> {
+            final ExpressionOperator filter = msf.getExpression(permission).orElse(null);
 
-        if (expression == null) {
-            return filter;
-        }
+            if (expression == null) {
+                return filter;
+            }
 
-        if (filter != null) {
-            final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
-            builder.addOperator(expression);
-            builder.addOperator(filter);
-            return builder.build();
-        }
+            if (filter != null) {
+                final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(Op.AND);
+                builder.addOperator(expression);
+                builder.addOperator(filter);
+                return builder.build();
+            }
 
-        return expression;
+            return expression;
+        }).orElse(expression);
     }
 }

@@ -2,7 +2,7 @@ package stroom.core.welcome;
 
 import io.swagger.annotations.Api;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;

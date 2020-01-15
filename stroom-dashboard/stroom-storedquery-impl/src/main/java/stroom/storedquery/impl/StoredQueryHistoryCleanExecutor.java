@@ -17,29 +17,30 @@
 
 package stroom.storedquery.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.task.api.TaskContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Task to clean out old query history items.
  */
 public class StoredQueryHistoryCleanExecutor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StoredQueryHistoryCleanExecutor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StoredQueryHistoryCleanExecutor.class);
 
     private final TaskContext taskContext;
     private final StoredQueryDao storedQueryDao;
-    private final StoredQueryHistoryConfig queryHistoryConfig;
+    private final StoredQueryConfig storedQueryConfig;
 
     @Inject
-    public StoredQueryHistoryCleanExecutor(final TaskContext taskContext, final StoredQueryDao storedQueryDao, final StoredQueryHistoryConfig queryHistoryConfig) {
+    public StoredQueryHistoryCleanExecutor(final TaskContext taskContext, final StoredQueryDao storedQueryDao, final StoredQueryConfig storedQueryConfig) {
         this.taskContext = taskContext;
         this.storedQueryDao = storedQueryDao;
-        this.queryHistoryConfig = queryHistoryConfig;
+        this.storedQueryConfig = storedQueryConfig;
     }
 
     public void exec() {
@@ -47,25 +48,25 @@ public class StoredQueryHistoryCleanExecutor {
     }
 
     public void clean(final boolean favourite) {
-        info("Starting history clean task");
+        info(() -> "Starting history clean task");
 
-        final int historyItemsRetention = queryHistoryConfig.getItemsRetention();
-        final int historyDaysRetention = queryHistoryConfig.getDaysRetention();
+        final int historyItemsRetention = storedQueryConfig.getItemsRetention();
+        final int historyDaysRetention = storedQueryConfig.getDaysRetention();
 
         final long oldestCrtMs = ZonedDateTime.now().minusDays(historyDaysRetention).toInstant().toEpochMilli();
 
         final List<String> users = storedQueryDao.getUsers(favourite);
         users.forEach(user -> {
-            info("Cleaning query history for '" + user + "'");
+            info(() -> "Cleaning query history for '" + user + "'");
 
             final Integer oldestId = storedQueryDao.getOldestId(user, favourite, historyItemsRetention);
             storedQueryDao.clean(user, favourite, oldestId, oldestCrtMs);
         });
 
-        info("Finished history clean task");
+        info(() -> "Finished history clean task");
     }
 
-    private void info(final String message) {
+    private void info(final Supplier<String> message) {
         LOGGER.debug(message);
         taskContext.info(message);
     }

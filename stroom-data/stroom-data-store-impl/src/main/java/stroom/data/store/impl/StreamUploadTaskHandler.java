@@ -83,7 +83,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
     @Override
     public VoidResult exec(final StreamUploadTask task) {
         return securityContext.secureResult(() -> {
-            taskContext.info(task.getFile().toString());
+            taskContext.info(() -> task.getFile().toString());
             uploadData(task);
             return VoidResult.INSTANCE;
         });
@@ -138,7 +138,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
                                final AttributeMap attributeMap) {
         StroomZipFile stroomZipFile = null;
         try {
-            taskContext.info("Zip");
+            taskContext.info(() -> "Zip");
 
             stroomZipFile = new StroomZipFile(streamUploadTask.getFile());
 
@@ -146,7 +146,8 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
                     .getBaseNameGroupedList(AGGREGATION_DELIMITER);
 
             for (int i = 0; i < groupedFileLists.size(); i++) {
-                taskContext.info("Zip {}/{}", i, groupedFileLists.size());
+                final int pos = i;
+                taskContext.info(() -> "Zip " + pos + "/" + groupedFileLists.size());
 
                 uploadData(stroomZipFile, streamUploadTask, attributeMap, groupedFileLists.get(i));
 
@@ -155,7 +156,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             throw EntityServiceExceptionUtil.create(e);
         } finally {
             CloseableUtil.closeLogAndIgnoreException(stroomZipFile);
-            taskContext.info("done");
+            taskContext.info(() -> "done");
         }
     }
 
@@ -195,18 +196,19 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
             targetRef = target;
 
             int count = 0;
-                final int maxCount = fileList.size();
-                for (final String inputBase : fileList) {
-                    count++;
-                    taskContext.info("{}/{}", count, maxCount);
-                    try (final OutputStreamProvider outputStreamProvider = target.next()) {
-                        streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Data,
-                                streamProgressMonitor);
-                        streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Meta,
-                                streamProgressMonitor);
-                        streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Context,
-                                streamProgressMonitor);
-                    }
+            final int maxCount = fileList.size();
+            for (final String inputBase : fileList) {
+                count++;
+                final int pos = count;
+                taskContext.info(() -> pos + "/" + maxCount);
+                try (final OutputStreamProvider outputStreamProvider = target.next()) {
+                    streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Data,
+                            streamProgressMonitor);
+                    streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Meta,
+                            streamProgressMonitor);
+                    streamContents(stroomZipFile, attributeMap, outputStreamProvider, inputBase, StroomZipFileType.Context,
+                            streamProgressMonitor);
+                }
             }
         } catch (final IOException | RuntimeException e) {
             LOGGER.error("importData() - aborting import ", e);

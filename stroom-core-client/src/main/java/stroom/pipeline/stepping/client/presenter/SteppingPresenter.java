@@ -321,7 +321,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
         });
     }
 
-    private void save() {
+    public void save() {
         // Tell all editors to save.
         for (final Entry<String, ElementPresenter> entry : editorMap.entrySet()) {
             entry.getValue().save();

@@ -19,6 +19,7 @@ package stroom.pipeline.cache;
 import stroom.cache.api.CacheManager;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventHandler;
+import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.security.api.SecurityContext;
 import stroom.xmlschema.shared.XmlSchemaDoc;
@@ -35,10 +36,11 @@ class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
 
     @Inject
     SchemaPoolImpl(final CacheManager cacheManager,
+                   final XmlSchemaConfig xmlSchemaConfig,
                    final SchemaLoader schemaLoader,
                    final XmlSchemaCache xmlSchemaCache,
                    final SecurityContext securityContext) {
-        super(cacheManager, "Schema Pool");
+        super(cacheManager, "Schema Pool", xmlSchemaConfig::getCacheConfig);
         this.schemaLoader = schemaLoader;
         this.securityContext = securityContext;
         xmlSchemaCache.addClearHandler(this::clear);
@@ -55,11 +57,9 @@ class SchemaPoolImpl extends AbstractPoolCache<SchemaKey, StoredSchema>
     }
 
     @Override
-    protected StoredSchema internalCreateValue(final Object key) {
-        return securityContext.asProcessingUserResult(() -> {
-            final SchemaKey schemaKey = (SchemaKey) key;
-            return schemaLoader.load(schemaKey.getSchemaLanguage(), schemaKey.getData(), schemaKey.getFindXMLSchemaCriteria());
-        });
+    protected StoredSchema internalCreateValue(final SchemaKey key) {
+        return securityContext.asProcessingUserResult(() ->
+                schemaLoader.load(key.getSchemaLanguage(), key.getData(), key.getFindXMLSchemaCriteria()));
     }
 
     /**

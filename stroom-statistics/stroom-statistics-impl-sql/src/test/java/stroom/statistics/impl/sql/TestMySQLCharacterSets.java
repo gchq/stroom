@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import stroom.config.common.ConnectionConfig;
 import stroom.db.util.DbUtil;
+import stroom.test.common.util.db.DbTestUtil;
 
 import java.nio.charset.Charset;
 import java.sql.Connection;
@@ -43,18 +44,20 @@ class TestMySQLCharacterSets {
     @BeforeAll
     static void setup() throws SQLException {
         try (final Connection connection = getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("DROP TABLE IF EXISTS CHAR_SET_TEST")) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    "DROP TABLE IF EXISTS CHAR_SET_TEST")) {
                 preparedStatement.execute();
             }
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("CREATE TABLE IF NOT EXISTS CHAR_SET_TEST (TXT VARCHAR(255)) ENGINE=InnoDB AUTO_INCREMENT=129 DEFAULT CHARSET=latin1")) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    "CREATE TABLE IF NOT EXISTS CHAR_SET_TEST (TXT VARCHAR(255)) " +
+                            "ENGINE=InnoDB AUTO_INCREMENT=129 DEFAULT CHARSET=latin1")) {
                 preparedStatement.execute();
             }
         }
     }
 
     private static Connection getConnection() throws SQLException {
-        final ConnectionConfig connectionConfig = new ConnectionConfig();
-        DbUtil.decorateConnectionConfig(connectionConfig);
+        final ConnectionConfig connectionConfig = DbTestUtil.getOrCreateEmbeddedConnectionConfig();
         DbUtil.validate(connectionConfig);
         return DbUtil.getSingleConnection(connectionConfig);
     }
@@ -72,7 +75,8 @@ class TestMySQLCharacterSets {
                 preparedStatement.execute();
             }
 
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM CHAR_SET_TEST WHERE TXT REGEXP ?")) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT * FROM CHAR_SET_TEST WHERE TXT REGEXP ?")) {
                 preparedStatement.setString(1, tabCharRegex);
 
                 int i = 0;
@@ -103,7 +107,8 @@ class TestMySQLCharacterSets {
                 preparedStatement.execute();
             }
 
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM CHAR_SET_TEST WHERE TXT REGEXP ?")) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT * FROM CHAR_SET_TEST WHERE TXT REGEXP ?")) {
                 preparedStatement.setString(1, tabCharRegex);
 
                 int i = 0;
@@ -144,12 +149,14 @@ class TestMySQLCharacterSets {
     @Test
     void testDelimiter() throws SQLException {
         try (final Connection connection = getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO CHAR_SET_TEST VALUES (?)")) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    "INSERT INTO CHAR_SET_TEST VALUES (?)")) {
                 preparedStatement.setString(1, "a¬b¬c¬d");
                 preparedStatement.execute();
             }
 
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO CHAR_SET_TEST VALUES (?)")) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    "INSERT INTO CHAR_SET_TEST VALUES (?)")) {
                 preparedStatement.setString(1, "a\u00acb\u00acc\u00acd");
                 preparedStatement.execute();
             }
@@ -171,7 +178,8 @@ class TestMySQLCharacterSets {
 
     private void dumpAllRows() throws SQLException {
         try (final Connection connection = getConnection()) {
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM CHAR_SET_TEST")) {
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                    "SELECT * FROM CHAR_SET_TEST")) {
                 System.out.println("---Results---");
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {

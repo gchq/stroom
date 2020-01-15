@@ -16,15 +16,13 @@
 
 package stroom.security.impl;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
 import stroom.docref.DocRef;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventBus;
+import stroom.entity.shared.EntityEventHandler;
 import stroom.security.shared.User;
 import stroom.util.shared.Clearable;
 
@@ -32,50 +30,46 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
+@EntityEventHandler(type = UserDocRefUtil.USER, action = {EntityAction.CLEAR_CACHE})
 class UserGroupsCache implements EntityEvent.Handler, Clearable {
-    private static final int MAX_CACHE_ENTRIES = 1000;
+    private static final String CACHE_NAME = "User Groups Cache";
 
     private final Provider<EntityEventBus> eventBusProvider;
-    private final LoadingCache<String, List> cache;
+    private final ICache<String, List> cache;
 
     @Inject
-    @SuppressWarnings("unchecked")
     UserGroupsCache(final CacheManager cacheManager,
                     final UserService userService,
-                    final Provider<EntityEventBus> eventBusProvider) {
+                    final Provider<EntityEventBus> eventBusProvider,
+                    final AuthorisationConfig authorisationConfig) {
         this.eventBusProvider = eventBusProvider;
-        final CacheLoader<String, List> cacheLoader = CacheLoader.from(userService::findGroupsForUser);
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(30, TimeUnit.MINUTES);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("User Groups Cache", cacheBuilder, cache);
+        cache = cacheManager.create(CACHE_NAME, authorisationConfig::getUserGroupsCache, userService::findGroupsForUser);
     }
 
     @SuppressWarnings("unchecked")
     List<User> get(final String userUuid) {
-        return cache.getUnchecked(userUuid);
+        return cache.get(userUuid);
     }
 
     void remove(final User user) {
         cache.invalidate(user.getUuid());
         final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(entityEventBus, DocRefUtil.create(user), EntityAction.CLEAR_CACHE);
+        EntityEvent.fire(entityEventBus, UserDocRefUtil.createDocRef(user), EntityAction.CLEAR_CACHE);
     }
 
     @Override
     public void clear() {
-        CacheUtil.clear(cache);
+        cache.clear();
     }
 
     @Override
     public void onChange(final EntityEvent event) {
         final DocRef docRef = event.getDocRef();
-        if (docRef != null && docRef.getType().equals(DocRefUtil.USER)) {
-            cache.invalidate(docRef.getUuid());
+        final User user = UserDocRefUtil.createUser(docRef);
+        if (user != null) {
+            cache.invalidate(user.getUuid());
         }
     }
 }

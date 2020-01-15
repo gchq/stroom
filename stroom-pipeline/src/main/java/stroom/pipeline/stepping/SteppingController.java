@@ -16,21 +16,19 @@
 
 package stroom.pipeline.stepping;
 
-import org.xml.sax.Locator;
-import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.pipeline.shared.StepLocation;
 import stroom.pipeline.shared.StepType;
+import stroom.pipeline.state.LocationHolder;
 import stroom.pipeline.state.MetaHolder;
-import stroom.pipeline.xml.converter.ds3.DS3Reader;
 import stroom.task.api.TaskContext;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Highlight;
-import stroom.util.shared.Location;
 
 import javax.inject.Inject;
 import java.util.HashSet;
@@ -38,12 +36,16 @@ import java.util.Set;
 
 @PipelineScoped
 public class SteppingController {
+    private static final Highlight DEFAULT_HIGHLIGHT = new Highlight(
+            new DefaultLocation(1, 0),
+            new DefaultLocation(1, 0));
+
     private final Set<ElementMonitor> monitors = new HashSet<>();
 
     private final MetaHolder metaHolder;
-    private final LocationFactoryProxy locationFactory;
     private final SteppingResponseCache steppingResponseCache;
     private final ErrorReceiverProxy errorReceiverProxy;
+    private final LocationHolder locationHolder;
 
     private String streamInfo;
     private SteppingTask request;
@@ -51,20 +53,17 @@ public class SteppingController {
     private StepLocation foundLocation;
     private RecordDetector recordDetector;
 
-    private Location currentStartLocation;
-    private Location currentEndLocation;
-
     private TaskContext taskContext;
 
     @Inject
     SteppingController(final MetaHolder metaHolder,
-                       final LocationFactoryProxy locationFactory,
                        final SteppingResponseCache steppingResponseCache,
-                       final ErrorReceiverProxy errorReceiverProxy) {
+                       final ErrorReceiverProxy errorReceiverProxy,
+                       final LocationHolder locationHolder) {
         this.metaHolder = metaHolder;
-        this.locationFactory = locationFactory;
         this.steppingResponseCache = steppingResponseCache;
         this.errorReceiverProxy = errorReceiverProxy;
+        this.locationHolder = locationHolder;
     }
 
     public void registerMonitor(final ElementMonitor monitor) {
@@ -92,24 +91,7 @@ public class SteppingController {
     }
 
     public void resetSourceLocation() {
-        currentStartLocation = locationFactory.create();
-        currentEndLocation = locationFactory.create();
-    }
-
-    public void moveSourceLocation(final Locator locator) {
-        if (locator != null) {
-            if (locator instanceof DS3Reader) {
-                final DS3Reader reader = (DS3Reader) locator;
-                currentStartLocation = locationFactory.create(currentEndLocation.getLineNo(),
-                        currentEndLocation.getColNo());
-                currentEndLocation = locationFactory.create(reader.getCurrentLineNumber(),
-                        reader.getCurrentColumnNumber());
-            } else {
-                currentStartLocation = locationFactory.create(currentEndLocation.getLineNo(),
-                        currentEndLocation.getColNo());
-                currentEndLocation = locationFactory.create(locator.getLineNumber(), locator.getColumnNumber());
-            }
-        }
+        locationHolder.reset();
     }
 
     public TaskContext getTaskContext() {
@@ -138,7 +120,7 @@ public class SteppingController {
      *
      * @return True if the step detector should terminate stepping.
      */
-    public boolean endRecord(final Locator locator, final long currentRecordNo) {
+    public boolean endRecord(final long currentRecordNo) {
         // Get the current stream number.
         final long currentStreamNo = metaHolder.getStreamNo();
 
@@ -148,14 +130,14 @@ public class SteppingController {
 
         // Update the progress monitor.
         if (getTaskContext() != null) {
-            getTaskContext().info("Processing stream - {} : [{}:{}]", streamInfo, currentStreamNo, currentRecordNo);
+            getTaskContext().info(LambdaLogUtil.message("Processing stream - {} : [{}:{}]", streamInfo, currentStreamNo, currentRecordNo));
         }
 
-        // Move source location.
-        moveSourceLocation(locator);
-
         // Figure out what the highlighted portion of the input stream should be.
-        final Highlight highlight = createHighlight();
+        Highlight highlight = DEFAULT_HIGHLIGHT;
+        if (locationHolder != null && locationHolder.getCurrentLocation() != null) {
+            highlight = locationHolder.getCurrentLocation().getHighlight();
+        }
 
         // First we need to check that the record is ok WRT the location of the
         // record, i.e. is it after the last record found if stepping forward
@@ -208,19 +190,6 @@ public class SteppingController {
         return StepType.BACKWARD.equals(request.getStepType()) && stepLocation != null
                 && currentStreamNo == stepLocation.getPartNo() && currentRecordNo >= stepLocation.getRecordNo() - 1;
 
-    }
-
-    Highlight createHighlight() {
-        // Record the current source location.
-        final Location start = locationFactory.create(currentStartLocation.getLineNo(), currentStartLocation.getColNo());
-        final Location end = locationFactory.create(currentEndLocation.getLineNo(), currentEndLocation.getColNo());
-
-        final int startLineNo = start.getLineNo() > 1 ? start.getLineNo() : 1;
-        final int startColNo = start.getColNo() > 1 ? start.getColNo() : 1;
-        final int endLineNo = end.getLineNo() > 1 ? end.getLineNo() : 1;
-        final int endColNo = end.getColNo() > 1 ? end.getColNo() : 1;
-
-        return new Highlight(new DefaultLocation(startLineNo, startColNo), new DefaultLocation(endLineNo, endColNo));
     }
 
     StepData createStepData(final Highlight highlight) {

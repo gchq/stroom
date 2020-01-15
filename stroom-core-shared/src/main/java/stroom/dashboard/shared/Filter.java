@@ -33,7 +33,7 @@ import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"includes", "excludes"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "filter")
 @XmlType(name = "Filter", propOrder = {"includes", "excludes"})
 public class Filter implements Serializable {
@@ -100,5 +100,9 @@ public class Filter implements Serializable {
         builder.append("includes", includes);
         builder.append("excludes", excludes);
         return builder.toString();
+    }
+
+    public Filter copy() {
+        return new Filter(includes, excludes);
     }
 }

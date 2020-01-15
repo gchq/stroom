@@ -180,9 +180,9 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
         }
 
         @Override
-        protected void doSelect(final ExplorerNode selection, final SelectionType selectionType) {
-            super.doSelect(selection, selectionType);
-            explorerDropDownTreePresenter.setSelectedTreeItem(resolve(selection), selectionType, false);
+        protected void doSelect(final ExplorerNode row, final SelectionType selectionType) {
+            super.doSelect(row, selectionType);
+            explorerDropDownTreePresenter.setSelectedTreeItem(resolve(row), selectionType, false);
         }
     }
 }

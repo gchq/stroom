@@ -19,7 +19,6 @@ package stroom.cache.impl;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.cluster.task.api.ClusterTask;
-import stroom.security.shared.UserToken;
 import stroom.util.shared.ResultList;
 
 class FetchCacheNodeRowClusterTask extends ClusterTask<ResultList<CacheInfo>> {
@@ -27,10 +26,9 @@ class FetchCacheNodeRowClusterTask extends ClusterTask<ResultList<CacheInfo>> {
 
     private FindCacheInfoCriteria criteria;
 
-    FetchCacheNodeRowClusterTask(final UserToken userToken,
-                                 final String taskName,
+    FetchCacheNodeRowClusterTask(final String taskName,
                                  final FindCacheInfoCriteria criteria) {
-        super(userToken, taskName);
+        super(taskName);
         this.criteria = criteria;
     }
 

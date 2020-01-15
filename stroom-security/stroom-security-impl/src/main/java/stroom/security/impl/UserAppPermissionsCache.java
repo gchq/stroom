@@ -16,48 +16,60 @@
 
 package stroom.security.impl;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
+import stroom.docref.DocRef;
+import stroom.entity.shared.EntityAction;
+import stroom.entity.shared.EntityEvent;
+import stroom.entity.shared.EntityEventBus;
+import stroom.entity.shared.EntityEventHandler;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
-// TODO watch for changes somehow, it used to use the generic entity event handler stuff
-public class UserAppPermissionsCache implements Clearable {
-    private static final int MAX_CACHE_ENTRIES = 1000;
+@EntityEventHandler(type = UserDocRefUtil.USER, action = {EntityAction.CLEAR_CACHE})
+public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
+    private static final String CACHE_NAME = "User App Permissions Cache";
 
-    private final LoadingCache<User, UserAppPermissions> cache;
+    private final Provider<EntityEventBus> eventBusProvider;
+    private final ICache<User, UserAppPermissions> cache;
 
     @Inject
-    @SuppressWarnings("unchecked")
     UserAppPermissionsCache(final CacheManager cacheManager,
-                            final UserAppPermissionService userAppPermissionService) {
-        final CacheLoader<User, UserAppPermissions> cacheLoader = CacheLoader.from(userAppPermissionService::getPermissionsForUser);
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(30, TimeUnit.MINUTES);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("User App Permissions Cache", cacheBuilder, cache);
+                            final AuthorisationConfig authorisationConfig,
+                            final UserAppPermissionService userAppPermissionService,
+                            final Provider<EntityEventBus> eventBusProvider) {
+        this.eventBusProvider = eventBusProvider;
+        cache = cacheManager.create(CACHE_NAME, authorisationConfig::getUserAppPermissionsCache, userAppPermissionService::getPermissionsForUser);
     }
 
-    UserAppPermissions get(final User key) {
-        return cache.getUnchecked(key);
+    UserAppPermissions get(final User user) {
+        return cache.get(user);
     }
 
-    void remove(final User userRef) {
-        cache.invalidate(userRef);
+    void remove(final User user) {
+        cache.invalidate(user);
+
+        final EntityEventBus entityEventBus = eventBusProvider.get();
+        EntityEvent.fire(entityEventBus, UserDocRefUtil.createDocRef(user), EntityAction.CLEAR_CACHE);
+    }
+
+    @Override
+    public void onChange(final EntityEvent event) {
+        final DocRef docRef = event.getDocRef();
+        final User user = UserDocRefUtil.createUser(docRef);
+        if (user != null) {
+            cache.invalidate(user);
+        }
     }
 
     @Override
     public void clear() {
-        CacheUtil.clear(cache);
+        cache.clear();
     }
 }

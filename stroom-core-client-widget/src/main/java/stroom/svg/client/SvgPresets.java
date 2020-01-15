@@ -21,6 +21,7 @@ public final class SvgPresets {
     public static final SvgPreset ABOUT = new SvgPreset("images/oo.svg", "About", true);
     public static final SvgPreset ADD = new SvgPreset("images/add.svg", "Add", true);
     public static final SvgPreset ALERT = new SvgPreset("images/alert.svg", "Alert", true);
+    public static final SvgPreset ANNOTATE = new SvgPreset("images/edit.svg", "Annotate", false);
     public static final SvgPreset CLEAR = new SvgPreset("images/clear.svg", "Clear", false);
     public static final SvgPreset CLOSE = new SvgPreset("images/close.svg", "Close", false);
     public static final SvgPreset COPY = new SvgPreset("images/copy.svg", "Copy", false);
@@ -60,6 +61,8 @@ public final class SvgPresets {
     public static final SvgPreset RULESET = new SvgPreset("images/ruleset.svg", "Rule Set", true);
     public static final SvgPreset SAVE = new SvgPreset("images/save.svg", "Save", false);
     public static final SvgPreset SAVE_AS = new SvgPreset("images/saveas.svg", "Save As", false);
+    public static final SvgPreset SETTINGS = new SvgPreset("images/settings.svg", "Settings", true);
+    public static final SvgPreset SETTINGS_BLUE = new SvgPreset("images/settings-blue.svg", "Settings", true);
     public static final SvgPreset SHARD_FLUSH = new SvgPreset("images/shard-flush.svg", "Flush Selected Shards", false);
     public static final SvgPreset SHARD_CLOSE = new SvgPreset("images/shard-close.svg", "Close Selected Shards", false);
     public static final SvgPreset SPINNER = new SvgPreset("images/spinner.svg", null, true);
@@ -83,6 +86,9 @@ public final class SvgPresets {
     public static final SvgPreset STEP_FORWARD_GREEN = new SvgPreset("images/step-forward-green.svg", "Forward", false);
     public static final SvgPreset FAST_FORWARD_GREEN = new SvgPreset("images/fast-forward-green.svg", "Last", false);
     public static final SvgPreset REFRESH_GREEN = new SvgPreset("images/refresh-green.svg", "Refresh", true);
+
+    public static final SvgPreset SHOW = new SvgPreset("images/show.svg", "Show", true);
+    public static final SvgPreset HIDE = new SvgPreset("images/hide.svg", "Hide", true);
 
     private SvgPresets() {
         // Utility class.

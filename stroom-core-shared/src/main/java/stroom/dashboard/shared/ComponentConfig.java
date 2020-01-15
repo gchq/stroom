@@ -31,7 +31,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "id", "name", "settings"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "component")
 @XmlType(name = "ComponentConfig", propOrder = {"type", "id", "name", "settings"})
 public class ComponentConfig implements SharedObject {

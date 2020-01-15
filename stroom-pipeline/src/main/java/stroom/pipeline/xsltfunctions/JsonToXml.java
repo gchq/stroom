@@ -27,6 +27,7 @@ import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import stroom.pipeline.xml.converter.json.JSONFactoryConfig;
 import stroom.pipeline.xml.converter.json.JSONParser;
 import stroom.util.shared.Severity;
 
@@ -65,7 +66,7 @@ class JsonToXml extends StroomExtensionFunctionCall {
         contentHandler.setPipelineConfiguration(pipe);
         contentHandler.setReceiver(builder);
 
-        final JSONParser parser = new JSONParser(false);
+        final JSONParser parser = new JSONParser(new JSONFactoryConfig(), false);
         parser.setContentHandler(contentHandler);
 
         parser.parse(new InputSource(new StringReader(json)));

@@ -4,6 +4,11 @@
 package stroom.processor.impl.db.jooq.tables;
 
 
+import java.util.Arrays;
+import java.util.List;
+
+import javax.annotation.Generated;
+
 import org.jooq.Field;
 import org.jooq.ForeignKey;
 import org.jooq.Identity;
@@ -16,14 +21,11 @@ import org.jooq.TableField;
 import org.jooq.UniqueKey;
 import org.jooq.impl.DSL;
 import org.jooq.impl.TableImpl;
+
 import stroom.processor.impl.db.jooq.Indexes;
 import stroom.processor.impl.db.jooq.Keys;
 import stroom.processor.impl.db.jooq.Stroom;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorTaskRecord;
-
-import javax.annotation.Generated;
-import java.util.Arrays;
-import java.util.List;
 
 
 /**
@@ -39,7 +41,7 @@ import java.util.List;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
 
-    private static final long serialVersionUID = 230672323;
+    private static final long serialVersionUID = 402767732;
 
     /**
      * The reference instance of <code>stroom.processor_task</code>
@@ -73,6 +75,11 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
      * The column <code>stroom.processor_task.fk_processor_node_id</code>.
      */
     public final TableField<ProcessorTaskRecord, Integer> FK_PROCESSOR_NODE_ID = createField("fk_processor_node_id", org.jooq.impl.SQLDataType.INTEGER, this, "");
+
+    /**
+     * The column <code>stroom.processor_task.fk_processor_feed_id</code>.
+     */
+    public final TableField<ProcessorTaskRecord, Integer> FK_PROCESSOR_FEED_ID = createField("fk_processor_feed_id", org.jooq.impl.SQLDataType.INTEGER, this, "");
 
     /**
      * The column <code>stroom.processor_task.create_time_ms</code>.
@@ -155,7 +162,7 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
      */
     @Override
     public List<Index> getIndexes() {
-        return Arrays.<Index>asList(Indexes.PROCESSOR_TASK_PRIMARY, Indexes.PROCESSOR_TASK_PROCESSOR_TASK_FK_PROCESSOR_FILTER_ID, Indexes.PROCESSOR_TASK_PROCESSOR_TASK_FK_PROCESSOR_NODE_ID, Indexes.PROCESSOR_TASK_PROCESSOR_TASK_META_ID_IDX, Indexes.PROCESSOR_TASK_PROCESSOR_TASK_STATUS_IDX);
+        return Arrays.<Index>asList(Indexes.PROCESSOR_TASK_PRIMARY, Indexes.PROCESSOR_TASK_PROCESSOR_TASK_FK_PROCESSOR_FEED_ID, Indexes.PROCESSOR_TASK_PROCESSOR_TASK_FK_PROCESSOR_FILTER_ID, Indexes.PROCESSOR_TASK_PROCESSOR_TASK_FK_PROCESSOR_NODE_ID, Indexes.PROCESSOR_TASK_PROCESSOR_TASK_META_ID_IDX, Indexes.PROCESSOR_TASK_PROCESSOR_TASK_STATUS_IDX);
     }
 
     /**
@@ -187,7 +194,7 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
      */
     @Override
     public List<ForeignKey<ProcessorTaskRecord, ?>> getReferences() {
-        return Arrays.<ForeignKey<ProcessorTaskRecord, ?>>asList(Keys.PROCESSOR_TASK_FK_PROCESSOR_FILTER_ID, Keys.PROCESSOR_TASK_FK_PROCESSOR_NODE_ID);
+        return Arrays.<ForeignKey<ProcessorTaskRecord, ?>>asList(Keys.PROCESSOR_TASK_FK_PROCESSOR_FILTER_ID, Keys.PROCESSOR_TASK_FK_PROCESSOR_NODE_ID, Keys.PROCESSOR_TASK_FK_PROCESSOR_FEED_ID);
     }
 
     public ProcessorFilter processorFilter() {
@@ -196,6 +203,10 @@ public class ProcessorTask extends TableImpl<ProcessorTaskRecord> {
 
     public ProcessorNode processorNode() {
         return new ProcessorNode(this, Keys.PROCESSOR_TASK_FK_PROCESSOR_NODE_ID);
+    }
+
+    public ProcessorFeed processorFeed() {
+        return new ProcessorFeed(this, Keys.PROCESSOR_TASK_FK_PROCESSOR_FEED_ID);
     }
 
     /**

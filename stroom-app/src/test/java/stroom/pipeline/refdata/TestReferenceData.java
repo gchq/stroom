@@ -17,6 +17,7 @@
 
 package stroom.pipeline.refdata;
 
+import com.google.inject.internal.cglib.core.$ClassNameReader;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
 import org.junit.jupiter.api.AfterEach;
@@ -39,7 +40,6 @@ import stroom.pipeline.PipelineSerialiser;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.store.RefDataStoreConfig;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.StringValue;
@@ -55,6 +55,7 @@ import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Range;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -105,7 +106,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     @Inject
     private PipelineSerialiser pipelineSerialiser;
 
-    private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
+    private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private RefDataStore refDataStore;
 
     @SuppressWarnings("unused")
@@ -115,6 +116,9 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     @SuppressWarnings("unused")
     @Inject
     private PipelineStore pipelineStore;
+
+    @Inject
+    private Provider<RefDataStoreHolder> refDataStoreHolderProvider;
 
     @BeforeEach
     void setup() throws IOException {
@@ -130,7 +134,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
         LOGGER.debug("Creating LMDB environment in dbDir {}", getDbDir().toAbsolutePath().toString());
 
-        refDataStoreConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
+        referenceDataConfig.setLocalDir(getDbDir().toAbsolutePath().toString());
 
         setDbMaxSizeProperty(DB_MAX_SIZE);
         refDataStore = refDataStoreFactory.getOffHeapStore();
@@ -149,10 +153,6 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
         if (Files.isDirectory(dbDir)) {
             FileUtil.deleteDir(dbDir);
         }
-    }
-
-    private RefDataStoreHolder getRefDataStoreHolder() {
-        return getInjector().getInstance(RefDataStoreHolder.class);
     }
 
     @Test
@@ -175,7 +175,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
 
             try (CacheManager cacheManager = new CacheManagerImpl()) {
                 final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(
-                        cacheManager, null, null, null) {
+                        cacheManager, null, null, null, new ReferenceDataConfig()) {
                     @Override
                     protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -189,7 +189,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         null,
                         mockDocumentPermissionCache,
                         mockReferenceDataLoader,
-                        getRefDataStoreHolder(),
+                        refDataStoreHolderProvider.get(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
                         new MockSecurityContext());
@@ -388,7 +388,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
             streamSet.add(new EffectiveStream(0, 0L));
             try (CacheManager cacheManager = new CacheManagerImpl()) {
-                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
+                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null, new ReferenceDataConfig()) {
                     @Override
                     protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -402,7 +402,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         null,
                         mockDocumentPermissionCache,
                         mockReferenceDataLoader,
-                        getRefDataStoreHolder(),
+                        refDataStoreHolderProvider.get(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
                         new MockSecurityContext());
@@ -461,7 +461,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
             final TreeSet<EffectiveStream> streamSet = new TreeSet<>();
             streamSet.add(new EffectiveStream(0, 0L));
             try (CacheManager cacheManager = new CacheManagerImpl()) {
-                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null) {
+                final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(cacheManager, null, null, null, new ReferenceDataConfig()) {
                     @Override
                     protected TreeSet<EffectiveStream> create(final EffectiveStreamKey key) {
                         return streamSet;
@@ -475,7 +475,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                         null,
                         mockDocumentPermissionCache,
                         mockReferenceDataLoader,
-                        getRefDataStoreHolder(),
+                        refDataStoreHolderProvider.get(),
                         new RefDataLoaderHolder(),
                         pipelineStore,
                         new MockSecurityContext());
@@ -560,7 +560,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
     }
 
     private void setDbMaxSizeProperty(final long sizeInBytes) {
-        refDataStoreConfig.setMaxStoreSize(Long.toString(sizeInBytes));
+        referenceDataConfig.setMaxStoreSize(Long.toString(sizeInBytes));
     }
 
     private Path getDbDir() {

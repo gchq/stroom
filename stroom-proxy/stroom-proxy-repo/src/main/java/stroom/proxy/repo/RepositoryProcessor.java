@@ -25,6 +25,7 @@ import stroom.task.shared.ThreadPoolImpl;
 import stroom.util.date.DateUtil;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
@@ -95,12 +96,12 @@ public final class RepositoryProcessor {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.info("Started");
 
-        taskContext.info("Process started {}, maxFileScan {}, maxConcurrentMappedFiles {}, maxFilesPerAggregate {}, maxUncompressedFileSize {}",
+        taskContext.info(LambdaLogUtil.message("Process started {}, maxFileScan {}, maxConcurrentMappedFiles {}, maxFilesPerAggregate {}, maxUncompressedFileSize {}",
                 DateUtil.createNormalDateTimeString(System.currentTimeMillis()),
                 ModelStringUtil.formatCsv(maxFileScan),
                 ModelStringUtil.formatCsv(maxConcurrentMappedFiles),
                 ModelStringUtil.formatCsv(maxFilesPerAggregate),
-                ModelStringUtil.formatIECByteSizeString(maxUncompressedFileSize));
+                ModelStringUtil.formatIECByteSizeString(maxUncompressedFileSize)));
 
         try {
             if (Files.isDirectory(repoPath)) {
@@ -158,7 +159,7 @@ public final class RepositoryProcessor {
 
                 @Override
                 public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    taskContext.info(FileUtil.getCanonicalPath(file));
+                    taskContext.info(() -> FileUtil.getCanonicalPath(file));
 
                     if (Thread.currentThread().isInterrupted() || fileCount.get() >= maxFileScan) {
                         return FileVisitResult.TERMINATE;
@@ -224,7 +225,7 @@ public final class RepositoryProcessor {
 
                 @Override
                 public FileVisitResult visitFile(final Path file, final BasicFileAttributes attrs) {
-                    taskContext.info(FileUtil.getCanonicalPath(file));
+                    taskContext.info(() -> FileUtil.getCanonicalPath(file));
 
                     if (Thread.currentThread().isInterrupted()) {
                         return FileVisitResult.TERMINATE;
@@ -403,7 +404,7 @@ public final class RepositoryProcessor {
                 final Runnable runnable = () -> {
                     // Process the file to extract ZipInfo
                     taskContext.setName("Fragment");
-                    taskContext.info(FileUtil.getCanonicalPath(file));
+                    taskContext.info(() -> FileUtil.getCanonicalPath(file));
 
                     if (!Thread.currentThread().isInterrupted()) {
                         zipFragmenter.fragment(file);
@@ -452,7 +453,7 @@ public final class RepositoryProcessor {
                 final Runnable runnable = () -> {
                     // Process the file to extract ZipInfo
                     taskContext.setName("Extract Zip Info");
-                    taskContext.info(FileUtil.getCanonicalPath(file));
+                    taskContext.info(() -> FileUtil.getCanonicalPath(file));
 
                     if (!Thread.currentThread().isInterrupted()) {
                         final ZipInfo zipInfo = zipInfoExtractor.extract(file, attrs);

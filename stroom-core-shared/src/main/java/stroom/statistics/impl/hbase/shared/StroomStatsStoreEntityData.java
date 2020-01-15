@@ -39,7 +39,7 @@ import java.util.Set;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "data")
 @JsonPropertyOrder({"field", "customRollUpMask"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 public class StroomStatsStoreEntityData implements SharedObject {
 
     private static final long serialVersionUID = -2754817144611481958L;

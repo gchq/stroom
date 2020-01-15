@@ -7,7 +7,6 @@ import javax.inject.Singleton;
 
 @Singleton
 public class IndexWriterConfig implements IsConfig {
-
     private CacheConfig cacheConfig;
 
     public IndexWriterConfig() {

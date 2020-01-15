@@ -16,6 +16,9 @@ dependencies {
     compile libs.jackson_annotations
     compile libs.javax_inject
     compile libs.jaxb_api
+    compile libs.restygwt
+    compile libs.stroomQueryApi
+    compile libs.ws_rs_api
 
     //Needed only for the GwtCompilerWrapper
     compileOnly libs.gwt_dev

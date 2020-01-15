@@ -25,7 +25,6 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.LocationHolder;
-import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.xml.event.Event;
 import stroom.pipeline.xml.event.simple.StartElement;
 import stroom.pipeline.xml.event.simple.StartPrefixMapping;
@@ -113,21 +112,14 @@ public class SplitFilter extends AbstractXMLFilter {
      */
     private boolean hasFiredEvents;
 
-    private final MetaHolder metaHolder;
     private final LocationHolder locationHolder;
-    private Locator locator;
-    private boolean storeLocations = true;
-    private SourceLocationFactory sourceLocationFactory;
 
     public SplitFilter() {
-        this.metaHolder = null;
         this.locationHolder = null;
     }
 
     @Inject
-    SplitFilter(final MetaHolder metaHolder,
-                final LocationHolder locationHolder) {
-        this.metaHolder = metaHolder;
+    SplitFilter(final LocationHolder locationHolder) {
         this.locationHolder = locationHolder;
     }
 
@@ -149,8 +141,8 @@ public class SplitFilter extends AbstractXMLFilter {
         afterRoot = -1;
         depth = 0;
         count = 0;
-        if (sourceLocationFactory != null) {
-            sourceLocationFactory.reset();
+        if (locationHolder != null) {
+            locationHolder.reset();
         }
 
         super.startStream();
@@ -159,7 +151,9 @@ public class SplitFilter extends AbstractXMLFilter {
     @Override
     public void setDocumentLocator(final Locator locator) {
         super.setDocumentLocator(locator);
-        this.locator = locator;
+        if (locationHolder != null) {
+            locationHolder.setDocumentLocator(locator, splitCount);
+        }
     }
 
     /**
@@ -314,8 +308,8 @@ public class SplitFilter extends AbstractXMLFilter {
         }
 
         if (depth == splitDepth) {
-            if (storeLocations && locationHolder != null && metaHolder != null) {
-                getSourceLocationFactory().storeLocation();
+            if (locationHolder != null) {
+                locationHolder.storeLocation();
             }
 
             buffer = true;
@@ -335,17 +329,6 @@ public class SplitFilter extends AbstractXMLFilter {
         }
 
         depth--;
-    }
-
-    private SourceLocationFactory getSourceLocationFactory() {
-        if (sourceLocationFactory == null) {
-            if (locator.getClass().getSimpleName().contains("DS")) {
-                sourceLocationFactory = new DSSourceLocationFactory(metaHolder, locationHolder, locator, splitCount);
-            } else {
-                sourceLocationFactory = new XmlSourceLocationFactory(metaHolder, locationHolder, locator, splitCount);
-            }
-        }
-        return sourceLocationFactory;
     }
 
     /**
@@ -449,6 +432,8 @@ public class SplitFilter extends AbstractXMLFilter {
             defaultValue = "true",
             displayPriority = 3)
     public void setStoreLocations(final boolean storeLocations) {
-        this.storeLocations = storeLocations;
+        if (locationHolder != null) {
+            locationHolder.setStoreLocations(storeLocations);
+        }
     }
 }

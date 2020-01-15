@@ -21,6 +21,8 @@ import stroom.dashboard.expression.v1.DateUtil;
 import java.math.BigDecimal;
 
 public final class TypeConverter {
+    private static final int DATE_LENGTH = "2000-01-01T00:00:00.000Z".length();
+
     private TypeConverter() {
         // Utility class
     }
@@ -34,13 +36,14 @@ public final class TypeConverter {
             return (Double) obj;
         }
 
+        final String string = obj.toString();
         try {
-            return new BigDecimal(obj.toString()).doubleValue();
+            return (double) DateUtil.parseNormalDateTimeString(string);
         } catch (final RuntimeException e) {
         }
 
         try {
-            return (double) DateUtil.parseNormalDateTimeString(obj.toString());
+            return new BigDecimal(string).doubleValue();
         } catch (final RuntimeException e) {
         }
 

@@ -16,16 +16,13 @@
 
 package stroom.search.impl.shard;
 
-import stroom.pipeline.errorhandler.ErrorReceiver;
-import stroom.search.extraction.Values;
+import stroom.search.coprocessor.Receiver;
 import stroom.search.impl.shard.IndexShardSearchTask.IndexShardQueryFactory;
-import stroom.search.impl.shard.IndexShardSearchTask.ResultReceiver;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.shared.ThreadPool;
 import stroom.task.shared.ThreadPoolImpl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.Severity;
-import stroom.util.task.taskqueue.AbstractTaskProducer;
 import stroom.util.task.taskqueue.TaskExecutor;
 import stroom.util.task.taskqueue.TaskProducer;
 
@@ -33,182 +30,89 @@ import javax.inject.Provider;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executor;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
-public final class IndexShardSearchTaskProducer extends AbstractTaskProducer implements TaskProducer {
-    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
+class IndexShardSearchTaskProducer extends TaskProducer {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
 
-    public static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
+    static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
             "Search Index Shard",
             5,
             0,
             Integer.MAX_VALUE);
 
-    private final ErrorReceiver errorReceiver;
     private final Queue<IndexShardSearchRunnable> taskQueue = new ConcurrentLinkedQueue<>();
-    private final long now = System.currentTimeMillis();
-    private final AtomicInteger threadsUsed = new AtomicInteger();
-
-    private final int maxThreadsPerTask;
-
-    private final int tasksTotal;
-    private final AtomicInteger tasksRemaining = new AtomicInteger();
     private final AtomicInteger tasksRequested = new AtomicInteger();
-    private final CountDownLatch completionLatch = new CountDownLatch(1);
-    private final LinkedBlockingQueue<Values> storedData;
 
-    public IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
-                                        final LinkedBlockingQueue<Values> storedData,
-                                        final List<Long> shards,
-                                        final IndexShardQueryFactory queryFactory,
-                                        final String[] fieldNames,
-                                        final ErrorReceiver errorReceiver,
-                                        final AtomicLong hitCount,
-                                        final int maxThreadsPerTask,
-                                        final Executor executor,
-                                        final Provider<IndexShardSearchTaskHandler> handlerProvider) {
-        super(taskExecutor, executor);
-        this.maxThreadsPerTask = maxThreadsPerTask;
-        this.storedData = storedData;
-        this.errorReceiver = errorReceiver;
+    private final Tracker tracker;
 
-        // Create a deque to capture stored data from the index that can be used by coprocessors.
-        final ResultReceiver resultReceiver = (shardId, values) -> putValues(values);
+    IndexShardSearchTaskProducer(final TaskExecutor taskExecutor,
+                                 final Receiver receiver,
+                                 final List<Long> shards,
+                                 final IndexShardQueryFactory queryFactory,
+                                 final String[] fieldNames,
+                                 final int maxThreadsPerTask,
+                                 final ExecutorProvider executorProvider,
+                                 final Provider<IndexShardSearchTaskHandler> handlerProvider,
+                                 final Tracker tracker) {
+        super(taskExecutor, maxThreadsPerTask, executorProvider.getExecutor(THREAD_POOL));
+        this.tracker = tracker;
 
         for (final Long shard : shards) {
-            final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory, shard, fieldNames, resultReceiver, errorReceiver, hitCount);
+            final IndexShardSearchTask task = new IndexShardSearchTask(queryFactory, shard, fieldNames, receiver, tracker);
             final IndexShardSearchRunnable runnable = new IndexShardSearchRunnable(task, handlerProvider);
             taskQueue.add(runnable);
         }
-        final int count = taskQueue.size();
-        LAMBDA_LOGGER.debug(() -> String.format("Queued %s index shard search tasks", count));
+    }
 
-        // Set the total number of index shards we are searching.
-        // We set this here so that any errors that might have occurred adding shard search tasks would prevent this producer having work to do.
-        tasksTotal = count;
-        tasksRemaining.set(tasksTotal);
+    void process() {
+        final int count = taskQueue.size();
+        LOGGER.debug(() -> String.format("Queued %s index shard search tasks", count));
 
         // Attach to the supplied executor.
         attach();
 
         // Tell the supplied executor that we are ready to deliver tasks.
         signalAvailable();
+
+        // Set the total number of index shards we are searching.
+        // We set this here so that any errors that might have occurred adding shard search tasks would prevent this producer having work to do.
+        setTasksTotal(count);
+
+        // Let consumers know there will be no more tasks.
+        finishedAddingTasks();
     }
 
-    private void putValues(final Values values) {
-        try {
-            storedData.put(values);
-        } catch (final InterruptedException e) {
-            error(e.getMessage(), e);
-
-            // Continue to interrupt this thread.
-            Thread.currentThread().interrupt();
-        }
-    }
-
-    /**
-     * Get the next task to execute or null if the producer has reached a concurrent execution limit or no further tasks
-     * are available.
-     *
-     * @return The next task to execute or null if no tasks are available at this time.
-     */
     @Override
-    public final Runnable next() {
-        Runnable runnable = null;
+    protected Runnable getNext() {
+        IndexShardSearchRunnable task = null;
 
-        final int count = threadsUsed.incrementAndGet();
-        if (count > maxThreadsPerTask) {
-            threadsUsed.decrementAndGet();
-        } else {
-            final Runnable task = getNext();
-            if (task == null) {
-                // There are no remaining tasks.
-                threadsUsed.decrementAndGet();
-                // Auto detach if we are complete.
-                detach();
-            } else {
-                runnable = () -> {
-                    try {
-                        task.run();
-                    } catch (final RuntimeException e) {
-                        LAMBDA_LOGGER.debug(e::getMessage, e);
-                    } finally {
-                        threadsUsed.decrementAndGet();
-                        final int remaining = tasksRemaining.decrementAndGet();
-                        if (remaining <= 0) {
-                            complete();
-                        }
-                    }
-                };
+        if (!Thread.currentThread().isInterrupted()) {
+            // If there are no open shards that can be used for any tasks then just get the task at the head of the queue.
+            task = taskQueue.poll();
+            if (task != null) {
+                final int no = tasksRequested.incrementAndGet();
+                task.getTask().setShardTotal(getTasksTotal());
+                task.getTask().setShardNumber(no);
             }
         }
 
-        return runnable;
-    }
-
-    @Override
-    public int compareTo(final TaskProducer o) {
-        return Long.compare(now, ((IndexShardSearchTaskProducer) o).now);
-    }
-
-    /**
-     * Wait for this task producer to not issue any further tasks and that all of the tasks it has issued have completed processing.
-     */
-    public void awaitCompletion() throws InterruptedException {
-        completionLatch.await();
-    }
-
-    private Runnable getNext() {
-        final IndexShardSearchRunnable task = taskQueue.poll();
-        if (task != null) {
-            final int no = tasksRequested.incrementAndGet();
-            task.getTask().setShardTotal(tasksTotal);
-            task.getTask().setShardNumber(no);
-        }
+        checkCompletion();
 
         return task;
     }
 
-    private void complete() {
-        taskQueue.clear();
-        tasksRemaining.set(0);
-
-        try {
-            storedData.put(Values.COMPLETE);
-        } catch (final InterruptedException e) {
-            LAMBDA_LOGGER.debug(e::getMessage, e);
-
-            // Continue to interrupt this thread.
-            Thread.currentThread().interrupt();
-        }
-
-        try {
-            completionLatch.countDown();
-        } finally {
-            // Ensure we are detached.
-            detach();
-        }
-    }
-
-    private void error(final String message, final Throwable t) {
-        errorReceiver.log(Severity.ERROR, null, null, message, t);
-    }
-
     @Override
-    public String toString() {
-        final int remaining = tasksRemaining.get();
-        return getClass().getSimpleName() +
-                " (remaining=" +
-                remaining +
-                ", completed=" +
-                (tasksTotal - remaining) +
-                ", total=" +
-                tasksTotal +
-                ")";
+    protected void incrementTasksCompleted() {
+        super.incrementTasksCompleted();
+        checkCompletion();
+    }
+
+    private void checkCompletion() {
+        if (isComplete()) {
+            // Set complete.
+            tracker.complete();
+        }
     }
 
     private static class IndexShardSearchRunnable implements Runnable {

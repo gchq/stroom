@@ -18,7 +18,7 @@ package stroom.statistics.impl.sql.search;
 
 import com.google.inject.AbstractModule;
 import stroom.statistics.impl.sql.StatisticsQueryService;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 

@@ -32,7 +32,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"pattern", "timeZone"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "dateTimeFormatSettings")
 @XmlType(name = "DateTimeFormatSettings", propOrder = {"pattern", "timeZone"})
 public class DateTimeFormatSettings implements FormatSettings {
@@ -46,6 +46,14 @@ public class DateTimeFormatSettings implements FormatSettings {
     @XmlElement(name = "timeZone")
     @JsonProperty("timeZone")
     private TimeZone timeZone;
+
+    public DateTimeFormatSettings() {
+    }
+
+    public DateTimeFormatSettings(final String pattern, final TimeZone timeZone) {
+        this.pattern = pattern;
+        this.timeZone = timeZone;
+    }
 
     public String getPattern() {
         return pattern;
@@ -97,5 +105,10 @@ public class DateTimeFormatSettings implements FormatSettings {
                 "pattern='" + pattern + '\'' +
                 ", timeZone=" + timeZone +
                 '}';
+    }
+
+    @Override
+    public FormatSettings copy() {
+        return new DateTimeFormatSettings(pattern, timeZone);
     }
 }

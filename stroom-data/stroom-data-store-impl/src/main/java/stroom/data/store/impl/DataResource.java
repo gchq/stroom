@@ -32,7 +32,7 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;

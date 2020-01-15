@@ -1,9 +1,11 @@
 package stroom.statistics.impl.sql.search;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class SearchConfig implements IsConfig {
@@ -13,6 +15,10 @@ public class SearchConfig implements IsConfig {
     private int resultHandlerBatchSize = DEFAULT_ROWS_IN_BATCH;
     private int maxResults = 100000;
     private int fetchSize = 5000;
+    private CacheConfig searchResultCache = new CacheConfig.Builder()
+            .maximumSize(10000L)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
 
     @JsonPropertyDescription("The maximum number of search results to keep in memory at each level.")
     public String getStoreSize() {
@@ -50,6 +56,14 @@ public class SearchConfig implements IsConfig {
         this.fetchSize = fetchSize;
     }
 
+    public CacheConfig getSearchResultCache() {
+        return searchResultCache;
+    }
+
+    public void setSearchResultCache(final CacheConfig searchResultCache) {
+        this.searchResultCache = searchResultCache;
+    }
+
     @Override
     public String toString() {
         return "SearchConfig{" +
@@ -57,6 +71,7 @@ public class SearchConfig implements IsConfig {
                 ", resultHandlerBatchSize=" + resultHandlerBatchSize +
                 ", maxResults=" + maxResults +
                 ", fetchSize=" + fetchSize +
+                ", searchResultCache=" + searchResultCache +
                 '}';
     }
 }

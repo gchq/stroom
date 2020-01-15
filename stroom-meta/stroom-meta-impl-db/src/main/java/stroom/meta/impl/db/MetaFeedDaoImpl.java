@@ -19,6 +19,8 @@ package stroom.meta.impl.db;
 
 import org.jooq.Condition;
 import org.jooq.Field;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.ICache;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaFeedDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaFeedRecord;
@@ -26,52 +28,49 @@ import stroom.meta.impl.db.jooq.tables.records.MetaFeedRecord;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static stroom.meta.impl.db.jooq.tables.MetaFeed.META_FEED;
 
 @Singleton
 class MetaFeedDaoImpl implements MetaFeedDao {
-    // TODO : @66 Replace with a proper cache.
-    private final Map<String, Integer> cache = new ConcurrentHashMap<>();
+    private static final String CACHE_NAME = "Meta Feed Cache";
 
-    private final ConnectionProvider connectionProvider;
+    private final ICache<String, Integer> cache;
+    private final MetaDbConnProvider metaDbConnProvider;
 
     @Inject
-    MetaFeedDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    MetaFeedDaoImpl(final MetaDbConnProvider metaDbConnProvider,
+                    final CacheManager cacheManager,
+                    final MetaServiceConfig metaServiceConfig) {
+        this.metaDbConnProvider = metaDbConnProvider;
+        cache = cacheManager.create(CACHE_NAME, metaServiceConfig::getMetaFeedCache, this::load);
+    }
+
+    private int load(final String name) {
+        // Try and get the existing id from the DB.
+        return get(name)
+                .or(() -> {
+                    // The id isn't in the DB so create it.
+                    return create(name)
+                            .or(() -> {
+                                // If the id is still null then this may be because the create method failed
+                                // due to the name having been inserted into the DB by another thread prior
+                                // to us calling create and the DB preventing duplicate names.
+                                // Assuming this is the case, try and get the id from the DB one last time.
+                                return get(name);
+                            });
+                })
+                .orElseThrow();
     }
 
     @Override
     public Integer getOrCreate(final String name) {
-        // Try and get the id from the cache.
-        return Optional.ofNullable(cache.get(name))
-                .or(() -> {
-                    // Try and get the existing id from the DB.
-                    return get(name)
-                            .or(() -> {
-                                // The id isn't in the DB so create it.
-                                return create(name)
-                                        .or(() -> {
-                                            // If the id is still null then this may be because the create method failed
-                                            // due to the name having been inserted into the DB by another thread prior
-                                            // to us calling create and the DB preventing duplicate names.
-                                            // Assuming this is the case, try and get the id from the DB one last time.
-                                            return get(name);
-                                        });
-                            })
-                            .map(i -> {
-                                // Cache for next time.
-                                cache.put(name, i);
-                                return i;
-                            });
-                }).orElseThrow();
+        return cache.get(name);
     }
 
     Optional<Integer> get(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(META_FEED.ID)
                 .from(META_FEED)
                 .where(META_FEED.NAME.eq(name))
@@ -80,7 +79,7 @@ class MetaFeedDaoImpl implements MetaFeedDao {
 
     List<Integer> find(final String name) {
         final Condition condition = createCondition(META_FEED.NAME, name);
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(META_FEED.ID)
                 .from(META_FEED)
                 .where(condition)
@@ -98,7 +97,7 @@ class MetaFeedDaoImpl implements MetaFeedDao {
     }
 
     Optional<Integer> create(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .insertInto(META_FEED, META_FEED.NAME)
                 .values(name)
                 .onDuplicateKeyIgnore()
@@ -109,7 +108,7 @@ class MetaFeedDaoImpl implements MetaFeedDao {
 
     @Override
     public List<String> list() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(META_FEED.NAME)
                 .from(META_FEED)
                 .fetch(META_FEED.NAME));
@@ -122,7 +121,7 @@ class MetaFeedDaoImpl implements MetaFeedDao {
     }
 
     private int deleteAll() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .delete(META_FEED)
                 .execute());
     }

@@ -10,45 +10,35 @@
         "name" : "timestamp",
         "expression" : "formatDate(${timestamp},'MM dd', '+0000')",
         "sort" : {
-          "order" : 0,
-          "direction" : "ASCENDING"
+          "order" : 0
         },
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 0,
-        "width" : 200,
-        "visible" : true
+        "group" : 0
       }, {
         "name" : "isp_user",
         "expression" : "${isp_user}",
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 0,
-        "width" : 200,
-        "visible" : true
+        "group" : 0
       }, {
         "name" : "Count",
         "expression" : "count()",
         "sort" : {
-          "order" : 1,
           "direction" : "DESCENDING"
         },
         "format" : {
           "type" : "NUMBER"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "width" : 200,
         "visible" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
-        "width" : 200,
         "visible" : false
       } ],
       "extractionPipeline" : {
@@ -71,19 +61,16 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "timestamp",
           "condition" : "BETWEEN",
-          "value" : "2016-02-01T00:00:00.000Z,2016-04-01T00:00:00.000Z",
-          "enabled" : true
+          "value" : "2016-02-01T00:00:00.000Z,2016-04-01T00:00:00.000Z"
         }, {
           "type" : "term",
           "field" : "isp_user",
           "condition" : "EQUALS",
-          "value" : "*",
-          "enabled" : true
+          "value" : "*"
         }, {
           "type" : "operator",
           "op" : "NOT",
@@ -94,31 +81,23 @@
               "type" : "term",
               "field" : "isp_user",
               "condition" : "EQUALS",
-              "value" : "comcast",
-              "enabled" : true
+              "value" : "comcast"
             }, {
               "type" : "term",
               "field" : "isp_user",
               "condition" : "EQUALS",
-              "value" : "centurylink",
-              "enabled" : true
+              "value" : "centurylink"
             }, {
               "type" : "term",
               "field" : "isp_user",
               "condition" : "EQUALS",
-              "value" : "unknown",
-              "enabled" : true
-            } ],
-            "enabled" : true
-          } ],
-          "enabled" : true
-        } ],
-        "enabled" : true
+              "value" : "unknown"
+            } ]
+          } ]
+        } ]
       },
       "automate" : {
-        "open" : true,
-        "refresh" : false,
-        "refreshInterval" : "10s"
+        "open" : true
       }
     }
   }, {
@@ -138,18 +117,13 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : {
-      "width" : 200,
-      "height" : 200
-    },
+    "preferredSize" : { },
     "dimension" : 1,
     "children" : [ {
       "type" : "splitLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 173
       },
-      "dimension" : 0,
       "children" : [ {
         "type" : "tabLayout",
         "preferredSize" : {
@@ -159,29 +133,32 @@
         "tabs" : [ {
           "id" : "query-JT8D7"
         } ],
-        "selected" : 0
+        "selected" : 0,
+        "visibleTabCount" : 1,
+        "allTabCount" : 1
       }, {
         "type" : "tabLayout",
         "preferredSize" : {
-          "width" : 809,
-          "height" : 200
+          "width" : 809
         },
         "tabs" : [ {
           "id" : "table-IIO1T"
         } ],
-        "selected" : 0
+        "selected" : 0,
+        "visibleTabCount" : 1,
+        "allTabCount" : 1
       } ]
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 871
       },
       "tabs" : [ {
         "id" : "vis-BX59A"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     } ]
-  },
-  "tabVisibility" : "SHOW_ALL"
+  }
 }

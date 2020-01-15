@@ -3,42 +3,50 @@ package stroom.config.app;
 import com.google.inject.AbstractModule;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
+import stroom.cluster.task.impl.ClusterTaskConfig;
+import stroom.config.common.CommonDbConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
-import stroom.core.db.DbConfig;
+import stroom.core.db.CoreConfig;
 import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
+import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
 import stroom.data.retention.impl.DataRetentionConfig;
 import stroom.data.store.impl.fs.DataStoreServiceConfig;
+import stroom.data.store.impl.fs.FsVolumeConfig;
+import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
+import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
-import stroom.index.impl.db.IndexDbConfig;
+import stroom.index.impl.IndexConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
-import stroom.job.impl.db.JobDbConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.meta.impl.db.MetaServiceConfig;
 import stroom.node.impl.HeapHistogramConfig;
 import stroom.node.impl.NodeConfig;
 import stroom.node.impl.StatusConfig;
-import stroom.node.impl.db.NodeDbConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.pipeline.destination.AppenderConfig;
+import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
-import stroom.pipeline.refdata.store.RefDataStoreConfig;
+import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.search.extraction.ExtractionConfig;
 import stroom.search.impl.SearchConfig;
 import stroom.search.impl.shard.IndexShardSearchConfig;
+import stroom.search.solr.SolrConfig;
+import stroom.search.solr.search.SolrSearchConfig;
+import stroom.searchable.impl.SearchableConfig;
 import stroom.security.impl.AuthenticationConfig;
+import stroom.security.impl.ContentSecurityConfig;
 import stroom.security.impl.SecurityConfig;
-import stroom.security.impl.db.SecurityDbConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.statistics.impl.InternalStatisticsConfig;
 import stroom.statistics.impl.hbase.internal.HBaseStatisticsConfig;
 import stroom.statistics.impl.sql.SQLStatisticsConfig;
-import stroom.storedquery.impl.StoredQueryHistoryConfig;
+import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.ui.config.shared.QueryConfig;
 import stroom.ui.config.shared.SplashConfig;
@@ -46,71 +54,146 @@ import stroom.ui.config.shared.ThemeConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.ui.config.shared.UrlConfig;
 import stroom.util.io.PathConfig;
+import stroom.util.shared.IsConfig;
+import stroom.util.xml.ParserConfig;
+
+import java.nio.file.Path;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class AppConfigModule extends AbstractModule {
-    private final AppConfig appConfig;
+    private final ConfigHolder configHolder;
 
-    public AppConfigModule(final AppConfig appConfig) {
-        this.appConfig = appConfig;
+    public AppConfigModule(final ConfigHolder configHolder) {
+        this.configHolder = configHolder;
     }
 
     @Override
     protected void configure() {
-        // Bind the application config.        
-        bind(AppConfig.class).toInstance(appConfig);
+        // Bind the de-serialised yaml config to a singleton AppConfig object, whose parts
+        // can be injected all over the app.
+        bind(AppConfig.class).toInstance(configHolder.getAppConfig());
+
+        // Holder for the location of the yaml config file so the AppConfigMonitor can
+        // get hold of it via guice
+        bind(ConfigLocation.class).toInstance(new ConfigLocation(configHolder.getConfigFile()));
 
         // AppConfig will instantiate all of its child config objects so
-        // bind each of these instances so we can inject these objects on their own
-        bind(ActivityConfig.class).toInstance(appConfig.getUiConfig().getActivityConfig());
-        bind(AppenderConfig.class).toInstance(appConfig.getPipelineConfig().getAppenderConfig());
-        bind(AuthenticationConfig.class).toInstance(appConfig.getSecurityConfig().getAuthenticationConfig());
-        bind(BenchmarkClusterConfig.class).toInstance(appConfig.getBenchmarkClusterConfig());
-        bind(ClusterConfig.class).toInstance(appConfig.getClusterConfig());
-        bind(ClusterLockConfig.class).toInstance(appConfig.getClusterLockConfig());
-        bind(ContentPackImportConfig.class).toInstance(appConfig.getContentPackImportConfig());
-        bind(DataConfig.class).toInstance(appConfig.getDataConfig());
-        bind(DataRetentionConfig.class).toInstance(appConfig.getDataConfig().getDataRetentionConfig());
-        bind(DataSourceUrlConfig.class).toInstance(appConfig.getDataSourceUrlConfig());
-        bind(DataStoreServiceConfig.class).toInstance(appConfig.getDataConfig().getDataStoreServiceConfig());
-        bind(DbConfig.class).toInstance(appConfig.getDbConfig());
-        bind(ExplorerConfig.class).toInstance(appConfig.getExplorerConfig());
-        bind(ExportConfig.class).toInstance(appConfig.getExportConfig());
-        bind(ExtractionConfig.class).toInstance(appConfig.getSearchConfig().getExtractionConfig());
-        bind(HBaseStatisticsConfig.class).toInstance(appConfig.getStatisticsConfig().getHbaseStatisticsConfig());
-        bind(HeapHistogramConfig.class).toInstance(appConfig.getNodeConfig().getStatusConfig().getHeapHistogramConfig());
-        bind(IndexDbConfig.class).toInstance(appConfig.getIndexDbConfig());
-        bind(IndexShardSearchConfig.class).toInstance(appConfig.getSearchConfig().getShardConfig());
-        bind(InternalStatisticsConfig.class).toInstance(appConfig.getStatisticsConfig().getInternalStatisticsConfig());
-        bind(JobSystemConfig.class).toInstance(appConfig.getJobSystemConfig());
-        bind(JobDbConfig.class).toInstance(appConfig.getJobDbConfig());
-        bind(LifecycleConfig.class).toInstance(appConfig.getLifecycleConfig());
-        bind(MetaServiceConfig.class).toInstance(appConfig.getDataConfig().getMetaServiceConfig());
-        bind(NodeConfig.class).toInstance(appConfig.getNodeConfig());
-        bind(NodeDbConfig.class).toInstance(appConfig.getNodeDbConfig());
-        bind(PathConfig.class).toInstance(appConfig.getPathConfig());
-        bind(PipelineConfig.class).toInstance(appConfig.getPipelineConfig());
-        bind(ProcessorConfig.class).toInstance(appConfig.getProcessorConfig());
-        bind(PropertyServiceConfig.class).toInstance(appConfig.getPropertyServiceConfig());
-        bind(ProxyAggregationConfig.class).toInstance(appConfig.getProxyAggregationConfig());
-        bind(QueryConfig.class).toInstance(appConfig.getUiConfig().getQueryConfig());
-        bind(ReceiveDataConfig.class).toInstance(appConfig.getReceiveDataConfig());
-        bind(RefDataStoreConfig.class).toInstance(appConfig.getPipelineConfig().getRefDataStoreConfig());
-        bind(SQLStatisticsConfig.class).toInstance(appConfig.getStatisticsConfig().getSqlStatisticsConfig());
-        bind(SearchConfig.class).toInstance(appConfig.getSearchConfig());
-        bind(SecurityConfig.class).toInstance(appConfig.getSecurityConfig());
-        bind(SecurityDbConfig.class).toInstance(appConfig.getSecurityDbConfig());
-        bind(ServiceDiscoveryConfig.class).toInstance(appConfig.getServiceDiscoveryConfig());
-        bind(SplashConfig.class).toInstance(appConfig.getUiConfig().getSplashConfig());
-        bind(StatisticsConfig.class).toInstance(appConfig.getStatisticsConfig());
-        bind(StatusConfig.class).toInstance(appConfig.getNodeConfig().getStatusConfig());
-        bind(StoredQueryHistoryConfig.class).toInstance(appConfig.getStoredQueryHistoryConfig());
-        bind(ThemeConfig.class).toInstance(appConfig.getUiConfig().getThemeConfig());
-        bind(UiConfig.class).toInstance(appConfig.getUiConfig());
-        bind(UrlConfig.class).toInstance(appConfig.getUiConfig().getUrlConfig());
-        bind(VolumeConfig.class).toInstance(appConfig.getVolumeConfig());
-        bind(XsltConfig.class).toInstance(appConfig.getPipelineConfig().getXsltConfig());
-        bind(stroom.activity.impl.db.ActivityConfig.class).toInstance(appConfig.getActivityConfig());
-        bind(stroom.statistics.impl.sql.search.SearchConfig.class).toInstance(appConfig.getStatisticsConfig().getSqlStatisticsConfig().getSearchConfig());
-        bind(stroom.ui.config.shared.ProcessConfig.class).toInstance(appConfig.getUiConfig().getProcessConfig());
+        // bind each of these instances so we can inject these objects on their own.
+        // This allows gradle modules to know nothing about the other modules.
+        // Our bind method has the arguments in the reverse way to guice so we can
+        // more easily see the tree structure
+
+        bind(AppConfig::getActivityConfig, stroom.activity.impl.db.ActivityConfig.class);
+        bind(AppConfig::getAnnotationConfig, stroom.annotation.impl.AnnotationConfig.class);
+        bind(AppConfig::getBenchmarkClusterConfig, BenchmarkClusterConfig.class);
+        bind(AppConfig::getClusterConfig, ClusterConfig.class);
+        bind(AppConfig::getClusterLockConfig, ClusterLockConfig.class);
+        bind(AppConfig::getClusterTaskConfig, ClusterTaskConfig.class);
+        bind(AppConfig::getCommonDbConfig, CommonDbConfig.class);
+        bind(AppConfig::getContentPackImportConfig, ContentPackImportConfig.class);
+        bind(AppConfig::getCoreConfig, CoreConfig.class);
+        bind(AppConfig::getDashboardConfig, DashboardConfig.class);
+        bind(AppConfig::getDataConfig, DataConfig.class, c -> {
+            bind(c, DataConfig::getDataRetentionConfig, DataRetentionConfig.class);
+            bind(c, DataConfig::getDataStoreServiceConfig, DataStoreServiceConfig.class);
+            bind(c, DataConfig::getFsVolumeConfig, FsVolumeConfig.class);
+            bind(c, DataConfig::getMetaServiceConfig, MetaServiceConfig.class);
+        });
+        bind(AppConfig::getDataSourceUrlConfig, DataSourceUrlConfig.class);
+        bind(AppConfig::getDocStoreConfig, DocStoreConfig.class);
+        bind(AppConfig::getExplorerConfig, ExplorerConfig.class);
+        bind(AppConfig::getExportConfig, ExportConfig.class);
+        bind(AppConfig::getFeedConfig, FeedConfig.class);
+        bind(AppConfig::getIndexConfig, IndexConfig.class);
+        bind(AppConfig::getJobSystemConfig, JobSystemConfig.class);
+        bind(AppConfig::getLifecycleConfig, LifecycleConfig.class);
+        bind(AppConfig::getNodeConfig, NodeConfig.class, c -> {
+            bind(c, NodeConfig::getStatusConfig, StatusConfig.class, c2 -> {
+                bind(c2, StatusConfig::getHeapHistogramConfig, HeapHistogramConfig.class);
+            });
+        });
+        bind(AppConfig::getPathConfig, PathConfig.class);
+        bind(AppConfig::getPipelineConfig, PipelineConfig.class, c -> {
+            bind(c, PipelineConfig::getAppenderConfig, AppenderConfig.class);
+            bind(c, PipelineConfig::getParserConfig, ParserConfig.class);
+            bind(c, PipelineConfig::getReferenceDataConfig, ReferenceDataConfig.class);
+            bind(c, PipelineConfig::getXmlSchemaConfig, XmlSchemaConfig.class);
+            bind(c, PipelineConfig::getXsltConfig, XsltConfig.class);
+        });
+        bind(AppConfig::getProcessorConfig, ProcessorConfig.class);
+        bind(AppConfig::getPropertyServiceConfig, PropertyServiceConfig.class);
+        bind(AppConfig::getProxyAggregationConfig, ProxyAggregationConfig.class);
+        bind(AppConfig::getReceiveDataConfig, ReceiveDataConfig.class);
+        bind(AppConfig::getSearchConfig, SearchConfig.class, c -> {
+            bind(c, SearchConfig::getExtractionConfig, ExtractionConfig.class);
+            bind(c, SearchConfig::getShardConfig, IndexShardSearchConfig.class);
+        });
+        bind(AppConfig::getSearchableConfig, SearchableConfig.class);
+        bind(AppConfig::getSecurityConfig, SecurityConfig.class, c -> {
+            bind(c, SecurityConfig::getAuthenticationConfig, AuthenticationConfig.class);
+            bind(c, SecurityConfig::getContentSecurityConfig, ContentSecurityConfig.class);
+        });
+        bind(AppConfig::getServiceDiscoveryConfig, ServiceDiscoveryConfig.class);
+        bind(AppConfig::getSessionCookieConfig, SessionCookieConfig.class);
+        bind(AppConfig::getSolrConfig, SolrConfig.class, c -> {
+            bind(c, SolrConfig::getSolrSearchConfig, SolrSearchConfig.class);
+        });
+        bind(AppConfig::getStatisticsConfig, StatisticsConfig.class, c -> {
+            bind(c, StatisticsConfig::getHbaseStatisticsConfig, HBaseStatisticsConfig.class);
+            bind(c, StatisticsConfig::getInternalStatisticsConfig, InternalStatisticsConfig.class);
+            bind(c, StatisticsConfig::getSqlStatisticsConfig, SQLStatisticsConfig.class, c2 -> {
+                bind(c2, SQLStatisticsConfig::getSearchConfig, stroom.statistics.impl.sql.search.SearchConfig.class);
+            });
+        });
+        bind(AppConfig::getStoredQueryConfig, StoredQueryConfig.class);
+        bind(AppConfig::getUiConfig, UiConfig.class, c -> {
+            bind(c, UiConfig::getActivityConfig, ActivityConfig.class);
+            bind(c, UiConfig::getProcessConfig, stroom.ui.config.shared.ProcessConfig.class);
+            bind(c, UiConfig::getQueryConfig, QueryConfig.class);
+            bind(c, UiConfig::getSplashConfig, SplashConfig.class);
+            bind(c, UiConfig::getThemeConfig, ThemeConfig.class);
+            bind(c, UiConfig::getUrlConfig, UrlConfig.class);
+        });
+        bind(AppConfig::getVolumeConfig, VolumeConfig.class);
+    }
+
+    private <T extends IsConfig> void bind(
+            final Function<AppConfig, T> getter,
+            final Class<T> clazz) {
+        bind(configHolder.getAppConfig(), getter, clazz, null);
+    }
+
+    private <T extends IsConfig> void bind(
+            final Function<AppConfig, T> getter,
+            final Class<T> clazz,
+            final Consumer<T> childConfigConsumer) {
+        bind(configHolder.getAppConfig(), getter, clazz, childConfigConsumer);
+    }
+
+    private <X extends IsConfig, T extends IsConfig> void bind(
+            final X object,
+            final Function<X, T> getter,
+            final Class<T> clazz) {
+        bind(object, getter, clazz, null);
+    }
+
+    private <X extends IsConfig, T extends IsConfig> void bind(
+            final X object,
+            final Function<X, T> getter,
+            final Class<T> clazz,
+            final Consumer<T> childConfigConsumer) {
+
+        T instance = getter.apply(object);
+        bind(clazz).toInstance(instance);
+        if (childConfigConsumer != null) {
+            childConfigConsumer.accept(instance);
+        }
+    }
+
+    public interface ConfigHolder {
+        AppConfig getAppConfig();
+
+        Path getConfigFile();
     }
 }

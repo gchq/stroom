@@ -24,6 +24,13 @@ include 'stroom-activity:stroom-activity-impl-db'
 include 'stroom-activity:stroom-activity-impl-db-jooq'
 include 'stroom-activity:stroom-activity-mock'
 
+// Annotations project.
+include 'stroom-annotation:stroom-annotation-api'
+include 'stroom-annotation:stroom-annotation-impl'
+include 'stroom-annotation:stroom-annotation-impl-db'
+include 'stroom-annotation:stroom-annotation-impl-db-jooq'
+include 'stroom-annotation:stroom-config-common'
+
 // App.
 include 'stroom-app'
 include 'stroom-app-gwt'

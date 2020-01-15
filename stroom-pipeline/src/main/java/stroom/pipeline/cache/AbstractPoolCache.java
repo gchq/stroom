@@ -16,47 +16,54 @@
 
 package stroom.pipeline.cache;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.cache.RemovalListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.Clearable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 public abstract class AbstractPoolCache<K, V> implements Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractPoolCache.class);
 
-    private static final int MAX_CACHE_ENTRIES = 1000;
-
-    private final LoadingCache<PoolKey<K>, PoolItem<V>> cache;
+    private final ICache<PoolKey<K>, PoolItem<V>> cache;
     private final Map<K, LinkedBlockingDeque<PoolKey<K>>> keyMap = new ConcurrentHashMap<>();
 
-    @SuppressWarnings("unchecked")
-    public AbstractPoolCache(final CacheManager cacheManager, final String name) {
-        final RemovalListener<PoolKey<K>, PoolItem<V>> removalListener = notification -> destroy(notification.getKey());
-        final CacheLoader<PoolKey<K>, PoolItem<V>> cacheLoader = CacheLoader.from(k -> {
-            final V value = internalCreateValue(k.getKey());
-            return new PoolItem<>(k, value);
-        });
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(10, TimeUnit.MINUTES)
-                .removalListener(removalListener);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache(name, cacheBuilder, cache);
+    public AbstractPoolCache(final CacheManager cacheManager, final String cacheName, final Supplier<CacheConfig> cacheConfigSupplier) {
+        cache = cacheManager.create(cacheName, cacheConfigSupplier, this::create, this::destroy);
     }
 
-    protected abstract V internalCreateValue(Object key);
+    private PoolItem<V> create(final PoolKey<K> poolKey) {
+        final V value = internalCreateValue(poolKey.getKey());
+        return new PoolItem<>(poolKey, value);
+    }
 
+    private void destroy(final PoolKey<K> key, final PoolItem<V> value) {
+        if (key != null) {
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Destroy\n" + getKeySizes());
+            }
+
+            keyMap.compute(key.getKey(), (k, v) -> {
+                if (v == null || v.size() == 0) {
+                    return null;
+                }
+                v.remove(key);
+                if (v.size() == 0) {
+                    return null;
+                }
+                return v;
+            });
+        }
+    }
+
+    protected abstract V internalCreateValue(K key);
 
     protected PoolItem<V> internalBorrowObject(final K key, final boolean usePool) {
         try {
@@ -83,7 +90,7 @@ public abstract class AbstractPoolCache<K, V> implements Clearable {
             }
 
             // Get an item from the cache using the pool key.
-            return cache.getUnchecked(poolKey);
+            return cache.get(poolKey);
 
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
@@ -104,7 +111,7 @@ public abstract class AbstractPoolCache<K, V> implements Clearable {
                 // Make this key available again to other threads.
                 // Get the current deque associated with the key.
                 keyMap.compute(poolKey.getKey(), (k, v) -> {
-                    LinkedBlockingDeque deque = v;
+                    LinkedBlockingDeque<PoolKey<K>> deque = v;
                     if (deque == null) {
                         deque = new LinkedBlockingDeque<>();
                     }
@@ -120,27 +127,8 @@ public abstract class AbstractPoolCache<K, V> implements Clearable {
         }
     }
 
-    private void destroy(final PoolKey<K> poolKey) {
-        if (poolKey != null) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Destroy\n" + getKeySizes());
-            }
-
-            keyMap.compute(poolKey.getKey(), (k, v) -> {
-                if (v == null || v.size() == 0) {
-                    return null;
-                }
-                v.remove(poolKey);
-                if (v.size() == 0) {
-                    return null;
-                }
-                return v;
-            });
-        }
-    }
-
     public void clear() {
-        CacheUtil.clear(cache);
+        cache.clear();
     }
 
     private String getKeySizes() {

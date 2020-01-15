@@ -3,10 +3,6 @@
   "uuid" : "c9dd857d-324c-49b2-ab16-020d7e921dd8",
   "name" : "LAX_CARGO_VOLUME-INDEX",
   "version" : "1a7f4a70-efbf-4ba3-ae65-5faee49361b2",
-  "maxDocsPerShard" : 1000000000,
-  "partitionBy" : "MONTH",
-  "partitionSize" : 1,
-  "shardsPerPartition" : 1,
   "fields" : [ {
     "fieldType" : "ID",
     "fieldName" : "StreamId",

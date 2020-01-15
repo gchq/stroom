@@ -8,56 +8,42 @@
       "queryId" : "query-JT8D7",
       "fields" : [ {
         "name" : "User Id",
-        "expression" : "${EventSource/User/Id}",
-        "width" : 200,
-        "visible" : true
+        "expression" : "${EventSource/User/Id}"
       }, {
         "name" : "System Name",
-        "expression" : "${EventSource/System/Name}",
-        "width" : 200,
-        "visible" : true
+        "expression" : "${EventSource/System/Name}"
       }, {
         "name" : "Event Type ID",
-        "expression" : "${EventDetail/TypeId}",
-        "width" : 200,
-        "visible" : true
+        "expression" : "${EventDetail/TypeId}"
       }, {
         "name" : "All Users",
-        "expression" : "${.//Id}",
-        "width" : 200,
-        "visible" : true
+        "expression" : "${.//Id}"
       }, {
         "name" : "EventTime",
         "expression" : "${EventTime}",
-        "width" : 484,
-        "visible" : true
+        "width" : 484
       }, {
         "name" : "All Data",
         "expression" : "${.//Data}",
-        "width" : 458,
-        "visible" : true
+        "width" : 458
       }, {
         "name" : "All Data Vals",
         "expression" : "${.//Data/@Value}",
-        "width" : 362,
-        "visible" : true
+        "width" : 362
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "width" : 200,
         "visible" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
-        "width" : 200,
         "visible" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "26ed1000-255e-4182-b69b-00266be891ee",
         "name" : "Standard Raw extraction"
-      },
-      "maxResults" : [ 1000000 ]
+      }
     }
   }, {
     "type" : "query",
@@ -72,69 +58,58 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "EventTime",
           "condition" : "LESS_THAN",
-          "value" : "2019-09-11T00:00:00.000Z",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "2019-09-11T00:00:00.000Z"
+        } ]
       },
-      "automate" : {
-        "open" : false,
-        "refresh" : false,
-        "refreshInterval" : "10s"
-      }
+      "automate" : { }
     }
   }, {
     "type" : "text",
     "id" : "text-OQOGW",
     "name" : "Text",
     "settings" : {
-      "type" : "text",
-      "showAsHtml" : false
+      "type" : "text"
     }
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : {
-      "width" : 200,
-      "height" : 200
-    },
+    "preferredSize" : { },
     "dimension" : 1,
     "children" : [ {
       "type" : "tabLayout",
-      "preferredSize" : {
-        "width" : 200,
-        "height" : 200
-      },
+      "preferredSize" : { },
       "tabs" : [ {
         "id" : "query-JT8D7"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 782
       },
       "tabs" : [ {
         "id" : "table-IIO1T"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 639
       },
       "tabs" : [ {
         "id" : "text-OQOGW"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     } ]
-  },
-  "tabVisibility" : "SHOW_ALL"
+  }
 }

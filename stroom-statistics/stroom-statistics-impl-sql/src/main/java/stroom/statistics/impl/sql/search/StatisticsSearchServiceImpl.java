@@ -11,10 +11,10 @@ import stroom.dashboard.expression.v1.ValDouble;
 import stroom.dashboard.expression.v1.ValLong;
 import stroom.dashboard.expression.v1.ValNull;
 import stroom.dashboard.expression.v1.ValString;
-import stroom.statistics.impl.sql.ConnectionProvider;
 import stroom.statistics.impl.sql.PreparedStatementUtil;
 import stroom.statistics.impl.sql.SQLStatisticConstants;
 import stroom.statistics.impl.sql.SQLStatisticNames;
+import stroom.statistics.impl.sql.SQLStatisticsDbConnProvider;
 import stroom.statistics.impl.sql.SqlBuilder;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
@@ -38,13 +38,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
         //called by DI
 //TODO rename to StatisticsDatabaseSearchServiceImpl
 class StatisticsSearchServiceImpl implements StatisticsSearchService {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(StatisticsSearchServiceImpl.class);
 
@@ -55,7 +55,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     private static final String ALIASED_COUNT_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.COUNT;
     private static final String ALIASED_VALUE_COL = VALUE_TABLE_ALIAS + "." + SQLStatisticNames.VALUE;
 
-    private final ConnectionProvider connectionProvider;
+    private final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider;
     private final SearchConfig searchConfig;
     private final TaskContext taskContext;
 
@@ -69,10 +69,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     @SuppressWarnings("unused") // Called by DI
     @Inject
-    StatisticsSearchServiceImpl(final ConnectionProvider connectionProvider,
+    StatisticsSearchServiceImpl(final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider,
                                 final SearchConfig searchConfig,
                                 final TaskContext taskContext) {
-        this.connectionProvider = connectionProvider;
+        this.SQLStatisticsDbConnProvider = SQLStatisticsDbConnProvider;
         this.searchConfig = searchConfig;
         this.taskContext = taskContext;
     }
@@ -358,17 +358,17 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
         // will have mode on each time.
         Flowable<Val[]> resultSetFlowable = Flowable
                 .using(
-                        () -> new PreparedStatementResourceHolder(connectionProvider, sql, searchConfig),
+                        () -> new PreparedStatementResourceHolder(SQLStatisticsDbConnProvider, sql, searchConfig),
                         factory -> {
                             LOGGER.debug("Converting factory to a flowable");
                             Preconditions.checkNotNull(factory);
                             PreparedStatement ps = factory.getPreparedStatement();
                             return Flowable.generate(
                                     () -> {
-                                        final String message = String.format("Executing query %s", sql.toString());
+                                        final Supplier<String> message = () -> "Executing query " + sql.toString();
                                         taskContext.setName(SqlStatisticsStore.TASK_NAME);
                                         taskContext.info(message);
-                                        LAMBDA_LOGGER.debug(() -> message);
+                                        LAMBDA_LOGGER.debug(message);
 
                                         try {
                                             return ps.executeQuery();
@@ -384,7 +384,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
                                         //advance the resultSet, if it is a row emit it, else finish the flow
                                         // TODO prob needs to change in 6.1
-                                        if (Thread.currentThread().isInterrupted() || Thread.currentThread().isInterrupted()) {
+                                        if (Thread.currentThread().isInterrupted()) {
                                             LOGGER.debug("Task is terminated/interrupted, calling onComplete");
                                             emitter.onComplete();
                                         } else {

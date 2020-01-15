@@ -18,6 +18,7 @@ package stroom.dashboard.client.main;
 
 import stroom.dashboard.client.query.QueryPresenter;
 import stroom.dashboard.client.table.TimeZones;
+import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
@@ -135,7 +136,7 @@ public class SearchModel {
                 currentParameterMap = KVMapUtil.parse(params);
 
                 // Replace any parameters in the expression.
-                final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(expression.getEnabled(), expression.getOp());
+                final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(expression.isEnabled(), expression.getOp());
                 replaceExpressionParameters(builder, expression, currentParameterMap);
                 currentExpression = builder.build();
 
@@ -208,7 +209,7 @@ public class SearchModel {
                 if (child instanceof ExpressionOperator) {
                     final ExpressionOperator childOperator = (ExpressionOperator) child;
                     final ExpressionOperator.Builder childBuilder = new ExpressionOperator.Builder(childOperator.getOp())
-                            .enabled(childOperator.getEnabled());
+                            .enabled(childOperator.isEnabled());
                     builder.addOperator(childBuilder.build());
                     replaceExpressionParameters(childBuilder, childOperator, paramMap);
                 } else if (child instanceof ExpressionTerm) {
@@ -216,7 +217,7 @@ public class SearchModel {
                     final String value = term.getValue();
                     final String replaced = KVMapUtil.replaceParameters(value, paramMap);
                     builder.addTerm(new ExpressionTerm.Builder()
-                            .enabled(term.getEnabled())
+                            .enabled(term.isEnabled())
                             .field(term.getField())
                             .condition(term.getCondition())
                             .value(replaced)
@@ -301,8 +302,8 @@ public class SearchModel {
             final String componentId = entry.getKey();
             final ResultComponent resultComponent = entry.getValue();
             if (result.getResults() != null && result.getResults().containsKey(componentId)) {
-                final String json = result.getResults().get(componentId);
-                resultComponent.setData(json);
+                final ComponentResult componentResult = result.getResults().get(componentId);
+                resultComponent.setData(componentResult);
             }
 
             if (result.isComplete()) {

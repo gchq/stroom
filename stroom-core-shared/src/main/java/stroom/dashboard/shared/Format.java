@@ -36,7 +36,7 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "settings", "wrap"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "format")
 @XmlType(name = "Format", propOrder = {"type", "settings", "wrap"})
 public class Format implements Serializable {
@@ -128,6 +128,13 @@ public class Format implements Serializable {
                 ", settings=" + settings +
                 ", wrap=" + wrap +
                 '}';
+    }
+
+    public Format copy() {
+        if (settings != null) {
+            return new Format(type, settings.copy(), wrap);
+        }
+        return new Format(type, null, wrap);
     }
 
     public enum Type implements HasDisplayValue {

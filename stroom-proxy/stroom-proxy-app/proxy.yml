@@ -81,19 +81,19 @@ proxyConfig:
   proxyRequestConfig:
     receiptPolicyUuid:
   feedStatus:
-    url: "http://127.0.0.1/api/feedStatus/v1"
-    apiKey: "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6InN0cm9vbSIsInNpZCI6bnVsbH0.k0Ssb43GCdTunAMeM26fIulYKNUuPUaJJk6GxDmzCPb7kVPwEtdfBSrtwazfEFM97dnmvURkLqs-DAZTXhhf-0VqQx4hkwcCHf83eVptWTy-lufIhQo6FCM223c9ONIhl6CPqknWh9Bo3vFNrNJoKz5Zw2T_iCcQhi2WGjd_tjTG7VbibTIpH3lPQDw1IBD2nMsEqACJSk3IaFe0GYcrAEMwsjj3sjAwByMbj5DJvo_DJbAuzUwS5IVpASEENen5Xd3wALLirrraUfED1OY0G56Ttcwl3uQ2s-grZXBM4JCiIurlWR5iNtNwoPUsZsyMju4FMSXt3Ur1NIpD7XKJlg"
+    url: "https://localhost/api/feedStatus/v1"
+    apiKey: "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6InN0cm9vbSIsImF1ZCI6IlBabkpyOGtIUktxbmxKUlFUaFNJIn0.qT5jdPWBpN9me0L3OqUT0VFT2mvVX9mCp0gPFyTVg8DkFTPLLYIuXjOslvrllJDBbqefEtqS9OwQs3RmRnZxror676stTP6JHN76YqJWj2yJYyJGuggbXjZnfTiZGO3SOxl5FP4nmRRvPxA3XqV9kippKBpHfqm5RuTpFTU8uses2iaHFm7lY4zXmKDmwVizXybBQBtpxrBNQkeQjQyg7UFkpsRO8-PmIdbTldRhGlud5VpntwI1_ahwOzK-einUJQOWrcOBmXAMPRYBI6tSLT1xS_c5XpFX1Rxoj3FGjI-Myqp_2Nt_lZuQ3h-0Qh8WkZMnWQ76G7CKawXzRAwd7Q"
   forwardStreamConfig:
     forwardingEnabled: true
     forwardDestinations:
-      - forwardUrl: "https://127.0.0.1/stroom/datafeeddirect"
+      - forwardUrl: "https://localhost/stroom/datafeeddirect"
         sslConfig:
-          keyStorePath: ${HOME}/dev/gchq/stroom-resources/dev-resources/certs/client/client.jks
+          keyStorePath: ../../../stroom-resources/dev-resources/certs/client/client.jks
           keyStorePassword: "password"
-          trustStorePath: ${HOME}/dev/gchq/stroom-resources/dev-resources/certs/certificate-authority/ca.jks
+          trustStorePath: ../../../stroom-resources/dev-resources/certs/certificate-authority/ca.jks
           trustStorePassword: "password"
           hostnameVerificationEnabled: true
-      - forwardUrl: "http://127.0.0.1/stroom/datafeed"
+      - forwardUrl: "http://localhost/stroom/datafeed"
   proxyRepositoryConfig:
     storingEnabled: true
     repoDir: "/tmp/stroom-proxy/repo"
@@ -106,8 +106,8 @@ proxyConfig:
 #  contentSyncConfig:
 #    contentSyncEnabled: false
 #    upstreamUrl:
-#      RuleSet: "http://127.0.0.1/api/ruleset/v1"
-#      Dictionary: "http://127.0.0.1/api/dictionary/v1"
+#      RuleSet: "http://localhost/api/ruleset/v1"
+#      Dictionary: "http://localhost/api/dictionary/v1"
 #    syncFrequency: 30000
 #    apiKey: ""
   jerseyClient:
@@ -121,20 +121,17 @@ proxyConfig:
     retries: 0
 #    userAgent: Stroom-Proxy (Jersey)
     tls:
-#      protocol: TLSv1.2
+      protocol: TLSv1.2
       verifyHostname: true
-      #    keyStorePath: /path/to/file
-      #    keyStorePassword: changeit
-      #    keyStoreType: JKS
-      keyStorePath: ${HOME}/dev/gchq/stroom-resources/dev-resources/certs/client/client.jks
+      keyStorePath: ../../../stroom-resources/dev-resources/certs/client/client.jks
       keyStorePassword: password
       keyStoreType: JKS
-      trustStorePath: ${HOME}/dev/gchq/stroom-resources/dev-resources/certs/server/ca.jks
+      trustStorePath: ../../../stroom-resources/dev-resources/certs/server/ca.jks
       trustStorePassword: password
       trustStoreType: JKS
       trustSelfSignedCertificates: false
 #      supportedProtocols:
 #        - TLSv1.1
 #        - TLSv1.2
-  #    supportedCipherSuites:
-  #      - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256
+#      supportedCipherSuites:
+#        - TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256

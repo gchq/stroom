@@ -225,8 +225,6 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
 
             // Update the meta data for all output streams to use.
             metaData.put("Source Stream", String.valueOf(meta.getId()));
-            // TODO : @66 DO WE REALLY NEED TO KNOW WHAT NODE PROCESSED A STREAM AS THE DATA IS AVAILABLE ON STREAM TASK???
-//            metaData.put(MetaDataSource.NODE, nodeInfo.get().getName());
 
             // Set the search id to be the id of the stream processor filter.
             // Only do this where the task has specific data ranges that need extracting as this is only the case with a batch search.
@@ -260,10 +258,8 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
             final String processingInfo = PROCESSING + info;
 
             // Log that we are starting to process.
-            taskContext.info(processingInfo);
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info(processingInfo);
-            }
+            taskContext.info(() -> processingInfo);
+            LOGGER.info(processingInfo);
 
             // Hold the source and feed so the pipeline filters can get them.
             streamProcessorHolder.setStreamProcessor(streamProcessor, streamTask);
@@ -281,7 +277,7 @@ public class PipelineDataProcessorTaskExecutor implements DataProcessorTaskExecu
                     ModelStringUtil.formatDurationString(System.currentTimeMillis() - startTime);
 
             // Log that we have finished processing.
-            taskContext.info(finishedInfo);
+            taskContext.info(() -> finishedInfo);
             LOGGER.info(finishedInfo);
 
         } catch (final RuntimeException e) {

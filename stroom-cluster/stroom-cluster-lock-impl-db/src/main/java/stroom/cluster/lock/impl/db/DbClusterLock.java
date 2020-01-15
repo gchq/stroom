@@ -37,11 +37,11 @@ class DbClusterLock implements Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(DbClusterLock.class);
     private final Set<String> registeredLockSet = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    private final ConnectionProvider connectionProvider;
+    private final ClusterLockDbConnProvider clusterLockDbConnProvider;
 
     @Inject
-    DbClusterLock(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    DbClusterLock(final ClusterLockDbConnProvider clusterLockDbConnProvider) {
+        this.clusterLockDbConnProvider = clusterLockDbConnProvider;
     }
 
     public void lock(final String lockName, final Runnable runnable) {
@@ -52,7 +52,7 @@ class DbClusterLock implements Clearable {
             // This happens outside this transaction
         checkLockCreated(lockName);
 
-        JooqUtil.transaction(connectionProvider, context -> {
+        JooqUtil.transaction(clusterLockDbConnProvider, context -> {
             final Optional<Record> optional = context
                     .select()
                     .from(CLUSTER_LOCK)
@@ -90,7 +90,7 @@ class DbClusterLock implements Clearable {
     }
 
     private Integer get(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(clusterLockDbConnProvider, context -> context
                 .select(CLUSTER_LOCK.ID)
                 .from(CLUSTER_LOCK)
                 .where(CLUSTER_LOCK.NAME.eq(name))
@@ -100,7 +100,7 @@ class DbClusterLock implements Clearable {
     }
 
     private Integer create(final String name) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(clusterLockDbConnProvider, context -> context
                 .insertInto(CLUSTER_LOCK, CLUSTER_LOCK.NAME)
                 .values(name)
                 .onDuplicateKeyIgnore()

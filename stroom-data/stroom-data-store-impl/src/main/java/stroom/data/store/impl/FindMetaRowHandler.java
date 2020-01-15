@@ -26,14 +26,19 @@ import javax.inject.Inject;
 
 class FindMetaRowHandler extends AbstractTaskHandler<FindMetaRowAction, ResultList<MetaRow>> {
     private final MetaService metaService;
+    private final StreamAttributeMapRetentionRuleDecorator ruleDecorator;
 
     @Inject
-    FindMetaRowHandler(final MetaService metaService) {
+    FindMetaRowHandler(final MetaService metaService,
+                       final StreamAttributeMapRetentionRuleDecorator ruleDecorator) {
         this.metaService = metaService;
+        this.ruleDecorator = ruleDecorator;
     }
 
     @Override
     public ResultList<MetaRow> exec(final FindMetaRowAction action) {
-        return metaService.findRows(action.getCriteria());
+        final ResultList<MetaRow> list = metaService.findRows(action.getCriteria());
+        list.forEach(metaRow -> ruleDecorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
+        return list;
     }
 }

@@ -17,8 +17,6 @@
 package stroom.kafka.pipeline;
 
 import com.google.common.base.Preconditions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.pipeline.destination.Destination;
@@ -29,11 +27,12 @@ import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.writer.AbstractDestinationProvider;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Severity;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayDeque;
 import java.util.Queue;
@@ -41,7 +40,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractKafkaAppender extends AbstractDestinationProvider implements Destination {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractKafkaAppender.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractKafkaAppender.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private KafkaProducer stroomKafkaProducer;
@@ -110,12 +109,12 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     }
 
     @Override
-    public final OutputStream getByteArrayOutputStream() throws IOException {
+    public final OutputStream getByteArrayOutputStream() {
         return getOutputStream(null, null);
     }
 
     @Override
-    public final OutputStream getOutputStream(final byte[] header, final byte[] footer) throws IOException {
+    public final OutputStream getOutputStream(final byte[] header, final byte[] footer) {
         this.header = header;
         this.footer = footer;
 
@@ -143,12 +142,12 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     }
 
     @Override
-    public Destination borrowDestination() throws IOException {
+    public Destination borrowDestination() {
         return this;
     }
 
     @Override
-    public void returnDestination(final Destination destination) throws IOException {
+    public void returnDestination(final Destination destination) {
         Preconditions.checkArgument(
                 destination == this,
                 "Returned destination is a different object to this");

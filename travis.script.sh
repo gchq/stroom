@@ -38,14 +38,21 @@ doDockerBuild=false
 create_file_hash() {
     local -r file="$1"
     local -r hash_file="${file}.sha256"
+    local dir
+    dir="$(dirname "${file}")"
+    local filename
+    filename="$(basename "${file}")"
 
-    echo -e "Creating a SHA-256 hash for file ${GREEN}${file}${NC}"
+    echo -e "Creating a SHA-256 hash for file ${GREEN}${filename}${NC} in ${GREEN}${dir}${NC}"
     # Go to the dir where the file is so the hash file doesn't contain the full
     # path
-    pushd "$(dirname "${file}")" > /dev/null
-    sha256sum "${file}" > "${hash_file}"
+    pushd "${dir}" > /dev/null
+    sha256sum "${filename}" > "${hash_file}"
     popd > /dev/null
-    echo -e "Created hash file ${GREEN}${hash_file}${NC}"
+    echo -e "Created hash file ${GREEN}${hash_file}${NC}, containing:"
+    echo -e "-------------------------------------------------------"
+    cat "${hash_file}"
+    echo -e "-------------------------------------------------------"
 }
 
 generate_file_hashes() {
@@ -241,7 +248,7 @@ else
     ./local.yml.sh
 
     # Do the gradle build
-    # Use custom gwt compile jvm settings to avoid blowing the ram limit in 
+    # Use custom gwt compile jvm settings to avoid blowing the ram limit in
     # travis. At time of writing a sudo VM in travis has 7.5gb ram.
     # Each work will chew up the maxHeap value and we have to allow for
     # our docker services as well.
@@ -250,7 +257,7 @@ else
       -Pversion="${TRAVIS_TAG}" \
       -PgwtCompilerWorkers=2 \
       -PgwtCompilerMinHeap=50M \
-      -PgwtCompilerMaxHeap=1000M \
+      -PgwtCompilerMaxHeap=1G \
       clean \
       build \
       buildDistribution \

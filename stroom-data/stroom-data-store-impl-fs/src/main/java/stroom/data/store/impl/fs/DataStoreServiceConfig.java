@@ -2,39 +2,28 @@ package stroom.data.store.impl.fs;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
+import stroom.config.common.DbConfig;
+import stroom.config.common.HasDbConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class DataStoreServiceConfig implements IsConfig {
-    private ConnectionConfig connectionConfig = new ConnectionConfig();
-    private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
-
+public class DataStoreServiceConfig implements IsConfig, HasDbConfig {
+    private DbConfig dbConfig = new DbConfig();
     private String deletePurgeAge = "7d";
     private int deleteBatchSize = 1000;
     private int fileSystemCleanBatchSize = 20;
     private boolean fileSystemCleanDeleteOut;
     private String fileSystemCleanOldAge = "1d";
 
-    @JsonProperty("connection")
-    public ConnectionConfig getConnectionConfig() {
-        return connectionConfig;
+    @JsonProperty("db")
+    public DbConfig getDbConfig() {
+        return dbConfig;
     }
 
-    public void setConnectionConfig(final ConnectionConfig connectionConfig) {
-        this.connectionConfig = connectionConfig;
-    }
-
-    @JsonProperty("connectionPool")
-    public ConnectionPoolConfig getConnectionPoolConfig() {
-        return connectionPoolConfig;
-    }
-
-    public void setConnectionPoolConfig(final ConnectionPoolConfig connectionPoolConfig) {
-        this.connectionPoolConfig = connectionPoolConfig;
+    public void setDbConfig(final DbConfig dbConfig) {
+        this.dbConfig = dbConfig;
     }
 
     @JsonPropertyDescription("How long data records are left logically deleted before it is deleted from the database")

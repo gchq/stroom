@@ -17,7 +17,6 @@
 package stroom.security.impl.event;
 
 import stroom.cluster.task.api.ClusterTask;
-import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
 
 public class ClusterPermissionChangeEventTask extends ClusterTask<VoidResult> {
@@ -25,8 +24,8 @@ public class ClusterPermissionChangeEventTask extends ClusterTask<VoidResult> {
 
     private final PermissionChangeEvent event;
 
-    public ClusterPermissionChangeEventTask(final Task<?> parentTask, final PermissionChangeEvent event) {
-        super(parentTask.getUserToken(), "PermissionChangeEvent");
+    public ClusterPermissionChangeEventTask(final PermissionChangeEvent event) {
+        super("PermissionChangeEvent");
         this.event = event;
     }
 

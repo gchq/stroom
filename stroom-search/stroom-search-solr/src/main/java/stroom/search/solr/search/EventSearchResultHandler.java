@@ -23,6 +23,7 @@ import stroom.query.common.v2.Data;
 import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.ResultHandler;
 import stroom.search.api.EventRefs;
+import stroom.search.coprocessor.EventRefsPayload;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -52,7 +53,7 @@ class EventSearchResultHandler implements ResultHandler {
             if (payloadMap != null) {
                 for (final Entry<CoprocessorKey, Payload> entry : payloadMap.entrySet()) {
                     final Payload payload = entry.getValue();
-                    if (payload != null && payload instanceof EventRefsPayload) {
+                    if (payload instanceof EventRefsPayload) {
                         final EventRefsPayload eventRefsPayload = (EventRefsPayload) payload;
                         add(eventRefsPayload.getEventRefs());
                     }

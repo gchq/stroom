@@ -315,6 +315,13 @@ public class HDFSFileAppender extends AbstractAppender {
         super.setSplitAggregatedStreams(splitAggregatedStreams);
     }
 
+    @PipelineProperty(description = "Choose if you want to split individual records into separate output files.",
+            defaultValue = "false",
+            displayPriority = 6)
+    public void setSplitRecords(final boolean splitRecords) {
+        super.setSplitRecords(splitRecords);
+    }
+
     /**
      * Used for injecting a configuration in testing
      */

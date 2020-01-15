@@ -126,21 +126,37 @@ public class TickBox extends Composite
         if (this.state != value) {
             this.state = value;
 
-            switch (state) {
-                case TICK:
-                    image.setResource(resources.tick());
-                    break;
-                case HALF_TICK:
-                    image.setResource(resources.halfTick());
-                    break;
-                case UNTICK:
-                    image.setResource(resources.untick());
-                    break;
-            }
+            updateImage();
 
             if (fireEvents) {
                 ValueChangeEvent.fire(this, state);
             }
+        }
+    }
+
+    private void updateImage() {
+        switch (state) {
+            case TICK:
+                if (enabled) {
+                    image.setResource(resources.tick());
+                } else {
+                    image.setResource(resources.tickDisabled());
+                }
+                break;
+            case HALF_TICK:
+                if (enabled) {
+                    image.setResource(resources.halfTick());
+                } else {
+                    image.setResource(resources.halfTickDisabled());
+                }
+                break;
+            case UNTICK:
+                if (enabled) {
+                    image.setResource(resources.untick());
+                } else {
+                    image.setResource(resources.untickDisabled());
+                }
+                break;
         }
     }
 
@@ -184,6 +200,7 @@ public class TickBox extends Composite
 
     public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
+        updateImage();
     }
 
     public interface Binder extends UiBinder<Widget, TickBox> {
@@ -203,6 +220,12 @@ public class TickBox extends Composite
         ImageResource halfTick();
 
         ImageResource untick();
+
+        ImageResource tickDisabled();
+
+        ImageResource halfTickDisabled();
+
+        ImageResource untickDisabled();
 
         @Source("tickbox.css")
         Style style();

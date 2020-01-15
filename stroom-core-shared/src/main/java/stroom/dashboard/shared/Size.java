@@ -33,7 +33,7 @@ import java.util.Arrays;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"width", "height"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "size")
 @XmlType(name = "Size", propOrder = {"width", "height"})
 public class Size implements SharedObject {

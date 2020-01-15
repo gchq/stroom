@@ -3,168 +3,89 @@ package stroom.config.app;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.activity.impl.db.ActivityConfig;
+import stroom.annotation.impl.AnnotationConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
+import stroom.cluster.task.impl.ClusterTaskConfig;
+import stroom.config.common.CommonDbConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
-import stroom.core.db.DbConfig;
+import stroom.core.db.CoreConfig;
 import stroom.core.receive.ProxyAggregationConfig;
 import stroom.core.receive.ReceiveDataConfig;
+import stroom.dashboard.impl.DashboardConfig;
 import stroom.dashboard.impl.datasource.DataSourceUrlConfig;
+import stroom.docstore.impl.db.DocStoreConfig;
 import stroom.explorer.impl.db.ExplorerConfig;
+import stroom.feed.impl.FeedConfig;
 import stroom.importexport.impl.ContentPackImportConfig;
 import stroom.importexport.impl.ExportConfig;
 import stroom.index.impl.IndexConfig;
-import stroom.index.impl.db.IndexDbConfig;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.job.impl.JobSystemConfig;
-import stroom.job.impl.db.JobDbConfig;
 import stroom.lifecycle.impl.LifecycleConfig;
 import stroom.node.impl.NodeConfig;
-import stroom.node.impl.db.NodeDbConfig;
 import stroom.pipeline.PipelineConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.search.impl.SearchConfig;
+import stroom.search.solr.SolrConfig;
+import stroom.searchable.impl.SearchableConfig;
 import stroom.security.impl.SecurityConfig;
-import stroom.security.impl.db.SecurityDbConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
-import stroom.storedquery.impl.StoredQueryHistoryConfig;
+import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.shared.IsConfig;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class AppConfig implements IsConfig {
-    private ActivityConfig activityConfig;
-    private BenchmarkClusterConfig benchmarkClusterConfig;
-    private ClusterConfig clusterConfig;
-    private ClusterLockConfig clusterLockConfig;
-    private ContentPackImportConfig contentPackImportConfig;
-    private DataConfig dataConfig;
-    private DataSourceUrlConfig dataSourceUrlConfig;
-    private DbConfig dbConfig;
-    private ExplorerConfig explorerConfig;
-    private ExportConfig exportConfig;
-    private IndexConfig indexConfig;
-    private IndexDbConfig indexDbConfig;
-    private JobSystemConfig jobSystemConfig;
-    private JobDbConfig jobDbConfig;
-    private LifecycleConfig lifecycleConfig;
-    private NodeConfig nodeConfig;
-    private NodeDbConfig nodeDbConfig;
-    private PathConfig pathConfig;
-    private PipelineConfig pipelineConfig;
-    private ProcessorConfig processorConfig;
-    private PropertyServiceConfig propertyServiceConfig;
-    private ProxyAggregationConfig proxyAggregationConfig;
-    private ReceiveDataConfig receiveDataConfig;
-    private SearchConfig searchConfig;
-    private SecurityConfig securityConfig;
-    private SecurityDbConfig securityDbConfig;
-    private ServiceDiscoveryConfig serviceDiscoveryConfig;
-    private StatisticsConfig statisticsConfig;
-    private StoredQueryHistoryConfig storedQueryHistoryConfig;
-    private UiConfig uiConfig;
-    private VolumeConfig volumeConfig;
+    private boolean superDevMode;
+    private ActivityConfig activityConfig = new ActivityConfig();
+    private AnnotationConfig annotationConfig = new AnnotationConfig();
+    private BenchmarkClusterConfig benchmarkClusterConfig = new BenchmarkClusterConfig();
+    private ClusterConfig clusterConfig = new ClusterConfig();
+    private ClusterLockConfig clusterLockConfig = new ClusterLockConfig();
+    private ClusterTaskConfig clusterTaskConfig = new ClusterTaskConfig();
+    private CommonDbConfig commonDbConfig = new CommonDbConfig();
+    private ContentPackImportConfig contentPackImportConfig = new ContentPackImportConfig();
+    private CoreConfig coreConfig = new CoreConfig();
+    private DashboardConfig dashboardConfig = new DashboardConfig();
+    private DataConfig dataConfig = new DataConfig();
+    private DataSourceUrlConfig dataSourceUrlConfig = new DataSourceUrlConfig();
+    private DocStoreConfig docStoreConfig = new DocStoreConfig();
+    private ExplorerConfig explorerConfig = new ExplorerConfig();
+    private ExportConfig exportConfig = new ExportConfig();
+    private FeedConfig feedConfig = new FeedConfig();
+    private IndexConfig indexConfig = new IndexConfig();
+    private JobSystemConfig jobSystemConfig = new JobSystemConfig();
+    private LifecycleConfig lifecycleConfig = new LifecycleConfig();
+    private NodeConfig nodeConfig = new NodeConfig();
+    private PathConfig pathConfig = new PathConfig();
+    private PipelineConfig pipelineConfig = new PipelineConfig();
+    private ProcessorConfig processorConfig = new ProcessorConfig();
+    private PropertyServiceConfig propertyServiceConfig = new PropertyServiceConfig();
+    private ProxyAggregationConfig proxyAggregationConfig = new ProxyAggregationConfig();
+    private ReceiveDataConfig receiveDataConfig = new ReceiveDataConfig();
+    private SearchConfig searchConfig = new SearchConfig();
+    private SearchableConfig searchableConfig = new SearchableConfig();
+    private SecurityConfig securityConfig = new SecurityConfig();
+    private ServiceDiscoveryConfig serviceDiscoveryConfig = new ServiceDiscoveryConfig();
+    private SessionCookieConfig sessionCookieConfig = new SessionCookieConfig();
+    private SolrConfig solrConfig = new SolrConfig();
+    private StatisticsConfig statisticsConfig = new StatisticsConfig();
+    private StoredQueryConfig storedQueryConfig = new StoredQueryConfig();
+    private UiConfig uiConfig = new UiConfig();
+    private VolumeConfig volumeConfig = new VolumeConfig();
 
-    public AppConfig() {
-        this.activityConfig = new ActivityConfig();
-        this.benchmarkClusterConfig = new BenchmarkClusterConfig();
-        this.clusterConfig = new ClusterConfig();
-        this.clusterLockConfig = new ClusterLockConfig();
-        this.contentPackImportConfig = new ContentPackImportConfig();
-        this.dataConfig = new DataConfig();
-        this.dataSourceUrlConfig = new DataSourceUrlConfig();
-        this.dbConfig = new DbConfig();
-        this.explorerConfig = new ExplorerConfig();
-        this.exportConfig = new ExportConfig();
-        this.indexConfig = new IndexConfig();
-        this.indexDbConfig = new IndexDbConfig();
-        this.jobSystemConfig = new JobSystemConfig();
-        this.jobDbConfig = new JobDbConfig();
-        this.lifecycleConfig = new LifecycleConfig();
-        this.nodeConfig = new NodeConfig();
-        this.nodeDbConfig = new NodeDbConfig();
-        this.pathConfig = new PathConfig();
-        this.pipelineConfig = new PipelineConfig();
-        this.processorConfig = new ProcessorConfig();
-        this.propertyServiceConfig = new PropertyServiceConfig();
-        this.proxyAggregationConfig = new ProxyAggregationConfig();
-        this.receiveDataConfig = new ReceiveDataConfig();
-        this.searchConfig = new SearchConfig();
-        this.securityConfig = new SecurityConfig();
-        this.securityDbConfig = new SecurityDbConfig();
-        this.serviceDiscoveryConfig = new ServiceDiscoveryConfig();
-        this.statisticsConfig = new StatisticsConfig();
-        this.storedQueryHistoryConfig = new StoredQueryHistoryConfig();
-        this.uiConfig = new UiConfig();
-        this.volumeConfig = new VolumeConfig();
+    @JsonProperty("superDevMode")
+    public boolean isSuperDevMode() {
+        return superDevMode;
     }
 
-    @Inject
-    AppConfig(final BenchmarkClusterConfig benchmarkClusterConfig,
-              final ClusterConfig clusterConfig,
-              final ClusterLockConfig clusterLockConfig,
-              final ContentPackImportConfig contentPackImportConfig,
-              final DataConfig dataConfig,
-              final DataSourceUrlConfig dataSourceUrlConfig,
-              final DbConfig dbConfig,
-              final ExplorerConfig explorerConfig,
-              final ExportConfig exportConfig,
-              final IndexConfig indexConfig,
-              final IndexDbConfig indexDbConfig,
-              final JobSystemConfig jobSystemConfig,
-              final JobDbConfig jobDbConfig,
-              final LifecycleConfig lifecycleConfig,
-              final NodeConfig nodeConfig,
-              final NodeDbConfig nodeDbConfig,
-              final PathConfig pathConfig,
-              final PipelineConfig pipelineConfig,
-              final ProcessorConfig processorConfig,
-              final PropertyServiceConfig propertyServiceConfig,
-              final ProxyAggregationConfig proxyAggregationConfig,
-              final ReceiveDataConfig receiveDataConfig,
-              final SearchConfig searchConfig,
-              final SecurityConfig securityConfig,
-              final SecurityDbConfig securityDbConfig,
-              final ServiceDiscoveryConfig serviceDiscoveryConfig,
-              final StatisticsConfig statisticsConfig,
-              final StoredQueryHistoryConfig storedQueryHistoryConfig,
-              final UiConfig uiConfig,
-              final VolumeConfig volumeConfig,
-              final ActivityConfig activityConfig ) {
-        this.activityConfig = activityConfig;
-        this.benchmarkClusterConfig = benchmarkClusterConfig;
-        this.clusterConfig = clusterConfig;
-        this.clusterLockConfig = clusterLockConfig;
-        this.contentPackImportConfig = contentPackImportConfig;
-        this.dataConfig = dataConfig;
-        this.dataSourceUrlConfig = dataSourceUrlConfig;
-        this.dbConfig = dbConfig;
-        this.explorerConfig = explorerConfig;
-        this.exportConfig = exportConfig;
-        this.indexConfig = indexConfig;
-        this.indexDbConfig = indexDbConfig;
-        this.jobSystemConfig = jobSystemConfig;
-        this.lifecycleConfig = lifecycleConfig;
-        this.nodeConfig = nodeConfig;
-        this.nodeDbConfig = nodeDbConfig;
-        this.pathConfig = pathConfig;
-        this.pipelineConfig = pipelineConfig;
-        this.processorConfig = processorConfig;
-        this.propertyServiceConfig = propertyServiceConfig;
-        this.proxyAggregationConfig = proxyAggregationConfig;
-        this.receiveDataConfig = receiveDataConfig;
-        this.searchConfig = searchConfig;
-        this.securityConfig = securityConfig;
-        this.securityDbConfig = securityDbConfig;
-        this.serviceDiscoveryConfig = serviceDiscoveryConfig;
-        this.statisticsConfig = statisticsConfig;
-        this.storedQueryHistoryConfig = storedQueryHistoryConfig;
-        this.uiConfig = uiConfig;
-        this.volumeConfig = volumeConfig;
+    @JsonProperty("superDevMode")
+    public void setSuperDevMode(final boolean superDevMode) {
+        this.superDevMode = superDevMode;
     }
 
     @JsonProperty("activity")
@@ -174,6 +95,15 @@ public class AppConfig implements IsConfig {
 
     public void setActivityConfig(final ActivityConfig activityConfig) {
         this.activityConfig = activityConfig;
+    }
+
+    @JsonProperty("annotation")
+    public AnnotationConfig getAnnotationConfig() {
+        return annotationConfig;
+    }
+
+    public void setAnnotationConfig(final AnnotationConfig annotationConfig) {
+        this.annotationConfig = annotationConfig;
     }
 
     @JsonProperty("benchmark")
@@ -203,6 +133,26 @@ public class AppConfig implements IsConfig {
         this.clusterLockConfig = clusterLockConfig;
     }
 
+    @JsonProperty("clusterTask")
+    public ClusterTaskConfig getClusterTaskConfig() {
+        return clusterTaskConfig;
+    }
+
+    public void setClusterTaskConfig(final ClusterTaskConfig clusterTaskConfig) {
+        this.clusterTaskConfig = clusterTaskConfig;
+    }
+
+    @JsonProperty("commonDbDetails")
+    @JsonPropertyDescription("Defines a set of common database connection details to use if no connection details are " +
+            "defined for a service area in stroom, e.g. core or config")
+    public CommonDbConfig getCommonDbConfig() {
+        return commonDbConfig;
+    }
+
+    public void setCommonDbConfig(final CommonDbConfig commonDbConfig) {
+        this.commonDbConfig = commonDbConfig;
+    }
+
     @JsonProperty("contentPackImport")
     public ContentPackImportConfig getContentPackImportConfig() {
         return contentPackImportConfig;
@@ -214,12 +164,21 @@ public class AppConfig implements IsConfig {
 
     @JsonProperty("core")
     @JsonPropertyDescription("Configuration for the core stroom DB")
-    public DbConfig getDbConfig() {
-        return dbConfig;
+    public CoreConfig getCoreConfig() {
+        return coreConfig;
     }
 
-    public void setDbConfig(final DbConfig dbConfig) {
-        this.dbConfig = dbConfig;
+    public void setCoreConfig(final CoreConfig coreConfig) {
+        this.coreConfig = coreConfig;
+    }
+
+    @JsonProperty("dashboard")
+    public DashboardConfig getDashboardConfig() {
+        return dashboardConfig;
+    }
+
+    public void setDashboardConfig(final DashboardConfig dashboardConfig) {
+        this.dashboardConfig = dashboardConfig;
     }
 
     @JsonProperty("data")
@@ -241,6 +200,15 @@ public class AppConfig implements IsConfig {
         this.dataSourceUrlConfig = dataSourceUrlConfig;
     }
 
+    @JsonProperty("docstore")
+    public DocStoreConfig getDocStoreConfig() {
+        return docStoreConfig;
+    }
+
+    public void setDocStoreConfig(final DocStoreConfig docStoreConfig) {
+        this.docStoreConfig = docStoreConfig;
+    }
+
     @JsonProperty("explorer")
     public ExplorerConfig getExplorerConfig() {
         return explorerConfig;
@@ -248,6 +216,15 @@ public class AppConfig implements IsConfig {
 
     public void setExplorerConfig(final ExplorerConfig explorerConfig) {
         this.explorerConfig = explorerConfig;
+    }
+
+    @JsonProperty("feed")
+    public FeedConfig getFeedConfig() {
+        return feedConfig;
+    }
+
+    public void setFeedConfig(final FeedConfig feedConfig) {
+        this.feedConfig = feedConfig;
     }
 
     @JsonProperty("export")
@@ -268,15 +245,6 @@ public class AppConfig implements IsConfig {
         this.indexConfig = indexConfig;
     }
 
-    @JsonProperty("indexDb")
-    public IndexDbConfig getIndexDbConfig() {
-        return indexDbConfig;
-    }
-
-    public void setIndexDbConfig(final IndexDbConfig indexDbConfig) {
-        this.indexDbConfig = indexDbConfig;
-    }
-
     @JsonProperty("job")
     public JobSystemConfig getJobSystemConfig() {
         return jobSystemConfig;
@@ -284,15 +252,6 @@ public class AppConfig implements IsConfig {
 
     public void setJobSystemConfig(final JobSystemConfig jobSystemConfig) {
         this.jobSystemConfig = jobSystemConfig;
-    }
-
-    @JsonProperty("jobDb")
-    public JobDbConfig getJobDbConfig() {
-        return jobDbConfig;
-    }
-
-    public void setJobDbConfig(JobDbConfig jobDbConfig) {
-        this.jobDbConfig = jobDbConfig;
     }
 
     @JsonProperty("lifecycle")
@@ -311,15 +270,6 @@ public class AppConfig implements IsConfig {
 
     public void setNodeConfig(final NodeConfig nodeConfig) {
         this.nodeConfig = nodeConfig;
-    }
-
-    @JsonProperty("nodeDb")
-    public NodeDbConfig getNodeDbConfig() {
-        return nodeDbConfig;
-    }
-
-    public void setNodeDbConfig(NodeDbConfig nodeDbConfig) {
-        this.nodeDbConfig = nodeDbConfig;
     }
 
     @JsonProperty("path")
@@ -369,15 +319,15 @@ public class AppConfig implements IsConfig {
     }
 
     @JsonProperty("queryHistory")
-    public StoredQueryHistoryConfig getStoredQueryHistoryConfig() {
-        return storedQueryHistoryConfig;
+    public StoredQueryConfig getStoredQueryConfig() {
+        return storedQueryConfig;
     }
 
-    public void setStoredQueryHistoryConfig(final StoredQueryHistoryConfig storedQueryHistoryConfig) {
-        this.storedQueryHistoryConfig = storedQueryHistoryConfig;
+    public void setStoredQueryConfig(final StoredQueryConfig storedQueryConfig) {
+        this.storedQueryConfig = storedQueryConfig;
     }
 
-    @JsonProperty("feed")
+    @JsonProperty("receive")
     public ReceiveDataConfig getReceiveDataConfig() {
         return receiveDataConfig;
     }
@@ -395,6 +345,24 @@ public class AppConfig implements IsConfig {
         this.searchConfig = searchConfig;
     }
 
+    @JsonProperty("searchable")
+    public SearchableConfig getSearchableConfig() {
+        return searchableConfig;
+    }
+
+    public void setSearchableConfig(final SearchableConfig searchableConfig) {
+        this.searchableConfig = searchableConfig;
+    }
+
+    @JsonProperty("solr")
+    public SolrConfig getSolrConfig() {
+        return solrConfig;
+    }
+
+    public void setSolrConfig(final SolrConfig solrConfig) {
+        this.solrConfig = solrConfig;
+    }
+
     @JsonProperty("security")
     public SecurityConfig getSecurityConfig() {
         return securityConfig;
@@ -404,15 +372,6 @@ public class AppConfig implements IsConfig {
         this.securityConfig = securityConfig;
     }
 
-    @JsonProperty("securityDb")
-    public SecurityDbConfig getSecurityDbConfig() {
-        return securityDbConfig;
-    }
-
-    public void setSecurityDbConfig(final SecurityDbConfig securityDbConfig) {
-        this.securityDbConfig = securityDbConfig;
-    }
-
     @JsonProperty("serviceDiscovery")
     public ServiceDiscoveryConfig getServiceDiscoveryConfig() {
         return serviceDiscoveryConfig;
@@ -420,6 +379,16 @@ public class AppConfig implements IsConfig {
 
     public void setServiceDiscoveryConfig(final ServiceDiscoveryConfig serviceDiscoveryConfig) {
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
+    }
+
+    @JsonProperty("sessionCookie")
+    public SessionCookieConfig getSessionCookieConfig() {
+        return sessionCookieConfig;
+    }
+
+    @JsonProperty("sessionCookie")
+    public void setSessionCookieConfig(final SessionCookieConfig sessionCookieConfig) {
+        this.sessionCookieConfig = sessionCookieConfig;
     }
 
     @JsonProperty("statistics")

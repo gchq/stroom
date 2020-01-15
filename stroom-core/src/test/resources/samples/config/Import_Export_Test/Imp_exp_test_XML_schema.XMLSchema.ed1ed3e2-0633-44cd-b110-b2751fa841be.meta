@@ -6,6 +6,5 @@
   "description" : "My description",
   "namespaceURI" : "example:1",
   "systemId" : "file://example.xsd",
-  "deprecated" : false,
   "schemaGroup" : "EXAMPLE"
 }

@@ -23,6 +23,7 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Sizes;
 import stroom.search.api.EventRefs;
+import stroom.search.coprocessor.EventCoprocessorSettings;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.ui.config.shared.UiConfig;
@@ -80,8 +81,15 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
 
             // Create an asynchronous search task.
             final String searchName = "Event Search";
-            final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(task, task.getUserToken(), searchName,
-                    query, nodeName, task.getResultSendFrequency(), coprocessorMap, null, nowEpochMilli);
+            final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
+                    task,
+                    searchName,
+                    query,
+                    nodeName,
+                    task.getResultSendFrequency(),
+                    coprocessorMap,
+                    null,
+                    nowEpochMilli);
 
             // Create a collector to store search results.
             final Sizes storeSize = getStoreSizes();

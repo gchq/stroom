@@ -11,35 +11,26 @@
         "expression" : "${Type}",
         "format" : {
           "type" : "GENERAL"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "Node",
         "expression" : "${Node}",
         "format" : {
           "type" : "GENERAL"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "Statistic Value",
         "expression" : "${Statistic Value}",
         "format" : {
           "type" : "NUMBER"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "Date Time",
         "expression" : "${Date Time}",
         "format" : {
           "type" : "DATE_TIME"
-        },
-        "width" : 200,
-        "visible" : true
-      } ],
-      "maxResults" : [ 1000000 ]
+        }
+      } ]
     }
   }, {
     "type" : "query",
@@ -54,20 +45,16 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "Date Time",
           "condition" : "BETWEEN",
-          "value" : "now()-1d,now()",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "now()-1d,now()"
+        } ]
       },
       "automate" : {
         "open" : true,
-        "refresh" : true,
-        "refreshInterval" : "10s"
+        "refresh" : true
       }
     }
   }, {
@@ -97,20 +84,16 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "Date Time",
           "condition" : "BETWEEN",
-          "value" : "now()-1d,now()",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "now()-1d,now()"
+        } ]
       },
       "automate" : {
         "open" : true,
-        "refresh" : true,
-        "refreshInterval" : "10s"
+        "refresh" : true
       }
     }
   }, {
@@ -125,35 +108,26 @@
         "expression" : "${Type}",
         "format" : {
           "type" : "GENERAL"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "Node",
         "expression" : "${Node}",
         "format" : {
           "type" : "GENERAL"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "Statistic Value",
         "expression" : "${Statistic Value}",
         "format" : {
           "type" : "NUMBER"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "Date Time",
         "expression" : "${Date Time}",
         "format" : {
           "type" : "DATE_TIME"
-        },
-        "width" : 200,
-        "visible" : true
-      } ],
-      "maxResults" : [ 1000000 ]
+        }
+      } ]
     }
   }, {
     "type" : "vis",
@@ -182,20 +156,16 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "Date Time",
           "condition" : "BETWEEN",
-          "value" : "now()-1d,now()",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "now()-1d,now()"
+        } ]
       },
       "automate" : {
         "open" : true,
-        "refresh" : true,
-        "refreshInterval" : "10s"
+        "refresh" : true
       }
     }
   }, {
@@ -210,35 +180,26 @@
         "expression" : "${Type}",
         "format" : {
           "type" : "GENERAL"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "Node",
         "expression" : "${Node}",
         "format" : {
           "type" : "GENERAL"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "Statistic Value",
         "expression" : "${Statistic Value}",
         "format" : {
           "type" : "NUMBER"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "Date Time",
         "expression" : "${Date Time}",
         "format" : {
           "type" : "DATE_TIME"
-        },
-        "width" : 200,
-        "visible" : true
-      } ],
-      "maxResults" : [ 1000000 ]
+        }
+      } ]
     }
   }, {
     "type" : "vis",
@@ -267,20 +228,16 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "Date Time",
           "condition" : "BETWEEN",
-          "value" : "now()-1d,now()",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "now()-1d,now()"
+        } ]
       },
       "automate" : {
         "open" : true,
-        "refresh" : true,
-        "refreshInterval" : "10s"
+        "refresh" : true
       }
     }
   }, {
@@ -295,35 +252,26 @@
         "expression" : "${Type}",
         "format" : {
           "type" : "GENERAL"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "Node",
         "expression" : "${Node}",
         "format" : {
           "type" : "GENERAL"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "Statistic Value",
         "expression" : "${Statistic Value}",
         "format" : {
           "type" : "NUMBER"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "Date Time",
         "expression" : "${Date Time}",
         "format" : {
           "type" : "DATE_TIME"
-        },
-        "width" : 200,
-        "visible" : true
-      } ],
-      "maxResults" : [ 1000000 ]
+        }
+      } ]
     }
   }, {
     "type" : "vis",
@@ -342,15 +290,11 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : {
-      "width" : 200,
-      "height" : 200
-    },
+    "preferredSize" : { },
     "dimension" : 1,
     "children" : [ {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 192
       },
       "tabs" : [ {
@@ -360,11 +304,12 @@
       }, {
         "id" : "query-JT8D7"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 3,
+      "allTabCount" : 3
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 183
       },
       "tabs" : [ {
@@ -374,11 +319,12 @@
       }, {
         "id" : "query-XOG4Q"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 3,
+      "allTabCount" : 3
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 236
       },
       "tabs" : [ {
@@ -388,13 +334,12 @@
       }, {
         "id" : "query-HXTW8"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 3,
+      "allTabCount" : 3
     }, {
       "type" : "tabLayout",
-      "preferredSize" : {
-        "width" : 200,
-        "height" : 200
-      },
+      "preferredSize" : { },
       "tabs" : [ {
         "id" : "vis-QPS6W"
       }, {
@@ -402,8 +347,9 @@
       }, {
         "id" : "query-GXYVJ"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 3,
+      "allTabCount" : 3
     } ]
-  },
-  "tabVisibility" : "SHOW_ALL"
+  }
 }

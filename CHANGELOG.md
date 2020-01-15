@@ -6,11 +6,139 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1353** : Removed session identities from tasks.
+
+* Issue **#1352** : Removed internal API token.
+
+* Issue **#1347** : Added `http-call` method to XSLT.
+
+* Change docker image to allow us to pass in the dropwizard command to run, e.g. server|migrate.
+
+* Stop MySQL outputing Note level warnings during migration about things that don't exist when we expect them not to.
+
+
+## [v7.0-beta.13] - 2019-12-24
+
+* Add `migrate` command line argument to run just the DB migrations.
+
+* Updated API key to include audience and added client id and secret.
+
+* Change `stroom.conf.sh` to also look for ip in `/sbin`
+
+* Issue **#260** : You can now hide dashboard tabs.
+
+* Issue **#1332** : The text pane can now be configured to show source data.
+
+* Issue **#1311** : Improved source location tracking.
+
+
+## [v7.0-beta.12] - 2019-12-04
+
+* Change local.yml.sh to also look for ip in /sbin
+
+
+## [v7.0-beta.11] - 2019-12-04
+
+* Fix invalid SQL syntax in V07_00_00_012__Dictionary
+
+
+## [v7.0-beta.10] - 2019-12-04
+
+* Update auth api version
+
+* Add clientId and clientSecret to config
+
+* Update API keys (needed aud)
+
+* Issue **#1338** : Added new config options to control the maximum size of some caches: `stroom.pipeline.parser.maxPoolSize`, `stroom.pipeline.schema.maxPoolSize`, `stroom.pipeline.schema.maxPoolSize`, `stroom.pipeline.xslt.maxPoolSize`, `stroom.entity.maxCacheSize`, `stroom.referenceData.mapStore.maxCacheSize`.
+
+* Issue **#642** : Downloading query details now ignores hidden fields.
+
+* Issue **#1337** : Fixed issue where downloading large numbers of search results in Excel format was exceeding maximum style count of 64000. 
+
+* Issue **#1341** : Added XSRF protection to GWT RPC requests.
+
+* Issue **#1335** : Made session cookie `Secure` and `HttpOnly`.
+
+* Issue **#1334** : Fix 404 when accessing `/stroom/resourcestore/........`, i.e. fix Tools->Export.
+
+* Issue **#1333** : Improved resilience against XSS attacks.
+
+* Issue **#1330** : Allow configuration of `Content-Type` in HTTPAppender.
+
+* Issue **#1327** : Improvements to annotations.
+
+* Issue **#1328** : Increased size of data window and removed max size restrictions.
+
+* Issue **#1324** : Improved logging and added SSL options for HTTPAppender.
+
+
+## [v7.0-beta.9] - 2019-11-20
+
+* Fix SSL connection failure on remote feed staus check.
+
+* Remove ConfigServlet as the functionality is covered by ProxyConfigHealthCheck.
+
+* Fix password masking in ProxyConfigHealthCheck.
+
+* Change servlet path of ProxyStatusServlet from `/config` to `/status`.
+
+
+## [v7.0-beta.8] - 2019-11-20
+
+* Change precedence order for config properties. YAML > database > default. Change UI to show effective value. Add hot loading of YAML file changes.
+
+* Issue **#1322** : Stroom now asks if you really want to leave site when stepping items are dirty. Also fixed `Save` and `Save All` menu items and dashboard param changes now correctly make a dashboard dirty.
+
+* Issue **#1320** : Fixed formatting of XML where trailing spaces were being removed from content surrounded by start and end tags (data content) which should not happen. 
+
+* Issue **#1321** : Make path relative in stroom distribution .zip.sha256 hash file.
+
+* The auth service now supports the use of HTTPS without certificate verification and adds additional logging.
+
+* Issue **gchq/stroom-auth#157** : Automatically refresh user's API key when it expires.
+
+* Issue **#1243** : Dashboard visualisations now link with similar functions available to dashboard tables, e.g. `link()`, `dashboard()`, `annotation()`, `stepping()`, `data()`.
+
+* Issue **#1316** : JSONParser now includes various parse options including handling comments.
+
+* Issue **#48** : Added option to hide/show dashboard table columns.
+
+* Issue **#1315** : Improved health check for missing API key.
+
+* Updated stroom expression to v1.5.4 and added new field types.
+
+* Issue **#1315** : Improved health check for missing API key.
+
+* Issue **#1314** : Fixed NPE thrown when logging caused when viewing docs that can't be found.
+
+* Issue **#1313** : Suggestion boxes now make suggestions immediately before the user even starts typing.
+
+* Issue **#1043** : Added feature to allow floating point numbers to be indexed.
+
+* Issue **#1312** : Dictionaries now change the entity name in the DB when renamed.
+
+* Issue **#1312** : Fixed read only behaviour of dictionary settings UI.
+
+* Issue **#1300** : Multiple changes to annotations.
+
+* Issue **#1265** : Added `modulus()` function along with alias `mod()` and modulus operator `%`.
+
+* Issue **#1300** : Added `annotation()` link creation function, `currentUser()` alias for `param('currentUser()')` and additional link creation functions for `data()` and `stepping()`.
+
+* Issue **#67** : Table columns now display menu items on left click.
+
+* Uplift stroom-query to v2.2.4 to add better diagnostic logging.
+
 * Uplift Kafka client to v2.2.1.
 
 * Issue **#1293** : Add more static file types to allow nginx/browser caching on.
 
 * Issue **#1295** : Add authentication bypass for servlets such as /remoting, /status, /echo, etc.
+
+* Issue **#1297** : The UI now supplies API tokens to the backend for resource calls.
+
+* Issue **#1296** : Fixed NPE in StreamMapCreator caused when a stream can not be found.
 
 ## [v7.0-beta.7] - 2019-10-23
 
@@ -110,7 +238,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#1246** : Removed elastic search document type, menu items and filter.
 
-* Issue **#1247** : Added XSLT functions (`source`, `sourceId`, `partNo`, `recordNo`, `lineFrom`, `colFrom`, `lineTo`, `colTo`) to determine the current source location so it can be embedded in a cooked event. Events containing raw source location info can be made into links in dashboard tables or the text pane so that a user can see raw source data or jump directly to stepping that raw record. 
+* Issue **#1247** : Added XSLT functions (`source`, `sourceId`, `partNo`, `recordNo`, `lineFrom`, `colFrom`, `lineTo`, `colTo`) to determine the current source location so it can be embedded in a cooked event. Events containing raw source location info can be made into links in dashboard tables or the text pane so that a user can see raw source data or jump directly to stepping that raw record.
 
 * Add data retention feature and index optimisation to Solr indexes.
 
@@ -1804,7 +1932,13 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.7...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.13...HEAD
+[v7.0-beta.13]: https://github.com/gchq/stroom/compare/v7.0-beta.12...v7.0-beta.13
+[v7.0-beta.12]: https://github.com/gchq/stroom/compare/v7.0-beta.11...v7.0-beta.12
+[v7.0-beta.11]: https://github.com/gchq/stroom/compare/v7.0-beta.10...v7.0-beta.11
+[v7.0-beta.10]: https://github.com/gchq/stroom/compare/v7.0-beta.9...v7.0-beta.10
+[v7.0-beta.9]: https://github.com/gchq/stroom/compare/v7.0-beta.8...v7.0-beta.9
+[v7.0-beta.8]: https://github.com/gchq/stroom/compare/v7.0-beta.7...v7.0-beta.8
 [v7.0-beta.7]: https://github.com/gchq/stroom/compare/v7.0-beta.6...v7.0-beta.7
 [v7.0-beta.6]: https://github.com/gchq/stroom/compare/v7.0-beta.5...v7.0-beta.6
 [v7.0-beta.5]: https://github.com/gchq/stroom/compare/v7.0-beta.4...v7.0-beta.5

@@ -4,7 +4,7 @@ import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.security.api.SecurityContext;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;

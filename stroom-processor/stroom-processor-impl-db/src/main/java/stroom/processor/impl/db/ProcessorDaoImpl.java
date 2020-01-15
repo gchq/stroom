@@ -20,15 +20,15 @@ import static stroom.processor.impl.db.jooq.tables.Processor.PROCESSOR;
 import static stroom.processor.impl.db.jooq.tables.ProcessorFilter.PROCESSOR_FILTER;
 
 class ProcessorDaoImpl implements ProcessorDao {
-    private final ConnectionProvider connectionProvider;
+    private final ProcessorDbConnProvider processorDbConnProvider;
     private final GenericDao<ProcessorRecord, Processor, Integer> genericDao;
     private final ExpressionMapper expressionMapper;
 
     @Inject
-    public ProcessorDaoImpl(final ConnectionProvider connectionProvider,
+    public ProcessorDaoImpl(final ProcessorDbConnProvider processorDbConnProvider,
                             final ExpressionMapperFactory expressionMapperFactory) {
-        this.connectionProvider = connectionProvider;
-        this.genericDao = new GenericDao<>(PROCESSOR, PROCESSOR.ID, Processor.class, connectionProvider);
+        this.processorDbConnProvider = processorDbConnProvider;
+        this.genericDao = new GenericDao<>(PROCESSOR, PROCESSOR.ID, Processor.class, processorDbConnProvider);
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorDataSource.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
@@ -38,7 +38,7 @@ class ProcessorDaoImpl implements ProcessorDao {
     @Override
     public Processor create(final Processor processor) {
         // We don't use the delegate DAO here as we want to handle potential duplicates carefully so this behaves as a getOrCreate method.
-        return JooqUtil.contextResult(connectionProvider, context -> {
+        return JooqUtil.contextResult(processorDbConnProvider, context -> {
             final Optional<ProcessorRecord> optional = context
                     .insertInto(PROCESSOR,
                             PROCESSOR.CREATE_TIME_MS,
@@ -100,7 +100,7 @@ class ProcessorDaoImpl implements ProcessorDao {
 //        final Collection<Condition> conditions = JooqUtil.conditions(
 //                JooqUtil.getStringCondition(PROCESSOR.PIPELINE_UUID, criteria.getPipelineUuidCriteria()));
 
-        final List<Processor> list = JooqUtil.contextResult(connectionProvider, context -> context
+        final List<Processor> list = JooqUtil.contextResult(processorDbConnProvider, context -> context
                 .select()
                 .from(PROCESSOR)
                 .where(condition)

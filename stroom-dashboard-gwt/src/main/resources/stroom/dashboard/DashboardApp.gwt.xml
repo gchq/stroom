@@ -13,6 +13,9 @@
 
     <inherits name="javax.xml.bind.annotation.Adapters"/>
 
+    <!-- RestyGWT -->
+    <inherits name="org.fusesource.restygwt.RestyGWT"/>
+
     <!-- Other module inherits -->
     <inherits name="stroom.dispatch.Dispatch"/>
 
@@ -50,6 +53,7 @@
     <!-- Import functional areas -->
     <!-- Minimal -->
     <inherits name="stroom.activity.Activity" />
+    <inherits name="stroom.annotation.Annotation" />
     <inherits name="stroom.config.Config" />
     <inherits name="stroom.config.global.GlobalConfig" />
     <inherits name="stroom.ui.config.UiConfig" />

@@ -12,49 +12,41 @@
         "format" : {
           "type" : "DATE_TIME"
         },
-        "width" : 168,
-        "visible" : true
+        "width" : 168
       }, {
         "name" : "connection_type",
         "expression" : "${connection_type}",
         "format" : {
           "type" : "GENERAL"
         },
-        "width" : 115,
-        "visible" : true
+        "width" : 115
       }, {
         "name" : "isp_user",
         "expression" : "${isp_user}",
         "format" : {
           "type" : "GENERAL"
         },
-        "width" : 69,
-        "visible" : true
+        "width" : 69
       }, {
         "name" : "actual_download",
         "expression" : "${actual_download}",
         "format" : {
           "type" : "NUMBER"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "width" : 200,
         "visible" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
-        "width" : 200,
         "visible" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "03064900-4fe9-4c57-bcaf-5a755c5c75d7",
         "name" : "BROADBAND_SPEED_TESTS-EXTRACTION"
-      },
-      "maxResults" : [ 1000000 ]
+      }
     }
   }, {
     "type" : "query",
@@ -69,26 +61,20 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "timestamp",
           "condition" : "BETWEEN",
-          "value" : "2017-01-01T00:00:00.000Z,2018-01-01T00:00:00.000Z",
-          "enabled" : true
+          "value" : "2017-01-01T00:00:00.000Z,2018-01-01T00:00:00.000Z"
         }, {
           "type" : "term",
           "field" : "isp_user",
           "condition" : "EQUALS",
-          "value" : "*",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "*"
+        } ]
       },
       "automate" : {
-        "open" : true,
-        "refresh" : false,
-        "refreshInterval" : "10s"
+        "open" : true
       }
     }
   }, {
@@ -108,18 +94,13 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : {
-      "width" : 200,
-      "height" : 200
-    },
+    "preferredSize" : { },
     "dimension" : 1,
     "children" : [ {
       "type" : "splitLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 132
       },
-      "dimension" : 0,
       "children" : [ {
         "type" : "tabLayout",
         "preferredSize" : {
@@ -129,29 +110,32 @@
         "tabs" : [ {
           "id" : "query-JT8D7"
         } ],
-        "selected" : 0
+        "selected" : 0,
+        "visibleTabCount" : 1,
+        "allTabCount" : 1
       }, {
         "type" : "tabLayout",
         "preferredSize" : {
-          "width" : 764,
-          "height" : 200
+          "width" : 764
         },
         "tabs" : [ {
           "id" : "table-IIO1T"
         } ],
-        "selected" : 0
+        "selected" : 0,
+        "visibleTabCount" : 1,
+        "allTabCount" : 1
       } ]
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 912
       },
       "tabs" : [ {
         "id" : "vis-BX59A"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     } ]
-  },
-  "tabVisibility" : "SHOW_ALL"
+  }
 }

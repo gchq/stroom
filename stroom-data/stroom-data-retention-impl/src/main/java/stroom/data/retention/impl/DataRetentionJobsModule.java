@@ -20,8 +20,8 @@ public class DataRetentionJobsModule extends ScheduledJobsModule {
 
     private static class DataRetention extends TaskConsumer {
         @Inject
-        DataRetention(final DataRetentionExecutor dataRetentionExecutor) {
-            super(task -> dataRetentionExecutor.exec());
+        DataRetention(final DataRetentionPolicyExecutor dataRetentionPolicyExecutor) {
+            super(task -> dataRetentionPolicyExecutor.exec());
         }
     }
 }

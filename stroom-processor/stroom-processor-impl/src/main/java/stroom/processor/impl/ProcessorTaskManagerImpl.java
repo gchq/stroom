@@ -46,7 +46,6 @@ import stroom.search.api.EventRef;
 import stroom.search.api.EventRefs;
 import stroom.search.api.EventSearch;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserTokenUtil;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
@@ -54,6 +53,7 @@ import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Sort.Direction;
@@ -482,7 +482,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
             optionalProcessorFilter.ifPresent(loadedFilter -> {
 
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
-                securityContext.asUser(UserTokenUtil.create(loadedFilter.getCreateUser()), () -> {
+                securityContext.asUser(securityContext.createIdentity(loadedFilter.getCreateUser()), () -> {
                     LOGGER.debug("createTasksForFilter() - processorFilter {}", loadedFilter.toString());
 
                     // Only try and create tasks if the processor is enabled.
@@ -671,7 +671,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                             if (modified != null) {
                                 queue.add(modified);
                                 count++;
-                                taskContext.info("Adding {}/{} non owned Tasks", count, size);
+                                taskContext.info(LambdaLogUtil.message("Adding {}/{} non owned Tasks", count, size));
                             }
 
                             if (Thread.currentThread().isInterrupted()) {
@@ -761,7 +761,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         final ProcessorFilterTracker updatedTracker = processorFilterTrackerDao.update(tracker);
 
         final Long maxMetaId = metaService.getMaxId();
-        eventSearch.search(filter.getUpdateUser(),
+        eventSearch.search(
                 query,
                 minEvent,
                 maxEvent,

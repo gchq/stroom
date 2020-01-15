@@ -20,9 +20,12 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.MetaFields;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
+
+import java.util.function.Function;
 
 public class MetaListPresenter extends AbstractMetaListPresenter {
     @Inject
@@ -50,9 +53,7 @@ public class MetaListPresenter extends AbstractMetaListPresenter {
         addAttributeColumn("Error", MetaFields.REC_ERROR, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
         addAttributeColumn("Warn", MetaFields.REC_WARN, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
         addAttributeColumn("Info", MetaFields.REC_INFO, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-
-        // TODO : @66 Add data retention column back into the table.
-//        addAttributeColumn("Retention", StreamDataSource.RETENTION_AGE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Retention", DataRetentionFields.RETENTION_AGE_FIELD, Function.identity(), ColumnSizeConstants.SMALL_COL);
 
         getView().addEndColumn(new EndColumn<>());
     }

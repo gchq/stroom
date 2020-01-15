@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.Job;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.test.common.util.db.DbTestModule;
 import stroom.util.AuditUtil;
 
 import java.util.List;
@@ -26,7 +27,8 @@ class TestJobDaoImpl {
     void beforeEach() {
         Guice.createInjector(
                 new JobDbModule(),
-                new MockSecurityContextModule())
+                new MockSecurityContextModule(),
+                new DbTestModule())
                 .injectMembers(this);
         cleanup();
     }
@@ -61,7 +63,7 @@ class TestJobDaoImpl {
     }
 
     @Test
-    void badFetch(){
+    void badFetch() {
         // Given/when
         Optional<Job> job = dao.fetch(11111);
         // Then
@@ -69,7 +71,7 @@ class TestJobDaoImpl {
     }
 
     @Test
-    void update(){
+    void update() {
         // Given
         Job job = createStandardJob();
         int version = job.getVersion();
@@ -108,7 +110,7 @@ class TestJobDaoImpl {
     }
 
     @Test
-    void badDelete(){
+    void badDelete() {
         // Given/when
         boolean didDeleteSucceed = dao.delete(111111);
         // Then
@@ -116,7 +118,7 @@ class TestJobDaoImpl {
     }
 
     @Test
-    void checkOcc(){
+    void checkOcc() {
         // Given
         Job job = createStandardJob();
         Job copy1 = dao.fetch(job.getId()).get();
@@ -131,7 +133,7 @@ class TestJobDaoImpl {
         assertThrows(DataChangedException.class, () -> dao.update(copy2));
     }
 
-    private Job createStandardJob(){
+    private Job createStandardJob() {
         Job job = new Job();
         AuditUtil.stamp("test", job);
         job.setEnabled(true);

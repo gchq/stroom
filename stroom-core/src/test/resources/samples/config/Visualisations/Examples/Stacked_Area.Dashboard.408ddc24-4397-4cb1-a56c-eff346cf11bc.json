@@ -10,55 +10,46 @@
         "name" : "ReportPeriod",
         "expression" : "${ReportPeriod}",
         "sort" : {
-          "order" : 0,
-          "direction" : "ASCENDING"
+          "order" : 0
         },
         "format" : {
           "type" : "DATE_TIME"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "CargoType",
         "expression" : "${CargoType}",
         "format" : {
           "type" : "GENERAL"
         },
-        "width" : 88,
-        "visible" : true
+        "width" : 88
       }, {
         "name" : "Domestic_International",
         "expression" : "concat(${Domestic_International}, ' - ', ${Arrival_Departure})",
         "format" : {
           "type" : "GENERAL"
         },
-        "width" : 160,
-        "visible" : true
+        "width" : 160
       }, {
         "name" : "AirCargoTons",
         "expression" : "${AirCargoTons}",
         "format" : {
           "type" : "NUMBER"
         },
-        "width" : 107,
-        "visible" : true
+        "width" : 107
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "width" : 200,
         "visible" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
-        "width" : 200,
         "visible" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "a7fed513-fb9c-4530-802f-54ef65e80589",
         "name" : "LAX_CARGO_VOLUME-EXTRACTION"
-      },
-      "maxResults" : [ 1000000 ]
+      }
     }
   }, {
     "type" : "query",
@@ -73,20 +64,15 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "DataExtractDate",
           "condition" : "BETWEEN",
-          "value" : "2000-10-01T00:00:00.000Z,2018-12-14T00:00:00.000Z",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "2000-10-01T00:00:00.000Z,2018-12-14T00:00:00.000Z"
+        } ]
       },
       "automate" : {
-        "open" : true,
-        "refresh" : false,
-        "refreshInterval" : "10s"
+        "open" : true
       }
     }
   }, {
@@ -106,18 +92,13 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : {
-      "width" : 200,
-      "height" : 200
-    },
+    "preferredSize" : { },
     "dimension" : 1,
     "children" : [ {
       "type" : "splitLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 122
       },
-      "dimension" : 0,
       "children" : [ {
         "type" : "tabLayout",
         "preferredSize" : {
@@ -127,29 +108,32 @@
         "tabs" : [ {
           "id" : "query-JT8D7"
         } ],
-        "selected" : 0
+        "selected" : 0,
+        "visibleTabCount" : 1,
+        "allTabCount" : 1
       }, {
         "type" : "tabLayout",
         "preferredSize" : {
-          "width" : 713,
-          "height" : 200
+          "width" : 713
         },
         "tabs" : [ {
           "id" : "table-IIO1T"
         } ],
-        "selected" : 0
+        "selected" : 0,
+        "visibleTabCount" : 1,
+        "allTabCount" : 1
       } ]
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 895
       },
       "tabs" : [ {
         "id" : "vis-BX59A"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     } ]
-  },
-  "tabVisibility" : "SHOW_ALL"
+  }
 }

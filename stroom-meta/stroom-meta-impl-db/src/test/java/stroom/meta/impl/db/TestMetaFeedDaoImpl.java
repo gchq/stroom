@@ -19,10 +19,12 @@ package stroom.meta.impl.db;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.test.common.util.db.DbTestModule;
 
 import javax.inject.Inject;
 import java.util.Optional;
@@ -42,7 +44,9 @@ class TestMetaFeedDaoImpl {
                 new MockClusterLockModule(),
                 new MockSecurityContextModule(),
                 new MockCollectionModule(),
-                new MockWordListProviderModule())
+                new MockWordListProviderModule(),
+                new CacheModule(),
+                new DbTestModule())
                 .injectMembers(this);
         // Delete everything
         cleanup.clear();

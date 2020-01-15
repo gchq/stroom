@@ -18,8 +18,10 @@ package stroom.task.api;
 
 import stroom.util.shared.HasTerminate;
 
+import java.util.function.Supplier;
+
 public interface TaskContext extends HasTerminate {
     void setName(String name);
 
-    void info(Object... args);
+    void info(Supplier<String> messageSupplier);
 }

@@ -2,22 +2,30 @@ package stroom.security.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class AuthenticationConfig implements IsConfig {
     private String authenticationServiceUrl;
     private boolean authenticationRequired = true;
-    private String apiToken = "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc";
+    private boolean verifySsl;
     private String authServicesBaseUrl = "http://auth-service:8099";
-    private String durationToWarnBeforeExpiry = "30d";
     private JwtConfig jwtConfig = new JwtConfig();
     private boolean preventLogin;
     private String userNamePattern = "^[a-zA-Z0-9_-]{3,}$";
+    private String clientId;
+    private String clientSecret;
+
+    private CacheConfig apiTokenCache = new CacheConfig.Builder()
+            .maximumSize(10000L)
+            .expireAfterWrite(30, TimeUnit.MINUTES)
+            .build();
 
     @JsonPropertyDescription("The URL of the authentication service")
     public String getAuthenticationServiceUrl() {
@@ -38,14 +46,16 @@ public class AuthenticationConfig implements IsConfig {
         this.authenticationRequired = authenticationRequired;
     }
 
-    @RequiresRestart(RequiresRestart.RestartScope.UI)
-    @JsonPropertyDescription("The API token Stroom will use to authenticate itself when accessing other services")
-    public String getApiToken() {
-        return apiToken;
+    @ReadOnly
+    @JsonPropertyDescription("If using HTTPS should we verify the server certs")
+    public boolean isVerifySsl() {
+        return verifySsl;
     }
 
-    public void setApiToken(final String apiToken) {
-        this.apiToken = apiToken;
+    @ReadOnly
+    @JsonPropertyDescription("If using HTTPS should we verify the server certs")
+    public void setVerifySsl(final boolean verifySsl) {
+        this.verifySsl = verifySsl;
     }
 
     @JsonPropertyDescription("The URL of the auth service")
@@ -55,15 +65,6 @@ public class AuthenticationConfig implements IsConfig {
 
     public void setAuthServicesBaseUrl(final String authServicesBaseUrl) {
         this.authServicesBaseUrl = authServicesBaseUrl;
-    }
-
-    @JsonProperty("durationToWarnBeforeExpiry")
-    public String getDurationToWarnBeforeExpiry() {
-        return durationToWarnBeforeExpiry;
-    }
-
-    public void setDurationToWarnBeforeExpiry(final String durationToWarnBeforeExpiry) {
-        this.durationToWarnBeforeExpiry = durationToWarnBeforeExpiry;
     }
 
     @JsonProperty("jwt")
@@ -94,14 +95,36 @@ public class AuthenticationConfig implements IsConfig {
         this.userNamePattern = userNamePattern;
     }
 
+    public String getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
+    }
+
+    public String getClientSecret() {
+        return clientSecret;
+    }
+
+    public void setClientSecret(String clientSecret) {
+        this.clientSecret = clientSecret;
+    }
+
+    public CacheConfig getApiTokenCache() {
+        return apiTokenCache;
+    }
+
+    public void setApiTokenCache(final CacheConfig apiTokenCache) {
+        this.apiTokenCache = apiTokenCache;
+    }
+
     @Override
     public String toString() {
         return "AuthenticationConfig{" +
                 "authenticationServiceUrl='" + authenticationServiceUrl + '\'' +
                 ", authenticationRequired=" + authenticationRequired +
-                ", apiToken='" + apiToken + '\'' +
                 ", authServicesBaseUrl='" + authServicesBaseUrl + '\'' +
-                ", durationToWarnBeforeExpiry='" + durationToWarnBeforeExpiry + '\'' +
                 ", preventLogin=" + preventLogin +
                 ", userNamePattern='" + userNamePattern + '\'' +
                 '}';

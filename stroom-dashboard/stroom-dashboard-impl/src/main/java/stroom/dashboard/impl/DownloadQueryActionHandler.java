@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.dashboard.shared.DownloadQueryAction;
 import stroom.dashboard.shared.SearchRequest;
+import stroom.dashboard.shared.TableResultRequest;
 import stroom.query.api.v2.ResultRequest;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
@@ -65,14 +66,22 @@ class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction
                 }
                 final SearchRequest searchRequest = action.getSearchRequest();
 
-                //API users will typically want all data so ensure Fetch.ALL is set regardless of what it was before
+                // API users will typically want all data so ensure Fetch.ALL is set regardless of what it was before
                 if (searchRequest != null && searchRequest.getComponentResultRequests() != null) {
                     searchRequest.getComponentResultRequests()
                             .forEach((k, componentResultRequest) ->
                                     componentResultRequest.setFetch(ResultRequest.Fetch.ALL));
+
+                    // Remove special fields.
+                    searchRequest.getComponentResultRequests().forEach((k, v) -> {
+                        if (v instanceof TableResultRequest) {
+                            final TableResultRequest tableResultRequest = (TableResultRequest) v;
+                            tableResultRequest.getTableSettings().getFields().removeIf(field -> field.isSpecial());
+                        }
+                    });
                 }
 
-                //convert our internal model to the model used by the api
+                // Convert our internal model to the model used by the api
                 stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
                         action.getDashboardQueryKey(),
                         searchRequest);
@@ -81,7 +90,7 @@ class DownloadQueryActionHandler extends AbstractTaskHandler<DownloadQueryAction
                     throw new EntityServiceException("Query could not be mapped to a SearchRequest");
                 }
 
-                //generate the export file
+                // Generate the export file
                 String fileName = action.getDashboardQueryKey().toString();
                 fileName = NON_BASIC_CHARS.matcher(fileName).replaceAll("");
                 fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");

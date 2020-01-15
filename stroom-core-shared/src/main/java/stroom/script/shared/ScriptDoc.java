@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "dependencies"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 public class ScriptDoc extends Doc implements HasData {
     private static final long serialVersionUID = 4519634323788508083L;
 

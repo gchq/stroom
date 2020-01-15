@@ -20,51 +20,89 @@ import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.user.client.ui.Grid;
 import com.google.gwt.user.client.ui.HasText;
+import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.PasswordTextBox;
 import com.google.gwt.user.client.ui.TextArea;
-import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
-import com.gwtplatform.mvp.client.ViewImpl;
+import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter.GlobalPropertyEditView;
+import stroom.config.global.client.presenter.ManageGlobalPropertyEditUiHandlers;
 import stroom.widget.tickbox.client.view.TickBox;
 
-public final class GlobalPropertyEditViewImpl extends ViewImpl implements GlobalPropertyEditView {
+public final class GlobalPropertyEditViewImpl
+        extends ViewWithUiHandlers<ManageGlobalPropertyEditUiHandlers>
+        implements GlobalPropertyEditView {
+
     private final Widget widget;
     @UiField
     Grid grid;
     @UiField
-    TextBox name;
+    Label name;
     @UiField
     TextArea description;
     @UiField
-    TextArea value;
+    TextArea defaultValue;
     @UiField
-    TextBox source;
+    TextArea yamlValue;
     @UiField
-    TextBox defaultValue;
+    TickBox useOverride;
     @UiField
-    PasswordTextBox valuePassword;
+    TextArea databaseValue;
+    @UiField
+    PasswordTextBox databaseValuePassword;
+    @UiField
+    TextArea effectiveValue;
+    @UiField
+    Label dataType;
+    @UiField
+    Label source;
     @UiField
     TickBox requireRestart;
     @UiField
     TickBox requireUiRestart;
+    @UiField
+    TickBox readOnly;
+
     private boolean password;
+//    private static volatile Resources RESOURCES;
 
     @Inject
     public GlobalPropertyEditViewImpl(final EventBus eventBus, final Binder binder) {
         widget = binder.createAndBindUi(this);
+//        RESOURCES = GWT.create(Resources.class);
+//        RESOURCES.style().ensureInjected();
+
         setPasswordStyle(false);
         setEditable(false);
 
-        name.setReadOnly(true);
         description.setReadOnly(true);
-        source.setReadOnly(true);
         defaultValue.setReadOnly(true);
+        yamlValue.setReadOnly(true);
+        effectiveValue.setReadOnly(true);
 
         requireRestart.setEnabled(false);
         requireUiRestart.setEnabled(false);
+        readOnly.setEnabled(false);
+
+        useOverride.addValueChangeHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChangeUseOverride();
+            }
+        });
+
+        databaseValue.addKeyUpHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChangeOverrideValue();
+            }
+        });
+
+        databaseValuePassword.addKeyUpHandler(event -> {
+            if (getUiHandlers() != null) {
+                getUiHandlers().onChangeOverrideValue();
+            }
+        });
     }
 
     @Override
@@ -78,11 +116,11 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
     }
 
     @Override
-    public HasText getValue() {
+    public HasText getDatabaseValue() {
         if (password) {
-            return valuePassword;
+            return databaseValuePassword;
         } else {
-            return value;
+            return databaseValue;
         }
     }
 
@@ -97,16 +135,36 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
     }
 
     @Override
+    public HasText getYamlValue() {
+        return yamlValue;
+    }
+
+    @Override
+    public HasText getEffectiveValue() {
+        return effectiveValue;
+    }
+
+    @Override
+    public HasText getDataType() {
+        return dataType;
+    }
+
+    @Override
     public HasText getSource() {
         return source;
+    }
+
+    @Override
+    public boolean getUseOverride() {
+        return useOverride.getBooleanValue();
     }
 
     @Override
     public void setPasswordStyle(final boolean password) {
         this.password = password;
 
-        grid.getRowFormatter().setVisible(2, !password);
-        grid.getRowFormatter().setVisible(3, password);
+        grid.getRowFormatter().setVisible(4, !password);
+        grid.getRowFormatter().setVisible(5, password);
     }
 
     @Override
@@ -121,8 +179,22 @@ public final class GlobalPropertyEditViewImpl extends ViewImpl implements Global
 
     @Override
     public void setEditable(final boolean edit) {
-        value.setReadOnly(!edit);
-        valuePassword.setReadOnly(!edit);
+        readOnly.setBooleanValue(!edit);
+
+        databaseValue.setReadOnly(!edit);
+        databaseValuePassword.setReadOnly(!edit);
+        useOverride.setEnabled(edit);
+
+        // disable the override fields if use override is not ticked
+        if (edit) {
+            databaseValue.setReadOnly(!useOverride.getBooleanValue());
+            databaseValuePassword.setReadOnly(!useOverride.getBooleanValue());
+        }
+    }
+
+    @Override
+    public void setUseOverride(final boolean useOverride) {
+        this.useOverride.setBooleanValue(useOverride);
     }
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {

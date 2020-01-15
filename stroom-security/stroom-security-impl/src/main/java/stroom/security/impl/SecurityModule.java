@@ -35,12 +35,12 @@ import stroom.security.shared.FetchUserAction;
 import stroom.security.shared.FetchUserAndPermissionsAction;
 import stroom.security.shared.LogoutAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.RestResource;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HealthCheckBinder;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.RestResource;
 
 import javax.servlet.http.HttpSessionListener;
 
@@ -59,6 +59,8 @@ public class SecurityModule extends AbstractModule {
         bind(UserService.class).to(UserServiceImpl.class);
 
         FilterBinder.create(binder())
+                .bind(new FilterInfo(ContentSecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
+                        ContentSecurityFilter.class)
                 .bind(new FilterInfo(SecurityFilter.class.getSimpleName(), MATCH_ALL_PATHS),
                         SecurityFilter.class);
 
@@ -86,6 +88,7 @@ public class SecurityModule extends AbstractModule {
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(UserGroupsCache.class);
+        entityEventHandlerBinder.addBinding().to(UserAppPermissionsCache.class);
 
         final Multibinder<PermissionChangeEvent.Handler> permissionChangeEventHandlerBinder = Multibinder.newSetBinder(binder(), PermissionChangeEvent.Handler.class);
         permissionChangeEventHandlerBinder.addBinding().to(UserDocumentPermissionsCache.class);
@@ -94,8 +97,10 @@ public class SecurityModule extends AbstractModule {
                 .bind(JWTService.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(AuthenticationResource.class)
+                .addBinding(AuthorisationResource.class)
+                .addBinding(DocumentPermissionResourceImpl.class)
                 .addBinding(UserResourceImpl.class)
-                .addBinding(UserAppPermissionResourceImpl.class)
-                .addBinding(DocumentPermissionResourceImpl.class);
+                .addBinding(UserAppPermissionResourceImpl.class);
     }
 }

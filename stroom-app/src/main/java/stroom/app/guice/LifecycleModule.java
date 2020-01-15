@@ -13,7 +13,7 @@ import stroom.meta.impl.db.MetaDbLifecycleModule;
 import stroom.pipeline.destination.RollingDestinationsLifecycleModule;
 import stroom.processor.impl.StreamTaskLifecycleModule;
 import stroom.resource.impl.ResourceLifecycleModule;
-import stroom.search.impl.SearchLifecycleModule;
+import stroom.search.impl.shard.SearchLifecycleModule;
 import stroom.servicediscovery.impl.ServiceDiscoveryLifecycleModule;
 import stroom.statistics.impl.InternalStatisticsLifecycleModule;
 import stroom.statistics.impl.sql.SQLStatisticsLifecycleModule;

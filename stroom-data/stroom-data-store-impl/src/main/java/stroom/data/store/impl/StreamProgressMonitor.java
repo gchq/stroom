@@ -16,15 +16,16 @@
 
 package stroom.data.store.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.task.api.TaskContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import java.io.IOException;
+import java.util.function.Supplier;
 
 public class StreamProgressMonitor {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamProgressMonitor.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StreamProgressMonitor.class);
 
     private final TaskContext taskContext;
     private final String prefix;
@@ -52,7 +53,7 @@ public class StreamProgressMonitor {
 
         if (lastProgressTime + INTERVAL_MS < timeNow) {
             lastProgressTime = timeNow;
-            String msg = prefix + " - " + ModelStringUtil.formatIECByteSizeString(totalBytes);
+            final Supplier<String> msg = () -> prefix + " - " + ModelStringUtil.formatIECByteSizeString(totalBytes);
             if (taskContext != null) {
                 taskContext.info(msg);
 
@@ -60,9 +61,7 @@ public class StreamProgressMonitor {
                     throw new IOException("Progress Stopped");
                 }
             }
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(msg);
-            }
+            LOGGER.debug(msg);
         }
     }
 }

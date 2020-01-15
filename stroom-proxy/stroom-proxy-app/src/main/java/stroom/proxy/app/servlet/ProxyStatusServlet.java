@@ -20,7 +20,7 @@ import java.util.Set;
 public class ProxyStatusServlet extends HttpServlet implements IsServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyStatusServlet.class);
 
-    private static final Set<String> PATH_SPECS = Set.of("/config");
+    private static final Set<String> PATH_SPECS = Set.of("/status");
 
     private final Provider<BuildInfo> buildInfoProvider;
 

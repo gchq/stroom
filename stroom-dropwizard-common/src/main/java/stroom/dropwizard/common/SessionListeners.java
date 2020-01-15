@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpSessionListener;
+import java.util.Comparator;
 import java.util.Set;
 
 public class SessionListeners {
@@ -22,10 +23,12 @@ public class SessionListeners {
 
     public void register() {
         LOGGER.info("Adding session listeners:");
-        sessionListeners.forEach(sessionListener -> {
-            final String name = sessionListener.getClass().getName();
-            LOGGER.info("\t{}", name);
-            environment.servlets().addServletListeners(sessionListener);
-        });
+        sessionListeners.stream()
+                .sorted(Comparator.comparing(sessionListener -> sessionListener.getClass().getName()))
+                .forEach(sessionListener -> {
+                    final String name = sessionListener.getClass().getName();
+                    LOGGER.info("\t{}", name);
+                    environment.servlets().addServletListeners(sessionListener);
+                });
     }
 }

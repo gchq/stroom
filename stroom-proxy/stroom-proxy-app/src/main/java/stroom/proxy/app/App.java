@@ -35,7 +35,6 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
-import stroom.proxy.app.servlet.ConfigServlet;
 import stroom.util.guice.ResourcePaths;
 
 import javax.inject.Inject;
@@ -58,11 +57,6 @@ public class App extends Application<Config> {
     private ManagedServices managedServices;
 
     public static void main(final String[] args) throws Exception {
-        if (args.length > 0) {
-            final String configPath = args[args.length - 1];
-            ConfigServlet.setPath(configPath);
-        }
-
         new App().run(args);
     }
 

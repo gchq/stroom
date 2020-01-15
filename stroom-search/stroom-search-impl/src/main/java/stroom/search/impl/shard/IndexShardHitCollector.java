@@ -18,22 +18,33 @@ package stroom.search.impl.shard;
 
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.SimpleCollector;
+import stroom.pipeline.errorhandler.TerminatedException;
+import stroom.task.api.TaskContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.io.IOException;
 import java.util.OptionalInt;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 
 class IndexShardHitCollector extends SimpleCollector {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardHitCollector.class);
+
+    private final TaskContext taskContext;
     //an empty optional is used as a marker to indicate no more items will be added
     private final LinkedBlockingQueue<OptionalInt> docIdStore;
-    private final AtomicLong hitCount;
+    private final Tracker hitCount;
     private int docBase;
 
-    IndexShardHitCollector(final LinkedBlockingQueue<OptionalInt> docIdStore,
-                           final AtomicLong hitCount) {
+    IndexShardHitCollector(final TaskContext taskContext,
+                           final LinkedBlockingQueue<OptionalInt> docIdStore,
+                           final Tracker hitCount) {
         this.docIdStore = docIdStore;
+        this.taskContext = taskContext;
         this.hitCount = hitCount;
+
+        info(() -> "Searching...");
     }
 
     @Override
@@ -44,20 +55,29 @@ class IndexShardHitCollector extends SimpleCollector {
 
     @Override
     public void collect(final int doc) {
+        // Pause the current search if the deque is full.
+        final int docId = docBase + doc;
+
         try {
-            // Pause the current search if the deque is full.
-            final int docId = docBase + doc;
-
             docIdStore.put(OptionalInt.of(docId));
-
-            // Add to the hit count.
-            hitCount.incrementAndGet();
+            info(() -> "Found " + hitCount.getHitCount() + " hits");
         } catch (final InterruptedException e) {
-            // Continue to interrupt this thread.
+            // Continue to interrupt.
+            info(() -> "Quitting...");
             Thread.currentThread().interrupt();
-
-            throw new RuntimeException(e.getMessage(), e);
+            LOGGER.debug(e::getMessage, e);
+            throw new TerminatedException();
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
         }
+
+        // Add to the hit count.
+        hitCount.incrementHitCount();
+    }
+
+    private void info(final Supplier<String> message) {
+        taskContext.info(message);
+        LOGGER.info(message);
     }
 
     @Override
@@ -65,3 +85,4 @@ class IndexShardHitCollector extends SimpleCollector {
         return false;
     }
 }
+

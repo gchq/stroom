@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
+import java.util.Comparator;
 import java.util.Set;
 
 public class ManagedServices {
@@ -22,10 +23,12 @@ public class ManagedServices {
 
     public void register() {
         LOGGER.info("Adding managed services:");
-        managedServices.forEach(managed -> {
-            final String name = managed.getClass().getName();
-            LOGGER.info("\t{}", name);
-            environment.lifecycle().manage(managed);
-        });
+        managedServices.stream()
+                .sorted(Comparator.comparing(managedService -> managedService.getClass().getName()))
+                .forEach(managed -> {
+                    final String name = managed.getClass().getName();
+                    LOGGER.info("\t{}", name);
+                    environment.lifecycle().manage(managed);
+                });
     }
 }

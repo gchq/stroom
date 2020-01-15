@@ -16,10 +16,8 @@
 
 package stroom.cluster.task.impl;
 
-import com.google.common.cache.Cache;
-import com.google.common.cache.CacheBuilder;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
 import stroom.cluster.task.api.ClusterResultCollector;
 import stroom.cluster.task.api.ClusterResultCollectorCache;
 import stroom.cluster.task.api.CollectorId;
@@ -27,24 +25,19 @@ import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
+import java.util.Optional;
 
 @Singleton
 public class ClusterResultCollectorCacheImpl implements ClusterResultCollectorCache, Clearable {
-    private static final int MAX_CACHE_ENTRIES = 1000000;
+    private static final String CACHE_NAME = "Cluster Result Collector Cache";
 
-    private final Cache<CollectorId, ClusterResultCollector> cache;
+    private final ICache<CollectorId, ClusterResultCollector> cache;
 
     private volatile boolean shutdown;
 
     @Inject
-    @SuppressWarnings("unchecked")
-    public ClusterResultCollectorCacheImpl(final CacheManager cacheManager) {
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(1, TimeUnit.MINUTES);
-        cache = cacheBuilder.build();
-        cacheManager.registerCache("Cluster Result Collector Cache", cacheBuilder, cache);
+    public ClusterResultCollectorCacheImpl(final CacheManager cacheManager, final ClusterTaskConfig clusterTaskConfig) {
+        cache = cacheManager.create(CACHE_NAME, clusterTaskConfig::getClusterResultCollectorCache);
     }
 
     void shutdown() {
@@ -57,8 +50,8 @@ public class ClusterResultCollectorCacheImpl implements ClusterResultCollectorCa
             throw new RuntimeException("Stroom is shutting down");
         }
 
-        final ClusterResultCollector existing = cache.getIfPresent(collectorId);
-        if (existing != null) {
+        final Optional<ClusterResultCollector> existing = cache.getOptional(collectorId);
+        if (existing.isPresent()) {
             throw new RuntimeException(
                     "Existing item found in cluster result collector cache for key '" + collectorId.toString() + "'");
         }
@@ -68,7 +61,7 @@ public class ClusterResultCollectorCacheImpl implements ClusterResultCollectorCa
 
     @Override
     public ClusterResultCollector<?> get(final CollectorId collectorId) {
-        return cache.getIfPresent(collectorId);
+        return cache.getOptional(collectorId).orElse(null);
     }
 
     @Override
@@ -78,6 +71,6 @@ public class ClusterResultCollectorCacheImpl implements ClusterResultCollectorCa
 
     @Override
     public void clear() {
-        CacheUtil.clear(cache);
+        cache.clear();
     }
 }

@@ -17,7 +17,6 @@
 package stroom.core.entity.cluster;
 
 import stroom.cluster.task.api.ClusterTask;
-import stroom.task.shared.Task;
 import stroom.util.shared.VoidResult;
 
 public class ClearServiceClusterTask extends ClusterTask<VoidResult> {
@@ -25,9 +24,8 @@ public class ClearServiceClusterTask extends ClusterTask<VoidResult> {
 
     private Class<?> beanClass;
 
-    public ClearServiceClusterTask(final Task<?> parentTask,
-                                   final Class<?> beanClass) {
-        super(parentTask.getUserToken(), "ClearServiceClusterTask");
+    public ClearServiceClusterTask(final Class<?> beanClass) {
+        super("ClearServiceClusterTask");
         this.beanClass = beanClass;
     }
 

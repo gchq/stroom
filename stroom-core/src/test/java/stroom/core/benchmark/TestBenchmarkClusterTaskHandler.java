@@ -37,6 +37,7 @@ class TestBenchmarkClusterTaskHandler extends StroomUnitTest {
                 null,
                 null,
                 null,
+                null,
                 new BenchmarkClusterConfig());
         assertThat(benchmarkClusterTaskHandler.toEPS(1000, new Period(0L, 1000L))).as("1000 EPS").isEqualTo(1000);
         assertThat(benchmarkClusterTaskHandler.toEPS(1000000L, new Period(0L, 1000L))).as("1000000 EPS").isEqualTo(1000000);

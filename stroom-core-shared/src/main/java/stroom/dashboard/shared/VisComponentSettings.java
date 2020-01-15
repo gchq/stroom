@@ -32,7 +32,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"tableId", "visualisation", "json"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "vis")
 @XmlType(name = "VisComponentSettings", propOrder = {"tableId", "visualisation", "json"})
 public class VisComponentSettings extends ComponentSettings {

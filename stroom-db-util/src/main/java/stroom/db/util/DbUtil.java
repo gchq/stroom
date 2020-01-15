@@ -4,22 +4,18 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
+import stroom.config.common.ConnectionPoolConfig;
+import stroom.config.common.DbConfig;
 import stroom.util.logging.LogUtil;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class DbUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(DbUtil.class);
-    private static final boolean USE_TEST_CONTAINERS = false;
     private static final long MAX_SLEEP_TIME_MS = 30_000;
     private static final int ACCESS_DENIED_BAD_UNAME_OR_PWORD = 1045;
     private static final int ACCESS_DENIED_BAD_DATABASE = 1044;
@@ -27,29 +23,44 @@ public class DbUtil {
     private DbUtil() {
     }
 
-    public static void decorateConnectionConfig(final ConnectionConfig connectionConfig) {
-        if (USE_TEST_CONTAINERS) {
-            try {
-                final Class<?> clazz = Class.forName("org.testcontainers.jdbc.ContainerDatabaseDriver");
-                if (clazz != null) {
-                    LOGGER.info("Using test container DB connection config");
+    public static void copyConfig(final DbConfig from, final DbConfig to) {
+        copyConnectionConfig(from.getConnectionConfig(), to.getConnectionConfig());
+        copyConnectionPoolConfig(from.getConnectionPoolConfig(), to.getConnectionPoolConfig());
+    }
 
-                    connectionConfig.setJdbcDriverClassName("com.mysql.cj.jdbc.Driver");
-                    // Use reusable test containers with TC_REUSABLE=true
-                    // see https://github.com/testcontainers/testcontainers-java/pull/1781
-                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.5.52://localhost:3306/test?TC_REUSABLE=true");
-//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.6.43://localhost:3306/test?TC_REUSABLE=true");
-//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:5.7.25://localhost:3306/test?TC_REUSABLE=true");
-//                    connectionConfig.setJdbcDriverUrl("jdbc:tc:mysql:8.0.15://localhost:3306/test?TC_REUSABLE=true");
-                    connectionConfig.setJdbcDriverPassword("test");
-                    connectionConfig.setJdbcDriverUsername("test");
+    public static void copyConnectionConfig(final ConnectionConfig from, final ConnectionConfig to) {
+        if (from.getJdbcDriverClassName() != null) {
+            to.setJdbcDriverClassName(from.getJdbcDriverClassName());
+        }
+        if (from.getJdbcDriverUrl() != null) {
+            to.setJdbcDriverUrl(from.getJdbcDriverUrl());
+        }
+        if (from.getJdbcDriverUsername() != null) {
+            to.setJdbcDriverUsername(from.getJdbcDriverUsername());
+        }
+        if (from.getJdbcDriverPassword() != null) {
+            to.setJdbcDriverPassword(from.getJdbcDriverPassword());
+        }
+    }
 
-                }
-            } catch (final ClassNotFoundException e) {
-                LOGGER.debug("Not using test container DB connection config");
-            }
-        } else {
-            LOGGER.debug("Not using test container DB connection config");
+    public static void copyConnectionPoolConfig(final ConnectionPoolConfig from, final ConnectionPoolConfig to) {
+        if (from.getCachePrepStmts() != null) {
+            to.setCachePrepStmts(from.getCachePrepStmts());
+        }
+        if (from.getPrepStmtCacheSize() != null) {
+            to.setPrepStmtCacheSize(from.getPrepStmtCacheSize());
+        }
+        if (from.getPrepStmtCacheSqlLimit() != null) {
+            to.setPrepStmtCacheSqlLimit(from.getPrepStmtCacheSqlLimit());
+        }
+        if (from.getIdleTimeout() != null) {
+            to.setIdleTimeout(from.getIdleTimeout());
+        }
+        if (from.getMaxLifetime() != null) {
+            to.setMaxLifetime(from.getMaxLifetime());
+        }
+        if (from.getMaxPoolSize() != null) {
+            to.setMaxPoolSize(from.getMaxPoolSize());
         }
     }
 
@@ -84,7 +95,8 @@ public class DbUtil {
     public static void waitForConnection(ConnectionConfig connectionConfig) {
         final String jdbcUrl = connectionConfig.getJdbcDriverUrl();
         final String username = connectionConfig.getJdbcDriverUsername();
-        LOGGER.info("Ensuring database connection to {} with username {}", jdbcUrl, username);
+        LOGGER.info("Ensuring database connection to {} with username {} and driver class {}",
+                jdbcUrl, username, connectionConfig.getJdbcDriverClassName());
 
         long sleepMs = 100;
         Throwable lastThrowable = null;
@@ -147,75 +159,9 @@ public class DbUtil {
         return 0;
     }
 
-    public static void clearAllTables(final Connection connection) {
-        final List<String> tables = new ArrayList<>();
-
-        try (final PreparedStatement statement = connection.prepareStatement("SELECT table_name FROM information_schema.tables where table_type like '%BASE TABLE%';")) {
-            try (final ResultSet resultSet = statement.executeQuery()) {
-                while (resultSet.next()) {
-                    final String name = resultSet.getString(1);
-                    if (!name.contains("schema")) {
-                        tables.add(name);
-                    }
-                }
-            }
-        } catch (final SQLException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        }
-
-        clearTables(connection, tables);
-    }
-
-    private static void clearTables(final Connection connection, final List<String> tableNames) {
-        List<String> deleteStatements = tableNames.stream()
-                .map(tableName -> "DELETE FROM " + tableName)
-                .collect(Collectors.toList());
-
-        executeStatementsWithNoConstraints(connection, deleteStatements);
-    }
-
-    private static void executeStatementsWithNoConstraints(final Connection connection, final List<String> statements) {
-        final List<String> allStatements = new ArrayList<>();
-        allStatements.add("SET FOREIGN_KEY_CHECKS=0");
-        allStatements.addAll(statements);
-        allStatements.add("SET FOREIGN_KEY_CHECKS=1");
-
-        executeStatements(connection, allStatements);
-    }
 
 //    private void executeStatement(final Connection connection, final String sql) throws SQLException {
 //        executeStatements(connection, Collections.singletonList(sql));
 //    }
 
-    private static void executeStatements(final Connection connection, final List<String> sqlStatements) {
-        LOGGER.debug(">>> %s", sqlStatements);
-//        final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        try (final Statement statement = connection.createStatement()) {
-            sqlStatements.forEach(sql -> {
-                try {
-                    statement.addBatch(sql);
-                } catch (SQLException e) {
-                    throw new RuntimeException(String.format("Error adding sql [%s] to batch", sql), e);
-                }
-            });
-            int[] results = statement.executeBatch();
-            boolean isFailure = Arrays.stream(results)
-                    .anyMatch(val -> val == Statement.EXECUTE_FAILED);
-
-            if (isFailure) {
-                throw new RuntimeException(String.format("Got error code for batch %s", sqlStatements));
-            }
-
-//            log(logExecutionTime,
-//                    () -> Arrays.stream(results)
-//                            .mapToObj(Integer::toString)
-//                            .collect(Collectors.joining(",")),
-//                    sqlStatements::toString,
-//                    Collections.emptyList());
-
-        } catch (final SQLException e) {
-            LOGGER.error("executeStatement() - " + sqlStatements, e);
-            throw new RuntimeException(e.getMessage(), e);
-        }
-    }
 }

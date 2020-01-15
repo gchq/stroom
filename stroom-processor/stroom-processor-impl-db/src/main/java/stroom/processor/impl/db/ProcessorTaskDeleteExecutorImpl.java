@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.processor.impl.BatchDeleteConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
@@ -33,8 +34,9 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
-import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -44,32 +46,29 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
-class ProcessorTaskDeleteExecutorImpl extends AbstractBatchDeleteExecutor implements ProcessorTaskDeleteExecutor {
+class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorTaskDeleteExecutorImpl.class);
 
     private static final String TASK_NAME = "Processor Task Delete Executor";
     private static final String LOCK_NAME = "ProcessorTaskDeleteExecutor";
-    private static final String TEMP_STRM_TASK_ID_TABLE = "TEMP_PROCESSOR_TASK_ID";
 
-    private final ConnectionProvider connectionProvider;
+    private final ProcessorDbConnProvider processorDbConnProvider;
+    private final ClusterLockService clusterLockService;
+    private final ProcessorConfig processorConfig;
     private final ProcessorFilterDao processorFilterDao;
     private final ProcessorTaskManager processorTaskManager;
 
     @Inject
-    ProcessorTaskDeleteExecutorImpl(final ConnectionProvider connectionProvider,
+    ProcessorTaskDeleteExecutorImpl(final ProcessorDbConnProvider processorDbConnProvider,
                                     final ClusterLockService clusterLockService,
                                     final ProcessorConfig processorConfig,
-                                    final TaskContext taskContext,
                                     final ProcessorFilterDao processorFilterDao,
                                     final ProcessorTaskManager processorTaskManager) {
-        super(clusterLockService, taskContext, TASK_NAME, LOCK_NAME, processorConfig, TEMP_STRM_TASK_ID_TABLE);
-
-        this.connectionProvider = connectionProvider;
+        this.processorDbConnProvider = processorDbConnProvider;
+        this.clusterLockService = clusterLockService;
+        this.processorConfig = processorConfig;
         this.processorFilterDao = processorFilterDao;
         this.processorTaskManager = processorTaskManager;
-
-        final BatchIdTransactionHelper batchIdTransactionHelper = new BatchIdTransactionHelper(connectionProvider, TEMP_STRM_TASK_ID_TABLE);
-        setBatchIdTransactionHelper(batchIdTransactionHelper);
     }
 
     public void exec() {
@@ -91,57 +90,40 @@ class ProcessorTaskDeleteExecutorImpl extends AbstractBatchDeleteExecutor implem
         }
     }
 
+    final void lockAndDelete() {
+        LOGGER.info(TASK_NAME + " - start");
+        clusterLockService.tryLock(LOCK_NAME, () -> {
+            try {
+                if (!Thread.currentThread().isInterrupted()) {
+                    final LogExecutionTime logExecutionTime = new LogExecutionTime();
+                    final long age = getDeleteAge(processorConfig);
+                    if (age > 0) {
+                        delete(age);
+                    }
+                    LOGGER.info(TASK_NAME + " - finished in {}", logExecutionTime);
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        });
+    }
+
     @Override
     public void delete(final long age) {
-        super.delete(age);
+        deleteOldTasks(age);
         deleteOldFilters(age);
     }
 
-    @Override
-    protected void deleteCurrentBatch(final long total) {
-        // Delete stream tasks.
-        deleteWithJoin(PROCESSOR_TASK, PROCESSOR_TASK.ID, "stream tasks", total);
-    }
-
-    @Override
-    protected List<Long> getDeleteIdList(final long age, final int batchSize) {
+    private int deleteOldTasks(final long age) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 Optional.of(PROCESSOR_TASK.STATUS.in(TaskStatus.COMPLETE.getPrimitiveValue(), TaskStatus.FAILED.getPrimitiveValue())),
                 Optional.of(PROCESSOR_TASK.CREATE_TIME_MS.isNull().or(PROCESSOR_TASK.CREATE_TIME_MS.lessThan(age))));
 
-        return JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(processorDbConnProvider, context ->
                 context
-                        .select(PROCESSOR_TASK.ID)
-                        .from(PROCESSOR_TASK)
+                        .deleteFrom(PROCESSOR_TASK)
                         .where(conditions)
-                        .orderBy(PROCESSOR_TASK.ID)
-                        .limit(batchSize)
-                        .fetch(PROCESSOR_TASK.ID));
-
-
-//        final SqlBuilder sql = new SqlBuilder();
-//        sql.append("SELECT ");
-//        sql.append(ProcessorTask.ID);
-//        sql.append(" FROM ");
-//        sql.append(ProcessorTask.TABLE_NAME);
-//        sql.append(" WHERE ");
-//        sql.append(ProcessorTask.STATUS);
-//        sql.append(" IN (");
-//        sql.append(TaskStatus.COMPLETE.getPrimitiveValue());
-//        sql.append(", ");
-//        sql.append(TaskStatus.FAILED.getPrimitiveValue());
-//        sql.append(") AND (");
-//        sql.append(ProcessorTask.CREATE_MS);
-//        sql.append(" IS NULL OR ");
-//        sql.append(ProcessorTask.CREATE_MS);
-//        sql.append(" < ");
-//        sql.arg(age);
-//        sql.append(")");
-//        sql.append(" ORDER BY ");
-//        sql.append(ProcessorTask.ID);
-//        sql.append(" LIMIT ");
-//        sql.arg(batchSize);
-//        return stroomEntityManager.executeNativeQueryResultList(sql);
+                        .execute());
     }
 
     private void deleteOldFilters(final long age) {
@@ -180,5 +162,19 @@ class ProcessorTaskDeleteExecutorImpl extends AbstractBatchDeleteExecutor implem
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
+    }
+
+    private Long getDeleteAge(final BatchDeleteConfig config) {
+        Long age = null;
+        final String durationString = config.getDeletePurgeAge();
+        if (durationString != null && !durationString.isEmpty()) {
+            try {
+                final long duration = ModelStringUtil.parseDurationString(durationString);
+                age = System.currentTimeMillis() - duration;
+            } catch (final RuntimeException e) {
+                LOGGER.error("Error reading config");
+            }
+        }
+        return age;
     }
 }

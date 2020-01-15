@@ -20,7 +20,7 @@ import com.google.inject.AbstractModule;
 import stroom.search.api.EventSearch;
 import stroom.search.extraction.ExtractionModule;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 

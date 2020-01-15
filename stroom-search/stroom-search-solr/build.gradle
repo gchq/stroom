@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.search.solr'
 
 dependencies {
+    compile project(':stroom-annotation:stroom-annotation-api')
     compile project(':stroom-cluster:stroom-cluster-lock-api')
 //    compile project(':stroom-core-server')
 //    compile project(':stroom-core-shared')

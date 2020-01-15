@@ -26,6 +26,7 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,11 +42,13 @@ class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Inject
-    private FsCleanExecutor fileSystemCleanTaskExecutor;
+    private DataStoreServiceConfig config;
+    @Inject
+    private Provider<FsCleanExecutor> fileSystemCleanTaskExecutor;
 
     @Test
     void testSimple() throws IOException {
-        // commonTestControl.deleteDir();
+        config.setFileSystemCleanOldAge("0s");
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 
@@ -66,6 +69,8 @@ class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest
 
         Files.createFile(test1);
 
-        fileSystemCleanTaskExecutor.exec(new MockTask("Test"));
+        assertThat(Files.exists(test1)).isTrue();
+        fileSystemCleanTaskExecutor.get().exec(new MockTask("Test"));
+        assertThat(Files.exists(test1)).isFalse();
     }
 }

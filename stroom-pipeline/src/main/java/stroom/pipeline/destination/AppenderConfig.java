@@ -11,7 +11,8 @@ public class AppenderConfig implements IsConfig {
 
     private int maxActiveDestinations = DEFAULT_MAX_ACTIVE_DESTINATIONS;
 
-    @JsonPropertyDescription("The maximum number active destinations that Stroom will allow rolling appenders to be writing to at any one time.")
+    @JsonPropertyDescription("The maximum number active destinations that Stroom will allow rolling appenders to be " +
+            "writing to at any one time.")
     public int getMaxActiveDestinations() {
         return maxActiveDestinations;
     }

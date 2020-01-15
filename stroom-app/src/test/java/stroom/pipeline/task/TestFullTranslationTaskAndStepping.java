@@ -30,7 +30,7 @@ class TestFullTranslationTaskAndStepping extends TranslationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestFullTranslationTaskAndStepping.class);
 
     @Override
-    protected boolean doSingleSetup() {
+    protected boolean onAfterSetup() {
         testTranslationTask(false, false);
         return true;
     }

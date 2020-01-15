@@ -1,34 +1,38 @@
 package stroom.meta.impl.db;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
+import stroom.config.common.DbConfig;
+import stroom.config.common.HasDbConfig;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class MetaServiceConfig implements IsConfig {
-    private ConnectionConfig connectionConfig = new ConnectionConfig();
-    private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
-    private MetaValueConfig metaValueConfig;
+public class MetaServiceConfig implements IsConfig, HasDbConfig {
+    private DbConfig dbConfig = new DbConfig();
+    private MetaValueConfig metaValueConfig = new MetaValueConfig();
+    private CacheConfig metaFeedCache = new CacheConfig.Builder()
+            .maximumSize(1000L)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
+    private CacheConfig metaProcessorCache = new CacheConfig.Builder()
+            .maximumSize(1000L)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
+    private CacheConfig metaTypeCache = new CacheConfig.Builder()
+            .maximumSize(1000L)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
 
-    @JsonProperty("connection")
-    public ConnectionConfig getConnectionConfig() {
-        return connectionConfig;
+    @JsonProperty("db")
+    public DbConfig getDbConfig() {
+        return dbConfig;
     }
 
-    public void setConnectionConfig(final ConnectionConfig connectionConfig) {
-        this.connectionConfig = connectionConfig;
-    }
-
-    @JsonProperty("connectionPool")
-    public ConnectionPoolConfig getConnectionPoolConfig() {
-        return connectionPoolConfig;
-    }
-
-    public void setConnectionPoolConfig(final ConnectionPoolConfig connectionPoolConfig) {
-        this.connectionPoolConfig = connectionPoolConfig;
+    public void setDbConfig(final DbConfig dbConfig) {
+        this.dbConfig = dbConfig;
     }
 
     public MetaValueConfig getMetaValueConfig() {
@@ -37,5 +41,29 @@ public class MetaServiceConfig implements IsConfig {
 
     public void setMetaValueConfig(final MetaValueConfig metaValueConfig) {
         this.metaValueConfig = metaValueConfig;
+    }
+
+    public CacheConfig getMetaFeedCache() {
+        return metaFeedCache;
+    }
+
+    public void setMetaFeedCache(final CacheConfig metaFeedCache) {
+        this.metaFeedCache = metaFeedCache;
+    }
+
+    public CacheConfig getMetaProcessorCache() {
+        return metaProcessorCache;
+    }
+
+    public void setMetaProcessorCache(final CacheConfig metaProcessorCache) {
+        this.metaProcessorCache = metaProcessorCache;
+    }
+
+    public CacheConfig getMetaTypeCache() {
+        return metaTypeCache;
+    }
+
+    public void setMetaTypeCache(final CacheConfig metaTypeCache) {
+        this.metaTypeCache = metaTypeCache;
     }
 }

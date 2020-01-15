@@ -76,7 +76,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                 if (LOGGER.isDebugEnabled()) {
                     final StringBuilder sb = new StringBuilder(
                             "Only the following search queries should be active for session '");
-                    sb.append(action.getUserToken());
+                    sb.append(activeQueriesManager.createKey(securityContext.getUserIdentity(), action.getApplicationInstanceId()));
                     sb.append("'\n");
                     for (final DashboardQueryKey queryKey : action.getSearchActionMap().keySet()) {
                         sb.append("\t");
@@ -85,8 +85,7 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                     LOGGER.debug(sb.toString());
                 }
 
-                final String searchSessionId = action.getUserToken() + "_" + action.getApplicationInstanceId();
-                final ActiveQueries activeQueries = activeQueriesManager.get(searchSessionId);
+                final ActiveQueries activeQueries = activeQueriesManager.get(securityContext.getUserIdentity(), action.getApplicationInstanceId());
                 final Map<DashboardQueryKey, SearchResponse> searchResultMap = new HashMap<>();
 
 //            // Fix query keys so they have session and user info.
@@ -156,6 +155,18 @@ class SearchBusPollActionHandler extends AbstractTaskHandler<SearchBusPollAction
                     .getDataSourceProvider(dataSourceRef)
                     .orElseThrow(() ->
                             new RuntimeException("No search provider found for '" + dataSourceRef.getType() + "' data source"));
+
+            // Add a param for `currentUser()`
+            if (searchRequest.getSearch() != null) {
+                Map<String, String> paramMap = searchRequest.getSearch().getParamMap();
+                if (paramMap != null) {
+                    paramMap = new HashMap<>(paramMap);
+                } else {
+                    paramMap= new HashMap<>();
+                }
+                paramMap.put("currentUser()", securityContext.getUserId());
+                searchRequest.getSearch().setParamMap(paramMap);
+            }
 
             stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
             stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);

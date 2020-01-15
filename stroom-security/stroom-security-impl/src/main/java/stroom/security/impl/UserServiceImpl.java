@@ -24,8 +24,11 @@ import stroom.util.AuditUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Singleton
 class UserServiceImpl implements UserService {
@@ -133,5 +136,52 @@ class UserServiceImpl implements UserService {
     @Override
     public String getNamePattern() {
         return securityConfig.getUserNamePattern();
+    }
+
+    @Override
+    public List<String> getAssociates(final String filter) {
+        Set<String> associates;
+
+        // Admin users will see all.
+        if (securityContext.isAdmin()) {
+            final FindUserCriteria findUserCriteria = new FindUserCriteria();
+            findUserCriteria.setGroup(false);
+            final List<User> users = find(findUserCriteria);
+
+            associates = users
+                    .stream()
+                    .filter(User::isEnabled)
+                    .filter(user -> user.getUuid().length() > 5)
+                    .filter(user -> !user.isGroup())
+                    .map(User::getName)
+                    .collect(Collectors.toSet());
+
+        } else {
+            final User user = getUserByName(securityContext.getUserId());
+            final Set<User> userSet = new HashSet<>();
+            userSet.add(user);
+
+            final List<User> groups = findGroupsForUser(user.getUuid());
+            groups.forEach(userGroup -> {
+                final List<User> usersInGroup = findUsersInGroup(userGroup.getUuid());
+                if (usersInGroup != null) {
+                    userSet.addAll(usersInGroup);
+                }
+            });
+
+            associates = userSet
+                    .stream()
+                    .filter(User::isEnabled)
+                    .filter(u -> u.getUuid().length() > 5)
+                    .filter(u -> !user.isGroup())
+                    .map(User::getName)
+                    .collect(Collectors.toSet());
+        }
+
+        return associates
+                .stream()
+                .filter(value -> filter == null || value.toLowerCase().contains(filter.toLowerCase()))
+                .sorted()
+                .collect(Collectors.toList());
     }
 }

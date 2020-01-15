@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "imports"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 public class DictionaryDoc extends Doc {
     private static final long serialVersionUID = -4208920620555926044L;
 

@@ -1,6 +1,5 @@
 package stroom.searchable.impl;
 
-import com.google.common.base.Functions;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Maps;
 import stroom.dashboard.expression.v1.FieldIndexMap;
@@ -43,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 class SearchableStore implements Store {
@@ -75,7 +75,7 @@ class SearchableStore implements Store {
         searchKey = searchRequest.getKey().toString();
         LOGGER.debug(LambdaLogUtil.message("Starting search with key {}", searchKey));
         taskContext.setName(TASK_NAME);
-        taskContext.info("DB search " + searchKey + " - running query");
+        taskContext.info(() -> "DB search " + searchKey + " - running query");
 
         final CoprocessorSettingsMap coprocessorSettingsMap = CoprocessorSettingsMap.create(searchRequest);
         Preconditions.checkNotNull(coprocessorSettingsMap);
@@ -94,7 +94,7 @@ class SearchableStore implements Store {
 
         final Map<String, AbstractField> fieldMap = searchable.getDataSource().getFields()
                 .stream()
-                .collect(Collectors.toMap(AbstractField::getName, Functions.identity()));
+                .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
         final OptionalInt max = fieldIndexMap.getMap().values().stream().mapToInt(Integer::intValue).max();
         final AbstractField[] fieldArray = new AbstractField[max.orElse(-1) + 1];
         fieldIndexMap.getMap().forEach((k, v) -> {
@@ -153,7 +153,7 @@ class SearchableStore implements Store {
 
                     processPayloads(resultHandler, coprocessorMap);
                     taskContext.setName(TASK_NAME);
-                    taskContext.info(searchKey +
+                    taskContext.info(() -> searchKey +
                             " - running database query (" + counter.longValue() + " rows fetched)");
                     nextProcessPayloadsTime.set(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
                     countSinceLastSend.set(0);
@@ -166,7 +166,7 @@ class SearchableStore implements Store {
             // completed our window so create and pass on a payload for the
             // data we have gathered so far
             processPayloads(resultHandler, coprocessorMap);
-            taskContext.info(searchKey + " - complete");
+            taskContext.info(() -> searchKey + " - complete");
             LOGGER.debug(() -> "completeSearch called");
             completionState.complete();
 
@@ -231,7 +231,7 @@ class SearchableStore implements Store {
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
             // log the queue sizes in the payload map
-            if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(() -> {
                 final String contents = payloadMap.entrySet().stream()
                         .map(entry -> {
                             String key = entry.getKey() != null ? entry.getKey().toString() : "null";
@@ -250,8 +250,8 @@ class SearchableStore implements Store {
                             return key + ": " + size;
                         })
                         .collect(Collectors.joining(", "));
-                LOGGER.debug(LambdaLogUtil.message("payloadMap: [{}]", contents));
-            }
+                return LogUtil.message("payloadMap: [{}]", contents);
+            });
 
             // give the processed results to the collector, it will handle nulls
             resultHandler.handle(payloadMap);

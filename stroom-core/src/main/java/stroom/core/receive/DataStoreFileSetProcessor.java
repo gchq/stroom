@@ -103,7 +103,8 @@ public final class DataStoreFileSetProcessor implements FileSetProcessor {
 
             for (final Path file : fileSet.getFiles()) {
                 count++;
-                taskContext.info("File " + count + " of " + fileSet.getFiles().size());
+                final long c = count;
+                taskContext.info(() -> "File " + c + " of " + fileSet.getFiles().size());
 
                 if (Thread.currentThread().isInterrupted()) {
                     break;

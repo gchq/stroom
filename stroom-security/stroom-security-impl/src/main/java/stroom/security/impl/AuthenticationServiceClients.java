@@ -53,10 +53,6 @@ class AuthenticationServiceClients {
     AuthenticationServiceClients(final AuthenticationConfig securityConfig) {
         enableAuth = securityConfig.isAuthenticationRequired();
         if (enableAuth) {
-            if (Strings.isNullOrEmpty(securityConfig.getApiToken())) {
-                throw new RuntimeException("Missing API key! Please configure using 'stroom.security.apiToken'");
-            }
-
             if (Strings.isNullOrEmpty(securityConfig.getAuthServicesBaseUrl())) {
                 throw new RuntimeException("Missing auth service URL! Please configure using 'stroom.auth.services.url'");
             }
@@ -64,7 +60,7 @@ class AuthenticationServiceClients {
 
         authServiceClient = new ApiClient();
         authServiceClient.setBasePath(securityConfig.getAuthServicesBaseUrl());
-        authServiceClient.addDefaultHeader("Authorization", "Bearer " + securityConfig.getApiToken());
+        authServiceClient.setVerifyingSsl(securityConfig.isVerifySsl());
     }
 
     AuthenticationApi newAuthenticationApi() {
@@ -103,7 +99,7 @@ class AuthenticationServiceClients {
         }
     }
 
-    private String createTokenForUser(String userId) throws ApiException {
+    String createTokenForUser(String userId) throws ApiException {
         CreateTokenRequest createTokenRequest = new CreateTokenRequest();
         createTokenRequest.setEnabled(true);
         createTokenRequest.setTokenType("api");

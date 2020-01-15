@@ -3,6 +3,7 @@ package stroom.hyperlink.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.http.client.URL;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -11,6 +12,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HandlerContainerImpl;
 import stroom.alert.client.event.ConfirmEvent;
+import stroom.annotation.client.ShowAnnotationEvent;
+import stroom.annotation.shared.Annotation;
+import stroom.annotation.shared.EventId;
 import stroom.core.client.ContentManager;
 import stroom.data.client.presenter.ShowDataEvent;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
@@ -26,6 +30,10 @@ import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 @Singleton
 public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements HyperlinkEvent.Handler, HasHandlers {
@@ -149,14 +157,46 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
                 }
                 case DATA: {
                     final long id = getParam(href, "id", -1);
-                    final long partNo = getParam(href, "partNo", 0);
+                    final long partNo = getParam(href, "partNo", 1);
                     final long recordNo = getParam(href, "recordNo", 0);
-                    final int lineFrom = (int) getParam(href, "lineFrom", 1);
-                    final int colFrom = (int) getParam(href, "colFrom", 0);
-                    final int lineTo = (int) getParam(href, "lineTo", 1);
-                    final int colTo = (int) getParam(href, "colTo", 0);
-                    final SourceLocation sourceLocation = new SourceLocation(id, null, partNo, recordNo, new Highlight(new DefaultLocation(lineFrom, colFrom), new DefaultLocation(lineTo, colTo)));
+                    final int lineFrom = (int) getParam(href, "lineFrom", -1);
+                    final int colFrom = (int) getParam(href, "colFrom", -1);
+                    final int lineTo = (int) getParam(href, "lineTo", -1);
+                    final int colTo = (int) getParam(href, "colTo", -1);
+
+                    Highlight highlight = null;
+                    if (lineFrom != -1 && colFrom != -1 && lineTo != -1 && colTo != -1) {
+                        highlight = new Highlight(new DefaultLocation(lineFrom, colFrom), new DefaultLocation(lineTo, colTo));
+                    }
+
+                    final SourceLocation sourceLocation = new SourceLocation(id, null, partNo, recordNo, highlight);
                     ShowDataEvent.fire(this, sourceLocation);
+                    break;
+                }
+                case ANNOTATION: {
+                    final Long annotationId = getLongParam(href, "annotationId");
+                    final Long streamId = getLongParam(href, "streamId");
+                    final Long eventId = getLongParam(href, "eventId");
+                    final String title = getParam(href, "title");
+                    final String subject = getParam(href, "subject");
+                    final String status = getParam(href, "status");
+                    final String assignedTo = getParam(href, "assignedTo");
+                    final String comment = getParam(href, "comment");
+
+                    final Annotation annotation = new Annotation();
+                    annotation.setId(annotationId);
+                    annotation.setTitle(title);
+                    annotation.setSubject(subject);
+                    annotation.setStatus(status);
+                    annotation.setAssignedTo(assignedTo);
+                    annotation.setComment(comment);
+
+                    final List<EventId> linkedEvents = new ArrayList<>();
+                    if (streamId != null && eventId != null) {
+                        linkedEvents.add(new EventId(streamId, eventId));
+                    }
+
+                    ShowAnnotationEvent.fire(this, annotation, linkedEvents);
                     break;
                 }
                 default:
@@ -168,17 +208,38 @@ public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements H
     }
 
     private long getParam(final String href, final String paramName, final long def) {
+        String value = getParam(href, paramName);
+        if (value == null || value.length() == 0) {
+            return def;
+        }
+        return Long.parseLong(value);
+    }
+
+    private Long getLongParam(final String href, final String paramName) {
+        String value = getParam(href, paramName);
+        if (value == null || value.length() == 0) {
+            return null;
+        }
+        return Long.valueOf(value);
+    }
+
+    private String getParam(final String href, final String paramName) {
+        String value = null;
         int start = href.indexOf(paramName + "=");
         if (start != -1) {
             start = start + (paramName + "=").length();
             int end = href.indexOf("&", start);
             if (end == -1) {
-                return Long.parseLong(href.substring(start));
+                value = href.substring(start);
             } else {
-                return Long.parseLong(href.substring(start, end));
+                value = href.substring(start, end);
             }
         }
-        return def;
+        if (value != null) {
+            value = URL.decodeQueryString(value);
+        }
+
+        return value;
     }
 
     @Override

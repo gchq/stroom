@@ -16,11 +16,8 @@
 
 package stroom.processor.impl;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.security.api.SecurityContext;
@@ -29,34 +26,27 @@ import stroom.util.shared.Clearable;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class ProcessorFilterCache implements Clearable {
-    private static final int MAX_CACHE_ENTRIES = 1000;
+    private static final String CACHE_NAME = "Processor Filter Cache";
 
-    private final LoadingCache<Integer, Optional<ProcessorFilter>> cache;
+    private final ICache<Integer, Optional<ProcessorFilter>> cache;
     private final ProcessorFilterService processorFilterService;
     private final SecurityContext securityContext;
 
     @Inject
-    @SuppressWarnings("unchecked")
     public ProcessorFilterCache(final CacheManager cacheManager,
                                 final ProcessorFilterService processorFilterService,
-                                final SecurityContext securityContext) {
+                                final SecurityContext securityContext,
+                                final ProcessorConfig processorConfig) {
         this.processorFilterService = processorFilterService;
         this.securityContext = securityContext;
-
-        final CacheLoader<Integer, Optional<ProcessorFilter>> cacheLoader = CacheLoader.from(this::create);
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(10, TimeUnit.SECONDS);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("Processor Filter Cache", cacheBuilder, cache);
+        cache = cacheManager.create(CACHE_NAME, processorConfig::getProcessorCache, this::create);
     }
 
     public Optional<ProcessorFilter> get(final int id) {
-        return cache.getUnchecked(id);
+        return cache.get(id);
     }
 
     private Optional<ProcessorFilter> create(final int id) {
@@ -65,6 +55,6 @@ public class ProcessorFilterCache implements Clearable {
 
     @Override
     public void clear() {
-        CacheUtil.clear(cache);
+        cache.clear();
     }
 }

@@ -13,11 +13,16 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.pipeline.state.MetaDataHolder;
+import stroom.util.cert.SSLConfig;
+import stroom.util.cert.SSLUtil;
 import stroom.util.io.ByteCountOutputStream;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
@@ -43,7 +48,7 @@ import java.util.zip.ZipOutputStream;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STREAM)
 public class HTTPAppender extends AbstractAppender {
-    private static final Logger LOGGER = LoggerFactory.getLogger(HTTPAppender.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HTTPAppender.class);
     private static final Logger SEND_LOG = LoggerFactory.getLogger("send");
 
     private final MetaDataHolder metaDataHolder;
@@ -59,6 +64,12 @@ public class HTTPAppender extends AbstractAppender {
     private ByteCountOutputStream byteCountOutputStream;
     private long startTimeMs;
     private long count;
+
+    private boolean useJvmSslConfig = true;
+    private final SSLConfig sslConfig = new SSLConfig();
+
+    private String requestMethod = "POST";
+    private String contentType = "application/json";
 
     @Inject
     HTTPAppender(final ErrorReceiverProxy errorReceiverProxy,
@@ -85,16 +96,23 @@ public class HTTPAppender extends AbstractAppender {
             OutputStream outputStream;
             final AttributeMap attributeMap = metaDataHolder.getMetaData();
 
-            if (LOGGER.isInfoEnabled()) {
-                LOGGER.info("handleHeader() - " + forwardUrl + " Sending request " + attributeMap);
-            }
+            LOGGER.info(() -> "createOutputStream() - " + forwardUrl + " Sending request " + attributeMap);
             startTimeMs = System.currentTimeMillis();
             attributeMap.computeIfAbsent(StandardHeaderArguments.GUID, k -> UUID.randomUUID().toString());
 
             URL url = new URL(forwardUrl);
             connection = (HttpURLConnection) url.openConnection();
 
-            sslCheck();
+            if (connection instanceof HttpsURLConnection) {
+                final HttpsURLConnection httpsURLConnection = (HttpsURLConnection) connection;
+                if (!useJvmSslConfig) {
+                    LOGGER.info(() -> "Configuring SSLSocketFactory for destination " + forwardUrl);
+                    final SSLSocketFactory sslSocketFactory = SSLUtil.createSslSocketFactory(sslConfig);
+                    SSLUtil.applySSLConfiguration(connection, sslSocketFactory, sslConfig);
+                } else if (!sslConfig.isHostnameVerificationEnabled()) {
+                    SSLUtil.disableHostnameVerification(httpsURLConnection);
+                }
+            }
 
             if (connectionTimeout != null) {
                 connection.setConnectTimeout(connectionTimeout.intValue());
@@ -103,8 +121,8 @@ public class HTTPAppender extends AbstractAppender {
                 // connection.setReadTimeout(forwardTimeoutMs);
             }
 
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/audit");
+            connection.setRequestMethod(requestMethod);
+            connection.setRequestProperty("Content-Type", contentType);
             connection.setDoOutput(true);
             connection.setDoInput(true);
 
@@ -118,9 +136,7 @@ public class HTTPAppender extends AbstractAppender {
             }
 
             if (forwardChunkSize != null) {
-                if (LOGGER.isDebugEnabled()) {
-                    LOGGER.debug("handleHeader() - setting ChunkedStreamingMode = " + forwardChunkSize);
-                }
+                LOGGER.debug(() -> "handleHeader() - setting ChunkedStreamingMode = " + forwardChunkSize);
                 connection.setChunkedStreamingMode(forwardChunkSize.intValue());
             }
             connection.connect();
@@ -144,6 +160,7 @@ public class HTTPAppender extends AbstractAppender {
             return byteCountOutputStream;
 
         } catch (final IOException | RuntimeException e) {
+            LOGGER.debug(e::getMessage, e);
             closeConnection();
             throw e;
         }
@@ -177,18 +194,24 @@ public class HTTPAppender extends AbstractAppender {
     }
 
     private void closeConnection() throws IOException {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("handleFooter() - header fields " + connection.getHeaderFields());
-        }
         int responseCode = -1;
 
         if (connection != null) {
+            LOGGER.debug(() -> "closeConnection() - header fields " + connection.getHeaderFields());
             try {
                 responseCode = StroomStreamException.checkConnectionResponse(connection);
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e::getMessage, e);
+                throw e;
             } finally {
+                long bytes = 0;
+                if (byteCountOutputStream != null) {
+                    bytes = byteCountOutputStream.getCount();
+                }
+
                 final long duration = System.currentTimeMillis() - startTimeMs;
                 final AttributeMap attributeMap = metaDataHolder.getMetaData();
-                log(SEND_LOG, attributeMap, "SEND", forwardUrl, responseCode, byteCountOutputStream.getCount(), duration);
+                log(SEND_LOG, attributeMap, "SEND", forwardUrl, responseCode, bytes, duration);
 
                 connection.disconnect();
                 connection = null;
@@ -196,54 +219,6 @@ public class HTTPAppender extends AbstractAppender {
         }
 
     }
-
-//    /**
-//     * Handle some pay load.
-//     */
-//    @Override
-//    public void handleEntryData(final byte[] buffer, final int off, final int length) throws IOException {
-//        bytesSent += length;
-//        zipOutputStream.write(buffer, off, length);
-//        if (forwardDelayMs != null) {
-//            LOGGER.debug("handleEntryData() - adding delay {}", forwardDelayMs);
-//            ThreadUtil.sleep(forwardDelayMs);
-//        }
-//    }
-
-    private void sslCheck() {
-        if (connection instanceof HttpsURLConnection) {
-            ((HttpsURLConnection) connection).setHostnameVerifier((s, sslSession) -> true);
-        }
-    }
-
-//    @Override
-//    public void handleError() throws IOException {
-//        LOGGER.info("handleError() - " + forwardUrl);
-//        if (connection != null) {
-//            connection.disconnect();
-//        }
-//    }
-//
-//    @Override
-//    public void validate() {
-//        try {
-//            URL url = new URL(forwardUrl);
-//            connection = (HttpURLConnection) url.openConnection();
-//            connection.disconnect();
-//        } catch (IOException ex) {
-//            throw new RuntimeException(ex);
-//        }
-//    }
-//
-
-
-//    public LogStream(final LogStreamConfig logStreamConfig) {
-//        if (logStreamConfig != null) {
-//            metaKeySet = getMetaKeySet(logStreamConfig.getMetaKeys());
-//        } else {
-//            metaKeySet = Collections.emptySet();
-//        }
-//    }
 
     public void log(final Logger logger, final AttributeMap attributeMap, final String type, final String url, final int responseCode, final long bytes, final long duration) {
         if (logger.isInfoEnabled() && metaKeySet.size() > 0) {
@@ -274,13 +249,34 @@ public class HTTPAppender extends AbstractAppender {
         return Arrays.stream(csv.toLowerCase().split(",")).collect(Collectors.toSet());
     }
 
+    @PipelineProperty(description = "When the current output exceeds this size it will be closed and a new one created.",
+            displayPriority = 2)
+    public void setRollSize(final String size) {
+        super.setRollSize(size);
+    }
 
-    @PipelineProperty(description = "The URL to send data to", displayPriority = 1)
+    @PipelineProperty(description = "Choose if you want to split aggregated streams into separate output.",
+            defaultValue = "false",
+            displayPriority = 3)
+    public void setSplitAggregatedStreams(final boolean splitAggregatedStreams) {
+        super.setSplitAggregatedStreams(splitAggregatedStreams);
+    }
+
+    @PipelineProperty(description = "Choose if you want to split individual records into separate output.",
+            defaultValue = "false",
+            displayPriority = 4)
+    public void setSplitRecords(final boolean splitRecords) {
+        super.setSplitRecords(splitRecords);
+    }
+
+    @PipelineProperty(description = "The URL to send data to",
+            displayPriority = 5)
     public void setForwardUrl(final String forwardUrl) {
         this.forwardUrl = forwardUrl;
     }
 
-    @PipelineProperty(description = "How long to wait before we abort sending data due to connection timeout", displayPriority = 3)
+    @PipelineProperty(description = "How long to wait before we abort sending data due to connection timeout",
+            displayPriority = 6)
     public void setConnectionTimeout(final String string) {
         connectionTimeout = null;
         if (string != null && !string.isEmpty()) {
@@ -288,12 +284,14 @@ public class HTTPAppender extends AbstractAppender {
         }
     }
 
-    @PipelineProperty(description = "Should data be sent in chunks and if so how big should the chunks be", displayPriority = 4)
+    @PipelineProperty(description = "Should data be sent in chunks and if so how big should the chunks be",
+            displayPriority = 7)
     public void setForwardChunkSize(final String string) {
         this.forwardChunkSize = ModelStringUtil.parseIECByteSizeString(string);
     }
 
-    @PipelineProperty(description = "Should data be compressed when sending", defaultValue = "true", displayPriority = 2)
+    @PipelineProperty(description = "Should data be compressed when sending", defaultValue = "true",
+            displayPriority = 8)
     public void setUseCompression(final boolean useCompression) {
         this.useCompression = useCompression;
     }
@@ -301,8 +299,81 @@ public class HTTPAppender extends AbstractAppender {
     @PipelineProperty(
             description = "Which meta data values will be logged in the send log",
             defaultValue = "guid,feed,system,environment,remotehost,remoteaddress",
-            displayPriority = 5)
+            displayPriority = 9)
     public void setLogMetaKeys(final String string) {
         metaKeySet = getMetaKeySet(string);
+    }
+
+    @PipelineProperty(description = "Use JVM SSL config",
+            defaultValue = "true",
+            displayPriority = 10)
+    public void setUseJvmSslConfig(final boolean useJvmSslConfig) {
+        this.useJvmSslConfig = useJvmSslConfig;
+    }
+
+    @PipelineProperty(description = "The key store file path on the server",
+            displayPriority = 11)
+    public void setKeyStorePath(final String keyStorePath) {
+        sslConfig.setKeyStorePath(keyStorePath);
+    }
+
+    @PipelineProperty(description = "The key store type",
+            defaultValue = "JKS",
+            displayPriority = 12)
+    public void setKeyStoreType(final String keyStoreType) {
+        sslConfig.setKeyStoreType(keyStoreType);
+    }
+
+    @PipelineProperty(description = "The key store password",
+            displayPriority = 13)
+    public void setKeyStorePassword(final String keyStorePassword) {
+        sslConfig.setKeyStorePassword(keyStorePassword);
+    }
+
+    @PipelineProperty(description = "The trust store file path on the server",
+            displayPriority = 14)
+    public void setTrustStorePath(final String trustStorePath) {
+        sslConfig.setTrustStorePath(trustStorePath);
+    }
+
+    @PipelineProperty(description = "The trust store type",
+            defaultValue = "JKS",
+            displayPriority = 15)
+    public void setTrustStoreType(final String trustStoreType) {
+        sslConfig.setTrustStoreType(trustStoreType);
+    }
+
+    @PipelineProperty(description = "The trust store password",
+            displayPriority = 16)
+    public void setTrustStorePassword(final String trustStorePassword) {
+        sslConfig.setTrustStorePassword(trustStorePassword);
+    }
+
+    @PipelineProperty(description = "Verify host names",
+            defaultValue = "true",
+            displayPriority = 17)
+    public void setHostnameVerificationEnabled(final boolean hostnameVerificationEnabled) {
+        sslConfig.setHostnameVerificationEnabled(hostnameVerificationEnabled);
+    }
+
+    @PipelineProperty(description = "The SSL protocol to use",
+            defaultValue = "TLSv1.2",
+            displayPriority = 18)
+    public void setSslProtocol(final String sslProtocol) {
+        sslConfig.setSslProtocol(sslProtocol);
+    }
+
+    @PipelineProperty(description = "The request method, e.g. POST",
+            defaultValue = "POST",
+            displayPriority = 19)
+    public void setRequestMethod(String requestMethod) {
+        this.requestMethod = requestMethod;
+    }
+
+    @PipelineProperty(description = "The content type",
+            defaultValue = "application/json",
+            displayPriority = 20)
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
     }
 }

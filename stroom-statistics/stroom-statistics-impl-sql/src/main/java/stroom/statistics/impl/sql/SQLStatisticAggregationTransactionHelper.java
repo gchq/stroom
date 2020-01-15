@@ -123,7 +123,7 @@ public class SQLStatisticAggregationTransactionHelper {
             "WHERE TIME_MS < ? " +
             "AND PRES = ? " +
             "AND VAL_TP = ?";
-    private final ConnectionProvider connectionProvider;
+    private final SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider;
     private final SQLStatisticsConfig config;
 
     // @formatter:on
@@ -158,9 +158,9 @@ public class SQLStatisticAggregationTransactionHelper {
     };
 
     @Inject
-    SQLStatisticAggregationTransactionHelper(final ConnectionProvider connectionProvider,
+    SQLStatisticAggregationTransactionHelper(final SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider,
                                              final SQLStatisticsConfig config) {
-        this.connectionProvider = connectionProvider;
+        this.sqlStatisticsDbConnProvider = sqlStatisticsDbConnProvider;
         this.config = config;
     }
 
@@ -174,7 +174,7 @@ public class SQLStatisticAggregationTransactionHelper {
         final LogExecutionTime time = new LogExecutionTime();
         final String trace = buildSQLTrace(sql, args);
 
-        taskContext.info("{}\n {}", prefix, trace);
+        taskContext.info(() -> prefix + "\n " + trace);
 
         final int count = ConnectionUtil.executeUpdate(connection, sql, args);
 
@@ -187,7 +187,7 @@ public class SQLStatisticAggregationTransactionHelper {
         final LogExecutionTime time = new LogExecutionTime();
         final String trace = buildSQLTrace(sql, args);
 
-        taskContext.info("{}\n {}", prefix, trace);
+        taskContext.info(() -> prefix + "\n " + trace);
 
         final long result = ConnectionUtil.executeQueryLongResult(connection, sql, args);
 
@@ -205,19 +205,19 @@ public class SQLStatisticAggregationTransactionHelper {
     }
 
     public Long getAggregateMinId() throws SQLException {
-        try (final Connection connection = connectionProvider.getConnection()) {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             return doAggregateSQL_LongResult(connection, AGGREGATE_MIN_ID, null);
         }
     }
 
     public Long getAggregateMaxId() throws SQLException {
-        try (final Connection connection = connectionProvider.getConnection()) {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             return doAggregateSQL_LongResult(connection, AGGREGATE_MAX_ID, null);
         }
     }
 
     public Long getAggregateCount() throws SQLException {
-        try (final Connection connection = connectionProvider.getConnection()) {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             return doAggregateSQL_LongResult(connection, AGGREGATE_COUNT, null);
         }
     }
@@ -238,7 +238,7 @@ public class SQLStatisticAggregationTransactionHelper {
             // convert the max age into a time bucket so we can delete
             // everything older than that time bucket
             final long oldestTimeBucketToKeep = mostCoarseLevel.getAggregateToMs(timeNowMs - retentionAgeMs);
-            try (final Connection connection = connectionProvider.getConnection()) {
+            try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
                 final long rowsAffected = doAggregateSQL_Update(connection, taskContext, "", DELETE_OLD_STATS,
                         Arrays.asList((Object) oldestTimeBucketToKeep));
                 LOGGER.info("Deleted {} stats with a time older than {}", rowsAffected,
@@ -258,7 +258,7 @@ public class SQLStatisticAggregationTransactionHelper {
                                       final long timeNowMs) throws SQLException {
         long processCount = 0;
 
-        try (final Connection connection = connectionProvider.getConnection()) {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             // mark a set of records in STATVAL_SRC as being processed so all
             // DML below can filter by them
             // records are chosen at random to avoid overhead of a sort
@@ -331,7 +331,7 @@ public class SQLStatisticAggregationTransactionHelper {
                             final long aggregateToMs) throws SQLException {
         int count;
         final LogExecutionTime time = new LogExecutionTime();
-        taskContext.info("{}\n {}", prefix, SPROC_STAGE1_UPSERT);
+        taskContext.info(() -> prefix + "\n " + SPROC_STAGE1_UPSERT);
 
         LOGGER.debug(">>> {}", SPROC_STAGE1_UPSERT);
         try (final CallableStatement stmt = connection.prepareCall(SPROC_STAGE1_UPSERT)) {
@@ -368,7 +368,7 @@ public class SQLStatisticAggregationTransactionHelper {
                             final long aggregateToMs) throws SQLException {
         int count;
         final LogExecutionTime time = new LogExecutionTime();
-        taskContext.info("{}\n {}", prefix, SPROC_STAGE2_UPSERT);
+        taskContext.info(() -> prefix + "\n " + SPROC_STAGE2_UPSERT);
 
         LOGGER.debug(">>> {}", SPROC_STAGE2_UPSERT);
         try (final CallableStatement stmt = connection.prepareCall(SPROC_STAGE2_UPSERT)) {
@@ -398,7 +398,7 @@ public class SQLStatisticAggregationTransactionHelper {
 
     public void aggregateConfigStage2(final TaskContext taskContext, final String prefix, final long timeNowMs)
             throws SQLException {
-        try (final Connection connection = connectionProvider.getConnection()) {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             // Stage 2 is about moving stats from one precision in STAT_VAL to a
             // coarser one once they have become too old for their current
             // precision
@@ -468,7 +468,7 @@ public class SQLStatisticAggregationTransactionHelper {
         LOGGER.debug(">>> {}", tableName);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        try (final Connection connection = connectionProvider.getConnection()) {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             try (final Statement statement = connection.createStatement()) {
                 final String sql = TRUNCATE_TABLE_SQL + tableName;
                 // (TRUNCATE_TABLE_SQL
@@ -488,7 +488,7 @@ public class SQLStatisticAggregationTransactionHelper {
     public void clearTable(final String tableName) throws SQLException {
         LOGGER.debug(">>> {}", tableName);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        try (final Connection connection = connectionProvider.getConnection()) {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             try (final Statement statement = connection.createStatement()) {
                 final String sql = CLEAR_TABLE_SQL + tableName;
                 statement.execute(sql);

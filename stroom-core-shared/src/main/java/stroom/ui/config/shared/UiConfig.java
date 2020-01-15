@@ -22,66 +22,32 @@ import stroom.docref.SharedObject;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.IsConfig;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 public class UiConfig implements SharedObject, IsConfig {
     private String welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
     private String aboutHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
-    private BuildInfo buildInfo;
+    private BuildInfo buildInfo = new BuildInfo();
     private String nodeName;
     private String maintenanceMessage;
     private String defaultMaxResults = "1000000,100,10,1";
-    private ProcessConfig processConfig;
+    private ProcessConfig processConfig = new ProcessConfig();
     private String helpUrl;
-    private ThemeConfig themeConfig;
-    private QueryConfig queryConfig;
+    private ThemeConfig themeConfig = new ThemeConfig();
+    private QueryConfig queryConfig = new QueryConfig();
     private String namePattern = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
     private String htmlTitle = "Stroom";
     private String oncontextmenu = "return false;";
-    private SplashConfig splashConfig;
-    private ActivityConfig activityConfig;
-    private UrlConfig urlConfig;
+    private SplashConfig splashConfig = new SplashConfig();
+    private ActivityConfig activityConfig = new ActivityConfig();
+    private UrlConfig urlConfig = new UrlConfig();
 
     private static final long serialVersionUID = 8717922468620533698L;
 
     public UiConfig() {
         // Default constructor necessary for GWT serialisation.
-        buildInfo = new BuildInfo();
-        processConfig = new ProcessConfig();
-        themeConfig = new ThemeConfig();
-        queryConfig = new QueryConfig();
-        splashConfig = new SplashConfig();
-        activityConfig = new ActivityConfig();
-        urlConfig = new UrlConfig();
     }
-
-    @Inject
-    public UiConfig(final BuildInfo buildInfo,
-                    final ProcessConfig processConfig,
-                    final ThemeConfig themeConfig,
-                    final QueryConfig queryConfig,
-                    final SplashConfig splashConfig,
-                    final ActivityConfig activityConfig,
-                    final UrlConfig urlConfig) {
-        this.buildInfo = buildInfo;
-        this.processConfig = processConfig;
-        this.themeConfig = themeConfig;
-        this.queryConfig = queryConfig;
-        this.splashConfig = splashConfig;
-        this.activityConfig = activityConfig;
-        this.urlConfig = urlConfig;
-    }
-
-    //@JsonPropertyDescription("HTML")
-//    public String getLoginHtml() {
-//        return loginHtml;
-//    }
-//
-//    public void setLoginHtml(final String loginHtml) {
-//        this.loginHtml = loginHtml;
-//    }
 
     @JsonPropertyDescription("HTML")
     public String getWelcomeHtml() {

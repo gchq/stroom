@@ -75,24 +75,24 @@ class IndexShardDaoImpl implements IndexShardDao {
         FIELD_MAP.put(FindIndexShardCriteria.FIELD_PARTITION, INDEX_SHARD.PARTITION_NAME);
     }
 
-    private final ConnectionProvider connectionProvider;
+    private final IndexDbConnProvider indexDbConnProvider;
     private final IndexVolumeDao indexVolumeDao;
     private final GenericDao<IndexShardRecord, IndexShard, Long> genericDao;
     private final RoundRobinVolumeSelector volumeSelector = new RoundRobinVolumeSelector();
 
     @Inject
-    IndexShardDaoImpl(final ConnectionProvider connectionProvider,
+    IndexShardDaoImpl(final IndexDbConnProvider indexDbConnProvider,
                       final IndexVolumeDao indexVolumeDao) {
-        this.connectionProvider = connectionProvider;
+        this.indexDbConnProvider = indexDbConnProvider;
         this.indexVolumeDao = indexVolumeDao;
-        genericDao = new GenericDao<>(INDEX_SHARD, INDEX_SHARD.ID, IndexShard.class, connectionProvider);
+        genericDao = new GenericDao<>(INDEX_SHARD, INDEX_SHARD.ID, IndexShard.class, indexDbConnProvider);
         genericDao.setRecordToObjectMapper(RECORD_TO_INDEX_SHARD_MAPPER);
         genericDao.setObjectToRecordMapper(INDEX_SHARD_TO_RECORD_MAPPER);
     }
 
     @Override
     public Optional<IndexShard> fetch(final long id) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .select()
                 .from(INDEX_SHARD)
                 .join(INDEX_VOLUME).on(INDEX_VOLUME.ID.eq(INDEX_SHARD.FK_VOLUME_ID))
@@ -148,7 +148,7 @@ class IndexShardDaoImpl implements IndexShardDao {
 
         final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
-        return JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(indexDbConnProvider, context ->
                 context
                         .select()
                         .from(INDEX_SHARD)
@@ -257,7 +257,7 @@ class IndexShardDaoImpl implements IndexShardDao {
     @Override
     public void setStatus(final Long id,
                           final IndexShard.IndexShardStatus status) {
-        JooqUtil.context(connectionProvider, context -> context
+        JooqUtil.context(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
                 .set(INDEX_SHARD.STATUS, status.getPrimitiveValue())
                 .where(INDEX_SHARD.ID.eq(id))
@@ -270,7 +270,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                        final Long commitDurationMs,
                        final Long commitMs,
                        final Long fileSize) {
-        JooqUtil.context(connectionProvider, context -> context
+        JooqUtil.context(indexDbConnProvider, context -> context
                 .update(INDEX_SHARD)
                 .set(INDEX_SHARD.DOCUMENT_COUNT, documentCount)
                 .set(INDEX_SHARD.COMMIT_DOCUMENT_COUNT, 0)

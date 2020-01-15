@@ -26,7 +26,7 @@ import stroom.docstore.shared.Doc;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "functionName", "scriptRef"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 public class VisualisationDoc extends Doc {
     private static final long serialVersionUID = 4519634323788508083L;
 

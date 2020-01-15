@@ -74,10 +74,12 @@ public class DashboardMainPresenter
         final String title = urlParameters.getTitle();
         final String params = urlParameters.getParams();
         final boolean embedded = urlParameters.isEmbedded();
+        final boolean queryOnOpen = urlParameters.isQueryOnOpen();
 
         dashboardPresenter.setCustomTitle(title);
         dashboardPresenter.setParams(params);
         dashboardPresenter.setEmbedded(embedded);
+        dashboardPresenter.setQueryOnOpen(queryOnOpen);
 
         if (title != null && title.trim().length() > 0) {
             Window.setTitle(title);

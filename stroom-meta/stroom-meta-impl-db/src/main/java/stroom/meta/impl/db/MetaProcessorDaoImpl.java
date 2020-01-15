@@ -17,28 +17,49 @@
 
 package stroom.meta.impl.db;
 
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.ICache;
 import stroom.db.util.JooqUtil;
 import stroom.meta.impl.MetaProcessorDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaProcessorRecord;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static stroom.meta.impl.db.jooq.tables.MetaProcessor.META_PROCESSOR;
 
 @Singleton
 class MetaProcessorDaoImpl implements MetaProcessorDao {
-    // TODO : @66 Replace with a proper cache.
-    private final Map<String, Integer> cache = new ConcurrentHashMap<>();
+    private static final String CACHE_NAME = "Meta Processor Cache";
 
-    private final ConnectionProvider connectionProvider;
+    private final ICache<Key, Integer> cache;
+    private final MetaDbConnProvider metaDbConnProvider;
 
     @Inject
-    MetaProcessorDaoImpl(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    MetaProcessorDaoImpl(final MetaDbConnProvider metaDbConnProvider,
+                         final CacheManager cacheManager,
+                         final MetaServiceConfig metaServiceConfig) {
+        this.metaDbConnProvider = metaDbConnProvider;
+        cache = cacheManager.create(CACHE_NAME, metaServiceConfig::getMetaProcessorCache, this::load);
+    }
+
+    private int load(final Key key) {
+        // Try and get the existing id from the DB.
+        return get(key.getProcessorUuid())
+                .or(() -> {
+                    // The id isn't in the DB so create it.
+                    return create(key.getProcessorUuid(), key.getPipelineUuid())
+                            .or(() -> {
+                                // If the id is still null then this may be because the create method failed
+                                // due to the name having been inserted into the DB by another thread prior
+                                // to us calling create and the DB preventing duplicate names.
+                                // Assuming this is the case, try and get the id from the DB one last time.
+                                return get(key.getProcessorUuid());
+                            });
+                })
+                .orElseThrow();
     }
 
     @Override
@@ -47,32 +68,12 @@ class MetaProcessorDaoImpl implements MetaProcessorDao {
             return null;
         }
 
-        // Try and get the id from the cache.
-        return Optional.ofNullable(cache.get(processorUuid))
-                .or(() -> {
-                    // Try and get the existing id from the DB.
-                    return get(processorUuid)
-                            .or(() -> {
-                                // The id isn't in the DB so create it.
-                                return create(processorUuid, pipelineUuid)
-                                        .or(() -> {
-                                            // If the id is still null then this may be because the create method failed
-                                            // due to the name having been inserted into the DB by another thread prior
-                                            // to us calling create and the DB preventing duplicate names.
-                                            // Assuming this is the case, try and get the id from the DB one last time.
-                                            return get(processorUuid);
-                                        });
-                            })
-                            .map(i -> {
-                                // Cache for next time.
-                                cache.put(processorUuid, i);
-                                return i;
-                            });
-                }).orElseThrow();
+        final Key key = new Key(processorUuid, pipelineUuid);
+        return cache.get(key);
     }
 
     private Optional<Integer> get(final String processorUuid) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(META_PROCESSOR.ID)
                 .from(META_PROCESSOR)
                 .where(META_PROCESSOR.PROCESSOR_UUID.eq(processorUuid))
@@ -80,7 +81,7 @@ class MetaProcessorDaoImpl implements MetaProcessorDao {
     }
 
     private Optional<Integer> create(final String processorUuid, final String pipelineUuid) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .insertInto(META_PROCESSOR, META_PROCESSOR.PROCESSOR_UUID, META_PROCESSOR.PIPELINE_UUID)
                 .values(processorUuid, pipelineUuid)
                 .onDuplicateKeyIgnore()
@@ -96,8 +97,48 @@ class MetaProcessorDaoImpl implements MetaProcessorDao {
     }
 
     private int deleteAll() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .delete(META_PROCESSOR)
                 .execute());
+    }
+
+    private static class Key {
+        private final String processorUuid;
+        private final String pipelineUuid;
+
+        private Key(final String processorUuid, final String pipelineUuid) {
+            this.processorUuid = processorUuid;
+            this.pipelineUuid = pipelineUuid;
+        }
+
+        public String getProcessorUuid() {
+            return processorUuid;
+        }
+
+        public String getPipelineUuid() {
+            return pipelineUuid;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final Key key = (Key) o;
+            return Objects.equals(processorUuid, key.processorUuid) &&
+                    Objects.equals(pipelineUuid, key.pipelineUuid);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(processorUuid, pipelineUuid);
+        }
+
+        @Override
+        public String toString() {
+            return "Key{" +
+                    "processorUuid='" + processorUuid + '\'' +
+                    ", pipelineUuid='" + pipelineUuid + '\'' +
+                    '}';
+        }
     }
 }

@@ -12,7 +12,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.security.api.SecurityContext;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import javax.inject.Inject;

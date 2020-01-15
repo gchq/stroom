@@ -16,13 +16,10 @@
 
 package stroom.pipeline.refdata;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaService;
@@ -37,15 +34,14 @@ import java.util.Collections;
 import java.util.NavigableSet;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class EffectiveStreamCache implements Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(EffectiveStreamCache.class);
 
-    private static final int MAX_CACHE_ENTRIES = 1000;
+    private static final String CACHE_NAME = "Reference Data - Effective Stream Cache";
 
-    private final LoadingCache<EffectiveStreamKey, NavigableSet> cache;
+    private final ICache<EffectiveStreamKey, NavigableSet<EffectiveStream>> cache;
     private final MetaService metaService;
     private final EffectiveStreamInternPool internPool;
     private final SecurityContext securityContext;
@@ -54,30 +50,15 @@ public class EffectiveStreamCache implements Clearable {
     EffectiveStreamCache(final CacheManager cacheManager,
                          final MetaService metaService,
                          final EffectiveStreamInternPool internPool,
-                         final SecurityContext securityContext) {
-        this(cacheManager, metaService, internPool, securityContext, 10, TimeUnit.MINUTES);
-    }
-
-    @SuppressWarnings("unchecked")
-    EffectiveStreamCache(final CacheManager cacheManager,
-                         final MetaService metaService,
-                         final EffectiveStreamInternPool internPool,
                          final SecurityContext securityContext,
-                         final long duration,
-                         final TimeUnit unit) {
+                         final ReferenceDataConfig referenceDataConfig) {
         this.metaService = metaService;
         this.internPool = internPool;
         this.securityContext = securityContext;
 
-        final CacheLoader<EffectiveStreamKey, NavigableSet> cacheLoader = CacheLoader.from(this::create);
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterWrite(duration, unit);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("Reference Data - Effective Stream Cache", cacheBuilder, cache);
+        cache = cacheManager.create(CACHE_NAME, referenceDataConfig::getEffectiveStreamCache, this::create);
     }
 
-    @SuppressWarnings("unchecked")
     public NavigableSet<EffectiveStream> get(final EffectiveStreamKey effectiveStreamKey) {
         if (effectiveStreamKey.getFeed() == null) {
             throw new ProcessException("No feed has been specified for reference data lookup");
@@ -86,7 +67,7 @@ public class EffectiveStreamCache implements Clearable {
             throw new ProcessException("No stream type has been specified for reference data lookup");
         }
 
-        return cache.getUnchecked(effectiveStreamKey);
+        return cache.get(effectiveStreamKey);
     }
 
     protected NavigableSet<EffectiveStream> create(final EffectiveStreamKey key) {
@@ -156,6 +137,6 @@ public class EffectiveStreamCache implements Clearable {
 
     @Override
     public void clear() {
-        CacheUtil.clear(cache);
+        cache.clear();
     }
 }

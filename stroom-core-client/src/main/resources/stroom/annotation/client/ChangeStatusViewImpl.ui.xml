@@ -1,0 +1,13 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:button="urn:import:stroom.widget.button.client">
+    <g:FlowPanel addStyleNames="annotationSetting">
+        <g:FlowPanel addStyleNames="annotationSettingHeading">
+            <g:Label ui:field="statusLabel" styleName="annotationClickLabel" text="Status:"/>
+            <g:Label ui:field="status" styleName="annotationLabel"/>
+            <button:SvgButton ui:field="statusIcon" addStyleNames="annotationDropDownIcon"/>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>
+

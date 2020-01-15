@@ -16,11 +16,8 @@
 
 package stroom.feed.impl;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
@@ -31,34 +28,27 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class FeedDocCache implements Clearable {
-    private static final int MAX_CACHE_ENTRIES = 1000;
+    private static final String CACHE_NAME = "Feed Doc Cache";
 
-    private final LoadingCache<String, Optional<FeedDoc>> cache;
+    private final ICache<String, Optional<FeedDoc>> cache;
     private final FeedStore feedStore;
     private final SecurityContext securityContext;
 
     @Inject
-    @SuppressWarnings("unchecked")
     public FeedDocCache(final CacheManager cacheManager,
                         final FeedStore feedStore,
-                        final SecurityContext securityContext) {
+                        final SecurityContext securityContext,
+                        final FeedConfig feedConfig) {
         this.feedStore = feedStore;
         this.securityContext = securityContext;
-
-        final CacheLoader<String, Optional<FeedDoc>> cacheLoader = CacheLoader.from(this::create);
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterAccess(10, TimeUnit.SECONDS);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("Feed Doc Cache", cacheBuilder, cache);
+        cache = cacheManager.create(CACHE_NAME, feedConfig::getFeedDocCache, this::create);
     }
 
     public Optional<FeedDoc> get(final String feedName) {
-        return cache.getUnchecked(feedName);
+        return cache.get(feedName);
     }
 
     private Optional<FeedDoc> create(final String feedName) {
@@ -73,6 +63,6 @@ public class FeedDocCache implements Clearable {
 
     @Override
     public void clear() {
-        CacheUtil.clear(cache);
+        cache.clear();
     }
 }

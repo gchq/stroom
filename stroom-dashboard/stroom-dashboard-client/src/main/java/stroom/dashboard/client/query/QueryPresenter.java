@@ -119,6 +119,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private boolean initialised;
     private Timer autoRefreshTimer;
     private String lastUsedQueryInfo;
+    private boolean queryOnOpen;
 
     @Inject
     public QueryPresenter(final EventBus eventBus,
@@ -431,6 +432,11 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
+    public void setQueryOnOpen(final boolean queryOnOpen) {
+        this.queryOnOpen = queryOnOpen;
+    }
+
+    @Override
     public void start() {
         if (SearchModel.Mode.INACTIVE.equals(searchModel.getMode())) {
             queryInfoPresenterProvider.get().show(lastUsedQueryInfo, state -> {
@@ -474,13 +480,13 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
-    public void read(final ComponentConfig componentData) {
-        super.read(componentData);
+    public void read(final ComponentConfig componentConfig) {
+        super.read(componentConfig);
         queryComponentSettings = getSettings();
 
         // Create and register the search model.
         final DashboardDoc dashboard = getComponents().getDashboard();
-        final DashboardUUID dashboardUUID = new DashboardUUID(dashboard.getUuid(), dashboard.getName(), getComponentData().getId());
+        final DashboardUUID dashboardUUID = new DashboardUUID(dashboard.getUuid(), dashboard.getName(), getComponentConfig().getId());
         searchModel.setDashboardUUID(dashboardUUID);
 
         // Read data source.
@@ -495,12 +501,12 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     @Override
-    public void write(final ComponentConfig componentData) {
-        super.write(componentData);
+    public void write(final ComponentConfig componentConfig) {
+        super.write(componentConfig);
 
         // Write expression.
         queryComponentSettings.setExpression(expressionPresenter.write());
-        componentData.setSettings(queryComponentSettings);
+        componentConfig.setSettings(queryComponentSettings);
     }
 
     @Override
@@ -518,7 +524,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             initialised = true;
             // An auto search can only commence if the UI has fully loaded and the data source has also loaded from the server.
             final Automate automate = getAutomate();
-            if (automate.isOpen()) {
+            if (queryOnOpen || automate.isOpen()) {
                 run(true, false);
             }
         }
@@ -541,10 +547,10 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     }
 
     private QueryComponentSettings getSettings() {
-        ComponentSettings settings = getComponentData().getSettings();
+        ComponentSettings settings = getComponentConfig().getSettings();
         if (!(settings instanceof QueryComponentSettings)) {
             settings = createSettings();
-            getComponentData().setSettings(settings);
+            getComponentConfig().setSettings(settings);
         }
 
         return (QueryComponentSettings) settings;
@@ -675,7 +681,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             final DashboardUUID dashboardUUID = new DashboardUUID(
                     dashboard.getUuid(),
                     dashboard.getName(),
-                    getComponentData().getId());
+                    getComponentConfig().getId());
             final DashboardQueryKey dashboardQueryKey = DashboardQueryKey.create(
                     dashboardUUID.getUUID(),
                     dashboard.getUuid(),

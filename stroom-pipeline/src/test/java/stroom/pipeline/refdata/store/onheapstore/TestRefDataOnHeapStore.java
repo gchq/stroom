@@ -33,7 +33,7 @@ import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.store.RefDataStoreConfig;
+import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
 import stroom.pipeline.refdata.store.RefDataValue;
@@ -85,7 +85,7 @@ class TestRefDataOnHeapStore {
     private static final String RANGE_TYPE = "Range";
     private static final String PADDING = IntStream.rangeClosed(1, 300).boxed().map(i -> "-").collect(Collectors.joining());
 
-    private RefDataStoreConfig refDataStoreConfig = new RefDataStoreConfig();
+    private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
 
     @Inject
     private RefDataStoreFactory refDataStoreFactory;
@@ -98,7 +98,7 @@ class TestRefDataOnHeapStore {
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(RefDataStoreConfig.class).toInstance(refDataStoreConfig);
+                        bind(ReferenceDataConfig.class).toInstance(referenceDataConfig);
                         install(new RefDataStoreModule());
                     }
                 });

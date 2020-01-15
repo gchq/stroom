@@ -82,7 +82,7 @@ class MetaDaoImpl implements MetaDao {
             .effectiveMs(record.get(meta.EFFECTIVE_TIME))
             .build();
 
-    private final ConnectionProvider connectionProvider;
+    private final MetaDbConnProvider metaDbConnProvider;
     private final MetaFeedDaoImpl feedDao;
     private final MetaTypeDaoImpl metaTypeDao;
     private final MetaProcessorDaoImpl metaProcessorDao;
@@ -93,7 +93,7 @@ class MetaDaoImpl implements MetaDao {
     private final ValueMapper valueMapper;
 
     @Inject
-    MetaDaoImpl(final ConnectionProvider connectionProvider,
+    MetaDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                 final MetaFeedDaoImpl feedDao,
                 final MetaTypeDaoImpl metaTypeDao,
                 final MetaProcessorDaoImpl metaProcessorDao,
@@ -101,7 +101,7 @@ class MetaDaoImpl implements MetaDao {
                 final ExpressionMapperFactory expressionMapperFactory,
                 final WordListProvider wordListProvider,
                 final CollectionService collectionService) {
-        this.connectionProvider = connectionProvider;
+        this.metaDbConnProvider = metaDbConnProvider;
         this.feedDao = feedDao;
         this.metaTypeDao = metaTypeDao;
         this.metaProcessorDao = metaProcessorDao;
@@ -161,7 +161,7 @@ class MetaDaoImpl implements MetaDao {
 
     @Override
     public Long getMaxId() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(max(meta.ID))
                 .from(meta)
                 .fetchOptional()
@@ -175,7 +175,7 @@ class MetaDaoImpl implements MetaDao {
         final Integer typeId = metaTypeDao.getOrCreate(metaProperties.getTypeName());
         final Integer processorId = metaProcessorDao.getOrCreate(metaProperties.getProcessorUuid(), metaProperties.getPipelineUuid());
 
-        final long id = JooqUtil.contextResult(connectionProvider, context -> context
+        final long id = JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .insertInto(META,
                         META.CREATE_TIME,
                         META.EFFECTIVE_TIME,
@@ -223,7 +223,7 @@ class MetaDaoImpl implements MetaDao {
 
         final Condition c = condition;
 
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .update(meta)
                 .set(meta.STATUS, MetaStatusId.getPrimitiveValue(newStatus))
                 .set(meta.STATUS_TIME, statusTime)
@@ -264,7 +264,7 @@ class MetaDaoImpl implements MetaDao {
     }
 
     private List<Meta> find(final Condition condition, final OrderField[] orderFields, final int offset, final int numberOfRows) {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(
                         meta.ID,
                         metaFeed.NAME,
@@ -331,7 +331,7 @@ class MetaDaoImpl implements MetaDao {
             }
         }
 
-        JooqUtil.context(connectionProvider, context -> {
+        JooqUtil.context(metaDbConnProvider, context -> {
             int offset = 0;
             int numberOfRows = 1000000;
 
@@ -417,12 +417,20 @@ class MetaDaoImpl implements MetaDao {
                 });
     }
 
+//    @Override
+//    public int delete(final FindMetaCriteria criteria) {
+//        final Condition condition = createCondition(criteria);
+//        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+//                .deleteFrom(meta)
+//                .where(condition)
+//                .execute());
+//    }
+
     @Override
-    public int delete(final FindMetaCriteria criteria) {
-        final Condition condition = createCondition(criteria);
-        return JooqUtil.contextResult(connectionProvider, context -> context
+    public int delete(final List<Long> metaIdList) {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .deleteFrom(meta)
-                .where(condition)
+                .where(meta.ID.in(metaIdList))
                 .execute());
     }
 
@@ -430,7 +438,7 @@ class MetaDaoImpl implements MetaDao {
     public Optional<Long> getMaxId(final FindMetaCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(max(meta.ID))
                 .from(meta)
                 .where(condition)
@@ -440,7 +448,7 @@ class MetaDaoImpl implements MetaDao {
 
     @Override
     public int getLockCount() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .selectCount()
                 .from(meta)
                 .where(meta.STATUS.eq(MetaStatusId.LOCKED))
@@ -451,7 +459,7 @@ class MetaDaoImpl implements MetaDao {
 
     @Override
     public void clear() {
-        JooqUtil.context(connectionProvider, context -> context
+        JooqUtil.context(metaDbConnProvider, context -> context
                 .delete(META)
                 .execute());
     }

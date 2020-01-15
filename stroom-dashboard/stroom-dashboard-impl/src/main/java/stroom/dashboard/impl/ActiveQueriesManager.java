@@ -16,48 +16,52 @@
 
 package stroom.dashboard.impl;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.google.common.cache.RemovalListener;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
 import stroom.dashboard.impl.datasource.DataSourceProviderRegistry;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 class ActiveQueriesManager implements Clearable {
-    private static final int MAX_ACTIVE_QUERIES = 100;
+    private static final String CACHE_NAME = "Active Queries";
 
-    private final LoadingCache<String, ActiveQueries> cache;
+    private final DataSourceProviderRegistry dataSourceProviderRegistry;
+    private final SecurityContext securityContext;
+    private final ICache<String, ActiveQueries> cache;
 
     @Inject
-    @SuppressWarnings("unchecked")
     ActiveQueriesManager(final CacheManager cacheManager,
                          final DataSourceProviderRegistry dataSourceProviderRegistry,
-                         final SecurityContext securityContext) {
-        final RemovalListener<String, ActiveQueries> removalListener = notification -> notification.getValue().destroy();
-
-        final CacheLoader<String, ActiveQueries> cacheLoader = CacheLoader.from(k -> new ActiveQueries(dataSourceProviderRegistry, securityContext));
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_ACTIVE_QUERIES)
-                .expireAfterAccess(1, TimeUnit.MINUTES)
-                .removalListener(removalListener);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("Active Queries", cacheBuilder, cache);
+                         final SecurityContext securityContext,
+                         final DashboardConfig dashboardConfig) {
+        this.dataSourceProviderRegistry = dataSourceProviderRegistry;
+        this.securityContext = securityContext;
+        cache = cacheManager.create(CACHE_NAME, dashboardConfig::getActiveQueriesCache, this::create, this::destroy);
     }
 
-    public ActiveQueries get(final String key) {
-        return cache.getUnchecked(key);
+    private ActiveQueries create(final String key) {
+        return new ActiveQueries(dataSourceProviderRegistry, securityContext);
+    }
+
+    private void destroy(final String key, final ActiveQueries value) {
+        value.destroy();
+    }
+
+    public ActiveQueries get(final UserIdentity userIdentity, final String applicationInstanceId) {
+        return cache.get(createKey(userIdentity, applicationInstanceId));
+    }
+
+    public String createKey(final UserIdentity userIdentity, final String applicationInstanceId) {
+        return userIdentity.getId() + "_" + userIdentity.getSessionId() + "_" + applicationInstanceId;
     }
 
     @Override
     public void clear() {
-        CacheUtil.clear(cache);
+        cache.clear();
     }
 }

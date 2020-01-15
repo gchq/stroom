@@ -34,6 +34,15 @@ import stroom.dashboard.client.main.DashboardMainPresenter;
 import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainProxy;
 import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainView;
 import stroom.dashboard.client.main.DashboardMainViewImpl;
+import stroom.data.client.presenter.ClassificationWrapperPresenter;
+import stroom.data.client.presenter.ClassificationWrapperPresenter.ClassificationWrapperView;
+import stroom.data.client.presenter.DataPresenter;
+import stroom.data.client.presenter.DataPresenter.DataView;
+import stroom.data.client.presenter.TextPresenter;
+import stroom.data.client.presenter.TextPresenter.TextView;
+import stroom.data.client.view.ClassificationWrapperViewImpl;
+import stroom.data.client.view.DataViewImpl;
+import stroom.data.client.view.TextViewImpl;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.view.EditorViewImpl;
@@ -71,5 +80,9 @@ public class DashboardAppModule extends AbstractPresenterModule {
         bindPresenterWidget(EditorPresenter.class, EditorView.class, EditorViewImpl.class);
         bindPresenterWidget(IFramePresenter.class, IFrameView.class, IFrameViewImpl.class);
         bindPresenterWidget(IFrameContentPresenter.class, IFrameContentView.class, IFrameContentViewImpl.class);
+
+        bindPresenterWidget(ClassificationWrapperPresenter.class, ClassificationWrapperView.class, ClassificationWrapperViewImpl.class);
+        bindPresenterWidget(DataPresenter.class, DataView.class, DataViewImpl.class);
+        bindPresenterWidget(TextPresenter.class, TextView.class, TextViewImpl.class);
     }
 }

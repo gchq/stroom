@@ -15,6 +15,7 @@ import stroom.util.shared.Unauthenticated;
 
 import javax.inject.Inject;
 import javax.servlet.Servlet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -57,32 +58,35 @@ public class Servlets {
         }
 
         LOGGER.info("Adding servlets:");
-        servlets.forEach(servlet -> {
-            // A servlet may have multiple path specs
-            for (String partialPathSpec : servlet.getPathSpecs()) {
-                final String name = servlet.getClass().getSimpleName();
-                final String servletPath = Objects.requireNonNull(partialPathSpec);
-                final String fullPathSpec;
-                // Determine the full servlet path based on whether the servlet requires
-                // authentication or not
-                if (servlet.getClass().isAnnotationPresent(Unauthenticated.class)) {
-                    fullPathSpec = ResourcePaths.buildUnauthenticatedServletPath(servletPath);
-                } else {
-                    fullPathSpec = ResourcePaths.buildAuthenticatedServletPath(servletPath);
-                }
-                LOGGER.info("\t{} -> {}", name, fullPathSpec);
-                final ServletHolder servletHolder;
-                try {
-                    servletHolder = new ServletHolder(name, (Servlet) servlet);
-                } catch (ClassCastException e) {
-                    throw new RuntimeException(LogUtil.message("Injected class {} is not a Servlet",
-                            servlet.getClass().getName()));
-                }
-                servletContextHandler.addServlet(servletHolder, fullPathSpec);
+        servlets.stream()
+                .sorted(Comparator.comparing(isServlet ->
+                        isServlet.getClass().getSimpleName()))
+                .forEach(servlet -> {
+                    // A servlet may have multiple path specs
+                    for (String partialPathSpec : servlet.getPathSpecs()) {
+                        final String name = servlet.getClass().getSimpleName();
+                        final String servletPath = Objects.requireNonNull(partialPathSpec);
+                        final String fullPathSpec;
+                        // Determine the full servlet path based on whether the servlet requires
+                        // authentication or not
+                        if (servlet.getClass().isAnnotationPresent(Unauthenticated.class)) {
+                            fullPathSpec = ResourcePaths.buildUnauthenticatedServletPath(servletPath);
+                        } else {
+                            fullPathSpec = ResourcePaths.buildAuthenticatedServletPath(servletPath);
+                        }
+                        LOGGER.info("\t{} => {}", name, fullPathSpec);
+                        final ServletHolder servletHolder;
+                        try {
+                            servletHolder = new ServletHolder(name, (Servlet) servlet);
+                        } catch (ClassCastException e) {
+                            throw new RuntimeException(LogUtil.message("Injected class {} is not a Servlet",
+                                    servlet.getClass().getName()));
+                        }
+                        servletContextHandler.addServlet(servletHolder, fullPathSpec);
 
-                registerHealthCheck(servlet, fullPathSpec);
-            }
-        });
+                        registerHealthCheck(servlet, fullPathSpec);
+                    }
+                });
     }
 
     private void registerHealthCheck(final IsServlet servlet,
@@ -99,15 +103,38 @@ public class Servlets {
                 @Override
                 protected HealthCheck.Result check() {
                     // Decorate the existing health check results with the full path spec
+                    // as the servlet doesn't know its own full path
                     HealthCheck.Result result = ((HasHealthCheck) servlet).getHealth();
 
-                    if (result.getDetails().containsKey(SERVLET_PATH_KEY)) {
-                        LOGGER.warn("Overriding health check detail for {} {} in servlet {}",
-                                SERVLET_PATH_KEY,
-                                result.getDetails().get(SERVLET_PATH_KEY),
-                                name);
+                    HealthCheck.ResultBuilder builder = Result.builder();
+                    if (result.isHealthy()) {
+                        builder
+                                .healthy()
+                                .withMessage(result.getMessage())
+                                .withDetail(SERVLET_PATH_KEY, fullPathSpec)
+                                .build();
+                    } else {
+                        builder
+                                .unhealthy(result.getError())
+                                .withMessage(result.getMessage())
+                                .withDetail(SERVLET_PATH_KEY, fullPathSpec)
+                                .build();
                     }
-                    result.getDetails().put(SERVLET_PATH_KEY, fullPathSpec);
+                    builder
+                            .withMessage(result.getMessage())
+                            .withDetail(SERVLET_PATH_KEY, fullPathSpec);
+
+                    if (result.getDetails() != null) {
+                        if (result.getDetails().containsKey(SERVLET_PATH_KEY)) {
+                            LOGGER.warn("Overriding health check detail for {} {} in servlet {}",
+                                    SERVLET_PATH_KEY,
+                                    result.getDetails().get(SERVLET_PATH_KEY),
+                                    name);
+                        }
+                        result.getDetails().forEach(builder::withDetail);
+                    }
+
+                    result = builder.build();
 
                     return result;
                 }

@@ -32,6 +32,7 @@ import stroom.query.common.v2.Payload;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
+import stroom.search.resultsender.NodeResult;
 import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskContext;
@@ -137,12 +138,12 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         // We have to wrap the cluster termination task in another task or
         // ClusterDispatchAsyncImpl
         // will not execute it if the parent task is terminated.
-        final GenericServerTask outerTask = GenericServerTask.create(null, task.getUserToken(), "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
+        final GenericServerTask outerTask = GenericServerTask.create(null, "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
         outerTask.setRunnable(() -> {
-            taskContext.info(task.getSearchName() + " - terminating child tasks");
+            taskContext.info(() -> task.getSearchName() + " - terminating child tasks");
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
             findTaskCriteria.addAncestorId(task.getId());
-            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(task.getUserToken(), "Terminate: " + task.getTaskName(), findTaskCriteria, false);
+            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask("Terminate: " + task.getTaskName(), findTaskCriteria, false);
 
             // Terminate matching tasks.
             dispatchHelper.execAsync(terminateTask, TargetType.ACTIVE);
@@ -215,14 +216,14 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
 
     private void waitForPendingWork() {
         LAMBDA_LOGGER.logDurationIfTraceEnabled(() -> {
-                    LOGGER.trace("No remaining nodes so wait for the result handler to clear any pending work");
-                    try {
-                        resultHandler.waitForPendingWork();
-                    } catch (InterruptedException e) {
-                        Thread.currentThread().interrupt();
-                        LOGGER.debug("Thread interrupted waiting for resultHandler to finish pending work");
-                        // we will just let it complete as we have been interrupted
-                    }
+            LOGGER.trace("No remaining nodes so wait for the result handler to clear any pending work");
+            try {
+                resultHandler.waitForPendingWork();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                LOGGER.debug("Thread interrupted waiting for resultHandler to finish pending work");
+                // we will just let it complete as we have been interrupted
+            }
         }, "Waiting for resultHandler to finish pending work");
     }
 

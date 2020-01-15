@@ -8,6 +8,7 @@ import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.StandardHeaderArguments;
 import stroom.proxy.repo.StreamHandler;
 import stroom.receive.common.StroomStreamException;
+import stroom.util.cert.SSLUtil;
 
 import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;

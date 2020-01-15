@@ -40,7 +40,7 @@ class TestPathCreator {
 
         final String result = PathCreator.replaceAll(template, attributeMap);
 
-        LOGGER.info("result: %s", result);
+        LOGGER.info("result: {}}", result);
         assertThat(result).isEqualTo("someText_mytype1_someText_myFeed_someText_mytype2_someText");
     }
 

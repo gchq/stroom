@@ -16,8 +16,6 @@
 
 package stroom.core.benchmark;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
@@ -36,18 +34,20 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.task.api.TaskContext;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BaseResultList;
 import stroom.util.xml.XMLUtil;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
+import java.util.function.Supplier;
 
 public abstract class AbstractBenchmark {
     // FIXME : Do something with this....
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractBenchmark.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractBenchmark.class);
 
     private final Store streamStore;
     private final MetaService metaService;
@@ -73,15 +73,14 @@ public abstract class AbstractBenchmark {
         Thread.currentThread().interrupt();
     }
 
-    protected void info(final Object... args) {
-        taskContext.info(args);
-        Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
+    protected void info(final Supplier<String> messageSupplier) {
+        taskContext.info(messageSupplier);
+        LOGGER.info(messageSupplier);
     }
 
-    protected void infoInterval(final Object... args) {
-        taskContext.info(args);
-        //TODO logger in an interval
-        Arrays.asList(args).forEach(arg -> LOGGER.info(arg.toString()));
+    protected void infoInterval(final Supplier<String> messageSupplier) {
+        taskContext.info(messageSupplier);
+        LOGGER.info(messageSupplier);
     }
 
     protected Meta writeData(final String feedName, final String streamTypeName, final String data) {

@@ -17,12 +17,8 @@
 
 package stroom.search.solr;
 
-import com.google.common.base.Functions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
+import stroom.cache.api.ICache;
 import stroom.docref.DocRef;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityEvent;
@@ -35,50 +31,48 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Singleton
 @EntityEventHandler(type = SolrIndexDoc.DOCUMENT_TYPE, action = {EntityAction.CREATE, EntityAction.DELETE, EntityAction.UPDATE})
 class SolrIndexCacheImpl implements SolrIndexCache, EntityEvent.Handler, Clearable {
-    private static final int MAX_CACHE_ENTRIES = 100;
+    private static final String CACHE_NAME = "Solr Index Cache";
 
-    private final LoadingCache<DocRef, CachedSolrIndex> cache;
+    private final SolrIndexStore solrIndexStore;
+    private final ICache<DocRef, CachedSolrIndex> cache;
 
     @Inject
-    @SuppressWarnings("unchecked")
     SolrIndexCacheImpl(final CacheManager cacheManager,
-                       final SolrIndexStore solrIndexStore) {
-        final CacheLoader<DocRef, CachedSolrIndex> cacheLoader = CacheLoader.from(k -> {
-            if (k == null) {
-                throw new NullPointerException("Null key supplied");
-            }
+                       final SolrIndexStore solrIndexStore,
+                       final SolrConfig solrConfig) {
+        this.solrIndexStore = solrIndexStore;
+        cache = cacheManager.create(CACHE_NAME, solrConfig::getIndexCache, this::create);
+    }
 
-            final SolrIndexDoc loaded = solrIndexStore.readDocument(k);
-            if (loaded == null) {
-                throw new NullPointerException("No solr index can be found for: " + k);
-            }
+    private CachedSolrIndex create(final DocRef docRef) {
+        if (docRef == null) {
+            throw new NullPointerException("Null key supplied");
+        }
 
-            // Create a map of index fields keyed by name.
-            final List<SolrIndexField> fields = loaded.getFields();
-            if (fields == null || fields.size() == 0) {
-                throw new SolrIndexException("No index fields have been set for: " + k);
-            }
+        final SolrIndexDoc loaded = solrIndexStore.readDocument(docRef);
+        if (loaded == null) {
+            throw new NullPointerException("No solr index can be found for: " + docRef);
+        }
 
-            final Map<String, SolrIndexField> fieldMap = fields.stream().collect(Collectors.toMap(SolrIndexField::getFieldName, Functions.identity()));
-            return new CachedSolrIndex(loaded, fields, fieldMap);
-        });
+        // Create a map of index fields keyed by name.
+        final List<SolrIndexField> fields = loaded.getFields();
+        if (fields == null || fields.size() == 0) {
+            throw new SolrIndexException("No index fields have been set for: " + docRef);
+        }
 
-        final CacheBuilder cacheBuilder = CacheBuilder.newBuilder()
-                .maximumSize(MAX_CACHE_ENTRIES)
-                .expireAfterWrite(10, TimeUnit.MINUTES);
-        cache = cacheBuilder.build(cacheLoader);
-        cacheManager.registerCache("Solr Index Cache", cacheBuilder, cache);
+        final Map<String, SolrIndexField> fieldMap = fields.stream().collect(Collectors.toMap(SolrIndexField::getFieldName, Function.identity()));
+        return new CachedSolrIndex(loaded, fields, fieldMap);
     }
 
     @Override
     public CachedSolrIndex get(final DocRef key) {
-        return cache.getUnchecked(key);
+        return cache.get(key);
     }
 
     @Override
@@ -95,6 +89,6 @@ class SolrIndexCacheImpl implements SolrIndexCache, EntityEvent.Handler, Clearab
 
     @Override
     public void clear() {
-        CacheUtil.clear(cache);
+        cache.clear();
     }
 }

@@ -35,6 +35,8 @@ import java.util.stream.Collectors;
 
 
 class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction, SharedList<SharedString>> {
+    private static final int LIMIT = 20;
+
     private final MetaService metaService;
     private final PipelineStore pipelineStore;
     private final SecurityContext securityContext;
@@ -59,10 +61,11 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
 
                     if (task.getField().getName().equals(MetaFields.PIPELINE)) {
                         return new SharedList<>(pipelineStore.list().stream()
-                                .filter(docRef -> docRef.getName().contains(task.getText()))
                                 .map(DocRef::getName)
+                                .filter(name -> task.getText() == null || name.contains(task.getText()))
                                 .map(SharedString::wrap)
                                 .sorted()
+                                .limit(LIMIT)
                                 .collect(Collectors.toList()));
                     }
 
@@ -73,14 +76,12 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
                     if (task.getField().getName().equals(MetaFields.STATUS)) {
                         return new SharedList<>(Arrays.stream(Status.values())
                                 .map(Status::getDisplayValue)
+                                .filter(name -> task.getText() == null || name.contains(task.getText()))
                                 .map(SharedString::wrap)
                                 .sorted()
+                                .limit(LIMIT)
                                 .collect(Collectors.toList()));
                     }
-
-//                    if (task.getField().getName().equals(StreamDataSource.NODE)) {
-//                        return createList(nodeService, task.getText());
-//                    }
                 }
             }
 
@@ -88,24 +89,12 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
         });
     }
 
-//    @SuppressWarnings("unchecked")
-//    private SharedList<SharedString> createList(final FindService service, final String text) {
-//        final SharedList<SharedString> result = new SharedList<>();
-//        final FindNamedEntityCriteria criteria = (FindNamedEntityCriteria) service.createCriteria();
-//        criteria.setName(new StringCriteria(text, MatchStyle.WildEnd));
-//        final List<Object> list = service.find(criteria);
-//        list
-//                .stream()
-//                .sorted(Comparator.comparing(e -> ((NamedEntity) e).getName()))
-//                .forEachOrdered(e -> result.add(SharedString.wrap(((NamedEntity) e).getName())));
-//        return result;
-//    }
-
     private SharedList<SharedString> createFeedList(final String text) {
         return metaService.getFeeds()
                 .parallelStream()
-                .filter(name -> name.startsWith(text))
+                .filter(name -> name == null || name.startsWith(text))
                 .sorted(Comparator.naturalOrder())
+                .limit(LIMIT)
                 .map(SharedString::wrap)
                 .collect(Collectors.toCollection(SharedList::new));
     }
@@ -113,8 +102,9 @@ class FetchSuggestionsHandler extends AbstractTaskHandler<FetchSuggestionsAction
     private SharedList<SharedString> createStreamTypeList(final String text) {
         return metaService.getTypes()
                 .parallelStream()
-                .filter(name -> name.startsWith(text))
+                .filter(name -> name == null || name.startsWith(text))
                 .sorted(Comparator.naturalOrder())
+                .limit(LIMIT)
                 .map(SharedString::wrap)
                 .collect(Collectors.toCollection(SharedList::new));
     }

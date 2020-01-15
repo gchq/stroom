@@ -2,30 +2,34 @@ package stroom.statistics.impl.sql;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
+import stroom.config.common.DbConfig;
+import stroom.config.common.HasDbConfig;
 import stroom.statistics.impl.sql.search.SearchConfig;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.IsConfig;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class SQLStatisticsConfig implements IsConfig {
+public class SQLStatisticsConfig implements IsConfig, HasDbConfig {
+    private DbConfig dbConfig = new DbConfig();
     private String docRefType = "StatisticStore";
-    private ConnectionConfig connectionConfig = new ConnectionConfig();
-    private ConnectionPoolConfig connectionPoolConfig = new ConnectionPoolConfig();
-    private SearchConfig searchConfig;
+    private SearchConfig searchConfig = new SearchConfig();
     private int statisticAggregationBatchSize = 1000000;
     private String maxProcessingAge;
+    private CacheConfig dataSourceCache = new CacheConfig.Builder()
+            .maximumSize(100L)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
 
-    public SQLStatisticsConfig() {
-        searchConfig = new SearchConfig();
+    @JsonProperty("db")
+    public DbConfig getDbConfig() {
+        return dbConfig;
     }
 
-    @Inject
-    public SQLStatisticsConfig(final SearchConfig searchConfig) {
-        this.searchConfig = searchConfig;
+    public void setDbConfig(final DbConfig dbConfig) {
+        this.dbConfig = dbConfig;
     }
 
     @JsonPropertyDescription("The entity type for the sql statistics service")
@@ -35,24 +39,6 @@ public class SQLStatisticsConfig implements IsConfig {
 
     public void setDocRefType(final String docRefType) {
         this.docRefType = docRefType;
-    }
-
-    @JsonProperty("connection")
-    public ConnectionConfig getConnectionConfig() {
-        return connectionConfig;
-    }
-
-    public void setConnectionConfig(final ConnectionConfig connectionConfig) {
-        this.connectionConfig = connectionConfig;
-    }
-
-    @JsonProperty("connectionPool")
-    public ConnectionPoolConfig getConnectionPoolConfig() {
-        return connectionPoolConfig;
-    }
-
-    public void setConnectionPoolConfig(final ConnectionPoolConfig connectionPoolConfig) {
-        this.connectionPoolConfig = connectionPoolConfig;
     }
 
     @JsonProperty("search")
@@ -82,10 +68,20 @@ public class SQLStatisticsConfig implements IsConfig {
         this.maxProcessingAge = maxProcessingAge;
     }
 
+    public CacheConfig getDataSourceCache() {
+        return dataSourceCache;
+    }
+
+    public void setDataSourceCache(final CacheConfig dataSourceCache) {
+        this.dataSourceCache = dataSourceCache;
+    }
+
     @Override
     public String toString() {
         return "SQLStatisticsConfig{" +
-                "docRefType='" + docRefType + '\'' +
+                "dbConfig=" + dbConfig +
+                ", docRefType='" + docRefType + '\'' +
+                ", searchConfig=" + searchConfig +
                 ", statisticAggregationBatchSize=" + statisticAggregationBatchSize +
                 ", maxProcessingAge='" + maxProcessingAge + '\'' +
                 '}';

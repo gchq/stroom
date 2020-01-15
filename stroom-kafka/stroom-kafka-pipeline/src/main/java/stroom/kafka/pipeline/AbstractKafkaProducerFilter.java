@@ -1,8 +1,6 @@
 package stroom.kafka.pipeline;
 
 import com.google.common.base.Strings;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
@@ -15,12 +13,14 @@ import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractSamplingFilter;
 import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
 import java.util.Collections;
 
 public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AbstractKafkaProducerFilter.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractKafkaProducerFilter.class);
 
     private boolean flushOnSend;
     private DocRef kafkaConfigRef;

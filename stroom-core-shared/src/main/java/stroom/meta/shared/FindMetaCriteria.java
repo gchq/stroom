@@ -37,6 +37,13 @@ public class FindMetaCriteria extends ExpressionCriteria implements SharedObject
         super(expression);
     }
 
+    public static FindMetaCriteria createFromId(final long id) {
+        final FindMetaCriteria criteria = new FindMetaCriteria();
+        criteria.setExpression(MetaExpressionUtil.createSimpleExpression());
+        criteria.obtainSelectedIdSet().add(id);
+        return criteria;
+    }
+
     public static FindMetaCriteria createFromMeta(final Meta meta) {
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(MetaExpressionUtil.createSimpleExpression());

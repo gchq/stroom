@@ -1,26 +1,26 @@
 package stroom.security.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.config.common.DbConfig;
+import stroom.config.common.HasDbConfig;
 import stroom.util.shared.IsConfig;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class SecurityConfig implements IsConfig {
-    private AuthenticationConfig authenticationConfig;
-    private AuthorisationConfig authorisationConfig;
+public class SecurityConfig implements IsConfig, HasDbConfig {
+    private DbConfig dbConfig = new DbConfig();
+    private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
+    private AuthorisationConfig authorisationConfig = new AuthorisationConfig();
+    private ContentSecurityConfig contentSecurityConfig = new ContentSecurityConfig();
 
-    public SecurityConfig() {
-        this.authenticationConfig = new AuthenticationConfig();
-        this.authorisationConfig = new AuthorisationConfig();
+    @JsonProperty("db")
+    public DbConfig getDbConfig() {
+        return dbConfig;
     }
 
-    @Inject
-    SecurityConfig(final AuthenticationConfig authenticationConfig,
-                   final AuthorisationConfig authorisationConfig) {
-        this.authenticationConfig = authenticationConfig;
-        this.authorisationConfig = authorisationConfig;
+    public void setDbConfig(final DbConfig dbConfig) {
+        this.dbConfig = dbConfig;
     }
 
     @JsonProperty("authentication")
@@ -39,5 +39,24 @@ public class SecurityConfig implements IsConfig {
 
     public void setAuthorisationConfig(final AuthorisationConfig authorisationConfig) {
         this.authorisationConfig = authorisationConfig;
+    }
+
+    @JsonProperty("webContent")
+    public ContentSecurityConfig getContentSecurityConfig() {
+        return contentSecurityConfig;
+    }
+
+    public void setContentSecurityConfig(final ContentSecurityConfig contentSecurityConfig) {
+        this.contentSecurityConfig = contentSecurityConfig;
+    }
+
+    @Override
+    public String toString() {
+        return "SecurityConfig{" +
+                "dbConfig=" + dbConfig +
+                ", authenticationConfig=" + authenticationConfig +
+                ", authorisationConfig=" + authorisationConfig +
+                ", webContent=" + contentSecurityConfig +
+                '}';
     }
 }

@@ -98,10 +98,16 @@ public class PostMessage {
     /*-{
     var listener = function(event) {
       var origin = event.origin;
-      var host = window.location.host;
+      var hostname = window.location.hostname;
 
       // Stop this script being called from other domains.
-      if (origin.indexOf(host) === -1) return;
+      var eventLocation = document.createElement("a");
+      eventLocation.href = origin;
+      var eventHostname = eventLocation.hostname;
+      if (eventHostname != hostname) {
+        console.error("Ignoring event as host names do not match: hostname='" + hostname + "' eventHostname='" + eventHostname + "'");
+        return;
+      }
 
       var receiveMessage = @stroom.dashboard.client.vis.PostMessage::receiveMessage(*);
       receiveMessage(event);

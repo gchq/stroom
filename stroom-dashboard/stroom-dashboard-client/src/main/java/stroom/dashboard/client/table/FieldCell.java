@@ -22,6 +22,7 @@ import com.google.gwt.cell.client.ImageResourceCell;
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.resources.client.ImageResource;
 import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import stroom.dashboard.shared.Field;
@@ -32,20 +33,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class FieldCell extends CompositeCell<Field> {
-    public FieldCell(final List<HasCell<Field, ?>> cells) {
+    private final FieldsManager fieldsManager;
+
+    public FieldCell(final FieldsManager fieldsManager, final List<HasCell<Field, ?>> cells) {
         super(cells);
+        this.fieldsManager = fieldsManager;
     }
 
     public static FieldCell create(final FieldsManager fieldsManager) {
         final List<HasCell<Field, ?>> cells = new ArrayList<>();
 
-        final Column<Field, String> name = new Column<Field, String>(new FieldEditTextCell(fieldsManager)) {
+        final Column<Field, SafeHtml> name = new Column<Field, SafeHtml>(new SafeHtmlCell()) {
             @Override
-            public String getValue(final Field field) {
-                return field.getName();
+            public SafeHtml getValue(final Field field) {
+                final SafeHtmlBuilder builder = new SafeHtmlBuilder();
+                builder.appendHtmlConstant("<div class=\"" + fieldsManager.getResources().style().fieldLabel() + "\">");
+                builder.appendEscaped(field.getName());
+                builder.appendHtmlConstant("</div>");
+                return builder.toSafeHtml();
             }
         };
-        name.setFieldUpdater((index, object, value) -> object.setName(value));
         cells.add(name);
 
         final Column<Field, ImageResource> group = new Column<Field, ImageResource>(new ImageResourceCell()) {
@@ -119,6 +126,13 @@ public class FieldCell extends CompositeCell<Field> {
         };
         cells.add(filter);
 
-        return new FieldCell(cells);
+        return new FieldCell(fieldsManager, cells);
+    }
+
+    @Override
+    public void render(Context context, Field value, SafeHtmlBuilder sb) {
+        sb.appendHtmlConstant("<div class=\"" + fieldsManager.getResources().style().field() + "\">");
+        super.render(context, value, sb);
+        sb.appendHtmlConstant("</div>");
     }
 }

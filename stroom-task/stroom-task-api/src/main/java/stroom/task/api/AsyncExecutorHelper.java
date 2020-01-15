@@ -195,7 +195,7 @@ public class AsyncExecutorHelper<R> {
             final StringBuilder sb = new StringBuilder();
             sb.append(taskInfo);
             appendStatus(sb);
-            taskContext.info(sb.toString());
+            taskContext.info(sb::toString);
         }
     }
 

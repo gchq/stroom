@@ -47,4 +47,6 @@ public interface UserService extends ProvidesNamePattern {
     void addUserToGroup(String userUuid, String groupUuid);
 
     void removeUserFromGroup(String userUuid, String groupUuid);
+
+    List<String> getAssociates(String filter);
 }

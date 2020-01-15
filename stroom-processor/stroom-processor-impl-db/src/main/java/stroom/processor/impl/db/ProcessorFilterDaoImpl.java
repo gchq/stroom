@@ -42,16 +42,16 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private static final Function<Record, ProcessorFilter> RECORD_TO_PROCESSOR_FILTER_MAPPER = new RecordToProcessorFilterMapper();
     private static final Function<Record, ProcessorFilterTracker> RECORD_TO_PROCESSOR_FILTER_TRACKER_MAPPER = new RecordToProcessorFilterTrackerMapper();
 
-    private final ConnectionProvider connectionProvider;
+    private final ProcessorDbConnProvider processorDbConnProvider;
     private final ProcessorFilterMarshaller marshaller;
     private final GenericDao<ProcessorFilterRecord, ProcessorFilter, Integer> genericDao;
     private final ExpressionMapper expressionMapper;
 
     @Inject
-    ProcessorFilterDaoImpl(final ConnectionProvider connectionProvider, final ExpressionMapperFactory expressionMapperFactory) {
-        this.connectionProvider = connectionProvider;
+    ProcessorFilterDaoImpl(final ProcessorDbConnProvider processorDbConnProvider, final ExpressionMapperFactory expressionMapperFactory) {
+        this.processorDbConnProvider = processorDbConnProvider;
         this.marshaller = new ProcessorFilterMarshaller();
-        this.genericDao = new GenericDao<>(PROCESSOR_FILTER, PROCESSOR_FILTER.ID, ProcessorFilter.class, connectionProvider);
+        this.genericDao = new GenericDao<>(PROCESSOR_FILTER, PROCESSOR_FILTER.ID, ProcessorFilter.class, processorDbConnProvider);
 
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(ProcessorFilterDataSource.PRIORITY, PROCESSOR_FILTER.PRIORITY, Integer::valueOf);
@@ -68,7 +68,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         LAMBDA_LOGGER.debug(LambdaLogUtil.message("Creating a {}", PROCESSOR_FILTER.getName()));
 
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
-        return marshaller.unmarshal(JooqUtil.transactionResult(connectionProvider, context -> {
+        return marshaller.unmarshal(JooqUtil.transactionResult(processorDbConnProvider, context -> {
             final ProcessorFilterTrackerRecord processorFilterTrackerRecord = context.newRecord(PROCESSOR_FILTER_TRACKER, new ProcessorFilterTracker());
             processorFilterTrackerRecord.store();
             final ProcessorFilterTracker processorFilterTracker = processorFilterTrackerRecord.into(ProcessorFilterTracker.class);
@@ -92,7 +92,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     @Override
     public ProcessorFilter update(final ProcessorFilter processorFilter) {
         final ProcessorFilter marshalled = marshaller.marshal(processorFilter);
-        return marshaller.unmarshal(JooqUtil.contextResultWithOptimisticLocking(connectionProvider, context -> {
+        return marshaller.unmarshal(JooqUtil.contextResultWithOptimisticLocking(processorDbConnProvider, context -> {
             final ProcessorFilterRecord processorFilterRecord =
                     context.newRecord(PROCESSOR_FILTER, marshalled);
 
@@ -115,7 +115,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public Optional<ProcessorFilter> fetch(final int id) {
-        return JooqUtil.contextResult(connectionProvider, context ->
+        return JooqUtil.contextResult(processorDbConnProvider, context ->
                 context
                         .select()
                         .from(PROCESSOR_FILTER)
@@ -137,7 +137,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
     @Override
     public BaseResultList<ProcessorFilter> find(final ExpressionCriteria criteria) {
-        return JooqUtil.contextResult(connectionProvider, context -> find(context, criteria));
+        return JooqUtil.contextResult(processorDbConnProvider, context -> find(context, criteria));
     }
 
     private BaseResultList<ProcessorFilter> find(final DSLContext context, final ExpressionCriteria criteria) {

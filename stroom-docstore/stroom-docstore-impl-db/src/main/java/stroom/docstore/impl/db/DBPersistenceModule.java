@@ -16,16 +16,57 @@
 
 package stroom.docstore.impl.db;
 
-import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
+import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.db.util.DataSourceProxy;
 import stroom.docstore.impl.Persistence;
 import stroom.util.shared.Clearable;
 
-public class DBPersistenceModule extends AbstractModule {
+import javax.sql.DataSource;
+
+public class DBPersistenceModule extends AbstractFlyWayDbModule<DocStoreConfig, DocStoreDbConnProvider> {
+    private static final String MODULE = "stroom-docstore";
+    private static final String FLYWAY_LOCATIONS = "stroom/docstore/impl/db/migration";
+    private static final String FLYWAY_TABLE = "docstore_history";
+
     @Override
     protected void configure() {
+        super.configure();
+
         bind(Persistence.class).to(DBPersistence.class);
 
-        Multibinder.newSetBinder(binder(), Clearable.class).addBinding().to(DBPersistence.class);
+        Multibinder.newSetBinder(binder(), Clearable.class)
+                .addBinding().to(DBPersistence.class);
+    }
+
+    @Override
+    protected String getFlyWayTableName() {
+        return FLYWAY_TABLE;
+    }
+
+    @Override
+    protected String getModuleName() {
+        return MODULE;
+    }
+
+    @Override
+    protected String getFlyWayLocation() {
+        return FLYWAY_LOCATIONS;
+    }
+
+    @Override
+    protected Class<DocStoreDbConnProvider> getConnectionProviderType() {
+        return DocStoreDbConnProvider.class;
+    }
+
+    @Override
+    protected DocStoreDbConnProvider createConnectionProvider(final DataSource dataSource) {
+        return new DataSourceImpl(dataSource);
+    }
+
+    private static class DataSourceImpl extends DataSourceProxy implements DocStoreDbConnProvider {
+        private DataSourceImpl(final DataSource dataSource) {
+            super(dataSource);
+        }
     }
 }

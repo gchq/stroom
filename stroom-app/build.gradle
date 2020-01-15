@@ -19,6 +19,8 @@ def swaggerDir = "${uiDir}/swagger"
 def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
 def sendToStroomScriptVersion = 'send-to-stroom-v2.0'
+def releaseBuildDir = 'build/release'
+def configDefaultsFile = releaseBuildDir + '/config/config-defaults.yml'
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -26,6 +28,7 @@ mainClassName = 'stroom.app.App'
 
 dependencies {
     compile project(':stroom-activity:stroom-activity-impl-db')
+    compile project(':stroom-annotation:stroom-annotation-impl-db')
     compile project(':stroom-cache:stroom-cache-impl')
     compile project(':stroom-cluster:stroom-cluster-impl')
     compile project(':stroom-cluster:stroom-cluster-lock-impl-db')
@@ -177,8 +180,6 @@ dependencies {
     testRuntimeOnly libs.javax_el
     testRuntimeOnly libs.jaxb_runtime
     testRuntimeOnly libs.junit_jupiter_engine
-    testRuntimeOnly libs.test_containers
-    testRuntimeOnly libs.test_containers_mysql
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.jcl_over_slf4j
@@ -241,6 +242,15 @@ runShadow {
     args 'server', '../local.yml'
 }
 
+// Run the DB migrations then exit
+task migrate(type: JavaExec) {
+    dependsOn ':stroom-config:stroom-config-app:compileJava'
+
+    classpath = sourceSets.main.runtimeClasspath
+    main = mainClassName
+    args 'migrate', '../local.yml'
+}
+
 def stroomDockerBuildDir = "${projectDir}/docker/build"
 
 clean {
@@ -267,10 +277,7 @@ task copyFilesForStroomDockerBuild() {
 
         // Copy the dropwizard yml configuration
         copy {
-            // TODO we whould be using the prod one as that has the proper prod logging config in it.
-            //   Need to wait till the properties work is merge in.
-            from "${projectDir}/dev.yml"
-            rename ("dev.yml", "prod.yml")
+            from "${projectDir}/prod.yml"
             into stroomDockerBuildDir
         }
 
@@ -319,7 +326,6 @@ swagger {
 }
 
 
-def releaseBuildDir= 'build/release'
 
 task copyJar(type: Copy) {
     from shadowJar.outputs.files
@@ -330,13 +336,13 @@ task copySupportingFiles(type: Copy) {
     from 'src/dist'
     into releaseBuildDir 
 
-//    doLast {
-//        // stroom.conf is a sym-link so it seems to go into the zip with +x perms
-//        // which we don't want
-//        exec {
-//            commandLine 'chmod', '644', "${releaseBuildDir}/config/stroom.conf"
-//        }
-//    }
+    doLast {
+        // This is a sym-link so it seems to go into the zip with +x perms
+        // which we don't want
+        exec {
+            commandLine 'chmod', '644', "${releaseBuildDir}/config/config.yml"
+        }
+    }
 }
 
 import de.undercouch.gradle.tasks.download.Download
@@ -366,7 +372,20 @@ task copyContentPackToDistribution(type: Copy) {
     into "${releaseBuildDir}/contentPacks"
 }
 
+// Create an example yaml config file from the compile-time defaults
+task generateConfigDefaultsYamlFile(type: JavaExec) {
+    dependsOn ':stroom-config:stroom-config-app:compileJava'
+    dependsOn ':stroom-config:stroom-config-app:compileTestJava'
+
+    classpath = project(':stroom-config:stroom-config-app').sourceSets.test.runtimeClasspath
+    main = 'stroom.config.app.GenerateExpectedYaml'
+    args = [configDefaultsFile]
+}
+
+// Build the release distribution zip for stroom
 task buildDistribution(type: Zip) {
+
+    // run all the tasks that produce content for the zip
     dependsOn copyJar
     dependsOn copySupportingFiles
     dependsOn downloadSend
@@ -374,6 +393,8 @@ task buildDistribution(type: Zip) {
     dependsOn makeSendExecutable
     dependsOn parent.downloadStroomContent
     dependsOn copyContentPackToDistribution
+    dependsOn generateConfigDefaultsYamlFile
+
     from releaseBuildDir
 }
 
@@ -437,4 +458,9 @@ task setupSampleDataApplication(type: JavaExec) {
     classpath = sourceSets.test.runtimeClasspath
     main = 'stroom.test.SetupSampleData'
 }
+
+////TODO This specific dep is needed to ensure TestKafkaExternalLoader has the jar available
+////for its test. This is a TODO as stroom-connectors needs a big refactor once we
+////decide what we are doing with plugable client libs and pipeline elements.
+//tasks.test.dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
 

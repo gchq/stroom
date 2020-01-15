@@ -25,7 +25,7 @@ import stroom.importexport.api.DocRefs;
 import stroom.importexport.api.DocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;

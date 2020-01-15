@@ -22,36 +22,91 @@ import stroom.util.shared.IsConfig;
 import java.util.Objects;
 
 public class ConnectionPoolConfig implements IsConfig {
-    private boolean cachePrepStmts = true;
-    private int prepStmtCacheSize = 250;
-    private int prepStmtCacheSqlLimit = 2048;
+    private Boolean cachePrepStmts;
+    private Integer prepStmtCacheSize;
+    private Integer prepStmtCacheSqlLimit;
+    private Long idleTimeout;
+    private Long maxLifetime;
+    private Integer maxPoolSize;
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    public boolean isCachePrepStmts() {
+    public Boolean getCachePrepStmts() {
         return cachePrepStmts;
     }
 
-    public void setCachePrepStmts(final boolean cachePrepStmts) {
+    public void setCachePrepStmts(final Boolean cachePrepStmts) {
         this.cachePrepStmts = cachePrepStmts;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    public int getPrepStmtCacheSize() {
+    public Integer getPrepStmtCacheSize() {
         return prepStmtCacheSize;
     }
 
-    public void setPrepStmtCacheSize(final int prepStmtCacheSize) {
+    public void setPrepStmtCacheSize(final Integer prepStmtCacheSize) {
         this.prepStmtCacheSize = prepStmtCacheSize;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    public int getPrepStmtCacheSqlLimit() {
+    public Integer getPrepStmtCacheSqlLimit() {
         return prepStmtCacheSqlLimit;
     }
 
-    public void setPrepStmtCacheSqlLimit(final int prepStmtCacheSqlLimit) {
+    public void setPrepStmtCacheSqlLimit(final Integer prepStmtCacheSqlLimit) {
         this.prepStmtCacheSqlLimit = prepStmtCacheSqlLimit;
     }
+
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    public Long getIdleTimeout() {
+        return idleTimeout;
+    }
+
+    public void setIdleTimeout(final Long idleTimeout) {
+        this.idleTimeout = idleTimeout;
+    }
+
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    public Long getMaxLifetime() {
+        return maxLifetime;
+    }
+
+    public void setMaxLifetime(final Long maxLifetime) {
+        this.maxLifetime = maxLifetime;
+    }
+
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
+    public Integer getMaxPoolSize() {
+        return maxPoolSize;
+    }
+
+    public void setMaxPoolSize(final Integer maxPoolSize) {
+        this.maxPoolSize = maxPoolSize;
+    }
+
+//    @Override
+//    public boolean equals(final Object o) {
+//        if (this == o) return true;
+//        if (o == null || getClass() != o.getClass()) return false;
+//        final ConnectionPoolConfig that = (ConnectionPoolConfig) o;
+//        return cachePrepStmts == that.cachePrepStmts &&
+//                prepStmtCacheSize == that.prepStmtCacheSize &&
+//                prepStmtCacheSqlLimit == that.prepStmtCacheSqlLimit;
+//    }
+//
+//    @Override
+//    public int hashCode() {
+//        return Objects.hash(cachePrepStmts, prepStmtCacheSize, prepStmtCacheSqlLimit);
+//    }
+//
+//    @Override
+//    public String toString() {
+//        return "ConnectionPoolConfig{" +
+//                "cachePrepStmts=" + cachePrepStmts +
+//                ", prepStmtCacheSize=" + prepStmtCacheSize +
+//                ", prepStmtCacheSqlLimit=" + prepStmtCacheSqlLimit +
+//                '}';
+//    }
+
 
     @Override
     public boolean equals(final Object o) {
@@ -60,23 +115,17 @@ public class ConnectionPoolConfig implements IsConfig {
         final ConnectionPoolConfig that = (ConnectionPoolConfig) o;
         return cachePrepStmts == that.cachePrepStmts &&
                 prepStmtCacheSize == that.prepStmtCacheSize &&
-                prepStmtCacheSqlLimit == that.prepStmtCacheSqlLimit;
+                prepStmtCacheSqlLimit == that.prepStmtCacheSqlLimit &&
+                Objects.equals(idleTimeout, that.idleTimeout) &&
+                Objects.equals(maxLifetime, that.maxLifetime) &&
+                Objects.equals(maxPoolSize, that.maxPoolSize);
     }
 
     @Override
     public int hashCode() {
-
-        return Objects.hash(cachePrepStmts, prepStmtCacheSize, prepStmtCacheSqlLimit);
+        return Objects.hash(cachePrepStmts, prepStmtCacheSize, prepStmtCacheSqlLimit, idleTimeout, maxLifetime, maxPoolSize);
     }
 
-    @Override
-    public String toString() {
-        return "ConnectionPoolConfig{" +
-                "cachePrepStmts=" + cachePrepStmts +
-                ", prepStmtCacheSize=" + prepStmtCacheSize +
-                ", prepStmtCacheSqlLimit=" + prepStmtCacheSqlLimit +
-                '}';
-    }
     public static class Builder {
         private final ConnectionPoolConfig instance;
 
@@ -92,10 +141,12 @@ public class ConnectionPoolConfig implements IsConfig {
             this.instance.setCachePrepStmts(value);
             return this;
         }
+
         public Builder withPrepStmtCacheSize(final int value) {
             this.instance.setPrepStmtCacheSize(value);
             return this;
         }
+
         public Builder withPrepStmtCacheSqlLimit(final int value) {
             this.instance.setPrepStmtCacheSqlLimit(value);
             return this;

@@ -17,6 +17,8 @@
 package stroom.feed.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.HasDisplayValue;
@@ -25,6 +27,7 @@ import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "classification", "encoding", "contextEncoding", "retentionDayAge", "reference", "streamType", "feedStatus"})
+@JsonInclude(Include.NON_DEFAULT)
 public class FeedDoc extends Doc {
     public static final String DOCUMENT_TYPE = "Feed";
 

@@ -32,12 +32,12 @@ class StoredQueryDaoImpl implements StoredQueryDao {
             FindStoredQueryCriteria.FIELD_TIME, QUERY.CREATE_TIME_MS);
 
     private final GenericDao<QueryRecord, StoredQuery, Integer> genericDao;
-    private final ConnectionProvider connectionProvider;
+    private final StoredQueryDbConnProvider storedQueryDbConnProvider;
 
     @Inject
-    StoredQueryDaoImpl(final ConnectionProvider connectionProvider) {
-        genericDao = new GenericDao<>(QUERY, QUERY.ID, StoredQuery.class, connectionProvider);
-        this.connectionProvider = connectionProvider;
+    StoredQueryDaoImpl(final StoredQueryDbConnProvider storedQueryDbConnProvider) {
+        genericDao = new GenericDao<>(QUERY, QUERY.ID, StoredQuery.class, storedQueryDbConnProvider);
+        this.storedQueryDbConnProvider = storedQueryDbConnProvider;
     }
 
     @Override
@@ -68,7 +68,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 
     @Override
     public BaseResultList<StoredQuery> find(FindStoredQueryCriteria criteria) {
-        List<StoredQuery> list = JooqUtil.contextResult(connectionProvider, context -> {
+        List<StoredQuery> list = JooqUtil.contextResult(storedQueryDbConnProvider, context -> {
             final Collection<Condition> conditions = JooqUtil.conditions(
                     Optional.ofNullable(criteria.getUserId()).map(QUERY.CREATE_USER::eq),
                     JooqUtil.getStringCondition(QUERY.NAME, criteria.getName()),
@@ -105,7 +105,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
                             .map(id -> QUERY.ID.le(id).or(QUERY.CREATE_TIME_MS.lt(oldestCrtMs)))
                             .or(() -> Optional.of(QUERY.CREATE_TIME_MS.lt(oldestCrtMs))));
 
-            final int rows = JooqUtil.contextResult(connectionProvider, context -> context
+            final int rows = JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
                     .deleteFrom(QUERY)
                     .where(conditions)
                     .execute());
@@ -119,7 +119,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 
     @Override
     public List<String> getUsers(final boolean favourite) {
-        final List<String> list = JooqUtil.contextResult(connectionProvider, context -> context
+        final List<String> list = JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
                 .select(QUERY.CREATE_USER)
                 .from(QUERY)
                 .where(QUERY.FAVOURITE.eq(favourite))
@@ -149,7 +149,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 
     @Override
     public Integer getOldestId(final String user, final boolean favourite, final int retain) {
-        final Optional<Integer> optional = JooqUtil.contextResult(connectionProvider, context -> context
+        final Optional<Integer> optional = JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
                 .select(QUERY.ID)
                 .from(QUERY)
                 .where(QUERY.CREATE_USER.eq(user)
@@ -185,7 +185,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 
     @Override
     public void clear() {
-        JooqUtil.context(connectionProvider, context -> context
+        JooqUtil.context(storedQueryDbConnProvider, context -> context
                 .deleteFrom(QUERY)
                 .execute());
     }

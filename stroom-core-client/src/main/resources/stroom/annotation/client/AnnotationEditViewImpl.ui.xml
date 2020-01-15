@@ -1,0 +1,55 @@
+<!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
+<ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
+             xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:v="urn:import:stroom.widget.layout.client.view"
+             xmlns:button="urn:import:stroom.widget.button.client">
+
+    <g:FlowPanel styleName="annotationContainer">
+        <g:FlowPanel styleName="annotationTop">
+            <g:FlowPanel addStyleNames="annotationTitleContainer">
+                <g:TextBox ui:field="titleTextBox" styleName="annotationTitleTextBox annotationTextBox" tabIndex="1"/>
+            </g:FlowPanel>
+            <g:FlowPanel addStyleNames="annotationSubjectContainer">
+                <g:TextBox ui:field="subjectTextBox" styleName="annotationSubjectTextBox annotationTextBox"
+                           tabIndex="2"/>
+            </g:FlowPanel>
+        </g:FlowPanel>
+        <g:FlowPanel styleName="annotationBottom">
+            <g:FlowPanel styleName="annotationLeft">
+                <g:FlowPanel addStyleNames="annotationSetting">
+                    <g:FlowPanel addStyleNames="annotationSettingHeading">
+                        <g:Label ui:field="statusLabel" styleName="annotationClickLabel" text="Status:"/>
+                        <g:Label ui:field="status" styleName="annotationLabel"/>
+                        <button:SvgButton ui:field="statusIcon" addStyleNames="annotationDropDownIcon"/>
+                    </g:FlowPanel>
+                </g:FlowPanel>
+                <g:FlowPanel addStyleNames="annotationSetting">
+                    <g:FlowPanel addStyleNames="annotationSettingHeading">
+                        <g:Label ui:field="assignedToLabel" styleName="annotationClickLabel" text="Assigned To:"/>
+                        <g:Label ui:field="assignedTo" styleName="annotationLabel"/>
+                        <g:Label ui:field="assignYourself" styleName="annotationAssignYourself">Assign Yourself
+                        </g:Label>
+                        <button:SvgButton ui:field="assignedToIcon" addStyleNames="annotationDropDownIcon"/>
+                    </g:FlowPanel>
+                </g:FlowPanel>
+                <g:FlowPanel addStyleNames="annotationSetting">
+                    <g:FlowPanel addStyleNames="annotationSettingHeading">
+                        <g:Label ui:field="commentLabel" styleName="annotationClickLabel" text="Comment:" width="100%"/>
+                        <button:SvgButton ui:field="commentIcon" addStyleNames="annotationDropDownIcon"/>
+                    </g:FlowPanel>
+                </g:FlowPanel>
+                <g:FlowPanel styleName="annotationCommentContainer">
+                    <g:TextArea ui:field="comment" styleName="annotationComment" tabIndex="3"/>
+                    <g:SimplePanel ui:field="buttons" styleName="annotationButtons">
+                        <g:Button ui:field="create" text="Create" width="200px" tabIndex="4"/>
+                    </g:SimplePanel>
+                </g:FlowPanel>
+            </g:FlowPanel>
+            <g:FlowPanel styleName="annotationRight">
+                <g:Label ui:field="showLinkedEvents" styleName="showLinkedEvents" text="Show Linked Events"/>
+                <v:ResizeSimplePanel ui:field="history" styleName="annotationHistory"/>
+            </g:FlowPanel>
+        </g:FlowPanel>
+    </g:FlowPanel>
+</ui:UiBinder>
+

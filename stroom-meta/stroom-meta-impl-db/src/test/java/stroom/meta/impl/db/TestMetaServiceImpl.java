@@ -3,6 +3,7 @@ package stroom.meta.impl.db;
 import com.google.inject.Guice;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
@@ -18,6 +19,7 @@ import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.test.common.util.db.DbTestModule;
 import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
@@ -38,7 +40,10 @@ class TestMetaServiceImpl {
                 new MockClusterLockModule(),
                 new MockSecurityContextModule(),
                 new MockCollectionModule(),
-                new MockWordListProviderModule())
+                new MockWordListProviderModule(),
+                new CacheModule(),
+                new DbTestModule(),
+                new MetaTestModule())
                 .injectMembers(this);
         // Delete everything
         cleanup.clear();

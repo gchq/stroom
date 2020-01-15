@@ -34,6 +34,7 @@ import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityValidationResult;
 import stroom.activity.shared.FindActivityCriteria;
 import stroom.security.api.SecurityContext;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.shared.BaseResultList;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -52,9 +53,10 @@ class TestActivityServiceImpl {
         Mockito.when(securityContext.getUserId()).thenReturn("testUser");
         Mockito.when(securityContext.isLoggedIn()).thenReturn(true);
 
-        final ConnectionProvider connectionProvider = new ActivityDbModule().getConnectionProvider(ActivityConfig::new);
+        final ActivityDbConnProvider activityDbConnProvider = DbTestUtil.getTestDbDatasource(
+                new ActivityDbModule(), new ActivityConfig());
 
-        final ActivityDao activityDao = new ActivityDaoImpl(connectionProvider);
+        final ActivityDao activityDao = new ActivityDaoImpl(activityDbConnProvider);
         activityService = new ActivityServiceImpl(securityContext, activityDao);
     }
 

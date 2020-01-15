@@ -124,6 +124,7 @@ public class StatisticsQueryServiceImpl implements StatisticsQueryService {
                     .map(resultRequest -> new TableResult(
                             resultRequest.getComponentId(),
                             Collections.emptyList(),
+                            Collections.emptyList(),
                             new OffsetRange(0, 0),
                             0,
                             null))

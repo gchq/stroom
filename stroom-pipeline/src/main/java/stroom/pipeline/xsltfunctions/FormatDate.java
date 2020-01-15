@@ -21,6 +21,9 @@ import net.sf.saxon.om.EmptyAtomicSequence;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.value.StringValue;
+import stroom.pipeline.LocationFactory;
+import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.pipeline.shared.data.PipelineReference;
 import stroom.pipeline.state.MetaHolder;
 import stroom.util.date.DateFormatterCache;
 import stroom.util.date.DateUtil;
@@ -38,7 +41,12 @@ import java.time.format.DateTimeFormatterBuilder;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.time.temporal.WeekFields;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.function.Function;
 
 class FormatDate extends StroomExtensionFunctionCall {
     private static final Locale LOCALE = Locale.ENGLISH;
@@ -57,11 +65,21 @@ class FormatDate extends StroomExtensionFunctionCall {
 
     private final MetaHolder metaHolder;
 
+    private final Map<Key, Function<String, Long>> cachedParsers = new HashMap<>();
+
     private Instant baseTime;
 
     @Inject
     FormatDate(final MetaHolder metaHolder) {
         this.metaHolder = metaHolder;
+    }
+
+    @Override
+    void configure(final ErrorReceiver errorReceiver, final LocationFactory locationFactory, final List<PipelineReference> pipelineReferences) {
+        super.configure(errorReceiver, locationFactory, pipelineReferences);
+
+        // Reset the parser cache.
+        cachedParsers.clear();
     }
 
     @Override
@@ -196,9 +214,13 @@ class FormatDate extends StroomExtensionFunctionCall {
         return result;
     }
 
-    // TODO : @66 Reinstate date format caching.
-
     long parseDate(final XPathContext context, final String value, final String pattern, final String timeZone) {
+        final Key key = new Key(pattern, timeZone);
+        final Function<String, Long> parser = cachedParsers.computeIfAbsent(key, k -> createParser(context, k.pattern, k.timeZone));
+        return parser.apply(value);
+    }
+
+    private Function<String, Long> createParser(final XPathContext context, final String pattern, final String timeZone) {
         final ZoneId zoneId = getTimeZone(context, timeZone);
         final DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder()
                 .parseLenient()
@@ -216,20 +238,19 @@ class FormatDate extends StroomExtensionFunctionCall {
                 || fieldSet.contains(DAY_OF_WEEK)) {
 
             // Week based date parsing.
-            return parseWeekBasedDate(fieldSet, builder, value, zoneId);
+            return createWeekBasedParser(fieldSet, builder, zoneId);
         }
 
         // Regular date parsing.
-        return parseRegularDate(fieldSet, builder, value, zoneId);
+        return createRegularParser(fieldSet, builder, zoneId);
     }
 
     /**
      * Parsing dates that use week fields has to be done differently as week based parsing does not seem to cope with conflicting default values for fields.
      */
-    private long parseWeekBasedDate(final FieldSet fieldSet,
-                                    final DateTimeFormatterBuilder builder,
-                                    final String value,
-                                    final ZoneId zoneId) {
+    private Function<String, Long> createWeekBasedParser(final FieldSet fieldSet,
+                                                         final DateTimeFormatterBuilder builder,
+                                                         final ZoneId zoneId) {
         final ZonedDateTime referenceDateTime = getBaseTime().atZone(zoneId);
 
         if (!fieldSet.contains(WEEK_BASED_YEAR)
@@ -253,41 +274,18 @@ class FormatDate extends StroomExtensionFunctionCall {
         }
 
         final DateTimeFormatter formatter = builder.toFormatter(LOCALE);
-
-        // Parse the date as best we can.
-        ZonedDateTime dateTime = parseBest(value, formatter, zoneId);
-
-        // Subtract a year if the date appears to be after our reference time.
-        if (dateTime.isAfter(referenceDateTime)) {
-            if (!fieldSet.contains(YEAR_OF_ERA)
-                    && !fieldSet.contains(YEAR)
-                    && !fieldSet.contains(WEEK_BASED_YEAR)) {
-                if (!fieldSet.contains(MONTH_OF_YEAR)
-                        && !fieldSet.contains(WEEK_OF_WEEK_BASED_YEAR)
-                        && !fieldSet.contains(WEEK_OF_YEAR)) {
-                    dateTime = dateTime.minusWeeks(1);
-                } else {
-                    dateTime = dateTime.minusWeeks(52);
-                }
-            }
-        }
-        return dateTime.toInstant().toEpochMilli();
+        return new WeekBasedParser(fieldSet, formatter, zoneId, referenceDateTime);
     }
 
-    private long parseRegularDate(final FieldSet fieldSet,
-                                  final DateTimeFormatterBuilder builder,
-                                  final String value,
-                                  final ZoneId zoneId) {
-        ZonedDateTime dateTime;
-
+    private Function<String, Long> createRegularParser(final FieldSet fieldSet,
+                                                       final DateTimeFormatterBuilder builder,
+                                                       final ZoneId zoneId) {
         // Don't use the defaulting formatter if we can help it.
         if ((fieldSet.contains(YEAR) || fieldSet.contains(YEAR_OF_ERA))
                 && fieldSet.contains(MONTH_OF_YEAR)
                 && fieldSet.contains(DAY_OF_MONTH)) {
             final DateTimeFormatter formatter = builder.toFormatter(LOCALE);
-
-            // Parse the date as best we can.
-            dateTime = parseBest(value, formatter, zoneId);
+            return new RegularParser(formatter, zoneId);
 
         } else {
             final ZonedDateTime referenceDateTime = getBaseTime().atZone(zoneId);
@@ -298,23 +296,8 @@ class FormatDate extends StroomExtensionFunctionCall {
 
             final DateTimeFormatter formatter = builder.toFormatter(LOCALE);
 
-            // Parse the date as best we can.
-            dateTime = parseBest(value, formatter, zoneId);
-
-            // Subtract a year if the date appears to be after our reference time.
-            if (dateTime.isAfter(referenceDateTime)) {
-                if (!fieldSet.contains(YEAR_OF_ERA)
-                        && !fieldSet.contains(YEAR)) {
-                    if (!fieldSet.contains(MONTH_OF_YEAR)) {
-                        dateTime = dateTime.minusMonths(1);
-                    } else {
-                        dateTime = dateTime.minusYears(1);
-                    }
-                }
-            }
+            return new RegularParserWithReferenceTime(fieldSet, formatter, zoneId, referenceDateTime);
         }
-
-        return dateTime.toInstant().toEpochMilli();
     }
 
 //    long parseDate(final XPathContext context, final String value, final String pattern, final String timeZone) {
@@ -381,7 +364,7 @@ class FormatDate extends StroomExtensionFunctionCall {
         return baseTime;
     }
 
-    private ZonedDateTime parseBest(final String value, final DateTimeFormatter formatter, final ZoneId zoneId) {
+    private static ZonedDateTime parseBest(final String value, final DateTimeFormatter formatter, final ZoneId zoneId) {
         final TemporalAccessor temporalAccessor = formatter.parseBest(value, ZonedDateTime::from, LocalDateTime::from, LocalDate::from);
         if (temporalAccessor instanceof ZonedDateTime) {
             return ((ZonedDateTime) temporalAccessor).withZoneSameInstant(zoneId);
@@ -401,6 +384,132 @@ class FormatDate extends StroomExtensionFunctionCall {
 
         private boolean contains(final String fieldName) {
             return resolvedPattern.contains("(" + fieldName + ",");
+        }
+    }
+
+    private static class Key {
+        private final String pattern;
+        private final String timeZone;
+
+        Key(final String pattern, final String timeZone) {
+            this.pattern = pattern;
+            this.timeZone = timeZone;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final Key key = (Key) o;
+            return Objects.equals(pattern, key.pattern) &&
+                    Objects.equals(timeZone, key.timeZone);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(pattern, timeZone);
+        }
+    }
+
+    private static class RegularParser implements Function<String, Long> {
+        private final DateTimeFormatter formatter;
+        private final ZoneId zoneId;
+
+        RegularParser(final DateTimeFormatter formatter,
+                      final ZoneId zoneId) {
+            this.formatter = formatter;
+            this.zoneId = zoneId;
+        }
+
+        @Override
+        public Long apply(final String value) {
+            // Parse the date as best we can.
+            final ZonedDateTime dateTime = parseBest(value, formatter, zoneId);
+            return dateTime.toInstant().toEpochMilli();
+        }
+    }
+
+    private static class RegularParserWithReferenceTime implements Function<String, Long> {
+        private final DateTimeFormatter formatter;
+        private final ZoneId zoneId;
+        private final ZonedDateTime referenceDateTime;
+        private final Function<ZonedDateTime, ZonedDateTime> adjustment;
+
+        RegularParserWithReferenceTime(final FieldSet fieldSet,
+                                       final DateTimeFormatter formatter,
+                                       final ZoneId zoneId,
+                                       final ZonedDateTime referenceDateTime) {
+            this.formatter = formatter;
+            this.zoneId = zoneId;
+            this.referenceDateTime = referenceDateTime;
+
+            if (!fieldSet.contains(YEAR_OF_ERA)
+                    && !fieldSet.contains(YEAR)) {
+                if (!fieldSet.contains(MONTH_OF_YEAR)) {
+                    // Subtract a month if the date appears to be after our reference time and no month is provided.
+                    adjustment = value -> value.minusMonths(1);
+                } else {
+                    // Subtract a year if the date appears to be after our reference time and no year is provided.
+                    adjustment = value -> value.minusYears(1);
+                }
+            } else {
+                adjustment = value -> value;
+            }
+        }
+
+        @Override
+        public Long apply(final String value) {
+            // Parse the date as best we can.
+            ZonedDateTime dateTime = parseBest(value, formatter, zoneId);
+
+            // Subtract a year if the date appears to be after our reference time.
+            if (dateTime.isAfter(referenceDateTime)) {
+                dateTime = adjustment.apply(dateTime);
+            }
+
+            return dateTime.toInstant().toEpochMilli();
+        }
+    }
+
+    private static class WeekBasedParser implements Function<String, Long> {
+        private final DateTimeFormatter formatter;
+        private final ZoneId zoneId;
+        private final ZonedDateTime referenceDateTime;
+        private final Function<ZonedDateTime, ZonedDateTime> adjustment;
+
+        WeekBasedParser(final FieldSet fieldSet,
+                        final DateTimeFormatter formatter,
+                        final ZoneId zoneId,
+                        final ZonedDateTime referenceDateTime) {
+            this.formatter = formatter;
+            this.zoneId = zoneId;
+            this.referenceDateTime = referenceDateTime;
+
+            if (!fieldSet.contains(YEAR_OF_ERA)
+                    && !fieldSet.contains(YEAR)
+                    && !fieldSet.contains(WEEK_BASED_YEAR)) {
+                if (!fieldSet.contains(MONTH_OF_YEAR)
+                        && !fieldSet.contains(WEEK_OF_WEEK_BASED_YEAR)
+                        && !fieldSet.contains(WEEK_OF_YEAR)) {
+                    adjustment = value -> value.minusWeeks(1);
+                } else {
+                    adjustment = value -> value.minusWeeks(52);
+                }
+            } else {
+                adjustment = value -> value;
+            }
+        }
+
+        @Override
+        public Long apply(final String value) {
+            // Parse the date as best we can.
+            ZonedDateTime dateTime = parseBest(value, formatter, zoneId);
+
+            // Subtract a year if the date appears to be after our reference time.
+            if (dateTime.isAfter(referenceDateTime)) {
+                dateTime = adjustment.apply(dateTime);
+            }
+            return dateTime.toInstant().toEpochMilli();
         }
     }
 }

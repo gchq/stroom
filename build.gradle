@@ -30,7 +30,7 @@ plugins {
 
     id "com.github.johnrengelman.shadow" version "4.0.3" apply false
 
-    id 'nu.studer.jooq' version '3.0.2' apply false
+    id 'nu.studer.jooq' version '3.0.3' apply false
 
     id 'org.flywaydb.flyway' version '5.2.4' apply false
 
@@ -53,17 +53,6 @@ if (!JavaVersion.current().isJava12()) {
 
 ext.stroomPluginsDir = System.getProperty("user.home") + "/.stroom/plugins"
 ext.stroomContentImportDir = System.getProperty("user.home") + "/.stroom/contentPackImport"
-ext.testContainersConfigFile = System.getProperty("user.home") + "/.testcontainers.properties"
-
-// Create a config file for test containers so we can make it reuse the mysql container to speed the build up
-if (!file(testContainersConfigFile).exists()) {
-    println "Creating file $testContainersConfigFile"
-    new File(testContainersConfigFile).text = "" +
-        "testcontainers.reuse.enable=true\n" +
-        "checks.disable=true\n"
-} else {
-    println "Using exising test containers config in $testContainersConfigFile"
-}
 
 //if the project has a value for the passed property (i.e from the cmd line via -PpropName=xxx)
 //use that, else use a default value
@@ -96,10 +85,10 @@ ext.versions = [
         eventLogging      : 'v4.0.5_schema-v3.2.4',
         hadoopCommonShaded: 'v2.6.4-5',
         hadoopHdfsShaded  : 'v2.6.4-4',
-        stroomAuth        : 'v1.0-beta.8',
-        stroomExpression  : 'v3.0.0',
+        stroomAuth        : 'v7.0-beta.4', // Needed for the correct version of the client API
+        stroomExpression  : 'v3.0.3',
         stroomProxyApi    : 'v5.1.2',
-        stroomQuery       : 'v4.0-beta.38', // same version for stroom-docref, stroom-query-api and stroom-query-common
+        stroomQuery       : 'v4.0-beta.45', // same version for stroom-docref, stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
@@ -120,10 +109,10 @@ ext.versions = [
         //------------3rd-party------------
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
         dropwizard        : '1.3.14', // used to set the dropwizard-bom version, that controls lots of dependency versions
-        guice4            : '4.2.0',
+        guice4            : '4.2.2',
         gwt               : '2.8.2',
         hikari            : '3.2.0',
-        jooq              : '3.11.9',
+        jooq              : '3.12.3',
         junit_jupiter     : '5.3.2',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
@@ -158,8 +147,10 @@ ext.libs = [
         aopalliance                    : "aopalliance:aopalliance:1.0",
         assertj_core                   : "org.assertj:assertj-core:3.10.0",
         c3p0                           : "com.mchange:c3p0:0.9.5.2",
+        caffeine                       : "com.github.ben-manes.caffeine:caffeine:2.8.0",
         commons_codec                  : "commons-codec:commons-codec:1.11",
         commons_compress               : "org.apache.commons:commons-compress:1.18",
+        commons_csv                    : "org.apache.commons:commons-csv:1.7",
         commons_fileupload             : "commons-fileupload:commons-fileupload:1.3.3",
         commons_io                     : "commons-io:commons-io:2.6",
         commons_lang                   : "org.apache.commons:commons-lang3", // version controlled by DW BOM
@@ -232,7 +223,6 @@ ext.libs = [
         jooq_codegen                   : "org.jooq:jooq-codegen:$versions.jooq",
         jooq_meta                      : "org.jooq:jooq-meta:$versions.jooq",
         jose4j                         : "org.bitbucket.b_c:jose4j:0.6.4",
-        jsinterop_annotations          : "com.google.jsinterop:jsinterop-annotations:1.0.1",
         jsr173_api                     : "javax.xml.bind:jsr173_api:1.0",
         jul_to_slf4j                   : "org.slf4j:jul-to-slf4j", // version controlled by DW BOM
         junit_jupiter_api              : "org.junit.jupiter:junit-jupiter-api:$versions.junit_jupiter",
@@ -251,19 +241,20 @@ ext.libs = [
         mockito_junit_jupiter          : "org.mockito:mockito-junit-jupiter:$versions.mockito",
         mysql_connector_java           : "mysql:mysql-connector-java:8.0.15",
         objenesis                      : "org.objenesis:objenesis", // version controlled by DW BOM
+        okhttp                         : "com.squareup.okhttp3:okhttp:4.3.0",
         poi                            : "org.apache.poi:poi:3.17",
         poi_ooxml                      : "org.apache.poi:poi-ooxml:3.17",
         reactivestreams                : "org.reactivestreams:reactive-streams:1.0.2", //used by rxjava
+        restygwt                       : "org.fusesource.restygwt:restygwt:2.2.6",
         rxjava                         : "io.reactivex.rxjava2:rxjava:$versions.rxjava",
         saxon_he                       : "net.sf.saxon:Saxon-HE:9.7.0-21",
         slf4j_api                      : "org.slf4j:slf4j-api", // version controlled by DW BOM
         solrj                          : "org.apache.solr:solr-solrj:8.2.0",
         stax_api                       : "stax:stax-api:1.0.1",
         swagger_annotations            : "io.swagger:swagger-annotations:$versions.swagger",
-        test_containers                : "org.testcontainers:testcontainers:1.11.1",
-        test_containers_mysql          : "org.testcontainers:mysql:1.12.3",
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",
         vavr                           : "io.vavr:vavr:0.9.0",
+        wix_embedded_mysql             : "com.wix:wix-embedded-mysql:4.6.1",
         ws_rs_api                      : "javax.ws.rs:javax.ws.rs-api:2.1",
         xml_apis                       : "xml-apis:xml-apis:1.0.b2",
         zookeeper                      : "org.apache.zookeeper:zookeeper:$versions.zookeeper",

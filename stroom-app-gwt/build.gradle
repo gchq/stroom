@@ -179,6 +179,17 @@ task gwtSuperDevMode(dependsOn: classes, type: JavaExec) {
         file(deployDir).mkdirs()
         println "Making directory extraDir $extraDir"
         file(extraDir).mkdirs()
+
+        def GREEN='\033[1;32m'
+        def NC='\033[0m'
+
+        println """
+        To run stroom in SuperDevMode:${GREEN}
+          * Set appConfig.security.authenticationRequired to false in local.yml
+          * Vist the code server (link further down) and copy the dev mode buttons to your browser bookmarks
+          * Visit stroom at http://localhost:8080/stroom/ui (NOTE: http, not https)
+          * Click 'Dev Mode On'${NC}
+        """.stripIndent().trim()
     }
 
     main = 'com.google.gwt.dev.DevMode'

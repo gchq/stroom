@@ -43,8 +43,8 @@ public class MetaRow implements SharedObject {
         this.meta = meta;
     }
 
-    public void addAttribute(final String name, final String value) {
-        attributes.put(name, value);
+    public Map<String, String> getAttributes() {
+        return attributes;
     }
 
     public String getAttributeValue(final String name) {

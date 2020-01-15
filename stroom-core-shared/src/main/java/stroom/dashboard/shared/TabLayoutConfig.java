@@ -29,11 +29,13 @@ import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"preferredSize", "tabs", "selected"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "tabLayout")
 @XmlType(name = "TabLayoutConfig", propOrder = {"preferredSize", "tabs", "selected"})
 public class TabLayoutConfig extends LayoutConfig {
@@ -75,9 +77,30 @@ public class TabLayoutConfig extends LayoutConfig {
         this.preferredSize = preferredSize;
     }
 
+    private List<TabConfig> getVisibleTabs() {
+        if (tabs == null) {
+            return Collections.emptyList();
+        }
+        return tabs.stream().filter(TabConfig::isVisible).collect(Collectors.toList());
+    }
+
+    private int visibleIndex(final int index) {
+        int realIndex = index;
+        for (int i = 0; i <= index && i < tabs.size(); i++) {
+            if (!tabs.get(i).isVisible()) {
+                realIndex++;
+            }
+        }
+        if (realIndex >= tabs.size()) {
+            realIndex = tabs.size() - 1;
+        }
+        return realIndex;
+    }
+
     public TabConfig get(final int index) {
-        if (tabs != null) {
-            final TabConfig tab = tabs.get(index);
+        if (tabs != null && tabs.size() > 0) {
+            final int realIndex = visibleIndex(index);
+            final TabConfig tab = tabs.get(realIndex);
             if (tab != null) {
                 tab.setParent(this);
                 return tab;
@@ -95,11 +118,12 @@ public class TabLayoutConfig extends LayoutConfig {
     }
 
     public void add(final int index, final TabConfig tab) {
+        final int realIndex = visibleIndex(index);
         if (tabs == null) {
             tabs = new ArrayList<>();
         }
-        if (index <= tabs.size()) {
-            tabs.add(index, tab);
+        if (realIndex <= tabs.size()) {
+            tabs.add(realIndex, tab);
         } else {
             tabs.add(tab);
         }
@@ -114,17 +138,28 @@ public class TabLayoutConfig extends LayoutConfig {
     }
 
     public int indexOf(final TabConfig tab) {
-        if (tabs == null) {
-            return -1;
-        }
-        return tabs.indexOf(tab);
+        return getVisibleTabs().indexOf(tab);
     }
 
-    public int count() {
+    public int getVisibleTabCount() {
+        return getVisibleTabs().size();
+    }
+
+    public int getAllTabCount() {
         if (tabs == null) {
             return 0;
         }
         return tabs.size();
+    }
+
+    public List<TabConfig> getTabs() {
+        if (tabs == null) {
+            tabs = new ArrayList<>();
+        }
+        for (final TabConfig tabConfig : tabs) {
+            tabConfig.setParent(this);
+        }
+        return tabs;
     }
 
     public Integer getSelected() {

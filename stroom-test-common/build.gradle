@@ -3,6 +3,7 @@ ext.moduleName = 'stroom.test.common'
 dependencies {
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-util')
+    compile project(':stroom-db-util')
 
     compile libs.assertj_core
     compile libs.commons_lang
@@ -11,6 +12,7 @@ dependencies {
     compile libs.guice4
     compile libs.junit_jupiter_api
     compile libs.slf4j_api
+    compile libs.wix_embedded_mysql
 
     // The following logging libs are needed when running junits outside dropwizard
     runtimeOnly libs.jcl_over_slf4j

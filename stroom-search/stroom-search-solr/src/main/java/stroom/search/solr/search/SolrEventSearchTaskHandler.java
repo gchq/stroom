@@ -22,6 +22,7 @@ import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Sizes;
 import stroom.search.api.EventRefs;
+import stroom.search.coprocessor.EventCoprocessorSettings;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskManager;
@@ -73,8 +74,14 @@ public class SolrEventSearchTaskHandler extends AbstractTaskHandler<SolrEventSea
 
             // Create an asynchronous search task.
             final String searchName = "Event Search";
-            final SolrAsyncSearchTask asyncSearchTask = new SolrAsyncSearchTask(task, task.getUserToken(), searchName,
-                    query, task.getResultSendFrequency(), coprocessorMap, null, nowEpochMilli);
+            final SolrAsyncSearchTask asyncSearchTask = new SolrAsyncSearchTask(
+                    task,
+                    searchName,
+                    query,
+                    task.getResultSendFrequency(),
+                    coprocessorMap,
+                    null,
+                    nowEpochMilli);
 
             // Create a collector to store search results.
             final Sizes storeSize = getStoreSizes();

@@ -11,6 +11,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
+    compile libs.caffeine
     compile libs.guava
     compile libs.guice4
     compile libs.javax_inject

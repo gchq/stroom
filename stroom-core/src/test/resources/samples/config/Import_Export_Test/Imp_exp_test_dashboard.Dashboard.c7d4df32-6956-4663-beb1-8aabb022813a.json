@@ -11,19 +11,14 @@
         "expression" : "${New Field 0}",
         "format" : {
           "type" : "NUMBER"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "New Field 1",
         "expression" : "${New Field 1}",
         "format" : {
           "type" : "NUMBER"
-        },
-        "width" : 200,
-        "visible" : true
-      } ],
-      "maxResults" : [ 1000000 ]
+        }
+      } ]
     }
   }, {
     "type" : "query",
@@ -38,13 +33,11 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "New Field 0",
           "condition" : "EQUALS",
-          "value" : "xxxx",
-          "enabled" : true
+          "value" : "xxxx"
         }, {
           "type" : "operator",
           "op" : "OR",
@@ -52,24 +45,16 @@
             "type" : "term",
             "field" : "New Field 0",
             "condition" : "EQUALS",
-            "value" : "yyyy",
-            "enabled" : true
+            "value" : "yyyy"
           }, {
             "type" : "term",
             "field" : "New Field 1",
             "condition" : "EQUALS",
-            "value" : "123",
-            "enabled" : true
-          } ],
-          "enabled" : true
-        } ],
-        "enabled" : true
+            "value" : "123"
+          } ]
+        } ]
       },
-      "automate" : {
-        "open" : false,
-        "refresh" : false,
-        "refreshInterval" : "10s"
-      }
+      "automate" : { }
     }
   }, {
     "type" : "vis",
@@ -95,58 +80,49 @@
         "type" : "Pipeline",
         "uuid" : "99dd2ba1-8a1f-4be1-9368-2ae67bfab970",
         "name" : "Imp_exp_test_pipeline"
-      },
-      "showAsHtml" : false
+      }
     }
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : {
-      "width" : 200,
-      "height" : 200
-    },
+    "preferredSize" : { },
     "dimension" : 1,
     "children" : [ {
       "type" : "tabLayout",
-      "preferredSize" : {
-        "width" : 200,
-        "height" : 200
-      },
+      "preferredSize" : { },
       "tabs" : [ {
         "id" : "query-JT8D7"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     }, {
       "type" : "tabLayout",
-      "preferredSize" : {
-        "width" : 200,
-        "height" : 200
-      },
+      "preferredSize" : { },
       "tabs" : [ {
         "id" : "table-IIO1T"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     }, {
       "type" : "tabLayout",
-      "preferredSize" : {
-        "width" : 200,
-        "height" : 200
-      },
+      "preferredSize" : { },
       "tabs" : [ {
         "id" : "vis-8SIW1"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     }, {
       "type" : "tabLayout",
-      "preferredSize" : {
-        "width" : 200,
-        "height" : 200
-      },
+      "preferredSize" : { },
       "tabs" : [ {
         "id" : "text-K9XC0"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     } ]
-  },
-  "tabVisibility" : "SHOW_ALL"
+  }
 }

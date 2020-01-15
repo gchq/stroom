@@ -20,6 +20,7 @@ import stroom.task.shared.Task;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.function.Supplier;
 
 public final class CurrentTaskState {
     private static final ThreadLocal<Deque<TaskThread>> THREAD_LOCAL = ThreadLocal.withInitial(ArrayDeque::new);
@@ -58,10 +59,10 @@ public final class CurrentTaskState {
         }
     }
 
-    static void info(final Object... args) {
+    static void info(final Supplier<String> messageSupplier) {
         final TaskThread taskThread = currentState();
         if (taskThread != null) {
-            taskThread.info(args);
+            taskThread.info(messageSupplier);
         }
     }
 

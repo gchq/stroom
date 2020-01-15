@@ -39,7 +39,7 @@ import java.util.Set;
 @XmlAccessorType(XmlAccessType.PROPERTY)
 @XmlRootElement(name = "data")
 @JsonPropertyOrder({"field", "customRollUpMask"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 public class StatisticsDataSourceData implements SharedObject {
     private static final long serialVersionUID = -9071682094300037627L;
 

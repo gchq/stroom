@@ -16,16 +16,22 @@
 
 package stroom.data.store.util;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoExtension;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
-import stroom.db.util.DbUtil;
-import stroom.meta.impl.db.ConnectionProvider;
+import stroom.meta.impl.db.MetaDbConnProvider;
 import stroom.meta.shared.MetaProperties;
+import stroom.test.common.util.db.DbTestUtil;
+import stroom.test.common.util.db.DbTestModule;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.test.common.util.test.TempDir;
 import stroom.test.common.util.test.TempDirExtension;
@@ -38,19 +44,28 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-@ExtendWith(TempDirExtension.class)
+@ExtendWith({TempDirExtension.class, MockitoExtension.class})
 class TestStreamDumpTool {
+
     @Inject
-    private ConnectionProvider connectionProvider;
+    private MetaDbConnProvider metaDbConnProvider;
+
     @Inject
     private Store streamStore;
 
+    @Mock
+    private ToolInjector toolInjector;
+
     @BeforeEach
     void setup() {
-        new ToolInjector().getInjector().injectMembers(this);
+        final Injector injector = Guice.createInjector(new DbTestModule(), new ToolModule());
+        injector.injectMembers(this);
 
-        try (final Connection connection = connectionProvider.getConnection()) {
-            DbUtil.clearAllTables(connection);
+        Mockito.when(toolInjector.getInjector())
+                .thenReturn(injector);
+
+        try (final Connection connection = metaDbConnProvider.getConnection()) {
+            DbTestUtil.clearAllTables(connection);
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
         }
@@ -65,7 +80,7 @@ class TestStreamDumpTool {
             addData(feedName, "This is some test data to dump2");
             addData(feedName, "This is some test data to dump3");
 
-            final StreamDumpTool streamDumpTool = new StreamDumpTool();
+            final StreamDumpTool streamDumpTool = new StreamDumpTool(toolInjector);
             streamDumpTool.setFeed(feedName);
             streamDumpTool.setOutputDir(FileUtil.getCanonicalPath(tempDir));
             streamDumpTool.run();

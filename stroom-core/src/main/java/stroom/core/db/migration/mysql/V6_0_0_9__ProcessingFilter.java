@@ -49,15 +49,8 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
     }
 
     public V6_0_0_9__ProcessingFilter(final boolean writeUpdates) {
-        System.setProperty("javax.xml.transform.TransformerFactory",
-                "net.sf.saxon.TransformerFactoryImpl");
+        System.setProperty("javax.xml.transform.TransformerFactory", "net.sf.saxon.TransformerFactoryImpl");
         this.writeUpdates = writeUpdates;
-        try {
-            findStreamCriteriaJaxb = JAXBContext.newInstance(_V07_00_00_FindStreamCriteria.class);
-            queryDataJaxb = JAXBContext.newInstance(QueryData.class);
-        } catch (JAXBException e) {
-            jaxbException = e;
-        }
     }
 
     @Override
@@ -318,7 +311,7 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
             rawTerms.stream()
                     .map(l -> {
                         final Optional<DocRef> value = toDocRef.apply(l);
-                        if (!value.isPresent()) {
+                        if (value.isEmpty()) {
                             LOGGER.warn("Could not find value for {} in field {}", l, field);
                         }
                         return value.orElseGet(() -> {
@@ -343,7 +336,7 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
             final String values = rawTerms.stream()
                     .map(l -> {
                         final Optional<String> value = toString.apply(l);
-                        if (!value.isPresent()) {
+                        if (value.isEmpty()) {
                             LOGGER.warn("Could not find value for {} in field {}", l, field);
                         }
                         return value.orElseGet(() -> "--missing " + field + " (" + l + ")");
@@ -358,17 +351,43 @@ public class V6_0_0_9__ProcessingFilter extends BaseJavaMigration {
     }
 
     private _V07_00_00_FindStreamCriteria unmarshalCriteria(final String input) throws JAXBException {
+        final JAXBContext jaxbContext = getFindStreamCriteriaJaxb();
+
         if (null != jaxbException) {
             throw jaxbException;
         }
-        return XMLMarshallerUtil.unmarshal(findStreamCriteriaJaxb, _V07_00_00_FindStreamCriteria.class, input);
+        return XMLMarshallerUtil.unmarshal(jaxbContext, _V07_00_00_FindStreamCriteria.class, input);
     }
 
     private String marshalQueryData(final QueryData queryData) throws JAXBException {
+        final JAXBContext jaxbContext = getQueryDataJaxb();
+
         if (null != jaxbException) {
             throw jaxbException;
         }
 
-        return XMLMarshallerUtil.marshal(queryDataJaxb, queryData);
+        return XMLMarshallerUtil.marshal(jaxbContext, queryData);
+    }
+
+    private JAXBContext getFindStreamCriteriaJaxb() {
+        if (jaxbException != null && findStreamCriteriaJaxb != null) {
+            try {
+                findStreamCriteriaJaxb = JAXBContext.newInstance(_V07_00_00_FindStreamCriteria.class);
+            } catch (final JAXBException e) {
+                jaxbException = e;
+            }
+        }
+        return findStreamCriteriaJaxb;
+    }
+
+    private JAXBContext getQueryDataJaxb() {
+        if (jaxbException != null && queryDataJaxb != null) {
+            try {
+                queryDataJaxb = JAXBContext.newInstance(QueryData.class);
+            } catch (JAXBException e) {
+                jaxbException = e;
+            }
+        }
+        return queryDataJaxb;
     }
 }

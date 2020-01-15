@@ -34,7 +34,7 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"parameters", "components", "layout", "tabVisibility"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "dashboard")
 @XmlType(name = "DashboardConfig", propOrder = {"parameters", "components", "layout", "tabVisibility"})
 public class DashboardConfig implements SharedObject {

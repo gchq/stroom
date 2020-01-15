@@ -4,8 +4,16 @@
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <ui:style>
         .max {
-        width:100%;
-        height:100%;
+            width:100%;
+            height:100%;
+        }
+        .textArea {
+            width:100%;
+            height:80px;
+        }
+        .textAreaReducedHeight {
+            width:100%;
+            height:50px;
         }
     </ui:style>
 
@@ -13,37 +21,61 @@
         <g:row>
             <g:cell>Name:</g:cell>
             <g:customCell>
-                <g:TextBox ui:field="name" width="100%"/>
+                <g:Label ui:field="name" width="100%" addStyleNames="globalProperties stroom-control-label"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Description:</g:cell>
             <g:customCell>
-                <g:TextArea ui:field="description" width="100%"/>
-            </g:customCell>
-        </g:row>
-        <g:row styleName="{style.max}">
-            <g:cell>Value:</g:cell>
-            <g:customCell>
-                <g:TextArea ui:field="value" width="100%" height="100%"/>
+                <g:TextArea ui:field="description" width="100%" addStyleNames="globalProperties {style.textAreaReducedHeight}"/>
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>Value:</g:cell>
+            <g:cell>Default Value:</g:cell>
             <g:customCell>
-                <g:PasswordTextBox ui:field="valuePassword" width="100%"/>
+                <g:TextArea ui:field="defaultValue" width="100%" addStyleNames="globalProperties {style.textAreaReducedHeight}"/>
+            </g:customCell>
+        </g:row>
+        <g:row>
+            <g:cell>Use Global Override:</g:cell>
+            <g:customCell>
+                <tickbox:TickBox ui:field="useOverride"/>
+            </g:customCell>
+        </g:row>
+        <g:row styleName="{style.textArea}">
+            <g:cell>Global Value:</g:cell>
+            <g:customCell>
+                <g:TextArea ui:field="databaseValue" width="100%" addStyleNames="globalProperties"/>
+            </g:customCell>
+        </g:row>
+        <g:row>
+            <g:cell>Global Value:</g:cell>
+            <g:customCell>
+                <g:PasswordTextBox ui:field="databaseValuePassword" width="100%" addStyleNames="globalProperties"/>
+            </g:customCell>
+        </g:row>
+        <g:row>
+            <g:cell>YAML Value:</g:cell>
+            <g:customCell>
+                <g:TextArea ui:field="yamlValue" width="100%" addStyleNames="globalProperties {style.textAreaReducedHeight}"/>
+            </g:customCell>
+        </g:row>
+        <g:row>
+            <g:cell>Effective Value:</g:cell>
+            <g:customCell>
+                <g:TextArea ui:field="effectiveValue" width="100%" addStyleNames="globalProperties {style.textAreaReducedHeight}"/>
+            </g:customCell>
+        </g:row>
+        <g:row>
+            <g:cell>Data Type:</g:cell>
+            <g:customCell>
+                <g:Label ui:field="dataType" width="100%" addStyleNames="globalProperties"/>
             </g:customCell>
         </g:row>
         <g:row>
             <g:cell>Source:</g:cell>
             <g:customCell>
-                <g:TextBox ui:field="source" width="100%"/>
-            </g:customCell>
-        </g:row>
-        <g:row>
-            <g:cell>Default:</g:cell>
-            <g:customCell>
-                <g:TextBox ui:field="defaultValue" width="100%"/>
+                <g:Label ui:field="source" width="100%" addStyleNames="globalProperties"/>
             </g:customCell>
         </g:row>
         <g:row>
@@ -56,6 +88,12 @@
             <g:cell>Requires Restart:</g:cell>
             <g:customCell>
                 <tickbox:TickBox ui:field="requireRestart"/>
+            </g:customCell>
+        </g:row>
+        <g:row>
+            <g:cell>Read Only:</g:cell>
+            <g:customCell>
+                <tickbox:TickBox ui:field="readOnly"/>
             </g:customCell>
         </g:row>
     </g:Grid>

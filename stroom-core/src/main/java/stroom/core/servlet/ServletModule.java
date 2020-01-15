@@ -56,9 +56,7 @@ public class ServletModule extends AbstractModule {
                 .bind(StroomServlet.class)
                 // unauthenticated servlets (i.e. run as proc user)
                 .bind(ReceiveDataServlet.class)
-                .bind(ReceiveDataServlet.class)
                 .bind(DebugServlet.class)
-                .bind(EchoServlet.class)
                 .bind(StatusServlet.class);
     }
 

@@ -58,7 +58,7 @@ class DispatchEntityEventTaskHandler extends AbstractTaskHandler<DispatchEntityE
                 // Only send the event to remote nodes and not this one.
                 targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {
                     // Send the entity event.
-                    final ClusterEntityEventTask clusterEntityEventTask = new ClusterEntityEventTask(task, task.getEntityEvent());
+                    final ClusterEntityEventTask clusterEntityEventTask = new ClusterEntityEventTask(task.getEntityEvent());
                     dispatchHelper.execAsync(clusterEntityEventTask, targetNode);
                 });
             } catch (final NullClusterStateException | NodeNotFoundException e) {

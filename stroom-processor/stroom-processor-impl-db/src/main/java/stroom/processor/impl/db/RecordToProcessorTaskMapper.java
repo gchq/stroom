@@ -7,6 +7,7 @@ import stroom.processor.shared.TaskStatus;
 import java.util.function.Function;
 
 import static stroom.processor.impl.db.jooq.tables.ProcessorNode.PROCESSOR_NODE;
+import static stroom.processor.impl.db.jooq.tables.ProcessorFeed.PROCESSOR_FEED;
 import static stroom.processor.impl.db.jooq.tables.ProcessorTask.PROCESSOR_TASK;
 
 class RecordToProcessorTaskMapper implements Function<Record, ProcessorTask> {
@@ -19,6 +20,9 @@ class RecordToProcessorTaskMapper implements Function<Record, ProcessorTask> {
         processorTask.setData(record.get(PROCESSOR_TASK.DATA));
         if (record.field(PROCESSOR_NODE.NAME) != null) {
             processorTask.setNodeName(record.get(PROCESSOR_NODE.NAME));
+        }
+        if (record.field(PROCESSOR_FEED.NAME) != null) {
+            processorTask.setFeedName(record.get(PROCESSOR_FEED.NAME));
         }
         processorTask.setStatus(TaskStatus.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(record.get(PROCESSOR_TASK.STATUS)));
         processorTask.setStartTimeMs(record.get(PROCESSOR_TASK.STATUS_TIME_MS));

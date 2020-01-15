@@ -32,6 +32,7 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
     private String size;
     private Long sizeBytes = null;
     private boolean splitAggregatedStreams;
+    private boolean splitRecords;
 
     AbstractAppender(final ErrorReceiverProxy errorReceiverProxy) {
         this.errorReceiverProxy = errorReceiverProxy;
@@ -58,9 +59,15 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     @Override
     public void returnDestination(final Destination destination) throws IOException {
-        final Long sizeBytes = getSizeBytes();
-        if (sizeBytes > 0 && sizeBytes <= getCurrentOutputSize()) {
-            closeCurrentOutputStream();
+        if (splitRecords) {
+            if (getCurrentOutputSize() > 0) {
+                closeCurrentOutputStream();
+            }
+        } else {
+            final Long sizeBytes = getSizeBytes();
+            if (sizeBytes > 0 && sizeBytes <= getCurrentOutputSize()) {
+                closeCurrentOutputStream();
+            }
         }
     }
 
@@ -146,5 +153,9 @@ public abstract class AbstractAppender extends AbstractDestinationProvider imple
 
     protected void setSplitAggregatedStreams(final boolean splitAggregatedStreams) {
         this.splitAggregatedStreams = splitAggregatedStreams;
+    }
+
+    protected void setSplitRecords(final boolean splitRecords) {
+        this.splitRecords = splitRecords;
     }
 }

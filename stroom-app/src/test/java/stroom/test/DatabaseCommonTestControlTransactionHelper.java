@@ -16,8 +16,8 @@
 
 package stroom.test;
 
-import stroom.core.db.ConnectionProvider;
-import stroom.db.util.DbUtil;
+import stroom.core.db.CoreDbConnProvider;
+import stroom.test.common.util.db.DbTestUtil;
 
 import javax.inject.Inject;
 import java.sql.Connection;
@@ -29,16 +29,16 @@ import java.sql.SQLException;
  * </p>
  */
 class DatabaseCommonTestControlTransactionHelper {
-    private final ConnectionProvider connectionProvider;
+    private final CoreDbConnProvider coreDbConnProvider;
 
     @Inject
-    DatabaseCommonTestControlTransactionHelper(final ConnectionProvider connectionProvider) {
-        this.connectionProvider = connectionProvider;
+    DatabaseCommonTestControlTransactionHelper(final CoreDbConnProvider coreDbConnProvider) {
+        this.coreDbConnProvider = coreDbConnProvider;
     }
 
     void clearAllTables() {
-        try (final Connection connection = connectionProvider.getConnection()) {
-            DbUtil.clearAllTables(connection);
+        try (final Connection connection = coreDbConnProvider.getConnection()) {
+            DbTestUtil.clearAllTables(connection);
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);
         }

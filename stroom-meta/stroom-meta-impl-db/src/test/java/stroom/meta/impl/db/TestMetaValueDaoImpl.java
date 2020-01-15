@@ -21,6 +21,7 @@ import com.google.inject.Guice;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import stroom.cache.impl.CacheModule;
 import stroom.cluster.lock.mock.MockClusterLockModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.mock.MockWordListProviderModule;
@@ -34,6 +35,7 @@ import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
+import stroom.test.common.util.db.DbTestModule;
 import stroom.util.date.DateUtil;
 
 import javax.inject.Inject;
@@ -58,7 +60,10 @@ class TestMetaValueDaoImpl {
                 new MockClusterLockModule(),
                 new MockSecurityContextModule(),
                 new MockCollectionModule(),
-                new MockWordListProviderModule())
+                new MockWordListProviderModule(),
+                new CacheModule(),
+                new DbTestModule(),
+                new MetaTestModule())
                 .injectMembers(this);
         metaValueConfig.setAddAsync(false);
         // Delete everything

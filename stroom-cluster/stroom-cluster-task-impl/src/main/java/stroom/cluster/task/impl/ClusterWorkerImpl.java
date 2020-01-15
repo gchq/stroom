@@ -26,6 +26,7 @@ import stroom.cluster.task.api.ClusterTask;
 import stroom.cluster.task.api.CollectorId;
 import stroom.docref.SharedObject;
 import stroom.node.api.NodeInfo;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskId;
@@ -44,14 +45,17 @@ public class ClusterWorkerImpl implements ClusterWorker {
     private final TaskManager taskManager;
     private final NodeInfo nodeInfo;
     private final ClusterCallService clusterCallService;
+    private final SecurityContext securityContext;
 
     @Inject
     public ClusterWorkerImpl(final TaskManager taskManager,
                              final NodeInfo nodeInfo,
-                             final ClusterCallServiceRemote clusterCallService) {
+                             final ClusterCallServiceRemote clusterCallService,
+                             final SecurityContext securityContext) {
         this.taskManager = taskManager;
         this.nodeInfo = nodeInfo;
         this.clusterCallService = clusterCallService;
+        this.securityContext = securityContext;
     }
 
     /**
@@ -136,7 +140,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
                     // Trace attempt to send result.
                     LOGGER.trace("Sending result for task '{}' to node '{}' (attempt={})", task.getTaskName(), sourceNode, tryCount);
                     // Send result.
-                    ok = clusterCallService.call(targetNode, sourceNode, ClusterDispatchAsyncImpl.SERVICE_NAME,
+                    ok = clusterCallService.call(targetNode, sourceNode, securityContext.getUserIdentity(), ClusterDispatchAsyncImpl.SERVICE_NAME,
                             ClusterDispatchAsyncImpl.RECEIVE_RESULT_METHOD,
                             ClusterDispatchAsyncImpl.RECEIVE_RESULT_METHOD_ARGS, new Object[]{task, targetNode,
                                     sourceTaskId, collectorId, result, t, success});

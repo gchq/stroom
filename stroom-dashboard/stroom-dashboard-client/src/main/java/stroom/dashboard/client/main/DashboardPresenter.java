@@ -29,6 +29,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.content.client.event.RefreshContentTabEvent;
+import stroom.core.client.HasSave;
 import stroom.dashboard.client.flexlayout.FlexLayoutChangeHandler;
 import stroom.dashboard.client.flexlayout.PositionAndSize;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -61,6 +62,7 @@ import stroom.util.client.RandomId;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.button.client.ButtonPanel;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -72,7 +74,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class DashboardPresenter extends DocumentEditPresenter<DashboardView, DashboardDoc>
-        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers {
+        implements FlexLayoutChangeHandler, DocumentTabData, DashboardUiHandlers, HasSave {
     private static final Logger logger = Logger.getLogger(DashboardPresenter.class.getName());
     private final ButtonView saveButton;
     private final ButtonView saveAsButton;
@@ -91,6 +93,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     private String currentParams;
     private String lastUsedQueryInfo;
     private boolean embedded;
+    private boolean queryOnOpen;
 
     @Inject
     public DashboardPresenter(final EventBus eventBus,
@@ -98,6 +101,8 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                               final DashboardLayoutPresenter layoutPresenter,
                               final Provider<ComponentAddPresenter> addPresenterProvider,
                               final Components components,
+                              final MenuListPresenter menuListPresenter,
+                              final Provider<RenameTabPresenter> renameTabPresenterProvider,
                               final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
                               final ClientSecurityContext securityContext) {
         super(eventBus, view, securityContext);
@@ -106,16 +111,15 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         this.components = components;
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
 
+        final TabManager tabManager = new TabManager(components, menuListPresenter, renameTabPresenterProvider, this);
+        layoutPresenter.setTabManager(tabManager);
+
         saveButton = addButtonLeft(SvgPresets.SAVE);
         saveAsButton = addButtonLeft(SvgPresets.SAVE_AS);
         saveButton.setEnabled(false);
         saveAsButton.setEnabled(false);
 
-        registerHandler(saveButton.addClickHandler(event -> {
-            if (saveButton.isEnabled()) {
-                WriteDocumentEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
-            }
-        }));
+        registerHandler(saveButton.addClickHandler(event -> save()));
         registerHandler(saveAsButton.addClickHandler(event -> {
             if (saveAsButton.isEnabled()) {
                 SaveAsDocumentEvent.fire(DashboardPresenter.this, docRef);
@@ -131,6 +135,13 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
         addButton.setEnabled(false);
 
         view.setUiHandlers(this);
+    }
+
+    @Override
+    public void save() {
+        if (saveButton.isEnabled()) {
+            WriteDocumentEvent.fire(DashboardPresenter.this, DashboardPresenter.this);
+        }
     }
 
     private ButtonView addButtonLeft(final SvgPreset preset) {
@@ -184,6 +195,10 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     void setEmbedded(final boolean embedded) {
         this.embedded = embedded;
         getView().setEmbedded(embedded);
+    }
+
+    public void setQueryOnOpen(final boolean queryOnOpen) {
+        this.queryOnOpen = queryOnOpen;
     }
 
     @Override
@@ -275,6 +290,13 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
             // }
 
             layoutPresenter.setLayoutData(layoutData);
+
+            // Tell all queryable components whether we want them to query on open.
+            for (final Component component : components) {
+                if (component instanceof Queryable) {
+                    ((Queryable) component).setQueryOnOpen(queryOnOpen);
+                }
+            }
         }
     }
 
@@ -355,11 +377,11 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
     }
 
     @Override
-    public void requestTabClose(final TabConfig tabData) {
+    public void requestTabClose(final TabConfig tabConfig) {
         ConfirmEvent.fire(this, "Are you sure you want to close this tab?", ok -> {
             if (ok) {
-                layoutPresenter.closeTab(tabData);
-                components.remove(tabData.getId(), true);
+                layoutPresenter.closeTab(tabConfig);
+                components.remove(tabConfig.getId(), true);
             }
         });
     }
@@ -492,10 +514,10 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                     componentPresenter.link();
                 }
 
-                final TabConfig tabData = new TabConfig();
-                tabData.setId(id);
+                final TabConfig tabConfig = new TabConfig();
+                tabConfig.setId(id);
 
-                final TabLayoutConfig tabLayoutData = new TabLayoutConfig(tabData);
+                final TabLayoutConfig tabLayoutConfig = new TabLayoutConfig(tabConfig);
 
                 // Choose where to put the new component in the layout data.
                 LayoutConfig layoutData = layoutPresenter.getLayoutData();
@@ -503,20 +525,20 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                     // There is no existing layout so add the new item as a
                     // single item layout.
 
-                    layoutData = tabLayoutData;
+                    layoutData = tabLayoutConfig;
 
                 } else if (layoutData instanceof TabLayoutConfig) {
                     // If the layout is a single item then replace it with a
                     // split layout.
                     layoutData = new SplitLayoutConfig(Direction.DOWN.getDimension(),
-                            layoutData, tabLayoutData);
+                            layoutData, tabLayoutConfig);
                 } else {
                     // If the layout is already a split then add a new component
                     // to the split.
                     final SplitLayoutConfig parent = (SplitLayoutConfig) layoutData;
 
                     // Add the new component.
-                    parent.add(tabLayoutData);
+                    parent.add(tabLayoutConfig);
 
                     // Fix the heights of the components to fit the new
                     // component in.

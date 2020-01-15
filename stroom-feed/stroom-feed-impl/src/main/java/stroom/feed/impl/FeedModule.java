@@ -25,6 +25,7 @@ import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.meta.shared.MetaSecurityFilter;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
@@ -37,6 +38,7 @@ public class FeedModule extends AbstractModule {
 
         bind(FeedStore.class).to(FeedStoreImpl.class);
         bind(FeedProperties.class).to(FeedPropertiesImpl.class);
+        bind(MetaSecurityFilter.class).to(MetaSecurityFilterImpl.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
         explorerActionHandlerBinder.addBinding().to(FeedStoreImpl.class);

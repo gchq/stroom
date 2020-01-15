@@ -37,6 +37,7 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.io.BufferFactory;
+import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogItemProgress;
 import stroom.util.shared.BaseResultList;
@@ -68,10 +69,10 @@ public class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTas
 
     @Inject
     public DataDownloadTaskHandler(final TaskContext taskContext,
-                            final Store streamStore,
-                            final MetaService metaService,
-                            final SecurityContext securityContext,
-                            final BufferFactory bufferFactory) {
+                                   final Store streamStore,
+                                   final MetaService metaService,
+                                   final SecurityContext securityContext,
+                                   final BufferFactory bufferFactory) {
         this.taskContext = taskContext;
         this.streamStore = streamStore;
         this.metaService = metaService;
@@ -98,7 +99,7 @@ public class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTas
         StroomZipOutputStream stroomZipOutputStream = null;
         try {
             final LogItemProgress logItemProgress = new LogItemProgress(0, list.size());
-            taskContext.info("Data {}", logItemProgress);
+            taskContext.info(() -> "Data " + logItemProgress);
 
             for (final Meta meta : list) {
                 try {
@@ -170,7 +171,7 @@ public class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTas
             throw new UncheckedIOException(e);
         } finally {
             closeDelete(stroomZipOutputStream);
-            taskContext.info("done");
+            taskContext.info(() -> "done");
         }
     }
 
@@ -190,7 +191,8 @@ public class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTas
             if (maxParts == null || count < maxParts) {
                 for (int index = 0; index < count; index++) {
                     try (final InputStreamProvider inputStreamProvider = source.get(index)) {
-                        taskContext.info("Data Input {}/{}", index, count);
+                        final int pos = index;
+                        taskContext.info(() -> "Data Input " + pos + "/" + count);
 
                         String basePartName = StroomFileNameUtil.getIdPath(id);
                         if (count > 1) {
@@ -254,7 +256,7 @@ public class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTas
                 attributeMap, ZIP_EXTENSION);
         final Path file = outputDir.resolve(filename);
 
-        taskContext.info(file.toString());
+        taskContext.info(() -> FileUtil.getCanonicalPath(file));
 
         StroomZipOutputStreamImpl outputStream;
 

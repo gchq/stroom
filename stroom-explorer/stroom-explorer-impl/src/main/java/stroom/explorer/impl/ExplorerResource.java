@@ -11,7 +11,7 @@ import stroom.explorer.shared.HasNodeState;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;

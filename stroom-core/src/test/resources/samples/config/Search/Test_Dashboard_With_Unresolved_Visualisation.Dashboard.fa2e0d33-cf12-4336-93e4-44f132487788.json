@@ -12,15 +12,12 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "EventTime",
           "condition" : "LESS_THAN",
-          "value" : "2020-01-01T00:00:00.000Z",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "2020-01-01T00:00:00.000Z"
+        } ]
       }
     }
   }, {
@@ -36,43 +33,34 @@
         "format" : {
           "type" : "DATE_TIME"
         },
-        "group" : 0,
-        "width" : 200,
-        "visible" : true
+        "group" : 0
       }, {
         "name" : "UserId",
         "expression" : "${UserId}",
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 0,
-        "width" : 200,
-        "visible" : true
+        "group" : 0
       }, {
         "name" : "Count",
         "expression" : "count()",
         "format" : {
           "type" : "NUMBER"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "width" : 200,
         "visible" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
-        "width" : 200,
         "visible" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
         "name" : "Example extraction"
-      },
-      "maxResults" : [ 1000000 ]
+      }
     }
   }, {
     "type" : "vis",
@@ -90,42 +78,41 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : {
-      "width" : 200,
-      "height" : 200
-    },
+    "preferredSize" : { },
     "dimension" : 1,
     "children" : [ {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 122
       },
       "tabs" : [ {
         "id" : "query-MRGPM"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 258
       },
       "tabs" : [ {
         "id" : "table-78LF4"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 604
       },
       "tabs" : [ {
         "id" : "vis-SPSCW"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     } ]
-  },
-  "tabVisibility" : "SHOW_ALL"
+  }
 }

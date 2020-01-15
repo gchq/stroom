@@ -31,6 +31,7 @@ import stroom.about.client.view.AboutViewImpl;
 import stroom.content.client.presenter.ContentTabPanePresenter;
 import stroom.content.client.presenter.ContentTabPanePresenter.ContentTabPaneProxy;
 import stroom.core.client.ContentManager;
+import stroom.core.client.HasSaveRegistry;
 import stroom.core.client.KeyboardInterceptor;
 import stroom.core.client.LocationManager;
 import stroom.core.client.NameTokens;
@@ -95,6 +96,7 @@ public class AppModule extends AbstractPresenterModule {
 
         // bind(CurrentUser.class).in(Singleton.class);
 
+        bind(HasSaveRegistry.class).asEagerSingleton();
         bind(LocationManager.class).asEagerSingleton();
         bind(ContentManager.class).asEagerSingleton();
 

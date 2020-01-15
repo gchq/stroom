@@ -1,6 +1,7 @@
 ext.moduleName = 'stroom.docstore.impl.db'
 
 dependencies {
+    compile project(':stroom-db-util')
     compile project(':stroom-docstore:stroom-docstore-impl')
 
     compile libs.stroomDocRef

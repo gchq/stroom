@@ -17,7 +17,6 @@
 package stroom.data.store.impl;
 
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.security.shared.UserToken;
 import stroom.task.api.ServerTask;
 
 import java.nio.file.Path;
@@ -31,12 +30,10 @@ public class DataDownloadTask extends ServerTask<DataDownloadResult> {
     public DataDownloadTask() {
     }
 
-    public DataDownloadTask(final UserToken userToken,
-                            final FindMetaCriteria criteria,
+    public DataDownloadTask(final FindMetaCriteria criteria,
                             final Path outputDir,
                             final String format,
                             final DataDownloadSettings settings) {
-        super(null, userToken);
         this.criteria = criteria;
         this.outputDir = outputDir;
         this.format = format;

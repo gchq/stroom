@@ -46,7 +46,7 @@ import java.util.List;
 public class StreamGrepTool extends AbstractCommandLineTool {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamGrepTool.class);
 
-    private final ToolInjector toolInjector = new ToolInjector();
+    private final ToolInjector toolInjector;
 
     private String feed;
     private String streamType;
@@ -54,6 +54,15 @@ public class StreamGrepTool extends AbstractCommandLineTool {
     private String createPeriodFrom;
     private String createPeriodTo;
     private String addLineBreak;
+
+    public StreamGrepTool() {
+        toolInjector = new ToolInjector();
+    }
+
+    // for testing
+    StreamGrepTool(final ToolInjector toolInjector) {
+        this.toolInjector = toolInjector;
+    }
 
     private static void checkMatch(final String match, final ArrayDeque<String> preBuffer,
                                    final ArrayDeque<String> postBuffer, final String searchLine) {

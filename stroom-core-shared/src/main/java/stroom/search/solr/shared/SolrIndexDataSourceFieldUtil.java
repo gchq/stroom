@@ -17,9 +17,13 @@
 package stroom.search.solr.shared;
 
 import stroom.datasource.api.v2.AbstractField;
+import stroom.datasource.api.v2.BooleanField;
 import stroom.datasource.api.v2.DateField;
+import stroom.datasource.api.v2.DoubleField;
+import stroom.datasource.api.v2.FloatField;
 import stroom.datasource.api.v2.IdField;
-import stroom.datasource.api.v2.NumberField;
+import stroom.datasource.api.v2.IntegerField;
+import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
 
 import java.util.List;
@@ -39,14 +43,22 @@ public final class SolrIndexDataSourceFieldUtil {
 
     private static AbstractField convert(final SolrIndexField field) {
         switch (field.getFieldUse()) {
+            case ID:
+                return new IdField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+            case BOOLEAN_FIELD:
+                return new BooleanField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+            case INTEGER_FIELD:
+                return new IntegerField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+            case LONG_FIELD:
+                return new LongField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+            case FLOAT_FIELD:
+                return new FloatField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
+            case DOUBLE_FIELD:
+                return new DoubleField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
             case DATE_FIELD:
                 return new DateField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
             case FIELD:
                 return new TextField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
-            case ID:
-                return new IdField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
-            case NUMERIC_FIELD:
-                return new NumberField(field.getFieldName(), field.isIndexed(), field.getSupportedConditions());
         }
 
         return null;

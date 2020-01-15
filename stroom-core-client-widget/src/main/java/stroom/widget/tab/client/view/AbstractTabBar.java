@@ -19,6 +19,7 @@ package stroom.widget.tab.client.view;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.dom.client.Style.Unit;
+import com.google.gwt.dom.client.Style.Visibility;
 import com.google.gwt.event.logical.shared.SelectionEvent;
 import com.google.gwt.event.logical.shared.SelectionHandler;
 import com.google.gwt.event.shared.HandlerRegistration;
@@ -284,13 +285,13 @@ public abstract class AbstractTabBar extends Widget implements TabBar, RequiresR
     }
 
     private void makeInvisible(final Element element) {
-        element.getStyle().setOpacity(0);
+        element.getStyle().setVisibility(Visibility.HIDDEN);
         element.getStyle().setLeft(-1000, Unit.PX);
     }
 
     private void makeVisible(final Element element, final int x) {
         element.getStyle().setLeft(x, Unit.PX);
-        element.getStyle().setOpacity(1);
+        element.getStyle().setVisibility(Visibility.VISIBLE);
     }
 
     @Override

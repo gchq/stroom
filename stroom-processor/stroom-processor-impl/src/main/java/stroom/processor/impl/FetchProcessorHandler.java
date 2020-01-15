@@ -142,7 +142,7 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
     private ExpressionOperator decorate(final ExpressionOperator operator) {
         final ExpressionOperator.Builder builder = new Builder()
                 .op(operator.getOp())
-                .enabled(operator.getEnabled());
+                .enabled(operator.isEnabled());
 
         if (operator.getChildren() != null) {
             for (final ExpressionItem child : operator.getChildren()) {
@@ -157,7 +157,7 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
                         final DocRefInfo docRefInfo = explorerService.info(docRef);
                         if (docRefInfo != null) {
                             term = new ExpressionTerm.Builder()
-                                    .enabled(term.getEnabled())
+                                    .enabled(term.isEnabled())
                                     .field(term.getField())
                                     .condition(term.getCondition())
                                     .value(term.getValue())

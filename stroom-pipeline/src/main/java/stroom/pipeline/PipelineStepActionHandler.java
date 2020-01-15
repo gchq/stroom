@@ -44,7 +44,7 @@ class PipelineStepActionHandler extends AbstractTaskHandler<PipelineStepAction, 
 
         try {
             // Copy the action settings to the server task.
-            final SteppingTask task = new SteppingTask(action.getUserToken());
+            final SteppingTask task = new SteppingTask();
             task.setCriteria(action.getCriteria());
             task.setChildStreamType(action.getChildStreamType());
             task.setStepLocation(action.getStepLocation());

@@ -16,8 +16,8 @@
 
 package stroom.util;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -25,7 +25,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 
 public class DatabaseTool extends AbstractCommandLineTool {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DatabaseTool.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DatabaseTool.class);
 
     private String jdbcDriverClassName;
     private String jdbcDriverUrl;
@@ -60,7 +60,7 @@ public class DatabaseTool extends AbstractCommandLineTool {
         }
         try {
             connection = DriverManager.getConnection(jdbcDriverUrl, jdbcDriverUsername, jdbcDriverPassword);
-            LOGGER.info("getConnection() - Connected !! (%s,%s)", jdbcDriverClassName, jdbcDriverUrl);
+            LOGGER.info(() -> "getConnection() - Connected !! (" + jdbcDriverClassName + "," + jdbcDriverUrl + ")");
             return connection;
         } catch (final SQLException e) {
             throw new RuntimeException(e.getMessage(), e);

@@ -1,6 +1,6 @@
 package stroom.kafka.pipeline;
 
-import org.slf4j.Logger;
+import stroom.util.logging.LambdaLogger;
 
 import java.util.Collections;
 import java.util.List;
@@ -67,24 +67,32 @@ public interface KafkaProducer {
     /**
      * Create an exception handler that will just log the error and not raise it. The error message will be logged
      * at ERROR and the full stacktrace at DEBUG
+     *
      * @param logger The Logger instance to log with
-     * @param topic The name of the topic involved
-     * @param key The name of the key involved
+     * @param topic  The name of the topic involved
+     * @param key    The name of the key involved
      * @return An exception handler
      */
-    static Consumer<Throwable> createLogOnlyExceptionHandler(final Logger logger,
+    static Consumer<Throwable> createLogOnlyExceptionHandler(final LambdaLogger logger,
                                                              final String topic,
                                                              final String key) {
-        final String baseMsg = "Unable to send record to Kafka with topic/key: {}/{}";
         return e -> {
             final Throwable cause = e.getCause();
-            logger.error(
-                    baseMsg + ", due to: [{}], caused by: [{}] (enable DEBUG for full stacktrace)",
-                    topic,
-                    key,
-                    e.getMessage(),
-                    cause != null ? cause.getMessage() : "unknown");
-            logger.debug(baseMsg, e);
+            logger.error(() ->
+                    "Unable to send record to Kafka with topic/key: " +
+                            topic +
+                            "/" +
+                            key +
+                            ", due to: [" +
+                            e.getMessage() +
+                            "], caused by: [" +
+                            (cause != null ? cause.getMessage() : "unknown") +
+                            "] (enable DEBUG for full stacktrace)");
+            logger.debug(() ->
+                    "Unable to send record to Kafka with topic/key: " +
+                            topic +
+                            "/" +
+                            key, e);
         };
     }
 

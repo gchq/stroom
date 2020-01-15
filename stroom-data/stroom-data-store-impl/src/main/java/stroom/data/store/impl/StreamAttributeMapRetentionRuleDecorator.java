@@ -23,6 +23,7 @@ import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
+import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.util.date.DateUtil;
@@ -38,10 +39,6 @@ import java.util.Map;
 
 class StreamAttributeMapRetentionRuleDecorator {
     private static final Logger LOGGER = LoggerFactory.getLogger(StreamAttributeMapRetentionRuleDecorator.class);
-
-    static final String RETENTION_AGE = "Age";
-    static final String RETENTION_UNTIL = "Until";
-    static final String RETENTION_RULE = "Rule";
 
     private final List<DataRetentionRule> rules;
     private final ExpressionMatcher expressionMatcher;
@@ -72,7 +69,7 @@ class StreamAttributeMapRetentionRuleDecorator {
 
             if (index != -1) {
                 final DataRetentionRule rule = rules.get(index);
-                attributeMap.put(RETENTION_AGE, rule.getAgeString());
+                attributeMap.put(DataRetentionFields.RETENTION_AGE, rule.getAgeString());
 
                 String keepUntil = DataRetentionRule.FOREVER;
                 if (meta != null) {
@@ -84,17 +81,17 @@ class StreamAttributeMapRetentionRuleDecorator {
                     }
                 }
 
-                attributeMap.put(RETENTION_UNTIL, keepUntil);
-                attributeMap.put(RETENTION_RULE, rule.toString());
+                attributeMap.put(DataRetentionFields.RETENTION_UNTIL, keepUntil);
+                attributeMap.put(DataRetentionFields.RETENTION_RULE, rule.toString());
             } else {
-                attributeMap.put(RETENTION_AGE, DataRetentionRule.FOREVER);
-                attributeMap.put(RETENTION_UNTIL, DataRetentionRule.FOREVER);
-                attributeMap.put(RETENTION_RULE, "None");
+                attributeMap.put(DataRetentionFields.RETENTION_AGE, DataRetentionRule.FOREVER);
+                attributeMap.put(DataRetentionFields.RETENTION_UNTIL, DataRetentionRule.FOREVER);
+                attributeMap.put(DataRetentionFields.RETENTION_RULE, "None");
             }
         } catch (final RuntimeException e) {
-            attributeMap.put(RETENTION_AGE, DataRetentionRule.FOREVER);
-            attributeMap.put(RETENTION_UNTIL, DataRetentionRule.FOREVER);
-            attributeMap.put(RETENTION_RULE, "Error - " + e.getMessage());
+            attributeMap.put(DataRetentionFields.RETENTION_AGE, DataRetentionRule.FOREVER);
+            attributeMap.put(DataRetentionFields.RETENTION_UNTIL, DataRetentionRule.FOREVER);
+            attributeMap.put(DataRetentionFields.RETENTION_RULE, "Error - " + e.getMessage());
         }
     }
 
@@ -105,7 +102,7 @@ class StreamAttributeMapRetentionRuleDecorator {
             try {
                 final DataRetentionRule rule = rules.get(i);
                 // We will ignore rules that are not enabled or have no enabled expression.
-                if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().enabled()) {
+                if (rule.isEnabled() && rule.getExpression() != null && rule.getExpression().isEnabled()) {
                     if (expressionMatcher.match(attributeMap, rule.getExpression())) {
                         return i;
                     }

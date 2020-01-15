@@ -82,7 +82,7 @@ public abstract class CurveTabLayoutPresenter<P extends Proxy<?>> extends MyPres
     public void selectTab(final TabData tabData) {
         final Layer layer = tabContentMap.get(tabData);
         if (layer != null) {
-            fireSelectedTabChange(getSelectedTab());
+            fireSelectedTabChange(tabData);
             getView().getTabBar().selectTab(tabData);
             getView().getLayerContainer().show(layer);
         }

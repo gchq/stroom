@@ -17,8 +17,6 @@
 
 package stroom.processor.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.meta.shared.Meta;
@@ -33,6 +31,9 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
+import stroom.util.logging.LambdaLogUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -41,7 +42,7 @@ import java.io.IOException;
 import java.util.Map;
 
 public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorTask, VoidResult> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DataProcessorTaskHandler.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataProcessorTaskHandler.class);
     //    private static final Set<String> FETCH_SET = new HashSet<>(
 //            Arrays.asList(Processor.ENTITY_TYPE, ProcessorFilter.ENTITY_TYPE));
     private final Map<TaskType, Provider<DataProcessorTaskExecutor>> executorProviders;
@@ -80,7 +81,7 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
                 boolean complete = false;
                 final long startTime = System.currentTimeMillis();
                 ProcessorTask streamTask = task.getProcessorTask();
-                LOGGER.trace("Executing stream task: {}", streamTask.getId());
+                LOGGER.trace(LambdaLogUtil.message("Executing stream task: {}", streamTask.getId()));
 
                 // Open the stream source.
                 try (Source source = streamStore.openSource(streamTask.getMetaId())) {
@@ -100,21 +101,13 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
                             throw new RuntimeException("No dest processor has been loaded.");
                         }
 
-                        if (destStreamProcessor.getPipelineUuid() != null) {
-                            taskContext.info("Stream {} {} {} {}", meta.getId(),
-                                    DateUtil.createNormalDateTimeString(meta.getCreateMs()),
-                                    destStreamProcessor.getTaskType(), destStreamProcessor.getPipelineUuid());
-                        } else {
-                            taskContext.info("Stream {} {} {}", meta.getId(),
-                                    DateUtil.createNormalDateTimeString(meta.getCreateMs()),
-                                    destStreamProcessor.getTaskType());
-                        }
+                        log(meta, destStreamProcessor);
 
                         // Don't process any streams that we have already created
                         if (meta.getProcessorUuid() != null && meta.getProcessorUuid().equals(destStreamProcessor.getUuid())) {
                             complete = true;
-                            LOGGER.warn("Skipping data that we seem to have created (avoid processing forever) {} {}", meta,
-                                    destStreamProcessor);
+                            LOGGER.warn(LambdaLogUtil.message("Skipping data that we seem to have created (avoid processing forever) {} {}", meta,
+                                    destStreamProcessor));
 
                         } else {
                             // Change the task status.... and save
@@ -138,12 +131,12 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
                                     complete = true;
                                 }
                             } catch (final RuntimeException e) {
-                                LOGGER.error("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e);
+                                LOGGER.error(LambdaLogUtil.message("Task failed {} {}", new Object[]{destStreamProcessor, meta}, e));
                             }
                         }
                     }
                 } catch (final IOException | RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.error(e::getMessage, e);
                 } finally {
                     if (complete) {
                         processorTaskDao.changeTaskStatus(streamTask, nodeInfo.getThisNodeName(), TaskStatus.COMPLETE,
@@ -157,5 +150,25 @@ public class DataProcessorTaskHandler extends AbstractTaskHandler<DataProcessorT
                 return new VoidResult();
             });
         });
+    }
+
+    private void log(final Meta meta, final Processor destStreamProcessor) {
+        if (destStreamProcessor.getPipelineUuid() != null) {
+            taskContext.info(() -> "Stream " +
+                    meta.getId() +
+                    " " +
+                    DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
+                    " " +
+                    destStreamProcessor.getTaskType() +
+                    " " +
+                    destStreamProcessor.getPipelineUuid());
+        } else {
+            taskContext.info(() -> "Stream " +
+                    meta.getId() +
+                    " " +
+                    DateUtil.createNormalDateTimeString(meta.getCreateMs()) +
+                    " " +
+                    destStreamProcessor.getTaskType());
+        }
     }
 }

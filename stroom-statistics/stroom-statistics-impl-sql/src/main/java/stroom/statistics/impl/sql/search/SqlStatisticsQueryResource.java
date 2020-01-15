@@ -28,7 +28,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.statistics.impl.sql.StatisticsQueryService;
-import stroom.util.RestResource;
+import stroom.util.shared.RestResource;
 import stroom.util.json.JsonUtil;
 
 import javax.inject.Inject;

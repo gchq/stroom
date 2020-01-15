@@ -24,6 +24,9 @@ import stroom.dashboard.client.main.DashboardLayoutPresenter;
 import stroom.dashboard.client.main.DashboardLayoutViewImpl;
 import stroom.dashboard.client.main.DashboardPresenter;
 import stroom.dashboard.client.main.DashboardViewImpl;
+import stroom.dashboard.client.main.RenameTabPresenter;
+import stroom.dashboard.client.main.RenameTabPresenter.RenameTabView;
+import stroom.dashboard.client.main.RenameTabViewImpl;
 import stroom.dashboard.client.unknown.HTMLView;
 import stroom.dashboard.client.unknown.HTMLViewImpl;
 import stroom.hyperlink.client.HyperlinkEventHandlerImpl;
@@ -40,6 +43,7 @@ public class DashboardModule extends PluginModule {
         bindPlugin(DashboardPlugin.class);
         bindPresenterWidget(DashboardPresenter.class, DashboardPresenter.DashboardView.class, DashboardViewImpl.class);
         bindPresenterWidget(DashboardLayoutPresenter.class, DashboardLayoutPresenter.DashboardLayoutView.class, DashboardLayoutViewImpl.class);
+        bindPresenterWidget(RenameTabPresenter.class, RenameTabView.class, RenameTabViewImpl.class);
 
         bindSharedView(LinkTabsLayoutView.class, LinkTabsLayoutViewImpl.class);
         bindSharedView(HTMLView.class, HTMLViewImpl.class);

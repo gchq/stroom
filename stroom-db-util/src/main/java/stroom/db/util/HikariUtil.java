@@ -1,23 +1,19 @@
 package stroom.db.util;
 
 import com.zaxxer.hikari.HikariConfig;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
+import stroom.config.common.DbConfig;
 
 public class HikariUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(HikariUtil.class);
-
-    private static boolean testing;
-
     private HikariUtil() {
         // Utility class.
     }
 
-    public static HikariConfig createConfig(final ConnectionConfig connectionConfig, final ConnectionPoolConfig connectionPoolConfig) {
-        // Add test connection details if needed.
-        DbUtil.decorateConnectionConfig(connectionConfig);
+    public static HikariConfig createConfig(final DbConfig dbConfig) {
+        final ConnectionConfig connectionConfig = dbConfig.getConnectionConfig();
+        final ConnectionPoolConfig connectionPoolConfig = dbConfig.getConnectionPoolConfig();
+
         // Validate the connection details.
         DbUtil.validate(connectionConfig);
         // Keep waiting until we can establish a DB connection to allow for the DB to start after the app
@@ -28,29 +24,37 @@ public class HikariUtil {
 
     private static HikariConfig create(final ConnectionConfig connectionConfig, final ConnectionPoolConfig connectionPoolConfig) {
         final HikariConfig config = new HikariConfig();
-        config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
-        config.setUsername(connectionConfig.getJdbcDriverUsername());
-        config.setPassword(connectionConfig.getJdbcDriverPassword());
-        config.addDataSourceProperty("cachePrepStmts",
-                String.valueOf(connectionPoolConfig.isCachePrepStmts()));
-        config.addDataSourceProperty("prepStmtCacheSize",
-                String.valueOf(connectionPoolConfig.getPrepStmtCacheSize()));
-        config.addDataSourceProperty("prepStmtCacheSqlLimit",
-                String.valueOf(connectionPoolConfig.getPrepStmtCacheSqlLimit()));
 
-        if (testing) {
-            LOGGER.trace("Testing");
-            config.setIdleTimeout(000);
-            config.setMaxLifetime(1000);
-            config.setMaximumPoolSize(2);
-        } else {
-            LOGGER.trace("Not testing");
+        if (connectionPoolConfig.getIdleTimeout() != null) {
+            config.setIdleTimeout(connectionPoolConfig.getIdleTimeout());
+        }
+        if (connectionPoolConfig.getMaxLifetime() != null) {
+            config.setMaxLifetime(connectionPoolConfig.getMaxLifetime());
+        }
+        if (connectionPoolConfig.getMaxPoolSize() != null) {
+            config.setMaximumPoolSize(connectionPoolConfig.getMaxPoolSize());
+        }
+
+        if (connectionConfig.getJdbcDriverUrl() != null) {
+            config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
+        }
+        if (connectionConfig.getJdbcDriverUsername() != null) {
+            config.setUsername(connectionConfig.getJdbcDriverUsername());
+        }
+        if (connectionConfig.getJdbcDriverPassword() != null) {
+            config.setPassword(connectionConfig.getJdbcDriverPassword());
+        }
+
+        if (connectionPoolConfig.getCachePrepStmts() != null) {
+            config.addDataSourceProperty("cachePrepStmts", String.valueOf(connectionPoolConfig.getCachePrepStmts()));
+        }
+        if (connectionPoolConfig.getPrepStmtCacheSize() != null) {
+            config.addDataSourceProperty("prepStmtCacheSize", String.valueOf(connectionPoolConfig.getPrepStmtCacheSize()));
+        }
+        if (connectionPoolConfig.getPrepStmtCacheSqlLimit() != null) {
+            config.addDataSourceProperty("prepStmtCacheSqlLimit", String.valueOf(connectionPoolConfig.getPrepStmtCacheSqlLimit()));
         }
 
         return config;
-    }
-
-    public static void setTesting(final boolean testing) {
-        HikariUtil.testing = testing;
     }
 }

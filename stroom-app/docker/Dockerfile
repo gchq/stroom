@@ -84,7 +84,7 @@ ENTRYPOINT ["/sbin/tini", "--", "/stroom/docker-entrypoint.sh"]
 
 # start the app, the config file will either be supplied by a bind mount volume
 # or a fallback version baked into the image
-CMD ["./start.sh"]
+CMD ["./start.sh", "server"]
 
 # https://github.com/gchq/stroom/issues/884
 # JRE fails to load fonts if there are no standard fonts in the image; ttf-DejaVu is a good choice,

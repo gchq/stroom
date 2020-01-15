@@ -24,7 +24,6 @@ import java.util.Objects;
  * Class used to represent processing a stream.
  */
 public class ProcessorTask implements SharedObject {
-//    public static final String ENTITY_TYPE = "StreamTask";
     private static final long serialVersionUID = 3926403008832938745L;
 
     // standard id and OCC fields
@@ -34,6 +33,7 @@ public class ProcessorTask implements SharedObject {
     private Long metaId;
     private String data;
     private String nodeName;
+    private String feedName;
     private Long createTimeMs;
     private Long statusTimeMs;
     private Long startTimeMs;
@@ -81,6 +81,14 @@ public class ProcessorTask implements SharedObject {
 
     public void setNodeName(final String nodeName) {
         this.nodeName = nodeName;
+    }
+
+    public String getFeedName() {
+        return feedName;
+    }
+
+    public void setFeedName(final String feedName) {
+        this.feedName = feedName;
     }
 
     public TaskStatus getStatus() {
@@ -139,6 +147,7 @@ public class ProcessorTask implements SharedObject {
                 ", metaId=" + metaId +
                 ", data='" + data + '\'' +
                 ", nodeName='" + nodeName + '\'' +
+                ", feedName='" + feedName + '\'' +
                 ", createTimeMs=" + createTimeMs +
                 ", statusTimeMs=" + statusTimeMs +
                 ", startTimeMs=" + startTimeMs +

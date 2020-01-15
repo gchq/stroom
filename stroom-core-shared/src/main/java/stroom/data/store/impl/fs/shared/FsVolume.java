@@ -16,6 +16,7 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.docref.HasDisplayValue;
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;
@@ -147,6 +148,7 @@ public class FsVolume implements HasAuditInfo, SharedObject {
         this.volumeState = volumeState;
     }
 
+    @JsonIgnore
     public boolean isFull() {
         // If we haven't established how many bytes are used on a volume then
         // assume it is not full (could be dangerous but worst case we will get

@@ -152,7 +152,7 @@ class TestRangeStoreDb extends AbstractLmdbDbTest {
     }
 
     private void getAndAssertNotFound(Txn<ByteBuffer> txn, UID uid, long key) {
-        LOGGER.debug("getAndAssertNotFound {}, {}, {}", uid, key);
+        LOGGER.debug("getAndAssertNotFound {}, {}", uid, key);
 
         Optional<ValueStoreKey> optValueStoreKey = rangeStoreDb.get(txn, uid, key);
         assertThat(optValueStoreKey).isEmpty();

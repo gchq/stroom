@@ -9,10 +9,7 @@
       "fields" : [ {
         "name" : "timestamp",
         "expression" : "floorDay(${timestamp})",
-        "sort" : {
-          "order" : 1,
-          "direction" : "ASCENDING"
-        },
+        "sort" : { },
         "format" : {
           "type" : "DATE_TIME",
           "settings" : {
@@ -21,38 +18,31 @@
             "timeZone" : {
               "use" : "UTC",
               "id" : "Europe/London"
-            },
-            "default" : true
+            }
           }
         },
         "group" : 0,
-        "width" : 177,
-        "visible" : true
+        "width" : 177
       }, {
         "name" : "Count",
         "expression" : "count()",
         "format" : {
           "type" : "NUMBER"
-        },
-        "width" : 200,
-        "visible" : true
+        }
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "width" : 200,
         "visible" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
-        "width" : 200,
         "visible" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "03064900-4fe9-4c57-bcaf-5a755c5c75d7",
         "name" : "BROADBAND_SPEED_TESTS-EXTRACTION"
-      },
-      "maxResults" : [ 1000000 ]
+      }
     }
   }, {
     "type" : "query",
@@ -67,20 +57,15 @@
       },
       "expression" : {
         "type" : "operator",
-        "op" : "AND",
         "children" : [ {
           "type" : "term",
           "field" : "timestamp",
           "condition" : "BETWEEN",
-          "value" : "2016-02-01T00:00:00.000Z,2016-08-01T00:00:00.000Z",
-          "enabled" : true
-        } ],
-        "enabled" : true
+          "value" : "2016-02-01T00:00:00.000Z,2016-08-01T00:00:00.000Z"
+        } ]
       },
       "automate" : {
-        "open" : true,
-        "refresh" : false,
-        "refreshInterval" : "10s"
+        "open" : true
       }
     }
   }, {
@@ -100,50 +85,47 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : {
-      "width" : 200,
-      "height" : 200
-    },
+    "preferredSize" : { },
     "dimension" : 1,
     "children" : [ {
       "type" : "splitLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 198
       },
-      "dimension" : 0,
       "children" : [ {
         "type" : "tabLayout",
         "preferredSize" : {
-          "width" : 782,
-          "height" : 200
+          "width" : 782
         },
         "tabs" : [ {
           "id" : "query-JT8D7"
         } ],
-        "selected" : 0
+        "selected" : 0,
+        "visibleTabCount" : 1,
+        "allTabCount" : 1
       }, {
         "type" : "tabLayout",
         "preferredSize" : {
-          "width" : 555,
-          "height" : 200
+          "width" : 555
         },
         "tabs" : [ {
           "id" : "table-IIO1T"
         } ],
-        "selected" : 0
+        "selected" : 0,
+        "visibleTabCount" : 1,
+        "allTabCount" : 1
       } ]
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
-        "width" : 200,
         "height" : 846
       },
       "tabs" : [ {
         "id" : "vis-G5GO9"
       } ],
-      "selected" : 0
+      "selected" : 0,
+      "visibleTabCount" : 1,
+      "allTabCount" : 1
     } ]
-  },
-  "tabVisibility" : "SHOW_ALL"
+  }
 }

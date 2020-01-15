@@ -23,10 +23,10 @@ import stroom.util.shared.IsConfig;
 import java.util.Objects;
 
 public class ConnectionConfig implements IsConfig {
-    private String jdbcDriverClassName = "com.mysql.cj.jdbc.Driver";
-    private String jdbcDriverUrl = "jdbc:mysql://localhost:3307/stroom?useUnicode=yes&characterEncoding=UTF-8";
-    private String jdbcDriverUsername = "stroomuser";
-    private String jdbcDriverPassword = "stroompassword1";
+    private String jdbcDriverClassName;
+    private String jdbcDriverUrl;
+    private String jdbcDriverUsername;
+    private String jdbcDriverPassword;
 
     @ReadOnly
     @JsonPropertyDescription("Should only be set per node in application property file")
@@ -66,21 +66,6 @@ public class ConnectionConfig implements IsConfig {
 
     public void setJdbcDriverPassword(final String jdbcDriverPassword) {
         this.jdbcDriverPassword = jdbcDriverPassword;
-    }
-
-    public void validate() {
-        if (jdbcDriverClassName == null) {
-            throw new NullPointerException("jdbcDriverClassName is null");
-        }
-        if (jdbcDriverUrl == null) {
-            throw new NullPointerException("jdbcDriverUrl is null");
-        }
-        if (jdbcDriverUsername == null) {
-            throw new NullPointerException("jdbcDriverUsername is null");
-        }
-        if (jdbcDriverPassword == null) {
-            throw new NullPointerException("jdbcDriverPassword is null");
-        }
     }
 
     @Override
@@ -124,14 +109,17 @@ public class ConnectionConfig implements IsConfig {
             this.instance.setJdbcDriverClassName(value);
             return this;
         }
+
         public Builder jdbcUrl(final String value) {
             this.instance.setJdbcDriverUrl(value);
             return this;
         }
+
         public Builder username(final String value) {
             this.instance.setJdbcDriverUsername(value);
             return this;
         }
+
         public Builder password(final String value) {
             this.instance.setJdbcDriverPassword(value);
             return this;

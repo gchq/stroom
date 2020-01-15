@@ -28,12 +28,10 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserTokenUtil;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
 import stroom.util.AbstractCommandLineTool;
 import stroom.util.io.BufferFactory;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Sort.Direction;
 
@@ -41,13 +39,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 /**
  * Handy tool to dump out content.
  */
 public class StreamDumpTool extends AbstractCommandLineTool {
-    private final ToolInjector toolInjector = new ToolInjector();
+    private final ToolInjector toolInjector;
 
     private String feed;
     private String streamType;
@@ -55,6 +54,15 @@ public class StreamDumpTool extends AbstractCommandLineTool {
     private String createPeriodTo;
     private String outputDir;
     private String format;
+
+    public StreamDumpTool() {
+        this.toolInjector = new ToolInjector();
+    }
+
+    // for testing
+    StreamDumpTool(final ToolInjector toolInjector) {
+        this.toolInjector = toolInjector;
+    }
 
     public static void main(final String[] args) {
         new StreamDumpTool().doMain(args);
@@ -120,10 +128,8 @@ public class StreamDumpTool extends AbstractCommandLineTool {
 
         final TaskContext taskContext = new SimpleTaskContext() {
             @Override
-            public void info(final Object... args) {
-                final Object[] otherArgs = new Object[args.length - 1];
-                System.arraycopy(args, 1, otherArgs, 0, otherArgs.length);
-                System.out.println(LogUtil.message((String) args[0], otherArgs));
+            public void info(final Supplier<String> messageSupplier) {
+                System.out.println(messageSupplier.get());
             }
         };
         final Store streamStore = injector.getInstance(Store.class);
@@ -132,7 +138,8 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         final BufferFactory bufferFactory = () -> new byte[4096];
         final DataDownloadTaskHandler streamDownloadTaskHandler = new DataDownloadTaskHandler(taskContext, streamStore, metaService, securityContext, bufferFactory);
 
-        download(feed, streamType, createPeriodFrom, createPeriodTo, dir, format, streamDownloadTaskHandler);
+        securityContext.asProcessingUser(() ->
+                download(feed, streamType, createPeriodFrom, createPeriodTo, dir, format, streamDownloadTaskHandler));
 
         System.out.println("Finished dumping streams");
     }
@@ -174,7 +181,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         dataDownloadSettings.setMaxFileSize(ModelStringUtil.parseIECByteSizeString("2G"));
         dataDownloadSettings.setMaxFileParts(10000L);
 
-        final DataDownloadTask streamDownloadTask = new DataDownloadTask(UserTokenUtil.processingUser(), criteria, dir, format, dataDownloadSettings);
+        final DataDownloadTask streamDownloadTask = new DataDownloadTask(criteria, dir, format, dataDownloadSettings);
         dataDownloadTaskHandler.exec(streamDownloadTask);
 
 

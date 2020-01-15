@@ -2,38 +2,27 @@ package stroom.pipeline;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.pipeline.destination.AppenderConfig;
+import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
-import stroom.pipeline.refdata.store.RefDataStoreConfig;
+import stroom.pipeline.refdata.ReferenceDataConfig;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.IsConfig;
 import stroom.util.xml.ParserConfig;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class PipelineConfig implements IsConfig {
-    private AppenderConfig appenderConfig;
-    private ParserConfig parserConfig;
-    private RefDataStoreConfig refDataStoreConfig;
-    private XsltConfig xsltConfig;
-
-    public PipelineConfig() {
-        appenderConfig = new AppenderConfig();
-        parserConfig = new ParserConfig();
-        refDataStoreConfig = new RefDataStoreConfig();
-        xsltConfig = new XsltConfig();
-    }
-
-    @Inject
-    public PipelineConfig(final AppenderConfig appenderConfig,
-                          final ParserConfig parserConfig,
-                          final RefDataStoreConfig refDataStoreConfig,
-                          final XsltConfig xsltConfig) {
-        this.appenderConfig = appenderConfig;
-        this.parserConfig = parserConfig;
-        this.refDataStoreConfig = refDataStoreConfig;
-        this.xsltConfig = xsltConfig;
-    }
+    private AppenderConfig appenderConfig = new AppenderConfig();
+    private ParserConfig parserConfig = new ParserConfig();
+    private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
+    private XmlSchemaConfig xmlSchemaConfig = new XmlSchemaConfig();
+    private XsltConfig xsltConfig = new XsltConfig();
+    private CacheConfig pipelineDataCache = new CacheConfig.Builder()
+            .maximumSize(1000L)
+            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .build();
 
     @JsonProperty("appender")
     public AppenderConfig getAppenderConfig() {
@@ -53,13 +42,22 @@ public class PipelineConfig implements IsConfig {
         this.parserConfig = parserConfig;
     }
 
-    @JsonProperty("refdata")
-    public RefDataStoreConfig getRefDataStoreConfig() {
-        return refDataStoreConfig;
+    @JsonProperty("referenceData")
+    public ReferenceDataConfig getReferenceDataConfig() {
+        return referenceDataConfig;
     }
 
-    public void setRefDataStoreConfig(final RefDataStoreConfig refDataStoreConfig) {
-        this.refDataStoreConfig = refDataStoreConfig;
+    public void setReferenceDataConfig(final ReferenceDataConfig referenceDataConfig) {
+        this.referenceDataConfig = referenceDataConfig;
+    }
+
+    @JsonProperty("xmlSchema")
+    public XmlSchemaConfig getXmlSchemaConfig() {
+        return xmlSchemaConfig;
+    }
+
+    public void setXmlSchemaConfig(final XmlSchemaConfig xmlSchemaConfig) {
+        this.xmlSchemaConfig = xmlSchemaConfig;
     }
 
     @JsonProperty("xslt")
@@ -69,5 +67,13 @@ public class PipelineConfig implements IsConfig {
 
     public void setXsltConfig(final XsltConfig xsltConfig) {
         this.xsltConfig = xsltConfig;
+    }
+
+    public CacheConfig getPipelineDataCache() {
+        return pipelineDataCache;
+    }
+
+    public void setPipelineDataCache(final CacheConfig pipelineDataCache) {
+        this.pipelineDataCache = pipelineDataCache;
     }
 }

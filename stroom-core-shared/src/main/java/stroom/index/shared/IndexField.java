@@ -262,19 +262,9 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
                     conditions.add(Condition.IN);
                     conditions.add(Condition.IN_DICTIONARY);
                     break;
+
                 case FIELD:
                     conditions.add(Condition.EQUALS);
-                    conditions.add(Condition.IN);
-                    conditions.add(Condition.IN_DICTIONARY);
-                    break;
-
-                case NUMERIC_FIELD:
-                    conditions.add(Condition.EQUALS);
-                    conditions.add(Condition.GREATER_THAN);
-                    conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
-                    conditions.add(Condition.LESS_THAN);
-                    conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
-                    conditions.add(Condition.BETWEEN);
                     conditions.add(Condition.IN);
                     conditions.add(Condition.IN_DICTIONARY);
                     break;
@@ -288,6 +278,19 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
                     conditions.add(Condition.BETWEEN);
                     conditions.add(Condition.IN);
                     conditions.add(Condition.IN_DICTIONARY);
+                    break;
+
+                default:
+                    if (fieldType.isNumeric()) {
+                        conditions.add(Condition.EQUALS);
+                        conditions.add(Condition.GREATER_THAN);
+                        conditions.add(Condition.GREATER_THAN_OR_EQUAL_TO);
+                        conditions.add(Condition.LESS_THAN);
+                        conditions.add(Condition.LESS_THAN_OR_EQUAL_TO);
+                        conditions.add(Condition.BETWEEN);
+                        conditions.add(Condition.IN);
+                        conditions.add(Condition.IN_DICTIONARY);
+                    }
                     break;
             }
         }

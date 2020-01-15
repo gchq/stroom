@@ -5,8 +5,5 @@
   "version" : "b43ba71f-9212-4e99-a545-746539ea8600",
   "description" : "TEST_DS_PARSER-EVENTS",
   "encoding" : "UTF-8",
-  "contextEncoding" : "UTF-8",
-  "reference" : false,
-  "streamType" : "Raw Events",
-  "status" : "RECEIVE"
+  "contextEncoding" : "UTF-8"
 }

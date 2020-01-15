@@ -23,6 +23,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -69,7 +70,7 @@ class TestExpressionMatcher {
     }
 
     private void test(final Map<String, Object> attributeMap, final ExpressionOperator expression, final boolean outcome) {
-        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(FIELD_MAP, null, null);
+        final ExpressionMatcher expressionMatcher = new ExpressionMatcher(FIELD_MAP, null, null, ZoneOffset.UTC.getId(), System.currentTimeMillis());
         assertThat(expressionMatcher.match(attributeMap, expression)).isEqualTo(outcome);
     }
 

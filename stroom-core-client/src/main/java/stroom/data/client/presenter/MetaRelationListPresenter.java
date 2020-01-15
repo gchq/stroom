@@ -23,6 +23,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -42,6 +43,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public class MetaRelationListPresenter extends AbstractMetaListPresenter {
     private final Map<Long, MetaRow> streamMap = new HashMap<>();
@@ -171,9 +173,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
         addAttributeColumn("Error", MetaFields.REC_ERROR, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
         addAttributeColumn("Warn", MetaFields.REC_WARN, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
         addAttributeColumn("Info", MetaFields.REC_INFO, v -> ModelStringUtil.formatCsv(Long.valueOf(v)), 40);
-
-        // TODO : @66 Add data retention column back into the table.
-//        addAttributeColumn("Retention", StreamAttributeConstants.RETENTION_AGE, ColumnSizeConstants.SMALL_COL);
+        addAttributeColumn("Retention", DataRetentionFields.RETENTION_AGE_FIELD, Function.identity(), ColumnSizeConstants.SMALL_COL);
 
         getView().addEndColumn(new EndColumn<>());
     }

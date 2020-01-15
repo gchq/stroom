@@ -17,7 +17,6 @@
 package stroom.task.impl;
 
 import stroom.cluster.task.api.ClusterTask;
-import stroom.security.shared.UserToken;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.ResultList;
@@ -27,10 +26,9 @@ public class FindTaskProgressClusterTask extends ClusterTask<ResultList<TaskProg
 
     private FindTaskProgressCriteria criteria;
 
-    public FindTaskProgressClusterTask(final UserToken userToken,
-                                       final String taskName,
+    public FindTaskProgressClusterTask(final String taskName,
                                        final FindTaskProgressCriteria criteria) {
-        super(userToken, taskName);
+        super(taskName);
         this.criteria = criteria;
     }
 

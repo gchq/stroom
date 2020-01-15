@@ -16,23 +16,45 @@
 
 package stroom.pipeline.state;
 
+import org.xml.sax.Locator;
 import stroom.pipeline.shared.SourceLocation;
 import stroom.util.pipeline.scope.PipelineScoped;
+import stroom.util.shared.DefaultLocation;
+import stroom.util.shared.Highlight;
+import stroom.util.shared.Location;
+import stroom.pipeline.xml.converter.ds3.DSLocator;
 
+import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.List;
 
 @PipelineScoped
 public class LocationHolder implements Holder {
+    private final MetaHolder metaHolder;
     private List<SourceLocation> locations;
     private SourceLocation currentLocation;
     private FunctionType functionType;
 
-    public List<SourceLocation> getLocations() {
-        return locations;
+    private Locator locator;
+    private int maxSize = 1;
+    private boolean storeLocations = true;
+    private long recordNo;
+    private Location currentStartLocation;
+    private Location currentEndLocation;
+
+    @Inject
+    public LocationHolder(final MetaHolder metaHolder) {
+        this.metaHolder = metaHolder;
+        reset();
     }
 
-    public void setLocations(final List<SourceLocation> locations) {
-        this.locations = locations;
+    public void setDocumentLocator(final Locator locator, final int maxSize) {
+        this.maxSize = maxSize;
+        if (locator instanceof DSLocator) {
+            this.locator = ((DSLocator) locator).getRecordEndLocator();
+        } else {
+            this.locator = locator;
+        }
     }
 
     public void move(final FunctionType functionType) {
@@ -53,8 +75,48 @@ public class LocationHolder implements Holder {
         return currentLocation;
     }
 
-    public void setCurrentLocation(final SourceLocation currentLocation) {
-        this.currentLocation = currentLocation;
+    public void reset() {
+        recordNo = 0;
+        currentStartLocation = new DefaultLocation(1, 0);
+        currentEndLocation = new DefaultLocation(1, 0);
+    }
+
+    public void storeLocation() {
+        if (storeLocations && locator != null && metaHolder != null && metaHolder.getMeta() != null) {
+            final Highlight highlight = createHighlight();
+
+            recordNo++;
+            final SourceLocation sourceLocation = new SourceLocation(metaHolder.getMeta().getId(), metaHolder.getChildDataType(), metaHolder.getStreamNo(), recordNo, highlight);
+            if (maxSize <= 1) {
+                currentLocation = sourceLocation;
+
+            } else {
+                if (locations == null) {
+                    locations = new ArrayList<>();
+                }
+                locations.add(sourceLocation);
+
+                // If locations aren't being consumed then stop recording them.
+                if (locations.size() > maxSize + 10) {
+                    storeLocations = false;
+                    locations.clear();
+                }
+            }
+        }
+    }
+
+    public void setStoreLocations(final boolean storeLocations) {
+        this.storeLocations = storeLocations;
+    }
+
+    private Highlight createHighlight() {
+        final Location location = new DefaultLocation(locator.getLineNumber(), locator.getColumnNumber());
+        // Only change if we have moved forward.
+        if (currentEndLocation.getLineNo() != location.getLineNo() || currentEndLocation.getColNo() != location.getColNo()) {
+            currentStartLocation = currentEndLocation;
+            currentEndLocation = location;
+        }
+        return new Highlight(currentStartLocation, currentEndLocation);
     }
 
     public enum FunctionType {

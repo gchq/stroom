@@ -48,7 +48,7 @@ class MetaValueDaoImpl implements MetaValueDao {
 
     private static final String LOCK_NAME = "MetaDeleteExecutor";
 
-    private final ConnectionProvider connectionProvider;
+    private final MetaDbConnProvider metaDbConnProvider;
     private final MetaKeyDao metaKeyService;
     private final MetaValueConfig metaValueConfig;
     private final ClusterLockService clusterLockService;
@@ -56,11 +56,11 @@ class MetaValueDaoImpl implements MetaValueDao {
     private final Queue<MetaValRecord> queue = new ConcurrentLinkedQueue<>();
 
     @Inject
-    MetaValueDaoImpl(final ConnectionProvider connectionProvider,
+    MetaValueDaoImpl(final MetaDbConnProvider metaDbConnProvider,
                      final MetaKeyDao metaKeyService,
                      final MetaValueConfig metaValueConfig,
                      final ClusterLockService clusterLockService) {
-        this.connectionProvider = connectionProvider;
+        this.metaDbConnProvider = metaDbConnProvider;
         this.metaKeyService = metaKeyService;
         this.metaValueConfig = metaValueConfig;
         this.clusterLockService = clusterLockService;
@@ -69,10 +69,11 @@ class MetaValueDaoImpl implements MetaValueDao {
     @Override
     public void addAttributes(final Meta meta, final AttributeMap attributes) {
         attributes.forEach((k, v) -> {
-            try {
-                final Long longValue = Long.valueOf(v);
-                final Optional<Integer> optional = metaKeyService.getIdForName(k);
-                optional.ifPresent(keyId -> {
+            final Optional<Integer> optional = metaKeyService.getIdForName(k);
+            optional.ifPresent(keyId -> {
+                try {
+                    final Long longValue = Long.valueOf(v);
+
                     MetaValRecord record = new MetaValRecord();
                     record.setCreateTime(meta.getCreateMs());
                     record.setMetaId(meta.getId());
@@ -84,10 +85,10 @@ class MetaValueDaoImpl implements MetaValueDao {
                     } else {
                         insertRecords(Collections.singletonList(record));
                     }
-                });
-            } catch (final NumberFormatException e) {
-                LOGGER.debug(e.getMessage(), e);
-            }
+                } catch (final NumberFormatException e) {
+                    LOGGER.debug(e.getMessage(), e);
+                }
+            });
         });
     }
 
@@ -208,7 +209,7 @@ class MetaValueDaoImpl implements MetaValueDao {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.debug("Processing batch of {}, queue size is {}", records.size(), queue.size());
 
-        JooqUtil.context(connectionProvider, context -> context
+        JooqUtil.context(metaDbConnProvider, context -> context
                 .batchStore(records)
                 .execute());
 
@@ -236,7 +237,7 @@ class MetaValueDaoImpl implements MetaValueDao {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         LOGGER.debug("Processing batch age {}, batch size is {}", age, batchSize);
 
-        final int count = JooqUtil.contextResult(connectionProvider, context -> context
+        final int count = JooqUtil.contextResult(metaDbConnProvider, context -> context
                         // TODO : @66 Maybe try delete with limits again after un upgrade to MySQL 5.7.
 //            count = context
 //                    .delete(META_VAL)
@@ -282,7 +283,6 @@ class MetaValueDaoImpl implements MetaValueDao {
 //        return stroomEntityManager.executeNativeQueryResultList(sql);
     }
 
-
     /**
      * @return The oldest data attribute that we should keep
      */
@@ -303,7 +303,7 @@ class MetaValueDaoImpl implements MetaValueDao {
                 .map(Meta::getId)
                 .collect(Collectors.toList());
 
-        JooqUtil.context(connectionProvider, context -> context
+        JooqUtil.context(metaDbConnProvider, context -> context
                 .select(
                         META_VAL.META_ID,
                         META_VAL.META_KEY_ID,
@@ -317,7 +317,7 @@ class MetaValueDaoImpl implements MetaValueDao {
                     metaKeyService.getNameForId(keyId).ifPresent(name -> {
                         final long dataId = r.get(META_VAL.META_ID);
                         final String value = String.valueOf(r.get(META_VAL.VAL));
-                        rowMap.computeIfAbsent(dataId, k -> new MetaRow()).addAttribute(name, value);
+                        rowMap.computeIfAbsent(dataId, k -> new MetaRow()).getAttributes().put(name, value);
                     });
                 })
         );
@@ -378,13 +378,21 @@ class MetaValueDaoImpl implements MetaValueDao {
     }
 
     @Override
+    public int delete(final List<Long> metaIdList) {
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
+                .deleteFrom(META_VAL)
+                .where(META_VAL.META_ID.in(metaIdList))
+                .execute());
+    }
+
+    @Override
     public void clear() {
         queue.clear();
         deleteAll();
     }
 
     private int deleteAll() {
-        return JooqUtil.contextResult(connectionProvider, context -> context
+        return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .delete(META_VAL)
                 .execute());
     }

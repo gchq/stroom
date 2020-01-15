@@ -18,9 +18,6 @@ package stroom.cache.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cache.api.CacheHolder;
-import stroom.cache.api.CacheManager;
-import stroom.cache.api.CacheUtil;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.util.shared.BaseResultList;
@@ -40,10 +37,10 @@ import java.util.stream.Collectors;
 class CacheManagerServiceImpl implements CacheManagerService, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(CacheManagerServiceImpl.class);
 
-    private final CacheManager cacheManager;
+    private final CacheManagerImpl cacheManager;
 
     @Inject
-    CacheManagerServiceImpl(final CacheManager cacheManager) {
+    CacheManagerServiceImpl(final CacheManagerImpl cacheManager) {
         this.cacheManager = cacheManager;
     }
 
@@ -56,7 +53,7 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
         // Trim the list to the specified range.
         if (pageRequest.getLength() != null && pageRequest.getLength() < list.size()) {
             int from = 0;
-            int to = 0;
+            int to;
             if (pageRequest.getOffset() != null) {
                 from = pageRequest.getOffset().intValue();
             }
@@ -94,14 +91,14 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
 
                 if (cacheHolder != null) {
                     final Map<String, String> map = new HashMap<>();
-                    map.put("Entries", String.valueOf(cacheHolder.getCache().size()));
+                    map.put("Entries", String.valueOf(cacheHolder.getCache().estimatedSize()));
                     addEntries(map, cacheHolder.getCacheBuilder().toString());
                     addEntries(map, cacheHolder.getCache().stats().toString());
 
                     map.forEach((k, v) -> {
                         if (k.startsWith("Expire")) {
                             try {
-                                final long nanos = Long.valueOf(v);
+                                final long nanos = Long.parseLong(v);
                                 map.put(k, ModelStringUtil.formatDurationString(nanos / 1000000, true));
 
                             } catch (final RuntimeException e) {

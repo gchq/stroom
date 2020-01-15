@@ -33,6 +33,7 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeState;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.io.FileUtil;
 
@@ -80,9 +81,11 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 
         final SecurityContext securityContext = new MockSecurityContext();
 
-        final ConnectionProvider connectionProvider = new FsDataStoreDbModule().getConnectionProvider(DataStoreServiceConfig::new);
-        final FsVolumeDao fsVolumeDao = new FsVolumeDaoImpl(connectionProvider);
-        final FsVolumeStateDao fsVolumeStateDao = new FsVolumeStateDaoImpl(connectionProvider);
+        final FsDataStoreDbConnProvider fsDataStoreDbConnProvider = DbTestUtil.getTestDbDatasource(
+                new FsDataStoreDbModule(), new DataStoreServiceConfig());
+
+        final FsVolumeDao fsVolumeDao = new FsVolumeDaoImpl(fsDataStoreDbConnProvider);
+        final FsVolumeStateDao fsVolumeStateDao = new FsVolumeStateDaoImpl(fsDataStoreDbConnProvider);
         volumeService = new FsVolumeService(fsVolumeDao,
                 fsVolumeStateDao,
                 securityContext,

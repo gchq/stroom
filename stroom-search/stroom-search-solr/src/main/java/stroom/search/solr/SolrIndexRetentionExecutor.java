@@ -38,6 +38,7 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 @Singleton
 public class SolrIndexRetentionExecutor {
@@ -76,7 +77,7 @@ public class SolrIndexRetentionExecutor {
         taskContext.setName(TASK_NAME);
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        info("Start");
+        info(() -> "Start");
         clusterLockService.tryLock(LOCK_NAME, () -> {
             try {
                 if (!Thread.currentThread().isInterrupted()) {
@@ -84,7 +85,7 @@ public class SolrIndexRetentionExecutor {
                     if (docRefs != null) {
                         docRefs.forEach(this::performRetention);
                     }
-                    info("Finished in " + logExecutionTime);
+                    info(() -> "Finished in " + logExecutionTime);
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e::getMessage, e);
@@ -112,7 +113,7 @@ public class SolrIndexRetentionExecutor {
                         final String queryString = query.toString();
                         solrIndexClientCache.context(solrIndexDoc.getSolrConnectionConfig(), solrClient -> {
                             try {
-                                info("Deleting data from '" + solrIndexDoc.getName() + "' matching query '" + queryString + "'");
+                                info(() -> "Deleting data from '" + solrIndexDoc.getName() + "' matching query '" + queryString + "'");
                                 solrClient.deleteByQuery(solrIndexDoc.getCollection(), queryString, 10000);
                             } catch (final SolrServerException | IOException e) {
                                 LOGGER.error(e::getMessage, e);
@@ -126,8 +127,8 @@ public class SolrIndexRetentionExecutor {
         }
     }
 
-    private void info(final String message) {
+    private void info(final Supplier<String> message) {
         taskContext.info(message);
-        LOGGER.info(() -> message);
+        LOGGER.info(message);
     }
 }

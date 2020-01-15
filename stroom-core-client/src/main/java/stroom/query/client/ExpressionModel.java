@@ -16,7 +16,6 @@
 
 package stroom.query.client;
 
-
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
@@ -39,7 +38,7 @@ public class ExpressionModel {
 
     public ExpressionOperator getExpressionFromTree(final DefaultTreeForTreeLayout<Item> tree) {
         final Item item = tree.getRoot();
-        if (item != null && item instanceof Operator) {
+        if (item instanceof Operator) {
             final Operator source = (Operator) item;
             final ExpressionOperator.Builder dest = new ExpressionOperator.Builder(source.getEnabled(), source.getOp());
             addChildrenFromTree(source, dest, tree);
@@ -55,7 +54,7 @@ public class ExpressionModel {
 
                 final Operator operator = new Operator();
                 operator.setOp(expressionOperator.getOp());
-                operator.setEnabled(expressionOperator.getEnabled());
+                operator.setEnabled(expressionOperator.isEnabled());
                 return operator;
 
             } else if (expressionItem instanceof ExpressionTerm) {
@@ -66,7 +65,7 @@ public class ExpressionModel {
                 term.setCondition(expressionTerm.getCondition());
                 term.setValue(expressionTerm.getValue());
                 term.setDocRef(expressionTerm.getDocRef());
-                term.setEnabled(expressionTerm.getEnabled());
+                term.setEnabled(expressionTerm.isEnabled());
 
                 return term;
             }

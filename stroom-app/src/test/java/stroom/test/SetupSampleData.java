@@ -18,6 +18,7 @@ package stroom.test;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import stroom.db.util.DbModule;
 import stroom.task.api.TaskManager;
 
 /**
@@ -35,12 +36,13 @@ import stroom.task.api.TaskManager;
  * stroom-core/src/test/resources/samples. The content in this folder should NOT duplicate any content
  * that is available in content packs.
  *
- * The content packs that get downlaoded (for auto import) are defined in the root build.gradle file.
+ * The content packs that get downloaded (for auto import) are defined in the root build.gradle file.
  */
 public final class SetupSampleData {
 
     public static void main(final String[] args) {
-        final Injector injector = Guice.createInjector(new CoreTestModule());
+        // We are running stroom so want to use a proper db
+        final Injector injector = Guice.createInjector(new DbModule(), new CoreTestModule());
 
         // Start task manager
         injector.getInstance(TaskManager.class).startup();

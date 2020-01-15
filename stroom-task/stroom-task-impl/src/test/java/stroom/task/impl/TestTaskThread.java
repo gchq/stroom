@@ -25,21 +25,21 @@ import java.util.List;
 class TestTaskThread {
     @Test
     void test_toString() {
-        final TaskThread root = new TaskThread(null);
-        root.info("root");
-        final TaskThread child1 = new TaskThread(null);
+        final TaskThread root = new TaskThread(null, null);
+        root.info(() -> "root");
+        final TaskThread child1 = new TaskThread(null, null);
         root.addChild(child1);
-        child1.info("child1");
-        final TaskThread child1child1 = new TaskThread(null);
-        child1child1.info("child1child1");
+        child1.info(() -> "child1");
+        final TaskThread child1child1 = new TaskThread(null, null);
+        child1child1.info(() -> "child1child1");
         child1.addChild(child1child1);
-        final TaskThread child1child2 = new TaskThread(null);
+        final TaskThread child1child2 = new TaskThread(null, null);
         child1.addChild(child1child2);
-        child1child2.info("child1child2");
-        child1child2.info("child1child2");
-        final TaskThread child2 = new TaskThread(null);
+        child1child2.info(() -> "child1child2");
+        child1child2.info(() -> "child1child2");
+        final TaskThread child2 = new TaskThread(null, null);
         root.addChild(child2);
-        child2.info("child2");
+        child2.info(() -> "child2");
 
         final List<TaskThread> list = new ArrayList<>();
         list.add(root);

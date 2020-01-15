@@ -1,7 +1,6 @@
 package stroom.statistics.impl.sql.search;
 
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Maps;
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
@@ -185,7 +184,7 @@ public class SqlStatisticsStore implements Store {
 
         LOGGER.debug("Starting search with key {}", searchKey);
         taskContext.setName(TASK_NAME);
-        taskContext.info("Sql Statistics search " + searchKey + " - running query");
+        taskContext.info(() -> "Sql Statistics search " + searchKey + " - running query");
 
         final LongAdder counter = new LongAdder();
         // subscribe to the flowable, mapping each resultSet to a String[]
@@ -228,7 +227,7 @@ public class SqlStatisticsStore implements Store {
 
                                 processPayloads(resultHandler, coprocessorMap);
                                 taskContext.setName(TASK_NAME);
-                                taskContext.info(searchKey +
+                                taskContext.info(() -> searchKey +
                                         " - running database query (" + counter.longValue() + " rows fetched)");
                                 nextProcessPayloadsTime.set(Instant.now().plus(RESULT_SEND_INTERVAL).toEpochMilli());
                                 countSinceLastSend.set(0);
@@ -245,7 +244,7 @@ public class SqlStatisticsStore implements Store {
                             // completed our window so create and pass on a payload for the
                             // data we have gathered so far
                             processPayloads(resultHandler, coprocessorMap);
-                            taskContext.info(searchKey + " - complete");
+                            taskContext.info(() -> searchKey + " - complete");
                             completeSearch();
 
                             LAMBDA_LOGGER.debug(() ->
@@ -271,7 +270,7 @@ public class SqlStatisticsStore implements Store {
                         entry.getKey(),
                         createCoprocessor(entry.getValue(), fieldIndexMap, paramMap)))
                 .filter(entry -> entry.getKey() != null)
-                .collect(ImmutableMap.toImmutableMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toUnmodifiableMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private void completeSearch() {

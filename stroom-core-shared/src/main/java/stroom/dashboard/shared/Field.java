@@ -16,10 +16,12 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.HasDisplayValue;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.ToStringBuilder;
@@ -28,17 +30,21 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
+import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"name", "expression", "sort", "filter", "format", "group", "width", "visible"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonPropertyOrder({"id", "name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "field")
-@XmlType(name = "Field", propOrder = {"name", "expression", "sort", "filter", "format", "group", "width", "visible"})
-public class Field implements Serializable {
+@XmlType(name = "Field", propOrder = {"id", "name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})
+public class Field implements Serializable, HasDisplayValue {
     private static final long serialVersionUID = 7327802315955158337L;
 
+    @XmlElement(name = "id")
+    private String id;
     @XmlElement(name = "name")
     @JsonProperty("name")
     private String name;
@@ -63,6 +69,9 @@ public class Field implements Serializable {
     @XmlElement(name = "visible")
     @JsonProperty("visible")
     private boolean visible = true;
+    @XmlElement(name = "special")
+    @JsonProperty(value = "special")
+    private boolean special = false;
 
     public Field() {
         // Default constructor necessary for GWT serialisation.
@@ -72,7 +81,16 @@ public class Field implements Serializable {
         this.name = name;
     }
 
-    public Field(String name, String expression, Sort sort, Filter filter, Format format, Integer group, int width, boolean visible) {
+    public Field(final String id,
+                 final String name,
+                 final String expression,
+                 final Sort sort,
+                 final Filter filter,
+                 final Format format,
+                 final Integer group,
+                 final int width,
+                 final boolean visible) {
+        this.id = id;
         this.name = name;
         this.expression = expression;
         this.sort = sort;
@@ -81,6 +99,14 @@ public class Field implements Serializable {
         this.group = group;
         this.width = width;
         this.visible = visible;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(final String id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -147,60 +173,64 @@ public class Field implements Serializable {
         this.visible = visible;
     }
 
+    public boolean isSpecial() {
+        return special;
+    }
+
+    public void setSpecial(final boolean special) {
+        this.special = special;
+    }
+
+    @JsonIgnore
+    @XmlTransient
+    @Override
+    public String getDisplayValue() {
+        return name;
+    }
+
     @Override
     public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof Field)) {
-            return false;
-        }
-
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         final Field field = (Field) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(name, field.name);
-        builder.append(expression, field.expression);
-        builder.append(sort, field.sort);
-        builder.append(filter, field.filter);
-        builder.append(format, field.format);
-        builder.append(group, field.group);
-        return builder.isEquals();
+
+        return Objects.equals(id, field.id);
     }
 
     @Override
     public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(name);
-        builder.append(expression);
-        builder.append(sort);
-        builder.append(filter);
-        builder.append(format);
-        builder.append(group);
-        return builder.toHashCode();
-    }
-
-    @Override
-    public String toString() {
-        final ToStringBuilder builder = new ToStringBuilder();
-        builder.append("name", name);
-        builder.append("expression", expression);
-        builder.append("sort", sort);
-        builder.append("filter", filter);
-        builder.append("format", format);
-        builder.append("group", group);
-        return builder.toString();
+        return Objects.hash(id);
     }
 
     public Field copy() {
         final Field field = new Field();
+        field.id = id;
         field.name = name;
         field.expression = expression;
-        field.sort = sort;
-        field.filter = filter;
-        field.format = format;
+        if (sort != null) {
+            field.sort = sort.copy();
+        }
+        if (filter != null) {
+            field.filter = filter.copy();
+        }
+        if (format != null) {
+            field.format = format.copy();
+        }
         field.group = group;
         field.width = width;
         field.visible = visible;
+        field.special = special;
 
         return field;
+    }
+
+    public static boolean equalsId(final Field lhs, final Field rhs) {
+        if (lhs == null && rhs == null) {
+            return true;
+        }
+        if (lhs != null && rhs != null) {
+            return Objects.equals(lhs.id, rhs.id);
+        }
+        return false;
     }
 }

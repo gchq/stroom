@@ -5,16 +5,11 @@ dependencies {
 //    compile project(':stroom-cluster:stroom-cluster-lock-mock')
 //    compile project(':stroom-config:stroom-config-common')
 //    compile project(':stroom-core-shared')
+    compile project(':stroom-cache:stroom-cache-api')
     compile project(':stroom-meta:stroom-meta-impl')
     compile project(':stroom-meta:stroom-meta-impl-db-jooq')
     compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-db-util')
-//    compile project(':stroom-event-logging:stroom-event-logging-api')
-//    compile project(':stroom-lifecycle:stroom-lifecycle-api')
-//    compile project(':stroom-util') // TODO : @66 TRY AND REMOVE THIS
-//    compile project(':stroom-util-shared')
-//    compile project(':stroom-task:stroom-task-api')
-//    compile project(':stroom-job:stroom-job-api')
 
     compile libs.flyway_core
     compile libs.guice4
@@ -27,10 +22,12 @@ dependencies {
 //    compile libs.ws_rs_api
 //
 //    runtimeOnly libs.mysql_connector_java
-//    
+//
+    testCompile project(':stroom-cache:stroom-cache-impl')
     testCompile project(':stroom-dictionary:stroom-dictionary-mock')
     testCompile project(':stroom-explorer:stroom-collection-mock')
     testCompile project(':stroom-security:stroom-security-mock')
+    testCompile project(':stroom-test-common')
 
     testCompile libs.assertj_core
 
@@ -45,6 +42,4 @@ dependencies {
     testRuntimeOnly libs.log4j_over_slf4j
     testRuntimeOnly libs.logback_classic
     testRuntimeOnly libs.logback_core
-    testRuntimeOnly libs.test_containers
-    testRuntimeOnly libs.test_containers_mysql
 }

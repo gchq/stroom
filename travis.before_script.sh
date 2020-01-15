@@ -44,7 +44,7 @@ else
     git checkout "${STROOM_RESOURCES_GIT_REF}"
 
     echo -e "${GREEN}Start all the services we need to run the integration tests in stroom${NC}"
-    ./bounceIt.sh 'up -d --build' -d -e -y -x kafka stroom-all-dbs zookeeper
+    ./bounceIt.sh 'up -d --build' -d -e -y -x kafka zookeeper
     popd
 fi
 

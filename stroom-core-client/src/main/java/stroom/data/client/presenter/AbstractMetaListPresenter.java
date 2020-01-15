@@ -276,58 +276,6 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
         getView().addColumn(infoColumn, "<br/>", ColumnSizeConstants.ICON_COL);
     }
 
-//    private void buildTipText(final StreamAttributeMap row, final StringBuilder html) {
-//        TooltipUtil.addHeading(html, "Stream");
-//
-//        TooltipUtil.addRowData(html, "Stream Id", row.getMeta().getId());
-//        TooltipUtil.addRowData(html, "Status", row.getMeta().getStatus());
-//        StreamTooltipPresenterUtil.addRowDateString(html, "Status Ms", row.getMeta().getStatusTimeMs());
-//        TooltipUtil.addRowData(html, "Stream Task Id", row.getMeta().getProcessorTaskId());
-//        TooltipUtil.addRowData(html, "Parent Stream Id", row.getMeta().getParentMetaId());
-//        StreamTooltipPresenterUtil.addRowDateString(html, "Created", row.getMeta().getCreateTimeMs());
-//        StreamTooltipPresenterUtil.addRowDateString(html, "Effective", row.getMeta().getEffectiveMs());
-//        TooltipUtil.addRowData(html, "Stream Type", row.getMeta().getTypeName());
-//        TooltipUtil.addRowData(html, "Feed", row.getMeta().getFeedName());
-//        if (row.getMeta().getProcessorId() != null) {
-//            TooltipUtil.addRowData(html, "Stream Processor Id", row.getMeta().getProcessorId());
-//        }
-//        if (row.getMeta().getPipelineUuid() != null) {
-//            TooltipUtil.addRowData(html, "Stream Processor Pipeline", row.getMeta().getPipelineUuid());
-//        }
-//        TooltipUtil.addBreak(html);
-//        TooltipUtil.addHeading(html, "Attributes");
-//
-//        try {
-//            final List<String> keys = new ArrayList<>(row.getAttributeKeySet());
-//
-//            Collections.sort(keys);
-//
-//            for (final String key : keys) {
-//                if (!key.equals(StreamAttributeConstants.RETENTION_AGE) &&
-//                        !key.equals(StreamAttributeConstants.RETENTION_UNTIL) &&
-//                        !key.equals(StreamAttributeConstants.RETENTION_RULE)) {
-//                    TooltipUtil.addRowData(html, key, row.formatAttribute(key));
-//                }
-//            }
-//        } catch (final RuntimeException e) {
-//            html.append(e.getMessage());
-//        }
-//
-//        if (row.getFileNameList() != null) {
-//            TooltipUtil.addBreak(html);
-//            TooltipUtil.addHeading(html, "Files");
-//            for (final String file : row.getFileNameList()) {
-//                TooltipUtil.addRowData(html, file);
-//            }
-//        }
-//
-//        TooltipUtil.addBreak(html);
-//        TooltipUtil.addHeading(html, "Retention");
-//        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_AGE, row.getAttributeValue(StreamAttributeConstants.RETENTION_AGE));
-//        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_UNTIL, row.getAttributeValue(StreamAttributeConstants.RETENTION_UNTIL));
-//        TooltipUtil.addRowData(html, StreamAttributeConstants.RETENTION_RULE, row.getAttributeValue(StreamAttributeConstants.RETENTION_RULE));
-//    }
-
     void addCreatedColumn() {
         // Created.
         getView().addResizableColumn(new Column<MetaRow, String>(new TextCell()) {

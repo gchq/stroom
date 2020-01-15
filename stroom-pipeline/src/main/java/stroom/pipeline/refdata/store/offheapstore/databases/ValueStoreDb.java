@@ -162,7 +162,7 @@ public class ValueStoreDb extends AbstractLmdbDb<ValueStoreKey, RefDataValue> {
 
         Preconditions.checkArgument(!writeTxn.isReadOnly(), "A write transaction is required");
 
-        LOGGER.trace("getOrCreate called for refDataValue: {}, isOverwrite", refDataValue, isOverwrite);
+        LOGGER.trace("getOrCreate called for refDataValue: {}, isOverwrite: {}", refDataValue, isOverwrite);
 
         try (final PooledByteBuffer pooledValueBuffer = getPooledValueBuffer()) {
 //            final ByteBuffer valueBuffer = pooledValueBuffer.getByteBuffer();

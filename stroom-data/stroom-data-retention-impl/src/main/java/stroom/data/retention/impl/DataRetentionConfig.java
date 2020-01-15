@@ -7,7 +7,6 @@ import javax.inject.Singleton;
 @Singleton
 public class DataRetentionConfig implements IsConfig {
     private int deleteBatchSize = 1000;
-    private String uuid;
 
     public int getDeleteBatchSize() {
         return deleteBatchSize;

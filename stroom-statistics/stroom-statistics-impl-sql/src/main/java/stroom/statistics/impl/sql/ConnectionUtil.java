@@ -16,8 +16,8 @@
 
 package stroom.statistics.impl.sql;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
 
@@ -33,12 +33,12 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class ConnectionUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConnectionUtil.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConnectionUtil.class);
 
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static int executeUpdate(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
-        LOGGER.debug(">>> {}", sql);
+        LOGGER.debug(() -> ">>> " + sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try (final PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
             PreparedStatementUtil.setArguments(preparedStatement, args);
@@ -48,7 +48,7 @@ public class ConnectionUtil {
 
             return result;
         } catch (final SQLException sqlException) {
-            LOGGER.error("executeUpdate() - {} {}", new Object[]{sql, args}, sqlException);
+            LOGGER.error(() -> "executeUpdate() - " + sql + " " + args + "", sqlException);
             throw sqlException;
         }
     }
@@ -83,7 +83,7 @@ public class ConnectionUtil {
     }
 
     public static void executeStatements(final Connection connection, final List<String> sqlStatements) throws SQLException {
-        LOGGER.debug(">>> %s", sqlStatements);
+        LOGGER.debug(() -> ">>> " + sqlStatements);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         try (final Statement statement = connection.createStatement()) {
 
@@ -110,7 +110,7 @@ public class ConnectionUtil {
                     Collections.emptyList());
 
         } catch (final RuntimeException e) {
-            LOGGER.error("executeStatement() - " + sqlStatements, e);
+            LOGGER.error(() -> "executeStatement() - " + sqlStatements, e);
             throw e;
         }
     }
@@ -118,7 +118,7 @@ public class ConnectionUtil {
     @SuppressWarnings("SQL_PREPARED_STATEMENT_GENERATED_FROM_NONCONSTANT_STRING")
     public static Long executeQueryLongResult(final Connection connection, final String sql, final List<Object> args)
             throws SQLException {
-        LOGGER.debug(">>> {}", sql);
+        LOGGER.debug(() -> ">>> " + sql);
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         Long result = null;
 
@@ -134,7 +134,7 @@ public class ConnectionUtil {
 
             return result;
         } catch (final SQLException sqlException) {
-            LOGGER.error("executeQueryLongResult() - " + sql + " " + args, sqlException);
+            LOGGER.error(() -> "executeQueryLongResult() - " + sql + " " + args, sqlException);
             throw sqlException;
         }
     }
@@ -211,9 +211,9 @@ public class ConnectionUtil {
             final String message = "<<< " + sqlSupplier.get() + " " + args + " took " + ModelStringUtil.formatDurationString(time)
                     + " with result " + resultSupplier.get();
             if (time > 1000) {
-                LOGGER.warn(message);
+                LOGGER.warn(() -> message);
             } else {
-                LOGGER.debug(message);
+                LOGGER.debug(() -> message);
             }
         }
     }

@@ -31,7 +31,6 @@ import stroom.proxy.app.ProxyConfigHealthCheck;
 import stroom.proxy.app.handler.ForwardStreamHandlerFactory;
 import stroom.proxy.app.handler.ProxyRequestHandler;
 import stroom.proxy.app.handler.RemoteFeedStatusService;
-import stroom.proxy.app.servlet.ConfigServlet;
 import stroom.proxy.app.servlet.ProxySecurityFilter;
 import stroom.proxy.app.servlet.ProxyStatusServlet;
 import stroom.proxy.app.servlet.ProxyWelcomeServlet;
@@ -55,7 +54,6 @@ import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
-import stroom.util.RestResource;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
@@ -63,6 +61,7 @@ import stroom.util.guice.HealthCheckBinder;
 import stroom.util.guice.ServletBinder;
 import stroom.util.io.BufferFactory;
 import stroom.util.shared.BuildInfo;
+import stroom.util.shared.RestResource;
 
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
@@ -125,11 +124,9 @@ public class ProxyModule extends AbstractModule {
                 .bind(new FilterInfo(ProxySecurityFilter.class.getSimpleName(), "/*"), ProxySecurityFilter.class);
 
         ServletBinder.create(binder())
-                .bind(ConfigServlet.class)
                 .bind(DebugServlet.class)
                 .bind(ProxyStatusServlet.class)
                 .bind(ProxyWelcomeServlet.class)
-                .bind(ReceiveDataServlet.class)
                 .bind(ReceiveDataServlet.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)

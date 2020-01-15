@@ -45,7 +45,7 @@ public class QueryDataLogUtil {
             return;
         }
 
-        if (item.getEnabled()) {
+        if (item.isEnabled()) {
             if (item instanceof ExpressionOperator) {
                 appendOperator(items, wordListProvider, collectionService, (ExpressionOperator) item);
             } else {

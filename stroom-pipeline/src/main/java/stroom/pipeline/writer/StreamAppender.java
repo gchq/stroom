@@ -261,6 +261,13 @@ public class StreamAppender extends AbstractAppender {
         super.setSplitAggregatedStreams(splitAggregatedStreams);
     }
 
+    @PipelineProperty(description = "Choose if you want to split individual records into separate output streams.",
+            defaultValue = "false",
+    displayPriority = 6)
+    public void setSplitRecords(final boolean splitRecords) {
+        super.setSplitRecords(splitRecords);
+    }
+
     private void fatal(final String message) {
         errorReceiverProxy.log(Severity.FATAL_ERROR, null, getElementId(), message, null);
         throw new ProcessException(message);

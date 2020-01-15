@@ -16,57 +16,38 @@
 
 package stroom.search.extraction;
 
-import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.docref.DocRef;
-import stroom.pipeline.errorhandler.ErrorReceiver;
+import stroom.search.coprocessor.Receiver;
 
-public class ExtractionTask {
+class ExtractionTask {
     private final long streamId;
     private final long[] eventIds;
     private final DocRef pipelineRef;
-    private final FieldIndexMap fieldIndexes;
-    private final ResultReceiver resultReceiver;
-    private final ErrorReceiver errorReceiver;
+    private final Receiver receiver;
 
     ExtractionTask(final long streamId,
                    final long[] eventIds,
                    final DocRef pipelineRef,
-                   final FieldIndexMap fieldIndexes,
-                   final ResultReceiver resultReceiver,
-                   final ErrorReceiver errorReceiver) {
+                   final Receiver receiver) {
         this.streamId = streamId;
         this.eventIds = eventIds;
         this.pipelineRef = pipelineRef;
-        this.fieldIndexes = fieldIndexes;
-        this.resultReceiver = resultReceiver;
-        this.errorReceiver = errorReceiver;
+        this.receiver = receiver;
     }
 
-    public long getStreamId() {
+    long getStreamId() {
         return streamId;
     }
 
-    public long[] getEventIds() {
+    long[] getEventIds() {
         return eventIds;
     }
 
-    public DocRef getPipelineRef() {
+    DocRef getPipelineRef() {
         return pipelineRef;
     }
 
-    public FieldIndexMap getFieldIndexes() {
-        return fieldIndexes;
-    }
-
-    public ResultReceiver getResultReceiver() {
-        return resultReceiver;
-    }
-
-    public ErrorReceiver getErrorReceiver() {
-        return errorReceiver;
-    }
-
-    public interface ResultReceiver {
-        void receive(Values values);
+    Receiver getReceiver() {
+        return receiver;
     }
 }

@@ -39,7 +39,6 @@ public class XmlSchemaCache implements EntityEvent.Handler {
     private static final Logger LOGGER = LoggerFactory.getLogger(XmlSchemaCache.class);
     private static final long TEN_MINUTES = 1000 * 60 * 10;
 
-
     private final XmlSchemaStore xmlSchemaStore;
     private final List<ClearHandler> clearHandlers = new ArrayList<>();
     private final Map<FindXMLSchemaCriteria, SchemaSet> schemaSets = new ConcurrentHashMap<>();

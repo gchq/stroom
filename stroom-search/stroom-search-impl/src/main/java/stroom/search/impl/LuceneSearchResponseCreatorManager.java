@@ -1,41 +1,52 @@
-/*
- * Copyright 2017 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package stroom.search.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.cache.api.CacheManager;
+import stroom.cache.api.ICache;
 import stroom.query.common.v2.SearchResponseCreator;
 import stroom.query.common.v2.SearchResponseCreatorCache;
 import stroom.query.common.v2.SearchResponseCreatorManager;
+import stroom.query.common.v2.Store;
+import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-@SuppressWarnings("unused") // used by DI
+@SuppressWarnings("unused") //Used by DI
 public class LuceneSearchResponseCreatorManager implements SearchResponseCreatorManager, Clearable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LuceneSearchResponseCreatorManager.class);
 
-    private final SearchResponseCreatorCache cache;
+    private static final String CACHE_NAME = "Lucene Search Result Creators";
+
+    private final LuceneSearchStoreFactory storeFactory;
+    private final ICache<SearchResponseCreatorCache.Key, SearchResponseCreator> cache;
 
     @Inject
-    public LuceneSearchResponseCreatorManager(
-            final LuceneInMemorySearchResponseCreatorCacheFactory cacheFactory,
-            final LuceneSearchStoreFactory storeFactory) {
+    public LuceneSearchResponseCreatorManager(final CacheManager cacheManager,
+                                              final IndexShardSearchConfig indexShardSearchConfig,
+                                              final LuceneSearchStoreFactory storeFactory) {
+        this.storeFactory = storeFactory;
+        cache = cacheManager.create(CACHE_NAME, indexShardSearchConfig::getSearchResultCache, this::create, this::destroy);
+    }
 
-        this.cache = cacheFactory.create(storeFactory);
+    private SearchResponseCreator create(SearchResponseCreatorCache.Key key) {
+        try {
+            LOGGER.debug("Creating new store for key {}", key);
+            final Store store = storeFactory.create(key.getSearchRequest());
+            return new SearchResponseCreator(store);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            throw e;
+        }
+    }
+
+    private void destroy(final SearchResponseCreatorCache.Key key, final SearchResponseCreator value) {
+        if (value != null) {
+            value.destroy();
+        }
     }
 
     @Override

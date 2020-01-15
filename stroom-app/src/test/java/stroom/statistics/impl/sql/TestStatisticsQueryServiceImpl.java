@@ -107,7 +107,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
     @Inject
     private CommonTestControl commonTestControl;
     @Inject
-    private ConnectionProvider connectionProvider;
+    private SQLStatisticsDbConnProvider sqlStatisticsDbConnProvider;
     @Inject
     private SQLStatisticValueBatchSaveService sqlStatisticValueBatchSaveService;
     @Inject
@@ -469,7 +469,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
     private int getRowCount(final String tableName) throws SQLException {
         int count;
-        try (final Connection connection = connectionProvider.getConnection()) {
+        try (final Connection connection = sqlStatisticsDbConnProvider.getConnection()) {
             try (final PreparedStatement preparedStatement = connection.prepareStatement("select count(*) from " + tableName)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     resultSet.next();

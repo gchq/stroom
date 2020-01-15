@@ -27,6 +27,25 @@
 	height: 18px;
 }
 
+.field {
+	padding: 0px;
+	cursor: pointer;
+	opacity: 0.9;
+    transition: opacity 0.5s linear;
+    -webkit-transition: opacity 0.5s linear;
+    -moz-transition: opacity 0.5s linear;
+    -o-transition: opacity 0.5s linear;
+}
+
+.field * {
+    text-decoration: inherit;
+}
+
+.field:hover {
+    opacity: 1;
+    text-decoration: underline;
+}
+
 .fieldLabel {
 	display: inline-block;
 	height: 16px;
@@ -34,6 +53,7 @@
 	padding-right: 5px;
 	cursor: pointer;
 	font-weight: 500;
+    text-decoration: inherit;
 }
 
 .fieldText {
@@ -45,6 +65,7 @@
 	display: inline-block;
 	font-size: 8px;	
 	vertical-align: top;
+	text-decoration: none;
 }
 
 .buttons {

@@ -63,7 +63,7 @@ public class SolrAsyncSearchTaskHandler extends AbstractTaskHandler<SolrAsyncSea
             final SolrSearchResultCollector resultCollector = task.getResultCollector();
             if (!Thread.currentThread().isInterrupted()) {
                 try {
-                    taskContext.info(task.getSearchName() + " - initialising");
+                    taskContext.info(() -> task.getSearchName() + " - initialising");
                     final Query query = task.getQuery();
 
                     // Reload the index.
@@ -80,7 +80,7 @@ public class SolrAsyncSearchTaskHandler extends AbstractTaskHandler<SolrAsyncSea
                             task.getCoprocessorMap(), task.getDateTimeLocale(), task.getNow());
                     clusterSearchTaskHandler.exec(clusterSearchTask, resultCollector);
 
-                    taskContext.info(task.getSearchName() + " - searching...");
+                    taskContext.info(() -> task.getSearchName() + " - searching...");
 
                     // Await completion.
                     resultCollector.awaitCompletion();
@@ -93,7 +93,7 @@ public class SolrAsyncSearchTaskHandler extends AbstractTaskHandler<SolrAsyncSea
                     // Continue to interrupt this thread.
                     Thread.currentThread().interrupt();
                 } finally {
-                    taskContext.info(task.getSearchName() + " - complete");
+                    taskContext.info(() -> task.getSearchName() + " - complete");
 
                     // Make sure we try and terminate any child tasks on worker
                     // nodes if we need to.
@@ -104,7 +104,7 @@ public class SolrAsyncSearchTaskHandler extends AbstractTaskHandler<SolrAsyncSea
 
                     // We need to wait here for the client to keep getting results if
                     // this is an interactive search.
-                    taskContext.info(task.getSearchName() + " - staying alive for UI requests");
+                    taskContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
                 }
             }
 
@@ -119,12 +119,12 @@ public class SolrAsyncSearchTaskHandler extends AbstractTaskHandler<SolrAsyncSea
         // We have to wrap the cluster termination task in another task or
         // ClusterDispatchAsyncImpl
         // will not execute it if the parent task is terminated.
-        final GenericServerTask outerTask = GenericServerTask.create(null, task.getUserToken(), "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
+        final GenericServerTask outerTask = GenericServerTask.create(null, "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
         outerTask.setRunnable(() -> {
-            taskContext.info(task.getSearchName() + " - terminating child tasks");
+            taskContext.info(() -> task.getSearchName() + " - terminating child tasks");
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
             findTaskCriteria.addAncestorId(task.getId());
-            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(task.getUserToken(), "Terminate: " + task.getTaskName(), findTaskCriteria, false);
+            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask("Terminate: " + task.getTaskName(), findTaskCriteria, false);
 
             // Terminate matching tasks.
             dispatchHelper.execAsync(terminateTask, TargetType.ACTIVE);

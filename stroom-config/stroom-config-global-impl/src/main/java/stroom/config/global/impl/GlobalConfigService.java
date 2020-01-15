@@ -20,7 +20,13 @@ package stroom.config.global.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.config.global.api.ConfigProperty;
+import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.DefaultClusterResultCollector;
+import stroom.cluster.task.api.TargetType;
+import stroom.config.global.shared.ClusterConfigProperty;
+import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.FindGlobalConfigCriteria;
+import stroom.config.global.shared.NodeConfigResult;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
@@ -31,97 +37,69 @@ import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @Singleton
+        // Needs to be singleton to prevent initialise being called multiple times
 class GlobalConfigService {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigService.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigService.class);
 
     private final ConfigPropertyDao dao;
     private final SecurityContext securityContext;
-    private final Map<String, ConfigProperty> globalProperties = new HashMap<>();
     private final ConfigMapper configMapper;
+    private final ClusterDispatchAsyncHelper dispatchHelper;
 
     @Inject
     GlobalConfigService(final ConfigPropertyDao dao,
                         final SecurityContext securityContext,
-                        final ConfigMapper configMapper) {
+                        final ConfigMapper configMapper,
+                        final ClusterDispatchAsyncHelper dispatchHelper) {
         this.dao = dao;
         this.securityContext = securityContext;
         this.configMapper = configMapper;
+        this.dispatchHelper = dispatchHelper;
 
         initialise();
     }
 
-
-    private Object updateConfigObject(final String key, final String value) {
-        return configMapper.updateConfigObject(key, value);
-    }
-
     private void initialise() {
-        // Setup DB properties.
-        LOGGER.info("Setting up configuration properties");
-        loadMappedProperties();
-        loadDBProperties();
+        // At this point the configMapper.getGlobalProperties() will contain the name, defaultValue
+        // and the yamlValue. It will also contain any info gained from the config class annotations,
+        // e.g. @Readonly
+        LOGGER.info("Initialising application config with global database properties");
+        updateConfigFromDb(true);
     }
 
-    private void loadMappedProperties() {
-        try {
-            final Collection<ConfigProperty> configPropertyList = configMapper.getGlobalProperties();
-            for (final ConfigProperty configProperty : configPropertyList) {
-                globalProperties.put(configProperty.getName(), configProperty);
-                updateConfigObject(configProperty.getName(), configProperty.getValue());
-            }
-        } catch (final RuntimeException e) {
-            e.printStackTrace();
-        }
+    private void updateConfigFromDb() {
+        LOGGER.info("Updating application config with global database properties");
+        updateConfigFromDb(false);
     }
 
-    private void loadDBProperties() {
-        final Map<String, ConfigProperty> map = new HashMap<>(globalProperties);
+    private void updateConfigFromDb(final boolean deleteUnknownProps) {
+        // Get all props held in the DB, which may be a subset of those in the config
+        // object model
+        dao.list().forEach(dbConfigProperty -> {
+            final String fullPath = dbConfigProperty.getName();
+            if (fullPath != null) {
 
-        final List<ConfigProperty> list = dao.list();
-
-        list.forEach(record -> {
-            if (record.getName() != null && record.getValue() != null) {
-                final ConfigProperty configProperty = map.remove(record.getName());
-                if (configProperty != null) {
-                    configProperty.setId(record.getId());
-                    configProperty.setValue(record.getValue());
-                    configProperty.setSource(ConfigProperty.SourceType.DATABASE);
-
-                    updateConfigObject(record.getName(), record.getValue());
-                } else {
-                    // Delete old property that is not in the object model
-                    deleteFromDb(record.getName());
+                try {
+                    // Update the object model and global config property with the value from the DB
+                    configMapper.decorateDbConfigProperty(dbConfigProperty);
+                } catch (ConfigMapper.UnknownPropertyException e) {
+                    LOGGER.debug("Property {} is in the database but not in the appConfig model", fullPath);
+                    if (deleteUnknownProps) {
+                        // Delete old property that is not in the object model
+                        deleteFromDb(dbConfigProperty.getName());
+                    }
                 }
-            }
-        });
-    }
-
-    private synchronized void updateConfigObjectsFromDB() {
-        final Map<String, ConfigProperty> map = new HashMap<>(globalProperties);
-
-        final List<ConfigProperty> list = dao.list();
-
-        list.forEach(record -> {
-            if (record.getName() != null && record.getValue() != null) {
-                final ConfigProperty configProperty = map.remove(record.getName());
-                if (configProperty != null) {
-                    configProperty.setId(record.getId());
-                    configProperty.setValue(record.getValue());
-                    configProperty.setSource(ConfigProperty.SourceType.DATABASE);
-
-                    Object typedValue = updateConfigObject(record.getName(), record.getValue());
-//                                configProperty.setTypedValue(typedValue);
-                }
+            } else {
+                LOGGER.warn("Bad config record in the database {}", dbConfigProperty);
             }
         });
     }
@@ -130,96 +108,152 @@ class GlobalConfigService {
      * Refresh in background
      */
     void updateConfigObjects() {
-        updateConfigObjectsFromDB();
+        updateConfigFromDb();
     }
 
-    public List<ConfigProperty> list() {
+    public List<ConfigProperty> list(FindGlobalConfigCriteria criteria) {
+        if (criteria.getName() != null) {
+            return list(v -> criteria.getName().isMatch(v.getName()));
+        } else {
+            return list();
+        }
+    }
+
+    private List<ConfigProperty> list(final Predicate<ConfigProperty> filter) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
-            updateConfigObjectsFromDB();
+            // Ensure the global config properties are up to date with the db values
+            // TODO This is not ideal as each time the filter is changed we hit the db to
+            //   update the config props.
+            updateConfigFromDb();
 
-            final List<ConfigProperty> list = new ArrayList<>(globalProperties.values());
-            list.sort(Comparator.comparing(ConfigProperty::getName));
-
-            return list;
+            return configMapper.getGlobalProperties().stream()
+                    .sorted(Comparator.comparing(ConfigProperty::getName))
+                    .filter(filter)
+                    .collect(Collectors.toList());
         });
     }
 
-    public ConfigProperty fetch(final int id) {
-        return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> dao.fetch(id)
-                .map(prop -> {
-                    prop.setSource(ConfigProperty.SourceType.DATABASE);
-                    return prop;
-                }).orElse(null));
+    public List<ConfigProperty> list() {
+        return list(v -> true);
+    }
+
+    /**
+     * @param propertyName The name of the prop to fetch, e.g. stroom.path.temp
+     * @return A {@link ConfigProperty} if it is a valid prop name. The prop may or may not exist in the
+     * DB. If it doesn't exist in the db then the property will be obtained from the object model.
+     */
+    public Optional<ConfigProperty> fetch(final String propertyName) {
+        return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
+            // update the global config from the returned db record then return the corresponding
+            // object from global properties which may have a yaml value in it and a different
+            // effective value
+            return dao.fetch(propertyName)
+                    .map(configMapper::decorateDbConfigProperty)
+                    .or(() ->
+                            configMapper.getGlobalProperty(propertyName));
+        });
+    }
+
+    /**
+     * @param id The DB primary key for the prop
+     * @return A {@link ConfigProperty} if it exists in the DB, i.e. it has a db override value.
+     * This means a valid prop can return an empty if the prop only has a default/yaml value.
+     */
+    public Optional<ConfigProperty> fetch(final int id) {
+        return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
+
+            // update the global config from the returned db record then return the corresponding
+            // object from global properties which may have a yaml value in it and a different
+            // effective value
+            final Optional<ConfigProperty> optionalConfigProperty = dao.fetch(id)
+                    .map(configMapper::decorateDbConfigProperty);
+
+            return optionalConfigProperty;
+        });
+    }
+
+    private ClusterConfigProperty buildClusterConfigProperty(final ConfigProperty configProperty) {
+        // TODO need to run this periodically and cache it, else we have to wait too long
+        //   for all nodes to answer
+        final DefaultClusterResultCollector<NodeConfigResult> collector = dispatchHelper
+                .execAsync(new NodeConfigClusterTask(),
+                        5,
+                        TimeUnit.SECONDS,
+                        TargetType.ENABLED);
+
+        ClusterConfigProperty clusterConfigProperty = new ClusterConfigProperty(configProperty);
+        collector.getResponseMap().forEach((nodeName, response) -> {
+            if (response == null) {
+                // TODO
+
+            } else if (response.getError() != null) {
+                // TODO
+
+            } else {
+                clusterConfigProperty.putYamlOverrideValue(
+                        nodeName, response.getResult().getYamlOverrideValue());
+            }
+        });
+        return clusterConfigProperty;
     }
 
     public ConfigProperty update(final ConfigProperty configProperty) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
+
             LAMBDA_LOGGER.debug(LambdaLogUtil.message(
-                    "Saving property [{}] with new value [{}]",
-                    configProperty.getName(), configProperty.getValue()));
+                    "Saving property [{}] with new database value [{}]",
+                    configProperty.getName(), configProperty.getDatabaseOverrideValue()));
 
-            AuditUtil.stamp(securityContext.getUserId(), configProperty);
-
-            ConfigProperty result;
-            if (configProperty.getId() == null) {
-                result = dao.create(configProperty);
+            // Make sure we can parse the string value,
+            // into an object (e.g. if it is a docref, list, map etc)
+            final ConfigProperty persistedConfigProperty;
+            if (!configProperty.hasDatabaseOverride()) {
+                if (configProperty.getId() != null) {
+                    // getDatabaseValue is unset so we need to remove it from the DB
+                    try {
+                        dao.delete(configProperty.getName());
+                    } catch (Exception e) {
+                        throw new RuntimeException(LogUtil.message("Error deleting property {}: {}",
+                                configProperty.getName(), e.getMessage()));
+                    }
+                    // this is now orphaned so clear the ID
+                    configProperty.setId(null);
+                }
+                persistedConfigProperty = configProperty;
             } else {
-                result = dao.update(configProperty);
+                configProperty.getDatabaseOverrideValue().ifOverridePresent(optDbValue ->
+                        optDbValue.ifPresent(dbValue ->
+                                configMapper.validateStringValue(configProperty.getName(), dbValue)));
+
+                AuditUtil.stamp(securityContext.getUserId(), configProperty);
+
+                if (configProperty.getId() == null) {
+                    try {
+                        persistedConfigProperty = dao.create(configProperty);
+                    } catch (Exception e) {
+                        throw new RuntimeException(LogUtil.message("Error inserting property {}: {}",
+                                configProperty.getName(), e.getMessage()));
+                    }
+                } else {
+                    try {
+                        persistedConfigProperty = dao.update(configProperty);
+                    } catch (Exception e) {
+                        throw new RuntimeException(LogUtil.message("Error updating property {} with id {}: {}",
+                                configProperty.getName(), configProperty.getId(), e.getMessage()));
+                    }
+                }
             }
-
-
-//                // Change value in DB
-//                int rowsAffected = create
-//                        .update(CONFIG)
-//                        .set(CONFIG.VAL, configProperty.getValue())
-//                        .where(CONFIG.NAME.eq(configProperty.getName()))
-//                        .execute();
-//
-//                if (rowsAffected == 0) {
-//                    LOGGER.debug("No record to update with key {}, so inserting new record", configProperty.getName());
-//                    create
-//                            .insertInto(CONFIG,
-//                                    CONFIG.NAME,
-//                                    CONFIG.VAL)
-//                            .values(configProperty.getName(), configProperty.getValue())
-//                            .execute();
-//                }
-//
-//                // Record history.
-//                recordHistory(configProperty);
 
             // Update property in the config object tree
-            updateConfigObject(result.getName(), result.getValue());
+            configMapper.decorateDbConfigProperty(persistedConfigProperty);
 
-            // update the property in
-            final ConfigProperty configPropertyFromMap = globalProperties.get(result.getName());
-            if (configPropertyFromMap != null) {
-                configPropertyFromMap.setSource(ConfigProperty.SourceType.DATABASE);
-                configPropertyFromMap.setValue(result.getValue());
-            } else {
-                result.setSource(ConfigProperty.SourceType.DATABASE);
-                globalProperties.put(result.getName(), result);
-            }
-
-
-            return result;
+            return persistedConfigProperty;
         });
     }
 
     private void deleteFromDb(final String name) {
-        LAMBDA_LOGGER.warn(() -> LogUtil.message("Deleting property {} as it is not valid in the object model", name));
+        LAMBDA_LOGGER.warn(() ->
+                LogUtil.message("Deleting property {} as it is not valid in the object model", name));
         dao.delete(name);
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        for (final Entry<String, ConfigProperty> entry : globalProperties.entrySet()) {
-            sb.append(entry.getKey());
-            sb.append("=");
-            sb.append(entry.getValue());
-            sb.append("\n");
-        }
-        return sb.toString();
     }
 }

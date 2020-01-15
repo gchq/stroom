@@ -98,7 +98,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // Get the nodes that we are going to send the search request
                     // to.
                     final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-                    taskContext.info(task.getSearchName() + " - initialising");
+                    taskContext.info(() -> task.getSearchName() + " - initialising");
                     final Query query = task.getQuery();
 
                     // Reload the index.
@@ -152,8 +152,8 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                     // Now send out distributed search tasks to each worker node.
                     filteredShardNodes.forEach((node, shards) -> {
-                        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(task,
-                                task.getUserToken(),
+                        final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
+                                task,
                                 "Cluster Search",
                                 query,
                                 shards,
@@ -167,7 +167,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                         dispatchAsyncProvider.get().execAsync(clusterSearchTask, resultCollector, sourceNode,
                                 Collections.singleton(node));
                     });
-                    taskContext.info(task.getSearchName() + " - searching...");
+                    taskContext.info(() -> task.getSearchName() + " - searching...");
 
                     // Await completion.
                     resultCollector.awaitCompletion();
@@ -180,7 +180,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // Continue to interrupt this thread.
                     Thread.currentThread().interrupt();
                 } finally {
-                    taskContext.info(task.getSearchName() + " - complete");
+                    taskContext.info(() -> task.getSearchName() + " - complete");
 
                     // Make sure we try and terminate any child tasks on worker
                     // nodes if we need to.
@@ -191,7 +191,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                     // We need to wait here for the client to keep getting results if
                     // this is an interactive search.
-                    taskContext.info(task.getSearchName() + " - staying alive for UI requests");
+                    taskContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
                 }
             }
 
@@ -206,12 +206,12 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         // We have to wrap the cluster termination task in another task or
         // ClusterDispatchAsyncImpl
         // will not execute it if the parent task is terminated.
-        final GenericServerTask outerTask = GenericServerTask.create(null, task.getUserToken(), "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
+        final GenericServerTask outerTask = GenericServerTask.create(null, "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
         outerTask.setRunnable(() -> {
-            taskContext.info(task.getSearchName() + " - terminating child tasks");
+            taskContext.info(() -> task.getSearchName() + " - terminating child tasks");
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
             findTaskCriteria.addAncestorId(task.getId());
-            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask(task.getUserToken(), "Terminate: " + task.getTaskName(), findTaskCriteria, false);
+            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask("Terminate: " + task.getTaskName(), findTaskCriteria, false);
 
             // Terminate matching tasks.
             dispatchHelper.execAsync(terminateTask, TargetType.ACTIVE);

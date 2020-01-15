@@ -35,10 +35,11 @@ import javax.xml.bind.annotation.XmlType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
-@JsonInclude(Include.NON_EMPTY)
+@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "table")
 @XmlType(name = "TableComponentSettings", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
 public class TableComponentSettings extends ComponentSettings {
@@ -73,6 +74,15 @@ public class TableComponentSettings extends ComponentSettings {
         this.fields = fields;
     }
 
+    public TableComponentSettings(final String queryId, final List<Field> fields, final Boolean extractValues, final DocRef extractionPipeline, final int[] maxResults, final Boolean showDetail) {
+        this.queryId = queryId;
+        this.fields = fields;
+        this.extractValues = extractValues;
+        this.extractionPipeline = extractionPipeline;
+        this.maxResults = maxResults;
+        this.showDetail = showDetail;
+    }
+
     public String getQueryId() {
         return queryId;
     }
@@ -94,15 +104,9 @@ public class TableComponentSettings extends ComponentSettings {
             fields = new ArrayList<>();
         }
 
+        Objects.requireNonNull(field.getId(), "Field id is null");
+
         fields.add(field);
-    }
-
-    public void addField(final int index, final Field field) {
-        if (fields == null) {
-            fields = new ArrayList<>();
-        }
-
-        fields.add(index, field);
     }
 
     public void removeField(final Field field) {
@@ -214,5 +218,25 @@ public class TableComponentSettings extends ComponentSettings {
         builder.append("maxResults", Arrays.toString(maxResults));
         builder.append("showDetail", showDetail);
         return builder.toString();
+    }
+
+    public TableComponentSettings copy() {
+        List<Field> fieldsCopy = null;
+        if (fields != null) {
+            fieldsCopy = new ArrayList<>(fields.size());
+            for (final Field field : fields) {
+                fieldsCopy.add(field.copy());
+            }
+        }
+
+        int[] maxResultCopy = null;
+        if (maxResults != null) {
+            maxResultCopy = new int[maxResults.length];
+            for (int i = 0; i < maxResults.length; i++) {
+                maxResultCopy[i] = maxResults[i];
+            }
+        }
+
+        return new TableComponentSettings(queryId, fieldsCopy, extractValues, extractionPipeline, maxResultCopy, showDetail);
     }
 }
