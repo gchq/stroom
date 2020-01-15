@@ -62,6 +62,6 @@ class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPer
             }
         }
 
-        return new UserAndPermissions(user, securityContext.getUserIdentity().getJws(), userAndPermissionsHelper.get(user));
+        return new UserAndPermissions(user.getName(), userAndPermissionsHelper.get(user));
     }
 }

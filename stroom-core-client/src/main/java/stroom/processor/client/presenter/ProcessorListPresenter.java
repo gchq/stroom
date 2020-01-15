@@ -19,6 +19,7 @@ package stroom.processor.client.presenter;
 import com.google.gwt.cell.client.FieldUpdater;
 import com.google.gwt.cell.client.NumberCell;
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -41,6 +42,8 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.SharedObject;
 import stroom.entity.client.ActionQueue;
@@ -51,12 +54,12 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.FetchProcessorAction;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.UpdateProcessorAction;
-import stroom.processor.shared.UpdateProcessorFilterAction;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
@@ -73,23 +76,30 @@ import stroom.widget.util.client.MultiSelectionModel;
 
 public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<SharedObject>>
         implements Refreshable, HasDocumentRead<SharedObject> {
+    private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
+
     private final ActionDataProvider<SharedObject> dataProvider;
     private final TooltipPresenter tooltipPresenter;
     private final FetchProcessorAction action;
     private final ActionQueue<Processor> processorSaveQueue;
     private final ActionQueue<ProcessorFilter> processorFilterSaveQueue;
+    private final RestFactory restFactory;
     private boolean doneDataDisplay = false;
     private Column<SharedObject, Expander> expanderColumn;
     private ProcessorFilter nextSelection;
+
+    private final RestSaveQueue restSaveQueue;
 
     private boolean allowUpdate;
 
     @Inject
     public ProcessorListPresenter(final EventBus eventBus,
                                   final TooltipPresenter tooltipPresenter,
-                                  final ClientDispatchAsync dispatcher) {
+                                  final ClientDispatchAsync dispatcher,
+                                  final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.tooltipPresenter = tooltipPresenter;
+        this.restFactory = restFactory;
 
         action = new FetchProcessorAction();
         dataProvider = new ActionDataProvider<SharedObject>(dispatcher, action) {
@@ -102,6 +112,13 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
 
         processorSaveQueue = new ActionQueue<>(dispatcher);
         processorFilterSaveQueue = new ActionQueue<>(dispatcher);
+
+        restSaveQueue = new RestSaveQueue(restFactory) {
+            @Override
+            protected void doAction(final Rest<?> rest, final Integer key, final Integer value) {
+                rest.call(PROCESSOR_FILTER_RESOURCE).setPriority(key, value);
+            }
+        };
     }
 
     void setAllowUpdate(final boolean allowUpdate) {
@@ -342,8 +359,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                         final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
                         final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
                         processorFilter.setPriority(value.intValue());
-//                        final Processor processor = processorFilter.getProcessor();
-                        processorFilterSaveQueue.dispatch(processorFilter, new UpdateProcessorFilterAction(processorFilter));
+                        restSaveQueue.setPriority(processorFilter.getId(), value.intValue());
                     }
                 }
             });
@@ -411,23 +427,21 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
         };
 
         if (allowUpdate) {
-            enabledColumn.setFieldUpdater(new FieldUpdater<SharedObject, TickBoxState>() {
-                @Override
-                public void update(final int index, final SharedObject row, final TickBoxState value) {
-                    if (row instanceof ProcessorFilterRow) {
-                        final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                        final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-//                        final Processor processor = processorFilter                                .getProcessor();
+            enabledColumn.setFieldUpdater((index, row, value) -> {
+                if (row instanceof ProcessorFilterRow) {
+                    final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
+                    final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
 
-                        processorFilter.setEnabled(value.toBoolean());
-                        processorFilterSaveQueue.dispatch(processorFilter, new UpdateProcessorFilterAction(processorFilter));
-                    } else if (row instanceof ProcessorRow) {
-                        final ProcessorRow processorRow = (ProcessorRow) row;
-                        final Processor processor = processorRow.getProcessor();
-                        processor.setEnabled(value.toBoolean());
-//                        final String pipelineUuid = processor.getPipelineUuid();
-                        processorSaveQueue.dispatch(processor, new UpdateProcessorAction(processor));
-                    }
+                    processorFilter.setEnabled(value.toBoolean());
+
+                    final Rest<ProcessorFilter> rest = restFactory.create();
+                    rest.call(PROCESSOR_FILTER_RESOURCE).setEnabled(processorFilter.getId(), value.toBoolean());
+
+                } else if (row instanceof ProcessorRow) {
+                    final ProcessorRow processorRow = (ProcessorRow) row;
+                    final Processor processor = processorRow.getProcessor();
+                    processor.setEnabled(value.toBoolean());
+                    processorSaveQueue.dispatch(processor, new UpdateProcessorAction(processor));
                 }
             });
         }

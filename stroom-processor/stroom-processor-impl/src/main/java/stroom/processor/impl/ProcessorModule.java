@@ -21,17 +21,15 @@ import stroom.job.api.DistributedTaskFactory;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.api.ProcessorTaskService;
-import stroom.processor.shared.CreateProcessorFilterAction;
 import stroom.processor.shared.FetchProcessorAction;
 import stroom.processor.shared.FindProcessorTaskAction;
 import stroom.processor.shared.FindProcessorTaskSummaryAction;
 import stroom.processor.shared.ReprocessDataAction;
-import stroom.processor.shared.UpdateProcessorFilterAction;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.RestResource;
 
 public class ProcessorModule extends AbstractModule {
     @Override
@@ -41,15 +39,16 @@ public class ProcessorModule extends AbstractModule {
         bind(ProcessorService.class).to(ProcessorServiceImpl.class);
         bind(ProcessorTaskService.class).to(ProcessorTaskServiceImpl.class);
 
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(ProcessorFilterResourceImpl.class);
+
         TaskHandlerBinder.create(binder())
-                .bind(CreateProcessorFilterAction.class, CreateProcessorFilterHandler.class)
                 .bind(CreateStreamTasksTask.class, CreateStreamTasksTaskHandler.class)
                 .bind(FetchProcessorAction.class, FetchProcessorHandler.class)
                 .bind(FindProcessorTaskAction.class, FetchProcessorTaskHandler.class)
                 .bind(FindProcessorTaskSummaryAction.class, FetchProcessorTaskSummaryHandler.class)
                 .bind(ReprocessDataAction.class, ReprocessDataHandler.class)
-                .bind(DataProcessorTask.class, DataProcessorTaskHandler.class)
-                .bind(UpdateProcessorFilterAction.class, UpdateProcessorFilterHandler.class);
+                .bind(DataProcessorTask.class, DataProcessorTaskHandler.class);
 
         GuiceUtil.buildMultiBinder(binder(), DistributedTaskFactory.class)
                 .addBinding(DataProcessorTaskFactory.class);
