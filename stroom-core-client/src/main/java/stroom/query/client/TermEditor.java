@@ -291,6 +291,9 @@ public class TermEditor extends Composite {
             }
         }
 
+        // We no longer use CONTAINS.
+        conditions.remove(Condition.CONTAINS);
+
         return conditions;
     }
 
