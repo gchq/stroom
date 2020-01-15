@@ -10,7 +10,9 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class DataConfig implements IsConfig {
+public class DataConfig extends IsConfig {
+    public static final String NAME = "data";
+    
 
     public static final String PROP_NAME_META = "meta";
     public static final String PROP_NAME_RETENTION = "retention";

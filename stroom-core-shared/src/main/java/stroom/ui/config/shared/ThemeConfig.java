@@ -7,7 +7,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class ThemeConfig implements SharedObject, IsConfig {
+public class ThemeConfig extends IsConfig implements SharedObject {
     private String backgroundAttachment = "scroll";
     private String backgroundColor = "#1E88E5";
     private String backgroundImage = "none";

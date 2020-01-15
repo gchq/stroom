@@ -35,7 +35,6 @@ import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.ConfigValidationResults;
 import stroom.util.shared.IsConfig;
 
 import javax.inject.Inject;
@@ -96,10 +95,6 @@ public class ConfigMapper {
     // A map of property accessor objects keyed on the fully qualified prop path (i.e. stroom.path.temp)
     private final Map<String, Prop> propertyMap = new HashMap<>();
 
-    // A map of the config object instance to its property path, e.g. <nodeCondfig> => 'stroom.node'
-    // Allows us to find the path of a config object
-    private final Map<IsConfig, String> configInstanceToPathMap = new HashMap<>();
-
     @Inject
     public ConfigMapper(final AppConfig appConfig) {
         LOGGER.debug("Initialising ConfigMapper with class {}", appConfig.getClass().getName());
@@ -120,7 +115,6 @@ public class ConfigMapper {
             addConfigObjectMethods(
                 vanillaObject,
                 ROOT_PROPERTY_PATH,
-                new HashMap<>(),
                 new HashMap<>(),
                 this::defaultValuePropertyConsumer);
 
@@ -154,32 +148,12 @@ public class ConfigMapper {
             // YAML values where present.
             LOGGER.debug("Adding yaml config values into global property map");
             addConfigObjectMethods(
-                newAppConfig, ROOT_PROPERTY_PATH, propertyMap, configInstanceToPathMap, this::yamlPropertyConsumer);
+                newAppConfig, ROOT_PROPERTY_PATH, propertyMap, this::yamlPropertyConsumer);
         }
     }
 
     public boolean validatePropertyPath(final String fullPath) {
         return propertyMap.get(fullPath) != null;
-    }
-
-    public ConfigValidationResults validateConfiguration() {
-        final ConfigValidationResults.Aggregator aggregator = ConfigValidationResults.aggregator();
-        for (final Map.Entry<IsConfig, String> entry : configInstanceToPathMap.entrySet()) {
-            aggregator.addAll(entry.getKey().validateConfig());
-        }
-        return aggregator.aggregate();
-    }
-
-    public String getBasePath(final IsConfig config) {
-        final String path = configInstanceToPathMap.get(config);
-
-        Objects.requireNonNull(path, LogUtil.message("Class {} has no property path",
-            config.getClass().getCanonicalName()));
-        return path;
-    }
-
-    public String getFullPath(final IsConfig config, final String propertyName) {
-        return getBasePath(config) + "." + propertyName;
     }
 
     Collection<ConfigProperty> getGlobalProperties() {
@@ -243,20 +217,25 @@ public class ConfigMapper {
         }
     }
 
-    private void addConfigObjectMethods(final IsConfig object,
+    private void addConfigObjectMethods(final IsConfig config,
                                         final String path,
                                         final Map<String, Prop> propertyMap,
-                                        final Map<IsConfig, String> configInstanceToPathMap,
                                         final BiConsumer<String, Prop> propConsumer) {
-        LOGGER.trace("addConfigObjectMethods({}, {}, .....)", object, path);
+        LOGGER.trace("addConfigObjectMethods({}, {}, .....)", config, path);
+
+        // Add this ConfigMapper instance to the IsConfig so it can do name resolution
+//        config.setConfigPathResolver(this);
+        config.setBasePath(path);
 
         // Add our object with its path to the map
-        configInstanceToPathMap.put(object, path);
+//        configInstanceToPathMap.put(config, path);
 
-        final Map<String, Prop> properties = PropertyUtil.getProperties(object);
+        final Map<String, Prop> properties = PropertyUtil.getProperties(config);
         properties.forEach((k, prop) -> {
             LOGGER.trace("prop: {}", prop);
-            Method getter = prop.getGetter();
+            final Method getter = prop.getGetter();
+
+            // The prop may have a JsonPropery annotation that defines its name
             String specifiedName = getNameFromAnnotation(getter);
             String name = prop.getName();
             if (specifiedName != null) {
@@ -279,7 +258,7 @@ public class ConfigMapper {
                 if (value != null) {
                     IsConfig childConfigObject = (IsConfig) value;
                     addConfigObjectMethods(
-                        childConfigObject, fullPath, propertyMap, configInstanceToPathMap, propConsumer);
+                        childConfigObject, fullPath, propertyMap, propConsumer);
                 }
             } else {
                 // This is not expected

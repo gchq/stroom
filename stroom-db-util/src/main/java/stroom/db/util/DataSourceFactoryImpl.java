@@ -43,8 +43,8 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 
     protected DbConfig mergeConfig(final DbConfig dbConfig) {
         final DbConfig mergedConfig = new DbConfig();
-        FieldMapper.copy(commonDbConfig, mergedConfig, FieldMapper.CopyOptions.DONT_COPY_NULLS);
-        FieldMapper.copy(dbConfig, mergedConfig, FieldMapper.CopyOptions.DONT_COPY_NULLS);
+        FieldMapper.copy(commonDbConfig, mergedConfig, FieldMapper.CopyOption.DONT_COPY_NULLS);
+        FieldMapper.copy(dbConfig, mergedConfig, FieldMapper.CopyOption.DONT_COPY_NULLS);
         return mergedConfig;
     }
 }

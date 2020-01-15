@@ -8,7 +8,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class ClusterLockConfig implements IsConfig, HasDbConfig {
+public class ClusterLockConfig extends IsConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
 
     @JsonProperty("db")

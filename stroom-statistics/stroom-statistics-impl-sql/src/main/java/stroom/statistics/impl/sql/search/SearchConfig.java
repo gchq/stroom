@@ -8,7 +8,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class SearchConfig implements IsConfig {
+public class SearchConfig extends IsConfig {
     private static final int DEFAULT_ROWS_IN_BATCH = 5_000;
 
     private String storeSize = "1000000,100,10,1";

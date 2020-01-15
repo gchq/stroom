@@ -9,7 +9,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class DataStoreServiceConfig implements IsConfig, HasDbConfig {
+public class DataStoreServiceConfig extends IsConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private String deletePurgeAge = "7d";
     private int deleteBatchSize = 1000;

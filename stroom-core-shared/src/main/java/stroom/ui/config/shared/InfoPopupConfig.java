@@ -8,7 +8,7 @@ import stroom.util.shared.ValidRegex;
 import javax.inject.Singleton;
 
 @Singleton
-public class InfoPopupConfig implements SharedObject, IsConfig {
+public class InfoPopupConfig extends IsConfig implements SharedObject {
     private boolean enabled;
     private String title = "Please Provide Query Info";
     private String validationRegex = "^[\\s\\S]{3,}$";

@@ -8,7 +8,7 @@ import stroom.util.shared.ModelStringUtil;
 import javax.inject.Singleton;
 
 @Singleton
-public class MetaValueConfig implements IsConfig {
+public class MetaValueConfig extends IsConfig {
     private String deleteAge = "30d";
     private int deleteBatchSize = 1000;
     private int flushBatchSize = 1000;

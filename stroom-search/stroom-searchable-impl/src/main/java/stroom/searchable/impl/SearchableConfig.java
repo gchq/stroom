@@ -8,7 +8,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class SearchableConfig implements IsConfig {
+public class SearchableConfig extends IsConfig {
     private String storeSize = "1000000,100,10,1";
     private CacheConfig searchResultCache = new CacheConfig.Builder()
             .maximumSize(10000L)

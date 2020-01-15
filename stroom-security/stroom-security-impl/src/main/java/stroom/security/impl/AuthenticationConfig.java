@@ -15,7 +15,7 @@ import javax.validation.constraints.NotNull;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class AuthenticationConfig implements IsConfig {
+public class AuthenticationConfig extends IsConfig {
 
     public static final String PROP_NAME_AUTHENTICATION_REQUIRED = "authenticationRequired";
     public static final String PROP_NAME_VERIFY_SSL = "verifySsl";
@@ -196,7 +196,7 @@ public class AuthenticationConfig implements IsConfig {
                 '}';
     }
 
-    public static class JwtConfig implements IsConfig {
+    public static class JwtConfig extends IsConfig {
 
         public static final String PROP_NAME_JWT_ISSUER = "jwtIssuer";
         public static final String PROP_NAME_ENABLE_TOKEN_REVOCATION_CHECK = "enableTokenRevocationCheck";

@@ -79,8 +79,9 @@ public class ConfigValidator {
         for (javax.validation.Path.Node node : constraintViolation.getPropertyPath()) {
             propName = node.getName();
         }
-        // Use config mapper to get the path of the config object
-        final String path = configMapper.getFullPath((IsConfig) constraintViolation.getLeafBean(), propName);
+        IsConfig config = (IsConfig) constraintViolation.getLeafBean();
+
+        final String path = config.getFullPath(propName);
 
         logFunc.accept(LogUtil.message("  Validation {} for {} [{}] - {}",
             severityStr,
@@ -104,6 +105,18 @@ public class ConfigValidator {
 
         public int getWarningCount() {
             return warningCount;
+        }
+
+        public boolean hasErrors() {
+            return errorCount > 0;
+        }
+
+        public boolean hasWarnings() {
+            return warningCount > 0;
+        }
+
+        public boolean hasErrorsOrWarnings() {
+            return errorCount > 0 || warningCount > 0;
         }
     }
 }

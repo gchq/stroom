@@ -81,7 +81,7 @@ class TestFieldMapper {
 
         MyObject copy = new MyObject();
         copy.setString("copy");
-        FieldMapper.copy(original, copy, FieldMapper.CopyOptions.DONT_COPY_NULLS);
+        FieldMapper.copy(original, copy, FieldMapper.CopyOption.DONT_COPY_NULLS);
 
         // we requested not to copy nulls so value is unchanged.
         assertThat(copy.getString())
@@ -188,7 +188,7 @@ class TestFieldMapper {
         System.out.println("parent1: " + parent1);
         System.out.println("parent2: " + parent2);
 
-        FieldMapper.copy(parent2, parent1, FieldMapper.CopyOptions.DONT_COPY_NULLS);
+        FieldMapper.copy(parent2, parent1, FieldMapper.CopyOption.DONT_COPY_NULLS);
         System.out.println("parent1: " + parent1);
         System.out.println("parent2: " + parent2);
 

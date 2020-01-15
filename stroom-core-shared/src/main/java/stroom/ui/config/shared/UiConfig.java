@@ -26,7 +26,7 @@ import stroom.util.shared.ValidRegex;
 import javax.inject.Singleton;
 
 @Singleton
-public class UiConfig implements SharedObject, IsConfig {
+public class UiConfig extends IsConfig implements SharedObject {
     private String welcomeHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
     private String aboutHtml = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";
     private BuildInfo buildInfo = new BuildInfo();

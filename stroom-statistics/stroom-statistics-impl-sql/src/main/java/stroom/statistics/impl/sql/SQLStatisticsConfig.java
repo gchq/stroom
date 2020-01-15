@@ -12,7 +12,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class SQLStatisticsConfig implements IsConfig, HasDbConfig {
+public class SQLStatisticsConfig extends IsConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private String docRefType = "StatisticStore";
     private SearchConfig searchConfig = new SearchConfig();

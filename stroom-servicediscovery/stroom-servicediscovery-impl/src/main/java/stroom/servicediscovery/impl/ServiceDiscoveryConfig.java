@@ -7,7 +7,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class ServiceDiscoveryConfig implements IsConfig {
+public class ServiceDiscoveryConfig extends IsConfig {
     private boolean enabled = false;
     private String zookeeperUrl = "localhost:2181";
     private String servicesHostNameOrIpAddress = "localhost";

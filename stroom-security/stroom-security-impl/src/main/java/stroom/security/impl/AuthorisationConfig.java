@@ -7,7 +7,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class AuthorisationConfig implements IsConfig {
+public class AuthorisationConfig extends IsConfig {
     private CacheConfig userGroupsCache = new CacheConfig.Builder()
             .maximumSize(1000L)
             .expireAfterAccess(30, TimeUnit.MINUTES)

@@ -6,7 +6,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class DataSourceUrlConfig implements IsConfig {
+public class DataSourceUrlConfig extends IsConfig {
     private String index = "http://127.0.0.1:8080/api/stroom-index/v2";
     private String solrIndex = "http://127.0.0.1:8080/api/stroom-solr-index/v2";
     private String statisticStore = "http://127.0.0.1:8080/api/sqlstatistics/v2";

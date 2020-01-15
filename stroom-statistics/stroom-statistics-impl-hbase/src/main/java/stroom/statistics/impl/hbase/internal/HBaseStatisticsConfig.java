@@ -7,7 +7,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class HBaseStatisticsConfig implements IsConfig {
+public class HBaseStatisticsConfig extends IsConfig {
     private String docRefType = "StroomStatsStore";
     private KafkaTopicsConfig kafkaTopicsConfig = new KafkaTopicsConfig();
     private String kafkaConfigUuid;

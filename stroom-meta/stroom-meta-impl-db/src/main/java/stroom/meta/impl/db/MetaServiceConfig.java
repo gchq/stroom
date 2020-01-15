@@ -10,7 +10,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class MetaServiceConfig implements IsConfig, HasDbConfig {
+public class MetaServiceConfig extends IsConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private MetaValueConfig metaValueConfig = new MetaValueConfig();
     private CacheConfig metaFeedCache = new CacheConfig.Builder()

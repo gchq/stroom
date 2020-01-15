@@ -6,7 +6,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class BenchmarkClusterConfig implements IsConfig {
+public class BenchmarkClusterConfig extends IsConfig {
     private int streamCount = 1000;
     private int recordCount = 10000;
     private int concurrentWriters = 10;

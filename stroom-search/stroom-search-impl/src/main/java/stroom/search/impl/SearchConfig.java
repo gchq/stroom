@@ -9,7 +9,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class SearchConfig implements IsConfig {
+public class SearchConfig extends IsConfig {
     /**
      * We don't want to collect more than 10k doc's data into the queue by
      * default. When the queue is full the index shard data tasks will pause

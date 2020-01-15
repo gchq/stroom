@@ -7,7 +7,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class VolumeConfig implements IsConfig {
+public class VolumeConfig extends IsConfig {
     private int resilientReplicationCount = 1;
     private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";

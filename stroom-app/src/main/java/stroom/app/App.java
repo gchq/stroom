@@ -182,10 +182,10 @@ public class App extends Application<Config> {
             result.getErrorCount(),
             result.getWarningCount());
 
-        if (result.getErrorCount() > 0 && appConfig.isHaltBootOnConfigValidationFailure()) {
+        if (result.hasErrors() && appConfig.isHaltBootOnConfigValidationFailure()) {
             LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid " +
                     "configuration, set {} to false. This is not advised!",
-                configMapper.getFullPath(appConfig, AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
+                appConfig.getFullPath(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
             System.exit(1);
         }
     }

@@ -8,7 +8,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
-public class QueryConfig implements SharedObject, IsConfig {
+public class QueryConfig extends IsConfig implements SharedObject {
     private InfoPopupConfig infoPopupConfig = new InfoPopupConfig();
 
     public QueryConfig() {

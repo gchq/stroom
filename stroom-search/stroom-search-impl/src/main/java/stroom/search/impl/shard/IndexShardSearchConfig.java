@@ -8,7 +8,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class IndexShardSearchConfig implements IsConfig {
+public class IndexShardSearchConfig extends IsConfig {
     private static final int DEFAULT_MAX_THREADS = 4;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;
 

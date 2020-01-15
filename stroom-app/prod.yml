@@ -108,7 +108,7 @@ appConfig:
     enabled: true
     executionInterval: "10s"
   node:
-    node: ${STROOM_NODE:-node1a}
+    name: ${STROOM_NODE:-node1a}
   path:
     temp: "/tmp/stroom"
   security:

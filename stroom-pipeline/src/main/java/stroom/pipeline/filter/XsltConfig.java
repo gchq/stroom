@@ -9,7 +9,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class XsltConfig implements IsConfig {
+public class XsltConfig extends IsConfig {
     private static final int DEFAULT_MAX_ELEMENTS = 1000000;
 
     private CacheConfig cacheConfig = new CacheConfig.Builder()

@@ -2,7 +2,7 @@ package stroom.util.shared;
 
 import stroom.docref.SharedObject;
 
-public class BuildInfo implements SharedObject, IsConfig {
+public class BuildInfo extends IsConfig implements SharedObject {
     private String upDate;
     private String buildDate = "TBD";
     private String buildVersion = "TBD";

@@ -9,7 +9,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class SolrConfig implements IsConfig {
+public class SolrConfig extends IsConfig {
     private SolrSearchConfig solrSearchConfig = new SolrSearchConfig();
     private CacheConfig indexClientCache = new CacheConfig.Builder()
             .maximumSize(100L)

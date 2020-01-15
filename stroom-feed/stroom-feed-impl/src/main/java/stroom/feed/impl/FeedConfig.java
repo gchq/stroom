@@ -10,13 +10,14 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class FeedConfig implements IsConfig {
+public class FeedConfig extends IsConfig {
 
     public static final String PROP_NAME_FEED_NAME_PATTERN = "feedNamePattern";
     public static final String PROP_NAME_FEED_DOC_CACHE = "feedDocCache";
 
     private String unknownClassification = "UNKNOWN CLASSIFICATION";
     private String feedNamePattern = "^[A-Z0-9_-]{3,}$";
+
     private CacheConfig feedDocCache = new CacheConfig.Builder()
             .maximumSize(1000L)
             .expireAfterAccess(10, TimeUnit.SECONDS)

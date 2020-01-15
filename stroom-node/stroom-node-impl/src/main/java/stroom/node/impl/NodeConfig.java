@@ -11,9 +11,9 @@ import javax.inject.Singleton;
 import javax.validation.constraints.NotNull;
 
 @Singleton
-public class NodeConfig implements IsConfig, HasDbConfig {
+public class NodeConfig extends IsConfig implements HasDbConfig {
 
-    public static final String PROP_NAME_NODE = "node";
+    public static final String PROP_NAME_NAME = "name";
     public static final String PROP_NAME_STATUS = "status";
 
     private DbConfig dbConfig = new DbConfig();
@@ -32,7 +32,7 @@ public class NodeConfig implements IsConfig, HasDbConfig {
     @NotNull
     @ReadOnly
     @JsonPropertyDescription("Should only be set per node in the application YAML config file")
-    @JsonProperty(PROP_NAME_NODE)
+    @JsonProperty(PROP_NAME_NAME)
     public String getNodeName() {
         return nodeName;
     }

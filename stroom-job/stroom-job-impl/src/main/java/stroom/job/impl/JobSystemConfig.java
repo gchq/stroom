@@ -14,7 +14,7 @@ import stroom.util.shared.ModelStringUtil;
 import javax.inject.Singleton;
 
 @Singleton
-public class JobSystemConfig implements IsConfig, HasDbConfig {
+public class JobSystemConfig extends IsConfig implements HasDbConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobSystemConfig.class);
 
     private static final int ONE_SECOND = 1000;

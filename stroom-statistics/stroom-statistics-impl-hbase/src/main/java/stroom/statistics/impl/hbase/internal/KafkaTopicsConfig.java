@@ -6,7 +6,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class KafkaTopicsConfig implements IsConfig {
+public class KafkaTopicsConfig extends IsConfig {
     private String count = "statisticEvents-Count";
     private String value = "statisticEvents-Value";
 

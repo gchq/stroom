@@ -28,7 +28,7 @@ class EmbeddedDbDataSourceFactory extends DataSourceFactoryImpl {
             FieldMapper.copy(
                 DbTestUtil.getOrCreateEmbeddedConnectionConfig(),
                 mergedConfig.getConnectionConfig(),
-                FieldMapper.CopyOptions.DONT_COPY_NULLS);
+                FieldMapper.CopyOption.DONT_COPY_NULLS);
         }
 
         return mergedConfig;

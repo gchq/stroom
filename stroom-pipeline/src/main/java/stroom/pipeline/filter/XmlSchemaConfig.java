@@ -9,7 +9,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class XmlSchemaConfig implements IsConfig {
+public class XmlSchemaConfig extends IsConfig {
     private CacheConfig cacheConfig = new CacheConfig.Builder()
             .maximumSize(1000L)
             .expireAfterAccess(10, TimeUnit.MINUTES)

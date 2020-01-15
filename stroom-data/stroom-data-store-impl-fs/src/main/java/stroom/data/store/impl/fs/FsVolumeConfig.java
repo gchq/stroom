@@ -9,7 +9,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class FsVolumeConfig implements IsConfig {
+public class FsVolumeConfig extends IsConfig {
 //    private int resilientReplicationCount = 1;
 //    private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";

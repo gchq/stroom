@@ -5,7 +5,7 @@ import stroom.util.shared.IsConfig;
 
 import java.util.Objects;
 
-public class DbConfig implements IsConfig {
+public class DbConfig extends IsConfig {
 
     public static final String PROP_NAME_CONNECTION = "connection";
     public static final String PROP_NAME_CONNECTION_POOL = "connectionPool";

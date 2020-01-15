@@ -43,9 +43,11 @@ import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.validation.constraints.AssertFalse;
 
-@JsonRootName("stroom")
+@JsonRootName(AppConfig.NAME)
 @Singleton
-public class AppConfig implements IsConfig {
+public class AppConfig extends IsConfig {
+
+    public static final String NAME = "stroom";
 
     public static final String PROP_NAME_SUPER_DEV_MODE = "superDevMode";
     public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
@@ -128,7 +130,6 @@ public class AppConfig implements IsConfig {
     private UiConfig uiConfig = new UiConfig();
     private VolumeConfig volumeConfig = new VolumeConfig();
 
-    @JsonProperty(PROP_NAME_SUPER_DEV_MODE)
     @AssertFalse(
         message = "Super Dev Mode is enabled. This should only be used in development",
         payload = ValidationSeverity.Warning.class)

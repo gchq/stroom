@@ -9,7 +9,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class ParserConfig implements IsConfig {
+public class ParserConfig extends IsConfig {
     private CacheConfig cacheConfig = new CacheConfig.Builder()
             .maximumSize(1000L)
             .expireAfterAccess(10, TimeUnit.MINUTES)

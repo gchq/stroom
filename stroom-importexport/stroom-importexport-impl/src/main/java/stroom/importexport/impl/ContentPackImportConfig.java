@@ -7,7 +7,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class ContentPackImportConfig implements IsConfig {
+public class ContentPackImportConfig extends IsConfig {
     private boolean enabled;
 
     @RequiresRestart(RequiresRestart.RestartScope.UI)

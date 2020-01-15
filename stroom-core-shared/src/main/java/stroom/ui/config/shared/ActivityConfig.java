@@ -7,7 +7,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class ActivityConfig implements SharedObject, IsConfig {
+public class ActivityConfig extends IsConfig implements SharedObject {
     private boolean enabled;
     private boolean chooseOnStartup;
     private String managerTitle = "Choose Activity";

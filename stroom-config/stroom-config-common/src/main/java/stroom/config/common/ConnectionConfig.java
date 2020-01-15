@@ -19,11 +19,12 @@ package stroom.config.common;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.ReadOnly;
+import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.IsConfig;
 
 import java.util.Objects;
 
-public class ConnectionConfig implements IsConfig {
+public class ConnectionConfig extends IsConfig {
 
     public static final String PROP_NAME_JDBC_DRIVER_CLASS_NAME = "jdbcDriverClassName";
     public static final String PROP_NAME_JDBC_DRIVER_URL = "jdbcDriverUrl";
@@ -39,6 +40,7 @@ public class ConnectionConfig implements IsConfig {
     private String jdbcDriverPassword;
 
     @ReadOnly
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The class name for the JDBC database connection, e.g. com.mysql.cj.jdbc.Driver. "
         + COMMON_DESCRIPTION)
     @JsonProperty(PROP_NAME_JDBC_DRIVER_CLASS_NAME)
@@ -51,6 +53,7 @@ public class ConnectionConfig implements IsConfig {
     }
 
     @ReadOnly
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The URL for the JDBC database connection, e.g. " +
         "jdbc:mysql://some-host:3306/db-name?useUnicode=yes&characterEncoding=UTF-8. "
         + COMMON_DESCRIPTION)
@@ -64,6 +67,7 @@ public class ConnectionConfig implements IsConfig {
     }
 
     @ReadOnly
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The username to connect to the database with. "
         + COMMON_DESCRIPTION)
     @JsonProperty(PROP_NAME_JDBC_DRIVER_USERNAME)
@@ -76,6 +80,7 @@ public class ConnectionConfig implements IsConfig {
     }
 
     @ReadOnly
+    @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The password to connect to the database with. "
         + COMMON_DESCRIPTION)
     @JsonProperty(PROP_NAME_JDBC_DRIVER_PASSWORD)

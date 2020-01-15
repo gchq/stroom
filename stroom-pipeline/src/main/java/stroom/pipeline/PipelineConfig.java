@@ -13,7 +13,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class PipelineConfig implements IsConfig {
+public class PipelineConfig extends IsConfig {
     private AppenderConfig appenderConfig = new AppenderConfig();
     private ParserConfig parserConfig = new ParserConfig();
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();

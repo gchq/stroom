@@ -93,8 +93,8 @@ class TestAppConfigModule {
                 })
                 .forEach(hasDbConfig -> {
                     final DbConfig mergedConfig = new DbConfig();
-                    FieldMapper.copy(commonDbConfig, mergedConfig, FieldMapper.CopyOptions.DONT_COPY_NULLS);
-                    FieldMapper.copy(hasDbConfig.getDbConfig(), mergedConfig, FieldMapper.CopyOptions.DONT_COPY_NULLS);
+                    FieldMapper.copy(commonDbConfig, mergedConfig, FieldMapper.CopyOption.DONT_COPY_NULLS);
+                    FieldMapper.copy(hasDbConfig.getDbConfig(), mergedConfig, FieldMapper.CopyOption.DONT_COPY_NULLS);
 
                     Assertions.assertThat(mergedConfig.getConnectionConfig())
                             .isEqualTo(commonDbConfig.getConnectionConfig());

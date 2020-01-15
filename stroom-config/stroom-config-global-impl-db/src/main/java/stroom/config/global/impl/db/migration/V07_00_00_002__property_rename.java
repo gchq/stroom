@@ -27,6 +27,7 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
     static {
 
         // TODO what do we do about mapping c3po pool props to hikari?
+        //   Can we map some/any of them to equiv hikari props?
 
         FROM_TO_MAP.put("stroom.aboutHTML", "stroom.ui.aboutHtml");
         FROM_TO_MAP.put("stroom.activity.chooseOnStartup", "stroom.ui.activity.chooseOnStartup");
@@ -114,7 +115,7 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
         FROM_TO_MAP.put("stroom.maxAggregationScan", "stroom.proxyAggregation.maxFileScan");
         FROM_TO_MAP.put("stroom.maxStreamSize", "stroom.proxyAggregation.maxUncompressedFileSize");
         FROM_TO_MAP.put("stroom.namePattern", "stroom.ui.namePattern");
-        FROM_TO_MAP.put("stroom.node", "stroom.node.node");
+        FROM_TO_MAP.put("stroom.node", "stroom.node.name");
 
         // Same names in 6 & master
         // stroom.node.status.heapHistogram.classNameMatchRegex

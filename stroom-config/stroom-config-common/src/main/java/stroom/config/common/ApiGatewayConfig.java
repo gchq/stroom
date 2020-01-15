@@ -11,7 +11,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.Objects;
 
-public class ApiGatewayConfig implements IsConfig {
+public class ApiGatewayConfig extends IsConfig {
 
     public static final String PROP_NAME_HOST_NAME = "hostname";
     public static final String PROP_NAME_SCHEME = "scheme";

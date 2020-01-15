@@ -6,7 +6,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class IndexWriterConfig implements IsConfig {
+public class IndexWriterConfig extends IsConfig {
     private CacheConfig cacheConfig;
 
     public IndexWriterConfig() {

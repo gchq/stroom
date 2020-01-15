@@ -10,7 +10,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Singleton
-public class PathConfig implements IsConfig {
+public class PathConfig extends IsConfig {
     private String temp = "/tmp";//System.getProperty("java.io.tmpdir");
 
     @ReadOnly

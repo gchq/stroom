@@ -7,7 +7,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class SplashConfig implements SharedObject, IsConfig {
+public class SplashConfig extends IsConfig implements SharedObject {
     private boolean enabled;
     private String title = "Splash Screen";
     private String body = "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple systems.</p>";

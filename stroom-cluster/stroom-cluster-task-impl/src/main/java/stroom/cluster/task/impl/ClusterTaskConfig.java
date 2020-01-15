@@ -7,7 +7,9 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class ClusterTaskConfig implements IsConfig {
+public class ClusterTaskConfig extends IsConfig {
+    public static final String NAME = "clusterTask";
+    
     private CacheConfig clusterResultCollectorCache = new CacheConfig.Builder()
             .maximumSize(1000000L)
             .expireAfterAccess(1, TimeUnit.MINUTES)

@@ -83,7 +83,7 @@ appConfig:
     enabled: true
     executionInterval: "10s"
   node:
-    node: node1a
+    name: node1a
   path:
     temp: "/tmp/stroom"
   security:

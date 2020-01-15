@@ -11,7 +11,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class ReferenceDataConfig implements IsConfig {
+public class ReferenceDataConfig extends IsConfig {
     private static final int MAX_READERS_DEFAULT = 100;
     private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 1000;
     private static final int VALUE_BUFFER_CAPACITY_DEFAULT_VALUE = 1000;

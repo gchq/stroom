@@ -9,7 +9,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class StoredQueryConfig implements IsConfig, HasDbConfig {
+public class StoredQueryConfig extends IsConfig implements HasDbConfig {
     private int itemsRetention = 100;
     private int daysRetention = 365;
     private DbConfig dbConfig = new DbConfig();

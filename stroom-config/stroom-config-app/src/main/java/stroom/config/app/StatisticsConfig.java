@@ -9,7 +9,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class StatisticsConfig implements IsConfig {
+public class StatisticsConfig extends IsConfig {
 
     public static final String PROP_NAME_SQL = "sql";
     public static final String PROP_NAME_HBASE = "hbase";

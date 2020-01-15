@@ -5,7 +5,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class SessionCookieConfig implements IsConfig {
+public class SessionCookieConfig extends IsConfig {
     private boolean secure = true;
     private boolean httpOnly = true;
 

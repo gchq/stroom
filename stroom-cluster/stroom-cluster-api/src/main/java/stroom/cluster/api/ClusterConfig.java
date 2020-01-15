@@ -9,7 +9,7 @@ import stroom.util.shared.ModelStringUtil;
 import javax.inject.Singleton;
 
 @Singleton
-public class ClusterConfig implements IsConfig {
+public class ClusterConfig extends IsConfig {
     private boolean clusterCallUseLocal = true;
     private String clusterCallReadTimeout = "30s";
     private boolean clusterCallIgnoreSSLHostnameVerifier = true;

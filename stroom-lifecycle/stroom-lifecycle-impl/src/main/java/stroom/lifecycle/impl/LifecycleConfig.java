@@ -7,7 +7,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class LifecycleConfig implements IsConfig {
+public class LifecycleConfig extends IsConfig {
     private boolean enabled = true;
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)

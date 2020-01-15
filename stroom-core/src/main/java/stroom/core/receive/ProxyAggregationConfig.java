@@ -9,7 +9,7 @@ import stroom.util.shared.ModelStringUtil;
 import javax.inject.Singleton;
 
 @Singleton
-public class ProxyAggregationConfig implements IsConfig {
+public class ProxyAggregationConfig extends IsConfig {
     private String proxyDir = "${stroom.temp}/proxy";
     private volatile int proxyThreads = 10;
 

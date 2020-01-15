@@ -5,7 +5,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class DataRetentionConfig implements IsConfig {
+public class DataRetentionConfig extends IsConfig {
     private int deleteBatchSize = 1000;
 
     public int getDeleteBatchSize() {

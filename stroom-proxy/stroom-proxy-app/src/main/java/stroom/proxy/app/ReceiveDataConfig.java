@@ -7,7 +7,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class ReceiveDataConfig implements IsConfig {
+public class ReceiveDataConfig extends IsConfig {
     /**
      * Same size as JDK's Buffered Output Stream.
      */

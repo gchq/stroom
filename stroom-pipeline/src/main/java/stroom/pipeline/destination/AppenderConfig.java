@@ -6,7 +6,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class AppenderConfig implements IsConfig {
+public class AppenderConfig extends IsConfig {
     private static final int DEFAULT_MAX_ACTIVE_DESTINATIONS = 100;
 
     private int maxActiveDestinations = DEFAULT_MAX_ACTIVE_DESTINATIONS;

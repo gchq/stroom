@@ -11,7 +11,7 @@ import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class IndexConfig implements IsConfig, HasDbConfig {
+public class IndexConfig extends IsConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private int ramBufferSizeMB = 1024;
     private IndexWriterConfig indexWriterConfig = new IndexWriterConfig();

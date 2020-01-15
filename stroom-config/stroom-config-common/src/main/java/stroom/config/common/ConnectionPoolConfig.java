@@ -22,7 +22,7 @@ import stroom.util.shared.IsConfig;
 
 import java.util.Objects;
 
-public class ConnectionPoolConfig implements IsConfig {
+public class ConnectionPoolConfig extends IsConfig {
 
     public static final String COMMON_CONN_POOL_DESC = "See " +
         "https://github.com/brettwooldridge/HikariCP for further " +

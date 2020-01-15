@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
-public class AnnotationConfig implements IsConfig, HasDbConfig {
+public class AnnotationConfig extends IsConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private List<String> statusValues = new ArrayList<>();
     private List<String> standardComments = new ArrayList<>();

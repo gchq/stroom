@@ -6,7 +6,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class StatusConfig implements IsConfig {
+public class StatusConfig extends IsConfig {
     private HeapHistogramConfig heapHistogramConfig = new HeapHistogramConfig();
 
     @JsonProperty("heapHistogram")

@@ -31,33 +31,38 @@ public class HikariUtil {
         final HikariConfig config = new HikariConfig();
 
         // Pool properties
-        setPoolProp(connectionPoolConfig::getConnectionTimeout, config::setConnectionTimeout, Long::longValue);
-        setPoolProp(connectionPoolConfig::getIdleTimeout, config::setIdleTimeout, Long::longValue);
-        setPoolProp(connectionPoolConfig::getMaxLifetime, config::setMaxLifetime, Long::longValue);
-        setPoolProp(connectionPoolConfig::getMinimumIdle, config::setMinimumIdle, Integer::intValue);
-        setPoolProp(connectionPoolConfig::getMaxPoolSize, config::setMaximumPoolSize, Integer::intValue);
+        copyAndMapProp(connectionPoolConfig::getConnectionTimeout, config::setConnectionTimeout, Long::longValue);
+        copyAndMapProp(connectionPoolConfig::getIdleTimeout, config::setIdleTimeout, Long::longValue);
+        copyAndMapProp(connectionPoolConfig::getMaxLifetime, config::setMaxLifetime, Long::longValue);
+        copyAndMapProp(connectionPoolConfig::getMinimumIdle, config::setMinimumIdle, Integer::intValue);
+        copyAndMapProp(connectionPoolConfig::getMaxPoolSize, config::setMaximumPoolSize, Integer::intValue);
 
-        setPoolProp(connectionConfig::getJdbcDriverUrl, config::setJdbcUrl, Function.identity());
-        setPoolProp(connectionConfig::getJdbcDriverUsername, config::setUsername, Function.identity());
-        setPoolProp(connectionConfig::getJdbcDriverPassword, config::setPassword, Function.identity());
+        copyAndMapProp(connectionConfig::getJdbcDriverUrl, config::setJdbcUrl, Function.identity());
+        copyAndMapProp(connectionConfig::getJdbcDriverUsername, config::setUsername, Function.identity());
+        copyAndMapProp(connectionConfig::getJdbcDriverPassword, config::setPassword, Function.identity());
 
         // JDBC Driver properties
-        setPoolProp(connectionPoolConfig::getCachePrepStmts,
+        copyAndMapProp(connectionPoolConfig::getCachePrepStmts,
             val -> config.addDataSourceProperty("cachePrepStmts", val),
             String::valueOf);
-        setPoolProp(connectionPoolConfig::getPrepStmtCacheSize,
+        copyAndMapProp(connectionPoolConfig::getPrepStmtCacheSize,
             val -> config.addDataSourceProperty("prepStmtCacheSize", val),
             String::valueOf);
-        setPoolProp(connectionPoolConfig::getPrepStmtCacheSqlLimit,
+        copyAndMapProp(connectionPoolConfig::getPrepStmtCacheSqlLimit,
             val -> config.addDataSourceProperty("prepStmtCacheSqlLimit", val),
             String::valueOf);
 
         return config;
     }
 
-    private static <T1, T2> void setPoolProp(final Supplier<T1> source,
-                                             final Consumer<T2> dest,
-                                             final Function<T1, T2> typeMapper) {
+    /**
+     * If the source supplier (i.e. getter) has a non-null value then set it
+     * on the dest consumer (i.e. setter). Convert the type of the value in the
+     * process.
+     */
+    private static <T1, T2> void copyAndMapProp(final Supplier<T1> source,
+                                                final Consumer<T2> dest,
+                                                final Function<T1, T2> typeMapper) {
         final T1 sourceValue = source.get();
         if (sourceValue != null) {
             dest.accept(typeMapper.apply(sourceValue));

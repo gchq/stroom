@@ -75,7 +75,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         Assertions.assertThat(appConfig.getPathConfig().getTemp())
                 .isNotEqualTo(newPathValue);
 
-        final AppConfigMonitor appConfigMonitor = new AppConfigMonitor(appConfig, configLocation, configMapper);
+        final AppConfigMonitor appConfigMonitor = new AppConfigMonitor(appConfig, configLocation, configMapper, configValidator);
 
 
         // start watching the file for changes

@@ -7,7 +7,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.IsConfig;
 import stroom.util.shared.ModelStringUtil;
 
-public class CacheConfig implements IsConfig {
+public class CacheConfig extends IsConfig {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CacheConfig.class);
 
     private String timeToLive;

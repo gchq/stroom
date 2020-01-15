@@ -8,7 +8,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class ActivityConfig implements IsConfig, HasDbConfig {
+public class ActivityConfig extends IsConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
 
     @JsonProperty("db")

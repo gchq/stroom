@@ -6,7 +6,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class ExportConfig implements IsConfig {
+public class ExportConfig extends IsConfig {
     private boolean enabled;
 
     @JsonPropertyDescription("Determines if the system will allow configuration to be exported via the export servlet")

@@ -759,7 +759,7 @@ class TestConfigMapper {
     }
 
 
-    public static class TestPrimitiveConfig implements IsConfig {
+    public static class TestPrimitiveConfig extends IsConfig {
         private boolean booleanProp = false;
         private int intProp = 123;
         private long longProp = 123L;
@@ -807,7 +807,7 @@ class TestConfigMapper {
         }
     }
 
-    public static class TestBoxedConfig implements IsConfig {
+    public static class TestBoxedConfig extends IsConfig {
         private Boolean booleanProp = false;
         private Integer intProp = 123;
         private Long longProp = 123L;
@@ -855,7 +855,7 @@ class TestConfigMapper {
         }
     }
 
-    public static class TestOtherTypesConfig implements IsConfig {
+    public static class TestOtherTypesConfig extends IsConfig {
 
 
     }

@@ -8,7 +8,7 @@ import stroom.util.shared.IsConfig;
 import javax.inject.Singleton;
 
 @Singleton
-public class SecurityConfig implements IsConfig, HasDbConfig {
+public class SecurityConfig extends IsConfig implements HasDbConfig {
 
     private DbConfig dbConfig = new DbConfig();
     private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
