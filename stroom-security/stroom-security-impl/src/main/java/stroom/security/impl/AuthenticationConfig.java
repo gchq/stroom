@@ -5,12 +5,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.shared.ConfigValidationResults;
 import stroom.util.shared.IsConfig;
+import stroom.util.shared.ValidRegex;
 import stroom.util.shared.ValidationSeverity;
 
 import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;
+import javax.validation.constraints.NotNull;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
@@ -142,6 +143,7 @@ public class AuthenticationConfig implements IsConfig {
 
     @JsonPropertyDescription("The regex pattern for user names")
     @JsonProperty(PROP_NAME_USER_NAME_PATTERN)
+    @ValidRegex
     public String getUserNamePattern() {
         return userNamePattern;
     }
@@ -194,16 +196,6 @@ public class AuthenticationConfig implements IsConfig {
                 '}';
     }
 
-    @Override
-    public ConfigValidationResults validateConfig() {
-        return ConfigValidationResults.builder(this)
-            .addWarningWhen(!authenticationRequired, PROP_NAME_AUTHENTICATION_REQUIRED, "All authentication " +
-                "is disabled. This should only be used in development or test environments.")
-            .addErrorWhenPatternInvalid(userNamePattern, PROP_NAME_USER_NAME_PATTERN)
-            .addErrorWhenModelStringDurationInvalid(durationToWarnBeforeExpiry, PROP_NAME_DURATION_TO_WARN_BEFORE_EXPIRY)
-            .build();
-    }
-
     public static class JwtConfig implements IsConfig {
 
         public static final String PROP_NAME_JWT_ISSUER = "jwtIssuer";
@@ -215,6 +207,7 @@ public class AuthenticationConfig implements IsConfig {
         @RequiresRestart(RequiresRestart.RestartScope.UI)
         @JsonPropertyDescription("The issuer to expect when verifying JWTs.")
         @JsonProperty(PROP_NAME_JWT_ISSUER)
+        @NotNull
         public String getJwtIssuer() {
             return jwtIssuer;
         }
@@ -243,13 +236,6 @@ public class AuthenticationConfig implements IsConfig {
                     "jwtIssuer='" + jwtIssuer + '\'' +
                     ", enableTokenRevocationCheck=" + enableTokenRevocationCheck +
                     '}';
-        }
-
-        @Override
-        public ConfigValidationResults validateConfig() {
-            return ConfigValidationResults.builder(this)
-                .addErrorWhenEmpty(jwtIssuer, PROP_NAME_JWT_ISSUER)
-                .build();
         }
     }
 }

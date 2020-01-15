@@ -36,7 +36,6 @@ import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
-import stroom.util.shared.ConfigValidationResults;
 import stroom.util.shared.IsConfig;
 import stroom.util.shared.ValidationSeverity;
 
@@ -491,12 +490,5 @@ public class AppConfig implements IsConfig {
 
     public void setVolumeConfig(final VolumeConfig volumeConfig) {
         this.volumeConfig = volumeConfig;
-    }
-
-    @Override
-    public ConfigValidationResults validateConfig() {
-        return ConfigValidationResults.builder(this)
-            .addWarningWhen(superDevMode, PROP_NAME_SUPER_DEV_MODE, "Super Dev Mode is enabled. This should only be used in development")
-            .build();
     }
 }

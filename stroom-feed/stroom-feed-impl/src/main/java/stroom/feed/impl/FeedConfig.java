@@ -3,8 +3,8 @@ package stroom.feed.impl;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
-import stroom.util.shared.ConfigValidationResults;
 import stroom.util.shared.IsConfig;
+import stroom.util.shared.ValidRegex;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
@@ -33,6 +33,7 @@ public class FeedConfig implements IsConfig {
 
     @JsonPropertyDescription("The regex pattern for feed names")
     @JsonProperty(PROP_NAME_FEED_NAME_PATTERN)
+    @ValidRegex
     public String getFeedNamePattern() {
         return feedNamePattern;
     }
@@ -59,12 +60,5 @@ public class FeedConfig implements IsConfig {
                 ", feedNamePattern='" + feedNamePattern + '\'' +
                 ", feedDocCache=" + feedDocCache +
                 '}';
-    }
-
-    @Override
-    public ConfigValidationResults validateConfig() {
-        return ConfigValidationResults.builder(this)
-            .addErrorWhenPatternInvalid(feedNamePattern, PROP_NAME_FEED_NAME_PATTERN)
-            .build();
     }
 }

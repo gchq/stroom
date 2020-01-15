@@ -3,9 +3,12 @@ package stroom.config.common;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.util.shared.ConfigValidationResults;
 import stroom.util.shared.IsConfig;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.util.Objects;
 
 public class ApiGatewayConfig implements IsConfig {
@@ -21,6 +24,7 @@ public class ApiGatewayConfig implements IsConfig {
     @JsonProperty(PROP_NAME_HOST_NAME)
     @JsonPropertyDescription("The hostname, DNS name or IP address of the " +
         "Stroom API gateway, i.e. Nginx.")
+    @NotNull
     public String getHostname() {
         return hostname;
     }
@@ -32,6 +36,8 @@ public class ApiGatewayConfig implements IsConfig {
     @JsonProperty(PROP_NAME_SCHEME)
     @JsonPropertyDescription("The scheme to use when passing requests to the API gateway, " +
         " i.e. https")
+    @Pattern(regexp = "^https?$")
+    @NotNull
     public String getScheme() {
         return scheme;
     }
@@ -44,6 +50,9 @@ public class ApiGatewayConfig implements IsConfig {
     @JsonPropertyDescription("The port to use when passing requests to the API gateway. " +
         "If no port is supplied then no port will be used in the resulting URL and it will " +
         "be inferred from the scheme.")
+    @Min(1)
+    @Max(65535)
+    @NotNull
     public Integer getPort() {
         return port;
     }
@@ -93,18 +102,6 @@ public class ApiGatewayConfig implements IsConfig {
     @Override
     public int hashCode() {
         return Objects.hash(hostname, scheme, port);
-    }
-
-    @Override
-    public ConfigValidationResults validateConfig() {
-        return ConfigValidationResults.builder(this)
-            .addErrorWhenEmpty(hostname, PROP_NAME_HOST_NAME)
-            .addErrorWhen(
-                port != null && (port < 1 || port > 65535),
-                PROP_NAME_PORT,
-                "Port must be in the range 1-65535")
-            .addErrorWhenNoRegexMatch(scheme, "^https?$", PROP_NAME_SCHEME)
-            .build();
     }
 
     private StringBuilder buildBasePath() {

@@ -7,19 +7,5 @@ package stroom.util.shared;
  */
 public interface IsConfig {
 
-    /**
-     * Perform any validation tests and return the results of all tests.
-     * If not implemented a healthy result will be returned.
-     */
-    default ConfigValidationResults validateConfig() {
-        return ConfigValidationResults.healthy();
-    }
 
-//    /**
-//     * Perform any validation steps on
-//     * @param propertyName The un-qualified name of the property, e.g. node or jdbcDriverUrl
-//     */
-//    default ConfigValidationResults validateConfig(final String propertyName) {
-//        return ConfigValidationResults.healthy();
-//    }
 }

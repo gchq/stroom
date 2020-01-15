@@ -62,13 +62,6 @@ public class CacheConfig implements IsConfig {
         this.expireAfterWrite = expireAfterWrite;
     }
 
-    @Override
-    public ConfigValidationResults validateConfig() {
-        return ConfigValidationResults.builder(this)
-            .addErrorWhen(maximumSize < 0, PROP_NAME_MAXIMUM_SIZE, "Must be a positive value")
-            .build();
-    }
-
     public static class Builder {
         private Long maximumSize;
         private Long expireAfterAccess; // Milliseconds
