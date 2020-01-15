@@ -1,25 +1,26 @@
 package stroom.util.shared;
 
+import stroom.docref.SharedObject;
+
 import java.util.Objects;
-import java.util.StringJoiner;
 
 /**
  * Marker interface for java bean classes used to provide configuration properties.
  * This includes AppConfig and the classes that sit beneath it.  Implementing classes
  * are expected to be (de)serialised from/to YAML configuration files.
  */
-public abstract class AbstractConfig {
+public abstract class AbstractConfig implements SharedObject {
 
     // Held in part form to reduce memory overhead as some parts will be used
     // many times over all the config objects
-    private String[] basePathParts = new String[] {};
+    private PropertyPath basePropertyPath = PropertyPath.blank();
 
     /**
      * @return The base property path, e.g. "stroom.node" for this config object
      */
     public String getBasePath() {
-        Objects.requireNonNull(basePathParts);
-        return joinBaseParts().toString();
+        Objects.requireNonNull(basePropertyPath);
+        return basePropertyPath.toString();
     }
 
     /**
@@ -27,22 +28,12 @@ public abstract class AbstractConfig {
      * object
      */
     public String getFullPath(final String propertyName) {
-        Objects.requireNonNull(basePathParts);
+        Objects.requireNonNull(basePropertyPath);
         Objects.requireNonNull(propertyName);
-        return joinBaseParts()
-            .add(propertyName)
-            .toString();
+        return basePropertyPath.merge(propertyName).toString();
     }
 
-    private StringJoiner joinBaseParts() {
-        StringJoiner stringJoiner = new StringJoiner(".");
-        for (final String basePathPart : basePathParts) {
-            stringJoiner.add(basePathPart);
-        }
-        return stringJoiner;
-    }
-
-    public void setBasePath(final String basePath) {
-        this.basePathParts = basePath.split("\\.");
+    public void setBasePath(final PropertyPath basePropertyPath) {
+        this.basePropertyPath = basePropertyPath;
     }
 }
