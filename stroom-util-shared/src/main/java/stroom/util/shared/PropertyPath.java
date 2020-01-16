@@ -25,14 +25,23 @@ public class PropertyPath {
         return EMPTY_INSTANCE;
     }
 
+    /**
+     * Create a {@link PropertyPath} from a path string, e.g "stroom.node.name"
+     */
     public static PropertyPath from(final String propertyPath) {
         return PropertyPath.from(propertyPath.split(DELIMITER_REGEX));
     }
 
+    /**
+     * Create a {@link PropertyPath} from a path string, e.g ["stroom", "node", "name"]
+     */
     public static PropertyPath from(final String... parts) {
         return new PropertyPath(Arrays.asList(parts));
     }
 
+    /**
+     * Create a {@link PropertyPath} from a path string, e.g ["stroom", "node", "name"]
+     */
     public static PropertyPath from(final List<String> parts) {
         if (parts.isEmpty()) {
             return EMPTY_INSTANCE;
@@ -45,12 +54,18 @@ public class PropertyPath {
         this.parts = new ArrayList<>(parts);
     }
 
+    /**
+     * Merge otherPath onto the end of this and return a new {@link PropertyPath}
+     */
     public PropertyPath merge(final PropertyPath otherPath) {
         List<String> mergedParts = new ArrayList<>(this.parts);
         mergedParts.addAll(otherPath.parts);
         return new PropertyPath(mergedParts);
     }
 
+    /**
+     * Merge part onto the end of this and return a new {@link PropertyPath}
+     */
     public PropertyPath merge(final String part) {
         List<String> mergedParts = new ArrayList<>(this.parts);
         mergedParts.add(part);
