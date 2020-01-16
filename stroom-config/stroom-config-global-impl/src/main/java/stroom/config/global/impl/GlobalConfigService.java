@@ -18,6 +18,7 @@
 package stroom.config.global.impl;
 
 
+import org.apache.poi.openxml4j.opc.PackagePart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
@@ -34,6 +35,7 @@ import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.PropertyPath;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -84,7 +86,7 @@ class GlobalConfigService {
         // Get all props held in the DB, which may be a subset of those in the config
         // object model
         dao.list().forEach(dbConfigProperty -> {
-            final String fullPath = dbConfigProperty.getName();
+            final PropertyPath fullPath = dbConfigProperty.getName();
             if (fullPath != null) {
 
                 try {
@@ -255,7 +257,7 @@ class GlobalConfigService {
         });
     }
 
-    private void deleteFromDb(final String name) {
+    private void deleteFromDb(final PropertyPath name) {
         LAMBDA_LOGGER.warn(() ->
                 LogUtil.message("Deleting property {} as it is not valid in the object model", name));
         dao.delete(name);

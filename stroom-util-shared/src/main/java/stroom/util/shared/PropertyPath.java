@@ -10,7 +10,7 @@ import java.util.Objects;
  * Class for representing a path to a property in an object tree, i.e
  * stroom.node.name
  */
-public class PropertyPath {
+public class PropertyPath implements Comparable<PropertyPath> {
 
     private static final String DELIMITER = ".";
     private static final String DELIMITER_REGEX = "\\" + DELIMITER;
@@ -28,21 +28,21 @@ public class PropertyPath {
     /**
      * Create a {@link PropertyPath} from a path string, e.g "stroom.node.name"
      */
-    public static PropertyPath from(final String propertyPath) {
-        return PropertyPath.from(propertyPath.split(DELIMITER_REGEX));
+    public static PropertyPath fromPathString(final String propertyPath) {
+        return PropertyPath.fromParts(propertyPath.split(DELIMITER_REGEX));
     }
 
     /**
      * Create a {@link PropertyPath} from a path string, e.g ["stroom", "node", "name"]
      */
-    public static PropertyPath from(final String... parts) {
+    public static PropertyPath fromParts(final String... parts) {
         return new PropertyPath(Arrays.asList(parts));
     }
 
     /**
      * Create a {@link PropertyPath} from a path string, e.g ["stroom", "node", "name"]
      */
-    public static PropertyPath from(final List<String> parts) {
+    public static PropertyPath fromParts(final List<String> parts) {
         if (parts.isEmpty()) {
             return EMPTY_INSTANCE;
         } else {
@@ -76,21 +76,9 @@ public class PropertyPath {
         return new Builder();
     }
 
-    public static class Builder {
-
-        private List<String> parts = null;
-
-        public Builder add(final String part) {
-            if (parts == null) {
-                parts = new ArrayList<>();
-            }
-            parts.add(part);
-            return this;
-        }
-
-        public PropertyPath build() {
-            return new PropertyPath(parts);
-        }
+    @Override
+    public int compareTo(final PropertyPath other) {
+        return toString().compareTo(other.toString());
     }
 
     @Override
@@ -109,5 +97,22 @@ public class PropertyPath {
     @Override
     public int hashCode() {
         return Objects.hash(parts);
+    }
+
+    public static class Builder {
+
+        private List<String> parts = null;
+
+        public Builder add(final String part) {
+            if (parts == null) {
+                parts = new ArrayList<>();
+            }
+            parts.add(part);
+            return this;
+        }
+
+        public PropertyPath build() {
+            return new PropertyPath(parts);
+        }
     }
 }

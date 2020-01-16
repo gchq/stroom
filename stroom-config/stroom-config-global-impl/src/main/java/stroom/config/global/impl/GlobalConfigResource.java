@@ -16,6 +16,7 @@ import java.util.List;
 @Path("/config/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public interface GlobalConfigResource extends RestResource {
+
     @GET
     @Path("/")
     @Produces(MediaType.APPLICATION_JSON)

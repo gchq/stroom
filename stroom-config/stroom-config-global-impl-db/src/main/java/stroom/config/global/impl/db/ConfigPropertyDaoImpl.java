@@ -7,6 +7,7 @@ import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.PropertyPath;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -18,6 +19,7 @@ import java.util.function.Function;
 import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
 
 class ConfigPropertyDaoImpl implements ConfigPropertyDao {
+
     private static final Function<Record, ConfigProperty> RECORD_TO_CONFIG_PROPERTY_MAPPER = record -> {
         final ConfigProperty configProperty = new ConfigProperty();
         configProperty.setId(record.get(CONFIG.ID));
@@ -26,7 +28,7 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
         configProperty.setCreateUser(record.get(CONFIG.CREATE_USER));
         configProperty.setUpdateTimeMs(record.get(CONFIG.UPDATE_TIME_MS));
         configProperty.setUpdateUser(record.get(CONFIG.UPDATE_USER));
-        configProperty.setName(record.get(CONFIG.NAME));
+        configProperty.setName(PropertyPath.from(record.get(CONFIG.NAME)));
         String value = record.get(CONFIG.VAL);
         // value col is not-null
         if (value.isEmpty()) {
@@ -44,7 +46,7 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
         record.set(CONFIG.CREATE_USER, configProperty.getCreateUser());
         record.set(CONFIG.UPDATE_TIME_MS, configProperty.getUpdateTimeMs());
         record.set(CONFIG.UPDATE_USER, configProperty.getUpdateUser());
-        record.set(CONFIG.NAME, configProperty.getName());
+        record.set(CONFIG.NAME, configProperty.getNameAsString());
         // DB doesn't allow null values so use empty string
         if (!configProperty.hasDatabaseOverride()) {
             // If there is no value override then we don't want it in the DB

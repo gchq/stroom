@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.PropertyPath;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -56,7 +57,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     private String createUser;
     private Long updateTimeMs;
     private String updateUser;
-    private String name;
+    private PropertyPath name;
 
     // TODO now that properties are typed in AppConfig we should really be dealing with typed
     // values here so the UI can edit/display/validate them appropriately according to their type,
@@ -155,12 +156,17 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * @return The fully qualified name of the property, e.g. "stroom.temp.path"
      */
-    public String getName() {
+    @JsonProperty("name")
+    public String getNameAsString() {
+        return name.toString();
+    }
+
+    @JsonIgnore
+    public PropertyPath getName() {
         return name;
     }
 
-    @JsonProperty("name")
-    public void setName(final String name) {
+    public void setName(final PropertyPath name) {
         this.name = name;
     }
 

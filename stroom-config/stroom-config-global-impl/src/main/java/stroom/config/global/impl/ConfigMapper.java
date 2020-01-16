@@ -36,6 +36,7 @@ import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.PropertyPath;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -77,7 +78,7 @@ public class ConfigMapper {
             "|", ":", ";", ",", "!", "/", "\\", "#", "@", "~", "-", "_", "=", "+", "?");
     private static final Set<String> VALID_DELIMITERS_SET = new HashSet<>(VALID_DELIMITERS_LIST);
 
-    private static final String ROOT_PROPERTY_PATH = "stroom";
+    private static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts("stroom");
     private static final String DOCREF_PREFIX = "docRef(";
     public static final String LIST_EXAMPLE = "|item1|item2|item3";
     public static final String MAP_EXAMPLE = "|:key1:value1|:key2:value2|:key3:value3";
@@ -90,10 +91,10 @@ public class ConfigMapper {
 
     // A map of config properties keyed on the fully qualified prop path (i.e. stroom.path.temp)
     // This is the source of truth for all properties. It is used to update the guice injected object model
-    private final ConcurrentMap<String, ConfigProperty> globalPropertiesMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<PropertyPath, ConfigProperty> globalPropertiesMap = new ConcurrentHashMap<>();
 
     // A map of property accessor objects keyed on the fully qualified prop path (i.e. stroom.path.temp)
-    private final Map<String, Prop> propertyMap = new HashMap<>();
+    private final Map<PropertyPath, Prop> propertyMap = new HashMap<>();
 
     @Inject
     public ConfigMapper(final AppConfig appConfig) {
@@ -152,7 +153,7 @@ public class ConfigMapper {
         }
     }
 
-    public boolean validatePropertyPath(final String fullPath) {
+    public boolean validatePropertyPath(final PropertyPath fullPath) {
         return propertyMap.get(fullPath) != null;
     }
 
@@ -160,7 +161,7 @@ public class ConfigMapper {
         return globalPropertiesMap.values();
     }
 
-    Optional<ConfigProperty> getGlobalProperty(final String fullPath) {
+    Optional<ConfigProperty> getGlobalProperty(final PropertyPath fullPath) {
         Objects.requireNonNull(fullPath);
         return Optional.ofNullable(globalPropertiesMap.get(fullPath));
     }
@@ -169,7 +170,7 @@ public class ConfigMapper {
      * Verifies that the passed value for the property with fullPath can be converted into
      * the appropriate object type
      */
-    void validateStringValue(final String fullPath, final String value) {
+    void validateStringValue(final PropertyPath fullPath, final String value) {
         final Prop prop = propertyMap.get(fullPath);
         if (prop != null) {
             final Type genericType = prop.getValueType();
@@ -186,11 +187,12 @@ public class ConfigMapper {
     ConfigProperty decorateDbConfigProperty(final ConfigProperty dbConfigProperty) {
         Objects.requireNonNull(dbConfigProperty);
 
-        final String fullPath = dbConfigProperty.getName();
+        final PropertyPath fullPath = dbConfigProperty.getName();
 
         synchronized (this) {
             ConfigProperty globalConfigProperty = getGlobalProperty(fullPath)
-                    .orElseThrow(() -> new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath)));
+                    .orElseThrow(() ->
+                            new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath)));
 
             final Prop prop = propertyMap.get(fullPath);
             if (prop != null) {
@@ -218,9 +220,9 @@ public class ConfigMapper {
     }
 
     private void addConfigObjectMethods(final AbstractConfig config,
-                                        final String path,
-                                        final Map<String, Prop> propertyMap,
-                                        final BiConsumer<String, Prop> propConsumer) {
+                                        final PropertyPath path,
+                                        final Map<PropertyPath, Prop> propertyMap,
+                                        final BiConsumer<PropertyPath, Prop> propConsumer) {
         LOGGER.trace("addConfigObjectMethods({}, {}, .....)", config, path);
 
         // Add this ConfigMapper instance to the IsConfig so it can do name resolution
@@ -242,7 +244,7 @@ public class ConfigMapper {
                 name = specifiedName;
             }
 
-            final String fullPath = path + "." + name;
+            final PropertyPath fullPath = path.merge(name);
 
             final Class<?> valueType = prop.getValueClass();
 
@@ -271,7 +273,7 @@ public class ConfigMapper {
         });
     }
 
-    private void yamlPropertyConsumer(final String fullPath, final Prop yamlProp) {
+    private void yamlPropertyConsumer(final PropertyPath fullPath, final Prop yamlProp) {
 
         // We have already walked a vanilla AppConfig object tree so all compile time
         // props should be in here with a default value (and a value that matches it)
@@ -296,7 +298,7 @@ public class ConfigMapper {
 //        }
     }
 
-    private void defaultValuePropertyConsumer(final String fullPath, final Prop defaultProp) {
+    private void defaultValuePropertyConsumer(final PropertyPath fullPath, final Prop defaultProp) {
 
         // Create global property.
         final String defaultValueAsStr = getDefaultValue(defaultProp);
