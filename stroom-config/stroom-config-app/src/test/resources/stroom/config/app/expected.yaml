@@ -292,7 +292,7 @@ appConfig:
         maxLifetime: null
         minimumIdle: null
         maxPoolSize: null
-    node: "tba"
+    name: "tba"
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"

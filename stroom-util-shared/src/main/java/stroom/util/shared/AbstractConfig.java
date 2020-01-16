@@ -1,5 +1,6 @@
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.docref.SharedObject;
 
 import java.util.Objects;
@@ -18,6 +19,7 @@ public abstract class AbstractConfig implements SharedObject {
     /**
      * @return The base property path, e.g. "stroom.node" for this config object
      */
+    @JsonIgnore
     public String getBasePath() {
         Objects.requireNonNull(basePropertyPath);
         return basePropertyPath.toString();
@@ -27,6 +29,7 @@ public abstract class AbstractConfig implements SharedObject {
      * @return The full property path, e.g. "stroom.node.status" for the named property on this config
      * object
      */
+    @JsonIgnore
     public String getFullPath(final String propertyName) {
         Objects.requireNonNull(basePropertyPath);
         Objects.requireNonNull(propertyName);
