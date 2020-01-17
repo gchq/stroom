@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.query;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
@@ -46,6 +47,8 @@ import stroom.dashboard.shared.SearchRequest;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -53,8 +56,10 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.explorer.client.presenter.EntityChooser;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.CreateProcessorFilterAction;
+import stroom.processor.shared.CreateProcessorFilterRequest;
 import stroom.processor.shared.Limits;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -86,6 +91,8 @@ import java.util.List;
 public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
         implements QueryUiHandlers, HasDirtyHandlers, Queryable {
 
+    private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
+
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query");
     static final int TEN_SECONDS = 10000;
 
@@ -97,6 +104,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final MenuListPresenter menuListPresenter;
     private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private final LocationManager locationManager;
 
     private final IndexLoader indexLoader;
@@ -134,6 +142,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final ProcessorLimitsPresenter processorLimitsPresenter,
                           final MenuListPresenter menuListPresenter,
                           final ClientDispatchAsync dispatcher,
+                          final RestFactory restFactory,
                           final ClientSecurityContext securityContext,
                           final UiConfigCache clientPropertyCache,
                           final LocationManager locationManager,
@@ -147,6 +156,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.processorLimitsPresenter = processorLimitsPresenter;
         this.menuListPresenter = menuListPresenter;
         this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         this.locationManager = locationManager;
 
         view.setExpressionView(expressionPresenter.getView());
@@ -405,13 +415,15 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
     private void openEditor(final QueryData queryData, final DocRef pipeline) {
         // Now create the processor filter using the find stream criteria.
-        dispatcher.exec(new CreateProcessorFilterAction(pipeline, queryData, true, 1)).onSuccess(streamProcessorFilter -> {
+        final CreateProcessorFilterRequest request = new CreateProcessorFilterRequest(pipeline, queryData, true, 1);
+        final Rest<ProcessorFilter> rest = restFactory.create();
+        rest.onSuccess(streamProcessorFilter -> {
             if (streamProcessorFilter != null) {
                 CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter);
             } else {
                 AlertEvent.fireInfo(this, "Created batch processor", null);
             }
-        });
+        }).call(PROCESSOR_FILTER_RESOURCE).create(request);
     }
 
     private void showWarnings() {

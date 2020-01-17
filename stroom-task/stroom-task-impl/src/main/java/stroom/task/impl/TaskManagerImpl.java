@@ -257,6 +257,11 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
      */
     @Override
     public <R> void execAsync(final Task<R> task, TaskCallback<R> c, final ThreadPool threadPool) {
+        final UserIdentity userIdentity = securityContext.getUserIdentity();
+        if (userIdentity == null) {
+            LOGGER.error("Null user identity: " + task.getClass().getSimpleName());
+        }
+
         if (c == null) {
             c = new AsyncTaskCallback<>();
         }
@@ -267,12 +272,12 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 throw new IllegalStateException("All tasks must have a pre-allocated id");
             }
 
-            // Create the task scope runnable object outside of the executing
-            // thread so we can store a reference to the current task scope
-            // context.
-            // The reference to the current context is stored during
-            // construction of this object.
-            final Runnable runnable = () -> pipelineScopeRunnable.scopeRunnable(() -> {
+            // Create the task scope runnable object outside of the executing thread so we can store a reference to the
+            // current task scope context.
+
+            // The reference to the current context is stored during construction of this object.
+
+            final Runnable scopedRunnable = () -> securityContext.asUser(userIdentity, () -> pipelineScopeRunnable.scopeRunnable(() -> {
                 try {
                     doExec(task, callback);
 
@@ -299,7 +304,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                     // Decrease the count of the number of async tasks.
                     currentAsyncTaskCount.decrementAndGet();
                 }
-            });
+            }));
 
             // Now we have a task scoped runnable we will execute it in a new
             // thread.
@@ -308,9 +313,8 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 currentAsyncTaskCount.incrementAndGet();
 
                 try {
-                    // We might run out of threads and get a can't fork
-                    // exception from the thread pool.
-                    executor.execute(runnable);
+                    // We might run out of threads and get a can't fork exception from the thread pool.
+                    executor.execute(scopedRunnable);
 
                 } catch (final RuntimeException e) {
                     try {
@@ -337,9 +341,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
     public void execAsync(final Task<?> parentTask, final String taskName, final Runnable runnable, ThreadPool threadPool) {
         final UserIdentity userIdentity = securityContext.getUserIdentity();
         if (userIdentity == null) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Null user identity: " + taskName);
-            }
+            LOGGER.error("Null user identity: " + taskName);
         }
 
         final GenericServerTask task = GenericServerTask.create(parentTask, taskName, null);
@@ -356,7 +358,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
         // context.
         // The reference to the current context is stored during
         // construction of this object.
-        final Runnable scopedRunnable = () -> pipelineScopeRunnable.scopeRunnable(() -> {
+        final Runnable scopedRunnable = () -> securityContext.asUser(userIdentity, () -> pipelineScopeRunnable.scopeRunnable(() -> {
             if (stop.get()) {
                 throw new TaskTerminatedException(stop.get());
             }
@@ -384,17 +386,15 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 }
                 currentTasks.put(task.getId(), taskThread);
 
-                securityContext.asUser(userIdentity, () -> {
-                    CurrentTaskState.pushState(taskThread);
-                    try {
-                        LOGGER.debug("doExec() - exec >> '{}' {}", task.getClass().getName(), task);
-                        runnable.run();
-                        LOGGER.debug("doExec() - exec << '{}' {}", task.getClass().getName(), task);
+                CurrentTaskState.pushState(taskThread);
+                try {
+                    LOGGER.debug("doExec() - exec >> '{}' {}", task.getClass().getName(), task);
+                    runnable.run();
+                    LOGGER.debug("doExec() - exec << '{}' {}", task.getClass().getName(), task);
 
-                    } finally {
-                        CurrentTaskState.popState();
-                    }
-                });
+                } finally {
+                    CurrentTaskState.popState();
+                }
             } catch (final ThreadDeath t) {
                 LOGGER.error("exec() - ThreadDeath (" + task.getClass().getSimpleName() + ")");
                 LOGGER.debug("exec() (" + task.getClass().getSimpleName() + ")", t);
@@ -415,7 +415,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 // Decrease the count of the number of async tasks.
                 currentAsyncTaskCount.decrementAndGet();
             }
-        });
+        }));
 
         // Now we have a task scoped runnable we will execute it in a new
         // thread.
@@ -450,9 +450,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
 
         final UserIdentity userIdentity = securityContext.getUserIdentity();
         if (userIdentity == null) {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Null user identity: " + task.getClass().getSimpleName());
-            }
+            LOGGER.error("Null user identity: " + task.getClass().getSimpleName());
         }
 
         final Thread currentThread = Thread.currentThread();

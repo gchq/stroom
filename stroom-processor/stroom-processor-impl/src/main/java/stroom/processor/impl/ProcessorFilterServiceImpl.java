@@ -18,12 +18,15 @@ package stroom.processor.impl;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.shared.BaseResultList;
@@ -55,6 +58,11 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                   final QueryData queryData,
                                   final int priority,
                                   final boolean enabled) {
+        // Check the user has read permissions on the pipeline.
+        if (!securityContext.hasDocumentPermission(PipelineDoc.DOCUMENT_TYPE, pipelineRef.getUuid(), DocumentPermissionNames.READ)) {
+            throw new PermissionException("You do not have permission to create this processor filter");
+        }
+
         final Processor processor = processorService.create(pipelineRef, enabled);
         return create(processor, queryData, priority, enabled);
     }
@@ -64,6 +72,11 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                   final QueryData queryData,
                                   final int priority,
                                   final boolean enabled) {
+        // Check the user has read permissions on the pipeline.
+        if (!securityContext.hasDocumentPermission(PipelineDoc.DOCUMENT_TYPE, processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
+            throw new PermissionException("You do not have permission to create this processor filter");
+        }
+
         // now create the filter and tracker
         final ProcessorFilter processorFilter = new ProcessorFilter();
         AuditUtil.stamp(securityContext.getUserId(), processorFilter);
@@ -94,6 +107,11 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
     @Override
     public ProcessorFilter update(final ProcessorFilter processorFilter) {
+        // Check the user has update permissions on the pipeline.
+        if (!securityContext.hasDocumentPermission(PipelineDoc.DOCUMENT_TYPE, processorFilter.getProcessor().getPipelineUuid(), DocumentPermissionNames.UPDATE)) {
+            throw new PermissionException("You do not have permission to update this processor filter");
+        }
+
         if (processorFilter.getUuid() == null) {
             processorFilter.setUuid(UUID.randomUUID().toString());
         }
@@ -107,6 +125,22 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     public boolean delete(final int id) {
         return securityContext.secureResult(PERMISSION, () ->
                 processorFilterDao.delete(id));
+    }
+
+    @Override
+    public void setPriority(final Integer id, final Integer priority) {
+        fetch(id).ifPresent(processorFilter -> {
+            processorFilter.setPriority(priority);
+            update(processorFilter);
+        });
+    }
+
+    @Override
+    public void setEnabled(final Integer id, final Boolean enabled) {
+        fetch(id).ifPresent(processorFilter -> {
+            processorFilter.setEnabled(enabled);
+            update(processorFilter);
+        });
     }
 
     //    /**

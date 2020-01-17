@@ -22,6 +22,7 @@ import event.logging.Query;
 import event.logging.Query.Advanced;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.job.shared.FindJobNodeAction;
+import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeRow;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.BaseResultList;
@@ -52,9 +53,9 @@ class FindJobNodeHandler extends AbstractTaskHandler<FindJobNodeAction, ResultLi
         BaseResultList<JobNodeRow> results = null;
         try {
             results = jobNodeService.findStatus(action.getCriteria());
-            documentEventLog.search(action.getCriteria(), query, results, null);
+            documentEventLog.search(action.getCriteria(), query, JobNode.class.getSimpleName(), results, null);
         } catch (final RuntimeException e) {
-            documentEventLog.search(action.getCriteria(), query, results, e);
+            documentEventLog.search(action.getCriteria(), query, JobNode.class.getSimpleName(), results, e);
         }
         return results;
     }

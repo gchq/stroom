@@ -18,7 +18,6 @@ package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
-import stroom.security.api.AuthenticationService;
 import stroom.security.shared.User;
 import stroom.util.shared.Clearable;
 

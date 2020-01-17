@@ -19,22 +19,19 @@ package stroom.processor.shared;
 import stroom.docref.DocRef;
 import stroom.task.shared.Action;
 
-public class CreateProcessorFilterAction extends Action<ProcessorFilter> {
-    private static final long serialVersionUID = -1773544031158236156L;
-
+public class CreateProcessorFilterRequest {
     private DocRef pipeline;
     private QueryData queryData;
     private boolean enabled;
     private int priority;
 
-    public CreateProcessorFilterAction() {
-        // Default constructor necessary for GWT serialisation.
+    CreateProcessorFilterRequest() {
     }
 
-    public CreateProcessorFilterAction(final DocRef pipeline,
-                                       final QueryData queryData,
-                                       boolean enabled,
-                                       int priority) {
+    public CreateProcessorFilterRequest(final DocRef pipeline,
+                                        final QueryData queryData,
+                                        boolean enabled,
+                                        int priority) {
         this.pipeline = pipeline;
         this.queryData = queryData;
         this.enabled = enabled;
@@ -71,10 +68,5 @@ public class CreateProcessorFilterAction extends Action<ProcessorFilter> {
 
     public void setPriority(int priority) {
         this.priority = priority;
-    }
-
-    @Override
-    public String getTaskName() {
-        return "CreateProcessorFilterAction";
     }
 }

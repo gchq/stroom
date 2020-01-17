@@ -220,12 +220,7 @@ class ScheduledTaskExecutor {
     }
 
     private AtomicBoolean getRunningState(final ScheduledJob scheduledJob) {
-        AtomicBoolean running = runningMapOfScheduledJobs.get(scheduledJob);
-        if (running == null) {
-            runningMapOfScheduledJobs.putIfAbsent(scheduledJob, new AtomicBoolean(false));
-            running = runningMapOfScheduledJobs.get(scheduledJob);
-        }
-        return running;
+        return runningMapOfScheduledJobs.computeIfAbsent(scheduledJob, k ->  new AtomicBoolean(false));
     }
 
     private static class JobNodeTrackedFunction extends ScheduledJobFunction {

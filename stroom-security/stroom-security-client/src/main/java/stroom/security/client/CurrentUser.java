@@ -32,7 +32,6 @@ import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.RequestLogoutEvent;
 import stroom.security.shared.CheckDocumentPermissionAction;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
 
 import javax.inject.Singleton;
@@ -44,8 +43,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     private final Provider<ClientDispatchAsync> dispatcherProvider;
     private final Provider<SplashPresenter> splashPresenterProvider;
     private final CurrentActivity currentActivity;
-    private User userRef;
-    private String apiToken;
+    private String userId;
     private Set<String> permissions;
 
     @Inject
@@ -60,8 +58,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     public void clear() {
-        this.userRef = null;
-        this.apiToken = null;
+        this.userId = null;
         this.permissions = null;
     }
 
@@ -72,8 +69,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     public void setUserAndPermissions(final UserAndPermissions userAndPermissions, final boolean fireUserChangedEvent) {
         clear();
         if (userAndPermissions != null) {
-            this.userRef = userAndPermissions.getUser();
-            this.apiToken = userAndPermissions.getApiToken();
+            this.userId = userAndPermissions.getUserId();
             this.permissions = userAndPermissions.getAppPermissionSet();
         }
 
@@ -86,26 +82,14 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
         }
     }
 
-    public User getUser() {
-        return userRef;
-    }
-
     @Override
     public String getUserId() {
-        if (userRef == null) {
-            return null;
-        }
-        return userRef.getName();
-    }
-
-    @Override
-    public String getApiToken() {
-        return apiToken;
+        return userId;
     }
 
     @Override
     public boolean isLoggedIn() {
-        return userRef != null;
+        return userId != null;
     }
 
     private boolean isAdmin() {
