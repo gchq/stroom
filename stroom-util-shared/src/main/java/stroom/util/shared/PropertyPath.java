@@ -94,6 +94,20 @@ public class PropertyPath implements Comparable<PropertyPath> {
         return parts.equals(that.parts);
     }
 
+    public boolean equalsIgnoreCase(final PropertyPath o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (parts.size() != o.parts.size()) {
+            return false;
+        }
+        for (int i = 0; i < parts.size(); i++) {
+            if (!parts.get(i).equalsIgnoreCase(o.parts.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public int hashCode() {
         return Objects.hash(parts);

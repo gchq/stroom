@@ -25,7 +25,8 @@ class ListGlobalConfigHandler extends AbstractTaskHandler<ListGlobalConfigAction
 
         if (task.getCriteria().getName() != null) {
             list = list.stream()
-                    .filter(v -> task.getCriteria().getName().isMatch(v.getName()))
+                    .filter(configProperty ->
+                        task.getCriteria().getName().isMatch(configProperty.getName().toString()))
 //                    .peek(v -> {
 //                        if (v.isPassword()) {
 //                            v.setValue("********************");

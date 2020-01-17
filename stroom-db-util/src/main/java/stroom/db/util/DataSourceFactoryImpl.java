@@ -26,6 +26,8 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
     public DataSourceFactoryImpl(final CommonDbConfig commonDbConfig) {
         this.commonDbConfig = commonDbConfig;
         LOGGER.debug("Initialising {}", this.getClass().getSimpleName());
+
+        JooqUtil.disableJooqLogoInLogs();
     }
 
     public DataSource create(final HasDbConfig config) {

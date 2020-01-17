@@ -123,7 +123,7 @@ public final class ManageGlobalPropertyEditPresenter
         getView().setPasswordStyle(getEntity().isPassword());
         getView().setRequireRestart(getEntity().isRequireRestart());
         getView().setRequireUiRestart(getEntity().isRequireUiRestart());
-        getView().getName().setText(getEntity().getName());
+        getView().getName().setText(getEntity().getName().toString());
         getView().setUseOverride(getEntity().hasDatabaseOverride());
         String databaseOverrideValue = "";
         if (getEntity().hasDatabaseOverride()) {

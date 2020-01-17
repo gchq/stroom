@@ -18,7 +18,6 @@
 package stroom.config.global.impl;
 
 
-import org.apache.poi.openxml4j.opc.PackagePart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
@@ -112,9 +111,10 @@ class GlobalConfigService {
         updateConfigFromDb();
     }
 
-    public List<ConfigProperty> list(FindGlobalConfigCriteria criteria) {
+    public List<ConfigProperty> list(final FindGlobalConfigCriteria criteria) {
         if (criteria.getName() != null) {
-            return list(v -> criteria.getName().isMatch(v.getName()));
+            return list(configProperty ->
+                criteria.getName().isMatch(configProperty.getName().toString()));
         } else {
             return list();
         }
@@ -151,7 +151,7 @@ class GlobalConfigService {
             return dao.fetch(propertyName)
                     .map(configMapper::decorateDbConfigProperty)
                     .or(() ->
-                            configMapper.getGlobalProperty(propertyName));
+                            configMapper.getGlobalProperty(PropertyPath.fromPathString(propertyName)));
         });
     }
 

@@ -28,7 +28,7 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
         configProperty.setCreateUser(record.get(CONFIG.CREATE_USER));
         configProperty.setUpdateTimeMs(record.get(CONFIG.UPDATE_TIME_MS));
         configProperty.setUpdateUser(record.get(CONFIG.UPDATE_USER));
-        configProperty.setName(PropertyPath.from(record.get(CONFIG.NAME)));
+        configProperty.setName(PropertyPath.fromPathString(record.get(CONFIG.NAME)));
         String value = record.get(CONFIG.VAL);
         // value col is not-null
         if (value.isEmpty()) {
@@ -104,6 +104,11 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
                 .deleteFrom(CONFIG)
                 .where(CONFIG.NAME.eq(name))
                 .execute()) > 0;
+    }
+
+    @Override
+    public boolean delete(final PropertyPath propertyPath) {
+        return delete(propertyPath.toString());
     }
 
     @Override
