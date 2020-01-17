@@ -208,14 +208,14 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                         updateCount.incrementAndGet();
                     };
 
-                    LOGGER.info("Updating application config.");
+                    LOGGER.info("Updating application config from file.");
                     // Copy changed values from the newly modified appConfig into the guice bound one
                     FieldMapper.copy(newAppConfig, this.appConfig, updateAction);
 
                     // Update the config objects using the DB as the removal of a yaml value may trigger
                     // a DB value to be effective
+                    LOGGER.info("Completed updating application config from file. Changes: {}", updateCount.get());
                     globalConfigService.updateConfigObjects();
-                    LOGGER.info("Completed updating application config. Changes: {}", updateCount.get());
 
                 } catch (Throwable e) {
                     // Swallow error as we don't want to break the app because the new config is bad

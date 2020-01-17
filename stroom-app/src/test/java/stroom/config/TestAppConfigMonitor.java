@@ -3,9 +3,6 @@ package stroom.config;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
@@ -29,7 +26,6 @@ import java.util.Optional;
 import java.util.regex.MatchResult;
 import java.util.regex.Pattern;
 
-@ExtendWith(MockitoExtension.class)
 class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfigMonitor.class);
 
@@ -37,12 +33,13 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
 
     @Inject
     private Validator validator;
-    @Mock
+    @Inject
     private GlobalConfigService globalConfigService;
 
     @AfterEach
-    void afterEach() {
+    void afterEach() throws IOException {
         FileUtil.deleteContents(tmpDir);
+        Files.deleteIfExists(tmpDir);
     }
 
     @Test
