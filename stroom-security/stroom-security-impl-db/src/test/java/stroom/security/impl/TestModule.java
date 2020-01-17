@@ -19,7 +19,6 @@ public class TestModule extends AbstractModule {
         install(new MockSecurityContextModule());
 
         bind(UserService.class).to(UserServiceImpl.class);
-        bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(ExplorerService.class).toInstance(mock(ExplorerService.class));
         bind(EntityEventBus.class).toInstance(mock(EntityEventBus.class));
     }

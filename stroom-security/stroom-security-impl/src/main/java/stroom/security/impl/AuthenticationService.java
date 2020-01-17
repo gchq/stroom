@@ -18,7 +18,6 @@ package stroom.security.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.api.AuthenticationService;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.util.AuditUtil;
@@ -28,8 +27,8 @@ import javax.inject.Singleton;
 import java.util.UUID;
 
 @Singleton
-class AuthenticationServiceImpl implements AuthenticationService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
+class AuthenticationService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
 
     private static final String ADMINISTRATORS = "Administrators";
     private static final int GET_USER_ATTEMPTS = 2;
@@ -38,15 +37,14 @@ class AuthenticationServiceImpl implements AuthenticationService {
     private final AppPermissionDao appPermissionDao;
 
     @Inject
-    AuthenticationServiceImpl(
+    AuthenticationService(
             final UserDao userDao,
             final AppPermissionDao appPermissionDao) {
         this.userDao = userDao;
         this.appPermissionDao = appPermissionDao;
     }
 
-    @Override
-    public User getUser(final String userId) {
+    User getUser(final String userId) {
         if (userId == null || userId.trim().length() == 0) {
             return null;
         }
