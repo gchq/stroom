@@ -23,9 +23,12 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
@@ -36,25 +39,30 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigMonitor.class);
 
     private final AppConfig appConfig;
+    private final ConfigMapper configMapper;
+    private final ConfigValidator configValidator;
+    private final GlobalConfigService globalConfigService;
+
     private final Path configFile;
     private final Path dirToWatch;
     private final ExecutorService executorService;
     private WatchService watchService = null;
     private Future<?> watcherFuture = null;
-    private final ConfigMapper configMapper;
-    private final ConfigValidator configValidator;
     private boolean isRunning = false;
     private final boolean isValidFile;
+    private final AtomicBoolean isFileReadScheduled = new AtomicBoolean(false);
 
     @Inject
     public AppConfigMonitor(final AppConfig appConfig,
                             final ConfigLocation configLocation,
                             final ConfigMapper configMapper,
-                            final ConfigValidator configValidator) {
+                            final ConfigValidator configValidator,
+                            final GlobalConfigService globalConfigService) {
         this.appConfig = appConfig;
         this.configFile = configLocation.getConfigFilePath();
         this.configMapper = configMapper;
         this.configValidator = configValidator;
+        this.globalConfigService = globalConfigService;
 
         if (Files.isRegularFile(configFile)) {
             isValidFile = true;
@@ -142,14 +150,14 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         LOGGER.debug("Dir watch event {}, {}, {}", kind.name(), kind.type(), pathEvent.context());
 
         // Only trigger on modify events and when count is one to avoid repeated events
-        if (kind.equals(StandardWatchEventKinds.ENTRY_MODIFY)
-            && pathEvent.count() == 1) {
+        if (kind.equals(StandardWatchEventKinds.ENTRY_MODIFY)) {
             final Path modifiedFile = dirToWatch.resolve(pathEvent.context());
 
             try {
                 // we don't care about changes to other files
                 if (Files.isRegularFile(modifiedFile) && Files.isSameFile(configFile, modifiedFile)) {
-                    updateAppConfigFromFile();
+                    LOGGER.info("Change detected to config file {}", configFile.toAbsolutePath().normalize());
+                    scheduleUpdateIfRequired();
                 }
             } catch (IOException e) {
                 // Swallow error so future changes can be monitored.
@@ -158,10 +166,28 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         }
     }
 
-    private void updateAppConfigFromFile() {
+    private synchronized void scheduleUpdateIfRequired() {
+
+        // When a file is changed the filesystem can trigger two changes, one to change the file content
+        // and another to change the file access time. To prevent a duplicate read we delay the read
+        // a bit so we can have many changes during that delay period but with only one read of the file.
+        if (isFileReadScheduled.compareAndSet(false, true)) {
+            LOGGER.info("Scheduling update of application config from file");
+            CompletableFuture.delayedExecutor(700, TimeUnit.MILLISECONDS)
+                .execute(() -> {
+                    try {
+                        updateAppConfigFromFile();
+                    } finally {
+                        isFileReadScheduled.set(false);
+                    }
+                });
+        }
+    }
+
+    private synchronized void updateAppConfigFromFile() {
         final AppConfig newAppConfig;
         try {
-            LOGGER.info("Change detected to config file {}", configFile.toAbsolutePath().normalize());
+            LOGGER.info("Reading updated config file");
             newAppConfig = YamlUtil.readAppConfig(configFile);
 
             final ConfigValidator.Result result = validateNewConfig(newAppConfig);
@@ -174,7 +200,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                     // Don't have to worry about the DBV config merging that goes on in DataSourceFactoryImpl
                     // as that doesn't mutate the config objects
 
-                    AtomicInteger updateCount = new AtomicInteger(0);
+                    final AtomicInteger updateCount = new AtomicInteger(0);
                     final FieldMapper.UpdateAction updateAction = (destParent, prop, sourcePropValue, destPropValue) -> {
                         final String fullPath = ((AbstractConfig)destParent).getFullPath(prop.getName());
                         LOGGER.info("  Updating config value of {} from [{}] to [{}]",
@@ -184,8 +210,11 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
 
                     LOGGER.info("Updating application config.");
                     // Copy changed values from the newly modified appConfig into the guice bound one
-                    // TODO
                     FieldMapper.copy(newAppConfig, this.appConfig, updateAction);
+
+                    // Update the config objects using the DB as the removal of a yaml value may trigger
+                    // a DB value to be effective
+                    globalConfigService.updateConfigObjects();
                     LOGGER.info("Completed updating application config. Changes: {}", updateCount.get());
 
                 } catch (Throwable e) {

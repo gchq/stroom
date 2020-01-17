@@ -23,7 +23,7 @@ public class ValidationModule extends AbstractModule {
     @Provides
     Validator getValidator(final CustomConstraintValidatorFactory customConstraintValidatorFactory) {
 
-        // TODO uncomment jackson prop provider when we have Hibernate Validater v6
+        // TODO uncomment jackson prop provider when we have Hibernate Validator v6
         // This should get the validation impl that dropwizard-validation provides, i.e. hibernate-validation
         final ValidatorFactory factory = Validation.byDefaultProvider()
             .configure()

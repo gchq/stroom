@@ -46,7 +46,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton // Needs to be singleton to prevent initialise being called multiple times
-class GlobalConfigService {
+public class GlobalConfigService {
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalConfigService.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GlobalConfigService.class);
 
