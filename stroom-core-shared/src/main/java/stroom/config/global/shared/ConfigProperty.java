@@ -158,7 +158,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
      */
     @JsonProperty("name")
     public String getNameAsString() {
-        return name.toString();
+        return name == null ? null : name.toString();
     }
 
     @JsonIgnore
@@ -166,8 +166,18 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         return name;
     }
 
+    @JsonIgnore
     public void setName(final PropertyPath name) {
         this.name = name;
+    }
+
+    @JsonProperty("name")
+    public void setName(final String propertyPathString) {
+        if (propertyPathString == null) {
+            this.name = null;
+        } else {
+            this.name = PropertyPath.fromPathString(propertyPathString);
+        }
     }
 
     /**
