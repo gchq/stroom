@@ -21,6 +21,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
 import stroom.node.server.StroomPropertyService;
+import stroom.security.SecurityContext;
 import stroom.security.server.AuthenticationService;
 import stroom.security.server.AuthenticationServiceClients;
 import stroom.security.server.ContentSecurityConfig;
@@ -64,12 +65,14 @@ public class SecurityConfiguration {
             final SecurityConfig securityConfig,
             final JWTService jwtService,
             final AuthenticationServiceClients authenticationServiceClients,
-            final AuthenticationService authenticationService) {
+            final AuthenticationService authenticationService,
+            final SecurityContext securityContext) {
         return new SecurityFilter(
                 securityConfig,
                 jwtService,
                 authenticationServiceClients,
-                authenticationService);
+                authenticationService,
+                securityContext);
     }
 
     @Bean(name = "contentSecurityConfig")
