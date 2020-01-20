@@ -67,13 +67,13 @@ class JobNodeService {
         return securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> {
             final Optional<JobNode> before = fetch(jobNode.getId());
 
-                // We always want to update a job node instance even if we have a stale version.
-                before.ifPresent(j -> jobNode.setVersion(j.getVersion()));
+            // We always want to update a job node instance even if we have a stale version.
+            before.ifPresent(j -> jobNode.setVersion(j.getVersion()));
 
-                AuditUtil.stamp(securityContext.getUserId(), jobNode);
-                final JobNode after = jobNodeDao.update(jobNode);
-                return after;
-            });
+            AuditUtil.stamp(securityContext.getUserId(), jobNode);
+            final JobNode after = jobNodeDao.update(jobNode);
+            return after;
+        });
     }
 
     private BaseResultList<JobNode> find(final FindJobNodeCriteria findJobNodeCriteria) {
@@ -90,7 +90,7 @@ class JobNodeService {
             }
 
             DefaultClusterResultCollector<SharedMap<JobNode, JobNodeInfo>> collector;
-            collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(securityContext.getUserToken()), TargetType.ACTIVE);
+            collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(), TargetType.ACTIVE);
 
             final List<JobNode> jobNodes = find(findJobNodeCriteria);
 

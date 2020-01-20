@@ -18,7 +18,6 @@ package stroom.security.impl;
 
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
-import stroom.security.api.SecurityContext;
 import stroom.security.shared.User;
 import stroom.util.shared.Clearable;
 
@@ -30,28 +29,19 @@ import java.util.Optional;
 class UserCache implements Clearable {
     private static final String CACHE_NAME = "User Cache";
 
-    private final UserService userService;
-    private final SecurityContext securityContext;
+    private final AuthenticationService authenticationService;
     private final ICache<String, Optional<User>> cache;
 
     @Inject
     UserCache(final CacheManager cacheManager,
               final AuthorisationConfig authorisationConfig,
-              final UserService userService,
-              final SecurityContext securityContext) {
-        this.userService = userService;
-        this.securityContext = securityContext;
-
-        // TODO if get is called on the cache before the admin user has been created
-        //  then the cache will get an empty optional and then nobody will be able to
-        //  get the admin user. May want to call getUser on AuthenticationService which
-        //  will ensure the user.
+              final AuthenticationService authenticationService) {
+        this.authenticationService = authenticationService;
         cache = cacheManager.create(CACHE_NAME, authorisationConfig::getUserCache, this::getUser);
     }
 
     private Optional<User> getUser(final String name) {
-        return securityContext.asProcessingUserResult(
-                () -> Optional.ofNullable(userService.getUserByName(name)));
+        return Optional.ofNullable(authenticationService.getUser(name));
     }
 
     Optional<User> get(final String name) {

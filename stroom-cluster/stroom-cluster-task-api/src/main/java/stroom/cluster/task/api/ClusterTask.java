@@ -17,7 +17,6 @@
 package stroom.cluster.task.api;
 
 import stroom.docref.SharedObject;
-import stroom.security.shared.UserToken;
 import stroom.task.api.TaskIdFactory;
 import stroom.task.shared.SimpleThreadPool;
 import stroom.task.shared.Task;
@@ -32,14 +31,11 @@ public abstract class ClusterTask<R extends SharedObject> implements Task<R>, Se
 
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(5);
 
-    private final UserToken userToken;
     private String taskName;
 
     private transient TaskId id;
 
-    public ClusterTask(final UserToken userToken,
-                       final String taskName) {
-        this.userToken = userToken;
+    public ClusterTask(final String taskName) {
         this.taskName = taskName;
     }
 
@@ -63,11 +59,6 @@ public abstract class ClusterTask<R extends SharedObject> implements Task<R>, Se
      */
     public void assignId(final TaskId sourceTaskId) {
         this.id = TaskIdFactory.create(sourceTaskId);
-    }
-
-    @Override
-    public UserToken getUserToken() {
-        return userToken;
     }
 
     @Override

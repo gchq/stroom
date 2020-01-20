@@ -451,9 +451,7 @@ appConfig:
       authenticationServiceUrl: null
       authenticationRequired: true
       verifySsl: false
-      apiToken: "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc"
       authServicesBaseUrl: "http://auth-service:8099"
-      durationToWarnBeforeExpiry: "30d"
       jwt:
         jwtIssuer: "stroom"
         enableTokenRevocationCheck: true

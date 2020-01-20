@@ -37,4 +37,8 @@ public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
                            final boolean enabled);
 
     BaseResultList<ProcessorFilter> find(ExpressionCriteria criteria);
+
+    void setPriority(Integer id, Integer priority);
+
+    void setEnabled(Integer id, Boolean enabled);
 }

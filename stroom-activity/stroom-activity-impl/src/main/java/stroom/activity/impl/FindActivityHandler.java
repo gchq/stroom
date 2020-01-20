@@ -33,15 +33,15 @@ import javax.inject.Inject;
 
 public class FindActivityHandler extends AbstractTaskHandler<FindActivityAction, ResultList<Activity>> {
     private final ActivityService activityService;
-    private final DocumentEventLog entityEventLog;
+    private final DocumentEventLog documentEventLog;
     private final SecurityContext securityContext;
 
     @Inject
     FindActivityHandler(final ActivityService activityService,
-                        final DocumentEventLog entityEventLog,
+                        final DocumentEventLog documentEventLog,
                         final SecurityContext securityContext) {
         this.activityService = activityService;
-        this.entityEventLog = entityEventLog;
+        this.documentEventLog = documentEventLog;
         this.securityContext = securityContext;
     }
 
@@ -59,9 +59,9 @@ public class FindActivityHandler extends AbstractTaskHandler<FindActivityAction,
 
             try {
                 result = activityService.find(criteria);
-                entityEventLog.search(criteria, query, result, null);
+                documentEventLog.search(criteria, query, Activity.class.getSimpleName(), result, null);
             } catch (final RuntimeException e) {
-                entityEventLog.search(criteria, query, null, e);
+                documentEventLog.search(criteria, query, Activity.class.getSimpleName(), null, e);
                 throw e;
             }
 

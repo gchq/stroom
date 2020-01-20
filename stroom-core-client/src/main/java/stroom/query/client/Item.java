@@ -17,17 +17,13 @@
 package stroom.query.client;
 
 public abstract class Item {
-    private Boolean enabled;
+    private boolean enabled = true;
 
-    public Boolean getEnabled() {
+    public boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(final Boolean enabled) {
+    public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
-    }
-
-    public boolean enabled() {
-        return enabled == null || enabled;
     }
 }

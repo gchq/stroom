@@ -28,7 +28,6 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserTokenUtil;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
 import stroom.util.AbstractCommandLineTool;
@@ -139,7 +138,8 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         final BufferFactory bufferFactory = () -> new byte[4096];
         final DataDownloadTaskHandler streamDownloadTaskHandler = new DataDownloadTaskHandler(taskContext, streamStore, metaService, securityContext, bufferFactory);
 
-        download(feed, streamType, createPeriodFrom, createPeriodTo, dir, format, streamDownloadTaskHandler);
+        securityContext.asProcessingUser(() ->
+                download(feed, streamType, createPeriodFrom, createPeriodTo, dir, format, streamDownloadTaskHandler));
 
         System.out.println("Finished dumping streams");
     }
@@ -181,7 +181,7 @@ public class StreamDumpTool extends AbstractCommandLineTool {
         dataDownloadSettings.setMaxFileSize(ModelStringUtil.parseIECByteSizeString("2G"));
         dataDownloadSettings.setMaxFileParts(10000L);
 
-        final DataDownloadTask streamDownloadTask = new DataDownloadTask(UserTokenUtil.processingUser(), criteria, dir, format, dataDownloadSettings);
+        final DataDownloadTask streamDownloadTask = new DataDownloadTask(criteria, dir, format, dataDownloadSettings);
         dataDownloadTaskHandler.exec(streamDownloadTask);
 
 

@@ -51,9 +51,9 @@ class FindNodeHandler extends AbstractTaskHandler<FindNodeAction, ResultList<Nod
 
         try {
             results = nodeService.find(action.getCriteria());
-            documentEventLog.search(action.getCriteria(), query, results, null);
+            documentEventLog.search(action.getCriteria(), query, Node.class.getSimpleName(), results, null);
         } catch (final RuntimeException e) {
-            documentEventLog.search(action.getCriteria(), query, results, e);
+            documentEventLog.search(action.getCriteria(), query, Node.class.getSimpleName(), results, e);
         }
 
         return results;

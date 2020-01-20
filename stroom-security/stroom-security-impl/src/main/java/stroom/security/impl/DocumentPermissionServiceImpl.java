@@ -21,6 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.api.DocumentPermissionService;
+import stroom.security.api.UserIdentity;
 import stroom.security.shared.DocumentPermissionJooq;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
@@ -106,10 +107,10 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     @Override
     public void clearDocumentPermissions(final String documentType, final String documentUuid) {
         // Get the current user.
-        final User userRef = securityContext.getUser();
+        final UserIdentity userIdentity = securityContext.getUserIdentity();
 
-        // If no user is present then don't create permissions.
-        if (userRef != null) {
+        // If no user is present then don't clear permissions.
+        if (userIdentity != null) {
             if (securityContext.hasDocumentPermission(documentType, documentUuid, DocumentPermissionNames.OWNER)) {
                 clearDocumentPermissions(documentUuid);
             }
@@ -119,10 +120,11 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
     @Override
     public void addDocumentPermissions(final String sourceType, final String sourceUuid, final String documentType, final String documentUuid, final boolean owner) {
         // Get the current user.
-        final User userRef = securityContext.getUser();
+        final UserIdentity userIdentity = securityContext.getUserIdentity();
 
         // If no user is present then don't create permissions.
-        if (userRef != null) {
+        if (userIdentity != null) {
+            final User user = securityContext.getUser(userIdentity);
             if (owner || securityContext.hasDocumentPermission(documentType, documentUuid, DocumentPermissionNames.OWNER)) {
                 final DocRef docRef = new DocRef(documentType, documentUuid);
 
@@ -130,7 +132,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
                     // Make the current user the owner of the new document.
                     try {
                         addPermission(docRef.getUuid(),
-                                userRef.getUuid(),
+                                user.getUuid(),
                                 DocumentPermissionNames.OWNER);
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);

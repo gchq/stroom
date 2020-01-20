@@ -16,8 +16,6 @@
 
 package stroom.security.api;
 
-import stroom.security.shared.UserToken;
-
 import java.util.function.Supplier;
 
 public interface SecurityContext {
@@ -28,19 +26,15 @@ public interface SecurityContext {
      */
     String getUserId();
 
-    /**
-     * Get the current user token associated with this security context.
-     *
-     * @return The current user token associated with this security context.
-     */
-    UserToken getUserToken();
+
+    UserIdentity createIdentity(String userId);
 
     /**
-     * Gets an API token string for the current user.
+     * Gets teh identity of the current user.
      *
-     * @return An API token string for the current user.
+     * @return The identity of the current user.
      */
-    String getApiToken();
+    UserIdentity getUserIdentity();
 
     /**
      * Check if the user associated with this security context is logged in.
@@ -82,12 +76,12 @@ public interface SecurityContext {
     /**
      * Run the supplied code as the specified user.
      */
-    <T> T asUserResult(UserToken userToken, Supplier<T> supplier);
+    <T> T asUserResult(UserIdentity userIdentity, Supplier<T> supplier);
 
     /**
      * Run the supplied code as the specified user.
      */
-    void asUser(UserToken userToken, Runnable runnable);
+    void asUser(UserIdentity userIdentity, Runnable runnable);
 
     /**
      * Run the supplied code as the internal processing user.

@@ -144,7 +144,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
             return securityContext.useAsReadResult(() -> {
                 // Set the current user so they are visible during translation.
-                currentUserHolder.setCurrentUser(request.getUserToken().getUserId());
+                currentUserHolder.setCurrentUser(securityContext.getUserId());
 
                 StepData stepData;
                 generalErrors = new HashSet<>();

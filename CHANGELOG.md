@@ -6,12 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Simplify the /status servlet and make it return json.
-
-* Add validation of config property values when edited in the UI.
-
-* Add validation of the config file on boot.
-
 * Change docker image to allow us to pass in the dropwizard command to run, e.g. server|migrate.
 
 * Stop MySQL outputing Note level warnings during migration about things that don't exist when we expect them not to.
@@ -1932,7 +1926,10 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.16...HEAD
+[v7.0-beta.16]: https://github.com/gchq/stroom/compare/v7.0-beta.15...v7.0-beta.16
+[v7.0-beta.15]: https://github.com/gchq/stroom/compare/v7.0-beta.14...v7.0-beta.15
+[v7.0-beta.14]: https://github.com/gchq/stroom/compare/v7.0-beta.13...v7.0-beta.14
 [v7.0-beta.13]: https://github.com/gchq/stroom/compare/v7.0-beta.12...v7.0-beta.13
 [v7.0-beta.12]: https://github.com/gchq/stroom/compare/v7.0-beta.11...v7.0-beta.12
 [v7.0-beta.11]: https://github.com/gchq/stroom/compare/v7.0-beta.10...v7.0-beta.11

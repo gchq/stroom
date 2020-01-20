@@ -42,7 +42,7 @@ public interface DocumentEventLog {
 
     void download(Object entity, Throwable ex);
 
-    void search(BaseCriteria criteria, Query query, BaseResultList<?> results, Throwable ex);
+    void search(BaseCriteria criteria, Query query, String resultType, BaseResultList<?> results, Throwable ex);
 
-    void searchSummary(BaseCriteria criteria, Query query, BaseResultList<?> results, Throwable ex);
+    void searchSummary(BaseCriteria criteria, Query query, String resultType, BaseResultList<?> results, Throwable ex);
 }

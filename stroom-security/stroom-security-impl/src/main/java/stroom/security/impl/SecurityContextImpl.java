@@ -1,20 +1,18 @@
 package stroom.security.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserTokenUtil;
+import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
-import stroom.security.shared.UserToken;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -22,62 +20,50 @@ import java.util.function.Supplier;
 class SecurityContextImpl implements SecurityContext {
     private final ThreadLocal<Boolean> checkTypeThreadLocal = ThreadLocal.withInitial(() -> Boolean.TRUE);
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SecurityContextImpl.class);
-    private static final String USER = "user";
-    private static final UserToken INTERNAL_PROCESSING_USER_TOKEN = UserTokenUtil.processingUser();
-    private static final User INTERNAL_PROCESSING_USER = new User.Builder()
-            .id(0)
-            .uuid("0")
-            .name(INTERNAL_PROCESSING_USER_TOKEN.getUserId())
-            .group(false)
-            .build();
-
     private final UserDocumentPermissionsCache userDocumentPermissionsCache;
     private final UserGroupsCache userGroupsCache;
     private final UserAppPermissionsCache userAppPermissionsCache;
     private final UserCache userCache;
-    private final ApiTokenCache apiTokenCache;
 
     @Inject
     SecurityContextImpl(
             final UserDocumentPermissionsCache userDocumentPermissionsCache,
             final UserGroupsCache userGroupsCache,
             final UserAppPermissionsCache userAppPermissionsCache,
-            final UserCache userCache,
-            final ApiTokenCache apiTokenCache) {
+            final UserCache userCache) {
         this.userDocumentPermissionsCache = userDocumentPermissionsCache;
         this.userGroupsCache = userGroupsCache;
         this.userAppPermissionsCache = userAppPermissionsCache;
         this.userCache = userCache;
-        this.apiTokenCache = apiTokenCache;
-    }
-
-    User getUser() {
-        return CurrentUserState.currentUser();
-    }
-
-    @Override
-    public UserToken getUserToken() {
-        return CurrentUserState.currentUserToken();
     }
 
     @Override
     public String getUserId() {
-        final User userRef = getUser();
-        if (userRef == null) {
+        final UserIdentity userIdentity = getUserIdentity();
+        if (userIdentity == null) {
             return null;
         }
-        return userRef.getName();
+        return userIdentity.getId();
     }
 
     @Override
-    public String getApiToken() {
-        return apiTokenCache.get(getUserId());
+    public UserIdentity getUserIdentity() {
+        return CurrentUserState.current();
+    }
+
+    @Override
+    public UserIdentity createIdentity(final String userId) {
+        Objects.requireNonNull(userId, "Null user id provided");
+        final Optional<User> optional = userCache.get(userId);
+        if (optional.isEmpty()) {
+            throw new AuthenticationException("Unable to find user with id=" + userId);
+        }
+        return new UserIdentityImpl(optional.get(), userId, null, null);
     }
 
     @Override
     public boolean isLoggedIn() {
-        return getUser() != null;
+        return getUserIdentity() != null;
     }
 
     @Override
@@ -85,38 +71,15 @@ class SecurityContextImpl implements SecurityContext {
         return hasAppPermission(PermissionNames.ADMINISTRATOR);
     }
 
-    private void pushUser(final UserToken token) {
-        User userRef = null;
-
-        if (token != null) {
-            final String type = token.getType();
-            final String name = token.getUserId();
-
-            if (INTERNAL_PROCESSING_USER_TOKEN.getType().equals(type)) {
-                if (INTERNAL_PROCESSING_USER_TOKEN.getUserId().equals(name)) {
-                    userRef = INTERNAL_PROCESSING_USER;
-                } else {
-                    LOGGER.error("Unexpected system user '" + name + "'");
-                    throw new AuthenticationException("Unexpected system user '" + name + "'");
-                }
-            } else if (USER.equals(type)) {
-                if (name.length() > 0) {
-                    final Optional<User> optional = userCache.get(name);
-                    if (optional.isEmpty()) {
-                        final String message = "Unable to push user '" + name + "' as user is unknown";
-                        LOGGER.error(message);
-                        throw new AuthenticationException(message);
-                    } else {
-                        userRef = optional.get();
-                    }
-                }
-            } else {
-                LOGGER.error("Unexpected token type '" + type + "'");
-                throw new AuthenticationException("Unexpected token type '" + type + "'");
-            }
+    User getUser(final UserIdentity userIdentity) {
+        if (!(userIdentity instanceof UserIdentityImpl)) {
+            throw new AuthenticationException("Expecting a real user identity");
         }
+        return ((UserIdentityImpl) userIdentity).getUser();
+    }
 
-        CurrentUserState.push(token, userRef);
+    private void pushUser(final UserIdentity userIdentity) {
+        CurrentUserState.push(userIdentity);
     }
 
     private void popUser() {
@@ -134,37 +97,38 @@ class SecurityContextImpl implements SecurityContext {
     @Override
     public boolean hasAppPermission(final String permission) {
         // Get the current user.
-        final User userRef = getUser();
+        final UserIdentity userIdentity = getUserIdentity();
 
         // If there is no logged in user then throw an exception.
-        if (userRef == null) {
+        if (userIdentity == null) {
             throw new AuthenticationException("No user is currently logged in");
         }
 
         // If the user is the internal processing user then they automatically have permission.
-        if (INTERNAL_PROCESSING_USER.equals(userRef)) {
+        if (ProcessingUserIdentity.INSTANCE.equals(userIdentity)) {
             return true;
         }
 
         // See if the user has permission.
-        boolean result = hasAppPermission(userRef, permission);
+        final User user = getUser(userIdentity);
+        boolean result = hasAppPermission(user, permission);
 
         // If the user doesn't have the requested permission see if they are an admin.
         if (!result && !PermissionNames.ADMINISTRATOR.equals(permission)) {
-            result = hasAppPermission(userRef, PermissionNames.ADMINISTRATOR);
+            result = hasAppPermission(user, PermissionNames.ADMINISTRATOR);
         }
 
         return result;
     }
 
-    private boolean hasAppPermission(final User userRef, final String permission) {
+    private boolean hasAppPermission(final User user, final String permission) {
         // See if the user has an explicit permission.
-        if (hasUserAppPermission(userRef, permission)) {
+        if (hasUserAppPermission(user, permission)) {
             return true;
         }
 
         // See if the user belongs to a group that has permission.
-        final List<User> userGroups = userGroupsCache.get(userRef.getUuid());
+        final List<User> userGroups = userGroupsCache.get(user.getUuid());
         if (userGroups != null) {
             for (final User userGroup : userGroups) {
                 if (hasUserAppPermission(userGroup, permission)) {
@@ -191,10 +155,10 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         // Get the current user.
-        final User userRef = getUser();
+        final UserIdentity userIdentity = getUserIdentity();
 
         // If there is no logged in user then throw an exception.
-        if (userRef == null) {
+        if (userIdentity == null) {
             throw new AuthenticationException("No user is currently logged in");
         }
 
@@ -204,17 +168,18 @@ class SecurityContextImpl implements SecurityContext {
             perm = DocumentPermissionNames.USE;
         }
 
-        return hasDocumentPermission(userRef, documentUuid, perm);
+        final User user = getUser(userIdentity);
+        return hasDocumentPermission(user, documentUuid, perm);
     }
 
-    private boolean hasDocumentPermission(final User userRef, final String documentUuid, final String permission) {
+    private boolean hasDocumentPermission(final User user, final String documentUuid, final String permission) {
         // See if the user has an explicit permission.
-        if (hasUserDocumentPermission(userRef.getUuid(), documentUuid, permission)) {
+        if (hasUserDocumentPermission(user.getUuid(), documentUuid, permission)) {
             return true;
         }
 
         // See if the user belongs to a group that has permission.
-        final List<User> userGroups = userGroupsCache.get(userRef.getUuid());
+        final List<User> userGroups = userGroupsCache.get(user.getUuid());
         if (userGroups != null) {
             for (final User userGroup : userGroups) {
                 if (hasUserDocumentPermission(userGroup.getUuid(), documentUuid, permission)) {
@@ -237,11 +202,11 @@ class SecurityContextImpl implements SecurityContext {
      * Run the supplied code as the specified user.
      */
     @Override
-    public <T> T asUserResult(final UserToken userToken, final Supplier<T> supplier) {
+    public <T> T asUserResult(final UserIdentity userIdentity, final Supplier<T> supplier) {
         T result;
         boolean success = false;
         try {
-            pushUser(userToken);
+            pushUser(userIdentity);
             success = true;
             result = supplier.get();
         } finally {
@@ -256,10 +221,10 @@ class SecurityContextImpl implements SecurityContext {
      * Run the supplied code as the specified user.
      */
     @Override
-    public void asUser(final UserToken userToken, final Runnable runnable) {
+    public void asUser(final UserIdentity userIdentity, final Runnable runnable) {
         boolean success = false;
         try {
-            pushUser(userToken);
+            pushUser(userIdentity);
             success = true;
             runnable.run();
         } finally {
@@ -277,7 +242,7 @@ class SecurityContextImpl implements SecurityContext {
         T result;
         boolean success = false;
         try {
-            pushUser(UserTokenUtil.processingUser());
+            pushUser(ProcessingUserIdentity.INSTANCE);
             success = true;
             result = supplier.get();
         } finally {
@@ -295,7 +260,7 @@ class SecurityContextImpl implements SecurityContext {
     public void asProcessingUser(final Runnable runnable) {
         boolean success = false;
         try {
-            pushUser(UserTokenUtil.processingUser());
+            pushUser(ProcessingUserIdentity.INSTANCE);
             success = true;
             runnable.run();
         } finally {

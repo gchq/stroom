@@ -184,7 +184,7 @@ public class GlobalConfigService {
         // TODO need to run this periodically and cache it, else we have to wait too long
         //   for all nodes to answer
         final DefaultClusterResultCollector<NodeConfigResult> collector = dispatchHelper
-                .execAsync(new NodeConfigClusterTask(securityContext.getUserToken()),
+                .execAsync(new NodeConfigClusterTask(),
                         5,
                         TimeUnit.SECONDS,
                         TargetType.ENABLED);

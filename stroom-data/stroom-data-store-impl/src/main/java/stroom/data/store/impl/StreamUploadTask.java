@@ -16,7 +16,6 @@
 
 package stroom.data.store.impl;
 
-import stroom.security.shared.UserToken;
 import stroom.task.api.ServerTask;
 import stroom.util.shared.VoidResult;
 
@@ -33,10 +32,9 @@ public class StreamUploadTask extends ServerTask<VoidResult> {
     public StreamUploadTask() {
     }
 
-    public StreamUploadTask(final UserToken userToken, final String fileName, final Path file,
+    public StreamUploadTask(final String fileName, final Path file,
                             final String feedName, final String streamTypeName, final Long effectiveMs,
                             final String metaData) {
-        super(null, userToken);
         this.fileName = fileName;
         this.file = file;
         this.feedName = feedName;

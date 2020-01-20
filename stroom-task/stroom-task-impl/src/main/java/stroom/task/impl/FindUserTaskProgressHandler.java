@@ -44,7 +44,7 @@ class FindUserTaskProgressHandler
     @Override
     public BaseResultList<TaskProgress> exec(final FindUserTaskProgressAction action) {
         return securityContext.secureResult(() -> {
-            final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
+            final ExtendedFindTaskProgressCriteria criteria = new ExtendedFindTaskProgressCriteria();
             criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
             criteria.setSessionId(sessionIdProvider.get());
             return doExec(action, criteria);

@@ -31,13 +31,13 @@ import javax.inject.Inject;
 
 class FindStoredQueryHandler extends AbstractTaskHandler<FindStoredQueryAction, ResultList<StoredQuery>> {
     private final StoredQueryServiceImpl storedQueryService;
-    private final DocumentEventLog entityEventLog;
+    private final DocumentEventLog documentEventLog;
 
     @Inject
     FindStoredQueryHandler(final StoredQueryServiceImpl storedQueryService,
-                           final DocumentEventLog entityEventLog) {
+                           final DocumentEventLog documentEventLog) {
         this.storedQueryService = storedQueryService;
-        this.entityEventLog = entityEventLog;
+        this.documentEventLog = documentEventLog;
     }
 
     @Override
@@ -53,9 +53,9 @@ class FindStoredQueryHandler extends AbstractTaskHandler<FindStoredQueryAction, 
 
         try {
             result = storedQueryService.find(criteria);
-            entityEventLog.search(criteria, query, result, null);
+            documentEventLog.search(criteria, query, StoredQuery.class.getSimpleName(), result, null);
         } catch (final RuntimeException e) {
-            entityEventLog.search(criteria, query, null, e);
+            documentEventLog.search(criteria, query, StoredQuery.class.getSimpleName(), null, e);
             throw e;
         }
 

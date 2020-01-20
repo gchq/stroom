@@ -17,15 +17,15 @@ import javax.inject.Inject;
 
 class FetchProcessorTaskSummaryHandler extends AbstractTaskHandler<FindProcessorTaskSummaryAction, ResultList<ProcessorTaskSummary>> {
     private final ProcessorTaskService processorTaskService;
-    private final DocumentEventLog entityEventLog;
+    private final DocumentEventLog documentEventLog;
     private final SecurityContext securityContext;
 
     @Inject
     FetchProcessorTaskSummaryHandler(final ProcessorTaskService processorTaskService,
-                                     final DocumentEventLog entityEventLog,
+                                     final DocumentEventLog documentEventLog,
                                      final SecurityContext securityContext) {
         this.processorTaskService = processorTaskService;
-        this.entityEventLog = entityEventLog;
+        this.documentEventLog = documentEventLog;
         this.securityContext = securityContext;
     }
 
@@ -43,9 +43,9 @@ class FetchProcessorTaskSummaryHandler extends AbstractTaskHandler<FindProcessor
 
             try {
                 result = processorTaskService.findSummary(criteria);
-                entityEventLog.search(criteria, query, result, null);
+                documentEventLog.search(criteria, query, ProcessorTaskSummary.class.getSimpleName(), result, null);
             } catch (final RuntimeException e) {
-                entityEventLog.search(criteria, query, null, e);
+                documentEventLog.search(criteria, query, ProcessorTaskSummary.class.getSimpleName(), null, e);
                 throw e;
             }
 

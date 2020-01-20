@@ -19,9 +19,7 @@ public class AuthenticationConfig extends AbstractConfig {
 
     public static final String PROP_NAME_AUTHENTICATION_REQUIRED = "authenticationRequired";
     public static final String PROP_NAME_VERIFY_SSL = "verifySsl";
-    public static final String PROP_NAME_GET_API_TOKEN = "apiToken";
     public static final String PROP_NAME_AUTH_SERVICES_BASE_URL = "authServicesBaseUrl";
-    public static final String PROP_NAME_DURATION_TO_WARN_BEFORE_EXPIRY = "durationToWarnBeforeExpiry";
     public static final String PROP_NAME_JWT = "jwt";
     public static final String PROP_NAME_PREVENT_LOGIN = "preventLogin";
     public static final String PROP_NAME_USER_NAME_PATTERN = "userNamePattern";
@@ -32,9 +30,7 @@ public class AuthenticationConfig extends AbstractConfig {
     private String authenticationServiceUrl;
     private boolean authenticationRequired = true;
     private boolean verifySsl;
-    private String apiToken = "eyJhbGciOiJIUzI1NiJ9.eyJleHAiOjE1Mzg2NDM1NTQsInN1YiI6ImFkbWluIiwiaXNzIjoic3Ryb29tIn0.J8dqtQf9gGXQlKU_rAye46lUKlJR8-vcyrYhOD0Rxoc";
     private String authServicesBaseUrl = "http://auth-service:8099";
-    private String durationToWarnBeforeExpiry = "30d";
     private JwtConfig jwtConfig = new JwtConfig();
     private boolean preventLogin;
     private String userNamePattern = "^[a-zA-Z0-9_-]{3,}$";
@@ -85,18 +81,6 @@ public class AuthenticationConfig extends AbstractConfig {
         this.verifySsl = verifySsl;
     }
 
-    @RequiresRestart(RequiresRestart.RestartScope.UI)
-    @JsonProperty(PROP_NAME_GET_API_TOKEN)
-    @JsonPropertyDescription("The API token Stroom will use to authenticate itself when accessing other services")
-    public String getApiToken() {
-        return apiToken;
-    }
-
-    @SuppressWarnings("unused")
-    public void setApiToken(final String apiToken) {
-        this.apiToken = apiToken;
-    }
-
     @JsonPropertyDescription("The URL of the auth service")
     @JsonProperty(PROP_NAME_AUTH_SERVICES_BASE_URL)
     public String getAuthServicesBaseUrl() {
@@ -108,18 +92,7 @@ public class AuthenticationConfig extends AbstractConfig {
         this.authServicesBaseUrl = authServicesBaseUrl;
     }
 
-    @JsonProperty(PROP_NAME_DURATION_TO_WARN_BEFORE_EXPIRY)
-    public String getDurationToWarnBeforeExpiry() {
-        return durationToWarnBeforeExpiry;
-    }
-
-    @SuppressWarnings("unused")
-    public void setDurationToWarnBeforeExpiry(final String durationToWarnBeforeExpiry) {
-        this.durationToWarnBeforeExpiry = durationToWarnBeforeExpiry;
-    }
-
     @JsonProperty(PROP_NAME_JWT)
-    @SuppressWarnings("unused")
     public JwtConfig getJwtConfig() {
         return jwtConfig;
     }
@@ -188,9 +161,7 @@ public class AuthenticationConfig extends AbstractConfig {
         return "AuthenticationConfig{" +
                 "authenticationServiceUrl='" + authenticationServiceUrl + '\'' +
                 ", authenticationRequired=" + authenticationRequired +
-                ", apiToken='" + apiToken + '\'' +
                 ", authServicesBaseUrl='" + authServicesBaseUrl + '\'' +
-                ", durationToWarnBeforeExpiry='" + durationToWarnBeforeExpiry + '\'' +
                 ", preventLogin=" + preventLogin +
                 ", userNamePattern='" + userNamePattern + '\'' +
                 '}';

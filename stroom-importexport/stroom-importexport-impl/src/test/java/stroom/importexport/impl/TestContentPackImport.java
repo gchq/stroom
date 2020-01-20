@@ -26,10 +26,9 @@ import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import stroom.security.api.AuthenticationService;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.security.shared.User;
-import stroom.security.shared.UserToken;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -49,17 +48,12 @@ class TestContentPackImport {
         CONTENT_PACK_DIR = FileUtil.getTempDir().resolve(ContentPackImport.CONTENT_PACK_IMPORT_DIR);
     }
 
-    //This is needed as you can't have to RunWith annotations
-    //so this is the same as     @Rule
-//    public MockitoRule mockitoRule = MockitoJUnit.rule();
     @Mock
     private ImportExportService importExportService;
     @Mock
     private ContentPackImportConfig contentPackImportConfig;
     @Mock
     private SecurityContext securityContext;
-    @Mock
-    private AuthenticationService authenticationService;
 
     private Path testPack1 = CONTENT_PACK_DIR.resolve("testPack1.zip");
     private Path testPack2 = CONTENT_PACK_DIR.resolve("testPack2.zip");
@@ -97,13 +91,26 @@ class TestContentPackImport {
                     runnable.run();
                     return null;
                 })
-                .when(securityContext).asUser(Mockito.any(UserToken.class), Mockito.any(Runnable.class));
+                .when(securityContext).asUser(Mockito.any(UserIdentity.class), Mockito.any(Runnable.class));
 
-        User adminUser = new User();
-        adminUser.setName(User.ADMIN_USER_NAME);
         Mockito
-                .when(authenticationService.getAdminUser())
-                .thenReturn(adminUser);
+                .when(securityContext.createIdentity(Mockito.eq(User.ADMIN_USER_NAME)))
+                .thenReturn(new UserIdentity() {
+                    @Override
+                    public String getId() {
+                        return User.ADMIN_USER_NAME;
+                    }
+
+                    @Override
+                    public String getJws() {
+                        return null;
+                    }
+
+                    @Override
+                    public String getSessionId() {
+                        return null;
+                    }
+                });
     }
 
     private void deleteTestFiles() throws IOException {
@@ -182,6 +189,6 @@ class TestContentPackImport {
 
     private ContentPackImport getContentPackImport() {
         return new ContentPackImport(
-                importExportService, contentPackImportConfig, securityContext, authenticationService);
+                importExportService, contentPackImportConfig, securityContext);
     }
 }
