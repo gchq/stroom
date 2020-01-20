@@ -1,0 +1,28 @@
+apply plugin: 'com.github.johnrengelman.shadow'
+
+shadowJar {
+    // Allows us to build fat jars with lots of files
+    zip64 true
+}
+
+install {
+    repositories.mavenInstaller {
+        pom.artifactId = 'stroom-auth-swagger-java-client'
+    }
+}
+
+task execute(type:JavaExec) {
+   main = System.getProperty('mainClass')
+   classpath = sourceSets.main.runtimeClasspath
+}
+
+dependencies {
+    compile deps.javax_annotations
+    compile deps.swagger_annotations
+    compile deps.okhttp
+    compile deps.okhttp_logginer_interceptor
+    compile deps.gson
+    compile deps.joda_time
+
+    testCompile testDeps.junit
+}

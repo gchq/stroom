@@ -1,0 +1,149 @@
+server:
+  registerDefaultExceptionMappers: false
+  adminMinThreads: 1
+  adminMaxThreads: 10
+  adminContextPath: ${ADMIN_CONTEXT_PATH:- /}
+  applicationContextPath: ${APPLICATION_CONTEXT_PATH:- /}
+  applicationConnectors:
+    - type: http
+      port: ${STROOM_AUTH_SERVICE_PORT:- 8099}
+  adminConnectors:
+    - type: http
+      port: ${STROOM_AUTH_SERVICE_ADMIN_PORT:- 8100}
+  requestLog:
+    appenders:
+    - type: file
+      currentLogFilename: ./logs/access/access.log
+      queueSize: 256
+      discardingThreshold: 0
+      threshold: ALL
+      archive: true
+      archivedLogFilenamePattern: ./logs/access/access-%d{yyyy-MM-dd'T'HH:mm}.log.gz
+      # archivedFileCount being set means we'll start losing data if the logs
+      # aren't being sent somewhere, or if that mechanism fails.
+      archivedFileCount: 100
+      timeZone: UTC
+
+database:
+  driverClass: com.mysql.jdbc.Driver
+  user: ${DB_USER:- authuser}
+  password: ${DB_PASSWORD:- stroompassword1}
+  url: ${DB_URL:- jdbc:mysql://<IP_ADDRESS>:3307/auth?useUnicode=yes&characterEncoding=UTF-8}
+  properties:
+    charSet: UTF-8
+    hibernate.dialect: org.hibernate.dialect.MySQLInnoDBDialect
+    hibernate.show_sql: false
+
+logging:
+  level: ${LOGGING_LEVEL:- ERROR}
+  loggers:
+    stroom: INFO
+    io.dropwizard: INFO
+    org.eclipse.jetty: INFO
+    org.flywaydb: INFO
+    "event-logger":
+      level: INFO
+      additive: false
+      appenders:
+      - type: file
+        currentLogFilename: ./logs/user/user.log
+        threshold: ALL
+        queueSize: 256
+        discardingThreshold: 0
+        archive: true
+        archivedLogFilenamePattern: ./logs/user/user-%d{yyyy-MM-dd'T'HH:mm}.log.gz
+        archivedFileCount: 100
+        timeZone: UTC
+        logFormat: "%msg%n"
+  appenders:
+    - type: console
+      logFormat: "%highlight(%-6level) [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%green(%t)] %cyan(%logger) - %X{code} %msg %n"
+      timeZone: UTC
+    - type: file
+      currentLogFilename: ./logs/app/app.log
+      queueSize: 256
+      discardingThreshold: 0
+      threshold: ALL
+      archive: true
+      archivedLogFilenamePattern: ./logs/app/app-%d{yyyy-MM-dd'T'HH:mm}.log.gz
+      # archivedFileCount being set means we'll start losing data if the logs
+      # aren't being sent somewhere, or if that mechanism fails.
+      archivedFileCount: 100
+      timeZone: UTC
+      logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
+
+jooq:
+  dialect: MYSQL
+  logExecutedSql: yes
+  renderSchema: yes
+  renderNameStyle: QUOTED
+  renderKeywordStyle: LOWER
+  renderFormatted: no
+  paramType: INDEXED
+  statementType: PREPARED_STATEMENT
+  executeLogging: no
+  executeWithOptimisticLocking: no
+  attachRecords: yes
+  updatablePrimaryKeys: no
+
+token:
+  # The default expiry is configured in stroom-ui.
+  minutesUntilExpirationForUserToken: ${JWS_MINUTES_UNTIL_EXPIRATION_FOR_USER_TOKEN:- 43200} # 43200 minutes = 30 days
+  minutesUntilExpirationForEmailResetToken: ${JWS_MINUTES_UNTIL_EXPIRATION_FOR_EMAIL_RESET_TOKEN:- 5} # 5 minutes - short validity for the token
+  jwsIssuer: ${JWS_ISSUER:- stroom}
+  requireExpirationTime: ${JWS_REQUIRE_EXPIRATION_TIME:- false}
+  algorithm: ${JWS_ALGORITHM:- RS256}
+
+certificateDnPattern: ${CERTIFICATE_DN_PATTERN:- .*\((.*)\)} # This is the Java regex pattern used to capture the ID from the CN.
+certificateDnCaptureGroupIndex: ${CERTIFICATE_DN_CAPTURE_GROUP_INDEX:- 1} # The pattern above must identify the group with the sid.loginUrl: ${AUTH_UI:- http://<IP_ADDRESS>:5000/login}
+loginUrl: ${AUTH_UI:- https://<IP_ADDRESS>/s/login}
+changePasswordUrl: ${CHANGE_PASSWORD_URL:-https://<IP_ADDRESS>/s/changepassword}
+unauthorisedUrl: ${UNAUTHORISED_URL:-https://<IP_ADDRESS>/s/unauthorised}
+stroomUrl: ${STROOM_UI:- https://<IP_ADDRESS>}
+advertisedHost: ${ADVERTISED_HTTP_HOST:- https://<IP_ADDRESS>}
+failedLoginLockThreshold: ${FAILED_LOGIN_LOCK_THRESHOLD:- 3}
+sessionIdCookieMaxAge: ${SESSION_ID_COOKIE_MAX_AGE:- 2592000} # 2592000 = 1 month
+
+# This is the path at which the authentication service may be found, i.e. when it's being reverse proxied
+# e.g. https://123.123.123.123/authenticationService/v1/postAuthenticationRedirect
+ownPath: ${OWN_PATH:-api/auth/authentication}
+
+authorisationService:
+  url: ${AUTHORISATION_SERVICE_URL:-http://<IP_ADDRESS>:8080/api/authorisation/v1}
+  canManageUsersPermission: ${AUTHORISATION_SERVICE_CAN_MANAGE_USERS_PERMISSION:- Manage Users}
+#  groupsForUserPath: ${STROOM_APP_PERMISSIONS_SERVICE_GROUPS_FOR_USER_PATH:-/groupsForUserName}
+
+userService:
+  url: ${STROOM_USER_SERVICE_URL:-http://<IP_ADDRESS>:8080/api/appPermissions/v1}
+#  setStatusPath: ${AUTHORISATION_SERVICE_SET_USER_STATUS_PATH:- /setUserStatus}
+
+email:
+  fromAddress: ${EMAIL_FROM_ADDRESS:- noreply@stroom.com}
+  fromName: ${EMAIL_FROM_NAME:- Stroom User Accounts}
+  allowPasswordResets: ${ALLOW_PASSWORD_RESETS:- true}
+  passwordResetSubject: ${EMAIL_RESET_SUBJECT:- Password reset for Stroom}
+  passwordResetText: "${EMAIL_RESET_TEXT:- 'A password reset has been requested for this email address. Please visit the following URL to reset your password: %s.'}"
+  passwordResetUrl: ${EMAIL_RESET_URL:- 'https://<IP_ADDRESS>/s/resetPassword/?user=%s&token=%s'}
+  passwordResetTokenValidityInMinutes: ${EMAIL_RESET_TOKEN_VALIDITY_IN_MINUTES:- 600}
+  smtp:
+    host: ${EMAIL_SMTP_HOST:- localhost}
+    port: ${EMAIL_SMTP_PORT:- 2525}
+    transport: ${EMAIL_SMTP_TRANSPORT:- plain} # Possible values: TLS, SSL, plain. Defaults to plain if unspecified.
+    username: ${EMAIL_SMTP_USERNAME:-username}
+    password: ${EMAIL_SMTP_PASSWORD:-password}
+
+passwordIntegrityChecks:
+  neverUsedAccountDeactivationThreshold: ${NEVER_USED_ACCOUNT_DEACTIVATION_THRESHOLD:-P30D} # 30 days
+  unusedAccountDeactivationThreshold: ${UNUSED_ACCOUNT_DEACTIVATION_THRESHOLD:-P90D} # 90 days
+  mandatoryPasswordChangeDuration: ${MANDATORY_PASSWORD_CHANGE_DURATION:-P30D} # 30 days
+  durationBetweenChecks: ${DURATION_BETWEEN_CHECKS:-PT2M}
+  forcePasswordChangeOnFirstLogin: ${FORCE_PASSWORD_CHANGE_ON_FIRST_LOGIN:-true}
+  # There is an effective regex here: https://stackoverflow.com/questions/3802192/regexp-java-for-password-validation
+  # That regex won't work when pasted directly into this YAML.
+  minimumPasswordLength: ${MINIMUM_PASSWORD_LENGTH:-1}
+  passwordComplexityRegex: ${PASSWORD_COMPLEXITY_REGEX:-.*}
+
+stroom:
+  clientId: ${STROOM_CLIENT_ID:-PZnJr8kHRKqnlJRQThSI}
+  clientSecret: ${STROOM_CLIENT_SECRET:-OtzHiAWLj8QWcwO2IxXmqxpzE2pyg0pMKCghR2aU}
+  clientHost: ${STROOM_CLIENT_URI:-<IP_ADDRESS>}
