@@ -78,3 +78,6 @@ include 'stroom-headless'
 
 // Integration tests.
 include 'stroom-integrationtest'
+
+
+include 'stroom-ssl-test'

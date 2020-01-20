@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v6.0.30] - 2020-01-20
+
+* Issue **#1347** : Added SSL options to `http-call` XSLT method.
+
 
 ## [v6.0.29] - 2020-01-13
 
@@ -2030,7 +2034,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.29...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.30...6.0
+[v6.0.30]: https://github.com/gchq/stroom/compare/v6.0.29...v6.0.30
 [v6.0.29]: https://github.com/gchq/stroom/compare/v6.0.28...v6.0.29
 [v6.0.28]: https://github.com/gchq/stroom/compare/v6.0.27...v6.0.28
 [v6.0.27]: https://github.com/gchq/stroom/compare/v6.0.26...v6.0.27
