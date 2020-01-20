@@ -18,11 +18,13 @@
 package stroom.config.global.impl;
 
 
+import com.google.inject.internal.cglib.core.$DefaultNamingPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.DefaultClusterResultCollector;
 import stroom.cluster.task.api.TargetType;
+import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.config.global.shared.ClusterConfigProperty;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.FindGlobalConfigCriteria;
@@ -30,10 +32,12 @@ import stroom.config.global.shared.NodeConfigResult;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
+import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
 
 import javax.inject.Inject;
@@ -53,16 +57,19 @@ public class GlobalConfigService {
     private final ConfigPropertyDao dao;
     private final SecurityContext securityContext;
     private final ConfigMapper configMapper;
+    private final ConfigValidator configValidator;
     private final ClusterDispatchAsyncHelper dispatchHelper;
 
     @Inject
     GlobalConfigService(final ConfigPropertyDao dao,
                         final SecurityContext securityContext,
                         final ConfigMapper configMapper,
+                        final ConfigValidator configValidator,
                         final ClusterDispatchAsyncHelper dispatchHelper) {
         this.dao = dao;
         this.securityContext = securityContext;
         this.configMapper = configMapper;
+        this.configValidator = configValidator;
         this.dispatchHelper = dispatchHelper;
 
         initialise();
@@ -201,11 +208,6 @@ public class GlobalConfigService {
     public ConfigProperty update(final ConfigProperty configProperty) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
 
-            //TODO Need to validate the property value so we don't store a bad value
-            //  Need to use the full path to get the Prop object then from that get the
-            //  parent object then call validate on that.  Need a mechanism of only validating
-            // the prop of interest and not the whole lot.
-
             LAMBDA_LOGGER.debug(LambdaLogUtil.message(
                     "Saving property [{}] with new database value [{}]",
                     configProperty.getName(), configProperty.getDatabaseOverrideValue()));
@@ -213,23 +215,11 @@ public class GlobalConfigService {
             // Make sure we can parse the string value,
             // into an object (e.g. if it is a docref, list, map etc)
             final ConfigProperty persistedConfigProperty;
-            if (!configProperty.hasDatabaseOverride()) {
-                if (configProperty.getId() != null) {
-                    // getDatabaseValue is unset so we need to remove it from the DB
-                    try {
-                        dao.delete(configProperty.getName());
-                    } catch (Exception e) {
-                        throw new RuntimeException(LogUtil.message("Error deleting property {}: {}",
-                                configProperty.getName(), e.getMessage()));
-                    }
-                    // this is now orphaned so clear the ID
-                    configProperty.setId(null);
-                }
-                persistedConfigProperty = configProperty;
-            } else {
-                configProperty.getDatabaseOverrideValue().ifOverridePresent(optDbValue ->
-                        optDbValue.ifPresent(dbValue ->
-                                configMapper.validateStringValue(configProperty.getName(), dbValue)));
+            if (configProperty.hasDatabaseOverride()) {
+
+                // Ensure the value is a valid serialised form and that the de-serialised form
+                // passes javax validation
+                validateConfigProperty(configProperty);
 
                 AuditUtil.stamp(securityContext.getUserId(), configProperty);
 
@@ -248,6 +238,19 @@ public class GlobalConfigService {
                                 configProperty.getName(), configProperty.getId(), e.getMessage()));
                     }
                 }
+            } else {
+                if (configProperty.getId() != null) {
+                    // getDatabaseValue is unset so we need to remove it from the DB
+                    try {
+                        dao.delete(configProperty.getName());
+                    } catch (Exception e) {
+                        throw new RuntimeException(LogUtil.message("Error deleting property {}: {}",
+                                configProperty.getName(), e.getMessage()));
+                    }
+                    // this is now orphaned so clear the ID
+                    configProperty.setId(null);
+                }
+                persistedConfigProperty = configProperty;
             }
 
             // Update property in the config object tree
@@ -255,6 +258,43 @@ public class GlobalConfigService {
 
             return persistedConfigProperty;
         });
+    }
+
+    private void validateConfigProperty(final ConfigProperty configProperty) {
+        // We need to validate the effective value as the DB value may have been set to null
+        // and the validation may demand NotNull. In this instance the yaml/default should provide
+        // a value to satisfy the validation.
+
+        final PropertyPath propertyPath = configProperty.getName();
+        final String effectiveValueStr = configProperty.getEffectiveValue().orElse(null);
+        final Object effectiveValue = configMapper.convertValue(propertyPath, effectiveValueStr);
+
+        final PropertyUtil.Prop prop = configMapper.getProp(propertyPath)
+                .orElseThrow(() ->
+                        new RuntimeException(LogUtil.message("No prop object exists for {}", configProperty.getName())));
+
+        final AbstractConfig parentConfigObject = (AbstractConfig) prop.getParentObject();
+        final String propertyName = propertyPath.getPropertyName();
+
+        ConfigValidator.Result result = configValidator.validateValue(
+                parentConfigObject.getClass(), propertyName, effectiveValue);
+
+        // TODO ideally we would handle warnings in some way, but that is probably a job for a new UI
+        if (result.hasErrors()) {
+            // We may have more than one message for the one prop, as each prop can have many validation annotations
+            final StringBuilder stringBuilder = new StringBuilder()
+                    .append("Value [").append(effectiveValueStr).append("] ")
+                    .append(" for property ")
+                    .append(propertyPath.toString())
+                    .append(" is invalid:");
+
+            result.handleErrors(error -> {
+                stringBuilder
+                        .append("\n")
+                        .append(error.getMessage());
+            });
+            throw new RuntimeException(stringBuilder.toString());
+        }
     }
 
     private void deleteFromDb(final PropertyPath name) {

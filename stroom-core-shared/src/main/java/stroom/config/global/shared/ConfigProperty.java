@@ -63,7 +63,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     // values here so the UI can edit/display/validate them appropriately according to their type,
     // e.g. a custom UI control for managing List/Map/boolean types
 
-
     // The values are held inside an OverrideValue so we can one of three things:
     // A null reference - indicating no override value has been supplied
     // A OverrideValue holding null - indicating a null value has been supplied, e.g. an empty maintenanceMessage
@@ -75,7 +74,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
 
     // The cluster wide value held in the database and set by the user in the UI, may be null.
     private OverrideValue<String> databaseOverrideValue = OverrideValue.unSet();
-
 
     // These fields are not saved to the database,
     // they come from the annotations on the java config classes

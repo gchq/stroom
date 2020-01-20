@@ -566,11 +566,11 @@ class TestConfigMapper {
         PropertyPath propertyPath = PropertyPath.fromPathString(path);
 
         if (shouldValidate) {
-            configMapper.validateStringValue(propertyPath, value);
+            configMapper.validateValueSerialisation(propertyPath, value);
         } else {
             Assertions.assertThrows(RuntimeException.class, () -> {
                 // no leading delimiter
-                configMapper.validateStringValue(propertyPath, value);
+                configMapper.validateValueSerialisation(propertyPath, value);
             });
         }
     }

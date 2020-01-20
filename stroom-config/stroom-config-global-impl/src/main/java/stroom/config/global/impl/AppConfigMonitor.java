@@ -237,6 +237,8 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
 
         LOGGER.info("Validating modified config file");
         final ConfigValidator.Result result = configValidator.validate(newAppConfig);
+        result.handleViolations(ConfigValidator::logConstraintViolation);
+
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
             result.getErrorCount(),
             result.getWarningCount());

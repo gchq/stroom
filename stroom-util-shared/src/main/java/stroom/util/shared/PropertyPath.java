@@ -72,6 +72,16 @@ public class PropertyPath implements Comparable<PropertyPath> {
         return new PropertyPath(mergedParts);
     }
 
+    /**
+     * @return The property name from a property path, i.e. "name" from "stroom.node.name"
+     */
+    public String getPropertyName() {
+        if (parts.isEmpty()) {
+            throw new RuntimeException("Unable to get property name from empty path");
+        }
+        return parts.get(parts.size() - 1);
+    }
+
     public static Builder builder() {
         return new Builder();
     }
@@ -117,6 +127,9 @@ public class PropertyPath implements Comparable<PropertyPath> {
 
         private List<String> parts = null;
 
+        /**
+         * Add path part to the end of the list of paths already added
+         */
         public Builder add(final String part) {
             if (parts == null) {
                 parts = new ArrayList<>();

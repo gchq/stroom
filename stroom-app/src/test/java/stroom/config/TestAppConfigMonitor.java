@@ -83,7 +83,7 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         final AppConfig appConfig = YamlUtil.readAppConfig(devYamlCopyPath);
         final ConfigMapper configMapper = new ConfigMapper(appConfig);
         final ConfigLocation configLocation = new ConfigLocation(devYamlCopyPath);
-        final ConfigValidator configValidator = new ConfigValidator(configMapper, validator);
+        final ConfigValidator configValidator = new ConfigValidator(validator);
 
         Assertions.assertThat(appConfig.getPathConfig().getTemp())
                 .isNotEqualTo(newPathValue);

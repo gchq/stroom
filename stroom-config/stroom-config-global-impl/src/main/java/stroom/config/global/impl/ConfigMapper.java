@@ -153,6 +153,9 @@ public class ConfigMapper {
         }
     }
 
+    /**
+     * @return True if fullPath is a valid path to a config value
+     */
     public boolean validatePropertyPath(final PropertyPath fullPath) {
         return propertyMap.get(fullPath) != null;
     }
@@ -161,20 +164,29 @@ public class ConfigMapper {
         return globalPropertiesMap.values();
     }
 
-    Optional<ConfigProperty> getGlobalProperty(final PropertyPath fullPath) {
-        Objects.requireNonNull(fullPath);
-        return Optional.ofNullable(globalPropertiesMap.get(fullPath));
+    Optional<ConfigProperty> getGlobalProperty(final PropertyPath propertyPath) {
+        Objects.requireNonNull(propertyPath);
+        return Optional.ofNullable(globalPropertiesMap.get(propertyPath));
+    }
+
+    public Optional<Prop> getProp(final PropertyPath propertyPath) {
+        return Optional.ofNullable(propertyMap.get(propertyPath));
     }
 
     /**
      * Verifies that the passed value for the property with fullPath can be converted into
      * the appropriate object type
      */
-    void validateStringValue(final PropertyPath fullPath, final String value) {
+    void validateValueSerialisation(final PropertyPath fullPath, final String valueAsString) {
+        // If the string form can't be converted then an exception will be thrown
+        convertValue(fullPath, valueAsString);
+    }
+
+    Object convertValue(final PropertyPath fullPath, final String valueAsString) {
         final Prop prop = propertyMap.get(fullPath);
         if (prop != null) {
             final Type genericType = prop.getValueType();
-            convertToObject(value, genericType);
+            return convertToObject(valueAsString, genericType);
         } else {
             throw new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath));
         }

@@ -177,6 +177,7 @@ public class App extends Application<Config> {
             configFile.toAbsolutePath().normalize().toString());
 
         ConfigValidator.Result result = configValidator.validate(appConfig);
+        result.handleViolations(ConfigValidator::logConstraintViolation);
 
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
             result.getErrorCount(),
