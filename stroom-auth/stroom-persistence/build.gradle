@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+ext.moduleName = 'stroom.persistence'
 //plugins {
     //id 'nu.studer.jooq' version '2.0.6'
 //}

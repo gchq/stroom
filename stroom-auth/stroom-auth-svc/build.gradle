@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+ext.moduleName = 'stroom.auth.svc'
+
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow' 
 apply plugin: 'com.benjaminsproule.swagger'
@@ -58,8 +60,8 @@ run {
 }
 
 dependencies {
-    compile project(':stroom-persistence')
-    compile project(':stroom-auth-service-api')
+    compile project(':stroom-auth:stroom-persistence')
+    compile project(':stroom-auth:stroom-auth-service-api')
     compile deps.dropwizard_core
     compile deps.dropwizard_flyway
     compile deps.dropwizard_jooq
@@ -157,6 +159,6 @@ task generateSwaggerApi {
                 'modelPackage'  : 'stroom.auth.service.api.model',
                 'sourceFolder'  : 'src/main/java'
         ])
-        new DefaultGenerator().opts(config.toClientOptInput()).generate()
+        new org.jooq.codegen.DefaultGenerator().opts(config.toClientOptInput()).generate()
     }
 }

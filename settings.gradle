@@ -36,7 +36,7 @@ include 'stroom-app'
 include 'stroom-app-gwt'
 
 // Auth
-include 'stroom-auth:stroom-auth=service-api'
+include 'stroom-auth:stroom-auth-service-api'
 include 'stroom-auth:stroom-auth-svc'
 include 'stroom-auth:stroom-persistence' //TODO: rename to stroom-auth-persistence
 

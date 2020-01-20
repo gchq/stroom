@@ -1,3 +1,5 @@
+ext.moduleName = 'stroom.auth.service.api'
+
 apply plugin: 'com.github.johnrengelman.shadow'
 
 shadowJar {
@@ -5,11 +7,12 @@ shadowJar {
     zip64 true
 }
 
-install {
-    repositories.mavenInstaller {
-        pom.artifactId = 'stroom-auth-swagger-java-client'
-    }
-}
+// TODO commented out for migration
+//install {
+//    repositories.mavenInstaller {
+//        pom.artifactId = 'stroom-auth-swagger-java-client'
+//    }
+//}
 
 task execute(type:JavaExec) {
    main = System.getProperty('mainClass')

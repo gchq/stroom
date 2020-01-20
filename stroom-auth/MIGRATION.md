@@ -2,7 +2,7 @@
 
 Lots to do, listed (perhaps) in order of work:
 
-- [ ] Get IDE to compile code
+- [x] Get IDE to compile code
 - [ ] Add resources into Stroom's DW config
 - [ ] Compiling yet?
 - [ ] Merge flyway files
