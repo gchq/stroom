@@ -40,6 +40,7 @@ import org.glassfish.jersey.server.filter.RolesAllowedDynamicFeature;
 import org.jooq.Configuration;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import stroom.auth.EmailSender;
+import stroom.auth.AuthModule;
 import stroom.auth.PasswordIntegrityCheckTask;
 import stroom.auth.TokenVerifier;
 import stroom.auth.config.Config;
@@ -110,8 +111,8 @@ public final class App extends Application<Config> {
         jooqConfig.settings().setRenderSchema(false);
 
         //TODO migration change -- is this right?
-//        injector = Guice.createInjector(new stroom.auth.service.Module(config, jooqConfig));
-        injector = Guice.createInjector(new stroom.auth.service.Module());
+//        injector = Guice.createInjector(new stroom.auth.Module(config, jooqConfig));
+        injector = Guice.createInjector(new AuthModule());
 
         // We need the database before we need most other things
         migrate(config, environment);

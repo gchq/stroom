@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.auth.service;
+package stroom.auth;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
@@ -41,7 +41,7 @@ import stroom.auth.service.eventlogging.StroomEventLoggingService;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.RestResource;
 
-public final class Module extends AbstractModule {
+public final class AuthModule extends AbstractModule {
 //    private Config config;
     private Configuration jooqConfig;
 //

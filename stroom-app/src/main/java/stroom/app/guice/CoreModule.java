@@ -1,6 +1,7 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
+import stroom.auth.AuthModule;
 import stroom.core.db.CoreDbModule;
 import stroom.receive.common.RemoteFeedModule;
 import stroom.searchable.impl.SearchableModule;
@@ -9,7 +10,7 @@ public class CoreModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.activity.impl.db.ActivityDbModule());
-        install(new stroom.auth.service.Module()); //TODO rename
+        install(new AuthModule()); //TODO rename
         install(new stroom.auth.AuthDbModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
         install(new stroom.cache.impl.CacheHandlerModule());
