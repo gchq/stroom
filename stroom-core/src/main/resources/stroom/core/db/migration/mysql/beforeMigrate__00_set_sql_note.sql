@@ -1,5 +1,5 @@
 -- stop note level warnings about objects (not)? existing
-SET @old_sql_notes=@@sql_notes, sql_notes=0;
+SET @before_migrate_sql_notes=@@sql_notes, sql_notes=0;
 
 -- This is here to stop the following warnings
 

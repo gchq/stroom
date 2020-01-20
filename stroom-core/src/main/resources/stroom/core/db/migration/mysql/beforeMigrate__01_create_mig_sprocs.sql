@@ -24,7 +24,7 @@ DELIMITER $$
 
 DROP PROCEDURE IF EXISTS core_run_sql_v1 $$
 
-CREATE PROCEDURE core_run_sql_v1(
+CREATE PROCEDURE core_run_sql_v1 (
     p_sql_stmt varchar(1000)
 )
 BEGIN
