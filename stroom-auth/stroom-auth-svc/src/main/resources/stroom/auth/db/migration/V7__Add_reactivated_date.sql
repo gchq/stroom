@@ -1,2 +1,2 @@
-ALTER TABLE users
+ALTER TABLE authentication_users
 ADD reactivated_date TIMESTAMP NULL;

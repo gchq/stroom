@@ -5,7 +5,7 @@ Lots to do, listed (perhaps) in order of work:
 - [x] Get IDE to compile code
 - [x] Add Guide module
 - [x] Add resources into Stroom's DW config
-- [ ] Fix guice config
+- [x] Fix guice config
 - [ ] Merge flyway files
 - [ ] Merge gradle build files, e.g. version numbers. What if we're using different versions of things? Migrate those too.
 - [ ] Ensure remaining files are copied accross, e.g. docker.sh and ?
@@ -16,3 +16,4 @@ Lots to do, listed (perhaps) in order of work:
 - [ ] Re-organise tiers according to stroom standard -- i.e. service for security, etc...
 - [ ] Get travis build working -- it'll be building multiple images now.
 - [ ] Re-factor persistence so it doesn't use swagger? Stroom depends on this so we might want to do it later, but until we don't have swagger the build for auth will have a different process and we want it 100% aligned with Stroom.
+- [ ] Make migration scripts re-runnable

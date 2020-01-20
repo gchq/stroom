@@ -1,26 +1,9 @@
-/*
- * Copyright 2017 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 -- Following Simon Holywell's style guide: http://www.sqlstyle.guide/
 
 
--------------------------------------------------------------
 -- USERS
--------------------------------------------------------------
-CREATE TABLE users (
+CREATE TABLE authentication_users (
     id 				      MEDIUMINT NOT NULL AUTO_INCREMENT,
     email                 VARCHAR(255) NOT NULL,
     password_hash         VARCHAR(255) NOT NULL,
@@ -41,9 +24,7 @@ CREATE TABLE users (
 ) ENGINE=InnoDB DEFAULT CHARSET latin1;
 
 
--------------------------------------------------------------
 -- TOKENS / API KEYS
--------------------------------------------------------------
 CREATE TABLE token_types (
     id 				      MEDIUMINT NOT NULL AUTO_INCREMENT,
     token_type             VARCHAR(255) NOT NULL,
@@ -66,15 +47,15 @@ CREATE TABLE tokens (
     PRIMARY KEY           (id),
     UNIQUE 			      (id),
     CONSTRAINT            `fk_issued_to`
-        FOREIGN KEY(user_id) REFERENCES users(id)
+        FOREIGN KEY(user_id) REFERENCES authentication_users(id)
         ON DELETE CASCADE -- We want tokens to be removed when users are
         ON UPDATE RESTRICT, -- We don't want the user's ID changing if we have a token
     CONSTRAINT            `fk_issued_by_user`
-        FOREIGN KEY(issued_by_user) REFERENCES users(id)
+        FOREIGN KEY(issued_by_user) REFERENCES authentication_users(id)
         ON DELETE CASCADE -- We want tokens to be removed when users are
         ON UPDATE RESTRICT, -- We don't want the user's ID changing if we have a token
     CONSTRAINT            `fk_updated_by_user`
-        FOREIGN KEY(updated_by_user) REFERENCES users(id)
+        FOREIGN KEY(updated_by_user) REFERENCES authentication_users(id)
         ON DELETE CASCADE -- We want tokens to be removed when users are
         ON UPDATE RESTRICT, -- We don't want the user's ID changing if we have a token
     CONSTRAINT            `fk_token_type_id`
@@ -84,9 +65,7 @@ CREATE TABLE tokens (
 ) ENGINE=InnoDB DEFAULT CHARSET latin1;
 
 
--------------------------------------------------------------
 -- JWKs
--------------------------------------------------------------
 CREATE TABLE json_web_key (
     id 				      MEDIUMINT NOT NULL AUTO_INCREMENT,
     keyId                 VARCHAR(255) NOT NULL,
