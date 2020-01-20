@@ -21,16 +21,8 @@ import java.util.UUID;
 public class JwkDao {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(JwkDao.class);
 
-    @Inject
-    private Configuration jooqConfig;
-
     private DSLContext database = null;
     private AuthDbConnProvider authDbConnProvider;
-
-    @Inject
-    private void init() {
-        database = DSL.using(this.jooqConfig);
-    }
 
     @Inject
     JwkDao(final AuthDbConnProvider authDbConnProvider) {

@@ -22,6 +22,7 @@ import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.auth.AuthDbConnProvider;
 import stroom.auth.TokenBuilder;
 import stroom.auth.TokenBuilderFactory;
 import stroom.auth.config.TokenConfig;
@@ -33,9 +34,11 @@ import stroom.auth.resources.token.v1.SearchRequest;
 import stroom.auth.resources.token.v1.SearchResponse;
 import stroom.auth.resources.token.v1.Token;
 import stroom.auth.resources.user.v1.User;
+import stroom.db.util.JooqUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -51,23 +54,15 @@ import static stroom.auth.db.Tables.USERS;
 public class TokenDao {
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenDao.class);
     private final TokenConfig config;
-
-    @Inject
-    private Configuration jooqConfig;
+    private AuthDbConnProvider authDbConnProvider;
 
     @Inject
     private TokenBuilderFactory tokenBuilderFactory;
 
-    private DSLContext database = null;
-
     @Inject
-    private void init() {
-        database = DSL.using(this.jooqConfig);
-    }
-
-    @Inject
-    public TokenDao(TokenConfig config){
+    public TokenDao(TokenConfig config, AuthDbConnProvider authDbConnProvider) {
         this.config = config;
+        this.authDbConnProvider = authDbConnProvider;
     }
 
     public SearchResponse searchTokens(SearchRequest searchRequest) {
@@ -84,7 +79,7 @@ public class TokenDao {
         Users updatingUsers = USERS.as("updatingUsers");
 
         // Use a default if there's no order direction specified in the request
-        if(orderDirection == null){
+        if (orderDirection == null) {
             orderDirection = "asc";
         }
 
@@ -109,34 +104,41 @@ public class TokenDao {
         Optional<List<Condition>> conditions;
         conditions = getConditions(filters, issueingUsers, tokenOwnerUsers, updatingUsers);
 
-        int offset = limit * page;
-        SelectJoinStep<Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer>> selectFrom =
-                TokenDao.getSelectFrom(database, issueingUsers, tokenOwnerUsers, updatingUsers, userEmail);
+        DSLContext context = null;
+        try {
+            context = JooqUtil.createContext(authDbConnProvider.getConnection());
+            int offset = limit * page;
+            SelectJoinStep<Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer>> selectFrom =
+                    TokenDao.getSelectFrom(context, issueingUsers, tokenOwnerUsers, updatingUsers, userEmail);
 
-        Result<Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer>> results =
-                selectFrom
-                        .where(conditions.get())
-                        .orderBy(orderByField.get())
-                        .limit(limit)
-                        .offset(offset)
-                        .fetch();
-        List<Token> tokens = results.into(Token.class);
+            Result<Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer>> results =
+                    selectFrom
+                            .where(conditions.get())
+                            .orderBy(orderByField.get())
+                            .limit(limit)
+                            .offset(offset)
+                            .fetch();
+            List<Token> tokens = results.into(Token.class);
 
-        // Finally we need to get the number of tokens so we can calculate the total number of pages
-        SelectSelectStep<Record1<Integer>> selectCount =
-                database.selectCount();
-        SelectJoinStep<Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer>>
-                fromCount = TokenDao.getFrom(selectCount, issueingUsers, tokenOwnerUsers, updatingUsers, userEmail);
-        int count = fromCount
-                .where(conditions.get())
-                .fetchOne(0, int.class);
-        // We need to round up so we always have enough pages even if there's a remainder.
-        int pages = (int) Math.ceil((double) count / limit);
+            // Finally we need to get the number of tokens so we can calculate the total number of pages
+            SelectSelectStep<Record1<Integer>> selectCount =
+                    context.selectCount();
+            SelectJoinStep<Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer>>
+                    fromCount = TokenDao.getFrom(selectCount, issueingUsers, tokenOwnerUsers, updatingUsers, userEmail);
+            int count = fromCount
+                    .where(conditions.get())
+                    .fetchOne(0, int.class);
+            // We need to round up so we always have enough pages even if there's a remainder.
+            int pages = (int) Math.ceil((double) count / limit);
 
-        SearchResponse searchResponse = new SearchResponse();
-        searchResponse.setTokens(tokens);
-        searchResponse.setTotalPages(pages);
-        return searchResponse;
+            SearchResponse searchResponse = new SearchResponse();
+            searchResponse.setTokens(tokens);
+            searchResponse.setTotalPages(pages);
+            return searchResponse;
+        } catch (SQLException e) {
+            LOGGER.error("Unable to execute select!", e);
+            throw new RuntimeException(e);
+        }
     }
 
     public String createEmailResetToken(String emailAddress, String clientId) throws NoSuchUserException {
@@ -153,24 +155,24 @@ public class TokenDao {
     }
 
     public Token createIdToken(String idToken, String subject, Timestamp expiresOn) {
-        Record1<Integer> userRecord = database
+        Record1<Integer> userRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .select(USERS.ID)
                 .from(USERS)
                 .where(USERS.EMAIL.eq(subject))
-                .fetchOne();
+                .fetchOne());
         if (userRecord == null) {
             throw new NoSuchUserException("Cannot find user to associate with this token!");
         }
         int recipientUserId = userRecord.get(USERS.ID);
 
-        int tokenTypeId = database
+        int tokenTypeId = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .select(TOKEN_TYPES.ID)
                 .from(TOKEN_TYPES)
                 .where(TOKEN_TYPES.TOKEN_TYPE.eq(Token.TokenType.USER.getText().toLowerCase()))
                 .fetchOne()
-                .get(TOKEN_TYPES.ID);
+                .get(TOKEN_TYPES.ID));
 
-        Token tokenRecord = database
+        Token tokenRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .insertInto((Table) TOKENS)
                 .set(TOKENS.USER_ID, recipientUserId)
                 .set(TOKENS.TOKEN_TYPE_ID, tokenTypeId)
@@ -181,7 +183,7 @@ public class TokenDao {
                 .set(TOKENS.COMMENTS, "This is an OpenId idToken created by the Authentication Service.")
                 .returning(new Field[]{TOKENS.ID})
                 .fetchOne()
-                .into(Token.class);
+                .into(Token.class));
 
         return tokenRecord;
     }
@@ -209,11 +211,11 @@ public class TokenDao {
             boolean isEnabled,
             String comment) throws NoSuchUserException {
 
-        Record1<Integer> userRecord = database
+        Record1<Integer> userRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .select(USERS.ID)
                 .from(USERS)
                 .where(USERS.EMAIL.eq(recipientUserEmail))
-                .fetchOne();
+                .fetchOne());
         if (userRecord == null) {
             throw new NoSuchUserException("Cannot find user to associate with this API key!");
         }
@@ -228,21 +230,21 @@ public class TokenDao {
         Instant actualExpiryDate = tokenBuilder.getExpiryDate();
         String idToken = tokenBuilder.build();
 
-        int issuingUserId = database
+        int issuingUserId = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .select(USERS.ID)
                 .from(USERS)
                 .where(USERS.EMAIL.eq(issuingUserEmail))
                 .fetchOne()
-                .get(USERS.ID);
+                .get(USERS.ID));
 
-        int tokenTypeId = database
+        int tokenTypeId = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .select(TOKEN_TYPES.ID)
                 .from(TOKEN_TYPES)
                 .where(TOKEN_TYPES.TOKEN_TYPE.eq(tokenType.getText().toLowerCase()))
                 .fetchOne()
-                .get(TOKEN_TYPES.ID);
+                .get(TOKEN_TYPES.ID));
 
-        Token tokenRecord = database
+        Token tokenRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .insertInto((Table) TOKENS)
                 .set(TOKENS.USER_ID, recipientUserId)
                 .set(TOKENS.TOKEN_TYPE_ID, tokenTypeId)
@@ -254,27 +256,28 @@ public class TokenDao {
                 .set(TOKENS.COMMENTS, comment)
                 .returning()
                 .fetchOne()
-                .into(Token.class);
+                .into(Token.class));
 
         return tokenRecord;
     }
 
     public void deleteAllTokensExceptAdmins() {
-        Integer adminUserId = database.select(USERS.ID).from(USERS)
-                .where(USERS.EMAIL.eq("admin")).fetchOne().into(Integer.class);
+        Integer adminUserId = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .select(USERS.ID).from(USERS)
+                .where(USERS.EMAIL.eq("admin")).fetchOne().into(Integer.class));
 
-        database
+        JooqUtil.context(authDbConnProvider, context -> context
                 .deleteFrom(TOKENS)
                 .where(TOKENS.USER_ID.ne(adminUserId))
-                .execute();
+                .execute());
     }
 
     public void deleteTokenById(int tokenId) {
-        database.deleteFrom(TOKENS).where(TOKENS.ID.eq(tokenId)).execute();
+        JooqUtil.context(authDbConnProvider, context -> context.deleteFrom(TOKENS).where(TOKENS.ID.eq(tokenId)).execute());
     }
 
     public void deleteTokenByTokenString(String token) {
-        database.deleteFrom(TOKENS).where(TOKENS.TOKEN.eq(token)).execute();
+        JooqUtil.context(authDbConnProvider, context -> context.deleteFrom(TOKENS).where(TOKENS.TOKEN.eq(token)).execute());
     }
 
     public Optional<Token> readById(int tokenId) {
@@ -284,19 +287,25 @@ public class TokenDao {
         Users tokenOwnerUsers = USERS.as("tokenOwnerUsers");
         Users updatingUsers = USERS.as("updatingUsers");
 
-        Field userEmail = tokenOwnerUsers.EMAIL.as("user_email");
-        SelectJoinStep<Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer>> selectFrom =
-                getSelectFrom(database, issueingUsers, tokenOwnerUsers, updatingUsers, userEmail);
+        try {
+            DSLContext context = JooqUtil.createContext(authDbConnProvider.getConnection());
+            Field userEmail = tokenOwnerUsers.EMAIL.as("user_email");
+            SelectJoinStep<Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer>> selectFrom =
+                    getSelectFrom(context, issueingUsers, tokenOwnerUsers, updatingUsers, userEmail);
 
-        Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer> token =
-                selectFrom
-                        .where(new Condition[]{TOKENS.ID.eq(tokenId)})
-                        .fetchOne();
-        if (token == null) {
-            return Optional.empty();
+            Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer> token =
+                    selectFrom
+                            .where(new Condition[]{TOKENS.ID.eq(tokenId)})
+                            .fetchOne();
+            if (token == null) {
+                return Optional.empty();
+            }
+
+            return Optional.of(token.into(Token.class));
+        } catch (SQLException e) {
+            LOGGER.error("Unable to execute querY!", e);
+            throw new RuntimeException(e);
         }
-
-        return Optional.of(token.into(Token.class));
     }
 
 
@@ -305,7 +314,7 @@ public class TokenDao {
         Users tokenOwnerUsers = USERS.as("tokenOwnerUsers");
         Field userEmail = tokenOwnerUsers.EMAIL.as("user_email");
 
-         Record tokenResult = database.select(
+        Record tokenResult = JooqUtil.contextResult(authDbConnProvider, context -> context.select(
                 TOKENS.ID.as("id"),
                 TOKENS.ENABLED.as("enabled"),
                 TOKENS.EXPIRES_ON.as("expires_on"),
@@ -315,18 +324,18 @@ public class TokenDao {
                 TOKEN_TYPES.TOKEN_TYPE.as("token_type"),
                 TOKENS.UPDATED_ON.as("updated_on"),
                 TOKENS.USER_ID.as("user_id"))
-        .from(TOKENS
-                .join(TOKEN_TYPES)
-                .on(TOKENS.TOKEN_TYPE_ID.eq(TOKEN_TYPES.ID))
-                .join(tokenOwnerUsers)
-                .on(TOKENS.USER_ID.eq(tokenOwnerUsers.ID)))
-        .where(new Condition[]{TOKENS.TOKEN.eq(token)})
-                 .fetchOne();
+                .from(TOKENS
+                        .join(TOKEN_TYPES)
+                        .on(TOKENS.TOKEN_TYPE_ID.eq(TOKEN_TYPES.ID))
+                        .join(tokenOwnerUsers)
+                        .on(TOKENS.USER_ID.eq(tokenOwnerUsers.ID)))
+                .where(new Condition[]{TOKENS.TOKEN.eq(token)})
+                .fetchOne());
 
-         if(tokenResult == null){
-             return Optional.empty();
-         }
-         return Optional.of(tokenResult.into(Token.class));
+        if (tokenResult == null) {
+            return Optional.empty();
+        }
+        return Optional.of(tokenResult.into(Token.class));
     }
 
 
@@ -380,7 +389,7 @@ public class TokenDao {
         // We might be ordering by TOKENS or USERS or TOKEN_TYPES - we join and select on all
         SortField orderByField;
         if (orderBy != null) {
-            switch(orderBy){
+            switch (orderBy) {
                 case "userEmail":
                     orderByField = orderDirection.equals("asc") ? USERS.EMAIL.asc() : USERS.EMAIL.desc();
                     break;
@@ -391,7 +400,8 @@ public class TokenDao {
                     orderByField = orderDirection.equals("asc") ? TOKEN_TYPES.TOKEN_TYPE.asc() : TOKEN_TYPES.TOKEN_TYPE.desc();
                     break;
                 case "issuedOn":
-                default:  orderByField = orderDirection.equals("asc") ? TOKENS.ISSUED_ON.asc() : TOKENS.ISSUED_ON.desc();
+                default:
+                    orderByField = orderDirection.equals("asc") ? TOKENS.ISSUED_ON.asc() : TOKENS.ISSUED_ON.desc();
             }
         } else {
             // We don't have an orderBy so we'll use the default ordering
@@ -401,13 +411,13 @@ public class TokenDao {
     }
 
     public void enableOrDisableToken(int tokenId, boolean enabled, User updatingUser) {
-        Object result = database
+        Object result = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .update(TOKENS)
                 .set(TOKENS.ENABLED, enabled)
                 .set(TOKENS.UPDATED_ON, Timestamp.from(Instant.now()))
                 .set(TOKENS.UPDATED_BY_USER, updatingUser.getId())
                 .where(TOKENS.ID.eq((tokenId)))
-                .execute();
+                .execute());
     }
 
     /**
