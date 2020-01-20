@@ -42,12 +42,13 @@ public class XsrfProtectedServiceServlet extends CustomRemoteServiceServlet {
      *
      * @param method Method being invoked
      * @return {@code true} if XSRF token should be verified, {@code false}
-     *         otherwise
+     * otherwise
      */
     private boolean shouldValidateXsrfToken(final Method method) {
         return Util.isMethodXsrfProtected(method, XsrfProtect.class,
                 NoXsrfProtect.class, RpcToken.class);
     }
+
     /**
      * Validates {@link XsrfToken} included with {@link RPCRequest} against XSRF
      * cookie.
@@ -66,7 +67,8 @@ public class XsrfProtectedServiceServlet extends CustomRemoteServiceServlet {
                 throw new RpcTokenException("Invalid XSRF token");
             }
         } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
+            LOGGER.warn(e.getMessage());
             throw e;
         }
     }
