@@ -2,6 +2,7 @@ package stroom.config.global.impl;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.lifecycle.Managed;
+import stroom.config.global.impl.validation.ValidationModule;
 import stroom.config.global.shared.FetchGlobalConfigAction;
 import stroom.config.global.shared.FindGlobalConfigAction;
 import stroom.config.global.shared.UpdateGlobalConfigAction;
@@ -29,6 +30,8 @@ public class GlobalConfigModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(GlobalConfigResourceImpl.class);
+
+        install(new ValidationModule());
     }
 
     @Override

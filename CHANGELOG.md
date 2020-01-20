@@ -6,25 +6,6 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-
-## [v7.0-beta.16] - 2020-01-20
-
-* Fix broken DB migration.
-
-
-## [v7.0-beta.15] - 2020-01-20
-
-* Fix broken DB migration.
-
-
-## [v7.0-beta.14] - 2020-01-17
-
-* Issue **#1353** : Removed session identities from tasks.
-
-* Issue **#1352** : Removed internal API token.
-
-* Issue **#1347** : Added `http-call` method to XSLT.
-
 * Change docker image to allow us to pass in the dropwizard command to run, e.g. server|migrate.
 
 * Stop MySQL outputing Note level warnings during migration about things that don't exist when we expect them not to.

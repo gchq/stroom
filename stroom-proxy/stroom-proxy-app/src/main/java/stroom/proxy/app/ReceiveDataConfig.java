@@ -2,12 +2,12 @@ package stroom.proxy.app;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ReceiveDataConfig implements IsConfig {
+public class ReceiveDataConfig extends AbstractConfig {
     /**
      * Same size as JDK's Buffered Output Stream.
      */

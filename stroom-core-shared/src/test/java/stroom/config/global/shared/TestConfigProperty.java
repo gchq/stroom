@@ -9,6 +9,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.shared.PropertyPath;
 
 import java.io.IOException;
 
@@ -296,7 +297,7 @@ class TestConfigProperty {
 
         ConfigProperty configProperty = new ConfigProperty();
         configProperty.setId(123);
-        configProperty.setName("name");
+        configProperty.setName(PropertyPath.fromPathString("stroom.node.name"));
         configProperty.setEditable(true);
         configProperty.setPassword(false);
         configProperty.setRequireRestart(true);

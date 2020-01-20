@@ -31,7 +31,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.app.commands.DbMigrationCommand;
 import stroom.app.guice.AppModule;
+import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
+import stroom.config.global.impl.ConfigMapper;
+import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.dropwizard.common.Filters;
 import stroom.dropwizard.common.HealthChecks;
 import stroom.dropwizard.common.ManagedServices;
@@ -123,6 +126,13 @@ public class App extends Application<Config> {
 
         final AppModule appModule = new AppModule(configuration, environment, configFile);
         final Injector injector = Guice.createInjector(appModule);
+
+        // Ideally we would do the validation before all the guice binding but the validation
+        // relies on ConfigMapper and the various custom validator impls being injected by guice.
+        // As long as we do this as the first thing after the injector is created then it is
+        // only eager singletons that will have been spun up.
+        validateAppConfig(injector, configuration.getAppConfig());
+
         injector.injectMembers(this);
 
         // Add health checks
@@ -154,6 +164,31 @@ public class App extends Application<Config> {
         sessionCookieConfig.setSecure(configuration.getAppConfig().getSessionCookieConfig().isSecure());
         sessionCookieConfig.setHttpOnly(configuration.getAppConfig().getSessionCookieConfig().isHttpOnly());
         // TODO : Add `SameSite=Strict` when supported by JEE
+    }
+
+    private void validateAppConfig(final Injector injector, final AppConfig appConfig) {
+
+        // Inject this way rather than using injectMembers so we can avoid instantiating
+        // too many classes before running our validation
+        final ConfigMapper configMapper = injector.getInstance(ConfigMapper.class);
+        final ConfigValidator configValidator = injector.getInstance(ConfigValidator.class);
+
+        LOGGER.info("Validating application configuration file {}",
+            configFile.toAbsolutePath().normalize().toString());
+
+        ConfigValidator.Result result = configValidator.validate(appConfig);
+        result.handleViolations(ConfigValidator::logConstraintViolation);
+
+        LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
+            result.getErrorCount(),
+            result.getWarningCount());
+
+        if (result.hasErrors() && appConfig.isHaltBootOnConfigValidationFailure()) {
+            LOGGER.error("Application configuration is invalid. Stopping Stroom. To run Stroom with invalid " +
+                    "configuration, set {} to false. This is not advised!",
+                appConfig.getFullPath(AppConfig.PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE));
+            System.exit(1);
+        }
     }
 
     private static Path getYamlFileFromArgs(final String[] args) {

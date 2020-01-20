@@ -1,6 +1,7 @@
 ---
 appConfig:
   superDevMode: false
+  haltBootOnConfigValidationFailure: true
   activity:
     db:
       connection:
@@ -12,8 +13,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   annotation:
     db:
@@ -26,8 +29,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
     statusValues:
     - "New"
@@ -35,6 +40,10 @@ appConfig:
     - "Closed"
     standardComments: []
     createText: "Create Annotation"
+  apiGateway:
+    hostname: null
+    scheme: "https"
+    port: null
   benchmark:
     streamCount: 1000
     recordCount: 10000
@@ -55,8 +64,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   clusterTask:
     clusterResultCollectorCache:
@@ -73,8 +84,10 @@ appConfig:
       cachePrepStmts: null
       prepStmtCacheSize: null
       prepStmtCacheSqlLimit: null
+      connectionTimeout: null
       idleTimeout: null
       maxLifetime: null
+      minimumIdle: null
       maxPoolSize: null
   contentPackImport:
     enabled: false
@@ -89,8 +102,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   dashboard:
     activeQueriesCache:
@@ -126,8 +141,10 @@ appConfig:
           cachePrepStmts: null
           prepStmtCacheSize: null
           prepStmtCacheSqlLimit: null
+          connectionTimeout: null
           idleTimeout: null
           maxLifetime: null
+          minimumIdle: null
           maxPoolSize: null
     retention:
       deleteBatchSize: 1000
@@ -147,8 +164,10 @@ appConfig:
           cachePrepStmts: null
           prepStmtCacheSize: null
           prepStmtCacheSqlLimit: null
+          connectionTimeout: null
           idleTimeout: null
           maxLifetime: null
+          minimumIdle: null
           maxPoolSize: null
     filesystemVolume:
       volumeSelector: "RoundRobin"
@@ -179,8 +198,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   explorer:
     db:
@@ -193,8 +214,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   export:
     enabled: false
@@ -221,8 +244,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
     writer:
       cache:
@@ -244,8 +269,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   lifecycle:
     enabled: true
@@ -260,10 +287,12 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
-    node: "tba"
+    name: "tba"
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"
@@ -342,8 +371,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   properties:
     db:
@@ -356,8 +387,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   proxyAggregation:
     proxyDir: "${stroom.temp}/proxy"
@@ -409,14 +442,19 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
     authentication:
       authenticationServiceUrl: null
       authenticationRequired: true
       verifySsl: false
       authServicesBaseUrl: "http://auth-service:8099"
+      jwt:
+        jwtIssuer: "stroom"
+        enableTokenRevocationCheck: true
       preventLogin: false
       userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
       clientId: null
@@ -425,9 +463,6 @@ appConfig:
         maximumSize: 10000
         expireAfterAccess: null
         expireAfterWrite: 1800000
-      jwt:
-        jwtIssuer: "stroom"
-        enableTokenRevocationCheck: true
     authorisation:
       userGroupsCache:
         maximumSize: 1000
@@ -508,8 +543,10 @@ appConfig:
           cachePrepStmts: null
           prepStmtCacheSize: null
           prepStmtCacheSqlLimit: null
+          connectionTimeout: null
           idleTimeout: null
           maxLifetime: null
+          minimumIdle: null
           maxPoolSize: null
       search:
         storeSize: "1000000,100,10,1"
@@ -618,8 +655,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   ui:
     welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
