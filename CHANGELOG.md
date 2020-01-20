@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Simplify the /status servlet and make it return json.
+
+* Add validation of config property values when edited in the UI.
+
 * Add validation of the config file on boot.
 
 * Change docker image to allow us to pass in the dropwizard command to run, e.g. server|migrate.

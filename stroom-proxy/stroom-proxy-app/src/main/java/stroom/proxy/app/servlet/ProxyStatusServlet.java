@@ -1,5 +1,6 @@
 package stroom.proxy.app.servlet;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.shared.BuildInfo;
@@ -13,9 +14,13 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.Writer;
+import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
+/**
+ * Public un-authenticated servlet for client systems to monitor stroom-proxy's availability.
+ */
 @Unauthenticated
 public class ProxyStatusServlet extends HttpServlet implements IsServlet {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProxyStatusServlet.class);
@@ -44,18 +49,17 @@ public class ProxyStatusServlet extends HttpServlet implements IsServlet {
     }
 
     @Override
-    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException, IOException {
-        response.setContentType("text/plain");
-        final BuildInfo buildInfo = buildInfoProvider.get();
-        final Writer writer = response.getWriter();
-        writer.write("INFO,HTTP,OK");
-        writer.write("\nINFO,STROOM_PROXY,Build version ");
-        writer.write(buildInfo.getBuildVersion());
-        writer.write("\nINFO,STROOM_PROXY,Build date ");
-        writer.write(buildInfo.getBuildDate());
-        writer.write("\nINFO,STROOM_PROXY,Up date ");
-        writer.write(buildInfo.getUpDate());
-        writer.close();
+    protected void doGet(final HttpServletRequest request, final HttpServletResponse response) throws ServletException {
+        try (final PrintWriter printWriter = response.getWriter()) {
+            response.setContentType("application/json");
+            response.setCharacterEncoding(StandardCharsets.UTF_8.name());
+            response.setStatus(200);
+
+            new ObjectMapper().writeValue(printWriter, buildInfoProvider.get());
+        } catch (final IOException e) {
+            LOGGER.error("Error retrieving stroom status", e);
+            throw new ServletException("Error retrieving stroom status");
+        }
     }
 
     /**
