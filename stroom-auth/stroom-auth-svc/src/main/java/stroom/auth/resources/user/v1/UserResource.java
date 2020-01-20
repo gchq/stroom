@@ -47,6 +47,7 @@ import stroom.auth.daos.UserMapper;
 import stroom.auth.service.eventlogging.StroomEventLoggingService;
 import stroom.auth.service.security.ServiceUser;
 import stroom.auth.db.tables.records.UsersRecord;
+import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -71,7 +72,7 @@ import static stroom.auth.db.Tables.USERS;
 @Path("/user/v1")
 @Produces({"application/json"})
 @Api(description = "Stroom User API", tags = {"User"})
-public final class UserResource {
+public final class UserResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserResource.class);
 
     private AuthorisationService authorisationService;

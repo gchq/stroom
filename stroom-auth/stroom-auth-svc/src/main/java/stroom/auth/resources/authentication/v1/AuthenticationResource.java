@@ -45,6 +45,7 @@ import stroom.auth.resources.token.v1.Token;
 import stroom.auth.resources.user.v1.User;
 import stroom.auth.service.eventlogging.StroomEventLoggingService;
 import stroom.auth.service.security.ServiceUser;
+import stroom.util.shared.RestResource;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
@@ -87,7 +88,7 @@ import static stroom.auth.resources.authentication.v1.PasswordValidator.validate
 @Path("/authentication/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom Authentication API", tags = {"Authentication"})
-public final class AuthenticationResource {
+public final class AuthenticationResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationResource.class);
     private static final String INVALID_CREDENTIALS_MESSAGE = "Invalid credentials";
     private static final String ACCOUNT_LOCKED_MESSAGE = "This account is locked. Please contact your administrator";

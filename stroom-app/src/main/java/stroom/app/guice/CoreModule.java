@@ -9,6 +9,7 @@ public class CoreModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.activity.impl.db.ActivityDbModule());
+        install(new stroom.auth.AuthModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
         install(new stroom.cache.impl.CacheHandlerModule());
         install(new stroom.cache.impl.CacheModule());

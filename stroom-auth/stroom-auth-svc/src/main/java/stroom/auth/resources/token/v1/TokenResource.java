@@ -39,6 +39,7 @@ import stroom.auth.daos.UserDao;
 import stroom.auth.resources.user.v1.User;
 import stroom.auth.service.eventlogging.StroomEventLoggingService;
 import stroom.auth.service.security.ServiceUser;
+import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -65,7 +66,7 @@ import java.util.Optional;
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom API Key API", tags = {"ApiKey"})
-public class TokenResource {
+public class TokenResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenResource.class);
 
     private final TokenDao tokenDao;

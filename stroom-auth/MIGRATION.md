@@ -3,8 +3,9 @@
 Lots to do, listed (perhaps) in order of work:
 
 - [x] Get IDE to compile code
-- [ ] Add resources into Stroom's DW config
-- [ ] Compiling yet?
+- [x] Add Guide module
+- [x] Add resources into Stroom's DW config
+- [ ] Fix guice config
 - [ ] Merge flyway files
 - [ ] Merge gradle build files, e.g. version numbers. What if we're using different versions of things? Migrate those too.
 - [ ] Ensure remaining files are copied accross, e.g. docker.sh and ?
