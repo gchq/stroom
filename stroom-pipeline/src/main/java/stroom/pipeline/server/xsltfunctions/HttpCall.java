@@ -1,6 +1,5 @@
 package stroom.pipeline.server.xsltfunctions;
 
-import kotlin.Pair;
 import net.sf.saxon.Configuration;
 import net.sf.saxon.event.Builder;
 import net.sf.saxon.event.PipelineConfiguration;
@@ -26,6 +25,8 @@ import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map.Entry;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
@@ -121,11 +122,14 @@ class HttpCall extends StroomExtensionFunctionCall {
         // Write headers.
         if (response.headers() != null && response.headers().size() > 0) {
             startElement(contentHandler, "headers");
-            for (final Pair<? extends String, ? extends String> header : response.headers()) {
-                startElement(contentHandler, "header");
-                data(contentHandler, "key", header.component1());
-                data(contentHandler, "value", header.component2());
-                endElement(contentHandler, "header");
+            for (final Entry<String, List<String>> entry : response.headers().toMultimap().entrySet()) {
+                final String key = entry.getKey();
+                for (final String value : entry.getValue()) {
+                    startElement(contentHandler, "header");
+                    data(contentHandler, "key", key);
+                    data(contentHandler, "value", value);
+                    endElement(contentHandler, "header");
+                }
             }
             endElement(contentHandler, "headers");
         }

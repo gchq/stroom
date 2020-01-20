@@ -1,5 +1,7 @@
 dependencies {
     compile libs.dropwizard_assets
+    compile libs.dropwizard_configuration
     compile libs.dropwizard_core
+    compile libs.dropwizard_jersey
 }
 
