@@ -38,24 +38,24 @@ import stroom.auth.resources.authentication.v1.AuthenticationResource;
 import stroom.auth.resources.token.v1.TokenResource;
 import stroom.auth.resources.user.v1.UserResource;
 import stroom.auth.service.eventlogging.StroomEventLoggingService;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 public final class Module extends AbstractModule {
-    private Config config;
+//    private Config config;
     private Configuration jooqConfig;
+//
+//    public Module(Config config, Configuration jooqConfig) {
+//        this.config = config;
+//        this.jooqConfig = jooqConfig;
+//    }
 
-    public Module(Config config, Configuration jooqConfig) {
-        this.config = config;
-        this.jooqConfig = jooqConfig;
-    }
-
+    @Override
     protected void configure() {
         bind(UserResource.class);
-        bind(AuthenticationResource.class);
-        bind(TokenResource.class);
-        bind(UserServiceClient.class);
-        bind(TokenDao.class);
-        bind(UserDao.class);
-        bind(JwkDao.class);
+//        bind(AuthenticationResource.class);
+//        bind(TokenResource.class);
+//        bind(UserServiceClient.class);
         bind(TokenVerifier.class);
         bind(EmailSender.class);
         bind(CertificateManager.class);
@@ -66,25 +66,29 @@ public final class Module extends AbstractModule {
         bind(TokenCreationExceptionMapper.class);
         bind(UnsupportedFilterExceptionMapper.class);
         bind(NoSuchUserExceptionMapper.class);
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(UserResource.class)
+                .addBinding(AuthenticationResource.class)
+                .addBinding(TokenResource.class);
     }
-
-    @Provides
-    public Config getConfig() {
-        return config;
-    }
-
-    @Provides
-    public TokenConfig getTokenConfig() {
-        return config.getTokenConfig();
-    }
-
+//
+//    @Provides
+//    public Config getConfig() {
+//        return config;
+//    }
+//
+//    @Provides
+//    public TokenConfig getTokenConfig() {
+//        return config.getTokenConfig();
+//    }
+//
     @Provides
     public Configuration getJooqConfig() {
         return jooqConfig;
     }
-
-    @Provides
-    public PasswordIntegrityCheckTask getPasswordIntegrityCheckTask(Config config, UserDao userDao){
-        return new PasswordIntegrityCheckTask(config.getPasswordIntegrityChecksConfig(), userDao);
-    }
+//
+//    @Provides
+//    public PasswordIntegrityCheckTask getPasswordIntegrityCheckTask(Config config, UserDao userDao){
+//        return new PasswordIntegrityCheckTask(config.getPasswordIntegrityChecksConfig(), userDao);
+//    }
 }

@@ -109,7 +109,9 @@ public final class App extends Application<Config> {
         // use a different db name in the connection url
         jooqConfig.settings().setRenderSchema(false);
 
-        injector = Guice.createInjector(new stroom.auth.service.Module(config, jooqConfig));
+        //TODO migration change -- is this right?
+//        injector = Guice.createInjector(new stroom.auth.service.Module(config, jooqConfig));
+        injector = Guice.createInjector(new stroom.auth.service.Module());
 
         // We need the database before we need most other things
         migrate(config, environment);

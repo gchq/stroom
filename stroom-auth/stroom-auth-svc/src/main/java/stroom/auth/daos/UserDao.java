@@ -29,12 +29,14 @@ import org.jooq.impl.DSL;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.auth.AuthDbConnProvider;
 import stroom.auth.config.Config;
 import stroom.auth.exceptions.BadRequestException;
 import stroom.auth.exceptions.NoSuchUserException;
 import stroom.auth.resources.user.v1.User;
 import stroom.auth.db.Tables;
 import stroom.auth.db.tables.records.UsersRecord;
+import stroom.db.util.JooqUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -55,29 +57,32 @@ import static stroom.auth.db.Tables.USERS;
 public class UserDao {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserDao.class);
 
+    private AuthDbConnProvider authDbConnProvider;
+
     @Inject
     private Configuration jooqConfig;
 
-    private DSLContext database = null;
+//    private DSLContext database = null;
     private Config config;
     private Clock clock;
 
     @Inject
-    public UserDao(Config config) {
+    public UserDao(Config config, AuthDbConnProvider authDbConnProvider) {
         this.config = config;
+        this.authDbConnProvider = authDbConnProvider;
         this.clock = Clock.systemDefaultZone();
     }
 
-    @Inject
-    private void init() {
-        if(this.jooqConfig != null){
-            database = DSL.using(this.jooqConfig);
-        }
-    }
+//    @Inject
+//    private void init() {
+//        if(this.jooqConfig != null){
+//            database = DSL.using(this.jooqConfig);
+//        }
+//    }
 
-    public void setDatabase(DSLContext database){
-        this.database = database;
-    }
+//    public void setDatabase(DSLContext database){
+//        this.database = database;
+//    }
 
     public void setClock(Clock clock){
         this.clock = clock;
@@ -88,7 +93,7 @@ public class UserDao {
         newUser.setCreatedByUser(creatingUsername);
         newUser.setLoginCount(0);
         UsersRecord usersRecord = UserMapper.map(newUser);
-        UsersRecord createdUser = database.newRecord(USERS, usersRecord);
+        UsersRecord createdUser = JooqUtil.contextResult(authDbConnProvider, context -> context.newRecord(USERS, usersRecord));
         createdUser.store();
         return createdUser.getId();
     }
