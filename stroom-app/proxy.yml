@@ -82,7 +82,7 @@ proxyConfig:
   feedStatus:
 #    url: http://127.0.0.1:8080/api/feedStatus/v1
     url: "https://nginx/api/feedStatus/v1"
-    apiKey: "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6InN0cm9vbSIsImF1ZCI6IlBabkpyOGtIUktxbmxKUlFUaFNJIn0.qT5jdPWBpN9me0L3OqUT0VFT2mvVX9mCp0gPFyTVg8DkFTPLLYIuXjOslvrllJDBbqefEtqS9OwQs3RmRnZxror676stTP6JHN76YqJWj2yJYyJGuggbXjZnfTiZGO3SOxl5FP4nmRRvPxA3XqV9kippKBpHfqm5RuTpFTU8uses2iaHFm7lY4zXmKDmwVizXybBQBtpxrBNQkeQjQyg7UFkpsRO8-PmIdbTldRhGlud5VpntwI1_ahwOzK-einUJQOWrcOBmXAMPRYBI6tSLT1xS_c5XpFX1Rxoj3FGjI-Myqp_2Nt_lZuQ3h-0Qh8WkZMnWQ76G7CKawXzRAwd7Q"
+    apiKey: "eyJhbGciOiJSUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsImlzcyI6InN0cm9vbSIsInNpZCI6bnVsbH0.k0Ssb43GCdTunAMeM26fIulYKNUuPUaJJk6GxDmzCPb7kVPwEtdfBSrtwazfEFM97dnmvURkLqs-DAZTXhhf-0VqQx4hkwcCHf83eVptWTy-lufIhQo6FCM223c9ONIhl6CPqknWh9Bo3vFNrNJoKz5Zw2T_iCcQhi2WGjd_tjTG7VbibTIpH3lPQDw1IBD2nMsEqACJSk3IaFe0GYcrAEMwsjj3sjAwByMbj5DJvo_DJbAuzUwS5IVpASEENen5Xd3wALLirrraUfED1OY0G56Ttcwl3uQ2s-grZXBM4JCiIurlWR5iNtNwoPUsZsyMju4FMSXt3Ur1NIpD7XKJlg"
   forwardStreamConfig:
     forwardingEnabled: true
 #    userAgent: "My custom user agent string"

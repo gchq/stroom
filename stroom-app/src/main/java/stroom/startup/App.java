@@ -87,8 +87,6 @@ import stroom.security.server.JWTService;
 import stroom.security.server.SecurityFilter;
 import stroom.security.server.SessionListListener;
 import stroom.security.server.SessionResource;
-import stroom.security.server.UserAppPermissionResource;
-import stroom.security.server.UserResource;
 import stroom.security.spring.SecurityConfiguration;
 import stroom.servicediscovery.ResourcePaths;
 import stroom.servicediscovery.ServiceDiscovererImpl;
@@ -395,11 +393,7 @@ public class App extends Application<Config> {
         SpringUtil.addResource(environment.jersey(), applicationContext, RuleSetResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SessionResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, SqlStatisticsQueryResource.class);
         SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, StroomIndexQueryResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, UserAppPermissionResource.class);
-        SpringUtil.addResource(environment.jersey(), applicationContext, UserResource.class);
 
         // Map exceptions to helpful HTTP responses
         environment.jersey().register(PermissionExceptionMapper.class);

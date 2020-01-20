@@ -6,6 +6,7 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
 ## [v6.0.30] - 2020-01-20
 
 * Issue **#1347** : Added SSL options to `http-call` XSLT method.
