@@ -1,0 +1,5 @@
+dependencies {
+    compile libs.dropwizard_assets
+    compile libs.dropwizard_core
+}
+
