@@ -215,7 +215,7 @@ public class StroomXSLTFunctionLibrary {
                         SequenceType.OPTIONAL_STRING,
                         SequenceType.OPTIONAL_STRING
                 })
-                .resultType(SequenceType.OPTIONAL_STRING)
+                .resultType(SequenceType.NODE_SEQUENCE)
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
