@@ -21,82 +21,93 @@ apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'com.benjaminsproule.swagger'
 apply plugin: 'org.flywaydb.flyway'
 
+//TODO comment out for migration
 mainClassName = 'stroom.auth.service.App'
 
-jar {
-    manifest {
-        attributes (
-            "Implementation-Title": "Stroom Auth Service",
-            "Implementation-Version": versions.stroomAuth,
-            "Main-Class": "stroom.auth.service.App"
-        )
-    }
+//TODO commented out for migration
+//jar {
+//    manifest {
+//        attributes (
+//            "Implementation-Title": "Stroom Auth Service",
+//            "Implementation-Version": versions.stroomAuth,
+//            "Main-Class": "stroom.auth.service.App"
+//        )
+//    }
+//
+//    archiveName 'stroom-auth-service.jar'
+//}
 
-    archiveName 'stroom-auth-service.jar'
-}
+//TODO commented out for migration
+//shadowJar {
+//    // Allows us to build fat jars with lots of files
+//    zip64 true
+//    mergeServiceFiles()
+//    archiveName 'stroom-auth-service-all.jar'
+//}
 
-shadowJar {
-    // Allows us to build fat jars with lots of files
-    zip64 true
-    mergeServiceFiles()
-    archiveName 'stroom-auth-service-all.jar'
-}
+//TODO commented out for migration
+//sourceSets {
+//    // This lets us use different directories for our integration tests.
+//    integrationTest {
+//        java {
+//            compileClasspath += main.output + test.output
+//            runtimeClasspath += main.output + test.output
+//            srcDir file('src/integration-test/java')
+//        }
+//        resources.srcDir file('src/integration-test/resources')
+//    }
+//}
 
-sourceSets {
-    // This lets us use different directories for our integration tests.
-    integrationTest {
-        java {
-            compileClasspath += main.output + test.output
-            runtimeClasspath += main.output + test.output
-            srcDir file('src/integration-test/java')
-        }
-        resources.srcDir file('src/integration-test/resources')
-    }
-}
-
+//TODO commented out for migration
 // Configure the run task to start the Dropwizard service
-run {
-    args 'server', './config.generated.yml'
-}
+//run {
+//    args 'server', './config.generated.yml'
+//}
 
 dependencies {
     compile project(':stroom-auth:stroom-persistence')
     compile project(':stroom-auth:stroom-auth-service-api')
     compile project(':stroom-util-shared')
+    compile project(':stroom-db-util')
     compile project(':stroom-util')
-    compile deps.dropwizard_core
-    compile deps.dropwizard_flyway
-    compile deps.dropwizard_jooq
-    compile deps.dropwizard_jersey
-    compile deps.dropwizard_auth
-    compile deps.dropwizard_auth_jwt
-    compile deps.bcrypt
-    compile deps.jose4j
-    compile deps.guice
-    compile deps.slf4j
-    compile deps.shiro_core
-    compile deps.flyway_core
-    compile deps.curator_service_discovery
-    compile deps.simple_java_mail
-    compile deps.swagger_annotations
-    compile deps.eventLogging
-    compile deps.jaxb_api
-    compile deps.jaxb_core
-    compile deps.jaxb_impl
-    compile deps.javax_activation
+    compile authDeps.dropwizard_core
+    compile authDeps.dropwizard_flyway
+    compile authDeps.dropwizard_jooq
+    compile authDeps.dropwizard_jersey
+    compile authDeps.dropwizard_auth
+    compile authDeps.dropwizard_auth_jwt
+    compile authDeps.bcrypt
+    compile authDeps.jose4j
+    compile authDeps.guice
+    compile authDeps.slf4j
+    compile authDeps.shiro_core
+    compile authDeps.flyway_core
+    compile authDeps.curator_service_discovery
+    compile authDeps.simple_java_mail
+    compile authDeps.swagger_annotations
+    compile authDeps.eventLogging
+    compile authDeps.jaxb_api
+    compile authDeps.jaxb_core
+    compile authDeps.jaxb_impl
+    compile authDeps.javax_activation
 
-    runtime deps.mysql_connector_java
+    runtime authDeps.mysql_connector_java
 
-    testCompile testDeps.junit
-    testCompile testDeps.assertj
-    testCompile testDeps.wiremock
-    testCompile testDeps.test_containers_mysql
-    testCompile testDeps.mockito
-    testCompile testDeps.junit_jupiter
+    testCompile project(':stroom-auth:stroom-auth-svc')
+    testCompile authTestDeps.junit
+    testCompile authTestDeps.assertj
+    testCompile authTestDeps.wiremock
+    testCompile authTestDeps.test_containers_mysql
+    testCompile authTestDeps.mockito
+    testCompile authTestDeps.junit_jupiter
+    testCompile authTestDeps.moshi
+    testCompile authTestDeps.dropwizard_testing
+    testCompile authTestDeps.unirest
 
-    integrationTestCompile testDeps.dropwizard_testing
-    integrationTestCompile testDeps.moshi
-    integrationTestCompile testDeps.unirest
+    // TODO: commented out for mgiration
+//    integrationTestCompile testDeps.dropwizard_testing
+//    integrationTestCompile testDeps.moshi
+//    integrationTestCompile testDeps.unirest
 }
 
 def apiProjectRoot = "${projectDir}/../stroom-auth-service-api"

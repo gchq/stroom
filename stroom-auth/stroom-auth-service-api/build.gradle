@@ -20,12 +20,12 @@ task execute(type:JavaExec) {
 }
 
 dependencies {
-    compile deps.javax_annotations
-    compile deps.swagger_annotations
-    compile deps.okhttp
-    compile deps.okhttp_logginer_interceptor
-    compile deps.gson
-    compile deps.joda_time
+    compile authDeps.javax_annotations
+    compile authDeps.swagger_annotations
+    compile authDeps.okhttp
+    compile authDeps.okhttp_logginer_interceptor
+    compile authDeps.gson
+    compile authDeps.joda_time
 
-    testCompile testDeps.junit
+    testCompile authTestDeps.junit
 }
