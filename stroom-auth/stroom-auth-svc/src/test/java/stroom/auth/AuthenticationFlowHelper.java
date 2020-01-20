@@ -24,6 +24,7 @@ import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
+import org.assertj.core.api.Assertions;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jwk.RsaJsonWebKey;
 import org.jose4j.jwt.JwtClaims;
@@ -72,7 +73,7 @@ public class AuthenticationFlowHelper {
                 .asString();
 
         if(changePasswordResponse.getStatus() != Response.Status.OK.getStatusCode()){
-            fail("Unable to change password! " + changePasswordResponse.getStatusText());
+            Assertions.fail("Unable to change password! " + changePasswordResponse.getStatusText());
         }
 
         // We need to use a real-ish sort of nonce otherwise the OpenId tokens might end up being identical.
@@ -135,7 +136,7 @@ public class AuthenticationFlowHelper {
             fail("Initial authentication request failed!");
         }
 
-        assertThat(authenticationRequestResponse.getStatus()).isEqualTo(303);// 303 = See Other
+        Assertions.assertThat(authenticationRequestResponse.getStatus()).isEqualTo(303);// 303 = See Other
         StringBuilder redirectionPathBuilder = new StringBuilder();
         redirectionPathBuilder.append("/s/login?error=login_required&state=&clientId=");
         redirectionPathBuilder.append(CLIENT_ID);
@@ -207,7 +208,7 @@ public class AuthenticationFlowHelper {
                     .header("Cookie", cookies)
                     .asString();
         } catch (UnirestException e) {
-            fail("Unable to follow postAuthenticationRedirect! " + e.toString());
+            Assertions.fail("Unable to follow postAuthenticationRedirect! " + e.toString());
         }
         String redirectUri = postAuthenticationRedirectResponse.getHeaders().get("Location").get(0);
         LOGGER.info("redirectUrl:{}", redirectUri);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.auth.service.resources;
+package stroom.auth.resources;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;

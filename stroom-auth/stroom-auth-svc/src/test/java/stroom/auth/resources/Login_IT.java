@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package stroom.auth.service.resources;
+package stroom.auth.resources;
 
 import org.junit.Test;
 import stroom.auth.AuthenticationFlowHelper;
 import stroom.auth.service.ApiException;
-import stroom.auth.service.resources.support.Dropwizard_IT;
+import stroom.auth.resources.support.Dropwizard_IT;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Java6Assertions.fail;

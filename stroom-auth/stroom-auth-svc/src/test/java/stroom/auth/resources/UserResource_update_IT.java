@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.auth.service.resources;
+package stroom.auth.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
@@ -25,7 +25,7 @@ import stroom.auth.service.api.AuthenticationApi;
 import stroom.auth.service.api.UserApi;
 import stroom.auth.service.api.model.ChangePasswordRequest;
 import stroom.auth.service.api.model.User;
-import stroom.auth.service.resources.support.Dropwizard_IT;
+import stroom.auth.resources.support.Dropwizard_IT;
 
 import java.util.UUID;
 

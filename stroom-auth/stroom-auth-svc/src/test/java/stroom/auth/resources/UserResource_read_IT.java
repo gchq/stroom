@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.auth.service.resources;
+package stroom.auth.resources;
 
 import org.junit.Test;
 import stroom.auth.AuthenticationFlowHelper;
@@ -24,7 +24,7 @@ import stroom.auth.service.ApiResponse;
 import stroom.auth.service.api.AuthenticationApi;
 import stroom.auth.service.api.UserApi;
 import stroom.auth.service.api.model.ChangePasswordRequest;
-import stroom.auth.service.resources.support.Dropwizard_IT;
+import stroom.auth.resources.support.Dropwizard_IT;
 
 import java.util.List;
 import java.util.UUID;

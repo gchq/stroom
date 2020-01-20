@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.auth.service.resources;
+package stroom.auth.resources;
 
 import org.joda.time.DateTime;
 import org.junit.Test;

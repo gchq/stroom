@@ -1,4 +1,4 @@
-package stroom.auth.service.resources.support;
+package stroom.auth.resources.support;
 
 import org.flywaydb.core.Flyway;
 import org.jooq.DSLContext;

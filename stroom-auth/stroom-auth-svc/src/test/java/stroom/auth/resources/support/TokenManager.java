@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.auth.service.resources.support;
+package stroom.auth.resources.support;
 
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;

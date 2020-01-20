@@ -16,7 +16,7 @@
  *
  */
 
-package stroom.auth.service.resources;
+package stroom.auth.resources;
 
 import stroom.auth.service.ApiClient;
 import stroom.auth.service.api.ApiKeyApi;

@@ -5,7 +5,7 @@ import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.junit.Test;
 import stroom.auth.resources.user.v1.User;
-import stroom.auth.service.resources.support.Database_IT;
+import stroom.auth.resources.support.Database_IT;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

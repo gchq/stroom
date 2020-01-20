@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.auth.service.resources;
+package stroom.auth.resources;
 
-public class TokenResource_read_IT {
+public class TokenResource_update_IT {
 }

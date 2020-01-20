@@ -19,7 +19,7 @@
 package stroom.auth;
 
 import org.junit.Test;
-import stroom.auth.service.resources.support.Dropwizard_IT;
+import stroom.auth.resources.support.Dropwizard_IT;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
