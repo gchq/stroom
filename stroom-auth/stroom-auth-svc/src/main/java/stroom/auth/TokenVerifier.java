@@ -44,12 +44,19 @@ import java.util.Optional;
 public class TokenVerifier {
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenDao.class);
 
-    @Inject private Config config;
-    @Inject private TokenDao tokenDao;
-    @Inject private JwkDao jwkDao;
+    private Config config;
+    private TokenDao tokenDao;
+    private JwkDao jwkDao;
 
     private JwtConsumer consumer;
     private PublicJsonWebKey jwk;
+
+    @Inject
+    public TokenVerifier(Config config, TokenDao tokenDao, JwkDao jwkDao) {
+        this.config = config;
+        this.tokenDao = tokenDao;
+        this.jwkDao = jwkDao;
+    }
 
     @Inject
     public void init() throws NoSuchAlgorithmException, JoseException {

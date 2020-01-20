@@ -350,7 +350,6 @@ public class UserDao_IT extends Database_IT {
 
         // We don't care about most config for this test, so we'll pass in null
         UserDao userDao = new UserDao(null);
-        userDao.setDatabase(database);
         // We're doing tests against elapsed time so we need to be able to move the clock.
         Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
         userDao.setClock(clock);

@@ -21,7 +21,6 @@ import java.util.UUID;
 public class JwkDao {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(JwkDao.class);
 
-    private DSLContext database = null;
     private AuthDbConnProvider authDbConnProvider;
 
     @Inject
@@ -36,7 +35,8 @@ public class JwkDao {
         try {
             JooqUtil.context(authDbConnProvider, context ->
                     context.selectFrom(Tables.JSON_WEB_KEY).fetchOne());
-            JsonWebKeyRecord existingJwkRecord = database.selectFrom(Tables.JSON_WEB_KEY).fetchOne();
+            JsonWebKeyRecord existingJwkRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
+                    .selectFrom(Tables.JSON_WEB_KEY).fetchOne());
 
             if(existingJwkRecord == null ) {
                 LOGGER.info("We don't have a saved JWK so we'll create one and save it for use next time.");
@@ -49,7 +49,7 @@ public class JwkDao {
                 JsonWebKeyRecord jwkRecord = new JsonWebKeyRecord();
                 jwkRecord.setKeyid(jwkId);
                 jwkRecord.setJson(jwk.toJson(JsonWebKey.OutputControlLevel.INCLUDE_PRIVATE));
-                database.executeInsert(jwkRecord);
+                JooqUtil.context(authDbConnProvider, context -> context.executeInsert(jwkRecord));
 
                 return jwk;
             }
