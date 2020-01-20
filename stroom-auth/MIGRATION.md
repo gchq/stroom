@@ -1,0 +1,17 @@
+# Auth into stroom migration
+
+Lots to do, listed (perhaps) in order of work:
+
+- [ ] Get IDE to compile code
+- [ ] Add resources into Stroom's DW config
+- [ ] Compiling yet?
+- [ ] Merge flyway files
+- [ ] Merge gradle build files, e.g. version numbers. What if we're using different versions of things? Migrate those too.
+- [ ] Ensure remaining files are copied accross, e.g. docker.sh and ?
+- [ ] Add auth config to stroom config
+  - [ ] Update config templates
+  - [ ] Add config to docker yml 
+- [ ] Rename/re-organise modules according to stroom standardresources
+- [ ] Re-organise tiers according to stroom standard -- i.e. service for security, etc...
+- [ ] Get travis build working -- it'll be building multiple images now.
+- [ ] Re-factor persistence so it doesn't use swagger? Stroom depends on this so we might want to do it later, but until we don't have swagger the build for auth will have a different process and we want it 100% aligned with Stroom.
