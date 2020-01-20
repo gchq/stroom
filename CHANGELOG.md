@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 ## [Unreleased]
 
 
+## [v7.0-beta.16] - 2020-01-20
+
+* Fix broken DB migration.
+
+
 ## [v7.0-beta.15] - 2020-01-20
 
 * Fix broken DB migration.
@@ -1940,7 +1945,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.15...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.16...HEAD
+[v7.0-beta.16]: https://github.com/gchq/stroom/compare/v7.0-beta.15...v7.0-beta.16
 [v7.0-beta.15]: https://github.com/gchq/stroom/compare/v7.0-beta.14...v7.0-beta.15
 [v7.0-beta.14]: https://github.com/gchq/stroom/compare/v7.0-beta.13...v7.0-beta.14
 [v7.0-beta.13]: https://github.com/gchq/stroom/compare/v7.0-beta.12...v7.0-beta.13
