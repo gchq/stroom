@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.db.util.JooqUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.time.StroomDuration;
 
 import java.time.Duration;
 import java.time.Period;
@@ -393,6 +394,11 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
            return null;
         } else if (oldValue.isBlank()) {
             return "";
+        } else if (oldValue.matches("^[0-9]+[dD]$")) {
+            // special case for days to stop Duration turning them into hours
+            // e.g. 30d becomes PT720H rather than P30D
+            String daysPart = oldValue.replaceAll("[dD]$","");
+            return StroomDuration.parse("P" + daysPart + "D").toString();
         } else {
             final Long durationMs = ModelStringUtil.parseDurationString(oldValue);
             return Duration.ofMillis(durationMs).toString();
