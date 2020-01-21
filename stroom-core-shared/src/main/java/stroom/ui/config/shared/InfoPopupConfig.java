@@ -3,7 +3,7 @@ package stroom.ui.config.shared;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.docref.SharedObject;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.ValidRegex;
+import stroom.util.shared.validation.ValidRegex;
 
 import javax.inject.Singleton;
 

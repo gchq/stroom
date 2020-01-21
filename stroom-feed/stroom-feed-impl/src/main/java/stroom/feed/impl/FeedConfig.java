@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.ValidRegex;
+import stroom.util.shared.validation.ValidRegex;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;

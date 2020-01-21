@@ -6,8 +6,8 @@ import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.ValidRegex;
-import stroom.util.shared.ValidationSeverity;
+import stroom.util.shared.validation.ValidRegex;
+import stroom.util.shared.validation.ValidationSeverity;
 
 import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;

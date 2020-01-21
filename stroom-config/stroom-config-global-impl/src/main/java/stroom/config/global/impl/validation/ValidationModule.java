@@ -2,7 +2,8 @@ package stroom.config.global.impl.validation;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import stroom.util.shared.ValidRegexValidator;
+import stroom.util.shared.validation.ValidCronValidator;
+import stroom.util.shared.validation.ValidRegexValidator;
 
 import javax.validation.Validation;
 import javax.validation.Validator;
@@ -18,8 +19,10 @@ public class ValidationModule extends AbstractModule {
         // This decouples the validator impls from the pojos to
         // avoid dragging more libs into gwt land
         bind(ValidRegexValidator.class).to(ValidRegexValidatorImpl.class);
+        bind(ValidCronValidator.class).to(ValidCronValidatorImpl.class);
     }
 
+    @SuppressWarnings("unused")
     @Provides
     Validator getValidator(final CustomConstraintValidatorFactory customConstraintValidatorFactory) {
 
