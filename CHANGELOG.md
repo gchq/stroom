@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1340** : Fixed issue with FindReplaceFilter where it failed in some cases when more than one filter was chained together.
+
+* Issue **#1338** : You can now configure the max size of the map store cache.
+
+* Issue **#1350** : Fixed scope of dictionaries when loaded in multiple XSLT pipeline steps.
+
+* Issue **#1347** : Added SSL options to `http-call` XSLT method.
+
 
 ## [v6.1-beta.16] - 2020-01-14
 

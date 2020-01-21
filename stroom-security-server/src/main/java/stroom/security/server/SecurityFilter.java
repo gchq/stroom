@@ -26,6 +26,7 @@ import stroom.auth.service.ApiException;
 import stroom.auth.service.api.model.IdTokenRequest;
 import stroom.feed.server.UserAgentSessionUtil;
 import stroom.security.ProcessingUserIdentity;
+import stroom.security.SecurityContext;
 import stroom.security.shared.UserIdentity;
 import stroom.security.shared.UserRef;
 import stroom.util.logging.LambdaLogger;
@@ -95,6 +96,7 @@ public class SecurityFilter implements Filter {
     private final JWTService jwtService;
     private final AuthenticationServiceClients authenticationServiceClients;
     private final AuthenticationService authenticationService;
+    private final SecurityContext securityContext;
 
     //    private Pattern pattern = null;
     private List<Pattern> bypassPatterns = new ArrayList<>();
@@ -106,11 +108,13 @@ public class SecurityFilter implements Filter {
             final SecurityConfig config,
             final JWTService jwtService,
             final AuthenticationServiceClients authenticationServiceClients,
-            final AuthenticationService authenticationService) {
+            final AuthenticationService authenticationService,
+            final SecurityContext securityContext) {
         this.config = config;
         this.jwtService = jwtService;
         this.authenticationServiceClients = authenticationServiceClients;
         this.authenticationService = authenticationService;
+        this.securityContext = securityContext;
     }
 
     @Override
@@ -189,7 +193,7 @@ public class SecurityFilter implements Filter {
             } else if (isApiRequest(servletPath)) {
                 LOGGER.debug("API request");
                 if (!config.isAuthenticationRequired()) {
-                    authenticateAsProcUser(request, response, chain, false);
+                    authenticateAsAdmin(request, response, chain, false);
                 } else {
                     // Authenticate requests to the API.
                     final UserIdentityImpl token = loginAPI(request, response);
@@ -205,7 +209,7 @@ public class SecurityFilter implements Filter {
                 if (token != null) {
                     continueAsUser(request, response, chain, token);
                 } else if (!config.isAuthenticationRequired()) {
-                    authenticateAsProcUser(request, response, chain, true);
+                    authenticateAsAdmin(request, response, chain, true);
                 } else {
                     // If the session doesn't have a user ref then attempt login.
                     final boolean loggedIn = loginUI(request, response);
@@ -244,6 +248,14 @@ public class SecurityFilter implements Filter {
 
     private boolean isDispatchRequest(String servletPath) {
         return dispatchPathPattern != null && dispatchPathPattern.matcher(servletPath).matches();
+    }
+
+    private void authenticateAsAdmin(final HttpServletRequest request,
+                                     final HttpServletResponse response,
+                                     final FilterChain chain,
+                                     final boolean useSession) throws IOException, ServletException {
+
+        bypassAuthentication(request, response, chain, useSession, securityContext.createIdentity(UserService.ADMIN_USER_NAME));
     }
 
     private void authenticateAsProcUser(final HttpServletRequest request,

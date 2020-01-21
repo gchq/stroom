@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Component
-@Scope(value = StroomScope.TASK)
+@Scope(StroomScope.TASK)
 class TaskScopeMap {
     private final Map<String, String> map = new HashMap<>();
 

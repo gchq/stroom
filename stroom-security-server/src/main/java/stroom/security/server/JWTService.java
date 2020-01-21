@@ -8,7 +8,6 @@ import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jwk.RsaJsonWebKey;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jwt.JwtClaims;
-import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
@@ -20,15 +19,12 @@ import org.springframework.stereotype.Component;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.ApiKeyApi;
 import stroom.security.server.exception.AuthenticationException;
-import stroom.security.shared.UserRef;
 import stroom.util.HasHealthCheck;
 
 import javax.inject.Inject;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.NotNull;
-import java.time.Clock;
-import java.time.Instant;
 import java.util.Optional;
 
 @Component
@@ -44,7 +40,6 @@ public class JWTService implements HasHealthCheck {
     private AuthenticationServiceClients authenticationServiceClients;
     private final boolean checkTokenRevocation;
     private final boolean authenticationRequired;
-    private Clock clock;
     private String clientId;
 
     @Inject
@@ -67,12 +62,6 @@ public class JWTService implements HasHealthCheck {
         if (authenticationServiceUrl == null) {
             throw new SecurityException("No authentication service URL is defined");
         }
-
-        this.clock = Clock.systemDefaultZone();
-    }
-
-    public void setClock(Clock clock) {
-        this.clock = clock;
     }
 
     private void updatePublicJsonWebKey() {
@@ -133,32 +122,6 @@ public class JWTService implements HasHealthCheck {
         }
 
         return Optional.empty();
-    }
-
-    public String refreshTokenIfExpired(String jws) {
-        if (!authenticationRequired) {
-            return null;
-        }
-
-        try {
-            verifyToken(jws);
-            return jws;
-        } catch (InvalidJwtException e) {
-            try {
-                JwtClaims claims = e.getJwtContext().getJwtClaims();
-                if (claims.getExpirationTime().getValueInMillis() < Instant.now().toEpochMilli()) {
-                    LOGGER.info("The API key for user '{}' has expired. An API key is required, i.e. for queries. Creating a new one.", claims.getSubject());
-                    String newJws = authenticationServiceClients.createTokenForUser(claims.getSubject());
-                    return newJws;
-                } else {
-                    return jws;
-                }
-            } catch (MalformedClaimException | ApiException innerEx) {
-                String error = "Unable to get new token! The error was: " + innerEx.getMessage();
-                LOGGER.error(error);
-                throw new RuntimeException(error, innerEx);
-            }
-        }
     }
 
     public Optional<String> getJws(final ServletRequest request) {

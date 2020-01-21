@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-@Scope(value = StroomScope.TASK)
+@Scope(StroomScope.PROTOTYPE)
 class Dictionary extends StroomExtensionFunctionCall {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(Dictionary.class);
 
