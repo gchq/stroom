@@ -60,7 +60,7 @@ public final class MapStoreCache {
 
         long maximumSize = DEFAULT_MAXIMUM_SIZE;
         if (stroomPropertyService != null) {
-            stroomPropertyService.getLongProperty(MAXIMUM_SIZE_PROPERTY, DEFAULT_MAXIMUM_SIZE);
+            maximumSize = stroomPropertyService.getLongProperty(MAXIMUM_SIZE_PROPERTY, DEFAULT_MAXIMUM_SIZE);
         }
 
         final CacheLoader<MapStoreCacheKey, MapStore> cacheLoader = CacheLoader.from(this::create);
