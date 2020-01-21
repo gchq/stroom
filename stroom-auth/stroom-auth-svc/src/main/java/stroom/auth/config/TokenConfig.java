@@ -28,12 +28,12 @@ public class TokenConfig {
     @Valid
     @NotNull
     @JsonProperty
-    private int minutesUntilExpirationForUserToken;
+    private int minutesUntilExpirationForUserToken = 43200;
 
     @Valid
     @NotNull
     @JsonProperty
-    private int minutesUntilExpirationForEmailResetToken;
+    private int minutesUntilExpirationForEmailResetToken = 5;
 
     @Valid
     @NotNull
@@ -43,12 +43,12 @@ public class TokenConfig {
     @Valid
     @NotNull
     @JsonProperty
-    private boolean requireExpirationTime = true;
+    private boolean requireExpirationTime = false;
 
     @Valid
     @NotNull
     @JsonProperty
-    private String algorithm;
+    private String algorithm = "RS256";
 
     public int getMinutesUntilExpirationForUserToken() {
         return minutesUntilExpirationForUserToken;

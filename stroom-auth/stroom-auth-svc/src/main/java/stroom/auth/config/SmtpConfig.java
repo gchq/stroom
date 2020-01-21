@@ -28,23 +28,23 @@ public class SmtpConfig extends Configuration {
 
     @NotNull
     @JsonProperty
-    private String host;
+    private String host = "localhost";
 
     @NotNull
     @JsonProperty
-    private int port;
+    private int port = 2525;
 
     @NotNull
     @JsonProperty
-    private String transport;
+    private String transport = "plain";
 
     @NotNull
     @JsonProperty
-    private String username;
+    private String username = "username";
 
     @NotNull
     @JsonProperty
-    private String password;
+    private String password = "password";
 
     public String getHost() {
         return host;

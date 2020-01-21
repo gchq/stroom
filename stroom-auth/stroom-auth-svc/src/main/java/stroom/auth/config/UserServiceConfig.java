@@ -26,7 +26,7 @@ public class UserServiceConfig {
 
     @NotNull
     @JsonProperty
-    private String url;
+    private String url = "http://localhost:8080/api/appPermissions/v";
 
 ////    @NotNull
 ////    @JsonProperty

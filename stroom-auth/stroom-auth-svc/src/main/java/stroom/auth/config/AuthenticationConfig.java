@@ -25,57 +25,66 @@ import io.dropwizard.db.DataSourceFactory;
 import io.dropwizard.flyway.FlywayFactory;
 import io.dropwizard.jetty.HttpConnectorFactory;
 import io.dropwizard.server.DefaultServerFactory;
+import stroom.config.common.DbConfig;
+import stroom.config.common.HasDbConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.annotation.Nullable;
+import javax.inject.Singleton;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-public final class Config extends Configuration {
+@Singleton
+public final class AuthenticationConfig extends AbstractConfig implements HasDbConfig {
 
-    @Valid
-    @NotNull
-    @JsonProperty("database")
-    private DataSourceFactory dataSourceFactory = new DataSourceFactory();
+    private DbConfig dbConfig = new DbConfig();
 
-    @Valid
-    @NotNull
-    @JsonProperty("flyway")
-    private FlywayFactory flywayFactory = new FlywayFactory();
+//    @Valid
+//    @NotNull
+//    @JsonProperty("database")
+//    private DataSourceFactory dataSourceFactory = new DataSourceFactory();
 
-    @Valid
-    @NotNull
-    @JsonProperty("jooq")
-    private JooqFactory jooqFactory = new JooqFactory();
+//    @Valid
+//    @NotNull
+//    @JsonProperty("flyway")
+//    private FlywayFactory flywayFactory = new FlywayFactory();
+
+//    @Valid
+//    @NotNull
+//    @JsonProperty("jooq")
+//    private JooqFactory jooqFactory = new JooqFactory();
 
     @Valid
     @NotNull
     @JsonProperty
-    private String certificateDnPattern = "CN=[^ ]+ [^ ]+ (?([a-zA-Z0-9]+))?";
+    private String certificateDnPattern = ".*\\((.*)\\)";
 
     @Valid
     @NotNull
     @JsonProperty
     private int certificateDnCaptureGroupIndex = 1;
 
+    //TODO: change all these URLs so they exclude the actual FQDN. Just have them be the paths.
+    // TODO: 'Define' below means they need to be in config, but that's only because they include the domain. Change that first.
     @Valid
     @NotNull
     @JsonProperty
-    private String loginUrl = "";
+    private String loginUrl = "https://localhost/s/login"; // TODO define
 
     @Valid
     @NotNull
     @JsonProperty
-    private String changePasswordUrl = "";
+    private String changePasswordUrl = "https://localhost/s/changepassword"; // TODO define
 
     @Valid
     @NotNull
     @JsonProperty
-    private String stroomUrl = "";
+    private String stroomUrl = "https://localhost/"; // TODO define
 
     @Valid
     @NotNull
     @JsonProperty
-    private String advertisedHost = "";
+    private String advertisedHost = "https://localhost";
 
     @Nullable
     @JsonProperty
@@ -91,51 +100,51 @@ public final class Config extends Configuration {
 
     @Nullable
     @JsonProperty
-    private String unauthorisedUrl = "";
+    private String unauthorisedUrl = "https://localhost/s/unauthorised"; // TODO define
 
     @Nullable
     @JsonProperty("email")
-    private EmailConfig emailConfig;
+    private EmailConfig emailConfig = new EmailConfig();
 
     @Nullable
     @JsonProperty("token")
-    private TokenConfig tokenConfig;
+    private TokenConfig tokenConfig = new TokenConfig();
 
     @Nullable
     @JsonProperty("sessionIdCookieMaxAge")
-    private int sessionIdCookieMaxAge;
+    private int sessionIdCookieMaxAge = 2592000; // 259200 = 1 month
 
     @NotNull
     @JsonProperty("userService")
-    private UserServiceConfig userServiceConfig;
+    private UserServiceConfig userServiceConfig = new UserServiceConfig();
 
     @NotNull
     @JsonProperty("passwordIntegrityChecks")
-    private PasswordIntegrityChecksConfig passwordIntegrityChecksConfig;
+    private PasswordIntegrityChecksConfig passwordIntegrityChecksConfig = new PasswordIntegrityChecksConfig();
 
     @NotNull
     @JsonProperty("ownPath")
-    private String ownPath;
+    private String ownPath = "api/auth/authentication";
 
     @NotNull
     @JsonProperty("authorisationService")
-    private AuthorisationServiceConfig authorisationServiceConfig;
+    private AuthorisationServiceConfig authorisationServiceConfig = new AuthorisationServiceConfig();
 
     @Nullable
     @JsonProperty("stroom")
-    private StroomConfig stroomConfig;
+    private StroomConfig stroomConfig = new StroomConfig();
 
-    public final DataSourceFactory getDataSourceFactory() {
-        return this.dataSourceFactory;
-    }
-
-    public final FlywayFactory getFlywayFactory() {
-        return this.flywayFactory;
-    }
-
-    public final JooqFactory getJooqFactory() {
-        return this.jooqFactory;
-    }
+//    public final DataSourceFactory getDataSourceFactory() {
+//        return this.dataSourceFactory;
+//    }
+//
+//    public final FlywayFactory getFlywayFactory() {
+//        return this.flywayFactory;
+//    }
+//
+//    public final JooqFactory getJooqFactory() {
+//        return this.jooqFactory;
+//    }
 
     public final String getCertificateDnPattern() {
         return this.certificateDnPattern;
@@ -157,13 +166,13 @@ public final class Config extends Configuration {
         return this.advertisedHost;
     }
 
-    public final Integer getHttpPort() {
-        return getPort();
-    }
-
-    public final Integer getHttpsPort() {
-        return getPort();
-    }
+//    public final Integer getHttpPort() {
+//        return getPort();
+//    }
+//
+//    public final Integer getHttpsPort() {
+//        return getPort();
+//    }
 
     public EmailConfig getEmailConfig() {
         return emailConfig;
@@ -207,18 +216,27 @@ public final class Config extends Configuration {
         return authorisationServiceConfig;
     }
 
-    private Integer getPort() {
-        DefaultServerFactory serverFactory = (DefaultServerFactory) this.getServerFactory();
-        Integer port = serverFactory.getApplicationConnectors().stream()
-                .filter(connectorFactory -> connectorFactory instanceof HttpConnectorFactory)
-                .map(connectorFactory -> (HttpConnectorFactory) connectorFactory)
-                .map(HttpConnectorFactory::getPort)
-                .findFirst()
-                .get();
-        return port;
-    }
+//    private Integer getPort() {
+//        DefaultServerFactory serverFactory = (DefaultServerFactory) this.getServerFactory();
+//        Integer port = serverFactory.getApplicationConnectors().stream()
+//                .filter(connectorFactory -> connectorFactory instanceof HttpConnectorFactory)
+//                .map(connectorFactory -> (HttpConnectorFactory) connectorFactory)
+//                .map(HttpConnectorFactory::getPort)
+//                .findFirst()
+//                .get();
+//        return port;
+//    }
 
     public StroomConfig getStroomConfig() {
         return stroomConfig;
+    }
+
+    @Override
+    public DbConfig getDbConfig() {
+        return dbConfig;
+    }
+
+    public void setDbConfig(final DbConfig dbConfig) {
+        this.dbConfig = dbConfig;
     }
 }

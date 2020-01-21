@@ -27,35 +27,37 @@ public class EmailConfig extends Configuration {
 
     @NotNull
     @JsonProperty("smtp")
-    private SmtpConfig smtpConfig;
+    private SmtpConfig smtpConfig = new SmtpConfig();
 
     @NotNull
     @JsonProperty
-    private String fromAddress;
+    private String fromAddress = "noreply@stroom";
 
     @NotNull
     @JsonProperty
-    private String fromName;
+    private String fromName = "Stroom User Accounts";
 
     @NotNull
     @JsonProperty
-    private String passwordResetSubject;
+    private String passwordResetSubject = "Password reset for Stroom";
 
     @NotNull
     @JsonProperty
-    private String passwordResetText;
+    private String passwordResetText = "A password reset has been requested for this email address. Please visit the following URL to reset your password: %s.";
 
     @NotNull
     @JsonProperty
-    private String passwordResetUrl;
+    private String passwordResetUrl = "https://localhost/s/resetPassword/?user=%s&token=%s";
 
     @NotNull
     @JsonProperty
-    private float passwordResetTokenValidityInMinutes;
+    // TODO Why is this a float? Change it I think.
+    private float passwordResetTokenValidityInMinutes = 600;
 
     @NotNull
     @JsonProperty
-    private boolean allowPasswordResets;
+    // Defaults to false because this feature needs to be configured and actively turned on before it works.
+    private boolean allowPasswordResets = false;
 
     public SmtpConfig getSmtpConfig() {
         return smtpConfig;

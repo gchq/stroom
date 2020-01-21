@@ -8,11 +8,11 @@ public class AuthorisationServiceConfig {
 
     @NotNull
     @JsonProperty
-    private String url;
+    private String url = "http://localhost:8080/api/authorisation/v";
 
     @NotNull
     @JsonProperty
-    private String canManageUsersPermission;
+    private String canManageUsersPermission = "Manage Users";
 
 
     public String getUrl() {

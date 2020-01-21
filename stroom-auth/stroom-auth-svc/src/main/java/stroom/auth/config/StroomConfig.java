@@ -14,13 +14,13 @@ import javax.validation.constraints.NotNull;
 public class StroomConfig {
     @NotNull
     @JsonProperty
-    private String clientId;
+    private String clientId = "PZnJr8kHRKqnlJRQThSI";
     @NotNull
     @JsonProperty
-    private String clientSecret;
+    private String clientSecret = "OtzHiAWLj8QWcwO2IxXmqxpzE2pyg0pMKCghR2aU";
     @NotNull
     @JsonProperty
-    private String clientHost;
+    private String clientHost = "localhost";
 
     public String getClientId() {
         return clientId;
