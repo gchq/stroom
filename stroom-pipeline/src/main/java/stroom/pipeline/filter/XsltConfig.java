@@ -3,13 +3,13 @@ package stroom.pipeline.filter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class XsltConfig implements IsConfig {
+public class XsltConfig extends AbstractConfig {
     private static final int DEFAULT_MAX_ELEMENTS = 1000000;
 
     private CacheConfig cacheConfig = new CacheConfig.Builder()

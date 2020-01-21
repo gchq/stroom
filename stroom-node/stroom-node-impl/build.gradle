@@ -24,6 +24,7 @@ dependencies {
     compile libs.slf4j_api
     compile libs.stroomDocRef
     compile libs.stroomProxyRemoteApi
+    compile libs.validation_api
     
     testCompile libs.assertj_core
     testCompile libs.mockito_core
