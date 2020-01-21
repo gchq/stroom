@@ -59,7 +59,7 @@ logging:
 
   appenders:
   - type: console
-    logFormat: "%highlight(%-5level) [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%thread] %-20logger{0} %gray(%msg) %n"
+    logFormat: "%highlight(%-5level) %d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC} %yellow(%thread) %cyan(%-30logger{25}) %msg %n"
     timeZone: UTC
   - type: file
     currentLogFilename: ${HOME}/.stroom-proxy/logs/app/app.log
