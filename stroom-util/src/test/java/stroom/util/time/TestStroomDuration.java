@@ -1,4 +1,4 @@
-package stroom.util.shared;
+package stroom.util.time;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;

@@ -37,7 +37,7 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
-import stroom.util.shared.StroomDuration;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

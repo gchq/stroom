@@ -27,7 +27,7 @@ import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.util.ByteSizeUnit;
 import stroom.util.pipeline.scope.PipelineScopeModule;
-import stroom.util.shared.StroomDuration;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import java.io.IOException;

@@ -61,7 +61,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.StroomDuration;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

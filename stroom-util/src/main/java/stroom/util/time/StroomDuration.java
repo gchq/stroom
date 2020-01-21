@@ -1,9 +1,10 @@
-package stroom.util.shared;
+package stroom.util.time;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonValue;
 import stroom.docref.SharedObject;
+import stroom.util.shared.ModelStringUtil;
 
 import java.time.Duration;
 import java.time.temporal.TemporalAmount;

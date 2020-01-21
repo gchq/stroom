@@ -6,7 +6,7 @@ import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.StroomDuration;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;

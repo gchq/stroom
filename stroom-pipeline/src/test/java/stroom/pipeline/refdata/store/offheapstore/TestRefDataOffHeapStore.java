@@ -53,7 +53,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.shared.Range;
-import stroom.util.shared.StroomDuration;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import java.io.IOException;
