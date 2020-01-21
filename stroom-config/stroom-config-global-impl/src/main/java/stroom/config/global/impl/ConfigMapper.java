@@ -550,6 +550,8 @@ public class ConfigMapper {
                 return stringToEnum(value, type);
             } else if (Path.class.isAssignableFrom(type)) {
                 return Path.of(value);
+            } else if (StroomDuration.class.isAssignableFrom(type)) {
+                return StroomDuration.parse(value);
             }
         } catch (Exception e) {
             // Don't include the original exception else gwt uses the msg of the
