@@ -6,7 +6,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1340** : Fixed issue with FidReplaceFilter where it failed in some cases when more than one filter was chained together.
+
+## [v6.0.31] - 2020-01-21
+
+* Issue **#1340** : Fixed issue with FindReplaceFilter where it failed in some cases when more than one filter was chained together.
 
 * Issue **#1338** : You can now configure the max size of the map store cache.
 
@@ -2041,7 +2044,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.30...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.31...6.0
+[v6.0.31]: https://github.com/gchq/stroom/compare/v6.0.30...v6.0.31
 [v6.0.30]: https://github.com/gchq/stroom/compare/v6.0.29...v6.0.30
 [v6.0.29]: https://github.com/gchq/stroom/compare/v6.0.28...v6.0.29
 [v6.0.28]: https://github.com/gchq/stroom/compare/v6.0.27...v6.0.28
