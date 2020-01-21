@@ -8,6 +8,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.testcontainers.containers.MySQLContainer;
+import stroom.auth.AuthDbConnProvider;
+import stroom.auth.TestAuthDbConnProvider;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -28,12 +30,14 @@ import static stroom.auth.db.Tables.USERS;
 public abstract class Database_IT {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(Database_IT.class);
 
-    protected static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-    protected static final String DATABASE_NAME = "auth";
-    protected static final String JDBC_USER = "authuser";
-    protected static final String JDBC_PASSWORD = "stroompassword1";
+    public static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
+    public static final String DATABASE_NAME = "auth";
+    public static final String JDBC_USER = "authuser";
+    public static final String JDBC_PASSWORD = "stroompassword1";
 
     private static final String MYSQL_DOCKER_IMAGE = "mysql:5.6.43";
+
+    protected AuthDbConnProvider authDbConnProvider;
 
     @ClassRule
     public static MySQLContainer mysql = new MySQLContainer(MYSQL_DOCKER_IMAGE)
@@ -48,7 +52,7 @@ public abstract class Database_IT {
 
     @Before
     public void before() {
-
+        authDbConnProvider = new TestAuthDbConnProvider(mysql);
         Map<String, String> flywayConfiguration = new HashMap<String, String>();
         flywayConfiguration.put("flyway.driver", JDBC_DRIVER);
         flywayConfiguration.put("flyway.url", mysql.getJdbcUrl());

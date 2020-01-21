@@ -18,6 +18,7 @@ package stroom.auth.resources;
 
 import org.assertj.core.api.Condition;
 import org.joda.time.DateTime;
+import org.junit.Ignore;
 import org.junit.Test;
 import stroom.auth.AuthenticationFlowHelper;
 import stroom.auth.resources.token.v1.Token;
@@ -39,6 +40,7 @@ import static stroom.auth.resources.token.v1.Token.TokenType.API;
 import static stroom.auth.resources.token.v1.Token.TokenType.EMAIL_RESET;
 import static stroom.auth.resources.token.v1.Token.TokenType.USER;
 
+@Ignore("Temporarily ignore for auth migration")
 public class TokenResource_search_IT extends TokenResource_IT {
 
     @Test

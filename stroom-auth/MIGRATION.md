@@ -17,3 +17,4 @@ Lots to do, listed (perhaps) in order of work:
 - [ ] Get travis build working -- it'll be building multiple images now.
 - [ ] Re-factor persistence so it doesn't use swagger? Stroom depends on this so we might want to do it later, but until we don't have swagger the build for auth will have a different process and we want it 100% aligned with Stroom.
 - [ ] Make migration scripts re-runnable
+- [ ] Restore DB tests

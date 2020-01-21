@@ -17,6 +17,7 @@
 package stroom.auth.resources;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.junit.Ignore;
 import org.junit.Test;
 import stroom.auth.AuthenticationFlowHelper;
 //import stroom.auth.resources.user.v1.User;
@@ -31,6 +32,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Ignore("Temporarily ignore for auth migration")
 public final class UserResource_update_IT extends Dropwizard_IT {
     @Test
     public final void update_user() throws Exception {

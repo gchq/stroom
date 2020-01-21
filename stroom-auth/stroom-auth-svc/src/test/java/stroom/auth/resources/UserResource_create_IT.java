@@ -16,6 +16,7 @@
 
 package stroom.auth.resources;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import stroom.auth.AuthenticationFlowHelper;
 import stroom.auth.service.ApiException;
@@ -28,6 +29,7 @@ import java.util.UUID;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.assertj.core.api.Java6Assertions.fail;
 
+@Ignore("Temporarily ignore for auth migration")
 public final class UserResource_create_IT extends Dropwizard_IT {
     @Test
     public final void create_user() throws Exception {
