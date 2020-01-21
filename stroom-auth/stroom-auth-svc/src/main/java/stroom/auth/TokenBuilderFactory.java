@@ -18,7 +18,7 @@
 
 package stroom.auth;
 
-import stroom.auth.config.Config;
+import stroom.auth.config.AuthenticationConfig;
 import stroom.auth.exceptions.TokenCreationException;
 import stroom.auth.resources.token.v1.Token.TokenType;
 
@@ -29,12 +29,12 @@ import java.time.Instant;
 @Singleton
 public class TokenBuilderFactory {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(TokenBuilderFactory.class);
-    private Config config;
+    private AuthenticationConfig config;
     private TokenVerifier tokenVerifier;
     private Instant expiryDateForApiKeys;
 
     @Inject
-    public TokenBuilderFactory(Config config, TokenVerifier tokenVerifier) {
+    public TokenBuilderFactory(AuthenticationConfig config, TokenVerifier tokenVerifier) {
         this.config = config;
         this.tokenVerifier = tokenVerifier;
     }

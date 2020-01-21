@@ -18,7 +18,7 @@
 
 package stroom.auth.exceptions.mappers;
 
-import stroom.auth.config.Config;
+import stroom.auth.config.AuthenticationConfig;
 import stroom.auth.exceptions.TokenCreationException;
 
 import javax.inject.Inject;
@@ -29,10 +29,10 @@ import java.net.URISyntaxException;
 
 public class TokenCreationExceptionMapper implements ExceptionMapper<TokenCreationException> {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(TokenCreationExceptionMapper.class);
-    private Config config;
+    private AuthenticationConfig config;
 
     @Inject
-    public TokenCreationExceptionMapper(Config config) {
+    public TokenCreationExceptionMapper(AuthenticationConfig config) {
         this.config = config;
     }
 

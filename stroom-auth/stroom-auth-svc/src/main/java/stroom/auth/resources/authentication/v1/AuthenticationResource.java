@@ -19,7 +19,6 @@
 package stroom.auth.resources.authentication.v1;
 
 import com.codahale.metrics.annotation.Timed;
-import io.dropwizard.auth.Auth;
 import io.dropwizard.jersey.sessions.Session;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -35,7 +34,7 @@ import stroom.auth.SessionManager;
 import stroom.auth.TokenBuilder;
 import stroom.auth.TokenBuilderFactory;
 import stroom.auth.TokenVerifier;
-import stroom.auth.config.Config;
+import stroom.auth.config.AuthenticationConfig;
 import stroom.auth.config.PasswordIntegrityChecksConfig;
 import stroom.auth.daos.TokenDao;
 import stroom.auth.daos.UserDao;
@@ -95,7 +94,7 @@ public final class AuthenticationResource implements RestResource {
     private static final String ACCOUNT_DISABLED_MESSAGE = "This account is disabled. Please contact your administrator";
     private static final String ACCOUNT_INACTIVE_MESSAGE = "This account is marked as inactive. Please contact your administrator";
 
-    private Config config;
+    private AuthenticationConfig config;
     private final Pattern dnPattern;
     private TokenDao tokenDao;
     private UserDao userDao;
@@ -108,7 +107,7 @@ public final class AuthenticationResource implements RestResource {
 
     @Inject
     public AuthenticationResource(
-            @NotNull Config config,
+            @NotNull AuthenticationConfig config,
             TokenDao tokenDao,
             UserDao userDao,
             TokenVerifier tokenVerifier,
@@ -472,7 +471,7 @@ public final class AuthenticationResource implements RestResource {
     @ApiOperation(value = "Reset an authenticated user's password.",
             response = String.class, tags = {"Authentication"})
     public final Response resetPassword(
-            @Auth @NotNull ServiceUser user,
+            @io.dropwizard.auth.Auth @NotNull ServiceUser user,
             @Context @NotNull HttpServletRequest httpServletRequest,
             @ApiParam("changePasswordRequest") @NotNull ResetPasswordRequest req) {
         List<PasswordValidationFailureType> failedOn = new ArrayList<>();

@@ -21,16 +21,13 @@ package stroom.auth.daos;
 import com.google.common.base.Strings;
 import org.apache.commons.lang3.Validate;
 import org.jooq.Condition;
-import org.jooq.Configuration;
-import org.jooq.DSLContext;
 import org.jooq.Result;
 import org.jooq.Table;
-import org.jooq.impl.DSL;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.AuthDbConnProvider;
-import stroom.auth.config.Config;
+import stroom.auth.config.AuthenticationConfig;
 import stroom.auth.exceptions.BadRequestException;
 import stroom.auth.exceptions.NoSuchUserException;
 import stroom.auth.resources.user.v1.User;
@@ -58,11 +55,11 @@ public class UserDao {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserDao.class);
 
     private AuthDbConnProvider authDbConnProvider;
-    private Config config;
+    private AuthenticationConfig config;
     private Clock clock;
 
     @Inject
-    public UserDao(Config config, AuthDbConnProvider authDbConnProvider) {
+    public UserDao(AuthenticationConfig config, AuthDbConnProvider authDbConnProvider) {
         this.config = config;
         this.authDbConnProvider = authDbConnProvider;
         this.clock = Clock.systemDefaultZone();

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.annotation.impl.AnnotationConfig;
+import stroom.auth.config.AuthenticationConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.cluster.task.impl.ClusterTaskConfig;
@@ -54,6 +55,7 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
     public static final String PROP_NAME_API_GATEWAY = "apiGateway";
+    public static final String PROP_NAME_AUTHENTICATION = "authentication";
     public static final String PROP_NAME_BENCHMARK = "benchmark";
     public static final String PROP_NAME_CLUSTER = "cluster";
     public static final String PROP_NAME_CLUSTER_LOCK = "clusterLock";
@@ -95,6 +97,7 @@ public class AppConfig extends AbstractConfig {
     private ActivityConfig activityConfig = new ActivityConfig();
     private AnnotationConfig annotationConfig = new AnnotationConfig();
     private ApiGatewayConfig apiGatewayConfig = new ApiGatewayConfig();
+    private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
     private BenchmarkClusterConfig benchmarkClusterConfig = new BenchmarkClusterConfig();
     private ClusterConfig clusterConfig = new ClusterConfig();
     private ClusterLockConfig clusterLockConfig = new ClusterLockConfig();
@@ -176,6 +179,15 @@ public class AppConfig extends AbstractConfig {
 
     public void setApiGatewayConfig(final ApiGatewayConfig apiGatewayConfig) {
         this.apiGatewayConfig = apiGatewayConfig;
+    }
+
+    @JsonProperty(PROP_NAME_AUTHENTICATION)
+    public AuthenticationConfig getAuthConfig() {
+        return authenticationConfig;
+    }
+
+    public void setAuthConfig(final AuthenticationConfig authenticationConfig) {
+        this.authenticationConfig = authenticationConfig;
     }
 
     @JsonProperty(PROP_NAME_BENCHMARK)

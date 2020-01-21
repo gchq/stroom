@@ -23,7 +23,7 @@ import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.auth.config.Config;
+import stroom.auth.config.AuthenticationConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -37,11 +37,11 @@ import javax.ws.rs.core.Response;
 public class AuthorisationServiceClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthorisationServiceClient.class);
 
-    private Config config;
+    private AuthenticationConfig config;
     private Client authorisationService = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
 
     @Inject
-    public AuthorisationServiceClient(Config config) {
+    public AuthorisationServiceClient(AuthenticationConfig config) {
         this.config = config;
     }
 

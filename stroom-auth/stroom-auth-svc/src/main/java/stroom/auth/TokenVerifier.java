@@ -30,7 +30,7 @@ import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.auth.config.Config;
+import stroom.auth.config.AuthenticationConfig;
 import stroom.auth.daos.JwkDao;
 import stroom.auth.daos.TokenDao;
 import stroom.auth.resources.token.v1.Token;
@@ -44,7 +44,7 @@ import java.util.Optional;
 public class TokenVerifier {
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenDao.class);
 
-    private Config config;
+    private AuthenticationConfig config;
     private TokenDao tokenDao;
     private JwkDao jwkDao;
 
@@ -52,7 +52,7 @@ public class TokenVerifier {
     private PublicJsonWebKey jwk;
 
     @Inject
-    public TokenVerifier(Config config, TokenDao tokenDao, JwkDao jwkDao) {
+    public TokenVerifier(AuthenticationConfig config, TokenDao tokenDao, JwkDao jwkDao) {
         this.config = config;
         this.tokenDao = tokenDao;
         this.jwkDao = jwkDao;

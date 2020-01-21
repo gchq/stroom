@@ -18,22 +18,19 @@
 
 package stroom.auth.clients;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.eclipse.jetty.http.HttpStatus;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.auth.config.Config;
+import stroom.auth.config.AuthenticationConfig;
 import stroom.auth.config.UserServiceConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
-import java.util.Objects;
 
 @Singleton
 public class UserServiceClient {
@@ -46,7 +43,7 @@ public class UserServiceClient {
     private Client authorisationService = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
 
     @Inject
-    public UserServiceClient(Config config) {
+    public UserServiceClient(AuthenticationConfig config) {
         this.config = config.getUserServiceConfig();
     }
 

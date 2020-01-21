@@ -35,7 +35,6 @@ import org.jose4j.lang.JoseException;
 import stroom.auth.resources.authentication.v1.LoginResponse;
 import stroom.auth.service.ApiClient;
 import stroom.auth.service.ApiException;
-import stroom.auth.service.App;
 import stroom.auth.service.api.ApiKeyApi;
 import stroom.auth.service.api.AuthenticationApi;
 import stroom.auth.service.api.model.Credentials;
@@ -166,7 +165,8 @@ public class AuthenticationFlowHelper {
         credentials.setEmail(username);
         credentials.setPassword(password);
         credentials.setRequestingClientId(CLIENT_ID);
-        String cookies = App.SESSION_COOKIE_NAME + "=" + sessionId;
+//        String cookies = App.SESSION_COOKIE_NAME + "authSessionId=" + sessionId;
+        String cookies = "authSessionId=" + sessionId;
         HttpResponse loginResponse = null;
         try {
             loginResponse = Unirest

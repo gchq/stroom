@@ -24,7 +24,7 @@ import org.simplejavamail.email.Email;
 import org.simplejavamail.mailer.Mailer;
 import org.simplejavamail.mailer.config.ServerConfig;
 import org.simplejavamail.mailer.config.TransportStrategy;
-import stroom.auth.config.Config;
+import stroom.auth.config.AuthenticationConfig;
 import stroom.auth.config.EmailConfig;
 import stroom.auth.config.SmtpConfig;
 import stroom.auth.resources.user.v1.User;
@@ -37,12 +37,12 @@ import javax.mail.Message;
 @Singleton
 public class EmailSender {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(EmailSender.class);
-    private Config config;
+    private AuthenticationConfig config;
     private final ServerConfig serverConfig;
     private final TransportStrategy transportStrategy;
 
     @Inject
-    public EmailSender(Config config) {
+    public EmailSender(AuthenticationConfig config) {
         this.config = config;
         final SmtpConfig smtpConfig = Preconditions.checkNotNull(config.getEmailConfig(),
                 "Missing 'email' section in config")
