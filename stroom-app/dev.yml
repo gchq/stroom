@@ -58,6 +58,14 @@ logging:
     logFormat: "%-6level [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%t] %logger - %X{code} %msg %n"
 
 appConfig:
+  authentication:
+    loginUrl: ${AUTH_UI:- https://<<<IP_ADDRESS>>>/s/login}
+    changePasswordUrl: ${CHANGE_PASSWORD_URL:-https://<<<IP_ADDRESS>>>/s/changepassword}
+    unauthorisedUrl: ${UNAUTHORISED_URL:-https://<<<IP_ADDRESS>>>/s/unauthorised}
+    stroomUrl: ${STROOM_UI:- https://<<<IP_ADDRESS>>>}
+    advertisedHost: ${ADVERTISED_HTTP_HOST:- https://<<<IP_ADDRESS>>>}
+    stroom:
+      clientHost: ${STROOM_CLIENT_URI:-<IP_ADDRESS>}
   superDevMode: true
   apiGateway:
     hostname: ${API_GATEWAY_HOST:-<<<IP_ADDRESS>>>}

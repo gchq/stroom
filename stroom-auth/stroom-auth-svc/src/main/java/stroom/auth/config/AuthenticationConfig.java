@@ -65,21 +65,20 @@ public final class AuthenticationConfig extends AbstractConfig implements HasDbC
     private int certificateDnCaptureGroupIndex = 1;
 
     //TODO: change all these URLs so they exclude the actual FQDN. Just have them be the paths.
-    // TODO: 'Define' below means they need to be in config, but that's only because they include the domain. Change that first.
     @Valid
     @NotNull
     @JsonProperty
-    private String loginUrl = "https://localhost/s/login"; // TODO define
+    private String loginUrl = "https://localhost/s/login";
 
     @Valid
     @NotNull
     @JsonProperty
-    private String changePasswordUrl = "https://localhost/s/changepassword"; // TODO define
+    private String changePasswordUrl = "https://localhost/s/changepassword";
 
     @Valid
     @NotNull
     @JsonProperty
-    private String stroomUrl = "https://localhost/"; // TODO define
+    private String stroomUrl = "https://localhost/";
 
     @Valid
     @NotNull
@@ -100,7 +99,7 @@ public final class AuthenticationConfig extends AbstractConfig implements HasDbC
 
     @Nullable
     @JsonProperty
-    private String unauthorisedUrl = "https://localhost/s/unauthorised"; // TODO define
+    private String unauthorisedUrl = "https://localhost/s/unauthorised";
 
     @Nullable
     @JsonProperty("email")
