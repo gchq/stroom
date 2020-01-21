@@ -29,6 +29,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
@@ -41,6 +42,7 @@ import java.security.SecureRandom;
 import java.util.concurrent.TimeUnit;
 
 @Component
+@Singleton
 public class HttpClientCache {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(HttpClientCache.class);
 

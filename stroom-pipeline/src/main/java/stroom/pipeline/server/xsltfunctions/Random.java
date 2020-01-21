@@ -22,9 +22,10 @@ import net.sf.saxon.om.Sequence;
 import net.sf.saxon.value.DoubleValue;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
+import stroom.util.spring.StroomScope;
 
 @Component
-@Scope("prototype")
+@Scope(StroomScope.PROTOTYPE)
 class Random extends StroomExtensionFunctionCall {
     @Override
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) {

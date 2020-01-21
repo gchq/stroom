@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1350** : Fixed scope of dictionaries when loaded in multiple XSLT pipeline steps.
+
 
 ## [v6.0.30] - 2020-01-20
 
