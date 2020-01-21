@@ -90,4 +90,5 @@ class TestStroomDuration {
 
         Assertions.assertThat(stroomDuration).isEqualTo(stroomDuration2);
     }
+
 }

@@ -33,7 +33,7 @@ import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -87,9 +87,9 @@ public class PhysicalDeleteExecutor {
             try {
                 if (!Thread.currentThread().isInterrupted()) {
                     final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                    final long age = getDeleteAge(dataStoreServiceConfig);
-                    if (age > 0) {
-                        delete(age);
+                    final long deleteThresholdEpochMs = getDeleteThresholdEpochMs(dataStoreServiceConfig);
+                    if (deleteThresholdEpochMs > 0) {
+                        delete(deleteThresholdEpochMs);
                     }
                     LOGGER.info(() -> TASK_NAME + " - finished in " + logExecutionTime);
                 }
@@ -99,7 +99,7 @@ public class PhysicalDeleteExecutor {
         });
     }
 
-    public void delete(final long age) {
+    public void delete(final long deleteThresholdEpochMs) {
         if (!Thread.currentThread().isInterrupted()) {
             long count = 0;
             long total = 0;
@@ -112,7 +112,7 @@ public class PhysicalDeleteExecutor {
                 do {
                     // Insert a batch of ids into the temp id table and find out
                     // how many were inserted.
-                    final List<Meta> idList = getDeleteIdList(age, deleteBatchSize);
+                    final List<Meta> idList = getDeleteIdList(deleteThresholdEpochMs, deleteBatchSize);
                     count = idList.size();
 
                     // If we inserted some ids then try and delete this batch.
@@ -196,10 +196,16 @@ public class PhysicalDeleteExecutor {
         }
     }
 
-    private List<Meta> getDeleteIdList(final long age, final int batchSize) {
+    private List<Meta> getDeleteIdList(final long deleteThresholdEpochMs, final int batchSize) {
         final ExpressionOperator expression = new ExpressionOperator.Builder()
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, Status.DELETED.getDisplayValue())
-                .addTerm(MetaFields.STATUS_TIME, Condition.LESS_THAN, DateUtil.createNormalDateTimeString(age))
+                .addTerm(
+                    MetaFields.STATUS,
+                    Condition.EQUALS,
+                    Status.DELETED.getDisplayValue())
+                .addTerm(
+                    MetaFields.STATUS_TIME,
+                    Condition.LESS_THAN,
+                    DateUtil.createNormalDateTimeString(deleteThresholdEpochMs))
                 .build();
 
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);
@@ -209,17 +215,16 @@ public class PhysicalDeleteExecutor {
         return metaService.find(criteria);
     }
 
-    private Long getDeleteAge(final DataStoreServiceConfig config) {
-        Long age = null;
-        final String durationString = config.getDeletePurgeAge();
-        if (durationString != null && !durationString.isEmpty()) {
+    private Long getDeleteThresholdEpochMs(final DataStoreServiceConfig config) {
+        Long deleteThresholdEpochMs = null;
+        final StroomDuration deletePurgeAge = config.getDeletePurgeAge();
+        if (deletePurgeAge != null) {
             try {
-                final long duration = ModelStringUtil.parseDurationString(durationString);
-                age = System.currentTimeMillis() - duration;
+                deleteThresholdEpochMs = System.currentTimeMillis() - deletePurgeAge.toMillis();
             } catch (final RuntimeException e) {
                 LOGGER.error(() -> "Error reading config");
             }
         }
-        return age;
+        return deleteThresholdEpochMs;
     }
 }

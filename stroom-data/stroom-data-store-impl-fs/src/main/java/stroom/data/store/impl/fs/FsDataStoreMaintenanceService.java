@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -102,11 +104,12 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
     public ScanVolumePathResult scanVolumePath(final FsVolume volume,
                                                final boolean doDelete,
                                                final String repoPath,
-                                               final long oldFileAge) {
+                                               final Duration oldFileAge) {
+        Objects.requireNonNull(oldFileAge);
         return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
             final ScanVolumePathResult result = new ScanVolumePathResult();
 
-            final long oldFileTime = System.currentTimeMillis() - oldFileAge;
+            final long oldFileTime = System.currentTimeMillis() - oldFileAge.toMillis();
 
             final Map<String, List<String>> filesKeyedByBaseName = new HashMap<>();
             final Map<String, DataVolume> streamsKeyedByBaseName = new HashMap<>();
