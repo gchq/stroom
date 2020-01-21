@@ -117,6 +117,14 @@ public class StroomDuration implements SharedObject, Comparable<StroomDuration> 
         }
     }
 
+    public long toMillis() {
+        return duration.toMillis();
+    }
+
+    public long toNanos() {
+        return duration.toNanos();
+    }
+
     @Override
     public String toString() {
         return valueAsStr;

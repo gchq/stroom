@@ -1,19 +1,18 @@
 package stroom.cluster.api;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
 
 @Singleton
 public class ClusterConfig extends AbstractConfig {
     private boolean clusterCallUseLocal = true;
-    private String clusterCallReadTimeout = "30s";
+    private StroomDuration clusterCallReadTimeout = StroomDuration.ofSeconds(30);
     private boolean clusterCallIgnoreSSLHostnameVerifier = true;
-    private String clusterResponseTimeout = "30s";
+    private StroomDuration clusterResponseTimeout = StroomDuration.ofSeconds(30);
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Do local calls when calling our own local services (true is an optimisation)")
@@ -21,17 +20,19 @@ public class ClusterConfig extends AbstractConfig {
         return clusterCallUseLocal;
     }
 
+    @SuppressWarnings("unused")
     public void setClusterCallUseLocal(final boolean clusterCallUseLocal) {
         this.clusterCallUseLocal = clusterCallUseLocal;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("Time in ms (but can be specified as 10s, 1m) before throwing read timeout")
-    public String getClusterCallReadTimeout() {
+    @JsonPropertyDescription("Time before throwing read timeout")
+    public StroomDuration getClusterCallReadTimeout() {
         return clusterCallReadTimeout;
     }
 
-    public void setClusterCallReadTimeout(final String clusterCallReadTimeout) {
+    @SuppressWarnings("unused")
+    public void setClusterCallReadTimeout(final StroomDuration clusterCallReadTimeout) {
         this.clusterCallReadTimeout = clusterCallReadTimeout;
     }
 
@@ -42,27 +43,19 @@ public class ClusterConfig extends AbstractConfig {
         return clusterCallIgnoreSSLHostnameVerifier;
     }
 
+    @SuppressWarnings("unused")
     public void setClusterCallIgnoreSSLHostnameVerifier(final boolean clusterCallIgnoreSSLHostnameVerifier) {
         this.clusterCallIgnoreSSLHostnameVerifier = clusterCallIgnoreSSLHostnameVerifier;
     }
 
-    @JsonPropertyDescription("Time in ms (but can be specified as 10s, 1m) before giving up on cluster results")
-    public String getClusterResponseTimeout() {
+    @JsonPropertyDescription("Time before giving up on cluster results")
+    public StroomDuration getClusterResponseTimeout() {
         return clusterResponseTimeout;
     }
 
-    public void setClusterResponseTimeout(final String clusterResponseTimeout) {
+    @SuppressWarnings("unused")
+    public void setClusterResponseTimeout(final StroomDuration clusterResponseTimeout) {
         this.clusterResponseTimeout = clusterResponseTimeout;
-    }
-
-    @JsonIgnore
-    public long getClusterCallReadTimeoutMs() {
-        return ModelStringUtil.parseDurationString(clusterCallReadTimeout);
-    }
-
-    @JsonIgnore
-    public long getClusterResponseTimeoutMs() {
-        return ModelStringUtil.parseDurationString(clusterResponseTimeout);
     }
 
     @Override

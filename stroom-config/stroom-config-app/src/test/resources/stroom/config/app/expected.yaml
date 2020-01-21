@@ -50,9 +50,9 @@ appConfig:
     concurrentWriters: 10
   cluster:
     clusterCallUseLocal: true
-    clusterCallReadTimeout: "30s"
+    clusterCallReadTimeout: "PT30S"
     clusterCallIgnoreSSLHostnameVerifier: true
-    clusterResponseTimeout: "30s"
+    clusterResponseTimeout: "PT30S"
   clusterLock:
     db:
       connection:
