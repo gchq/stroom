@@ -6,6 +6,7 @@ import net.sf.saxon.event.PipelineConfiguration;
 import net.sf.saxon.event.ReceivingContentHandler;
 import net.sf.saxon.expr.XPathContext;
 import net.sf.saxon.om.EmptyAtomicSequence;
+import net.sf.saxon.om.Item;
 import net.sf.saxon.om.Sequence;
 import net.sf.saxon.trans.XPathException;
 import net.sf.saxon.tree.tiny.TinyBuilder;
@@ -27,6 +28,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 
 @Component
 @Scope(StroomScope.PROTOTYPE)
@@ -47,11 +49,11 @@ class HttpCall extends StroomExtensionFunctionCall {
     protected Sequence call(final String functionName, final XPathContext context, final Sequence[] arguments) throws XPathException {
         Sequence sequence = EmptyAtomicSequence.getInstance();
 
-        final String url = arguments.length > 0 ? getSafeString(functionName, context, arguments, 0) : "";
-        final String headers = arguments.length > 1 ? getSafeString(functionName, context, arguments, 1) : "";
-        final String mediaType = arguments.length > 2 ? getSafeString(functionName, context, arguments, 2) : "application/json; charset=utf-8";
-        final String data = arguments.length > 3 ? getSafeString(functionName, context, arguments, 3) : "";
-        final String clientConfig = arguments.length > 4 ? getSafeString(functionName, context, arguments, 4) : "";
+        final String url = getOptionalString(arguments, 0).orElse("");
+        final String headers = getOptionalString(arguments, 1).orElse("");
+        final String mediaType = getOptionalString(arguments, 2).orElse("application/json; charset=utf-8");
+        final String data = getOptionalString(arguments, 3).orElse("");
+        final String clientConfig = getOptionalString(arguments, 4).orElse("");
 
         if (url.isEmpty()) {
             log(context, Severity.WARNING, "No URL specified for HTTP call", null);
@@ -195,5 +197,18 @@ class HttpCall extends StroomExtensionFunctionCall {
     private void characters(final ReceivingContentHandler contentHandler, final String characters) throws SAXException {
         final char[] chars = characters.toCharArray();
         contentHandler.characters(chars, 0, chars.length);
+    }
+
+    private Optional<String> getOptionalString(final Sequence[] arguments, final int index) throws XPathException {
+        if (arguments.length > index) {
+            final Sequence sequence = arguments[index];
+            if (sequence != null) {
+                final Item item = sequence.iterate().next();
+                if (item != null) {
+                    return Optional.ofNullable(item.getStringValue());
+                }
+            }
+        }
+        return Optional.empty();
     }
 }
