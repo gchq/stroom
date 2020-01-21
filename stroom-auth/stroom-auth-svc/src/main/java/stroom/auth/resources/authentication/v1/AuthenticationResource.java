@@ -44,6 +44,7 @@ import stroom.auth.resources.token.v1.Token;
 import stroom.auth.resources.user.v1.User;
 import stroom.auth.service.eventlogging.StroomEventLoggingService;
 import stroom.auth.service.security.ServiceUser;
+import stroom.security.api.SecurityContext;
 import stroom.util.shared.RestResource;
 
 import javax.annotation.Nullable;
@@ -104,6 +105,7 @@ public final class AuthenticationResource implements RestResource {
     private CertificateManager certificateManager;
     private TokenBuilderFactory tokenBuilderFactory;
     private StroomEventLoggingService stroomEventLoggingService;
+    private SecurityContext securityContext;
 
     @Inject
     public AuthenticationResource(
@@ -115,7 +117,8 @@ public final class AuthenticationResource implements RestResource {
             EmailSender emailSender,
             CertificateManager certificateManager,
             TokenBuilderFactory tokenBuilderFactory,
-            StroomEventLoggingService stroomEventLoggingService) {
+            StroomEventLoggingService stroomEventLoggingService,
+            SecurityContext securityContext) {
         this.config = config;
         this.dnPattern = Pattern.compile(config.getCertificateDnPattern());
         this.tokenDao = tokenDao;
@@ -126,6 +129,7 @@ public final class AuthenticationResource implements RestResource {
         this.certificateManager = certificateManager;
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.stroomEventLoggingService = stroomEventLoggingService;
+        this.securityContext = securityContext;
     }
 
 
@@ -471,24 +475,29 @@ public final class AuthenticationResource implements RestResource {
     @ApiOperation(value = "Reset an authenticated user's password.",
             response = String.class, tags = {"Authentication"})
     public final Response resetPassword(
-            @io.dropwizard.auth.Auth @NotNull ServiceUser user,
             @Context @NotNull HttpServletRequest httpServletRequest,
             @ApiParam("changePasswordRequest") @NotNull ResetPasswordRequest req) {
-        List<PasswordValidationFailureType> failedOn = new ArrayList<>();
-        PasswordIntegrityChecksConfig conf = config.getPasswordIntegrityChecksConfig();
+        if(securityContext.isLoggedIn()) {
+            final String loggedInUser = securityContext.getUserId();
+            List<PasswordValidationFailureType> failedOn = new ArrayList<>();
+            PasswordIntegrityChecksConfig conf = config.getPasswordIntegrityChecksConfig();
 
-        validateLength(req.getNewPassword(), conf.getMinimumPasswordLength()).ifPresent(failedOn::add);
-        validateComplexity(req.getNewPassword(), conf.getPasswordComplexityRegex()).ifPresent(failedOn::add);
+            validateLength(req.getNewPassword(), conf.getMinimumPasswordLength()).ifPresent(failedOn::add);
+            validateComplexity(req.getNewPassword(), conf.getPasswordComplexityRegex()).ifPresent(failedOn::add);
 
-        final ChangePasswordResponseBuilder responseBuilder = ChangePasswordResponseBuilder.aChangePasswordResponse();
+            final ChangePasswordResponseBuilder responseBuilder = ChangePasswordResponseBuilder.aChangePasswordResponse();
 
-        if (responseBuilder.failedOn.size() == 0) {
-            responseBuilder.withSuccess();
-            stroomEventLoggingService.changePassword(httpServletRequest, user.getName());
-            userDao.changePassword(user.getName(), req.getNewPassword());
+            if (responseBuilder.failedOn.size() == 0) {
+                responseBuilder.withSuccess();
+//                stroomEventLoggingService.changePassword(httpServletRequest, user.getName());
+//                userDao.changePassword(user.getName(), req.getNewPassword());
+                stroomEventLoggingService.changePassword(httpServletRequest, loggedInUser);
+                userDao.changePassword(loggedInUser, req.getNewPassword());
+            }
+
+            return Response.status(Status.OK).entity(responseBuilder.build()).build();
         }
-
-        return Response.status(Status.OK).entity(responseBuilder.build()).build();
+        else return Response.status(Status.UNAUTHORIZED).build();
     }
 
     @GET

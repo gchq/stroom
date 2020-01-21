@@ -70,6 +70,8 @@ dependencies {
     compile project(':stroom-util-shared')
     compile project(':stroom-db-util')
     compile project(':stroom-util')
+    compile project(':stroom-security:stroom-security-api')
+    compile project(':stroom-security:stroom-security-impl')
     compile authDeps.dropwizard_core
     compile authDeps.dropwizard_flyway
     compile authDeps.dropwizard_jooq
