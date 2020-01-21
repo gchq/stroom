@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1-beta.17] - 2020-01-21
+
 * Issue **#1355** : Fixed stepping from dashboard text pane.
 
 * Issue **#1354** : Fixed double click to edit list items, e.g. properties.
@@ -2056,7 +2059,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.16...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.17...6.1
+[v6.1-beta.17]: https://github.com/gchq/stroom/compare/v6.1-beta.16...v6.1-beta.17
 [v6.1-beta.16]: https://github.com/gchq/stroom/compare/v6.1-beta.15...v6.1-beta.16
 [v6.1-beta.15]: https://github.com/gchq/stroom/compare/v6.1-beta.14...v6.1-beta.15
 [v6.1-beta.14]: https://github.com/gchq/stroom/compare/v6.1-beta.13...v6.1-beta.14
