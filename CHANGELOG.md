@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1354** : Fixed double click to edit list items, e.g. properties.
+
 * Issue **#1340** : Fixed issue with FindReplaceFilter where it failed in some cases when more than one filter was chained together.
 
 * Issue **#1338** : You can now configure the max size of the map store cache.
