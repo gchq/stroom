@@ -32,7 +32,6 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -69,10 +68,10 @@ public class CacheManagerImpl implements CacheManager {
             cacheBuilder.maximumSize(cacheConfig.getMaximumSize());
         }
         if (cacheConfig.getExpireAfterAccess() != null) {
-            cacheBuilder.expireAfterAccess(cacheConfig.getExpireAfterAccess(), TimeUnit.MILLISECONDS);
+            cacheBuilder.expireAfterAccess(cacheConfig.getExpireAfterAccess().getDuration());
         }
         if (cacheConfig.getExpireAfterWrite() != null) {
-            cacheBuilder.expireAfterWrite(cacheConfig.getExpireAfterWrite(), TimeUnit.MILLISECONDS);
+            cacheBuilder.expireAfterWrite(cacheConfig.getExpireAfterWrite().getDuration());
         }
         if (removalNotificationConsumer != null) {
             final RemovalListener<K, V> removalListener = (key, value, cause) -> {

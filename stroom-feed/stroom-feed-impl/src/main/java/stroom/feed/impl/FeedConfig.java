@@ -5,9 +5,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class FeedConfig extends AbstractConfig {
@@ -20,7 +20,7 @@ public class FeedConfig extends AbstractConfig {
 
     private CacheConfig feedDocCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.SECONDS)
+            .expireAfterAccess(StroomDuration.ofSeconds(10))
             .build();
 
     @JsonPropertyDescription("The classification banner to display for data if one is not defined")

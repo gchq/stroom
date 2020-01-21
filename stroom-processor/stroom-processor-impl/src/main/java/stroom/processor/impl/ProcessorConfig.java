@@ -6,9 +6,9 @@ import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unused")
 @Singleton
@@ -25,19 +25,19 @@ public class ProcessorConfig extends AbstractConfig implements BatchDeleteConfig
 
     private CacheConfig processorCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.SECONDS)
+            .expireAfterAccess(StroomDuration.ofSeconds(10))
             .build();
     private CacheConfig processorFilterCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.SECONDS)
+            .expireAfterAccess(StroomDuration.ofSeconds(10))
             .build();
     private CacheConfig processorNodeCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
     private CacheConfig processorFeedCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
     @JsonProperty("db")

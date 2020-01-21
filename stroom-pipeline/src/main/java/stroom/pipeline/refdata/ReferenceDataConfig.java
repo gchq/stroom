@@ -9,7 +9,6 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class ReferenceDataConfig extends AbstractConfig {
@@ -21,12 +20,12 @@ public class ReferenceDataConfig extends AbstractConfig {
     private int maxPutsBeforeCommit = MAX_PUTS_BEFORE_COMMIT_DEFAULT;
     private int maxReaders = MAX_READERS_DEFAULT;
     private String maxStoreSize = "50G";
-    private StroomDuration purgeAge = StroomDuration.ofDays(30);
+    private StroomDuration purgeAge = StroomDuration.parse("P30D");
     private int valueBufferCapacity = VALUE_BUFFER_CAPACITY_DEFAULT_VALUE;
     private boolean isReadAheadEnabled = true;
     private CacheConfig effectiveStreamCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)

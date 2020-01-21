@@ -5,9 +5,9 @@ import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
@@ -15,15 +15,15 @@ public class MetaServiceConfig extends AbstractConfig implements HasDbConfig {
     private MetaValueConfig metaValueConfig = new MetaValueConfig();
     private CacheConfig metaFeedCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
     private CacheConfig metaProcessorCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
     private CacheConfig metaTypeCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
     @JsonProperty("db")

@@ -408,7 +408,11 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
         if (oldValue == null) {
             return null;
         } else if (oldValue.isBlank()) {
-            return "";
+            return null;
+        } else if (oldValue.matches("^[0-9]+[dD]$")) {
+            // special case for days to stop Duration turning them into hours
+            String daysPart = oldValue.replaceAll("[dD]$","");
+            return Duration.parse("P" + daysPart + "D").toString();
         } else {
             final Long durationMs = ModelStringUtil.parseDurationString(oldValue);
 

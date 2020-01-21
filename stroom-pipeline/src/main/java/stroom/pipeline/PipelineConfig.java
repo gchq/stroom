@@ -7,10 +7,10 @@ import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 import stroom.util.xml.ParserConfig;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class PipelineConfig extends AbstractConfig {
@@ -21,7 +21,7 @@ public class PipelineConfig extends AbstractConfig {
     private XsltConfig xsltConfig = new XsltConfig();
     private CacheConfig pipelineDataCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
     @JsonProperty("appender")
