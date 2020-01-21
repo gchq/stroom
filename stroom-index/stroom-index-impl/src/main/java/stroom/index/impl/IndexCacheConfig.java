@@ -7,8 +7,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
 
-public class CacheConfig extends AbstractConfig {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CacheConfig.class);
+public class IndexCacheConfig extends AbstractConfig {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexCacheConfig.class);
 
     private String timeToLive;
     private String timeToIdle;
