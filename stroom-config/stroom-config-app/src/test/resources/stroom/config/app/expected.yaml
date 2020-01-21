@@ -115,7 +115,7 @@ appConfig:
   data:
     meta:
       metaValueConfig:
-        deleteAge: "30d"
+        deleteAge: "P30D"
         deleteBatchSize: 1000
         flushBatchSize: 1000
         addAsync: true
@@ -149,11 +149,11 @@ appConfig:
     retention:
       deleteBatchSize: 1000
     store:
-      deletePurgeAge: "7d"
+      deletePurgeAge: "P7D"
       deleteBatchSize: 1000
       fileSystemCleanBatchSize: 20
       fileSystemCleanDeleteOut: false
-      fileSystemCleanOldAge: "1d"
+      fileSystemCleanOldAge: "PT24H"
       db:
         connection:
           jdbcDriverClassName: null

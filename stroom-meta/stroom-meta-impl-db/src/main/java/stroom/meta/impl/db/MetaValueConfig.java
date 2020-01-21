@@ -8,7 +8,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class MetaValueConfig extends AbstractConfig {
-    private StroomDuration deleteAge = StroomDuration.ofDays(30);
+    private StroomDuration deleteAge = StroomDuration.parse("P30D"); // parse stops it storing P720D
     private int deleteBatchSize = 1000;
     private int flushBatchSize = 1000;
     private boolean addAsync = true;

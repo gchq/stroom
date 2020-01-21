@@ -12,7 +12,7 @@ import javax.inject.Singleton;
 @Singleton
 public class DataStoreServiceConfig extends AbstractConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
-    private StroomDuration deletePurgeAge = StroomDuration.ofDays(7);
+    private StroomDuration deletePurgeAge = StroomDuration.parse("P7D"); // parse stops it storing P720D
     private int deleteBatchSize = 1000;
     private int fileSystemCleanBatchSize = 20;
     private boolean fileSystemCleanDeleteOut;
