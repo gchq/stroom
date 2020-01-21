@@ -3,7 +3,7 @@
 
 
 -- USERS
-CREATE TABLE authentication_users (
+CREATE TABLE users (
     id 				      MEDIUMINT NOT NULL AUTO_INCREMENT,
     email                 VARCHAR(255) NOT NULL,
     password_hash         VARCHAR(255) NOT NULL,
@@ -47,15 +47,15 @@ CREATE TABLE tokens (
     PRIMARY KEY           (id),
     UNIQUE 			      (id),
     CONSTRAINT            `fk_issued_to`
-        FOREIGN KEY(user_id) REFERENCES authentication_users(id)
+        FOREIGN KEY(user_id) REFERENCES users(id)
         ON DELETE CASCADE -- We want tokens to be removed when users are
         ON UPDATE RESTRICT, -- We don't want the user's ID changing if we have a token
     CONSTRAINT            `fk_issued_by_user`
-        FOREIGN KEY(issued_by_user) REFERENCES authentication_users(id)
+        FOREIGN KEY(issued_by_user) REFERENCES users(id)
         ON DELETE CASCADE -- We want tokens to be removed when users are
         ON UPDATE RESTRICT, -- We don't want the user's ID changing if we have a token
     CONSTRAINT            `fk_updated_by_user`
-        FOREIGN KEY(updated_by_user) REFERENCES authentication_users(id)
+        FOREIGN KEY(updated_by_user) REFERENCES users(id)
         ON DELETE CASCADE -- We want tokens to be removed when users are
         ON UPDATE RESTRICT, -- We don't want the user's ID changing if we have a token
     CONSTRAINT            `fk_token_type_id`

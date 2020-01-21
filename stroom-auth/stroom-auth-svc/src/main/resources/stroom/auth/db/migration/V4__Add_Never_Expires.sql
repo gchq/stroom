@@ -1,4 +1,4 @@
-ALTER TABLE authentication_users
+ALTER TABLE users
 ADD never_expires BOOLEAN DEFAULT FALSE NOT NULL;
 
-UPDATE authentication_users SET never_expires=TRUE WHERE email='admin';
+UPDATE users SET never_expires=TRUE WHERE email='admin';

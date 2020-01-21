@@ -13,7 +13,7 @@ VALUES (
 
 -- Create seed accounts
 -- Must be reset In the running instance after a production deployment.
-INSERT INTO authentication_users (
+INSERT INTO users (
     email,
     password_hash,
     comments,
@@ -32,7 +32,7 @@ VALUES (
 -- These API keys are signed with the RSA private key in json_web_key.
 -- Must be reset in the running instance after a production deployment.
 -- For stroom
-INSERT INTO authentication_users (
+INSERT INTO users (
     email,
     password_hash,
     state,
@@ -56,17 +56,17 @@ INSERT INTO tokens(
     issued_by_user
 )
 VALUES (
-    (SELECT id FROM authentication_users WHERE email = 'stroomServiceUser'),
+    (SELECT id FROM users WHERE email = 'stroomServiceUser'),
     (SELECT id FROM token_types WHERE token_type = 'api'),
     -- This token is for admin and doesn't have an expiration.
     'eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDQ4NjMwNDMsInN1YiI6InN0cm9vbVNlcnZpY2VVc2VyIiwiaXNzIjoic3Ryb29tIn0.gHJkpxeW5CjU_hBzuLhQd8Ot8XkLvhu45_-Ql4gOX96iNbl0AnKEwKu2QmMY3uVerGjYBHDczgKJlLVF_RQtFiwFLorT2P_Mv-9ShcCL0Ml-Tq-1i-_UnHMYHP5Nv-rP3ajUz-vTHwIYqi_WU-IEpIF56MCYBqeDkgQfe-I03VyfsLkWt-3f8L3AKESZirmqjPUB_SPi4vWGpyN28FuJe1KyqdCPo5QVKnrM_dpguE_aIj1Dy1sovmgO5WxFm3-hE7asW3WrnokSopNXQ1bJ3W77v4k1CnMpYDw5schQAKqUffPVGxNE6UxNunZTlRQJQqYihKkhpeiTiZMo9XCHGg',
     NOW(),
-    (SELECT id FROM authentication_users WHERE email = 'stroomServiceUser')
+    (SELECT id FROM users WHERE email = 'stroomServiceUser')
 );
 
 
 -- For stats
-INSERT INTO authentication_users (
+INSERT INTO users (
     email,
     password_hash,
     state,
@@ -89,18 +89,18 @@ INSERT INTO tokens(
     issued_by_user
 )
 VALUES (
-    (SELECT id FROM authentication_users WHERE email = 'statsServiceUser'),
+    (SELECT id FROM users WHERE email = 'statsServiceUser'),
     (SELECT id FROM token_types WHERE token_type = 'api'),
     -- This token is for admin and doesn't have an expiration.
     'eyJhbGciOiJSUzI1NiJ9.eyJleHAiOjE1NDQ4NjMwNjIsInN1YiI6InN0YXRzU2VydmljZVVzZXIiLCJpc3MiOiJzdHJvb20ifQ.7AFPkNgM1UBL_Pj-K5kSNPClgDJ6wZ22WWukjWGw_myZWuMZPGd-kqYxUuQzqqmTA918wylFSx5xBPWA1oCbx0aEPGEOdMnUViykq5XaGEHwPGT9Tf9JI0h8z6-TfOt2VJ2CFsSmRSpfe1CYOywZwziqBwvf5m0rWhfb0wm1abcBnjmX_EfxZiV3McmY0MEzSN6AkYGyWr4ggja06onKEObkoZ9f5pRt7tkTsBpCvaolavfu3IF5FXP9GRifOcxdQXFOgRCDe4JkG6ZAeKbTT6aJJCU798F9jL2ozIw-tQTrA5KjkwIpefaA6CoA_mZd-gIa-ZOLVGzRaIMBo-dl-g',
     NOW(),
-    (SELECT id FROM authentication_users WHERE email = 'statsServiceUser')
+    (SELECT id FROM users WHERE email = 'statsServiceUser')
 );
 
 
 
 -- For the AuthenticationResource
-INSERT INTO authentication_users (
+INSERT INTO users (
     email,
     password_hash,
     state,
