@@ -37,6 +37,7 @@ import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
+import stroom.util.shared.StroomDuration;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -352,7 +353,8 @@ public class ConfigMapper {
                 Map.class.isAssignableFrom(type) ||
                 DocRef.class.isAssignableFrom(type) ||
                 Enum.class.isAssignableFrom(type) ||
-                Path.class.isAssignableFrom(type);
+                Path.class.isAssignableFrom(type) ||
+                StroomDuration.class.isAssignableFrom(type);
 
         LOGGER.trace("isSupportedPropertyType({}), returning: {}", type, isSupported);
         return isSupported;

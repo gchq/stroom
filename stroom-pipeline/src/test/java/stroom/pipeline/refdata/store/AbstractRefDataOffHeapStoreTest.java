@@ -27,6 +27,7 @@ import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
 import stroom.util.ByteSizeUnit;
 import stroom.util.pipeline.scope.PipelineScopeModule;
+import stroom.util.shared.StroomDuration;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -76,7 +77,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
         referenceDataConfig.setMaxStoreSize(Long.toString(sizeInBytes));
     }
 
-    protected void setPurgeAgeProperty(final String purgeAge) {
+    protected void setPurgeAgeProperty(final StroomDuration purgeAge) {
         referenceDataConfig.setPurgeAge(purgeAge);
     }
 

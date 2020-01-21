@@ -94,11 +94,16 @@ public class App extends Application<Config> {
         bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
                 bootstrap.getConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false)));
+
         bootstrap.addBundle(new AssetsBundle("/ui", ResourcePaths.ROOT_PATH, "index.html", "ui"));
 
         // Add a DW Command so we can run the full migration without running the
         // http server
         bootstrap.addCommand(new DbMigrationCommand(configFile));
+
+        // If we want to use javax.validation on our rest resources with our own custom validation annotations
+        // then we will need to do something with bootstrap.setValidatorFactory()
+        // and our CustomConstraintValidatorFactory
     }
 
     @Override

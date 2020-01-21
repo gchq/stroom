@@ -6,6 +6,7 @@ import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.StroomDuration;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +21,7 @@ public class ReferenceDataConfig extends AbstractConfig {
     private int maxPutsBeforeCommit = MAX_PUTS_BEFORE_COMMIT_DEFAULT;
     private int maxReaders = MAX_READERS_DEFAULT;
     private String maxStoreSize = "50G";
-    private String purgeAge = "30d";
+    private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private int valueBufferCapacity = VALUE_BUFFER_CAPACITY_DEFAULT_VALUE;
     private boolean isReadAheadEnabled = true;
     private CacheConfig effectiveStreamCache = new CacheConfig.Builder()
@@ -79,18 +80,14 @@ public class ReferenceDataConfig extends AbstractConfig {
 
     @JsonPropertyDescription("The time to retain reference data for in the off heap store. The time is taken " +
             "from the time that the reference stream was last accessed, e.g. a lookup was made against it. " +
-            "The age can be expressed with suffixes of ms/s/m/h/d, e.g. 10d, defaulting to millis if no suffix " +
-            "is provided")
-    public String getPurgeAge() {
+            "The age can be expressed with simple suffixes of ms/s/m/h/d, e.g. 10d, defaulting to millis if no suffix " +
+            "is provided. Alternatively it can be expressed as an ISO 8601 string, e.g. P1DT12H")
+    public StroomDuration getPurgeAge() {
         return purgeAge;
     }
 
-    @JsonIgnore
-    public long getPurgeAgeMs() {
-        return ModelStringUtil.parseDurationString(purgeAge);
-    }
-
-    public void setPurgeAge(final String purgeAge) {
+    @SuppressWarnings("unused")
+    public void setPurgeAge(final StroomDuration purgeAge) {
         this.purgeAge = purgeAge;
     }
 

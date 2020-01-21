@@ -61,6 +61,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.StroomDuration;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -387,7 +388,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     @Override
     public void purgeOldData() {
-        purgeOldData(System.currentTimeMillis());
+        purgeOldData(Instant.now());
     }
 
     /**
@@ -432,12 +433,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     /**
-     * @param nowMs Allows the setting of the current time for testing purposes
+     * @param now Allows the setting of the current time for testing purposes
      */
-    void purgeOldData(final long nowMs) {
+    void purgeOldData(final Instant now) {
         final Instant startTime = Instant.now();
         final AtomicReference<Tuple4<Integer, Integer, Integer, Integer>> totalsRef = new AtomicReference<>(Tuple.of(0, 0, 0, 0));
-        try (final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer(nowMs);
+        try (final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer(now);
              final PooledByteBufferPair procInfoPooledBufferPair = processingInfoDb.getPooledBufferPair()) {
 
             final AtomicReference<ByteBuffer> currRefStreamDefBufRef = new AtomicReference<>();
@@ -741,26 +742,26 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return lmdbDb.getEntryCount();
     }
 
-    private long getPurgeCutOffEpochMs(final long purgeAgeMs) {
-        return System.currentTimeMillis() - purgeAgeMs;
+    private Instant getPurgeCutOffEpoch(final StroomDuration purgeAge) {
+        return Instant.now().minus(purgeAge.getDuration());
     }
 
-    private long getPurgeCutOffEpochMs(final long nowEpochMs, final long purgeAgeMs) {
-        return nowEpochMs - purgeAgeMs;
+    private Instant getPurgeCutOffEpoch(final Instant now, final StroomDuration purgeAgeMs) {
+        return now.minus(purgeAgeMs.getDuration());
     }
 
-    private PooledByteBuffer getAccessTimeCutOffBuffer(final long nowEpocMs) {
+    private PooledByteBuffer getAccessTimeCutOffBuffer(final Instant now) {
 
-        long purgeAgeMs = referenceDataConfig.getPurgeAgeMs();
-        long purgeCutOff = getPurgeCutOffEpochMs(nowEpocMs, purgeAgeMs);
+        StroomDuration purgeAge = referenceDataConfig.getPurgeAge();
+        Instant purgeCutOff = getPurgeCutOffEpoch(now, purgeAge);
 
         LOGGER.info("Using purge duration {}, cut off {}, now {}",
-                Duration.ofMillis(purgeAgeMs),
-                Instant.ofEpochMilli(purgeCutOff),
-                Instant.ofEpochMilli(nowEpocMs));
+                purgeAge,
+                purgeCutOff,
+                now);
 
         PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(Long.BYTES);
-        pooledByteBuffer.getByteBuffer().putLong(purgeCutOff);
+        pooledByteBuffer.getByteBuffer().putLong(purgeCutOff.toEpochMilli());
         pooledByteBuffer.getByteBuffer().flip();
         return pooledByteBuffer;
     }
@@ -777,8 +778,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .withDetail("Environment max size", ModelStringUtil.formatIECByteSizeString(maxSize))
                     .withDetail("Environment current size", ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
                     .withDetail("Purge age", referenceDataConfig.getPurgeAge())
-                    .withDetail("Purge cut off", Instant.ofEpochMilli(
-                            getPurgeCutOffEpochMs(referenceDataConfig.getPurgeAgeMs())).toString())
+                    .withDetail("Purge cut off", getPurgeCutOffEpoch(referenceDataConfig.getPurgeAge()).toString())
                     .withDetail("Max readers", maxReaders)
                     .withDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
                     .withDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1().toString())
