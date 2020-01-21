@@ -19,12 +19,14 @@ package stroom.pipeline.server.reader;
 import org.junit.Assert;
 import org.junit.Test;
 import stroom.pipeline.server.DefaultLocationFactory;
+import stroom.pipeline.server.LocationFactory;
 import stroom.pipeline.server.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.server.errorhandler.ProcessException;
 import stroom.pipeline.server.reader.FindReplaceFilter.Builder;
 import stroom.pipeline.server.reader.FindReplaceFilter.SubSequence;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.util.regex.Matcher;
@@ -495,6 +497,19 @@ public class TestFindReplaceFilter {
         test(builder, 100000, "cat <[dog cat dog", "cat wolf cat dog", null);
     }
 
+    @Test
+    public void testMultiFilter() {
+        final Builder builder1 = new Builder()
+                .find("a")
+                .replacement("")
+                .regex(true);
+        final Builder builder2 = new Builder()
+                .find("b")
+                .replacement("c")
+                .regex(true);
+        final Builder[] builders = {builder1, builder2};
+        testMulti(builders, 100000, "abb", "cc", null);
+    }
 
     private String getDogCat() {
         final StringBuilder sb = new StringBuilder();
@@ -531,14 +546,52 @@ public class TestFindReplaceFilter {
     }
 
     private void test(final Builder builder, final int length, final String input, final String expectedOutput, final String expectedError) {
+//        try {
+//            final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
+//            final FindReplaceFilter reader = builder
+//                    .reader(new StringReader(input))
+//                    .locationFactory(new DefaultLocationFactory())
+//                    .errorReceiver(loggingErrorReceiver)
+//                    .elementId("findReplaceFilter")
+//                    .build();
+//
+//            final StringBuilder stringBuilder = new StringBuilder();
+//            final char[] buffer = new char[length];
+//            int len;
+//            while ((len = reader.read(buffer, 0, length)) != -1) {
+//                stringBuilder.append(buffer, 0, len);
+//            }
+//
+//            final String error = loggingErrorReceiver.toString();
+//            if (expectedError != null) {
+//                Assert.assertTrue(error.contains(expectedError));
+//            } else if (error.length() > 0) {
+//                throw new ProcessException(error);
+//            }
+//
+//            Assert.assertEquals(expectedOutput, stringBuilder.toString());
+//        } catch (final IOException e) {
+//            throw new UncheckedIOException(e);
+//        }
+
+        final Builder[] builders = {builder};
+        testMulti(builders, length, input, expectedOutput, expectedError);
+    }
+
+    private void testMulti(final Builder[] builder, final int length, final String input, final String expectedOutput, final String expectedError) {
         try {
+            final LocationFactory locationFactory = new DefaultLocationFactory();
             final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
-            final FindReplaceFilter reader = builder
-                    .reader(new StringReader(input))
-                    .locationFactory(new DefaultLocationFactory())
-                    .errorReceiver(loggingErrorReceiver)
-                    .elementId("findReplaceFilter")
-                    .build();
+
+            Reader reader = new StringReader(input);
+            for (int i = 0; i < builder.length; i++) {
+                reader = builder[i]
+                        .reader(reader)
+                        .locationFactory(locationFactory)
+                        .errorReceiver(loggingErrorReceiver)
+                        .elementId("findReplaceFilter_" + i)
+                        .build();
+            }
 
             final StringBuilder stringBuilder = new StringBuilder();
             final char[] buffer = new char[length];

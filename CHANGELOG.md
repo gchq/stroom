@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1340** : Fixed issue with FidReplaceFilter where it failed in some cases when more than one filter was chained together.
+
 * Issue **#1338** : You can now configure the max size of the map store cache.
 
 * Issue **#1350** : Fixed scope of dictionaries when loaded in multiple XSLT pipeline steps.

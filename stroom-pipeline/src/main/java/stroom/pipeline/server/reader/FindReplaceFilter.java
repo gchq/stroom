@@ -95,10 +95,9 @@ public class FindReplaceFilter extends FilterReader {
     /**
      * Read text into the input buffer, replace the first match if possible and copy replaced text to the output buffer.
      */
-    private void performReplacement() throws IOException {
-        inBuffer.fillBuffer();
-
+    private boolean performReplacement() throws IOException {
         boolean doneReplacement = false;
+        inBuffer.fillBuffer();
         final CharSequence charSequence = new PaddingWrapper(inBuffer, inputOffset != 0);
         final Matcher matcher = pattern.matcher(charSequence);
 
@@ -159,6 +158,7 @@ public class FindReplaceFilter extends FilterReader {
 
         // Subsequent matches will work on padded input so that `^` anchored patterns will no longer match.
         inputOffset = 1;
+        return doneReplacement;
     }
 
     private void copyBuffer(int length) {
@@ -187,10 +187,11 @@ public class FindReplaceFilter extends FilterReader {
 
     @Override
     public int read(final char[] cbuf, final int offset, final int length) throws IOException {
+        boolean doneReplacement = false;
         if (outBuffer.length() == 0) {
             if (allowReplacement) {
                 // Read text into the input buffer, replace the first match if possible and copy replaced text to the output buffer.
-                performReplacement();
+                doneReplacement = performReplacement();
 
             } else {
                 // Put any remaining text from the input buffer into the output buffer.
@@ -210,44 +211,13 @@ public class FindReplaceFilter extends FilterReader {
 
         // If there was nothing left in the output buffer, we didn't return any content and we are EOF then return -1.
         if (len == 0 && inBuffer.isEof()) {
-            len = -1;
+            len = doneReplacement ? 0 : -1;
         } else {
             // Move the offset in the output buffer ready for the next read operation.
             outBuffer.move(len);
         }
 
         return len;
-    }
-
-    @Override
-    public int read() throws IOException {
-        if (outBuffer.length() == 0) {
-            if (allowReplacement) {
-                // Read text into the input buffer, replace the first match if possible and copy replaced text to the output buffer.
-                performReplacement();
-
-            } else {
-                // Put any remaining text from the input buffer into the output buffer.
-                if (inBuffer.length() > 0) {
-                    copyBuffer(inBuffer.length());
-
-                } else {
-                    // There is no more text to be replaced so pass through.
-                    return super.read();
-                }
-            }
-        }
-
-        // Copy text from the output buffer to the supplied char array up to the requested length or length of the output buffer.
-        final int len = Math.min(1, outBuffer.length());
-        int result = -1;
-        if (len > 0) {
-            result = outBuffer.charAt(0);
-            // Move the offset in the output buffer ready for the next read operation.
-            outBuffer.move(len);
-        }
-
-        return result;
     }
 
     int getTotalReplacementCount() {
@@ -395,7 +365,7 @@ public class FindReplaceFilter extends FilterReader {
         void fillBuffer() throws IOException {
             // Only fill the buffer if we haven't reached the end of the file.
             if (!eof) {
-                int i = 0;
+                int len = 0;
 
                 // Only fill the buffer if the length of remaining characters is
                 // less than half the capacity.
@@ -411,35 +381,36 @@ public class FindReplaceFilter extends FilterReader {
 
                     // Now fill any remaining capacity.
                     int maxLength = capacity - offset;
-                    while (maxLength > length && (i = reader.read()) != -1) {
-                        final char c = (char) i;
+                    final char cb[] = new char[1];
+                    while (maxLength > length && (len = reader.read(cb, 0, 1)) != -1) {
+                        if (len > 0) {
+                            // If we have filled the buffer then double the size of
+                            // it up to the maximum capacity.
+                            if (buffer.length == offset + length) {
+                                int newLen = buffer.length * 2;
+                                if (newLen == 0) {
+                                    newLen = initialSize;
+                                } else if (newLen > capacity) {
+                                    newLen = capacity;
+                                }
+                                final char[] tmp = new char[newLen];
+                                System.arraycopy(buffer, offset, tmp, 0, length);
+                                offset = 0;
+                                buffer = tmp;
 
-                        // If we have filled the buffer then double the size of
-                        // it up to the maximum capacity.
-                        if (buffer.length == offset + length) {
-                            int newLen = buffer.length * 2;
-                            if (newLen == 0) {
-                                newLen = initialSize;
-                            } else if (newLen > capacity) {
-                                newLen = capacity;
+                                // Now the offset has been reset to 0 we should set
+                                // the max length to be the maximum capacity.
+                                maxLength = capacity;
                             }
-                            final char[] tmp = new char[newLen];
-                            System.arraycopy(buffer, offset, tmp, 0, length);
-                            offset = 0;
-                            buffer = tmp;
 
-                            // Now the offset has been reset to 0 we should set
-                            // the max length to be the maximum capacity.
-                            maxLength = capacity;
+                            buffer[offset + length] = cb[0];
+                            length++;
                         }
-
-                        buffer[offset + length] = c;
-                        length++;
                     }
                 }
 
                 // Determine if we reached the end of the file.
-                eof = i == -1;
+                eof = len == -1;
             }
         }
 
