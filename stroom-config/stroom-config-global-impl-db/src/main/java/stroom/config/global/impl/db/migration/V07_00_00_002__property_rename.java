@@ -421,7 +421,10 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
         } else if (oldValue.isBlank()) {
             return "";
         } else {
-            return StroomDuration.parse(oldValue).toString();
+            StroomDuration stroomDuration = StroomDuration.parse(oldValue);
+            // We want the ISO format so create a new one with the underlying duration so we
+            // lose the old string format
+            return StroomDuration.of(stroomDuration.getDuration()).toString();
         }
     }
 }

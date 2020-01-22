@@ -46,8 +46,14 @@ class TestV07_00_00_002__property_rename {
 
     @Test
     void testModuleStringDurationToDurationConversion1() {
-        doConversionTest(V07_00_00_002__property_rename::modelStringDurationToStroomDuration,"30d", "P30D");
-        doConversionTest(V07_00_00_002__property_rename::modelStringDurationToStroomDuration,"1H", "PT1H");
+        doConversionTest(
+            V07_00_00_002__property_rename::modelStringDurationToStroomDuration,
+            "30d",
+            "P30D");
+        doConversionTest(
+            V07_00_00_002__property_rename::modelStringDurationToStroomDuration,
+            "1H",
+            "PT1H");
     }
 
     @Test
