@@ -101,7 +101,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private final long maxSize;
     private final int maxReaders;
     private final int maxPutsBeforeCommit;
-    private final int valueBufferCapacity;
 
     private final Env<ByteBuffer> lmdbEnvironment;
 
@@ -139,7 +138,6 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         this.maxSize = referenceDataConfig.getMaxStoreSizeBytes();
         this.maxReaders = referenceDataConfig.getMaxReaders();
         this.maxPutsBeforeCommit = referenceDataConfig.getMaxPutsBeforeCommit();
-        this.valueBufferCapacity = referenceDataConfig.getValueBufferCapacity();
 
         this.lmdbEnvironment = createEnvironment(referenceDataConfig);
 
@@ -173,12 +171,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private Env<ByteBuffer> createEnvironment(final ReferenceDataConfig referenceDataConfig) {
         LOGGER.info(
                 "Creating RefDataOffHeapStore environment with [maxSize: {}, dbDir {}, maxReaders {}, " +
-                        "maxPutsBeforeCommit {}, valueBufferCapacity {}, isReadAheadEnabled {}]",
+                        "maxPutsBeforeCommit {}, isReadAheadEnabled {}]",
                 FileUtils.byteCountToDisplaySize(maxSize),
                 dbDir.toAbsolutePath().toString() + File.separatorChar,
                 maxReaders,
                 maxPutsBeforeCommit,
-                FileUtils.byteCountToDisplaySize(valueBufferCapacity),
                 referenceDataConfig.isReadAheadEnabled());
 
         // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.

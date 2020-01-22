@@ -9,19 +9,18 @@ import stroom.util.shared.ModelStringUtil;
 import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
+import javax.validation.constraints.Min;
 
 @Singleton
 public class ReferenceDataConfig extends AbstractConfig {
     private static final int MAX_READERS_DEFAULT = 100;
     private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 1000;
-    private static final int VALUE_BUFFER_CAPACITY_DEFAULT_VALUE = 1000;
 
     private String localDir = "${stroom.temp}/refDataOffHeapStore";
     private int maxPutsBeforeCommit = MAX_PUTS_BEFORE_COMMIT_DEFAULT;
     private int maxReaders = MAX_READERS_DEFAULT;
     private String maxStoreSize = "50G";
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
-    private int valueBufferCapacity = VALUE_BUFFER_CAPACITY_DEFAULT_VALUE;
     private boolean isReadAheadEnabled = true;
     private CacheConfig effectiveStreamCache = new CacheConfig.Builder()
             .maximumSize(1000L)
@@ -40,22 +39,26 @@ public class ReferenceDataConfig extends AbstractConfig {
         this.localDir = localDir;
     }
 
+    @Min(1)
     @JsonPropertyDescription("The maximum number of puts into the store before the transaction is committed. " +
             "There is only one write transaction available and long running transactions are not desirable.")
     public int getMaxPutsBeforeCommit() {
         return maxPutsBeforeCommit;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxPutsBeforeCommit(final int maxPutsBeforeCommit) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
     }
 
+    @Min(1)
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The maximum number of concurrent readers/threads that can use the off-heap store.")
     public int getMaxReaders() {
         return maxReaders;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxReaders(final int maxReaders) {
         this.maxReaders = maxReaders;
     }
@@ -89,16 +92,6 @@ public class ReferenceDataConfig extends AbstractConfig {
         this.purgeAge = purgeAge;
     }
 
-    @JsonPropertyDescription("The size in bytes allocated to the value buffers used in the off-heap store. " +
-            "This should be large enough to accommodate reference data values.")
-    public int getValueBufferCapacity() {
-        return valueBufferCapacity;
-    }
-
-    public void setValueBufferCapacity(final int valueBufferCapacity) {
-        this.valueBufferCapacity = valueBufferCapacity;
-    }
-
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("Read ahead means the OS will pre-fetch additional data from the disk in the " +
             "expectation that it will be used at some point. This generally improves performance as more data is " +
@@ -129,7 +122,6 @@ public class ReferenceDataConfig extends AbstractConfig {
                 ", maxReaders=" + maxReaders +
                 ", maxStoreSize='" + maxStoreSize + '\'' +
                 ", purgeAge='" + purgeAge + '\'' +
-                ", valueBufferCapacity=" + valueBufferCapacity +
                 ", isReadAheadEnabled=" + isReadAheadEnabled +
                 '}';
     }
