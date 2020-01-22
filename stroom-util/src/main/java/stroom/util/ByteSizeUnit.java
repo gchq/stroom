@@ -26,33 +26,33 @@ import java.util.stream.Collectors;
 public enum ByteSizeUnit {
     BYTE(1, "B", "bytes"),
 
-    KIBIBYTE(1024, "KiB", "Kibibytes"),
-    MEBIBYTE(1024 * 1024, "MiB", "Mebibytes"),
-    GIBIBYTE(1024 * 1024 * 1024, "GiB", "Gibibytes"),
-    TEBIBYTE(1024 * 1024 * 1024 * 1024, "TiB", "Tebibytes"),
-    PEBIBYTE(1024 * 1024 * 1024 * 1024 * 1024, "PiB", "Pebibytes"),
+    KIBIBYTE(1024L, "KiB", "Kibibytes"),
+    MEBIBYTE(1024L * 1024, "MiB", "Mebibytes"),
+    GIBIBYTE(1024L * 1024 * 1024, "GiB", "Gibibytes"),
+    TEBIBYTE(1024L * 1024 * 1024 * 1024, "TiB", "Tebibytes"),
+    PEBIBYTE(1024L * 1024 * 1024 * 1024 * 1024, "PiB", "Pebibytes"),
 
-    KILOBYTE(1000, "kB", "Kilobytes"),
-    MEGABYTE(1000 * 1000, "MB", "Megabytes"),
-    GIGABYTE(1000 * 1000 * 1000, "GB", "Gigabytes"),
-    TERABYTE(1000 * 1000 * 1000 * 1000, "TB", "Terabytes"),
-    PETABYTE(1000 * 1000 * 1000 * 1000 * 1000, "PB", "Petabytes");
+    KILOBYTE(1000L, "kB", "Kilobytes"),
+    MEGABYTE(1000L * 1000, "MB", "Megabytes"),
+    GIGABYTE(1000L * 1000 * 1000, "GB", "Gigabytes"),
+    TERABYTE(1000L * 1000 * 1000 * 1000, "TB", "Terabytes"),
+    PETABYTE(1000L * 1000 * 1000 * 1000 * 1000, "PB", "Petabytes");
 
     private static final Map<CaseInsensitiveString, ByteSizeUnit> shortNameToEnumMap = new HashMap<>();
-    private static final Map<Integer, ByteSizeUnit> intToEnumMap = new HashMap<>();
+    private static final Map<Long, ByteSizeUnit> intToEnumMap = new HashMap<>();
 
     static {
         for (ByteSizeUnit byteSizeUnit : ByteSizeUnit.values()) {
             shortNameToEnumMap.put(CaseInsensitiveString.fromString(byteSizeUnit.shortName), byteSizeUnit);
-            intToEnumMap.put(byteSizeUnit.intBytes(), byteSizeUnit);
+            intToEnumMap.put(byteSizeUnit.longBytes(), byteSizeUnit);
         }
     }
 
-    private final int bytes;
+    private final long bytes;
     private final String shortName;
     private final String longName;
 
-    private ByteSizeUnit(final int bytes, final String shortName, final String longName) {
+    private ByteSizeUnit(final long bytes, final String shortName, final String longName) {
         this.bytes = bytes;
         this.shortName = shortName;
         this.longName = longName;
@@ -66,21 +66,19 @@ public enum ByteSizeUnit {
                         return byteSizeUnit.shortName;
                     })
                     .collect(Collectors.joining(", "));
-            throw new IllegalArgumentException(String.format("ShortName [%s] is not valid. Should be one of [%s] (case insensitive).", shortName, allShortNames));
-        }
-        return val;
-    }
-
-    public static ByteSizeUnit fromBytes(final int bytes) {
-        ByteSizeUnit val = intToEnumMap.get(bytes);
-        if (val == null) {
-            throw new IllegalArgumentException(String.format("The byte value %s is not a valid value for conversion into a ByteSizeUnit unit", bytes));
+            throw new IllegalArgumentException(String.format(
+                "ShortName [%s] is not valid. Should be one of [%s] (case insensitive).", shortName, allShortNames));
         }
         return val;
     }
 
     public static ByteSizeUnit fromBytes(final long bytes) {
-        return fromBytes((int) bytes);
+        ByteSizeUnit val = intToEnumMap.get(bytes);
+        if (val == null) {
+            throw new IllegalArgumentException(String.format(
+                "The byte value %s is not a valid value for conversion into a ByteSizeUnit unit", bytes));
+        }
+        return val;
     }
 
     /**
@@ -94,20 +92,6 @@ public enum ByteSizeUnit {
      * Converts the value from the units of this into bytes
      */
     public long longBytes(long fromValue) {
-        return this.bytes * fromValue;
-    }
-
-    /**
-     * @return The number of bytes in this byte size unit
-     */
-    public int intBytes() {
-        return bytes;
-    }
-
-    /**
-     * Converts the value from the units of this into bytes
-     */
-    public int intBytes(final int fromValue) {
         return this.bytes * fromValue;
     }
 
