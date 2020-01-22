@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
-import stroom.util.ByteSizeUnit;
+import stroom.util.io.ByteSizeUnit;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.time.StroomDuration;
 

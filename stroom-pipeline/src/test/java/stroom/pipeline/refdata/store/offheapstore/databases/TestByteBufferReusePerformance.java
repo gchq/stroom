@@ -28,7 +28,7 @@ import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.util.ByteSizeUnit;
+import stroom.util.io.ByteSizeUnit;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 

@@ -17,7 +17,6 @@
 
 package stroom.pipeline.refdata;
 
-import com.google.inject.internal.cglib.core.$ClassNameReader;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
 import org.junit.jupiter.api.AfterEach;
@@ -48,7 +47,7 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.security.api.DocumentPermissionCache;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.ByteSizeUnit;
+import stroom.util.io.ByteSizeUnit;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;

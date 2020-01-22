@@ -46,7 +46,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
-import stroom.util.ByteSizeUnit;
+import stroom.util.io.ByteSizeUnit;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
