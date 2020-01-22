@@ -24,19 +24,19 @@ import java.util.stream.Collectors;
  * Utility class for handling byte size units such as MiB, GiB, TiB etc.
  */
 public enum ByteSizeUnit {
-    BYTE(1, "B", "bytes"),
+    BYTE("B", "bytes", 1),
 
-    KIBIBYTE(1024L, "KiB", "Kibibytes"),
-    MEBIBYTE(1024L * 1024, "MiB", "Mebibytes"),
-    GIBIBYTE(1024L * 1024 * 1024, "GiB", "Gibibytes"),
-    TEBIBYTE(1024L * 1024 * 1024 * 1024, "TiB", "Tebibytes"),
-    PEBIBYTE(1024L * 1024 * 1024 * 1024 * 1024, "PiB", "Pebibytes"),
+    KIBIBYTE("KiB", "Kibibytes", 1024L),
+    MEBIBYTE("MiB", "Mebibytes", 1024L * 1024),
+    GIBIBYTE("GiB", "Gibibytes", 1024L * 1024 * 1024),
+    TEBIBYTE("TiB", "Tebibytes", 1024L * 1024 * 1024 * 1024),
+    PEBIBYTE("PiB", "Pebibytes", 1024L * 1024 * 1024 * 1024 * 1024),
 
-    KILOBYTE(1000L, "kB", "Kilobytes"),
-    MEGABYTE(1000L * 1000, "MB", "Megabytes"),
-    GIGABYTE(1000L * 1000 * 1000, "GB", "Gigabytes"),
-    TERABYTE(1000L * 1000 * 1000 * 1000, "TB", "Terabytes"),
-    PETABYTE(1000L * 1000 * 1000 * 1000 * 1000, "PB", "Petabytes");
+    KILOBYTE("kB", "Kilobytes", 1000L),
+    MEGABYTE("MB", "Megabytes", 1000L * 1000),
+    GIGABYTE("GB", "Gigabytes", 1000L * 1000 * 1000),
+    TERABYTE("TB", "Terabytes", 1000L * 1000 * 1000 * 1000),
+    PETABYTE("PB", "Petabytes", 1000L * 1000 * 1000 * 1000 * 1000);
 
     private static final Map<CaseInsensitiveString, ByteSizeUnit> shortNameToEnumMap = new HashMap<>();
     private static final Map<Long, ByteSizeUnit> intToEnumMap = new HashMap<>();
@@ -52,7 +52,7 @@ public enum ByteSizeUnit {
     private final String shortName;
     private final String longName;
 
-    private ByteSizeUnit(final long bytes, final String shortName, final String longName) {
+    ByteSizeUnit(final String shortName, final String longName, final long bytes) {
         this.bytes = bytes;
         this.shortName = shortName;
         this.longName = longName;
