@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,15 @@
 
 package stroom.processor.shared;
 
-import stroom.task.shared.Action;
+import stroom.util.shared.ResultPage;
 
-public class DeleteProcessorAction extends Action<Processor> {
-    private static final long serialVersionUID = -1773544031158236156L;
+import java.util.List;
 
-    private Processor processor;
-
-    public DeleteProcessorAction() {
-        // Default constructor necessary for GWT serialisation.
+public class FetchProcessorResponse extends ResultPage<ProcessorListRow> {
+    public FetchProcessorResponse() {
     }
 
-    public DeleteProcessorAction(final Processor processor) {
-        this.processor = processor;
-    }
-
-    public Processor getProcessor() {
-        return processor;
-    }
-
-    @Override
-    public String getTaskName() {
-        return "DeleteProcessorAction";
+    public FetchProcessorResponse(final List<ProcessorListRow> list) {
+        super(list);
     }
 }
