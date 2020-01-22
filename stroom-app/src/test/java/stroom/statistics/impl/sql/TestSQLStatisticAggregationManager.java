@@ -27,18 +27,19 @@ import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
-import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -95,7 +96,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         // final long startDateMs =
         // DateUtil.parseNormalDateTimeString("2015-01-01T00:00:00.000Z");
         //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
-        final long startDateMs = LocalDateTime.of(2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC).toEpochMilli();
+        final Instant startDate = LocalDateTime.of(2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC);
         final int statNameCount = 4;
         final int timesCount = 10;
         final int numberOfDifferentPrecisions = 4;
@@ -109,11 +110,11 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
         final LogExecutionTime time = new LogExecutionTime();
 
-        loadData(startDateMs, statNameCount, timesCount, statisticType);
+        loadData(startDate, statNameCount, timesCount, statisticType);
 
         LOGGER.info("First aggregation run");
-        LOGGER.info("startDate: " + DateUtil.createNormalDateTimeString(startDateMs));
-        runAggregation(startDateMs);
+        LOGGER.info("startDate: " + startDate);
+        runAggregation(startDate);
 
         assertThat(getAggregateTotal(COL_NAME_CNT)).isEqualTo(expectedCountTotal);
         assertThat(getAggregateTotal(COL_NAME_VAL)).isEqualTo(expectedValueTotal);
@@ -135,7 +136,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION)).isEqualTo(expectedCountTotalByPrecision);
 
         LOGGER.info("run aggregation again with no new data in SVS");
-        runAggregation(startDateMs);
+        runAggregation(startDate);
 
         assertThat(getAggregateTotal(COL_NAME_CNT)).isEqualTo(expectedCountTotal);
         assertThat(getAggregateTotal(COL_NAME_VAL)).isEqualTo(expectedValueTotal);
@@ -158,13 +159,13 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
         LOGGER.info(
                 "run aggregation again but pretend we are 2hrs in the future so it rolls up the zero precision");
-        long futureDateMs = startDateMs + TimeUnit.HOURS.toMillis(2);
-        LOGGER.info("futureDate: " + DateUtil.createNormalDateTimeString(futureDateMs));
+        Instant futureDate = startDate.plus(2, ChronoUnit.HOURS);
+        LOGGER.info("futureDate: " + futureDate);
         // load more data into each precision so it has to merge existing
         // and roll up existing default moves to hour one new of each
         // precision
-        loadData(futureDateMs, statNameCount, timesCount, statisticType);
-        runAggregation(futureDateMs);
+        loadData(futureDate, statNameCount, timesCount, statisticType);
+        runAggregation(futureDate);
 
         assertThat(getAggregateTotal(COL_NAME_CNT)).isEqualTo(expectedCountTotal * 2);
         assertThat(getAggregateTotal(COL_NAME_VAL)).isEqualTo(expectedValueTotal * 2);
@@ -186,14 +187,14 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION)).isEqualTo(expectedCountTotalByPrecision * 2);
 
         LOGGER.info("run aggregation again but pretend we are 2days in the future");
-        futureDateMs = startDateMs + TimeUnit.DAYS.toMillis(2);
-        LOGGER.info("futureDate: " + DateUtil.createNormalDateTimeString(futureDateMs));
+        futureDate = startDate.plus(2, ChronoUnit.DAYS);
+        LOGGER.info("futureDate: " + futureDate);
         // load more data into each precision so it has to merge existing
         // and roll up one new in each precision one default from above
         // moves into day three hour from above move into day already two in
         // day
-        loadData(futureDateMs, statNameCount, timesCount, statisticType);
-        runAggregation(futureDateMs);
+        loadData(futureDate, statNameCount, timesCount, statisticType);
+        runAggregation(futureDate);
 
         assertThat(getAggregateTotal(COL_NAME_CNT)).isEqualTo(expectedCountTotal * 3);
         assertThat(getAggregateTotal(COL_NAME_VAL)).isEqualTo(expectedValueTotal * 3);
@@ -215,13 +216,13 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION)).isEqualTo(expectedCountTotalByPrecision * 3);
 
         LOGGER.info("run aggregation again but pretend we are 32days in the future");
-        futureDateMs = startDateMs + TimeUnit.DAYS.toMillis(65);
-        LOGGER.info("futureDate: " + DateUtil.createNormalDateTimeString(futureDateMs));
+        futureDate = startDate.plus(65, ChronoUnit.DAYS);
+        LOGGER.info("futureDate: " + futureDate);
         // load more data into each precision so it has to merge existing
         // and roll up one new in each precision existing default moves to
         // hour existing hour moves to day
-        loadData(futureDateMs, statNameCount, timesCount, statisticType);
-        runAggregation(futureDateMs);
+        loadData(futureDate, statNameCount, timesCount, statisticType);
+        runAggregation(futureDate);
 
         assertThat(getAggregateTotal(COL_NAME_CNT)).isEqualTo(expectedCountTotal * 4);
         assertThat(getAggregateTotal(COL_NAME_VAL)).isEqualTo(expectedValueTotal * 4);
@@ -243,8 +244,8 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION)).isEqualTo(expectedCountTotalByPrecision * 12);
 
         LOGGER.info("run aggregation again with no new data so day data can roll up to month");
-        LOGGER.info("futureDate: " + DateUtil.createNormalDateTimeString(futureDateMs));
-        runAggregation(futureDateMs);
+        LOGGER.info("futureDate: " + futureDate);
+        runAggregation(futureDate);
 
         assertThat(getAggregateTotal(COL_NAME_CNT)).isEqualTo(expectedCountTotal * 4);
         assertThat(getAggregateTotal(COL_NAME_VAL)).isEqualTo(expectedValueTotal * 4);
@@ -274,7 +275,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         // final long startDateMs =
         // DateUtil.parseNormalDateTimeString("2015-01-01T00:00:00.000Z");
         //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
-        final long startDateMs = LocalDateTime.of(2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC).toEpochMilli();
+        final Instant startDate = LocalDateTime.of(2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC);
         final int statNameCount = 4;
         final int timesCount = 100;
         final int numberOfDifferentPrecisions = 3;
@@ -288,11 +289,11 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
 
         final LogExecutionTime time = new LogExecutionTime();
 
-        loadData(startDateMs, statNameCount, timesCount, statisticType);
+        loadData(startDate, statNameCount, timesCount, statisticType);
 
         LOGGER.info("First aggregation run");
-        LOGGER.info("startDate: " + DateUtil.createNormalDateTimeString(startDateMs));
-        runAggregation(startDateMs);
+        LOGGER.info("startDate: " + startDate);
+        runAggregation(startDate);
 
         assertThat(getAggregateTotal(COL_NAME_CNT)).isEqualTo(expectedCountTotal);
         assertThat(getAggregateTotal(COL_NAME_VAL)).isEqualTo(expectedValueTotal);
@@ -310,7 +311,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION)).isEqualTo(expectedCountTotalByPrecision);
 
         LOGGER.info("run aggregation again with no new data in SVS");
-        runAggregation(startDateMs);
+        runAggregation(startDate);
 
         assertThat(getAggregateTotal(COL_NAME_CNT)).isEqualTo(expectedCountTotal);
         assertThat(getAggregateTotal(COL_NAME_VAL)).isEqualTo(expectedValueTotal);
@@ -328,13 +329,13 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION)).isEqualTo(expectedCountTotalByPrecision);
 
         LOGGER.info("run aggregation again but pretend we are 2days in the future");
-        long futureDateMs = startDateMs + TimeUnit.DAYS.toMillis(2);
-        LOGGER.info("futureDate: " + DateUtil.createNormalDateTimeString(futureDateMs));
+        Instant futureDate = startDate.plus(2, ChronoUnit.DAYS);
+        LOGGER.info("futureDate: " + futureDate);
         // load more data into each precision so it has to merge existing
         // and roll up one new in each precision one default from above
         // moves into day
-        loadData(futureDateMs, statNameCount, timesCount, statisticType);
-        runAggregation(futureDateMs);
+        loadData(futureDate, statNameCount, timesCount, statisticType);
+        runAggregation(futureDate);
 
         assertThat(getAggregateTotal(COL_NAME_CNT)).isEqualTo(expectedCountTotal * 2);
         assertThat(getAggregateTotal(COL_NAME_VAL)).isEqualTo(expectedValueTotal * 2);
@@ -352,13 +353,13 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION)).isEqualTo(expectedCountTotalByPrecision * 2);
 
         LOGGER.info("run aggregation again but pretend we are 32days in the future");
-        futureDateMs = startDateMs + TimeUnit.DAYS.toMillis(65);
-        LOGGER.info("futureDate: " + DateUtil.createNormalDateTimeString(futureDateMs));
+        futureDate = startDate.plus(65, ChronoUnit.DAYS);
+        LOGGER.info("futureDate: " + futureDate);
         // load more data into each precision so it has to merge existing
         // and roll up one new in each precision existing default moves to
         // hour existing hour moves to day
-        loadData(futureDateMs, statNameCount, timesCount, statisticType);
-        runAggregation(futureDateMs);
+        loadData(futureDate, statNameCount, timesCount, statisticType);
+        runAggregation(futureDate);
 
         assertThat(getAggregateTotal(COL_NAME_CNT)).isEqualTo(expectedCountTotal * 3);
         assertThat(getAggregateTotal(COL_NAME_VAL)).isEqualTo(expectedValueTotal * 3);
@@ -376,8 +377,8 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION)).isEqualTo(expectedCountTotalByPrecision * 7);
 
         LOGGER.info("run aggregation again with no new data so day data can roll up to month");
-        LOGGER.info("futureDate: " + DateUtil.createNormalDateTimeString(futureDateMs));
-        runAggregation(futureDateMs);
+        LOGGER.info("futureDate: " + futureDate);
+        runAggregation(futureDate);
 
         assertThat(getAggregateTotal(COL_NAME_CNT)).isEqualTo(expectedCountTotal * 3);
         assertThat(getAggregateTotal(COL_NAME_VAL)).isEqualTo(expectedValueTotal * 3);
@@ -401,7 +402,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     void testDeletingOldStats() throws SQLException {
         final StatisticType statisticType = StatisticType.VALUE;
         //Use a fixed start date to avoid any oddities caused by the power of 10 rounding
-        final long startDateMs = LocalDateTime.of(2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC).toEpochMilli();
+        final Instant startDate = LocalDateTime.of(2016, 12, 13, 11, 59, 3).toInstant(ZoneOffset.UTC);
         //the number of different satst names to use in the test
         final int statNameCount = 4;
         //the number of different data points per stat name
@@ -418,16 +419,16 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         final LogExecutionTime time = new LogExecutionTime();
 
         //put the data into SQL_STAT_VAL_SRC
-        loadData(startDateMs, statNameCount, timesCount, statisticType);
+        loadData(startDate, statNameCount, timesCount, statisticType);
 
-        final long newStartDate = startDateMs - TimeUnit.DAYS.toMillis(200);
-        LOGGER.info("Adding stats working back from: " + DateUtil.createNormalDateTimeString(newStartDate));
+        final Instant newStartDate = startDate.minus(200, ChronoUnit.DAYS);
+        LOGGER.info("Adding stats working back from: " + newStartDate);
         //Put some very old data in to SQL_STAT_VAL_SRC so that it will get deleted but leave behind some of the data loaded above
         fillStatValSrc(newStartDate, statNameCount, timesCount, statisticType);
 
         LOGGER.info("First aggregation run");
-        LOGGER.info("startDate: " + DateUtil.createNormalDateTimeString(startDateMs));
-        runAggregation(startDateMs);
+        LOGGER.info("startDate: " + startDate);
+        runAggregation(startDate);
 
         assertThat(getAggregateTotal(COL_NAME_CNT)).isEqualTo(expectedCountTotal);
         assertThat(getAggregateTotal(COL_NAME_VAL)).isEqualTo(expectedValueTotal);
@@ -450,11 +451,11 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         // aggregation
         // run aggregation and check the right amount of stats are left
 
-        final long futureDateMs = startDateMs + TimeUnit.DAYS.toMillis(2);
+        final Instant futureDate = startDate.plus(2, ChronoUnit.DAYS);
 
-        sqlStatisticsConfig.setMaxProcessingAge("30d");
+        sqlStatisticsConfig.setMaxProcessingAge(StroomDuration.ofDays(30));
 
-        runAggregation(futureDateMs);
+        runAggregation(futureDate);
 
         assertThat(getAggregateByPrecision(COL_NAME_VAL, SQLStatisticAggregationTransactionHelper.DEFAULT_PRECISION)).isEqualTo(0);
 
@@ -470,41 +471,41 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
         assertThat(getAggregateByPrecision(COL_NAME_CNT, SQLStatisticAggregationTransactionHelper.MONTH_PRECISION)).isEqualTo(expectedCountTotalByPrecision);
     }
 
-    private void loadData(final long startDateMs, final int statNameCount, final int timesCount,
+    private void loadData(final Instant startDate, final int statNameCount, final int timesCount,
                           final StatisticType statisticType) throws SQLException {
         int iteration = 0;
 
         LOGGER.info("Filling STAT_VAL_SRC");
 
         // initial load of data just before now
-        long newStartDate = startDateMs;
-        LOGGER.info("Adding stats working back from: " + DateUtil.createNormalDateTimeString(newStartDate));
+        Instant newStartDate = startDate;
+        LOGGER.info("Adding stats working back from: " + newStartDate);
         fillStatValSrc(newStartDate, statNameCount, timesCount, statisticType);
         assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)).isEqualTo(statNameCount * timesCount * ++iteration);
 
         // Value stats doesn't do hour granularity
         if (statisticType.equals(StatisticType.COUNT)) {
             // load of data two hours old
-            newStartDate = startDateMs - TimeUnit.HOURS.toMillis(2);
-            LOGGER.info("Adding stats working back from: " + DateUtil.createNormalDateTimeString(newStartDate));
+            newStartDate = startDate.minus(2, ChronoUnit.HOURS);
+            LOGGER.info("Adding stats working back from: " + newStartDate);
             fillStatValSrc(newStartDate, statNameCount, timesCount, statisticType);
             assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)).isEqualTo(statNameCount * timesCount * ++iteration);
         }
 
         // load of data 2 days old
-        newStartDate = startDateMs - TimeUnit.DAYS.toMillis(2);
-        LOGGER.info("Adding stats working back from: " + DateUtil.createNormalDateTimeString(newStartDate));
+        newStartDate = startDate.minus(2, ChronoUnit.DAYS);
+        LOGGER.info("Adding stats working back from: " + newStartDate);
         fillStatValSrc(newStartDate, statNameCount, timesCount, statisticType);
         assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)).isEqualTo(statNameCount * timesCount * ++iteration);
 
         // load of data 65 days old
-        newStartDate = startDateMs - TimeUnit.DAYS.toMillis(65);
-        LOGGER.info("Adding stats working back from: " + DateUtil.createNormalDateTimeString(newStartDate));
+        newStartDate = startDate.minus(65, ChronoUnit.DAYS);
+        LOGGER.info("Adding stats working back from: " + newStartDate);
         fillStatValSrc(newStartDate, statNameCount, timesCount, statisticType);
         assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)).isEqualTo(statNameCount * timesCount * ++iteration);
     }
 
-    private void fillStatValSrc(final long startDateMs,
+    private void fillStatValSrc(final Instant startDate,
                                 final int statNameCount,
                                 final int timesCount,
                                 final StatisticType statisticType) {
@@ -516,7 +517,7 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
             final String statName = "stat" + i;
             for (int j = 0; j < timesCount; j++) {
                 // make each time 1ms earlier
-                final long timeMs = startDateMs - j;
+                final long timeMs = startDate.toEpochMilli() - j;
                 StatisticEvent statisticEvent;
 
                 if (statisticType.equals(StatisticType.COUNT)) {
@@ -547,11 +548,11 @@ class TestSQLStatisticAggregationManager extends AbstractCoreIntegrationTest {
     }
 
     private void runAggregation() throws SQLException {
-        runAggregation(System.currentTimeMillis());
+        runAggregation(Instant.now());
     }
 
-    private void runAggregation(final long timeNowMs) throws SQLException {
-        sqlStatisticAggregationManager.aggregate(timeNowMs);
+    private void runAggregation(final Instant timeNow) throws SQLException {
+        sqlStatisticAggregationManager.aggregate(timeNow);
 
         assertThat(getRowCount(SQLStatisticNames.SQL_STATISTIC_VALUE_SOURCE_TABLE_NAME)).isEqualTo(0);
 
