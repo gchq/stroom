@@ -319,7 +319,6 @@ appConfig:
       maxReaders: 100
       maxStoreSize: "50G"
       purgeAge: "P30D"
-      valueBufferCapacity: 1000
       effectiveStreamCache:
         maximumSize: 1000
         expireAfterAccess: "PT10M"
