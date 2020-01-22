@@ -153,7 +153,7 @@ appConfig:
       deleteBatchSize: 1000
       fileSystemCleanBatchSize: 20
       fileSystemCleanDeleteOut: false
-      fileSystemCleanOldAge: "PT24H"
+      fileSystemCleanOldAge: "P1D"
       db:
         connection:
           jdbcDriverClassName: null
@@ -339,9 +339,7 @@ appConfig:
   processor:
     assignTasks: true
     createTasks: true
-    deleteAge: "1d"
-    deletePurgeAge: "7d"
-    deleteBatchSize: 1000
+    deleteAge: "P1D"
     fillTaskQueue: true
     queueSize: 1000
     databaseMultiInsertMaxBatchSize: 500
