@@ -7,6 +7,7 @@ import stroom.config.common.HasDbConfig;
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
+import javax.validation.constraints.Min;
 
 @Singleton
 public class StoredQueryConfig extends AbstractConfig implements HasDbConfig {
@@ -23,6 +24,7 @@ public class StoredQueryConfig extends AbstractConfig implements HasDbConfig {
         this.itemsRetention = itemsRetention;
     }
 
+    @Min(0)
     @JsonPropertyDescription("The number of days query history items will be retained for")
     public int getDaysRetention() {
         return daysRetention;
