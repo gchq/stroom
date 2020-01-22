@@ -1,9 +1,15 @@
 package stroom.util.io;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.StringWriter;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,10 +40,22 @@ class TestByteSize {
 
     @Test
     void ofBytes() {
-        long input = 1024L;
-        ByteSize byteSize = ByteSize.ofBytes(input);
-        assertThat(byteSize.getBytes()).isEqualTo(input);
-        assertThat(byteSize.getValueAsStr()).isEqualTo("1K");
+        doOfTest(10L, ByteSize::ofBytes, "10B", 1);
+        doOfTest(10L, ByteSize::ofKibibytes, "10K", KI);
+        doOfTest(10L, ByteSize::ofMebibytes, "10M", KI * KI);
+        doOfTest(10L, ByteSize::ofGibibytes, "10G", KI * KI * KI);
+        doOfTest(10L, ByteSize::ofTebibytes, "10T", KI * KI * KI * KI);
+        doOfTest(10L, ByteSize::ofPebibytes, "10P", KI * KI * KI * KI * KI);
+    }
+
+    private void doOfTest(final long input,
+                          final Function<Long, ByteSize> func,
+                          final String expected,
+                          final long expectedMultiplier) {
+        ByteSize byteSize = func.apply(input);
+
+        assertThat(byteSize.getValueAsStr()).isEqualTo(expected);
+        assertThat(byteSize.getBytes()).isEqualTo(input * expectedMultiplier);
     }
 
     @Test
@@ -53,6 +71,25 @@ class TestByteSize {
         ByteSize byteSize = ByteSize.ZERO;
         assertThat(byteSize.getBytes()).isEqualTo(0);
         assertThat(byteSize.getValueAsStr()).isEqualTo("0B");
+    }
+
+    @Test
+    void testSerde() throws IOException {
+        final ByteSize byteSize = ByteSize.parse("1234K");
+
+        final ObjectMapper objectMapper = new ObjectMapper();
+
+        final StringWriter stringWriter = new StringWriter();
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+        objectMapper.writeValue(stringWriter, byteSize);
+
+        final String json = stringWriter.toString();
+
+        System.out.println(json);
+
+        final ByteSize byteSize2 = objectMapper.readValue(json, ByteSize.class);
+
+        assertThat(byteSize).isEqualTo(byteSize2);
     }
 
     private void doParseTest(final long expectedBytes, final String... values) {

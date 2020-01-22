@@ -27,12 +27,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
 import stroom.pipeline.refdata.store.RefDataValue;
@@ -46,7 +46,7 @@ import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
-import stroom.util.io.ByteSizeUnit;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -100,11 +100,11 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     private RefDataStore refDataStore;
 
     void setDbMaxSizeProperty() {
-        setDbMaxSizeProperty(ByteSizeUnit.MEBIBYTE.longBytes(500));
+        setDbMaxSizeProperty(ByteSize.ofMebibytes(500));
     }
 
-    void setDbMaxSizeProperty(final long sizeInBytes) {
-        referenceDataConfig.setMaxStoreSize(Long.toString(sizeInBytes));
+    void setDbMaxSizeProperty(final ByteSize size) {
+        referenceDataConfig.setMaxStoreSize(size);
     }
 
     @BeforeEach

@@ -23,7 +23,6 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
@@ -55,6 +54,7 @@ import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.pipeline.refdata.util.PooledByteBufferPair;
 import stroom.pipeline.writer.PathCreator;
 import stroom.util.HasHealthCheck;
+import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
@@ -98,7 +98,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private static final long PROCESSING_INFO_UPDATE_DELAY_MS = Duration.of(1, ChronoUnit.HOURS).toMillis();
 
     private final Path dbDir;
-    private final long maxSize;
+    private final ByteSize maxSize;
     private final int maxReaders;
     private final int maxPutsBeforeCommit;
 
@@ -135,7 +135,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
         this.referenceDataConfig = referenceDataConfig;
         this.dbDir = getStoreDir();
-        this.maxSize = referenceDataConfig.getMaxStoreSizeBytes();
+        this.maxSize = referenceDataConfig.getMaxStoreSize();
         this.maxReaders = referenceDataConfig.getMaxReaders();
         this.maxPutsBeforeCommit = referenceDataConfig.getMaxPutsBeforeCommit();
 
@@ -172,7 +172,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         LOGGER.info(
                 "Creating RefDataOffHeapStore environment with [maxSize: {}, dbDir {}, maxReaders {}, " +
                         "maxPutsBeforeCommit {}, isReadAheadEnabled {}]",
-                FileUtils.byteCountToDisplaySize(maxSize),
+                maxSize,
                 dbDir.toAbsolutePath().toString() + File.separatorChar,
                 maxReaders,
                 maxPutsBeforeCommit,
@@ -198,7 +198,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
         final Env<ByteBuffer> env = Env.create()
                 .setMaxReaders(maxReaders)
-                .setMapSize(maxSize)
+                .setMapSize(maxSize.getBytes())
                 .setMaxDbs(7) //should equal the number of DBs we create which is fixed at compile time
                 .open(dbDir.toFile(), envFlags);
 
@@ -771,7 +771,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             builder
                     .healthy()
                     .withDetail("Path", dbDir.toAbsolutePath().toString())
-                    .withDetail("Environment max size", ModelStringUtil.formatIECByteSizeString(maxSize))
+                    .withDetail("Environment max size", maxSize)
                     .withDetail("Environment current size", ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
                     .withDetail("Purge age", referenceDataConfig.getPurgeAge())
                     .withDetail("Purge cut off", TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())

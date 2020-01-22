@@ -23,7 +23,7 @@ import org.lmdbjava.Env;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.test.common.util.test.StroomUnitTest;
-import stroom.util.io.ByteSizeUnit;
+import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
 
 import java.io.IOException;
@@ -33,7 +33,7 @@ import java.nio.file.Path;
 
 public abstract class AbstractLmdbDbTest extends StroomUnitTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractLmdbDbTest.class);
-    private static final long DB_MAX_SIZE = ByteSizeUnit.KIBIBYTE.longBytes(1000);
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(1);
     protected Env<ByteBuffer> lmdbEnv = null;
     private Path dbDir = null;
 
@@ -44,7 +44,7 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
                 getMaxSizeBytes(), dbDir.toAbsolutePath().toString());
 
         lmdbEnv = Env.create()
-                .setMapSize(getMaxSizeBytes())
+                .setMapSize(getMaxSizeBytes().getBytes())
                 .setMaxDbs(10)
                 .open(dbDir.toFile());
     }
@@ -64,7 +64,7 @@ public abstract class AbstractLmdbDbTest extends StroomUnitTest {
         return dbDir;
     }
 
-    protected long getMaxSizeBytes() {
+    protected ByteSize getMaxSizeBytes() {
         return DB_MAX_SIZE;
     }
 }

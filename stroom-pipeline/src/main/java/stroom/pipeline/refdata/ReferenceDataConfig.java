@@ -1,11 +1,10 @@
 package stroom.pipeline.refdata;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
@@ -19,7 +18,7 @@ public class ReferenceDataConfig extends AbstractConfig {
     private String localDir = "${stroom.temp}/refDataOffHeapStore";
     private int maxPutsBeforeCommit = MAX_PUTS_BEFORE_COMMIT_DEFAULT;
     private int maxReaders = MAX_READERS_DEFAULT;
-    private String maxStoreSize = "50G";
+    private ByteSize maxStoreSize = ByteSize.ofGibibytes(50);
     private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private boolean isReadAheadEnabled = true;
     private CacheConfig effectiveStreamCache = new CacheConfig.Builder()
@@ -64,19 +63,15 @@ public class ReferenceDataConfig extends AbstractConfig {
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The maximum size in bytes for the ref loader off heap store. There must be " +
-            "available space on the disk to accommodate this size. It can be larger than the amount of available RAM " +
-            "and will only be allocated as it is needed.")
-    public String getMaxStoreSize() {
+    @JsonPropertyDescription("The maximum size for the ref loader off heap store. There must be " +
+        "available space on the disk to accommodate this size. It can be larger than the amount of available RAM " +
+        "and will only be allocated as it is needed. Can be expressed in IEC units (multiples of 1024), " +
+        "e.g. 1024, 1024B, 1024bytes, 1KiB, 1KB, 1K, etc.")
+    public ByteSize getMaxStoreSize() {
         return maxStoreSize;
     }
 
-    @JsonIgnore
-    public long getMaxStoreSizeBytes() {
-        return ModelStringUtil.parseIECByteSizeString(maxStoreSize);
-    }
-
-    public void setMaxStoreSize(final String maxStoreSize) {
+    public void setMaxStoreSize(final ByteSize maxStoreSize) {
         this.maxStoreSize = maxStoreSize;
     }
 

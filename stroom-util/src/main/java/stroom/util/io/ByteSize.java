@@ -6,6 +6,9 @@ import stroom.util.shared.ModelStringUtil;
 
 import java.util.Objects;
 
+/**
+ * Class to represent a size in bytes. It can be parsed from IEC byte units, e.g. 5Kib, 10MiB, etc.
+ */
 public class ByteSize {
     private final String valueAsStr;
     private final long bytes;
@@ -19,20 +22,31 @@ public class ByteSize {
         if (bytes == null) {
             throw new IllegalArgumentException("Unable to parse [" + valueAsStr + "] to a ByteSize.");
         }
-        this.valueAsStr = valueAsStr;
         this.bytes = bytes;
+        if (valueAsStr.equals(ByteSize.ofBytes(bytes).getValueAsStr())) {
+            // valueAsStr is same as from ModelStringUtil so no need to store it
+            this.valueAsStr = null;
+        } else {
+            this.valueAsStr = valueAsStr;
+        }
     }
 
     private ByteSize(final long bytes) {
         if (bytes < 0) {
             throw new IllegalArgumentException("bytes [" + bytes + "] cannot be less than zero");
         }
+        this.bytes = bytes;
 
-        valueAsStr = ModelStringUtil.formatIECByteSizeString(bytes, true);
+        final String valueAsStr = formatBytes(bytes);
         if (valueAsStr.isEmpty()) {
             throw new RuntimeException("Something went wrong, valueAsStr should not be empty.");
         }
-        this.bytes = bytes;
+        // valueAsStr is from ModelStringUtil so no need to store it
+        this.valueAsStr = null;
+    }
+
+    private String formatBytes(final long bytes) {
+        return ModelStringUtil.formatIECByteSizeString(bytes, true);
     }
 
     @JsonCreator
@@ -44,13 +58,40 @@ public class ByteSize {
         return new ByteSize(bytes);
     }
 
+    public static ByteSize ofKibibytes(final long kibibytes) {
+        return new ByteSize(ByteSizeUnit.KIBIBYTE.longBytes(kibibytes));
+    }
+
+    public static ByteSize ofMebibytes(final long mebibytes) {
+        return new ByteSize(ByteSizeUnit.MEBIBYTE.longBytes(mebibytes));
+    }
+
+    public static ByteSize ofGibibytes(final long gibibytes) {
+        return new ByteSize(ByteSizeUnit.GIBIBYTE.longBytes(gibibytes));
+    }
+
+    public static ByteSize ofTebibytes(final long tebibytes) {
+        return new ByteSize(ByteSizeUnit.TEBIBYTE.longBytes(tebibytes));
+    }
+
+    public static ByteSize ofPebibytes(final long pebibytes) {
+        return new ByteSize(ByteSizeUnit.PEBIBYTE.longBytes(pebibytes));
+    }
+
     public long getBytes() {
         return bytes;
     }
 
+    @Override
+    public String toString() {
+        return getValueAsStr();
+    }
+
     @JsonValue
     public String getValueAsStr() {
-        return valueAsStr;
+        return valueAsStr == null
+            ? formatBytes(bytes)
+            : valueAsStr;
     }
 
     @Override
