@@ -13,8 +13,8 @@ public class CacheConfig extends AbstractConfig {
     public static final String PROP_NAME_EXPIRE_AFTER_ACCESS = "expireAfterAccess";
     public static final String PROP_NAME_EXPIRE_AFTER_WRITE = "expireAfterWrite";
     private Long maximumSize;
-    private StroomDuration expireAfterAccess; // Milliseconds
-    private StroomDuration expireAfterWrite; // Milliseconds
+    private StroomDuration expireAfterAccess;
+    private StroomDuration expireAfterWrite;
 
     public CacheConfig() {
     }
@@ -40,7 +40,7 @@ public class CacheConfig extends AbstractConfig {
 
     @JsonPropertyDescription("Specifies that each entry should be automatically removed from the cache once " +
         "a this duration has elapsed after the entry's creation, the most recent replacement of " +
-        "its value, or its last read. Value is in milliseconds.")
+        "its value, or its last read. In ISO-8601 duration format, e.g. 'PT10M'")
     @JsonProperty(PROP_NAME_EXPIRE_AFTER_ACCESS)
     public StroomDuration getExpireAfterAccess() {
         return expireAfterAccess;
@@ -52,7 +52,7 @@ public class CacheConfig extends AbstractConfig {
 
     @JsonPropertyDescription("Specifies that each entry should be automatically removed from the cache once " +
         "a fixed duration has elapsed after the entry's creation, or the most recent replacement of its value. " +
-        "Value is in milliseconds.")
+        "In ISO-8601 duration format, e.g. 'PT5M'")
     @JsonProperty(PROP_NAME_EXPIRE_AFTER_WRITE)
     public StroomDuration getExpireAfterWrite() {
         return expireAfterWrite;
@@ -65,8 +65,8 @@ public class CacheConfig extends AbstractConfig {
 
     public static class Builder {
         private Long maximumSize;
-        private StroomDuration expireAfterAccess; // Milliseconds
-        private StroomDuration expireAfterWrite; // Milliseconds
+        private StroomDuration expireAfterAccess;
+        private StroomDuration expireAfterWrite;
 
         public Builder maximumSize(final Long maximumSize) {
             this.maximumSize = maximumSize;
@@ -78,21 +78,10 @@ public class CacheConfig extends AbstractConfig {
             return this;
         }
 
-//        public Builder expireAfterAccess(final Du, final TimeUnit timeUnit) {
-//            this.expireAfterAccess = StroomDuration.of(expireAfterAccess, timeUnit);
-//            timeUnit.toMillis(expireAfterAccess);
-//            return this;
-//        }
-
         public Builder expireAfterWrite(final StroomDuration expireAfterWrite) {
             this.expireAfterWrite = expireAfterWrite;
             return this;
         }
-
-//        public Builder expireAfterWrite(final int expireAfterWrite, final TimeUnit timeUnit) {
-//            this.expireAfterWrite = timeUnit.toMillis(expireAfterWrite);
-//            return this;
-//        }
 
         public CacheConfig build() {
             return new CacheConfig(maximumSize, expireAfterAccess, expireAfterWrite);

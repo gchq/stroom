@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.processor.impl.BatchDeleteConfig;
 import stroom.processor.impl.ProcessorConfig;
 import stroom.processor.impl.ProcessorFilterDao;
 import stroom.processor.impl.ProcessorTaskDeleteExecutor;
@@ -36,9 +35,11 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.time.StroomDuration;
+import stroom.util.time.TimeUtils;
 
 import javax.inject.Inject;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -96,9 +97,12 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
             try {
                 if (!Thread.currentThread().isInterrupted()) {
                     final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                    final long age = getDeleteAge(processorConfig);
-                    if (age > 0) {
-                        delete(age);
+
+                    final StroomDuration deleteAge = processorConfig.getDeleteAge();
+
+                    if (!deleteAge.isZero()) {
+                        final Instant deleteThreshold = TimeUtils.durationToThreshold(deleteAge);
+                        delete(deleteThreshold);
                     }
                     LOGGER.info(TASK_NAME + " - finished in {}", logExecutionTime);
                 }
@@ -109,15 +113,18 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
     }
 
     @Override
-    public void delete(final long age) {
-        deleteOldTasks(age);
-        deleteOldFilters(age);
+    public void delete(final Instant deleteThreshold) {
+        deleteOldTasks(deleteThreshold);
+        deleteOldFilters(deleteThreshold);
     }
 
-    private int deleteOldTasks(final long age) {
+    private int deleteOldTasks(final Instant deleteThreshold) {
         final Collection<Condition> conditions = JooqUtil.conditions(
-                Optional.of(PROCESSOR_TASK.STATUS.in(TaskStatus.COMPLETE.getPrimitiveValue(), TaskStatus.FAILED.getPrimitiveValue())),
-                Optional.of(PROCESSOR_TASK.CREATE_TIME_MS.isNull().or(PROCESSOR_TASK.CREATE_TIME_MS.lessThan(age))));
+                Optional.of(PROCESSOR_TASK.STATUS.in(
+                    TaskStatus.COMPLETE.getPrimitiveValue(),
+                    TaskStatus.FAILED.getPrimitiveValue())),
+                Optional.of(PROCESSOR_TASK.CREATE_TIME_MS.isNull()
+                    .or(PROCESSOR_TASK.CREATE_TIME_MS.lessThan(deleteThreshold.toEpochMilli()))));
 
         return JooqUtil.contextResult(processorDbConnProvider, context ->
                 context
@@ -126,11 +133,14 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                         .execute());
     }
 
-    private void deleteOldFilters(final long age) {
+    private void deleteOldFilters(final Instant deleteThreshold) {
         try {
             // Get all filters that have not been polled for a while.
             final ExpressionOperator expression = new ExpressionOperator.Builder()
-                    .addTerm(ProcessorFilterDataSource.LAST_POLL_MS, ExpressionTerm.Condition.LESS_THAN, age)
+                    .addTerm(
+                        ProcessorFilterDataSource.LAST_POLL_MS,
+                        ExpressionTerm.Condition.LESS_THAN,
+                        deleteThreshold.toEpochMilli())
                     .build();
             final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 //            criteria.setLastPollPeriod(new Period(null, age));
@@ -162,19 +172,5 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }
-    }
-
-    private Long getDeleteAge(final BatchDeleteConfig config) {
-        Long age = null;
-        final String durationString = config.getDeletePurgeAge();
-        if (durationString != null && !durationString.isEmpty()) {
-            try {
-                final long duration = ModelStringUtil.parseDurationString(durationString);
-                age = System.currentTimeMillis() - duration;
-            } catch (final RuntimeException e) {
-                LOGGER.error("Error reading config");
-            }
-        }
-        return age;
     }
 }

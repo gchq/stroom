@@ -17,6 +17,7 @@ public class DashboardConfig extends AbstractConfig {
         return activeQueriesCache;
     }
 
+    @SuppressWarnings("unused")
     public void setActiveQueriesCache(final CacheConfig activeQueriesCache) {
         this.activeQueriesCache = activeQueriesCache;
     }

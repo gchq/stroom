@@ -8,12 +8,13 @@ import javax.inject.Singleton;
 
 @Singleton
 public class MetaValueConfig extends AbstractConfig {
-    private StroomDuration deleteAge = StroomDuration.parse("P30D"); // parse stops it storing P720D
+    private StroomDuration deleteAge = StroomDuration.ofDays(30);
     private int deleteBatchSize = 1000;
     private int flushBatchSize = 1000;
     private boolean addAsync = true;
 
-    @JsonPropertyDescription("The age of streams that we store meta data in the database for")
+    @JsonPropertyDescription("The age of streams that we store meta data in the database for. " +
+        "In ISO-8601 duration format, e.g. 'P1DT12H'")
     public StroomDuration getDeleteAge() {
         return deleteAge;
     }

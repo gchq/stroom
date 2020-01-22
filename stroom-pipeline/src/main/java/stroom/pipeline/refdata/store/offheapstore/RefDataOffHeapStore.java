@@ -30,13 +30,13 @@ import org.lmdbjava.EnvFlags;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
@@ -61,7 +61,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.time.StroomDuration;
+import stroom.util.time.TimeUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -742,21 +742,20 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return lmdbDb.getEntryCount();
     }
 
-    private Instant getPurgeCutOffEpoch(final StroomDuration purgeAge) {
-        return Instant.now().minus(purgeAge.getDuration());
-    }
+//    private Instant getPurgeCutOffEpoch(final StroomDuration purgeAge) {
+//        return Instant.now().minus(purgeAge.getDuration());
+//    }
 
-    private Instant getPurgeCutOffEpoch(final Instant now, final StroomDuration purgeAgeMs) {
-        return now.minus(purgeAgeMs.getDuration());
-    }
+//    private Instant getPurgeCutOffEpoch(final Instant now, final StroomDuration purgeAgeMs) {
+//        return now.minus(purgeAgeMs.getDuration());
+//    }
 
     private PooledByteBuffer getAccessTimeCutOffBuffer(final Instant now) {
 
-        StroomDuration purgeAge = referenceDataConfig.getPurgeAge();
-        Instant purgeCutOff = getPurgeCutOffEpoch(now, purgeAge);
+        Instant purgeCutOff = TimeUtils.durationToThreshold(now, referenceDataConfig.getPurgeAge());
 
         LOGGER.info("Using purge duration {}, cut off {}, now {}",
-                purgeAge,
+                referenceDataConfig.getPurgeAge(),
                 purgeCutOff,
                 now);
 
@@ -778,7 +777,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
                     .withDetail("Environment max size", ModelStringUtil.formatIECByteSizeString(maxSize))
                     .withDetail("Environment current size", ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
                     .withDetail("Purge age", referenceDataConfig.getPurgeAge())
-                    .withDetail("Purge cut off", getPurgeCutOffEpoch(referenceDataConfig.getPurgeAge()).toString())
+                    .withDetail("Purge cut off", TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
                     .withDetail("Max readers", maxReaders)
                     .withDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
                     .withDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1().toString())
