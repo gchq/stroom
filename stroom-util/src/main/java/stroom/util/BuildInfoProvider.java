@@ -30,6 +30,7 @@ import java.util.Properties;
 class BuildInfoProvider implements Provider<BuildInfo> {
     private static final String upDate = DateUtil.createNormalDateTimeString();
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildInfoProvider.class);
+    private static final String BUILD_PROPERTIES = "META-INF/stroom-util-build.properties";
 
     private BuildInfo buildInfo;
 
@@ -38,9 +39,9 @@ class BuildInfoProvider implements Provider<BuildInfo> {
             Properties properties = new Properties();
             try {
                 properties.load(
-                        BuildInfoProvider.class.getClassLoader().getResourceAsStream("META-INF/stroom-util-build.properties"));
+                        BuildInfoProvider.class.getClassLoader().getResourceAsStream(BUILD_PROPERTIES));
             } catch (final IOException e) {
-                LOGGER.error("Unable to load stroom-util-build.properties!", e);
+                LOGGER.error("Unable to load {}", BUILD_PROPERTIES, e);
             }
             final String buildVersion = properties.getProperty("buildVersion");
             final String buildDate = properties.getProperty("buildDate");

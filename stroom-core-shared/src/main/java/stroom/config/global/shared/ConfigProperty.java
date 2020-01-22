@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;
+import stroom.util.shared.PropertyPath;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -56,12 +57,11 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     private String createUser;
     private Long updateTimeMs;
     private String updateUser;
-    private String name;
+    private PropertyPath name;
 
     // TODO now that properties are typed in AppConfig we should really be dealing with typed
     // values here so the UI can edit/display/validate them appropriately according to their type,
     // e.g. a custom UI control for managing List/Map/boolean types
-
 
     // The values are held inside an OverrideValue so we can one of three things:
     // A null reference - indicating no override value has been supplied
@@ -74,7 +74,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
 
     // The cluster wide value held in the database and set by the user in the UI, may be null.
     private OverrideValue<String> databaseOverrideValue = OverrideValue.unSet();
-
 
     // These fields are not saved to the database,
     // they come from the annotations on the java config classes
@@ -155,13 +154,28 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * @return The fully qualified name of the property, e.g. "stroom.temp.path"
      */
-    public String getName() {
+    @JsonProperty("name")
+    public String getNameAsString() {
+        return name == null ? null : name.toString();
+    }
+
+    @JsonIgnore
+    public PropertyPath getName() {
         return name;
     }
 
-    @JsonProperty("name")
-    public void setName(final String name) {
+    @JsonIgnore
+    public void setName(final PropertyPath name) {
         this.name = name;
+    }
+
+    @JsonProperty("name")
+    public void setName(final String propertyPathString) {
+        if (propertyPathString == null) {
+            this.name = null;
+        } else {
+            this.name = PropertyPath.fromPathString(propertyPathString);
+        }
     }
 
     /**

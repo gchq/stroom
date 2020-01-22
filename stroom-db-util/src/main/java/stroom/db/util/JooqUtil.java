@@ -41,6 +41,10 @@ public final class JooqUtil {
         // Utility class.
     }
 
+    public static void disableJooqLogoInLogs() {
+        System.getProperties().setProperty("org.jooq.no-logo", "true");
+    }
+
     public static DSLContext createContext(final Connection connection) {
         Settings settings = new Settings();
         // Turn off fully qualified schemata.
