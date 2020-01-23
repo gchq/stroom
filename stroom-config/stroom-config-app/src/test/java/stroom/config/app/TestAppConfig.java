@@ -38,7 +38,9 @@ class TestAppConfig {
             final Class<?> fieldClass = field.getType();
 
             // We are trying to inspect props that are themselves config objects
-            if (fieldClass.getName().startsWith("stroom") && !WHITE_LISTED_CLASSES.contains(fieldClass)) {
+            if (fieldClass.getName().startsWith("stroom")
+                    && fieldClass.getSimpleName().endsWith("Config")
+                    && !WHITE_LISTED_CLASSES.contains(fieldClass)) {
 
                 LOGGER.debug("{}Field {} : {} {}",
                         indent, field.getName(), fieldClass.getSimpleName(), fieldClass.getAnnotations());
