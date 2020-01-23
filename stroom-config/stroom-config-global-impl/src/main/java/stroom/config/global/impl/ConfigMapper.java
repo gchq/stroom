@@ -34,6 +34,7 @@ import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
@@ -62,6 +63,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -96,6 +99,18 @@ public class ConfigMapper {
 
     // A map of property accessor objects keyed on the fully qualified prop path (i.e. stroom.path.temp)
     private final Map<PropertyPath, Prop> propertyMap = new HashMap<>();
+
+//    private static final Map<Class<?>, Mapping> MAPPERS = new HashMap<>();
+//
+//    static {
+//        map(boolean.class, StroomDuration::parse);
+//        map(StroomDuration.class, StroomDuration::parse, Object::toString);
+//        map(List.class, (list, genericType) -> {
+//            final Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
+//            return createDelimitedConversionFunc(ConfigMapper::listToString);
+//        }, Object::toString);
+//
+//    }
 
     @Inject
     public ConfigMapper(final AppConfig appConfig) {
@@ -354,7 +369,8 @@ public class ConfigMapper {
                 DocRef.class.isAssignableFrom(type) ||
                 Enum.class.isAssignableFrom(type) ||
                 Path.class.isAssignableFrom(type) ||
-                StroomDuration.class.isAssignableFrom(type);
+                StroomDuration.class.isAssignableFrom(type) ||
+                ByteSize.class.isAssignableFrom(type);
 
         LOGGER.trace("isSupportedPropertyType({}), returning: {}", type, isSupported);
         return isSupported;
@@ -442,6 +458,13 @@ public class ConfigMapper {
     static String convertToString(final Object value) {
         List<String> availableDelimiters = new ArrayList<>(VALID_DELIMITERS_LIST);
         return convertToString(value, availableDelimiters);
+    }
+
+    static Function<Object, String> createDelimitedConversionFunc(
+            final BiFunction<Object, List<String>, String> conversionFunc) {
+
+        List<String> availableDelimiters = new ArrayList<>(VALID_DELIMITERS_LIST);
+        return object -> conversionFunc.apply(object, availableDelimiters);
     }
 
     static void validateDelimiter(final String serialisedForm,
@@ -536,13 +559,12 @@ public class ConfigMapper {
                 return Duration.parse(value);
             } else if (List.class.isAssignableFrom(type)) {
                 // determine the type of the list items
-                Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
+                final Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
                 return stringToList(value, itemType);
-                //        } else if (type.isAssignableFrom(Map.class)) {
             } else if (Map.class.isAssignableFrom(type)) {
                 // determine the types of the keys and values
-                Class<?> keyType = getDataType(getGenericTypes(genericType).get(0));
-                Class<?> valueType = getDataType(getGenericTypes(genericType).get(1));
+                final Class<?> keyType = getDataType(getGenericTypes(genericType).get(0));
+                final Class<?> valueType = getDataType(getGenericTypes(genericType).get(1));
                 return stringToMap(value, keyType, valueType);
             } else if (type.equals(DocRef.class)) {
                 return stringToDocRef(value);
@@ -552,6 +574,8 @@ public class ConfigMapper {
                 return Path.of(value);
             } else if (StroomDuration.class.isAssignableFrom(type)) {
                 return StroomDuration.parse(value);
+            } else if (ByteSize.class.isAssignableFrom(type)) {
+                return ByteSize.parse(value);
             }
         } catch (Exception e) {
             // Don't include the original exception else gwt uses the msg of the
@@ -567,6 +591,16 @@ public class ConfigMapper {
         LOGGER.error("Unable to convert value [{}] of type [{}] to an Object", value, type);
         throw new RuntimeException(LogUtil.message(
             "Type [{}] is not supported for value [{}]", genericType, value));
+    }
+
+    private Optional<Method> getParseMethod(final Class<?> clazz) {
+        return Arrays.stream(clazz.getDeclaredMethods())
+                .filter(method ->
+                        method.getName().equals("parse")
+                                && method.getParameterCount() == 1
+                                && method.getParameterTypes()[0].equals(String.class)
+                                && method.getReturnType().equals(clazz))
+                .findFirst();
     }
 
 
@@ -801,6 +835,23 @@ public class ConfigMapper {
         return chosenDelimiter;
     }
 
+//    private static void map(final Class<?> propertyType,
+//                            final Function<String, Object> deSerialiseFunc,
+//                            final Function<Object, String> serialiseFunc) {
+//        if (MAPPERS.containsKey(propertyType)) {
+//            throw new RuntimeException(LogUtil.message("Class {} is already mapped", propertyType));
+//        }
+//        MAPPERS.put(propertyType, Mapping.of(propertyType, deSerialiseFunc, serialiseFunc));
+//    }
+//
+//    private static void map(final Class<?> propertyType,
+//                            final Function<String, Object> deSerialiseFunc) {
+//        if (MAPPERS.containsKey(propertyType)) {
+//            throw new RuntimeException(LogUtil.message("Class {} is already mapped", propertyType));
+//        }
+//        MAPPERS.put(propertyType, Mapping.of(propertyType, deSerialiseFunc));
+//    }
+
     public static class UnknownPropertyException extends RuntimeException {
         /**
          * Constructs a new runtime exception with the specified detail message.
@@ -831,5 +882,44 @@ public class ConfigMapper {
 //        UnknownPropertyException(final String message, final Throwable cause) {
 //            super(message, cause);
 //        }
+    }
+
+    private static class Mapping {
+        private final Class<?> propertyType;
+        private final BiFunction<String, Type, Object> deSerialiseFunc;
+        private final Function<Object, String> serialiseFunc;
+
+        private Mapping(final Class<?> propertyType,
+                        final BiFunction<String, Type, Object> deSerialiseFunc,
+                        final Function<Object, String> serialiseFunc) {
+            this.propertyType = propertyType;
+            this.deSerialiseFunc = deSerialiseFunc;
+            this.serialiseFunc = serialiseFunc;
+        }
+
+        static Mapping of(final Class<?> propertyType,
+                          final BiFunction<String, Type, Object> deSerialiseFunc,
+                          final Function<Object, String> serialiseFunc) {
+            return new Mapping(propertyType, deSerialiseFunc, serialiseFunc);
+        }
+
+        static Mapping of(final Class<?> propertyType,
+                          final BiFunction<String, Type, Object> deSerialiseFunc) {
+            return new Mapping(propertyType, deSerialiseFunc, obj ->
+                obj == null ? null : obj.toString()
+            );
+        }
+
+        Class<?> getPropertyType() {
+            return propertyType;
+        }
+
+        Function<Object, String> getSerialiseFunc() {
+            return serialiseFunc;
+        }
+
+        BiFunction<String, Type, Object> getDeSerialiseFunc() {
+            return deSerialiseFunc;
+        }
     }
 }
