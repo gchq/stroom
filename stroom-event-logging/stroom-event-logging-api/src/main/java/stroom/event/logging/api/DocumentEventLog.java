@@ -20,6 +20,8 @@ package stroom.event.logging.api;
 import event.logging.Query;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.BaseResultList;
+import stroom.util.shared.PageResponse;
+import stroom.util.shared.ResultPage;
 
 public interface DocumentEventLog {
     void create(Object entity, Throwable ex);
@@ -42,7 +44,9 @@ public interface DocumentEventLog {
 
     void download(Object entity, Throwable ex);
 
-    void search(BaseCriteria criteria, Query query, String resultType, BaseResultList<?> results, Throwable ex);
+//    void search(BaseCriteria criteria, Query query, String resultType, BaseResultList<?> results, Throwable ex);
 
-    void searchSummary(BaseCriteria criteria, Query query, String resultType, BaseResultList<?> results, Throwable ex);
+    void search(String typeId, Query query, String resultType, PageResponse pageResponse, Throwable ex);
+
+//    void searchSummary(BaseCriteria criteria, Query query, String resultType, BaseResultList<?> results, Throwable ex);
 }

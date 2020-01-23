@@ -16,8 +16,6 @@
 
 package stroom.dashboard.impl.datasource;
 
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.datasource.api.v2.DataSource;
@@ -25,18 +23,17 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
+import stroom.security.api.ClientSecurityUtil;
 import stroom.security.api.SecurityContext;
-import stroom.security.api.UserIdentity;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.PermissionException;
 
+import javax.inject.Provider;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -49,11 +46,14 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
 
     private final SecurityContext securityContext;
     private final String url;
+    private final Provider<Client> clientProvider;
 
     RemoteDataSourceProvider(final SecurityContext securityContext,
-                             final String url) {
+                             final String url,
+                             final Provider<Client> clientProvider) {
         this.securityContext = securityContext;
         this.url = url;
+        this.clientProvider = clientProvider;
         LOGGER.trace("Creating RemoteDataSourceProvider for url {}", url);
     }
 
@@ -87,23 +87,11 @@ public class RemoteDataSourceProvider implements DataSourceProvider {
                        final Class<T> responseClass) {
         try {
             LOGGER.trace("Sending request {} to {}/{}", request, url, path);
-            Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
+            Client client = clientProvider.get();
             WebTarget webTarget = client.target(url).path(path);
 
             final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-
-            String jws = null;
-            final UserIdentity userIdentity = securityContext.getUserIdentity();
-            if (userIdentity == null) {
-                LOGGER.debug("No user is currently logged in");
-            } else {
-                jws = userIdentity.getJws();
-                if (jws == null) {
-                    LOGGER.debug("The JWS is null for user '{}'", userIdentity.getId());
-                }
-            }
-
-            invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + jws);
+            ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, securityContext);
             final Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
 
             switch (response.getStatus()) {

@@ -68,7 +68,6 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         return nodeDao.find(criteria);
     }
 
-
     @Override
     public List<String> findNodeNames(final FindNodeCriteria criteria) {
         return find(criteria).stream().map(Node::getName).collect(Collectors.toList());

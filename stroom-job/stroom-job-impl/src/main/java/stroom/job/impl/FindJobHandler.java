@@ -52,9 +52,9 @@ class FindJobHandler extends AbstractTaskHandler<FindJobAction, ResultList<Job>>
 
         try {
             results = jobService.find(action.getCriteria());
-            documentEventLog.search(action.getCriteria(), query, Job.class.getSimpleName(), results, null);
+            documentEventLog.search(action.getCriteria().getClass().getSimpleName(), query, Job.class.getSimpleName(), results.getPageResponse(), null);
         } catch (final RuntimeException e) {
-            documentEventLog.search(action.getCriteria(), query, Job.class.getSimpleName(), results, e);
+            documentEventLog.search(action.getCriteria().getClass().getSimpleName(), query, Job.class.getSimpleName(), null, e);
         }
 
         return results;
