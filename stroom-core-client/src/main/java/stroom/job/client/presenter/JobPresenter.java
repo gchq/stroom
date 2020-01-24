@@ -20,7 +20,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.job.shared.Job;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
@@ -30,9 +29,12 @@ public class JobPresenter extends ContentTabPresenter<JobPresenter.JobView> {
     public static final String JOB_NODE_LIST = "JOB_NODE_LIST";
     private final JobListPresenter jobListPresenter;
     private final JobNodeListPresenter jobNodeListPresenter;
+
     @Inject
-    public JobPresenter(final EventBus eventBus, final JobView view, final JobListPresenter jobListPresenter,
-                        final JobNodeListPresenter jobNodeListPresenter, final ClientDispatchAsync dispatcher) {
+    public JobPresenter(final EventBus eventBus,
+                        final JobView view,
+                        final JobListPresenter jobListPresenter,
+                        final JobNodeListPresenter jobNodeListPresenter) {
         super(eventBus, view);
         this.jobListPresenter = jobListPresenter;
         this.jobNodeListPresenter = jobNodeListPresenter;

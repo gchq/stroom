@@ -22,26 +22,24 @@ import event.logging.Query;
 import event.logging.Query.Advanced;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.node.api.NodeCallUtil;
+import stroom.node.api.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
-import stroom.security.api.ClientSecurityUtil;
-import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
+import stroom.util.jersey.webTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Client;
 import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -55,22 +53,22 @@ public class NodeResourceImpl implements NodeResource, RestResource, HasHealthCh
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeResourceImpl.class);
 
     private final NodeServiceImpl nodeService;
+    private final NodeInfo nodeInfo;
     private final ClusterNodeManager clusterNodeManager;
-    private final Provider<Client> clientProvider;
+    private final webTargetFactory webTargetFactory;
     private final DocumentEventLog documentEventLog;
-    private final SecurityContext securityContext;
 
     @Inject
     private NodeResourceImpl(final NodeServiceImpl nodeService,
+                             final NodeInfo nodeInfo,
                              final ClusterNodeManager clusterNodeManager,
-                             final Provider<Client> clientProvider,
-                             final DocumentEventLog documentEventLog,
-                             final SecurityContext securityContext) {
+                             final webTargetFactory webTargetFactory,
+                             final DocumentEventLog documentEventLog) {
         this.nodeService = nodeService;
+        this.nodeInfo = nodeInfo;
         this.clusterNodeManager = clusterNodeManager;
-        this.clientProvider = clientProvider;
+        this.webTargetFactory = webTargetFactory;
         this.documentEventLog = documentEventLog;
-        this.securityContext = securityContext;
     }
 
     @Override
@@ -98,7 +96,8 @@ public class NodeResourceImpl implements NodeResource, RestResource, HasHealthCh
             for (final Node node : nodes) {
                 resultList.add(new NodeStatusResult(node, node.equals(master)));
             }
-            response = new FetchNodeStatusResponse(resultList);
+            response = new FetchNodeStatusResponse();
+            response.init(resultList);
 
             documentEventLog.search("List Nodes", query, Node.class.getSimpleName(), response.getPageResponse(), null);
         } catch (final RuntimeException e) {
@@ -115,43 +114,24 @@ public class NodeResourceImpl implements NodeResource, RestResource, HasHealthCh
         try {
             final long now = System.currentTimeMillis();
 
-            final Node node = nodeService.getNode(nodeName);
-            if (node == null) {
-                throw new RuntimeException("Unknown node: " + nodeName);
-            }
-
-            final Node thisNode = nodeService.getThisNode();
-            if (thisNode == null) {
-                throw new RuntimeException("This node not set");
-            }
-
             // If this is the node that was contacted then just return our local info.
-            if (node.getId().equals(thisNode.getId())) {
+            if (NodeCallUtil.executeLocally(nodeService, nodeInfo, nodeName)) {
                 clusterNodeInfo = clusterNodeManager.getClusterNodeInfo();
 
             } else {
-                nodeUrl = node.getUrl();
-                if (nodeUrl == null || nodeUrl.trim().length() == 0) {
-                    throw new RuntimeException("Remote node has no URL set");
-                }
-
-                // A normal cluster call url is something like "http://fqdn:8080/stroom/clustercall.rpc"
-
-                String url = fixUrl(nodeUrl);
-                url += "/api/node/" + node.getName();
-
-                final Client client = clientProvider.get();
-                final WebTarget webTarget = client.target(url);
-                final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-                ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, securityContext);
-
-                final Response response = invocationBuilder.get();
+                nodeUrl = NodeCallUtil.getUrl(nodeService, nodeName);
+                String url = nodeUrl;
+                url += "/api/node/" + nodeName;
+                final Response response = webTargetFactory
+                        .create(url)
+                        .request(MediaType.APPLICATION_JSON)
+                        .get();
                 if (response.getStatus() != 200) {
                     throw new WebApplicationException(response);
                 }
                 clusterNodeInfo = response.readEntity(ClusterNodeInfo.class);
                 if (clusterNodeInfo == null) {
-                    throw new RuntimeException("Unable to contact node \"" + node.getName() + "\" at URL: " + url);
+                    throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
             }
 
@@ -171,58 +151,28 @@ public class NodeResourceImpl implements NodeResource, RestResource, HasHealthCh
         return clusterNodeInfo;
     }
 
-    private String fixUrl(String url) {
-        int index = url.lastIndexOf("/stroom/clustercall.rpc");
-        if (index != -1) {
-            url = url.substring(0, index);
-        }
-        index = url.lastIndexOf("/clustercall.rpc");
-        if (index != -1) {
-            url = url.substring(0, index);
-        }
-        return url;
-    }
-
     @Override
     public Long ping(final String nodeName) {
         try {
             final long now = System.currentTimeMillis();
-            final Node node = nodeService.getNode(nodeName);
-            if (node == null) {
-                throw new RuntimeException("Unknown node '" + nodeName + "'");
-            }
-
-            final Node thisNode = nodeService.getThisNode();
-            if (thisNode == null) {
-                throw new RuntimeException("This node not set");
-            }
 
             // If this is the node that was contacted then just return the latency we have incurred within this method.
-            if (node.getId().equals(thisNode.getId())) {
+            if (NodeCallUtil.executeLocally(nodeService, nodeInfo, nodeName)) {
+                return System.currentTimeMillis() - now;
+            } else {
+                String url = NodeCallUtil.getUrl(nodeService, nodeName);
+                url += "/api/node/" + nodeName + "/ping";
+                final Response response = webTargetFactory
+                        .create(url)
+                        .request(MediaType.APPLICATION_JSON)
+                        .get();
+                if (response.getStatus() != 200) {
+                    throw new WebApplicationException(response);
+                }
+                final Long ping = response.readEntity(Long.class);
+                Objects.requireNonNull(ping, "Null ping");
                 return System.currentTimeMillis() - now;
             }
-
-            if (node.getUrl() == null || node.getUrl().trim().length() == 0) {
-                throw new RuntimeException("Remote node '" + nodeName + "' has no URL set");
-            }
-
-            // A normal cluster call url is something like "http://fqdn:8080/stroom/clustercall.rpc"
-
-            String url = fixUrl(node.getUrl());
-            url += "/api/node/" + node.getName() + "/ping";
-
-            final Client client = clientProvider.get();
-            final WebTarget webTarget = client.target(url);
-            final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-            ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, securityContext);
-
-            final Response response = invocationBuilder.get();
-            if (response.getStatus() != 200) {
-                throw new WebApplicationException(response);
-            }
-            final Long ping = response.readEntity(Long.class);
-            Objects.requireNonNull(ping, "Null ping");
-            return System.currentTimeMillis() - now;
 
         } catch (final WebApplicationException e) {
             throw e;

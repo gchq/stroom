@@ -14,37 +14,37 @@
  * limitations under the License.
  */
 
-package stroom.processor.shared;
+package stroom.job.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "processor")
-@Path("/processor")
+@Api(value = "job")
+@Path("/job")
 @Produces(MediaType.APPLICATION_JSON)
-public interface ProcessorResource extends DirectRestService {
-    @DELETE
-    @Path("/{id}")
+public interface JobResource extends DirectRestService {
+    @GET
+    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Deletes a processor",
-            response = Processor.class)
-    void delete(@PathParam("id") Integer id);
+            value = "Lists jobs",
+            response = ListJobResponse.class)
+    ListJobResponse list();
 
     @PUT
     @Path("/{id}/enabled")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Sets the enabled/disabled state for a processor")
+    @ApiOperation(value = "Sets the enabled status of the job")
     void setEnabled(@PathParam("id") Integer id, Boolean enabled);
 }

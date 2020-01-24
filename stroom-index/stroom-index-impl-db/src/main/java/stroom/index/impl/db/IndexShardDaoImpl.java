@@ -68,7 +68,7 @@ class IndexShardDaoImpl implements IndexShardDao {
         return record;
     };
 
-    private static Map<String, Field> FIELD_MAP = new HashMap<>();
+    private static Map<String, Field<?>> FIELD_MAP = new HashMap<>();
 
     static {
         FIELD_MAP.put(FindIndexShardCriteria.FIELD_ID, INDEX_SHARD.ID);
@@ -146,7 +146,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                 JooqUtil.getStringCondition(INDEX_SHARD.PARTITION_NAME, criteria.getPartition())
         );
 
-        final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         return JooqUtil.contextResult(indexDbConnProvider, context ->
                 context

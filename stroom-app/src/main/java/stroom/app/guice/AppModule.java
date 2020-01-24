@@ -20,12 +20,18 @@ import stroom.dropwizard.common.LogLevelInspector;
 import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
 import stroom.resource.impl.SessionResourceModule;
+import stroom.security.api.ClientSecurityUtil;
+import stroom.security.api.SecurityContext;
 import stroom.security.impl.SecurityContextModule;
 import stroom.util.guice.HealthCheckBinder;
+import stroom.util.jersey.webTargetFactory;
 import stroom.util.shared.BuildInfo;
 
 import javax.inject.Provider;
 import javax.ws.rs.client.Client;
+import javax.ws.rs.client.Invocation.Builder;
+import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.MediaType;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -124,4 +130,43 @@ public class AppModule extends AbstractModule {
                 .build(PROXY_JERSEY_CLIENT_NAME)
                 .register(LoggingFeature.class);
     }
+
+    @Provides
+    @Singleton
+    webTargetFactory provideJerseyRequestBuilder(final Client client,
+                                                 final SecurityContext securityContext) {
+        return url -> {
+            final WebTarget webTarget = client.target(url);
+            final WebTarget webTargetProxy = new WebTargetProxy(webTarget) {
+                @Override
+                public Builder request() {
+                    final Builder builder = super.request();
+                    ClientSecurityUtil.addAuthorisationHeader(builder, securityContext);
+                    return builder;
+                }
+
+                @Override
+                public Builder request(final String... acceptedResponseTypes) {
+                    final Builder builder =  super.request(acceptedResponseTypes);
+                    ClientSecurityUtil.addAuthorisationHeader(builder, securityContext);
+                    return builder;
+                }
+
+                @Override
+                public Builder request(final MediaType... acceptedResponseTypes) {
+                    final Builder builder =  super.request(acceptedResponseTypes);
+                    ClientSecurityUtil.addAuthorisationHeader(builder, securityContext);
+                    return builder;
+                }
+            };
+            return webTargetProxy;
+//
+//            Builder invocationBuilder = webTarget.request();
+//            ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, securityContext);
+//            invocationBuilder = invocationBuilder.accept(MediaType.APPLICATION_JSON);
+//            return invocationBuilder;
+        };
+    }
+
+
 }

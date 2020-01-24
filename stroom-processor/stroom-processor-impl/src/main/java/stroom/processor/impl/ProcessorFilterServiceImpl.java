@@ -45,6 +45,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Expander;
+import stroom.util.shared.PageResponse;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -289,7 +290,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 }
             }
 
-            return new FetchProcessorResponse(values);
+            final FetchProcessorResponse response = new FetchProcessorResponse();
+            response.init(values);
+            return response;
         });
     }
 

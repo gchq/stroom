@@ -82,7 +82,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         this.tooltipPresenter = tooltipPresenter;
         this.nodeEditPresenterProvider = nodeEditPresenterProvider;
         initTableColumns();
-        dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus, new Object()) {
+        dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
             @Override
             protected void exec(final Consumer<FetchNodeStatusResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                 final Rest<FetchNodeStatusResponse> rest = restFactory.create();

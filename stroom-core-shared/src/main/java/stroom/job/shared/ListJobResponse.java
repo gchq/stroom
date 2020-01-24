@@ -16,16 +16,7 @@
 
 package stroom.job.shared;
 
-import stroom.entity.shared.FindAction;
+import stroom.util.shared.ResultPage;
 
-public class FindJobAction extends FindAction<FindJobCriteria, Job> {
-    private static final long serialVersionUID = -6808045615241590297L;
-
-    public FindJobAction() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public FindJobAction(final FindJobCriteria criteria) {
-        super(criteria);
-    }
+public class ListJobResponse extends ResultPage<Job> {
 }

@@ -26,7 +26,7 @@ import static stroom.storedquery.impl.db.jooq.Tables.QUERY;
 class StoredQueryDaoImpl implements StoredQueryDao {
     private static final Logger LOGGER = LoggerFactory.getLogger(stroom.storedquery.impl.StoredQueryDao.class);
 
-    private static final Map<String, Field> FIELD_MAP = Map.of(
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindStoredQueryCriteria.FIELD_ID, QUERY.ID,
             FindStoredQueryCriteria.FIELD_NAME, QUERY.NAME,
             FindStoredQueryCriteria.FIELD_TIME, QUERY.CREATE_TIME_MS);
@@ -76,7 +76,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
                     Optional.ofNullable(criteria.getComponentId()).map(QUERY.COMPONENT_ID::eq),
                     Optional.ofNullable(criteria.getFavourite()).map(QUERY.FAVOURITE::eq));
 
-            final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+            final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
             return context
                     .select()
@@ -119,32 +119,13 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 
     @Override
     public List<String> getUsers(final boolean favourite) {
-        final List<String> list = JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
+        return JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
                 .select(QUERY.CREATE_USER)
                 .from(QUERY)
                 .where(QUERY.FAVOURITE.eq(favourite))
                 .groupBy(QUERY.CREATE_USER)
                 .orderBy(QUERY.CREATE_USER)
                 .fetch(QUERY.CREATE_USER));
-
-
-//        final SqlBuilder sql = new SqlBuilder();
-//        sql.append("SELECT ");
-//        sql.append(StoredQuery.CREATE_USER);
-//        sql.append(" FROM ");
-//        sql.append(StoredQuery.TABLE_NAME);
-//        sql.append(" WHERE ");
-//        sql.append(StoredQuery.FAVOURITE);
-//        sql.append(" = ");
-//        sql.arg(favourite);
-//        sql.append(" GROUP BY ");
-//        sql.append(StoredQuery.CREATE_USER);
-//        sql.append(" ORDER BY ");
-//        sql.append(StoredQuery.CREATE_USER);
-//
-//        @SuppressWarnings("unchecked") final List<String> list = entityManager.executeNativeQueryResultList(sql);
-
-        return list;
     }
 
     @Override
