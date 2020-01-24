@@ -1,0 +1,14 @@
+ext.moduleName = 'stroom.annotation.pipeline'
+
+dependencies {
+
+    compile project(':stroom-core-shared')
+
+    compile project(':stroom-pipeline')
+    compile project(':stroom-util-shared')
+    compile project(':stroom-util')
+
+    compile project(':stroom-annotation:stroom-annotation-impl')
+    compile project(':stroom-search:stroom-searchable-api')
+    compile libs.javax_inject
+}

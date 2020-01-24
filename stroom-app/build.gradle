@@ -29,6 +29,7 @@ mainClassName = 'stroom.app.App'
 dependencies {
     compile project(':stroom-activity:stroom-activity-impl-db')
     compile project(':stroom-annotation:stroom-annotation-impl-db')
+    compile project(':stroom-annotation:stroom-annotation-pipeline')
     compile project(':stroom-cache:stroom-cache-impl')
     compile project(':stroom-cluster:stroom-cluster-impl')
     compile project(':stroom-cluster:stroom-cluster-lock-impl-db')
