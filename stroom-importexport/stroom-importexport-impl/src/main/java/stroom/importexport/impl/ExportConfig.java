@@ -1,12 +1,12 @@
 package stroom.importexport.impl;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ExportConfig implements IsConfig {
+public class ExportConfig extends AbstractConfig {
     private boolean enabled;
 
     @JsonPropertyDescription("Determines if the system will allow configuration to be exported via the export servlet")

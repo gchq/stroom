@@ -10,6 +10,7 @@ public class CoreModule extends AbstractModule {
     protected void configure() {
         install(new stroom.activity.impl.db.ActivityDbModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
+        install(new stroom.annotation.pipeline.AnnotationPipelineModule());
         install(new stroom.cache.impl.CacheHandlerModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
@@ -67,8 +68,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.meta.impl.StreamAttributeMapResourceModule());
         install(new stroom.node.impl.db.NodeDbModule());
         install(new stroom.node.impl.NodeModule());
-        install(new stroom.node.impl.NodeHandlerModule());
-        install(new stroom.node.impl.NodeServiceModule());
         install(new stroom.pipeline.cache.PipelineCacheModule());
         install(new stroom.pipeline.factory.CommonPipelineElementModule());
         install(new stroom.pipeline.factory.DataStorePipelineElementModule());

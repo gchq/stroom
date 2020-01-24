@@ -53,9 +53,9 @@ class FindStoredQueryHandler extends AbstractTaskHandler<FindStoredQueryAction, 
 
         try {
             result = storedQueryService.find(criteria);
-            documentEventLog.search(criteria, query, StoredQuery.class.getSimpleName(), result, null);
+            documentEventLog.search(action.getCriteria().getClass().getSimpleName(), query, StoredQuery.class.getSimpleName(), result.getPageResponse(), null);
         } catch (final RuntimeException e) {
-            documentEventLog.search(criteria, query, StoredQuery.class.getSimpleName(), null, e);
+            documentEventLog.search(action.getCriteria().getClass().getSimpleName(), query, StoredQuery.class.getSimpleName(), null, e);
             throw e;
         }
 

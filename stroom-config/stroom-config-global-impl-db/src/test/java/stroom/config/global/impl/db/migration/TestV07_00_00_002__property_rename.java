@@ -4,6 +4,7 @@ import org.assertj.core.api.SoftAssertions;
 import org.junit.jupiter.api.Test;
 import stroom.config.app.AppConfig;
 import stroom.config.global.impl.ConfigMapper;
+import stroom.util.shared.PropertyPath;
 
 class TestV07_00_00_002__property_rename {
 
@@ -25,7 +26,7 @@ class TestV07_00_00_002__property_rename {
 
         final SoftAssertions softAssertions = new SoftAssertions();
         V07_00_00_002__property_rename.FROM_TO_MAP.forEach((sourceKey, destKey) -> {
-            boolean result = configMapper.validatePropertyPath(destKey);
+            boolean result = configMapper.validatePropertyPath(PropertyPath.fromPathString(destKey));
 
             softAssertions.assertThat(result)
                     .describedAs("Destination key %s does not exist in the model", destKey)

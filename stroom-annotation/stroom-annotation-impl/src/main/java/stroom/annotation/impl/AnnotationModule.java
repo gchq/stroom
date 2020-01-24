@@ -17,6 +17,7 @@
 package stroom.annotation.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.annotation.api.AnnotationCreator;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.search.extraction.AnnotationsDecoratorFactory;
@@ -26,6 +27,8 @@ import stroom.util.shared.RestResource;
 public class AnnotationModule extends AbstractModule {
     @Override
     protected void configure() {
+        bind (AnnotationCreator.class).to(AnnotationService.class);
+
         bind(AnnotationsDecoratorFactory.class).to(AnnotationReceiverDecoratorFactory.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)

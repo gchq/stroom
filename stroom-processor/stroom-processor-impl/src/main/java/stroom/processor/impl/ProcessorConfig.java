@@ -5,14 +5,14 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unused")
 @Singleton
-public class ProcessorConfig implements BatchDeleteConfig, IsConfig, HasDbConfig {
+public class ProcessorConfig extends AbstractConfig implements BatchDeleteConfig, HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private boolean assignTasks = true;
     private boolean createTasks = true;
@@ -22,6 +22,7 @@ public class ProcessorConfig implements BatchDeleteConfig, IsConfig, HasDbConfig
     private boolean fillTaskQueue = true;
     private int queueSize = 1000;
     private int databaseMultiInsertMaxBatchSize = 500;
+
     private CacheConfig processorCache = new CacheConfig.Builder()
             .maximumSize(1000L)
             .expireAfterAccess(10, TimeUnit.SECONDS)

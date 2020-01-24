@@ -29,11 +29,13 @@ mainClassName = 'stroom.app.App'
 dependencies {
     compile project(':stroom-activity:stroom-activity-impl-db')
     compile project(':stroom-annotation:stroom-annotation-impl-db')
+    compile project(':stroom-annotation:stroom-annotation-pipeline')
     compile project(':stroom-cache:stroom-cache-impl')
     compile project(':stroom-cluster:stroom-cluster-impl')
     compile project(':stroom-cluster:stroom-cluster-lock-impl-db')
     compile project(':stroom-cluster:stroom-cluster-task-impl')
     compile project(':stroom-config:stroom-config-app')
+    compile project(':stroom-config:stroom-config-global-impl')
     compile project(':stroom-config:stroom-config-global-impl-db')
     compile project(':stroom-core')
     compile project(':stroom-core-shared')
@@ -92,15 +94,15 @@ dependencies {
     compile(libs.dropwizard_core) {
         exclude(group: "org.glassfish.web", module: "javax.el")
     }
-    compile libs.jetty_servlet
+    compile libs.dropwizard_configuration
     compile libs.dropwizard_jersey
     compile libs.dropwizard_jetty
     compile libs.dropwizard_lifecycle
+    compile libs.dropwizard_metrics_annotation
+    compile libs.dropwizard_metrics_core
     compile libs.dropwizard_metrics_healthchecks
     compile libs.dropwizard_servlets
-    compile libs.dropwizard_metrics_core
-    compile libs.dropwizard_metrics_annotation
-    compile libs.dropwizard_configuration
+    compile libs.dropwizard_validation
     compile libs.flyway_core
     compile libs.guava
     compile libs.guice4
@@ -110,10 +112,12 @@ dependencies {
     compile libs.jcommander
     compile libs.jersey_common
     compile libs.jetty_server
+    compile libs.jetty_servlet
     compile libs.jetty_servlets
     compile libs.logback_classic
     compile libs.slf4j_api
     compile libs.stroomDocRef
+    compile libs.validation_api
     compile libs.ws_rs_api
 
     runtimeOnly libs.javax_el
@@ -125,6 +129,7 @@ dependencies {
     testCompile project(':stroom-activity:stroom-activity-api')
     testCompile project(':stroom-activity:stroom-activity-mock')
     testCompile project(':stroom-config:stroom-config-app')
+    testCompile project(':stroom-config:stroom-config-global-impl')
     testCompile project(':stroom-core')
     testCompile project(':stroom-core-shared')
     testCompile project(':stroom-dashboard:stroom-dashboard-impl')
@@ -143,8 +148,8 @@ dependencies {
     testCompile project(':stroom-explorer:stroom-explorer-impl-db')
     testCompile project(':stroom-headless')
     testCompile project(':stroom-importexport:stroom-importexport-api')
-    testCompile project(':stroom-index:stroom-index-mock')
     testCompile project(':stroom-index:stroom-index-impl')
+    testCompile project(':stroom-index:stroom-index-mock')
     testCompile project(':stroom-meta:stroom-meta-api')
     testCompile project(':stroom-meta:stroom-meta-mock')
     testCompile project(':stroom-node:stroom-node-mock')
@@ -157,8 +162,8 @@ dependencies {
     testCompile project(':stroom-statistics:stroom-statistics-api')
     testCompile project(':stroom-statistics:stroom-statistics-impl')
     testCompile project(':stroom-statistics:stroom-statistics-impl-hbase')
-    testCompile project(':stroom-statistics:stroom-statistics-mock')
     testCompile project(':stroom-statistics:stroom-statistics-impl-sql')
+    testCompile project(':stroom-statistics:stroom-statistics-mock')
     testCompile project(':stroom-task:stroom-task-api')
     testCompile project(':stroom-test-common')
     testCompile project(':stroom-util')

@@ -1,5 +1,6 @@
 package stroom.annotation.impl;
 
+import stroom.annotation.api.AnnotationCreator;
 import stroom.annotation.api.AnnotationDataSource;
 import stroom.annotation.shared.AnnotationDetail;
 import stroom.annotation.shared.CreateEntryRequest;
@@ -23,7 +24,7 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class AnnotationService implements Searchable {
+public class AnnotationService implements Searchable, AnnotationCreator {
     private static final DocRef ANNOTATIONS_PSEUDO_DOC_REF = new DocRef("Searchable", "Annotations", "Annotations");
 
     private final AnnotationDao annotationDao;
@@ -72,7 +73,7 @@ public class AnnotationService implements Searchable {
         return annotationDao.getDetail(annotationId);
     }
 
-    AnnotationDetail createEntry(final CreateEntryRequest request) {
+    public AnnotationDetail createEntry(final CreateEntryRequest request) {
         checkPermission();
         return annotationDao.createEntry(request, securityContext.getUserId());
     }

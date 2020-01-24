@@ -53,9 +53,9 @@ class FindJobNodeHandler extends AbstractTaskHandler<FindJobNodeAction, ResultLi
         BaseResultList<JobNodeRow> results = null;
         try {
             results = jobNodeService.findStatus(action.getCriteria());
-            documentEventLog.search(action.getCriteria(), query, JobNode.class.getSimpleName(), results, null);
+            documentEventLog.search(action.getCriteria().getClass().getSimpleName(), query, JobNode.class.getSimpleName(), results.getPageResponse(), null);
         } catch (final RuntimeException e) {
-            documentEventLog.search(action.getCriteria(), query, JobNode.class.getSimpleName(), results, e);
+            documentEventLog.search(action.getCriteria().getClass().getSimpleName(), query, JobNode.class.getSimpleName(), null, e);
         }
         return results;
     }

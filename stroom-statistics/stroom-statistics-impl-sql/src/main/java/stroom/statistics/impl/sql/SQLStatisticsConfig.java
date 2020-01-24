@@ -6,13 +6,13 @@ import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.statistics.impl.sql.search.SearchConfig;
 import stroom.util.cache.CacheConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class SQLStatisticsConfig implements IsConfig, HasDbConfig {
+public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private String docRefType = "StatisticStore";
     private SearchConfig searchConfig = new SearchConfig();

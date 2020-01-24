@@ -16,18 +16,19 @@
 
 package stroom.node.shared;
 
-import stroom.docref.SharedObject;
+import java.util.Objects;
 
-public class NodeStatusResult implements SharedObject {
-    private static final long serialVersionUID = -6143973264434353978L;
-
+public class NodeStatusResult {
     private Node node;
-    private Long ping;
     private boolean master;
-    private String error;
 
     public NodeStatusResult() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    public NodeStatusResult(final Node node, final boolean master) {
+        this.node = node;
+        this.master = master;
     }
 
     public Node getNode() {
@@ -38,14 +39,6 @@ public class NodeStatusResult implements SharedObject {
         this.node = node;
     }
 
-    public Long getPing() {
-        return ping;
-    }
-
-    public void setPing(final Long ping) {
-        this.ping = ping;
-    }
-
     public boolean isMaster() {
         return master;
     }
@@ -54,11 +47,16 @@ public class NodeStatusResult implements SharedObject {
         this.master = master;
     }
 
-    public String getError() {
-        return error;
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final NodeStatusResult that = (NodeStatusResult) o;
+        return Objects.equals(node.getId(), that.node.getId());
     }
 
-    public void setError(final String error) {
-        this.error = error;
+    @Override
+    public int hashCode() {
+        return Objects.hash(node.getId());
     }
 }

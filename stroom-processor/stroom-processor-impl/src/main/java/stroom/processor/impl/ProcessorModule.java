@@ -21,7 +21,6 @@ import stroom.job.api.DistributedTaskFactory;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.api.ProcessorTaskService;
-import stroom.processor.shared.FetchProcessorAction;
 import stroom.processor.shared.FindProcessorTaskAction;
 import stroom.processor.shared.FindProcessorTaskSummaryAction;
 import stroom.processor.shared.ReprocessDataAction;
@@ -40,11 +39,11 @@ public class ProcessorModule extends AbstractModule {
         bind(ProcessorTaskService.class).to(ProcessorTaskServiceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(ProcessorResourceImpl.class)
                 .addBinding(ProcessorFilterResourceImpl.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(CreateStreamTasksTask.class, CreateStreamTasksTaskHandler.class)
-                .bind(FetchProcessorAction.class, FetchProcessorHandler.class)
                 .bind(FindProcessorTaskAction.class, FetchProcessorTaskHandler.class)
                 .bind(FindProcessorTaskSummaryAction.class, FetchProcessorTaskSummaryHandler.class)
                 .bind(ReprocessDataAction.class, ReprocessDataHandler.class)

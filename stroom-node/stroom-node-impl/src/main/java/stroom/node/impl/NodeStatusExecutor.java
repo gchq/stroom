@@ -31,7 +31,6 @@ class NodeStatusExecutor {
     @Inject
     NodeStatusExecutor(final NodeStatusServiceUtil nodeStatusServiceUtil,
                        final InternalStatisticsReceiver internalStatisticsReceiver) {
-
         this.nodeStatusServiceUtil = nodeStatusServiceUtil;
         this.internalStatisticsReceiver = internalStatisticsReceiver;
     }

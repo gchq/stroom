@@ -5,6 +5,10 @@ import stroom.config.common.ConnectionConfig;
 import stroom.config.common.ConnectionPoolConfig;
 import stroom.config.common.DbConfig;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
 public class HikariUtil {
     private HikariUtil() {
         // Utility class.
@@ -22,39 +26,46 @@ public class HikariUtil {
         return create(connectionConfig, connectionPoolConfig);
     }
 
-    private static HikariConfig create(final ConnectionConfig connectionConfig, final ConnectionPoolConfig connectionPoolConfig) {
+    private static HikariConfig create(final ConnectionConfig connectionConfig,
+                                       final ConnectionPoolConfig connectionPoolConfig) {
         final HikariConfig config = new HikariConfig();
 
-        if (connectionPoolConfig.getIdleTimeout() != null) {
-            config.setIdleTimeout(connectionPoolConfig.getIdleTimeout());
-        }
-        if (connectionPoolConfig.getMaxLifetime() != null) {
-            config.setMaxLifetime(connectionPoolConfig.getMaxLifetime());
-        }
-        if (connectionPoolConfig.getMaxPoolSize() != null) {
-            config.setMaximumPoolSize(connectionPoolConfig.getMaxPoolSize());
-        }
+        // Pool properties
+        copyAndMapProp(connectionPoolConfig::getConnectionTimeout, config::setConnectionTimeout, Long::longValue);
+        copyAndMapProp(connectionPoolConfig::getIdleTimeout, config::setIdleTimeout, Long::longValue);
+        copyAndMapProp(connectionPoolConfig::getMaxLifetime, config::setMaxLifetime, Long::longValue);
+        copyAndMapProp(connectionPoolConfig::getMinimumIdle, config::setMinimumIdle, Integer::intValue);
+        copyAndMapProp(connectionPoolConfig::getMaxPoolSize, config::setMaximumPoolSize, Integer::intValue);
 
-        if (connectionConfig.getJdbcDriverUrl() != null) {
-            config.setJdbcUrl(connectionConfig.getJdbcDriverUrl());
-        }
-        if (connectionConfig.getJdbcDriverUsername() != null) {
-            config.setUsername(connectionConfig.getJdbcDriverUsername());
-        }
-        if (connectionConfig.getJdbcDriverPassword() != null) {
-            config.setPassword(connectionConfig.getJdbcDriverPassword());
-        }
+        copyAndMapProp(connectionConfig::getJdbcDriverUrl, config::setJdbcUrl, Function.identity());
+        copyAndMapProp(connectionConfig::getJdbcDriverUsername, config::setUsername, Function.identity());
+        copyAndMapProp(connectionConfig::getJdbcDriverPassword, config::setPassword, Function.identity());
 
-        if (connectionPoolConfig.getCachePrepStmts() != null) {
-            config.addDataSourceProperty("cachePrepStmts", String.valueOf(connectionPoolConfig.getCachePrepStmts()));
-        }
-        if (connectionPoolConfig.getPrepStmtCacheSize() != null) {
-            config.addDataSourceProperty("prepStmtCacheSize", String.valueOf(connectionPoolConfig.getPrepStmtCacheSize()));
-        }
-        if (connectionPoolConfig.getPrepStmtCacheSqlLimit() != null) {
-            config.addDataSourceProperty("prepStmtCacheSqlLimit", String.valueOf(connectionPoolConfig.getPrepStmtCacheSqlLimit()));
-        }
+        // JDBC Driver properties
+        copyAndMapProp(connectionPoolConfig::getCachePrepStmts,
+            val -> config.addDataSourceProperty("cachePrepStmts", val),
+            String::valueOf);
+        copyAndMapProp(connectionPoolConfig::getPrepStmtCacheSize,
+            val -> config.addDataSourceProperty("prepStmtCacheSize", val),
+            String::valueOf);
+        copyAndMapProp(connectionPoolConfig::getPrepStmtCacheSqlLimit,
+            val -> config.addDataSourceProperty("prepStmtCacheSqlLimit", val),
+            String::valueOf);
 
         return config;
+    }
+
+    /**
+     * If the source supplier (i.e. getter) has a non-null value then set it
+     * on the dest consumer (i.e. setter). Convert the type of the value in the
+     * process.
+     */
+    private static <T1, T2> void copyAndMapProp(final Supplier<T1> source,
+                                                final Consumer<T2> dest,
+                                                final Function<T1, T2> typeMapper) {
+        final T1 sourceValue = source.get();
+        if (sourceValue != null) {
+            dest.accept(typeMapper.apply(sourceValue));
+        }
     }
 }

@@ -23,7 +23,6 @@ import stroom.node.shared.ClusterNodeInfo;
  */
 public interface ClusterNodeManager {
     ServiceName SERVICE_NAME = new ServiceName("clusterNodeManager");
-    String GET_CLUSTER_NODE_INFO_METHOD = "getClusterNodeInfo";
     String PING_METHOD = "ping";
 
     /**

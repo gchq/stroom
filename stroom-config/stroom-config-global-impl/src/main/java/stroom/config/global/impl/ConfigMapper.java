@@ -35,7 +35,8 @@ import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.PropertyPath;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -44,6 +45,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -75,7 +78,7 @@ public class ConfigMapper {
             "|", ":", ";", ",", "!", "/", "\\", "#", "@", "~", "-", "_", "=", "+", "?");
     private static final Set<String> VALID_DELIMITERS_SET = new HashSet<>(VALID_DELIMITERS_LIST);
 
-    private static final String ROOT_PROPERTY_PATH = "stroom";
+    private static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts("stroom");
     private static final String DOCREF_PREFIX = "docRef(";
     public static final String LIST_EXAMPLE = "|item1|item2|item3";
     public static final String MAP_EXAMPLE = "|:key1:value1|:key2:value2|:key3:value3";
@@ -88,10 +91,10 @@ public class ConfigMapper {
 
     // A map of config properties keyed on the fully qualified prop path (i.e. stroom.path.temp)
     // This is the source of truth for all properties. It is used to update the guice injected object model
-    private final ConcurrentMap<String, ConfigProperty> globalPropertiesMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<PropertyPath, ConfigProperty> globalPropertiesMap = new ConcurrentHashMap<>();
 
     // A map of property accessor objects keyed on the fully qualified prop path (i.e. stroom.path.temp)
-    private final Map<String, Prop> propertyMap = new HashMap<>();
+    private final Map<PropertyPath, Prop> propertyMap = new HashMap<>();
 
     @Inject
     public ConfigMapper(final AppConfig appConfig) {
@@ -133,7 +136,7 @@ public class ConfigMapper {
      * and update the globalPropertiesMap.
      * It will also apply common database config to all other database config objects.
      */
-    void updateConfigFromYaml(final AppConfig newAppConfig) {
+    private void updateConfigFromYaml(final AppConfig newAppConfig) {
         synchronized (this) {
             if (System.identityHashCode(newAppConfig) != System.identityHashCode(appConfig)) {
                 // We have been passed a different object to our instance appConfig so copy all
@@ -145,11 +148,15 @@ public class ConfigMapper {
             // Now walk the AppConfig object model from the DropWiz YAML updating globalPropertiesMap with the
             // YAML values where present.
             LOGGER.debug("Adding yaml config values into global property map");
-            addConfigObjectMethods(newAppConfig, ROOT_PROPERTY_PATH, propertyMap, this::yamlPropertyConsumer);
+            addConfigObjectMethods(
+                newAppConfig, ROOT_PROPERTY_PATH, propertyMap, this::yamlPropertyConsumer);
         }
     }
 
-    public boolean validatePropertyPath(final String fullPath) {
+    /**
+     * @return True if fullPath is a valid path to a config value
+     */
+    public boolean validatePropertyPath(final PropertyPath fullPath) {
         return propertyMap.get(fullPath) != null;
     }
 
@@ -157,20 +164,29 @@ public class ConfigMapper {
         return globalPropertiesMap.values();
     }
 
-    Optional<ConfigProperty> getGlobalProperty(final String fullPath) {
-        Objects.requireNonNull(fullPath);
-        return Optional.ofNullable(globalPropertiesMap.get(fullPath));
+    Optional<ConfigProperty> getGlobalProperty(final PropertyPath propertyPath) {
+        Objects.requireNonNull(propertyPath);
+        return Optional.ofNullable(globalPropertiesMap.get(propertyPath));
+    }
+
+    public Optional<Prop> getProp(final PropertyPath propertyPath) {
+        return Optional.ofNullable(propertyMap.get(propertyPath));
     }
 
     /**
      * Verifies that the passed value for the property with fullPath can be converted into
      * the appropriate object type
      */
-    void validateStringValue(final String fullPath, final String value) {
+    void validateValueSerialisation(final PropertyPath fullPath, final String valueAsString) {
+        // If the string form can't be converted then an exception will be thrown
+        convertValue(fullPath, valueAsString);
+    }
+
+    Object convertValue(final PropertyPath fullPath, final String valueAsString) {
         final Prop prop = propertyMap.get(fullPath);
         if (prop != null) {
             final Type genericType = prop.getValueType();
-            convertToObject(value, genericType);
+            return convertToObject(valueAsString, genericType);
         } else {
             throw new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath));
         }
@@ -183,11 +199,12 @@ public class ConfigMapper {
     ConfigProperty decorateDbConfigProperty(final ConfigProperty dbConfigProperty) {
         Objects.requireNonNull(dbConfigProperty);
 
-        final String fullPath = dbConfigProperty.getName();
+        final PropertyPath fullPath = dbConfigProperty.getName();
 
         synchronized (this) {
             ConfigProperty globalConfigProperty = getGlobalProperty(fullPath)
-                    .orElseThrow(() -> new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath)));
+                    .orElseThrow(() ->
+                            new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath)));
 
             final Prop prop = propertyMap.get(fullPath);
             if (prop != null) {
@@ -214,23 +231,32 @@ public class ConfigMapper {
         }
     }
 
-    private void addConfigObjectMethods(final IsConfig object,
-                                        final String path,
-                                        final Map<String, Prop> propertyMap,
-                                        final BiConsumer<String, Prop> propConsumer) {
-        LOGGER.trace("addConfigObjectMethods({}, {}, .....)", object, path);
+    private void addConfigObjectMethods(final AbstractConfig config,
+                                        final PropertyPath path,
+                                        final Map<PropertyPath, Prop> propertyMap,
+                                        final BiConsumer<PropertyPath, Prop> propConsumer) {
+        LOGGER.trace("addConfigObjectMethods({}, {}, .....)", config, path);
 
-        final Map<String, Prop> properties = PropertyUtil.getProperties(object);
+        // Add this ConfigMapper instance to the IsConfig so it can do name resolution
+//        config.setConfigPathResolver(this);
+        config.setBasePath(path);
+
+        // Add our object with its path to the map
+//        configInstanceToPathMap.put(config, path);
+
+        final Map<String, Prop> properties = PropertyUtil.getProperties(config);
         properties.forEach((k, prop) -> {
             LOGGER.trace("prop: {}", prop);
-            Method getter = prop.getGetter();
+            final Method getter = prop.getGetter();
+
+            // The prop may have a JsonPropery annotation that defines its name
             String specifiedName = getNameFromAnnotation(getter);
             String name = prop.getName();
             if (specifiedName != null) {
                 name = specifiedName;
             }
 
-            final String fullPath = path + "." + name;
+            final PropertyPath fullPath = path.merge(name);
 
             final Class<?> valueType = prop.getValueClass();
 
@@ -241,24 +267,25 @@ public class ConfigMapper {
 
                 // Now let the consumer do something to it
                 propConsumer.accept(fullPath, prop);
-            } else if (IsConfig.class.isAssignableFrom(valueType)) {
+            } else if (AbstractConfig.class.isAssignableFrom(valueType)) {
                 // This must be a branch, i.e. config object so recurse into that
                 if (value != null) {
-                    IsConfig childConfigObject = (IsConfig) value;
-                    addConfigObjectMethods(childConfigObject, fullPath, propertyMap, propConsumer);
+                    AbstractConfig childConfigObject = (AbstractConfig) value;
+                    addConfigObjectMethods(
+                        childConfigObject, fullPath, propertyMap, propConsumer);
                 }
             } else {
                 // This is not expected
                 throw new RuntimeException(LogUtil.message(
                         "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
                         valueType.getName(),
-                        IsConfig.class.getSimpleName()));
+                        AbstractConfig.class.getSimpleName()));
             }
 
         });
     }
 
-    private void yamlPropertyConsumer(final String fullPath, final Prop yamlProp) {
+    private void yamlPropertyConsumer(final PropertyPath fullPath, final Prop yamlProp) {
 
         // We have already walked a vanilla AppConfig object tree so all compile time
         // props should be in here with a default value (and a value that matches it)
@@ -283,7 +310,7 @@ public class ConfigMapper {
 //        }
     }
 
-    private void defaultValuePropertyConsumer(final String fullPath, final Prop defaultProp) {
+    private void defaultValuePropertyConsumer(final PropertyPath fullPath, final Prop defaultProp) {
 
         // Create global property.
         final String defaultValueAsStr = getDefaultValue(defaultProp);
@@ -296,7 +323,7 @@ public class ConfigMapper {
         updatePropertyFromConfigAnnotations(configProperty, defaultProp);
 
         if (defaultValueAsStr == null) {
-            LOGGER.debug("Property {} has no default value", fullPath);
+            LOGGER.trace("Property {} has no default value", fullPath);
         }
 
         globalPropertiesMap.put(fullPath, configProperty);
@@ -320,10 +347,12 @@ public class ConfigMapper {
                 type.equals(boolean.class) ||
                 type.equals(Character.class) ||
                 type.equals(char.class) ||
+                type.equals(Duration.class) ||
                 List.class.isAssignableFrom(type) ||
                 Map.class.isAssignableFrom(type) ||
                 DocRef.class.isAssignableFrom(type) ||
-                Enum.class.isAssignableFrom(type);
+                Enum.class.isAssignableFrom(type) ||
+                Path.class.isAssignableFrom(type);
 
         LOGGER.trace("isSupportedPropertyType({}), returning: {}", type, isSupported);
         return isSupported;
@@ -501,6 +530,8 @@ public class ConfigMapper {
                 return Boolean.valueOf(value);
             } else if ((type.equals(Character.class) || type.equals(char.class)) && value.length() > 0) {
                 return value.charAt(0);
+            } else if (type.equals(Duration.class)) {
+                return Duration.parse(value);
             } else if (List.class.isAssignableFrom(type)) {
                 // determine the type of the list items
                 Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
@@ -515,6 +546,8 @@ public class ConfigMapper {
                 return stringToDocRef(value);
             } else if (Enum.class.isAssignableFrom(type)) {
                 return stringToEnum(value, type);
+            } else if (Path.class.isAssignableFrom(type)) {
+                return Path.of(value);
             }
         } catch (Exception e) {
             // Don't include the original exception else gwt uses the msg of the

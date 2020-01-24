@@ -34,7 +34,6 @@ public class RemoteFeedStatusService implements FeedStatusService, HasHealthChec
     private final Map<GetFeedStatusRequest, CachedResponse> lastKnownResponse = new ConcurrentHashMap<>();
     private final WebTarget feedStatusWebTarget;
 
-
     @Inject
     RemoteFeedStatusService(final FeedStatusConfig feedStatusConfig,
                             final Client jerseyClient) {

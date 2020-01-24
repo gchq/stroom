@@ -4,10 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
 
-public class CacheConfig implements IsConfig {
+public class CacheConfig extends AbstractConfig {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CacheConfig.class);
 
     private String timeToLive;

@@ -7,9 +7,11 @@ import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.app.ConfigLocation;
 import stroom.config.app.YamlUtil;
+import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.util.HasHealthCheck;
 import stroom.util.config.FieldMapper;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -21,9 +23,13 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
@@ -33,22 +39,30 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(AppConfigMonitor.class);
 
     private final AppConfig appConfig;
+    private final ConfigMapper configMapper;
+    private final ConfigValidator configValidator;
+    private final GlobalConfigService globalConfigService;
+
     private final Path configFile;
     private final Path dirToWatch;
     private final ExecutorService executorService;
     private WatchService watchService = null;
     private Future<?> watcherFuture = null;
-    private final ConfigMapper configMapper;
     private boolean isRunning = false;
     private final boolean isValidFile;
+    private final AtomicBoolean isFileReadScheduled = new AtomicBoolean(false);
 
     @Inject
     public AppConfigMonitor(final AppConfig appConfig,
                             final ConfigLocation configLocation,
-                            final ConfigMapper configMapper) {
+                            final ConfigMapper configMapper,
+                            final ConfigValidator configValidator,
+                            final GlobalConfigService globalConfigService) {
         this.appConfig = appConfig;
         this.configFile = configLocation.getConfigFilePath();
         this.configMapper = configMapper;
+        this.configValidator = configValidator;
+        this.globalConfigService = globalConfigService;
 
         if (Files.isRegularFile(configFile)) {
             isValidFile = true;
@@ -130,18 +144,20 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         isRunning = true;
     }
 
-    private void handleWatchEvent(final WatchEvent<Path> event) {
-        final WatchEvent<Path> pathEvent = event;
+    private void handleWatchEvent(final WatchEvent<Path> pathEvent) {
         final WatchEvent.Kind<Path> kind = pathEvent.kind();
+
         LOGGER.debug("Dir watch event {}, {}, {}", kind.name(), kind.type(), pathEvent.context());
 
+        // Only trigger on modify events and when count is one to avoid repeated events
         if (kind.equals(StandardWatchEventKinds.ENTRY_MODIFY)) {
             final Path modifiedFile = dirToWatch.resolve(pathEvent.context());
 
             try {
                 // we don't care about changes to other files
                 if (Files.isRegularFile(modifiedFile) && Files.isSameFile(configFile, modifiedFile)) {
-                    updateAppConfigFromFile();
+                    LOGGER.info("Change detected to config file {}", configFile.toAbsolutePath().normalize());
+                    scheduleUpdateIfRequired();
                 }
             } catch (IOException e) {
                 // Swallow error so future changes can be monitored.
@@ -150,29 +166,83 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         }
     }
 
-    private void updateAppConfigFromFile() {
+    private synchronized void scheduleUpdateIfRequired() {
+
+        // When a file is changed the filesystem can trigger two changes, one to change the file content
+        // and another to change the file access time. To prevent a duplicate read we delay the read
+        // a bit so we can have many changes during that delay period but with only one read of the file.
+        if (isFileReadScheduled.compareAndSet(false, true)) {
+            LOGGER.info("Scheduling update of application config from file");
+            CompletableFuture.delayedExecutor(700, TimeUnit.MILLISECONDS)
+                .execute(() -> {
+                    try {
+                        updateAppConfigFromFile();
+                    } finally {
+                        isFileReadScheduled.set(false);
+                    }
+                });
+        }
+    }
+
+    private synchronized void updateAppConfigFromFile() {
         final AppConfig newAppConfig;
         try {
-            LOGGER.info("Change detected to file {}, updating application config.",
-                    configFile.toAbsolutePath().normalize());
+            LOGGER.info("Reading updated config file");
             newAppConfig = YamlUtil.readAppConfig(configFile);
 
-            try {
-                // TODO this needs to take into account the CommonDbConfig copying that goes on in AppConfigModule,
-                // i.e. read the yaml then do the db config copying then copy the values into the appConfig
+            final ConfigValidator.Result result = validateNewConfig(newAppConfig);
 
-                // Copy changed values from the newly modified appConfig into the guice bound one
-                FieldMapper.copy(newAppConfig, this.appConfig);
+            if (result.hasErrors()) {
+                LOGGER.error("Unable to update application config from file {} because it failed validation. " +
+                    "Fix the errors and save the file.", configFile.toAbsolutePath().normalize().toString());
+            } else {
+                try {
+                    // Don't have to worry about the DBV config merging that goes on in DataSourceFactoryImpl
+                    // as that doesn't mutate the config objects
 
-            } catch (Throwable e) {
-                // Swallow error as we don't want to break the app because the new config is bad
-                // The admins can fix the problem and let it have another go.
-                LOGGER.error("Error updating runtime configuration from file {}", configFile.toAbsolutePath(), e);
+                    final AtomicInteger updateCount = new AtomicInteger(0);
+                    final FieldMapper.UpdateAction updateAction = (destParent, prop, sourcePropValue, destPropValue) -> {
+                        final String fullPath = ((AbstractConfig)destParent).getFullPath(prop.getName());
+                        LOGGER.info("  Updating config value of {} from [{}] to [{}]",
+                            fullPath, destPropValue, sourcePropValue);
+                        updateCount.incrementAndGet();
+                    };
+
+                    LOGGER.info("Updating application config from file.");
+                    // Copy changed values from the newly modified appConfig into the guice bound one
+                    FieldMapper.copy(newAppConfig, this.appConfig, updateAction);
+
+                    // Update the config objects using the DB as the removal of a yaml value may trigger
+                    // a DB value to be effective
+                    LOGGER.info("Completed updating application config from file. Changes: {}", updateCount.get());
+                    globalConfigService.updateConfigObjects();
+
+                } catch (Throwable e) {
+                    // Swallow error as we don't want to break the app because the new config is bad
+                    // The admins can fix the problem and let it have another go.
+                    LOGGER.error("Error updating runtime configuration from file {}",
+                        configFile.toAbsolutePath().normalize(), e);
+                }
             }
         } catch (Throwable e) {
             // Swallow error as we don't want to break the app because the file is bad.
-            LOGGER.error("Error parsing configuration from file {}", configFile.toAbsolutePath(), e);
+            LOGGER.error("Error parsing configuration from file {}",
+                configFile.toAbsolutePath().normalize(), e);
         }
+    }
+
+    private ConfigValidator.Result validateNewConfig(final AppConfig newAppConfig) {
+        // Initialise a ConfigMapper on the new config tree so it will decorate all the paths
+        new ConfigMapper(newAppConfig);
+
+        LOGGER.info("Validating modified config file");
+        final ConfigValidator.Result result = configValidator.validate(newAppConfig);
+        result.handleViolations(ConfigValidator::logConstraintViolation);
+
+        LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
+            result.getErrorCount(),
+            result.getWarningCount());
+        return result;
     }
 
 

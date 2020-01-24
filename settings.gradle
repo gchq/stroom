@@ -30,6 +30,7 @@ include 'stroom-annotation:stroom-annotation-impl'
 include 'stroom-annotation:stroom-annotation-impl-db'
 include 'stroom-annotation:stroom-annotation-impl-db-jooq'
 include 'stroom-annotation:stroom-config-common'
+include 'stroom-annotation:stroom-annotation-pipeline'
 
 // App.
 include 'stroom-app'

@@ -4,12 +4,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class DataStoreServiceConfig implements IsConfig, HasDbConfig {
+public class DataStoreServiceConfig extends AbstractConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private String deletePurgeAge = "7d";
     private int deleteBatchSize = 1000;
