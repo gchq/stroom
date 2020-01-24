@@ -17,8 +17,15 @@
 
 package stroom.processor.impl;
 
+import java.time.Instant;
+
 public interface ProcessorTaskDeleteExecutor {
+
     void exec();
 
-    void delete(long age);
+    /**
+     * Deletes tasks and filters where the task create time and filter last poll time is less than
+     * the passed deleteThreshold Instant
+     */
+    void delete(Instant deleteThreshold);
 }

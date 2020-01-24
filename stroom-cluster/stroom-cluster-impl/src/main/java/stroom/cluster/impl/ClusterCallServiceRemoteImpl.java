@@ -28,6 +28,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.security.api.UserIdentity;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -52,7 +53,7 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
     private final NodeService nodeService;
     private final Map<ServiceName, Provider<Object>> serviceMap;
     private final boolean clusterCallUseLocal;
-    private final Long clusterCallReadTimeout;
+    private final StroomDuration clusterCallReadTimeout;
     private final Map<String, ClusterCallService> proxyMap = new HashMap<>();
 
     private HessianProxyFactory proxyFactory = null;
@@ -67,7 +68,7 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
         this.nodeService = nodeService;
         this.serviceMap = serviceMap;
         this.clusterCallUseLocal = clusterConfig.isClusterCallUseLocal();
-        this.clusterCallReadTimeout = clusterConfig.getClusterCallReadTimeoutMs();
+        this.clusterCallReadTimeout = clusterConfig.getClusterCallReadTimeout();
         this.ignoreSSLHostnameVerifier = clusterConfig.isClusterCallIgnoreSSLHostnameVerifier();
     }
 
@@ -85,7 +86,7 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
             proxyFactory = stroomHessianProxyFactory;
 
             if (clusterCallReadTimeout != null) {
-                proxyFactory.setReadTimeout(clusterCallReadTimeout);
+                proxyFactory.setReadTimeout(clusterCallReadTimeout.toMillis());
             }
         }
         return proxyFactory;

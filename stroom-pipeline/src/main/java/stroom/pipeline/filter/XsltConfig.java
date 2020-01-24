@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class XsltConfig extends AbstractConfig {
@@ -14,7 +14,7 @@ public class XsltConfig extends AbstractConfig {
 
     private CacheConfig cacheConfig = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
     private int maxElements = DEFAULT_MAX_ELEMENTS;
 

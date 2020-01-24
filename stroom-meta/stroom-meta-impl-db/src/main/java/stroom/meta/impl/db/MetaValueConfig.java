@@ -1,31 +1,27 @@
 package stroom.meta.impl.db;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
 
 @Singleton
 public class MetaValueConfig extends AbstractConfig {
-    private String deleteAge = "30d";
+    private StroomDuration deleteAge = StroomDuration.ofDays(30);
     private int deleteBatchSize = 1000;
     private int flushBatchSize = 1000;
     private boolean addAsync = true;
 
-    @JsonPropertyDescription("The age of streams that we store meta data in the database for")
-    public String getDeleteAge() {
+    @JsonPropertyDescription("The age of streams that we store meta data in the database for. " +
+        "In ISO-8601 duration format, e.g. 'P1DT12H'")
+    public StroomDuration getDeleteAge() {
         return deleteAge;
     }
 
-    public void setDeleteAge(final String deleteAge) {
+    @SuppressWarnings("unused")
+    public void setDeleteAge(final StroomDuration deleteAge) {
         this.deleteAge = deleteAge;
-    }
-
-    @JsonIgnore
-    long getDeleteAgeMs() {
-        return ModelStringUtil.parseDurationString(deleteAge);
     }
 
     @JsonPropertyDescription("How many stream attributes we want to try and delete in a single batch")
@@ -33,6 +29,7 @@ public class MetaValueConfig extends AbstractConfig {
         return deleteBatchSize;
     }
 
+    @SuppressWarnings("unused")
     public void setDeleteBatchSize(final int deleteBatchSize) {
         this.deleteBatchSize = deleteBatchSize;
     }
@@ -41,6 +38,7 @@ public class MetaValueConfig extends AbstractConfig {
         return flushBatchSize;
     }
 
+    @SuppressWarnings("unused")
     public void setFlushBatchSize(final int flushBatchSize) {
         this.flushBatchSize = flushBatchSize;
     }

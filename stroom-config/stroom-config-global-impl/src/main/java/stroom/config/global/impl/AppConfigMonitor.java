@@ -48,9 +48,11 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
     private final ExecutorService executorService;
     private WatchService watchService = null;
     private Future<?> watcherFuture = null;
-    private boolean isRunning = false;
+    private AtomicBoolean isRunning = new AtomicBoolean(false);
     private final boolean isValidFile;
     private final AtomicBoolean isFileReadScheduled = new AtomicBoolean(false);
+
+    private static final long DELAY_BEFORE_FILE_READ_MS = 1_000;
 
     @Inject
     public AppConfigMonitor(final AppConfig appConfig,
@@ -82,15 +84,14 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
 
     /**
      * Starts the object. Called <i>before</i> the application becomes available.
-     *
-     * @throws Exception if something goes wrong; this will halt the application startup.
      */
     @Override
-    public void start() throws Exception {
+    public void start() {
         if (isValidFile) {
             try {
                 startWatcher();
             } catch (Exception e) {
+                // Swallow and log as we don't want to stop the app from starting just for this
                 LOGGER.error("Unable to start config file monitor due to [{}]. Changes to {} will not be monitored.",
                         e.getMessage(), configFile.toAbsolutePath().normalize(), e);
             }
@@ -120,6 +121,7 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                 }
 
                 try {
+                    isRunning.compareAndSet(false, true);
                     // block until the watch service spots a change
                     watchKey = watchService.take();
                 } catch (InterruptedException ie) {
@@ -129,10 +131,25 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                 }
 
                 for (WatchEvent<?> event : watchKey.pollEvents()) {
+                    if (LOGGER.isDebugEnabled()) {
+                        if (event == null) {
+                            LOGGER.debug("Event is null");
+                        } else {
+                            String name = event.kind() != null ? event.kind().name() : "kind==null";
+                            String type = event.kind() != null ? event.kind().type().getSimpleName() : "kind==null";
+                            LOGGER.debug("Dir watch event {}, {}, {}", name, type, event.context());
+                        }
+                    }
+
                     if (event.kind().equals(OVERFLOW)) {
+                        LOGGER.warn("{} event detected breaking out. Retry config file change", OVERFLOW.name());
                         break;
                     }
-                    handleWatchEvent((WatchEvent<Path>) event);
+                    if (event.kind() != null && Path.class.isAssignableFrom(event.kind().type())) {
+                        handleWatchEvent((WatchEvent<Path>) event);
+                    } else {
+                        LOGGER.debug("Not an event we care about");
+                    }
                 }
                 boolean isValid = watchKey.reset();
                 if (!isValid) {
@@ -141,13 +158,10 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                 }
             }
         });
-        isRunning = true;
     }
 
     private void handleWatchEvent(final WatchEvent<Path> pathEvent) {
         final WatchEvent.Kind<Path> kind = pathEvent.kind();
-
-        LOGGER.debug("Dir watch event {}, {}, {}", kind.name(), kind.type(), pathEvent.context());
 
         // Only trigger on modify events and when count is one to avoid repeated events
         if (kind.equals(StandardWatchEventKinds.ENTRY_MODIFY)) {
@@ -172,8 +186,8 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         // and another to change the file access time. To prevent a duplicate read we delay the read
         // a bit so we can have many changes during that delay period but with only one read of the file.
         if (isFileReadScheduled.compareAndSet(false, true)) {
-            LOGGER.info("Scheduling update of application config from file");
-            CompletableFuture.delayedExecutor(700, TimeUnit.MILLISECONDS)
+            LOGGER.info("Scheduling update of application config from file in {}ms", DELAY_BEFORE_FILE_READ_MS);
+            CompletableFuture.delayedExecutor(DELAY_BEFORE_FILE_READ_MS, TimeUnit.MILLISECONDS)
                 .execute(() -> {
                     try {
                         updateAppConfigFromFile();
@@ -267,14 +281,18 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
                 executorService.shutdown();
             }
         }
-        isRunning = false;
+        isRunning.set(false);
+    }
+
+    public boolean isRunning() {
+        return isRunning.get();
     }
 
     @Override
     public HealthCheck.Result getHealth() {
         HealthCheck.ResultBuilder resultBuilder = HealthCheck.Result.builder();
 
-        if (isRunning) {
+        if (isRunning.get()) {
             resultBuilder.healthy();
         } else {
             resultBuilder.unhealthy();

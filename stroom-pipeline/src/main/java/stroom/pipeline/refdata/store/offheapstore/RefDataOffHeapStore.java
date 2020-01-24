@@ -23,20 +23,19 @@ import io.vavr.Tuple;
 import io.vavr.Tuple2;
 import io.vavr.Tuple3;
 import io.vavr.Tuple4;
-import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.lmdbjava.Env;
 import org.lmdbjava.EnvFlags;
 import org.lmdbjava.Txn;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.AbstractRefDataStore;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.RefDataValue;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.pipeline.refdata.store.offheapstore.databases.KeyValueStoreDb;
@@ -55,12 +54,14 @@ import stroom.pipeline.refdata.util.PooledByteBuffer;
 import stroom.pipeline.refdata.util.PooledByteBufferPair;
 import stroom.pipeline.writer.PathCreator;
 import stroom.util.HasHealthCheck;
+import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.time.TimeUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -97,10 +98,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private static final long PROCESSING_INFO_UPDATE_DELAY_MS = Duration.of(1, ChronoUnit.HOURS).toMillis();
 
     private final Path dbDir;
-    private final long maxSize;
+    private final ByteSize maxSize;
     private final int maxReaders;
     private final int maxPutsBeforeCommit;
-    private final int valueBufferCapacity;
 
     private final Env<ByteBuffer> lmdbEnvironment;
 
@@ -135,10 +135,9 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
         this.referenceDataConfig = referenceDataConfig;
         this.dbDir = getStoreDir();
-        this.maxSize = referenceDataConfig.getMaxStoreSizeBytes();
+        this.maxSize = referenceDataConfig.getMaxStoreSize();
         this.maxReaders = referenceDataConfig.getMaxReaders();
         this.maxPutsBeforeCommit = referenceDataConfig.getMaxPutsBeforeCommit();
-        this.valueBufferCapacity = referenceDataConfig.getValueBufferCapacity();
 
         this.lmdbEnvironment = createEnvironment(referenceDataConfig);
 
@@ -172,12 +171,11 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     private Env<ByteBuffer> createEnvironment(final ReferenceDataConfig referenceDataConfig) {
         LOGGER.info(
                 "Creating RefDataOffHeapStore environment with [maxSize: {}, dbDir {}, maxReaders {}, " +
-                        "maxPutsBeforeCommit {}, valueBufferCapacity {}, isReadAheadEnabled {}]",
-                FileUtils.byteCountToDisplaySize(maxSize),
+                        "maxPutsBeforeCommit {}, isReadAheadEnabled {}]",
+                maxSize,
                 dbDir.toAbsolutePath().toString() + File.separatorChar,
                 maxReaders,
                 maxPutsBeforeCommit,
-                FileUtils.byteCountToDisplaySize(valueBufferCapacity),
                 referenceDataConfig.isReadAheadEnabled());
 
         // By default LMDB opens with readonly mmaps so you cannot mutate the bytebuffers inside a txn.
@@ -200,7 +198,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
         final Env<ByteBuffer> env = Env.create()
                 .setMaxReaders(maxReaders)
-                .setMapSize(maxSize)
+                .setMapSize(maxSize.getBytes())
                 .setMaxDbs(7) //should equal the number of DBs we create which is fixed at compile time
                 .open(dbDir.toFile(), envFlags);
 
@@ -387,7 +385,7 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
 
     @Override
     public void purgeOldData() {
-        purgeOldData(System.currentTimeMillis());
+        purgeOldData(Instant.now());
     }
 
     /**
@@ -432,12 +430,12 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
     }
 
     /**
-     * @param nowMs Allows the setting of the current time for testing purposes
+     * @param now Allows the setting of the current time for testing purposes
      */
-    void purgeOldData(final long nowMs) {
+    void purgeOldData(final Instant now) {
         final Instant startTime = Instant.now();
         final AtomicReference<Tuple4<Integer, Integer, Integer, Integer>> totalsRef = new AtomicReference<>(Tuple.of(0, 0, 0, 0));
-        try (final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer(nowMs);
+        try (final PooledByteBuffer accessTimeThresholdPooledBuf = getAccessTimeCutOffBuffer(now);
              final PooledByteBufferPair procInfoPooledBufferPair = processingInfoDb.getPooledBufferPair()) {
 
             final AtomicReference<ByteBuffer> currRefStreamDefBufRef = new AtomicReference<>();
@@ -741,26 +739,25 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
         return lmdbDb.getEntryCount();
     }
 
-    private long getPurgeCutOffEpochMs(final long purgeAgeMs) {
-        return System.currentTimeMillis() - purgeAgeMs;
-    }
+//    private Instant getPurgeCutOffEpoch(final StroomDuration purgeAge) {
+//        return Instant.now().minus(purgeAge.getDuration());
+//    }
 
-    private long getPurgeCutOffEpochMs(final long nowEpochMs, final long purgeAgeMs) {
-        return nowEpochMs - purgeAgeMs;
-    }
+//    private Instant getPurgeCutOffEpoch(final Instant now, final StroomDuration purgeAgeMs) {
+//        return now.minus(purgeAgeMs.getDuration());
+//    }
 
-    private PooledByteBuffer getAccessTimeCutOffBuffer(final long nowEpocMs) {
+    private PooledByteBuffer getAccessTimeCutOffBuffer(final Instant now) {
 
-        long purgeAgeMs = referenceDataConfig.getPurgeAgeMs();
-        long purgeCutOff = getPurgeCutOffEpochMs(nowEpocMs, purgeAgeMs);
+        Instant purgeCutOff = TimeUtils.durationToThreshold(now, referenceDataConfig.getPurgeAge());
 
         LOGGER.info("Using purge duration {}, cut off {}, now {}",
-                Duration.ofMillis(purgeAgeMs),
-                Instant.ofEpochMilli(purgeCutOff),
-                Instant.ofEpochMilli(nowEpocMs));
+                referenceDataConfig.getPurgeAge(),
+                purgeCutOff,
+                now);
 
         PooledByteBuffer pooledByteBuffer = byteBufferPool.getPooledByteBuffer(Long.BYTES);
-        pooledByteBuffer.getByteBuffer().putLong(purgeCutOff);
+        pooledByteBuffer.getByteBuffer().putLong(purgeCutOff.toEpochMilli());
         pooledByteBuffer.getByteBuffer().flip();
         return pooledByteBuffer;
     }
@@ -774,11 +771,10 @@ public class RefDataOffHeapStore extends AbstractRefDataStore implements RefData
             builder
                     .healthy()
                     .withDetail("Path", dbDir.toAbsolutePath().toString())
-                    .withDetail("Environment max size", ModelStringUtil.formatIECByteSizeString(maxSize))
+                    .withDetail("Environment max size", maxSize)
                     .withDetail("Environment current size", ModelStringUtil.formatIECByteSizeString(getEnvironmentDiskUsage()))
                     .withDetail("Purge age", referenceDataConfig.getPurgeAge())
-                    .withDetail("Purge cut off", Instant.ofEpochMilli(
-                            getPurgeCutOffEpochMs(referenceDataConfig.getPurgeAgeMs())).toString())
+                    .withDetail("Purge cut off", TimeUtils.durationToThreshold(referenceDataConfig.getPurgeAge()).toString())
                     .withDetail("Max readers", maxReaders)
                     .withDetail("Current buffer pool size", byteBufferPool.getCurrentPoolSize())
                     .withDetail("Earliest lastAccessedTime", lastAccessedTimeRange._1().toString())

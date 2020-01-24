@@ -8,6 +8,7 @@ dependencies {
     compile libs.stroomDocRef
 
     testCompile libs.assertj_core
+    testCompile libs.jackson_databind
     testCompile libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard
