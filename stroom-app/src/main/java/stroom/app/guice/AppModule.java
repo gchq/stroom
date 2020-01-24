@@ -1,14 +1,7 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.client.JerseyClientConfiguration;
 import io.dropwizard.setup.Environment;
-import org.glassfish.jersey.logging.LoggingFeature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.cluster.impl.ClusterModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
@@ -20,28 +13,12 @@ import stroom.dropwizard.common.LogLevelInspector;
 import stroom.lifecycle.impl.LifecycleServiceModule;
 import stroom.meta.statistics.impl.MetaStatisticsModule;
 import stroom.resource.impl.SessionResourceModule;
-import stroom.security.api.ClientSecurityUtil;
-import stroom.security.api.SecurityContext;
 import stroom.security.impl.SecurityContextModule;
 import stroom.util.guice.HealthCheckBinder;
-import stroom.util.jersey.webTargetFactory;
-import stroom.util.shared.BuildInfo;
 
-import javax.inject.Provider;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Invocation.Builder;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import java.nio.file.Path;
-import java.util.Optional;
 
 public class AppModule extends AbstractModule {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AppModule.class);
-
-    // This name is used by dropwizard metrics
-    private static final String PROXY_JERSEY_CLIENT_NAME = "stroom_jersey_client";
-    private static final String PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX = "stroom/";
-
     private final Config configuration;
     private final Environment environment;
     private final ConfigHolder configHolder;
@@ -85,6 +62,7 @@ public class AppModule extends AbstractModule {
         install(new stroom.statistics.impl.sql.search.SQLStatisticSearchModule());
         install(new DispatchModule());
         install(new SessionResourceModule());
+        install(new JerseyModule());
 
         HealthCheckBinder.create(binder())
                 .bind(LogLevelInspector.class);
@@ -109,64 +87,4 @@ public class AppModule extends AbstractModule {
             return path;
         }
     }
-
-    @Provides
-    @Singleton
-    Client provideJerseyClient(final JerseyClientConfiguration jerseyClientConfiguration,
-                               final Environment environment,
-                               final Provider<BuildInfo> buildInfoProvider) {
-
-        // If the userAgent has not been explicitly set in the config then set it based
-        // on the build version
-        if (!jerseyClientConfiguration.getUserAgent().isPresent()) {
-            final String userAgent = PROXY_JERSEY_CLIENT_USER_AGENT_PREFIX + buildInfoProvider.get().getBuildVersion();
-            LOGGER.info("Setting jersey client user agent string to [{}]", userAgent);
-            jerseyClientConfiguration.setUserAgent(Optional.of(userAgent));
-        }
-
-        LOGGER.info("Creating jersey client {}", PROXY_JERSEY_CLIENT_NAME);
-        return new JerseyClientBuilder(environment)
-                .using(jerseyClientConfiguration)
-                .build(PROXY_JERSEY_CLIENT_NAME)
-                .register(LoggingFeature.class);
-    }
-
-    @Provides
-    @Singleton
-    webTargetFactory provideJerseyRequestBuilder(final Client client,
-                                                 final SecurityContext securityContext) {
-        return url -> {
-            final WebTarget webTarget = client.target(url);
-            final WebTarget webTargetProxy = new WebTargetProxy(webTarget) {
-                @Override
-                public Builder request() {
-                    final Builder builder = super.request();
-                    ClientSecurityUtil.addAuthorisationHeader(builder, securityContext);
-                    return builder;
-                }
-
-                @Override
-                public Builder request(final String... acceptedResponseTypes) {
-                    final Builder builder =  super.request(acceptedResponseTypes);
-                    ClientSecurityUtil.addAuthorisationHeader(builder, securityContext);
-                    return builder;
-                }
-
-                @Override
-                public Builder request(final MediaType... acceptedResponseTypes) {
-                    final Builder builder =  super.request(acceptedResponseTypes);
-                    ClientSecurityUtil.addAuthorisationHeader(builder, securityContext);
-                    return builder;
-                }
-            };
-            return webTargetProxy;
-//
-//            Builder invocationBuilder = webTarget.request();
-//            ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, securityContext);
-//            invocationBuilder = invocationBuilder.accept(MediaType.APPLICATION_JSON);
-//            return invocationBuilder;
-        };
-    }
-
-
 }
