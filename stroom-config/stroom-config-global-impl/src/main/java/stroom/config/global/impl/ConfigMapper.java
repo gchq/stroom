@@ -65,6 +65,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -83,12 +84,13 @@ public class ConfigMapper {
     private static final Set<String> VALID_DELIMITERS_SET = new HashSet<>(VALID_DELIMITERS_LIST);
 
     private static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts("stroom");
-    private static final String DOCREF_PREFIX = "docRef(";
+    private static final String DOCREF_PREFIX = "docRef";
+    private static final Pattern DOCREF_PATTERN = Pattern.compile("^" + DOCREF_PREFIX + "\\([^)]+\\)$");
     public static final String LIST_EXAMPLE = "|item1|item2|item3";
     public static final String MAP_EXAMPLE = "|:key1:value1|:key2:value2|:key3:value3";
-    public static final String DOCREF_EXAMPLE = "|,"
+    public static final String DOCREF_EXAMPLE = ","
         + DOCREF_PREFIX
-        + "StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)";
+        + "(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)";
 
     // The guice bound appConfig
     private final AppConfig appConfig;
@@ -100,6 +102,8 @@ public class ConfigMapper {
     // A map of property accessor objects keyed on the fully qualified prop path (i.e. stroom.path.temp)
     private final Map<PropertyPath, Prop> propertyMap = new HashMap<>();
 
+    // TODO Created this with a view to improving the ser/deser of the values but it needs
+    //   more thought.  Leaving it here for now.
 //    private static final Map<Class<?>, Mapping> MAPPERS = new HashMap<>();
 //
 //    static {
@@ -529,7 +533,8 @@ public class ConfigMapper {
         return null;
     }
 
-    private static Object convertToObject(final String value, final Type genericType) {
+    // pkg private for testing
+    static Object convertToObject(final String value, final Type genericType) {
         if (value == null) {
             return null;
         }
@@ -559,12 +564,12 @@ public class ConfigMapper {
                 return Duration.parse(value);
             } else if (List.class.isAssignableFrom(type)) {
                 // determine the type of the list items
-                final Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
+                final Class<?> itemType = getGenericsParam(genericType, 0);
                 return stringToList(value, itemType);
             } else if (Map.class.isAssignableFrom(type)) {
                 // determine the types of the keys and values
-                final Class<?> keyType = getDataType(getGenericTypes(genericType).get(0));
-                final Class<?> valueType = getDataType(getGenericTypes(genericType).get(1));
+                final Class<?> keyType = getGenericsParam(genericType, 0);
+                final Class<?> valueType = getGenericsParam(genericType, 1);
                 return stringToMap(value, keyType, valueType);
             } else if (type.equals(DocRef.class)) {
                 return stringToDocRef(value);
@@ -585,7 +590,7 @@ public class ConfigMapper {
                     value, genericType, e.getMessage()), e);
             throw new RuntimeException(LogUtil.message(
                 "Unable to convert value [{}] to type {} due to: {}",
-                    value, getDataTypeName(genericType), e.getMessage()));
+                    value, getDataTypeName(genericType), e.getMessage()), e);
         }
 
         LOGGER.error("Unable to convert value [{}] of type [{}] to an Object", value, type);
@@ -593,15 +598,21 @@ public class ConfigMapper {
             "Type [{}] is not supported for value [{}]", genericType, value));
     }
 
-    private Optional<Method> getParseMethod(final Class<?> clazz) {
-        return Arrays.stream(clazz.getDeclaredMethods())
-                .filter(method ->
-                        method.getName().equals("parse")
-                                && method.getParameterCount() == 1
-                                && method.getParameterTypes()[0].equals(String.class)
-                                && method.getReturnType().equals(clazz))
-                .findFirst();
+    private static Class<?> getGenericsParam(final Type typeWithGenerics, final int index) {
+        List<Type> genericsParamTypes = getGenericTypes(typeWithGenerics);
+        if (genericsParamTypes.isEmpty()) {
+           throw new RuntimeException(LogUtil.message(
+               "Unable to get generics parameter {} for type {} as it has no parameterised types",
+               index, typeWithGenerics));
+        }
+        if (index >= genericsParamTypes.size()) {
+            throw new IllegalArgumentException(LogUtil.message("Index {} is out of bounds for types {}",
+                index, genericsParamTypes));
+        }
+
+        return getDataType(genericsParamTypes.get(index));
     }
+
 
 
     private static String listToString(final List<?> list,
@@ -758,9 +769,15 @@ public class ConfigMapper {
             final String delimiter = String.valueOf(serialisedForm.charAt(0));
             validateDelimiter(serialisedForm, 0, "first", DOCREF_EXAMPLE);
 
+            // Remove the delimiter off the front
             String delimitedValue = serialisedForm.substring(1);
 
-            delimitedValue = delimitedValue.replace(DOCREF_PREFIX, "");
+            if (!DOCREF_PATTERN.matcher(delimitedValue).matches()) {
+                throw new RuntimeException(LogUtil.message("Expecting [{}] to match [{}]",
+                    delimitedValue, DOCREF_PATTERN.pattern()));
+            }
+
+            delimitedValue = delimitedValue.replace(DOCREF_PREFIX + "(", "");
             delimitedValue = delimitedValue.replace(")", "");
 
             final List<String> parts = Splitter.on(delimiter).splitToList(delimitedValue);
@@ -835,6 +852,32 @@ public class ConfigMapper {
         return chosenDelimiter;
     }
 
+    public static class UnknownPropertyException extends RuntimeException {
+        /**
+         * Constructs a new runtime exception with the specified detail message.
+         * The cause is not initialized, and may subsequently be initialized by a
+         * call to {@link #initCause}.
+         *
+         * @param message the detail message. The detail message is saved for
+         *                later retrieval by the {@link #getMessage()} method.
+         */
+        UnknownPropertyException(final String message) {
+            super(message);
+        }
+    }
+
+    // TODO Created these with a view to improving the ser/deser of the values but it needs
+    //   more thought.  Leaving them here for now.
+//    private Optional<Method> getParseMethod(final Class<?> clazz) {
+//        return Arrays.stream(clazz.getDeclaredMethods())
+//            .filter(method ->
+//                method.getName().equals("parse")
+//                    && method.getParameterCount() == 1
+//                    && method.getParameterTypes()[0].equals(String.class)
+//                    && method.getReturnType().equals(clazz))
+//            .findFirst();
+//    }
+//
 //    private static void map(final Class<?> propertyType,
 //                            final Function<String, Object> deSerialiseFunc,
 //                            final Function<Object, String> serialiseFunc) {
@@ -851,75 +894,43 @@ public class ConfigMapper {
 //        }
 //        MAPPERS.put(propertyType, Mapping.of(propertyType, deSerialiseFunc));
 //    }
-
-    public static class UnknownPropertyException extends RuntimeException {
-        /**
-         * Constructs a new runtime exception with the specified detail message.
-         * The cause is not initialized, and may subsequently be initialized by a
-         * call to {@link #initCause}.
-         *
-         * @param message the detail message. The detail message is saved for
-         *                later retrieval by the {@link #getMessage()} method.
-         */
-        UnknownPropertyException(final String message) {
-            super(message);
-        }
-
-//        /**
-//         * Constructs a new runtime exception with the specified detail message and
-//         * cause.  <p>Note that the detail message associated with
-//         * {@code cause} is <i>not</i> automatically incorporated in
-//         * this runtime exception's detail message.
-//         *
-//         * @param message the detail message (which is saved for later retrieval
-//         *                by the {@link #getMessage()} method).
-//         * @param cause   the cause (which is saved for later retrieval by the
-//         *                {@link #getCause()} method).  (A {@code null} value is
-//         *                permitted, and indicates that the cause is nonexistent or
-//         *                unknown.)
-//         * @since 1.4
-//         */
-//        UnknownPropertyException(final String message, final Throwable cause) {
-//            super(message, cause);
+//
+//    private static class Mapping {
+//        private final Class<?> propertyType;
+//        private final BiFunction<String, Type, Object> deSerialiseFunc;
+//        private final Function<Object, String> serialiseFunc;
+//
+//        private Mapping(final Class<?> propertyType,
+//                        final BiFunction<String, Type, Object> deSerialiseFunc,
+//                        final Function<Object, String> serialiseFunc) {
+//            this.propertyType = propertyType;
+//            this.deSerialiseFunc = deSerialiseFunc;
+//            this.serialiseFunc = serialiseFunc;
 //        }
-    }
-
-    private static class Mapping {
-        private final Class<?> propertyType;
-        private final BiFunction<String, Type, Object> deSerialiseFunc;
-        private final Function<Object, String> serialiseFunc;
-
-        private Mapping(final Class<?> propertyType,
-                        final BiFunction<String, Type, Object> deSerialiseFunc,
-                        final Function<Object, String> serialiseFunc) {
-            this.propertyType = propertyType;
-            this.deSerialiseFunc = deSerialiseFunc;
-            this.serialiseFunc = serialiseFunc;
-        }
-
-        static Mapping of(final Class<?> propertyType,
-                          final BiFunction<String, Type, Object> deSerialiseFunc,
-                          final Function<Object, String> serialiseFunc) {
-            return new Mapping(propertyType, deSerialiseFunc, serialiseFunc);
-        }
-
-        static Mapping of(final Class<?> propertyType,
-                          final BiFunction<String, Type, Object> deSerialiseFunc) {
-            return new Mapping(propertyType, deSerialiseFunc, obj ->
-                obj == null ? null : obj.toString()
-            );
-        }
-
-        Class<?> getPropertyType() {
-            return propertyType;
-        }
-
-        Function<Object, String> getSerialiseFunc() {
-            return serialiseFunc;
-        }
-
-        BiFunction<String, Type, Object> getDeSerialiseFunc() {
-            return deSerialiseFunc;
-        }
-    }
+//
+//        static Mapping of(final Class<?> propertyType,
+//                          final BiFunction<String, Type, Object> deSerialiseFunc,
+//                          final Function<Object, String> serialiseFunc) {
+//            return new Mapping(propertyType, deSerialiseFunc, serialiseFunc);
+//        }
+//
+//        static Mapping of(final Class<?> propertyType,
+//                          final BiFunction<String, Type, Object> deSerialiseFunc) {
+//            return new Mapping(propertyType, deSerialiseFunc, obj ->
+//                obj == null ? null : obj.toString()
+//            );
+//        }
+//
+//        Class<?> getPropertyType() {
+//            return propertyType;
+//        }
+//
+//        Function<Object, String> getSerialiseFunc() {
+//            return serialiseFunc;
+//        }
+//
+//        BiFunction<String, Type, Object> getDeSerialiseFunc() {
+//            return deSerialiseFunc;
+//        }
+//    }
 }
