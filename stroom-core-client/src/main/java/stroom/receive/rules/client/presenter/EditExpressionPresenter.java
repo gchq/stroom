@@ -187,7 +187,7 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
 
     private String getEnableDisableText() {
         final stroom.query.client.Item selectedItem = getSelectedItem();
-        if (selectedItem != null && !selectedItem.enabled()) {
+        if (selectedItem != null && !selectedItem.isEnabled()) {
             return "Enable";
         }
         return "Disable";

@@ -4,12 +4,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class StoredQueryConfig implements IsConfig, HasDbConfig {
+public class StoredQueryConfig extends AbstractConfig implements HasDbConfig {
     private int itemsRetention = 100;
     private int daysRetention = 365;
     private DbConfig dbConfig = new DbConfig();

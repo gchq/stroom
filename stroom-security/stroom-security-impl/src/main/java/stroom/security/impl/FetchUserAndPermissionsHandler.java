@@ -30,15 +30,15 @@ import javax.inject.Inject;
 class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPermissionsAction, UserAndPermissions> {
     private final SecurityContext securityContext;
     private final UserAndPermissionsHelper userAndPermissionsHelper;
-    private final AuthenticationConfig securityConfig;
+    private final AuthenticationConfig authenticationConfig;
 
     @Inject
     FetchUserAndPermissionsHandler(final SecurityContext securityContext,
                                    final UserAndPermissionsHelper userAndPermissionsHelper,
-                                   final AuthenticationConfig securityConfig) {
+                                   final AuthenticationConfig authenticationConfig) {
         this.securityContext = securityContext;
         this.userAndPermissionsHelper = userAndPermissionsHelper;
-        this.securityConfig = securityConfig;
+        this.authenticationConfig = authenticationConfig;
     }
 
     @Override
@@ -55,13 +55,13 @@ class FetchUserAndPermissionsHandler extends AbstractTaskHandler<FetchUserAndPer
             return null;
         }
 
-        final boolean preventLogin = securityConfig.isPreventLogin();
+        final boolean preventLogin = authenticationConfig.isPreventLogin();
         if (preventLogin) {
             if (!securityContext.isAdmin()) {
                 throw new AuthenticationException("Stroom is down for maintenance. Please try again later.");
             }
         }
 
-        return new UserAndPermissions(user, securityContext.getUserIdentity().getJws(), userAndPermissionsHelper.get(user));
+        return new UserAndPermissions(user.getName(), userAndPermissionsHelper.get(user));
     }
 }

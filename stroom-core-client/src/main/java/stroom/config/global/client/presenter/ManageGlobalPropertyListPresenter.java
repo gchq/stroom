@@ -48,7 +48,7 @@ public class ManageGlobalPropertyListPresenter
                 if (row == null) {
                     return null;
                 }
-                return row.getName();
+                return row.getName().toString();
             }
         }, "Name", 350);
         getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {

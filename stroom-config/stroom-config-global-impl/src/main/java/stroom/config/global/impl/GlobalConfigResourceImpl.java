@@ -22,7 +22,9 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
         try {
             return globalConfigService.list();
         } catch (final RuntimeException e) {
-            throw new ServerErrorException(e.getMessage() != null ? e.getMessage() : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
+            throw new ServerErrorException(e.getMessage() != null
+                    ? e.getMessage()
+                    : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
         }
     }
 
@@ -32,7 +34,9 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
             final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(propertyName);
             return optConfigProperty.orElseThrow(NotFoundException::new);
         } catch (final RuntimeException e) {
-            throw new ServerErrorException(e.getMessage() != null ? e.getMessage() : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
+            throw new ServerErrorException(e.getMessage() != null
+                    ? e.getMessage()
+                    : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
         }
     }
 
@@ -45,7 +49,9 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource {
                             configProperty.getYamlOverrideValue().getValue())
                     .orElseThrow(NotFoundException::new);
         } catch (final RuntimeException e) {
-            throw new ServerErrorException(e.getMessage() != null ? e.getMessage() : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
+            throw new ServerErrorException(e.getMessage() != null
+                    ? e.getMessage()
+                    : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
         }
     }
 }

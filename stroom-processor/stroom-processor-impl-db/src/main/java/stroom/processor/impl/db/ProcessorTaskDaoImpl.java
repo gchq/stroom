@@ -89,7 +89,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
 
     private static final Field<Integer> COUNT = DSL.count();
 
-    private static final Map<String, Field> FIELD_MAP = Map.of(
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             ProcessorTaskDataSource.FIELD_ID, PROCESSOR_TASK.ID,
             ProcessorTaskDataSource.FIELD_COUNT, COUNT,
             ProcessorTaskDataSource.FIELD_CREATE_TIME, PROCESSOR_TASK.CREATE_TIME_MS,
@@ -906,7 +906,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 //        final Collection<Condition> conditions = convertCriteria(criteria);
 
-        final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<ProcessorTaskSummary> list = JooqUtil.contextResult(processorDbConnProvider, context -> context
                 .select(

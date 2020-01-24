@@ -2,13 +2,13 @@ package stroom.searchable.impl;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class SearchableConfig implements IsConfig {
+public class SearchableConfig extends AbstractConfig {
     private String storeSize = "1000000,100,10,1";
     private CacheConfig searchResultCache = new CacheConfig.Builder()
             .maximumSize(10000L)

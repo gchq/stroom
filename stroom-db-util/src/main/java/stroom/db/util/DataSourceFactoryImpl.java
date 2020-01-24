@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
+import stroom.util.config.FieldMapper;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -25,6 +26,8 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
     public DataSourceFactoryImpl(final CommonDbConfig commonDbConfig) {
         this.commonDbConfig = commonDbConfig;
         LOGGER.debug("Initialising {}", this.getClass().getSimpleName());
+
+        JooqUtil.disableJooqLogoInLogs();
     }
 
     public DataSource create(final HasDbConfig config) {
@@ -42,8 +45,8 @@ public class DataSourceFactoryImpl implements DataSourceFactory {
 
     protected DbConfig mergeConfig(final DbConfig dbConfig) {
         final DbConfig mergedConfig = new DbConfig();
-        DbUtil.copyConfig(commonDbConfig, mergedConfig);
-        DbUtil.copyConfig(dbConfig, mergedConfig);
+        FieldMapper.copy(commonDbConfig, mergedConfig, FieldMapper.CopyOption.DONT_COPY_NULLS);
+        FieldMapper.copy(dbConfig, mergedConfig, FieldMapper.CopyOption.DONT_COPY_NULLS);
         return mergedConfig;
     }
 }

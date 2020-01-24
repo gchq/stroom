@@ -15,7 +15,7 @@ public class JobNode implements HasAuditInfo, SharedObject {
     private Long updateTimeMs;
     private String updateUser;
     private Job job;
-    private byte jobType = JobType.UNKNOWN.getPrimitiveValue();
+    private JobType jobType = JobType.UNKNOWN;
     private String nodeName;
     private int taskLimit = 20;
     private String schedule;
@@ -29,7 +29,7 @@ public class JobNode implements HasAuditInfo, SharedObject {
         this.nodeName = nodeName;
         this.job = job;
         this.taskLimit = taskLimit;
-        this.jobType = jobType.primitiveValue;
+        this.jobType = jobType;
         this.schedule = schedule;
         this.enabled = enabled;
     }
@@ -95,11 +95,11 @@ public class JobNode implements HasAuditInfo, SharedObject {
     }
 
     public JobType getJobType() {
-        return JobType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(jobType);
+        return jobType;
     }
 
     public void setJobType(final JobType jobType) {
-        this.jobType = jobType.getPrimitiveValue();
+        this.jobType = jobType;
     }
 
     public String getNodeName() {

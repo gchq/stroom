@@ -20,6 +20,7 @@ import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -32,7 +33,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 //    private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(JobNodeDaoImpl.class);
 
 
-    private static final Map<String, Field> FIELD_MAP = Map.of(
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindJobNodeCriteria.FIELD_ID, JOB_NODE.ID);
 
     private static final Function<Record, Job> RECORD_TO_JOB_MAPPER = record -> {
@@ -104,6 +105,9 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
     @Override
     public JobNode update(@Nonnull final JobNode jobNode) {
+        Objects.requireNonNull(jobNode, "Null JobNode");
+        Objects.requireNonNull(jobNode.getJob(), "Null JobNode Job");
+
         final JobNode result = genericDao.update(jobNode);
         result.setJob(jobNode.getJob());
         return result;
@@ -116,7 +120,17 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
     @Override
     public Optional<JobNode> fetch(int id) {
-        return genericDao.fetch(id);
+       return JooqUtil.contextResult(jobDbConnProvider, context -> context
+                .select()
+                .from(JOB_NODE)
+                .join(JOB).on(JOB_NODE.JOB_ID.eq(JOB.ID))
+                .where(JOB_NODE.ID.eq(id))
+                .fetchOptional().map(record -> {
+                    final Job job = RECORD_TO_JOB_MAPPER.apply(record);
+                    final JobNode jobNode = RECORD_TO_JOB_NODE_MAPPER.apply(record);
+                    jobNode.setJob(job);
+                    return jobNode;
+                }));
     }
 
     public BaseResultList<JobNode> find(FindJobNodeCriteria criteria) {
@@ -124,7 +138,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                 JooqUtil.getStringCondition(JOB.NAME, criteria.getJobName()),
                 JooqUtil.getStringCondition(JOB_NODE.NODE_NAME, criteria.getNodeName()));
 
-        final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<JobNode> list = JooqUtil.contextResult(jobDbConnProvider, context -> context
                 .select()
@@ -143,32 +157,4 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
         return BaseResultList.createUnboundedList(list);
     }
-
-
-//    private GenericDao<JobNodeRecord, JobNode, Integer> genericDao;
-//
-//    @Inject
-//    JobNodeDao(final ConnectionProvider connectionProvider) {
-//        genericDao = new GenericDao<>(JOB_NODE, JOB_NODE.ID, JobNode.class, connectionProvider);
-//    }
-//
-//    @Override
-//    public JobNode create(@Nonnull final JobNode jobNode) {
-//        return genericDao.create(jobNode);
-//    }
-//
-//    @Override
-//    public JobNode update(@Nonnull final JobNode jobNode) {
-//        return genericDao.update(jobNode);
-//    }
-//
-//    @Override
-//    public boolean delete(int id) {
-//        return genericDao.delete(id);
-//    }
-//
-//    @Override
-//    public Optional<JobNode> fetch(int id) {
-//        return genericDao.fetch(id);
-//    }
 }

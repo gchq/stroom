@@ -28,8 +28,6 @@ import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.data.store.impl.fs.shared.UpdateFsVolumeAction;
 import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.item.client.ItemListBox;
-import stroom.node.shared.FindNodeAction;
-import stroom.node.shared.FindNodeCriteria;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -65,21 +63,20 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
             opening = true;
 
             this.volume = volume;
-            clientDispatchAsync.exec(new FindNodeAction(new FindNodeCriteria())).onSuccess(result -> {
-                getView().getPath().setText(volume.getPath());
-                getView().getStatus().addItems(VolumeUseStatus.values());
-                getView().getStatus().setSelectedItem(volume.getStatus());
 
-                if (volume.getByteLimit() != null) {
-                    getView().getByteLimit().setText(ModelStringUtil.formatIECByteSizeString(volume.getByteLimit()));
-                } else {
-                    getView().getByteLimit().setText("");
-                }
+            getView().getPath().setText(volume.getPath());
+            getView().getStatus().addItems(VolumeUseStatus.values());
+            getView().getStatus().setSelectedItem(volume.getStatus());
 
-                opening = false;
-                ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title,
-                        new DelegatePopupUiHandlers(popupUiHandlers));
-            });
+            if (volume.getByteLimit() != null) {
+                getView().getByteLimit().setText(ModelStringUtil.formatIECByteSizeString(volume.getByteLimit()));
+            } else {
+                getView().getByteLimit().setText("");
+            }
+
+            opening = false;
+            ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title,
+                    new DelegatePopupUiHandlers(popupUiHandlers));
         }
     }
 

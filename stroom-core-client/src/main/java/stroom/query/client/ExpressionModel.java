@@ -40,7 +40,7 @@ public class ExpressionModel {
         final Item item = tree.getRoot();
         if (item instanceof Operator) {
             final Operator source = (Operator) item;
-            final ExpressionOperator.Builder dest = new ExpressionOperator.Builder(source.getEnabled(), source.getOp());
+            final ExpressionOperator.Builder dest = new ExpressionOperator.Builder(source.isEnabled(), source.getOp());
             addChildrenFromTree(source, dest, tree);
             return dest.build();
         }
@@ -98,13 +98,13 @@ public class ExpressionModel {
             for (final Item child : children) {
                 if (child instanceof Operator) {
                     final Operator operator = (Operator) child;
-                    final ExpressionOperator.Builder childDest = new ExpressionOperator.Builder(operator.enabled(), operator.getOp());
+                    final ExpressionOperator.Builder childDest = new ExpressionOperator.Builder(operator.isEnabled(), operator.getOp());
                     addChildrenFromTree(operator, childDest, tree);
                     dest.addOperator(childDest.build());
                 } else if (child instanceof Term) {
                     final Term term = (Term) child;
                     dest.addTerm(new ExpressionTerm.Builder()
-                            .enabled(term.getEnabled())
+                            .enabled(term.isEnabled())
                             .field(term.getField())
                             .condition(term.getCondition())
                             .value(term.getValue())

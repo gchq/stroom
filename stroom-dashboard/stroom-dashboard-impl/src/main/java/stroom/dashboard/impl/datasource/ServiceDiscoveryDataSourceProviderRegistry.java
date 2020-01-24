@@ -21,17 +21,22 @@ import stroom.security.api.SecurityContext;
 import stroom.servicediscovery.api.ExternalService;
 import stroom.servicediscovery.api.ServiceDiscoverer;
 
+import javax.inject.Provider;
+import javax.ws.rs.client.Client;
 import java.util.Optional;
 
 public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourceProviderRegistry {
     private final SecurityContext securityContext;
     private final ServiceDiscoverer serviceDiscoverer;
+    private final Provider<Client> clientProvider;
 
     //    @Inject
     ServiceDiscoveryDataSourceProviderRegistry(final SecurityContext securityContext,
-                                               final ServiceDiscoverer serviceDiscoverer) {
+                                               final ServiceDiscoverer serviceDiscoverer,
+                                               final Provider<Client> clientProvider) {
         this.securityContext = securityContext;
         this.serviceDiscoverer = serviceDiscoverer;
+        this.clientProvider = clientProvider;
     }
 
     /**
@@ -52,7 +57,7 @@ public class ServiceDiscoveryDataSourceProviderRegistry implements DataSourcePro
 //                .filter(ServiceInstance::isEnabled) //not available until curator 2.12
                 .flatMap(serviceInstance -> {
                     String address = serviceInstance.buildUriSpec();
-                    return Optional.of(new RemoteDataSourceProvider(securityContext, address));
+                    return Optional.of(new RemoteDataSourceProvider(securityContext, address, clientProvider));
                 });
     }
 

@@ -41,9 +41,9 @@ class FindFsVolumeHandler extends AbstractTaskHandler<FindFsVolumeAction, Result
 
             try {
                 result = volumeService.find(action.getCriteria());
-                documentEventLog.search(action.getCriteria(), query, result, null);
+                documentEventLog.search(action.getCriteria().getClass().getSimpleName(), query, FsVolume.class.getSimpleName(), result.getPageResponse(), null);
             } catch (final RuntimeException e) {
-                documentEventLog.search(action.getCriteria(), query, result, e);
+                documentEventLog.search(action.getCriteria().getClass().getSimpleName(), query, FsVolume.class.getSimpleName(), null, e);
                 throw e;
             }
 

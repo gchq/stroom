@@ -44,7 +44,7 @@ logging:
 
   appenders:
   - type: console
-    logFormat: "%highlight(%-5level) [%d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC}] [%yellow(%thread)] %cyan(%-20logger{0}) %msg %n"
+    logFormat: "%highlight(%-5level) %d{\"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'\",UTC} %yellow(%thread) %cyan(%-30logger{25}) %msg %n"
     timeZone: UTC
   - type: file
     currentLogFilename: ${HOME}/.stroom/logs/app.log
@@ -59,6 +59,8 @@ logging:
 
 appConfig:
   superDevMode: true
+  apiGateway:
+    hostname: ${API_GATEWAY_HOST:-<<<IP_ADDRESS>>>}
   commonDbDetails:
     connection:
       jdbcDriverClassName: ${STROOM_JDBC_DRIVER_CLASS_NAME:-com.mysql.cj.jdbc.Driver}
@@ -81,7 +83,7 @@ appConfig:
     enabled: true
     executionInterval: "10s"
   node:
-    node: node1a
+    name: node1a
   path:
     temp: "/tmp/stroom"
   security:
@@ -98,7 +100,7 @@ appConfig:
   sessionCookie:
     secure: false
   ui:
-    # nodeName is set to appConfig.node.node in FetchUiConfigHandler
+    # nodeName is set to appConfig.node.name in FetchUiConfigHandler
     nodeName: null
     url:
       ui: ${STROOM_ADVERTISED_URL:-https://<<<IP_ADDRESS>>>}

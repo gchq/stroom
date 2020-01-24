@@ -105,4 +105,12 @@ public class ProcessorServiceImpl implements ProcessorService {
         return securityContext.secureResult(() ->
                 processorDao.find(criteria));
     }
+
+    @Override
+    public void setEnabled(final Integer id, final Boolean enabled) {
+        fetch(id).ifPresent(processor -> {
+            processor.setEnabled(enabled);
+            update(processor);
+        });
+    }
 }

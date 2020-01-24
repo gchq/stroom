@@ -16,21 +16,62 @@
 
 package stroom.security.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
 import stroom.security.shared.UserAppPermissions;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.util.Set;
 
-public interface UserAppPermissionService {
-    UserAppPermissions getPermissionsForUser(User userRef);
+@Singleton
+class UserAppPermissionService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserAppPermissionService.class);
 
-    Set<String> getPermissionNamesForUser(String userUuid);
+    private static final Set<String> ALL_PERMISSIONS = Set.of(PermissionNames.PERMISSIONS);
+    private final AppPermissionDao appPermissionDao;
 
-    Set<String> getAllPermissionNames();
+    @Inject
+    UserAppPermissionService(final AppPermissionDao appPermissionDao) {
+        this.appPermissionDao = appPermissionDao;
+    }
 
-    Set<String> getPermissionNamesForUserName(String userName);
+    UserAppPermissions getPermissionsForUser(final User userRef) {
+        final Set<String> permissionNames = getPermissionNamesForUser(userRef.getUuid());
+        final Set<String> allNames = getAllPermissionNames();
 
-    void addPermission(String userUuid, String permission);
+        return new UserAppPermissions(userRef, allNames, permissionNames);
+    }
 
-    void removePermission(String userUuid, String permission);
+    Set<String> getPermissionNamesForUser(final String userUuid) {
+        return appPermissionDao.getPermissionsForUser(userUuid);
+    }
+
+    Set<String> getAllPermissionNames() {
+        return ALL_PERMISSIONS;
+    }
+
+    Set<String> getPermissionNamesForUserName(String userName) {
+        return appPermissionDao.getPermissionsForUserName(userName);
+    }
+
+    void addPermission(final String userUuid, final String permission) {
+        try {
+            appPermissionDao.addPermission(userUuid, permission);
+        } catch (final RuntimeException e) {
+            LOGGER.error("addPermission()", e);
+            throw e;
+        }
+    }
+
+    void removePermission(final String userUuid, final String permission) {
+        try {
+            appPermissionDao.removePermission(userUuid, permission);
+        } catch (final RuntimeException e) {
+            LOGGER.error("removePermission()", e);
+            throw e;
+        }
+    }
 }

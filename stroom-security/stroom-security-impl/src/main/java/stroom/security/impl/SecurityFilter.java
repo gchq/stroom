@@ -24,9 +24,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.api.model.IdTokenRequest;
-import stroom.security.api.AuthenticationService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.shared.User;
 import stroom.ui.config.shared.UiConfig;
@@ -84,7 +84,7 @@ class SecurityFilter implements Filter {
     private final UiConfig uiConfig;
     private final JWTService jwtService;
     private final AuthenticationServiceClients authenticationServiceClients;
-    private final AuthenticationService authenticationService;
+    private final UserCache userCache;
     private final SecurityContext securityContext;
     private final Pattern publicApiPathPattern;
 
@@ -94,18 +94,15 @@ class SecurityFilter implements Filter {
             final UiConfig uiConfig,
             final JWTService jwtService,
             final AuthenticationServiceClients authenticationServiceClients,
-            final AuthenticationService authenticationService,
+            final UserCache userCache,
             final SecurityContext securityContext) {
         this.config = config;
         this.uiConfig = uiConfig;
         this.jwtService = jwtService;
         this.authenticationServiceClients = authenticationServiceClients;
-        this.authenticationService = authenticationService;
+        this.userCache = userCache;
         this.securityContext = securityContext;
 
-        if (!config.isAuthenticationRequired()) {
-            LOGGER.warn("All authentication is disabled");
-        }
         publicApiPathPattern = Pattern.compile(PUBLIC_API_PATH_REGEX);
     }
 
@@ -147,55 +144,57 @@ class SecurityFilter implements Filter {
             LOGGER.debug("Passing on to next filter");
             chain.doFilter(request, response);
         } else {
-            // We need to distinguish between requests from an API client and from the UI.
-            // - If a request is from the UI and fails authentication then we need to redirect to the login page.
-            // - If a request is from an API client and fails authentication then we need to return HTTP 403 UNAUTHORIZED.
-            // - If a request is for clustercall.rpc then it's a back-channel stroom-to-stroom request and we want to
-            //   let it through. It is essential that port 8080 is not exposed and that any reverse-proxy
-            //   blocks requests that look like '.*clustercall.rpc$'.
-            final String servletPath = request.getServletPath().toLowerCase();
-            final String fullPath = request.getRequestURI().toLowerCase();
-            if (isPublicApiRequest(fullPath)) {
-                authenticateAsProcUser(request, response, chain, false);
-            } else if (isApiRequest(servletPath)) {
-                LOGGER.debug("API request");
-                if (!config.isAuthenticationRequired()) {
+            // See if we have an authenticated session.
+            final UserIdentity userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
+            if (userIdentity != null) {
+                continueAsUser(request, response, chain, userIdentity);
+
+            } else {
+                // We need to distinguish between requests from an API client and from the UI.
+                // - If a request is from the UI and fails authentication then we need to redirect to the login page.
+                // - If a request is from an API client and fails authentication then we need to return HTTP 403 UNAUTHORIZED.
+                // - If a request is for clustercall.rpc then it's a back-channel stroom-to-stroom request and we want to
+                //   let it through. It is essential that port 8080 is not exposed and that any reverse-proxy
+                //   blocks requests that look like '.*clustercall.rpc$'.
+                final String servletPath = request.getServletPath().toLowerCase();
+                final String fullPath = request.getRequestURI().toLowerCase();
+                if (isPublicApiRequest(fullPath)) {
+                    authenticateAsProcUser(request, response, chain, false);
+                } else if (isApiRequest(servletPath)) {
+                    LOGGER.debug("API request");
+                    if (!config.isAuthenticationRequired()) {
+                        authenticateAsAdmin(request, response, chain, false);
+                    } else {
+                        // Authenticate requests to the API.
+                        final UserIdentity token = loginAPI(request, response);
+                        continueAsUser(request, response, chain, token);
+                    }
+                } else if (shouldBypassAuthentication(servletPath)) {
+                    // Some servet requests need to bypass authentication -- this happens if the servlet class
+                    // is annotated with @Unauthenticated. E.g. the status servlet doesn't require authentication.
                     authenticateAsProcUser(request, response, chain, false);
                 } else {
-                    // Authenticate requests to the API.
-                    final UserIdentity token = loginAPI(request, response);
-                    continueAsUser(request, response, chain, token);
-                }
-            } else if (shouldBypassAuthentication(servletPath)) {
-                // Some servet requests need to bypass authentication -- this happens if the servlet class
-                // is annotated with @Unauthenticated. E.g. the status servlet doesn't require authentication.
-                authenticateAsProcUser(request, response, chain, false);
-            } else {
-                // We assume all other requests are from the UI, and instigate an OpenID authentication flow
-                // like the good relying party we are.
+                    // We assume all other requests are from the UI, and instigate an OpenID authentication flow
+                    // like the good relying party we are.
 
-                // Try and get an existing authentication token from the session.
-                final UserIdentity userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
-                if (userIdentity != null) {
-                    continueAsUser(request, response, chain, userIdentity);
+                    if (!config.isAuthenticationRequired()) {
+                        authenticateAsAdmin(request, response, chain, true);
 
-                } else if (!config.isAuthenticationRequired()) {
-                    authenticateAsProcUser(request, response, chain, true);
+                    } else {
+                        // If the session doesn't have a user ref then attempt login.
+                        final boolean loggedIn = loginUI(request, response);
 
-                } else {
-                    // If the session doesn't have a user ref then attempt login.
-                    final boolean loggedIn = loginUI(request, response);
-
-                    // If we're not logged in we need to start an AuthenticationRequest flow.
-                    // If this is a dispatch request then we won't try and log in. This avoids a race-condition:
-                    //   1. User logs out and a new authentication flow is started
-                    //   2. Before the browser is redirected GWT makes a dispatch.rpc request
-                    //   3. This request, not being logged in, starts a new authentication flow
-                    //   4. This new authentication flow partially over-writes the relying party data in auth.
-                    // This would manifest as a bad redirect_url, one which contains 'dispatch.rpc'.
-                    if (!loggedIn && !isDispatchRequest(servletPath)) {
-                        // We were unable to login so we're going to redirect with an AuthenticationRequest.
-                        redirectToAuthService(request, response);
+                        // If we're not logged in we need to start an AuthenticationRequest flow.
+                        // If this is a dispatch request then we won't try and log in. This avoids a race-condition:
+                        //   1. User logs out and a new authentication flow is started
+                        //   2. Before the browser is redirected GWT makes a dispatch.rpc request
+                        //   3. This request, not being logged in, starts a new authentication flow
+                        //   4. This new authentication flow partially over-writes the relying party data in auth.
+                        // This would manifest as a bad redirect_url, one which contains 'dispatch.rpc'.
+                        if (!loggedIn && !isDispatchRequest(servletPath)) {
+                            // We were unable to login so we're going to redirect with an AuthenticationRequest.
+                            redirectToAuthService(request, response);
+                        }
                     }
                 }
             }
@@ -216,6 +215,14 @@ class SecurityFilter implements Filter {
 
     private boolean shouldBypassAuthentication(String servletPath) {
         return servletPath.startsWith(NO_AUTH_PATH);
+    }
+
+    private void authenticateAsAdmin(final HttpServletRequest request,
+                                     final HttpServletResponse response,
+                                     final FilterChain chain,
+                                     final boolean useSession) throws IOException, ServletException {
+
+        bypassAuthentication(request, response, chain, useSession, securityContext.createIdentity(User.ADMIN_USER_NAME));
     }
 
     private void authenticateAsProcUser(final HttpServletRequest request,
@@ -411,7 +418,8 @@ class SecurityFilter implements Filter {
             if (match) {
                 LOGGER.info("User is authenticated for sessionId " + sessionId);
                 final String userId = jwtClaims.getSubject();
-                final User user = authenticationService.getUser(userId);
+                final Optional<User> optionalUser = userCache.get(userId);
+                final User user = optionalUser.orElseThrow(() -> new AuthenticationException("Unable to find user: " + userId));
                 token = new UserIdentityImpl(user, userId, jws, sessionId);
 
             } else {
@@ -464,7 +472,8 @@ class SecurityFilter implements Filter {
             }
 
             final String userId = optionalUserId.get();
-            final User user = authenticationService.getUser(userId);
+            final Optional<User> optionalUser = userCache.get(userId);
+            final User user = optionalUser.orElseThrow(() -> new AuthenticationException("Unable to find user: " + userId));
             token = new UserIdentityImpl(user, userId, optionalJws.get(), sessionId);
         } else {
             LOGGER.error("Cannot get a valid JWS for API request!");

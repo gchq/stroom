@@ -46,6 +46,4 @@ public class ClusterConfigProperty implements SharedObject {
                         AbstractMap.SimpleEntry::getKey,
                         entry -> entry.getValue().get()));
     }
-
-
 }

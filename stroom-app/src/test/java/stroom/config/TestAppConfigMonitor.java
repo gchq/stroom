@@ -6,13 +6,17 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
-import stroom.config.global.impl.AppConfigMonitor;
 import stroom.config.app.ConfigLocation;
 import stroom.config.app.YamlUtil;
+import stroom.config.global.impl.AppConfigMonitor;
 import stroom.config.global.impl.ConfigMapper;
+import stroom.config.global.impl.GlobalConfigService;
+import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.FileUtil;
 
+import javax.inject.Inject;
+import javax.validation.Validator;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -27,9 +31,15 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
 
     private final Path tmpDir = FileUtil.createTempDir(this.getClass().getSimpleName());
 
+    @Inject
+    private Validator validator;
+    @Inject
+    private GlobalConfigService globalConfigService;
+
     @AfterEach
-    void afterEach() {
+    void afterEach() throws IOException {
         FileUtil.deleteContents(tmpDir);
+        Files.deleteIfExists(tmpDir);
     }
 
     @Test
@@ -68,27 +78,38 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
 
         Assertions.assertThat(optMatcher).isPresent();
 
+        // We need to craft our own instances of these classes rather than use guice
+        // so that we can use our own config file
         final AppConfig appConfig = YamlUtil.readAppConfig(devYamlCopyPath);
         final ConfigMapper configMapper = new ConfigMapper(appConfig);
         final ConfigLocation configLocation = new ConfigLocation(devYamlCopyPath);
+        final ConfigValidator configValidator = new ConfigValidator(validator);
 
         Assertions.assertThat(appConfig.getPathConfig().getTemp())
                 .isNotEqualTo(newPathValue);
 
-        final AppConfigMonitor appConfigMonitor = new AppConfigMonitor(appConfig, configLocation, configMapper);
-
+        final AppConfigMonitor appConfigMonitor = new AppConfigMonitor(
+            appConfig, configLocation, configMapper, configValidator, globalConfigService);
 
         // start watching the file for changes
         appConfigMonitor.start();
 
+        // We need to sleep here to give the config monitor time to start as it monitors asynchronously.
+        Thread.sleep(3000);
+
         // Update the config file
-        final String updatedDevYamlStr = pattern.matcher(devYamlStr).replaceAll("temp: \"" + newPathValue + "\"");
+        final String updatedDevYamlStr = pattern.matcher(devYamlStr)
+            .replaceAll("temp: \"" + newPathValue + "\"");
+
+        // Ensure the replace worked
+        Assertions.assertThat(updatedDevYamlStr).isNotEqualTo(devYamlStr);
         Files.writeString(devYamlCopyPath, updatedDevYamlStr);
         LOGGER.debug("Modified file {}", devYamlCopyPath.toAbsolutePath());
 
         Instant startTime = Instant.now();
-        Instant timeOutTime = startTime.plusSeconds(60);
-        while (!appConfig.getPathConfig().getTemp().equals(newPathValue) && Instant.now().isBefore(timeOutTime)) {
+        Instant timeOutTime = startTime.plusSeconds(10);
+        while (!appConfig.getPathConfig().getTemp().equals(newPathValue)
+            && Instant.now().isBefore(timeOutTime)) {
             LOGGER.debug("value {}", appConfig.getPathConfig().getTemp());
             grepFile.run();
             Thread.sleep(200);

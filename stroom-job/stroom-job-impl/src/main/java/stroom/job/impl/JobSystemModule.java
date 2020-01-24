@@ -20,14 +20,12 @@ import com.google.inject.AbstractModule;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.JobManager;
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.shared.FindJobAction;
-import stroom.job.shared.FindJobNodeAction;
 import stroom.job.shared.GetScheduledTimesAction;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
-import stroom.job.shared.UpdateJobAction;
-import stroom.job.shared.UpdateJobNodeAction;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 public class JobSystemModule extends AbstractModule {
     @Override
@@ -44,13 +42,12 @@ public class JobSystemModule extends AbstractModule {
 
         TaskHandlerBinder.create(binder())
                 .bind(DistributedTaskRequestClusterTask.class, DistributedTaskRequestClusterHandler.class)
-                .bind(FindJobAction.class, FindJobHandler.class)
-                .bind(FindJobNodeAction.class, FindJobNodeHandler.class)
                 .bind(GetScheduledTimesAction.class, GetScheduledTimesHandler.class)
-                .bind(JobNodeInfoClusterTask.class, JobNodeInfoClusterHandler.class)
-                .bind(ScheduledTask.class, ScheduledTaskHandler.class)
-                .bind(UpdateJobAction.class, UpdateJobHandler.class)
-                .bind(UpdateJobNodeAction.class, UpdateJobNodeHandler.class);
+                .bind(ScheduledTask.class, ScheduledTaskHandler.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(JobResourceImpl.class)
+                .addBinding(JobNodeResourceImpl.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())

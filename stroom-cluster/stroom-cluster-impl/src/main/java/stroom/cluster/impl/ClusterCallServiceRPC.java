@@ -29,7 +29,7 @@ import stroom.util.shared.IsServlet;
 import javax.inject.Inject;
 import java.util.Set;
 
-class ClusterCallServiceRPC extends HessianServlet implements ClusterCallService, IsServlet {
+public class ClusterCallServiceRPC extends HessianServlet implements ClusterCallService, IsServlet {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterCallServiceRPC.class);
     private static final Set<String> PATH_SPECS = Set.of("/clustercall.rpc");
 
