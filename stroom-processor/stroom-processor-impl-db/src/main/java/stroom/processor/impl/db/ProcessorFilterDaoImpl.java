@@ -35,7 +35,7 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCES
 class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
-    private static final Map<String, Field> FIELD_MAP = Map.of(
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             ProcessorFilterDataSource.FIELD_ID, PROCESSOR_FILTER.ID);
 
     private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
@@ -143,7 +143,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private BaseResultList<ProcessorFilter> find(final DSLContext context, final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 
-        final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<ProcessorFilter> list = context
                 .select()

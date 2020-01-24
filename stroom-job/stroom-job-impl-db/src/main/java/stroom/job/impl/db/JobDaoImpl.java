@@ -51,7 +51,7 @@ import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
 public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(JobDao.class);
 
-    private static final Map<String, Field> FIELD_MAP = Map.of(
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindJobCriteria.FIELD_ID, JOB.ID,
             FindJobCriteria.FIELD_NAME, JOB.NAME);
 
@@ -89,7 +89,7 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getStringCondition(JOB.NAME, criteria.getName()));
 
-        final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<Job> list = JooqUtil.contextResult(jobDbConnProvider, context -> context
                 .select()

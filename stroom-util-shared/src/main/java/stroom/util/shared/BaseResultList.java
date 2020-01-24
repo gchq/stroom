@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * List that knows how big the whole set is.
  */
-public class BaseResultList<T extends SharedObject> extends SharedList<T>implements ResultList<T> {
+public class BaseResultList<T extends SharedObject> extends SharedList<T> implements ResultList<T> {
     private static final long serialVersionUID = 6482769757822956315L;
 
     private PageResponse pageResponse;
@@ -40,6 +40,12 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T>impleme
     public BaseResultList(final List<T> list, final Long offset, final Long completeSize, final boolean exact) {
         super(list);
         pageResponse = new PageResponse(offset, size(), completeSize, exact);
+    }
+
+    public <R extends ResultPage<T>> R toResultPage(final R resultPage) {
+        resultPage.setValues(new ArrayList<T>(this));
+        resultPage.setPageResponse(pageResponse);
+        return resultPage;
     }
 
     /**

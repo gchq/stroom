@@ -28,13 +28,21 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
 @Api(value = "processor-filter")
 @Path("/processor-filter")
 @Produces(MediaType.APPLICATION_JSON)
 public interface ProcessorFilterResource extends DirectRestService {
+    @POST
+    @Path("find")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Finds processors and filters matching request",
+            response = Processor.class)
+    FetchProcessorResponse find(FetchProcessorRequest request);
+
     @POST
     @Path("")
     @Consumes(MediaType.APPLICATION_JSON)

@@ -18,6 +18,7 @@
 package stroom.node.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
@@ -29,18 +30,18 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.data.client.presenter.ActionDataProvider;
+import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.ClusterNodeInfo;
-import stroom.node.shared.ClusterNodeInfoAction;
-import stroom.node.shared.FetchNodeStatusAction;
+import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.Node;
+import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
-import stroom.node.shared.UpdateNodeAction;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.BuildInfo;
@@ -55,26 +56,56 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Consumer;
+
 public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<NodeStatusResult>> implements Refreshable {
-    private final ClientDispatchAsync dispatcher;
+    private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
+
+    private final RestFactory restFactory;
     private final TooltipPresenter tooltipPresenter;
-    private final FetchNodeStatusAction action = new FetchNodeStatusAction();
-    private final ActionDataProvider<NodeStatusResult> dataProvider;
+    private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
 
     private final ButtonView editButton;
     private final Provider<NodeEditPresenter> nodeEditPresenterProvider;
 
+    private final Map<String, PingResult> latestPing = new HashMap<>();
+
     @Inject
     public NodeMonitoringPresenter(final EventBus eventBus,
-                                   final ClientDispatchAsync dispatcher,
+                                   final RestFactory restFactory,
                                    final TooltipPresenter tooltipPresenter,
                                    final Provider<NodeEditPresenter> nodeEditPresenterProvider) {
         super(eventBus, new DataGridViewImpl<>(true));
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         this.tooltipPresenter = tooltipPresenter;
         this.nodeEditPresenterProvider = nodeEditPresenterProvider;
         initTableColumns();
-        dataProvider = new ActionDataProvider<>(dispatcher, action);
+        dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
+            @Override
+            protected void exec(final Consumer<FetchNodeStatusResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<FetchNodeStatusResponse> rest = restFactory.create();
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(NODE_RESOURCE).list();
+            }
+
+            @Override
+            protected void changeData(final FetchNodeStatusResponse data) {
+                // Ping each node.
+                data.getValues().forEach(row -> {
+                    final String nodeName = row.getNode().getName();
+                    final Rest<Long> rest = restFactory.create();
+                    rest.onSuccess(ping -> {
+                        latestPing.put(nodeName, new PingResult(ping, null));
+                        super.changeData(data);
+                    }).onFailure(throwable -> {
+                        latestPing.put(nodeName, new PingResult(null, throwable.getMessage()));
+                        super.changeData(data);
+                    }).call(NODE_RESOURCE).ping(nodeName);
+                });
+                super.changeData(data);
+            }
+        };
         dataProvider.addDataDisplay(getView().getDataDisplay());
 
         editButton = getView().addButton(SvgPresets.EDIT);
@@ -104,54 +135,12 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         final InfoColumn<NodeStatusResult> infoColumn = new InfoColumn<NodeStatusResult>() {
             @Override
             protected void showInfo(final NodeStatusResult row, final int x, final int y) {
-                dispatcher.exec(new ClusterNodeInfoAction(row.getNode().getName()))
-                        .onSuccess(result -> {
-                            final StringBuilder html = new StringBuilder();
-                            TooltipUtil.addHeading(html, "Node Details");
-
-                            if (result != null) {
-                                final BuildInfo buildInfo = result.getBuildInfo();
-                                TooltipUtil.addRowData(html, "Node Name", result.getNodeName(), true);
-                                TooltipUtil.addRowData(html, "Build Version", buildInfo.getBuildVersion(), true);
-                                TooltipUtil.addRowData(html, "Build Date", buildInfo.getBuildDate(), true);
-                                TooltipUtil.addRowData(html, "Up Date", buildInfo.getUpDate(), true);
-                                TooltipUtil.addRowData(html, "Discover Time", result.getDiscoverTime(), true);
-                                TooltipUtil.addRowData(html, "Cluster URL", result.getClusterURL(), true);
-                            } else {
-                                TooltipUtil.addRowData(html, "Node Name", row.getNode().getName(), true);
-                                TooltipUtil.addRowData(html, "Cluster URL", row.getNode().getUrl(), true);
-                            }
-
-                            TooltipUtil.addRowData(html, "Ping", ModelStringUtil.formatDurationString(row.getPing()));
-                            TooltipUtil.addRowData(html, "Error", row.getError());
-
-                            if (result != null) {
-                                TooltipUtil.addBreak(html);
-                                TooltipUtil.addHeading(html, "Node List");
-                                for (final ClusterNodeInfo.ClusterNodeInfoItem info : result.getItemList()) {
-                                    html.append(info.getNodeName());
-                                    if (!info.isActive()) {
-                                        html.append(" (Unknown)");
-                                    }
-                                    if (info.isMaster()) {
-                                        html.append(" (Master)");
-                                    }
-                                    html.append("<br/>");
-                                }
-                            }
-
-                            tooltipPresenter.setHTML(html.toString());
-                            final PopupPosition popupPosition = new PopupPosition(x, y);
-                            ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
-                                    popupPosition, null);
-                        })
-                        .onFailure(caught -> {
-                                    tooltipPresenter.setHTML(caught.getMessage());
-                                    final PopupPosition popupPosition = new PopupPosition(x, y);
-                                    ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
-                                            popupPosition, null);
-                                }
-                        );
+                final Rest<ClusterNodeInfo> rest = restFactory.create();
+                rest
+                        .onSuccess(result -> showNodeInfoResult(row.getNode(), result, x, y))
+                        .onFailure(caught -> showNodeInfoError(caught, x, y))
+                        .call(NODE_RESOURCE)
+                        .info(row.getNode().getName());
             }
         };
         getView().addColumn(infoColumn, "<br/>", 20);
@@ -187,14 +176,18 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 if (row == null) {
                     return null;
                 }
-                if ("No response".equals(row.getError())) {
-                    return row.getError();
-                }
-                if (row.getError() != null) {
-                    return "Error";
-                }
 
-                return ModelStringUtil.formatDurationString(row.getPing());
+                final PingResult pingResult = latestPing.get(row.getNode().getName());
+                if (pingResult != null) {
+                    if ("No response".equals(pingResult.getError())) {
+                        return pingResult.getError();
+                    }
+                    if (pingResult.getError() != null) {
+                        return "Error";
+                    }
+                    return ModelStringUtil.formatDurationString(pingResult.getPing());
+                }
+                return "-";
             }
         };
         getView().addResizableColumn(pingColumn, "Ping", 150);
@@ -223,7 +216,10 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 return new EditableInteger(row.getNode().getPriority());
             }
         };
-        priorityColumn.setFieldUpdater((index, row, value) -> dispatcher.exec(new UpdateNodeAction(row.getNode())));
+        priorityColumn.setFieldUpdater((index, row, value) -> {
+            final Rest<Node> rest = restFactory.create();
+            rest.onSuccess(result -> refresh()).call(NODE_RESOURCE).setPriority(row.getNode().getName(), value.intValue());
+        });
         getView().addColumn(priorityColumn, "Priority", 55);
 
         // Enabled
@@ -237,11 +233,62 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 return TickBoxState.fromBoolean(row.getNode().isEnabled());
             }
         };
-        enabledColumn.setFieldUpdater((index, row, value) -> dispatcher.exec(new UpdateNodeAction(row.getNode())));
+        enabledColumn.setFieldUpdater((index, row, value) -> {
+            final Rest<Node> rest = restFactory.create();
+            rest.onSuccess(result -> refresh()).call(NODE_RESOURCE).setEnabled(row.getNode().getName(), value.toBoolean());
+        });
 
         getView().addColumn(enabledColumn, "Enabled", 60);
 
         getView().addEndColumn(new EndColumn<>());
+    }
+
+    private void showNodeInfoResult(final Node node, final ClusterNodeInfo result, final int x, final int y) {
+        final StringBuilder html = new StringBuilder();
+        TooltipUtil.addHeading(html, "Node Details");
+
+        if (result != null) {
+            final BuildInfo buildInfo = result.getBuildInfo();
+            TooltipUtil.addRowData(html, "Node Name", result.getNodeName(), true);
+            if (buildInfo != null) {
+                TooltipUtil.addRowData(html, "Build Version", buildInfo.getBuildVersion(), true);
+                TooltipUtil.addRowData(html, "Build Date", buildInfo.getBuildDate(), true);
+                TooltipUtil.addRowData(html, "Up Date", buildInfo.getUpDate(), true);
+            }
+            TooltipUtil.addRowData(html, "Discover Time", result.getDiscoverTime(), true);
+            TooltipUtil.addRowData(html, "Cluster URL", result.getClusterURL(), true);
+            TooltipUtil.addRowData(html, "Ping", ModelStringUtil.formatDurationString(result.getPing()));
+            TooltipUtil.addRowData(html, "Error", result.getError());
+
+            TooltipUtil.addBreak(html);
+            TooltipUtil.addHeading(html, "Node List");
+            for (final ClusterNodeInfo.ClusterNodeInfoItem info : result.getItemList()) {
+                html.append(info.getNodeName());
+                if (!info.isActive()) {
+                    html.append(" (Unknown)");
+                }
+                if (info.isMaster()) {
+                    html.append(" (Master)");
+                }
+                html.append("<br/>");
+            }
+
+        } else {
+            TooltipUtil.addRowData(html, "Node Name", node.getName(), true);
+            TooltipUtil.addRowData(html, "Cluster URL", node.getUrl(), true);
+        }
+
+        tooltipPresenter.setHTML(html.toString());
+        final PopupPosition popupPosition = new PopupPosition(x, y);
+        ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
+                popupPosition, null);
+    }
+
+    private void showNodeInfoError(final Throwable caught, final int x, final int y) {
+        tooltipPresenter.setHTML(caught.getMessage());
+        final PopupPosition popupPosition = new PopupPosition(x, y);
+        ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
+                popupPosition, null);
     }
 
     private void onEdit(final NodeStatusResult nodeStatusResult) {
@@ -256,7 +303,9 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 if (ok) {
                     if (node.getUrl() == null || !node.getUrl().equals(editor.getClusterUrl())) {
                         node.setUrl(editor.getClusterUrl());
-                        dispatcher.exec(new UpdateNodeAction(node)).onSuccess(result -> refresh());
+
+                        final Rest<Node> rest = restFactory.create();
+                        rest.onSuccess(result -> refresh()).call(NODE_RESOURCE).setUrl(node.getName(), editor.getClusterUrl());
                     }
                 }
 
@@ -291,5 +340,23 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     @Override
     public String getLabel() {
         return "Nodes";
+    }
+
+    private static final class PingResult {
+        private final Long ping;
+        private final String error;
+
+        PingResult(final Long ping, final String error) {
+            this.ping = ping;
+            this.error = error;
+        }
+
+        Long getPing() {
+            return ping;
+        }
+
+        String getError() {
+            return error;
+        }
     }
 }

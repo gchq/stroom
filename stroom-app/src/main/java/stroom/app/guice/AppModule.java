@@ -62,6 +62,7 @@ public class AppModule extends AbstractModule {
         install(new stroom.statistics.impl.sql.search.SQLStatisticSearchModule());
         install(new DispatchModule());
         install(new SessionResourceModule());
+        install(new JerseyModule());
 
         HealthCheckBinder.create(binder())
                 .bind(LogLevelInspector.class);

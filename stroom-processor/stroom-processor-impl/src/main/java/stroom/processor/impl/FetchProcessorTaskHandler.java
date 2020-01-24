@@ -43,9 +43,9 @@ class FetchProcessorTaskHandler extends AbstractTaskHandler<FindProcessorTaskAct
 
             try {
                 result = processorTaskService.find(criteria);
-                documentEventLog.search(criteria, query, ProcessorTask.class.getSimpleName(), result, null);
+                documentEventLog.search(criteria.getClass().getSimpleName(), query, ProcessorTask.class.getSimpleName(), result.getPageResponse(), null);
             } catch (final RuntimeException e) {
-                documentEventLog.search(criteria, query, ProcessorTask.class.getSimpleName(), null, e);
+                documentEventLog.search(criteria.getClass().getSimpleName(), query, ProcessorTask.class.getSimpleName(), null, e);
                 throw e;
             }
 

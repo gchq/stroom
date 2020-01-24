@@ -16,28 +16,7 @@
 
 package stroom.job.shared;
 
-import stroom.docref.SharedObject;
+import stroom.util.shared.ResultPage;
 
-public class JobNodeRow implements SharedObject {
-    private static final long serialVersionUID = 3306590492924959915L;
-
-    private JobNode jobNode;
-    private JobNodeInfo jobNodeInfo;
-
-    public JobNodeRow() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public JobNodeRow(final JobNode jobNode, final JobNodeInfo jobNodeInfo) {
-        this.jobNode = jobNode;
-        this.jobNodeInfo = jobNodeInfo;
-    }
-
-    public JobNode getJobNode() {
-        return jobNode;
-    }
-
-    public JobNodeInfo getJobNodeInfo() {
-        return jobNodeInfo;
-    }
+public class ListJobResponse extends ResultPage<Job> {
 }

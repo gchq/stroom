@@ -17,7 +17,6 @@
 
 package stroom.meta.impl;
 
-
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.BeforeAll;
@@ -25,6 +24,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.app.guice.CoreModule;
+import stroom.app.guice.JerseyModule;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
@@ -63,6 +63,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(SecurityContextModule.class)
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
+@IncludeModule(JerseyModule.class)
 @ExtendWith(TempDirExtension.class)
 class TestMetaService {
     private static final String TEST_USER = "test_user";

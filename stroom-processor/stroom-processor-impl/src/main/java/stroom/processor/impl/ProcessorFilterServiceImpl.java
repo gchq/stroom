@@ -17,23 +17,43 @@
 package stroom.processor.impl;
 
 import stroom.docref.DocRef;
+import stroom.docref.DocRefInfo;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.explorer.api.ExplorerService;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.FetchProcessorRequest;
+import stroom.processor.shared.FetchProcessorResponse;
 import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorDataSource;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterRow;
+import stroom.processor.shared.ProcessorListRow;
+import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.QueryData;
+import stroom.query.api.v2.ExpressionItem;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionOperator.Builder;
+import stroom.query.api.v2.ExpressionOperator.Op;
+import stroom.query.api.v2.ExpressionTerm;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.shared.BaseResultList;
+import stroom.util.shared.Expander;
+import stroom.util.shared.PageResponse;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Singleton
@@ -43,14 +63,17 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     private final ProcessorService processorService;
     private final ProcessorFilterDao processorFilterDao;
     private final SecurityContext securityContext;
+    private final ExplorerService explorerService;
 
     @Inject
     ProcessorFilterServiceImpl(final ProcessorService processorService,
                                final ProcessorFilterDao processorFilterDao,
-                               final SecurityContext securityContext) {
+                               final SecurityContext securityContext,
+                               final ExplorerService explorerService) {
         this.processorService = processorService;
         this.processorFilterDao = processorFilterDao;
         this.securityContext = securityContext;
+        this.explorerService = explorerService;
     }
 
     @Override
@@ -198,6 +221,151 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 processorFilterDao.find(criteria));
     }
 
+    // TODO : The following method combines results from the processor and processor filter services so should possibly
+    //  be in another class that controls the collaboration.
+    @Override
+    public FetchProcessorResponse find(final FetchProcessorRequest request) {
+        return securityContext.secureResult(PERMISSION, () -> {
+            final List<ProcessorListRow> values = new ArrayList<>();
+
+            final ExpressionCriteria criteria = new ExpressionCriteria(request.getExpression());
+            final ExpressionCriteria criteriaRoot = new ExpressionCriteria(request.getExpression());
+//            if (action.getPipeline() != null) {
+//                criteria.obtainPipelineUuidCriteria().setString(action.getPipeline().getUuid());
+//                criteriaRoot.obtainPipelineUuidCriteria().setString(action.getPipeline().getUuid());
+//            }
+
+            // If the user is not an admin then only show them filters that were created by them.
+            if (!securityContext.isAdmin()) {
+                final ExpressionOperator.Builder builder = new Builder(Op.AND)
+                        .addTerm(ProcessorDataSource.CREATE_USER, Condition.EQUALS, securityContext.getUserId())
+                        .addOperator(criteria.getExpression());
+                criteria.setExpression(builder.build());
+            }
+
+            final BaseResultList<Processor> streamProcessors = processorService.find(criteriaRoot);
+
+            final BaseResultList<ProcessorFilter> processorFilters = find(criteria);
+
+            // Get unique processors.
+            final Set<Processor> processors = new HashSet<>(streamProcessors);
+
+            final List<Processor> sorted = new ArrayList<>(processors);
+            sorted.sort((o1, o2) -> {
+                if (o1.getPipelineUuid() != null && o2.getPipelineUuid() != null) {
+                    return o1.getPipelineUuid().compareTo(o2.getPipelineUuid());
+                }
+                if (o1.getPipelineUuid() != null) {
+                    return -1;
+                }
+                if (o2.getPipelineUuid() != null) {
+                    return 1;
+                }
+                return o1.getId().compareTo(o2.getId());
+            });
+
+            for (final Processor processor : sorted) {
+                final Expander processorExpander = new Expander(0, false, false);
+                final ProcessorRow processorRow = new ProcessorRow(processorExpander,
+                        processor);
+                values.add(processorRow);
+
+                // If the job row is open then add child rows.
+                if (request.getExpandedRows() == null || request.isRowExpanded(processorRow)) {
+                    processorExpander.setExpanded(true);
+
+                    // Add filters.
+                    for (final ProcessorFilter processorFilter : processorFilters) {
+                        if (processor.equals(processorFilter.getProcessor())) {
+                            // Decorate the expression with resolved dictionaries etc.
+                            final QueryData queryData = processorFilter.getQueryData();
+                            if (queryData != null && queryData.getExpression() != null) {
+                                queryData.setExpression(decorate(queryData.getExpression()));
+                            }
+
+                            final ProcessorFilterRow processorFilterRow = new ProcessorFilterRow(processorFilter);
+                            values.add(processorFilterRow);
+                        }
+                    }
+                }
+            }
+
+            final FetchProcessorResponse response = new FetchProcessorResponse();
+            response.init(values);
+            return response;
+        });
+    }
+
+    private ExpressionOperator decorate(final ExpressionOperator operator) {
+        final ExpressionOperator.Builder builder = new Builder()
+                .op(operator.getOp())
+                .enabled(operator.isEnabled());
+
+        if (operator.getChildren() != null) {
+            for (final ExpressionItem child : operator.getChildren()) {
+                if (child instanceof ExpressionOperator) {
+                    builder.addOperator(decorate((ExpressionOperator) child));
+
+                } else if (child instanceof ExpressionTerm) {
+                    ExpressionTerm term = (ExpressionTerm) child;
+                    DocRef docRef = term.getDocRef();
+
+                    if (docRef != null) {
+                        final DocRefInfo docRefInfo = explorerService.info(docRef);
+                        if (docRefInfo != null) {
+                            term = new ExpressionTerm.Builder()
+                                    .enabled(term.isEnabled())
+                                    .field(term.getField())
+                                    .condition(term.getCondition())
+                                    .value(term.getValue())
+                                    .docRef(docRefInfo.getDocRef())
+                                    .build();
+                        }
+//
+//                        if (DictionaryDoc.ENTITY_TYPE.equals(docRef.getType())) {
+//                            try {
+//                                final DictionaryDoc dictionaryDoc = dictionaryStore.read(docRef.getUuid());
+//                                docRef = stroom.entity.shared.DocRefUtil.create(dictionaryDoc);
+//                            } catch (final RuntimeException e) {
+//                                LOGGER.debug(e.getMessage(), e);
+//                            }
+//
+//                            term = new ExpressionTerm.Builder()
+//                                    .enabled(term.getEnabled())
+//                                    .field(term.getField())
+//                                    .condition(term.getCondition())
+//                                    .value(term.getValue())
+//                                    .docRef(docRef)
+//                                    .build();
+//                        }
+//
+//                        if (PipelineEntity.ENTITY_TYPE.equals(docRef.getType())) {
+//                            try {
+//                                final PipelineEntity pipelineEntity = pipelineService.loadByUuid(docRef.getUuid());
+//                                docRef = stroom.entity.shared.DocRefUtil.create(pipelineEntity);
+//                            } catch (final RuntimeException e) {
+//                                LOGGER.debug(e.getMessage(), e);
+//                            }
+//
+//                            term = new ExpressionTerm.Builder()
+//                                    .enabled(term.getEnabled())
+//                                    .field(term.getField())
+//                                    .condition(term.getCondition())
+//                                    .value(term.getValue())
+//                                    .docRef(docRef)
+//                                    .build();
+//                        }
+                    }
+
+                    builder.addTerm(term);
+                }
+            }
+        }
+
+        return builder.build();
+    }
+
+
 //    @Override
 //    public ProcessorFilter createFilter(final Processor streamProcessor,
 //                                        final QueryData queryData,
@@ -227,49 +395,6 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 //
 //
 //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 //    @Override

@@ -94,6 +94,9 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         // start watching the file for changes
         appConfigMonitor.start();
 
+        // We need to sleep here to give the config monitor time to start as it monitors asynchronously.
+        Thread.sleep(3000);
+
         // Update the config file
         final String updatedDevYamlStr = pattern.matcher(devYamlStr)
             .replaceAll("temp: \"" + newPathValue + "\"");

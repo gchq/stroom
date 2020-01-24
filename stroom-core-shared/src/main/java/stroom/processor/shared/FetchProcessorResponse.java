@@ -14,18 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.node.shared;
+package stroom.processor.shared;
 
-import stroom.entity.shared.FindAction;
+import stroom.util.shared.ResultPage;
 
-public class FindNodeAction extends FindAction<FindNodeCriteria, Node> {
-    private static final long serialVersionUID = -6808045615241590297L;
-
-    public FindNodeAction() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public FindNodeAction(final FindNodeCriteria criteria) {
-        super(criteria);
-    }
+public class FetchProcessorResponse extends ResultPage<ProcessorListRow> {
 }

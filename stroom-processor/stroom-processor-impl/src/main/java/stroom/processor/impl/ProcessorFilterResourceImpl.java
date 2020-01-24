@@ -17,29 +17,19 @@
 package stroom.processor.impl;
 
 import com.codahale.metrics.health.HealthCheck.Result;
-import stroom.annotation.shared.AnnotationDetail;
-import stroom.annotation.shared.CreateEntryRequest;
-import stroom.annotation.shared.EventId;
-import stroom.annotation.shared.EventLink;
-import stroom.annotation.shared.SetAssignedToRequest;
-import stroom.annotation.shared.SetStatusRequest;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.CreateProcessorFilterRequest;
+import stroom.processor.shared.FetchProcessorRequest;
+import stroom.processor.shared.FetchProcessorResponse;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionException;
-import stroom.security.shared.PermissionNames;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
-import java.util.List;
-import java.util.stream.Collectors;
 
 // TODO : @66 add event logging
 public class ProcessorFilterResourceImpl implements ProcessorFilterResource, RestResource, HasHealthCheck {
@@ -83,6 +73,11 @@ public class ProcessorFilterResourceImpl implements ProcessorFilterResource, Res
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
         processorFilterService.setEnabled(id, enabled);
+    }
+
+    @Override
+    public FetchProcessorResponse find(final FetchProcessorRequest request) {
+        return processorFilterService.find(request);
     }
 
     //    @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,9 @@
  * limitations under the License.
  */
 
-package stroom.node.shared;
+package stroom.job.shared;
 
-import stroom.task.shared.Action;
+import stroom.util.shared.ResultPage;
 
-public class UpdateNodeAction extends Action<Node> {
-    private static final long serialVersionUID = 1451964889275627717L;
-
-    private Node node;
-
-    public UpdateNodeAction() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public UpdateNodeAction(final Node node) {
-        this.node = node;
-    }
-
-    public Node getNode() {
-        return node;
-    }
-
-    @Override
-    public String getTaskName() {
-        return "Update node";
-    }
+public class ListJobNodeResponse extends ResultPage<JobNode> {
 }
