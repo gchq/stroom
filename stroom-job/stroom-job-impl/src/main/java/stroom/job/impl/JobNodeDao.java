@@ -1,6 +1,5 @@
 package stroom.job.impl;
 
-import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode;
 import stroom.util.shared.BaseResultList;
 

@@ -71,43 +71,4 @@ public interface JobNodeResource extends DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Sets the enabled status of the job node")
     void setEnabled(@PathParam("id") Integer id, Boolean enabled);
-//
-//    @GET
-//    @Path("/{nodeName}")
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation(
-//            value = "Gets detailed information about a node",
-//            response = Long.class)
-//    ClusterNodeInfo info(@PathParam("nodeName") String nodeName);
-//
-//    @GET
-//    @Path("/{nodeName}/ping")
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation(
-//            value = "Gets a ping time for a node",
-//            response = Long.class)
-//    Long ping(@PathParam("nodeName") String nodeName);
-//
-//    @PUT
-//    @Path("/{nodeName}/url")
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation(value = "Sets the url for a node")
-//    void setUrl(@PathParam("nodeName") String nodeName, String url);
-//
-//    @PUT
-//    @Path("/{nodeName}/priority")
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation(value = "Sets the priority of a node")
-//    void setPriority(@PathParam("nodeName") String nodeName, Integer priority);
-//
-//    @PUT
-//    @Path("/{nodeName}/enabled")
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation(value = "Sets whether a node is enabled")
-//    void setEnabled(@PathParam("nodeName") String nodeName, Boolean enabled);
 }

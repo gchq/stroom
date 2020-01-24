@@ -21,7 +21,6 @@ import event.logging.BaseAdvancedQueryOperator.And;
 import event.logging.Query;
 import event.logging.Query.Advanced;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobResource;
 import stroom.job.shared.ListJobResponse;

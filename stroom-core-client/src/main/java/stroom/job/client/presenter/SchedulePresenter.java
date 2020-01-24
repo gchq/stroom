@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-package stroom.monitoring.client.presenter;
+package stroom.job.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.HasClickHandlers;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.job.shared.GetScheduledTimesAction;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.job.shared.GetScheduledTimesRequest;
 import stroom.job.shared.JobNode.JobType;
+import stroom.job.shared.ScheduledTimeResource;
+import stroom.job.shared.ScheduledTimes;
 import stroom.util.client.StroomCoreStringUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -32,16 +36,20 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.ScheduleView> {
-    private final ClientDispatchAsync clientDispatchAsync;
+    private static final ScheduledTimeResource SCHEDULED_TIME_RESOURCE = GWT.create(ScheduledTimeResource.class);
+
+    private final RestFactory restFactory;
     private JobType jobType = JobType.UNKNOWN;
     private Long scheduleReferenceTime = 0L;
     private Long lastExecutedTime = 0L;
     private String scheduleString = "";
+
     @Inject
-    public SchedulePresenter(final EventBus eventBus, final ScheduleView view,
-                             final ClientDispatchAsync clientDispatchAsync) {
+    public SchedulePresenter(final EventBus eventBus,
+                             final ScheduleView view,
+                             final RestFactory restFactory) {
         super(eventBus, view);
-        this.clientDispatchAsync = clientDispatchAsync;
+        this.restFactory = restFactory;
     }
 
     @Override
@@ -78,13 +86,17 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
         final Long scheduleReferenceTime = this.scheduleReferenceTime;
         final Long lastExecutedTime = this.lastExecutedTime;
         if (currentString != null && currentString.trim().length() > 0 && jobType != null) {
-            clientDispatchAsync.exec(new GetScheduledTimesAction(jobType, scheduleReferenceTime, lastExecutedTime, currentString))
+            final GetScheduledTimesRequest request = new GetScheduledTimesRequest(jobType, scheduleReferenceTime, lastExecutedTime, currentString);
+            final Rest<ScheduledTimes> rest = restFactory.create();
+            rest
                     .onSuccess(result -> {
                         if (result != null) {
                             getView().getLastExecutedTime().setText(result.getLastExecutedTime());
                             getView().getNextScheduledTime().setText(result.getNextScheduledTime());
                         }
-                    });
+                    })
+                    .call(SCHEDULED_TIME_RESOURCE)
+                    .get(request);
         }
     }
 
@@ -97,9 +109,13 @@ public class SchedulePresenter extends MyPresenterWidget<SchedulePresenter.Sched
         // before saving. Getting the scheduled times acts as validation.
         if (ok) {
             write();
-            clientDispatchAsync.exec(
-                    new GetScheduledTimesAction(jobType, scheduleReferenceTime, lastExecutedTime, scheduleString))
-                    .onSuccess(result -> HidePopupEvent.fire(SchedulePresenter.this, SchedulePresenter.this, autoClose, ok));
+
+            final GetScheduledTimesRequest request = new GetScheduledTimesRequest(jobType, scheduleReferenceTime, lastExecutedTime, scheduleString);
+            final Rest<ScheduledTimes> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> HidePopupEvent.fire(SchedulePresenter.this, SchedulePresenter.this, autoClose, ok))
+                    .call(SCHEDULED_TIME_RESOURCE)
+                    .get(request);
         } else {
             HidePopupEvent.fire(SchedulePresenter.this, SchedulePresenter.this, autoClose, ok);
         }

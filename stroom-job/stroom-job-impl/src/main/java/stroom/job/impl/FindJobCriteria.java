@@ -14,27 +14,16 @@
  * limitations under the License.
  */
 
-package stroom.job.shared;
+package stroom.job.impl;
 
-import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.StringCriteria;
+import stroom.util.shared.FindNamedEntityCriteria;
 
 /**
  * Criteria object used to fetch a job that matches the parameters specified.
  */
-public class FindJobNodeCriteria extends BaseCriteria {
-    private static final long serialVersionUID = 71512228011037748L;
+public class FindJobCriteria extends FindNamedEntityCriteria {
+    private static final long serialVersionUID = 3995637015554049174L;
 
     public static final String FIELD_ID = "Id";
-
-    private StringCriteria jobName = new StringCriteria();
-    private StringCriteria nodeName = new StringCriteria();
-
-    public StringCriteria getJobName() {
-        return jobName;
-    }
-
-    public StringCriteria getNodeName() {
-        return nodeName;
-    }
+    public static final String FIELD_ADVANCED = "Advanced";
 }

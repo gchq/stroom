@@ -43,7 +43,6 @@ import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeResource;
 import stroom.job.shared.ListJobNodeResponse;
-import stroom.monitoring.client.presenter.SchedulePresenter;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;

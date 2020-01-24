@@ -20,8 +20,6 @@ package stroom.job.impl;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.job.api.ScheduledJob;
 import stroom.job.api.TaskConsumer;
-import stroom.job.shared.FindJobCriteria;
-import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;

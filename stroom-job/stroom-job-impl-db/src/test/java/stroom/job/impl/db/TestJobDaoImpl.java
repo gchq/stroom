@@ -7,7 +7,7 @@ import org.jooq.exception.DataAccessException;
 import org.jooq.exception.DataChangedException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import stroom.job.shared.FindJobCriteria;
+import stroom.job.impl.FindJobCriteria;
 import stroom.job.shared.Job;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.common.util.db.DbTestModule;

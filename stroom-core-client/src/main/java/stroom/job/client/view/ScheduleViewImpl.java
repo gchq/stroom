@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.monitoring.client.view;
+package stroom.job.client.view;
 
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.HasClickHandlers;
@@ -25,7 +25,7 @@ import com.google.gwt.user.client.ui.Label;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
 import com.gwtplatform.mvp.client.ViewImpl;
-import stroom.monitoring.client.presenter.SchedulePresenter.ScheduleView;
+import stroom.job.client.presenter.SchedulePresenter.ScheduleView;
 
 public class ScheduleViewImpl extends ViewImpl implements ScheduleView {
     private final Label lblScheduleType = new Label("", false);

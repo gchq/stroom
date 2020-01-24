@@ -18,8 +18,6 @@
 package stroom.job.impl;
 
 import stroom.job.api.JobManager;
-import stroom.job.shared.FindJobCriteria;
-import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.security.api.SecurityContext;

@@ -17,22 +17,21 @@
 package stroom.job.shared;
 
 import stroom.job.shared.JobNode.JobType;
-import stroom.task.shared.Action;
 
-public class GetScheduledTimesAction extends Action<ScheduledTimes> {
-    private static final long serialVersionUID = -5419140463010782005L;
-
+public class GetScheduledTimesRequest {
     private JobType jobType;
     private Long scheduleReferenceTime;
     private Long lastExecutedTime;
     private String schedule;
 
-    public GetScheduledTimesAction() {
+    public GetScheduledTimesRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public GetScheduledTimesAction(final JobType jobType, final Long scheduleReferenceTime, final Long lastExecutedTime,
-                                   final String schedule) {
+    public GetScheduledTimesRequest(final JobType jobType,
+                                    final Long scheduleReferenceTime,
+                                    final Long lastExecutedTime,
+                                    final String schedule) {
         this.jobType = jobType;
         this.scheduleReferenceTime = scheduleReferenceTime;
         this.lastExecutedTime = lastExecutedTime;
@@ -43,20 +42,31 @@ public class GetScheduledTimesAction extends Action<ScheduledTimes> {
         return jobType;
     }
 
+    public void setJobType(final JobType jobType) {
+        this.jobType = jobType;
+    }
+
     public Long getScheduleReferenceTime() {
         return scheduleReferenceTime;
+    }
+
+    public void setScheduleReferenceTime(final Long scheduleReferenceTime) {
+        this.scheduleReferenceTime = scheduleReferenceTime;
     }
 
     public Long getLastExecutedTime() {
         return lastExecutedTime;
     }
 
+    public void setLastExecutedTime(final Long lastExecutedTime) {
+        this.lastExecutedTime = lastExecutedTime;
+    }
+
     public String getSchedule() {
         return schedule;
     }
 
-    @Override
-    public String getTaskName() {
-        return "Get Scheduled Times jobType=" + jobType + ", schedule=" + schedule + ", lastExecutedTime=" + lastExecutedTime;
+    public void setSchedule(final String schedule) {
+        this.schedule = schedule;
     }
 }
