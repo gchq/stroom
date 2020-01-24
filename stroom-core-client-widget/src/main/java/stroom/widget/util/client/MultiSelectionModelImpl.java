@@ -37,7 +37,7 @@ public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<
     }
 
     @Override
-    public void setSelection(final Selection<T> selection) {
+    public void setSelection(final Selection<T> selection, final SelectionType selectionType) {
         selection.getSelectedItems().forEach(selected -> {
             if (!this.selection.isSelected(selected)) {
                 changes.add(selected);
@@ -52,7 +52,9 @@ public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<
 
         if (changes.size() > 0) {
             fireSelectionChangeEvent();
-            fireChange();
+            fireChange(selectionType);
+        } else if (selectionType.isDoubleSelect() || selectionType.isRightClick()) {
+            fireChange(selectionType);
         }
     }
 
@@ -72,35 +74,21 @@ public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<
         return selection.isSelected(item);
     }
 
-    /**
-     * Sets the selected state of the specified item.
-     */
     @Override
     public void setSelected(final T item, final boolean selected) {
-        if (item != null) {
-            final boolean currentlySelected = isSelected(item);
-            selection.setSelected(item, selected);
-            if (currentlySelected != selected) {
-                changes.add(item);
-                fireSelectionChangeEvent();
-                fireChange();
-            }
-        }
+        setSelected(item, selected, new SelectionType(false, false));
     }
 
-    /**
-     * Gets the most recently selected item or only selected item if an item is selected, null otherwise.
-     */
     @Override
-    public T getSelected() {
-        return selection.getSelected();
+    public void setSelected(final T item) {
+        setSelected(item, new SelectionType(false, false));
     }
 
     /**
      * Sets the specified item as the only selected item, i.e. clears the current selection and sets a single item selected.
      */
     @Override
-    public void setSelected(final T item) {
+    public void setSelected(final T item, final SelectionType selectionType) {
         if (item == null) {
             clear();
 
@@ -120,9 +108,33 @@ public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<
                 selection.setSelected(item);
 
                 fireSelectionChangeEvent();
-                fireChange();
+                fireChange(selectionType);
             }
         }
+    }
+
+    /**
+     * Sets the selected state of the specified item.
+     */
+    @Override
+    public void setSelected(final T item, final boolean selected, final SelectionType selectionType) {
+        if (item != null) {
+            final boolean currentlySelected = isSelected(item);
+            selection.setSelected(item, selected);
+            if (currentlySelected != selected) {
+                changes.add(item);
+                fireSelectionChangeEvent();
+                fireChange(selectionType);
+            }
+        }
+    }
+
+    /**
+     * Gets the most recently selected item or only selected item if an item is selected, null otherwise.
+     */
+    @Override
+    public T getSelected() {
+        return selection.getSelected();
     }
 
     /**
@@ -134,12 +146,11 @@ public abstract class MultiSelectionModelImpl<T> extends AbstractSelectionModel<
             changes.addAll(selection.getSelectedItems());
             selection.clear();
             fireSelectionChangeEvent();
-            fireChange();
+            fireChange(new SelectionType(false, false));
         }
     }
 
-    protected void fireChange() {
-
+    protected void fireChange(final SelectionType selectionType) {
     }
 
     @Override
