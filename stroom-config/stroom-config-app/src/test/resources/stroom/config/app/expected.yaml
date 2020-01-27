@@ -303,7 +303,7 @@ appConfig:
   pipeline:
     httpClientCache:
       maximumSize: 1000
-      expireAfterAccess: 600000
+      expireAfterAccess: "PT10M"
       expireAfterWrite: null
     pipelineDataCache:
       maximumSize: 1000
