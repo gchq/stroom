@@ -21,7 +21,7 @@ public class PipelineConfig extends AbstractConfig {
     private XsltConfig xsltConfig = new XsltConfig();
     private CacheConfig httpClientCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
     private CacheConfig pipelineDataCache = new CacheConfig.Builder()
             .maximumSize(1000L)
