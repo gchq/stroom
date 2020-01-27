@@ -231,3 +231,6 @@ include 'stroom-test-common'
 // Util
 include 'stroom-util'
 include 'stroom-util-shared'
+
+
+include 'stroom-ssl-test'
