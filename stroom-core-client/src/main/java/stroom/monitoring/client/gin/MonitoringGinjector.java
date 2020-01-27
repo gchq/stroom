@@ -24,7 +24,7 @@ import stroom.job.client.presenter.JobListPresenter;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
-import stroom.monitoring.client.TaskManagerPlugin;
+import stroom.task.client.TaskManagerPlugin;
 import stroom.monitoring.client.presenter.DatabaseTablesMonitoringPresenter;
 import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.node.client.ManageNodeToolsPlugin;
