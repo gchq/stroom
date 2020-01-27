@@ -27,8 +27,8 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
     private static final long serialVersionUID = 2759048534848720682L;
 
     private String sessionId;
-    private Set<TaskIdImpl> ancestorIdSet;
-    private Set<TaskIdImpl> idSet;
+    private Set<TaskId> ancestorIdSet;
+    private Set<TaskId> idSet;
 
     public FindTaskCriteria() {
         // Default constructor necessary for GWT serialisation.
@@ -42,32 +42,32 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
         this.sessionId = sessionId;
     }
 
-    public Set<TaskIdImpl> getAncestorIdSet() {
+    public Set<TaskId> getAncestorIdSet() {
         return ancestorIdSet;
     }
 
-    public void setAncestorIdSet(final Set<TaskIdImpl> ancestorIdSet) {
+    public void setAncestorIdSet(final Set<TaskId> ancestorIdSet) {
         this.ancestorIdSet = ancestorIdSet;
     }
 
     @JsonIgnore
-    public void addAncestorId(final TaskIdImpl ancestorId) {
+    public void addAncestorId(final TaskId ancestorId) {
         if (ancestorIdSet == null) {
             ancestorIdSet = new HashSet<>();
         }
         ancestorIdSet.add(ancestorId);
     }
 
-    public Set<TaskIdImpl> getIdSet() {
+    public Set<TaskId> getIdSet() {
         return idSet;
     }
 
-    public void setIdSet(final Set<TaskIdImpl> idSet) {
+    public void setIdSet(final Set<TaskId> idSet) {
         this.idSet = idSet;
     }
 
     @JsonIgnore
-    public void addId(final TaskIdImpl id) {
+    public void addId(final TaskId id) {
         if (idSet == null) {
             idSet = new HashSet<>();
         }
@@ -91,7 +91,7 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
             }
         }
         if (idSet != null && idSet.size() > 0) {
-            if (idSet.contains((TaskIdImpl) task.getId())) {
+            if (idSet.contains(task.getId())) {
                 return true;
             }
         }
@@ -104,14 +104,14 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
         final StringBuilder sb = new StringBuilder();
         if (ancestorIdSet != null && ancestorIdSet.size() > 0) {
             sb.append("Ancestor Id: ");
-            for (final TaskIdImpl ancestorId : ancestorIdSet) {
+            for (final TaskId ancestorId : ancestorIdSet) {
                 sb.append(ancestorId);
                 sb.append(", ");
             }
         }
         if (idSet != null && idSet.size() > 0) {
             sb.append("Id: ");
-            for (final TaskIdImpl id : idSet) {
+            for (final TaskId id : idSet) {
                 sb.append(id);
                 sb.append(", ");
             }

@@ -27,7 +27,7 @@ import java.util.Objects;
 public class TaskProgress implements SharedObject, TreeRow {
     private static final long serialVersionUID = 7903893715149262619L;
 
-    private TaskIdImpl id;
+    private TaskId id;
     private String taskName;
     private String taskInfo;
     private String userName;
@@ -39,11 +39,11 @@ public class TaskProgress implements SharedObject, TreeRow {
 
     private Expander expander;
 
-    public TaskIdImpl getId() {
+    public TaskId getId() {
         return id;
     }
 
-    public void setId(final TaskIdImpl id) {
+    public void setId(final TaskId id) {
         this.id = id;
     }
 

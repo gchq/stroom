@@ -33,7 +33,6 @@ import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.Task;
 import stroom.task.shared.TaskId;
-import stroom.task.shared.TaskIdImpl;
 import stroom.task.shared.TaskProgress;
 import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.ScalingThreadPoolExecutor;
@@ -606,7 +605,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
 
     private TaskProgress buildTaskProgress(final long timeNowMs, final TaskThread taskThread, final Task<?> task) {
         final TaskProgress taskProgress = new TaskProgress();
-        taskProgress.setId((TaskIdImpl) task.getId());
+        taskProgress.setId(task.getId());
         taskProgress.setTaskName(taskThread.getName());
         taskProgress.setUserName(taskThread.getUserId());
         taskProgress.setThreadName(taskThread.getThreadName());

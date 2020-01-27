@@ -18,7 +18,6 @@ package stroom.task.client.presenter;
 
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
-import stroom.task.shared.TaskIdImpl;
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.CompareUtil;
@@ -84,7 +83,7 @@ class TaskProgressUtil {
                     // If we have no record of this parent then create a
                     // dummy dead one.
                     final TaskProgress parent = new TaskProgress();
-                    parent.setId((TaskIdImpl) parentId);
+                    parent.setId(parentId);
                     parent.setSubmitTimeMs(child.getSubmitTimeMs());
                     parent.setTimeNowMs(child.getTimeNowMs());
                     parent.setTaskName("<<dead>>");

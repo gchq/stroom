@@ -21,7 +21,6 @@ import org.junit.jupiter.api.Test;
 import stroom.node.shared.Node;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
-import stroom.task.shared.TaskIdImpl;
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.Sort.Direction;
 
@@ -132,7 +131,7 @@ class TestTaskProgressUtil {
                 user = "user2";
             }
 
-            final TaskIdImpl parentId = new TaskIdImpl("parent" + i, null);
+            final TaskId parentId = new TaskId("parent" + i, null);
             final TaskProgress parent = new TaskProgress();
             parent.setId(parentId);
             parent.setSubmitTimeMs(parentSubmitTime);
@@ -147,7 +146,7 @@ class TestTaskProgressUtil {
             criteria.setExpanded(parent, true);
 
             for (int j = 0; j < 10; j++) {
-                final TaskIdImpl childId = new TaskIdImpl("child" + i + ":" + j, parentId);
+                final TaskId childId = new TaskId("child" + i + ":" + j, parentId);
                 final TaskProgress child = new TaskProgress();
                 child.setId(childId);
                 child.setSubmitTimeMs(parentSubmitTime + (long) (Math.random() * 100));
