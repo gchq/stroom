@@ -38,6 +38,7 @@ public class FindTaskProgressCriteria extends BaseCriteria implements Comparator
 
     private Set<TaskProgress> expandedTasks;
     private String nameFilter;
+    private String sessionId;
 
     public String getNameFilter() {
         return nameFilter;
@@ -45,6 +46,14 @@ public class FindTaskProgressCriteria extends BaseCriteria implements Comparator
 
     public void setNameFilter(final String nameFilter) {
         this.nameFilter = nameFilter;
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(final String sessionId) {
+        this.sessionId = sessionId;
     }
 
     @Override

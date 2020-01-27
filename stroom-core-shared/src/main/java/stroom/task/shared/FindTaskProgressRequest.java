@@ -16,35 +16,36 @@
 
 package stroom.task.shared;
 
-import stroom.util.shared.VoidResult;
+import java.util.Set;
 
-public class TerminateTaskProgressAction extends Action<VoidResult> {
-    private static final long serialVersionUID = 2759048534848720682L;
+public class FindTaskProgressRequest {
+    private FindTaskProgressCriteria criteria;
 
-    private String taskName;
-    private FindTaskCriteria criteria;
-    private boolean kill;
-
-    public TerminateTaskProgressAction() {
+    public FindTaskProgressRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public TerminateTaskProgressAction(final String taskName, final FindTaskCriteria criteria, final boolean kill) {
-        this.taskName = taskName;
+    public FindTaskProgressRequest(final FindTaskProgressCriteria criteria) {
         this.criteria = criteria;
-        this.kill = kill;
     }
 
-    public FindTaskCriteria getCriteria() {
+    public FindTaskProgressCriteria getCriteria() {
         return criteria;
     }
 
-    public boolean isKill() {
-        return kill;
+    public void setCriteria(final FindTaskProgressCriteria criteria) {
+        this.criteria = criteria;
     }
 
-    @Override
-    public String getTaskName() {
-        return taskName;
+    public Set<TaskProgress> getExpandedRows() {
+        return null;
+    }
+
+    public void setRowExpanded(final TaskProgress row, final boolean open) {
+        criteria.setExpanded(row, open);
+    }
+
+    public boolean isRowExpanded(final TaskProgress row) {
+        return criteria.isExpanded(row);
     }
 }

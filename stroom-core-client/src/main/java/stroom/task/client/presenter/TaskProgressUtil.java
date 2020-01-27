@@ -14,28 +14,18 @@
  * limitations under the License.
  */
 
-package stroom.task.impl;
+package stroom.task.client.presenter;
 
-import com.google.common.base.Strings;
-import stroom.cluster.task.api.ClusterCallEntry;
-import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
-import stroom.cluster.task.api.DefaultClusterResultCollector;
-import stroom.cluster.task.api.TargetType;
-import stroom.docref.SharedObject;
-import stroom.task.api.AbstractTaskHandler;
-import stroom.task.shared.Action;
 import stroom.task.shared.FindTaskProgressCriteria;
-import stroom.task.shared.Task;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
-import stroom.util.date.DateUtil;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Expander;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.ResultList;
+import stroom.widget.customdatebox.client.ClientDateUtil;
 
-import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -44,16 +34,11 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedObject>
-        extends AbstractTaskHandler<T, R> {
-    private final ClusterDispatchAsyncHelper dispatchHelper;
-
-    @Inject
-    FindTaskProgressHandlerBase(final ClusterDispatchAsyncHelper dispatchHelper) {
-        this.dispatchHelper = dispatchHelper;
+class TaskProgressUtil {
+    private TaskProgressUtil() {
     }
 
-    BaseResultList<TaskProgress> doExec(final Action<?> action, final FindTaskProgressCriteria criteria) {
+    static BaseResultList<TaskProgress> combine(final FindTaskProgressCriteria criteria, final Collection<List<TaskProgress>> input) {
         // Validate criteria.
         criteria.validateSortField();
 
@@ -62,15 +47,8 @@ abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedOb
             // Don't page limit the first query
             criteria.setPageRequest(new PageRequest());
 
-            final FindTaskProgressClusterTask clusterTask = new FindTaskProgressClusterTask(action.getTaskName(), criteria);
-            final DefaultClusterResultCollector<ResultList<TaskProgress>> collector = dispatchHelper
-                    .execAsync(clusterTask, TargetType.ACTIVE);
-
-            final Map<TaskId, TaskProgress> totalMap = collector.getResponseMap().values()
+            final Map<TaskId, TaskProgress> totalMap = input
                     .stream()
-                    .filter(value -> value.getResult() != null)
-                    .map(ClusterCallEntry::getResult)
-                    .map(ResultList::getValues)
                     .flatMap(List::stream)
                     .collect(Collectors.toMap(TaskProgress::getId, Function.identity()));
 
@@ -83,7 +61,7 @@ abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedOb
         }
     }
 
-    List<TaskProgress> createList(final Map<TaskId, TaskProgress> taskProgressMap, final FindTaskProgressCriteria criteria) {
+    static List<TaskProgress> createList(final Map<TaskId, TaskProgress> taskProgressMap, final FindTaskProgressCriteria criteria) {
         final Map<TaskId, TaskProgress> completeIdMap = new HashMap<>(taskProgressMap);
         final Map<TaskId, Set<TaskProgress>> childMap = new HashMap<>();
 
@@ -114,7 +92,7 @@ abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedOb
 
         // Filter the child map.
         Map<TaskId, Set<TaskProgress>> filteredMap = childMap;
-        if (!Strings.isNullOrEmpty(criteria.getNameFilter())) {
+        if (criteria.getNameFilter() != null && !criteria.getNameFilter().isEmpty()) {
             final String name = criteria.getNameFilter().toLowerCase();
             filteredMap = filter(completeIdMap, childMap, name);
         }
@@ -125,9 +103,9 @@ abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedOb
         return returnList;
     }
 
-    private Map<TaskId, Set<TaskProgress>> filter(final Map<TaskId, TaskProgress> completeIdMap,
-                                                  final Map<TaskId, Set<TaskProgress>> childMapIn,
-                                                  final String name) {
+    private static Map<TaskId, Set<TaskProgress>> filter(final Map<TaskId, TaskProgress> completeIdMap,
+                                                         final Map<TaskId, Set<TaskProgress>> childMapIn,
+                                                         final String name) {
         final Map<TaskId, Set<TaskProgress>> childMapOut = new HashMap<>();
 
         childMapIn.forEach((taskId, set) -> set.forEach(taskProgress -> {
@@ -149,7 +127,7 @@ abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedOb
         return childMapOut;
     }
 
-    private void addChildren(final TaskId parentId, final Map<TaskId, Set<TaskProgress>> childMapIn, final Map<TaskId, Set<TaskProgress>> childMapOut) {
+    private static void addChildren(final TaskId parentId, final Map<TaskId, Set<TaskProgress>> childMapIn, final Map<TaskId, Set<TaskProgress>> childMapOut) {
         final Set<TaskProgress> children = childMapIn.get(parentId);
         if (children != null) {
             children.forEach(child -> {
@@ -159,14 +137,14 @@ abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedOb
         }
     }
 
-    private boolean checkName(final TaskProgress taskProgress, final String name) {
+    private static boolean checkName(final TaskProgress taskProgress, final String name) {
         if (checkName(taskProgress.getNodeName(), name)) {
             return true;
         }
         if (checkName(taskProgress.getTaskName(), name)) {
             return true;
         }
-        if (checkName(DateUtil.createNormalDateTimeString(taskProgress.getSubmitTimeMs()), name)) {
+        if (checkName(ClientDateUtil.toISOString(taskProgress.getSubmitTimeMs()), name)) {
             return true;
         }
         if (checkName(taskProgress.getUserName(), name)) {
@@ -178,15 +156,15 @@ abstract class FindTaskProgressHandlerBase<T extends Task<R>, R extends SharedOb
         return checkName(taskProgress.getThreadName(), name);
     }
 
-    private boolean checkName(final String value, final String name) {
+    private static boolean checkName(final String value, final String name) {
         return value != null && value.toLowerCase().contains(name);
     }
 
-    private void buildTree(final Map<TaskId, Set<TaskProgress>> childMap,
-                           final TaskProgress parent,
-                           final int depth,
-                           final List<TaskProgress> returnList,
-                           FindTaskProgressCriteria criteria) {
+    private static void buildTree(final Map<TaskId, Set<TaskProgress>> childMap,
+                                  final TaskProgress parent,
+                                  final int depth,
+                                  final List<TaskProgress> returnList,
+                                  FindTaskProgressCriteria criteria) {
         TaskId parentId = null;
         if (parent != null) {
             parentId = parent.getId();

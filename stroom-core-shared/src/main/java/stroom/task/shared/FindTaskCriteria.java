@@ -25,11 +25,20 @@ import java.util.Set;
 public class FindTaskCriteria implements SharedObject, HasIsConstrained {
     private static final long serialVersionUID = 2759048534848720682L;
 
+    private String sessionId;
     private Set<TaskId> ancestorIdSet;
     private Set<TaskId> idSet;
 
     public FindTaskCriteria() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    public String getSessionId() {
+        return sessionId;
+    }
+
+    public void setSessionId(final String sessionId) {
+        this.sessionId = sessionId;
     }
 
     public Set<TaskId> getAncestorIdSet() {
@@ -74,7 +83,7 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
             }
         }
 
-        return false;
+        return this.sessionId == null || this.sessionId.equals(sessionId);
     }
 
     @Override
