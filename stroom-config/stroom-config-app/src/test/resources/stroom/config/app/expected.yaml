@@ -301,6 +301,10 @@ appConfig:
   path:
     temp: "/tmp"
   pipeline:
+    httpClientCache:
+      maximumSize: 1000
+      expireAfterAccess: 600000
+      expireAfterWrite: null
     pipelineDataCache:
       maximumSize: 1000
       expireAfterAccess: 600000
