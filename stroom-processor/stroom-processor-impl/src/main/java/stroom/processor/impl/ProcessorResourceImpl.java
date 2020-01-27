@@ -26,6 +26,8 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
+import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.core.Response.Status;
 
 // TODO : @66 add event logging
 public class ProcessorResourceImpl implements ProcessorResource, RestResource, HasHealthCheck {
@@ -43,12 +45,20 @@ public class ProcessorResourceImpl implements ProcessorResource, RestResource, H
 
     @Override
     public void delete(final Integer id) {
-        processorService.delete(id);
+        try {
+            processorService.delete(id);
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
+        try {
         processorService.setEnabled(id, enabled);
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
     @Override

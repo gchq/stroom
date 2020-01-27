@@ -30,8 +30,8 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "processor-filter")
-@Path("/processor-filter")
+@Api(value = "processorFilter")
+@Path("/processorFilter")
 @Produces(MediaType.APPLICATION_JSON)
 public interface ProcessorFilterResource extends DirectRestService {
     @POST

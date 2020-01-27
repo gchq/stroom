@@ -37,10 +37,12 @@ import stroom.util.shared.RestResource;
 import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
+import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
 
 // TODO : @66 add event logging
 public class TaskResourceImpl implements TaskResource, RestResource, HasHealthCheck {
@@ -99,6 +101,7 @@ public class TaskResourceImpl implements TaskResource, RestResource, HasHealthCh
 
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
         }
 
         return result;
@@ -106,13 +109,18 @@ public class TaskResourceImpl implements TaskResource, RestResource, HasHealthCh
 
     @Override
     public TaskProgressResponse userTasks(final String nodeName) {
-        final String sessionId = sessionIdProvider.get();
-        if (sessionId != null) {
-            final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
-            criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
-            criteria.setSessionId(sessionId);
-            final FindTaskProgressRequest findTaskProgressRequest = new FindTaskProgressRequest(criteria);
-            return find(nodeName, findTaskProgressRequest);
+        try {
+            final String sessionId = sessionIdProvider.get();
+            if (sessionId != null) {
+                final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
+                criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
+                criteria.setSessionId(sessionId);
+                final FindTaskProgressRequest findTaskProgressRequest = new FindTaskProgressRequest(criteria);
+                return find(nodeName, findTaskProgressRequest);
+            }
+        } catch (final RuntimeException e) {
+            LOGGER.error(e::getMessage, e);
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
         }
         return null;
     }
@@ -138,6 +146,7 @@ public class TaskResourceImpl implements TaskResource, RestResource, HasHealthCh
 
         } catch (final RuntimeException e) {
             LOGGER.error(e::getMessage, e);
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
         }
 
         return true;
