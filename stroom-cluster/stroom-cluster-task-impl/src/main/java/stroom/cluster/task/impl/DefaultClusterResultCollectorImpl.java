@@ -175,7 +175,7 @@ class DefaultClusterResultCollectorImpl<R extends SharedObject> implements Defau
             }
         } catch (final InterruptedException e) {
             waitTimeRemainingNS = 0;
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
 
             // Continue to interrupt this thread.
             Thread.currentThread().interrupt();
