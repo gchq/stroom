@@ -20,11 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.task.api.TaskContext;
-import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import java.sql.SQLException;
+import java.time.Instant;
 import java.util.concurrent.locks.ReentrantLock;
 
 class SQLStatisticAggregationManager {
@@ -60,7 +60,7 @@ class SQLStatisticAggregationManager {
         clusterLockService.tryLock(LOCK_NAME, () -> {
             try {
                 final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                aggregate(System.currentTimeMillis());
+                aggregate(Instant.now());
                 LOGGER.info("SQL Statistic Aggregation - finished in {}", logExecutionTime);
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
@@ -74,11 +74,10 @@ class SQLStatisticAggregationManager {
      * <br/>
      * Step 3 - Remove duplicates using temporary table<br/>
      */
-    void aggregate(final long timeNow) {
+    void aggregate(final Instant timeNow) {
         guard.lock();
         try {
-            LOGGER.debug("aggregate() Called for SQL stats - Start timeNow = {}",
-                    DateUtil.createNormalDateTimeString(timeNow));
+            LOGGER.debug("aggregate() Called for SQL stats - Start timeNow = {}", timeNow);
             final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
             // TODO delete any rows in SQL_STAT_VAL that have a data older
@@ -108,8 +107,8 @@ class SQLStatisticAggregationManager {
             } catch (final SQLException ex) {
                 throw new RuntimeException(ex.getMessage(), ex);
             } finally {
-                LOGGER.debug("aggregate() - Finished for SQL stats in {} timeNowOverride = {}", logExecutionTime,
-                        DateUtil.createNormalDateTimeString(timeNow));
+                LOGGER.debug("aggregate() - Finished for SQL stats in {} timeNowOverride = {}",
+                    logExecutionTime, timeNow);
             }
         } finally {
             guard.unlock();

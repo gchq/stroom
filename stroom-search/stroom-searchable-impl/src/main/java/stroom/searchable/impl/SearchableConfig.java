@@ -3,16 +3,16 @@ package stroom.searchable.impl;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class SearchableConfig extends AbstractConfig {
     private String storeSize = "1000000,100,10,1";
     private CacheConfig searchResultCache = new CacheConfig.Builder()
             .maximumSize(10000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
     @JsonPropertyDescription("The maximum number of search results to keep in memory at each level.")

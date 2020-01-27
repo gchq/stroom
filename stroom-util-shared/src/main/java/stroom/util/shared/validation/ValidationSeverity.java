@@ -1,4 +1,4 @@
-package stroom.util.shared;
+package stroom.util.shared.validation;
 
 import javax.validation.Payload;
 import java.util.Set;

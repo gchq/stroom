@@ -2,9 +2,9 @@ package stroom.cluster.task.impl;
 
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class ClusterTaskConfig extends AbstractConfig {
@@ -12,7 +12,7 @@ public class ClusterTaskConfig extends AbstractConfig {
     
     private CacheConfig clusterResultCollectorCache = new CacheConfig.Builder()
             .maximumSize(1000000L)
-            .expireAfterAccess(1, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(1))
             .build();
 
     public CacheConfig getClusterResultCollectorCache() {

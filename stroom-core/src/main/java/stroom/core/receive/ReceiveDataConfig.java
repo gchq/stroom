@@ -3,6 +3,7 @@ package stroom.core.receive;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.validation.ValidRegex;
 
 import javax.inject.Singleton;
 
@@ -23,6 +24,7 @@ public class ReceiveDataConfig extends AbstractConfig {
         return receiptPolicyUuid;
     }
 
+    @SuppressWarnings("unused")
     public void setReceiptPolicyUuid(final String receiptPolicyUuid) {
         this.receiptPolicyUuid = receiptPolicyUuid;
     }
@@ -33,6 +35,7 @@ public class ReceiveDataConfig extends AbstractConfig {
         return bufferSize;
     }
 
+    @SuppressWarnings("unused")
     public void setBufferSize(final int bufferSize) {
         this.bufferSize = bufferSize;
     }
@@ -42,15 +45,18 @@ public class ReceiveDataConfig extends AbstractConfig {
         return unknownClassification;
     }
 
+    @SuppressWarnings("unused")
     public void setUnknownClassification(final String unknownClassification) {
         this.unknownClassification = unknownClassification;
     }
 
+    @ValidRegex
     @JsonPropertyDescription("The regex pattern for feed names")
     public String getFeedNamePattern() {
         return feedNamePattern;
     }
 
+    @SuppressWarnings("unused")
     public void setFeedNamePattern(final String feedNamePattern) {
         this.feedNamePattern = feedNamePattern;
     }

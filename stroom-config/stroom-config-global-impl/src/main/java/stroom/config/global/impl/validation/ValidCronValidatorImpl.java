@@ -1,13 +1,13 @@
 package stroom.config.global.impl.validation;
 
-import stroom.util.shared.validation.ValidRegex;
-import stroom.util.shared.validation.ValidRegexValidator;
+import stroom.util.scheduler.MalformedCronException;
+import stroom.util.scheduler.SimpleCron;
+import stroom.util.shared.validation.ValidCron;
+import stroom.util.shared.validation.ValidCronValidator;
 
 import javax.validation.ConstraintValidatorContext;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
-public class ValidRegexValidatorImpl implements ValidRegexValidator {
+public class ValidCronValidatorImpl implements ValidCronValidator {
 
     /**
      * Initializes the validator in preparation for
@@ -21,7 +21,7 @@ public class ValidRegexValidatorImpl implements ValidRegexValidator {
      * @param constraintAnnotation annotation instance for a given constraint declaration
      */
     @Override
-    public void initialize(final ValidRegex constraintAnnotation) {
+    public void initialize(final ValidCron constraintAnnotation) {
 
     }
 
@@ -41,8 +41,8 @@ public class ValidRegexValidatorImpl implements ValidRegexValidator {
         boolean result = true;
 
         try {
-            Pattern.compile(value);
-        } catch (PatternSyntaxException e) {
+            SimpleCron.compile(value);
+        } catch (MalformedCronException e) {
             final String msgTemplate =
                 context.getDefaultConstraintMessageTemplate() +
                     ". caused by: " +

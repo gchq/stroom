@@ -29,7 +29,6 @@ import stroom.task.shared.Task;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -38,6 +37,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,7 +54,7 @@ class FsCleanExecutor {
     private final TaskContext taskContext;
     private final TaskManager taskManager;
     private final int batchSize;
-    private final long oldAge;
+    private final Duration oldAge;
     private final boolean deleteOut;
 
     private AsyncTaskHelper<VoidResult> asyncTaskHelper;
@@ -69,22 +69,16 @@ class FsCleanExecutor {
         this.taskManager = taskManager;
         this.batchSize = config.getDeleteBatchSize();
 
-        Long age;
-        try {
-            age = ModelStringUtil.parseDurationString(config.getFileSystemCleanOldAge());
-            if (age == null) {
-                age = ModelStringUtil.parseDurationString("1d");
-            }
-        } catch (final NumberFormatException e) {
-            LOGGER.error("Unable to parse property 'stroom.fileSystemCleanOldAge' value '" + config.getFileSystemCleanOldAge()
-                    + "', using default of '1d' instead", e);
-            age = ModelStringUtil.parseDurationString("1d");
+        Duration age;
+        age = config.getFileSystemCleanOldAge().getDuration();
+        if (age == null) {
+            age = Duration.ofDays(1);
         }
         this.oldAge = age;
         this.deleteOut = config.isFileSystemCleanDeleteOut();
     }
 
-    Long getOldAge() {
+    Duration getOldAge() {
         return oldAge;
     }
 
@@ -111,8 +105,7 @@ class FsCleanExecutor {
         // Load the node.
         asyncTaskHelper = new AsyncTaskHelper<>(null, taskContext, taskManager, batchSize);
 
-        logInfo(() -> "Starting file system clean task. oldAge = " +
-                ModelStringUtil.formatDurationString(oldAge));
+        logInfo(() -> "Starting file system clean task. oldAge = " + oldAge);
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 

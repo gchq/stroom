@@ -521,12 +521,12 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
     private Settings getSettings() {
         if (settings == null || settings.creationTime < (System.currentTimeMillis() - 60000)) {
-            final CacheConfig cacheConfig = indexConfig.getIndexWriterConfig().getCacheConfig();
-            final long timeToLive = Math.max(0, cacheConfig.getTimeToLiveMs());
-            final long timeToIdle = Math.max(0, cacheConfig.getTimeToIdleMs());
-            final long minItems = Math.max(0, cacheConfig.getMinItems());
-            final long coreItems = Math.max(minItems, cacheConfig.getCoreItems());
-            final long maxItems = Math.max(coreItems, cacheConfig.getMaxItems());
+            final IndexCacheConfig indexCacheConfig = indexConfig.getIndexWriterConfig().getIndexCacheConfig();
+            final long timeToLive = Math.max(0, indexCacheConfig.getTimeToLiveMs());
+            final long timeToIdle = Math.max(0, indexCacheConfig.getTimeToIdleMs());
+            final long minItems = Math.max(0, indexCacheConfig.getMinItems());
+            final long coreItems = Math.max(minItems, indexCacheConfig.getCoreItems());
+            final long maxItems = Math.max(coreItems, indexCacheConfig.getMaxItems());
 
             settings = new Settings(System.currentTimeMillis(), timeToLive, timeToIdle, minItems, coreItems, maxItems);
         }

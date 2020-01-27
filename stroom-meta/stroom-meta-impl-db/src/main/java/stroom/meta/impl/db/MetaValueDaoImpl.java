@@ -30,6 +30,7 @@ import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -224,18 +225,18 @@ class MetaValueDaoImpl implements MetaValueDao {
     public void deleteOldValues() {
         // Acquire a cluster lock before performing a batch delete to reduce db contention and to let a single node do the job.
         clusterLockService.tryLock(LOCK_NAME, () -> {
-            final Long age = getAttributeDatabaseAgeMs();
+            final Long createTimeThresholdEpochMs = getAttributeCreateTimeThresholdEpochMs();
             final int batchSize = metaValueConfig.getDeleteBatchSize();
             int count = batchSize;
             while (count >= batchSize) {
-                count = deleteBatchOfOldValues(age, batchSize);
+                count = deleteBatchOfOldValues(createTimeThresholdEpochMs, batchSize);
             }
         });
     }
 
-    private int deleteBatchOfOldValues(final long age, final int batchSize) {
+    private int deleteBatchOfOldValues(final long createTimeThresholdEpochMs, final int batchSize) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        LOGGER.debug("Processing batch age {}, batch size is {}", age, batchSize);
+        LOGGER.debug("Processing batch age {}, batch size is {}", createTimeThresholdEpochMs, batchSize);
 
         final int count = JooqUtil.contextResult(metaDbConnProvider, context -> context
                         // TODO : @66 Maybe try delete with limits again after un upgrade to MySQL 5.7.
@@ -254,7 +255,7 @@ class MetaValueDaoImpl implements MetaValueDao {
                         .execute("DELETE FROM {0} WHERE {1} < {2} ORDER BY {3} LIMIT {4}",
                                 META_VAL,
                                 META_VAL.CREATE_TIME,
-                                age,
+                                createTimeThresholdEpochMs,
                                 META_VAL.ID,
                                 batchSize)
         );
@@ -286,9 +287,9 @@ class MetaValueDaoImpl implements MetaValueDao {
     /**
      * @return The oldest data attribute that we should keep
      */
-    private Long getAttributeDatabaseAgeMs() {
-        final long age = metaValueConfig.getDeleteAgeMs();
-        return System.currentTimeMillis() - age;
+    private Long getAttributeCreateTimeThresholdEpochMs() {
+        final Duration deleteAge = metaValueConfig.getDeleteAge().getDuration();
+        return System.currentTimeMillis() - deleteAge.toMillis();
     }
 
     /**

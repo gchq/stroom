@@ -198,6 +198,7 @@ ext.libs = [
         jackson_core                   : "com.fasterxml.jackson.core:jackson-core", // version controlled by DW BOM
         jackson_databind               : "com.fasterxml.jackson.core:jackson-databind", // version controlled by DW BOM
         jackson_dataformat_yaml        : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", // version controlled by DW BOM
+        jackson_datatype_jsr310        : "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", // version controlled by DW BOM
         java_jwt                       : "com.auth0:java-jwt:3.1.0",
         javassist                      : "org.javassist:javassist", // version controlled by DW BOM
         javax_activation               : "javax.activation:javax.activation-api:1.2.0",
@@ -238,6 +239,7 @@ ext.libs = [
         lucene_backward_codecs         : "org.apache.lucene:lucene-backward-codecs:$versions.lucene",
         lucene_core                    : "org.apache.lucene:lucene-core:$versions.lucene",
         lucene_queryparser             : "org.apache.lucene:lucene-queryparser:$versions.lucene",
+        mbknor_jackson_jsonSchema      : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.36",
         mockito_core                   : "org.mockito:mockito-core:$versions.mockito",
         mockito_junit_jupiter          : "org.mockito:mockito-junit-jupiter:$versions.mockito",
         mysql_connector_java           : "mysql:mysql-connector-java:8.0.15",

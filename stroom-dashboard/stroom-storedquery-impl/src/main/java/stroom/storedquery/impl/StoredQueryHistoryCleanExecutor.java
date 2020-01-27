@@ -22,7 +22,8 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
-import java.time.ZonedDateTime;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -37,7 +38,9 @@ public class StoredQueryHistoryCleanExecutor {
     private final StoredQueryConfig storedQueryConfig;
 
     @Inject
-    public StoredQueryHistoryCleanExecutor(final TaskContext taskContext, final StoredQueryDao storedQueryDao, final StoredQueryConfig storedQueryConfig) {
+    public StoredQueryHistoryCleanExecutor(final TaskContext taskContext,
+                                           final StoredQueryDao storedQueryDao,
+                                           final StoredQueryConfig storedQueryConfig) {
         this.taskContext = taskContext;
         this.storedQueryDao = storedQueryDao;
         this.storedQueryConfig = storedQueryConfig;
@@ -53,7 +56,7 @@ public class StoredQueryHistoryCleanExecutor {
         final int historyItemsRetention = storedQueryConfig.getItemsRetention();
         final int historyDaysRetention = storedQueryConfig.getDaysRetention();
 
-        final long oldestCrtMs = ZonedDateTime.now().minusDays(historyDaysRetention).toInstant().toEpochMilli();
+        final long oldestCrtMs = Instant.now().minus(historyDaysRetention, ChronoUnit.DAYS).toEpochMilli();
 
         final List<String> users = storedQueryDao.getUsers(favourite);
         users.forEach(user -> {
