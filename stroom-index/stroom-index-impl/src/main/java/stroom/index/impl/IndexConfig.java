@@ -6,9 +6,9 @@ import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class IndexConfig extends AbstractConfig implements HasDbConfig {
@@ -17,7 +17,7 @@ public class IndexConfig extends AbstractConfig implements HasDbConfig {
     private IndexWriterConfig indexWriterConfig = new IndexWriterConfig();
     private CacheConfig indexStructureCache = new CacheConfig.Builder()
             .maximumSize(100L)
-            .expireAfterWrite(10, TimeUnit.SECONDS)
+            .expireAfterWrite(StroomDuration.ofSeconds(10))
             .build();
 
     @JsonProperty("db")

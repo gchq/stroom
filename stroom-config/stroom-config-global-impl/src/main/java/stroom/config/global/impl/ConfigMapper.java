@@ -34,9 +34,11 @@ import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.PropertyPath;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -61,6 +63,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -79,12 +84,13 @@ public class ConfigMapper {
     private static final Set<String> VALID_DELIMITERS_SET = new HashSet<>(VALID_DELIMITERS_LIST);
 
     private static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts("stroom");
-    private static final String DOCREF_PREFIX = "docRef(";
+    private static final String DOCREF_PREFIX = "docRef";
+    private static final Pattern DOCREF_PATTERN = Pattern.compile("^" + DOCREF_PREFIX + "\\([^)]+\\)$");
     public static final String LIST_EXAMPLE = "|item1|item2|item3";
     public static final String MAP_EXAMPLE = "|:key1:value1|:key2:value2|:key3:value3";
-    public static final String DOCREF_EXAMPLE = "|,"
+    public static final String DOCREF_EXAMPLE = ","
         + DOCREF_PREFIX
-        + "StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)";
+        + "(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)";
 
     // The guice bound appConfig
     private final AppConfig appConfig;
@@ -95,6 +101,20 @@ public class ConfigMapper {
 
     // A map of property accessor objects keyed on the fully qualified prop path (i.e. stroom.path.temp)
     private final Map<PropertyPath, Prop> propertyMap = new HashMap<>();
+
+    // TODO Created this with a view to improving the ser/deser of the values but it needs
+    //   more thought.  Leaving it here for now.
+//    private static final Map<Class<?>, Mapping> MAPPERS = new HashMap<>();
+//
+//    static {
+//        map(boolean.class, StroomDuration::parse);
+//        map(StroomDuration.class, StroomDuration::parse, Object::toString);
+//        map(List.class, (list, genericType) -> {
+//            final Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
+//            return createDelimitedConversionFunc(ConfigMapper::listToString);
+//        }, Object::toString);
+//
+//    }
 
     @Inject
     public ConfigMapper(final AppConfig appConfig) {
@@ -352,7 +372,9 @@ public class ConfigMapper {
                 Map.class.isAssignableFrom(type) ||
                 DocRef.class.isAssignableFrom(type) ||
                 Enum.class.isAssignableFrom(type) ||
-                Path.class.isAssignableFrom(type);
+                Path.class.isAssignableFrom(type) ||
+                StroomDuration.class.isAssignableFrom(type) ||
+                ByteSize.class.isAssignableFrom(type);
 
         LOGGER.trace("isSupportedPropertyType({}), returning: {}", type, isSupported);
         return isSupported;
@@ -442,6 +464,13 @@ public class ConfigMapper {
         return convertToString(value, availableDelimiters);
     }
 
+    static Function<Object, String> createDelimitedConversionFunc(
+            final BiFunction<Object, List<String>, String> conversionFunc) {
+
+        List<String> availableDelimiters = new ArrayList<>(VALID_DELIMITERS_LIST);
+        return object -> conversionFunc.apply(object, availableDelimiters);
+    }
+
     static void validateDelimiter(final String serialisedForm,
                                   final int delimiterPosition,
                                   final String positionName,
@@ -504,7 +533,8 @@ public class ConfigMapper {
         return null;
     }
 
-    private static Object convertToObject(final String value, final Type genericType) {
+    // pkg private for testing
+    static Object convertToObject(final String value, final Type genericType) {
         if (value == null) {
             return null;
         }
@@ -534,13 +564,12 @@ public class ConfigMapper {
                 return Duration.parse(value);
             } else if (List.class.isAssignableFrom(type)) {
                 // determine the type of the list items
-                Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
+                final Class<?> itemType = getGenericsParam(genericType, 0);
                 return stringToList(value, itemType);
-                //        } else if (type.isAssignableFrom(Map.class)) {
             } else if (Map.class.isAssignableFrom(type)) {
                 // determine the types of the keys and values
-                Class<?> keyType = getDataType(getGenericTypes(genericType).get(0));
-                Class<?> valueType = getDataType(getGenericTypes(genericType).get(1));
+                final Class<?> keyType = getGenericsParam(genericType, 0);
+                final Class<?> valueType = getGenericsParam(genericType, 1);
                 return stringToMap(value, keyType, valueType);
             } else if (type.equals(DocRef.class)) {
                 return stringToDocRef(value);
@@ -548,6 +577,10 @@ public class ConfigMapper {
                 return stringToEnum(value, type);
             } else if (Path.class.isAssignableFrom(type)) {
                 return Path.of(value);
+            } else if (StroomDuration.class.isAssignableFrom(type)) {
+                return StroomDuration.parse(value);
+            } else if (ByteSize.class.isAssignableFrom(type)) {
+                return ByteSize.parse(value);
             }
         } catch (Exception e) {
             // Don't include the original exception else gwt uses the msg of the
@@ -557,13 +590,29 @@ public class ConfigMapper {
                     value, genericType, e.getMessage()), e);
             throw new RuntimeException(LogUtil.message(
                 "Unable to convert value [{}] to type {} due to: {}",
-                    value, getDataTypeName(genericType), e.getMessage()));
+                    value, getDataTypeName(genericType), e.getMessage()), e);
         }
 
         LOGGER.error("Unable to convert value [{}] of type [{}] to an Object", value, type);
         throw new RuntimeException(LogUtil.message(
             "Type [{}] is not supported for value [{}]", genericType, value));
     }
+
+    private static Class<?> getGenericsParam(final Type typeWithGenerics, final int index) {
+        List<Type> genericsParamTypes = getGenericTypes(typeWithGenerics);
+        if (genericsParamTypes.isEmpty()) {
+           throw new RuntimeException(LogUtil.message(
+               "Unable to get generics parameter {} for type {} as it has no parameterised types",
+               index, typeWithGenerics));
+        }
+        if (index >= genericsParamTypes.size()) {
+            throw new IllegalArgumentException(LogUtil.message("Index {} is out of bounds for types {}",
+                index, genericsParamTypes));
+        }
+
+        return getDataType(genericsParamTypes.get(index));
+    }
+
 
 
     private static String listToString(final List<?> list,
@@ -720,9 +769,15 @@ public class ConfigMapper {
             final String delimiter = String.valueOf(serialisedForm.charAt(0));
             validateDelimiter(serialisedForm, 0, "first", DOCREF_EXAMPLE);
 
+            // Remove the delimiter off the front
             String delimitedValue = serialisedForm.substring(1);
 
-            delimitedValue = delimitedValue.replace(DOCREF_PREFIX, "");
+            if (!DOCREF_PATTERN.matcher(delimitedValue).matches()) {
+                throw new RuntimeException(LogUtil.message("Expecting [{}] to match [{}]",
+                    delimitedValue, DOCREF_PATTERN.pattern()));
+            }
+
+            delimitedValue = delimitedValue.replace(DOCREF_PREFIX + "(", "");
             delimitedValue = delimitedValue.replace(")", "");
 
             final List<String> parts = Splitter.on(delimiter).splitToList(delimitedValue);
@@ -809,23 +864,73 @@ public class ConfigMapper {
         UnknownPropertyException(final String message) {
             super(message);
         }
-
-//        /**
-//         * Constructs a new runtime exception with the specified detail message and
-//         * cause.  <p>Note that the detail message associated with
-//         * {@code cause} is <i>not</i> automatically incorporated in
-//         * this runtime exception's detail message.
-//         *
-//         * @param message the detail message (which is saved for later retrieval
-//         *                by the {@link #getMessage()} method).
-//         * @param cause   the cause (which is saved for later retrieval by the
-//         *                {@link #getCause()} method).  (A {@code null} value is
-//         *                permitted, and indicates that the cause is nonexistent or
-//         *                unknown.)
-//         * @since 1.4
-//         */
-//        UnknownPropertyException(final String message, final Throwable cause) {
-//            super(message, cause);
-//        }
     }
+
+    // TODO Created these with a view to improving the ser/deser of the values but it needs
+    //   more thought.  Leaving them here for now.
+//    private Optional<Method> getParseMethod(final Class<?> clazz) {
+//        return Arrays.stream(clazz.getDeclaredMethods())
+//            .filter(method ->
+//                method.getName().equals("parse")
+//                    && method.getParameterCount() == 1
+//                    && method.getParameterTypes()[0].equals(String.class)
+//                    && method.getReturnType().equals(clazz))
+//            .findFirst();
+//    }
+//
+//    private static void map(final Class<?> propertyType,
+//                            final Function<String, Object> deSerialiseFunc,
+//                            final Function<Object, String> serialiseFunc) {
+//        if (MAPPERS.containsKey(propertyType)) {
+//            throw new RuntimeException(LogUtil.message("Class {} is already mapped", propertyType));
+//        }
+//        MAPPERS.put(propertyType, Mapping.of(propertyType, deSerialiseFunc, serialiseFunc));
+//    }
+//
+//    private static void map(final Class<?> propertyType,
+//                            final Function<String, Object> deSerialiseFunc) {
+//        if (MAPPERS.containsKey(propertyType)) {
+//            throw new RuntimeException(LogUtil.message("Class {} is already mapped", propertyType));
+//        }
+//        MAPPERS.put(propertyType, Mapping.of(propertyType, deSerialiseFunc));
+//    }
+//
+//    private static class Mapping {
+//        private final Class<?> propertyType;
+//        private final BiFunction<String, Type, Object> deSerialiseFunc;
+//        private final Function<Object, String> serialiseFunc;
+//
+//        private Mapping(final Class<?> propertyType,
+//                        final BiFunction<String, Type, Object> deSerialiseFunc,
+//                        final Function<Object, String> serialiseFunc) {
+//            this.propertyType = propertyType;
+//            this.deSerialiseFunc = deSerialiseFunc;
+//            this.serialiseFunc = serialiseFunc;
+//        }
+//
+//        static Mapping of(final Class<?> propertyType,
+//                          final BiFunction<String, Type, Object> deSerialiseFunc,
+//                          final Function<Object, String> serialiseFunc) {
+//            return new Mapping(propertyType, deSerialiseFunc, serialiseFunc);
+//        }
+//
+//        static Mapping of(final Class<?> propertyType,
+//                          final BiFunction<String, Type, Object> deSerialiseFunc) {
+//            return new Mapping(propertyType, deSerialiseFunc, obj ->
+//                obj == null ? null : obj.toString()
+//            );
+//        }
+//
+//        Class<?> getPropertyType() {
+//            return propertyType;
+//        }
+//
+//        Function<Object, String> getSerialiseFunc() {
+//            return serialiseFunc;
+//        }
+//
+//        BiFunction<String, Type, Object> getDeSerialiseFunc() {
+//            return deSerialiseFunc;
+//        }
+//    }
 }

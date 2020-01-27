@@ -1,5 +1,9 @@
 package stroom.config.app;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.kjetland.jackson.jsonSchema.JsonSchemaGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,17 +34,20 @@ public class GenerateExpectedYaml {
      */
     public static void main(String[] args) throws IOException {
 
-        Path outputFile;
-        if (args.length > 0) {
-            outputFile = Paths.get(args[0]);
+        Path defaultsFile;
+        Path schemaFile;
+        if (args.length == 2) {
+            defaultsFile = Paths.get(args[0]);
+            schemaFile = Paths.get(args[1]);
         } else {
-            outputFile = TestYamlUtil.getExpectedYamlFile();
+            defaultsFile = TestYamlUtil.getExpectedYamlFile();
+            schemaFile = null;
         }
 
-        Path parentDir = outputFile.getParent();
+        Path parentDir = defaultsFile.getParent();
 
         if (!Files.isDirectory(parentDir)) {
-            LOGGER.info("Creating directory {}", outputFile.toAbsolutePath());
+            LOGGER.info("Creating directory {}", defaultsFile.toAbsolutePath());
             Files.createDirectories(parentDir);
         }
 
@@ -56,7 +63,27 @@ public class GenerateExpectedYaml {
             outputStr = generatedYaml;
         }
 
-        LOGGER.info("Writing generated yaml to {}", outputFile.toAbsolutePath());
-        Files.writeString(outputFile, outputStr);
+        LOGGER.info("Writing generated yaml to {}", defaultsFile.toAbsolutePath());
+        Files.writeString(defaultsFile, outputStr);
+
+        if (schemaFile != null) {
+            generateJsonSchema(schemaFile);
+        }
+    }
+
+
+    static void generateJsonSchema(final Path schemaFile) throws IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        JsonSchemaGenerator jsonSchemaGenerator = new JsonSchemaGenerator(objectMapper);
+
+        // If you want to configure it manually:
+        // JsonSchemaConfig config = JsonSchemaConfig.create(...);
+        // JsonSchemaGenerator generator = new JsonSchemaGenerator(objectMapper, config);
+
+        JsonNode jsonSchema = jsonSchemaGenerator.generateJsonSchema(AppConfig.class);
+        objectMapper.enable(SerializationFeature.INDENT_OUTPUT);
+
+        LOGGER.info("Writing schema file to {}", schemaFile.toAbsolutePath());
+        objectMapper.writeValue(schemaFile.toFile(), jsonSchema);
     }
 }

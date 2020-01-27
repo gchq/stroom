@@ -29,6 +29,7 @@ import stroom.security.mock.MockSecurityContext;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.cache.CacheConfig;
 import stroom.util.date.DateUtil;
+import stroom.util.time.StroomDuration;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -36,7 +37,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -131,7 +131,7 @@ class TestEffectiveStreamPool extends StroomUnitTest {
             final ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
             referenceDataConfig.setEffectiveStreamCache(new CacheConfig.Builder()
                     .maximumSize(1000L)
-                    .expireAfterWrite(100, TimeUnit.MILLISECONDS)
+                    .expireAfterWrite(StroomDuration.ofMillis(100))
                     .build());
 
             final EffectiveStreamCache effectiveStreamCache = new EffectiveStreamCache(

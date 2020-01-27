@@ -68,6 +68,7 @@ public class XsrfProtectedServiceServlet extends CustomRemoteServiceServlet {
             }
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
+            LOGGER.warn(e.getMessage());
             throw e;
         }
     }

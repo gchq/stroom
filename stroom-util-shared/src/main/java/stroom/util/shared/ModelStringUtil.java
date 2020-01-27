@@ -29,7 +29,8 @@ public final class ModelStringUtil {
             new Divider(METRIC_DIV, "K"),
             new Divider(METRIC_DIV, "M"),
             new Divider(METRIC_DIV, "G"),
-            new Divider(METRIC_DIV, "T")
+            new Divider(METRIC_DIV, "T"),
+            new Divider(METRIC_DIV, "P")
     };
 
     private static Divider[] METRIC_BYTE_SIZE_DIVIDER = new Divider[]{
@@ -37,7 +38,8 @@ public final class ModelStringUtil {
             new Divider(METRIC_DIV, "K", "KB"),
             new Divider(METRIC_DIV, "M", "MB"),
             new Divider(METRIC_DIV, "G", "GB"),
-            new Divider(METRIC_DIV, "T", "TB")
+            new Divider(METRIC_DIV, "T", "TB"),
+            new Divider(METRIC_DIV, "P", "PB")
     };
 
     private static Divider[] IEC_BYTE_SIZE_DIVIDER = new Divider[]{
@@ -45,7 +47,8 @@ public final class ModelStringUtil {
             new Divider(IEC_BYTE_DIV, "K", "KB", "KiB"),
             new Divider(IEC_BYTE_DIV, "M", "MB", "MiB"),
             new Divider(IEC_BYTE_DIV, "G", "GB", "GiB"),
-            new Divider(IEC_BYTE_DIV, "T", "TB", "TiB")
+            new Divider(IEC_BYTE_DIV, "T", "TB", "TiB"),
+            new Divider(IEC_BYTE_DIV, "P", "PB", "PiB")
     };
 
     /**
@@ -263,7 +266,7 @@ public final class ModelStringUtil {
             }
         }
 
-        throw new NumberFormatException("Unable to parse " + str + " as suffix not recognised");
+        throw new NumberFormatException("Unable to parse " + str + " as suffix " + suffix + " not recognised");
 
     }
 

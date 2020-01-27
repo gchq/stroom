@@ -1,7 +1,7 @@
 package stroom.config.global.impl.validation;
 
-import stroom.util.shared.ValidRegex;
-import stroom.util.shared.ValidRegexValidator;
+import stroom.util.shared.validation.ValidRegex;
+import stroom.util.shared.validation.ValidRegexValidator;
 
 import javax.validation.ConstraintValidatorContext;
 import java.util.regex.Pattern;

@@ -51,12 +51,13 @@ class HeapHistogramService {
     @Inject
     HeapHistogramService(final HeapHistogramConfig heapHistogramConfig) {
         this.heapHistogramConfig = heapHistogramConfig;
-        this.lineMatchPattern = Pattern.compile("\\s*\\d+:\\s+(?<instances>\\d+)\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
+        this.lineMatchPattern = Pattern.compile(
+            "\\s*\\d+:\\s+(?<instances>\\d+)\\s+(?<bytes>\\d+)\\s+(?<class>.*)");
     }
 
     /**
-     * Generates a jmap heap histogram by calling the 'jmap' binary on the filesystem.  Will
-     * block until jmap completes/fails. Reads the content of stdout and parses it to return a
+     * Generates a heap histogram using the 'gcClassHistogram' MBean action.  Will
+     * block until the action completes/fails.
      * list of {@link HeapHistogramEntry}
      */
     List<HeapHistogramEntry> generateHeapHistogram() {
@@ -85,7 +86,10 @@ class HeapHistogramService {
                     ACTION_NAME,
                     new Object[]{null},
                     new String[]{String[].class.getName()});
-        } catch (MalformedObjectNameException | InstanceNotFoundException | ReflectionException | MBeanException e) {
+        } catch (MalformedObjectNameException
+            | InstanceNotFoundException
+            | ReflectionException
+            | MBeanException e) {
             throw new RuntimeException(LogUtil.message("Error invoking action {}", ACTION_NAME), e);
         }
         return output;
@@ -132,7 +136,9 @@ class HeapHistogramService {
         }
     }
 
-    private Function<String, Optional<HeapHistogramEntry>> buildLineToEntryMapper(final Function<String, String> classNameReplacer) {
+    private Function<String, Optional<HeapHistogramEntry>> buildLineToEntryMapper(
+        final Function<String, String> classNameReplacer) {
+
         Preconditions.checkNotNull(classNameReplacer);
         return line -> {
             Matcher matcher = lineMatchPattern.matcher(line);
@@ -156,21 +162,23 @@ class HeapHistogramService {
         Preconditions.checkNotNull(output);
 
         try {
-            Predicate<String> classNamePredicate = getClassNameMatchPredicate();
-            Function<String, String> classNameReplacer = getClassReplacementMapper();
-            Function<String, Optional<HeapHistogramEntry>> lineToEntryMapper = buildLineToEntryMapper(classNameReplacer);
+            final Predicate<String> classNamePredicate = getClassNameMatchPredicate();
+            final Function<String, String> classNameReplacer = getClassReplacementMapper();
+            final Function<String, Optional<HeapHistogramEntry>> lineToEntryMapper =
+                buildLineToEntryMapper(classNameReplacer);
 
             String[] lines = output.split("\\r?\\n");
 
             LOGGER.debug("processing {} lines of stdout", lines.length);
 
-            final List<HeapHistogramService.HeapHistogramEntry> histogramEntries = Arrays.stream(lines)
-                    .map(lineToEntryMapper)
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .filter(heapHistogramEntry ->
-                            classNamePredicate.test(heapHistogramEntry.getClassName()))
-                    .collect(Collectors.toList());
+            final List<HeapHistogramService.HeapHistogramEntry> histogramEntries = Arrays
+                .stream(lines)
+                .map(lineToEntryMapper)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .filter(heapHistogramEntry ->
+                    classNamePredicate.test(heapHistogramEntry.getClassName()))
+                .collect(Collectors.toList());
 
             LOGGER.debug("histogramEntries size [{}]", histogramEntries.size());
             if (histogramEntries.size() == 0) {

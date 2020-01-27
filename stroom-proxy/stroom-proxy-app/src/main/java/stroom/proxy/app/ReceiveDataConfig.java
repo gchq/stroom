@@ -3,6 +3,7 @@ package stroom.proxy.app;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.validation.ValidRegex;
 
 import javax.inject.Singleton;
 
@@ -46,6 +47,7 @@ public class ReceiveDataConfig extends AbstractConfig {
         this.unknownClassification = unknownClassification;
     }
 
+    @ValidRegex
     @JsonPropertyDescription("The regex pattern for feed names")
     public String getFeedNamePattern() {
         return feedNamePattern;

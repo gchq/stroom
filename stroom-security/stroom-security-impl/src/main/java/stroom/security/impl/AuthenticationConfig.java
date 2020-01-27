@@ -6,13 +6,13 @@ import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.ValidRegex;
-import stroom.util.shared.ValidationSeverity;
+import stroom.util.shared.validation.ValidRegex;
+import stroom.util.shared.validation.ValidationSeverity;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
 import javax.validation.constraints.AssertTrue;
 import javax.validation.constraints.NotNull;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class AuthenticationConfig extends AbstractConfig {
@@ -39,7 +39,7 @@ public class AuthenticationConfig extends AbstractConfig {
 
     private CacheConfig apiTokenCache = new CacheConfig.Builder()
             .maximumSize(10000L)
-            .expireAfterWrite(30, TimeUnit.MINUTES)
+            .expireAfterWrite(StroomDuration.ofMinutes(30))
             .build();
 
     @JsonPropertyDescription("The URL of the authentication service")

@@ -25,15 +25,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.offheapstore.databases.AbstractLmdbDbTest;
-import stroom.util.ByteSizeUnit;
+import stroom.util.io.ByteSize;
+import stroom.util.io.ByteSizeUnit;
 import stroom.util.pipeline.scope.PipelineScopeModule;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import java.io.IOException;
 
 public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRefDataOffHeapStoreTest.class);
-    private static final long DB_MAX_SIZE = ByteSizeUnit.MEBIBYTE.longBytes(5);
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(5);
     protected RefDataStore refDataStore;
     protected Injector injector;
     @Inject
@@ -41,7 +43,7 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
 
     @Override
-    protected long getMaxSizeBytes() {
+    protected ByteSize getMaxSizeBytes() {
         return DB_MAX_SIZE;
     }
 
@@ -72,11 +74,11 @@ public abstract class AbstractRefDataOffHeapStoreTest extends AbstractLmdbDbTest
         return referenceDataConfig;
     }
 
-    protected void setDbMaxSizeProperty(final long sizeInBytes) {
-        referenceDataConfig.setMaxStoreSize(Long.toString(sizeInBytes));
+    protected void setDbMaxSizeProperty(final ByteSize sizeInBytes) {
+        referenceDataConfig.setMaxStoreSize(sizeInBytes);
     }
 
-    protected void setPurgeAgeProperty(final String purgeAge) {
+    protected void setPurgeAgeProperty(final StroomDuration purgeAge) {
         referenceDataConfig.setPurgeAge(purgeAge);
     }
 

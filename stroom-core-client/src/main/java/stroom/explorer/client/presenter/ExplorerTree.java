@@ -92,8 +92,8 @@ public class ExplorerTree extends AbstractExplorerTree {
             }
 
             @Override
-            protected void fireChange() {
-                MultiSelectEvent.fire(ExplorerTree.this, new SelectionType(false, false, allowMultiSelect, false, false));
+            protected void fireChange(final SelectionType selectionType) {
+                MultiSelectEvent.fire(ExplorerTree.this, selectionType);
             }
         };
         cellTable.setSelectionModel(multiSelectionModel, new MySelectionEventManager(cellTable));
@@ -264,7 +264,7 @@ public class ExplorerTree extends AbstractExplorerTree {
             selection.setSelected(row);
         }
 
-        selectionModel.setSelection(selection);
+        selectionModel.setSelection(selection, selectionType);
         MultiSelectEvent.fire(ExplorerTree.this, selectionType);
     }
 
