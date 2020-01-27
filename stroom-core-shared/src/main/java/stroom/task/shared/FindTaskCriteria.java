@@ -16,6 +16,7 @@
 
 package stroom.task.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasIsConstrained;
 
@@ -26,8 +27,8 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
     private static final long serialVersionUID = 2759048534848720682L;
 
     private String sessionId;
-    private Set<TaskId> ancestorIdSet;
-    private Set<TaskId> idSet;
+    private Set<TaskIdImpl> ancestorIdSet;
+    private Set<TaskIdImpl> idSet;
 
     public FindTaskCriteria() {
         // Default constructor necessary for GWT serialisation.
@@ -41,22 +42,32 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
         this.sessionId = sessionId;
     }
 
-    public Set<TaskId> getAncestorIdSet() {
+    public Set<TaskIdImpl> getAncestorIdSet() {
         return ancestorIdSet;
     }
 
-    public void addAncestorId(final TaskId ancestorId) {
+    public void setAncestorIdSet(final Set<TaskIdImpl> ancestorIdSet) {
+        this.ancestorIdSet = ancestorIdSet;
+    }
+
+    @JsonIgnore
+    public void addAncestorId(final TaskIdImpl ancestorId) {
         if (ancestorIdSet == null) {
             ancestorIdSet = new HashSet<>();
         }
         ancestorIdSet.add(ancestorId);
     }
 
-    public Set<TaskId> getIdSet() {
+    public Set<TaskIdImpl> getIdSet() {
         return idSet;
     }
 
-    public void addId(final TaskId id) {
+    public void setIdSet(final Set<TaskIdImpl> idSet) {
+        this.idSet = idSet;
+    }
+
+    @JsonIgnore
+    public void addId(final TaskIdImpl id) {
         if (idSet == null) {
             idSet = new HashSet<>();
         }
@@ -65,10 +76,12 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
     }
 
     @Override
+    @JsonIgnore
     public boolean isConstrained() {
         return (ancestorIdSet != null && ancestorIdSet.size() > 0) || (idSet != null && idSet.size() > 0);
     }
 
+    @JsonIgnore
     public boolean isMatch(final Task<?> task, final String sessionId) {
         if (ancestorIdSet != null && ancestorIdSet.size() > 0) {
             for (final TaskId ancestorId : ancestorIdSet) {
@@ -78,7 +91,7 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
             }
         }
         if (idSet != null && idSet.size() > 0) {
-            if (idSet.contains(task.getId())) {
+            if (idSet.contains((TaskIdImpl) task.getId())) {
                 return true;
             }
         }
@@ -91,14 +104,14 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
         final StringBuilder sb = new StringBuilder();
         if (ancestorIdSet != null && ancestorIdSet.size() > 0) {
             sb.append("Ancestor Id: ");
-            for (final TaskId ancestorId : ancestorIdSet) {
+            for (final TaskIdImpl ancestorId : ancestorIdSet) {
                 sb.append(ancestorId);
                 sb.append(", ");
             }
         }
         if (idSet != null && idSet.size() > 0) {
             sb.append("Id: ");
-            for (final TaskId id : idSet) {
+            for (final TaskIdImpl id : idSet) {
                 sb.append(id);
                 sb.append(", ");
             }

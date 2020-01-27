@@ -30,6 +30,7 @@ import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
+import stroom.task.shared.TaskIdImpl;
 import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
@@ -123,7 +124,7 @@ public class SolrAsyncSearchTaskHandler extends AbstractTaskHandler<SolrAsyncSea
         outerTask.setRunnable(() -> {
             taskContext.info(() -> task.getSearchName() + " - terminating child tasks");
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
-            findTaskCriteria.addAncestorId(task.getId());
+            findTaskCriteria.addAncestorId((TaskIdImpl) task.getId());
             final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask("Terminate: " + task.getTaskName(), findTaskCriteria, false);
 
             // Terminate matching tasks.

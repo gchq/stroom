@@ -18,14 +18,19 @@ package stroom.task.client.presenter;
 
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
+import stroom.task.shared.TaskIdImpl;
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.BaseResultList;
+import stroom.util.shared.CompareUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
+import stroom.util.shared.Sort.Direction;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -79,7 +84,7 @@ class TaskProgressUtil {
                     // If we have no record of this parent then create a
                     // dummy dead one.
                     final TaskProgress parent = new TaskProgress();
-                    parent.setId(parentId);
+                    parent.setId((TaskIdImpl) parentId);
                     parent.setSubmitTimeMs(child.getSubmitTimeMs());
                     parent.setTimeNowMs(child.getTimeNowMs());
                     parent.setTaskName("<<dead>>");
@@ -185,9 +190,58 @@ class TaskProgressUtil {
 
             if (state) {
                 childSet.stream()
-                        .sorted(criteria)
+                        .sorted(new TaskProgressComparator(criteria))
                         .forEach(child -> buildTree(childMap, child, depth + 1, returnList, criteria));
             }
+        }
+    }
+
+    private static class TaskProgressComparator implements Comparator<TaskProgress> {
+        private final FindTaskProgressCriteria criteria;
+
+        private TaskProgressComparator(final FindTaskProgressCriteria criteria) {
+            this.criteria = criteria;
+        }
+
+        @Override
+        public int compare(final TaskProgress o1, final TaskProgress o2) {
+            if (criteria.getSortList() != null) {
+                for (final Sort sort : criteria.getSortList()) {
+                    final String field = sort.getField();
+
+                    int compare = 0;
+                    switch (field) {
+                        case FindTaskProgressCriteria.FIELD_NAME:
+                            compare = CompareUtil.compareString(o1.getTaskName(), o2.getTaskName());
+                            break;
+                        case FindTaskProgressCriteria.FIELD_USER:
+                            compare = CompareUtil.compareString(o1.getUserName(), o2.getUserName());
+                            break;
+                        case FindTaskProgressCriteria.FIELD_SUBMIT_TIME:
+                            compare = CompareUtil.compareLong(o1.getSubmitTimeMs(), o2.getSubmitTimeMs());
+                            break;
+                        case FindTaskProgressCriteria.FIELD_AGE:
+                            compare = CompareUtil.compareLong(o1.getAgeMs(), o2.getAgeMs());
+                            break;
+                        case FindTaskProgressCriteria.FIELD_INFO:
+                            compare = CompareUtil.compareString(o1.getTaskInfo(), o2.getTaskInfo());
+                            break;
+                        case FindTaskProgressCriteria.FIELD_NODE:
+                            compare = CompareUtil.compareString(o1.getNodeName(), o2.getNodeName());
+                            break;
+                    }
+
+                    if (Direction.DESCENDING.equals(sort.getDirection())) {
+                        compare = compare * -1;
+                    }
+
+                    if (compare != 0) {
+                        return compare;
+                    }
+                }
+            }
+
+            return 0;
         }
     }
 }

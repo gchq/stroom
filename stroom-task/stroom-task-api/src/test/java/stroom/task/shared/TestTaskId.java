@@ -23,14 +23,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestTaskId {
     @Test
     void testSimple() {
-        final TaskId p1 = new TaskId("P1", null);
-        final TaskId p2 = new TaskId("P2", null);
-        final TaskId c1 = new TaskId("C1", p1);
-        final TaskId c2 = new TaskId("C2", p2);
-        final TaskId gc1 = new TaskId("GC1", c1);
-        final TaskId gc2 = new TaskId("GC2", c2);
+        final TaskId p1 = new TaskIdImpl("P1", null);
+        final TaskId p2 = new TaskIdImpl("P2", null);
+        final TaskId c1 = new TaskIdImpl("C1", p1);
+        final TaskId c2 = new TaskIdImpl("C2", p2);
+        final TaskId gc1 = new TaskIdImpl("GC1", c1);
+        final TaskId gc2 = new TaskIdImpl("GC2", c2);
 
-        assertThat(gc1.isOrHasAncestor(new TaskId("P1", null))).isTrue();
-        assertThat(gc2.isOrHasAncestor(new TaskId("P1", null))).isFalse();
+        assertThat(gc1.isOrHasAncestor(new TaskIdImpl("P1", null))).isTrue();
+        assertThat(gc2.isOrHasAncestor(new TaskIdImpl("P1", null))).isFalse();
     }
 }

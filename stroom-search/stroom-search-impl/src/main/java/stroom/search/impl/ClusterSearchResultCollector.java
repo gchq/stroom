@@ -39,6 +39,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.shared.FindTaskCriteria;
+import stroom.task.shared.TaskIdImpl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.VoidResult;
@@ -142,7 +143,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         outerTask.setRunnable(() -> {
             taskContext.info(() -> task.getSearchName() + " - terminating child tasks");
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
-            findTaskCriteria.addAncestorId(task.getId());
+            findTaskCriteria.addAncestorId((TaskIdImpl) task.getId());
             final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask("Terminate: " + task.getTaskName(), findTaskCriteria, false);
 
             // Terminate matching tasks.

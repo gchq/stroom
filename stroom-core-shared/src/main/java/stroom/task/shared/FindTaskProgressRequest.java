@@ -16,6 +16,8 @@
 
 package stroom.task.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.util.Set;
 
 public class FindTaskProgressRequest {
@@ -37,14 +39,17 @@ public class FindTaskProgressRequest {
         this.criteria = criteria;
     }
 
+    @JsonIgnore
     public Set<TaskProgress> getExpandedRows() {
         return null;
     }
 
+    @JsonIgnore
     public void setRowExpanded(final TaskProgress row, final boolean open) {
         criteria.setExpanded(row, open);
     }
 
+    @JsonIgnore
     public boolean isRowExpanded(final TaskProgress row) {
         return criteria.isExpanded(row);
     }
