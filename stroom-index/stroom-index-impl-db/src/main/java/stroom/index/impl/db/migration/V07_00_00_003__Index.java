@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package stroom.core.db.migration.mysql;
+package stroom.index.impl.db.migration;
 
 import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.core.db.migration._V07_00_00.doc.index._V07_00_00_IndexDoc;
-import stroom.core.db.migration._V07_00_00.doc.index._V07_00_00_IndexDoc.PartitionBy;
-import stroom.core.db.migration._V07_00_00.doc.index._V07_00_00_IndexFields;
-import stroom.core.db.migration._V07_00_00.doc.index._V07_00_00_IndexSerialiser;
+import stroom.index.impl.db.migration._V07_00_00.doc.index._V07_00_00_IndexDoc;
+import stroom.index.impl.db.migration._V07_00_00.doc.index._V07_00_00_IndexFields;
+import stroom.index.impl.db.migration._V07_00_00.doc.index._V07_00_00_IndexSerialiser;
 import stroom.index.shared.IndexDoc;
 import stroom.util.xml.XMLMarshallerUtil;
 
@@ -300,7 +299,8 @@ public class V07_00_00_017__Index extends BaseJavaMigration {
                         document.setDescription(descrip);
                         document.setMaxDocsPerShard(maxDoc);
                         document.setShardsPerPartition(maxShrd);
-                        document.setPartitionBy(PartitionBy.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(partBy));
+                        document.setPartitionBy(
+                            _V07_00_00_IndexDoc.PartitionBy.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(partBy));
                         document.setPartitionSize(partSz);
                         document.setRetentionDayAge(retenDayAge);
 
