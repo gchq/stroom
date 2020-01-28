@@ -91,6 +91,7 @@ appConfig:
       maxPoolSize: null
   contentPackImport:
     enabled: false
+    importDirectory: null
   core:
     db:
       connection:
