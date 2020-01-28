@@ -48,9 +48,11 @@ import stroom.util.thread.StroomThreadGroup;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -374,10 +376,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
             }
 
             // Get the parent task thread if there is one.
-            TaskThread parentTaskThread = null;
-            if (parentTask != null) {
-                parentTaskThread = currentTasks.get(parentTask.getId());
-            }
+            final Set<TaskThread> ancestorTaskSet = getAncestorTaskSet(parentTask);
 
             final Thread currentThread = Thread.currentThread();
             final String oldThreadName = currentThread.getName();
@@ -386,9 +385,10 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
             currentThread.setName(oldThreadName + " - " + task.getClass().getSimpleName());
             try {
                 taskThread.setThread(Thread.currentThread());
-                if (parentTaskThread != null) {
-                    parentTaskThread.addChild(taskThread);
-                }
+
+                // Let every ancestor know this descendant task is being executed.
+                ancestorTaskSet.forEach(ancestorTask -> ancestorTask.addChild(taskThread));
+
                 currentTasks.put(task.getId(), taskThread);
 
                 CurrentTaskState.pushState(taskThread);
@@ -412,9 +412,10 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 throw e;
             } finally {
                 currentTasks.remove(task.getId());
-                if (parentTaskThread != null) {
-                    parentTaskThread.removeChild(taskThread);
-                }
+
+                // Let every ancestor know this descendant task has completed.
+                ancestorTaskSet.forEach(ancestorTask -> ancestorTask.removeChild(taskThread));
+
                 taskThread.setThread(null);
                 currentThread.setName(oldThreadName);
                 // Decrease the count of the number of async tasks.
@@ -446,12 +447,23 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
         }
     }
 
+    private Set<TaskThread> getAncestorTaskSet(final Task<?> parentTask) {
+        // Get the parent task thread if there is one.
+        final Set<TaskThread> ancestorTaskSet = new HashSet<>();
+        Task<?> ancestor = parentTask;
+        while (ancestor != null) {
+            TaskThread ancestorTaskThread = currentTasks.get(ancestor.getId());
+            if (ancestorTaskThread != null) {
+                ancestorTaskSet.add(ancestorTaskThread);
+            }
+            ancestor = ancestor.getParentTask();
+        }
+        return ancestorTaskSet;
+    }
+
     private <R> void doExec(final Task<R> task, final TaskCallback<R> callback) {
         // Get the parent task thread if there is one.
-        TaskThread parentTaskThread = null;
-        if (task.getParentTask() != null) {
-            parentTaskThread = currentTasks.get(task.getParentTask().getId());
-        }
+        final Set<TaskThread> ancestorTaskSet = getAncestorTaskSet(task.getParentTask());
 
         final UserIdentity userIdentity = securityContext.getUserIdentity();
         if (userIdentity == null) {
@@ -470,9 +482,10 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
             }
 
             taskThread.setThread(Thread.currentThread());
-            if (parentTaskThread != null) {
-                parentTaskThread.addChild(taskThread);
-            }
+
+            // Let every ancestor know this descendant task is being executed.
+            ancestorTaskSet.forEach(ancestorTask -> ancestorTask.addChild(taskThread));
+
             currentTasks.put(task.getId(), taskThread);
 
             if (stop.get() || currentThread.isInterrupted()) {
@@ -493,9 +506,10 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
             }
         } finally {
             currentTasks.remove(task.getId());
-            if (parentTaskThread != null) {
-                parentTaskThread.removeChild(taskThread);
-            }
+
+            // Let every ancestor know this descendant task has completed.
+            ancestorTaskSet.forEach(ancestorTask -> ancestorTask.removeChild(taskThread));
+
             taskThread.setThread(null);
             currentThread.setName(oldThreadName);
         }
