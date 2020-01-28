@@ -175,7 +175,7 @@ ext.libs = [
         dropwizard_testing             : "io.dropwizard:dropwizard-testing", // version controlled by DW BOM
         dropwizard_validation          : "io.dropwizard:dropwizard-validation", // version controlled by DW BOM
         fast_infoset                   : "com.sun.xml.fastinfoset:FastInfoset:1.2.12",
-        flyway_core                    : "org.flywaydb:flyway-core:5.2.4",
+        flyway_core                    : "org.flywaydb:flyway-core:5.2.4", // We are stuck on 5.2.4 as newer non-enterprise versions don't support mysql 5.6
         gin                            : "com.google.gwt.inject:gin:2.1.2",
         google_findbugs                : "com.google.code.findbugs:jsr305:3.0.2",
         guava                          : "com.google.guava:guava", // version controlled by DW BOM
