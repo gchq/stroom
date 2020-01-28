@@ -18,55 +18,80 @@ package stroom.cache.client.presenter;
 
 import com.google.gwt.cell.client.ButtonCell;
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import stroom.cache.shared.CacheClearAction;
-import stroom.cache.shared.CacheRow;
-import stroom.cache.shared.FetchCacheRowAction;
-import stroom.data.client.presenter.ActionDataProvider;
+import stroom.cache.shared.CacheResource;
+import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.util.shared.ResultPage;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.util.client.MultiSelectionModel;
 
-public class CacheListPresenter extends MyPresenterWidget<DataGridView<CacheRow>> {
-    private final FetchCacheRowAction action = new FetchCacheRowAction();
-    private ActionDataProvider<CacheRow> dataProvider;
+import java.util.List;
+import java.util.function.Consumer;
+
+public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> {
+    private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
+
+    private RestDataProvider<String, StringResultPage> dataProvider;
 
     @Inject
-    public CacheListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
+    public CacheListPresenter(final EventBus eventBus,
+                              final RestFactory restFactory,
                               final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(true));
 
         // Name
-        getView().addResizableColumn(new Column<CacheRow, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<String, String>(new TextCell()) {
             @Override
-            public String getValue(final CacheRow row) {
-                return row.getCacheName();
+            public String getValue(final String row) {
+                return row;
             }
         }, "Name", 400);
 
         // Clear.
-        final Column<CacheRow, String> clearColumn = new Column<CacheRow, String>(new ButtonCell()) {
+        final Column<String, String> clearColumn = new Column<String, String>(new ButtonCell()) {
             @Override
-            public String getValue(final CacheRow row) {
+            public String getValue(final String row) {
                 return "Clear";
             }
         };
-        clearColumn.setFieldUpdater((index, row, value) -> dispatcher.exec(new CacheClearAction(row.getCacheName(), null)));
+        clearColumn.setFieldUpdater((index, row, value) -> {
+            final Rest<Boolean> rest = restFactory.create();
+            rest.call(CACHE_RESOURCE).clear(row, null);
+        });
         getView().addColumn(clearColumn, "</br>", 50);
 
         getView().addEndColumn(new EndColumn<>());
 
-        dataProvider = new ActionDataProvider<>(dispatcher, action);
+        dataProvider = new RestDataProvider<String, StringResultPage>(eventBus) {
+            @Override
+            protected void exec(final Consumer<StringResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<List<String>> rest = restFactory.create();
+                rest
+                        .onSuccess(list -> {
+                            final StringResultPage stringResultPage = new StringResultPage();
+                            stringResultPage.init(list);
+                            dataConsumer.accept(stringResultPage);
+                        })
+                        .onFailure(throwableConsumer)
+                        .call(CACHE_RESOURCE).list();
+            }
+        };
         dataProvider.addDataDisplay(getView().getDataDisplay());
     }
 
-    public MultiSelectionModel<CacheRow> getSelectionModel() {
+    public MultiSelectionModel<String> getSelectionModel() {
         return getView().getSelectionModel();
+    }
+
+    private static class StringResultPage extends ResultPage<String> {
     }
 }

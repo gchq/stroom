@@ -14,86 +14,82 @@
  * limitations under the License.
  */
 
-package stroom.task.impl;
+package stroom.cache.impl;
 
 import com.codahale.metrics.health.HealthCheck.Result;
-import stroom.event.logging.api.DocumentEventLog;
+import stroom.cache.shared.CacheInfo;
+import stroom.cache.shared.CacheInfoResponse;
+import stroom.cache.shared.CacheResource;
+import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.task.api.TaskManager;
-import stroom.task.shared.FindTaskProgressCriteria;
-import stroom.task.shared.FindTaskProgressRequest;
-import stroom.task.shared.TaskProgressResponse;
-import stroom.task.shared.TaskResource;
-import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.HasHealthCheck;
 import stroom.util.guice.ResourcePaths;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.Sort.Direction;
+import stroom.util.shared.StringCriteria;
 
 import javax.inject.Inject;
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
+import java.util.List;
 
 // TODO : @66 add event logging
-class TaskResourceImpl implements TaskResource, RestResource, HasHealthCheck {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskResourceImpl.class);
+class CacheResourceImpl implements CacheResource, RestResource, HasHealthCheck {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CacheResourceImpl.class);
 
-    private final TaskManager taskManager;
-    private final SessionIdProvider sessionIdProvider;
     private final NodeService nodeService;
     private final NodeInfo nodeInfo;
     private final WebTargetFactory webTargetFactory;
-    private final DocumentEventLog documentEventLog;
+    private final CacheManagerService cacheManagerService;
 
     @Inject
-    TaskResourceImpl(final TaskManager taskManager,
-                             final SessionIdProvider sessionIdProvider,
-                             final NodeService nodeService,
-                             final NodeInfo nodeInfo,
-                             final WebTargetFactory webTargetFactory,
-                             final DocumentEventLog documentEventLog) {
-        this.taskManager = taskManager;
-        this.sessionIdProvider = sessionIdProvider;
+    CacheResourceImpl(final NodeService nodeService,
+                      final NodeInfo nodeInfo,
+                      final WebTargetFactory webTargetFactory,
+                      final CacheManagerService cacheManagerService) {
         this.nodeService = nodeService;
         this.nodeInfo = nodeInfo;
         this.webTargetFactory = webTargetFactory;
-        this.documentEventLog = documentEventLog;
+        this.cacheManagerService = cacheManagerService;
     }
 
     @Override
-    public TaskProgressResponse list(final String nodeName) {
-        return find(nodeName, new FindTaskProgressRequest());
+    public List<String> list() {
+        return cacheManagerService.getCacheNames();
     }
 
     @Override
-    public TaskProgressResponse find(final String nodeName, final FindTaskProgressRequest request) {
-        TaskProgressResponse result = null;
+    public CacheInfoResponse info(final String cacheName, final String nodeName) {
+        CacheInfoResponse result = null;
         try {
             // If this is the node that was contacted then just return our local info.
             if (nodeInfo.getThisNodeName().equals(nodeName)) {
-                result = taskManager.find(request.getCriteria()).toResultPage(new TaskProgressResponse());
+                final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
+                criteria.setName(new StringCriteria(cacheName, null));
+                final List<CacheInfo> list = cacheManagerService.find(criteria);
+                result = new CacheInfoResponse();
+                result.init(list);
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_PATH + "/task/" + nodeName;
+                url += ResourcePaths.API_PATH + "/cache/info";
                 final Response response = webTargetFactory
                         .create(url)
+                        .queryParam("cacheName", cacheName)
+                        .queryParam("nodeName", nodeName)
                         .request(MediaType.APPLICATION_JSON)
-                        .post(Entity.json(request));
+                        .get();
                 if (response.getStatus() != 200) {
                     throw new WebApplicationException(response);
                 }
-                result = response.readEntity(TaskProgressResponse.class);
+                result = response.readEntity(CacheInfoResponse.class);
                 if (result == null) {
                     throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
@@ -108,39 +104,30 @@ class TaskResourceImpl implements TaskResource, RestResource, HasHealthCheck {
     }
 
     @Override
-    public TaskProgressResponse userTasks(final String nodeName) {
-        try {
-            final String sessionId = sessionIdProvider.get();
-            if (sessionId != null) {
-                final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
-                criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
-                criteria.setSessionId(sessionId);
-                final FindTaskProgressRequest findTaskProgressRequest = new FindTaskProgressRequest(criteria);
-                return find(nodeName, findTaskProgressRequest);
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
-        }
-        return null;
-    }
-
-    @Override
-    public Boolean terminate(final String nodeName, final TerminateTaskProgressRequest request) {
+    public Long clear(final String cacheName, final String nodeName) {
+        Long result = null;
         try {
             // If this is the node that was contacted then just return our local info.
             if (nodeInfo.getThisNodeName().equals(nodeName)) {
-                taskManager.terminate(request.getCriteria(), request.isKill());
+                final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
+                criteria.setName(new StringCriteria(cacheName, null));
+                result = cacheManagerService.clear(criteria);
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_PATH + "/task/" + nodeName + "/terminate";
+                url += ResourcePaths.API_PATH + "/cache";
                 final Response response = webTargetFactory
                         .create(url)
+                        .queryParam("cacheName", cacheName)
+                        .queryParam("nodeName", nodeName)
                         .request(MediaType.APPLICATION_JSON)
-                        .post(Entity.json(request));
+                        .delete();
                 if (response.getStatus() != 200) {
                     throw new WebApplicationException(response);
+                }
+                result = response.readEntity(Long.class);
+                if (result == null) {
+                    throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
             }
 
@@ -149,7 +136,7 @@ class TaskResourceImpl implements TaskResource, RestResource, HasHealthCheck {
             throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
         }
 
-        return true;
+        return result;
     }
 
     @Override

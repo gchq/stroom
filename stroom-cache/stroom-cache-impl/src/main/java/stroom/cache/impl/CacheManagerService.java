@@ -19,15 +19,19 @@ package stroom.cache.impl;
 
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.FindCacheInfoCriteria;
-import stroom.util.entity.FindClearService;
-import stroom.util.entity.FindService;
 import stroom.util.shared.Clearable;
+
+import java.util.List;
 
 /**
  * This class maintains several caches used throughout the application.
  */
-public interface CacheManagerService
-        extends Clearable, FindClearService<FindCacheInfoCriteria>, FindService<CacheInfo, FindCacheInfoCriteria> {
+public interface CacheManagerService extends Clearable {
+    List<String> getCacheNames();
+
+    List<CacheInfo> find(FindCacheInfoCriteria criteria);
+
+    Long clear(FindCacheInfoCriteria criteria);
 
     void evictExpiredElements();
 }

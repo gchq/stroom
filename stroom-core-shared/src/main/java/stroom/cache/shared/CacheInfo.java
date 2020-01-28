@@ -16,30 +16,44 @@
 
 package stroom.cache.shared;
 
-import stroom.docref.SharedObject;
-
 import java.util.Map;
 
-public class CacheInfo implements SharedObject {
-    private static final long serialVersionUID = 463047159587522512L;
-
+public class CacheInfo {
     private String name;
     private Map<String, String> map;
+    private String nodeName;
 
     public CacheInfo() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public CacheInfo(final String name, final Map<String, String> map) {
+    public CacheInfo(final String name, final Map<String, String> map, final String nodeName) {
         this.name = name;
         this.map = map;
+        this.nodeName = nodeName;
     }
 
     public String getName() {
         return name;
     }
 
+    public void setName(final String name) {
+        this.name = name;
+    }
+
     public Map<String, String> getMap() {
         return map;
+    }
+
+    public void setMap(final Map<String, String> map) {
+        this.map = map;
+    }
+
+    public String getNodeName() {
+        return nodeName;
+    }
+
+    public void setNodeName(final String nodeName) {
+        this.nodeName = nodeName;
     }
 }

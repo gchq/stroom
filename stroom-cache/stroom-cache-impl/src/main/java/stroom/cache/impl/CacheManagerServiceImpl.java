@@ -20,10 +20,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.FindCacheInfoCriteria;
-import stroom.util.shared.BaseResultList;
+import stroom.node.api.NodeInfo;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.PermissionNames;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.PageRequest;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -38,81 +39,71 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(CacheManagerServiceImpl.class);
 
     private final CacheManagerImpl cacheManager;
+    private final NodeInfo nodeInfo;
+    private final SecurityContext securityContext;
 
     @Inject
-    CacheManagerServiceImpl(final CacheManagerImpl cacheManager) {
+    CacheManagerServiceImpl(final CacheManagerImpl cacheManager,
+                            final NodeInfo nodeInfo,
+                            final SecurityContext securityContext) {
         this.cacheManager = cacheManager;
+        this.nodeInfo = nodeInfo;
+        this.securityContext = securityContext;
     }
 
     @Override
-    public BaseResultList<CacheInfo> find(final FindCacheInfoCriteria criteria) {
-        final PageRequest pageRequest = criteria.obtainPageRequest();
-
-        List<CacheInfo> list = findCaches(criteria);
-
-        // Trim the list to the specified range.
-        if (pageRequest.getLength() != null && pageRequest.getLength() < list.size()) {
-            int from = 0;
-            int to;
-            if (pageRequest.getOffset() != null) {
-                from = pageRequest.getOffset().intValue();
-            }
-
-            to = from + pageRequest.getLength();
-
-            final List<CacheInfo> shortList = new ArrayList<>(pageRequest.getLength());
-            for (int i = from; i < to; i++) {
-                shortList.add(list.get(i));
-            }
-            list = shortList;
-        }
-
-        // Return a base result list.
-        final long cacheCount = cacheManager.getCaches().size();
-        return new BaseResultList<>(list, pageRequest.getOffset(), cacheCount, pageRequest.getOffset() + list.size() == cacheCount);
-    }
-
-    private List<CacheInfo> findCaches(final FindCacheInfoCriteria criteria) {
-        final List<String> cacheNames = cacheManager.getCaches()
+    public List<String> getCacheNames() {
+        return securityContext.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () -> cacheManager.getCaches()
                 .keySet()
                 .stream()
                 .sorted(Comparator.naturalOrder())
-                .collect(Collectors.toList());
+                .collect(Collectors.toList()));
+    }
 
-        final List<CacheInfo> list = new ArrayList<>(cacheNames.size());
-        for (final String cacheName : cacheNames) {
-            boolean include = true;
-            if (criteria != null && criteria.getName() != null) {
-                include = criteria.getName().isMatch(cacheName);
-            }
+    @Override
+    public List<CacheInfo> find(final FindCacheInfoCriteria criteria) {
+        return securityContext.secureResult(PermissionNames.MANAGE_CACHE_PERMISSION, () -> {
+            final List<String> cacheNames = cacheManager.getCaches()
+                    .keySet()
+                    .stream()
+                    .sorted(Comparator.naturalOrder())
+                    .collect(Collectors.toList());
 
-            if (include) {
-                final CacheHolder cacheHolder = cacheManager.getCaches().get(cacheName);
+            final List<CacheInfo> list = new ArrayList<>(cacheNames.size());
+            for (final String cacheName : cacheNames) {
+                boolean include = true;
+                if (criteria != null && criteria.getName() != null) {
+                    include = criteria.getName().isMatch(cacheName);
+                }
 
-                if (cacheHolder != null) {
-                    final Map<String, String> map = new HashMap<>();
-                    map.put("Entries", String.valueOf(cacheHolder.getCache().estimatedSize()));
-                    addEntries(map, cacheHolder.getCacheBuilder().toString());
-                    addEntries(map, cacheHolder.getCache().stats().toString());
+                if (include) {
+                    final CacheHolder cacheHolder = cacheManager.getCaches().get(cacheName);
 
-                    map.forEach((k, v) -> {
-                        if (k.startsWith("Expire")) {
-                            try {
-                                final long nanos = Long.parseLong(v);
-                                map.put(k, ModelStringUtil.formatDurationString(nanos / 1000000, true));
+                    if (cacheHolder != null) {
+                        final Map<String, String> map = new HashMap<>();
+                        map.put("Entries", String.valueOf(cacheHolder.getCache().estimatedSize()));
+                        addEntries(map, cacheHolder.getCacheBuilder().toString());
+                        addEntries(map, cacheHolder.getCache().stats().toString());
 
-                            } catch (final RuntimeException e) {
-                                // Ignore.
+                        map.forEach((k, v) -> {
+                            if (k.startsWith("Expire")) {
+                                try {
+                                    final long nanos = Long.parseLong(v);
+                                    map.put(k, ModelStringUtil.formatDurationString(nanos / 1000000, true));
+
+                                } catch (final RuntimeException e) {
+                                    // Ignore.
+                                }
                             }
-                        }
-                    });
+                        });
 
-                    final CacheInfo info = new CacheInfo(cacheName, map);
-                    list.add(info);
+                        final CacheInfo info = new CacheInfo(cacheName, map, nodeInfo.getThisNodeName());
+                        list.add(info);
+                    }
                 }
             }
-        }
-        return list;
+            return list;
+        });
     }
 
     private void addEntries(final Map<String, String> map, String string) {
@@ -169,8 +160,8 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
      * Clears all items from named cache.
      */
     @Override
-    public Long findClear(final FindCacheInfoCriteria criteria) {
-        final List<CacheInfo> caches = findCaches(criteria);
+    public Long clear(final FindCacheInfoCriteria criteria) {
+        final List<CacheInfo> caches = find(criteria);
         for (final CacheInfo cacheInfo : caches) {
             final String cacheName = cacheInfo.getName();
             final CacheHolder cacheHolder = cacheManager.getCaches().get(cacheName);
@@ -180,11 +171,6 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
                 LOGGER.error("Unable to find cache with name '" + cacheName + "'");
             }
         }
-        return null;
-    }
-
-    @Override
-    public FindCacheInfoCriteria createCriteria() {
-        return new FindCacheInfoCriteria();
+        return (long) caches.size();
     }
 }

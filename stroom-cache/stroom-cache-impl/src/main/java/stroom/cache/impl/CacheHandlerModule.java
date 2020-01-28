@@ -17,22 +17,15 @@
 package stroom.cache.impl;
 
 import com.google.inject.AbstractModule;
-import stroom.cache.shared.CacheClearAction;
-import stroom.cache.shared.FetchCacheNodeRowAction;
-import stroom.cache.shared.FetchCacheRowAction;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.RestResource;
 
 public class CacheHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
-        TaskHandlerBinder.create(binder())
-                .bind(CacheClearAction.class, CacheClearHandler.class)
-                .bind(CacheClearClusterTask.class, CacheClearClusterHandler.class)
-                .bind(FetchCacheNodeRowAction.class, FetchCacheNodeRowHandler.class)
-                .bind(FetchCacheNodeRowClusterTask.class, FetchCacheNodeRowClusterHandler.class)
-                .bind(FetchCacheRowAction.class, FetchCacheRowHandler.class);
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(CacheResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(CacheManagerServiceImpl.class);
     }

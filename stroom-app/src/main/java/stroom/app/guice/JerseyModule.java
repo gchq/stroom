@@ -3,16 +3,11 @@ package stroom.app.guice;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
-import io.dropwizard.client.JerseyClientBuilder;
-import io.dropwizard.client.JerseyClientConfiguration;
-import io.dropwizard.setup.Environment;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.security.api.ClientSecurityUtil;
 import stroom.security.api.SecurityContext;
-import stroom.util.jersey.webTargetFactory;
+import stroom.util.jersey.WebTargetFactory;
 import stroom.util.shared.BuildInfo;
 
 import javax.inject.Provider;
@@ -21,8 +16,6 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Invocation.Builder;
 import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
-import java.util.Objects;
-import java.util.Optional;
 
 public class JerseyModule extends AbstractModule {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(JerseyModule.class);
@@ -63,7 +56,7 @@ public class JerseyModule extends AbstractModule {
 
     @Provides
     @Singleton
-    webTargetFactory provideJerseyRequestBuilder(final Client client,
+    WebTargetFactory provideJerseyRequestBuilder(final Client client,
                                                  final SecurityContext securityContext) {
         return url -> {
             final WebTarget webTarget = client.target(url);
