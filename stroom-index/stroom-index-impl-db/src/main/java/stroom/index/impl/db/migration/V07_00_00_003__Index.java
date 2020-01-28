@@ -20,6 +20,7 @@ import org.flywaydb.core.api.migration.BaseJavaMigration;
 import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.db.util.DbUtil;
 import stroom.index.impl.db.migration._V07_00_00.doc.index._V07_00_00_IndexDoc;
 import stroom.index.impl.db.migration._V07_00_00.doc.index._V07_00_00_IndexFields;
 import stroom.index.impl.db.migration._V07_00_00.doc.index._V07_00_00_IndexSerialiser;
@@ -62,19 +63,27 @@ public class V07_00_00_003__Index extends BaseJavaMigration {
      * relationship required is one-to-many, not many-to-many, so we don't have a choice about this.
      */
     private void migrate(final Connection connection) throws Exception {
-        final var indexUuidToVolumeIdListMap = getVolumesToMigrate(connection);
-        final var indexUuidToGroupNameMap = generateVolumeGroupNames(indexUuidToVolumeIdListMap.keySet());
-        final Set<String> groupNames = new HashSet<>(indexUuidToGroupNameMap.values());
+        if (DbUtil.doesTableExist(connection, "IDX_VOL")) {
+            final var indexUuidToVolumeIdListMap = getVolumesToMigrate(connection);
+            if (!indexUuidToVolumeIdListMap.isEmpty()) {
+                final var indexUuidToGroupNameMap = generateVolumeGroupNames(indexUuidToVolumeIdListMap.keySet());
+                final Set<String> groupNames = new HashSet<>(indexUuidToGroupNameMap.values());
 
-         createGroups(connection, groupNames);
+                createGroups(connection, groupNames);
 
-        for(var indexUuid : indexUuidToGroupNameMap.keySet()){
-            final var volumesToCreateForIndex = indexUuidToVolumeIdListMap.get(indexUuid);
-            final var groupForIndexes = indexUuidToGroupNameMap.get(indexUuid);
-            createIndexVolumes(connection, volumesToCreateForIndex, groupForIndexes);
+                for(var indexUuid : indexUuidToGroupNameMap.keySet()){
+                    final var volumesToCreateForIndex = indexUuidToVolumeIdListMap.get(indexUuid);
+                    final var groupForIndexes = indexUuidToGroupNameMap.get(indexUuid);
+                    createIndexVolumes(connection, volumesToCreateForIndex, groupForIndexes);
+                }
+
+                migrateIndexDocs(connection, indexUuidToGroupNameMap);
+            } else {
+                LOGGER.info("IDX_VOL table is empty so nothing to migrate");
+            }
+        } else {
+            LOGGER.info("IDX_VOL table doesn't exist so nothing to migrate");
         }
-
-        migrateIndexDocs(connection, indexUuidToGroupNameMap);
     }
 
     /**
