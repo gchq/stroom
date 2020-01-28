@@ -17,10 +17,11 @@
 package stroom.task.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import stroom.util.shared.TreeAction;
 
 import java.util.Set;
 
-public class FindTaskProgressRequest {
+public class FindTaskProgressRequest implements TreeAction<TaskProgress> {
     private FindTaskProgressCriteria criteria;
 
     public FindTaskProgressRequest() {

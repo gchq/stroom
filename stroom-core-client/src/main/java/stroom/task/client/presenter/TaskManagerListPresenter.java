@@ -34,6 +34,7 @@ import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
@@ -41,9 +42,11 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
+import stroom.processor.shared.ProcessorListRow;
 import stroom.svg.client.SvgPresets;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
@@ -70,6 +73,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class TaskManagerListPresenter
         extends MyPresenterWidget<DataGridView<TaskProgress>>
@@ -85,8 +89,10 @@ public class TaskManagerListPresenter
     private final RestFactory restFactory;
     private final NameFilterTimer timer = new NameFilterTimer();
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
+    private final RestDataProvider<TaskProgress, TaskProgressResponse> dataProvider;
 
     private FetchNodeStatusResponse fetchNodeStatusResponse;
+    private Column<TaskProgress, Expander> expanderColumn;
 
     @Inject
     public TaskManagerListPresenter(final EventBus eventBus,
@@ -104,6 +110,17 @@ public class TaskManagerListPresenter
         getView().addColumnSortHandler(this);
 
         initTableColumns();
+
+        dataProvider = new RestDataProvider<TaskProgress, TaskProgressResponse>(eventBus) {
+            @Override
+            protected void exec(final Consumer<TaskProgressResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                fetchNodes(dataConsumer, throwableConsumer);
+            }
+        };
+        dataProvider.addDataDisplay(getView().getDataDisplay());
+
+        // Handle use of the expander column.
+        dataProvider.setTreeRowHandler(new TreeRowHandler<TaskProgress>(request, getView(), expanderColumn));
     }
 
     /**
@@ -124,7 +141,7 @@ public class TaskManagerListPresenter
         getView().addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);
 
         // Expander column.
-        final Column<TaskProgress, Expander> expanderColumn = new Column<TaskProgress, Expander>(new ExpanderCell()) {
+        expanderColumn = new Column<TaskProgress, Expander>(new ExpanderCell()) {
             @Override
             public Expander getValue(final TaskProgress row) {
                 return buildExpander(row);
@@ -250,34 +267,44 @@ public class TaskManagerListPresenter
 
     @Override
     public void refresh() {
+        dataProvider.refresh();
+    }
+
+    public void fetchNodes(final Consumer<TaskProgressResponse> dataConsumer,
+                           final Consumer<Throwable> throwableConsumer) {
         if (fetchNodeStatusResponse == null) {
             final Rest<FetchNodeStatusResponse> rest = restFactory.create();
-            rest.onSuccess(this::refresh).call(NODE_RESOURCE).list();
+            rest.onSuccess(fetchNodeStatusResponse -> {
+                // Store node list for future queries.
+                this.fetchNodeStatusResponse = fetchNodeStatusResponse;
+                fetchTasksForNodes(dataConsumer, throwableConsumer, fetchNodeStatusResponse);
+            }).onFailure(throwableConsumer).call(NODE_RESOURCE).list();
         } else {
-            refresh(fetchNodeStatusResponse);
+            fetchTasksForNodes(dataConsumer, throwableConsumer, fetchNodeStatusResponse);
         }
     }
 
-    private void refresh(final FetchNodeStatusResponse fetchNodeStatusResponse) {
-        // Store node list for suture queries.
-        this.fetchNodeStatusResponse = fetchNodeStatusResponse;
+    private void fetchTasksForNodes(final Consumer<TaskProgressResponse> dataConsumer,
+                                    final Consumer<Throwable> throwableConsumer,
+                                    final FetchNodeStatusResponse fetchNodeStatusResponse) {
         for (final NodeStatusResult nodeStatusResult : fetchNodeStatusResponse.getValues()) {
             final String nodeName = nodeStatusResult.getNode().getName();
             final Rest<TaskProgressResponse> rest = restFactory.create();
             rest
                     .onSuccess(response -> {
                         responseMap.put(nodeName, response.getValues());
-                        update();
+                        combineNodeTasks(dataConsumer, throwableConsumer);
                     })
                     .onFailure(throwable -> {
                         responseMap.remove(nodeName);
-                        update();
+                        combineNodeTasks(dataConsumer, throwableConsumer);
                     })
                     .call(TASK_RESOURCE).find(nodeName, request);
         }
     }
 
-    private void update() {
+    private void combineNodeTasks(final Consumer<TaskProgressResponse> dataConsumer,
+                                  final Consumer<Throwable> throwableConsumer) {
         // Combine data from all nodes.
         final List<TaskProgress> list = TaskProgressUtil.combine(criteria, responseMap.values());
 
@@ -285,8 +312,9 @@ public class TaskManagerListPresenter
         selectedTaskProgress.retainAll(currentTaskSet);
         requestedTerminateTaskProgress.retainAll(currentTaskSet);
 
-        getView().setRowData(0, list);
-        getView().setRowCount(list.size(), true);
+        final TaskProgressResponse response = new TaskProgressResponse();
+        response.init(list);
+        dataConsumer.accept(response);
     }
 
     /**
