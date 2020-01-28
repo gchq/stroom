@@ -46,7 +46,7 @@ class TestFileSystemUtil {
     private static final String NO_WRITE_DIR2 = "/unable/to/create/this";
 
     @TempDir
-    private Path tempDir;
+    Path tempDir;
 
     private FsVolume buildTestVolume() {
         final FsVolume config = new FsVolume();

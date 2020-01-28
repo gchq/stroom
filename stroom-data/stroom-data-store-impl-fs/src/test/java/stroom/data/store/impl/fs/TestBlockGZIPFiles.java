@@ -34,7 +34,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestBlockGZIPFiles {
 
     @TempDir
-    private Path tempDir;
+    Path tempDir;
 
     @Test
     void testSimpleSmallDataInBigBlock() throws IOException {

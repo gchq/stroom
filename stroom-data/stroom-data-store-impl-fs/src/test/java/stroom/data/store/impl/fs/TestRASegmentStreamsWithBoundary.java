@@ -34,7 +34,7 @@ class TestRASegmentStreamsWithBoundary {
 
     @SuppressWarnings("unused")
     @TempDir
-    private Path tempDir;
+    Path tempDir;
 
     private Path datFile;
     private Path segFile;
