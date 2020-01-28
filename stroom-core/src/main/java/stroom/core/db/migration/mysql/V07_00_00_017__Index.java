@@ -35,6 +35,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -63,7 +64,7 @@ public class V07_00_00_017__Index extends BaseJavaMigration {
     private void migrate(final Connection connection) throws Exception {
         final var indexUuidToVolumeIdListMap = getVolumesToMigrate(connection);
         final var indexUuidToGroupNameMap = generateVolumeGroupNames(indexUuidToVolumeIdListMap.keySet());
-        final Set<String> groupNames = indexUuidToGroupNameMap.values().stream().collect(Collectors.toSet());
+        final Set<String> groupNames = new HashSet<>(indexUuidToGroupNameMap.values());
 
          createGroups(connection, groupNames);
 
@@ -82,7 +83,11 @@ public class V07_00_00_017__Index extends BaseJavaMigration {
     private Map<String, List<Integer>> getVolumesToMigrate(final Connection connection) throws Exception {
         final var indexUuidToVolumeIdListMap = new HashMap<String, List<Integer>>();
         try (final var preparedStatement = connection.prepareStatement(
-                "SELECT FK_VOL_ID, IDX_UUID FROM IDX_VOL")) {
+                "SELECT " +
+                    "  FK_VOL_ID, " +
+                    "  IDX_UUID " +
+                    "FROM " +
+                    "  IDX_VOL")) {
             try (final var resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final var volId = resultSet.getInt(1);
@@ -109,27 +114,31 @@ public class V07_00_00_017__Index extends BaseJavaMigration {
     }
 
 
-    private void createIndexVolumes(final Connection connection, final List<Integer> volumeIdSSet, final String groupName) throws SQLException {
-        String idSet = volumeIdSSet.stream().map(String::valueOf).collect(Collectors.joining(","));
+    private void createIndexVolumes(final Connection connection,
+                                    final List<Integer> volumeIdSSet,
+                                    final String groupName) throws SQLException {
+        String idSet = volumeIdSSet.stream()
+            .map(String::valueOf)
+            .collect(Collectors.joining(","));
         if (idSet.length() > 0) {
             idSet = " v.ID IN (" + idSet + ")";
         }
 
         final String selectVolumesToMigrate = "" +
                 "SELECT" +
-                " v.ID," +
-                " v.CRT_MS," +
-                " v.CRT_USER," +
-                " v.UPD_MS," +
-                " v.UPD_USER," +
-                " v.PATH," +
-                " v.IDX_STAT," +
-                " v.BYTES_LMT," +
-                " n.NAME," +
-                " vs.BYTES_USED," +
-                " vs.BYTES_FREE," +
-                " vs.BYTES_TOTL," +
-                " vs.STAT_MS" +
+                "  v.ID," +
+                "  v.CRT_MS," +
+                "  v.CRT_USER," +
+                "  v.UPD_MS," +
+                "  v.UPD_USER," +
+                "  v.PATH," +
+                "  v.IDX_STAT," +
+                "  v.BYTES_LMT," +
+                "  n.NAME," +
+                "  vs.BYTES_USED," +
+                "  vs.BYTES_FREE," +
+                "  vs.BYTES_TOTL," +
+                "  vs.STAT_MS " +
                 " FROM VOL v" +
                 " JOIN ND n ON (n.ID = v.FK_ND_ID)" +
                 " JOIN VOL_STATE vs ON (vs.ID = v.FK_VOL_STATE_ID)" +
@@ -193,7 +202,8 @@ public class V07_00_00_017__Index extends BaseJavaMigration {
     }
 
 
-    private Map<String, Integer> createGroups(final Connection connection, final Set<String> groups) throws SQLException {
+    private Map<String, Integer> createGroups(final Connection connection,
+                                              final Set<String> groups) throws SQLException {
         final long now = System.currentTimeMillis();
 
         // Create index volume groups
@@ -230,7 +240,8 @@ public class V07_00_00_017__Index extends BaseJavaMigration {
     }
 
 
-    private void migrateIndexDocs(final Connection connection, final Map<String, String> indexUuidToGroupNameMap) throws Exception {
+    private void migrateIndexDocs(final Connection connection,
+                                  final Map<String, String> indexUuidToGroupNameMap) throws Exception {
         final _V07_00_00_IndexSerialiser serialiser = new _V07_00_00_IndexSerialiser();
 
         final String selectSql = "" +
@@ -249,6 +260,7 @@ public class V07_00_00_017__Index extends BaseJavaMigration {
                 " RETEN_DAY_AGE," +
                 " FLDS" +
                 " FROM IDX";
+
         final String insertSql = "" +
                 " INSERT INTO doc (" +
                 " type," +
