@@ -33,13 +33,13 @@ import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.search.resultsender.NodeResult;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.task.api.TaskTerminatedException;
 import stroom.task.shared.FindTaskCriteria;
-import stroom.task.shared.TaskId;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.VoidResult;
@@ -74,6 +74,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private final Sizes defaultMaxResultsSizes;
     private final Sizes storeSize;
     private final CompletionState completionState;
+    private final SecurityContext securityContext;
 
     ClusterSearchResultCollector(final TaskManager taskManager,
                                  final TaskContext taskContext,
@@ -85,7 +86,8 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
                                  final ResultHandler resultHandler,
                                  final Sizes defaultMaxResultsSizes,
                                  final Sizes storeSize,
-                                 final CompletionState completionState) {
+                                 final CompletionState completionState,
+                                 final SecurityContext securityContext) {
         this.taskManager = taskManager;
         this.taskContext = taskContext;
         this.task = task;
@@ -97,6 +99,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.storeSize = storeSize;
         this.completionState = completionState;
+        this.securityContext = securityContext;
 
         id = CollectorIdFactory.create();
 
@@ -139,17 +142,19 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         // We have to wrap the cluster termination task in another task or
         // ClusterDispatchAsyncImpl
         // will not execute it if the parent task is terminated.
-        final GenericServerTask outerTask = GenericServerTask.create(null, "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
-        outerTask.setRunnable(() -> {
-            taskContext.info(() -> task.getSearchName() + " - terminating child tasks");
-            final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
-            findTaskCriteria.addAncestorId(task.getId());
-            final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask("Terminate: " + task.getTaskName(), findTaskCriteria, false);
+        securityContext.asProcessingUser(() -> {
+            final GenericServerTask outerTask = GenericServerTask.create(null, "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
+            outerTask.setRunnable(() -> {
+                taskContext.info(() -> task.getSearchName() + " - terminating child tasks");
+                final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
+                findTaskCriteria.addAncestorId(task.getId());
+                final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask("Terminate: " + task.getTaskName(), findTaskCriteria, false);
 
-            // Terminate matching tasks.
-            dispatchHelper.execAsync(terminateTask, TargetType.ACTIVE);
+                // Terminate matching tasks.
+                dispatchHelper.execAsync(terminateTask, TargetType.ACTIVE);
+            });
+            taskManager.execAsync(outerTask);
         });
-        taskManager.execAsync(outerTask);
     }
 
     @Override
