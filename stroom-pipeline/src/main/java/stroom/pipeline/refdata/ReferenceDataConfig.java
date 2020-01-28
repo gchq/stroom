@@ -1,31 +1,29 @@
 package stroom.pipeline.refdata;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.io.ByteSize;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
+import javax.validation.constraints.Min;
 
 @Singleton
 public class ReferenceDataConfig extends AbstractConfig {
     private static final int MAX_READERS_DEFAULT = 100;
     private static final int MAX_PUTS_BEFORE_COMMIT_DEFAULT = 1000;
-    private static final int VALUE_BUFFER_CAPACITY_DEFAULT_VALUE = 1000;
 
     private String localDir = "${stroom.temp}/refDataOffHeapStore";
     private int maxPutsBeforeCommit = MAX_PUTS_BEFORE_COMMIT_DEFAULT;
     private int maxReaders = MAX_READERS_DEFAULT;
-    private String maxStoreSize = "50G";
-    private String purgeAge = "30d";
-    private int valueBufferCapacity = VALUE_BUFFER_CAPACITY_DEFAULT_VALUE;
+    private ByteSize maxStoreSize = ByteSize.ofGibibytes(50);
+    private StroomDuration purgeAge = StroomDuration.ofDays(30);
     private boolean isReadAheadEnabled = true;
     private CacheConfig effectiveStreamCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -40,68 +38,53 @@ public class ReferenceDataConfig extends AbstractConfig {
         this.localDir = localDir;
     }
 
+    @Min(1)
     @JsonPropertyDescription("The maximum number of puts into the store before the transaction is committed. " +
             "There is only one write transaction available and long running transactions are not desirable.")
     public int getMaxPutsBeforeCommit() {
         return maxPutsBeforeCommit;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxPutsBeforeCommit(final int maxPutsBeforeCommit) {
         this.maxPutsBeforeCommit = maxPutsBeforeCommit;
     }
 
+    @Min(1)
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
     @JsonPropertyDescription("The maximum number of concurrent readers/threads that can use the off-heap store.")
     public int getMaxReaders() {
         return maxReaders;
     }
 
+    @SuppressWarnings("unused")
     public void setMaxReaders(final int maxReaders) {
         this.maxReaders = maxReaders;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
-    @JsonPropertyDescription("The maximum size in bytes for the ref loader off heap store. There must be " +
-            "available space on the disk to accommodate this size. It can be larger than the amount of available RAM " +
-            "and will only be allocated as it is needed.")
-    public String getMaxStoreSize() {
+    @JsonPropertyDescription("The maximum size for the ref loader off heap store. There must be " +
+        "available space on the disk to accommodate this size. It can be larger than the amount of available RAM " +
+        "and will only be allocated as it is needed. Can be expressed in IEC units (multiples of 1024), " +
+        "e.g. 1024, 1024B, 1024bytes, 1KiB, 1KB, 1K, etc.")
+    public ByteSize getMaxStoreSize() {
         return maxStoreSize;
     }
 
-    @JsonIgnore
-    public long getMaxStoreSizeBytes() {
-        return ModelStringUtil.parseIECByteSizeString(maxStoreSize);
-    }
-
-    public void setMaxStoreSize(final String maxStoreSize) {
+    public void setMaxStoreSize(final ByteSize maxStoreSize) {
         this.maxStoreSize = maxStoreSize;
     }
 
     @JsonPropertyDescription("The time to retain reference data for in the off heap store. The time is taken " +
-            "from the time that the reference stream was last accessed, e.g. a lookup was made against it. " +
-            "The age can be expressed with suffixes of ms/s/m/h/d, e.g. 10d, defaulting to millis if no suffix " +
-            "is provided")
-    public String getPurgeAge() {
+        "from the time that the reference stream was last accessed, e.g. a lookup was made against it. " +
+        "In ISO-8601 duration format, e.g. 'P1DT12H'")
+    public StroomDuration getPurgeAge() {
         return purgeAge;
     }
 
-    @JsonIgnore
-    public long getPurgeAgeMs() {
-        return ModelStringUtil.parseDurationString(purgeAge);
-    }
-
-    public void setPurgeAge(final String purgeAge) {
+    @SuppressWarnings("unused")
+    public void setPurgeAge(final StroomDuration purgeAge) {
         this.purgeAge = purgeAge;
-    }
-
-    @JsonPropertyDescription("The size in bytes allocated to the value buffers used in the off-heap store. " +
-            "This should be large enough to accommodate reference data values.")
-    public int getValueBufferCapacity() {
-        return valueBufferCapacity;
-    }
-
-    public void setValueBufferCapacity(final int valueBufferCapacity) {
-        this.valueBufferCapacity = valueBufferCapacity;
     }
 
     @RequiresRestart(RequiresRestart.RestartScope.SYSTEM)
@@ -134,7 +117,6 @@ public class ReferenceDataConfig extends AbstractConfig {
                 ", maxReaders=" + maxReaders +
                 ", maxStoreSize='" + maxStoreSize + '\'' +
                 ", purgeAge='" + purgeAge + '\'' +
-                ", valueBufferCapacity=" + valueBufferCapacity +
                 ", isReadAheadEnabled=" + isReadAheadEnabled +
                 '}';
     }

@@ -2,12 +2,12 @@ package stroom.search.solr.search;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.util.cache.CacheConfig;
 import stroom.search.extraction.ExtractionConfig;
+import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class SolrSearchConfig extends AbstractConfig {
@@ -25,7 +25,7 @@ public class SolrSearchConfig extends AbstractConfig {
     private ExtractionConfig extractionConfig = new ExtractionConfig();
     private CacheConfig searchResultCache = new CacheConfig.Builder()
             .maximumSize(10000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
     @JsonPropertyDescription("The maximum number documents that will have stored data retrieved from the index shard and queued prior to further processing")

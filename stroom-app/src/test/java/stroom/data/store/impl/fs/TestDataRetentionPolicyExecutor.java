@@ -40,6 +40,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -97,8 +98,8 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
 
     @Test
     void testCheckArchive() throws IOException {
-        dataStoreServiceConfig.setFileSystemCleanOldAge("0s");
-        dataStoreServiceConfig.setDeletePurgeAge("0s");
+        dataStoreServiceConfig.setFileSystemCleanOldAge(StroomDuration.ZERO);
+        dataStoreServiceConfig.setDeletePurgeAge(StroomDuration.ZERO);
         fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
 
         final ZonedDateTime oldDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(SIXTY);

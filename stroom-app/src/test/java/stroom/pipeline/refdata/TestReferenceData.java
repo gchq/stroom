@@ -17,7 +17,6 @@
 
 package stroom.pipeline.refdata;
 
-import com.google.inject.internal.cglib.core.$ClassNameReader;
 import io.vavr.Tuple;
 import io.vavr.Tuple3;
 import org.junit.jupiter.api.AfterEach;
@@ -48,8 +47,8 @@ import stroom.pipeline.state.FeedHolder;
 import stroom.security.api.DocumentPermissionCache;
 import stroom.security.mock.MockSecurityContext;
 import stroom.test.AbstractCoreIntegrationTest;
-import stroom.util.ByteSizeUnit;
 import stroom.util.date.DateUtil;
+import stroom.util.io.ByteSize;
 import stroom.util.io.FileUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.Range;
@@ -75,7 +74,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class TestReferenceData extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestReferenceData.class);
 
-    private static final long DB_MAX_SIZE = ByteSizeUnit.MEBIBYTE.longBytes(5);
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(5);
 
     private static final String USER_1 = "user1";
     private static final String VALUE_1 = "value1";
@@ -128,7 +127,7 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
                 getMaxSizeBytes(), dbDir.toAbsolutePath().toString());
 
         lmdbEnv = Env.create()
-                .setMapSize(getMaxSizeBytes())
+                .setMapSize(getMaxSizeBytes().getBytes())
                 .setMaxDbs(10)
                 .open(dbDir.toFile());
 
@@ -559,15 +558,15 @@ class TestReferenceData extends AbstractCoreIntegrationTest {
         }
     }
 
-    private void setDbMaxSizeProperty(final long sizeInBytes) {
-        referenceDataConfig.setMaxStoreSize(Long.toString(sizeInBytes));
+    private void setDbMaxSizeProperty(final ByteSize size) {
+        referenceDataConfig.setMaxStoreSize(size);
     }
 
     private Path getDbDir() {
         return dbDir;
     }
 
-    private long getMaxSizeBytes() {
+    private ByteSize getMaxSizeBytes() {
         return DB_MAX_SIZE;
     }
 }

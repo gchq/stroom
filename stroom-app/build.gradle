@@ -21,6 +21,7 @@ def fatJarName = 'stroom-app-all.jar'
 def sendToStroomScriptVersion = 'send-to-stroom-v2.0'
 def releaseBuildDir = 'build/release'
 def configDefaultsFile = releaseBuildDir + '/config/config-defaults.yml'
+def configSchemaFile = releaseBuildDir + '/config/config-schema.yml'
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow'
@@ -384,7 +385,7 @@ task generateConfigDefaultsYamlFile(type: JavaExec) {
 
     classpath = project(':stroom-config:stroom-config-app').sourceSets.test.runtimeClasspath
     main = 'stroom.config.app.GenerateExpectedYaml'
-    args = [configDefaultsFile]
+    args = [configDefaultsFile, configSchemaFile]
 }
 
 // Build the release distribution zip for stroom

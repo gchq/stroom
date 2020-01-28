@@ -2,21 +2,22 @@ package stroom.dashboard.impl;
 
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class DashboardConfig extends AbstractConfig {
     private CacheConfig activeQueriesCache = new CacheConfig.Builder()
             .maximumSize(100L)
-            .expireAfterAccess(1, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(1))
             .build();
 
     public CacheConfig getActiveQueriesCache() {
         return activeQueriesCache;
     }
 
+    @SuppressWarnings("unused")
     public void setActiveQueriesCache(final CacheConfig activeQueriesCache) {
         this.activeQueriesCache = activeQueriesCache;
     }

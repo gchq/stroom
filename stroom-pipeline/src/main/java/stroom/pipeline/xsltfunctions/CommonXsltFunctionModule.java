@@ -1,11 +1,18 @@
 package stroom.pipeline.xsltfunctions;
 
 import net.sf.saxon.value.SequenceType;
+import stroom.util.pipeline.scope.PipelineScoped;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
 public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
+    @Override
+    protected void configure() {
+        bind(TaskScopeMap.class).in(PipelineScoped.class);
+        super.configure();
+    }
+
     @Override
     protected void configureFunctions() {
         bindFunction(ClassificationFunction.class);
@@ -190,7 +197,7 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
                     SequenceType.OPTIONAL_STRING,
                     SequenceType.OPTIONAL_STRING,
                     SequenceType.OPTIONAL_STRING
-            }, SequenceType.OPTIONAL_STRING, functionCallProvider);
+            }, SequenceType.NODE_SEQUENCE, functionCallProvider);
         }
     }
 

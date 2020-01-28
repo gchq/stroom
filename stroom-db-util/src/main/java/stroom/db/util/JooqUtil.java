@@ -34,7 +34,7 @@ public final class JooqUtil {
     private static final Logger LOGGER = LoggerFactory.getLogger(JooqUtil.class);
 
     private static final String DEFAULT_ID_FIELD_NAME = "id";
-    private static final OrderField[] EMPTY_ORDER_FIELDS = new OrderField[0];
+    private static final OrderField<?>[] EMPTY_ORDER_FIELDS = new OrderField[0];
     private static final Boolean RENDER_SCHEMA = false;
 
     private JooqUtil() {
@@ -212,11 +212,10 @@ public final class JooqUtil {
      *
      * @param field    The jOOQ field being range queried
      * @param criteria The criteria to apply
-     * @param <R>      The type of the record
      * @param <T>      The type of the range
      * @return A condition that applies the given range.
      */
-    public static <R extends Record, T extends Number> Optional<Condition> getRangeCondition(
+    public static <T extends Number> Optional<Condition> getRangeCondition(
             final Field<T> field,
             final Range<T> criteria) {
         if (criteria == null || !criteria.isConstrained()) {
@@ -251,11 +250,10 @@ public final class JooqUtil {
      *
      * @param field    The jOOQ field being set queried
      * @param criteria The criteria to apply
-     * @param <R>      The type of the record
      * @param <T>      The type of the range
      * @return A condition that applies the given set.
      */
-    public static <R extends Record, T> Optional<Condition> getSetCondition(
+    public static <T> Optional<Condition> getSetCondition(
             final Field<T> field,
             final CriteriaSet<T> criteria) {
         if (criteria == null || !criteria.isConstrained()) {
@@ -277,10 +275,9 @@ public final class JooqUtil {
      *
      * @param field    The jOOQ field being queried
      * @param criteria The criteria to apply
-     * @param <R>      The type of the record
      * @return A condition that applies the given criteria
      */
-    public static <R extends Record> Optional<Condition> getStringCondition(
+    public static Optional<Condition> getStringCondition(
             final Field<String> field,
             final StringCriteria criteria) {
         if (criteria == null || !criteria.isConstrained()) {
@@ -319,7 +316,7 @@ public final class JooqUtil {
         return condition.or(() -> Optional.of(field.isNotNull()));
     }
 
-    public static OrderField[] getOrderFields(final Map<String, Field> fieldMap, final BaseCriteria criteria) {
+    public static OrderField<?>[] getOrderFields(final Map<String, Field<?>> fieldMap, final BaseCriteria criteria) {
         if (criteria.getSortList() == null) {
             return EMPTY_ORDER_FIELDS;
         }
@@ -331,8 +328,8 @@ public final class JooqUtil {
                 .toArray(OrderField[]::new);
     }
 
-    private static Optional<OrderField> getOrderField(final Map<String, Field> fieldMap, final Sort sort) {
-        final Field field = fieldMap.get(sort.getField());
+    private static Optional<OrderField<?>> getOrderField(final Map<String, Field<?>> fieldMap, final Sort sort) {
+        final Field<?> field = fieldMap.get(sort.getField());
 
         if (null != field) {
             switch (sort.getDirection()) {

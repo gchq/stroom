@@ -22,7 +22,8 @@ public class TestSerialisation {
         final List<ProcessorListRow> rows = new ArrayList<>();
         rows.add(new ProcessorRow(new Expander(), new Processor()));
         rows.add(new ProcessorFilterRow(new ProcessorFilter()));
-        FetchProcessorResponse resultPage1 = new FetchProcessorResponse(rows);
+        FetchProcessorResponse resultPage1 = new FetchProcessorResponse();
+        resultPage1.init(rows);
         final ObjectMapper objectMapper = JsonUtil.getMapper();
         final String result1 = objectMapper.writeValueAsString(resultPage1);
         System.out.println(result1);
@@ -30,7 +31,7 @@ public class TestSerialisation {
         final String result2 = objectMapper.writerFor(FetchProcessorResponse.class).writeValueAsString(resultPage2);
         System.out.println(result2);
 
-        assertThat(resultPage2.getList().get(0)).isInstanceOf(ProcessorRow.class);
-        assertThat(resultPage2.getList().get(1)).isInstanceOf(ProcessorFilterRow.class);
+        assertThat(resultPage2.getValues().get(0)).isInstanceOf(ProcessorRow.class);
+        assertThat(resultPage2.getValues().get(1)).isInstanceOf(ProcessorFilterRow.class);
     }
 }

@@ -82,11 +82,11 @@ public class GenericDao<RecordType extends UpdatableRecord, ObjectType, IdType>
     }
 
     public ObjectType update(final DSLContext context, final ObjectType object) {
-            final RecordType record = objectToRecordMapper.apply(object, context.newRecord(table));
+        final RecordType record = objectToRecordMapper.apply(object, context.newRecord(table));
         LAMBDA_LOGGER.debug(LambdaLogUtil.message(
                 "Updating a {} with id {}", table.getName(), record.get(idField)));
-            record.update();
-            return recordToObjectMapper.apply(record);
+        record.update();
+        return recordToObjectMapper.apply(record);
     }
 
     public boolean delete(final DSLContext context, final IdType id) {

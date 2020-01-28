@@ -21,7 +21,6 @@ package stroom.job.impl;
 import stroom.job.api.DistributedTaskFactoryDescription;
 import stroom.job.api.ScheduledJob;
 import stroom.job.api.TaskConsumer;
-import stroom.job.shared.FindJobCriteria;
 import stroom.job.shared.Job;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;

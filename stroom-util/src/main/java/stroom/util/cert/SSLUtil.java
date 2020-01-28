@@ -6,10 +6,13 @@ import stroom.util.logging.LogUtil;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,6 +22,7 @@ import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.Objects;
@@ -26,7 +30,7 @@ import java.util.Optional;
 
 public class SSLUtil {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(SSLUtil.class);
-    private static final HostnameVerifier PERMISSIVE_HOSTNAME_VERIFIER = (s, sslSession) -> true;
+    public static final HostnameVerifier PERMISSIVE_HOSTNAME_VERIFIER = (s, sslSession) -> true;
 
     private SSLUtil() {
     }
@@ -34,36 +38,36 @@ public class SSLUtil {
     public static SSLSocketFactory createSslSocketFactory(final SSLConfig sslConfig) {
         Objects.requireNonNull(sslConfig);
 
-        KeyStore keyStore = null;
-        KeyStore trustStore = null;
-        final TrustManagerFactory trustManagerFactory;
-        final KeyManagerFactory keyManagerFactory;
+        final KeyManager[] keyManagers = createKeyManagers(sslConfig);
+        final TrustManager[] trustManagers = createTrustManagers(sslConfig);
+
         final SSLContext sslContext;
-        InputStream inputStream;
+        try {
+            sslContext = SSLContext.getInstance(sslConfig.getSslProtocol());
+            sslContext.init(keyManagers, trustManagers, new SecureRandom());
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            throw new RuntimeException("Error initialising ssl context", e);
+        }
+
+        LOGGER.info(() -> "Creating ssl socket factory");
+        return sslContext.getSocketFactory();
+    }
+
+    public static KeyManager[] createKeyManagers(final SSLConfig sslConfig) {
+        Objects.requireNonNull(sslConfig);
+
+        KeyStore keyStore = null;
+        final KeyManagerFactory keyManagerFactory;
 
         // Load the keystore
         if (sslConfig.getKeyStorePath() != null) {
-            try {
+            try (final InputStream inputStream = new BufferedInputStream(new FileInputStream(sslConfig.getKeyStorePath()))) {
                 keyStore = KeyStore.getInstance(sslConfig.getKeyStoreType());
-                inputStream = new FileInputStream(sslConfig.getKeyStorePath());
                 LOGGER.info(() -> "Loading keystore " + sslConfig.getKeyStorePath() + " of type " + sslConfig.getKeyStoreType());
                 keyStore.load(inputStream, sslConfig.getKeyStorePassword().toCharArray());
             } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
-                throw new RuntimeException(LogUtil.message("Error locating and loading keystore {} with type",
-                        sslConfig.getKeyStorePath(), sslConfig.getKeyStoreType()), e);
-            }
-        }
-
-        // Load the truststore
-        if (sslConfig.getTrustStorePath() != null) {
-            try {
-                trustStore = KeyStore.getInstance(sslConfig.getTrustStoreType());
-                inputStream = new FileInputStream(sslConfig.getTrustStorePath());
-                LOGGER.info(() -> "Loading truststore " + sslConfig.getTrustStorePath() + " of type " + sslConfig.getTrustStoreType());
-                trustStore.load(inputStream, sslConfig.getTrustStorePassword().toCharArray());
-            } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
-                throw new RuntimeException(LogUtil.message("Error locating and loading truststore {} with type",
-                        sslConfig.getTrustStorePath(), sslConfig.getTrustStoreType()), e);
+                throw new RuntimeException(LogUtil.message("Error locating and loading keystore {} with type {}: {}",
+                        sslConfig.getKeyStorePath(), sslConfig.getKeyStoreType(), e.getMessage()), e);
             }
         }
 
@@ -73,8 +77,29 @@ public class SSLUtil {
                 keyManagerFactory.init(keyStore, sslConfig.getKeyStorePassword().toCharArray());
             }
         } catch (NoSuchAlgorithmException | KeyStoreException | UnrecoverableKeyException e) {
-            throw new RuntimeException(LogUtil.message("Error initialising KeyManagerFactory for keystore {}",
-                    sslConfig.getKeyStorePath()), e);
+            throw new RuntimeException(LogUtil.message("Error initialising KeyManagerFactory for keystore {}: {}",
+                    sslConfig.getKeyStorePath(), e.getMessage()), e);
+        }
+
+        return keyManagerFactory.getKeyManagers();
+    }
+
+    public static TrustManager[] createTrustManagers(final SSLConfig sslConfig) {
+        Objects.requireNonNull(sslConfig);
+
+        KeyStore trustStore = null;
+        final TrustManagerFactory trustManagerFactory;
+
+        // Load the truststore
+        if (sslConfig.getTrustStorePath() != null) {
+            try (final InputStream inputStream = new BufferedInputStream(new FileInputStream(sslConfig.getTrustStorePath()))) {
+                trustStore = KeyStore.getInstance(sslConfig.getTrustStoreType());
+                LOGGER.info(() -> "Loading truststore " + sslConfig.getTrustStorePath() + " of type " + sslConfig.getTrustStoreType());
+                trustStore.load(inputStream, sslConfig.getTrustStorePassword().toCharArray());
+            } catch (KeyStoreException | IOException | NoSuchAlgorithmException | CertificateException e) {
+                throw new RuntimeException(LogUtil.message("Error locating and loading truststore {} with type {}: {}",
+                        sslConfig.getTrustStorePath(), sslConfig.getTrustStoreType(), e.getMessage()), e);
+            }
         }
 
         try {
@@ -83,22 +108,11 @@ public class SSLUtil {
                 trustManagerFactory.init(trustStore);
             }
         } catch (NoSuchAlgorithmException | KeyStoreException e) {
-            throw new RuntimeException(LogUtil.message("Error initialising TrustManagerFactory for truststore {}",
-                    sslConfig.getTrustStorePath()), e);
+            throw new RuntimeException(LogUtil.message("Error initialising TrustManagerFactory for truststore {}: {}",
+                    sslConfig.getTrustStorePath(), e.getMessage()), e);
         }
 
-        try {
-            sslContext = SSLContext.getInstance(sslConfig.getSslProtocol());
-            sslContext.init(
-                    keyManagerFactory.getKeyManagers(),
-                    trustManagerFactory.getTrustManagers(),
-                    null);
-        } catch (NoSuchAlgorithmException | KeyManagementException e) {
-            throw new RuntimeException("Error initialising ssl context", e);
-        }
-
-        LOGGER.info(() -> "Creating ssl socket factory");
-        return sslContext.getSocketFactory();
+        return trustManagerFactory.getTrustManagers();
     }
 
     public static void applySSLConfiguration(final HttpURLConnection connection,

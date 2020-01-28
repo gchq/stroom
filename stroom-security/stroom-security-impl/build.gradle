@@ -31,6 +31,7 @@ dependencies {
     compile libs.ws_rs_api
 
     testCompile libs.assertj_core
+    testCompile libs.hessian
     testCompile libs.junit_jupiter_api
 
     // The following logging libs are needed when running junits outside dropwizard

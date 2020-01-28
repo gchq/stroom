@@ -50,9 +50,9 @@ appConfig:
     concurrentWriters: 10
   cluster:
     clusterCallUseLocal: true
-    clusterCallReadTimeout: "30s"
+    clusterCallReadTimeout: "PT30S"
     clusterCallIgnoreSSLHostnameVerifier: true
-    clusterResponseTimeout: "30s"
+    clusterResponseTimeout: "PT30S"
   clusterLock:
     db:
       connection:
@@ -72,7 +72,7 @@ appConfig:
   clusterTask:
     clusterResultCollectorCache:
       maximumSize: 1000000
-      expireAfterAccess: 60000
+      expireAfterAccess: "PT1M"
       expireAfterWrite: null
   commonDbDetails:
     connection:
@@ -110,26 +110,26 @@ appConfig:
   dashboard:
     activeQueriesCache:
       maximumSize: 100
-      expireAfterAccess: 60000
+      expireAfterAccess: "PT1M"
       expireAfterWrite: null
   data:
     meta:
       metaValueConfig:
-        deleteAge: "30d"
+        deleteAge: "P30D"
         deleteBatchSize: 1000
         flushBatchSize: 1000
         addAsync: true
       metaFeedCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       metaProcessorCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       metaTypeCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       db:
         connection:
@@ -149,11 +149,11 @@ appConfig:
     retention:
       deleteBatchSize: 1000
     store:
-      deletePurgeAge: "7d"
+      deletePurgeAge: "P7D"
       deleteBatchSize: 1000
       fileSystemCleanBatchSize: 20
       fileSystemCleanDeleteOut: false
-      fileSystemCleanOldAge: "1d"
+      fileSystemCleanOldAge: "P1D"
       db:
         connection:
           jdbcDriverClassName: null
@@ -174,11 +174,11 @@ appConfig:
       createDefaultOnStart: true
       feedPathCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       typePathCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
   dataSourceUrl:
     index: "http://127.0.0.1:8080/api/stroom-index/v2"
@@ -226,14 +226,14 @@ appConfig:
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     feedDocCache:
       maximumSize: 1000
-      expireAfterAccess: 10000
+      expireAfterAccess: "PT10S"
       expireAfterWrite: null
   index:
     ramBufferSizeMB: 1024
     indexStructureCache:
       maximumSize: 100
       expireAfterAccess: null
-      expireAfterWrite: 10000
+      expireAfterWrite: "PT10S"
     db:
       connection:
         jdbcDriverClassName: null
@@ -301,9 +301,13 @@ appConfig:
   path:
     temp: "/tmp"
   pipeline:
+    httpClientCache:
+      maximumSize: 1000
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
     pipelineDataCache:
       maximumSize: 1000
-      expireAfterAccess: 600000
+      expireAfterAccess: "PT10M"
       expireAfterWrite: null
     appender:
       maxActiveDestinations: 100
@@ -311,55 +315,52 @@ appConfig:
       secureProcessing: true
       cache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
     referenceData:
       localDir: "${stroom.temp}/refDataOffHeapStore"
       maxPutsBeforeCommit: 1000
       maxReaders: 100
       maxStoreSize: "50G"
-      purgeAge: "30d"
-      valueBufferCapacity: 1000
+      purgeAge: "P30D"
       effectiveStreamCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       readAheadEnabled: true
     xmlSchema:
       cache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
     xslt:
       maxElements: 1000000
       cache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
   processor:
     assignTasks: true
     createTasks: true
-    deleteAge: "1d"
-    deletePurgeAge: "7d"
-    deleteBatchSize: 1000
+    deleteAge: "P1D"
     fillTaskQueue: true
     queueSize: 1000
     databaseMultiInsertMaxBatchSize: 500
     processorCache:
       maximumSize: 1000
-      expireAfterAccess: 10000
+      expireAfterAccess: "PT10S"
       expireAfterWrite: null
     processorFilterCache:
       maximumSize: 1000
-      expireAfterAccess: 10000
+      expireAfterAccess: "PT10S"
       expireAfterWrite: null
     processorNodeCache:
       maximumSize: 1000
-      expireAfterAccess: 600000
+      expireAfterAccess: "PT10M"
       expireAfterWrite: null
     processorFeedCache:
       maximumSize: 1000
-      expireAfterAccess: 600000
+      expireAfterAccess: "PT10M"
       expireAfterWrite: null
     db:
       connection:
@@ -419,17 +420,17 @@ appConfig:
       maxThreadsPerTask: 2
       searchResultCache:
         maximumSize: 10000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       indexShardSearcherCache:
         maximumSize: 2
-        expireAfterAccess: 60000
+        expireAfterAccess: "PT1M"
         expireAfterWrite: null
   searchable:
     storeSize: "1000000,100,10,1"
     searchResultCache:
       maximumSize: 10000
-      expireAfterAccess: 600000
+      expireAfterAccess: "PT10M"
       expireAfterWrite: null
   security:
     db:
@@ -462,27 +463,27 @@ appConfig:
       apiTokenCache:
         maximumSize: 10000
         expireAfterAccess: null
-        expireAfterWrite: 1800000
+        expireAfterWrite: "PT30M"
     authorisation:
       userGroupsCache:
         maximumSize: 1000
-        expireAfterAccess: 1800000
+        expireAfterAccess: "PT30M"
         expireAfterWrite: null
       userAppPermissionsCache:
         maximumSize: 1000
-        expireAfterAccess: 1800000
+        expireAfterAccess: "PT30M"
         expireAfterWrite: null
       userCache:
         maximumSize: 1000
-        expireAfterAccess: 1800000
+        expireAfterAccess: "PT30M"
         expireAfterWrite: null
       userDocumentPermissionsCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       documentPermissionCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
     webContent:
       contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
@@ -506,19 +507,19 @@ appConfig:
   solr:
     indexClientCache:
       maximumSize: 100
-      expireAfterAccess: 600000
+      expireAfterAccess: "PT10M"
       expireAfterWrite: null
     indexCache:
       maximumSize: 100
       expireAfterAccess: null
-      expireAfterWrite: 600000
+      expireAfterWrite: "PT10M"
     search:
       maxStoredDataQueueSize: 1000
       maxBooleanClauseCount: 1024
       storeSize: "1000000,100,10,1"
       searchResultCache:
         maximumSize: 10000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       extraction:
         maxStoredDataQueueSize: 1000
@@ -531,7 +532,7 @@ appConfig:
       maxProcessingAge: null
       dataSourceCache:
         maximumSize: 100
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       db:
         connection:
@@ -555,7 +556,7 @@ appConfig:
         fetchSize: 5000
         searchResultCache:
           maximumSize: 10000
-          expireAfterAccess: 600000
+          expireAfterAccess: "PT10M"
           expireAfterWrite: null
     hbase:
       docRefType: "StroomStatsStore"

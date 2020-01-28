@@ -101,7 +101,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         this.tooltipPresenter = tooltipPresenter;
 
         request = new FetchProcessorRequest();
-        dataProvider = new RestDataProvider<ProcessorListRow, FetchProcessorResponse>(eventBus, request) {
+        dataProvider = new RestDataProvider<ProcessorListRow, FetchProcessorResponse>(eventBus) {
             @Override
             protected void exec(final Consumer<FetchProcessorResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                 final Rest<FetchProcessorResponse> rest = restFactory.create();

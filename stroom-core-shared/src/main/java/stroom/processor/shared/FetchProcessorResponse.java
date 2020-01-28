@@ -18,13 +18,5 @@ package stroom.processor.shared;
 
 import stroom.util.shared.ResultPage;
 
-import java.util.List;
-
 public class FetchProcessorResponse extends ResultPage<ProcessorListRow> {
-    public FetchProcessorResponse() {
-    }
-
-    public FetchProcessorResponse(final List<ProcessorListRow> list) {
-        super(list);
-    }
 }

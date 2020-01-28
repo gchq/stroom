@@ -37,6 +37,7 @@ dependencies {
     compile(libs.hbase) { transitive = false } // hbase-common is currently only used for its Bytes class, so exclude all its deps
     compile libs.jackson_annotations
     compile libs.jackson_core
+    compile libs.jackson_databind
     compile libs.javax_inject
     compile libs.jaxb_api
     compile libs.jersey_client

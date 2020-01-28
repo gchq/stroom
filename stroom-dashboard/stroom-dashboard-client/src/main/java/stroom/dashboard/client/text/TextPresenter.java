@@ -25,6 +25,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -481,7 +482,15 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     @Override
     public void beginStepping() {
-        BeginPipelineSteppingEvent.fire(this, currentStreamId, null, null, new StepLocation(currentStreamId, currentPartNo, currentRecordNo), null);
+        if (currentStreamId != null) {
+            final StepLocation stepLocation = new StepLocation(
+                    currentStreamId,
+                    currentPartNo != null ? currentPartNo : 1,
+                    currentRecordNo != null ? currentRecordNo : 1);
+            BeginPipelineSteppingEvent.fire(this, currentStreamId, null, null, stepLocation, null);
+        } else {
+            AlertEvent.fireError(this, "No stream id", null);
+        }
     }
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {

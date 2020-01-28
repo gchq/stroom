@@ -32,24 +32,6 @@ import javax.ws.rs.core.MediaType;
 @Path("/processor")
 @Produces(MediaType.APPLICATION_JSON)
 public interface ProcessorResource extends DirectRestService {
-//    @GET
-//    @Path("/{id}")
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation(
-//            value = "Gets a processor",
-//            response = Processor.class)
-//    Processor read(@PathParam("id") Integer id);
-//
-//    @PUT
-//    @Path("/{id}")
-//    @Consumes(MediaType.APPLICATION_JSON)
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @ApiOperation(
-//            value = "Updates a processor",
-//            response = Processor.class)
-//    Processor update(@PathParam("id") Integer id, Processor processor);
-
     @DELETE
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)

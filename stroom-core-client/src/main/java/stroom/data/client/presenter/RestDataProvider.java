@@ -24,31 +24,33 @@ import com.google.gwt.view.client.Range;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.entity.client.presenter.TreeRowHandler;
-import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.HasCriteria;
-import stroom.util.shared.HasIsConstrained;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
 
-import java.util.ArrayList;
 import java.util.function.Consumer;
 
 public abstract class RestDataProvider<R, T extends ResultPage<R>> extends AsyncDataProvider<R> implements HasHandlers {
     private final EventBus eventBus;
-    private final Object request;
     private Range requestedRange;
     private boolean fetching;
     private int fetchCount;
     private boolean refetch;
-    private boolean allowNoConstraint = true;
+//    private boolean allowNoConstraint = true;
     private TreeRowHandler<R> treeRowHandler;
 
-    public RestDataProvider(final EventBus eventBus, final Object request) {
+    private PageRequest pageRequest;
+
+    public RestDataProvider(final EventBus eventBus) {
         this.eventBus = eventBus;
-        this.request = request;
     }
 
-    public void setAllowNoConstraint(boolean allowNoConstraint) {
-        this.allowNoConstraint = allowNoConstraint;
+//    public void setAllowNoConstraint(boolean allowNoConstraint) {
+//        this.allowNoConstraint = allowNoConstraint;
+//    }
+
+
+    public void setPageRequest(final PageRequest pageRequest) {
+        this.pageRequest = pageRequest;
     }
 
     @Override
@@ -69,53 +71,58 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
         }
     }
 
-    private boolean checkNoConstraint() {
-        if (allowNoConstraint) {
-            return true;
-        }
-
-        boolean noConstraint = false;
-
-        if (request instanceof HasCriteria) {
-            final BaseCriteria criteria = ((HasCriteria<?>) request).getCriteria();
-
-            if (criteria == null) {
-                noConstraint = true;
-            } else {
-                if (criteria instanceof HasIsConstrained) {
-                    if (!((HasIsConstrained) criteria).isConstrained()) {
-                        noConstraint = true;
-                    }
-                }
-            }
-        }
-        if (request instanceof HasIsConstrained) {
-            if (!((HasIsConstrained) request).isConstrained()) {
-                noConstraint = true;
-            }
-        }
-
-        if (noConstraint) {
-            updateRowData(0, new ArrayList<>());
-            updateRowCount(0, true);
-            fetching = false;
-            return false;
-        }
-        return true;
-    }
+//    private boolean checkNoConstraint() {
+//        if (allowNoConstraint) {
+//            return true;
+//        }
+//
+//        boolean noConstraint = false;
+//
+//        if (request instanceof HasCriteria) {
+//            final BaseCriteria criteria = ((HasCriteria<?>) request).getCriteria();
+//
+//            if (criteria == null) {
+//                noConstraint = true;
+//            } else {
+//                if (criteria instanceof HasIsConstrained) {
+//                    if (!((HasIsConstrained) criteria).isConstrained()) {
+//                        noConstraint = true;
+//                    }
+//                }
+//            }
+//        }
+//        if (request instanceof HasIsConstrained) {
+//            if (!((HasIsConstrained) request).isConstrained()) {
+//                noConstraint = true;
+//            }
+//        }
+//
+//        if (noConstraint) {
+//            updateRowData(0, new ArrayList<>());
+//            updateRowCount(0, true);
+//            fetching = false;
+//            return false;
+//        }
+//        return true;
+//    }
 
     private void doFetch(final Range range) {
-        // No Criteria ... just produce no results.
-        if (!checkNoConstraint()) {
-            return;
-        }
+//        // No Criteria ... just produce no results.
+//        if (!checkNoConstraint()) {
+//            return;
+//        }
+//
+//        if (request instanceof HasCriteria) {
+//            final HasCriteria<?> hasCriteria = (HasCriteria<?>) request;
+//            final BaseCriteria criteria = hasCriteria.getCriteria();
+//
+//            criteria.obtainPageRequest().setOffset((long) range.getStart());
+//            criteria.obtainPageRequest().setLength(range.getLength());
+//        }
 
-        if (request instanceof HasCriteria) {
-            final HasCriteria<?> hasCriteria = (HasCriteria<?>) request;
-            final BaseCriteria criteria = hasCriteria.getCriteria();
-
-            criteria.obtainPageRequest().setOffset((long) range.getStart());
-            criteria.obtainPageRequest().setLength(range.getLength());
+        if (pageRequest != null) {
+            pageRequest.setOffset((long) range.getStart());
+            pageRequest.setLength(range.getLength());
         }
 
         fetchCount++;
@@ -166,8 +173,8 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
             treeRowHandler.handle(data.getValues());
         }
 
-        updateRowData(data.getStart(), data.getValues());
-        updateRowCount(data.getSize(), data.isExact());
+        updateRowData(getStart(data), data.getValues());
+        updateRowCount(getSize(data), data.getPageResponse().isExact());
     }
 
     public void refresh() {
@@ -180,5 +187,19 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
 
     public void setTreeRowHandler(final TreeRowHandler<R> treeRowHandler) {
         this.treeRowHandler = treeRowHandler;
+    }
+
+    private int getStart(final T data) {
+        if (data.getPageResponse().getOffset() == null) {
+            return 0;
+        }
+        return data.getPageResponse().getOffset().intValue();
+    }
+
+    public int getSize(final T data) {
+        if (data.getPageResponse().getTotal() == null) {
+            return getStart(data) + data.getValues().size();
+        }
+        return data.getPageResponse().getTotal().intValue();
     }
 }

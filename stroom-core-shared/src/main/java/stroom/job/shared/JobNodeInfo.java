@@ -16,11 +16,7 @@
 
 package stroom.job.shared;
 
-import stroom.docref.SharedObject;
-
-public class JobNodeInfo implements SharedObject {
-    private static final long serialVersionUID = 5184354985064930910L;
-
+public class JobNodeInfo {
     private Integer currentTaskCount;
     private Long scheduleReferenceTime;
     private Long lastExecutedTime;
@@ -39,11 +35,23 @@ public class JobNodeInfo implements SharedObject {
         return currentTaskCount;
     }
 
+    public void setCurrentTaskCount(final Integer currentTaskCount) {
+        this.currentTaskCount = currentTaskCount;
+    }
+
     public Long getScheduleReferenceTime() {
         return scheduleReferenceTime;
     }
 
+    public void setScheduleReferenceTime(final Long scheduleReferenceTime) {
+        this.scheduleReferenceTime = scheduleReferenceTime;
+    }
+
     public Long getLastExecutedTime() {
         return lastExecutedTime;
+    }
+
+    public void setLastExecutedTime(final Long lastExecutedTime) {
+        this.lastExecutedTime = lastExecutedTime;
     }
 }

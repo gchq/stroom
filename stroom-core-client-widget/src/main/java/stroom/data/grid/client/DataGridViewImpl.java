@@ -186,8 +186,8 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
                 }
 
                 @Override
-                protected void fireChange() {
-                    MultiSelectEvent.fire(dataGrid, new SelectionType(false, false, allowMultiSelect, false, false));
+                protected void fireChange(final SelectionType selectionType) {
+                    MultiSelectEvent.fire(dataGrid, selectionType);
                 }
             };
 
@@ -643,7 +643,7 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
             selection.setSelected(row);
         }
 
-        selectionModel.setSelection(selection);
+        selectionModel.setSelection(selection, selectionType);
     }
 
     @Override

@@ -35,7 +35,7 @@ import java.util.Optional;
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 
 public class NodeDaoImpl implements NodeDao {
-    private final Map<String, Field> FIELD_MAP = Map.of(FindNodeCriteria.FIELD_ID, NODE.ID, FindNodeCriteria.FIELD_NAME, NODE.NAME);
+    private final Map<String, Field<?>> FIELD_MAP = Map.of(FindNodeCriteria.FIELD_ID, NODE.ID, FindNodeCriteria.FIELD_NAME, NODE.NAME);
 
     private final NodeDbConnProvider nodeDbConnProvider;
 
@@ -72,7 +72,7 @@ public class NodeDaoImpl implements NodeDao {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getStringCondition(NODE.NAME, criteria.getName()));
 
-        final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<Node> list = JooqUtil.contextResult(nodeDbConnProvider, context ->
                 context
