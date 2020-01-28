@@ -44,7 +44,7 @@ class TestHDFSFileAppender extends StroomUnitTest {
     private static final String RUN_AS_USER = "hdfs";
 
     @TempDir
-    private java.nio.file.Path rootTestDir;
+    java.nio.file.Path rootTestDir;
 
     private Configuration conf;
     private UserGroupInformation userGroupInformation;
