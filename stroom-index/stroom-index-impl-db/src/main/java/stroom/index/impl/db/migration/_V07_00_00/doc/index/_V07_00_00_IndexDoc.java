@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package stroom.core.db.migration._V07_00_00.doc.index;
+package stroom.index.impl.db.migration._V07_00_00.doc.index;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.core.db.migration._V07_00_00.docstore.shared._V07_00_00_Doc;
 import stroom.docref.HasDisplayValue;
+import stroom.index.impl.db.migration._V07_00_00.docstore.shared._V07_00_00_Doc;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 

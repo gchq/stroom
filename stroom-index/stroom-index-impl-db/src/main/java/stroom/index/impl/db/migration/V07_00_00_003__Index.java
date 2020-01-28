@@ -42,8 +42,9 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class V07_00_00_017__Index extends BaseJavaMigration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_017__Index.class);
+@SuppressWarnings("unused")
+public class V07_00_00_003__Index extends BaseJavaMigration {
+    private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_003__Index.class);
 
     @Override
     public void migrate(final Context context) throws Exception {
