@@ -17,10 +17,8 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import stroom.data.store.api.SegmentOutputStream;
-import stroom.test.common.util.test.TempDir;
-import stroom.test.common.util.test.TempDirExtension;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;
@@ -29,7 +27,6 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(TempDirExtension.class)
 class TestRASegmentStreamsNulls {
 
     @Test

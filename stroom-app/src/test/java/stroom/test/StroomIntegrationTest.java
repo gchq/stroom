@@ -22,10 +22,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import stroom.test.common.util.test.StroomTest;
-import stroom.test.common.util.test.TempDir;
-import stroom.test.common.util.test.TempDirExtension;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
@@ -33,7 +31,6 @@ import java.nio.file.Path;
 /**
  * This class should be common to all component and integration tests.
  */
-@ExtendWith(TempDirExtension.class)
 public abstract class StroomIntegrationTest implements StroomTest {
     private Path testTempDir;
 

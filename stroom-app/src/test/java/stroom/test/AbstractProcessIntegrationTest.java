@@ -21,7 +21,7 @@ import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
-import stroom.test.common.util.test.TempDir;
+import org.junit.jupiter.api.io.TempDir;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
