@@ -17,13 +17,11 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.meta.shared.Meta;
 import stroom.test.common.util.test.FileSystemTestUtil;
-import stroom.test.common.util.test.TempDir;
-import stroom.test.common.util.test.TempDirExtension;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 
@@ -43,7 +41,6 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-@ExtendWith(TempDirExtension.class)
 class TestFileSystemUtil {
     private static final String NO_WRITE_DIR1 = "/usr/bin/username";
     private static final String NO_WRITE_DIR2 = "/unable/to/create/this";
