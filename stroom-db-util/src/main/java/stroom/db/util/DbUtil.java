@@ -7,6 +7,7 @@ import stroom.config.common.ConnectionConfig;
 import stroom.util.logging.LogUtil;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -118,6 +119,17 @@ public class DbUtil {
         }
 
         return 0;
+    }
+
+    public static boolean doesTableExist(final Connection connection, final String tableName) {
+        try {
+            DatabaseMetaData meta = connection.getMetaData();
+            ResultSet tables = meta.getTables(null, null, tableName, null);
+            return tables.next();
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                LogUtil.message("Error establishing if table {} exists in the database.", tableName), e);
+        }
     }
 
 
