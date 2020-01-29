@@ -19,6 +19,7 @@ package stroom.processor.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -33,7 +34,7 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "processorFilter")
 @Path("/processorFilter")
 @Produces(MediaType.APPLICATION_JSON)
-public interface ProcessorFilterResource extends DirectRestService {
+public interface ProcessorFilterResource extends RestResource, DirectRestService {
     @POST
     @Path("find")
     @Consumes(MediaType.APPLICATION_JSON)
@@ -44,7 +45,6 @@ public interface ProcessorFilterResource extends DirectRestService {
     FetchProcessorResponse find(FetchProcessorRequest request);
 
     @POST
-    @Path("")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(

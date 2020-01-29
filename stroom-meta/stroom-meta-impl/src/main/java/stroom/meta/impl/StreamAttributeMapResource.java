@@ -66,7 +66,6 @@ public class StreamAttributeMapResource implements RestResource {
     }
 
     @GET
-    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response page(@QueryParam("pageOffset") Long pageOffset,
                          @QueryParam("pageSize") Integer pageSize) {
@@ -99,7 +98,6 @@ public class StreamAttributeMapResource implements RestResource {
     }
 
     @POST
-    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
     public Response search(@QueryParam("pageOffset") Long pageOffset,

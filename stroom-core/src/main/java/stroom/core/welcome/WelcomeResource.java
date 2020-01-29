@@ -23,7 +23,6 @@ public class WelcomeResource implements RestResource {
     }
 
     @GET
-    @Path("/")
     public Response welcome() {
         Object response = new Object() {
             public String html = uiConfig.getWelcomeHtml();

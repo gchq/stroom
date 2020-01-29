@@ -1,20 +1,3 @@
-/*
- * Copyright 2017 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- */
-
 package stroom.security.impl;
 
 import org.slf4j.Logger;
@@ -24,42 +7,44 @@ import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.security.api.SecurityContext;
-import stroom.security.shared.ChangeDocumentPermissionsAction;
+import stroom.security.shared.ChangeDocumentPermissionsRequest;
 import stroom.security.shared.ChangeSet;
+import stroom.security.shared.CheckDocumentPermissionRequest;
+import stroom.security.shared.CopyPermissionsFromParentRequest;
+import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.DocumentPermissions;
+import stroom.security.shared.FetchAllDocumentPermissionsRequest;
 import stroom.security.shared.UserPermission;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.EntityServiceException;
-import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
-class ChangeDocumentPermissionsHandler
-        extends AbstractTaskHandler<ChangeDocumentPermissionsAction, VoidResult> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ChangeDocumentPermissionsHandler.class);
+class DocPermissionResourceImpl implements DocPermissionResource {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DocPermissionResourceImpl.class);
 
     private final DocumentPermissionServiceImpl documentPermissionService;
-    private final SecurityContext securityContext;
     private final ExplorerNodeService explorerNodeService;
+    private final SecurityContext securityContext;
 
     @Inject
-    ChangeDocumentPermissionsHandler(final DocumentPermissionServiceImpl documentPermissionService,
-                                     final SecurityContext securityContext,
-                                     final ExplorerNodeService explorerNodeService) {
+    DocPermissionResourceImpl(final DocumentPermissionServiceImpl documentPermissionService,
+                              final ExplorerNodeService explorerNodeService,
+                              final SecurityContext securityContext) {
         this.documentPermissionService = documentPermissionService;
-        this.securityContext = securityContext;
         this.explorerNodeService = explorerNodeService;
+        this.securityContext = securityContext;
     }
 
     @Override
-    public VoidResult exec(final ChangeDocumentPermissionsAction action) {
+    public Boolean changeDocumentPermissions(final ChangeDocumentPermissionsRequest request) {
         return securityContext.insecureResult(() -> {
-            final DocRef docRef = action.getDocRef();
+            final DocRef docRef = request.getDocRef();
 
             // Check that the current user has permission to change the permissions of the document.
             if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.OWNER)) {
@@ -68,19 +53,54 @@ class ChangeDocumentPermissionsHandler
                 final Set<String> affectedUserUuids = new HashSet<>();
 
                 // Change the permissions of the document.
-                final ChangeSet<UserPermission> changeSet = action.getChangeSet();
+                final ChangeSet<UserPermission> changeSet = request.getChangeSet();
                 changeDocPermissions(docRef, changeSet, affectedDocRefs, affectedUserUuids, false);
 
                 // Cascade changes if this is a folder and we have been asked to do so.
-                if (action.getCascade() != null) {
-                    cascadeChanges(docRef, changeSet, affectedDocRefs, affectedUserUuids, action.getCascade());
+                if (request.getCascade() != null) {
+                    cascadeChanges(docRef, changeSet, affectedDocRefs, affectedUserUuids, request.getCascade());
                 }
 
-                return VoidResult.INSTANCE;
+                return true;
             }
 
             throw new EntityServiceException("You do not have sufficient privileges to change permissions for this document");
         });
+    }
+
+    @Override
+    public DocumentPermissions copyPermissionFromParent(final CopyPermissionsFromParentRequest request) {
+        final DocRef docRef = request.getDocRef();
+
+        boolean isUserAllowedToChangePermissions = securityContext.
+                hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.OWNER);
+        if (!isUserAllowedToChangePermissions) {
+            throw new EntityServiceException("You do not have sufficient privileges to change permissions for this document!");
+        }
+
+        Optional<ExplorerNode> parent = explorerNodeService.getParent(docRef);
+        if (!parent.isPresent()) {
+            throw new EntityServiceException("This node does not have a parent to copy permissions from!");
+        }
+
+        DocumentPermissions parentsPermissions = documentPermissionService.getPermissionsForDocument(parent.get().getDocRef().getUuid());
+        return parentsPermissions;
+    }
+
+    @Override
+    public DocumentPermissions fetchAllDocumentPermissions(final FetchAllDocumentPermissionsRequest request) {
+        return securityContext.insecureResult(() -> {
+            if (securityContext.hasDocumentPermission(request.getDocRef().getType(), request.getDocRef().getUuid(), DocumentPermissionNames.OWNER)) {
+                return documentPermissionService.getPermissionsForDocument(request.getDocRef().getUuid());
+            }
+
+            throw new EntityServiceException("You do not have sufficient privileges to fetch permissions for this document");
+        });
+    }
+
+    @Override
+    public Boolean checkDocumentPermission(final CheckDocumentPermissionRequest request) {
+        return securityContext.insecureResult(() -> securityContext.hasDocumentPermission(request.getDocumentType(), request.getDocumentId(), request.getPermission()));
     }
 
     private void changeDocPermissions(final DocRef docRef,
@@ -196,7 +216,7 @@ class ChangeDocumentPermissionsHandler
                                 final ChangeSet<UserPermission> changeSet,
                                 final Set<DocRef> affectedDocRefs,
                                 final Set<String> affectedUserUuids,
-                                final ChangeDocumentPermissionsAction.Cascade cascade) {
+                                final ChangeDocumentPermissionsRequest.Cascade cascade) {
         if (DocumentTypes.isFolder(docRef.getType())) {
             switch (cascade) {
                 case CHANGES_ONLY:

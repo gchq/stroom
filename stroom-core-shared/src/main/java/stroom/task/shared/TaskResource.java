@@ -20,6 +20,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.job.shared.ListJobNodeResponse;
+import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -32,7 +33,7 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "task")
 @Path("/task")
 @Produces(MediaType.APPLICATION_JSON)
-public interface TaskResource extends DirectRestService {
+public interface TaskResource extends RestResource, DirectRestService {
     @GET
     @Path("/{nodeName}")
     @Consumes(MediaType.APPLICATION_JSON)

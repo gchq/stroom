@@ -18,12 +18,11 @@ package stroom.activity.impl;
 
 import com.google.common.base.Strings;
 import stroom.activity.api.ActivityService;
+import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.ActivityValidationResult;
-import stroom.activity.shared.FindActivityCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
-import stroom.util.shared.BaseResultList;
 import stroom.util.shared.EntityServiceException;
 
 import javax.inject.Inject;
@@ -38,7 +37,7 @@ public class ActivityServiceImpl implements ActivityService {
 
     @Inject
     public ActivityServiceImpl(final SecurityContext securityContext,
-                        final ActivityDao dao) {
+                               final ActivityDao dao) {
         this.securityContext = securityContext;
         this.dao = dao;
     }
@@ -97,7 +96,7 @@ public class ActivityServiceImpl implements ActivityService {
     }
 
     @Override
-    public BaseResultList<Activity> find(final FindActivityCriteria criteria) {
+    public List<Activity> find(final FindActivityCriteria criteria) {
         if (!securityContext.isLoggedIn()) {
             throw new EntityServiceException("No user is logged in");
         }

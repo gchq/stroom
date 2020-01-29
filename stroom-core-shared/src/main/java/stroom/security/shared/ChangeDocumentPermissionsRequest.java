@@ -21,16 +21,16 @@ import stroom.docref.HasDisplayValue;
 import stroom.task.shared.Action;
 import stroom.util.shared.VoidResult;
 
-public class ChangeDocumentPermissionsAction extends Action<VoidResult> {
-    private static final long serialVersionUID = -6740095230475597845L;
+public class ChangeDocumentPermissionsRequest {
     private DocRef docRef;
     private ChangeSet<UserPermission> changeSet;
     private Cascade cascade;
-    public ChangeDocumentPermissionsAction() {
+
+    public ChangeDocumentPermissionsRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ChangeDocumentPermissionsAction(final DocRef docRef, final ChangeSet<UserPermission> changeSet, final Cascade cascade) {
+    public ChangeDocumentPermissionsRequest(final DocRef docRef, final ChangeSet<UserPermission> changeSet, final Cascade cascade) {
         this.docRef = docRef;
         this.changeSet = changeSet;
         this.cascade = cascade;
@@ -40,8 +40,16 @@ public class ChangeDocumentPermissionsAction extends Action<VoidResult> {
         return docRef;
     }
 
+    public void setDocRef(final DocRef docRef) {
+        this.docRef = docRef;
+    }
+
     public ChangeSet<UserPermission> getChangeSet() {
         return changeSet;
+    }
+
+    public void setChangeSet(final ChangeSet<UserPermission> changeSet) {
+        this.changeSet = changeSet;
     }
 
     public Cascade getCascade() {
@@ -50,11 +58,6 @@ public class ChangeDocumentPermissionsAction extends Action<VoidResult> {
 
     public void setCascade(Cascade cascade) {
         this.cascade = cascade;
-    }
-
-    @Override
-    public String getTaskName() {
-        return "Change Document Permissions";
     }
 
     public enum Cascade implements HasDisplayValue {
@@ -71,5 +74,4 @@ public class ChangeDocumentPermissionsAction extends Action<VoidResult> {
             return displayValue;
         }
     }
-
 }

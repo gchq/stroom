@@ -16,6 +16,7 @@
 
 package stroom.activity.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;
 
@@ -23,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Activity implements HasAuditInfo, SharedObject {
+public class Activity implements HasAuditInfo {
     public static final String ENTITY_TYPE = "Activity";
 
     private Integer id;
@@ -120,17 +121,12 @@ public class Activity implements HasAuditInfo, SharedObject {
         this.details = details;
     }
 
-//    @Override
-//    public String getType() {
-//        return ENTITY_TYPE;
-//    }
-
     @Override
     public String toString() {
         return details.toString();
     }
 
-    public static class ActivityDetails implements SharedObject {
+    public static class ActivityDetails {
         private List<Prop> properties = new ArrayList<>();
 
         public ActivityDetails() {
@@ -144,11 +140,13 @@ public class Activity implements HasAuditInfo, SharedObject {
             this.properties = properties;
         }
 
+        @JsonIgnore
         public void add(final Prop prop, final String value) {
             prop.setValue(value);
             properties.add(prop);
         }
 
+        @JsonIgnore
         public String value(final String propertyId) {
             if (properties != null) {
                 for (final Prop prop : properties) {
@@ -166,7 +164,7 @@ public class Activity implements HasAuditInfo, SharedObject {
         }
     }
 
-    public static class Prop implements SharedObject {
+    public static class Prop {
         private String id;
         private String name;
         private String validation;

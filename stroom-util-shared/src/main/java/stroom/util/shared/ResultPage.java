@@ -31,6 +31,16 @@ public class ResultPage<T> {
         // Default constructor necessary for GWT serialisation.
     }
 
+    public ResultPage(final List<T> values) {
+        this.values = values;
+        this.pageResponse = new PageResponse(0L, values.size(), (long) values.size(), true);
+    }
+
+    public ResultPage(final List<T> values, final PageResponse pageResponse) {
+        this.values = values;
+        this.pageResponse = pageResponse;
+    }
+
     public List<T> getValues() {
         return values;
     }

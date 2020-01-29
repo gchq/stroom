@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> {
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
 
-    private RestDataProvider<String, StringResultPage> dataProvider;
+    private RestDataProvider<String, ResultPage<String>> dataProvider;
 
     @Inject
     public CacheListPresenter(final EventBus eventBus,
@@ -71,15 +71,13 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
 
         getView().addEndColumn(new EndColumn<>());
 
-        dataProvider = new RestDataProvider<String, StringResultPage>(eventBus) {
+        dataProvider = new RestDataProvider<String, ResultPage<String>>(eventBus) {
             @Override
-            protected void exec(final Consumer<StringResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+            protected void exec(final Consumer<ResultPage<String>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                 final Rest<List<String>> rest = restFactory.create();
                 rest
                         .onSuccess(list -> {
-                            final StringResultPage stringResultPage = new StringResultPage();
-                            stringResultPage.init(list);
-                            dataConsumer.accept(stringResultPage);
+                            dataConsumer.accept(new ResultPage<>(list));
                         })
                         .onFailure(throwableConsumer)
                         .call(CACHE_RESOURCE).list();
@@ -90,8 +88,5 @@ public class CacheListPresenter extends MyPresenterWidget<DataGridView<String>> 
 
     public MultiSelectionModel<String> getSelectionModel() {
         return getView().getSelectionModel();
-    }
-
-    private static class StringResultPage extends ResultPage<String> {
     }
 }

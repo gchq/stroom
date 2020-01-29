@@ -16,6 +16,7 @@
 
 package stroom.security.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.http.client.URL;
@@ -23,31 +24,32 @@ import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
-import stroom.core.client.LocationManager;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.event.LogoutEvent;
-import stroom.security.shared.FetchUserAndPermissionsAction;
-import stroom.security.shared.LogoutAction;
+import stroom.security.shared.AppPermissionResource;
+import stroom.security.shared.AuthenticationResource;
+import stroom.security.shared.UserAndPermissions;
 import stroom.ui.config.client.UiConfigCache;
 
 public class LoginManager implements HasHandlers {
+    private static final AuthenticationResource AUTHENTICATION_RESOURCE = GWT.create(AuthenticationResource.class);
+    private static final AppPermissionResource APP_PERMISSION_RESOURCE = GWT.create(AppPermissionResource.class);
+
     private final EventBus eventBus;
     private final CurrentUser currentUser;
-    private final ClientDispatchAsync dispatcher;
-    private final LocationManager locationManager;
+    private final RestFactory restFactory;
     private final UiConfigCache clientPropertyCache;
 
     @Inject
     public LoginManager(
             final EventBus eventBus,
             final CurrentUser currentUser,
-            final ClientDispatchAsync dispatcher,
-            final LocationManager locationManager,
+            final RestFactory restFactory,
             final UiConfigCache clientPropertyCache) {
         this.eventBus = eventBus;
         this.currentUser = currentUser;
-        this.dispatcher = dispatcher;
-        this.locationManager = locationManager;
+        this.restFactory = restFactory;
         this.clientPropertyCache = clientPropertyCache;
 
         // Listen for logout events.
@@ -56,36 +58,40 @@ public class LoginManager implements HasHandlers {
 
     public void fetchUserAndPermissions() {
         // When we start the application we will try and auto login using a client certificates.
-        dispatcher.exec(new FetchUserAndPermissionsAction(), "Loading. Please wait...").onSuccess(userAndPermissions -> {
-            if (userAndPermissions != null) {
-                currentUser.setUserAndPermissions(userAndPermissions);
-            } else {
-                logout();
-            }
-        }).onFailure(caught ->
-            AlertEvent.fireInfo(LoginManager.this, caught.getMessage(), this::logout));
+        final Rest<UserAndPermissions> rest = restFactory.create();
+        rest
+                .onSuccess(userAndPermissions -> {
+                    if (userAndPermissions != null) {
+                        currentUser.setUserAndPermissions(userAndPermissions);
+                    } else {
+                        logout();
+                    }
+                })
+                .onFailure(throwable -> AlertEvent.fireInfo(LoginManager.this, throwable.getMessage(), this::logout))
+                .call(APP_PERMISSION_RESOURCE).getUserAndPermissions();
     }
 
     private void logout() {
         // Perform logout on the server
-        dispatcher
-            .exec(new LogoutAction(), null)
-            .onSuccess(r -> {
-                // Redirect the page to logout.
-                clientPropertyCache
-                    .get()
-                    .onSuccess(result -> {
-                        final String authServiceUrl = result.getUrlConfig().getAuthenticationService();
-                        // Send the user's browser to the remote Authentication Service's logout endpoint.
-                        // By adding 'prompt=login' we ask the Identity Provider to prompt the user for a login,
-                        // bypassing certificate checks. We need this to enable username/password
-                        // logins in an environment where the user's browser always presents a certificate.
-                        String redirectUrl = URL.encode(result.getUrlConfig().getUi() + "?prompt=login");
-                        Window.Location.replace(authServiceUrl + "/logout?redirect_url=" + redirectUrl);
-                    });
-            })
-            .onFailure(t ->
-                AlertEvent.fireErrorFromException(LoginManager.this, t, null));
+        final Rest<Boolean> rest = restFactory.create();
+        rest
+                .onSuccess(response -> {
+                    // Redirect the page to logout.
+                    clientPropertyCache
+                            .get()
+                            .onSuccess(result -> {
+                                final String authServiceUrl = result.getUrlConfig().getAuthenticationService();
+                                // Send the user's browser to the remote Authentication Service's logout endpoint.
+                                // By adding 'prompt=login' we ask the Identity Provider to prompt the user for a login,
+                                // bypassing certificate checks. We need this to enable username/password
+                                // logins in an environment where the user's browser always presents a certificate.
+                                String redirectUrl = URL.encode(result.getUrlConfig().getUi() + "?prompt=login");
+                                Window.Location.replace(authServiceUrl + "/logout?redirect_url=" + redirectUrl);
+                            });
+                })
+                .onFailure(throwable -> AlertEvent.fireErrorFromException(LoginManager.this, throwable, null))
+                .call(AUTHENTICATION_RESOURCE)
+                .logout();
     }
 
     @Override

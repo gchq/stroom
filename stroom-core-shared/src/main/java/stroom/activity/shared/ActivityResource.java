@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.annotation.shared;
+package stroom.activity.shared;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -22,92 +22,97 @@ import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.List;
 
-@Api(value = "annotations")
-@Path("/annotation")
+@Api(value = "activity")
+@Path("/activity")
 @Produces(MediaType.APPLICATION_JSON)
-public interface AnnotationResource extends RestResource, DirectRestService {
+public interface ActivityResource extends RestResource, DirectRestService {
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Gets an annotation",
-            response = Response.class)
-    AnnotationDetail get(@QueryParam("annotationId") Long annotationId);
+            value = "Lists activities",
+            response = List.class)
+    List<Activity> list(@QueryParam("name") String name);
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    AnnotationDetail createEntry(CreateEntryRequest request);
+    @ApiOperation(
+            value = "Create an Activity",
+            response = Activity.class)
+    Activity create();
 
     @GET
-    @Path("status")
+    @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Gets a list of allowed statuses",
-            response = Response.class)
-    List<String> getStatus(@QueryParam("filter") String filter);
+            value = "Get an Activity",
+            response = Activity.class)
+    Activity read(@PathParam("id") Integer id);
+
+    @PUT
+    @Path("/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Update an Activity",
+            response = Activity.class)
+    Activity update(@PathParam("id") Integer id, Activity activity);
+
+    @DELETE
+    @Path("/{id}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Delete an activity",
+            response = Boolean.class)
+    Boolean delete(@PathParam("id") Integer id);
+
+    @POST
+    @Path("/validate")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Create an Activity",
+            response = ActivityValidationResult.class)
+    ActivityValidationResult validate(Activity activity);
 
     @GET
-    @Path("comment")
+    @Path("/current")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Gets a list of predefined comments",
-            response = Response.class)
-    List<String> getComment(@QueryParam("filter") String filter);
+            value = "Gets the current activity",
+            response = Activity.class)
+    Activity getCurrentActivity();
 
-    @GET
-    @Path("linkedEvents")
+    @PUT
+    @Path("/current")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Gets a list of events linked to this annotation",
-            response = Response.class)
-    List<EventId> getLinkedEvents(@QueryParam("annotationId") Long annotationId);
-
-    @POST
-    @Path("link")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Links an annotation to an event",
-            response = Response.class)
-    List<EventId> link(EventLink eventLink);
+            value = "Gets the current activity",
+            response = Activity.class)
+    Activity setCurrentActivity(Activity activity);
 
     @POST
-    @Path("unlink")
+    @Path("/acknowledge")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Unlinks an annotation from an event",
-            response = Response.class)
-    List<EventId> unlink(EventLink eventLink);
-
-    @POST
-    @Path("setStatus")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Bulk action to set the status for several annotations",
-            response = Response.class)
-    Integer setStatus(SetStatusRequest request);
-
-    @POST
-    @Path("setAssignedTo")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Bulk action to set the assignment for several annotations",
-            response = Response.class)
-    Integer setAssignedTo(SetAssignedToRequest request);
+            value = "Acknowledge the slash screen",
+            response = Boolean.class)
+    Boolean acknowledgeSplash(AcknowledgeSplashRequest request);
 }

@@ -16,31 +16,32 @@
 
 package stroom.activity.shared;
 
-import stroom.task.shared.Action;
+public class AcknowledgeSplashRequest {
+    private String message;
+    private String version;
 
-public class SetCurrentActivityAction extends Action<Activity> {
-    private static final long serialVersionUID = 1451964889275627717L;
-
-    private Activity activity;
-
-    public SetCurrentActivityAction() {
+    public AcknowledgeSplashRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public SetCurrentActivityAction(final Activity activity) {
-        this.activity = activity;
+    public AcknowledgeSplashRequest(final String message, final String version) {
+        this.message = message;
+        this.version = version;
     }
 
-    public Activity getActivity() {
-        return activity;
+    public String getMessage() {
+        return message;
     }
 
-    public void setActivity(final Activity activity) {
-        this.activity = activity;
+    public void setMessage(final String message) {
+        this.message = message;
     }
 
-    @Override
-    public String getTaskName() {
-        return "Set activity";
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(final String version) {
+        this.version = version;
     }
 }

@@ -19,6 +19,7 @@ package stroom.cache.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -32,9 +33,8 @@ import java.util.List;
 @Api(value = "cache")
 @Path("/cache")
 @Produces(MediaType.APPLICATION_JSON)
-public interface CacheResource extends DirectRestService {
+public interface CacheResource extends RestResource, DirectRestService {
     @GET
-    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -52,7 +52,6 @@ public interface CacheResource extends DirectRestService {
     CacheInfoResponse info(@QueryParam("cacheName") String cacheName, @QueryParam("nodeName") String nodeName);
 
     @DELETE
-    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(

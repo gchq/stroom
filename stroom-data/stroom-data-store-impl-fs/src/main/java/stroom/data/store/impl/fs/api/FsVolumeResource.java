@@ -30,7 +30,6 @@ public class FsVolumeResource implements RestResource {
      * all the data volumes.
      */
     @GET
-    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response fetchAll(){
         var findAll = new FindFsVolumeCriteria();
@@ -40,7 +39,6 @@ public class FsVolumeResource implements RestResource {
     }
 
     @POST
-    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response create(){
         var fsVolume = new FsVolume();

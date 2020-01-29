@@ -16,21 +16,16 @@
 
 package stroom.security.shared;
 
-import stroom.task.shared.Action;
-import stroom.util.shared.SharedBoolean;
-
-public class CheckDocumentPermissionAction extends Action<SharedBoolean> {
-    private static final long serialVersionUID = -6740095230475597845L;
-
+public class CheckDocumentPermissionRequest {
     private String documentType;
     private String documentId;
     private String permission;
 
-    public CheckDocumentPermissionAction() {
+    public CheckDocumentPermissionRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public CheckDocumentPermissionAction(final String documentType, final String documentId, final String permission) {
+    public CheckDocumentPermissionRequest(final String documentType, final String documentId, final String permission) {
         this.documentType = documentType;
         this.documentId = documentId;
         this.permission = permission;
@@ -40,8 +35,16 @@ public class CheckDocumentPermissionAction extends Action<SharedBoolean> {
         return documentType;
     }
 
+    public void setDocumentType(final String documentType) {
+        this.documentType = documentType;
+    }
+
     public String getDocumentId() {
         return documentId;
+    }
+
+    public void setDocumentId(final String documentId) {
+        this.documentId = documentId;
     }
 
     public String getPermission() {
@@ -50,10 +53,5 @@ public class CheckDocumentPermissionAction extends Action<SharedBoolean> {
 
     public void setPermission(final String permission) {
         this.permission = permission;
-    }
-
-    @Override
-    public String getTaskName() {
-        return "Check Document Permission";
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 Crown Copyright
+ * Copyright 2017 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,29 +14,27 @@
  * limitations under the License.
  */
 
-package stroom.activity.shared;
+package stroom.security.shared;
 
+import stroom.docref.DocRef;
 import stroom.task.shared.Action;
 
-public class ValidateActivityAction extends Action<ActivityValidationResult> {
-    private static final long serialVersionUID = 800905016214418723L;
+public class FetchAllDocumentPermissionsRequest {
+    private DocRef docRef;
 
-    private Activity activity;
-
-    public ValidateActivityAction() {
+    public FetchAllDocumentPermissionsRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ValidateActivityAction(final Activity activity) {
-        this.activity = activity;
+    public FetchAllDocumentPermissionsRequest(final DocRef docRef) {
+        this.docRef = docRef;
     }
 
-    public Activity getActivity() {
-        return activity;
+    public DocRef getDocRef() {
+        return docRef;
     }
 
-    @Override
-    public String getTaskName() {
-        return "ActivityValidationAction";
+    public void setDocRef(final DocRef docRef) {
+        this.docRef = docRef;
     }
 }

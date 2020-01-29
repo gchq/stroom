@@ -21,7 +21,6 @@ import java.util.List;
 public interface GlobalConfigResource extends RestResource {
 
     @GET
-    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
     List<ConfigProperty> getAllConfig();
