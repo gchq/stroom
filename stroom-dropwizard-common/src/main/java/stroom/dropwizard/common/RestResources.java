@@ -47,6 +47,6 @@ public class RestResources {
                                 .filter(Objects::nonNull)
                                 .findFirst())
                 .map(path ->
-                        ResourcePaths.API_PATH + path.value());
+                        ResourcePaths.API_ROOT_PATH + path.value());
     }
 }

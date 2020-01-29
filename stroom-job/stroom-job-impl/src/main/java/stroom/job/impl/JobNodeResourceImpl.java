@@ -102,7 +102,7 @@ class JobNodeResourceImpl implements JobNodeResource, RestResource, HasHealthChe
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_PATH + "/jobNode/info";
+                url += ResourcePaths.API_ROOT_PATH + "/jobNode/info";
                 final Response response = webTargetFactory
                         .create(url)
                         .queryParam("jobName", jobName)
