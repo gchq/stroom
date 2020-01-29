@@ -16,6 +16,10 @@
 
 package stroom.task.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.Task;
@@ -25,23 +29,38 @@ import javax.inject.Inject;
 import java.util.concurrent.Executor;
 
 class ExecutorProviderImpl implements ExecutorProvider {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ExecutorProviderImpl.class);
+
     private final TaskManager taskManager;
+    private final SecurityContext securityContext;
 
     @Inject
-    ExecutorProviderImpl(final TaskManager taskManager) {
+    ExecutorProviderImpl(final TaskManager taskManager,
+                         final SecurityContext securityContext) {
         this.taskManager = taskManager;
+        this.securityContext = securityContext;
     }
 
     @Override
     public Executor getExecutor() {
+        final UserIdentity userIdentity = securityContext.getUserIdentity();
+        if (userIdentity == null) {
+            throw new NullPointerException("Null user identity");
+        }
+
         final Task<?> parentTask = CurrentTaskState.currentTask();
-        return new ExecutorImpl(taskManager, null, parentTask, getTaskName(parentTask, "Generic Task"));
+        return new ExecutorImpl(taskManager, null, securityContext, parentTask, getTaskName(parentTask, "Generic Task"), userIdentity);
     }
 
     @Override
     public Executor getExecutor(final ThreadPool threadPool) {
+        final UserIdentity userIdentity = securityContext.getUserIdentity();
+        if (userIdentity == null) {
+            throw new NullPointerException("Null user identity");
+        }
+
         final Task<?> parentTask = CurrentTaskState.currentTask();
-        return new ExecutorImpl(taskManager, threadPool, parentTask, threadPool.getName());
+        return new ExecutorImpl(taskManager, threadPool, securityContext, parentTask, threadPool.getName(), userIdentity);
     }
 
     private String getTaskName(final Task<?> parentTask, final String defaultName) {
@@ -55,19 +74,23 @@ class ExecutorProviderImpl implements ExecutorProvider {
     private static class ExecutorImpl implements Executor {
         private final TaskManager taskManager;
         private final ThreadPool threadPool;
+        private final SecurityContext securityContext;
         private final Task<?> parentTask;
         private final String taskName;
+        private final UserIdentity userIdentity;
 
-        ExecutorImpl(final TaskManager taskManager, final ThreadPool threadPool, final Task<?> parentTask, final String taskName) {
+        ExecutorImpl(final TaskManager taskManager, final ThreadPool threadPool, final SecurityContext securityContext, final Task<?> parentTask, final String taskName, final UserIdentity userIdentity) {
             this.taskManager = taskManager;
             this.threadPool = threadPool;
+            this.securityContext = securityContext;
             this.parentTask = parentTask;
             this.taskName = taskName;
+            this.userIdentity = userIdentity;
         }
 
         @Override
         public void execute(final Runnable command) {
-            taskManager.execAsync(parentTask, taskName, command, threadPool);
+            securityContext.asUser(userIdentity, () -> taskManager.execAsync(parentTask, taskName, command, threadPool));
         }
     }
 }

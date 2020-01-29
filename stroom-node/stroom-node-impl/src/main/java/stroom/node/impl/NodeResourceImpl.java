@@ -31,7 +31,7 @@ import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
 import stroom.util.HasHealthCheck;
-import stroom.util.jersey.webTargetFactory;
+import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.RestResource;
@@ -39,7 +39,6 @@ import stroom.util.shared.RestResource;
 import javax.inject.Inject;
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
-import javax.ws.rs.client.Invocation;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -49,20 +48,20 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 // TODO : @66 add event logging
-public class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
+class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeResourceImpl.class);
 
     private final NodeServiceImpl nodeService;
     private final NodeInfo nodeInfo;
     private final ClusterNodeManager clusterNodeManager;
-    private final webTargetFactory webTargetFactory;
+    private final WebTargetFactory webTargetFactory;
     private final DocumentEventLog documentEventLog;
 
     @Inject
-    private NodeResourceImpl(final NodeServiceImpl nodeService,
+    NodeResourceImpl(final NodeServiceImpl nodeService,
                              final NodeInfo nodeInfo,
                              final ClusterNodeManager clusterNodeManager,
-                             final webTargetFactory webTargetFactory,
+                             final WebTargetFactory webTargetFactory,
                              final DocumentEventLog documentEventLog) {
         this.nodeService = nodeService;
         this.nodeInfo = nodeInfo;
@@ -177,7 +176,7 @@ public class NodeResourceImpl implements NodeResource, RestResource, HasHealthCh
         } catch (final WebApplicationException e) {
             throw e;
         } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR.getStatusCode(), e);
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
 //            throw new ServerErrorException(e.getMessage(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
         }
     }

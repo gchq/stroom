@@ -24,6 +24,7 @@ import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
 import stroom.index.shared.IndexShard;
 import stroom.search.impl.SearchException;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.ThreadPool;
@@ -51,10 +52,11 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
     private final CacheManager cacheManager;
     private final IndexShardService indexShardService;
     private final IndexShardWriterCache indexShardWriterCache;
-    private final Executor executor;
     private final AtomicLong closing = new AtomicLong();
+    private final ExecutorProvider executorProvider;
     private final TaskContext taskContext;
     private final IndexShardSearchConfig indexShardSearchConfig;
+    private final SecurityContext securityContext;
 
     private volatile ICache<Key, IndexShardSearcher> cache;
 
@@ -64,16 +66,15 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
                                 final IndexShardWriterCache indexShardWriterCache,
                                 final ExecutorProvider executorProvider,
                                 final TaskContext taskContext,
-                                final IndexShardSearchConfig indexShardSearchConfig) {
+                                final IndexShardSearchConfig indexShardSearchConfig,
+                                final SecurityContext securityContext) {
         this.cacheManager = cacheManager;
         this.indexShardService = indexShardService;
         this.indexShardWriterCache = indexShardWriterCache;
-        this.indexShardSearchConfig = indexShardSearchConfig;
-
-        final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Searcher Cache", 3, 0, Integer.MAX_VALUE);
-        executor = executorProvider.getExecutor(threadPool);
-
+        this.executorProvider = executorProvider;
         this.taskContext = taskContext;
+        this.indexShardSearchConfig = indexShardSearchConfig;
+        this.securityContext = securityContext;
     }
 
     private ICache<Key, IndexShardSearcher> getCache() {
@@ -128,21 +129,26 @@ public class IndexShardSearcherCacheImpl implements IndexShardSearcherCache, Cle
 //    }
 
     private void destroy(final Key key, final Object value) {
-        if (value instanceof IndexShardSearcher) {
-            final IndexShardSearcher indexShardSearcher = (IndexShardSearcher) value;
+        securityContext.asProcessingUser(() -> {
+            if (value instanceof IndexShardSearcher) {
+                final IndexShardSearcher indexShardSearcher = (IndexShardSearcher) value;
 
-            closing.incrementAndGet();
-            executor.execute(() -> {
-                try {
-                    taskContext.setName("Closing searcher");
-                    taskContext.info(() -> "Closing searcher for index shard " + key.indexShardId);
+                closing.incrementAndGet();
 
-                    indexShardSearcher.destroy();
-                } finally {
-                    closing.decrementAndGet();
-                }
-            });
-        }
+                final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Searcher Cache", 3, 0, Integer.MAX_VALUE);
+                final Executor executor = executorProvider.getExecutor(threadPool);
+                executor.execute(() -> {
+                    try {
+                        taskContext.setName("Closing searcher");
+                        taskContext.info(() -> "Closing searcher for index shard " + key.indexShardId);
+
+                        indexShardSearcher.destroy();
+                    } finally {
+                        closing.decrementAndGet();
+                    }
+                });
+            }
+        });
     }
 
     private IndexWriter getWriter(final Long indexShardId) {

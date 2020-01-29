@@ -19,6 +19,7 @@ package stroom.job.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -32,9 +33,8 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "jobNode")
 @Path("/jobNode")
 @Produces(MediaType.APPLICATION_JSON)
-public interface JobNodeResource extends DirectRestService {
+public interface JobNodeResource extends RestResource, DirectRestService {
     @GET
-    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(

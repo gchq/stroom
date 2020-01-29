@@ -19,6 +19,7 @@ package stroom.processor.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -31,7 +32,7 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "processor")
 @Path("/processor")
 @Produces(MediaType.APPLICATION_JSON)
-public interface ProcessorResource extends DirectRestService {
+public interface ProcessorResource extends RestResource, DirectRestService {
     @DELETE
     @Path("/{id}")
     @Consumes(MediaType.APPLICATION_JSON)

@@ -19,20 +19,20 @@ package stroom.cache.client.presenter;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.View;
-import stroom.cache.shared.CacheRow;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 
 public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView> {
     public static final String LIST = "LIST";
     public static final String NODE_LIST = "NODE_LIST";
+
     private final CacheListPresenter cacheListPresenter;
     private final CacheNodeListPresenter cacheNodeListPresenter;
+
     @Inject
     public CachePresenter(final EventBus eventBus, final CacheView view, final CacheListPresenter cacheListPresenter,
-                          final CacheNodeListPresenter cacheNodeListPresenter, final ClientDispatchAsync dispatcher) {
+                          final CacheNodeListPresenter cacheNodeListPresenter) {
         super(eventBus, view);
         this.cacheListPresenter = cacheListPresenter;
         this.cacheNodeListPresenter = cacheNodeListPresenter;
@@ -47,7 +47,7 @@ public class CachePresenter extends ContentTabPresenter<CachePresenter.CacheView
 
         registerHandler(
                 cacheListPresenter.getSelectionModel().addSelectionHandler(event -> {
-                    final CacheRow row = cacheListPresenter.getSelectionModel().getSelected();
+                    final String row = cacheListPresenter.getSelectionModel().getSelected();
                     cacheNodeListPresenter.read(row);
                 }));
     }

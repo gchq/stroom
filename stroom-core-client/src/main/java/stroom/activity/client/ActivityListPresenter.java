@@ -17,6 +17,7 @@
 package stroom.activity.client;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
 import com.google.gwt.user.cellview.client.Column;
@@ -25,25 +26,32 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
-import stroom.activity.shared.FindActivityAction;
-import stroom.activity.shared.FindActivityCriteria;
+import stroom.activity.shared.ActivityResource;
+import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.FindActionDataProvider;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPreset;
+import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
+
+import java.util.List;
+import java.util.function.Consumer;
 
 public class ActivityListPresenter
         extends MyPresenterWidget<DataGridView<Activity>>
         implements Refreshable {
-    protected FindActionDataProvider<FindActivityCriteria, Activity> dataProvider;
+    private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
+    protected RestDataProvider<Activity, ResultPage<Activity>> dataProvider;
+
+    private String name;
 
     @Inject
-    public ActivityListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+    public ActivityListPresenter(final EventBus eventBus, final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<Activity>(true));
 
         getView().addResizableColumn(new Column<Activity, SafeHtml>(new SafeHtmlCell()) {
@@ -76,7 +84,17 @@ public class ActivityListPresenter
         }, "Activity", 600);
         getView().addEndColumn(new EndColumn<Activity>());
 
-        dataProvider = new FindActionDataProvider<FindActivityCriteria, Activity>(dispatcher, getView(), new FindActivityAction());
+        dataProvider = new RestDataProvider<Activity, ResultPage<Activity>>(eventBus) {
+            @Override
+            protected void exec(final Consumer<ResultPage<Activity>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<List<Activity>> rest = restFactory.create();
+                rest
+                        .onSuccess(list -> dataConsumer.accept(new ResultPage<>(list)))
+                        .onFailure(throwableConsumer)
+                        .call(ACTIVITY_RESOURCE).list(name);
+            }
+        };
+        dataProvider.addDataDisplay(getView().getDataDisplay());
     }
 
     public ButtonView addButton(final SvgPreset preset) {
@@ -92,7 +110,7 @@ public class ActivityListPresenter
         return getView().getSelectionModel();
     }
 
-    void setCriteria(final FindActivityCriteria criteria) {
-        dataProvider.setCriteria(criteria);
+    void setCriteria(final String name) {
+        this.name = name;
     }
 }

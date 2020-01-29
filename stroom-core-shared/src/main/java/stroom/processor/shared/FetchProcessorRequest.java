@@ -16,6 +16,7 @@
 
 package stroom.processor.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.HasIsConstrained;
@@ -36,6 +37,7 @@ public class FetchProcessorRequest implements TreeAction<ProcessorListRow>, HasI
         this.expression = expression;
     }
 
+    @JsonIgnore
     @Override
     public boolean isConstrained() {
         return ExpressionUtil.termCount(expression) > 0;
@@ -49,6 +51,7 @@ public class FetchProcessorRequest implements TreeAction<ProcessorListRow>, HasI
         this.expression = expression;
     }
 
+    @JsonIgnore
     @Override
     public void setRowExpanded(final ProcessorListRow row, final boolean open) {
         if (open) {
@@ -63,6 +66,7 @@ public class FetchProcessorRequest implements TreeAction<ProcessorListRow>, HasI
         }
     }
 
+    @JsonIgnore
     @Override
     public boolean isRowExpanded(final ProcessorListRow row) {
         if (expandedRows == null) {
@@ -74,5 +78,9 @@ public class FetchProcessorRequest implements TreeAction<ProcessorListRow>, HasI
     @Override
     public Set<ProcessorListRow> getExpandedRows() {
         return expandedRows;
+    }
+
+    public void setExpandedRows(final Set<ProcessorListRow> expandedRows) {
+        this.expandedRows = expandedRows;
     }
 }
