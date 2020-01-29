@@ -19,6 +19,7 @@ package stroom.job.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -33,9 +34,8 @@ import javax.ws.rs.core.MediaType;
 @Api(value = "scheduledTime")
 @Path("/scheduledTime")
 @Produces(MediaType.APPLICATION_JSON)
-public interface ScheduledTimeResource extends DirectRestService {
+public interface ScheduledTimeResource extends RestResource, DirectRestService {
     @POST
-    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(

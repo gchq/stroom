@@ -1,8 +1,6 @@
 package stroom.activity.shared;
 
-import stroom.docref.SharedObject;
-
-public class ActivityValidationResult implements SharedObject {
+public class ActivityValidationResult {
     private boolean valid;
     private String messages;
 
@@ -18,7 +16,15 @@ public class ActivityValidationResult implements SharedObject {
         return valid;
     }
 
+    public void setValid(final boolean valid) {
+        this.valid = valid;
+    }
+
     public String getMessages() {
         return messages;
+    }
+
+    public void setMessages(final String messages) {
+        this.messages = messages;
     }
 }

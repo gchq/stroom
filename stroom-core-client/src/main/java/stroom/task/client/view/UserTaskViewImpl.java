@@ -29,7 +29,7 @@ import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
 import stroom.task.client.presenter.UserTaskUiHandlers;
-import stroom.task.shared.TaskId;
+import stroom.task.shared.TaskProgress;
 import stroom.widget.button.client.ImageButton;
 
 public class UserTaskViewImpl extends ViewWithUiHandlers<UserTaskUiHandlers> implements UserTaskView {
@@ -44,8 +44,8 @@ public class UserTaskViewImpl extends ViewWithUiHandlers<UserTaskUiHandlers> imp
     Label taskAge;
     @UiField
     ImageButton terminate;
-    private TaskId id;
-    private String taskNameString;
+
+    private TaskProgress taskProgress;
 
     @Inject
     public UserTaskViewImpl(final Binder binder) {
@@ -60,9 +60,9 @@ public class UserTaskViewImpl extends ViewWithUiHandlers<UserTaskUiHandlers> imp
     }
 
     @Override
-    public void setTaskName(final String taskName) {
-        this.taskName.setText(taskName);
-        this.taskNameString = taskName;
+    public void setTaskProgress(final TaskProgress taskProgress) {
+        this.taskName.setText(taskProgress.getTaskName());
+        this.taskProgress = taskProgress;
     }
 
     @Override
@@ -80,16 +80,11 @@ public class UserTaskViewImpl extends ViewWithUiHandlers<UserTaskUiHandlers> imp
         terminate.setVisible(visible);
     }
 
-    @Override
-    public void setId(final TaskId id) {
-        this.id = id;
-    }
-
     @UiHandler("terminate")
     public void onTerminateClick(final ClickEvent event) {
         if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
             if (getUiHandlers() != null) {
-                getUiHandlers().onTerminate(id, taskNameString);
+                getUiHandlers().onTerminate(taskProgress);
             }
         }
     }

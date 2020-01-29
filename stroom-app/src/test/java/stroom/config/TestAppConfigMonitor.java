@@ -120,6 +120,9 @@ class TestAppConfigMonitor extends AbstractCoreIntegrationTest {
         // Make sure the temp prop is in the file
         Assertions.assertThat(optMatchResult).isPresent();
 
+        // We need to sleep here to give the config monitor time to start as it monitors asynchronously.
+        Thread.sleep(3000);
+
         // Update the config file with our new value
         final String updatedDevYamlStr = pattern.matcher(devYamlStr)
             .replaceAll("temp: \"" + newPathValue + "\"");

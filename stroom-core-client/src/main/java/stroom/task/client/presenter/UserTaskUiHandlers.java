@@ -17,8 +17,8 @@
 package stroom.task.client.presenter;
 
 import com.gwtplatform.mvp.client.UiHandlers;
-import stroom.task.shared.TaskId;
+import stroom.task.shared.TaskProgress;
 
 public interface UserTaskUiHandlers extends UiHandlers {
-    void onTerminate(TaskId terminateId, String taskName);
+    void onTerminate(TaskProgress taskProgress);
 }

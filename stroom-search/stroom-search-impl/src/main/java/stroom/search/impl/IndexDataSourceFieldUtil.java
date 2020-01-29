@@ -16,6 +16,7 @@
 
 package stroom.search.impl;
 
+import stroom.annotation.api.AnnotationDataSource;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.BooleanField;
 import stroom.datasource.api.v2.DateField;
@@ -25,14 +26,19 @@ import stroom.datasource.api.v2.IdField;
 import stroom.datasource.api.v2.IntegerField;
 import stroom.datasource.api.v2.LongField;
 import stroom.datasource.api.v2.TextField;
+import stroom.index.shared.IndexConstants;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
+import stroom.security.api.SecurityContext;
+import stroom.security.shared.PermissionNames;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class IndexDataSourceFieldUtil {
-    public static List<AbstractField> getDataSourceFields(final IndexDoc index) {
+    public static List<AbstractField> getDataSourceFields(final IndexDoc index, final SecurityContext securityContext) {
         if (index == null || index.getFields() == null) {
             return null;
         }
@@ -42,6 +48,17 @@ public final class IndexDataSourceFieldUtil {
         for (final IndexField indexField : indexFields) {
             // TODO should index fields include doc refs?
             dataSourceFields.add(convert(indexField));
+        }
+
+        // Add annotation fields if this index has stream and event ids.
+        if (securityContext == null || securityContext.hasAppPermission(PermissionNames.ANNOTATIONS)) {
+            final Set<String> names = indexFields
+                    .stream()
+                    .map(IndexField::getFieldName)
+                    .collect(Collectors.toSet());
+            if (names.contains(IndexConstants.STREAM_ID) && names.contains(IndexConstants.EVENT_ID)) {
+                dataSourceFields.addAll(AnnotationDataSource.FIELDS);
+            }
         }
 
         return dataSourceFields;

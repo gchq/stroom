@@ -16,6 +16,7 @@
 
 package stroom.task.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.Sort;
@@ -26,7 +27,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
 
-public class FindTaskProgressCriteria extends BaseCriteria implements Comparator<TaskProgress> {
+public class FindTaskProgressCriteria extends BaseCriteria{
     private static final long serialVersionUID = 2014515855795611224L;
 
     public static final String FIELD_NODE = "Node";
@@ -38,6 +39,15 @@ public class FindTaskProgressCriteria extends BaseCriteria implements Comparator
 
     private Set<TaskProgress> expandedTasks;
     private String nameFilter;
+    private String sessionId;
+
+    public Set<TaskProgress> getExpandedTasks() {
+        return expandedTasks;
+    }
+
+    public void setExpandedTasks(final Set<TaskProgress> expandedTasks) {
+        this.expandedTasks = expandedTasks;
+    }
 
     public String getNameFilter() {
         return nameFilter;
@@ -47,47 +57,15 @@ public class FindTaskProgressCriteria extends BaseCriteria implements Comparator
         this.nameFilter = nameFilter;
     }
 
-    @Override
-    public int compare(final TaskProgress o1, final TaskProgress o2) {
-        if (getSortList() != null) {
-            for (final Sort sort : getSortList()) {
-                final String field = sort.getField();
-
-                int compare = 0;
-                switch (field) {
-                    case FIELD_NAME:
-                        compare = CompareUtil.compareString(o1.getTaskName(), o2.getTaskName());
-                        break;
-                    case FIELD_USER:
-                        compare = CompareUtil.compareString(o1.getUserName(), o2.getUserName());
-                        break;
-                    case FIELD_SUBMIT_TIME:
-                        compare = CompareUtil.compareLong(o1.getSubmitTimeMs(), o2.getSubmitTimeMs());
-                        break;
-                    case FIELD_AGE:
-                        compare = CompareUtil.compareLong(o1.getAgeMs(), o2.getAgeMs());
-                        break;
-                    case FIELD_INFO:
-                        compare = CompareUtil.compareString(o1.getTaskInfo(), o2.getTaskInfo());
-                        break;
-                    case FIELD_NODE:
-                        compare = CompareUtil.compareString(o1.getNodeName(), o2.getNodeName());
-                        break;
-                }
-
-                if (Direction.DESCENDING.equals(sort.getDirection())) {
-                    compare = compare * -1;
-                }
-
-                if (compare != 0) {
-                    return compare;
-                }
-            }
-        }
-
-        return 0;
+    public String getSessionId() {
+        return sessionId;
     }
 
+    public void setSessionId(final String sessionId) {
+        this.sessionId = sessionId;
+    }
+
+    @JsonIgnore
     public void setExpanded(final TaskProgress taskProgress, final boolean expanded) {
         if (expanded) {
             if (expandedTasks == null) {
@@ -104,6 +82,7 @@ public class FindTaskProgressCriteria extends BaseCriteria implements Comparator
         }
     }
 
+    @JsonIgnore
     public boolean isExpanded(final TaskProgress taskProgress) {
         if (expandedTasks != null) {
             return expandedTasks.contains(taskProgress);
@@ -111,6 +90,7 @@ public class FindTaskProgressCriteria extends BaseCriteria implements Comparator
         return false;
     }
 
+    @JsonIgnore
     public void validateSortField() {
         if (this.getSortList().isEmpty()) {
             Sort defaultSort = new Sort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME, Direction.ASCENDING, true);
@@ -131,6 +111,7 @@ public class FindTaskProgressCriteria extends BaseCriteria implements Comparator
         }
     }
 
+    @JsonIgnore
     public boolean isMatch(final String sessionId) {
         return true;
     }

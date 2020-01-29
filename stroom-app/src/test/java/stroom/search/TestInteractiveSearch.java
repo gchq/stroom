@@ -17,6 +17,8 @@
 
 package stroom.search;
 
+import net.sf.saxon.lib.Logger;
+import org.apache.hadoop.util.ThreadUtil;
 import org.junit.jupiter.api.Test;
 import stroom.annotation.api.AnnotationDataSource;
 import stroom.dictionary.impl.DictionaryStore;
@@ -423,6 +425,11 @@ class TestInteractiveSearch extends AbstractSearchTest {
                 1,
                 1,
                 indexStore);
+
+        while (taskManager.getCurrentTaskCount() > 0) {
+            ThreadUtil.sleepAtLeastIgnoreInterrupts(1000);
+        }
+        assertThat(taskManager.getCurrentTaskCount()).isEqualTo(0);
     }
 
     private void testEvents(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
@@ -469,6 +476,11 @@ class TestInteractiveSearch extends AbstractSearchTest {
         }
 
         assertThat(count).isEqualTo(expectResultCount);
+
+        while (taskManager.getCurrentTaskCount() > 0) {
+            ThreadUtil.sleepAtLeastIgnoreInterrupts(1000);
+        }
+        assertThat(taskManager.getCurrentTaskCount()).isEqualTo(0);
     }
 
     private TableSettings createTableSettings(final boolean extractValues) {

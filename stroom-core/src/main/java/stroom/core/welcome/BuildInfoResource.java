@@ -31,7 +31,6 @@ public class BuildInfoResource implements RestResource {
     }
 
     @GET
-    @Path("/")
     public Response buildInfo() {
         Object response = new Object() {
             public String userName = securityContext.getUserId();
