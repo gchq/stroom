@@ -280,7 +280,7 @@ public class CoreDbModule extends AbstractModule {
     private static class ForceMigrationImpl implements ForceCoreMigration {
 
         @Inject
-        ForceMigrationImpl(final CoreDbConnProvider datasource) {
+        ForceMigrationImpl(@SuppressWarnings("unused") final CoreDbConnProvider dataSource) {
             LOGGER.debug(() -> "Initialising " + this.getClass().getSimpleName());
         }
     }
