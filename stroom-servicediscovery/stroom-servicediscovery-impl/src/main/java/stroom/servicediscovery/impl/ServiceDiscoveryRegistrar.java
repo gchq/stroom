@@ -98,7 +98,7 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
                                                      final ServiceDiscovery<String> serviceDiscovery) {
         try {
             UriSpec uriSpec = new UriSpec("{scheme}://{address}:{port}" +
-                    ResourcePaths.API_PATH +
+                    ResourcePaths.API_ROOT_PATH +
                     registeredService.getVersionedPath());
 
             ServiceInstance<String> serviceInstance = ServiceInstance.<String>builder()
