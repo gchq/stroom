@@ -52,6 +52,7 @@ import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+// FIXME : @66 Fix test breaking CI
 @Disabled
 class TestInteractiveSearch extends AbstractSearchTest {
     @Inject
