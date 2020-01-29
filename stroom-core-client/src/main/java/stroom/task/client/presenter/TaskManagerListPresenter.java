@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.monitoring.client.presenter;
+package stroom.task.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
@@ -33,25 +33,31 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.data.client.presenter.ActionDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.TreeRowHandler;
+import stroom.node.shared.FetchNodeStatusResponse;
+import stroom.node.shared.NodeResource;
+import stroom.node.shared.NodeStatusResult;
+import stroom.processor.shared.ProcessorListRow;
 import stroom.svg.client.SvgPresets;
 import stroom.task.shared.FindTaskCriteria;
-import stroom.task.shared.FindTaskProgressAction;
 import stroom.task.shared.FindTaskProgressCriteria;
+import stroom.task.shared.FindTaskProgressRequest;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
-import stroom.task.shared.TerminateTaskProgressAction;
+import stroom.task.shared.TaskProgressResponse;
+import stroom.task.shared.TaskResource;
+import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.ResultList;
 import stroom.util.shared.Sort.Direction;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
@@ -61,53 +67,60 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class TaskManagerListPresenter
         extends MyPresenterWidget<DataGridView<TaskProgress>>
         implements HasDataSelectionHandlers<Set<String>>, Refreshable, ColumnSortEvent.Handler {
-    private final ClientDispatchAsync dispatcher;
+    private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
+    private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
+
     private final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
-    private final FindTaskProgressAction action = new FindTaskProgressAction(criteria);
-    private final ActionDataProvider<TaskProgress> dataProvider;
+    private final FindTaskProgressRequest request = new FindTaskProgressRequest(criteria);
     private final Set<TaskProgress> selectedTaskProgress = new HashSet<>();
     private final Set<TaskProgress> requestedTerminateTaskProgress = new HashSet<>();
     private final TooltipPresenter tooltipPresenter;
+    private final RestFactory restFactory;
     private final NameFilterTimer timer = new NameFilterTimer();
+    private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
+    private final RestDataProvider<TaskProgress, TaskProgressResponse> dataProvider;
+
+    private FetchNodeStatusResponse fetchNodeStatusResponse;
+    private Column<TaskProgress, Expander> expanderColumn;
 
     @Inject
     public TaskManagerListPresenter(final EventBus eventBus,
-                                    final ClientDispatchAsync dispatcher,
-                                    final TooltipPresenter tooltipPresenter) {
+                                    final TooltipPresenter tooltipPresenter,
+                                    final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<>(false, 1000));
-        this.dispatcher = dispatcher;
         this.tooltipPresenter = tooltipPresenter;
+        this.restFactory = restFactory;
         this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
 
         final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE);
         terminateButton.addClickHandler(event -> endSelectedTask());
         terminateButton.setEnabled(true);
 
-        dataProvider = new ActionDataProvider<TaskProgress>(dispatcher, action) {
+        getView().addColumnSortHandler(this);
+
+        initTableColumns();
+
+        dataProvider = new RestDataProvider<TaskProgress, TaskProgressResponse>(eventBus) {
             @Override
-            protected void changeData(final ResultList<TaskProgress> data) {
-                super.changeData(data);
-                onChangeData(data);
+            protected void exec(final Consumer<TaskProgressResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                fetchNodes(dataConsumer, throwableConsumer);
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
 
-        getView().addColumnSortHandler(this);
-
-        initTableColumns();
-    }
-
-    private void onChangeData(final ResultList<TaskProgress> data) {
-        final HashSet<TaskProgress> currentTaskSet = new HashSet<>(data);
-        selectedTaskProgress.retainAll(currentTaskSet);
-        requestedTerminateTaskProgress.retainAll(currentTaskSet);
+        // Handle use of the expander column.
+        dataProvider.setTreeRowHandler(new TreeRowHandler<TaskProgress>(request, getView(), expanderColumn));
     }
 
     /**
@@ -128,7 +141,7 @@ public class TaskManagerListPresenter
         getView().addColumn(column, "", ColumnSizeConstants.CHECKBOX_COL);
 
         // Expander column.
-        final Column<TaskProgress, Expander> expanderColumn = new Column<TaskProgress, Expander>(new ExpanderCell()) {
+        expanderColumn = new Column<TaskProgress, Expander>(new ExpanderCell()) {
             @Override
             public Expander getValue(final TaskProgress row) {
                 return buildExpander(row);
@@ -137,8 +150,8 @@ public class TaskManagerListPresenter
         getView().addColumn(expanderColumn, "");
 
         expanderColumn.setFieldUpdater((index, row, value) -> {
-            action.setRowExpanded(row, !value.isExpanded());
-            dataProvider.refresh();
+            request.setRowExpanded(row, !value.isExpanded());
+            refresh();
         });
 
         final InfoColumn<TaskProgress> furtherInfoColumn = new InfoColumn<TaskProgress>() {
@@ -246,9 +259,6 @@ public class TaskManagerListPresenter
         };
         getView().addResizableColumn(infoColumn, FindTaskProgressCriteria.FIELD_INFO, 1000);
         getView().addEndColumn(new EndColumn<>());
-
-        // Handle use of the expander column.
-        dataProvider.setTreeRowHandler(new TreeRowHandler<>(action, getView(), expanderColumn));
     }
 
     private Expander buildExpander(final TaskProgress row) {
@@ -257,15 +267,61 @@ public class TaskManagerListPresenter
 
     @Override
     public void refresh() {
-        // expanderColumnWidth = 0;
         dataProvider.refresh();
+    }
+
+    public void fetchNodes(final Consumer<TaskProgressResponse> dataConsumer,
+                           final Consumer<Throwable> throwableConsumer) {
+        if (fetchNodeStatusResponse == null) {
+            final Rest<FetchNodeStatusResponse> rest = restFactory.create();
+            rest.onSuccess(fetchNodeStatusResponse -> {
+                // Store node list for future queries.
+                this.fetchNodeStatusResponse = fetchNodeStatusResponse;
+                fetchTasksForNodes(dataConsumer, throwableConsumer, fetchNodeStatusResponse);
+            }).onFailure(throwableConsumer).call(NODE_RESOURCE).list();
+        } else {
+            fetchTasksForNodes(dataConsumer, throwableConsumer, fetchNodeStatusResponse);
+        }
+    }
+
+    private void fetchTasksForNodes(final Consumer<TaskProgressResponse> dataConsumer,
+                                    final Consumer<Throwable> throwableConsumer,
+                                    final FetchNodeStatusResponse fetchNodeStatusResponse) {
+        for (final NodeStatusResult nodeStatusResult : fetchNodeStatusResponse.getValues()) {
+            final String nodeName = nodeStatusResult.getNode().getName();
+            final Rest<TaskProgressResponse> rest = restFactory.create();
+            rest
+                    .onSuccess(response -> {
+                        responseMap.put(nodeName, response.getValues());
+                        combineNodeTasks(dataConsumer, throwableConsumer);
+                    })
+                    .onFailure(throwable -> {
+                        responseMap.remove(nodeName);
+                        combineNodeTasks(dataConsumer, throwableConsumer);
+                    })
+                    .call(TASK_RESOURCE).find(nodeName, request);
+        }
+    }
+
+    private void combineNodeTasks(final Consumer<TaskProgressResponse> dataConsumer,
+                                  final Consumer<Throwable> throwableConsumer) {
+        // Combine data from all nodes.
+        final List<TaskProgress> list = TaskProgressUtil.combine(criteria, responseMap.values());
+
+        final HashSet<TaskProgress> currentTaskSet = new HashSet<>(list);
+        selectedTaskProgress.retainAll(currentTaskSet);
+        requestedTerminateTaskProgress.retainAll(currentTaskSet);
+
+        final TaskProgressResponse response = new TaskProgressResponse();
+        response.init(list);
+        dataConsumer.accept(response);
     }
 
     /**
      * This sets the name filter to be used when fetching items. This method
      * returns false is the filter is set to the same value that is already set.
      *
-     * @param nameFilter
+     * @param name
      * @return
      */
     public void setNameFilter(final String name) {
@@ -292,17 +348,16 @@ public class TaskManagerListPresenter
 
         }
         refresh();
-
     }
 
     private void doTerminate(final TaskProgress taskProgress, final boolean kill) {
         final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
         findTaskCriteria.addId(taskProgress.getId());
-        final TerminateTaskProgressAction action = new TerminateTaskProgressAction(
-                "Terminate: " + taskProgress.getTaskName(), findTaskCriteria, kill);
+        final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria, kill);
 
         requestedTerminateTaskProgress.add(taskProgress);
-        dispatcher.exec(action);
+        final Rest<Boolean> rest = restFactory.create();
+        rest.call(TASK_RESOURCE).terminate(taskProgress.getNodeName(), request);
     }
 
     @Override
@@ -315,9 +370,9 @@ public class TaskManagerListPresenter
         if (event.getColumn() instanceof OrderByColumn<?, ?>) {
             final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
             if (event.isSortAscending()) {
-                action.getCriteria().setSort(orderByColumn.getField(), Direction.ASCENDING, orderByColumn.isIgnoreCase());
+                request.getCriteria().setSort(orderByColumn.getField(), Direction.ASCENDING, orderByColumn.isIgnoreCase());
             } else {
-                action.getCriteria().setSort(orderByColumn.getField(), Direction.DESCENDING, orderByColumn.isIgnoreCase());
+                request.getCriteria().setSort(orderByColumn.getField(), Direction.DESCENDING, orderByColumn.isIgnoreCase());
             }
             refresh();
         }

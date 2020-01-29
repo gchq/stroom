@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.monitoring.client;
+package stroom.task.client;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -22,7 +22,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.monitoring.client.presenter.TaskManagerPresenter;
+import stroom.monitoring.client.MonitoringPlugin;
+import stroom.task.client.presenter.TaskManagerPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;

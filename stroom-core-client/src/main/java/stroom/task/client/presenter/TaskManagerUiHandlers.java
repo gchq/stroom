@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.monitoring.client.presenter;
+package stroom.task.client.presenter;
 
 import com.gwtplatform.mvp.client.UiHandlers;
 

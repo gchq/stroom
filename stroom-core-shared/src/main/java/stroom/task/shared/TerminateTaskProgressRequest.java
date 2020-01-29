@@ -16,21 +16,15 @@
 
 package stroom.task.shared;
 
-import stroom.util.shared.VoidResult;
-
-public class TerminateTaskProgressAction extends Action<VoidResult> {
-    private static final long serialVersionUID = 2759048534848720682L;
-
-    private String taskName;
+public class TerminateTaskProgressRequest {
     private FindTaskCriteria criteria;
     private boolean kill;
 
-    public TerminateTaskProgressAction() {
+    public TerminateTaskProgressRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public TerminateTaskProgressAction(final String taskName, final FindTaskCriteria criteria, final boolean kill) {
-        this.taskName = taskName;
+    public TerminateTaskProgressRequest(final FindTaskCriteria criteria, final boolean kill) {
         this.criteria = criteria;
         this.kill = kill;
     }
@@ -39,12 +33,15 @@ public class TerminateTaskProgressAction extends Action<VoidResult> {
         return criteria;
     }
 
+    public void setCriteria(final FindTaskCriteria criteria) {
+        this.criteria = criteria;
+    }
+
     public boolean isKill() {
         return kill;
     }
 
-    @Override
-    public String getTaskName() {
-        return taskName;
+    public void setKill(final boolean kill) {
+        this.kill = kill;
     }
 }

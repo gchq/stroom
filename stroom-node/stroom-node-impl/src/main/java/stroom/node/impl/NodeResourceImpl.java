@@ -177,7 +177,7 @@ public class NodeResourceImpl implements NodeResource, RestResource, HasHealthCh
         } catch (final WebApplicationException e) {
             throw e;
         } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR.getStatusCode(), e);
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
 //            throw new ServerErrorException(e.getMessage(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
         }
     }

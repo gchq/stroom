@@ -22,6 +22,7 @@ import org.slf4j.MarkerFactory;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.security.shared.PermissionNames;
 import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskCallbackAdaptor;
@@ -39,6 +40,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
+import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.BaseResultList;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
@@ -46,9 +48,11 @@ import stroom.util.thread.StroomThreadGroup;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -65,6 +69,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
 
     private final TaskHandlerRegistry taskHandlerRegistry;
     private final NodeInfo nodeInfo;
+    private final SessionIdProvider sessionIdProvider;
     private final SecurityContext securityContext;
     private final PipelineScopeRunnable pipelineScopeRunnable;
     private final AtomicInteger currentAsyncTaskCount = new AtomicInteger();
@@ -77,10 +82,12 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
     @Inject
     TaskManagerImpl(final TaskHandlerRegistry taskHandlerRegistry,
                     final NodeInfo nodeInfo,
+                    final SessionIdProvider sessionIdProvider,
                     final SecurityContext securityContext,
                     final PipelineScopeRunnable pipelineScopeRunnable) {
         this.taskHandlerRegistry = taskHandlerRegistry;
         this.nodeInfo = nodeInfo;
+        this.sessionIdProvider = sessionIdProvider;
         this.securityContext = securityContext;
         this.pipelineScopeRunnable = pipelineScopeRunnable;
 
@@ -369,10 +376,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
             }
 
             // Get the parent task thread if there is one.
-            TaskThread parentTaskThread = null;
-            if (parentTask != null) {
-                parentTaskThread = currentTasks.get(parentTask.getId());
-            }
+            final Set<TaskThread> ancestorTaskSet = getAncestorTaskSet(parentTask);
 
             final Thread currentThread = Thread.currentThread();
             final String oldThreadName = currentThread.getName();
@@ -381,9 +385,10 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
             currentThread.setName(oldThreadName + " - " + task.getClass().getSimpleName());
             try {
                 taskThread.setThread(Thread.currentThread());
-                if (parentTaskThread != null) {
-                    parentTaskThread.addChild(taskThread);
-                }
+
+                // Let every ancestor know this descendant task is being executed.
+                ancestorTaskSet.forEach(ancestorTask -> ancestorTask.addChild(taskThread));
+
                 currentTasks.put(task.getId(), taskThread);
 
                 CurrentTaskState.pushState(taskThread);
@@ -407,9 +412,10 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 throw e;
             } finally {
                 currentTasks.remove(task.getId());
-                if (parentTaskThread != null) {
-                    parentTaskThread.removeChild(taskThread);
-                }
+
+                // Let every ancestor know this descendant task has completed.
+                ancestorTaskSet.forEach(ancestorTask -> ancestorTask.removeChild(taskThread));
+
                 taskThread.setThread(null);
                 currentThread.setName(oldThreadName);
                 // Decrease the count of the number of async tasks.
@@ -441,12 +447,23 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
         }
     }
 
+    private Set<TaskThread> getAncestorTaskSet(final Task<?> parentTask) {
+        // Get the parent task thread if there is one.
+        final Set<TaskThread> ancestorTaskSet = new HashSet<>();
+        Task<?> ancestor = parentTask;
+        while (ancestor != null) {
+            TaskThread ancestorTaskThread = currentTasks.get(ancestor.getId());
+            if (ancestorTaskThread != null) {
+                ancestorTaskSet.add(ancestorTaskThread);
+            }
+            ancestor = ancestor.getParentTask();
+        }
+        return ancestorTaskSet;
+    }
+
     private <R> void doExec(final Task<R> task, final TaskCallback<R> callback) {
         // Get the parent task thread if there is one.
-        TaskThread parentTaskThread = null;
-        if (task.getParentTask() != null) {
-            parentTaskThread = currentTasks.get(task.getParentTask().getId());
-        }
+        final Set<TaskThread> ancestorTaskSet = getAncestorTaskSet(task.getParentTask());
 
         final UserIdentity userIdentity = securityContext.getUserIdentity();
         if (userIdentity == null) {
@@ -465,9 +482,10 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
             }
 
             taskThread.setThread(Thread.currentThread());
-            if (parentTaskThread != null) {
-                parentTaskThread.addChild(taskThread);
-            }
+
+            // Let every ancestor know this descendant task is being executed.
+            ancestorTaskSet.forEach(ancestorTask -> ancestorTask.addChild(taskThread));
+
             currentTasks.put(task.getId(), taskThread);
 
             if (stop.get() || currentThread.isInterrupted()) {
@@ -488,9 +506,10 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
             }
         } finally {
             currentTasks.remove(task.getId());
-            if (parentTaskThread != null) {
-                parentTaskThread.removeChild(taskThread);
-            }
+
+            // Let every ancestor know this descendant task has completed.
+            ancestorTaskSet.forEach(ancestorTask -> ancestorTask.removeChild(taskThread));
+
             taskThread.setThread(null);
             currentThread.setName(oldThreadName);
         }
@@ -498,34 +517,36 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
 
     @Override
     public BaseResultList<TaskProgress> terminate(final FindTaskCriteria criteria, final boolean kill) {
-        // This can change a little between servers
-        final long timeNowMs = System.currentTimeMillis();
+        return securityContext.secureResult(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
+            // This can change a little between servers
+            final long timeNowMs = System.currentTimeMillis();
 
-        final List<TaskProgress> taskProgressList = new ArrayList<>();
+            final List<TaskProgress> taskProgressList = new ArrayList<>();
 
-        if (criteria != null && criteria.isConstrained()) {
-            final Iterator<TaskThread> iter = currentTasks.values().iterator();
+            if (criteria != null && criteria.isConstrained()) {
+                final Iterator<TaskThread> iter = currentTasks.values().iterator();
 
-            final List<TaskThread> terminateList = new ArrayList<>();
+                final List<TaskThread> terminateList = new ArrayList<>();
 
-            // Loop over all of the tasks that this node knows about and see if
-            // it should be terminated.
-            iter.forEachRemaining(taskThread -> {
-                final Task<?> task = taskThread.getTask();
+                // Loop over all of the tasks that this node knows about and see if
+                // it should be terminated.
+                iter.forEachRemaining(taskThread -> {
+                    final Task<?> task = taskThread.getTask();
 
-                // Terminate it?
-                if (kill || !taskThread.isTerminated()) {
-                    if (criteria.isMatch(task, taskThread.getSessionId())) {
-                        terminateList.add(taskThread);
+                    // Terminate it?
+                    if (kill || !taskThread.isTerminated()) {
+                        if (criteria.isMatch(task, taskThread.getSessionId())) {
+                            terminateList.add(taskThread);
+                        }
                     }
-                }
-            });
+                });
 
-            // Now terminate the relevant tasks.
-            doTerminated(kill, timeNowMs, taskProgressList, terminateList);
-        }
+                // Now terminate the relevant tasks.
+                doTerminated(kill, timeNowMs, taskProgressList, terminateList);
+            }
 
-        return BaseResultList.createUnboundedList(taskProgressList);
+            return BaseResultList.createUnboundedList(taskProgressList);
+        });
     }
 
     private void doTerminated(final boolean kill, final long timeNowMs, final List<TaskProgress> taskProgressList,
@@ -559,6 +580,20 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
 
     @Override
     public BaseResultList<TaskProgress> find(final FindTaskProgressCriteria findTaskProgressCriteria) {
+        final boolean sessionMatch = findTaskProgressCriteria != null &&
+                findTaskProgressCriteria.getSessionId() != null &&
+                findTaskProgressCriteria.getSessionId().equals(sessionIdProvider.get());
+
+        if (sessionMatch) {
+            // Always allow a user to see tasks for their own session if tasks for the current session have been requested.
+            return doFind(findTaskProgressCriteria);
+        } else {
+            return securityContext.secureResult(PermissionNames.MANAGE_TASKS_PERMISSION, () ->
+                    doFind(findTaskProgressCriteria));
+        }
+    }
+
+    private BaseResultList<TaskProgress> doFind(final FindTaskProgressCriteria findTaskProgressCriteria) {
         LOGGER.debug("getTaskProgressMap()");
         // This can change a little between servers.
         final long timeNowMs = System.currentTimeMillis();
@@ -572,7 +607,9 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
             final TaskProgress taskProgress = buildTaskProgress(timeNowMs, taskThread, task);
 
             // Only add this task progress if it matches the supplied criteria.
-            if (findTaskProgressCriteria == null || findTaskProgressCriteria.isMatch(taskThread.getSessionId())) {
+            if (findTaskProgressCriteria == null ||
+                    findTaskProgressCriteria.getSessionId() == null ||
+                    findTaskProgressCriteria.getSessionId().equals(taskThread.getSessionId())) {
                 taskProgressList.add(taskProgress);
             }
         });
@@ -613,10 +650,12 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
 
     @Override
     public void terminate(final TaskId taskId) {
-        final TaskThread taskThread = currentTasks.get(taskId);
-        if (taskThread != null) {
-            taskThread.terminate();
-        }
+        securityContext.secure(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
+            final TaskThread taskThread = currentTasks.get(taskId);
+            if (taskThread != null) {
+                taskThread.terminate();
+            }
+        });
     }
 
     @Override
@@ -638,11 +677,6 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
     public FindTaskProgressCriteria createCriteria() {
         return new FindTaskProgressCriteria();
     }
-
-//    @Override
-//    public void appendCriteria(final List<BaseAdvancedQueryItem> items, final FindTaskProgressCriteria criteria) {
-//        CriteriaLoggingUtil.appendStringTerm(items, "sessionId", criteria.getSessionId());
-//    }
 
     private static class AsyncTaskCallback<R> extends TaskCallbackAdaptor<R> {
     }

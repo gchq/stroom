@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.monitoring.client.presenter;
+package stroom.task.client.presenter;
 
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
@@ -23,7 +23,7 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
-import stroom.monitoring.client.presenter.TaskManagerPresenter.TaskManagerView;
+import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 

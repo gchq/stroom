@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.monitoring.client.view;
+package stroom.task.client.view;
 
 import com.google.gwt.event.logical.shared.ValueChangeEvent;
 import com.google.gwt.uibinder.client.UiBinder;
@@ -24,8 +24,8 @@ import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
-import stroom.monitoring.client.presenter.TaskManagerPresenter;
-import stroom.monitoring.client.presenter.TaskManagerUiHandlers;
+import stroom.task.client.presenter.TaskManagerPresenter;
+import stroom.task.client.presenter.TaskManagerUiHandlers;
 import stroom.widget.dropdowntree.client.view.QuickFilter;
 
 public class TaskManagerViewImpl extends ViewWithUiHandlers<TaskManagerUiHandlers>

@@ -31,6 +31,8 @@ import stroom.util.shared.BaseResultList;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
+import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.core.Response.Status;
 import java.util.function.Consumer;
 
 public class JobResourceImpl implements JobResource, RestResource, HasHealthCheck {
@@ -66,6 +68,7 @@ public class JobResourceImpl implements JobResource, RestResource, HasHealthChec
             documentEventLog.search("ListJobs", query, Job.class.getSimpleName(), results.getPageResponse(), null);
         } catch (final RuntimeException e) {
             documentEventLog.search("ListJobs", query, Job.class.getSimpleName(), null, e);
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
         }
         return response;
     }
@@ -94,7 +97,7 @@ public class JobResourceImpl implements JobResource, RestResource, HasHealthChec
 
         } catch (final RuntimeException e) {
             documentEventLog.update(before, after, e);
-            throw e;
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
         }
     }
 

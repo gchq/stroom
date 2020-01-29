@@ -16,13 +16,21 @@
 
 package stroom.task.shared;
 
-import stroom.util.shared.BaseResultList;
+import org.junit.jupiter.api.Test;
 
-public class FindUserTaskProgressAction extends Action<BaseResultList<TaskProgress>> {
-    private static final long serialVersionUID = 6824397982129712337L;
+import static org.assertj.core.api.Assertions.assertThat;
 
-    @Override
-    public String getTaskName() {
-        return "Find User Task Progress";
+class TestTaskId {
+    @Test
+    void testSimple() {
+        final TaskId p1 = new TaskId("P1", null);
+        final TaskId p2 = new TaskId("P2", null);
+        final TaskId c1 = new TaskId("C1", p1);
+        final TaskId c2 = new TaskId("C2", p2);
+        final TaskId gc1 = new TaskId("GC1", c1);
+        final TaskId gc2 = new TaskId("GC2", c2);
+
+        assertThat(gc1.isOrHasAncestor(new TaskId("P1", null))).isTrue();
+        assertThat(gc2.isOrHasAncestor(new TaskId("P1", null))).isFalse();
     }
 }
