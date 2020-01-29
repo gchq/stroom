@@ -16,43 +16,59 @@
 
 package stroom.core.db;
 
+import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
 import org.slf4j.MarkerFactory;
-import stroom.db.util.AbstractDataSourceProviderModule;
+import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceProxy;
 import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.db.ForceCoreMigration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import javax.inject.Singleton;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Configures anything related to persistence, e.g. transaction management, the
  * entity manager factory, data sources.
+ *
+ * This does not extend {@link stroom.db.util.AbstractDataSourceProviderModule} as the core migrations
+ * are special and need to happen first.
  */
-public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, CoreDbConnProvider> {
+public class CoreDbModule extends AbstractModule {
+
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CoreDbModule.class);
 
     private static final String MODULE = "stroom-core";
     private static final String FLYWAY_LOCATIONS = "stroom/core/db/migration/mysql";
     private static final String FLYWAY_TABLE = "schema_version";
 
+    private static final AtomicBoolean HAS_COMPLETED_MIGRATION = new AtomicBoolean(false);
+
     @Override
     protected void configure() {
         super.configure();
 
         // Force creation of connection provider so that legacy migration code executes.
-        bind(ForceMigration.class).asEagerSingleton();
+        bind(ForceMigrationImpl.class).asEagerSingleton();
+
+        // Allows other db modules to inject CoreMigration to ensure the core db migration
+        // has run before they do
+        bind(ForceCoreMigration.class).to(ForceMigrationImpl.class);
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
@@ -62,7 +78,23 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
                 .bind(FindSystemTableStatusAction.class, FindSystemTableStatusHandler.class);
     }
 
-    @Override
+    @Provides
+    @Singleton
+    public CoreDbConnProvider getConnectionProvider(final Provider<CoreConfig> configProvider,
+                                                    final DataSourceFactory dataSourceFactory) {
+        LOGGER.debug(() -> "Getting connection provider for " + getModuleName());
+
+        final DataSource dataSource = dataSourceFactory.create(configProvider.get());
+
+        // Prevent migrations from being re-run for each test
+        if (!HAS_COMPLETED_MIGRATION.get()) {
+            performMigration(dataSource);
+            HAS_COMPLETED_MIGRATION.set(true);
+        }
+
+        return createConnectionProvider(dataSource);
+    }
+
     protected void performMigration(final DataSource dataSource) {
         String baselineVersionAsString = null;
         Version version = null;
@@ -230,17 +262,11 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
         }
     }
 
-    @Override
     protected String getModuleName() {
         return MODULE;
     }
 
-    @Override
-    protected Class<CoreDbConnProvider> getConnectionProviderType() {
-        return CoreDbConnProvider.class;
-    }
 
-    @Override
     protected CoreDbConnProvider createConnectionProvider(final DataSource dataSource) {
         return new DataSourceImpl(dataSource);
     }
@@ -251,9 +277,10 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
         }
     }
 
-    private static class ForceMigration {
+    private static class ForceMigrationImpl implements ForceCoreMigration {
+
         @Inject
-        ForceMigration(final CoreDbConnProvider provider) {
+        ForceMigrationImpl(final CoreDbConnProvider datasource) {
             LOGGER.debug(() -> "Initialising " + this.getClass().getSimpleName());
         }
     }
