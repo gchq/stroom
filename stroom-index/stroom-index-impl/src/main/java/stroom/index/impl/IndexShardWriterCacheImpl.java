@@ -94,7 +94,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         this.indexShardManager = indexShardManager;
 
         final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Writer Cache", 3, 0, Integer.MAX_VALUE);
-        final Executor executor = executorProvider.getExecutor(threadPool);
+        final Executor executor = securityContext.asProcessingUserResult(() -> executorProvider.getExecutor(threadPool));
         asyncRunner = new AsyncRunner(executor);
         syncRunner = new SyncRunner();
 

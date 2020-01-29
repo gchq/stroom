@@ -30,7 +30,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.HasHealthCheck;
 import stroom.util.guice.ResourcePaths;
-import stroom.util.jersey.webTargetFactory;
+import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.BaseResultList;
@@ -42,20 +42,20 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.function.Consumer;
 
-public class JobNodeResourceImpl implements JobNodeResource, RestResource, HasHealthCheck {
+class JobNodeResourceImpl implements JobNodeResource, RestResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobNodeResourceImpl.class);
 
     private final JobNodeService jobNodeService;
     private final NodeService nodeService;
     private final NodeInfo nodeInfo;
-    private final webTargetFactory webTargetFactory;
+    private final WebTargetFactory webTargetFactory;
     private final DocumentEventLog documentEventLog;
 
     @Inject
-    private JobNodeResourceImpl(final JobNodeService jobNodeService,
+    JobNodeResourceImpl(final JobNodeService jobNodeService,
                                 final NodeService nodeService,
                                 final NodeInfo nodeInfo,
-                                final webTargetFactory webTargetFactory,
+                                final WebTargetFactory webTargetFactory,
                                 final DocumentEventLog documentEventLog) {
         this.jobNodeService = jobNodeService;
         this.nodeService = nodeService;
@@ -102,7 +102,7 @@ public class JobNodeResourceImpl implements JobNodeResource, RestResource, HasHe
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_PATH + "/jobNode/info";
+                url += ResourcePaths.API_ROOT_PATH + "/jobNode/info";
                 final Response response = webTargetFactory
                         .create(url)
                         .queryParam("jobName", jobName)

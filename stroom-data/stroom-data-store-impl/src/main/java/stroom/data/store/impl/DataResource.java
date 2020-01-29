@@ -84,7 +84,6 @@ public class DataResource implements RestResource {
     }
 
     @GET
-    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response fetchData(
             final @QueryParam("streamId") Long streamId,

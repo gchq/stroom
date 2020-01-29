@@ -100,7 +100,6 @@ public class PipelineResource implements RestResource {
     }
 
     @GET
-    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     public Response search(@QueryParam("offset") Integer offset,
                            @QueryParam("pageSize") Integer pageSize,

@@ -25,7 +25,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.task.client.presenter.UserTaskPresenter.UserTaskView;
-import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.ModelStringUtil;
 
@@ -36,9 +35,8 @@ public class UserTaskPresenter extends MyPresenterWidget<UserTaskView> {
     }
 
     public void setTaskProgress(final TaskProgress taskProgress) {
-        getView().setTaskName(taskProgress.getTaskName());
+        getView().setTaskProgress(taskProgress);
         getView().getTaskAge().setText(ModelStringUtil.formatDurationString(taskProgress.getAgeMs()));
-        getView().setId(taskProgress.getId());
         getView().getTaskStatus().setText(taskProgress.getTaskInfo());
     }
 
@@ -51,13 +49,11 @@ public class UserTaskPresenter extends MyPresenterWidget<UserTaskView> {
     }
 
     public interface UserTaskView extends View, HasUiHandlers<UserTaskUiHandlers> {
-        void setTaskName(String taskName);
+        void setTaskProgress(TaskProgress taskProgress);
 
         HasText getTaskAge();
 
         HasText getTaskStatus();
-
-        void setId(TaskId id);
 
         void setTerminateVisible(boolean visible);
     }

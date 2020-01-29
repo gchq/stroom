@@ -39,6 +39,10 @@ public class Expander implements SharedObject {
         return depth;
     }
 
+    public void setDepth(final int depth) {
+        this.depth = depth;
+    }
+
     public boolean isExpanded() {
         return expanded;
     }
@@ -49,5 +53,9 @@ public class Expander implements SharedObject {
 
     public boolean isLeaf() {
         return leaf;
+    }
+
+    public void setLeaf(final boolean leaf) {
+        this.leaf = leaf;
     }
 }
