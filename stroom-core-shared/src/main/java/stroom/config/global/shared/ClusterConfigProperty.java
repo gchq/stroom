@@ -5,27 +5,36 @@ import stroom.docref.SharedObject;
 import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class ClusterConfigProperty implements SharedObject {
     private ConfigProperty configProperty;
-    private Map<String, OverrideValue<String>> yamlOverrides = new HashMap<>();
+    private Map<String, OverrideValue<String>> nodeToOverrideMap = new HashMap<>();
 
     @SuppressWarnings("unused") // for gwt serialisation
     ClusterConfigProperty() {
     }
 
-    public ClusterConfigProperty(final ConfigProperty configProperty) {
+    public ClusterConfigProperty(final ConfigProperty configProperty, final String nodeName) {
         this.configProperty = configProperty;
     }
 
+    public ClusterConfigProperty(final ConfigProperty configProperty,
+                                 final Map<String, OverrideValue<String>> nodeToOverrideMap) {
+        Objects.requireNonNull(configProperty);
+        Objects.requireNonNull(nodeToOverrideMap);
+        this.configProperty = configProperty;
+        this.nodeToOverrideMap.putAll(nodeToOverrideMap);
+    }
+
     public void putYamlOverrideValue(final String nodeName, final OverrideValue<String> yamOverrideValue) {
-        yamlOverrides.put(nodeName, yamOverrideValue);
+        nodeToOverrideMap.put(nodeName, yamOverrideValue);
     }
 
     public Map<String, String> getYamlOverrideValues() {
-        return yamlOverrides.entrySet().stream()
+        return nodeToOverrideMap.entrySet().stream()
                 .filter(entry -> entry.getValue().hasOverride())
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
@@ -33,7 +42,7 @@ public class ClusterConfigProperty implements SharedObject {
     }
 
     public Map<String, String> getEffectiveValues() {
-        return yamlOverrides.entrySet().stream()
+        return nodeToOverrideMap.entrySet().stream()
                 .map(entry -> {
                     Optional<String> effectiveValue = ConfigProperty.getEffectiveValue(
                             configProperty.getDefaultValue().orElse(null),
@@ -45,5 +54,16 @@ public class ClusterConfigProperty implements SharedObject {
                 .collect(Collectors.toMap(
                         AbstractMap.SimpleEntry::getKey,
                         entry -> entry.getValue().get()));
+    }
+
+    public static ClusterConfigProperty merge(final ClusterConfigProperty prop1, final ClusterConfigProperty prop2) {
+        Objects.requireNonNull(prop1);
+        Objects.requireNonNull(prop2);
+        if (!prop1.configProperty.getName().equals(prop2.configProperty.getName())) {
+            throw new RuntimeException();
+        }
+        var nodeToOverrideMap = new HashMap<>(prop1.nodeToOverrideMap);
+        nodeToOverrideMap.putAll(prop2.nodeToOverrideMap);
+        return new ClusterConfigProperty(this.configProperty, nodeToOverrideMap);
     }
 }
