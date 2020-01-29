@@ -85,7 +85,7 @@ class TaskResourceImpl implements TaskResource, RestResource, HasHealthCheck {
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_PATH + "/task/" + nodeName;
+                url += ResourcePaths.API_ROOT_PATH + "/task/" + nodeName;
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
@@ -134,7 +134,7 @@ class TaskResourceImpl implements TaskResource, RestResource, HasHealthCheck {
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_PATH + "/task/" + nodeName + "/terminate";
+                url += ResourcePaths.API_ROOT_PATH + "/task/" + nodeName + "/terminate";
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
