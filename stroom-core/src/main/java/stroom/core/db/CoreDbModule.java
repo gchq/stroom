@@ -19,14 +19,14 @@ package stroom.core.db;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.db.util.AbstractDataSourceProviderModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;
@@ -41,7 +41,7 @@ import java.sql.Statement;
  * entity manager factory, data sources.
  */
 public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, CoreDbConnProvider> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CoreDbModule.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CoreDbModule.class);
 
     private static final String MODULE = "stroom-core";
     private static final String FLYWAY_LOCATIONS = "stroom/core/db/migration/mysql";
@@ -254,6 +254,7 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
     private static class ForceMigration {
         @Inject
         ForceMigration(final CoreDbConnProvider provider) {
+            LOGGER.debug(() -> "Initialising " + this.getClass().getSimpleName());
         }
     }
 }

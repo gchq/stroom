@@ -32,6 +32,8 @@ public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbCon
     @Override
     protected void configure() {
         super.configure();
+        
+        LOGGER.debug("Configure() called on " + this.getClass().getCanonicalName());
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class).addBinding(getConnectionProviderType());
@@ -45,6 +47,7 @@ public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbCon
 
         final DataSource dataSource = dataSourceFactory.create(configProvider.get());
 
+        // Prevent migrations from being re-run for each test
         if (!COMPLETED_MIGRATIONS.contains(getModuleName())) {
             performMigration(dataSource);
             COMPLETED_MIGRATIONS.add(getModuleName());
