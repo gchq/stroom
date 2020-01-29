@@ -21,12 +21,10 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.RestResource;
 
-public class CacheHandlerModule extends AbstractModule {
+public class CacheResourceModule extends AbstractModule {
     @Override
     protected void configure() {
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(CacheResourceImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(CacheManagerServiceImpl.class);
     }
 }

@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.FindCacheInfoCriteria;
-import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.Clearable;
@@ -39,15 +38,12 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
     private static final Logger LOGGER = LoggerFactory.getLogger(CacheManagerServiceImpl.class);
 
     private final CacheManagerImpl cacheManager;
-    private final NodeInfo nodeInfo;
     private final SecurityContext securityContext;
 
     @Inject
     CacheManagerServiceImpl(final CacheManagerImpl cacheManager,
-                            final NodeInfo nodeInfo,
                             final SecurityContext securityContext) {
         this.cacheManager = cacheManager;
-        this.nodeInfo = nodeInfo;
         this.securityContext = securityContext;
     }
 
@@ -97,7 +93,7 @@ class CacheManagerServiceImpl implements CacheManagerService, Clearable {
                             }
                         });
 
-                        final CacheInfo info = new CacheInfo(cacheName, map, nodeInfo.getThisNodeName());
+                        final CacheInfo info = new CacheInfo(cacheName, map);
                         list.add(info);
                     }
                 }

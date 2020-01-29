@@ -67,7 +67,7 @@ class CacheResourceImpl implements CacheResource, RestResource, HasHealthCheck {
 
     @Override
     public CacheInfoResponse info(final String cacheName, final String nodeName) {
-        CacheInfoResponse result = null;
+        CacheInfoResponse result;
         try {
             // If this is the node that was contacted then just return our local info.
             if (nodeInfo.getThisNodeName().equals(nodeName)) {
@@ -100,12 +100,17 @@ class CacheResourceImpl implements CacheResource, RestResource, HasHealthCheck {
             throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
         }
 
+        // Add the node name.
+        for (final CacheInfo value : result.getValues()) {
+            value.setNodeName(nodeName);
+        }
+
         return result;
     }
 
     @Override
     public Long clear(final String cacheName, final String nodeName) {
-        Long result = null;
+        Long result;
         try {
             // If this is the node that was contacted then just return our local info.
             if (nodeInfo.getThisNodeName().equals(nodeName)) {

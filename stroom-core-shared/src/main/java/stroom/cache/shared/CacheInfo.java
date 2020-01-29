@@ -27,10 +27,9 @@ public class CacheInfo {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public CacheInfo(final String name, final Map<String, String> map, final String nodeName) {
+    public CacheInfo(final String name, final Map<String, String> map) {
         this.name = name;
         this.map = map;
-        this.nodeName = nodeName;
     }
 
     public String getName() {
