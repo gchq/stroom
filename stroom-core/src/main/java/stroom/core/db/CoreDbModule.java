@@ -21,9 +21,11 @@ import com.google.inject.Provides;
 import org.flywaydb.core.Flyway;
 import org.flywaydb.core.api.FlywayException;
 import org.flywaydb.core.api.configuration.FluentConfiguration;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.MarkerFactory;
 import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceProxy;
+import stroom.db.util.DbUtil;
 import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.db.ForceCoreMigration;
@@ -40,14 +42,18 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 /**
  * Configures anything related to persistence, e.g. transaction management, the
  * entity manager factory, data sources.
  *
  * This does not extend {@link stroom.db.util.AbstractDataSourceProviderModule} as the core migrations
- * are special and need to happen first.
+ * are special and need to happen first before all the other migrations. {@link ForceCoreMigration} is
+ * used to achieve this by making all other datasource providers depend on {@link ForceCoreMigration}.
  */
 public class CoreDbModule extends AbstractModule {
 
@@ -95,146 +101,190 @@ public class CoreDbModule extends AbstractModule {
         return createConnectionProvider(dataSource);
     }
 
+    private Optional<Version> getVersionFromSchemaVersionTable(final Connection connection) {
+        Optional<Version> optVersion = Optional.empty();
+        try {
+            try (final Statement statement = connection.createStatement()) {
+                try (final ResultSet resultSet = statement.executeQuery(
+                    "SELECT version " +
+                        "FROM schema_version " +
+                        "ORDER BY installed_rank DESC")) {
+                    if (resultSet.next()) {
+                        final String ver = resultSet.getString(1);
+                        final String[] parts = ver.split("\\.");
+                        int maj = 0;
+                        int min = 0;
+                        int pat = 0;
+                        if (parts.length > 0) {
+                            maj = Integer.parseInt(parts[0]);
+                        }
+                        if (parts.length > 1) {
+                            min = Integer.parseInt(parts[1]);
+                        }
+                        if (parts.length > 2) {
+                            pat = Integer.parseInt(parts[2]);
+                        }
+
+                        LOGGER.info("Found schema_version.version " + ver);
+                        optVersion = Optional.of(new Version(maj, min, pat));
+                    }
+
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage());
+            // Ignore.
+        }
+        return optVersion;
+    }
+
+    private Optional<Version> getVersionFromStroomVerTable(final Connection connection) {
+        Optional<Version> optVersion = Optional.empty();
+        try {
+            try (final Statement statement = connection.createStatement()) {
+                try (final ResultSet resultSet = statement.executeQuery(
+                    "SELECT " +
+                        "VER_MAJ, " +
+                        "VER_MIN, " +
+                        "VER_PAT " +
+                        "FROM STROOM_VER " +
+                        "ORDER BY " +
+                        "VER_MAJ DESC, " +
+                        "VER_MIN DESC, " +
+                        "VER_PAT DESC " +
+                        "LIMIT 1")) {
+                    if (resultSet.next()) {
+                        final Version version = new Version(
+                            resultSet.getInt(1),
+                            resultSet.getInt(2),
+                            resultSet.getInt(3));
+                        LOGGER.info("Found STROOM_VER.VER_MAJ/VER_MIN/VER_PAT " + version);
+                        optVersion = Optional.of(version);
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            // Ignore.
+        }
+        return optVersion;
+    }
+
+    private Optional<Version> getVersionFromPresenceOfFdTable(final Connection connection) {
+        Optional<Version> optVersion = Optional.empty();
+        try {
+            try (final Statement statement = connection.createStatement()) {
+                try (final ResultSet resultSet = statement.executeQuery(
+                    "SELECT ID " +
+                        "FROM FD " +
+                        "LIMIT 1")) {
+                    if (resultSet.next()) {
+                        final Version version = new Version(2, 0, 0);
+                        LOGGER.info("Found FD table so version is: " + version);
+                        optVersion = Optional.of(version);
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            // Ignore.
+        }
+        return optVersion;
+    }
+
+    private Optional<Version> getVersionFromPresenceOfFeedTable(final Connection connection) {
+        Optional<Version> optVersion = Optional.empty();
+        try {
+            try (final Statement statement = connection.createStatement()) {
+                try (final ResultSet resultSet = statement.executeQuery(
+                    "SELECT ID " +
+                        "FROM FEED " +
+                        "LIMIT 1")) {
+                    if (resultSet.next()) {
+                        final Version version = new Version(2, 0, 0);
+                        LOGGER.info("Found FEED table so version is: " + version);
+                    }
+                }
+            }
+        } catch (final SQLException e) {
+            LOGGER.debug(e.getMessage(), e);
+            // Ignore.
+        }
+        return optVersion;
+    }
+
     protected void performMigration(final DataSource dataSource) {
-        String baselineVersionAsString = null;
-        Version version = null;
-        boolean usingFlyWay = false;
+
+        final AtomicBoolean isDbUsingFlyWay = new AtomicBoolean(false);
         LOGGER.info("Testing installed Stroom schema version");
 
+        final Optional<Version> optVersion = establishDbSchemaVersion(dataSource, isDbUsingFlyWay);
+
+        optVersion.ifPresentOrElse(
+            version -> LOGGER.info("Detected current Stroom version is v" + version.toString()),
+            () -> LOGGER.info("This is a new installation. Legacy migrations won't be applied")
+        );
+
+        Optional<String> optBaselineVersionAsString = optVersion.flatMap(version -> {
+            if (!isDbUsingFlyWay.get()) {
+                if (version.getMajor() == 4 && version.getMinor() == 0 && version.getPatch() >= 60) {
+                    // If Stroom is currently at v4.0.60+ then tell FlyWay to baseline at that version.
+                    return Optional.of("4.0.60");
+                } else {
+                    final String message =
+                        "The current Stroom version cannot be upgraded to v5+. " +
+                            "You must be on v4.0.60 or later.";
+                    LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
+                    throw new RuntimeException(message);
+                }
+            } else {
+                return Optional.empty();
+            }
+        });
+
+        final FluentConfiguration configuration = Flyway.configure()
+            .dataSource(dataSource)
+            .locations(FLYWAY_LOCATIONS)
+            .table(FLYWAY_TABLE)
+            .baselineOnMigrate(true);
+
+        optBaselineVersionAsString.ifPresent(configuration::baselineVersion);
+
+        final Flyway flyway = configuration.load();
+
+        optBaselineVersionAsString.ifPresent(ver ->
+            flyway.baseline());
+
+        migrateDatabase(flyway);
+    }
+
+    @NotNull
+    private Optional<Version> establishDbSchemaVersion(final DataSource dataSource,
+                                                       final AtomicBoolean isDbUsingFlyWay) {
+        Optional<Version> optVersion;
+
         try (final Connection connection = dataSource.getConnection()) {
-            try {
-                try (final Statement statement = connection.createStatement()) {
-                    try (final ResultSet resultSet = statement.executeQuery(
-                            "SELECT version " +
-                                "FROM schema_version " +
-                                "ORDER BY installed_rank DESC")) {
-                        if (resultSet.next()) {
-                            usingFlyWay = true;
 
-                            final String ver = resultSet.getString(1);
-                            final String[] parts = ver.split("\\.");
-                            int maj = 0;
-                            int min = 0;
-                            int pat = 0;
-                            if (parts.length > 0) {
-                                maj = Integer.parseInt(parts[0]);
-                            }
-                            if (parts.length > 1) {
-                                min = Integer.parseInt(parts[1]);
-                            }
-                            if (parts.length > 2) {
-                                pat = Integer.parseInt(parts[2]);
-                            }
+            isDbUsingFlyWay.set(DbUtil.doesTableExist(connection, "schema_version"));
 
-                            version = new Version(maj, min, pat);
-                            LOGGER.info("Found schema_version.version " + ver);
-                        }
-                    }
-                }
-            } catch (final SQLException e) {
-                LOGGER.debug(e.getMessage());
-                // Ignore.
-            }
+            // Try a number of approaches to determine the version of the existing DB schema
+            final Stream<Function<Connection, Optional<Version>>> versionFunctions = Stream.of(
+                this::getVersionFromSchemaVersionTable,
+                this::getVersionFromStroomVerTable,
+                this::getVersionFromPresenceOfFdTable,
+                this::getVersionFromPresenceOfFeedTable);
 
-            if (version == null) {
-                try {
-                    try (final Statement statement = connection.createStatement()) {
-                        try (final ResultSet resultSet = statement.executeQuery(
-                                "SELECT " +
-                                        "VER_MAJ, " +
-                                        "VER_MIN, " +
-                                        "VER_PAT " +
-                                    "FROM STROOM_VER " +
-                                    "ORDER BY " +
-                                        "VER_MAJ DESC, " +
-                                        "VER_MIN DESC, " +
-                                        "VER_PAT DESC " +
-                                    "LIMIT 1")) {
-                            if (resultSet.next()) {
-                                version = new Version(resultSet.getInt(1), resultSet.getInt(2), resultSet.getInt(3));
-                                LOGGER.info("Found STROOM_VER.VER_MAJ/VER_MIN/VER_PAT " + version);
-                            }
-                        }
-                    }
-                } catch (final SQLException e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    // Ignore.
-                }
-            }
+             optVersion = versionFunctions
+                .map(func -> func.apply(connection))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
 
-            if (version == null) {
-                try {
-                    try (final Statement statement = connection.createStatement()) {
-                        try (final ResultSet resultSet = statement.executeQuery(
-                                "SELECT ID " +
-                                    "FROM FD " +
-                                    "LIMIT 1")) {
-                            if (resultSet.next()) {
-                                version = new Version(2, 0, 0);
-                            }
-                        }
-                    }
-                } catch (final SQLException e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    // Ignore.
-                }
-            }
-
-            if (version == null) {
-                try {
-                    try (final Statement statement = connection.createStatement()) {
-                        try (final ResultSet resultSet = statement.executeQuery(
-                                "SELECT ID " +
-                                    "FROM FEED " +
-                                    "LIMIT 1")) {
-                            if (resultSet.next()) {
-                                version = new Version(2, 0, 0);
-                            }
-                        }
-                    }
-                } catch (final SQLException e) {
-                    LOGGER.debug(e.getMessage(), e);
-                    // Ignore.
-                }
-            }
         } catch (final SQLException e) {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
             throw new RuntimeException(e.getMessage(), e);
         }
-
-        if (version != null) {
-            LOGGER.info("Detected current Stroom version is v" + version.toString());
-        } else {
-            LOGGER.info("This is a new installation!");
-        }
-
-        if (version != null && !usingFlyWay) {
-            if (version.getMajor() == 4 && version.getMinor() == 0 && version.getPatch() >= 60) {
-                // If Stroom is currently at v4.0.60+ then tell FlyWay to baseline at that version.
-                baselineVersionAsString = "4.0.60";
-            } else {
-                final String message =
-                        "The current Stroom version cannot be upgraded to v5+. " +
-                            "You must be on v4.0.60 or later.";
-                LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
-                throw new RuntimeException(message);
-            }
-        }
-
-        FluentConfiguration configuration = Flyway.configure()
-                .dataSource(dataSource)
-                .locations(FLYWAY_LOCATIONS)
-                .table(FLYWAY_TABLE)
-                .baselineOnMigrate(true);
-
-        if (baselineVersionAsString != null) {
-            configuration = configuration.baselineVersion(baselineVersionAsString);
-        }
-        final Flyway flyway = configuration.load();
-        if (baselineVersionAsString != null) {
-            flyway.baseline();
-        }
-        migrateDatabase(flyway);
+        return optVersion;
     }
 
     private void migrateDatabase(final Flyway flyway) {

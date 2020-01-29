@@ -123,15 +123,15 @@ public class DbUtil {
 
     public static boolean doesTableExist(final Connection connection, final String tableName) {
         try {
-            DatabaseMetaData meta = connection.getMetaData();
-            ResultSet tables = meta.getTables(null, null, tableName, null);
-            return tables.next();
+            final DatabaseMetaData meta = connection.getMetaData();
+            try (ResultSet tables = meta.getTables(null, null, tableName, null)) {
+                return tables.next();
+            }
         } catch (SQLException e) {
             throw new RuntimeException(
                 LogUtil.message("Error establishing if table {} exists in the database.", tableName), e);
         }
     }
-
 
 //    private void executeStatement(final Connection connection, final String sql) throws SQLException {
 //        executeStatements(connection, Collections.singletonList(sql));
