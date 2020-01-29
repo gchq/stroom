@@ -77,14 +77,19 @@ public class ContentPackImport {
     }
 
     private void doImport(final List<Path> contentPacksDirs) {
-        LOGGER.info("ContentPackImport started");
 
-        AtomicInteger successCounter = new AtomicInteger();
-        AtomicInteger failedCounter = new AtomicInteger();
+        final AtomicInteger successCounter = new AtomicInteger();
+        final AtomicInteger failedCounter = new AtomicInteger();
+
+        final String dirsStr = contentPacksDirs.stream()
+            .map(dir -> "  " + FileUtil.getCanonicalPath(dir).toString())
+            .collect(Collectors.joining("\n"));
+
+        LOGGER.info("ContentPackImport started, checking the following locations for content packs to import,\n{}", dirsStr);
 
         contentPacksDirs.forEach(contentPacksDir -> {
             if (!Files.isDirectory(contentPacksDir)) {
-                LOGGER.warn("Content packs directory {} doesn't exist", FileUtil.getCanonicalPath(contentPacksDir));
+                LOGGER.info("Directory {} doesn't exist, ignoring.", FileUtil.getCanonicalPath(contentPacksDir));
 
             } else {
                 LOGGER.info("Processing content packs in directory {}", FileUtil.getCanonicalPath(contentPacksDir));
@@ -152,15 +157,21 @@ public class ContentPackImport {
         //  ~/.stroom
         // stroom.temp
         return Stream.of(
+                getConfiguredContentPackImportDir(),
                 getApplicationJarDir(),
                 getDotStroomDir(),
-                Optional.of(FileUtil.getTempDir())
+                Optional.of(FileUtil.getTempDir().resolve(CONTENT_PACK_IMPORT_DIR))
         )
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .map(path -> path.resolve(CONTENT_PACK_IMPORT_DIR))
                 .collect(Collectors.toList());
     }
+
+    Optional<Path> getConfiguredContentPackImportDir() {
+        return Optional.ofNullable(config.getImportDirectory())
+            .map(Paths::get);
+    }
+
 
     private Optional<Path> getDotStroomDir() {
         final String userHome = System.getProperty("user.home");
@@ -168,7 +179,8 @@ public class ContentPackImport {
             return Optional.empty();
         } else {
             final Path dotStroomDir = Paths.get(userHome)
-                    .resolve(".stroom");
+                    .resolve(".stroom")
+                    .resolve(CONTENT_PACK_IMPORT_DIR);
             return Optional.of(dotStroomDir);
         }
     }
@@ -177,8 +189,10 @@ public class ContentPackImport {
         try {
             //This isn't ideal when running in junit, as it will be the location of the junit class
             //however it won't find any zips in here so will carry on regardless
-            String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
-            return Optional.of(Paths.get(codeSourceLocation).getParent());
+            final String codeSourceLocation = this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath();
+            return Optional.of(Paths.get(codeSourceLocation)
+                .getParent()
+                .resolve(CONTENT_PACK_IMPORT_DIR));
         } catch (final RuntimeException e) {
             LOGGER.warn("Unable to determine application jar directory due to: {}", e.getMessage());
             return Optional.empty();

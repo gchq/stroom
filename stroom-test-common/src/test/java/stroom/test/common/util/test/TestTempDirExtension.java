@@ -1,6 +1,7 @@
 package stroom.test.common.util.test;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 
@@ -23,7 +24,7 @@ class TestTempDirExtension extends TempDirSuperClass {
     }
 
     @Test
-    void testMethodDirTwoArgs(@TempDir Path tempDir1, @TempDir Path tempDir2) {
+    void testMethodDirTwoArgs(@TempDir Path tempDir1) {
         assertThat(getInstanceTempDir()).isNotNull();
         assertThat(getInstanceTempDir()).exists();
         assertThat(getInstanceTempDir()).isDirectory();
@@ -32,13 +33,9 @@ class TestTempDirExtension extends TempDirSuperClass {
         assertThat(tempDir1).exists();
         assertThat(tempDir1).isDirectory();
 
-        assertThat(tempDir1).isNotEqualTo(getInstanceTempDir());
-
-        assertThat(tempDir2).isNotNull();
-        assertThat(tempDir2).exists();
-        assertThat(tempDir2).isDirectory();
-
-        assertThat(tempDir2).isNotEqualTo(tempDir1);
+        // No matter how many times you use the annotation in a test (as an instance variable
+        // of as a method arg) they will all get the same value
+        assertThat(tempDir1).isEqualTo(getInstanceTempDir());
     }
 
 }

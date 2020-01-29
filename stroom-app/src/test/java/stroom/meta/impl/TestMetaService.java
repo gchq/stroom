@@ -45,7 +45,6 @@ import stroom.security.shared.User;
 import stroom.test.AppConfigTestModule;
 import stroom.test.IntegrationTestSetupUtil;
 import stroom.test.common.util.db.DbTestModule;
-import stroom.test.common.util.test.TempDirExtension;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -64,7 +63,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
 @IncludeModule(JerseyModule.class)
-@ExtendWith(TempDirExtension.class)
 class TestMetaService {
     private static final String TEST_USER = "test_user";
     private static final String FEED_NO_PERMISSION = "FEED_NO_PERMISSION";

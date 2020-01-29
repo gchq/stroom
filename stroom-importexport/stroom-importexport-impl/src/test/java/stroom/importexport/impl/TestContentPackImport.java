@@ -22,6 +22,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -166,6 +167,28 @@ class TestContentPackImport {
         //File should have moved into the imported dir
         assertThat(Files.exists(testPack1)).isFalse();
         assertThat(Files.exists(CONTENT_PACK_DIR.resolve(ContentPackImport.IMPORTED_DIR).resolve(testPack1.getFileName()))).isTrue();
+    }
+
+    @Test
+    void testStartup_customLocation(@TempDir final Path tempDir) throws IOException {
+        setStandardMockAnswers();
+        Mockito.when(contentPackImportConfig.isEnabled()).thenReturn(true);
+        Mockito.when(contentPackImportConfig.getImportDirectory()).thenReturn(tempDir.toAbsolutePath().toString());
+
+        ContentPackImport contentPackImport = getContentPackImport();
+
+        Path packFile = tempDir.resolve("testFile1.zip");
+        FileUtil.touch(packFile);
+
+        contentPackImport.startup();
+        Mockito.verify(importExportService, Mockito.times(1))
+            .performImportWithoutConfirmation(packFile);
+
+        assertThat(Files.exists(packFile)).isFalse();
+
+        //File should have moved into the imported dir
+        assertThat(Files.exists(packFile)).isFalse();
+        assertThat(Files.exists(tempDir.resolve(ContentPackImport.IMPORTED_DIR).resolve(packFile.getFileName()))).isTrue();
     }
 
     @Test
