@@ -79,7 +79,7 @@ class CacheResourceImpl implements CacheResource, RestResource, HasHealthCheck {
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_PATH + "/cache/info";
+                url += ResourcePaths.API_ROOT_PATH + "/cache/info";
                 final Response response = webTargetFactory
                         .create(url)
                         .queryParam("cacheName", cacheName)
@@ -120,7 +120,7 @@ class CacheResourceImpl implements CacheResource, RestResource, HasHealthCheck {
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_PATH + "/cache";
+                url += ResourcePaths.API_ROOT_PATH + "/cache";
                 final Response response = webTargetFactory
                         .create(url)
                         .queryParam("cacheName", cacheName)
