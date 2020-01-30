@@ -12,6 +12,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
@@ -24,29 +25,41 @@ import java.util.List;
 public interface GlobalConfigResource extends RestResource, DirectRestService {
 
     String BASE_PATH = "/config/" + ResourcePaths.V1;
+    String PROPERTIES_SUB_PATH = "/properties";
     String YAML_VALUE_SUB_PATH = "/yamlValue";
     String CLUSTER_PROPERTIES_SUB_PATH = "/clusterProperties";
 
+    String PROP_NAME_PATH_PARAM = "/{propertyName}";
+    String NODE_NAME_PATH_PARAM = "/{nodeName}";
+
     @GET
+    @Path(PROPERTIES_SUB_PATH)
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
     List<ConfigProperty> getAllConfig();
 
     @GET
-    @Path("/{propertyName}")
+    @Path(PROPERTIES_SUB_PATH + "/{propertyName}")
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
     ConfigProperty getPropertyByName(final @PathParam("propertyName") String propertyName);
 
     @GET
-    @Path(YAML_VALUE_SUB_PATH + "/{propertyName}")
+    @Path(PROPERTIES_SUB_PATH + "/{propertyName}" + YAML_VALUE_SUB_PATH)
     @Produces(MediaType.TEXT_PLAIN)
     @Timed
     String getYamlValueByName(final @PathParam("propertyName") String propertyName);
 
     @GET
-    @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}")
+    @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}" + YAML_VALUE_SUB_PATH)
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
-    ClusterConfigProperty getClusterPropertyByName(final @PathParam("propertyName") String propertyName);
+    String getYamlValueByNodeAndName(final @PathParam("propertyName") String propertyName,
+                                             final @PathParam("nodeName") String nodeName);
+
+//    @GET
+//    @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}")
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @Timed
+//    ClusterConfigProperty getClusterPropertyByName(final @PathParam("propertyName") String propertyName);
 }
