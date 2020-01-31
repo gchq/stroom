@@ -17,6 +17,7 @@
 package stroom.util.shared;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 public class PageResponse implements Serializable {
     private static final long serialVersionUID = -8613411971150227752L;
@@ -41,40 +42,48 @@ public class PageResponse implements Serializable {
         return offset;
     }
 
+    public void setOffset(final Long offset) {
+        this.offset = offset;
+    }
+
     public Integer getLength() {
         return length;
+    }
+
+    public void setLength(final Integer length) {
+        this.length = length;
     }
 
     public Long getTotal() {
         return total;
     }
 
+    public void setTotal(final Long total) {
+        this.total = total;
+    }
+
     public boolean isExact() {
         return exact;
     }
 
+    public void setExact(final boolean exact) {
+        this.exact = exact;
+    }
+
     @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof PageResponse)) {
-            return false;
-        }
-        PageResponse other = (PageResponse) obj;
-        EqualsBuilder builder = new EqualsBuilder();
-        builder.append(this.offset, other.offset);
-        builder.append(this.length, other.length);
-        builder.append(this.total, other.total);
-        builder.append(this.exact, other.exact);
-        return builder.isEquals();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final PageResponse that = (PageResponse) o;
+        return exact == that.exact &&
+                Objects.equals(offset, that.offset) &&
+                Objects.equals(length, that.length) &&
+                Objects.equals(total, that.total);
     }
 
     @Override
     public int hashCode() {
-        HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(this.offset);
-        builder.append(this.length);
-        builder.append(this.total);
-        builder.append(this.exact);
-        return builder.toHashCode();
+        return Objects.hash(offset, length, total, exact);
     }
 
     @Override

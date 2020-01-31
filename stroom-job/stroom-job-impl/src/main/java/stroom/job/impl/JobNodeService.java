@@ -19,28 +19,19 @@ package stroom.job.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.task.api.ClusterCallEntry;
-import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
-import stroom.cluster.task.api.DefaultClusterResultCollector;
-import stroom.cluster.task.api.TargetType;
-import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
-import stroom.job.shared.JobNodeRow;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
+import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.SharedMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Singleton
@@ -48,16 +39,16 @@ class JobNodeService {
     private static final Logger LOGGER = LoggerFactory.getLogger(JobNodeService.class);
 
     private final JobNodeDao jobNodeDao;
+    private final JobNodeTrackerCache jobNodeTrackerCache;
     private final SecurityContext securityContext;
-    private final ClusterDispatchAsyncHelper dispatchHelper;
 
     @Inject
     JobNodeService(final JobNodeDao jobNodeDao,
-                   final SecurityContext securityContext,
-                   final ClusterDispatchAsyncHelper dispatchHelper) {
+                   final JobNodeTrackerCache jobNodeTrackerCache,
+                   final SecurityContext securityContext) {
         this.jobNodeDao = jobNodeDao;
+        this.jobNodeTrackerCache = jobNodeTrackerCache;
         this.securityContext = securityContext;
-        this.dispatchHelper = dispatchHelper;
     }
 
     JobNode update(final JobNode jobNode) {
@@ -76,54 +67,150 @@ class JobNodeService {
         });
     }
 
-    private BaseResultList<JobNode> find(final FindJobNodeCriteria findJobNodeCriteria) {
+    BaseResultList<JobNode> find(final FindJobNodeCriteria findJobNodeCriteria) {
         return securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobNodeDao.find(findJobNodeCriteria));
     }
 
-    BaseResultList<JobNodeRow> findStatus(final FindJobNodeCriteria findJobNodeCriteria) {
+    JobNodeInfo getInfo(final String jobName) {
         return securityContext.secureResult(() -> {
-            // Add the root node.
-            final List<JobNodeRow> values = new ArrayList<>();
+            JobNodeInfo result = null;
+            final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
+            if (trackers != null) {
+                final JobNodeTracker tracker = trackers.getTrackerForJobName(jobName);
+                if (tracker != null) {
+                    final JobNode jobNode = tracker.getJobNode();
+                    final int currentTaskCount = tracker.getCurrentTaskCount();
 
-            if (findJobNodeCriteria == null) {
-                return BaseResultList.createUnboundedList(values);
-            }
-
-            DefaultClusterResultCollector<SharedMap<JobNode, JobNodeInfo>> collector;
-            collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(), TargetType.ACTIVE);
-
-            final List<JobNode> jobNodes = find(findJobNodeCriteria);
-
-            // Sort job nodes by node name.
-            jobNodes.sort((JobNode o1, JobNode o2) -> o1.getNodeName().compareToIgnoreCase(o2.getNodeName()));
-
-            // Create the JobNodeRow value
-            for (final JobNode jobNode : jobNodes) {
-                JobNodeInfo jobNodeInfo = null;
-
-                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNodeName());
-
-                if (response == null) {
-                    LOGGER.debug("No response for: {}", jobNode);
-                } else if (response.getError() != null) {
-                    LOGGER.debug("Error response for: {} - {}", jobNode, response.getError().getMessage());
-                    LOGGER.debug(response.getError().getMessage(), response.getError());
-                } else {
-                    final Map<JobNode, JobNodeInfo> map = response.getResult();
-                    if (map == null) {
-                        LOGGER.warn("No data for: {}", jobNode);
-                    } else {
-                        jobNodeInfo = map.get(jobNode);
+                    Long scheduleReferenceTime = null;
+                    final Scheduler scheduler = trackers.getScheduler(jobNode);
+                    if (scheduler != null) {
+                        scheduleReferenceTime = scheduler.getScheduleReferenceTime();
                     }
+                    result = new JobNodeInfo(currentTaskCount, scheduleReferenceTime, tracker.getLastExecutedTime());
                 }
-
-                final JobNodeRow jobNodeRow = new JobNodeRow(jobNode, jobNodeInfo);
-                values.add(jobNodeRow);
             }
 
-            return BaseResultList.createUnboundedList(values);
+            return result;
         });
     }
+
+//    public stroom.util.shared.SharedMap<JobNode, JobNodeInfo> exec(final JobNodeInfoClusterTask task) {
+//        return securityContext.secureResult(() -> {
+//            final SharedMap<JobNode, JobNodeInfo> result = new SharedMap<>();
+//            final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
+//            if (trackers != null) {
+//                final Collection<JobNodeTracker> trackerList = trackers.getTrackerList();
+//                if (trackerList != null) {
+//                    for (final JobNodeTracker tracker : trackerList) {
+//                        final JobNode jobNode = tracker.getJobNode();
+//                        final int currentTaskCount = tracker.getCurrentTaskCount();
+//
+//                        Long scheduleReferenceTime = null;
+//                        final Scheduler scheduler = trackers.getScheduler(jobNode);
+//                        if (scheduler != null) {
+//                            scheduleReferenceTime = scheduler.getScheduleReferenceTime();
+//                        }
+//
+//                        final JobNodeInfo info = new JobNodeInfo(currentTaskCount, scheduleReferenceTime,
+//                                tracker.getLastExecutedTime());
+//                        result.put(jobNode, info);
+//                    }
+//                }
+//            }
+//
+//            return result;
+//        });
+//    }
+//
+//    BaseResultList<JobNodeRow> findStatus(final FindJobNodeCriteria findJobNodeCriteria) {
+//        return securityContext.secureResult(() -> {
+//            // Add the root node.
+//            final List<JobNodeRow> values = new ArrayList<>();
+//
+//            if (findJobNodeCriteria == null) {
+//                return BaseResultList.createUnboundedList(values);
+//            }
+//
+//            DefaultClusterResultCollector<SharedMap<JobNode, JobNodeInfo>> collector;
+//            collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(), TargetType.ACTIVE);
+//
+//            final List<JobNode> jobNodes = find(findJobNodeCriteria);
+//
+//            // Sort job nodes by node name.
+//            jobNodes.sort((JobNode o1, JobNode o2) -> o1.getNodeName().compareToIgnoreCase(o2.getNodeName()));
+//
+//            // Create the JobNodeRow value
+//            for (final JobNode jobNode : jobNodes) {
+//                JobNodeInfo jobNodeInfo = null;
+//
+//                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNodeName());
+//
+//                if (response == null) {
+//                    LOGGER.debug("No response for: {}", jobNode);
+//                } else if (response.getError() != null) {
+//                    LOGGER.debug("Error response for: {} - {}", jobNode, response.getError().getMessage());
+//                    LOGGER.debug(response.getError().getMessage(), response.getError());
+//                } else {
+//                    final Map<JobNode, JobNodeInfo> map = response.getResult();
+//                    if (map == null) {
+//                        LOGGER.warn("No data for: {}", jobNode);
+//                    } else {
+//                        jobNodeInfo = map.get(jobNode);
+//                    }
+//                }
+//
+//                final JobNodeRow jobNodeRow = new JobNodeRow(jobNode, jobNodeInfo);
+//                values.add(jobNodeRow);
+//            }
+//
+//            return BaseResultList.createUnboundedList(values);
+//        });
+//    }
+//
+//    BaseResultList<JobNode> list(final String jobName, final String nodeName) {
+//        return securityContext.secureResult(() -> {
+//            // Add the root node.
+//            final List<JobNode> values = new ArrayList<>();
+//
+//            if (findJobNodeCriteria == null) {
+//                return BaseResultList.createUnboundedList(values);
+//            }
+//
+//            DefaultClusterResultCollector<SharedMap<JobNode, JobNodeInfo>> collector;
+//            collector = dispatchHelper.execAsync(new JobNodeInfoClusterTask(), TargetType.ACTIVE);
+//
+//            final List<JobNode> jobNodes = find(findJobNodeCriteria);
+//
+//            // Sort job nodes by node name.
+//            jobNodes.sort((JobNode o1, JobNode o2) -> o1.getNodeName().compareToIgnoreCase(o2.getNodeName()));
+//
+//            // Create the JobNodeRow value
+//            for (final JobNode jobNode : jobNodes) {
+//                JobNodeInfo jobNodeInfo = null;
+//
+//                final ClusterCallEntry<SharedMap<JobNode, JobNodeInfo>> response = collector.getResponse(jobNode.getNodeName());
+//
+//                if (response == null) {
+//                    LOGGER.debug("No response for: {}", jobNode);
+//                } else if (response.getError() != null) {
+//                    LOGGER.debug("Error response for: {} - {}", jobNode, response.getError().getMessage());
+//                    LOGGER.debug(response.getError().getMessage(), response.getError());
+//                } else {
+//                    final Map<JobNode, JobNodeInfo> map = response.getResult();
+//                    if (map == null) {
+//                        LOGGER.warn("No data for: {}", jobNode);
+//                    } else {
+//                        jobNodeInfo = map.get(jobNode);
+//                    }
+//                }
+//
+//                final JobNodeRow jobNodeRow = new JobNodeRow(jobNode, jobNodeInfo);
+//                values.add(jobNodeRow);
+//            }
+//
+//            return BaseResultList.createUnboundedList(values);
+//        });
+//    }
 
     private void ensureSchedule(final JobNode jobNode) {
         // Stop Job Nodes being saved with invalid crons.

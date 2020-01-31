@@ -16,21 +16,19 @@
 
 package stroom.node.shared;
 
-import stroom.docref.SharedObject;
 import stroom.util.shared.BuildInfo;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ClusterNodeInfo implements SharedObject {
-    private static final long serialVersionUID = -15041191801817241L;
-
+public class ClusterNodeInfo {
     private String discoverTime;
     private BuildInfo buildInfo;
     private String nodeName;
     private String clusterURL;
     private List<ClusterNodeInfoItem> itemList = new ArrayList<>();
+    private Long ping;
+    private String error;
 
     public ClusterNodeInfo() {
         // Default constructor necessary for GWT serialisation.
@@ -55,24 +53,59 @@ public class ClusterNodeInfo implements SharedObject {
         return discoverTime;
     }
 
+    public void setDiscoverTime(final String discoverTime) {
+        this.discoverTime = discoverTime;
+    }
+
     public BuildInfo getBuildInfo() {
         return buildInfo;
+    }
+
+    public void setBuildInfo(final BuildInfo buildInfo) {
+        this.buildInfo = buildInfo;
     }
 
     public String getNodeName() {
         return nodeName;
     }
 
+    public void setNodeName(final String nodeName) {
+        this.nodeName = nodeName;
+    }
+
     public String getClusterURL() {
         return clusterURL;
+    }
+
+    public void setClusterURL(final String clusterURL) {
+        this.clusterURL = clusterURL;
     }
 
     public List<ClusterNodeInfoItem> getItemList() {
         return itemList;
     }
 
-    public static class ClusterNodeInfoItem implements Serializable {
-        private static final long serialVersionUID = -8555764783069283678L;
+    public void setItemList(final List<ClusterNodeInfoItem> itemList) {
+        this.itemList = itemList;
+    }
+
+    public Long getPing() {
+        return ping;
+    }
+
+    public void setPing(final Long ping) {
+        this.ping = ping;
+    }
+
+    public String getError() {
+        return error;
+    }
+
+    public void setError(final String error) {
+        this.error = error;
+    }
+
+    public static class ClusterNodeInfoItem {
         private String nodeName;
         private boolean active;
         private boolean master;

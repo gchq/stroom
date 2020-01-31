@@ -4,9 +4,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class FsVolumeConfig extends AbstractConfig {
@@ -17,11 +17,11 @@ public class FsVolumeConfig extends AbstractConfig {
 
     private CacheConfig feedPathCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
     private CacheConfig typePathCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
 //    @JsonPropertyDescription("Set to determine how many volume locations will be used to store a single stream")

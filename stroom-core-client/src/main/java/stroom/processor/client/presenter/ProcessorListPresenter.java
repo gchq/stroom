@@ -34,37 +34,36 @@ import stroom.cell.tickbox.client.TickBoxCell.NoBorderAppearance;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
-import stroom.data.client.presenter.ActionDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.MetaTooltipPresenterUtil;
+import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
-import stroom.entity.client.ActionQueue;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.entity.shared.NamedEntity;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.FetchProcessorAction;
+import stroom.processor.shared.FetchProcessorRequest;
+import stroom.processor.shared.FetchProcessorResponse;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorFilterTracker;
+import stroom.processor.shared.ProcessorListRow;
+import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
-import stroom.processor.shared.UpdateProcessorAction;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.TreeRow;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -74,46 +73,60 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
-public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<SharedObject>>
-        implements Refreshable, HasDocumentRead<SharedObject> {
+import java.util.function.Consumer;
+
+public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<ProcessorListRow>>
+        implements Refreshable, HasDocumentRead<Object> {
+    private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
-    private final ActionDataProvider<SharedObject> dataProvider;
+    private final RestDataProvider<ProcessorListRow, FetchProcessorResponse> dataProvider;
     private final TooltipPresenter tooltipPresenter;
-    private final FetchProcessorAction action;
-    private final ActionQueue<Processor> processorSaveQueue;
-    private final ActionQueue<ProcessorFilter> processorFilterSaveQueue;
-    private final RestFactory restFactory;
+    private final FetchProcessorRequest request;
     private boolean doneDataDisplay = false;
-    private Column<SharedObject, Expander> expanderColumn;
-    private ProcessorFilter nextSelection;
+    private Column<ProcessorListRow, Expander> expanderColumn;
+    private ProcessorListRow nextSelection;
 
-    private final RestSaveQueue restSaveQueue;
+    private final RestSaveQueue<Integer, Boolean> processorEnabledSaveQueue;
+    private final RestSaveQueue<Integer, Boolean> processorFilterEnabledSaveQueue;
+    private final RestSaveQueue<Integer, Integer> processorFilterPrioritySaveQueue;
 
     private boolean allowUpdate;
 
     @Inject
     public ProcessorListPresenter(final EventBus eventBus,
                                   final TooltipPresenter tooltipPresenter,
-                                  final ClientDispatchAsync dispatcher,
                                   final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.tooltipPresenter = tooltipPresenter;
-        this.restFactory = restFactory;
 
-        action = new FetchProcessorAction();
-        dataProvider = new ActionDataProvider<SharedObject>(dispatcher, action) {
+        request = new FetchProcessorRequest();
+        dataProvider = new RestDataProvider<ProcessorListRow, FetchProcessorResponse>(eventBus) {
             @Override
-            protected void changeData(final ResultList<SharedObject> data) {
+            protected void exec(final Consumer<FetchProcessorResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<FetchProcessorResponse> rest = restFactory.create();
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_FILTER_RESOURCE).find(request);
+            }
+
+            @Override
+            protected void changeData(final FetchProcessorResponse data) {
                 super.changeData(data);
                 onChangeData(data);
             }
         };
-
-        processorSaveQueue = new ActionQueue<>(dispatcher);
-        processorFilterSaveQueue = new ActionQueue<>(dispatcher);
-
-        restSaveQueue = new RestSaveQueue(restFactory) {
+        processorEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus, restFactory) {
+            @Override
+            protected void doAction(final Rest<?> rest, final Integer key, final Boolean value) {
+                rest.call(PROCESSOR_RESOURCE).setEnabled(key, value);
+            }
+        };
+        processorFilterEnabledSaveQueue = new RestSaveQueue<Integer, Boolean>(eventBus, restFactory) {
+            @Override
+            protected void doAction(final Rest<?> rest, final Integer key, final Boolean value) {
+                rest.call(PROCESSOR_FILTER_RESOURCE).setEnabled(key, value);
+            }
+        };
+        processorFilterPrioritySaveQueue = new RestSaveQueue<Integer, Integer>(eventBus, restFactory) {
             @Override
             protected void doAction(final Rest<?> rest, final Integer key, final Integer value) {
                 rest.call(PROCESSOR_FILTER_RESOURCE).setPriority(key, value);
@@ -128,15 +141,15 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             addColumns();
 
             // Handle use of the expander column.
-            dataProvider.setTreeRowHandler(new TreeRowHandler<>(action, getView(), expanderColumn));
+            dataProvider.setTreeRowHandler(new TreeRowHandler<ProcessorListRow>(request, getView(), expanderColumn));
         }
     }
 
-    private void onChangeData(final ResultList<SharedObject> data) {
-        SharedObject selected = getView().getSelectionModel().getSelected();
+    private void onChangeData(final FetchProcessorResponse data) {
+        ProcessorListRow selected = getView().getSelectionModel().getSelected();
 
         if (nextSelection != null) {
-            for (final SharedObject row : data) {
+            for (final ProcessorListRow row : data.getValues()) {
                 if (row instanceof ProcessorFilterRow) {
                     if (nextSelection.equals(((ProcessorFilterRow) row).getProcessorFilter())) {
                         getView().getSelectionModel().setSelected(row);
@@ -147,7 +160,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             nextSelection = null;
 
         } else if (selected != null) {
-            if (!data.contains(selected)) {
+            if (!data.getValues().contains(selected)) {
                 getView().getSelectionModel().setSelected(selected, false);
             }
         }
@@ -170,9 +183,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
 
     private void addInfoColumn() {
         // Info column.
-        final InfoColumn<SharedObject> infoColumn = new InfoColumn<SharedObject>() {
+        final InfoColumn<ProcessorListRow> infoColumn = new InfoColumn<ProcessorListRow>() {
             @Override
-            protected void showInfo(final SharedObject row, final int x, final int y) {
+            protected void showInfo(final ProcessorListRow row, final int x, final int y) {
                 final StringBuilder html = new StringBuilder();
 
                 if (row instanceof ProcessorRow) {
@@ -221,9 +234,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     }
 
     private void addExpanderColumn() {
-        expanderColumn = new Column<SharedObject, Expander>(new ExpanderCell()) {
+        expanderColumn = new Column<ProcessorListRow, Expander>(new ExpanderCell()) {
             @Override
-            public Expander getValue(final SharedObject row) {
+            public Expander getValue(final ProcessorListRow row) {
                 Expander expander = null;
                 if (row instanceof TreeRow) {
                     final TreeRow treeRow = (TreeRow) row;
@@ -233,16 +246,16 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             }
         };
         expanderColumn.setFieldUpdater((index, row, value) -> {
-            action.setRowExpanded(row, !value.isExpanded());
+            request.setRowExpanded(row, !value.isExpanded());
             refresh();
         });
         getView().addColumn(expanderColumn, "<br/>", 0);
     }
 
     private void addIconColumn() {
-        getView().addColumn(new Column<SharedObject, SvgPreset>(new SvgCell()) {
+        getView().addColumn(new Column<ProcessorListRow, SvgPreset>(new SvgCell()) {
             @Override
-            public SvgPreset getValue(final SharedObject row) {
+            public SvgPreset getValue(final ProcessorListRow row) {
                 SvgPreset icon = null;
                 if (row instanceof ProcessorFilterRow) {
                     icon = SvgPresets.FILTER.enabled(true);
@@ -255,13 +268,14 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     }
 
     private void addPipelineColumn() {
-        getView().addResizableColumn(new Column<SharedObject, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
             @Override
-            public String getValue(final SharedObject row) {
+            public String getValue(final ProcessorListRow row) {
                 String name = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
-                    final Processor processor = processorFilterRow.getProcessorFilter().getProcessor();
+                    final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
+                    final Processor processor = processorFilter.getProcessor();
                     if (processor != null) {
                         final String pipelineUuid = processor.getPipelineUuid();
                         if (pipelineUuid != null) {
@@ -282,9 +296,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     }
 
     private void addTrackerColumns() {
-        getView().addResizableColumn(new Column<SharedObject, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
             @Override
-            public String getValue(final SharedObject row) {
+            public String getValue(final ProcessorListRow row) {
                 String lastStream = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
@@ -294,9 +308,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                 return lastStream;
             }
         }, "Tracker Ms", ColumnSizeConstants.DATE_COL);
-        getView().addResizableColumn(new Column<SharedObject, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
             @Override
-            public String getValue(final SharedObject row) {
+            public String getValue(final ProcessorListRow row) {
                 final String lastStream = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
@@ -309,9 +323,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     }
 
     private void addLastPollColumns() {
-        getView().addResizableColumn(new Column<SharedObject, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
             @Override
-            public String getValue(final SharedObject row) {
+            public String getValue(final ProcessorListRow row) {
                 String lastPoll = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
@@ -320,9 +334,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                 return lastPoll;
             }
         }, "Last Poll Age", ColumnSizeConstants.MEDIUM_COL);
-        getView().addResizableColumn(new Column<SharedObject, Number>(new NumberCell()) {
+        getView().addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
             @Override
-            public Number getValue(final SharedObject row) {
+            public Number getValue(final ProcessorListRow row) {
                 Number currentTasks = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
@@ -335,10 +349,10 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     }
 
     private void addPriorityColumn() {
-        final Column<SharedObject, Number> priorityColumn = new Column<SharedObject, Number>(
+        final Column<ProcessorListRow, Number> priorityColumn = new Column<ProcessorListRow, Number>(
                 new ValueSpinnerCell(1, 100)) {
             @Override
-            public Number getValue(final SharedObject row) {
+            public Number getValue(final ProcessorListRow row) {
                 Number priority = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
@@ -352,14 +366,14 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
             }
         };
         if (allowUpdate) {
-            priorityColumn.setFieldUpdater(new FieldUpdater<SharedObject, Number>() {
+            priorityColumn.setFieldUpdater(new FieldUpdater<ProcessorListRow, Number>() {
                 @Override
-                public void update(final int index, final SharedObject row, final Number value) {
+                public void update(final int index, final ProcessorListRow row, final Number value) {
                     if (row instanceof ProcessorFilterRow) {
                         final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
                         final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
                         processorFilter.setPriority(value.intValue());
-                        restSaveQueue.setPriority(processorFilter.getId(), value.intValue());
+                        processorFilterPrioritySaveQueue.setValue(processorFilter.getId(), value.intValue());
                     }
                 }
             });
@@ -368,9 +382,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     }
 
     private void addStreamsColumn() {
-        getView().addResizableColumn(new Column<SharedObject, Number>(new NumberCell()) {
+        getView().addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
             @Override
-            public Number getValue(final SharedObject row) {
+            public Number getValue(final ProcessorListRow row) {
                 Number value = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
@@ -382,9 +396,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     }
 
     private void addEventsColumn() {
-        getView().addResizableColumn(new Column<SharedObject, Number>(new NumberCell()) {
+        getView().addResizableColumn(new Column<ProcessorListRow, Number>(new NumberCell()) {
             @Override
-            public Number getValue(final SharedObject row) {
+            public Number getValue(final ProcessorListRow row) {
                 Number value = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
@@ -396,9 +410,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     }
 
     private void addStatusColumn() {
-        getView().addResizableColumn(new Column<SharedObject, String>(new TextCell()) {
+        getView().addResizableColumn(new Column<ProcessorListRow, String>(new TextCell()) {
             @Override
-            public String getValue(final SharedObject row) {
+            public String getValue(final ProcessorListRow row) {
                 String status = null;
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
@@ -413,10 +427,10 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
         final Appearance appearance = allowUpdate ? new DefaultAppearance() : new NoBorderAppearance();
 
         // Enabled.
-        final Column<SharedObject, TickBoxState> enabledColumn = new Column<SharedObject, TickBoxState>(
+        final Column<ProcessorListRow, TickBoxState> enabledColumn = new Column<ProcessorListRow, TickBoxState>(
                 TickBoxCell.create(appearance, false, false, allowUpdate)) {
             @Override
-            public TickBoxState getValue(final SharedObject row) {
+            public TickBoxState getValue(final ProcessorListRow row) {
                 if (row instanceof ProcessorFilterRow) {
                     return TickBoxState.fromBoolean(((ProcessorFilterRow) row).getProcessorFilter().isEnabled());
                 } else if (row instanceof ProcessorRow) {
@@ -431,17 +445,20 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
                 if (row instanceof ProcessorFilterRow) {
                     final ProcessorFilterRow processorFilterRow = (ProcessorFilterRow) row;
                     final ProcessorFilter processorFilter = processorFilterRow.getProcessorFilter();
-
                     processorFilter.setEnabled(value.toBoolean());
 
-                    final Rest<ProcessorFilter> rest = restFactory.create();
-                    rest.call(PROCESSOR_FILTER_RESOURCE).setEnabled(processorFilter.getId(), value.toBoolean());
+                    processorFilterEnabledSaveQueue.setValue(processorFilter.getId(), value.toBoolean());
+//                    final Rest<ProcessorFilter> rest = restFactory.create();
+//                    rest.call(PROCESSOR_FILTER_RESOURCE).setEnabled(processorFilter.getId(), value.toBoolean());
 
                 } else if (row instanceof ProcessorRow) {
                     final ProcessorRow processorRow = (ProcessorRow) row;
                     final Processor processor = processorRow.getProcessor();
                     processor.setEnabled(value.toBoolean());
-                    processorSaveQueue.dispatch(processor, new UpdateProcessorAction(processor));
+
+                    processorEnabledSaveQueue.setValue(processor.getId(), value.toBoolean());
+//                    final Rest<Processor> rest = restFactory.create();
+//                    rest.call(PROCESSOR_RESOURCE).setEnabled(processor.getId(), value.toBoolean());
                 }
             });
         }
@@ -452,7 +469,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
         getView().addEndColumn(new EndColumn<>());
     }
 
-    public MultiSelectionModel<SharedObject> getSelectionModel() {
+    public MultiSelectionModel<ProcessorListRow> getSelectionModel() {
         return getView().getSelectionModel();
     }
 
@@ -471,22 +488,22 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
     }
 
     private void setPipeline(final DocRef pipelineRef) {
-        action.setExpression(ProcessorTaskExpressionUtil.createPipelineExpression(pipelineRef));
+        request.setExpression(ProcessorTaskExpressionUtil.createPipelineExpression(pipelineRef));
         doDataDisplay();
     }
 
     private void setFolder(final DocRef folder) {
-        action.setExpression(ProcessorTaskExpressionUtil.createFolderExpression(folder));
+        request.setExpression(ProcessorTaskExpressionUtil.createFolderExpression(folder));
         doDataDisplay();
     }
 
     private void setNullCriteria() {
-        action.setExpression(null);
+        request.setExpression(null);
         doDataDisplay();
     }
 
     @Override
-    public void read(final DocRef docRef, final SharedObject entity) {
+    public void read(final DocRef docRef, final Object entity) {
         if (docRef == null) {
             setNullCriteria();
         } else if (PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
@@ -496,7 +513,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Share
         }
     }
 
-    void setNextSelection(final ProcessorFilter nextSelection) {
+    void setNextSelection(final ProcessorListRow nextSelection) {
         this.nextSelection = nextSelection;
     }
 

@@ -1,0 +1,17 @@
+server:
+  applicationConnectors:
+    - type: https
+      port: 5443
+      keyStorePath: server.jks
+      keyStorePassword: "password"
+      keyStoreType: JKS
+      trustStorePath: ca.jks
+      trustStorePassword: "password"
+      trustStoreType: JKS
+      needClientAuth: true
+      certAlias: server
+      validateCerts: false
+      validatePeers: false
+  adminConnectors:
+    - type: http
+      port: 5081

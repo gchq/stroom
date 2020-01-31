@@ -16,6 +16,7 @@
 
 package stroom.activity.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.InputElement;
@@ -32,11 +33,11 @@ import stroom.activity.client.ActivityEditPresenter.ActivityEditView;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
-import stroom.activity.shared.CreateActivityAction;
-import stroom.activity.shared.UpdateActivityAction;
-import stroom.activity.shared.ValidateActivityAction;
+import stroom.activity.shared.ActivityResource;
+import stroom.activity.shared.ActivityValidationResult;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.ActivityConfig;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -50,7 +51,9 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
-    private final ClientDispatchAsync dispatcher;
+    private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
+
+    private final RestFactory restFactory;
 
     private boolean activityRecordingEnabled;
     private String activityEditorTitle;
@@ -61,10 +64,10 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
     @Inject
     public ActivityEditPresenter(final EventBus eventBus,
                                  final ActivityEditView view,
-                                 final ClientDispatchAsync dispatcher,
+                                 final RestFactory restFactory,
                                  final UiConfigCache uiConfigCache) {
         super(eventBus, view);
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         uiConfigCache.get()
                 .onSuccess(result -> {
@@ -220,32 +223,46 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
         activity.setDetails(details);
 
         // Validate the activity.
-        dispatcher.exec(new ValidateActivityAction(activity)).onSuccess(validationResult -> {
-            if (!validationResult.isValid()) {
-                AlertEvent.fireWarn(ActivityEditPresenter.this, "Validation Error", validationResult.getMessages(), null);
+        final Rest<ActivityValidationResult> rest = restFactory.create();
+        rest
+                .onSuccess(result -> afterValidation(result, details, consumer))
+                .call(ACTIVITY_RESOURCE)
+                .validate(activity);
+    }
 
+    private void afterValidation(final ActivityValidationResult validationResult, final ActivityDetails details, final Consumer<Activity> consumer) {
+        if (!validationResult.isValid()) {
+            AlertEvent.fireWarn(ActivityEditPresenter.this, "Validation Error", validationResult.getMessages(), null);
+
+        } else {
+            // Save the activity.
+            if (activity.getId() == null) {
+                final Rest<Activity> rest = restFactory.create();
+                rest
+                        .onSuccess(result -> {
+                            activity = result;
+                            activity.setDetails(details);
+
+                            update(activity, details, consumer);
+                        })
+                        .call(ACTIVITY_RESOURCE)
+                        .create();
             } else {
-                // Save the activity.
-                if (activity.getId() == null) {
-                    dispatcher.exec(new CreateActivityAction()).onSuccess(result -> {
-                        activity = result;
-                        activity.setDetails(details);
-
-                        dispatcher.exec(new UpdateActivityAction(activity)).onSuccess(r -> {
-                            activity = r;
-                            consumer.accept(r);
-                            hide();
-                        });
-                    });
-                } else {
-                    dispatcher.exec(new UpdateActivityAction(activity)).onSuccess(result -> {
-                        activity = result;
-                        consumer.accept(result);
-                        hide();
-                    });
-                }
+                update(activity, details, consumer);
             }
-        });
+        }
+    }
+
+    private void update(final Activity activity, final ActivityDetails details, final Consumer<Activity> consumer) {
+        final Rest<Activity> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    ActivityEditPresenter.this.activity = result;
+                    consumer.accept(result);
+                    hide();
+                })
+                .call(ACTIVITY_RESOURCE)
+                .update(activity.getId(), activity);
     }
 
     private void findInputElements(final NodeList<Node> nodes, final List<Element> inputElements) {

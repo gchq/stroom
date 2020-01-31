@@ -1,7 +1,7 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
-import stroom.auth.AuthModule;
+import stroom.cache.impl.CacheResourceModule;
 import stroom.core.db.CoreDbModule;
 import stroom.receive.common.RemoteFeedModule;
 import stroom.searchable.impl.SearchableModule;
@@ -13,7 +13,7 @@ public class CoreModule extends AbstractModule {
         install(new stroom.auth.AuthModule());
         install(new stroom.auth.AuthDbModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
-        install(new stroom.cache.impl.CacheHandlerModule());
+        install(new CacheResourceModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
         install(new stroom.cluster.task.impl.ClusterTaskModule());
@@ -68,8 +68,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.meta.impl.StreamAttributeMapResourceModule());
         install(new stroom.node.impl.db.NodeDbModule());
         install(new stroom.node.impl.NodeModule());
-        install(new stroom.node.impl.NodeHandlerModule());
-        install(new stroom.node.impl.NodeServiceModule());
         install(new stroom.pipeline.cache.PipelineCacheModule());
         install(new stroom.pipeline.factory.CommonPipelineElementModule());
         install(new stroom.pipeline.factory.DataStorePipelineElementModule());

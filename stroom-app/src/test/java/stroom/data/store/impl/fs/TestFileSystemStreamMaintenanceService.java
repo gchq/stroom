@@ -24,6 +24,7 @@ import stroom.meta.shared.Meta;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -48,7 +49,7 @@ class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest
 
     @Test
     void testSimple() throws IOException {
-        config.setFileSystemCleanOldAge("0s");
+        config.setFileSystemCleanOldAge(StroomDuration.ZERO);
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 

@@ -21,6 +21,7 @@ dependencies {
     compile libs.jaxb_api
     compile libs.saxon_he
     compile libs.slf4j_api
+    compile libs.ws_rs_api
     
     testCompile libs.assertj_core
     testCompile libs.commons_lang

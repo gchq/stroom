@@ -22,6 +22,7 @@ package stroom.search.manualtesting;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
@@ -41,7 +42,6 @@ import stroom.search.impl.shard.IndexShardSearchConfig;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
-import stroom.test.common.util.test.TempDir;
 
 import javax.inject.Inject;
 import java.nio.file.Path;

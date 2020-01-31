@@ -17,39 +17,31 @@
 package stroom.processor.impl;
 
 import com.codahale.metrics.health.HealthCheck.Result;
-import stroom.annotation.shared.AnnotationDetail;
-import stroom.annotation.shared.CreateEntryRequest;
-import stroom.annotation.shared.EventId;
-import stroom.annotation.shared.EventLink;
-import stroom.annotation.shared.SetAssignedToRequest;
-import stroom.annotation.shared.SetStatusRequest;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.CreateProcessorFilterRequest;
+import stroom.processor.shared.FetchProcessorRequest;
+import stroom.processor.shared.FetchProcessorResponse;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
-import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.PermissionException;
-import stroom.security.shared.PermissionNames;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
-import java.util.List;
-import java.util.stream.Collectors;
+import javax.ws.rs.ServerErrorException;
+import javax.ws.rs.core.Response.Status;
 
 // TODO : @66 add event logging
-public class ProcessorFilterResourceImpl implements ProcessorFilterResource, RestResource, HasHealthCheck {
+class ProcessorFilterResourceImpl implements ProcessorFilterResource, RestResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterResourceImpl.class);
 
     private final ProcessorFilterService processorFilterService;
     private final DocumentEventLog documentEventLog;
 
     @Inject
-    public ProcessorFilterResourceImpl(final ProcessorFilterService processorFilterService,
+    ProcessorFilterResourceImpl(final ProcessorFilterService processorFilterService,
                                        final DocumentEventLog documentEventLog) {
         this.processorFilterService = processorFilterService;
         this.documentEventLog = documentEventLog;
@@ -57,128 +49,66 @@ public class ProcessorFilterResourceImpl implements ProcessorFilterResource, Res
 
     @Override
     public ProcessorFilter create(final CreateProcessorFilterRequest request) {
-        return processorFilterService.create(request.getPipeline(), request.getQueryData(), request.getPriority(), request.isEnabled());
+        try {
+            return processorFilterService.create(request.getPipeline(), request.getQueryData(), request.getPriority(), request.isEnabled());
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
     @Override
     public ProcessorFilter read(final Integer id) {
-        return processorFilterService.fetch(id).orElse(null);
+        try {
+            return processorFilterService.fetch(id).orElse(null);
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
     @Override
     public ProcessorFilter update(final Integer id, final ProcessorFilter processorFilter) {
-        return processorFilterService.update(processorFilter);
+        try {
+            return processorFilterService.update(processorFilter);
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
     @Override
     public void delete(final Integer id) {
-        processorFilterService.delete(id);
+        try {
+            processorFilterService.delete(id);
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
     @Override
     public void setPriority(final Integer id, final Integer priority) {
-        processorFilterService.setPriority(id, priority);
+        try {
+            processorFilterService.setPriority(id, priority);
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
     @Override
     public void setEnabled(final Integer id, final Boolean enabled) {
-        processorFilterService.setEnabled(id, enabled);
+        try {
+            processorFilterService.setEnabled(id, enabled);
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
-    //    @Override
-//    public AnnotationDetail get(final Long annotationId) {
-//        AnnotationDetail annotationDetail = null;
-//
-////        if (annotationId != null) {
-//        LOGGER.info(() -> "Getting annotation " + annotationId);
-//        try {
-//            annotationDetail = annotationService.getDetail(annotationId);
-//            if (annotationDetail != null) {
-//                documentEventLog.view(annotationDetail, null);
-//            }
-//        } catch (final RuntimeException e) {
-//            documentEventLog.view("Annotation " + annotationId, e);
-//        }
-////        } else {
-////            LOGGER.info(() -> "Getting annotation " + streamId + ":" + eventId);
-////            try {
-////                annotationDetail = annotationService.getDetail(streamId, eventId);
-////                if (annotationDetail != null) {
-////                    documentEventLog.view(annotationDetail, null);
-////                }
-////            } catch (final RuntimeException e) {
-////                documentEventLog.view("Annotation " + streamId + ":" + eventId, e);
-////            }
-////        }
-//
-//        return annotationDetail;
-//    }
-//
-//    @Override
-//    public AnnotationDetail createEntry(final CreateEntryRequest request) {
-//        AnnotationDetail annotationDetail = null;
-//
-//        LOGGER.info(() -> "Creating annotation entry " + request.getAnnotation());
-//        try {
-//            annotationDetail = annotationService.createEntry(request);
-//            documentEventLog.create(annotationDetail, null);
-//        } catch (final RuntimeException e) {
-//            documentEventLog.create("Annotation entry " + request.getAnnotation(), e);
-//        }
-//
-//        return annotationDetail;
-//    }
-//
-//    @Override
-//    public List<String> getStatus(final String filter) {
-//        final List<String> values = annotationConfig.getStatusValues();
-//        if (filter == null || filter.isEmpty()) {
-//            return values;
-//        }
-//
-//        return values
-//                .stream()
-//                .filter(value -> value.toLowerCase().contains(filter.toLowerCase()))
-//                .collect(Collectors.toList());
-//    }
-//
-//    @Override
-//    public List<String> getComment(final String filter) {
-//        final List<String> values = annotationConfig.getStandardComments();
-//        if (filter == null || filter.isEmpty()) {
-//            return values;
-//        }
-//
-//        return values
-//                .stream()
-//                .filter(value -> value.toLowerCase().contains(filter.toLowerCase()))
-//                .collect(Collectors.toList());
-//    }
-//
-//    @Override
-//    public List<EventId> getLinkedEvents(final Long annotationId) {
-//        return annotationService.getLinkedEvents(annotationId);
-//    }
-//
-//    @Override
-//    public List<EventId> link(final EventLink eventLink) {
-//        return annotationService.link(eventLink);
-//    }
-//
-//    @Override
-//    public List<EventId> unlink(final EventLink eventLink) {
-//        return annotationService.unlink(eventLink);
-//    }
-//
-//    @Override
-//    public Integer setStatus(final SetStatusRequest request) {
-//        return annotationService.setStatus(request);
-//    }
-//
-//    @Override
-//    public Integer setAssignedTo(final SetAssignedToRequest request) {
-//        return annotationService.setAssignedTo(request);
-//    }
+    @Override
+    public FetchProcessorResponse find(final FetchProcessorRequest request) {
+        try {
+            return processorFilterService.find(request);
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        }
+    }
 
     @Override
     public Result getHealth() {

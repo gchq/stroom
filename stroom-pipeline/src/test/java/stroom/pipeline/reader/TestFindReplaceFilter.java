@@ -19,12 +19,14 @@ package stroom.pipeline.reader;
 
 import org.junit.jupiter.api.Test;
 import stroom.pipeline.DefaultLocationFactory;
+import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.reader.FindReplaceFilter.Builder;
 import stroom.pipeline.reader.FindReplaceFilter.SubSequence;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.util.regex.Matcher;
@@ -498,6 +500,20 @@ class TestFindReplaceFilter {
         test(builder, 100000, "cat <[dog cat dog", "cat wolf cat dog", null);
     }
 
+    @Test
+    void testMultiFilter() {
+        final Builder builder1 = new Builder()
+                .find("a")
+                .replacement("")
+                .regex(true);
+        final Builder builder2 = new Builder()
+                .find("b")
+                .replacement("c")
+                .regex(true);
+        final Builder[] builders = {builder1, builder2};
+        testMulti(builders, 100000, "abb", "cc", null);
+    }
+
     private String getDogCat() {
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 1000; i++) {
@@ -533,14 +549,24 @@ class TestFindReplaceFilter {
     }
 
     private void test(final Builder builder, final int length, final String input, final String expectedOutput, final String expectedError) {
+        final Builder[] builders = {builder};
+        testMulti(builders, length, input, expectedOutput, expectedError);
+    }
+
+    private void testMulti(final Builder[] builder, final int length, final String input, final String expectedOutput, final String expectedError) {
         try {
+            final LocationFactory locationFactory = new DefaultLocationFactory();
             final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
-            final FindReplaceFilter reader = builder
-                    .reader(new StringReader(input))
-                    .locationFactory(new DefaultLocationFactory())
-                    .errorReceiver(loggingErrorReceiver)
-                    .elementId("findReplaceFilter")
-                    .build();
+
+            Reader reader = new StringReader(input);
+            for (int i = 0; i < builder.length; i++) {
+                reader = builder[i]
+                        .reader(reader)
+                        .locationFactory(locationFactory)
+                        .errorReceiver(loggingErrorReceiver)
+                        .elementId("findReplaceFilter_" + i)
+                        .build();
+            }
 
             final StringBuilder stringBuilder = new StringBuilder();
             final char[] buffer = new char[length];

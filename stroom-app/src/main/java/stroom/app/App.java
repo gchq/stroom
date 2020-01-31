@@ -94,11 +94,16 @@ public class App extends Application<Config> {
         bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
                 bootstrap.getConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false)));
+
         bootstrap.addBundle(new AssetsBundle("/ui", ResourcePaths.ROOT_PATH, "index.html", "ui"));
 
         // Add a DW Command so we can run the full migration without running the
         // http server
         bootstrap.addCommand(new DbMigrationCommand(configFile));
+
+        // If we want to use javax.validation on our rest resources with our own custom validation annotations
+        // then we will need to do something with bootstrap.setValidatorFactory()
+        // and our CustomConstraintValidatorFactory
     }
 
     @Override
@@ -114,7 +119,7 @@ public class App extends Application<Config> {
         registerLogConfiguration(environment);
 
         // We want Stroom to use the root path so we need to move Dropwizard's path.
-        environment.jersey().setUrlPattern(ResourcePaths.API_PATH + "/*");
+        environment.jersey().setUrlPattern(ResourcePaths.API_ROOT_PATH + "/*");
 
         // Set up a session handler for Jetty
         environment.servlets().setSessionHandler(new SessionHandler());

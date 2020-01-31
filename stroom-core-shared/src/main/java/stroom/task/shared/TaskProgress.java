@@ -16,6 +16,7 @@
 
 package stroom.task.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.docref.SharedObject;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
@@ -38,31 +39,6 @@ public class TaskProgress implements SharedObject, TreeRow {
 
     private Expander expander;
 
-    @Override
-    public Expander getExpander() {
-        return expander;
-    }
-
-    public void setExpander(final Expander expander) {
-        this.expander = expander;
-    }
-
-    public String getNodeName() {
-        return nodeName;
-    }
-
-    public void setNodeName(final String nodeName) {
-        this.nodeName = nodeName;
-    }
-
-    public long getTimeNowMs() {
-        return timeNowMs;
-    }
-
-    public void setTimeNowMs(final long timeNowMs) {
-        this.timeNowMs = timeNowMs;
-    }
-
     public TaskId getId() {
         return id;
     }
@@ -83,16 +59,8 @@ public class TaskProgress implements SharedObject, TreeRow {
         return taskInfo;
     }
 
-    public void setTaskInfo(final String progress) {
-        this.taskInfo = progress;
-    }
-
-    public long getSubmitTimeMs() {
-        return submitTimeMs;
-    }
-
-    public void setSubmitTimeMs(final long submitTimeMs) {
-        this.submitTimeMs = submitTimeMs;
+    public void setTaskInfo(final String taskInfo) {
+        this.taskInfo = taskInfo;
     }
 
     public String getUserName() {
@@ -103,16 +71,50 @@ public class TaskProgress implements SharedObject, TreeRow {
         this.userName = userName;
     }
 
-    public long getAgeMs() {
-        return timeNowMs - submitTimeMs;
-    }
-
     public String getThreadName() {
         return threadName;
     }
 
     public void setThreadName(final String threadName) {
         this.threadName = threadName;
+    }
+
+    public String getNodeName() {
+        return nodeName;
+    }
+
+    public void setNodeName(final String nodeName) {
+        this.nodeName = nodeName;
+    }
+
+    public long getSubmitTimeMs() {
+        return submitTimeMs;
+    }
+
+    public void setSubmitTimeMs(final long submitTimeMs) {
+        this.submitTimeMs = submitTimeMs;
+    }
+
+    public long getTimeNowMs() {
+        return timeNowMs;
+    }
+
+    public void setTimeNowMs(final long timeNowMs) {
+        this.timeNowMs = timeNowMs;
+    }
+
+    @Override
+    public Expander getExpander() {
+        return expander;
+    }
+
+    public void setExpander(final Expander expander) {
+        this.expander = expander;
+    }
+
+    @JsonIgnore
+    public long getAgeMs() {
+        return timeNowMs - submitTimeMs;
     }
 
     @Override

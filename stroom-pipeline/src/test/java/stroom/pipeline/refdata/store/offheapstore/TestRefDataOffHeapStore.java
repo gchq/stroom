@@ -27,12 +27,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.MapDefinition;
 import stroom.pipeline.refdata.store.ProcessingState;
 import stroom.pipeline.refdata.store.RefDataLoader;
 import stroom.pipeline.refdata.store.RefDataProcessingInfo;
 import stroom.pipeline.refdata.store.RefDataStore;
-import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.pipeline.refdata.store.RefDataStoreFactory;
 import stroom.pipeline.refdata.store.RefDataStoreModule;
 import stroom.pipeline.refdata.store.RefDataValue;
@@ -46,13 +46,14 @@ import stroom.pipeline.refdata.store.offheapstore.databases.MapUidReverseDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ProcessingInfoDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.RangeStoreDb;
 import stroom.pipeline.refdata.store.offheapstore.databases.ValueStoreDb;
-import stroom.util.ByteSizeUnit;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeModule;
 import stroom.util.shared.Range;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -99,11 +100,11 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     private RefDataStore refDataStore;
 
     void setDbMaxSizeProperty() {
-        setDbMaxSizeProperty(ByteSizeUnit.MEBIBYTE.longBytes(500));
+        setDbMaxSizeProperty(ByteSize.ofMebibytes(500));
     }
 
-    void setDbMaxSizeProperty(final long sizeInBytes) {
-        referenceDataConfig.setMaxStoreSize(Long.toString(sizeInBytes));
+    void setDbMaxSizeProperty(final ByteSize size) {
+        referenceDataConfig.setMaxStoreSize(size);
     }
 
     @BeforeEach
@@ -487,7 +488,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         bulkLoadAndAssert(refStreamDefinitions, false, 1000);
 
-        getReferenceDataConfig().setPurgeAge("0ms");
+        getReferenceDataConfig().setPurgeAge(StroomDuration.ZERO);
 
         assertThat(refDataStore.getProcessingInfoEntryCount()).isEqualTo(2);
         assertThat(refDataStore.getKeyValueEntryCount()).isGreaterThan(0);
@@ -507,7 +508,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     @Test
     void testPurgeOldData_partial() {
 
-        setPurgeAgeProperty("1d");
+        setPurgeAgeProperty(StroomDuration.ofDays(1));
         int refStreamDefCount = 4;
         int keyValueMapCount = 2;
         int rangeValueMapCount = 2;
@@ -555,7 +556,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     @Test
     void testPurgeOldData_nothingToPurge() {
 
-        setPurgeAgeProperty("1d");
+        setPurgeAgeProperty(StroomDuration.ofDays(1));
         int refStreamDefCount = 4;
         int keyValueMapCount = 2;
         int rangeValueMapCount = 2;
@@ -597,7 +598,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
     @Test
     void testPurgeOldData_deReferenceValues() {
 
-        setPurgeAgeProperty("1d");
+        setPurgeAgeProperty(StroomDuration.ofDays(1));
         int refStreamDefCount = 1;
         int keyValueMapCount = 1;
         int rangeValueMapCount = 1;
@@ -675,7 +676,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
 
         MapNamFunc mapNamFunc = this::buildMapNameWithoutRefStreamDef;
 
-        setPurgeAgeProperty("1d");
+        setPurgeAgeProperty(StroomDuration.ofDays(1));
         int refStreamDefCount = 5;
         int keyValueMapCount = 2;
         int rangeValueMapCount = 2;
@@ -1196,7 +1197,7 @@ class TestRefDataOffHeapStore extends AbstractLmdbDbTest {
         return referenceDataConfig;
     }
 
-    protected void setPurgeAgeProperty(final String purgeAge) {
+    protected void setPurgeAgeProperty(final StroomDuration purgeAge) {
         referenceDataConfig.setPurgeAge(purgeAge);
     }
 }

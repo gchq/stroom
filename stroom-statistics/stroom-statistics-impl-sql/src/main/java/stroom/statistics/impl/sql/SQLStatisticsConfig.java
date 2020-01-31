@@ -7,9 +7,10 @@ import stroom.config.common.HasDbConfig;
 import stroom.statistics.impl.sql.search.SearchConfig;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
+import javax.annotation.Nullable;
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
 public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
@@ -17,10 +18,10 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
     private String docRefType = "StatisticStore";
     private SearchConfig searchConfig = new SearchConfig();
     private int statisticAggregationBatchSize = 1000000;
-    private String maxProcessingAge;
+    private StroomDuration maxProcessingAge;
     private CacheConfig dataSourceCache = new CacheConfig.Builder()
             .maximumSize(100L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
     @JsonProperty("db")
@@ -59,12 +60,16 @@ public class SQLStatisticsConfig extends AbstractConfig implements HasDbConfig {
         this.statisticAggregationBatchSize = statisticAggregationBatchSize;
     }
 
-    @JsonPropertyDescription("The maximum age (e.g. '90d') of statistics to process and retain, i.e. any statistics with an statistic event time older than the current time minus maxProcessingAge will be silently dropped.  Existing statistic data over this age will be purged during statistic aggregation. Leave blank to process/retain all data.")
-    public String getMaxProcessingAge() {
+    @Nullable
+    @JsonPropertyDescription("The maximum age of statistics to process and retain, i.e. any " +
+        "statistics with an statistic event time older than the current time minus maxProcessingAge will be silently " +
+        "dropped.  Existing statistic data over this age will be purged during statistic aggregation. " +
+        "Set to null to process/retain all data. In ISO-8601 duration format, e.g. 'P1DT12H'")
+    public StroomDuration getMaxProcessingAge() {
         return maxProcessingAge;
     }
 
-    public void setMaxProcessingAge(final String maxProcessingAge) {
+    public void setMaxProcessingAge(final StroomDuration maxProcessingAge) {
         this.maxProcessingAge = maxProcessingAge;
     }
 

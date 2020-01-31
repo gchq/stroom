@@ -21,6 +21,8 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.api.SecurityContext;
 
+import javax.inject.Provider;
+import javax.ws.rs.client.Client;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -33,10 +35,13 @@ class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
     private final Map<String, Supplier<String>> urlMap;
 
     private final SecurityContext securityContext;
+    private final Provider<Client> clientProvider;
 
     SimpleDataSourceProviderRegistry(final SecurityContext securityContext,
-                                     final DataSourceUrlConfig dataSourceUrlConfig) {
+                                     final DataSourceUrlConfig dataSourceUrlConfig,
+                                     final Provider<Client> clientProvider) {
         this.securityContext = securityContext;
+        this.clientProvider = clientProvider;
 
 //        if (basePath != null && !basePath.isEmpty()) {
         //TODO the path strings are defined in ResourcePaths but this is not accessible from here
@@ -78,7 +83,7 @@ class SimpleDataSourceProviderRegistry implements DataSourceProviderRegistry {
     private Optional<DataSourceProvider> getDataSourceProvider(final String docRefType) {
         return Optional.ofNullable(urlMap.get(docRefType))
                 .map(urlProvider ->
-                        new RemoteDataSourceProvider(securityContext, urlProvider.get()));
+                        new RemoteDataSourceProvider(securityContext, urlProvider.get(), clientProvider));
     }
 
     /**

@@ -78,7 +78,7 @@ public class AppConfigModule extends AbstractModule {
         // Holder for the location of the yaml config file so the AppConfigMonitor can
         // get hold of it via guice
         bind(ConfigLocation.class)
-            .toInstance(new ConfigLocation(configHolder.getConfigFile()));
+                .toInstance(new ConfigLocation(configHolder.getConfigFile()));
 
         // AppConfig will instantiate all of its child config objects so
         // bind each of these instances so we can inject these objects on their own.
@@ -112,11 +112,9 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getIndexConfig, IndexConfig.class);
         bindConfig(AppConfig::getJobSystemConfig, JobSystemConfig.class);
         bindConfig(AppConfig::getLifecycleConfig, LifecycleConfig.class);
-        bindConfig(AppConfig::getNodeConfig, NodeConfig.class, nodeConfig -> {
-            bindConfig(nodeConfig, NodeConfig::getStatusConfig, StatusConfig.class, statusConfig -> {
-                bindConfig(statusConfig, StatusConfig::getHeapHistogramConfig, HeapHistogramConfig.class);
-            });
-        });
+        bindConfig(AppConfig::getNodeConfig, NodeConfig.class, nodeConfig ->
+                bindConfig(nodeConfig, NodeConfig::getStatusConfig, StatusConfig.class, statusConfig ->
+                        bindConfig(statusConfig, StatusConfig::getHeapHistogramConfig, HeapHistogramConfig.class)));
         bindConfig(AppConfig::getPathConfig, PathConfig.class);
         bindConfig(AppConfig::getPipelineConfig, PipelineConfig.class, pipelineConfig -> {
             bindConfig(pipelineConfig, PipelineConfig::getAppenderConfig, AppenderConfig.class);
@@ -140,15 +138,13 @@ public class AppConfigModule extends AbstractModule {
         });
         bindConfig(AppConfig::getServiceDiscoveryConfig, ServiceDiscoveryConfig.class);
         bindConfig(AppConfig::getSessionCookieConfig, SessionCookieConfig.class);
-        bindConfig(AppConfig::getSolrConfig, SolrConfig.class, solrConfig -> {
-            bindConfig(solrConfig, SolrConfig::getSolrSearchConfig, SolrSearchConfig.class);
-        });
+        bindConfig(AppConfig::getSolrConfig, SolrConfig.class, solrConfig ->
+                bindConfig(solrConfig, SolrConfig::getSolrSearchConfig, SolrSearchConfig.class));
         bindConfig(AppConfig::getStatisticsConfig, StatisticsConfig.class, statisticsConfig -> {
             bindConfig(statisticsConfig, StatisticsConfig::getHbaseStatisticsConfig, HBaseStatisticsConfig.class);
             bindConfig(statisticsConfig, StatisticsConfig::getInternalStatisticsConfig, InternalStatisticsConfig.class);
-            bindConfig(statisticsConfig, StatisticsConfig::getSqlStatisticsConfig, SQLStatisticsConfig.class, sqlStatisticsConfig -> {
-                bindConfig(sqlStatisticsConfig, SQLStatisticsConfig::getSearchConfig, stroom.statistics.impl.sql.search.SearchConfig.class);
-            });
+            bindConfig(statisticsConfig, StatisticsConfig::getSqlStatisticsConfig, SQLStatisticsConfig.class, sqlStatisticsConfig ->
+                    bindConfig(sqlStatisticsConfig, SQLStatisticsConfig::getSearchConfig, stroom.statistics.impl.sql.search.SearchConfig.class));
         });
         bindConfig(AppConfig::getStoredQueryConfig, StoredQueryConfig.class);
         bindConfig(AppConfig::getUiConfig, UiConfig.class, uiConfig -> {
@@ -191,8 +187,8 @@ public class AppConfigModule extends AbstractModule {
 
         if (parentObject == null) {
             throw new RuntimeException(LogUtil.message("Unable to bind config to {} as the parent is null. " +
-                    "You may have an empty branch in your config YAML file.",
-                clazz.getCanonicalName()));
+                            "You may have an empty branch in your config YAML file.",
+                    clazz.getCanonicalName()));
         }
 
         try {
@@ -205,9 +201,9 @@ public class AppConfigModule extends AbstractModule {
             }
         } catch (Exception e) {
             throw new RuntimeException(LogUtil.message("Error binding getter on object {} to class {}",
-                parentObject.getClass().getCanonicalName(),
-                clazz.getCanonicalName()),
-                e);
+                    parentObject.getClass().getCanonicalName(),
+                    clazz.getCanonicalName()),
+                    e);
         }
     }
 

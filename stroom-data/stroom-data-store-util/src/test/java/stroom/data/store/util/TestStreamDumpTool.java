@@ -21,6 +21,7 @@ import com.google.inject.Injector;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -30,11 +31,9 @@ import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.meta.impl.db.MetaDbConnProvider;
 import stroom.meta.shared.MetaProperties;
-import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.db.DbTestModule;
+import stroom.test.common.util.db.DbTestUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;
-import stroom.test.common.util.test.TempDir;
-import stroom.test.common.util.test.TempDirExtension;
 import stroom.util.io.FileUtil;
 
 import javax.inject.Inject;
@@ -44,7 +43,7 @@ import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.SQLException;
 
-@ExtendWith({TempDirExtension.class, MockitoExtension.class})
+@ExtendWith({MockitoExtension.class})
 class TestStreamDumpTool {
 
     @Inject

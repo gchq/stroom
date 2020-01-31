@@ -23,8 +23,6 @@ import java.util.concurrent.TimeUnit;
 public interface ClusterDispatchAsyncHelper {
     <R extends SharedObject> DefaultClusterResultCollector<R> execAsync(ClusterTask<R> task, String targetNodeName);
 
-    <R extends SharedObject> DefaultClusterResultCollector<R> execAsync(ClusterTask<R> task, long waitTime, TimeUnit timeUnit, String targetNodeName);
-
     <R extends SharedObject> DefaultClusterResultCollector<R> execAsync(ClusterTask<R> task, TargetType targetType);
 
     <R extends SharedObject> DefaultClusterResultCollector<R> execAsync(ClusterTask<R> task, long waitTime, TimeUnit timeUnit, TargetType targetType);

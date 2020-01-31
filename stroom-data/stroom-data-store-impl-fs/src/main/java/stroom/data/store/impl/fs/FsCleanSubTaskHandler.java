@@ -59,8 +59,11 @@ class FsCleanSubTaskHandler extends AbstractTaskHandler<FsCleanSubTask, VoidResu
                 return VoidResult.INSTANCE;
             }
 
-            final ScanVolumePathResult result = streamMaintenanceService.scanVolumePath(task.getVolume(),
-                    task.getParentHandler().isDelete(), task.getPath(), task.getParentHandler().getOldAge());
+            final ScanVolumePathResult result = streamMaintenanceService.scanVolumePath(
+                task.getVolume(),
+                task.getParentHandler().isDelete(),
+                task.getPath(),
+                task.getParentHandler().getOldAge());
 
             task.getTaskProgress().addResult(result);
 

@@ -21,6 +21,7 @@ import stroom.cluster.task.api.ClusterResultCollectorCache;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Sizes;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 
@@ -32,16 +33,19 @@ public class ClusterSearchResultCollectorFactory {
     private final TaskContext taskContext;
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
+    private final SecurityContext securityContext;
 
     @Inject
     private ClusterSearchResultCollectorFactory(final TaskManager taskManager,
                                                 final TaskContext taskContext,
                                                 final ClusterDispatchAsyncHelper dispatchHelper,
-                                                final ClusterResultCollectorCache clusterResultCollectorCache) {
+                                                final ClusterResultCollectorCache clusterResultCollectorCache,
+                                                final SecurityContext securityContext) {
         this.taskManager = taskManager;
         this.taskContext = taskContext;
         this.dispatchHelper = dispatchHelper;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
+        this.securityContext = securityContext;
     }
 
     public ClusterSearchResultCollector create(final AsyncSearchTask task,
@@ -61,6 +65,7 @@ public class ClusterSearchResultCollectorFactory {
                 resultHandler,
                 defaultMaxResultsSizes,
                 storeSize,
-                completionState);
+                completionState,
+                securityContext);
     }
 }

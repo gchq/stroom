@@ -24,17 +24,17 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.DeleteProcessorAction;
+import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
+import stroom.processor.shared.ProcessorListRow;
+import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
@@ -44,18 +44,18 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.util.client.MultiSelectionModel;
 
 public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.ProcessorView>
-        implements HasDocumentRead<SharedObject> {
+        implements HasDocumentRead<Object> {
+    private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
     private final ProcessorListPresenter processorListPresenter;
     private final Provider<ProcessorEditPresenter> processorEditPresenterProvider;
     private final ExpressionTreePresenter expressionPresenter;
-    private final ClientDispatchAsync dispatcher;
     private final RestFactory restFactory;
 
     private DocRef docRef;
     private PipelineDoc pipelineDoc;
-    private SharedObject selectedProcessor;
+    private ProcessorListRow selectedProcessor;
     private ButtonView addButton;
     private ButtonView editButton;
     private ButtonView removeButton;
@@ -68,13 +68,11 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                               final ProcessorListPresenter processorListPresenter,
                               final Provider<ProcessorEditPresenter> processorEditPresenterProvider,
                               final ExpressionTreePresenter expressionPresenter,
-                              final ClientDispatchAsync dispatcher,
                               final RestFactory restFactory) {
         super(eventBus, view);
         this.processorListPresenter = processorListPresenter;
         this.processorEditPresenterProvider = processorEditPresenterProvider;
         this.expressionPresenter = expressionPresenter;
-        this.dispatcher = dispatcher;
         this.restFactory = restFactory;
 
         // Stop users from selecting expression items.
@@ -85,7 +83,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     @Override
-    public void read(final DocRef docRef, final SharedObject entity) {
+    public void read(final DocRef docRef, final Object entity) {
         this.docRef = docRef;
         processorListPresenter.read(docRef, entity);
         if (entity instanceof PipelineDoc) {
@@ -195,7 +193,7 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
         expressionPresenter.read(expression);
     }
 
-    public MultiSelectionModel<SharedObject> getSelectionModel() {
+    public MultiSelectionModel<ProcessorListRow> getSelectionModel() {
         return processorListPresenter.getSelectionModel();
     }
 
@@ -229,7 +227,8 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
                 final ProcessorRow streamProcessorRow = (ProcessorRow) selectedProcessor;
                 ConfirmEvent.fire(this, "Are you sure you want to delete this processor?", result -> {
                     if (result) {
-                        dispatcher.exec(new DeleteProcessorAction(streamProcessorRow.getProcessor())).onSuccess(res -> processorListPresenter.refresh());
+                        final Rest<Processor> rest = restFactory.create();
+                        rest.onSuccess(res -> processorListPresenter.refresh()).call(PROCESSOR_RESOURCE).delete(streamProcessorRow.getProcessor().getId());
                     }
                 });
             } else if (selectedProcessor instanceof ProcessorFilterRow) {
@@ -245,11 +244,12 @@ public class ProcessorPresenter extends MyPresenterWidget<ProcessorPresenter.Pro
     }
 
     public void refresh(final ProcessorFilter processorFilter) {
-        processorListPresenter.setNextSelection(processorFilter);
+        final ProcessorListRow processorListRow = new ProcessorFilterRow(processorFilter);
+        processorListPresenter.setNextSelection(processorListRow);
         processorListPresenter.refresh();
 
         processorListPresenter.getSelectionModel().clear();
-        processorListPresenter.getSelectionModel().setSelected(processorFilter, true);
+        processorListPresenter.getSelectionModel().setSelected(processorListRow, true);
         updateData();
     }
 
