@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [v6.0.31] - 2020-01-21
 
+* Issue **#1361** : Changed the way headers are parsed for the HttpCall XSLT function.
+
 * Issue **#1340** : Fixed issue with FindReplaceFilter where it failed in some cases when more than one filter was chained together.
 
 * Issue **#1338** : You can now configure the max size of the map store cache.
