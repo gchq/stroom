@@ -185,36 +185,99 @@ public class FindReplaceFilter extends FilterReader {
         }
     }
 
+    /**
+     * Attempts to read characters into the specified character buffer.
+     * The buffer is used as a repository of characters as-is: the only
+     * changes made are the results of a put operation. No flipping or
+     * rewinding of the buffer is performed.
+     *
+     * @param target the buffer to read characters into
+     * @return The number of characters added to the buffer, or
+     * -1 if this source of characters is at its end
+     * @throws IOException                      if an I/O error occurs
+     * @throws NullPointerException             if target is null
+     * @throws java.nio.ReadOnlyBufferException if target is a read only buffer
+     * @since 1.5
+     */
+    public int read(java.nio.CharBuffer target) throws IOException {
+        final int len = target.remaining();
+        final char[] cbuf = new char[len];
+        final int n = read(cbuf, 0, len);
+        if (n > 0) {
+            target.put(cbuf, 0, n);
+        }
+        return n;
+    }
+
+    /**
+     * Reads a single character.  This method will block until a character is
+     * available, an I/O error occurs, or the end of the stream is reached.
+     *
+     * <p> Subclasses that intend to support efficient single-character input
+     * should override this method.
+     *
+     * @return The character read, as an integer in the range 0 to 65535
+     * (<tt>0x00-0xffff</tt>), or -1 if the end of the stream has
+     * been reached
+     * @throws IOException If an I/O error occurs
+     */
+    public int read() throws IOException {
+        final char cb[] = new char[1];
+        if (read(cb, 0, 1) == -1) {
+            return -1;
+        } else {
+            return cb[0];
+        }
+    }
+
+    /**
+     * Reads characters into an array.  This method will block until some input
+     * is available, an I/O error occurs, or the end of the stream is reached.
+     *
+     * @param cbuf Destination buffer
+     * @return The number of characters read, or -1
+     * if the end of the stream
+     * has been reached
+     * @throws IOException If an I/O error occurs
+     */
+    public int read(char cbuf[]) throws IOException {
+        return read(cbuf, 0, cbuf.length);
+    }
+
     @Override
     public int read(final char[] cbuf, final int offset, final int length) throws IOException {
-        boolean doneReplacement = false;
-        if (outBuffer.length() == 0) {
-            if (allowReplacement) {
-                // Read text into the input buffer, replace the first match if possible and copy replaced text to the output buffer.
-                doneReplacement = performReplacement();
+        int len = 0;
 
-            } else {
-                // Put any remaining text from the input buffer into the output buffer.
-                if (inBuffer.length() > 0) {
-                    copyBuffer(inBuffer.length());
+        while (len == 0) {
+            boolean doneReplacement = false;
+            if (outBuffer.length() == 0) {
+                if (allowReplacement) {
+                    // Read text into the input buffer, replace the first match if possible and copy replaced text to the output buffer.
+                    doneReplacement = performReplacement();
 
                 } else {
-                    // There is no more text to be replaced so pass through.
-                    return super.read(cbuf, offset, length);
+                    // Put any remaining text from the input buffer into the output buffer.
+                    if (inBuffer.length() > 0) {
+                        copyBuffer(inBuffer.length());
+
+                    } else {
+                        // There is no more text to be replaced so pass through.
+                        return super.read(cbuf, offset, length);
+                    }
                 }
             }
-        }
 
-        // Copy text from the output buffer to the supplied char array up to the requested length or length of the output buffer.
-        int len = Math.min(length, outBuffer.length());
-        outBuffer.getChars(0, len, cbuf, offset);
+            // Copy text from the output buffer to the supplied char array up to the requested length or length of the output buffer.
+            len = Math.min(length, outBuffer.length());
+            outBuffer.getChars(0, len, cbuf, offset);
 
-        // If there was nothing left in the output buffer, we didn't return any content and we are EOF then return -1.
-        if (len == 0 && inBuffer.isEof()) {
-            len = doneReplacement ? 0 : -1;
-        } else {
-            // Move the offset in the output buffer ready for the next read operation.
-            outBuffer.move(len);
+            // If there was nothing left in the output buffer, we didn't return any content and we are EOF then return -1.
+            if (len == 0 && inBuffer.isEof()) {
+                len = doneReplacement ? 0 : -1;
+            } else {
+                // Move the offset in the output buffer ready for the next read operation.
+                outBuffer.move(len);
+            }
         }
 
         return len;
