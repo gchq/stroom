@@ -151,7 +151,6 @@ class AnnotationWriter extends AbstractXMLFilter {
 
     @Override
     public void endElement(final String uri, final String localName, final String qName) throws SAXException {
-        System.out.println ("AnnotationWriter endelement");
 
         if (EVENT_TAG.equals(localName)){
             if (lastStreamId == null){
