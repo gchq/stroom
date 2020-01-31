@@ -336,7 +336,7 @@ configure(projectsToBePublished) {
             name = 'stroom-auth'
             userOrg = 'stroom'
             licenses = ['Apache-2.0']
-            vcsUrl = 'https://github.com/gchq/stroom-auauth-th.git'
+            vcsUrl = 'https://github.com/gchq/stroom-auth.git'
             version {
                 name = "${versions.stroomAuth}"
                 desc = "stroom-auth-${versions.stroomAuth}"
