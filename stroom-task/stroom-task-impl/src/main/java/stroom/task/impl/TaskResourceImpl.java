@@ -29,7 +29,7 @@ import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.HasHealthCheck;
 import stroom.util.guice.ResourcePaths;
-import stroom.util.jersey.webTargetFactory;
+import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.SessionIdProvider;
@@ -45,22 +45,22 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 // TODO : @66 add event logging
-public class TaskResourceImpl implements TaskResource, RestResource, HasHealthCheck {
+class TaskResourceImpl implements TaskResource, RestResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskResourceImpl.class);
 
     private final TaskManager taskManager;
     private final SessionIdProvider sessionIdProvider;
     private final NodeService nodeService;
     private final NodeInfo nodeInfo;
-    private final webTargetFactory webTargetFactory;
+    private final WebTargetFactory webTargetFactory;
     private final DocumentEventLog documentEventLog;
 
     @Inject
-    private TaskResourceImpl(final TaskManager taskManager,
+    TaskResourceImpl(final TaskManager taskManager,
                              final SessionIdProvider sessionIdProvider,
                              final NodeService nodeService,
                              final NodeInfo nodeInfo,
-                             final webTargetFactory webTargetFactory,
+                             final WebTargetFactory webTargetFactory,
                              final DocumentEventLog documentEventLog) {
         this.taskManager = taskManager;
         this.sessionIdProvider = sessionIdProvider;
@@ -85,7 +85,7 @@ public class TaskResourceImpl implements TaskResource, RestResource, HasHealthCh
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_PATH + "/task/" + nodeName;
+                url += ResourcePaths.API_ROOT_PATH + "/task/" + nodeName;
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
@@ -134,7 +134,7 @@ public class TaskResourceImpl implements TaskResource, RestResource, HasHealthCh
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_PATH + "/task/" + nodeName + "/terminate";
+                url += ResourcePaths.API_ROOT_PATH + "/task/" + nodeName + "/terminate";
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)

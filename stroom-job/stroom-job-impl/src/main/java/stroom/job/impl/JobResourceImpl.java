@@ -35,14 +35,14 @@ import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Response.Status;
 import java.util.function.Consumer;
 
-public class JobResourceImpl implements JobResource, RestResource, HasHealthCheck {
+class JobResourceImpl implements JobResource, RestResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobResourceImpl.class);
 
     private final JobService jobService;
     private final DocumentEventLog documentEventLog;
 
     @Inject
-    private JobResourceImpl(final JobService jobService,
+    JobResourceImpl(final JobService jobService,
                             final DocumentEventLog documentEventLog) {
         this.jobService = jobService;
         this.documentEventLog = documentEventLog;

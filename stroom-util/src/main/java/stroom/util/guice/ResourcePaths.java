@@ -8,10 +8,12 @@ public interface ResourcePaths {
      * Used as the root for all servlet and UI requests
      */
     String ROOT_PATH = "/stroom";
+
     /**
-     * Used as the root for all servlet and UI requests
+     * Used as the root for all REST resources
      */
-    String API_PATH = "/api";
+    String API_ROOT_PATH = "/api";
+
     // TODO consider splitting all api resources into either stateful or stateless paths
     //   to make nginx routing easier
     String STATEFUL_PATH = "/stateful";
@@ -29,17 +31,38 @@ public interface ResourcePaths {
     String V3 = "/v3";
 
 
-    static String buildUnauthenticatedServletPath(final String value) {
+    static String buildUnauthenticatedServletPath(final String path) {
         return buildPath(
                 ROOT_PATH,
                 NO_AUTH_PATH,
-                value);
+                path);
     }
 
-    static String buildAuthenticatedServletPath(final String value) {
+    static String buildAuthenticatedServletPath(final String path) {
         return buildPath(
                 ROOT_PATH,
-                value);
+                path);
+    }
+
+    /**
+     * @param path The path to append onto the base path.
+     * @return The full path to the authenticated resource, e.g. /api/node
+     */
+    static String buildAuthenticatedApiPath(final String path) {
+        return buildPath(
+            API_ROOT_PATH,
+            path);
+    }
+
+    /**
+     * @param path The path to append onto the base path.
+     * @return The full path to the unauthenticated resource, e.g. /api/noauth/node
+     */
+    static String buildUnauthenticatedApiPath(final String path) {
+        return buildPath(
+            API_ROOT_PATH,
+            NO_AUTH_PATH,
+            path);
     }
 
     static String buildPath(final String... parts) {

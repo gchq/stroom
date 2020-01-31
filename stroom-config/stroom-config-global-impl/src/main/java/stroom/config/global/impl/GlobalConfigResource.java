@@ -3,6 +3,7 @@ package stroom.config.global.impl;
 import com.codahale.metrics.annotation.Timed;
 import io.swagger.annotations.Api;
 import stroom.config.global.shared.ConfigProperty;
+import stroom.util.guice.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.GET;
@@ -16,12 +17,14 @@ import java.util.List;
 //   would need to use the existing cluster call code and not REST resources.
 //   It needs to become a resource on the admin port
 @Api(value = "config - /v1")
-@Path("/config/v1")
+@Path(GlobalConfigResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public interface GlobalConfigResource extends RestResource {
 
+    String BASE_PATH = "/config/" + ResourcePaths.V1;
+    String YAML_VALUE_SUB_PATH = "yamlValue";
+
     @GET
-    @Path("/")
     @Produces(MediaType.APPLICATION_JSON)
     @Timed
     List<ConfigProperty> getAllConfig();
@@ -33,7 +36,7 @@ public interface GlobalConfigResource extends RestResource {
     ConfigProperty getPropertyByName(final @PathParam("propertyName") String propertyName);
 
     @GET
-    @Path("/yamlValue/{propertyName}")
+    @Path("/" + YAML_VALUE_SUB_PATH + "/{propertyName}")
     @Produces(MediaType.TEXT_PLAIN)
     @Timed
     String getYamlValueByName(final @PathParam("propertyName") String propertyName);

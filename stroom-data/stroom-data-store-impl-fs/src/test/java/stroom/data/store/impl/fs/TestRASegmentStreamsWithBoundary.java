@@ -19,9 +19,7 @@ package stroom.data.store.impl.fs;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import stroom.test.common.util.test.TempDir;
-import stroom.test.common.util.test.TempDirExtension;
+import org.junit.jupiter.api.io.TempDir;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -32,12 +30,11 @@ import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(TempDirExtension.class)
 class TestRASegmentStreamsWithBoundary {
 
     @SuppressWarnings("unused")
     @TempDir
-    private Path tempDir;
+    Path tempDir;
 
     private Path datFile;
     private Path segFile;

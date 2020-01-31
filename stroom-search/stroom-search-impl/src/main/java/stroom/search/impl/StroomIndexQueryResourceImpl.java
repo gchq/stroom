@@ -59,7 +59,7 @@ public class StroomIndexQueryResourceImpl implements StroomIndexQueryResource {
     public DataSource getDataSource(final DocRef docRef) {
         return securityContext.useAsReadResult(() -> {
             final IndexDoc index = indexStore.readDocument(docRef);
-            return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index));
+            return new DataSource(IndexDataSourceFieldUtil.getDataSourceFields(index, securityContext));
         });
     }
 

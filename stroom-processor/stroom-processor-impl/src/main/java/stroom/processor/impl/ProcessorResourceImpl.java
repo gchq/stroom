@@ -30,14 +30,14 @@ import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Response.Status;
 
 // TODO : @66 add event logging
-public class ProcessorResourceImpl implements ProcessorResource, RestResource, HasHealthCheck {
+class ProcessorResourceImpl implements ProcessorResource, RestResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorResourceImpl.class);
 
     private final ProcessorService processorService;
     private final DocumentEventLog documentEventLog;
 
     @Inject
-    private ProcessorResourceImpl(final ProcessorService processorService,
+    ProcessorResourceImpl(final ProcessorService processorService,
                                   final DocumentEventLog documentEventLog) {
         this.processorService = processorService;
         this.documentEventLog = documentEventLog;

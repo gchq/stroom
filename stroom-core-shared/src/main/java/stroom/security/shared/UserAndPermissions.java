@@ -16,13 +16,9 @@
 
 package stroom.security.shared;
 
-import stroom.docref.SharedObject;
-
 import java.util.Set;
 
-public class UserAndPermissions implements SharedObject {
-    private static final long serialVersionUID = -174816031610623504L;
-
+public class UserAndPermissions {
     private String userId;
     private Set<String> appPermissionSet;
 
@@ -39,7 +35,15 @@ public class UserAndPermissions implements SharedObject {
         return userId;
     }
 
+    public void setUserId(final String userId) {
+        this.userId = userId;
+    }
+
     public Set<String> getAppPermissionSet() {
         return appPermissionSet;
+    }
+
+    public void setAppPermissionSet(final Set<String> appPermissionSet) {
+        this.appPermissionSet = appPermissionSet;
     }
 }

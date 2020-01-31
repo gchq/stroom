@@ -206,7 +206,7 @@ class SecurityFilter implements Filter {
     }
 
     private boolean isApiRequest(String servletPath) {
-        return servletPath.startsWith(ResourcePaths.API_PATH);
+        return servletPath.startsWith(ResourcePaths.API_ROOT_PATH);
     }
 
     private boolean isDispatchRequest(String servletPath) {

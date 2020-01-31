@@ -17,9 +17,7 @@
 package stroom.data.store.impl.fs;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import stroom.test.common.util.test.TempDir;
-import stroom.test.common.util.test.TempDirExtension;
+import org.junit.jupiter.api.io.TempDir;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 
@@ -33,11 +31,10 @@ import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@ExtendWith(TempDirExtension.class)
 class TestBlockGZIPFiles {
 
     @TempDir
-    private Path tempDir;
+    Path tempDir;
 
     @Test
     void testSimpleSmallDataInBigBlock() throws IOException {
