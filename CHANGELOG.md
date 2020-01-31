@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.32] - 2020-01-31
+
 * Issue **#1368** : Fixed FindReplaceFilter as it wasn't working when used in conjunction with Data Splitter.
 
 * Issue **#1361** : Changed the way headers are parsed for the HttpCall XSLT function.
@@ -2048,7 +2051,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.31...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.32...6.0
+[v6.0.32]: https://github.com/gchq/stroom/compare/v6.0.31...v6.0.32
 [v6.0.31]: https://github.com/gchq/stroom/compare/v6.0.30...v6.0.31
 [v6.0.30]: https://github.com/gchq/stroom/compare/v6.0.29...v6.0.30
 [v6.0.29]: https://github.com/gchq/stroom/compare/v6.0.28...v6.0.29
