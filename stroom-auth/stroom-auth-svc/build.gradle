@@ -65,7 +65,7 @@ mainClassName = 'stroom.auth.service.App'
 //}
 
 dependencies {
-    compile project(':stroom-auth:stroom-persistence')
+    compile project(':stroom-auth:stroom-auth-persistence')
     compile project(':stroom-auth:stroom-auth-service-api')
     compile project(':stroom-util-shared')
     compile project(':stroom-db-util')

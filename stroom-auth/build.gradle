@@ -132,7 +132,7 @@ def projectsToBePublished = subprojects.findAll { project ->
 
 def javaProjects = subprojects.findAll { project -> 
     project.path in [
-        ':stroom-auth:stroom-persistence',
+        ':stroom-auth:stroom-auth-persistence',
         ':stroom-auth:stroom-auth-service-api',
         ':stroom-auth:stroom-auth-svc',
     ] 
@@ -336,7 +336,7 @@ configure(projectsToBePublished) {
             name = 'stroom-auth'
             userOrg = 'stroom'
             licenses = ['Apache-2.0']
-            vcsUrl = 'https://github.com/gchq/stroom-auth.git'
+            vcsUrl = 'https://github.com/gchq/stroom-auauth-th.git'
             version {
                 name = "${versions.stroomAuth}"
                 desc = "stroom-auth-${versions.stroomAuth}"
