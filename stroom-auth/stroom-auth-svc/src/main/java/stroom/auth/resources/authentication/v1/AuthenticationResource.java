@@ -42,9 +42,12 @@ import stroom.auth.exceptions.NoSuchUserException;
 import stroom.auth.resources.authentication.v1.ChangePasswordResponse.ChangePasswordResponseBuilder;
 import stroom.auth.resources.token.v1.Token;
 import stroom.auth.resources.user.v1.User;
+import stroom.auth.service.ApiException;
 import stroom.auth.service.eventlogging.StroomEventLoggingService;
 import stroom.auth.service.security.ServiceUser;
 import stroom.security.api.SecurityContext;
+import stroom.security.impl.AuthenticationServiceClients;
+import stroom.security.impl.ExchangeAccessCodeRequest;
 import stroom.util.shared.RestResource;
 
 import javax.annotation.Nullable;
@@ -106,19 +109,21 @@ public final class AuthenticationResource implements RestResource {
     private TokenBuilderFactory tokenBuilderFactory;
     private StroomEventLoggingService stroomEventLoggingService;
     private SecurityContext securityContext;
+    private AuthenticationServiceClients authenticationServiceClients;
 
     @Inject
     public AuthenticationResource(
-            @NotNull AuthenticationConfig config,
-            TokenDao tokenDao,
-            UserDao userDao,
-            TokenVerifier tokenVerifier,
-            SessionManager sessionManager,
-            EmailSender emailSender,
-            CertificateManager certificateManager,
-            TokenBuilderFactory tokenBuilderFactory,
-            StroomEventLoggingService stroomEventLoggingService,
-            SecurityContext securityContext) {
+            final @NotNull AuthenticationConfig config,
+            final TokenDao tokenDao,
+            final UserDao userDao,
+            final TokenVerifier tokenVerifier,
+            final SessionManager sessionManager,
+            final EmailSender emailSender,
+            final CertificateManager certificateManager,
+            final TokenBuilderFactory tokenBuilderFactory,
+            final StroomEventLoggingService stroomEventLoggingService,
+            final SecurityContext securityContext,
+            final AuthenticationServiceClients authenticationServiceClients ) {
         this.config = config;
         this.dnPattern = Pattern.compile(config.getCertificateDnPattern());
         this.tokenDao = tokenDao;
@@ -130,6 +135,7 @@ public final class AuthenticationResource implements RestResource {
         this.tokenBuilderFactory = tokenBuilderFactory;
         this.stroomEventLoggingService = stroomEventLoggingService;
         this.securityContext = securityContext;
+        this.authenticationServiceClients = authenticationServiceClients;
     }
 
 
@@ -578,6 +584,33 @@ public final class AuthenticationResource implements RestResource {
             return seeOther(redirectionUrl).build();
         }
     }
+
+    /**
+     * Performs the back-channel exchange of accessCode for idToken.
+     *
+     * This must be kept as a back-channel request, and the clientSecret kept away from the browser.
+     */
+    @POST
+    @Path("noauth/exchange")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Exchanges an accessCode for an idToken",
+            response = Response.class)
+    public Response exchangeAccessCode(@ApiParam("ExchangeAccessCodeRequest") final ExchangeAccessCodeRequest exchangeAccessCodeRequest) {
+        stroom.auth.service.api.model.IdTokenRequest idTokenRequest = new stroom.auth.service.api.model.IdTokenRequest()
+                .clientId(config.getStroomConfig().getClientId())
+                .clientSecret(config.getStroomConfig().getClientSecret())
+                .accessCode(exchangeAccessCodeRequest.getAccessCode());
+        try {
+            final String idToken = authenticationServiceClients.newAuthenticationApi().getIdToken(idTokenRequest);
+            return Response.ok(idToken).build();
+        } catch (ApiException e) {
+            LOGGER.error("Unable to exchange the accessCode for an idToken", e);
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
 
     private String createIdToken(String subject, String nonce, String state, String authSessionId) {
         TokenBuilder tokenBuilder = tokenBuilderFactory
