@@ -109,6 +109,7 @@ ext.versions = [
         //------------3rd-party------------
         curator           : '4.2.0', // Curator 4 works with ZK 3.4.x in soft compatibility mode, i.e. you must exlude its dep on ZK and explicitly add one for 3.4.x
         dropwizard        : '1.3.14', // used to set the dropwizard-bom version, that controls lots of dependency versions
+        dropwizard_jooq   : '1.1.0-0',
         guice4            : '4.2.2',
         gwt               : '2.8.2',
         hikari            : '3.2.0',
@@ -146,6 +147,7 @@ ext.libs = [
         //------3rd Party-libs---------------
         aopalliance                    : "aopalliance:aopalliance:1.0",
         assertj_core                   : "org.assertj:assertj-core:3.10.0",
+        bcrypt                         : 'de.svenkubiak:jBCrypt:0.4.1',
         c3p0                           : "com.mchange:c3p0:0.9.5.2",
         caffeine                       : "com.github.ben-manes.caffeine:caffeine:2.8.0",
         commons_codec                  : "commons-codec:commons-codec:1.11",
@@ -160,13 +162,17 @@ ext.libs = [
         curator_framework              : "org.apache.curator:curator-framework:$versions.curator",
         curator_x_discovery            : "org.apache.curator:curator-x-discovery:$versions.curator",
         dropwizard_assets              : "io.dropwizard:dropwizard-assets", // version controlled by DW BOM
+        dropwizard_auth                : "io.dropwizard:dropwizard-auth", // version controlled by DW BOM
+        dropwizard_auth_jwt            : "com.github.toastshaman:dropwizard-auth-jwt:1.0.2-0",
         dropwizard_bom                 : "io.dropwizard:dropwizard-bom:$versions.dropwizard",
         dropwizard_client              : "io.dropwizard:dropwizard-client", // version controlled by DW BOM
         dropwizard_configuration       : "io.dropwizard:dropwizard-configuration", // version controlled by DW BOM
         dropwizard_core                : "io.dropwizard:dropwizard-core", // version controlled by DW BOM
+        dropwizard_flyway              : 'io.dropwizard.modules:dropwizard-flyway:1.2.0-1', // version controlled by DW BOM
         dropwizard_jackson             : "io.dropwizard:dropwizard-jackson", // version controlled by DW BOM
         dropwizard_jersey              : "io.dropwizard:dropwizard-jersey", // version controlled by DW BOM
         dropwizard_jetty               : "io.dropwizard:dropwizard-jetty", //was 1.0.6 now 1.1.0
+        dropwizard_jooq                : "com.bendb.dropwizard:dropwizard-jooq:$versions.dropwizard_jooq",
         dropwizard_lifecycle           : "io.dropwizard:dropwizard-lifecycle", // version controlled by DW BOM
         dropwizard_metrics_annotation  : "io.dropwizard.metrics:metrics-annotation", // version controlled by DW BOM
         dropwizard_metrics_core        : "io.dropwizard.metrics:metrics-core", // version controlled by DW BOM
@@ -188,6 +194,7 @@ ext.libs = [
         gwt_servlet                    : "com.google.gwt:gwt-servlet:$versions.gwt",
         gwt_user                       : "com.google.gwt:gwt-user:$versions.gwt",
         gwtp_mvp_client                : "com.gwtplatform:gwtp-mvp-client:0.7",
+        gson                           : 'com.google.code.gson:gson:2.6.2',
         hbase                          : "org.apache.hbase:hbase-common:2.1.5", //should be set to be consistent with CDH version
         hessian                        : "com.caucho:hessian:4.0.51",
         hikari                         : "com.zaxxer:HikariCP:$versions.hikari",
@@ -210,8 +217,10 @@ ext.libs = [
         javax_mail_api                 : "javax.mail:javax.mail-api:1.6.0",
         javax_servlet_api              : "javax.servlet:javax.servlet-api", //version controlled by DB BOM
         jaxb_api                       : "javax.xml.bind:jaxb-api:2.4.0-b180830.0359", // Using beta versions of jaxb libs as they resolve the split pkg problem between jaxb-core and jaxb-runtime
+//        jaxb_core                      : "com.sun.xml.bind:jaxb-core:2.4.0-b180830.0438",
         jaxb_impl                      : "com.sun.xml.bind:jaxb-impl:2.4.0-b180830.0438",
         jaxb_runtime                   : "org.glassfish.jaxb:jaxb-runtime:2.4.0-b180830.0438",
+        jaxws_api                      : "javax.xml.ws:jaxws-api:2.2.6",
         jcl_over_slf4j                 : "org.slf4j:jcl-over-slf4j", // version controlled by DW BOM
         jcommander                     : 'com.beust:jcommander:1.72',
         jersey_client                  : "org.glassfish.jersey.core:jersey-client", // version controlled by DW BOM
@@ -221,6 +230,7 @@ ext.libs = [
         jetty_server                   : "org.eclipse.jetty:jetty-server", // version controlled by DW BOM
         jetty_servlet                  : "org.eclipse.jetty:jetty-servlet", // version controlled by DW BOM
         jetty_servlets                 : "org.eclipse.jetty:jetty-servlets", // version controlled by DW BOM
+        joda_time                      : 'joda-time:joda-time:2.9.3', // TODO: auth-into-stroom - remove joda
         jooq                           : "org.jooq:jooq:$versions.jooq",
         jooq_codegen                   : "org.jooq:jooq-codegen:$versions.jooq",
         jooq_meta                      : "org.jooq:jooq-meta:$versions.jooq",
@@ -246,12 +256,14 @@ ext.libs = [
         mysql_connector_java           : "mysql:mysql-connector-java:8.0.15",
         objenesis                      : "org.objenesis:objenesis", // version controlled by DW BOM
         okhttp                         : "com.squareup.okhttp3:okhttp:4.3.0",
+        okhttp_logging_interceptor     : 'com.squareup.okhttp:logging-interceptor:2.7.5',
         poi                            : "org.apache.poi:poi:3.17",
         poi_ooxml                      : "org.apache.poi:poi-ooxml:3.17",
         reactivestreams                : "org.reactivestreams:reactive-streams:1.0.2", //used by rxjava
         restygwt                       : "org.fusesource.restygwt:restygwt:2.2.6",
         rxjava                         : "io.reactivex.rxjava2:rxjava:$versions.rxjava",
         saxon_he                       : "net.sf.saxon:Saxon-HE:9.7.0-21",
+        simple_java_mail               : 'org.simplejavamail:simple-java-mail:4.3.0',
         slf4j_api                      : "org.slf4j:slf4j-api", // version controlled by DW BOM
         solrj                          : "org.apache.solr:solr-solrj:8.2.0",
         stax_api                       : "stax:stax-api:1.0.1",

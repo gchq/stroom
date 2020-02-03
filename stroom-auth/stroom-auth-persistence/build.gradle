@@ -20,13 +20,13 @@ ext.moduleName = 'stroom.auth.persistence'
 apply plugin: 'nu.studer.jooq' 
 
 dependencies {
-    compile authDeps.jooq
-    compile authDeps.jooq_codegen
-    compile authDeps.jooq_meta
-    compile authDeps.javax_annotations
-    compile authDeps.jaxws_api
+    compile libs.jooq
+    compile libs.jooq_codegen
+    compile libs.jooq_meta
+    compile libs.javax_annotation
+    compile libs.jaxws_api
 
-    jooqRuntime authDeps.mysql_connector_java
+    jooqRuntime libs.mysql_connector_java
 }
 
 def propNameJooqGeneration = 'jooqGeneration'

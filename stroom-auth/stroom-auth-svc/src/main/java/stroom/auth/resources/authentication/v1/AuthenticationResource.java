@@ -24,7 +24,6 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.curator.shaded.com.google.common.base.Strings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.CertificateManager;
@@ -194,7 +193,7 @@ public final class AuthenticationResource implements RestResource {
         Optional<String> optionalCn = certificateManager.getCertificate(httpServletRequest);
 
         // If the prompt is 'login' then we always want to prompt the user to login in with username and password.
-        boolean requireLoginPrompt = !Strings.isNullOrEmpty(prompt) && prompt.equalsIgnoreCase("login");
+        boolean requireLoginPrompt =  prompt != null && prompt.equalsIgnoreCase("login");
         boolean loginUsingCertificate = optionalCn.isPresent() && !requireLoginPrompt;
         if (requireLoginPrompt) {
             LOGGER.info("Relying party requested a user login page by using 'prompt=login'");
@@ -377,7 +376,7 @@ public final class AuthenticationResource implements RestResource {
 
         // If we have a redirect URL then we'll use that, otherwise we'll go to the advertised host.
         final String postLogoutUrl =
-                Strings.isNullOrEmpty(redirectUrl) ? this.config.getAdvertisedHost() : redirectUrl;
+                redirectUrl == null  || redirectUrl == "" ? this.config.getAdvertisedHost() : redirectUrl;
 
         return seeOther(new URI(postLogoutUrl)).build();
     }
@@ -531,7 +530,7 @@ public final class AuthenticationResource implements RestResource {
 
         List<PasswordValidationFailureType> failedOn = new ArrayList<>();
 
-        if (!Strings.isNullOrEmpty(passwordValidationRequest.getOldPassword())) {
+        if (passwordValidationRequest.getOldPassword() != null) {
             final UserDao.LoginResult loginResult = userDao.areCredentialsValid(passwordValidationRequest.getEmail(), passwordValidationRequest.getOldPassword());
             validateAuthenticity(loginResult).ifPresent(failedOn::add);
             validateReuse(passwordValidationRequest.getOldPassword(), passwordValidationRequest.getNewPassword()).ifPresent(failedOn::add);
