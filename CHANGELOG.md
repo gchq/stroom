@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1-beta.18] - 2020-02-03
+
 * Issue **#1357** : Fixed dragging tabs in dashboard with hidden panes.
 
 * Issue **#1368** : Fixed FindReplaceFilter as it wasn't working when used in conjunction with Data Splitter.
@@ -2065,7 +2068,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.17...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.18...6.1
+[v6.1-beta.18]: https://github.com/gchq/stroom/compare/v6.1-beta.17...v6.1-beta.18
 [v6.1-beta.17]: https://github.com/gchq/stroom/compare/v6.1-beta.16...v6.1-beta.17
 [v6.1-beta.16]: https://github.com/gchq/stroom/compare/v6.1-beta.15...v6.1-beta.16
 [v6.1-beta.15]: https://github.com/gchq/stroom/compare/v6.1-beta.14...v6.1-beta.15
