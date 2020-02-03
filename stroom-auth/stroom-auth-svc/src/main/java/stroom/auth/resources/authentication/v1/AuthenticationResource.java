@@ -513,7 +513,7 @@ public final class AuthenticationResource implements RestResource {
             response = Boolean.class, tags = {"Authentication"})
     public final Response needsPasswordChange(@QueryParam("email") String email) {
         boolean userNeedsToChangePassword = userDao.needsPasswordChange(
-                email, config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration(),
+                email, config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration().getDuration(),
                 config.getPasswordIntegrityChecksConfig().isForcePasswordChangeOnFirstLogin());
         return Response.status(Status.OK).entity(userNeedsToChangePassword).build();
     }
@@ -567,7 +567,7 @@ public final class AuthenticationResource implements RestResource {
         String username = session.getUserEmail();
 
         boolean userNeedsToChangePassword = userDao.needsPasswordChange(
-                username, config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration(),
+                username, config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration().getDuration(),
                 config.getPasswordIntegrityChecksConfig().isForcePasswordChangeOnFirstLogin());
 
         if (userNeedsToChangePassword) {

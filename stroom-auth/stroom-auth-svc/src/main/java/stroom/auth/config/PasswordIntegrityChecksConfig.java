@@ -2,6 +2,7 @@ package stroom.auth.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.validation.constraints.NotNull;
 import java.time.Duration;
@@ -10,19 +11,19 @@ public class PasswordIntegrityChecksConfig extends AbstractConfig {
 
     @NotNull
     @JsonProperty
-    private Duration neverUsedAccountDeactivationThreshold = Duration.parse("P30D");
+    private StroomDuration neverUsedAccountDeactivationThreshold = StroomDuration.parse("P30D");
 
     @NotNull
     @JsonProperty
-    private Duration unusedAccountDeactivationThreshold = Duration.parse("P90D");
+    private StroomDuration unusedAccountDeactivationThreshold = StroomDuration.parse("P90D");
 
     @NotNull
     @JsonProperty
-    private Duration mandatoryPasswordChangeDuration = Duration.parse("P90D");
+    private StroomDuration mandatoryPasswordChangeDuration = StroomDuration.parse("P90D");
 
     @NotNull
     @JsonProperty
-    private Duration durationBetweenChecks = Duration.parse("PT2M");
+    private StroomDuration durationBetweenChecks = StroomDuration.parse("PT2M");
 
     @NotNull
     @JsonProperty
@@ -36,19 +37,19 @@ public class PasswordIntegrityChecksConfig extends AbstractConfig {
     @JsonProperty
     private int minimumPasswordLength;
 
-    public Duration getNeverUsedAccountDeactivationThreshold() {
+    public StroomDuration getNeverUsedAccountDeactivationThreshold() {
         return neverUsedAccountDeactivationThreshold;
     }
 
-    public Duration getUnusedAccountDeactivationThreshold() {
+    public StroomDuration getUnusedAccountDeactivationThreshold() {
         return unusedAccountDeactivationThreshold;
     }
 
-    public Duration getMandatoryPasswordChangeDuration() {
+    public StroomDuration getMandatoryPasswordChangeDuration() {
         return mandatoryPasswordChangeDuration;
     }
 
-    public Duration getDurationBetweenChecks() {
+    public StroomDuration getDurationBetweenChecks() {
         return durationBetweenChecks;
     }
 
