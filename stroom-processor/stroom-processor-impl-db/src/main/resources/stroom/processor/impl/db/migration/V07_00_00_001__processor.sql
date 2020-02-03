@@ -34,19 +34,19 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 -- Create the table
 CREATE TABLE IF NOT EXISTS processor (
-  id                    int(11) NOT NULL AUTO_INCREMENT,
-  version               int(11) NOT NULL,
-  create_time_ms        bigint(20) NOT NULL,
-  create_user           varchar(255) NOT NULL,
-  update_time_ms        bigint(20) NOT NULL,
-  update_user           varchar(255) NOT NULL,
-  uuid          		varchar(255) NOT NULL,
-  task_type             varchar(255) DEFAULT NULL,
-  pipeline_uuid         varchar(255) NOT NULL,
-  enabled               bit(1) NOT NULL,
-  PRIMARY KEY           (id),
-  UNIQUE KEY            uuid (uuid),
-  UNIQUE KEY		    pipeline_uuid (pipeline_uuid)
+    id                    int(11) NOT NULL AUTO_INCREMENT,
+    version               int(11) NOT NULL,
+    create_time_ms        bigint(20) NOT NULL,
+    create_user           varchar(255) NOT NULL,
+    update_time_ms        bigint(20) NOT NULL,
+    update_user           varchar(255) NOT NULL,
+    uuid                  varchar(255) NOT NULL,
+    task_type             varchar(255) DEFAULT NULL,
+    pipeline_uuid         varchar(255) NOT NULL,
+    enabled               bit(1) NOT NULL,
+    PRIMARY KEY           (id),
+    UNIQUE KEY            uuid (uuid),
+    UNIQUE KEY            pipeline_uuid (pipeline_uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP PROCEDURE IF EXISTS copy_processor;
@@ -60,8 +60,28 @@ BEGIN
         -- Copy data into the table, use ID predicate to make it re-runnable
         --
         INSERT
-        INTO processor (id, version, create_time_ms, create_user, update_time_ms, update_user, uuid, task_type, pipeline_uuid, enabled)
-        SELECT SP.ID, SP.VER, SP.CRT_MS, SP.CRT_USER, SP.UPD_MS, SP.UPD_USER, P.UUID, SP.TASK_TP, P.UUID, SP.ENBL
+        INTO processor (
+            id,
+            version,
+            create_time_ms,
+            create_user,
+            update_time_ms,
+            update_user,
+            uuid,
+            task_type,
+            pipeline_uuid,
+            enabled)
+        SELECT
+            SP.ID,
+            SP.VER,
+            IFNULL(SP.CRT_MS,  0),
+            IFNULL(SP.CRT_USER,  'UNKNOWN'),
+            IFNULL(SP.UPD_MS,  0),
+            IFNULL(SP.UPD_USER,  'UNKNOWN'),
+            P.UUID,
+            SP.TASK_TP,
+            P.UUID,
+            SP.ENBL
         FROM STRM_PROC SP
         INNER JOIN PIPE P ON (P.ID = SP.FK_PIPE_ID)
         WHERE SP.ID > (SELECT COALESCE(MAX(id), 0) FROM processor)

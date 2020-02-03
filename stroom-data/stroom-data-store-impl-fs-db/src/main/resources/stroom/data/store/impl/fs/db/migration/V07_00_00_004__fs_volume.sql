@@ -59,28 +59,37 @@ DROP PROCEDURE IF EXISTS copy_fs_volume_state;
 DELIMITER //
 CREATE PROCEDURE copy_fs_volume_state ()
 BEGIN
-  IF EXISTS (
-      SELECT TABLE_NAME
-      FROM INFORMATION_SCHEMA.TABLES
-      WHERE TABLE_NAME = 'VOL_STATE') THEN
+    IF EXISTS (
+            SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'VOL_STATE') THEN
 
-    SET @insert_sql=''
-        ' INSERT INTO fs_volume_state (id, version, bytes_used, bytes_free, bytes_total, update_time_ms)'
-        ' SELECT ID, VER, BYTES_USED, BYTES_FREE, BYTES_TOTL, STAT_MS'
-        ' FROM VOL_STATE'
-        ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM fs_volume_state)'
-        ' ORDER BY ID;';
-    PREPARE insert_stmt FROM @insert_sql;
-    EXECUTE insert_stmt;
+        INSERT INTO fs_volume_state (
+            id,
+            version,
+            bytes_used,
+            bytes_free,
+            bytes_total,
+            update_time_ms)
+        SELECT
+            ID,
+            VER,
+            BYTES_USED,
+            BYTES_FREE,
+            BYTES_TOTL,
+            STAT_MS
+        FROM VOL_STATE
+        WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM fs_volume_state)
+        ORDER BY ID;
 
-    -- Work out what to set our auto_increment start value to
-    SELECT CONCAT('ALTER TABLE fs_volume_state AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
-    INTO @alter_table_sql
-    FROM fs_volume_state;
+        -- Work out what to set our auto_increment start value to
+        SELECT CONCAT('ALTER TABLE fs_volume_state AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+        INTO @alter_table_sql
+        FROM fs_volume_state;
 
-    PREPARE alter_table_stmt FROM @alter_table_sql;
-    EXECUTE alter_table_stmt;
-  END IF;
+        PREPARE alter_table_stmt FROM @alter_table_sql;
+        EXECUTE alter_table_stmt;
+    END IF;
 END//
 DELIMITER ;
 CALL copy_fs_volume_state();
@@ -93,28 +102,45 @@ DROP PROCEDURE IF EXISTS copy_fs_volume;
 DELIMITER //
 CREATE PROCEDURE copy_fs_volume ()
 BEGIN
-  IF EXISTS (
-      SELECT TABLE_NAME
-      FROM INFORMATION_SCHEMA.TABLES
-      WHERE TABLE_NAME = 'VOL') THEN
+    IF EXISTS (
+            SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'VOL') THEN
 
-    SET @insert_sql=''
-        ' INSERT INTO fs_volume (id, version, create_time_ms, create_user, update_time_ms, update_user, path, status, byte_limit, fk_fs_volume_state_id)'
-        ' SELECT ID, VER, CRT_MS, CRT_USER, UPD_MS, UPD_USER, PATH, STRM_STAT, BYTES_LMT, FK_VOL_STATE_ID'
-        ' FROM VOL'
-        ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM fs_volume)'
-        ' ORDER BY ID;';
-    PREPARE insert_stmt FROM @insert_sql;
-    EXECUTE insert_stmt;
+        INSERT INTO fs_volume (
+            id,
+            version,
+            create_time_ms,
+            create_user,
+            update_time_ms,
+            update_user,
+            path,
+            status,
+            byte_limit,
+            fk_fs_volume_state_id)
+        SELECT
+            ID,
+            VER,
+            IFNULL(CRT_MS,  0),
+            IFNULL(CRT_USER,  'UNKNOWN'),
+            IFNULL(UPD_MS,  0),
+            IFNULL(UPD_USER,  'UNKNOWN'),
+            PATH,
+            STRM_STAT,
+            BYTES_LMT,
+            FK_VOL_STATE_ID
+        FROM VOL
+        WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM fs_volume)
+        ORDER BY ID;;
 
-    -- Work out what to set our auto_increment start value to
-    SELECT CONCAT('ALTER TABLE fs_volume AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
-    INTO @alter_table_sql
-    FROM fs_volume;
+        -- Work out what to set our auto_increment start value to
+        SELECT CONCAT('ALTER TABLE fs_volume AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
+        INTO @alter_table_sql
+        FROM fs_volume;
 
-    PREPARE alter_table_stmt FROM @alter_table_sql;
-    EXECUTE alter_table_stmt;
-  END IF;
+        PREPARE alter_table_stmt FROM @alter_table_sql;
+        EXECUTE alter_table_stmt;
+    END IF;
 END//
 DELIMITER ;
 CALL copy_fs_volume();
