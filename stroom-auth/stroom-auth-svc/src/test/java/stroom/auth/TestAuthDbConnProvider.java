@@ -1,7 +1,9 @@
 package stroom.auth;
 
-import org.testcontainers.containers.MySQLContainer;
 import stroom.auth.resources.support.Database_IT;
+import stroom.config.common.ConnectionConfig;
+import stroom.db.util.DbUtil;
+import stroom.test.common.util.db.DbTestUtil;
 
 import java.io.PrintWriter;
 import java.sql.Connection;
@@ -11,20 +13,19 @@ import java.sql.SQLFeatureNotSupportedException;
 import java.util.logging.Logger;
 
 public class TestAuthDbConnProvider implements AuthDbConnProvider{
-    private MySQLContainer mysql;
-
-    public TestAuthDbConnProvider(MySQLContainer mysql){
-        this.mysql = mysql;
-    }
 
     @Override
     public Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(mysql.getJdbcUrl(), Database_IT.JDBC_USER, Database_IT.JDBC_PASSWORD);
+        final ConnectionConfig connectionConfig = DbTestUtil.getOrCreateEmbeddedConnectionConfig();
+        DbUtil.validate(connectionConfig);
+        return DbUtil.getSingleConnection(connectionConfig);
     }
 
     @Override
     public Connection getConnection(String username, String password) throws SQLException {
-        return DriverManager.getConnection(mysql.getJdbcUrl(), username, password);
+        final ConnectionConfig connectionConfig = DbTestUtil.getOrCreateEmbeddedConnectionConfig();
+        DbUtil.validate(connectionConfig);
+        return DbUtil.getSingleConnection(connectionConfig);
     }
 
     @Override
@@ -61,4 +62,5 @@ public class TestAuthDbConnProvider implements AuthDbConnProvider{
     public boolean isWrapperFor(Class<?> iface) throws SQLException {
         return false;
     }
+
 }

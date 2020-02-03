@@ -269,7 +269,6 @@ ext.libs = [
         solrj                          : "org.apache.solr:solr-solrj:8.2.0",
         stax_api                       : "stax:stax-api:1.0.1",
         swagger_annotations            : "io.swagger:swagger-annotations:$versions.swagger",
-        test_containers_mysql          : 'org.testcontainers:mysql:1.9.1',
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",
         validation_api                 : "javax.validation:validation-api:1.0.0.GA",
         //hibernate_validator            : "org.hibernate:hibernate-validator", // version controlled by DW BOM

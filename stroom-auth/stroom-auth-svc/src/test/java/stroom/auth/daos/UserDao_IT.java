@@ -34,7 +34,7 @@ public class UserDao_IT extends Database_IT {
 
     @Test
     public void testNewButInactiveUserIsDisabled(){
-        try (Connection conn = DriverManager.getConnection(mysql.getJdbcUrl(), JDBC_USER, JDBC_PASSWORD)) {
+        try (Connection conn = getConnection()) {
             // GIVEN...
             UserDao userDao = getUserDao(conn);
 
@@ -71,7 +71,7 @@ public class UserDao_IT extends Database_IT {
 
     @Test
     public void testReactivatedDateIsUsedInsteadOfLastLoginForNewUsers(){
-        try (Connection conn = DriverManager.getConnection(mysql.getJdbcUrl(), JDBC_USER, JDBC_PASSWORD)) {
+        try (Connection conn = getConnection()) {
             // GIVEN...
             UserDao userDao = getUserDao(conn);
 
@@ -114,7 +114,7 @@ public class UserDao_IT extends Database_IT {
 
     @Test
     public void testReactivatedDateIsUsedInsteadOfLastLogin(){
-        try (Connection conn = DriverManager.getConnection(mysql.getJdbcUrl(), JDBC_USER, JDBC_PASSWORD)) {
+        try (Connection conn = getConnection()) {
             // GIVEN...
             UserDao userDao = getUserDao(conn);
 
@@ -153,7 +153,7 @@ public class UserDao_IT extends Database_IT {
 
     @Test
     public void testInactiveUserIsDeactivated(){
-        try (Connection conn = DriverManager.getConnection(mysql.getJdbcUrl(), JDBC_USER, JDBC_PASSWORD)) {
+        try (Connection conn = getConnection()) {
             // GIVEN...
             UserDao userDao = getUserDao(conn);
 
@@ -194,7 +194,7 @@ public class UserDao_IT extends Database_IT {
 
     @Test
     public void testLockedUserIsNeverMadeInactive() {
-        try (Connection conn = DriverManager.getConnection(mysql.getJdbcUrl(), JDBC_USER, JDBC_PASSWORD)) {
+        try (Connection conn = getConnection()) {
             // GIVEN...
             UserDao userDao = getUserDao(conn);
 
@@ -224,7 +224,7 @@ public class UserDao_IT extends Database_IT {
 
     @Test
     public void testDisabledUserIsNeverMadeInactive() {
-        try (Connection conn = DriverManager.getConnection(mysql.getJdbcUrl(), JDBC_USER, JDBC_PASSWORD)) {
+        try (Connection conn = getConnection()) {
             // GIVEN...
             UserDao userDao = getUserDao(conn);
 
@@ -254,7 +254,7 @@ public class UserDao_IT extends Database_IT {
 
     @Test
     public void testNeverExpiresUser(){
-        try (Connection conn = DriverManager.getConnection(mysql.getJdbcUrl(), JDBC_USER, JDBC_PASSWORD)) {
+        try (Connection conn = getConnection()) {
             // GIVEN...
             UserDao userDao = getUserDao(conn);
 
@@ -286,7 +286,7 @@ public class UserDao_IT extends Database_IT {
 
     @Test
     public void testNeedsPasswordChange() {
-        try (Connection conn = DriverManager.getConnection(mysql.getJdbcUrl(), JDBC_USER, JDBC_PASSWORD)) {
+        try (Connection conn = getConnection()) {
             // GIVEN...
             UserDao userDao = getUserDao(conn);
 
