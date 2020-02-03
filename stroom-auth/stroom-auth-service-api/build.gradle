@@ -27,5 +27,5 @@ dependencies {
     compile libs.gson
     compile libs.joda_time
 
-    testCompile authTestDeps.junit
+    testCompile libs.junit_jupiter_api
 }

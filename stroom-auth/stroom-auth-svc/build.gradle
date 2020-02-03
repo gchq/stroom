@@ -92,15 +92,14 @@ dependencies {
     runtime libs.mysql_connector_java
 
     testCompile project(':stroom-auth:stroom-auth-svc')
-    testCompile authTestDeps.junit
-    testCompile authTestDeps.assertj
-    testCompile authTestDeps.wiremock
-    testCompile authTestDeps.test_containers_mysql
-    testCompile authTestDeps.mockito
-    testCompile authTestDeps.junit_jupiter
-    testCompile authTestDeps.moshi
-    testCompile authTestDeps.dropwizard_testing
-    testCompile authTestDeps.unirest
+    testCompile libs.junit_jupiter_api
+    testCompile libs.assertj_core
+    testCompile libs.wiremock
+    testCompile libs.test_containers_mysql
+    testCompile libs.mockito_core
+    testCompile libs.moshi
+    testCompile libs.dropwizard_testing
+    testCompile libs.unirest
 
     // TODO: commented out for mgiration
 //    integrationTestCompile testDeps.dropwizard_testing
