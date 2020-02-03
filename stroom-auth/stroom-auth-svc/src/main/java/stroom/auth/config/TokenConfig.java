@@ -19,11 +19,12 @@
 package stroom.auth.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.util.shared.AbstractConfig;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-public class TokenConfig {
+public class TokenConfig extends AbstractConfig {
 
     @Valid
     @NotNull

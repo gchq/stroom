@@ -19,12 +19,12 @@
 package stroom.auth.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.dropwizard.Configuration;
 import org.simplejavamail.mailer.config.TransportStrategy;
+import stroom.util.shared.AbstractConfig;
 
 import javax.validation.constraints.NotNull;
 
-public class SmtpConfig extends Configuration {
+public class SmtpConfig extends AbstractConfig {
 
     @NotNull
     @JsonProperty

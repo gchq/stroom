@@ -1,10 +1,11 @@
 package stroom.auth.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.util.shared.AbstractConfig;
 
 import javax.validation.constraints.NotNull;
 
-public class AuthorisationServiceConfig {
+public class AuthorisationServiceConfig extends AbstractConfig {
 
     @NotNull
     @JsonProperty

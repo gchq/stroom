@@ -19,11 +19,11 @@
 package stroom.auth.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.dropwizard.Configuration;
+import stroom.util.shared.AbstractConfig;
 
 import javax.validation.constraints.NotNull;
 
-public class EmailConfig extends Configuration {
+public class EmailConfig extends AbstractConfig {
 
     @NotNull
     @JsonProperty("smtp")

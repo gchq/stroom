@@ -1,6 +1,7 @@
 package stroom.auth.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.util.shared.AbstractConfig;
 
 import javax.validation.constraints.NotNull;
 
@@ -11,7 +12,7 @@ import javax.validation.constraints.NotNull;
  *
  * But seeing as we only have one we will just make the clientSecret and clientId part of the core configuration.
  */
-public class StroomConfig {
+public class StroomConfig extends AbstractConfig {
     @NotNull
     @JsonProperty
     private String clientId = "PZnJr8kHRKqnlJRQThSI";

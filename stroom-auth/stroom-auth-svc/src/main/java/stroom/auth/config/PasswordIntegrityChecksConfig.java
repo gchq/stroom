@@ -1,11 +1,12 @@
 package stroom.auth.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.util.shared.AbstractConfig;
 
 import javax.validation.constraints.NotNull;
 import java.time.Duration;
 
-public class PasswordIntegrityChecksConfig {
+public class PasswordIntegrityChecksConfig extends AbstractConfig {
 
     @NotNull
     @JsonProperty

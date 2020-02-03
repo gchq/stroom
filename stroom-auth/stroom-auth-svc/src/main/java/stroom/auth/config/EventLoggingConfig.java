@@ -1,11 +1,12 @@
 package stroom.auth.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.util.shared.AbstractConfig;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-public class EventLoggingConfig {
+public class EventLoggingConfig extends AbstractConfig {
 
     @Valid
     @NotNull
