@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-ext.moduleName = 'stroom.auth.svc'
+ext.moduleName = 'stroom.auth.impl'
 
 apply plugin: 'application'
 apply plugin: 'com.github.johnrengelman.shadow' 
@@ -66,7 +66,7 @@ mainClassName = 'stroom.auth.service.App'
 
 dependencies {
     compile project(':stroom-auth:stroom-auth-impl-db-jooq')
-    compile project(':stroom-auth:stroom-auth-service-api')
+    compile project(':stroom-auth:stroom-auth-api-swagger')
     compile project(':stroom-util-shared')
     compile project(':stroom-db-util')
     compile project(':stroom-util')
@@ -108,7 +108,7 @@ dependencies {
 //    integrationTestCompile testDeps.unirest
 }
 
-def apiProjectRoot = "${projectDir}/../stroom-auth-service-api"
+def apiProjectRoot = "${projectDir}/../stroom-auth-api-swagger"
 
 swagger {
     apiSource {

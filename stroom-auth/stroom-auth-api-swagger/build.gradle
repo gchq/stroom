@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.auth.service.api'
+ext.moduleName = 'stroom.auth.api.swagger'
 
 apply plugin: 'com.github.johnrengelman.shadow'
 

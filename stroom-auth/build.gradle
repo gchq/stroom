@@ -59,14 +59,14 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
 //defines a list of gradle projects that we will publish with maven/bintray
 def projectsToBePublished = subprojects.findAll { project -> 
     project.path in [
-        ':stroom-auth-service-api',
+        ':stroom-auth-api-swagger',
     ] 
 }
 
 def javaProjects = subprojects.findAll { project -> 
     project.path in [
         ':stroom-auth:stroom-auth-impl-db-jooq',
-        ':stroom-auth:stroom-auth-service-api',
+        ':stroom-auth:stroom-auth-api-swagger',
         ':stroom-auth:stroom-auth-impl',
     ] 
 }
