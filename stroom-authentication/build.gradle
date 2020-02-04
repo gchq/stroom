@@ -65,9 +65,9 @@ def projectsToBePublished = subprojects.findAll { project ->
 
 def javaProjects = subprojects.findAll { project -> 
     project.path in [
-        ':stroom-auth:stroom-auth-impl-db-jooq',
-        ':stroom-auth:stroom-auth-api-swagger',
-        ':stroom-auth:stroom-auth-impl',
+        ':stroom-authentication:stroom-auth-impl-db-jooq',
+        ':stroom-authentication:stroom-auth-api-swagger',
+        ':stroom-authentication:stroom-auth-impl',
     ] 
 }
 
@@ -266,7 +266,7 @@ configure(projectsToBePublished) {
 
         pkg {
             repo = 'stroom'
-            name = 'stroom-auth'
+            name = 'stroom-authentication'
             userOrg = 'stroom'
             licenses = ['Apache-2.0']
             vcsUrl = 'https://github.com/gchq/stroom-auth.git'

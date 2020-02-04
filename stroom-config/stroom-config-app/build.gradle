@@ -4,7 +4,7 @@ dependencies {
     compile project(':stroom-activity:stroom-activity-impl-db')
     compile project(':stroom-annotation:stroom-annotation-impl')
     compile project(':stroom-annotation:stroom-annotation-impl-db')
-    compile project(':stroom-auth:stroom-auth-impl')
+    compile project(':stroom-authentication:stroom-auth-impl')
     compile project(':stroom-core')
     compile project(':stroom-core-shared')
     compile project(':stroom-cluster:stroom-cluster-api')

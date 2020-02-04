@@ -36,9 +36,9 @@ include 'stroom-app'
 include 'stroom-app-gwt'
 
 // Auth
-include 'stroom-auth:stroom-auth-api-swagger'
-include 'stroom-auth:stroom-auth-impl'
-include 'stroom-auth:stroom-auth-impl-db-jooq'
+include 'stroom-authentication:stroom-auth-api-swagger'
+include 'stroom-authentication:stroom-auth-impl'
+include 'stroom-authentication:stroom-auth-impl-db-jooq'
 
 // Cache
 include 'stroom-cache:stroom-cache-api'
