@@ -141,7 +141,7 @@ BEGIN
         FROM JB_ND j
         JOIN ND n ON (j.FK_ND_ID = n.ID)
         WHERE j.ID > (SELECT COALESCE(MAX(id), 0) FROM job_node)
-        ORDER BY j.ID;;
+        ORDER BY j.ID;
 
         -- Work out what to set our auto_increment start value to
         SELECT CONCAT('ALTER TABLE job_node AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
