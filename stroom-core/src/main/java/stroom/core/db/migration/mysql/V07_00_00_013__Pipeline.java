@@ -27,6 +27,7 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public class V07_00_00_013__Pipeline extends BaseJavaMigration {
 
     @Override
@@ -34,7 +35,16 @@ public class V07_00_00_013__Pipeline extends BaseJavaMigration {
         final _V07_00_00_PipelineSerialiser serialiser = new _V07_00_00_PipelineSerialiser();
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, PARNT_PIPE, DAT FROM PIPE")) {
+                "SELECT CRT_MS, " +
+                    "  CRT_USER, " +
+                    "  UPD_MS, " +
+                    "  UPD_USER, " +
+                    "  NAME, " +
+                    "  UUID, " +
+                    "  DESCRIP, " +
+                    "  PARNT_PIPE, " +
+                    "  DAT " +
+                    "FROM PIPE")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);

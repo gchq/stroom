@@ -26,10 +26,11 @@ class TestJobDaoImpl {
     @BeforeEach
     void beforeEach() {
         Guice.createInjector(
-                new JobDbModule(),
-                new MockSecurityContextModule(),
-                new DbTestModule())
-                .injectMembers(this);
+            new TestModule(),
+            new JobDbModule(),
+            new MockSecurityContextModule(),
+            new DbTestModule())
+            .injectMembers(this);
         cleanup();
     }
 

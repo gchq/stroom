@@ -29,6 +29,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("unused")
 public class V07_00_00_003__Dictionary extends BaseJavaMigration {
 
     @Override

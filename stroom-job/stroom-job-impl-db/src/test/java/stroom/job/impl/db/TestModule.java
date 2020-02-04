@@ -1,13 +1,9 @@
-package stroom.meta.impl.db;
+package stroom.job.impl.db;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Provides;
-import stroom.meta.shared.MetaSecurityFilter;
 import stroom.util.db.ForceCoreMigration;
 
-import java.util.Optional;
-
-public class MetaTestModule extends AbstractModule {
+public class TestModule extends AbstractModule {
     @Override
     protected void configure() {
         super.configure();
@@ -16,8 +12,5 @@ public class MetaTestModule extends AbstractModule {
         bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() {});
     }
 
-    @Provides
-    MetaSecurityFilter getMetaSecurityFilter() {
-        return permission -> Optional.empty();
-    }
+
 }
