@@ -60,11 +60,31 @@ BEGIN
         -- Copy data into the table, use ID predicate to make it re-runnable
         INSERT
         INTO processor_filter_tracker (
-            id, version, min_meta_id, min_event_id, min_meta_create_ms, max_meta_create_ms,
-            meta_create_ms, last_poll_ms, last_poll_task_count, status, meta_count, event_count)
+            id,
+            version,
+            min_meta_id,
+            min_event_id,
+            min_meta_create_ms,
+            max_meta_create_ms,
+            meta_create_ms,
+            last_poll_ms,
+            last_poll_task_count,
+            status,
+            meta_count,
+            event_count)
         SELECT
-            ID, VER, MIN_STRM_ID, MIN_EVT_ID, MIN_STRM_CRT_MS, MAX_STRM_CRT_MS,
-            STRM_CRT_MS, LAST_POLL_MS, LAST_POLL_TASK_CT, STAT, STRM_CT, EVT_CT
+            ID,
+            VER,
+            MIN_STRM_ID,
+            MIN_EVT_ID,
+            MIN_STRM_CRT_MS,
+            MAX_STRM_CRT_MS,
+            STRM_CRT_MS,
+            LAST_POLL_MS,
+            LAST_POLL_TASK_CT,
+            STAT,
+            STRM_CT,
+            EVT_CT
         FROM STRM_PROC_FILT_TRAC
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor_filter_tracker)
         ORDER BY ID;

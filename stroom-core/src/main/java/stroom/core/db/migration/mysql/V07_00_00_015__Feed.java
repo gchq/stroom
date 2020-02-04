@@ -27,13 +27,30 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public class V07_00_00_015__Feed extends BaseJavaMigration {
     @Override
     public void migrate(final Context context) throws Exception {
         final _V07_00_00_FeedSerialiser serialiser = new _V07_00_00_FeedSerialiser();
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "SELECT f.CRT_MS, f.CRT_USER, f.UPD_MS, f.UPD_USER, f.NAME, f.UUID, f.DESCRIP, st.NAME, f.CLS, f.ENC, f.CTX_ENC, f.STAT, f.RETEN_DAY_AGE, f.REF FROM FD f LEFT OUTER JOIN STRM_TP st ON (st.ID = f.FK_STRM_TP_ID)")) {
+                "SELECT " +
+                    "  f.CRT_MS, " +
+                    "  f.CRT_USER, " +
+                    "  f.UPD_MS, " +
+                    "  f.UPD_USER, " +
+                    "  f.NAME, " +
+                    "  f.UUID, " +
+                    "  f.DESCRIP, " +
+                    "  st.NAME, " +
+                    "  f.CLS, " +
+                    "  f.ENC, " +
+                    "  f.CTX_ENC, " +
+                    "  f.STAT, " +
+                    "  f.RETEN_DAY_AGE, " +
+                    "  f.REF " +
+                    "FROM FD f " +
+                    "LEFT OUTER JOIN STRM_TP st ON (st.ID = f.FK_STRM_TP_ID)")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);
@@ -62,7 +79,6 @@ public class V07_00_00_015__Feed extends BaseJavaMigration {
                     document.setUpdateUser(updUser);
                     document.setDescription(descrip);
                     document.setStreamType(streamTypeName);
-
                     document.setClassification(classification);
                     document.setEncoding(encoding);
                     document.setContextEncoding(contextEncoding);

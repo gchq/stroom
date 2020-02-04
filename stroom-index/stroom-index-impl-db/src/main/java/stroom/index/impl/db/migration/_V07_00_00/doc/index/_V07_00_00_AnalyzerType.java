@@ -1,4 +1,4 @@
-package stroom.core.db.migration._V07_00_00.doc.index;
+package stroom.index.impl.db.migration._V07_00_00.doc.index;
 
 import stroom.docref.HasDisplayValue;
 
