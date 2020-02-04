@@ -40,17 +40,17 @@ CREATE TABLE IF NOT EXISTS stroom_user_group (
     id                    bigint(20) NOT NULL AUTO_INCREMENT,
     user_uuid             varchar(255) NOT NULL,
     group_uuid            varchar(255) NOT NULL,
-    PRIMARY KEY           (id)
+    PRIMARY KEY           (id),
     FOREIGN KEY (user_uuid) REFERENCES stroom_user (uuid),
-    FOREIGN KEY (group_uuid) REFERENCES stroom_user (uuid),
+    FOREIGN KEY (group_uuid) REFERENCES stroom_user (uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS app_permission (
     id                    bigint(20) NOT NULL AUTO_INCREMENT,
     user_uuid             varchar(255) NOT NULL,
     permission            varchar(255) NOT NULL,
-    PRIMARY KEY           (id)
-    FOREIGN KEY (user_uuid) REFERENCES stroom_user (uuid),
+    PRIMARY KEY           (id),
+    FOREIGN KEY (user_uuid) REFERENCES stroom_user (uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS doc_permission (
@@ -58,8 +58,8 @@ CREATE TABLE IF NOT EXISTS doc_permission (
     user_uuid             varchar(255) NOT NULL,
     doc_uuid              varchar(255) NOT NULL,
     permission            varchar(255) NOT NULL,
-    PRIMARY KEY           (id)
-    FOREIGN KEY (user_uuid) REFERENCES stroom_user (uuid),
+    PRIMARY KEY           (id),
+    FOREIGN KEY (user_uuid) REFERENCES stroom_user (uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
