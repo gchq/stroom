@@ -95,9 +95,8 @@ public final class AuthenticationResource implements RestResource {
     private static final String ACCOUNT_LOCKED_MESSAGE = "This account is locked. Please contact your administrator";
     private static final String ACCOUNT_DISABLED_MESSAGE = "This account is disabled. Please contact your administrator";
     private static final String ACCOUNT_INACTIVE_MESSAGE = "This account is marked as inactive. Please contact your administrator";
-
-    private AuthenticationConfig config;
     private final Pattern dnPattern;
+    private AuthenticationConfig config;
     private TokenDao tokenDao;
     private UserDao userDao;
     private TokenVerifier tokenVerifier;

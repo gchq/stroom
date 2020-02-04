@@ -34,9 +34,8 @@ import javax.ws.rs.core.Response;
 
 @Singleton
 public class UserServiceClient {
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceClient.class);
-
     public static final String UNAUTHORISED_USER_MESSAGE = "This user is not authorised to access this resource";
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceClient.class);
     private static final String NOT_FOUND_404_MESSAGE = "Received a 404 when trying to access the authorisation service! I am unable to check authorisation so all requests will be rejected until this is fixed. Is the service location correctly configured? Is the service running? The URL I tried was: {}";
 
     private UserServiceConfig config;

@@ -78,6 +78,28 @@ public final class User {
         this.password = password;
     }
 
+    public static Pair<Boolean, String> isValidForCreate(User user) {
+        ArrayList<UserValidationError> validationErrors = new ArrayList<>();
+
+        if (user == null) {
+            validationErrors.add(UserValidationError.NO_USER);
+        } else {
+            if (Strings.isNullOrEmpty(user.getEmail())) {
+                validationErrors.add(UserValidationError.NO_NAME);
+            }
+
+            if (Strings.isNullOrEmpty(user.getPassword())) {
+                validationErrors.add(UserValidationError.NO_PASSWORD);
+            }
+        }
+
+        String validationMessages = validationErrors.stream()
+                .map(UserValidationError::getMessage)
+                .reduce((validationMessage1, validationMessage2) -> validationMessage1 + validationMessage2).orElse("");
+        boolean isValid = validationErrors.size() == 0;
+        return Pair.of(isValid, validationMessages);
+    }
+
     @Nullable
     public final Integer getId() {
         return this.id;
@@ -230,12 +252,12 @@ public final class User {
         this.forcePasswordChange = forcePasswordChange;
     }
 
-    public void setReactivatedDate(String reactivatedDate) {
-        this.reactivatedDate = reactivatedDate;
-    }
-
     public String getReactivatedDate() {
         return this.reactivatedDate;
+    }
+
+    public void setReactivatedDate(String reactivatedDate) {
+        this.reactivatedDate = reactivatedDate;
     }
 
     /**
@@ -244,46 +266,6 @@ public final class User {
      */
     public String generatePasswordHash() {
         return BCrypt.hashpw(this.password, BCrypt.gensalt());
-    }
-
-    public static Pair<Boolean, String> isValidForCreate(User user) {
-        ArrayList<UserValidationError> validationErrors = new ArrayList<>();
-
-        if (user == null) {
-            validationErrors.add(UserValidationError.NO_USER);
-        } else {
-            if (Strings.isNullOrEmpty(user.getEmail())) {
-                validationErrors.add(UserValidationError.NO_NAME);
-            }
-
-            if (Strings.isNullOrEmpty(user.getPassword())) {
-                validationErrors.add(UserValidationError.NO_PASSWORD);
-            }
-        }
-
-        String validationMessages = validationErrors.stream()
-                .map(UserValidationError::getMessage)
-                .reduce((validationMessage1, validationMessage2) -> validationMessage1 + validationMessage2).orElse("");
-        boolean isValid = validationErrors.size() == 0;
-        return Pair.of(isValid, validationMessages);
-    }
-
-
-    public enum UserState {
-        ENABLED("enabled"),
-        INACTIVE("inactive"),
-        DISABLED("disabled"),
-        LOCKED("locked");
-
-        private String stateText;
-
-        UserState(String stateText) {
-            this.stateText = stateText;
-        }
-
-        public String getStateText() {
-            return this.stateText;
-        }
     }
 
     @Override
@@ -308,5 +290,22 @@ public final class User {
                 ", forcePasswordChange='" + forcePasswordChange + '\'' +
                 ", reactivated_date='" + reactivatedDate + '\'' +
                 '}';
+    }
+
+    public enum UserState {
+        ENABLED("enabled"),
+        INACTIVE("inactive"),
+        DISABLED("disabled"),
+        LOCKED("locked");
+
+        private String stateText;
+
+        UserState(String stateText) {
+            this.stateText = stateText;
+        }
+
+        public String getStateText() {
+            return this.stateText;
+        }
     }
 }

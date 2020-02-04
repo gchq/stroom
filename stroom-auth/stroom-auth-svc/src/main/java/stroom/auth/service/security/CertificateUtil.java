@@ -30,12 +30,11 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class CertificateUtil {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CertificateUtil.class);
-
     /**
      * API into the request for the certificate details.
      */
     public static final String SERVLET_CERT_ARG = "javax.servlet.request.X509Certificate";
+    private static final Logger LOGGER = LoggerFactory.getLogger(CertificateUtil.class);
 
     /**
      * Do all the below in 1 go !

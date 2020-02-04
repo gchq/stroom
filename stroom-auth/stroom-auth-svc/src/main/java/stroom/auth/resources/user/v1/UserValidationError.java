@@ -30,12 +30,12 @@ public enum UserValidationError {
     @NotNull
     private final String message;
 
+    UserValidationError(@NotNull String message) {
+        this.message = message;
+    }
+
     @NotNull
     public final String getMessage() {
         return this.message;
-    }
-
-    UserValidationError(@NotNull String message) {
-        this.message = message;
     }
 }

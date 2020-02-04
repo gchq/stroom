@@ -21,11 +21,6 @@ package stroom.auth;
 public class RelyingParty {
 
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(RelyingParty.class);
-
-    public RelyingParty(String clientId) {
-        this.clientId = clientId;
-    }
-
     private String clientId;
     private String clientSecret;
     private String clientUri;
@@ -35,6 +30,9 @@ public class RelyingParty {
     private String nonce;
     private String state;
     private String redirectUrl;
+    public RelyingParty(String clientId) {
+        this.clientId = clientId;
+    }
 
     public boolean accessCodesMatch(String accessCodeToMatch) {
         return this.accessCode != null && accessCode.equals(accessCodeToMatch);

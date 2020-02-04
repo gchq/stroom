@@ -24,9 +24,16 @@ import java.security.Principal;
 public final class ServiceUser implements Principal {
 
     @NotNull
-    private String name;
-    @NotNull
     private final String jwt;
+    @NotNull
+    private String name;
+
+    public ServiceUser(@NotNull String name, @NotNull String jwt) {
+        Preconditions.checkNotNull(name);
+        Preconditions.checkNotNull(jwt);
+        this.name = name;
+        this.jwt = jwt;
+    }
 
     @NotNull
     public String getName() {
@@ -36,12 +43,5 @@ public final class ServiceUser implements Principal {
     @NotNull
     public final String getJwt() {
         return this.jwt;
-    }
-
-    public ServiceUser(@NotNull String name, @NotNull String jwt) {
-        Preconditions.checkNotNull(name);
-        Preconditions.checkNotNull(jwt);
-        this.name = name;
-        this.jwt = jwt;
     }
 }

@@ -26,8 +26,8 @@ public class ChangePasswordResponse {
     }
 
     public static final class ChangePasswordResponseBuilder {
-        private boolean changeSucceeded;
         List<PasswordValidationFailureType> failedOn = new ArrayList<>();
+        private boolean changeSucceeded;
 
         private ChangePasswordResponseBuilder() {
         }

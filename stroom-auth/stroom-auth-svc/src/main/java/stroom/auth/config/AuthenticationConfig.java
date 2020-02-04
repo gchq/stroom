@@ -51,58 +51,46 @@ public final class AuthenticationConfig extends AbstractConfig {
 //    @NotNull
 //    @JsonProperty("jooq")
 //    private JooqFactory jooqFactory = new JooqFactory();
-
+    @Nullable
+    @JsonProperty(PROP_NAME_EMAIL)
+    public EmailConfig emailConfig = new EmailConfig();
     @Valid
     @NotNull
     @JsonProperty
     private String certificateDnPattern = ".*\\((.*)\\)";
-
     @Valid
     @NotNull
     @JsonProperty
     private int certificateDnCaptureGroupIndex = 1;
-
     //TODO: change all these URLs so they exclude the actual FQDN. Just have them be the paths.
     @Valid
     @NotNull
     @JsonProperty
     private String loginUrl = "https://localhost/s/login";
-
     @Valid
     @NotNull
     @JsonProperty
     private String changePasswordUrl = "https://localhost/s/changepassword";
-
     @Valid
     @NotNull
     @JsonProperty
     private String stroomUrl = "https://localhost/";
-
     @Valid
     @NotNull
     @JsonProperty
     private String advertisedHost = "https://localhost";
-
     @Nullable
     @JsonProperty
     private Integer httpPort;
-
     @Nullable
     @JsonProperty
     private Integer httpsPort;
-
     @Nullable
     @JsonProperty
     private Integer failedLoginLockThreshold = 3;
-
     @Nullable
     @JsonProperty
     private String unauthorisedUrl = "https://localhost/s/unauthorised";
-
-    @Nullable
-    @JsonProperty(PROP_NAME_EMAIL)
-    public EmailConfig emailConfig = new EmailConfig();
-
     @Nullable
     @JsonProperty(PROP_NAME_TOKEN)
     private TokenConfig tokenConfig = new TokenConfig();

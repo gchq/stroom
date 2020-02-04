@@ -37,9 +37,9 @@ import javax.mail.Message;
 @Singleton
 public class EmailSender {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(EmailSender.class);
-    private AuthenticationConfig config;
     private final ServerConfig serverConfig;
     private final TransportStrategy transportStrategy;
+    private AuthenticationConfig config;
 
     @Inject
     public EmailSender(AuthenticationConfig config) {

@@ -96,6 +96,16 @@ public final class UserResource implements RestResource {
         this.securityContext = securityContext;
     }
 
+    private static Boolean doesUserAlreadyExist(DSLContext database, String email) {
+        int countOfSameName = database
+                .selectCount()
+                .from(USERS)
+                .where(new Condition[]{USERS.EMAIL.eq(email)})
+                .fetchOne(0, Integer.TYPE);
+
+        return countOfSameName > 0;
+    }
+
     @ApiOperation(
             value = "Get all users.",
             response = String.class,
@@ -248,7 +258,6 @@ public final class UserResource implements RestResource {
         });
     }
 
-
     @ApiOperation(
             value = "Search for a user by email.",
             response = String.class,
@@ -307,7 +316,6 @@ public final class UserResource implements RestResource {
             }
         });
     }
-
 
     @ApiOperation(
             value = "Get a user by ID.",
@@ -452,16 +460,6 @@ public final class UserResource implements RestResource {
             Response response = Response.status(Response.Status.NO_CONTENT).build();
             return response;
         });
-    }
-
-    private static Boolean doesUserAlreadyExist(DSLContext database, String email) {
-        int countOfSameName = database
-                .selectCount()
-                .from(USERS)
-                .where(new Condition[]{USERS.EMAIL.eq(email)})
-                .fetchOne(0, Integer.TYPE);
-
-        return countOfSameName > 0;
     }
 }
 
