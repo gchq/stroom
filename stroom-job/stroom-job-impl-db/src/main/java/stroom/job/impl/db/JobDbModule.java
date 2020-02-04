@@ -18,6 +18,7 @@ public class JobDbModule extends AbstractFlyWayDbModule<JobSystemConfig, JobDbCo
         super.configure();
         bind(JobDao.class).to(JobDaoImpl.class);
         bind(JobNodeDao.class).to(JobNodeDaoImpl.class);
+
     }
 
     @Override

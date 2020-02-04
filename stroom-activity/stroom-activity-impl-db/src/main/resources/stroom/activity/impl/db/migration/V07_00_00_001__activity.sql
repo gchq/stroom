@@ -25,13 +25,11 @@ DELIMITER //
 CREATE PROCEDURE rename_activity ()
 BEGIN
   IF EXISTS (
-      SELECT TABLE_NAME
-      FROM INFORMATION_SCHEMA.TABLES
-      WHERE TABLE_NAME = 'ACTIVITY') THEN
+          SELECT TABLE_NAME
+          FROM INFORMATION_SCHEMA.TABLES
+          WHERE TABLE_NAME = 'ACTIVITY') THEN
 
-    SET @rename_sql='RENAME TABLE ACTIVITY TO OLD_ACTIVITY';
-    PREPARE stmt FROM @rename_sql;
-    EXECUTE stmt;
+      RENAME TABLE ACTIVITY TO OLD_ACTIVITY;
   END IF;
 END//
 DELIMITER ;
@@ -65,12 +63,27 @@ BEGIN
       FROM INFORMATION_SCHEMA.TABLES
       WHERE TABLE_NAME = 'OLD_ACTIVITY') THEN
 
-    SET @insert_sql=''
-        ' INSERT INTO activity (id, version, create_time_ms, create_user, update_time_ms, update_user, user_id, json)'
-        ' SELECT ID, 1, CRT_MS, CRT_USER, UPD_MS, UPD_USER, USER_ID, JSON'
-        ' FROM OLD_ACTIVITY'
-        ' WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM activity)'
-        ' ORDER BY ID;';
+         INSERT INTO activity (
+             id,
+             version,
+             create_time_ms,
+             create_user,
+             update_time_ms,
+             update_user,
+             user_id,
+             json)
+         SELECT
+             ID,
+             1,
+             IFNULL(CRT_MS, 0),
+             IFNULL(CRT_USER, 'UNKNOWN'),
+             IFNULL(UPD_MS, 0),
+             IFNULL(UPD_USER, 'UNKNOWN'),
+             USER_ID,
+             JSON
+         FROM OLD_ACTIVITY
+         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM activity)
+         ORDER BY ID;
     PREPARE insert_stmt FROM @insert_sql;
     EXECUTE insert_stmt;
 

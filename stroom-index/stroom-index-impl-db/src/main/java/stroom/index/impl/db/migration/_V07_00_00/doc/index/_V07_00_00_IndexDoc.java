@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,35 +14,40 @@
  * limitations under the License.
  */
 
-package stroom.core.db.migration._V07_00_00.doc.index;
+package stroom.index.impl.db.migration._V07_00_00.doc.index;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
-import stroom.importexport.migration.DocumentEntity;
-import stroom.importexport.shared.ExternalFile;
+import stroom.index.impl.db.migration._V07_00_00.docstore.shared._V07_00_00_Doc;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
-import javax.xml.bind.annotation.XmlTransient;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
-/**
- * Used for legacy migration
- **/
-public class _V07_00_00_Index extends DocumentEntity {
-    private static final int DEFAULT_MAX_DOCS_PER_SHARD = 1000000000;
+@JsonInclude(Include.NON_EMPTY)
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "maxDocsPerShard", "partitionBy", "partitionSize", "shardsPerPartition", "retentionDayAge", "indexFields", "volumeGroupName"})
+public class _V07_00_00_IndexDoc extends _V07_00_00_Doc {
+    private static final long serialVersionUID = 2648729644398564919L;
+
+    public static final int DEFAULT_MAX_DOCS_PER_SHARD = 1000000000;
     private static final int DEFAULT_SHARDS_PER_PARTITION = 1;
     private static final PartitionBy DEFAULT_PARTITION_BY = PartitionBy.MONTH;
     private static final int DEFAULT_PARTITION_SIZE = 1;
-    private static final String ENTITY_TYPE = "Index";
 
-    //    private Set<Volume> volumes = new HashSet<>();
-    private int maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
-    private int shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
-    private Byte pPartitionBy = DEFAULT_PARTITION_BY.primitiveValue;
-    private int partitionSize = DEFAULT_PARTITION_SIZE;
-    private Integer retentionDayAge;
+    public static final String DOCUMENT_TYPE = "Index";
+
     private String description;
-    private String indexFields;
-    private _V07_00_00_IndexFields indexFieldsObject;
+    private int maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
+    private PartitionBy partitionBy = DEFAULT_PARTITION_BY;
+    private int partitionSize = DEFAULT_PARTITION_SIZE;
+    private int shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
+    private Integer retentionDayAge;
+    private List<_V07_00_00_IndexField> indexFields;
+    private String volumeGroupName;
 
     public String getDescription() {
         return description;
@@ -60,12 +65,12 @@ public class _V07_00_00_Index extends DocumentEntity {
         this.maxDocsPerShard = maxDocsPerShard;
     }
 
-    public Byte getPPartitionBy() {
-        return pPartitionBy;
+    public PartitionBy getPartitionBy() {
+        return partitionBy;
     }
 
-    public void setPPartitionBy(final Byte pPartitionBy) {
-        this.pPartitionBy = pPartitionBy;
+    public void setPartitionBy(final PartitionBy partitionBy) {
+        this.partitionBy = partitionBy;
     }
 
     public int getPartitionSize() {
@@ -84,21 +89,6 @@ public class _V07_00_00_Index extends DocumentEntity {
         this.shardsPerPartition = shardsPerPartition;
     }
 
-    public PartitionBy getPartitionBy() {
-        if (pPartitionBy == null) {
-            return null;
-        }
-        return PartitionBy.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(pPartitionBy);
-    }
-
-    public void setPartitionBy(final PartitionBy partitionBy) {
-        if (partitionBy == null) {
-            this.pPartitionBy = null;
-        } else {
-            this.pPartitionBy = partitionBy.getPrimitiveValue();
-        }
-    }
-
     public Integer getRetentionDayAge() {
         return retentionDayAge;
     }
@@ -107,26 +97,44 @@ public class _V07_00_00_Index extends DocumentEntity {
         this.retentionDayAge = retentionDayAge;
     }
 
-    @ExternalFile
-    public String get_V07_00_00_IndexFields() {
+    public List<_V07_00_00_IndexField> getIndexFields() {
+        if (indexFields == null) {
+            indexFields = new ArrayList<>();
+        }
         return indexFields;
     }
 
-    public void set_V07_00_00_IndexFields(final String indexFields) {
+    public void setIndexFields(final List<_V07_00_00_IndexField> indexFields) {
         this.indexFields = indexFields;
     }
 
-    @XmlTransient
-    public _V07_00_00_IndexFields get_V07_00_00_IndexFieldsObject() {
-        return indexFieldsObject;
+    public String getVolumeGroupName() {
+        return volumeGroupName;
     }
 
-    public void set_V07_00_00_IndexFieldsObject(final _V07_00_00_IndexFields indexFieldsObject) {
-        this.indexFieldsObject = indexFieldsObject;
+    public void setVolumeGroupName(String volumeGroupName) {
+        this.volumeGroupName = volumeGroupName;
     }
 
-    public final String getType() {
-        return ENTITY_TYPE;
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        final _V07_00_00_IndexDoc indexDoc = (_V07_00_00_IndexDoc) o;
+        return maxDocsPerShard == indexDoc.maxDocsPerShard &&
+                partitionSize == indexDoc.partitionSize &&
+                shardsPerPartition == indexDoc.shardsPerPartition &&
+                Objects.equals(description, indexDoc.description) &&
+                partitionBy == indexDoc.partitionBy &&
+                Objects.equals(retentionDayAge, indexDoc.retentionDayAge) &&
+                Objects.equals(indexFields, indexDoc.indexFields) &&
+                Objects.equals(volumeGroupName, indexDoc.volumeGroupName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), description, maxDocsPerShard, partitionBy, partitionSize, shardsPerPartition, retentionDayAge, indexFields, volumeGroupName);
     }
 
     public enum PartitionBy implements HasDisplayValue, HasPrimitiveValue {

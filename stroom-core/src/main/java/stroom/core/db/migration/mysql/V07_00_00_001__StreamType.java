@@ -26,6 +26,7 @@ import stroom.core.db.migration._V07_00_00.streamstore.shared._V07_00_00_StreamT
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+@SuppressWarnings("unused")
 public class V07_00_00_001__StreamType extends BaseJavaMigration {
     private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_001__StreamType.class);
 

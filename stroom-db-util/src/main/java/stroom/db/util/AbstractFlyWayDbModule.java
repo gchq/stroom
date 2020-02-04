@@ -24,6 +24,7 @@ public abstract class AbstractFlyWayDbModule<T_Config extends HasDbConfig, T_Con
     @Override
     protected void configure() {
         super.configure();
+        LOGGER.debug("Configure() called on " + this.getClass().getCanonicalName());
     }
 
     @Override

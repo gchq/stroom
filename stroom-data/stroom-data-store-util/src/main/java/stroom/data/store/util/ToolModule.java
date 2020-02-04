@@ -27,6 +27,7 @@ import stroom.entity.shared.EntityEvent.Handler;
 import stroom.entity.shared.EntityEventBus;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.statistics.mock.MockInternalStatisticsModule;
+import stroom.util.db.ForceCoreMigration;
 import stroom.util.servlet.MockServletModule;
 
 public class ToolModule extends AbstractModule {
@@ -45,6 +46,9 @@ public class ToolModule extends AbstractModule {
         install(new MockServletModule());
         install(new MockCollectionModule());
         install(new MockWordListProviderModule());
+
+        // Not using all the DB modules so just bind to an empty anonymous class
+        bind(ForceCoreMigration.class).toInstance(new ForceCoreMigration() {});
     }
 
     @Provides
