@@ -1,8 +1,5 @@
 package stroom.auth.daos;
 
-import org.jooq.Configuration;
-import org.jooq.DSLContext;
-import org.jooq.impl.DSL;
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;
 import org.jose4j.jwk.RsaJsonWebKey;
@@ -27,6 +24,7 @@ public class JwkDao {
     JwkDao(final AuthDbConnProvider authDbConnProvider) {
         this.authDbConnProvider = authDbConnProvider;
     }
+
     /**
      * This will always return a single public key. If the key doesn't exist it will create it.
      * If it does exist it will return that.
@@ -38,7 +36,7 @@ public class JwkDao {
             JsonWebKeyRecord existingJwkRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
                     .selectFrom(Tables.JSON_WEB_KEY).fetchOne());
 
-            if(existingJwkRecord == null ) {
+            if (existingJwkRecord == null) {
                 LOGGER.info("We don't have a saved JWK so we'll create one and save it for use next time.");
                 // We need to set up the jwkId so we know which JWTs were signed by which JWKs.
                 String jwkId = UUID.randomUUID().toString();
@@ -52,8 +50,7 @@ public class JwkDao {
                 JooqUtil.context(authDbConnProvider, context -> context.executeInsert(jwkRecord));
 
                 return jwk;
-            }
-            else {
+            } else {
                 LOGGER.info("We do have a saved JWK so we'll re-use it.");
                 PublicJsonWebKey jwk = RsaJsonWebKey.Factory.newPublicJwk(existingJwkRecord.getJson());
                 return jwk;

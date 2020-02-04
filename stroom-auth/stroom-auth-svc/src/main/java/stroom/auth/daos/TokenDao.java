@@ -18,8 +18,17 @@
 
 package stroom.auth.daos;
 
-import org.jooq.*;
-import org.jooq.impl.DSL;
+import org.jooq.Condition;
+import org.jooq.DSLContext;
+import org.jooq.Field;
+import org.jooq.Record;
+import org.jooq.Record1;
+import org.jooq.Record11;
+import org.jooq.Result;
+import org.jooq.SelectJoinStep;
+import org.jooq.SelectSelectStep;
+import org.jooq.SortField;
+import org.jooq.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.AuthDbConnProvider;

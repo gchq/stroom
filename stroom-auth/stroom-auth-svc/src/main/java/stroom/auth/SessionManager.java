@@ -89,9 +89,9 @@ public class SessionManager {
     }
 
     public Optional<RelyingParty> getByAccessCode(String accessCode) {
-        for(Session session : sessions.values()){
-            for(RelyingParty relyingParty : session.getRelyingParties()){
-                if(relyingParty.getAccessCode() != null) {
+        for (Session session : sessions.values()) {
+            for (RelyingParty relyingParty : session.getRelyingParties()) {
+                if (relyingParty.getAccessCode() != null) {
                     if (relyingParty.getAccessCode().equals(accessCode)) {
                         return Optional.of(relyingParty);
                     }

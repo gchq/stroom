@@ -106,7 +106,7 @@ public class TokenVerifier {
         return Optional.of(tokenRecord.get().getUserEmail());
     }
 
-    public JwtConsumer getJwtConsumer(){
+    public JwtConsumer getJwtConsumer() {
         return this.consumer;
     }
 

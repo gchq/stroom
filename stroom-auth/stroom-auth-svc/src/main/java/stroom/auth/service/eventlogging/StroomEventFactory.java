@@ -27,7 +27,7 @@ class StroomEventFactory extends DefaultEventLoggingService implements EventLogg
     private volatile Device storedDevice;
     private EventLoggingConfig config;
 
-    StroomEventFactory (EventLoggingConfig config) {
+    StroomEventFactory(EventLoggingConfig config) {
         this.setValidate(true);
         this.config = config;
     }

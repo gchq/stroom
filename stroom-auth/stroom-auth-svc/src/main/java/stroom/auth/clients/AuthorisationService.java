@@ -1,7 +1,7 @@
 package stroom.auth.clients;
 
-import stroom.auth.config.AuthorisationServiceConfig;
 import stroom.auth.config.AuthenticationConfig;
+import stroom.auth.config.AuthorisationServiceConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -13,13 +13,13 @@ public class AuthorisationService {
     private AuthorisationServiceClient authorisationServiceClient;
 
     @Inject
-    public AuthorisationService(@NotNull AuthorisationServiceClient authorisationServiceClient, @NotNull AuthenticationConfig config ) {
+    public AuthorisationService(@NotNull AuthorisationServiceClient authorisationServiceClient, @NotNull AuthenticationConfig config) {
         super();
         this.authorisationServiceClient = authorisationServiceClient;
         this.config = config.getAuthorisationServiceConfig();
     }
 
-    public boolean canManageUsers(String userName, String idToken){
-        return  authorisationServiceClient.hasPermission(userName, idToken, config.getCanManageUsersPermission());
+    public boolean canManageUsers(String userName, String idToken) {
+        return authorisationServiceClient.hasPermission(userName, idToken, config.getCanManageUsersPermission());
     }
 }

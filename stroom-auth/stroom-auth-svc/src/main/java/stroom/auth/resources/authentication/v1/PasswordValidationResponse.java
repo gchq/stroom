@@ -29,7 +29,7 @@ public class PasswordValidationResponse {
             return new PasswordValidationResponseBuilder();
         }
 
-        public PasswordValidationResponseBuilder withFailedOn(PasswordValidationFailureType ...failedOn) {
+        public PasswordValidationResponseBuilder withFailedOn(PasswordValidationFailureType... failedOn) {
             this.failedOn.addAll(Arrays.asList(failedOn));
             return this;
         }

@@ -36,9 +36,9 @@ import stroom.auth.daos.TokenDao;
 import stroom.auth.daos.UserDao;
 import stroom.auth.resources.user.v1.User;
 import stroom.auth.service.eventlogging.StroomEventLoggingService;
+import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.RestResource;
-import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

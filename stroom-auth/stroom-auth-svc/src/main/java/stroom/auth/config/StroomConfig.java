@@ -7,9 +7,9 @@ import javax.validation.constraints.NotNull;
 
 /**
  * At the moment stroom is the only RP using stroom-auth-service.
- *
+ * <p>
  * Ideally every client would have to register with this OP manually, and then use those values.
- *
+ * <p>
  * But seeing as we only have one we will just make the clientSecret and clientId part of the core configuration.
  */
 public class StroomConfig extends AbstractConfig {

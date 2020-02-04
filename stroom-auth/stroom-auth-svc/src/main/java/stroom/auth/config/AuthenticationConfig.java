@@ -255,7 +255,7 @@ public final class AuthenticationConfig extends AbstractConfig {
         return stroomConfig;
     }
 
-    public void setStroomConfig(StroomConfig stroomConfig){
+    public void setStroomConfig(StroomConfig stroomConfig) {
         this.stroomConfig = stroomConfig;
     }
 }

@@ -9,7 +9,7 @@ public class LoginResponse {
 
     }
 
-    public LoginResponse(final boolean loginSuccessful, String message, String redirectUrl){
+    public LoginResponse(final boolean loginSuccessful, String message, String redirectUrl) {
         this.loginSuccessful = loginSuccessful;
         this.redirectUrl = redirectUrl;
         this.message = message;

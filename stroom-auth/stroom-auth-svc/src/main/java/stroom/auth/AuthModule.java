@@ -31,7 +31,7 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.RestResource;
 
 public final class AuthModule extends AbstractModule {
-//    private Config config;
+    //    private Config config;
     private Configuration jooqConfig;
 //
 //    public Module(Config config, Configuration jooqConfig) {
@@ -60,7 +60,8 @@ public final class AuthModule extends AbstractModule {
                 .addBinding(AuthenticationResource.class)
                 .addBinding(TokenResource.class);
     }
-//
+
+    //
 //    @Provides
 //    public Config getConfig() {
 //        return config;

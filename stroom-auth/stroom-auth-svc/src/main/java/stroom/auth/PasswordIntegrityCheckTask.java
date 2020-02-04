@@ -14,7 +14,7 @@ public class PasswordIntegrityCheckTask extends TimerTask {
     private UserDao userDao;
 
     @Inject
-    public PasswordIntegrityCheckTask(PasswordIntegrityChecksConfig passwordIntegrityChecksConfig, UserDao userDao){
+    public PasswordIntegrityCheckTask(PasswordIntegrityChecksConfig passwordIntegrityChecksConfig, UserDao userDao) {
         this.passwordIntegrityChecksConfig = passwordIntegrityChecksConfig;
         this.userDao = userDao;
     }

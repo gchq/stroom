@@ -40,16 +40,16 @@ public class TokenBuilderFactory {
     }
 
 
-    public TokenBuilderFactory expiryDateForApiKeys(Instant expiryDate){
-       this.expiryDateForApiKeys = expiryDate;
-       return this;
+    public TokenBuilderFactory expiryDateForApiKeys(Instant expiryDate) {
+        this.expiryDateForApiKeys = expiryDate;
+        return this;
     }
 
     public TokenBuilder newBuilder(TokenType tokenType) {
         TokenBuilder tokenBuilder = new TokenBuilder();
         switch (tokenType) {
             case API:
-                if(expiryDateForApiKeys == null) {
+                if (expiryDateForApiKeys == null) {
                     expiryDateForApiKeys = Instant.now().plusSeconds(config.getTokenConfig().getMinutesUntilExpirationForUserToken() * 60);
                 }
                 tokenBuilder.expiryDate(expiryDateForApiKeys);

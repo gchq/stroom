@@ -5,7 +5,6 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
 import javax.validation.constraints.NotNull;
-import java.time.Duration;
 
 public class PasswordIntegrityChecksConfig extends AbstractConfig {
 

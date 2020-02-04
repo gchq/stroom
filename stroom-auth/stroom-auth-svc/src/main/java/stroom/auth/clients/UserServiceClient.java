@@ -96,7 +96,7 @@ public class UserServiceClient {
 //        return isUserAuthorisedToManageUsers;
 //    }
 
-    public boolean setUserStatus(String usersJws, String user, boolean isEnabled){
+    public boolean setUserStatus(String usersJws, String user, boolean isEnabled) {
         String url = String.format("%s/%s/status?enabled=%s",
                 config.getUrl(),
                 user,

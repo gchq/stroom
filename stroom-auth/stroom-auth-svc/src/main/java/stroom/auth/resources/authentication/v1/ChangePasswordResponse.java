@@ -5,7 +5,6 @@ import io.swagger.annotations.ApiModelProperty;
 
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @ApiModel(description = "A response to a request to change a user's password.")

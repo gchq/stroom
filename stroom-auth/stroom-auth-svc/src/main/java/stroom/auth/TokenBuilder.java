@@ -67,7 +67,7 @@ public class TokenBuilder {
         return this;
     }
 
-    public TokenBuilder privateVerificationKey(PrivateKey privateVerificationKey){
+    public TokenBuilder privateVerificationKey(PrivateKey privateVerificationKey) {
         this.privateVerificationKey = privateVerificationKey;
         return this;
     }
@@ -92,7 +92,7 @@ public class TokenBuilder {
         return this;
     }
 
-    public Instant getExpiryDate(){
+    public Instant getExpiryDate() {
         return this.expiryDate;
     }
 
@@ -101,16 +101,16 @@ public class TokenBuilder {
      * to this Identity Provider to contain the authSessionId. The IP then requests logout from all known RPs,
      * passing this on. If the other RPs have a map of authSessionIds to it's own sessionIds then they will be
      * able to log the user out of their own sessions. See below for a sequence diagram of this flow.
-     *
+     * <p>
      * The logout requests below all include the authSessionId.
-     *
+     * <p>
      * RP1                      IP                       RP2                     RP3
-     *  |----logout------------>|                        |                        |
-     *  |                       |---logout-------------->|                        |
-     *  |                       |    Uses authSessionId to logout its own session |
-     *  |                       |---logout--------------------------------------->|
-     *  |                       |                        |       Uses authSessionId to logout its own session
-     *  |                       |                        |                        |
+     * |----logout------------>|                        |                        |
+     * |                       |---logout-------------->|                        |
+     * |                       |    Uses authSessionId to logout its own session |
+     * |                       |---logout--------------------------------------->|
+     * |                       |                        |       Uses authSessionId to logout its own session
+     * |                       |                        |                        |
      */
     public TokenBuilder authSessionId(String authSessionId) {
         this.authSessionId = authSessionId;
@@ -119,13 +119,13 @@ public class TokenBuilder {
 
     public String build() {
         JwtClaims claims = new JwtClaims();
-        if(expiryDate != null) {
+        if (expiryDate != null) {
             claims.setExpirationTime(NumericDate.fromSeconds(expiryDate.getEpochSecond()));
         }
         claims.setSubject(subject);
         claims.setIssuer(issuer);
         claims.setAudience(clientId);
-        if(authSessionId != null) {
+        if (authSessionId != null) {
             claims.setStringClaim("sid", authSessionId);
         }
         nonce.ifPresent(nonce -> claims.setClaim("nonce", nonce));

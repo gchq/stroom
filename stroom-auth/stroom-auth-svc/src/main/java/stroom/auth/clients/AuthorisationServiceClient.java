@@ -54,11 +54,11 @@ public class AuthorisationServiceClient {
                 .post(Entity.entity(new UserPermissionRequest(permission),
                         MediaType.APPLICATION_JSON_TYPE));
 
-        switch(response.getStatus()) {
+        switch (response.getStatus()) {
             case HttpStatus.OK_200:
-               return true;
-           case HttpStatus.UNAUTHORIZED_401:
-               return false;
+                return true;
+            case HttpStatus.UNAUTHORIZED_401:
+                return false;
             default:
                 LOGGER.error("Unable to check permissions for user {}. Response code was {} {}",
                         userName, response.getStatus(), response.getStatusInfo().getReasonPhrase());
@@ -68,8 +68,11 @@ public class AuthorisationServiceClient {
 
     private class UserPermissionRequest {
         private String permission;
-        public UserPermissionRequest(){}
-        public UserPermissionRequest(String permission){
+
+        public UserPermissionRequest() {
+        }
+
+        public UserPermissionRequest(String permission) {
             this.permission = permission;
         }
 

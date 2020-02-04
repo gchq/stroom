@@ -108,7 +108,7 @@ public class StroomEventLoggingService {
             HttpServletRequest request,
             String usersEmail,
             Search search,
-            String description){
+            String description) {
         Event.EventDetail eventDetail = new Event.EventDetail();
         eventDetail.setSearch(search);
         eventDetail.setTypeId(typeId);
@@ -124,7 +124,7 @@ public class StroomEventLoggingService {
             HttpServletRequest request,
             String usersEmail,
             ObjectOutcome objectOutcome,
-            String description){
+            String description) {
         Event.EventDetail eventDetail = new Event.EventDetail();
         eventDetail.setCreate(objectOutcome);
         eventDetail.setDescription(description);
@@ -140,7 +140,7 @@ public class StroomEventLoggingService {
             HttpServletRequest request,
             String usersEmail,
             ObjectOutcome objectOutcome,
-            String description){
+            String description) {
         Event.EventDetail eventDetail = new Event.EventDetail();
         eventDetail.setView(objectOutcome);
         eventDetail.setDescription(description);
@@ -156,7 +156,7 @@ public class StroomEventLoggingService {
             HttpServletRequest request,
             String usersEmail,
             Event.EventDetail.Update update,
-            String description){
+            String description) {
         Event.EventDetail eventDetail = new Event.EventDetail();
         eventDetail.setUpdate(update);
         eventDetail.setDescription(description);
@@ -172,7 +172,7 @@ public class StroomEventLoggingService {
             HttpServletRequest request,
             String usersEmail,
             ObjectOutcome objectOutcome,
-            String description){
+            String description) {
         Event.EventDetail eventDetail = new Event.EventDetail();
         eventDetail.setDelete(objectOutcome);
         eventDetail.setDescription(description);
@@ -188,7 +188,7 @@ public class StroomEventLoggingService {
             HttpServletRequest request,
             String usersEmail,
             AuthenticateAction authenticateAction,
-            String description){
+            String description) {
         User user = new User();
         user.setId(usersEmail);
         Event.EventDetail.Authenticate authenticate = new Event.EventDetail.Authenticate();

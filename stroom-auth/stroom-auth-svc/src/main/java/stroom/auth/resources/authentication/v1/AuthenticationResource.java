@@ -43,7 +43,6 @@ import stroom.auth.resources.token.v1.Token;
 import stroom.auth.resources.user.v1.User;
 import stroom.auth.service.ApiException;
 import stroom.auth.service.eventlogging.StroomEventLoggingService;
-import stroom.auth.service.security.ServiceUser;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.AuthenticationServiceClients;
 import stroom.security.impl.ExchangeAccessCodeRequest;
@@ -122,7 +121,7 @@ public final class AuthenticationResource implements RestResource {
             final TokenBuilderFactory tokenBuilderFactory,
             final StroomEventLoggingService stroomEventLoggingService,
             final SecurityContext securityContext,
-            final AuthenticationServiceClients authenticationServiceClients ) {
+            final AuthenticationServiceClients authenticationServiceClients) {
         this.config = config;
         this.dnPattern = Pattern.compile(config.getCertificateDnPattern());
         this.tokenDao = tokenDao;
@@ -193,7 +192,7 @@ public final class AuthenticationResource implements RestResource {
         Optional<String> optionalCn = certificateManager.getCertificate(httpServletRequest);
 
         // If the prompt is 'login' then we always want to prompt the user to login in with username and password.
-        boolean requireLoginPrompt =  prompt != null && prompt.equalsIgnoreCase("login");
+        boolean requireLoginPrompt = prompt != null && prompt.equalsIgnoreCase("login");
         boolean loginUsingCertificate = optionalCn.isPresent() && !requireLoginPrompt;
         if (requireLoginPrompt) {
             LOGGER.info("Relying party requested a user login page by using 'prompt=login'");
@@ -376,7 +375,7 @@ public final class AuthenticationResource implements RestResource {
 
         // If we have a redirect URL then we'll use that, otherwise we'll go to the advertised host.
         final String postLogoutUrl =
-                redirectUrl == null  || redirectUrl == "" ? this.config.getAdvertisedHost() : redirectUrl;
+                redirectUrl == null || redirectUrl == "" ? this.config.getAdvertisedHost() : redirectUrl;
 
         return seeOther(new URI(postLogoutUrl)).build();
     }
@@ -387,21 +386,20 @@ public final class AuthenticationResource implements RestResource {
     @ApiOperation(value = "Convert a previously provided access code into an ID token",
             response = String.class, tags = {"Authentication"})
     public final Response getIdToken(@ApiParam("IdTokenRequest") @NotNull IdTokenRequest idTokenRequest,
-            @Context @NotNull HttpServletRequest httpServletRequest) {
+                                     @Context @NotNull HttpServletRequest httpServletRequest) {
         Optional<RelyingParty> relyingParty = this.sessionManager.getByAccessCode(idTokenRequest.getAccessCode());
         if (!relyingParty.isPresent()) {
             return Response.status(Status.UNAUTHORIZED).entity("Invalid access code").build();
         }
 
         // See the comments in StroomConfig.
-        if(config.getStroomConfig().getClientId().equals(idTokenRequest.getClientId())
-            && config.getStroomConfig().getClientSecret().equals(idTokenRequest.getClientSecret()) ){
+        if (config.getStroomConfig().getClientId().equals(idTokenRequest.getClientId())
+                && config.getStroomConfig().getClientSecret().equals(idTokenRequest.getClientSecret())) {
             String idToken = relyingParty.get().getIdToken();
             relyingParty.get().forgetIdToken();
             relyingParty.get().forgetAccessCode();
             return Response.status(Status.OK).entity(idToken).build();
-        }
-        else {
+        } else {
             return Response.status(Status.UNAUTHORIZED).entity("Invalid client or access code").build();
         }
     }
@@ -461,12 +459,11 @@ public final class AuthenticationResource implements RestResource {
         validateComplexity(changePasswordRequest.getNewPassword(), config.getPasswordIntegrityChecksConfig().getPasswordComplexityRegex()).ifPresent(failedOn::add);
 
         final ChangePasswordResponseBuilder responseBuilder = ChangePasswordResponseBuilder.aChangePasswordResponse();
-        if (failedOn.size() == 0){
+        if (failedOn.size() == 0) {
             responseBuilder.withSuccess();
             stroomEventLoggingService.changePassword(httpServletRequest, changePasswordRequest.getEmail());
             userDao.changePassword(changePasswordRequest.getEmail(), changePasswordRequest.getNewPassword());
-        }
-        else {
+        } else {
             responseBuilder.withFailedOn(failedOn);
         }
 
@@ -482,7 +479,7 @@ public final class AuthenticationResource implements RestResource {
     public final Response resetPassword(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @ApiParam("changePasswordRequest") @NotNull ResetPasswordRequest req) {
-        if(securityContext.isLoggedIn()) {
+        if (securityContext.isLoggedIn()) {
             final String loggedInUser = securityContext.getUserId();
             List<PasswordValidationFailureType> failedOn = new ArrayList<>();
             PasswordIntegrityChecksConfig conf = config.getPasswordIntegrityChecksConfig();
@@ -501,8 +498,7 @@ public final class AuthenticationResource implements RestResource {
             }
 
             return Response.status(Status.OK).entity(responseBuilder.build()).build();
-        }
-        else return Response.status(Status.UNAUTHORIZED).build();
+        } else return Response.status(Status.UNAUTHORIZED).build();
     }
 
     @GET
@@ -586,7 +582,7 @@ public final class AuthenticationResource implements RestResource {
 
     /**
      * Performs the back-channel exchange of accessCode for idToken.
-     *
+     * <p>
      * This must be kept as a back-channel request, and the clientSecret kept away from the browser.
      */
     @POST

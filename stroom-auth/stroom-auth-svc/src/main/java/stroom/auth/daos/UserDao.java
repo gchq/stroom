@@ -28,11 +28,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.auth.AuthDbConnProvider;
 import stroom.auth.config.AuthenticationConfig;
+import stroom.auth.db.Tables;
+import stroom.auth.db.tables.records.UsersRecord;
 import stroom.auth.exceptions.BadRequestException;
 import stroom.auth.exceptions.NoSuchUserException;
 import stroom.auth.resources.user.v1.User;
-import stroom.auth.db.Tables;
-import stroom.auth.db.tables.records.UsersRecord;
 import stroom.db.util.JooqUtil;
 
 import javax.inject.Inject;
@@ -65,11 +65,11 @@ public class UserDao {
         this.clock = Clock.systemDefaultZone();
     }
 
-    public void setClock(Clock clock){
+    public void setClock(Clock clock) {
         this.clock = clock;
     }
 
-    public int create(User newUser, String creatingUsername){
+    public int create(User newUser, String creatingUsername) {
         newUser.setCreatedOn(UserMapper.toIso(Timestamp.from(Instant.now(clock))));
         newUser.setCreatedByUser(creatingUsername);
         newUser.setLoginCount(0);
@@ -80,7 +80,7 @@ public class UserDao {
     }
 
     public void recordSuccessfulLogin(String email) {
-        UsersRecord user = (UsersRecord)JooqUtil.contextResult(authDbConnProvider, context -> context
+        UsersRecord user = (UsersRecord) JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom((Table) USERS)
                 .where(new Condition[]{USERS.EMAIL.eq(email)})
                 .fetchOne());
@@ -110,8 +110,7 @@ public class UserDao {
         if (user == null) {
             LOGGER.debug("Request to log in with invalid username: " + email);
             return LoginResult.USER_DOES_NOT_EXIST;
-        }
-        else {
+        } else {
             boolean isPasswordCorrect = BCrypt.checkpw(password, user.getPasswordHash());
             boolean isDisabled = user.getState().equals(User.UserState.DISABLED.getStateText());
             boolean isInactive = user.getState().equals(User.UserState.INACTIVE.getStateText());
@@ -120,16 +119,13 @@ public class UserDao {
             if (isLocked) {
                 LOGGER.debug("Account {} tried to log in but it is locked.", email);
                 return isPasswordCorrect ? LoginResult.LOCKED_GOOD_CREDENTIALS : LoginResult.LOCKED_BAD_CREDENTIALS;
-            }
-            else if (isDisabled) {
+            } else if (isDisabled) {
                 LOGGER.debug("Account {} tried to log in but it is disabled.", email);
                 return isPasswordCorrect ? LoginResult.DISABLED_GOOD_CREDENTIALS : LoginResult.DISABLED_BAD_CREDENTIALS;
-            }
-            else if (isInactive) {
+            } else if (isInactive) {
                 LOGGER.debug("Account {} tried to log in but it is inactive.", email);
                 return isPasswordCorrect ? LoginResult.INACTIVE_GOOD_CREDENTIALS : LoginResult.INACTIVE_BAD_CREDENTIALS;
-            }
-            else {
+            } else {
                 return isPasswordCorrect ? LoginResult.GOOD_CREDENTIALS : LoginResult.BAD_CREDENTIALS;
             }
         }
@@ -143,10 +139,9 @@ public class UserDao {
 
         // If the password is wrong we need to increment the failed login count,
         // check if we need to locked the account, and save.
-        if(user.getLoginFailures() != null) {
+        if (user.getLoginFailures() != null) {
             user.setLoginFailures(user.getLoginFailures() + 1);
-        }
-        else {
+        } else {
             user.setLoginFailures(1);
         }
 
@@ -182,7 +177,7 @@ public class UserDao {
                 .where(new Condition[]{USERS.EMAIL.eq(email)})
                 .fetchOne());
 
-        if(user == null){
+        if (user == null) {
             throw new NoSuchUserException("Cannot change this password because this user does not exist!");
         }
 
@@ -205,7 +200,7 @@ public class UserDao {
                 .where(new Condition[]{USERS.EMAIL.eq(email)})
                 .fetchOne());
 
-        if(user == null){
+        if (user == null) {
             throw new NoSuchUserException("Cannot check if this user needs a password change because this user does not exist!");
         }
 
@@ -218,13 +213,13 @@ public class UserDao {
         boolean thresholdBreached = durationSinceLastPasswordChange.compareTo(mandatoryPasswordChangeDuration) > 0;
         boolean isFirstLogin = user.getPasswordLastChanged() == null;
 
-        if(thresholdBreached || (forcePasswordChangeOnFirstLogin && isFirstLogin) || user.getForcePasswordChange()){
+        if (thresholdBreached || (forcePasswordChangeOnFirstLogin && isFirstLogin) || user.getForcePasswordChange()) {
             LOGGER.debug("User {} needs a password change.", email);
             return true;
         } else return false;
     }
 
-    public int deactivateNewInactiveUsers(Duration neverUsedAccountDeactivationThreshold){
+    public int deactivateNewInactiveUsers(Duration neverUsedAccountDeactivationThreshold) {
         Timestamp activityThreshold = convertThresholdToTimestamp(neverUsedAccountDeactivationThreshold);
 
         Result<UsersRecord> candidatesForDeactivating = JooqUtil.contextResult(authDbConnProvider, context -> context
@@ -240,7 +235,7 @@ public class UserDao {
         List<Integer> usersToDeactivate = candidatesForDeactivating.stream()
                 .filter(usersRecord ->
                         usersRecord.getReactivatedDate() == null
-                        || usersRecord.getReactivatedDate().before(activityThreshold))
+                                || usersRecord.getReactivatedDate().before(activityThreshold))
                 .map(usersRecord -> usersRecord.getId())
                 .collect(Collectors.toList());
 
@@ -252,7 +247,7 @@ public class UserDao {
         return usersToDeactivate.size();
     }
 
-    public int deactivateInactiveUsers(Duration unusedAccountDeactivationThreshold){
+    public int deactivateInactiveUsers(Duration unusedAccountDeactivationThreshold) {
         Timestamp activityThreshold = convertThresholdToTimestamp(unusedAccountDeactivationThreshold);
 
         Result<UsersRecord> candidatesForDeactivating = JooqUtil.contextResult(authDbConnProvider, context -> context
@@ -267,7 +262,7 @@ public class UserDao {
         List<Integer> usersToDeactivate = candidatesForDeactivating.stream()
                 .filter(usersRecord ->
                         usersRecord.getReactivatedDate() == null
-                        || usersRecord.getReactivatedDate().before(activityThreshold))
+                                || usersRecord.getReactivatedDate().before(activityThreshold))
                 .map(usersRecord -> usersRecord.getId())
                 .collect(Collectors.toList());
 
@@ -287,7 +282,7 @@ public class UserDao {
         return result != null;
     }
 
-    private Timestamp convertThresholdToTimestamp(Duration duration){
+    private Timestamp convertThresholdToTimestamp(Duration duration) {
         Instant now = Instant.now(clock);
         Instant thresholdInstant = now.minus(duration);
         return Timestamp.from(thresholdInstant);
