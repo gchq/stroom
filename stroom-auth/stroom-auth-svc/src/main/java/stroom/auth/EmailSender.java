@@ -28,7 +28,6 @@ import stroom.auth.config.AuthenticationConfig;
 import stroom.auth.config.EmailConfig;
 import stroom.auth.config.SmtpConfig;
 import stroom.auth.resources.user.v1.User;
-import stroom.auth.util.logging.LambdaLogger;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -66,7 +65,7 @@ public class EmailSender {
 
     public void send(User user, String resetToken) {
         Preconditions.checkNotNull(user, "No User object supplied");
-        Preconditions.checkNotNull(user.getEmail(), LambdaLogger.buildMessage("User {} has no email address", user));
+        Preconditions.checkNotNull(user.getEmail(), String.format("User %s has no email address", user));
         Preconditions.checkNotNull(config.getEmailConfig(), "Missing 'email' section in config");
 
         final EmailConfig emailConfig = config.getEmailConfig();

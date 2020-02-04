@@ -3,7 +3,6 @@ package stroom.auth.util.db;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.auth.util.logging.LambdaLogger;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -41,8 +40,7 @@ public class DbUtil {
         try {
             Class.forName(driverClass);
         } catch (ClassNotFoundException e) {
-            throw new RuntimeException(LambdaLogger.buildMessage(
-                    "Invalid JDBC driver class name {}", driverClass), e);
+            throw new RuntimeException(String.format("Invalid JDBC driver class name %s", driverClass), e);
         }
 
         LOGGER.info("Ensuring database connection to {} with username {}", jdbcUrl, username);
