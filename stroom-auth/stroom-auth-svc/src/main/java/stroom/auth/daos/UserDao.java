@@ -19,10 +19,13 @@
 package stroom.auth.daos;
 
 import com.google.common.base.Strings;
+import event.logging.ObjectOutcome;
 import org.apache.commons.lang3.Validate;
 import org.jooq.Condition;
+import org.jooq.JSONFormat;
 import org.jooq.Result;
 import org.jooq.Table;
+import org.jooq.TableField;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -169,6 +172,23 @@ public class UserDao {
                 .where(USERS.EMAIL.eq(email)).fetchOptional());
 
         return userQuery.map(usersRecord -> UserMapper.map(usersRecord));
+    }
+
+    public String getAll() {
+        TableField orderByEmailField = USERS.EMAIL;
+        String usersAsJson = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(USERS)
+                .orderBy(orderByEmailField)
+                .fetch()
+                .formatJSON((new JSONFormat())
+                        .header(false)
+                        .recordFormat(JSONFormat.RecordFormat.OBJECT)));
+
+        ObjectOutcome objectOutcome = new ObjectOutcome();
+        event.logging.Object object = new event.logging.Object();
+        object.setName("GetAllUsers");
+        objectOutcome.getObjects().add(object);
+        return usersAsJson;
     }
 
     public void changePassword(String email, String newPassword) {

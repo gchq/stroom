@@ -114,19 +114,9 @@ public final class UserResource implements RestResource {
     @Path("/")
     @Timed
     @NotNull
-    public final Response getAll(
-            @Context @NotNull HttpServletRequest httpServletRequest,
-            @Context @NotNull DSLContext database) {
+    public final Response getAll(@Context @NotNull HttpServletRequest httpServletRequest ) {
         return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-
-            TableField orderByEmailField = USERS.EMAIL;
-            String usersAsJson = database
-                    .selectFrom(USERS)
-                    .orderBy(orderByEmailField)
-                    .fetch()
-                    .formatJSON((new JSONFormat())
-                            .header(false)
-                            .recordFormat(JSONFormat.RecordFormat.OBJECT));
+            String usersAsJson = userDao.getAll();
 
             ObjectOutcome objectOutcome = new ObjectOutcome();
             event.logging.Object object = new event.logging.Object();
