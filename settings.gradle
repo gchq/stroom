@@ -38,7 +38,7 @@ include 'stroom-app-gwt'
 // Auth
 include 'stroom-auth:stroom-auth-service-api'
 include 'stroom-auth:stroom-auth-svc'
-include 'stroom-auth:stroom-auth-persistence'
+include 'stroom-auth:stroom-auth-impl-db-jooq'
 
 // Cache
 include 'stroom-cache:stroom-cache-api'

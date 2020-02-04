@@ -13,11 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-ext.moduleName = 'stroom.auth.persistence'
-//plugins {
-    //id 'nu.studer.jooq' version '2.0.6'
-//}
-apply plugin: 'nu.studer.jooq' 
+
+ext.moduleName = 'stroom.auth.impl.db.jooq'
+apply plugin: 'nu.studer.jooq'
 
 dependencies {
     compile libs.jooq
@@ -30,6 +28,8 @@ dependencies {
 }
 
 def propNameJooqGeneration = 'jooqGeneration'
+
+// TODO: auth-into-stroom: don't think we need jooqGeneration here? Probably in main Stroom.
 
 //to run the jooq code generation add the following to the gradle command arguments
 //-PjooqGeneration=true
