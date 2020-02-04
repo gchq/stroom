@@ -12,7 +12,8 @@ public enum ConsoleColour {
     MAGENTA("\u001b[35m"),
     CYAN("\u001b[36m"),
     WHITE("\u001b[37m"),
-    RESET("\u001b[0m");
+    RESET("\u001b[0m"),
+    NO_COLOUR(null);
 
     private final String colourCode;
 
@@ -56,10 +57,14 @@ public enum ConsoleColour {
         return colourise(text, ConsoleColour.WHITE);
     }
 
-    private static String colourise(final String text, final ConsoleColour colour) {
+    public static String colourise(final String text, final ConsoleColour colour) {
         Objects.requireNonNull(text);
         Objects.requireNonNull(colour);
-        return colour.getColourCode() + text + ConsoleColour.RESET;
+        if (colour.getColourCode() == null) {
+            return text;
+        } else {
+            return colour.getColourCode() + text + ConsoleColour.RESET.colourCode;
+        }
     }
 
     public static void appendBlack(final StringBuilder stringBuilder, final String text) {

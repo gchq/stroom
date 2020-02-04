@@ -133,11 +133,11 @@ public class AppConfig extends AbstractConfig {
     @AssertFalse(
         message = "Super Dev Mode is enabled. This should only be used in development",
         payload = ValidationSeverity.Warning.class)
+    @JsonProperty(PROP_NAME_SUPER_DEV_MODE)
     public boolean isSuperDevMode() {
         return superDevMode;
     }
 
-    @JsonProperty(PROP_NAME_SUPER_DEV_MODE)
     public void setSuperDevMode(final boolean superDevMode) {
         this.superDevMode = superDevMode;
     }
