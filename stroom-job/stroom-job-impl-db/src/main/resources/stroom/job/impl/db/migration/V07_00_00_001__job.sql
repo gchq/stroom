@@ -85,7 +85,7 @@ BEGIN
             ENBL
         FROM JB
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM job)
-        ORDER BY ID;;
+        ORDER BY ID;
 
         -- Work out what to set our auto_increment start value to
         SELECT CONCAT('ALTER TABLE job AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))

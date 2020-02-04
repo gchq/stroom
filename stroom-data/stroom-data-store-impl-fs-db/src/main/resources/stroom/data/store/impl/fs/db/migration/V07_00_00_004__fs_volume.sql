@@ -131,7 +131,7 @@ BEGIN
             FK_VOL_STATE_ID
         FROM VOL
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM fs_volume)
-        ORDER BY ID;;
+        ORDER BY ID;
 
         -- Work out what to set our auto_increment start value to
         SELECT CONCAT('ALTER TABLE fs_volume AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))

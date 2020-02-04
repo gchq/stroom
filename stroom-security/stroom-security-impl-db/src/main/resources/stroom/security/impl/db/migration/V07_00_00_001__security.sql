@@ -149,7 +149,7 @@ BEGIN
             PERM
         FROM DOC_PERM
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM doc_permission)
-        ORDER BY ID;;
+        ORDER BY ID;
 
         -- Work out what to set our auto_increment start value to
         SELECT CONCAT('ALTER TABLE doc_permission AUTO_INCREMENT = ', COALESCE(MAX(id) + 1, 1))
