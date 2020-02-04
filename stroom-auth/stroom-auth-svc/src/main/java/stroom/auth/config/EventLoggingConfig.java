@@ -6,7 +6,7 @@ import stroom.util.shared.AbstractConfig;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
-public class EventLoggingConfig extends AbstractConfig {
+public class EventLoggingConfig {
 
     @Valid
     @NotNull

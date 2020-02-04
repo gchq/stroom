@@ -8,7 +8,7 @@ import stroom.db.util.DataSourceProxy;
 
 import javax.sql.DataSource;
 
-public class AuthDbModule extends AbstractFlyWayDbModule<AuthConfig, AuthDbConnProvider> {
+public class AuthDbModule extends AbstractFlyWayDbModule<AuthenticationDbConfig, AuthDbConnProvider> {
     private static final String MODULE = "stroom-auth";
     private static final String FLYWAY_LOCATIONS = "stroom/auth/db/migration";
     private static final String FLYWAY_TABLE = "auth_schema_history";

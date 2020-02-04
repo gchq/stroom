@@ -182,11 +182,11 @@ public class AppConfig extends AbstractConfig {
     }
 
     @JsonProperty(PROP_NAME_AUTHENTICATION)
-    public AuthenticationConfig getAuthConfig() {
+    public AuthenticationConfig getAuthenticationConfig() {
         return authenticationConfig;
     }
 
-    public void setAuthConfig(final AuthenticationConfig authenticationConfig) {
+    public void setAuthenticationConfig(final AuthenticationConfig authenticationConfig) {
         this.authenticationConfig = authenticationConfig;
     }
 

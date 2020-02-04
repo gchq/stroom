@@ -25,8 +25,10 @@ import javax.validation.constraints.NotNull;
 
 public class EmailConfig extends AbstractConfig {
 
+    public static final String PROP_NAME_SMTP = "smtp";
+
     @NotNull
-    @JsonProperty("smtp")
+    @JsonProperty(PROP_NAME_SMTP)
     private SmtpConfig smtpConfig = new SmtpConfig();
 
     @NotNull
@@ -59,8 +61,13 @@ public class EmailConfig extends AbstractConfig {
     // Defaults to false because this feature needs to be configured and actively turned on before it works.
     private boolean allowPasswordResets = false;
 
+    @JsonProperty(PROP_NAME_SMTP)
     public SmtpConfig getSmtpConfig() {
         return smtpConfig;
+    }
+
+    public void setSmtpConfig(SmtpConfig smtpConfig) {
+        this.smtpConfig = smtpConfig;
     }
 
     public String getFromAddress() {
