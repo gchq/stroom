@@ -67,7 +67,7 @@ def javaProjects = subprojects.findAll { project ->
     project.path in [
         ':stroom-auth:stroom-auth-impl-db-jooq',
         ':stroom-auth:stroom-auth-service-api',
-        ':stroom-auth:stroom-auth-svc',
+        ':stroom-auth:stroom-auth-impl',
     ] 
 }
 

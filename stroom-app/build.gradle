@@ -30,7 +30,7 @@ mainClassName = 'stroom.app.App'
 dependencies {
     compile project(':stroom-activity:stroom-activity-impl-db')
     compile project(':stroom-annotation:stroom-annotation-impl-db')
-    compile project(':stroom-auth:stroom-auth-svc')
+    compile project(':stroom-auth:stroom-auth-impl')
     compile project(':stroom-cache:stroom-cache-impl')
     compile project(':stroom-cluster:stroom-cluster-impl')
     compile project(':stroom-cluster:stroom-cluster-lock-impl-db')
@@ -128,7 +128,7 @@ dependencies {
 
     testCompile project(':stroom-activity:stroom-activity-api')
     testCompile project(':stroom-activity:stroom-activity-mock')
-    testCompile project(':stroom-auth:stroom-auth-svc')
+    testCompile project(':stroom-auth:stroom-auth-impl')
     testCompile project(':stroom-config:stroom-config-app')
     testCompile project(':stroom-config:stroom-config-global-impl')
     testCompile project(':stroom-core')
