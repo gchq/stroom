@@ -199,6 +199,7 @@ ext.libs = [
         jackson_databind               : "com.fasterxml.jackson.core:jackson-databind", // version controlled by DW BOM
         jackson_dataformat_yaml        : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", // version controlled by DW BOM
         jackson_datatype_jsr310        : "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", // version controlled by DW BOM
+        java_diff_utils                : "io.github.java-diff-utils:java-diff-utils:4.5",
         java_jwt                       : "com.auth0:java-jwt:3.1.0",
         javassist                      : "org.javassist:javassist", // version controlled by DW BOM
         javax_activation               : "javax.activation:javax.activation-api:1.2.0",

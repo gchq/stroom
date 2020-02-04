@@ -55,10 +55,15 @@ public class ColouredStringBuilder {
     public ColouredStringBuilder append(final String text, final ConsoleColour colour) {
         Objects.requireNonNull(text);
         Objects.requireNonNull(colour);
-        stringBuilder
-            .append(colour.getColourCode())
-            .append(text)
-            .append(ConsoleColour.RESET.getColourCode());
+        if (colour.getColourCode() == null) {
+            stringBuilder
+                .append(text);
+        } else {
+            stringBuilder
+                .append(colour.getColourCode())
+                .append(text)
+                .append(ConsoleColour.RESET.getColourCode());
+        }
         return this;
     }
 }

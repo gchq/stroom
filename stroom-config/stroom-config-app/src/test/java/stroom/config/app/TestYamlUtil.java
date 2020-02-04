@@ -1,6 +1,12 @@
 package stroom.config.app;
 
+import org.assertj.core.util.diff.DiffUtils;
+import org.assertj.core.util.diff.Patch;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.util.ConsoleColour;
+import stroom.util.logging.LogUtil;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
@@ -9,11 +15,16 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestYamlUtil {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TestYamlUtil.class);
+
     static final String EXPECTED_YAML_FILE_NAME = "expected.yaml";
+    static final String ACTUAL_YAML_FILE_NAME = "actual.yaml";
 
     /**
      * *** IMPORTANT ***
@@ -26,14 +37,66 @@ class TestYamlUtil {
      */
     @Test
     void testGeneratedYamlAgainstExpected() throws IOException {
-        final String expected = Files.readString(getExpectedYamlFile());
+        final Path expectedFile = getExpectedYamlFilePath();
+        final Path actualFile = getActualYamlFilePath();
+
+        final String expected = Files.readString(expectedFile);
         final String actual = getYamlFromJavaModel();
 
-        assertThat(actual)
-                .isEqualTo(expected);
+        // The expected file has already had the DW lines removed
+        final List<String> expectedLines = expected.lines().collect(Collectors.toList());
+        final List<String> actualLines = GenerateExpectedYaml.removeDropWizardLines(actual);
+
+        // write the actual out so we can compare in other tools
+        Files.write(actualFile, actualLines);
+
+        final Patch<String> patch = DiffUtils.diff(expectedLines, actualLines);
+
+        final List<String> unifiedDiff = DiffUtils.generateUnifiedDiff(
+            expectedFile.toString(),
+            actualFile.toString(),
+            expectedLines,
+            patch,
+            3);
+
+        if (!unifiedDiff.isEmpty()) {
+            LOGGER.error("Differences exist between the expected serialised form of AppConfig and the actual. " +
+                "If the difference is what you would expect based on the changes you have made to the config model " +
+                "then run the main() method in GenerateExpectedYaml to re-generate the expected yaml");
+
+            System.out.println("");
+            unifiedDiff.forEach(diffLine -> {
+
+                final ConsoleColour lineColour;
+                if (diffLine.startsWith("+")) {
+                    lineColour = ConsoleColour.GREEN;
+                } else if (diffLine.startsWith("-")) {
+                    lineColour = ConsoleColour.RED;
+                } else {
+                    lineColour = ConsoleColour.NO_COLOUR;
+                }
+
+                System.out.println(ConsoleColour.colourise(diffLine, lineColour));
+            });
+            System.out.println(LogUtil.message("\nvimdiff {} {}", expectedFile, actualFile));
+        }
+
+        assertThat(actualLines.equals(expectedLines))
+            .withFailMessage("Expected and actual YAML do not match!")
+            .isEqualTo(true);
     }
 
-    static Path getExpectedYamlFile() {
+
+
+    static Path getExpectedYamlFilePath() {
+        return getBasePath().resolve(EXPECTED_YAML_FILE_NAME);
+    }
+
+    static Path getActualYamlFilePath() {
+        return getBasePath().resolve(ACTUAL_YAML_FILE_NAME);
+    }
+
+    static Path getBasePath() {
         final String codeSourceLocation = TestYamlUtil.class
                 .getProtectionDomain().getCodeSource().getLocation().getPath();
 
@@ -49,7 +112,6 @@ class TestYamlUtil {
                 .resolve("stroom")
                 .resolve("config")
                 .resolve("app")
-                .resolve(EXPECTED_YAML_FILE_NAME)
                 .normalize()
                 .toAbsolutePath();
     }
