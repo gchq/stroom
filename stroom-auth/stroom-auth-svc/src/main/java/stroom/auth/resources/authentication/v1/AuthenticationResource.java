@@ -379,30 +379,6 @@ public final class AuthenticationResource implements RestResource {
         return seeOther(new URI(postLogoutUrl)).build();
     }
 
-    @POST
-    @Path("idToken")
-    @Timed
-    @ApiOperation(value = "Convert a previously provided access code into an ID token",
-            response = String.class, tags = {"Authentication"})
-    public final Response getIdToken(@ApiParam("IdTokenRequest") @NotNull IdTokenRequest idTokenRequest,
-                                     @Context @NotNull HttpServletRequest httpServletRequest) {
-        Optional<RelyingParty> relyingParty = this.sessionManager.getByAccessCode(idTokenRequest.getAccessCode());
-        if (!relyingParty.isPresent()) {
-            return Response.status(Status.UNAUTHORIZED).entity("Invalid access code").build();
-        }
-
-        // See the comments in StroomConfig.
-        if (config.getStroomConfig().getClientId().equals(idTokenRequest.getClientId())
-                && config.getStroomConfig().getClientSecret().equals(idTokenRequest.getClientSecret())) {
-            String idToken = relyingParty.get().getIdToken();
-            relyingParty.get().forgetIdToken();
-            relyingParty.get().forgetAccessCode();
-            return Response.status(Status.OK).entity(idToken).build();
-        } else {
-            return Response.status(Status.UNAUTHORIZED).entity("Invalid client or access code").build();
-        }
-    }
-
     @GET
     @Path("reset/{email}")
     @Timed
@@ -579,6 +555,7 @@ public final class AuthenticationResource implements RestResource {
         }
     }
 
+    //TODO: auth-into-stroom: obviously this needs to go
     /**
      * Performs the back-channel exchange of accessCode for idToken.
      * <p>
@@ -592,19 +569,22 @@ public final class AuthenticationResource implements RestResource {
             value = "Exchanges an accessCode for an idToken",
             response = Response.class)
     public Response exchangeAccessCode(@ApiParam("ExchangeAccessCodeRequest") final ExchangeAccessCodeRequest exchangeAccessCodeRequest) {
-        stroom.auth.service.api.model.IdTokenRequest idTokenRequest = new stroom.auth.service.api.model.IdTokenRequest()
-                .clientId(config.getStroomConfig().getClientId())
-                .clientSecret(config.getStroomConfig().getClientSecret())
-                .accessCode(exchangeAccessCodeRequest.getAccessCode());
-        try {
-            final String idToken = authenticationServiceClients.newAuthenticationApi().getIdToken(idTokenRequest);
-            return Response.ok(idToken).build();
-        } catch (ApiException e) {
-            LOGGER.error("Unable to exchange the accessCode for an idToken", e);
-            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).build();
+        Optional<RelyingParty> relyingParty = this.sessionManager.getByAccessCode(exchangeAccessCodeRequest.getAccessCode());
+        if (!relyingParty.isPresent()) {
+            return Response.status(Status.UNAUTHORIZED).entity("Invalid access code").build();
+        }
+
+        // See the comments in StroomConfig.
+        if (config.getStroomConfig().getClientId().equals(config.getStroomConfig().getClientId())
+                && config.getStroomConfig().getClientSecret().equals(config.getStroomConfig().getClientSecret())) {
+            String idToken = relyingParty.get().getIdToken();
+            relyingParty.get().forgetIdToken();
+            relyingParty.get().forgetAccessCode();
+            return Response.status(Status.OK).entity(idToken).build();
+        } else {
+            return Response.status(Status.UNAUTHORIZED).entity("Invalid client or access code").build();
         }
     }
-
 
     private String createIdToken(String subject, String nonce, String state, String authSessionId) {
         TokenBuilder tokenBuilder = tokenBuilderFactory
