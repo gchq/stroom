@@ -17,9 +17,9 @@
 package stroom.security.impl;
 
 import com.google.common.base.Strings;
-import stroom.auth.service.ApiClient;
-import stroom.auth.service.api.ApiKeyApi;
-import stroom.auth.service.api.AuthenticationApi;
+import stroom.authentication.service.ApiClient;
+import stroom.authentication.service.api.ApiKeyApi;
+import stroom.authentication.service.api.AuthenticationApi;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

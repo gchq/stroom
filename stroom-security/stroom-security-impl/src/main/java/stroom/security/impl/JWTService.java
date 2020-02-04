@@ -12,8 +12,8 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.lang.JoseException;
-import stroom.auth.service.ApiException;
-import stroom.auth.service.api.ApiKeyApi;
+import stroom.authentication.service.ApiException;
+import stroom.authentication.service.api.ApiKeyApi;
 import stroom.security.impl.AuthenticationConfig.JwtConfig;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.util.HasHealthCheck;
@@ -205,7 +205,7 @@ class JWTService implements HasHealthCheck {
             String publicJsonWebKey = fetchNewPublicKey();
             boolean canGetJwk = StringUtils.isNotBlank(publicJsonWebKey);
             if (!canGetJwk) {
-                resultBuilder.withDetail(KEY, "Cannot get stroom-auth-service's public key!\n");
+                resultBuilder.withDetail(KEY, "Cannot get stroom-authentication-service's public key!\n");
                 resultBuilder.unhealthy();
             }
         } catch (ApiException | RuntimeException e) {

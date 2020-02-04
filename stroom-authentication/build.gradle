@@ -59,15 +59,15 @@ ext.getPropertyOrDefault = { propName, defaultValue ->
 //defines a list of gradle projects that we will publish with maven/bintray
 def projectsToBePublished = subprojects.findAll { project -> 
     project.path in [
-        ':stroom-auth-api-swagger',
+        ':stroom-authentication-api-swagger',
     ] 
 }
 
 def javaProjects = subprojects.findAll { project -> 
     project.path in [
-        ':stroom-authentication:stroom-auth-impl-db-jooq',
-        ':stroom-authentication:stroom-auth-api-swagger',
-        ':stroom-authentication:stroom-auth-impl',
+        ':stroom-authentication:stroom-authentication-impl-db-jooq',
+        ':stroom-authentication:stroom-authentication-api-swagger',
+        ':stroom-authentication:stroom-authentication-impl',
     ] 
 }
 
@@ -272,7 +272,7 @@ configure(projectsToBePublished) {
             vcsUrl = 'https://github.com/gchq/stroom-auth.git'
             version {
                 name = "${versions.stroomAuth}"
-                desc = "stroom-auth-${versions.stroomAuth}"
+                desc = "stroom-authentication-${versions.stroomAuth}"
                 released  = new Date()
                 vcsTag = "${versions.stroomAuth}"
                 gpg {

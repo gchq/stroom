@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonRootName;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.annotation.impl.AnnotationConfig;
-import stroom.auth.config.AuthenticationConfig;
+import stroom.authentication.config.AuthenticationConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.cluster.task.impl.ClusterTaskConfig;
