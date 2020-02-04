@@ -10,6 +10,7 @@ import stroom.config.common.CommonDbConfig;
 import stroom.config.common.ConnectionConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.db.util.AbstractFlyWayDbModule;
+import stroom.util.db.ForceCoreMigration;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -44,12 +45,17 @@ public class DbTestUtil {
     }
 
     /**
-     * Gets aan embedded DB datasource for use in tests that don't use guice injection
+     * Gets an embedded DB datasource for use in tests that don't use guice injection
      */
     public static <T_Config extends HasDbConfig, T_ConnProvider extends DataSource> T_ConnProvider getTestDbDatasource(
             final AbstractFlyWayDbModule<T_Config, T_ConnProvider> dbModule,
             final T_Config config) {
-        return dbModule.getConnectionProvider(() -> config, new EmbeddedDbDataSourceFactory(new CommonDbConfig()));
+
+        // We are only running one module so just pass in any empty ForceCoreMigration
+        return dbModule.getConnectionProvider(
+            () -> config,
+            new EmbeddedDbDataSourceFactory(new CommonDbConfig()),
+            new ForceCoreMigration() { });
     }
 
     public static synchronized ConnectionConfig getOrCreateEmbeddedConnectionConfig() {

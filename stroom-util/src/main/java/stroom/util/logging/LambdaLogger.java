@@ -16,9 +16,11 @@
 
 package stroom.util.logging;
 
+import org.slf4j.Logger;
+
 import java.util.function.Supplier;
 
-public interface LambdaLogger {
+public interface LambdaLogger extends Logger {
     void trace(Supplier<String> message);
 
     void trace(Supplier<String> message, Throwable t);
