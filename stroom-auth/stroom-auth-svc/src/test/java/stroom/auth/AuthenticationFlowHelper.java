@@ -196,7 +196,7 @@ public class AuthenticationFlowHelper {
                 "http://localhost:8099%s?%s",
                 // 'authenticationService' refers to the public path in nginx -- the advertised host. But tests
                 // have no nginx so we need to refer to the configured path, which is 'authentication'.
-                postAuthenticationRedirectUrl.getPath().replaceAll("api/auth/authentication", "authentication"),
+                postAuthenticationRedirectUrl.getPath().replaceAll("api/authentication", "authentication"),
                 postAuthenticationRedirectUrl.getQuery());
 
         HttpResponse postAuthenticationRedirectResponse = null;

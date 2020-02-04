@@ -109,7 +109,7 @@ public final class AuthenticationConfig extends AbstractConfig {
 
     @NotNull
     @JsonProperty(PROP_NAME_OWN_PATH)
-    private String ownPath = "api/auth/authentication";
+    private String ownPath = "api/authentication";
 
     @NotNull
     @JsonProperty(PROP_NAME_AUTHORISATION_SERVICE)

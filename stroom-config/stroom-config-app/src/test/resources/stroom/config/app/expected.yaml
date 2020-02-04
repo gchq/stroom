@@ -88,7 +88,7 @@ appConfig:
       forcePasswordChangeOnFirstLogin: true
       passwordComplexityRegex: ".*"
       minimumPasswordLength: 0
-    ownPath: "api/auth/authentication"
+    ownPath: "api/authentication"
     authorisationService:
       url: "http://localhost:8080/api/authorisation/v"
       canManageUsersPermission: "Manage Users"
