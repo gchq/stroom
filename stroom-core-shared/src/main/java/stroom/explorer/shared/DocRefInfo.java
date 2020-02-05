@@ -1,29 +1,40 @@
 package stroom.explorer.shared;
 
-public class SharedDocRefInfo extends SharedDocRef {
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.DocRef;
+
+@JsonPropertyOrder({"otherInfo", "createTime", "updateTime", "createUser", "updateUser"})
+public class DocRefInfo {
+    private DocRef docRef;
     private String otherInfo;
     private Long createTime;
     private Long updateTime;
     private String createUser;
     private String updateUser;
 
-    public SharedDocRefInfo() {
+    public DocRefInfo() {
     }
 
-    public SharedDocRefInfo(final String type,
-                            final String uuid,
-                            final String name,
-                            final String otherInfo,
-                            final Long createTime,
-                            final String createUser,
-                            final Long updateTime,
-                            final String updateUser) {
-        super(type, uuid, name);
+    public DocRefInfo(final DocRef docRef,
+                      final String otherInfo,
+                      final Long createTime,
+                      final String createUser,
+                      final Long updateTime,
+                      final String updateUser) {
+        this.docRef = docRef;
         this.otherInfo = otherInfo;
         this.createTime = createTime;
         this.createUser = createUser;
         this.updateTime = updateTime;
         this.updateUser = updateUser;
+    }
+
+    public DocRef getDocRef() {
+        return docRef;
+    }
+
+    public void setDocRef(final DocRef docRef) {
+        this.docRef = docRef;
     }
 
     public String getOtherInfo() {
@@ -66,7 +77,8 @@ public class SharedDocRefInfo extends SharedDocRef {
         this.updateUser = updateUser;
     }
 
-    public static class Builder extends SharedDocRef.BaseBuilder<SharedDocRefInfo, Builder> {
+    public static class Builder {
+        private DocRef docRef;
         private String otherInfo;
         private Long createTime;
         private Long updateTime;
@@ -76,41 +88,38 @@ public class SharedDocRefInfo extends SharedDocRef {
         public Builder() {
         }
 
+        public Builder docRef(final DocRef value) {
+            this.docRef = value;
+            return this;
+        }
+
         public Builder otherInfo(final String value) {
             this.otherInfo = value;
-            return self();
+            return this;
         }
 
         public Builder createTime(final Long value) {
             this.createTime = value;
-            return self();
+            return this;
         }
 
         public Builder createUser(final String value) {
             this.createUser = value;
-            return self();
+            return this;
         }
 
         public Builder updateTime(final Long value) {
             this.updateTime = value;
-            return self();
+            return this;
         }
 
         public Builder updateUser(final String value) {
             this.updateUser = value;
-            return self();
-        }
-
-        @Override
-        protected Builder self() {
             return this;
         }
 
-        @Override
-        public SharedDocRefInfo build() {
-            return new SharedDocRefInfo(getType(),
-                    getUuid(),
-                    getName(),
+        public DocRefInfo build() {
+            return new DocRefInfo(docRef,
                     otherInfo,
                     createTime,
                     createUser,

@@ -18,33 +18,25 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
-import stroom.task.shared.Action;
 
-public class ExplorerServiceRenameAction extends Action<SharedDocRef> {
-    private static final long serialVersionUID = 800905016214418723L;
+import java.util.List;
 
-    private DocRef docRef;
-    private String docName;
+public class ExplorerServiceDeleteRequest {
+    private List<DocRef> docRefs;
 
-    public ExplorerServiceRenameAction() {
+    public ExplorerServiceDeleteRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ExplorerServiceRenameAction(final DocRef docRef, final String docName) {
-        this.docRef = docRef;
-        this.docName = docName;
+    public ExplorerServiceDeleteRequest(final List<DocRef> docRefs) {
+        this.docRefs = docRefs;
     }
 
-    public DocRef getDocRef() {
-        return docRef;
+    public List<DocRef> getDocRefs() {
+        return docRefs;
     }
 
-    public String getDocName() {
-        return docName;
-    }
-
-    @Override
-    public String getTaskName() {
-        return "Rename '" + docRef + "' to '" + docName + "'";
+    public void setDocRefs(final List<DocRef> docRefs) {
+        this.docRefs = docRefs;
     }
 }

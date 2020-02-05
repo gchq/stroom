@@ -18,22 +18,19 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
-import stroom.task.shared.Action;
 
 import java.util.List;
 
-public class ExplorerServiceCopyAction extends Action<BulkActionResult> {
-    private static final long serialVersionUID = 800905016214418723L;
-
+public class ExplorerServiceCopyRequest {
     private List<DocRef> docRefs;
     private DocRef destinationFolderRef;
     private PermissionInheritance permissionInheritance;
 
-    public ExplorerServiceCopyAction() {
+    public ExplorerServiceCopyRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ExplorerServiceCopyAction(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    public ExplorerServiceCopyRequest(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
         this.docRefs = docRefs;
         this.destinationFolderRef = destinationFolderRef;
         this.permissionInheritance = permissionInheritance;
@@ -43,16 +40,23 @@ public class ExplorerServiceCopyAction extends Action<BulkActionResult> {
         return docRefs;
     }
 
+    public void setDocRefs(final List<DocRef> docRefs) {
+        this.docRefs = docRefs;
+    }
+
     public DocRef getDestinationFolderRef() {
         return destinationFolderRef;
+    }
+
+    public void setDestinationFolderRef(final DocRef destinationFolderRef) {
+        this.destinationFolderRef = destinationFolderRef;
     }
 
     public PermissionInheritance getPermissionInheritance() {
         return permissionInheritance;
     }
 
-    @Override
-    public String getTaskName() {
-        return "Copy " + docRefs.size() + " documents to '" + destinationFolderRef + "'";
+    public void setPermissionInheritance(final PermissionInheritance permissionInheritance) {
+        this.permissionInheritance = permissionInheritance;
     }
 }

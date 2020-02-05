@@ -16,13 +16,9 @@
 
 package stroom.explorer.shared;
 
-import stroom.docref.SharedObject;
-
 import java.util.List;
 
-public class DocumentTypes implements SharedObject {
-    private static final long serialVersionUID = -8432367046243288634L;
-
+public class DocumentTypes {
     public static final String[] FOLDER_TYPES = new String[]{ExplorerConstants.SYSTEM, ExplorerConstants.FOLDER};
 
     private List<DocumentType> nonSystemTypes;
@@ -41,8 +37,16 @@ public class DocumentTypes implements SharedObject {
         return nonSystemTypes;
     }
 
+    public void setNonSystemTypes(final List<DocumentType> nonSystemTypes) {
+        this.nonSystemTypes = nonSystemTypes;
+    }
+
     public List<DocumentType> getVisibleTypes() {
         return visibleTypes;
+    }
+
+    public void setVisibleTypes(final List<DocumentType> visibleTypes) {
+        this.visibleTypes = visibleTypes;
     }
 
     public static boolean isFolder(final String type) {

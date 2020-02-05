@@ -18,45 +18,45 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
-import stroom.task.shared.Action;
 
-public class ExplorerServiceCreateAction extends Action<SharedDocRef> {
-    private static final long serialVersionUID = 800905016214418723L;
+import java.util.List;
 
-    private String docType;
-    private String docName;
+public class ExplorerServiceMoveRequest {
+    private List<DocRef> docRefs;
     private DocRef destinationFolderRef;
     private PermissionInheritance permissionInheritance;
 
-    public ExplorerServiceCreateAction() {
+    public ExplorerServiceMoveRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ExplorerServiceCreateAction(final String docType, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
-        this.docType = docType;
-        this.docName = docName;
+    public ExplorerServiceMoveRequest(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+        this.docRefs = docRefs;
         this.destinationFolderRef = destinationFolderRef;
         this.permissionInheritance = permissionInheritance;
     }
 
-    public String getDocType() {
-        return docType;
+    public List<DocRef> getDocRefs() {
+        return docRefs;
     }
 
-    public String getDocName() {
-        return docName;
+    public void setDocRefs(final List<DocRef> docRefs) {
+        this.docRefs = docRefs;
     }
 
     public DocRef getDestinationFolderRef() {
         return destinationFolderRef;
     }
 
+    public void setDestinationFolderRef(final DocRef destinationFolderRef) {
+        this.destinationFolderRef = destinationFolderRef;
+    }
+
     public PermissionInheritance getPermissionInheritance() {
         return permissionInheritance;
     }
 
-    @Override
-    public String getTaskName() {
-        return "Create '" + docType + "' in '" + destinationFolderRef + "' with name '" + docName + "'";
+    public void setPermissionInheritance(final PermissionInheritance permissionInheritance) {
+        this.permissionInheritance = permissionInheritance;
     }
 }

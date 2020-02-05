@@ -57,7 +57,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(MockResourceModule.class)
 @IncludeModule(SecurityContextModule.class)
-@Disabled // manual testing only
+@Disabled
+        // manual testing only
 class TestExplorerTreePerformance {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TestExplorerTreePerformance.class);
     private static final int MAX_CHILDREN = 200;
@@ -92,7 +93,7 @@ class TestExplorerTreePerformance {
             LOGGER.logDurationIfInfoEnabled(() -> {
                 explorerService.clear();
                 FetchExplorerNodeResult result = explorerService.getData(findExplorerNodeCriteria);
-                assertThat(result.getTreeStructure().getRoot()).isNull();
+                assertThat(result.getRootNodes()).isEmpty();
             }, "Checked empty tree");
 
             final int count = (int) Math.pow(MAX_CHILDREN, MAX_TREE_DEPTH) + MAX_CHILDREN + 1;
@@ -140,22 +141,20 @@ class TestExplorerTreePerformance {
 
         explorerService.clear();
         FetchExplorerNodeResult result = explorerService.getData(findExplorerNodeCriteria);
-        count(result.getTreeStructure().getRoot(), result, count, lastChild);
+        count(result.getRootNodes(), count, lastChild);
 
         assertThat(count.get()).isEqualTo(expected);
 
         return lastChild.get();
     }
 
-    private void count(final ExplorerNode parent, final FetchExplorerNodeResult result, final AtomicInteger count, final AtomicReference<ExplorerNode> lastChild) {
-        if (parent != null) {
-            lastChild.set(parent);
-            count.incrementAndGet();
-            final List<ExplorerNode> children = result.getTreeStructure().getChildren(parent);
-            if (children != null) {
-                for (final ExplorerNode child : children) {
-                    count(child, result, count, lastChild);
-                }
+    private void count(final List<ExplorerNode> parents, final AtomicInteger count, final AtomicReference<ExplorerNode> lastChild) {
+        if (parents != null) {
+            for (final ExplorerNode parent : parents) {
+                lastChild.set(parent);
+                count.incrementAndGet();
+                final List<ExplorerNode> children = parent.getChildren();
+                count(children, count, lastChild);
             }
         }
     }
@@ -163,10 +162,10 @@ class TestExplorerTreePerformance {
     private ExplorerNode openAll(final ExplorerNode parent, final FetchExplorerNodeResult result, final FindExplorerNodeCriteria findExplorerNodeCriteria) {
         ExplorerNode lastChild = null;
 
-        final List<ExplorerNode> children = result.getTreeStructure().getChildren(parent);
+        final List<ExplorerNode> children = parent.getChildren();
         if (children != null && children.size() > 0) {
-            findExplorerNodeCriteria.getOpenItems().addAll(children);
             for (final ExplorerNode child : children) {
+                findExplorerNodeCriteria.getOpenItems().add(child.getUuid());
                 lastChild = openAll(child, result, findExplorerNodeCriteria);
                 if (lastChild == null) {
                     lastChild = child;

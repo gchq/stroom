@@ -70,7 +70,7 @@ public class CopyDocumentPresenter
         final ExplorerNode firstChild = event.getExplorerNodeList().get(0);
         entityTreePresenter.setSelectedItem(firstChild);
         entityTreePresenter.getModel().reset();
-        entityTreePresenter.getModel().setEnsureVisible(firstChild);
+        entityTreePresenter.getModel().setEnsureVisible(firstChild.getUuid());
         entityTreePresenter.getModel().refresh();
 
         forceReveal();

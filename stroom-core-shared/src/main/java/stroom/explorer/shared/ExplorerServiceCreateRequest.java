@@ -18,41 +18,53 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
-import stroom.task.shared.Action;
 
-import java.util.List;
-
-public class ExplorerServiceMoveAction extends Action<BulkActionResult> {
-    private static final long serialVersionUID = 800905016214418723L;
-
-    private List<DocRef> docRefs;
+public class ExplorerServiceCreateRequest {
+    private String docType;
+    private String docName;
     private DocRef destinationFolderRef;
     private PermissionInheritance permissionInheritance;
 
-    public ExplorerServiceMoveAction() {
+    public ExplorerServiceCreateRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ExplorerServiceMoveAction(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
-        this.docRefs = docRefs;
+    public ExplorerServiceCreateRequest(final String docType, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+        this.docType = docType;
+        this.docName = docName;
         this.destinationFolderRef = destinationFolderRef;
         this.permissionInheritance = permissionInheritance;
     }
 
-    public List<DocRef> getDocRefs() {
-        return docRefs;
+    public String getDocType() {
+        return docType;
+    }
+
+    public void setDocType(final String docType) {
+        this.docType = docType;
+    }
+
+    public String getDocName() {
+        return docName;
+    }
+
+    public void setDocName(final String docName) {
+        this.docName = docName;
     }
 
     public DocRef getDestinationFolderRef() {
         return destinationFolderRef;
     }
 
+    public void setDestinationFolderRef(final DocRef destinationFolderRef) {
+        this.destinationFolderRef = destinationFolderRef;
+    }
+
     public PermissionInheritance getPermissionInheritance() {
         return permissionInheritance;
     }
 
-    @Override
-    public String getTaskName() {
-        return "Move " + docRefs.size() + " documents to '" + destinationFolderRef + "'";
+    public void setPermissionInheritance(final PermissionInheritance permissionInheritance) {
+        this.permissionInheritance = permissionInheritance;
     }
 }

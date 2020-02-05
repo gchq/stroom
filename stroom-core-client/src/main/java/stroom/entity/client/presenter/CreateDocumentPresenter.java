@@ -94,7 +94,7 @@ public class CreateDocumentPresenter
 
         entityTreePresenter.setSelectedItem(event.getSelected());
         entityTreePresenter.getModel().reset();
-        entityTreePresenter.getModel().setEnsureVisible(event.getSelected());
+        entityTreePresenter.getModel().setEnsureVisible(event.getSelected().getUuid());
         entityTreePresenter.getModel().refresh();
 
         caption = "New " + event.getDocDisplayType();

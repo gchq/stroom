@@ -36,6 +36,7 @@ import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
 import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
@@ -73,7 +74,7 @@ public class ExplorerTreePresenter
     public ExplorerTreePresenter(final EventBus eventBus,
                                  final ExplorerTreeView view,
                                  final ExplorerTreeProxy proxy,
-                                 final ClientDispatchAsync dispatcher,
+                                 final RestFactory restFactory,
                                  final DocumentTypeCache documentTypeCache,
                                  final TypeFilterPresenter typeFilterPresenter,
                                  final CurrentActivity currentActivity,
@@ -85,7 +86,7 @@ public class ExplorerTreePresenter
 
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(dispatcher, true) {
+        explorerTree = new ExplorerTree(restFactory, true) {
             @Override
             protected void doSelect(final ExplorerNode row, final SelectionType selectionType) {
                 super.doSelect(row, selectionType);
@@ -202,7 +203,7 @@ public class ExplorerTreePresenter
     public void onCurrentUserChanged(final CurrentUserChangedEvent event) {
         documentTypeCache.clear();
         // Set the data for the type filter.
-        documentTypeCache.fetch().onSuccess(typeFilterPresenter::setDocumentTypes);
+        documentTypeCache.fetch(typeFilterPresenter::setDocumentTypes);
 
         explorerTree.getTreeModel().reset();
         explorerTree.getTreeModel().setRequiredPermissions(DocumentPermissionNames.READ);
@@ -221,7 +222,7 @@ public class ExplorerTreePresenter
     @Override
     public void onHighlight(final HighlightExplorerNodeEvent event) {
         explorerTree.setSelectedItem(event.getExplorerNode());
-        explorerTree.getTreeModel().setEnsureVisible(event.getExplorerNode());
+        explorerTree.getTreeModel().setEnsureVisible(event.getExplorerNode().getUuid());
         explorerTree.getTreeModel().refresh();
     }
 

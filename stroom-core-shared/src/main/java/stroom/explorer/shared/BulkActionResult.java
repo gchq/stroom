@@ -39,7 +39,15 @@ public class BulkActionResult implements SharedObject {
         return docRefs;
     }
 
+    public void setDocRefs(final List<DocRef> docRefs) {
+        this.docRefs = docRefs;
+    }
+
     public String getMessage() {
         return message;
+    }
+
+    public void setMessage(final String message) {
+        this.message = message;
     }
 }

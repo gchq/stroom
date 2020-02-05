@@ -16,32 +16,43 @@
 
 package stroom.explorer.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.Set;
 
-public class ExplorerPermissions implements SharedObject {
-    private static final long serialVersionUID = -598649328210958431L;
-
-    private Set<DocumentType> createPermissions;
+public class ExplorerNodePermissions {
+    private ExplorerNode explorerNode;
+    private Set<String> createPermissions;
     private Set<String> documentPermissions;
     private boolean admin;
 
-    public ExplorerPermissions() {
+    public ExplorerNodePermissions() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ExplorerPermissions(final Set<DocumentType> createPermissions, final Set<String> documentPermissions, final boolean admin) {
+    public ExplorerNodePermissions(final ExplorerNode explorerNode,
+                                   final Set<String> createPermissions,
+                                   final Set<String> documentPermissions,
+                                   final boolean admin) {
+        this.explorerNode = explorerNode;
         this.createPermissions = createPermissions;
         this.documentPermissions = documentPermissions;
         this.admin = admin;
     }
 
-    public Set<DocumentType> getCreatePermissions() {
+    public ExplorerNode getExplorerNode() {
+        return explorerNode;
+    }
+
+    public void setExplorerNode(final ExplorerNode explorerNode) {
+        this.explorerNode = explorerNode;
+    }
+
+    public Set<String> getCreatePermissions() {
         return createPermissions;
     }
 
-    public void setCreatePermissions(final Set<DocumentType> createPermissions) {
+    public void setCreatePermissions(final Set<String> createPermissions) {
         this.createPermissions = createPermissions;
     }
 
@@ -53,13 +64,23 @@ public class ExplorerPermissions implements SharedObject {
         this.documentPermissions = documentPermissions;
     }
 
+    public boolean isAdmin() {
+        return admin;
+    }
+
+    public void setAdmin(final boolean admin) {
+        this.admin = admin;
+    }
+
+    @JsonIgnore
     public boolean hasCreatePermission(final DocumentType type) {
         if (admin) {
             return true;
         }
-        return createPermissions.contains(type);
+        return createPermissions.contains(type.getType());
     }
 
+    @JsonIgnore
     public boolean hasDocumentPermission(final String permission) {
         if (admin) {
             return true;

@@ -20,7 +20,6 @@ import com.google.gwt.user.cellview.client.HasSelection;
 import com.google.gwt.view.client.SelectionModel.AbstractSelectionModel;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.TreeStructure;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,7 +33,8 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
     private final HashMap<ExplorerNode, TickBoxState> stateMap = new HashMap<>();
     private final Set<ExplorerNode> stateChanges = new HashSet<>();
 
-    private TreeStructure treeStructure;
+    private List<ExplorerNode> roots;
+    private Map<ExplorerNode, ExplorerNode> parents;
     private Map<ExplorerNode, Set<ExplorerNode>> descendants = new HashMap<>();
 
     public TickBoxSelectionModel() {
@@ -82,7 +82,7 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
             changeParent(item);
 
             if (TickBoxState.TICK.equals(state)) {
-                addDescendants(treeStructure, treeStructure.getParent(item), item);
+                addDescendants(getParent(item), item);
                 selectChildren(item);
             } else {
                 removeDescendants(item);
@@ -103,16 +103,10 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
         }
     }
 
-    private void addDescendants(final TreeStructure treeStructure, final ExplorerNode ancestor, final ExplorerNode descendant) {
-        if (treeStructure != null && ancestor != null) {
-            Set<ExplorerNode> set = descendants.get(ancestor);
-            if (set == null) {
-                set = new HashSet<>();
-                descendants.put(ancestor, set);
-            }
-            set.add(descendant);
-
-            addDescendants(treeStructure, treeStructure.getParent(ancestor), descendant);
+    private void addDescendants(final ExplorerNode ancestor, final ExplorerNode descendant) {
+        if (ancestor != null) {
+            descendants.computeIfAbsent(ancestor, k -> new HashSet<>()).add(descendant);
+            addDescendants(getParent(ancestor), descendant);
         }
     }
 
@@ -126,7 +120,7 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
         if (parent != null) {
             boolean allTicked = true;
             boolean allUnticked = true;
-            final List<ExplorerNode> children = getChildren(parent);
+            final List<ExplorerNode> children = parent.getChildren();
             if (children != null && children.size() > 0) {
                 for (final ExplorerNode child : children) {
                     final TickBoxState childState = getState(child);
@@ -159,11 +153,11 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
     }
 
     private void selectChildren(final ExplorerNode item) {
-        final List<ExplorerNode> children = getChildren(item);
+        final List<ExplorerNode> children = item.getChildren();
         if (children != null && children.size() > 0) {
             for (final ExplorerNode child : children) {
                 modifyState(child, TickBoxState.TICK);
-                addDescendants(treeStructure, treeStructure.getParent(child), child);
+                addDescendants(getParent(child), child);
             }
         }
     }
@@ -189,37 +183,29 @@ public class TickBoxSelectionModel extends AbstractSelectionModel<ExplorerNode> 
     }
 
     private ExplorerNode getParent(final ExplorerNode object) {
-        if (treeStructure != null) {
-            return treeStructure.getParent(object);
+        if (parents != null) {
+            return parents.get(object);
         }
         return null;
     }
 
-    private List<ExplorerNode> getChildren(final ExplorerNode object) {
-        if (treeStructure != null) {
-            return treeStructure.getChildren(object);
-        }
-        return null;
-    }
-
-    public void setTreeStructure(final TreeStructure treeStructure) {
-        this.treeStructure = treeStructure;
+    public void setRoots(final List<ExplorerNode> roots) {
+        this.roots = roots;
+        this.parents = new HashMap<>();
 
         // Once the tree structure changes ensure we auto select descendants of selected ancestors.
-        if (treeStructure != null) {
-            for (final ExplorerNode item : getSelectedSet()) {
-                selectChildren(treeStructure, item);
-            }
+        if (roots != null) {
+            addChildren(null, roots, false);
         }
     }
 
-    private void selectChildren(final TreeStructure treeStructure, final ExplorerNode item) {
-        final List<ExplorerNode> children = treeStructure.getChildren(item);
-        if (children != null) {
-            for (final ExplorerNode child : children) {
-                setSelected(child, true);
-                selectChildren(treeStructure, child);
-            }
+    private void addChildren(final ExplorerNode parent, final List<ExplorerNode> children, final boolean select) {
+        for (final ExplorerNode child : children) {
+            parents.put(child, parent);
+
+            final boolean selectChildren = select || getSelectedSet().contains(child);
+            setSelected(child, selectChildren);
+            addChildren(child, child.getChildren(), selectChildren);
         }
     }
 }

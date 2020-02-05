@@ -6,8 +6,8 @@ import stroom.docref.DocRefInfo;
 import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerTreeFilter;
-import stroom.explorer.shared.HasNodeState;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
@@ -35,15 +35,15 @@ import java.util.stream.Collectors;
 @Path("/explorer/v1")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class ExplorerResource implements RestResource {
+public class NewUIExplorerResource implements RestResource {
     private final ExplorerService explorerService;
     private final ExplorerTreeModel explorerTreeModel;
     private final SecurityContext securityContext;
 
     @Inject
-    public ExplorerResource(final ExplorerService explorerService,
-                            final ExplorerTreeModel explorerTreeModel,
-                            final SecurityContext securityContext) {
+    public NewUIExplorerResource(final ExplorerService explorerService,
+                                 final ExplorerTreeModel explorerTreeModel,
+                                 final SecurityContext securityContext) {
         this.explorerService = explorerService;
         this.explorerTreeModel = explorerTreeModel;
         this.securityContext = securityContext;
@@ -120,7 +120,7 @@ public class ExplorerResource implements RestResource {
         explorerTreeModel.rebuild();
         final TreeModel treeModel = explorerTreeModel.getModel();
 
-        List<String> docRefTypes = treeModel.getChildMap().values().stream()
+        List<String> docRefTypes = treeModel.values().stream()
                 .flatMap(List::stream)
                 .map(elementNode -> elementNode == null ? "" : elementNode.getType())
                 .distinct()
@@ -306,7 +306,7 @@ public class ExplorerResource implements RestResource {
                                       final ExplorerTreeFilter filter) {
         int added = 0;
 
-        final List<ExplorerNode> children = treeModelIn.getChildMap().get(parent);
+        final List<ExplorerNode> children = treeModelIn.getChildren(parent);
         if (children != null) {
 
             for (final ExplorerNode child : children) {
@@ -346,7 +346,7 @@ public class ExplorerResource implements RestResource {
     }
 
     private void getFlatResults(final TreeModel filteredModel, final List<DocRef> results) {
-        final List<ExplorerNode> children = filteredModel.getChildMap().get(null);
+        final List<ExplorerNode> children = filteredModel.getChildren(null);
         if (children != null) {
             final ExplorerNode systemNode = children.stream()
                     .filter(c -> c.getName().equals("System"))
@@ -374,7 +374,7 @@ public class ExplorerResource implements RestResource {
     private SimpleDocRefTreeDTO getRoot(final TreeModel filteredModel) {
         SimpleDocRefTreeDTO result = null;
 
-        final List<ExplorerNode> children = filteredModel.getChildMap().get(null);
+        final List<ExplorerNode> children = filteredModel.getChildren(null);
         if (children != null) {
             final ExplorerNode systemNode = children.stream()
                     .filter(c -> c.getName().equals("System"))
@@ -392,12 +392,12 @@ public class ExplorerResource implements RestResource {
                                                   final TreeModel filteredModel) {
         List<SimpleDocRefTreeDTO> result = new ArrayList<>();
 
-        final List<ExplorerNode> children = filteredModel.getChildMap().get(parent);
+        final List<ExplorerNode> children = filteredModel.getChildren(parent);
 
         if (children == null) {
-            parent.setNodeState(HasNodeState.NodeState.LEAF);
+            parent.setNodeState(NodeState.LEAF);
         } else {
-            parent.setNodeState(HasNodeState.NodeState.OPEN);
+            parent.setNodeState(NodeState.OPEN);
             for (final ExplorerNode child : children) {
                 final SimpleDocRefTreeDTO resultChild = new SimpleDocRefTreeDTO(child.getUuid(), child.getType(), child.getName());
                 getChildren(child, filteredModel).forEach(resultChild::addChild);

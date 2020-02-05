@@ -12,39 +12,39 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
-import stroom.task.shared.Action;
-import stroom.util.shared.SharedSet;
 
-import java.util.Set;
+public class ExplorerServiceRenameRequest {
+    private DocRef docRef;
+    private String docName;
 
-public class FetchDocRefsAction extends Action<SharedSet<SharedDocRef>> {
-    private static final long serialVersionUID = -1773546031158236156L;
-
-    private Set<DocRef> docRefs;
-
-    public FetchDocRefsAction() {
+    public ExplorerServiceRenameRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchDocRefsAction(final Set<DocRef> docRefs) {
-        this.docRefs = docRefs;
+    public ExplorerServiceRenameRequest(final DocRef docRef, final String docName) {
+        this.docRef = docRef;
+        this.docName = docName;
     }
 
-    public Set<DocRef> getDocRefs() {
-        return docRefs;
+    public DocRef getDocRef() {
+        return docRef;
     }
 
-    public void setDocRefs(final Set<DocRef> docRefs) {
-        this.docRefs = docRefs;
+    public void setDocRef(final DocRef docRef) {
+        this.docRef = docRef;
     }
 
-    @Override
-    public String getTaskName() {
-        return "FetchDocRefsAction";
+    public String getDocName() {
+        return docName;
+    }
+
+    public void setDocName(final String docName) {
+        this.docName = docName;
     }
 }

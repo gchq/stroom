@@ -19,6 +19,7 @@ package stroom.pipeline.structure.client.presenter;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
@@ -34,13 +35,14 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.explorer.shared.FetchDocRefsAction;
+import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -67,6 +69,7 @@ import java.util.stream.Collectors;
 
 public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridView<PipelineReference>>
         implements HasDirtyHandlers, ReadOnlyChangeHandler {
+    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
     private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:500\">");
     private static final SafeHtml REMOVED = SafeHtmlUtils
             .fromSafeConstant("<div style=\"font-weight:500;text-decoration:line-through\">");
@@ -78,7 +81,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     private final Map<PipelineReference, State> referenceStateMap = new HashMap<>();
     private final List<PipelineReference> references = new ArrayList<>();
     private final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
 
     private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
     private PipelineDoc pipeline;
@@ -91,10 +94,10 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     @Inject
     public PipelineReferenceListPresenter(final EventBus eventBus,
                                           final Provider<NewPipelineReferencePresenter> newPipelineReferencePresenter,
-                                          final ClientDispatchAsync dispatcher) {
+                                          final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.newPipelineReferencePresenter = newPipelineReferencePresenter;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         addButton = getView().addButton(SvgPresets.NEW_ITEM);
         editButton = getView().addButton(SvgPresets.EDIT);
@@ -395,18 +398,22 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
         references.forEach(ref -> addPipelineReference(docRefs, ref));
         if (docRefs.size() > 0) {
             // Load entities.
-            dispatcher.exec(new FetchDocRefsAction(docRefs)).onSuccess(result -> {
-                final Map<DocRef, DocRef> fetchedDocRefs = result
-                        .stream()
-                        .collect(Collectors.toMap(Function.identity(), Function.identity()));
+            final Rest<Set<DocRef>> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        final Map<DocRef, DocRef> fetchedDocRefs = result
+                                .stream()
+                                .collect(Collectors.toMap(Function.identity(), Function.identity()));
 
-                for (final PipelineReference reference : references) {
-                    reference.setFeed(resolve(fetchedDocRefs, reference.getFeed()));
-                    reference.setPipeline(resolve(fetchedDocRefs, reference.getPipeline()));
-                }
+                        for (final PipelineReference reference : references) {
+                            reference.setFeed(resolve(fetchedDocRefs, reference.getFeed()));
+                            reference.setPipeline(resolve(fetchedDocRefs, reference.getPipeline()));
+                        }
 
-                setData(references);
-            });
+                        setData(references);
+                    })
+                    .call(EXPLORER_RESOURCE)
+                    .fetchDocRefs(docRefs);
         } else {
             setData(references);
         }

@@ -17,12 +17,8 @@
 
 package stroom.explorer.shared;
 
-import stroom.docref.SharedObject;
-
-public class DocumentType implements SharedObject {
+public class DocumentType {
     public static final String DOC_IMAGE_URL = "document/";
-
-    private static final long serialVersionUID = -7826692935161793565L;
 
     private int priority;
     private String type;
@@ -47,24 +43,40 @@ public class DocumentType implements SharedObject {
         this.iconUrl = iconUrl;
     }
 
-    private String getIconUrl(final String type) {
-        return DocumentType.DOC_IMAGE_URL + type + ".svg";
-    }
-
     public int getPriority() {
         return priority;
+    }
+
+    public void setPriority(final int priority) {
+        this.priority = priority;
     }
 
     public String getDisplayType() {
         return displayType;
     }
 
+    public void setDisplayType(final String displayType) {
+        this.displayType = displayType;
+    }
+
     public String getType() {
         return type;
     }
 
+    public void setType(final String type) {
+        this.type = type;
+    }
+
     public String getIconUrl() {
         return iconUrl;
+    }
+
+    public void setIconUrl(final String iconUrl) {
+        this.iconUrl = iconUrl;
+    }
+
+    private String getIconUrl(final String type) {
+        return DocumentType.DOC_IMAGE_URL + type + ".svg";
     }
 
     @Override

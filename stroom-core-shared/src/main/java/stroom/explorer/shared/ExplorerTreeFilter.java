@@ -16,15 +16,10 @@
 
 package stroom.explorer.shared;
 
-import stroom.docref.SharedObject;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
-
+import java.util.Objects;
 import java.util.Set;
 
-public class ExplorerTreeFilter implements SharedObject {
-    private static final long serialVersionUID = 6474393620178001033L;
-
+public class ExplorerTreeFilter {
     private Set<String> includedTypes;
     private Set<String> tags;
     private Set<String> requiredPermissions;
@@ -47,48 +42,56 @@ public class ExplorerTreeFilter implements SharedObject {
         return includedTypes;
     }
 
+    public void setIncludedTypes(final Set<String> includedTypes) {
+        this.includedTypes = includedTypes;
+    }
+
     public Set<String> getTags() {
         return tags;
+    }
+
+    public void setTags(final Set<String> tags) {
+        this.tags = tags;
     }
 
     public Set<String> getRequiredPermissions() {
         return requiredPermissions;
     }
 
+    public void setRequiredPermissions(final Set<String> requiredPermissions) {
+        this.requiredPermissions = requiredPermissions;
+    }
+
     public String getNameFilter() {
         return nameFilter;
+    }
+
+    public void setNameFilter(final String nameFilter) {
+        this.nameFilter = nameFilter;
     }
 
     public boolean isNameFilterChange() {
         return nameFilterChange;
     }
 
+    public void setNameFilterChange(final boolean nameFilterChange) {
+        this.nameFilterChange = nameFilterChange;
+    }
+
     @Override
     public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof ExplorerTreeFilter)) {
-            return false;
-        }
-
-        final ExplorerTreeFilter filter = (ExplorerTreeFilter) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(includedTypes, filter.includedTypes);
-        builder.append(tags, filter.tags);
-        builder.append(requiredPermissions, filter.requiredPermissions);
-        builder.append(nameFilter, filter.nameFilter);
-        builder.append(nameFilterChange, filter.nameFilterChange);
-        return builder.isEquals();
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ExplorerTreeFilter that = (ExplorerTreeFilter) o;
+        return nameFilterChange == that.nameFilterChange &&
+                Objects.equals(includedTypes, that.includedTypes) &&
+                Objects.equals(tags, that.tags) &&
+                Objects.equals(requiredPermissions, that.requiredPermissions) &&
+                Objects.equals(nameFilter, that.nameFilter);
     }
 
     @Override
     public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(includedTypes);
-        builder.append(tags);
-        builder.append(requiredPermissions);
-        builder.append(nameFilter);
-        builder.append(nameFilterChange);
-        return builder.toHashCode();
+        return Objects.hash(includedTypes, tags, requiredPermissions, nameFilter, nameFilterChange);
     }
 }

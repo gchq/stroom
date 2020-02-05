@@ -122,7 +122,7 @@ class ExplorerTreeModel {
         final TreeModel treeModel = explorerTreeDao.createModel(this::getIconUrl);
 
         // Sort children.
-        treeModel.getChildMap().values().forEach(this::sort);
+        treeModel.values().forEach(this::sort);
 
         return treeModel;
     }

@@ -16,36 +16,56 @@
 
 package stroom.explorer.shared;
 
-import stroom.docref.SharedObject;
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
-public class FetchExplorerNodeResult implements SharedObject {
-    private static final long serialVersionUID = 6474393620176001063L;
-
-    private TreeStructure treeStructure = new TreeStructure();
-    private List<ExplorerNode> openedItems = new ArrayList<>();
-    private Set<ExplorerNode> temporaryOpenedItems;
+public class FetchExplorerNodeResult {
+    private List<ExplorerNode> rootNodes = new ArrayList<>();
+    private List<String> openedItems = new ArrayList<>();
+    private Set<String> temporaryOpenedItems;
 
     public FetchExplorerNodeResult() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public TreeStructure getTreeStructure() {
-        return treeStructure;
+    public List<ExplorerNode> getRootNodes() {
+        return rootNodes;
     }
 
-    public List<ExplorerNode> getOpenedItems() {
+    public void setRootNodes(final List<ExplorerNode> rootNodes) {
+        this.rootNodes = rootNodes;
+    }
+
+    public List<String> getOpenedItems() {
         return openedItems;
     }
 
-    public Set<ExplorerNode> getTemporaryOpenedItems() {
+    public void setOpenedItems(final List<String> openedItems) {
+        this.openedItems = openedItems;
+    }
+
+    public Set<String> getTemporaryOpenedItems() {
         return temporaryOpenedItems;
     }
 
-    public void setTemporaryOpenedItems(final Set<ExplorerNode> temporaryOpenedItems) {
+    public void setTemporaryOpenedItems(final Set<String> temporaryOpenedItems) {
         this.temporaryOpenedItems = temporaryOpenedItems;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final FetchExplorerNodeResult that = (FetchExplorerNodeResult) o;
+        return Objects.equals(rootNodes, that.rootNodes) &&
+                Objects.equals(openedItems, that.openedItems) &&
+                Objects.equals(temporaryOpenedItems, that.temporaryOpenedItems);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(rootNodes, openedItems, temporaryOpenedItems);
     }
 }
