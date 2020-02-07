@@ -41,7 +41,7 @@ BEGIN
         AND EXISTS (
             SELECT NULL
             FROM stroom_user
-            WHERE uuid = ap.USER_UUID)
+            WHERE uuid = ap.USR_UUID)
         ORDER BY ap.ID;
 
         -- Work out what to set our auto_increment start value to

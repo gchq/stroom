@@ -43,7 +43,7 @@ BEGIN
         AND EXISTS (
             SELECT NULL
             FROM USR
-            WHERE UUID = USER_UUID)
+            WHERE UUID = USR_UUID)
         ORDER BY ID;
 
         -- Work out what to set our auto_increment start value to

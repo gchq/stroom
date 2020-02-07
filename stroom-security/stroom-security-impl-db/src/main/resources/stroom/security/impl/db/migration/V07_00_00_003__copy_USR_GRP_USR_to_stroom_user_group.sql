@@ -41,11 +41,11 @@ BEGIN
         AND EXISTS (
             SELECT NULL
             FROM stroom_user
-            WHERE uuid = USER_UUID)
+            WHERE uuid = USR_UUID)
         AND EXISTS (
             SELECT NULL
             FROM stroom_user
-            WHERE uuid = GROUP_UUID)
+            WHERE uuid = GRP_UUID)
         ORDER BY ID;
 
         -- Work out what to set our auto_increment start value to
