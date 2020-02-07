@@ -71,10 +71,10 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     }
 
     @Override
-    public <R extends SharedObject> void execAsync(final ClusterTask<R> task,
-                                                   final ClusterResultCollector<R> collector,
-                                                   final String sourceNode,
-                                                   final Set<String> targetNodes) {
+    public <R> void execAsync(final ClusterTask<R> task,
+                              final ClusterResultCollector<R> collector,
+                              final String sourceNode,
+                              final Set<String> targetNodes) {
 //        // Try and discover the parent task for this task as one hasn't been
 //        // supplied.
 //        if (!TaskScopeContextHolder.contextExists()) {
@@ -85,11 +85,11 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
         execAsync(parentTask, task, collector, sourceNode, targetNodes);
     }
 
-    private <R extends SharedObject> void execAsync(final Task<?> sourceTask,
-                                                    final ClusterTask<R> clusterTask,
-                                                    final ClusterResultCollector<R> collector,
-                                                    final String sourceNode,
-                                                    final Set<String> targetNodes) {
+    private <R> void execAsync(final Task<?> sourceTask,
+                               final ClusterTask<R> clusterTask,
+                               final ClusterResultCollector<R> collector,
+                               final String sourceNode,
+                               final Set<String> targetNodes) {
         if (sourceTask == null) {
             throw new NullPointerException("A source task must be provided");
         }
@@ -172,13 +172,13 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
      */
     //This method is * executed by Guice using a named bean/method, hence 'unused' suppression
     @SuppressWarnings({"unchecked", "unused"})
-    public <R extends SharedObject> Boolean receiveResult(final ClusterTask<R> task,
-                                                          final String targetNode,
-                                                          final TaskId sourceTaskId,
-                                                          final CollectorId collectorId,
-                                                          final R result,
-                                                          final Throwable throwable,
-                                                          final Boolean success) {
+    public <R> Boolean receiveResult(final ClusterTask<R> task,
+                                     final String targetNode,
+                                     final TaskId sourceTaskId,
+                                     final CollectorId collectorId,
+                                     final R result,
+                                     final Throwable throwable,
+                                     final Boolean success) {
         final AtomicBoolean successfullyReceived = new AtomicBoolean();
 
         DebugTrace.debugTraceIn(task, RECEIVE_RESULT, success);

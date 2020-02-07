@@ -17,11 +17,11 @@
 package stroom.processor.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
+
 
 import java.util.Objects;
 
-public class ProcessorTaskSummary implements SharedObject {
+public class ProcessorTaskSummary {
     private static final long serialVersionUID = 5631193345714122209L;
 
     private DocRef pipeline;

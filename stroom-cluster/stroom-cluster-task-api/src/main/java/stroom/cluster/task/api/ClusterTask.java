@@ -16,7 +16,6 @@
 
 package stroom.cluster.task.api;
 
-import stroom.docref.SharedObject;
 import stroom.task.api.TaskIdFactory;
 import stroom.task.shared.SimpleThreadPool;
 import stroom.task.shared.Task;
@@ -26,7 +25,7 @@ import stroom.task.shared.ThreadPool;
 import java.io.Serializable;
 import java.util.Objects;
 
-public abstract class ClusterTask<R extends SharedObject> implements Task<R>, Serializable {
+public abstract class ClusterTask<R> implements Task<R>, Serializable {
     private static final long serialVersionUID = 4730274660149532350L;
 
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(5);

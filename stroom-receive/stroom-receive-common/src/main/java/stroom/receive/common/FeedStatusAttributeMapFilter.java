@@ -3,7 +3,7 @@ package stroom.receive.common;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.StandardHeaderArguments;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.feed.remote.FeedStatus;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;

@@ -19,7 +19,6 @@ package stroom.importexport.impl;
 import stroom.importexport.shared.ImportState;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
-import stroom.util.shared.SharedList;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -31,7 +30,7 @@ public interface ImportExportService {
     /**
      * Get a list of entities for Stroom to be able to import.
      */
-    SharedList<ImportState> createImportConfirmationList(Path data);
+    List<ImportState> createImportConfirmationList(Path data);
 
     /**
      * Perform an import using a confirmation list.

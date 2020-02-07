@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.SharedObject;
+
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -40,7 +40,7 @@ import java.util.Set;
 @XmlRootElement(name = "data")
 @JsonPropertyOrder({"field", "customRollUpMask"})
 @JsonInclude(Include.NON_DEFAULT)
-public class StroomStatsStoreEntityData implements SharedObject {
+public class StroomStatsStoreEntityData {
 
     private static final long serialVersionUID = -2754817144611481958L;
     /**

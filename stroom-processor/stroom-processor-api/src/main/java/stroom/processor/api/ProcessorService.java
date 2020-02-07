@@ -18,7 +18,7 @@
 package stroom.processor.api;
 
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
+
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;

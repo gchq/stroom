@@ -24,7 +24,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -119,8 +119,8 @@ public class EditExpressionPresenter extends MyPresenterWidget<EditExpressionPre
         }));
     }
 
-    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<AbstractField> fields) {
-        expressionPresenter.init(dispatcher, dataSource, fields);
+    public void init(final RestFactory restFactory, final DocRef dataSource, final List<AbstractField> fields) {
+        expressionPresenter.init(restFactory, dataSource, fields);
     }
 
     private void setButtonsEnabled() {

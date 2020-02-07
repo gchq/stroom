@@ -17,12 +17,10 @@
 package stroom.pipeline.stepping;
 
 import stroom.pipeline.shared.SharedElementData;
-import stroom.pipeline.shared.SharedStepData;
+import stroom.pipeline.shared.stepping.SharedStepData;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.util.shared.Highlight;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 

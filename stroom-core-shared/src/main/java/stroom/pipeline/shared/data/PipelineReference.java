@@ -18,7 +18,7 @@ package stroom.pipeline.shared.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.CompareBuilder;
 import stroom.util.shared.Copyable;
 
@@ -55,7 +55,7 @@ import java.util.Objects;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "PipelineReference", propOrder = {"element", "name", "pipeline", "feed", "streamType"})
-public final class PipelineReference implements Comparable<PipelineReference>, SharedObject, Copyable<PipelineReference> {
+public final class PipelineReference implements Comparable<PipelineReference>, Copyable<PipelineReference> {
     private static final long serialVersionUID = -8037614920682819123L;
     @XmlElement(name = "element", required = true)
     protected String element;

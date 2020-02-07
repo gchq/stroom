@@ -54,7 +54,7 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
             throw new RuntimeException(LogUtil.message("Trying to save a config record when there is no databaseValue {}",
                     configProperty));
         }
-        record.set(CONFIG.VAL, configProperty.getDatabaseOverrideValue().getValueOrElse(""));
+        record.set(CONFIG.VAL, configProperty.getDatabaseOverrideValue().getValOrElse(""));
         return record;
     };
 

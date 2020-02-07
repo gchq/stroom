@@ -8,7 +8,7 @@ import stroom.core.db.migration._V07_00_00.streamstore.shared._V07_00_00_FindStr
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.docref.DocRef;
-import stroom.entity.shared.SQLNameConstants;
+import stroom.core.db.migration._V07_00_00.streamstore.shared.SQLNameConstants;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;

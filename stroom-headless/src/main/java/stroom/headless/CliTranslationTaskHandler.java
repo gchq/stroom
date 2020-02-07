@@ -23,7 +23,7 @@ import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.StandardHeaderArguments;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.pipeline.ErrorWriter;
 import stroom.pipeline.ErrorWriterProxy;
 import stroom.pipeline.PipelineStore;

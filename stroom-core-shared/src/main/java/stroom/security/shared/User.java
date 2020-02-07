@@ -1,11 +1,11 @@
 package stroom.security.shared;
 
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.HasAuditInfo;
 
 import java.util.Objects;
 
-public class User implements HasAuditInfo, SharedObject {
+public class User implements HasAuditInfo {
     public static final String ADMIN_USER_NAME = "admin";
 
     private Integer id;

@@ -19,7 +19,7 @@ package stroom.index.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.entity.shared.EntityEvent;
+import stroom.util.entity.EntityEvent;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.index.impl.api.IndexResourceImpl;

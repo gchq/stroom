@@ -35,7 +35,7 @@ import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.task.api.ExecutorProvider;

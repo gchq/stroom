@@ -16,9 +16,9 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
 
-public class Message implements SharedObject {
+
+public class Message {
     private static final long serialVersionUID = -2467020756279078626L;
 
     private Severity severity;
@@ -37,8 +37,16 @@ public class Message implements SharedObject {
         return severity;
     }
 
+    public void setSeverity(final Severity severity) {
+        this.severity = severity;
+    }
+
     public String getMessage() {
         return message;
+    }
+
+    public void setMessage(final String message) {
+        this.message = message;
     }
 
     @Override

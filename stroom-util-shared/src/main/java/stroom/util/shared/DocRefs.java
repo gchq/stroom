@@ -17,7 +17,7 @@
 package stroom.util.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
+
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Collection;
@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 @XmlRootElement(name = "docs")
-public class DocRefs implements Iterable<DocRef>, SharedObject {
+public class DocRefs implements Iterable<DocRef> {
     private static final long serialVersionUID = 8637215303311013483L;
     private Set<DocRef> set = new TreeSet<>();
 

@@ -1,6 +1,6 @@
 package stroom.config.global.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.AbstractMap;
 import java.util.HashMap;
@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-public class ClusterConfigProperty implements SharedObject {
+public class ClusterConfigProperty {
     private ConfigProperty configProperty;
     private Map<String, OverrideValue<String>> yamlOverrides = new HashMap<>();
 
@@ -29,7 +29,7 @@ public class ClusterConfigProperty implements SharedObject {
                 .filter(entry -> entry.getValue().hasOverride())
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        entry -> entry.getValue().getValue().orElse(null)));
+                        entry -> entry.getValue().getVal().orElse(null)));
     }
 
     public Map<String, String> getEffectiveValues() {

@@ -16,10 +16,10 @@
 
 package stroom.processor.shared;
 
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.Severity;
 
-public class ReprocessDataInfo implements SharedObject {
+public class ReprocessDataInfo {
     private static final long serialVersionUID = 7549523500761890727L;
 
     private Severity severity;

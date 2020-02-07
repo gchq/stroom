@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.vis;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.json.client.JSONArray;
 import com.google.gwt.json.client.JSONObject;
 import com.google.inject.Inject;
@@ -27,10 +28,10 @@ import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.SettingsPresenter;
 import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
-import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.VisComponentSettings;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.security.shared.DocumentPermissionNames;
@@ -38,6 +39,7 @@ import stroom.util.client.JSONUtil;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.EqualsUtil;
 import stroom.visualisation.shared.VisualisationDoc;
+import stroom.visualisation.shared.VisualisationResource;
 import stroom.widget.tab.client.presenter.TabData;
 
 import java.util.ArrayList;
@@ -47,8 +49,10 @@ import java.util.Map;
 
 public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVisSettingsPresenter.BasicVisSettingsView>
         implements BasicVisSettingsUiHandlers {
+    private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
+
     private final EntityDropDownPresenter visualisationPresenter;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private final Map<TabData, DynamicSettingsPane> dynamicSettingsMap = new HashMap<>();
     private SettingsPresenter settingsPresenter;
     private DocRef currentVisualisation;
@@ -56,11 +60,13 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     private List<String> fieldNames;
 
     @Inject
-    public BasicVisSettingsPresenter(final EventBus eventBus, final BasicVisSettingsView view,
-                                     final EntityDropDownPresenter visualisationPresenter, final ClientDispatchAsync dispatcher) {
+    public BasicVisSettingsPresenter(final EventBus eventBus,
+                                     final BasicVisSettingsView view,
+                                     final EntityDropDownPresenter visualisationPresenter,
+                                     final RestFactory restFactory) {
         super(eventBus, view);
         this.visualisationPresenter = visualisationPresenter;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         view.setUiHandlers(this);
 
         visualisationPresenter.setIncludedTypes(VisualisationDoc.DOCUMENT_TYPE);
@@ -108,15 +114,18 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
     private void loadVisualisation(final DocRef docRef, final JSONObject dynamicSettings) {
         currentVisualisation = docRef;
         if (docRef != null) {
-            final FetchVisualisationAction action = new FetchVisualisationAction(docRef);
-            dispatcher.exec(action).onSuccess(result -> {
-                String jsonString = "";
-                if (result != null && result.getSettings() != null) {
-                    jsonString = result.getSettings();
-                }
-                final JSONObject settings = JSONUtil.getObject(JSONUtil.parse(jsonString));
-                readSettings(settings, dynamicSettings);
-            });
+            final Rest<VisualisationDoc> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        String jsonString = "";
+                        if (result != null && result.getSettings() != null) {
+                            jsonString = result.getSettings();
+                        }
+                        final JSONObject settings = JSONUtil.getObject(JSONUtil.parse(jsonString));
+                        readSettings(settings, dynamicSettings);
+                    })
+                    .call(VISUALISATION_RESOURCE)
+                    .read(docRef);
         }
     }
 

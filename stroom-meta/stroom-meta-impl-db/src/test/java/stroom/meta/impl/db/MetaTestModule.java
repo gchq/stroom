@@ -2,7 +2,7 @@ package stroom.meta.impl.db;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import stroom.meta.shared.MetaSecurityFilter;
+import stroom.meta.api.MetaSecurityFilter;
 
 import java.util.Optional;
 

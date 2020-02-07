@@ -18,11 +18,11 @@
 package stroom.explorer.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
+
 
 import java.util.List;
 
-public class BulkActionResult implements SharedObject {
+public class BulkActionResult {
     private List<DocRef> docRefs;
     private String message;
 

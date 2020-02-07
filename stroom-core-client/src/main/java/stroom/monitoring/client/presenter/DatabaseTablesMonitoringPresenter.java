@@ -17,30 +17,37 @@
 package stroom.monitoring.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.data.client.presenter.ActionDataProvider;
+import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.DBTableStatus;
+import stroom.node.shared.DbStatusResource;
+import stroom.node.shared.DbTableStatusResultPage;
 import stroom.node.shared.FindDBTableCriteria;
-import stroom.node.shared.FindSystemTableStatusAction;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Sort.Direction;
 
+import java.util.function.Consumer;
+
 public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataGridView<DBTableStatus>> implements ColumnSortEvent.Handler {
+    private static final DbStatusResource DB_STATUS_RESOURCE = GWT.create(DbStatusResource.class);
+
     private final FindDBTableCriteria criteria;
-    private final ActionDataProvider<DBTableStatus> dataProvider;
+    private final RestDataProvider<DBTableStatus, DbTableStatusResultPage> dataProvider;
 
     @Inject
-    public DatabaseTablesMonitoringPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+    public DatabaseTablesMonitoringPresenter(final EventBus eventBus, final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<>(false, 1000));
 
         getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.FIELD_DATABASE, true) {
@@ -83,11 +90,15 @@ public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataG
         getView().addColumnSortHandler(this);
 
         criteria = new FindDBTableCriteria();
-        final FindSystemTableStatusAction action = new FindSystemTableStatusAction(criteria);
-        dataProvider = new ActionDataProvider<>(dispatcher, action);
+        dataProvider = new RestDataProvider<DBTableStatus, DbTableStatusResultPage>(eventBus) {
+            @Override
+            protected void exec(final Consumer<DbTableStatusResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<DbTableStatusResultPage> rest = restFactory.create();
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(DB_STATUS_RESOURCE).findSystemTableStatus(criteria);
+            }
+        };
         dataProvider.addDataDisplay(getView().getDataDisplay());
-
-        dataProvider.refresh();
+//        dataProvider.refresh();
     }
 
     @Override

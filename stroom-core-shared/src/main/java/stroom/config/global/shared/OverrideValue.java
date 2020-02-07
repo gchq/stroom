@@ -3,14 +3,13 @@ package stroom.config.global.shared;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.SharedObject;
+
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public class OverrideValue<T> implements SharedObject {
-
+public class OverrideValue<T> {
     private static final OverrideValue UNSET =  new OverrideValue<>(false, null);
     private static final OverrideValue NULL_VALUE =  new OverrideValue<>(true, null);
 
@@ -19,8 +18,24 @@ public class OverrideValue<T> implements SharedObject {
     private T value;
 
     @SuppressWarnings("unused")
-    OverrideValue() {
+    public OverrideValue() {
         // Required for GWT serialisation
+    }
+
+    public boolean isHasOverride() {
+        return hasOverride;
+    }
+
+    public void setHasOverride(final boolean hasOverride) {
+        this.hasOverride = hasOverride;
+    }
+
+    public T getValue() {
+        return value;
+    }
+
+    public void setValue(final T value) {
+        this.value = value;
     }
 
     @JsonIgnore
@@ -63,7 +78,7 @@ public class OverrideValue<T> implements SharedObject {
      * Use {@link OverrideValue#hasOverride()} to check if there is an override value.
      */
     @JsonIgnore
-    public Optional<T> getValue() {
+    public Optional<T> getVal() {
         if (!hasOverride) {
             throw new RuntimeException("No override present");
         }
@@ -74,7 +89,7 @@ public class OverrideValue<T> implements SharedObject {
      * Return the non-null override value or other if the override has explicitly been set to null/empty
      */
     @JsonIgnore
-    public T getValueOrElse(final T other) {
+    public T getValOrElse(final T other) {
         if (!hasOverride) {
             throw new RuntimeException("No override present");
         }
@@ -86,7 +101,7 @@ public class OverrideValue<T> implements SharedObject {
     }
 
     @JsonIgnore
-    public T getValueOrElse(final T valueIfUnSet, final T valueIfNull) {
+    public T getValOrElse(final T valueIfUnSet, final T valueIfNull) {
         if (!hasOverride) {
             return valueIfUnSet;
         } else if (value == null) {

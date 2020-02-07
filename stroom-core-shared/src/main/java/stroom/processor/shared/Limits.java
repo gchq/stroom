@@ -16,7 +16,7 @@
 
 package stroom.processor.shared;
 
-import stroom.docref.SharedObject;
+
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -27,7 +27,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "limits", propOrder = {"streamCount", "eventCount", "durationMs"})
 @XmlRootElement(name = "limits")
-public class Limits implements SharedObject {
+public class Limits {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "streamCount")

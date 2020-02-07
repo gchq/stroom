@@ -1,6 +1,6 @@
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,7 +12,7 @@ import java.util.Objects;
  * Class for representing a path to a property in an object tree, i.e
  * stroom.node.name
  */
-public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
+public class PropertyPath implements Comparable<PropertyPath> {
 
     private static final long serialVersionUID = 4298017138182350850L;
 
@@ -131,7 +131,7 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
         return Objects.hash(parts);
     }
 
-    public static class Builder implements SharedObject {
+    public static class Builder {
 
         private static final long serialVersionUID = 4646431868659034045L;
 

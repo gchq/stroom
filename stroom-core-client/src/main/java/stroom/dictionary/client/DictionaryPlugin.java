@@ -17,35 +17,64 @@
 
 package stroom.dictionary.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.dictionary.client.presenter.DictionaryPresenter;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dictionary.shared.DictionaryResource;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 
+import java.util.function.Consumer;
+
 public class DictionaryPlugin extends DocumentPlugin<DictionaryDoc> {
+    private static final DictionaryResource DICTIONARY_RESOURCE = GWT.create(DictionaryResource.class);
+
     private final Provider<DictionaryPresenter> editorProvider;
+    private final RestFactory restFactory;
 
     @Inject
     public DictionaryPlugin(final EventBus eventBus,
                             final Provider<DictionaryPresenter> editorProvider,
-                            final ClientDispatchAsync dispatcher,
+                            final RestFactory restFactory,
                             final ContentManager contentManager,
                             final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, dispatcher, contentManager, entityPluginEventManager);
+        super(eventBus, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
+        this.restFactory = restFactory;
     }
 
     @Override
     protected DocumentEditPresenter<?, ?> createEditor() {
         return editorProvider.get();
+    }
+
+    @Override
+    public void load(final DocRef docRef, final Consumer<DictionaryDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<DictionaryDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(DICTIONARY_RESOURCE)
+                .read(docRef);
+    }
+
+    @Override
+    public void save(final DocRef docRef, final DictionaryDoc document, final Consumer<DictionaryDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<DictionaryDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(DICTIONARY_RESOURCE)
+                .update(document);
     }
 
     @Override

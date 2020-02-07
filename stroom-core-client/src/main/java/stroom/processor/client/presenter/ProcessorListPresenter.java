@@ -35,7 +35,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.cell.valuespinner.client.ValueSpinnerCell;
 import stroom.cell.valuespinner.shared.EditableInteger;
 import stroom.data.client.presenter.ColumnSizeConstants;
-import stroom.data.client.presenter.MetaTooltipPresenterUtil;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -46,7 +45,6 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.TreeRowHandler;
-import stroom.entity.shared.NamedEntity;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.FetchProcessorResponse;
@@ -63,7 +61,6 @@ import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.TreeRow;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -194,9 +191,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                     TooltipUtil.addHeading(html, "Stream Processor");
                     TooltipUtil.addRowData(html, "Id", String.valueOf(processor.getId()));
                     TooltipUtil.addRowData(html, "Created By", processor.getCreateUser());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Created On", processor.getCreateTimeMs());
+                    addRowDateString(html, "Created On", processor.getCreateTimeMs());
                     TooltipUtil.addRowData(html, "Updated By", processor.getUpdateUser());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Updated On", processor.getUpdateTimeMs());
+                    addRowDateString(html, "Updated On", processor.getUpdateTimeMs());
                     TooltipUtil.addRowData(html, "Pipeline", processor.getPipelineUuid());
 
                 } else if (row instanceof ProcessorFilterRow) {
@@ -206,14 +203,14 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
                     TooltipUtil.addHeading(html, "Stream Processor Filter");
                     TooltipUtil.addRowData(html, "Id", filter.getId());
                     TooltipUtil.addRowData(html, "Created By", filter.getCreateUser());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Created On", filter.getCreateTimeMs());
+                    addRowDateString(html, "Created On", filter.getCreateTimeMs());
                     TooltipUtil.addRowData(html, "Updated By", filter.getUpdateUser());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Updated On", filter.getUpdateTimeMs());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Min Stream Create Ms", tracker.getMinMetaCreateMs());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Max Stream Create Ms", tracker.getMaxMetaCreateMs());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Stream Create Ms", tracker.getMetaCreateMs());
+                    addRowDateString(html, "Updated On", filter.getUpdateTimeMs());
+                    addRowDateString(html, "Min Stream Create Ms", tracker.getMinMetaCreateMs());
+                    addRowDateString(html, "Max Stream Create Ms", tracker.getMaxMetaCreateMs());
+                    addRowDateString(html, "Stream Create Ms", tracker.getMetaCreateMs());
                     TooltipUtil.addRowData(html, "Stream Create %", tracker.getTrackerStreamCreatePercentage());
-                    MetaTooltipPresenterUtil.addRowDateString(html, "Last Poll", tracker.getLastPollMs());
+                    addRowDateString(html, "Last Poll", tracker.getLastPollMs());
                     TooltipUtil.addRowData(html, "Last Poll Age", tracker.getLastPollAge());
                     TooltipUtil.addRowData(html, "Last Poll Task Count", tracker.getLastPollTaskCount());
                     TooltipUtil.addRowData(html, "Min Stream Id", tracker.getMinMetaId());
@@ -517,11 +514,9 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         this.nextSelection = nextSelection;
     }
 
-    private String toNameString(final NamedEntity namedEntity) {
-        if (namedEntity != null) {
-            return namedEntity.getName() + " (" + namedEntity.getId() + ")";
-        } else {
-            return "";
+    private void addRowDateString(final StringBuilder html, final String label, final Long ms) {
+        if (ms != null) {
+            TooltipUtil.addRowData(html, label, ClientDateUtil.toISOString(ms) + " (" + ms + ")");
         }
     }
 }

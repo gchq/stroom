@@ -17,7 +17,6 @@
 package stroom.processor.shared;
 
 import stroom.docref.DocRef;
-import stroom.task.shared.Action;
 
 public class CreateProcessorFilterRequest {
     private DocRef pipeline;

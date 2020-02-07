@@ -35,7 +35,6 @@ import stroom.activity.client.ActivityChangedEvent;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.shared.Activity.ActivityDetails;
 import stroom.activity.shared.Activity.Prop;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ExplorerTreeDeleteEvent;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;

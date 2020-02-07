@@ -1,13 +1,13 @@
 package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ThemeConfig extends AbstractConfig implements SharedObject {
+public class ThemeConfig extends AbstractConfig {
     private String backgroundAttachment = "scroll";
     private String backgroundColor = "#1E88E5";
     private String backgroundImage = "none";

@@ -16,11 +16,11 @@
 
 package stroom.dashboard.shared;
 
-import stroom.docref.SharedObject;
+
 import stroom.query.api.v2.Query;
 import stroom.util.shared.HasAuditInfo;
 
-public class StoredQuery implements HasAuditInfo, SharedObject {
+public class StoredQuery implements HasAuditInfo {
     private Integer id;
     private Integer version;
     private Long createTimeMs;

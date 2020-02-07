@@ -16,9 +16,10 @@
 
 package stroom.importexport.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -28,7 +29,7 @@ import java.util.List;
 /**
  * This has been put here as import export API is not Serializable.
  */
-public class ImportState implements SharedObject {
+public class ImportState {
     private static final long serialVersionUID = -5451928033766595954L;
     private DocRef docRef;
     private String sourcePath;
@@ -51,8 +52,16 @@ public class ImportState implements SharedObject {
         return docRef;
     }
 
+    public void setDocRef(final DocRef docRef) {
+        this.docRef = docRef;
+    }
+
     public String getSourcePath() {
         return sourcePath;
+    }
+
+    public void setSourcePath(final String sourcePath) {
+        this.sourcePath = sourcePath;
     }
 
     public String getDestPath() {
@@ -63,6 +72,7 @@ public class ImportState implements SharedObject {
         this.destPath = destPath;
     }
 
+    @JsonIgnore
     public boolean ok(final ImportMode importMode) {
         return importMode == ImportMode.IGNORE_CONFIRMATION
                 || (importMode == ImportMode.ACTION_CONFIRMATION && action);
@@ -80,10 +90,16 @@ public class ImportState implements SharedObject {
         return messageList;
     }
 
+    public void setMessageList(final List<Message> messageList) {
+        this.messageList = messageList;
+    }
+
+    @JsonIgnore
     public void addMessage(final Severity severity, final String message) {
         messageList.add(new Message(severity, message));
     }
 
+    @JsonIgnore
     public Severity getSeverity() {
         Severity severity = Severity.INFO;
         for (final Message message : messageList) {
@@ -96,6 +112,10 @@ public class ImportState implements SharedObject {
 
     public List<String> getUpdatedFieldList() {
         return updatedFieldList;
+    }
+
+    public void setUpdatedFieldList(final List<String> updatedFieldList) {
+        this.updatedFieldList = updatedFieldList;
     }
 
     public State getState() {

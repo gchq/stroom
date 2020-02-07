@@ -17,7 +17,7 @@
 
 package stroom.receive.rules.shared;
 
-import stroom.docref.SharedObject;
+
 import stroom.query.api.v2.ExpressionOperator;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -29,7 +29,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "DataReceiptRule", propOrder = {"ruleNumber", "creationTime", "name", "enabled", "expression", "action"})
 @XmlRootElement(name = "dataReceiptRule")
-public class ReceiveDataRule implements SharedObject {
+public class ReceiveDataRule {
     private static final long serialVersionUID = -4466080173384628077L;
 
     @XmlElement(name = "ruleNumber")

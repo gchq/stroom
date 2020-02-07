@@ -51,12 +51,24 @@ public class SearchRequest implements Serializable {
         return search;
     }
 
+    public void setSearch(final Search search) {
+        this.search = search;
+    }
+
     public Map<String, ComponentResultRequest> getComponentResultRequests() {
         return componentResultRequests;
     }
 
+    public void setComponentResultRequests(final Map<String, ComponentResultRequest> componentResultRequests) {
+        this.componentResultRequests = componentResultRequests;
+    }
+
     public String getDateTimeLocale() {
         return dateTimeLocale;
+    }
+
+    public void setDateTimeLocale(final String dateTimeLocale) {
+        this.dateTimeLocale = dateTimeLocale;
     }
 
     @Override

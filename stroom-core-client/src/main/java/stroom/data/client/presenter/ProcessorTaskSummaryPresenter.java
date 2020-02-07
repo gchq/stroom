@@ -17,6 +17,7 @@
 package stroom.data.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -25,20 +26,20 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
-import stroom.entity.client.presenter.FindActionDataProvider;
+
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.shared.FeedDoc;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.FindProcessorTaskSummaryAction;
 import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
+import stroom.processor.shared.ProcessorTaskSummaryResultPage;
 import stroom.task.shared.ExpressionUtil;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.ResultList;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -46,13 +47,18 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import java.util.function.Consumer;
+
 public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridView<ProcessorTaskSummary>>
-        implements HasDocumentRead<SharedObject> {
-    private final FindActionDataProvider<ExpressionCriteria, ProcessorTaskSummary> dataProvider;
+        implements HasDocumentRead<Object> {
+    private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
+
+    private final RestDataProvider<ProcessorTaskSummary, ProcessorTaskSummaryResultPage> dataProvider;
     private final ExpressionCriteria criteria;
 
     @Inject
-    public ProcessorTaskSummaryPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
+    public ProcessorTaskSummaryPresenter(final EventBus eventBus,
+                                         final RestFactory restFactory,
                                          final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(true, false));
 
@@ -120,20 +126,27 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         getView().addEndColumn(new EndColumn<>());
 
         criteria = new ExpressionCriteria();
-        dataProvider = new FindActionDataProvider<ExpressionCriteria, ProcessorTaskSummary>(dispatcher, getView(), new FindProcessorTaskSummaryAction()) {
+        dataProvider = new RestDataProvider<ProcessorTaskSummary, ProcessorTaskSummaryResultPage>(eventBus) {
             @Override
-            protected ResultList<ProcessorTaskSummary> processData(final ResultList<ProcessorTaskSummary> data) {
+            protected void exec(final Consumer<ProcessorTaskSummaryResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ProcessorTaskSummaryResultPage> rest = restFactory.create();
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_TASK_RESOURCE).findSummary(criteria);
+            }
+
+            @Override
+            protected void changeData(final ProcessorTaskSummaryResultPage data) {
                 final ProcessorTaskSummary selected = getView().getSelectionModel().getSelected();
                 if (selected != null) {
                     // Reselect the task set.
                     getView().getSelectionModel().clear();
-                    if (data != null && data.contains(selected)) {
+                    if (data != null && data.getValues().contains(selected)) {
                         getView().getSelectionModel().setSelected(selected);
                     }
                 }
-                return super.processData(data);
+                super.changeData(data);
             }
         };
+        dataProvider.addDataDisplay(getView().getDataDisplay());
     }
 
     public MultiSelectionModel<ProcessorTaskSummary> getSelectionModel() {
@@ -142,26 +155,26 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
 
     private void setPipeline(final PipelineDoc pipelineEntity) {
         criteria.setExpression(ExpressionUtil.createPipelineExpression(pipelineEntity));
-        dataProvider.setCriteria(criteria);
+        dataProvider.refresh();
     }
 
     private void setFeed(final String feed) {
         criteria.setExpression(ExpressionUtil.createFeedExpression(feed));
-        dataProvider.setCriteria(criteria);
+        dataProvider.refresh();
     }
 
     private void setFolder(final DocRef folder) {
         criteria.setExpression(ExpressionUtil.createFolderExpression(folder));
-        dataProvider.setCriteria(criteria);
+        dataProvider.refresh();
     }
 
     private void setNullCriteria() {
         criteria.setExpression(null);
-        dataProvider.setCriteria(criteria);
+        dataProvider.refresh();
     }
 
     @Override
-    public void read(final DocRef docRef, final SharedObject entity) {
+    public void read(final DocRef docRef, final Object entity) {
         if (entity instanceof PipelineDoc) {
             setPipeline((PipelineDoc) entity);
         } else if (entity instanceof FeedDoc) {

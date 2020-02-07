@@ -22,7 +22,7 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;

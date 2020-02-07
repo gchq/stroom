@@ -17,28 +17,35 @@
 package stroom.config.global.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.config.global.shared.ConfigProperty;
-import stroom.config.global.shared.FindGlobalConfigAction;
+import stroom.config.global.shared.ConfigPropertyResultPage;
+import stroom.config.global.shared.ConfigResource;
 import stroom.config.global.shared.FindGlobalConfigCriteria;
+import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.FindActionDataProvider;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonView;
 
+import java.util.function.Consumer;
+
 public class ManageGlobalPropertyListPresenter
         extends MyPresenterWidget<DataGridView<ConfigProperty>> implements Refreshable {
-    private final FindActionDataProvider<FindGlobalConfigCriteria, ConfigProperty> dataProvider;
+    private static final ConfigResource CONFIG_RESOURCE = GWT.create(ConfigResource.class);
+    private final RestDataProvider<ConfigProperty, ConfigPropertyResultPage> dataProvider;
+    private final FindGlobalConfigCriteria criteria = new FindGlobalConfigCriteria();
 
     @Inject
-    public ManageGlobalPropertyListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+    public ManageGlobalPropertyListPresenter(final EventBus eventBus, final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<>(true));
 
         // Name.
@@ -82,23 +89,15 @@ public class ManageGlobalPropertyListPresenter
         }, "Description", 400);
         getView().addEndColumn(new EndColumn<>());
 
-
-//        this.dataProvider = new FindActionDataProvider(dispatcher, getView(),
-//                new FindGlobalConfigAction(
-//                        new FindGlobalConfigCriteria()));
-        this.dataProvider = new FindActionDataProvider<>(dispatcher, getView(), new FindGlobalConfigAction());
-
-//        dataProvider = new EntityServiceFindActionDataProvider<>(dispatcher,
-//                getView());
-        dataProvider.setCriteria(new FindGlobalConfigCriteria());
-//        refresh();
+        this.dataProvider = new RestDataProvider<ConfigProperty, ConfigPropertyResultPage>(eventBus) {
+            @Override
+            protected void exec(final Consumer<ConfigPropertyResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ConfigPropertyResultPage> rest = restFactory.create();
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(CONFIG_RESOURCE).find(criteria);
+            }
+        };
+        dataProvider.addDataDisplay(getView().getDataDisplay());
     }
-
-//    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
-//                                     final ImageResource disabledImage, final boolean enabled) {
-//        return getView().addButton(title, enabledImage, disabledImage, enabled);
-//    }
-
 
     public ButtonView addButton(final SvgPreset preset) {
         return getView().addButton(preset);
@@ -127,12 +126,12 @@ public class ManageGlobalPropertyListPresenter
         getView().getSelectionModel().setSelected(row);
     }
 
-//    public void setCriteria(final FindGlobalConfigCriteria criteria) {
+    //    public void setCriteria(final FindGlobalConfigCriteria criteria) {
 //        this.criteria = criteria;
 //        refresh();
 //    }
 //
     FindGlobalConfigCriteria getFindGlobalPropertyCriteria() {
-        return dataProvider.getCriteria();
+        return criteria;
     }
 }

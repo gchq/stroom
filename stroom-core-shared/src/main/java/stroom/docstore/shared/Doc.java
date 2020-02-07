@@ -20,13 +20,13 @@ package stroom.docstore.shared;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.SharedObject;
+
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 @JsonInclude(Include.NON_DEFAULT)
-public class Doc implements SharedObject {
+public class Doc {
     private static final long serialVersionUID = -7268601402378907741L;
 
     private String type;

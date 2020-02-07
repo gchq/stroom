@@ -1,8 +1,8 @@
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
 
-public class BuildInfo extends AbstractConfig implements SharedObject {
+
+public class BuildInfo extends AbstractConfig {
     private String upDate;
     private String buildDate = "TBD";
     private String buildVersion = "TBD";

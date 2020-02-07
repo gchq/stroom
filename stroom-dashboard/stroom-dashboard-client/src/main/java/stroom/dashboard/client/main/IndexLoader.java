@@ -16,12 +16,15 @@
 
 package stroom.dashboard.client.main;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.dashboard.shared.DataSourceFieldsMap;
-import stroom.datasource.shared.FetchDataSourceFieldsAction;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.datasource.shared.DataSourceFields;
+import stroom.datasource.shared.DataSourceResource;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.pipeline.client.event.ChangeDataEvent;
 import stroom.pipeline.client.event.ChangeDataEvent.ChangeDataHandler;
@@ -32,7 +35,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
-    private final ClientDispatchAsync dispatcher;
+    private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
+
+    private final RestFactory restFactory;
     private final EventBus eventBus;
 
     private DocRef loadedDataSourceRef;
@@ -40,9 +45,9 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
     private DataSourceFieldsMap dataSourceFieldsMap;
     private int loadCount;
 
-    public IndexLoader(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+    public IndexLoader(final EventBus eventBus, final RestFactory restFactory) {
         this.eventBus = eventBus;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
     }
 
     @Override
@@ -57,21 +62,25 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
     public void loadDataSource(final DocRef dataSourceRef) {
         if (dataSourceRef != null) {
-            dispatcher.exec(new FetchDataSourceFieldsAction(dataSourceRef)).onSuccess(result -> {
-                loadedDataSourceRef = dataSourceRef;
+            final Rest<DataSourceFields> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        loadedDataSourceRef = dataSourceRef;
 
-                if (result != null) {
-                    dataSourceFieldsMap = new DataSourceFieldsMap(result.getFields());
-                    indexFieldNames = new ArrayList<>(dataSourceFieldsMap.keySet());
-                    Collections.sort(indexFieldNames);
-                } else {
-                    dataSourceFieldsMap = new DataSourceFieldsMap();
-                    indexFieldNames = new ArrayList<>();
-                }
+                        if (result != null) {
+                            dataSourceFieldsMap = new DataSourceFieldsMap(result.getFields());
+                            indexFieldNames = new ArrayList<>(dataSourceFieldsMap.keySet());
+                            Collections.sort(indexFieldNames);
+                        } else {
+                            dataSourceFieldsMap = new DataSourceFieldsMap();
+                            indexFieldNames = new ArrayList<>();
+                        }
 
-                loadCount++;
-                ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
-            });
+                        loadCount++;
+                        ChangeDataEvent.fire(IndexLoader.this, IndexLoader.this);
+                    })
+                    .call(DATA_SOURCE_RESOURCE)
+                    .fetchFields(dataSourceRef);
         } else {
             loadedDataSourceRef = null;
             indexFieldNames = null;

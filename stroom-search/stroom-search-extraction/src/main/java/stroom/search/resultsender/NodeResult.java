@@ -16,14 +16,14 @@
 
 package stroom.search.resultsender;
 
-import stroom.docref.SharedObject;
+
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Payload;
 
 import java.util.List;
 import java.util.Map;
 
-public class NodeResult implements SharedObject {
+public class NodeResult {
     private static final long serialVersionUID = -6092749103483061802L;
 
     private Map<CoprocessorKey, Payload> payloadMap;

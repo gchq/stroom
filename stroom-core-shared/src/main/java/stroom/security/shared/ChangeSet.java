@@ -16,12 +16,12 @@
 
 package stroom.security.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class ChangeSet<T> implements SharedObject {
+public class ChangeSet<T> {
     private static final long serialVersionUID = -1740543177783532223L;
 
     private Set<T> addSet = new HashSet<>();

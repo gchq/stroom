@@ -16,7 +16,7 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.Map;
 
@@ -24,7 +24,7 @@ import java.util.Map;
  * Class that represents a key to a resource. This key has a name and a string
  * key.
  */
-public class ResourceKey implements SharedObject {
+public class ResourceKey {
     public static final String NAME = "name";
     public static final String KEY = "key";
     private static final long serialVersionUID = 8764851638854986846L;
@@ -49,8 +49,16 @@ public class ResourceKey implements SharedObject {
         return key;
     }
 
+    public void setKey(final String key) {
+        this.key = key;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public void setName(final String name) {
+        this.name = name;
     }
 
     @Override

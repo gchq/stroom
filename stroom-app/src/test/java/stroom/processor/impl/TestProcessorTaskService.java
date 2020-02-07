@@ -21,7 +21,7 @@ import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.node.shared.Node;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTask;

@@ -16,7 +16,7 @@
 
 package stroom.pipeline.shared.data;
 
-import stroom.docref.SharedObject;
+
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -47,7 +47,7 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Link", propOrder = {"from", "to"})
-public class PipelineLink implements Comparable<PipelineLink>, SharedObject {
+public class PipelineLink implements Comparable<PipelineLink> {
     private static final long serialVersionUID = 8520066243443177869L;
 
     @XmlTransient

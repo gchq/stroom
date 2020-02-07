@@ -17,7 +17,7 @@
 package stroom.core.entity.event;
 
 import stroom.cluster.task.api.ClusterTask;
-import stroom.entity.shared.EntityEvent;
+import stroom.util.entity.EntityEvent;
 import stroom.util.shared.VoidResult;
 
 public class ClusterEntityEventTask extends ClusterTask<VoidResult> {

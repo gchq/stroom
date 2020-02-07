@@ -60,8 +60,8 @@ class TestConfigMapper {
                         LogUtil.message("{} - [{}] - [{}] - [{}] - [{}] - [{}] - [{}]",
                                 configProperty.getName(),
                                 configProperty.getDefaultValue().orElse(""),
-                                configProperty.getDatabaseOverrideValue().getValueOrElse("UNSET", null),
-                                configProperty.getYamlOverrideValue().getValueOrElse("UNSET", null),
+                                configProperty.getDatabaseOverrideValue().getValOrElse("UNSET", null),
+                                configProperty.getYamlOverrideValue().getValOrElse("UNSET", null),
                                 configProperty.getEffectiveValue().orElse(""),
                                 configProperty.getSource(),
                                 configProperty.getDescription()))

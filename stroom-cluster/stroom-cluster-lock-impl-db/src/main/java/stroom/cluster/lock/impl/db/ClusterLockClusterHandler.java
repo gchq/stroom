@@ -21,14 +21,13 @@ import org.slf4j.LoggerFactory;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.SharedBoolean;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTask, SharedBoolean> {
+public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTask, Boolean> {
     // 10 minutes
     private static final long TEN_MINUTES = 10 * 60 * 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockClusterHandler.class);
@@ -41,7 +40,7 @@ public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockCl
     }
 
     @Override
-    public SharedBoolean exec(final ClusterLockClusterTask task) {
+    public Boolean exec(final ClusterLockClusterTask task) {
         return securityContext.secureResult(() -> {
             boolean success = false;
 
@@ -58,7 +57,7 @@ public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockCl
                     break;
             }
 
-            return new SharedBoolean(success);
+            return success;
         });
     }
 

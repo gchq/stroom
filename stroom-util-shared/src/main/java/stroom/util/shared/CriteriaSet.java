@@ -16,7 +16,7 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+
 
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.Collection;
@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
  * you update it it will be restrictive until you setMatchAll
  */
 public class CriteriaSet<T>
-        implements SharedObject, Iterable<T>, Copyable<CriteriaSet<T>>, HasIsConstrained, Matcher<T>, Clearable {
+        implements Iterable<T>, Copyable<CriteriaSet<T>>, HasIsConstrained, Matcher<T>, Clearable {
     private static final long serialVersionUID = 1L;
 
     /**

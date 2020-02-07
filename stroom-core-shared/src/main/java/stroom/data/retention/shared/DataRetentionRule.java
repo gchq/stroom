@@ -16,7 +16,7 @@
 
 package stroom.data.retention.shared;
 
-import stroom.docref.SharedObject;
+
 import stroom.query.api.v2.ExpressionOperator;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -30,7 +30,7 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "DataRetentionRule", propOrder = {"ruleNumber", "creationTime", "name", "enabled", "expression", "age", "timeUnit", "forever"})
 @XmlRootElement(name = "dataRetentionRule")
-public class DataRetentionRule implements SharedObject {
+public class DataRetentionRule {
     public static final String FOREVER = "Forever";
 
     @XmlElement(name = "ruleNumber")

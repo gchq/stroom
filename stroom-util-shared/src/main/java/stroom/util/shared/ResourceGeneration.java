@@ -16,11 +16,11 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.List;
 
-public class ResourceGeneration implements SharedObject {
+public class ResourceGeneration {
     private static final long serialVersionUID = 8354737969578639291L;
 
     private ResourceKey resourceKey;

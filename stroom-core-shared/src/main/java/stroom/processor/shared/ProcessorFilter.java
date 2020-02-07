@@ -16,7 +16,7 @@
 
 package stroom.processor.shared;
 
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasUuid;
 
@@ -24,7 +24,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import java.util.Comparator;
 import java.util.Objects;
 
-public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
+public class ProcessorFilter implements HasAuditInfo, HasUuid {
     public static final String ENTITY_TYPE = "ProcessorFilter";
 
     public static final Comparator<ProcessorFilter> HIGHEST_PRIORITY_FIRST_COMPARATOR = (o1, o2) -> {

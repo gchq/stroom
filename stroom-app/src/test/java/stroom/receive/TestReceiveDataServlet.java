@@ -26,7 +26,7 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.SourceUtil;
 import stroom.data.store.mock.MockStore;
 import stroom.feed.api.FeedStore;
-import stroom.meta.shared.StandardHeaderArguments;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;

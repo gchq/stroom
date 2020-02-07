@@ -16,7 +16,7 @@
 
 package stroom.dashboard.shared;
 
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.ToStringBuilder;
@@ -33,7 +33,7 @@ import java.util.Set;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "searchResponse", propOrder = {"highlights", "errors", "complete", "results"})
 @XmlRootElement(name = "searchResponse")
-public class SearchResponse implements SharedObject {
+public class SearchResponse {
     private static final long serialVersionUID = -2964122512841756795L;
 
     /**

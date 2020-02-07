@@ -19,8 +19,6 @@ package stroom.search.solr;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.EntityEvent.Handler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.search.solr.indexing.SolrIndexingElementModule;
 import stroom.search.solr.search.SolrAsyncSearchTask;
@@ -28,13 +26,13 @@ import stroom.search.solr.search.SolrAsyncSearchTaskHandler;
 import stroom.search.solr.search.SolrEventSearchTask;
 import stroom.search.solr.search.SolrEventSearchTaskHandler;
 import stroom.search.solr.search.StroomSolrIndexQueryResource;
-import stroom.search.solr.shared.FetchSolrTypesAction;
-import stroom.search.solr.shared.SolrConnectionTestAction;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.shared.RestResource;
+import stroom.util.entity.EntityEvent;
+import stroom.util.entity.EntityEvent.Handler;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.RestResource;
 
 public class SolrSearchModule extends AbstractModule {
     @Override
@@ -47,14 +45,13 @@ public class SolrSearchModule extends AbstractModule {
         bind(SolrIndexStore.class).to(SolrIndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(SolrIndexResource.class)
+                .addBinding(SolrIndexResourceImpl.class)
+                .addBinding(NewUiSolrIndexResource.class)
                 .addBinding(StroomSolrIndexQueryResource.class);
 
         TaskHandlerBinder.create(binder())
                 .bind(SolrAsyncSearchTask.class, SolrAsyncSearchTaskHandler.class)
-                .bind(SolrEventSearchTask.class, SolrEventSearchTaskHandler.class)
-                .bind(FetchSolrTypesAction.class, FetchSolrTypesHandler.class)
-                .bind(SolrConnectionTestAction.class, SolrConnectionTestHandler.class);
+                .bind(SolrEventSearchTask.class, SolrEventSearchTaskHandler.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(SolrIndexCacheImpl.class);

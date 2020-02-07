@@ -26,7 +26,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.query.api.v2.ExpressionOperator;

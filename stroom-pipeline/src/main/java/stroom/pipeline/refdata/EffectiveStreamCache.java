@@ -22,7 +22,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Clearable;

@@ -16,26 +16,36 @@
 
 package stroom.pipeline.shared;
 
-import stroom.docref.SharedObject;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 
 import java.util.Map;
 
-public class FetchPropertyTypesResult implements SharedObject {
-    private static final long serialVersionUID = -456643944015316403L;
-
-    private Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes;
+public class FetchPropertyTypesResult {
+    private PipelineElementType pipelineElementType;
+    private Map<String, PipelinePropertyType> propertyTypes;
 
     public FetchPropertyTypesResult() {
-        // Default constructor necessary for GWT serialisation.
     }
 
-    public FetchPropertyTypesResult(final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes) {
+    public FetchPropertyTypesResult(final PipelineElementType pipelineElementType, final Map<String, PipelinePropertyType> propertyTypes) {
+        this.pipelineElementType = pipelineElementType;
         this.propertyTypes = propertyTypes;
     }
 
-    public Map<PipelineElementType, Map<String, PipelinePropertyType>> getPropertyTypes() {
+    public PipelineElementType getPipelineElementType() {
+        return pipelineElementType;
+    }
+
+    public void setPipelineElementType(final PipelineElementType pipelineElementType) {
+        this.pipelineElementType = pipelineElementType;
+    }
+
+    public Map<String, PipelinePropertyType> getPropertyTypes() {
         return propertyTypes;
+    }
+
+    public void setPropertyTypes(final Map<String, PipelinePropertyType> propertyTypes) {
+        this.propertyTypes = propertyTypes;
     }
 }

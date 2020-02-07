@@ -24,7 +24,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.util.client.BorderUtil;
 import stroom.widget.util.client.MultiSelectionModel;
@@ -35,7 +34,7 @@ public class DocRefListPresenter extends MyPresenterWidget<DataGridView<DocRef>>
 //    private final SelectionModel<Volume> selectionModel;
 
     @Inject
-    public DocRefListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+    public DocRefListPresenter(final EventBus eventBus) {
         super(eventBus, new DataGridViewImpl<>(true, true));
 
 //        selectionModel = new MySingleSelectionModel<>();

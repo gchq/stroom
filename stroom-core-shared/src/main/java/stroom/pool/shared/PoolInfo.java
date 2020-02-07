@@ -16,9 +16,9 @@
 
 package stroom.pool.shared;
 
-import stroom.docref.SharedObject;
 
-public class PoolInfo implements SharedObject {
+
+public class PoolInfo {
     private static final String DELIM = ",";
 
     private static final long serialVersionUID = 463047159587522512L;

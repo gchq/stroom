@@ -22,7 +22,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
-import stroom.importexport.api.DocRefs;
+import stroom.importexport.shared.DocRefs;
 import stroom.importexport.api.OldDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;

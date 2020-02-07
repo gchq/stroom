@@ -16,8 +16,8 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
 
-public interface Marker extends SharedObject {
+
+public interface Marker {
     Severity getSeverity();
 }

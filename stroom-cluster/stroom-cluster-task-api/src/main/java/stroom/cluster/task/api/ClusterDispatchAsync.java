@@ -16,10 +16,10 @@
 
 package stroom.cluster.task.api;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.Set;
 
 public interface ClusterDispatchAsync {
-    <R extends SharedObject> void execAsync(ClusterTask<R> task, ClusterResultCollector<R> collector, String sourceNode, Set<String> targetNodes);
+    <R> void execAsync(ClusterTask<R> task, ClusterResultCollector<R> collector, String sourceNode, Set<String> targetNodes);
 }

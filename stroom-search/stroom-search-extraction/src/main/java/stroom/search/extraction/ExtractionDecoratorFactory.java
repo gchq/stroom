@@ -2,7 +2,7 @@ package stroom.search.extraction;
 
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.docref.DocRef;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.query.api.v2.Query;
 import stroom.search.coprocessor.Coprocessors;
 import stroom.search.coprocessor.Error;

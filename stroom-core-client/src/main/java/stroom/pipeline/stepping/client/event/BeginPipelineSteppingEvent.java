@@ -20,7 +20,7 @@ import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import stroom.explorer.shared.SharedDocRef;
-import stroom.pipeline.shared.StepLocation;
+import stroom.pipeline.shared.stepping.StepLocation;
 
 public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEvent.Handler> {
     private static Type<Handler> TYPE;

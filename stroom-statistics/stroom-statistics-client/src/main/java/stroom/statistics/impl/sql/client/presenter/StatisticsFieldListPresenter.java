@@ -27,7 +27,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -60,7 +59,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
     @SuppressWarnings("unchecked")
     @Inject
     public StatisticsFieldListPresenter(final EventBus eventBus,
-                                        final StatisticsFieldEditPresenter statisticsFieldEditPresenter, final ClientDispatchAsync dispatcher) {
+                                        final StatisticsFieldEditPresenter statisticsFieldEditPresenter) {
         super(eventBus, new DataGridViewImpl<>(true, true));
         this.statisticsFieldEditPresenter = statisticsFieldEditPresenter;
 

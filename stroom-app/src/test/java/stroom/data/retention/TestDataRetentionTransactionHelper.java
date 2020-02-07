@@ -24,7 +24,7 @@ import stroom.dictionary.impl.DictionaryStore;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;

@@ -22,8 +22,7 @@ public class TestSerialisation {
         final List<ProcessorListRow> rows = new ArrayList<>();
         rows.add(new ProcessorRow(new Expander(), new Processor()));
         rows.add(new ProcessorFilterRow(new ProcessorFilter()));
-        FetchProcessorResponse resultPage1 = new FetchProcessorResponse();
-        resultPage1.init(rows);
+        FetchProcessorResponse resultPage1 = new FetchProcessorResponse().unlimited(rows);
         final ObjectMapper objectMapper = JsonUtil.getMapper();
         final String result1 = objectMapper.writeValueAsString(resultPage1);
         System.out.println(result1);

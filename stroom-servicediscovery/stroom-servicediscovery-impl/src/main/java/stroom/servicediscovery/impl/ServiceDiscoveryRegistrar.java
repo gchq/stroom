@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.servicediscovery.api.RegisteredService;
 import stroom.util.HasHealthCheck;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

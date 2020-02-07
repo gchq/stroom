@@ -17,20 +17,24 @@
 
 package stroom.receive.rules.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.TimeUnit;
-import stroom.datasource.shared.FetchFieldsAction;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.datasource.shared.DataSourceFields;
+import stroom.datasource.shared.DataSourceResource;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> {
+    private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
     private final EditExpressionPresenter editExpressionPresenter;
     private DataRetentionRule originalRule;
 
@@ -38,12 +42,16 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
     public DataRetentionRulePresenter(final EventBus eventBus,
                                       final DataRetentionRuleView view,
                                       final EditExpressionPresenter editExpressionPresenter,
-                                      final ClientDispatchAsync dispatcher) {
+                                      final RestFactory restFactory) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
 
-        dispatcher.exec(new FetchFieldsAction()).onSuccess(result -> editExpressionPresenter.init(dispatcher, MetaFields.STREAM_STORE_DOC_REF, result.getFields()));
+        final Rest<DataSourceFields> rest = restFactory.create();
+        rest
+                .onSuccess(result -> editExpressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, result.getFields()))
+                .call(DATA_SOURCE_RESOURCE)
+                .fetchFields(MetaFields.STREAM_STORE_DOC_REF);
     }
 
     void read(final DataRetentionRule rule) {

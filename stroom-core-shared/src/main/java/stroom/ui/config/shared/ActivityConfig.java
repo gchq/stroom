@@ -1,13 +1,13 @@
 package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ActivityConfig extends AbstractConfig implements SharedObject {
+public class ActivityConfig extends AbstractConfig {
     private boolean enabled;
     private boolean chooseOnStartup;
     private String managerTitle = "Choose Activity";

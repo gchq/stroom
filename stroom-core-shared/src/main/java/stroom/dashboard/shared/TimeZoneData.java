@@ -16,11 +16,11 @@
 
 package stroom.dashboard.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.List;
 
-public class TimeZoneData implements SharedObject {
+public class TimeZoneData {
     private static final long serialVersionUID = -7430894966676067923L;
 
     private List<String> ids;

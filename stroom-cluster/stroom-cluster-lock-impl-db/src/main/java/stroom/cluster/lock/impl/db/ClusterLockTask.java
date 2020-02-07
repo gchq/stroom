@@ -17,9 +17,8 @@
 package stroom.cluster.lock.impl.db;
 
 import stroom.task.api.ServerTask;
-import stroom.util.shared.SharedBoolean;
 
-public class ClusterLockTask extends ServerTask<SharedBoolean> {
+public class ClusterLockTask extends ServerTask<Boolean> {
     private final ClusterLockKey key;
     private final ClusterLockStyle lockStyle;
 

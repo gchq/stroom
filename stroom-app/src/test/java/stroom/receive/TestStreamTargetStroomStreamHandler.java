@@ -28,7 +28,7 @@ import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.StandardHeaderArguments;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;

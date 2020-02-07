@@ -18,8 +18,6 @@ package stroom.security.shared;
 
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
-import stroom.task.shared.Action;
-import stroom.util.shared.VoidResult;
 
 public class ChangeDocumentPermissionsRequest {
     private DocRef docRef;

@@ -17,17 +17,11 @@
 package stroom.core.document;
 
 import com.google.inject.AbstractModule;
-import stroom.entity.shared.DocumentServiceReadAction;
-import stroom.entity.shared.DocumentServiceWriteAction;
-import stroom.task.api.TaskHandlerBinder;
+import stroom.docstore.api.DocumentResourceHelper;
 
 public class DocumentModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(DocumentService.class).to(DocumentServiceImpl.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(DocumentServiceReadAction.class, DocumentServiceReadHandler.class)
-                .bind(DocumentServiceWriteAction.class, DocumentServiceWriteHandler.class);
+        bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);
     }
 }

@@ -11,7 +11,7 @@ import stroom.docstore.impl.memory.MemoryPersistenceModule;
 import stroom.feed.impl.FeedModule;
 import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
-import stroom.receive.rules.impl.ReceiveDataRulesetModule;
+import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
@@ -31,7 +31,7 @@ public class TestBaseModule extends AbstractModule {
         install(new MockStreamStoreModule());
         install(new PipelineScopeModule());
         install(new ReceiveDataModule());
-        install(new ReceiveDataRulesetModule());
+        install(new ReceiveDataRuleSetModule());
         install(new MockCollectionModule());
 
         bind(TaskContext.class).to(SimpleTaskContext.class);

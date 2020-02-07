@@ -16,14 +16,14 @@
 
 package stroom.processor.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.Objects;
 
 /**
  * Class used to represent processing a stream.
  */
-public class ProcessorTask implements SharedObject {
+public class ProcessorTask {
     private static final long serialVersionUID = 3926403008832938745L;
 
     // standard id and OCC fields

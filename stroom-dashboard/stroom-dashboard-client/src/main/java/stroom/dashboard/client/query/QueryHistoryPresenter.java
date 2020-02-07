@@ -16,15 +16,18 @@
 
 package stroom.dashboard.client.query;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.dashboard.shared.FindStoredQueryAction;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dashboard.shared.StoredQueryResource;
+import stroom.dashboard.shared.StoredQueryResultPage;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.util.shared.PageRequest;
@@ -40,17 +43,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresenter.QueryHistoryView> {
-    private final ClientDispatchAsync dispatcher;
+    private static final StoredQueryResource STORED_QUERY_RESOURCE = GWT.create(StoredQueryResource.class);
+
+    private final RestFactory restFactory;
     private final ExpressionTreePresenter expressionPresenter;
     private final MySingleSelectionModel<StoredQuery> selectionModel;
     private QueryPresenter queryPresenter;
     private String currentDashboardUuid;
 
     @Inject
-    public QueryHistoryPresenter(final EventBus eventBus, final QueryHistoryView view,
-                                 final ExpressionTreePresenter expressionPresenter, final ClientDispatchAsync dispatcher) {
+    public QueryHistoryPresenter(final EventBus eventBus,
+                                 final QueryHistoryView view,
+                                 final ExpressionTreePresenter expressionPresenter,
+                                 final RestFactory restFactory) {
         super(eventBus, view);
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         this.expressionPresenter = expressionPresenter;
 
         // Stop users from selecting expression items.
@@ -91,43 +98,46 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         criteria.setFavourite(false);
         criteria.setPageRequest(new PageRequest(0L, 100));
 
-        final FindStoredQueryAction action = new FindStoredQueryAction(criteria);
-        dispatcher.exec(action).onSuccess(result -> {
-            selectionModel.clear();
+        final Rest<StoredQueryResultPage> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    selectionModel.clear();
 
-            ExpressionOperator lastExpression = null;
-            final List<StoredQuery> dedupedList = new ArrayList<>(result.getSize());
-            for (final StoredQuery queryEntity : result) {
-                if (queryEntity != null && queryEntity.getQuery() != null && queryEntity.getQuery().getExpression() != null) {
-                    final ExpressionOperator expression = queryEntity.getQuery().getExpression();
-                    if (lastExpression == null || !lastExpression.equals(expression)) {
-                        dedupedList.add(queryEntity);
+                    ExpressionOperator lastExpression = null;
+                    final List<StoredQuery> dedupedList = new ArrayList<>(result.getValues().size());
+                    for (final StoredQuery queryEntity : result.getValues()) {
+                        if (queryEntity != null && queryEntity.getQuery() != null && queryEntity.getQuery().getExpression() != null) {
+                            final ExpressionOperator expression = queryEntity.getQuery().getExpression();
+                            if (lastExpression == null || !lastExpression.equals(expression)) {
+                                dedupedList.add(queryEntity);
+                            }
+
+                            lastExpression = expression;
+                        }
                     }
 
-                    lastExpression = expression;
-                }
-            }
+                    getView().getCellList().setRowData(dedupedList);
+                    getView().getCellList().setRowCount(dedupedList.size(), true);
 
-            getView().getCellList().setRowData(dedupedList);
-            getView().getCellList().setRowCount(dedupedList.size(), true);
+                    if (showAfterRefresh) {
+                        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                            @Override
+                            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                                close(ok);
+                            }
 
-            if (showAfterRefresh) {
-                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        close(ok);
+                            @Override
+                            public void onHide(final boolean autoClose, final boolean ok) {
+                            }
+                        };
+
+                        final PopupSize popupSize = new PopupSize(500, 400, true);
+                        ShowPopupEvent.fire(queryPresenter, QueryHistoryPresenter.this, PopupType.OK_CANCEL_DIALOG,
+                                popupSize, "Query History", popupUiHandlers);
                     }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                    }
-                };
-
-                final PopupSize popupSize = new PopupSize(500, 400, true);
-                ShowPopupEvent.fire(queryPresenter, QueryHistoryPresenter.this, PopupType.OK_CANCEL_DIALOG,
-                        popupSize, "Query History", popupUiHandlers);
-            }
-        });
+                })
+                .call(STORED_QUERY_RESOURCE)
+                .find(criteria);
     }
 
     private void close(final boolean ok) {

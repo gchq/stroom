@@ -16,11 +16,11 @@
 
 package stroom.statistics.impl.hbase.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.Set;
 
-public class CustomRollUpMaskFields implements SharedObject, Comparable<CustomRollUpMaskFields> {
+public class CustomRollUpMaskFields implements Comparable<CustomRollUpMaskFields> {
 
     private static final long serialVersionUID = 8434581070070953139L;
 

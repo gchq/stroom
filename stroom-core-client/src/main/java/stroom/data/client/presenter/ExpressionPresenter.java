@@ -22,7 +22,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -32,21 +32,21 @@ import java.util.List;
 
 public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.ExpressionView> {
     private final EditExpressionPresenter editExpressionPresenter;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
 
     @Inject
     public ExpressionPresenter(final EventBus eventBus,
                                final ExpressionView view,
                                final EditExpressionPresenter editExpressionPresenter,
-                               final ClientDispatchAsync dispatcher) {
+                               final RestFactory restFactory) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
     public void read(final ExpressionOperator expression, final DocRef dataSource, final List<AbstractField> fields) {
-        editExpressionPresenter.init(dispatcher, dataSource, fields);
+        editExpressionPresenter.init(restFactory, dataSource, fields);
 
         if (expression != null) {
             editExpressionPresenter.read(expression);

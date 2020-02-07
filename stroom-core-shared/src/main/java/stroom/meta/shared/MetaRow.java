@@ -16,12 +16,12 @@
 
 package stroom.meta.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class MetaRow implements SharedObject {
+public class MetaRow {
     private static final long serialVersionUID = -8198186456924478908L;
 
     private Meta meta;

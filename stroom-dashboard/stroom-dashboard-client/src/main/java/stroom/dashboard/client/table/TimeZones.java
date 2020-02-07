@@ -16,26 +16,35 @@
 
 package stroom.dashboard.client.table;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import stroom.dashboard.shared.FetchTimeZonesAction;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dashboard.shared.DashboardResource;
+import stroom.dashboard.shared.TimeZoneData;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 
 import java.util.List;
 
 @Singleton
 public class TimeZones {
+    private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
+
     private String timeZone;
     private List<String> ids;
 
     @Inject
-    public TimeZones(final ClientDispatchAsync dispatcher) {
+    public TimeZones(final RestFactory restFactory) {
         try {
             timeZone = getIntlTimeZone();
         } catch (final RuntimeException e) {
         }
 
-        dispatcher.exec(new FetchTimeZonesAction()).onSuccess(result -> ids = result.getIds());
+        final Rest<TimeZoneData> rest = restFactory.create();
+        rest
+                .onSuccess(result -> ids = result.getIds())
+                .call(DASHBOARD_RESOURCE)
+                .fetchTimeZones();
     }
 
     public String getTimeZone() {
@@ -47,7 +56,7 @@ public class TimeZones {
     }
 
     /**
-     * This javacsript call attempts to get the time zone, e.g. 'Europe/London'
+     * This javascript call attempts to get the time zone, e.g. 'Europe/London'
      * using the ECMAScript Internationalisation API Specification
      *
      * @return The browsers time zone, e.g. 'Europe/London' or

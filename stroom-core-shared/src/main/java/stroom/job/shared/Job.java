@@ -1,11 +1,11 @@
 package stroom.job.shared;
 
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.HasAuditInfo;
 
 import java.util.Objects;
 
-public final class Job implements HasAuditInfo, SharedObject {
+public final class Job implements HasAuditInfo {
     private Integer id;
     private Integer version;
     private Long createTimeMs;

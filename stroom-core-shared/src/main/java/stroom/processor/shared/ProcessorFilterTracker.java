@@ -16,13 +16,13 @@
 
 package stroom.processor.shared;
 
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.ModelStringUtil;
 
 import java.util.Objects;
 
 
-public class ProcessorFilterTracker implements SharedObject {
+public class ProcessorFilterTracker {
     public static final String ENTITY_TYPE = "ProcessorFilterTracker";
     public static final String COMPLETE = "Complete";
     private static final long serialVersionUID = -2478788451478923825L;

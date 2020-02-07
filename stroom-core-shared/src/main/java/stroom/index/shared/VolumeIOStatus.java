@@ -16,9 +16,9 @@
 
 package stroom.index.shared;
 
-import stroom.docref.SharedObject;
 
-public class VolumeIOStatus implements SharedObject {
+
+public class VolumeIOStatus {
     private static final long serialVersionUID = 1727071475174943132L;
     private IndexVolume volume;
     private String path;

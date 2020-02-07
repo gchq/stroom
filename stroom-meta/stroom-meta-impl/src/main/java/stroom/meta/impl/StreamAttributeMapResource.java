@@ -26,7 +26,7 @@ import stroom.datasource.api.v2.DocRefField;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
@@ -117,7 +117,7 @@ public class StreamAttributeMapResource implements RestResource {
             criteria.setPageRequest(new PageRequest(itemOffset, pageSize));
             criteria.setSort(new Sort("Create Time", Sort.Direction.DESCENDING, false));
 
-            //TODO disbale this and have it as a default field
+            //TODO disable this and have it as a default field
             // Set status to unlocked
 //             ExpressionTerm expressionTerm = new ExpressionTerm("Status", Condition.EQUALS, "Unlocked");
 //             ExpressionOperator expressionOperator = new ExpressionOperator(true, ExpressionOperator.Op.AND, expressionTerm);

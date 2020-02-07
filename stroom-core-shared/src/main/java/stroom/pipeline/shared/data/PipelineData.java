@@ -17,7 +17,7 @@
 package stroom.pipeline.shared.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import stroom.docref.SharedObject;
+
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -29,7 +29,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Pipeline", propOrder = {"elements", "properties", "pipelineReferences", "links"})
 @XmlRootElement(name = "pipeline")
-public class PipelineData implements SharedObject {
+public class PipelineData {
     private static final long serialVersionUID = -4874097335141550178L;
 
     @XmlElement(name = "elements", required = false)

@@ -19,7 +19,6 @@ package stroom.pipeline.shared;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
-import stroom.util.shared.SharedList;
 
 import java.util.List;
 
@@ -27,7 +26,7 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
     public static final int MAX_MARKERS = 100;
     public static final int MAX_TOTAL_MARKERS = 1000;
     private static final long serialVersionUID = 7559713171858774241L;
-    private SharedList<Marker> markers;
+    private List<Marker> markers;
 
     public FetchMarkerResult() {
         // Default constructor necessary for GWT serialisation.
@@ -36,13 +35,13 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
     public FetchMarkerResult(final String streamType, final String classification,
                              final OffsetRange<Long> streamRange, final RowCount<Long> streamRowCount, final OffsetRange<Long> pageRange,
                              final RowCount<Long> pageRowCount, final List<String> availableChildStreamTypes,
-                             final SharedList<Marker> markers) {
+                             final List<Marker> markers) {
         super(streamType, classification, streamRange, streamRowCount, pageRange, pageRowCount,
                 availableChildStreamTypes);
         this.markers = markers;
     }
 
-    public SharedList<Marker> getMarkers() {
+    public List<Marker> getMarkers() {
         return markers;
     }
 }

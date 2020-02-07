@@ -16,9 +16,9 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
 
-public class Expander implements SharedObject {
+
+public class Expander {
     private static final long serialVersionUID = 8021806527404021016L;
 
     private int depth;

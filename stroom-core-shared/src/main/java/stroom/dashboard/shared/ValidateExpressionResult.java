@@ -16,11 +16,7 @@
 
 package stroom.dashboard.shared;
 
-import stroom.docref.SharedObject;
-
-public class ValidateExpressionResult implements SharedObject {
-    private static final long serialVersionUID = 7559713171858774241L;
-
+public class ValidateExpressionResult {
     private boolean ok;
     private String string;
 
@@ -37,7 +33,15 @@ public class ValidateExpressionResult implements SharedObject {
         return ok;
     }
 
+    public void setOk(final boolean ok) {
+        this.ok = ok;
+    }
+
     public String getString() {
         return string;
+    }
+
+    public void setString(final String string) {
+        this.string = string;
     }
 }

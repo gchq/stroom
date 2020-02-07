@@ -1,8 +1,8 @@
 package stroom.config.global.shared;
 
-import stroom.docref.SharedObject;
 
-public class NodeConfigResult implements SharedObject {
+
+public class NodeConfigResult {
     private static final long serialVersionUID = 4454645971807552635L;
 
     private final String nodeName;

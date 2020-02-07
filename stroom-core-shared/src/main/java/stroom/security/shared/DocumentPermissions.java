@@ -16,13 +16,13 @@
 
 package stroom.security.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-public class DocumentPermissions implements SharedObject {
+public class DocumentPermissions {
     private static final long serialVersionUID = 5230917643321418827L;
 
     private String docRefUuid;

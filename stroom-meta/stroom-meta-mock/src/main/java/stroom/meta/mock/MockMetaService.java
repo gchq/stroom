@@ -8,7 +8,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Clearable;

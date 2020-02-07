@@ -19,7 +19,7 @@ package stroom.config.global.shared;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.PropertyPath;
 
@@ -47,7 +47,7 @@ import java.util.Optional;
  *
  * TODO At present the UI is unable to show the value from the YAML so may give a misleading picture
  */
-public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<ConfigProperty> {
+public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> {
 
     private static final long serialVersionUID = 8440384191352234225L;
 
@@ -191,9 +191,9 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
                                        final OverrideValue<String> databaseOverrideValue,
                                        final OverrideValue<String> yamlOverrideValue) {
         if (yamlOverrideValue.hasOverride()) {
-            return yamlOverrideValue.getValue();
+            return yamlOverrideValue.getVal();
         } else if (databaseOverrideValue.hasOverride()) {
-            return databaseOverrideValue.getValue();
+            return databaseOverrideValue.getVal();
         } else {
             return Optional.ofNullable(defaultValue);
         }
@@ -301,7 +301,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
 
     public void setYamlOverride(final OverrideValue<String> yamlOverride) {
         if (yamlOverride.hasOverride()) {
-            setYamlOverrideValue(yamlOverride.getValue().orElse(null));
+            setYamlOverrideValue(yamlOverride.getVal().orElse(null));
         } else {
             this.yamlOverrideValue = yamlOverride;
         }

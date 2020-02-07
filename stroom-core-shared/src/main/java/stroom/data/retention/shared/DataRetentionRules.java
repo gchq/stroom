@@ -19,7 +19,7 @@ package stroom.data.retention.shared;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.SharedObject;
+
 import stroom.docstore.shared.Doc;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -34,7 +34,7 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "DataRetentionPolicy", propOrder = {"rules"})
 @XmlRootElement(name = "dataRetentionPolicy")
-public class DataRetentionRules extends Doc implements SharedObject {
+public class DataRetentionRules extends Doc {
     public static final String DOCUMENT_TYPE = "DataRetentionRules";
 
     private List<DataRetentionRule> rules;

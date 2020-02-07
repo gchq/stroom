@@ -26,7 +26,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.util.io.FileUtil;
 import stroom.util.io.SeekableOutputStream;

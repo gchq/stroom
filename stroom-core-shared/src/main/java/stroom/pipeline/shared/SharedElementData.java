@@ -16,10 +16,10 @@
 
 package stroom.pipeline.shared;
 
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.Indicators;
 
-public class SharedElementData implements SharedObject {
+public class SharedElementData {
     private static final long serialVersionUID = -1614851794579868895L;
 
     private String input;
@@ -47,23 +47,47 @@ public class SharedElementData implements SharedObject {
         return input;
     }
 
+    public void setInput(final String input) {
+        this.input = input;
+    }
+
     public String getOutput() {
         return output;
+    }
+
+    public void setOutput(final String output) {
+        this.output = output;
     }
 
     public Indicators getCodeIndicators() {
         return codeIndicators;
     }
 
+    public void setCodeIndicators(final Indicators codeIndicators) {
+        this.codeIndicators = codeIndicators;
+    }
+
     public Indicators getOutputIndicators() {
         return outputIndicators;
+    }
+
+    public void setOutputIndicators(final Indicators outputIndicators) {
+        this.outputIndicators = outputIndicators;
     }
 
     public boolean isFormatInput() {
         return formatInput;
     }
 
+    public void setFormatInput(final boolean formatInput) {
+        this.formatInput = formatInput;
+    }
+
     public boolean isFormatOutput() {
         return formatOutput;
+    }
+
+    public void setFormatOutput(final boolean formatOutput) {
+        this.formatOutput = formatOutput;
     }
 }

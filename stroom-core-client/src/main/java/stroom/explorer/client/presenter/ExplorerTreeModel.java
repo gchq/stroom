@@ -17,7 +17,6 @@
 
 package stroom.explorer.client.presenter;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.user.client.Timer;
@@ -25,7 +24,6 @@ import com.google.gwt.user.client.ui.Widget;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.entity.shared.DocRefUtil;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerResource;
@@ -39,7 +37,7 @@ import java.util.Set;
 
 public class ExplorerTreeModel {
     private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
-    static final ExplorerNode NULL_SELECTION = ExplorerNode.create(DocRefUtil.NULL_SELECTION);
+    public static final ExplorerNode NULL_SELECTION = ExplorerNode.create(new DocRef.Builder().uuid("").name("None").type("").build());
 
     private final OpenItems<String> openItems = new OpenItems<>();
     private final NameFilterTimer timer = new NameFilterTimer();

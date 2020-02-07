@@ -16,7 +16,7 @@
 
 package stroom.pipeline.shared.data;
 
-import stroom.docref.SharedObject;
+
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -28,7 +28,7 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Links", propOrder = {"add", "remove"})
-public class PipelineLinks implements SharedObject {
+public class PipelineLinks {
     private static final long serialVersionUID = 6811753333974015789L;
 
     @XmlElementWrapper(name = "add", required = false)

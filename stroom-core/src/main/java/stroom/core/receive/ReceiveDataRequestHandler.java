@@ -23,7 +23,7 @@ import stroom.data.store.api.Store;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.StandardHeaderArguments;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.StroomStatusCode;
 import stroom.receive.common.AttributeMapFilter;

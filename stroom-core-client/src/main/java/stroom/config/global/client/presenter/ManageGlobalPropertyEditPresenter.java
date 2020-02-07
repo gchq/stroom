@@ -17,6 +17,7 @@
 
 package stroom.config.global.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -25,10 +26,10 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.config.global.shared.ConfigProperty;
-import stroom.config.global.shared.FetchGlobalConfigAction;
+import stroom.config.global.shared.ConfigResource;
 import stroom.config.global.shared.OverrideValue;
-import stroom.config.global.shared.UpdateGlobalConfigAction;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -40,7 +41,9 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 public final class ManageGlobalPropertyEditPresenter
         extends MyPresenterWidget<ManageGlobalPropertyEditPresenter.GlobalPropertyEditView>
         implements ManageGlobalPropertyEditUiHandlers {
-    private final ClientDispatchAsync dispatcher;
+    private static final ConfigResource CONFIG_RESOURCE = GWT.create(ConfigResource.class);
+
+    private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
     private final UiConfigCache clientPropertyCache;
     private ConfigProperty configProperty;
@@ -48,11 +51,11 @@ public final class ManageGlobalPropertyEditPresenter
     @Inject
     public ManageGlobalPropertyEditPresenter(final EventBus eventBus,
                                              final GlobalPropertyEditView view,
-                                             final ClientDispatchAsync dispatcher,
+                                             final RestFactory restFactory,
                                              final ClientSecurityContext securityContext,
                                              final UiConfigCache clientPropertyCache) {
         super(eventBus, view);
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         this.securityContext = securityContext;
         this.clientPropertyCache = clientPropertyCache;
         view.setUiHandlers(this);
@@ -87,13 +90,16 @@ public final class ManageGlobalPropertyEditPresenter
 
         if (configProperty.getId() != null) {
             // Reload it so we always have the latest version
-            final FetchGlobalConfigAction action = new FetchGlobalConfigAction(configProperty.getId());
-            dispatcher.exec(action).onSuccess(result -> {
-                setEntity(result);
-                read();
-                ShowPopupEvent.fire(ManageGlobalPropertyEditPresenter.this, ManageGlobalPropertyEditPresenter.this, popupType,
-                        getPopupSize(), caption, internalPopupUiHandlers);
-            });
+            final Rest<ConfigProperty> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        setEntity(result);
+                        read();
+                        ShowPopupEvent.fire(ManageGlobalPropertyEditPresenter.this, ManageGlobalPropertyEditPresenter.this, popupType,
+                                getPopupSize(), caption, internalPopupUiHandlers);
+                    })
+                    .call(CONFIG_RESOURCE)
+                    .read(configProperty.getId());
         } else {
             // new configProperty
             setEntity(configProperty);
@@ -127,11 +133,11 @@ public final class ManageGlobalPropertyEditPresenter
         getView().setUseOverride(getEntity().hasDatabaseOverride());
         String databaseOverrideValue = "";
         if (getEntity().hasDatabaseOverride()) {
-            databaseOverrideValue = getEntity().getDatabaseOverrideValue().getValueOrElse("");
+            databaseOverrideValue = getEntity().getDatabaseOverrideValue().getValOrElse("");
         }
         String yamlOverrideValue = "";
         if (getEntity().hasYamlOverride()) {
-            yamlOverrideValue = getEntity().getYamlOverrideValue().getValueOrElse("");
+            yamlOverrideValue = getEntity().getYamlOverrideValue().getValOrElse("");
         }
         getView().getDefaultValue().setText(getEntity().getDefaultValue().orElse(""));
         getView().getYamlValue().setText(yamlOverrideValue);
@@ -148,7 +154,8 @@ public final class ManageGlobalPropertyEditPresenter
         refreshValuesOnChange();
 
         // Save.
-        dispatcher.exec(new UpdateGlobalConfigAction(getEntity()))
+        final Rest<ConfigProperty> rest = restFactory.create();
+        rest
                 .onSuccess(result -> {
                     setEntity(result);
                     if (hideOnSave) {
@@ -162,7 +169,9 @@ public final class ManageGlobalPropertyEditPresenter
                         AlertEvent.fireError(ManageGlobalPropertyEditPresenter.this,
                                 "Error saving property",
                                 throwable.getMessage(),
-                                null));
+                                null))
+                .call(CONFIG_RESOURCE)
+                .update(getEntity());
     }
 
     private void refreshValuesOnChange() {

@@ -21,14 +21,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.docref.SharedObject;
+
 import stroom.docstore.shared.Doc;
 
 import java.util.List;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "fields", "rules"})
 @JsonInclude(Include.NON_DEFAULT)
-public class ReceiveDataRules extends Doc implements SharedObject {
+public class ReceiveDataRules extends Doc {
     private static final long serialVersionUID = -7268301402378907741L;
 
     public static final String DOCUMENT_TYPE = "ReceiveDataRuleSet";

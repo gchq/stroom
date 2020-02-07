@@ -16,9 +16,9 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
 
-public class StoredError implements Marker, Comparable<StoredError>, SharedObject {
+
+public class StoredError implements Marker, Comparable<StoredError> {
     private static final long serialVersionUID = -2467020756279078626L;
 
     private static final String SPACE = " ";

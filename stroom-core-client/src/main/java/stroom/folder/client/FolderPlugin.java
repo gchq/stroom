@@ -23,7 +23,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
@@ -34,20 +34,24 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.client.TaskEndEvent;
 
+import java.util.function.Consumer;
+
 public class FolderPlugin extends DocumentPlugin<SharedDocRef> {
     private final Provider<FolderPresenter> editorProvider;
+    private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
     private final ContentManager contentManager;
 
     @Inject
     public FolderPlugin(final EventBus eventBus,
                         final Provider<FolderPresenter> editorProvider,
-                        final ClientDispatchAsync dispatcher,
+                        final RestFactory restFactory,
                         final ClientSecurityContext securityContext,
                         final ContentManager contentManager,
                         final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, dispatcher, contentManager, entityPluginEventManager);
+        super(eventBus, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
+        this.restFactory = restFactory;
         this.securityContext = securityContext;
         this.contentManager = contentManager;
     }
@@ -60,6 +64,16 @@ public class FolderPlugin extends DocumentPlugin<SharedDocRef> {
         }
 
         return null;
+    }
+
+    @Override
+    public void load(final DocRef docRef, final Consumer<SharedDocRef> resultConsumer, final Consumer<Throwable> errorConsumer) {
+
+    }
+
+    @Override
+    public void save(final DocRef docRef, final SharedDocRef document, final Consumer<SharedDocRef> resultConsumer, final Consumer<Throwable> errorConsumer) {
+
     }
 
     @Override

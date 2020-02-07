@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
-import stroom.docref.SharedObject;
+
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -32,7 +32,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType(name = "statisticField", propOrder = {"fieldName"})
 @JsonPropertyOrder({"fieldName"})
 @JsonInclude(Include.NON_DEFAULT)
-public class StatisticField implements HasDisplayValue, Comparable<StatisticField>, SharedObject {
+public class StatisticField implements HasDisplayValue, Comparable<StatisticField> {
     private static final long serialVersionUID = 8967939276508418808L;
 
     @XmlElement(name = "fieldName")

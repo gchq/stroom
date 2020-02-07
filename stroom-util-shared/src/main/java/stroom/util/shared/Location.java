@@ -16,9 +16,9 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
 
-public interface Location extends Comparable<Location>, SharedObject {
+
+public interface Location extends Comparable<Location> {
     int getLineNo();
 
     int getColNo();

@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.SharedObject;
+
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -34,7 +34,7 @@ import javax.xml.bind.annotation.XmlType;
 @JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "component")
 @XmlType(name = "ComponentConfig", propOrder = {"type", "id", "name", "settings"})
-public class ComponentConfig implements SharedObject {
+public class ComponentConfig {
     private static final long serialVersionUID = -2530827581046882396L;
 
     @XmlElement(name = "type")

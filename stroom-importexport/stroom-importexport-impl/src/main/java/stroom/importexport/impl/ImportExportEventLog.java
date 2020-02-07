@@ -30,8 +30,7 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.event.logging.api.StroomEventLoggingService;
-import stroom.importexport.shared.ExportConfigAction;
-import stroom.importexport.shared.ImportConfigAction;
+import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportState;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.DocRefs;
@@ -52,14 +51,14 @@ public class ImportExportEventLog {
         this.securityContext = securityContext;
     }
 
-    public void export(final ExportConfigAction exportDataAction) {
+    public void export(final DocRefs docRefs) {
         securityContext.insecure(() -> {
             try {
                 final Event event = eventLoggingService.createAction("ExportConfig", "Exporting Configuration");
 
                 final Criteria criteria = new Criteria();
                 criteria.setType("Configuration");
-                appendCriteria(criteria, exportDataAction.getDocRefs());
+                appendCriteria(criteria, docRefs);
 
                 final MultiObject multiObject = new MultiObject();
                 multiObject.getObjects().add(criteria);
@@ -76,7 +75,7 @@ public class ImportExportEventLog {
         });
     }
 
-    public void _import(final ImportConfigAction importDataAction) {
+    public void _import(final ImportConfigRequest importDataAction) {
         securityContext.insecure(() -> {
             try {
                 final List<ImportState> confirmList = importDataAction.getConfirmList();

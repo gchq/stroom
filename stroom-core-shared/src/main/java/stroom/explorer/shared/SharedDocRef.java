@@ -19,10 +19,10 @@ package stroom.explorer.shared;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
+
 
 @JsonAutoDetect(getterVisibility = Visibility.NONE, setterVisibility = Visibility.NONE, fieldVisibility = Visibility.ANY)
-public class SharedDocRef extends DocRef implements SharedObject {
+public class SharedDocRef extends DocRef {
     public SharedDocRef() {
     }
 

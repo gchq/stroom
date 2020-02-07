@@ -312,8 +312,7 @@ public class TaskManagerListPresenter
         selectedTaskProgress.retainAll(currentTaskSet);
         requestedTerminateTaskProgress.retainAll(currentTaskSet);
 
-        final TaskProgressResponse response = new TaskProgressResponse();
-        response.init(list);
+        final TaskProgressResponse response = new TaskProgressResponse().unlimited(list);
         dataConsumer.accept(response);
     }
 

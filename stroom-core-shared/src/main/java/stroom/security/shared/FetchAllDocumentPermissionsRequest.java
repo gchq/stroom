@@ -17,7 +17,6 @@
 package stroom.security.shared;
 
 import stroom.docref.DocRef;
-import stroom.task.shared.Action;
 
 public class FetchAllDocumentPermissionsRequest {
     private DocRef docRef;

@@ -16,9 +16,9 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
 
-public class VoidResult implements SharedObject {
+
+public class VoidResult {
     public static final VoidResult INSTANCE = new VoidResult();
     private static final long serialVersionUID = 5318000723706657443L;
 }

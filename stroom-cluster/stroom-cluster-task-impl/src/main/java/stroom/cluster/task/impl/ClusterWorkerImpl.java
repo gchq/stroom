@@ -24,7 +24,7 @@ import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ServiceName;
 import stroom.cluster.task.api.ClusterTask;
 import stroom.cluster.task.api.CollectorId;
-import stroom.docref.SharedObject;
+
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskCallbackAdaptor;
@@ -75,7 +75,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
      * @param collectorId  The id of the collector to send results back to.
      */
     @Override
-    public <R extends SharedObject> void execAsync(final ClusterTask<R> task, final String sourceNode,
+    public <R> void execAsync(final ClusterTask<R> task, final String sourceNode,
                                                    final TaskId sourceTaskId, final CollectorId collectorId) {
         DebugTrace.debugTraceIn(task, EXEC_ASYNC, true);
         try {
@@ -124,7 +124,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
      *                     in the result of task failure.
      * @param success      Whether or not the task executed successfully.
      */
-    private <R extends SharedObject> void sendResult(final ClusterTask<R> task, final String sourceNode,
+    private <R> void sendResult(final ClusterTask<R> task, final String sourceNode,
                                                      final String targetNode, final TaskId sourceTaskId, final CollectorId collectorId, final R result,
                                                      final Throwable t, final boolean success) {
         int tryCount = 1;

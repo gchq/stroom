@@ -16,6 +16,7 @@
 
 package stroom.data.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.SimpleEventBus;
@@ -30,14 +31,16 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.LayerContainer;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.AbstractFetchDataResult;
-import stroom.pipeline.shared.FetchDataAction;
+import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
 import stroom.pipeline.shared.FetchMarkerResult;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.pipeline.shared.StepLocation;
+import stroom.pipeline.shared.ViewDataResource;
+import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.EqualsUtil;
@@ -46,7 +49,6 @@ import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.util.shared.Severity;
-import stroom.util.shared.SharedList;
 import stroom.widget.tab.client.presenter.TabBar;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -57,6 +59,8 @@ import java.util.List;
 import java.util.Map;
 
 public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> implements TextUiHandlers {
+    private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
+
     private static final String META = "Meta";
     private static final String META_DATA = "Meta Data";
     private static final String CONTEXT = "Context";
@@ -68,7 +72,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private final TabData contextTab = new TabDataImpl("Context");
     private final TextPresenter textPresenter;
     private final MarkerListPresenter markerListPresenter;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private final PagerRows pageRows;
     private final PagerRows streamRows;
     private final Map<String, OffsetRange<Long>> dataTypeOffsetRangeMap = new HashMap<>();
@@ -81,10 +85,10 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     private OffsetRange<Long> currentDataRange = new OffsetRange<>(0L, 1L);
     private OffsetRange<Long> currentPageRange = new OffsetRange<>(0L, 100L);
     private AbstractFetchDataResult lastResult;
-    private List<FetchDataAction> actionQueue;
+    private List<FetchDataRequest> actionQueue;
     private Timer delayedFetchDataTimer;
     private String data;
-    private SharedList<Marker> markers;
+    private List<Marker> markers;
     private int startLineNo;
     private List<Highlight> highlights;
     private Long highlightId;
@@ -100,11 +104,11 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
     @Inject
     public DataPresenter(final EventBus eventBus, final DataView view, final TextPresenter textPresenter,
                          final MarkerListPresenter markerListPresenter, final ClientSecurityContext securityContext,
-                         final ClientDispatchAsync dispatcher) {
+                         final RestFactory restFactory) {
         super(eventBus, view);
         this.textPresenter = textPresenter;
         this.markerListPresenter = markerListPresenter;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         markerListPresenter.getWidget().getElement().getStyle().setWidth(100, Unit.PCT);
         markerListPresenter.getWidget().getElement().getStyle().setHeight(100, Unit.PCT);
@@ -286,19 +290,19 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         if (!ignoreActions) {
             final Severity[] expandedSeverities = markerListPresenter.getExpandedSeverities();
 
-            final FetchDataAction action = new FetchDataAction();
-            action.setStreamId(currentMetaId);
-            action.setStreamRange(currentDataRange);
-            action.setPageRange(currentPageRange);
-            action.setChildStreamType(currentChildDataType);
-            action.setMarkerMode(errorMarkerMode);
-            action.setExpandedSeverities(expandedSeverities);
-            action.setFireEvents(fireEvents);
-            doFetch(action, fireEvents);
+            final FetchDataRequest request = new FetchDataRequest();
+            request.setStreamId(currentMetaId);
+            request.setStreamRange(currentDataRange);
+            request.setPageRange(currentPageRange);
+            request.setChildStreamType(currentChildDataType);
+            request.setMarkerMode(errorMarkerMode);
+            request.setExpandedSeverities(expandedSeverities);
+            request.setFireEvents(fireEvents);
+            doFetch(request, fireEvents);
         }
     }
 
-    private void doFetch(final FetchDataAction action, final boolean fireEvents) {
+    private void doFetch(final FetchDataRequest request, final boolean fireEvents) {
         if (currentMetaId != null) {
             getView().setRefreshing(true);
 
@@ -307,7 +311,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             ensureActionQueue();
 
             // Add the action and schedule the timer.
-            actionQueue.add(action);
+            actionQueue.add(request);
             delayedFetchDataTimer.cancel();
             delayedFetchDataTimer.schedule(250);
 
@@ -323,19 +327,22 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
                 @Override
                 public void run() {
                     if (actionQueue.size() > 0) {
-                        final FetchDataAction action = actionQueue.get(actionQueue.size() - 1);
+                        final FetchDataRequest request = actionQueue.get(actionQueue.size() - 1);
                         actionQueue.clear();
 
-                        dispatcher.exec(action)
+                        final Rest<AbstractFetchDataResult> rest = restFactory.create();
+                        rest
                                 .onSuccess(result -> {
                                     // If we are queueing more actions then don't
                                     // update the text.
                                     if (actionQueue.size() == 0) {
-                                        setPageResponse(result, action.isFireEvents());
+                                        setPageResponse(result, request.isFireEvents());
                                         getView().setRefreshing(false);
                                     }
                                 })
-                                .onFailure(caught -> getView().setRefreshing(false));
+                                .onFailure(caught -> getView().setRefreshing(false))
+                                .call(VIEW_DATA_RESOURCE)
+                                .fetch(request);
                     }
                 }
             };

@@ -24,9 +24,8 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.db.util.AbstractDataSourceProviderModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.node.shared.FindSystemTableStatusAction;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;
@@ -58,8 +57,8 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
                 .addBinding(CoreDbConnProvider.class);
 
-        TaskHandlerBinder.create(binder())
-                .bind(FindSystemTableStatusAction.class, FindSystemTableStatusHandler.class);
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(DbStatusResourceImpl.class);
     }
 
     @Override
@@ -74,8 +73,8 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
                 try (final Statement statement = connection.createStatement()) {
                     try (final ResultSet resultSet = statement.executeQuery(
                             "SELECT version " +
-                                "FROM schema_version " +
-                                "ORDER BY installed_rank DESC")) {
+                                    "FROM schema_version " +
+                                    "ORDER BY installed_rank DESC")) {
                         if (resultSet.next()) {
                             usingFlyWay = true;
 
@@ -112,12 +111,12 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
                                         "VER_MAJ, " +
                                         "VER_MIN, " +
                                         "VER_PAT " +
-                                    "FROM STROOM_VER " +
-                                    "ORDER BY " +
+                                        "FROM STROOM_VER " +
+                                        "ORDER BY " +
                                         "VER_MAJ DESC, " +
                                         "VER_MIN DESC, " +
                                         "VER_PAT DESC " +
-                                    "LIMIT 1")) {
+                                        "LIMIT 1")) {
                             if (resultSet.next()) {
                                 version = new Version(resultSet.getInt(1), resultSet.getInt(2), resultSet.getInt(3));
                                 LOGGER.info("Found STROOM_VER.VER_MAJ/VER_MIN/VER_PAT " + version);
@@ -135,8 +134,8 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
                     try (final Statement statement = connection.createStatement()) {
                         try (final ResultSet resultSet = statement.executeQuery(
                                 "SELECT ID " +
-                                    "FROM FD " +
-                                    "LIMIT 1")) {
+                                        "FROM FD " +
+                                        "LIMIT 1")) {
                             if (resultSet.next()) {
                                 version = new Version(2, 0, 0);
                             }
@@ -153,8 +152,8 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
                     try (final Statement statement = connection.createStatement()) {
                         try (final ResultSet resultSet = statement.executeQuery(
                                 "SELECT ID " +
-                                    "FROM FEED " +
-                                    "LIMIT 1")) {
+                                        "FROM FEED " +
+                                        "LIMIT 1")) {
                             if (resultSet.next()) {
                                 version = new Version(2, 0, 0);
                             }
@@ -183,7 +182,7 @@ public class CoreDbModule extends AbstractDataSourceProviderModule<CoreConfig, C
             } else {
                 final String message =
                         "The current Stroom version cannot be upgraded to v5+. " +
-                            "You must be on v4.0.60 or later.";
+                                "You must be on v4.0.60 or later.";
                 LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
                 throw new RuntimeException(message);
             }

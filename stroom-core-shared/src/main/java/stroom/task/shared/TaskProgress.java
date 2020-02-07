@@ -17,14 +17,14 @@
 package stroom.task.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.TreeRow;
 
 import java.util.Objects;
 
-public class TaskProgress implements SharedObject, TreeRow {
+public class TaskProgress implements TreeRow {
     private static final long serialVersionUID = 7903893715149262619L;
 
     private TaskId id;

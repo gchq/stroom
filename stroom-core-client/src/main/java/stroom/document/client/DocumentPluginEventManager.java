@@ -115,7 +115,7 @@ public class DocumentPluginEventManager extends Plugin {
     private final RestFactory restFactory;
     private final DocumentTypeCache documentTypeCache;
     private final MenuListPresenter menuListPresenter;
-    private final Map<String, DocumentPlugin<?>> pluginMap = new HashMap<>();
+    private final DocumentPluginRegistry documentPluginRegistry;
     private final KeyboardInterceptor keyboardInterceptor;
     private TabData selectedTab;
     private MultiSelectionModel<ExplorerNode> selectionModel;
@@ -128,6 +128,7 @@ public class DocumentPluginEventManager extends Plugin {
                                       final RestFactory restFactory,
                                       final DocumentTypeCache documentTypeCache,
                                       final MenuListPresenter menuListPresenter,
+                                      final DocumentPluginRegistry documentPluginRegistry,
                                       final UiConfigCache clientPropertyCache) {
         super(eventBus);
         this.hasSaveRegistry = hasSaveRegistry;
@@ -135,6 +136,7 @@ public class DocumentPluginEventManager extends Plugin {
         this.restFactory = restFactory;
         this.documentTypeCache = documentTypeCache;
         this.menuListPresenter = menuListPresenter;
+        this.documentPluginRegistry = documentPluginRegistry;
         this.clientPropertyCache = clientPropertyCache;
     }
 
@@ -185,7 +187,7 @@ public class DocumentPluginEventManager extends Plugin {
                     if (!event.getSelectionType().isRightClick() && !event.getSelectionType().isMultiSelect()) {
                         final ExplorerNode explorerNode = event.getSelectionModel().getSelected();
                         if (explorerNode != null) {
-                            final DocumentPlugin<?> plugin = pluginMap.get(explorerNode.getType());
+                            final DocumentPlugin<?> plugin = documentPluginRegistry.get(explorerNode.getType());
                             if (plugin != null) {
                                 plugin.open(explorerNode.getDocRef(), event.getSelectionType().isDoubleSelect());
                             }
@@ -210,7 +212,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 11. Handle entity reload events.
         registerHandler(getEventBus().addHandler(RefreshDocumentEvent.getType(), event -> {
-            final DocumentPlugin<?> plugin = pluginMap.get(event.getDocRef().getType());
+            final DocumentPlugin<?> plugin = documentPluginRegistry.get(event.getDocRef().getType());
             if (plugin != null) {
                 plugin.reload(event.getDocRef());
             }
@@ -220,7 +222,7 @@ public class DocumentPluginEventManager extends Plugin {
         registerHandler(getEventBus().addHandler(WriteDocumentEvent.getType(), event -> {
             if (isDirty(event.getTabData())) {
                 final DocumentTabData entityTabData = event.getTabData();
-                final DocumentPlugin<?> plugin = pluginMap.get(entityTabData.getType());
+                final DocumentPlugin<?> plugin = documentPluginRegistry.get(entityTabData.getType());
                 if (plugin != null) {
                     plugin.save(entityTabData);
                 }
@@ -229,7 +231,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         // 6. Handle save as events.
         registerHandler(getEventBus().addHandler(SaveAsDocumentEvent.getType(), event -> {
-            final DocumentPlugin<?> plugin = pluginMap.get(event.getDocRef().getType());
+            final DocumentPlugin<?> plugin = documentPluginRegistry.get(event.getDocRef().getType());
             if (plugin != null) {
                 plugin.saveAs(event.getDocRef());
             }
@@ -358,7 +360,7 @@ public class DocumentPluginEventManager extends Plugin {
 
         explorerNodeList.forEach(node -> {
             final DocRef docRef = node.getDocRef();
-            final DocumentPlugin<?> plugin = pluginMap.get(docRef.getType());
+            final DocumentPlugin<?> plugin = documentPluginRegistry.get(docRef.getType());
             if (plugin != null && plugin.isDirty(docRef)) {
                 dirtyList.add(node);
             } else {
@@ -581,7 +583,7 @@ public class DocumentPluginEventManager extends Plugin {
             if (documentPermissions.hasCreatePermission(documentType)) {
                 final Consumer<DocRef> newDocumentConsumer = docRef -> {
                     // Open the document in the content pane.
-                    final DocumentPlugin<?> plugin = pluginMap.get(docRef.getType());
+                    final DocumentPlugin<?> plugin = documentPluginRegistry.get(docRef.getType());
                     if (plugin != null) {
                         plugin.open(docRef, true);
                     }
@@ -732,7 +734,7 @@ public class DocumentPluginEventManager extends Plugin {
 
 
     void registerPlugin(final String entityType, final DocumentPlugin<?> plugin) {
-        pluginMap.put(entityType, plugin);
+        documentPluginRegistry.register(entityType, plugin);
         hasSaveRegistry.register(plugin);
     }
 

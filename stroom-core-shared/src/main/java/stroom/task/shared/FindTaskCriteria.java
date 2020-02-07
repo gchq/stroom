@@ -17,13 +17,13 @@
 package stroom.task.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.HasIsConstrained;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class FindTaskCriteria implements SharedObject, HasIsConstrained {
+public class FindTaskCriteria implements HasIsConstrained {
     private static final long serialVersionUID = 2759048534848720682L;
 
     private String sessionId;

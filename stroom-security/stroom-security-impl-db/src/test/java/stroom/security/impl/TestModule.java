@@ -2,7 +2,7 @@ package stroom.security.impl;
 
 import com.google.inject.AbstractModule;
 import stroom.cache.impl.CacheModule;
-import stroom.entity.shared.EntityEventBus;
+import stroom.util.entity.EntityEventBus;
 import stroom.explorer.api.ExplorerService;
 import stroom.security.impl.db.SecurityDbModule;
 import stroom.security.mock.MockSecurityContextModule;

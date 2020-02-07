@@ -16,10 +16,9 @@
 
 package stroom.dashboard.shared;
 
-import java.io.Serializable;
 import java.util.Objects;
 
-public class DashboardQueryKey implements Serializable {
+public class DashboardQueryKey {
     private String uuid;
     private String dashboardUuid;
     private String componentId;
@@ -39,12 +38,24 @@ public class DashboardQueryKey implements Serializable {
         return uuid;
     }
 
+    public void setUuid(final String uuid) {
+        this.uuid = uuid;
+    }
+
     public String getDashboardUuid() {
         return dashboardUuid;
     }
 
+    public void setDashboardUuid(final String dashboardUuid) {
+        this.dashboardUuid = dashboardUuid;
+    }
+
     public String getComponentId() {
         return componentId;
+    }
+
+    public void setComponentId(final String componentId) {
+        this.componentId = componentId;
     }
 
     @Override

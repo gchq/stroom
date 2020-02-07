@@ -22,7 +22,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.pipeline.shared.StepType;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 
 public class StepControlPresenter extends MyPresenterWidget<StepControlPresenter.StepControlView>

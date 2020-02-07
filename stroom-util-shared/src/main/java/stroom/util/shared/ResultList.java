@@ -16,11 +16,9 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
-
 import java.util.List;
 
-public interface ResultList<R> extends List<R>, SharedObject {
+public interface ResultList<R> extends List<R> {
     int getStart();
 
     List<R> getValues();

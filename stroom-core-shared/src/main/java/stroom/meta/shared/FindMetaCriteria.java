@@ -16,7 +16,7 @@
 
 package stroom.meta.shared;
 
-import stroom.docref.SharedObject;
+
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.Copyable;
@@ -24,7 +24,7 @@ import stroom.util.shared.IdSet;
 
 import java.util.Objects;
 
-public class FindMetaCriteria extends ExpressionCriteria implements SharedObject, Copyable<FindMetaCriteria> {
+public class FindMetaCriteria extends ExpressionCriteria implements Copyable<FindMetaCriteria> {
     private static final long serialVersionUID = -4777723504698304778L;
 
     private IdSet selectedIdSet;

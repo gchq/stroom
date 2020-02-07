@@ -16,7 +16,7 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,7 +24,7 @@ import java.util.List;
 /**
  * List that knows how big the whole set is.
  */
-public class BaseResultList<T extends SharedObject> extends SharedList<T> implements ResultList<T> {
+public class BaseResultList<T> extends ArrayList<T> implements ResultList<T> {
     private static final long serialVersionUID = 6482769757822956315L;
 
     private PageResponse pageResponse;
@@ -34,8 +34,7 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T> implem
     }
 
     /**
-     * @param exact
-     *            is the complete size exactly correct
+     * @param exact is the complete size exactly correct
      */
     public BaseResultList(final List<T> list, final Long offset, final Long completeSize, final boolean exact) {
         super(list);
@@ -50,12 +49,13 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T> implem
 
     /**
      * Creates a list limited to a result page from a full list of results.
-     * @param fullList The full list of results to create the result page from.
+     *
+     * @param fullList    The full list of results to create the result page from.
      * @param pageRequest The page request to limit the result list by.
-     * @param <T> The type of list item.
+     * @param <T>         The type of list item.
      * @return A list limited to a result page from a full list of results.
      */
-    public static <T extends SharedObject> BaseResultList<T> createPageLimitedList(final List<T> fullList, final PageRequest pageRequest) {
+    public static <T> BaseResultList<T> createPageLimitedList(final List<T> fullList, final PageRequest pageRequest) {
         if (pageRequest != null) {
             int offset = 0;
             if (pageRequest.getOffset() != null) {
@@ -86,7 +86,7 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T> implem
     /**
      * Used for full queries (not bounded).
      */
-    public static <T extends SharedObject> BaseResultList<T> createUnboundedList(final List<T> realList) {
+    public static <T> BaseResultList<T> createUnboundedList(final List<T> realList) {
         if (realList != null) {
             return new BaseResultList<>(realList, 0L, (long) realList.size(), true);
         } else {
@@ -97,26 +97,26 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T> implem
     /**
      * Used for filter queries (maybe bounded).
      */
-    public static <T extends SharedObject> BaseResultList<T> createCriterialBasedList(final List<T> realList,
-            final BaseCriteria baseCriteria) {
+    public static <T> BaseResultList<T> createCriterialBasedList(final List<T> realList,
+                                                                                      final BaseCriteria baseCriteria) {
         return createPageResultList(realList, baseCriteria.getPageRequest(), null);
     }
 
     /**
      * Used for filter queries (maybe bounded).
      */
-    public static <T extends SharedObject> BaseResultList<T> createCriterialBasedList(final List<T> realList,
-            final BaseCriteria baseCriteria, final Long totalSize) {
+    public static <T> BaseResultList<T> createCriterialBasedList(final List<T> realList,
+                                                                                      final BaseCriteria baseCriteria, final Long totalSize) {
         return createPageResultList(realList, baseCriteria.getPageRequest(), totalSize);
     }
 
     /**
      * Used for filter queries (maybe bounded).
      */
-    public static <T extends SharedObject> BaseResultList<T> createPageResultList(final List<T> realList,
-                                                                                      final PageRequest pageRequest,
-                                                                                      final Long totalSize) {
-        final boolean limited =pageRequest != null
+    public static <T> BaseResultList<T> createPageResultList(final List<T> realList,
+                                                                                  final PageRequest pageRequest,
+                                                                                  final Long totalSize) {
+        final boolean limited = pageRequest != null
                 && pageRequest.getLength() != null;
         boolean moreToFollow = false;
         Long calulatedTotalSize = totalSize;

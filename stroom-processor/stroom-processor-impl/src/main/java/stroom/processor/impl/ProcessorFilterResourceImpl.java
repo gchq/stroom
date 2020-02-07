@@ -18,12 +18,14 @@ package stroom.processor.impl;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.CreateProcessorFilterRequest;
 import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.FetchProcessorResponse;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
+import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -32,6 +34,7 @@ import stroom.util.shared.RestResource;
 import javax.inject.Inject;
 import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Response.Status;
+import java.util.List;
 
 // TODO : @66 add event logging
 class ProcessorFilterResourceImpl implements ProcessorFilterResource, RestResource, HasHealthCheck {
@@ -105,6 +108,15 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource, RestResour
     public FetchProcessorResponse find(final FetchProcessorRequest request) {
         try {
             return processorFilterService.find(request);
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        }
+    }
+
+    @Override
+    public List<ReprocessDataInfo> reprocess(final FindMetaCriteria criteria) {
+        try {
+            return processorFilterService.reprocess(criteria);
         } catch (final RuntimeException e) {
             throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
         }

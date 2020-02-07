@@ -29,7 +29,7 @@ import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.StandardHeaderArguments;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.util.io.CloseableUtil;
 import stroom.util.logging.LambdaLogUtil;

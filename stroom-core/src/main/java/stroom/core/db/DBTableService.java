@@ -19,6 +19,7 @@ package stroom.core.db;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.node.shared.DBTableStatus;
+import stroom.node.shared.DbTableStatusResultPage;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -49,7 +50,15 @@ class DBTableService {
         this.securityContext = securityContext;
     }
 
-    List<DBTableStatus> findSystemTableStatus(final FindDBTableCriteria criteria) {
+    public List<DBTableStatus> getSystemTableStatus() {
+        return securityContext.secureResult(() -> new DbTableStatusResultPage().unlimited(doFind(new FindDBTableCriteria())));
+    }
+
+    public DbTableStatusResultPage findSystemTableStatus(final FindDBTableCriteria criteria) {
+        return securityContext.secureResult(() -> new DbTableStatusResultPage().limited(doFind(criteria), criteria.getPageRequest()));
+    }
+
+    private List<DBTableStatus> doFind(final FindDBTableCriteria criteria) {
         return securityContext.secureResult(PermissionNames.MANAGE_DB_PERMISSION, () -> {
             final List<DBTableStatus> rtnList = new ArrayList<>();
 

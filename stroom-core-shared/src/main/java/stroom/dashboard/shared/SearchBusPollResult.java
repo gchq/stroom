@@ -16,12 +16,12 @@
 
 package stroom.dashboard.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.HashMap;
 import java.util.Map;
 
-public class SearchBusPollResult implements SharedObject {
+public class SearchBusPollResult {
     private static final long serialVersionUID = -2964122512841756795L;
 
     private Map<DashboardQueryKey, SearchResponse> searchResultMap = new HashMap<>();

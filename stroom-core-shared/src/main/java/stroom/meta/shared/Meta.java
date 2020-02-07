@@ -16,11 +16,11 @@
 
 package stroom.meta.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.Objects;
 
-public class Meta implements SharedObject {
+public class Meta {
     private long id;
     private String feedName;
     private String typeName;

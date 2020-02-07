@@ -1,10 +1,10 @@
 package stroom.meta.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.List;
 
-public class FullMetaInfoResult implements SharedObject {
+public class FullMetaInfoResult {
     private List<Section> sections;
 
     public FullMetaInfoResult() {
@@ -18,7 +18,7 @@ public class FullMetaInfoResult implements SharedObject {
         return sections;
     }
 
-    public static class Section implements SharedObject {
+    public static class Section {
         private String title;
         private List<Entry> entries;
 
@@ -39,7 +39,7 @@ public class FullMetaInfoResult implements SharedObject {
         }
     }
 
-    public static class Entry implements SharedObject {
+    public static class Entry {
         private String key;
         private String value;
 

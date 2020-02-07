@@ -17,14 +17,14 @@
 package stroom.pipeline.shared.data;
 
 import stroom.docref.HasDisplayValue;
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.HasType;
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class PipelineElementType implements Comparable<PipelineElementType>, HasType, SharedObject {
+public class PipelineElementType implements Comparable<PipelineElementType>, HasType {
     public static final String ROLE_SOURCE = "source";
     public static final String ROLE_DESTINATION = "destination";
     public static final String ROLE_TARGET = "target";

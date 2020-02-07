@@ -16,13 +16,13 @@
 
 package stroom.node.shared;
 
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.HasAuditInfo;
 
 /**
  * Represents a node for storage and processing.
  */
-public class Node implements HasAuditInfo, SharedObject {
+public class Node implements HasAuditInfo {
     private static final long serialVersionUID = 3578705325508265924L;
 
     public static final String ENTITY_TYPE = "Node";

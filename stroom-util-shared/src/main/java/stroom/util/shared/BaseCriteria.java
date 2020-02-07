@@ -16,7 +16,7 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.Sort.Direction;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ import java.util.Set;
 /**
  * Base criteria object used to aid getting pages of data.
  */
-public abstract class BaseCriteria implements SharedObject {
+public abstract class BaseCriteria {
     private static final long serialVersionUID = 779306892977183446L;
     private PageRequest pageRequest = null;
     private List<Sort> sortList;

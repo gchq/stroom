@@ -13,8 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.impl.DictionaryModule;
-import stroom.dictionary.impl.DictionaryResource;
-import stroom.dictionary.impl.DictionaryResource2;
+import stroom.dictionary.impl.NewUiDictionaryResource;
+import stroom.dictionary.impl.NewUiDictionaryResource2;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.StoreFactory;
@@ -47,7 +47,7 @@ import stroom.receive.common.RemoteFeedModule;
 import stroom.receive.common.RequestHandler;
 import stroom.receive.rules.impl.DataReceiptPolicyAttributeMapFilterFactoryImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResource;
-import stroom.receive.rules.impl.ReceiveDataRuleSetResource2;
+import stroom.receive.rules.impl.ReceiveDataRuleSetResourceImpl;
 import stroom.receive.rules.impl.ReceiveDataRuleSetService;
 import stroom.receive.rules.impl.ReceiveDataRuleSetServiceImpl;
 import stroom.security.api.SecurityContext;
@@ -110,8 +110,8 @@ public class ProxyModule extends AbstractModule {
 
         HealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
-                .bind(DictionaryResource.class)
-                .bind(DictionaryResource2.class)
+                .bind(NewUiDictionaryResource.class)
+                .bind(NewUiDictionaryResource2.class)
                 .bind(FeedStatusResource.class)
                 .bind(ForwardStreamHandlerFactory.class)
                 .bind(LogLevelInspector.class)
@@ -130,10 +130,10 @@ public class ProxyModule extends AbstractModule {
                 .bind(ReceiveDataServlet.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(DictionaryResource.class)
-                .addBinding(DictionaryResource2.class)
+                .addBinding(NewUiDictionaryResource.class)
+                .addBinding(NewUiDictionaryResource2.class)
                 .addBinding(ReceiveDataRuleSetResource.class)
-                .addBinding(ReceiveDataRuleSetResource2.class)
+                .addBinding(ReceiveDataRuleSetResourceImpl.class)
                 .addBinding(FeedStatusResource.class);
 
         GuiceUtil.buildMultiBinder(binder(), Managed.class)

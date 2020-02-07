@@ -16,13 +16,13 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
-public class FetchSet implements SharedObject {
+public class FetchSet {
     private static final long serialVersionUID = -3867859869578102437L;
 
     private boolean fetchAll;

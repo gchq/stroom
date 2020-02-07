@@ -29,12 +29,12 @@ class TestConfigProperty {
 
         assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getValue()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getVal()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getYamlOverrideValue().hasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getValue()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getVal()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getEffectiveValue())
@@ -52,11 +52,11 @@ class TestConfigProperty {
                 .isEqualTo(defaultValue);
         assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getValue()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getVal()))
                 .isInstanceOf(RuntimeException.class);
         assertThat(configProperty.getYamlOverrideValue().hasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getValue()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getVal()))
                 .isInstanceOf(RuntimeException.class);
         assertThat(configProperty.getEffectiveValue().orElseThrow())
                 .isEqualTo(defaultValue);
@@ -76,12 +76,12 @@ class TestConfigProperty {
 
         assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
                 .isTrue();
-        assertThat(configProperty.getDatabaseOverrideValue().getValue().orElseThrow())
+        assertThat(configProperty.getDatabaseOverrideValue().getVal().orElseThrow())
                 .isEqualTo(dbValue);
 
         assertThat(configProperty.getYamlOverrideValue().hasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getValue()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getVal()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getEffectiveValue().orElseThrow())
@@ -101,11 +101,11 @@ class TestConfigProperty {
                 .isEqualTo(defaultValue);
         assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
                 .isTrue();
-        assertThat(configProperty.getDatabaseOverrideValue().getValue())
+        assertThat(configProperty.getDatabaseOverrideValue().getVal())
                 .isEmpty();
         assertThat(configProperty.getYamlOverrideValue().hasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getValue()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getVal()))
                 .isInstanceOf(RuntimeException.class);
         assertThat(configProperty.getEffectiveValue())
                 .isEmpty();
@@ -125,12 +125,12 @@ class TestConfigProperty {
 
         assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getValue()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getVal()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getYamlOverrideValue().hasOverride())
                 .isTrue();
-        assertThat(configProperty.getYamlOverrideValue().getValue().orElseThrow())
+        assertThat(configProperty.getYamlOverrideValue().getVal().orElseThrow())
                 .isEqualTo(yamlValue);
 
         assertThat(configProperty.getEffectiveValue().orElseThrow())
@@ -151,12 +151,12 @@ class TestConfigProperty {
 
         assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getValue()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getVal()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getYamlOverrideValue().hasOverride())
                 .isTrue();
-        assertThat(configProperty.getYamlOverrideValue().getValue())
+        assertThat(configProperty.getYamlOverrideValue().getVal())
                 .isEmpty();
 
         assertThat(configProperty.getEffectiveValue())
@@ -179,12 +179,12 @@ class TestConfigProperty {
 
         assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
                 .isTrue();
-        assertThat(configProperty.getDatabaseOverrideValue().getValue().orElseThrow())
+        assertThat(configProperty.getDatabaseOverrideValue().getVal().orElseThrow())
                 .isEqualTo(dbValue);
 
         assertThat(configProperty.getYamlOverrideValue().hasOverride())
                 .isTrue();
-        assertThat(configProperty.getYamlOverrideValue().getValue().orElseThrow())
+        assertThat(configProperty.getYamlOverrideValue().getVal().orElseThrow())
                 .isEqualTo(yamlValue);
 
         assertThat(configProperty.getEffectiveValue().orElseThrow())
@@ -207,12 +207,12 @@ class TestConfigProperty {
 
         assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
                 .isTrue();
-        assertThat(configProperty.getDatabaseOverrideValue().getValue().orElseThrow())
+        assertThat(configProperty.getDatabaseOverrideValue().getVal().orElseThrow())
                 .isEqualTo(dbValue);
 
         assertThat(configProperty.getYamlOverrideValue().hasOverride())
                 .isTrue();
-        assertThat(configProperty.getYamlOverrideValue().getValue())
+        assertThat(configProperty.getYamlOverrideValue().getVal())
                 .isEmpty();
 
         assertThat(configProperty.getEffectiveValue())
@@ -226,12 +226,12 @@ class TestConfigProperty {
 
         assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
                 .isTrue();
-        assertThat(configProperty.getDatabaseOverrideValue().getValue().orElseThrow())
+        assertThat(configProperty.getDatabaseOverrideValue().getVal().orElseThrow())
                 .isEqualTo(dbValue);
 
         assertThat(configProperty.getYamlOverrideValue().hasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getValue()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getVal()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getEffectiveValue().orElseThrow())
@@ -245,12 +245,12 @@ class TestConfigProperty {
 
         assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getValue()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getVal()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getYamlOverrideValue().hasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getValue()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getVal()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getEffectiveValue().orElseThrow())

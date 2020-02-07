@@ -1,10 +1,10 @@
 package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.AbstractConfig;
 
-public class UrlConfig extends AbstractConfig implements SharedObject {
+public class UrlConfig extends AbstractConfig {
     private String ui = "http://IP_ADDRESS";
     private String authenticationService = "http://auth-service:8099/authentication/v1";
     private String users = "http://IP_ADDRESS/users";

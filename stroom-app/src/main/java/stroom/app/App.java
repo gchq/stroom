@@ -42,7 +42,7 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;

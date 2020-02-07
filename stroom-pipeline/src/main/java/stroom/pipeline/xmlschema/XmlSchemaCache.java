@@ -19,8 +19,8 @@ package stroom.pipeline.xmlschema;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.EntityEventHandler;
+import stroom.util.entity.EntityEvent;
+import stroom.util.entity.EntityEventHandler;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 

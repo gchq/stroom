@@ -1,9 +1,9 @@
 package stroom.importexport.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
 
-public class Dependency implements SharedObject {
+
+public class Dependency {
     private DocRef from;
     private DocRef to;
     private boolean ok;

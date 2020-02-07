@@ -16,11 +16,11 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.Objects;
 
-public class OffsetRange<T extends Number> implements SharedObject {
+public class OffsetRange<T extends Number> {
     private static final long serialVersionUID = 5045453517852867315L;
 
     private T offset;

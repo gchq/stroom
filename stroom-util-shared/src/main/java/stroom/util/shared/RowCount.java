@@ -16,11 +16,11 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.Objects;
 
-public class RowCount<T extends Number> implements SharedObject {
+public class RowCount<T extends Number> {
     private static final long serialVersionUID = 1435183608704221253L;
 
     private T count;

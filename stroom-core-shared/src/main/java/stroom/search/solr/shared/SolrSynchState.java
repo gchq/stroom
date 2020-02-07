@@ -1,10 +1,10 @@
 package stroom.search.solr.shared;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.List;
 
-public class SolrSynchState implements SharedObject {
+public class SolrSynchState {
     private Long lastSynchronized;
     private List<String> messages;
 

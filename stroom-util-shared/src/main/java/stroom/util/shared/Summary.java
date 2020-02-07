@@ -16,9 +16,9 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
 
-public class Summary implements Marker, TreeRow, SharedObject {
+
+public class Summary implements Marker, TreeRow {
     private static final long serialVersionUID = -2158641083789509554L;
 
     private Severity severity;

@@ -16,6 +16,7 @@
 
 package stroom.receive.rules.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.Style.BorderStyle;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -27,10 +28,10 @@ import stroom.content.client.event.RefreshContentTabEvent;
 import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
-import stroom.data.retention.shared.FetchDataRetentionRulesAction;
-import stroom.data.retention.shared.SaveDataRetentionRulesAction;
+import stroom.data.retention.shared.DataRetentionRulesResource;
 import stroom.data.retention.shared.TimeUnit;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -50,10 +51,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetentionPolicyPresenter.DataRetentionPolicyView> implements HasDirtyHandlers {
+    private static final DataRetentionRulesResource DATA_RETENTION_RULES_RESOURCE = GWT.create(DataRetentionRulesResource.class);
+
     private final DataRetentionPolicyListPresenter listPresenter;
     private final ExpressionTreePresenter expressionPresenter;
     private final Provider<DataRetentionRulePresenter> editRulePresenterProvider;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
 
     private DataRetentionRules policy;
     private List<DataRetentionRule> rules;
@@ -76,12 +79,12 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
                                         final DataRetentionPolicyListPresenter listPresenter,
                                         final ExpressionTreePresenter expressionPresenter,
                                         final Provider<DataRetentionRulePresenter> editRulePresenterProvider,
-                                        final ClientDispatchAsync dispatcher) {
+                                        final RestFactory restFactory) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.expressionPresenter = expressionPresenter;
         this.editRulePresenterProvider = editRulePresenterProvider;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         getView().setTableView(listPresenter.getView());
         getView().setExpressionView(expressionPresenter.getView());
@@ -102,30 +105,38 @@ public class DataRetentionPolicyPresenter extends ContentTabPresenter<DataRetent
 
         updateButtons();
 
-        dispatcher.exec(new FetchDataRetentionRulesAction()).onSuccess(result -> {
-            policy = result;
+        final Rest<DataRetentionRules> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    policy = result;
 
-            if (policy.getRules() == null) {
-                policy.setRules(new ArrayList<>());
-            }
+                    if (policy.getRules() == null) {
+                        policy.setRules(new ArrayList<>());
+                    }
 
-            this.rules = policy.getRules();
+                    this.rules = policy.getRules();
 
-            update();
-        });
+                    update();
+                })
+                .call(DATA_RETENTION_RULES_RESOURCE)
+                .read();
     }
 
     @Override
     protected void onBind() {
         registerHandler(saveButton.addClickHandler(event -> {
-            dispatcher.exec(new SaveDataRetentionRulesAction(policy)).onSuccess(result -> {
-                policy = result;
-                this.rules = policy.getRules();
-                listPresenter.getSelectionModel().clear();
+            final Rest<DataRetentionRules> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        policy = result;
+                        this.rules = policy.getRules();
+                        listPresenter.getSelectionModel().clear();
 
-                update();
-                setDirty(false);
-            });
+                        update();
+                        setDirty(false);
+                    })
+                    .call(DATA_RETENTION_RULES_RESOURCE)
+                    .update(policy);
         }));
         registerHandler(addButton.addClickHandler(event -> {
             if (rules != null) {

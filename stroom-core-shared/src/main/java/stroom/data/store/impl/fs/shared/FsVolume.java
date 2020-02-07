@@ -18,7 +18,7 @@ package stroom.data.store.impl.fs.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.docref.HasDisplayValue;
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
@@ -28,7 +28,7 @@ import java.util.Objects;
 /**
  * Some path on the network where we can store stuff.
  */
-public class FsVolume implements HasAuditInfo, SharedObject {
+public class FsVolume implements HasAuditInfo {
     private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
     private static final double NINETY_NINE_PERCENT = 0.99D;
 

@@ -17,13 +17,13 @@
 package stroom.processor.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasUuid;
 
 import java.util.Objects;
 
-public class Processor implements HasAuditInfo, HasUuid, SharedObject {
+public class Processor implements HasAuditInfo, HasUuid {
 //    public static final String ENTITY_TYPE = "StreamProcessor";
 
     private static final String PIPELINE_STREAM_PROCESSOR_TASK_TYPE = "pipelineStreamProcessor";

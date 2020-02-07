@@ -18,6 +18,7 @@ package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -58,8 +59,41 @@ public class ResultPage<T> {
     }
 
     @JsonIgnore
-    public void init(final List<T> values) {
-        this.values = values;
-        this.pageResponse = new PageResponse(0L, values.size(), (long) values.size(), true);
+    public <R extends ResultPage<T>> R unlimited(final List<T> values) {
+        return limited(values, null);
+    }
+
+    @JsonIgnore
+    @SuppressWarnings("unchecked")
+    public <R extends ResultPage<T>> R limited(final List<T> fullList, final PageRequest pageRequest) {
+        values = fullList;
+        pageResponse = new PageResponse((long) 0, fullList.size(), (long) fullList.size(), true);
+
+        if (pageRequest != null) {
+            int offset = 0;
+            if (pageRequest.getOffset() != null) {
+                offset = pageRequest.getOffset().intValue();
+            }
+
+            int length = fullList.size() - offset;
+            if (pageRequest.getLength() != null) {
+                length = Math.min(length, pageRequest.getLength());
+            }
+
+            // If the page request will lead to a limited number of results then apply that limit here.
+            if (offset != 0 || length < fullList.size()) {
+                // Ideally we'd use List.subList here but can't as GWT can't serialise the returned list type.
+//                final List<T> limited = fullList.subList(offset, offset + length);
+                final List<T> limited = new ArrayList<>(length);
+                for (int i = offset; i < offset + length; i++) {
+                    limited.add(fullList.get(i));
+                }
+
+                values = limited;
+                pageResponse = new PageResponse((long) offset, limited.size(), (long) fullList.size(), true);
+            }
+        }
+
+        return (R) this;
     }
 }

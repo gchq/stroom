@@ -7,7 +7,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.pipeline.task.SupersededOutputHelper;
 import stroom.processor.api.ProcessorTaskService;

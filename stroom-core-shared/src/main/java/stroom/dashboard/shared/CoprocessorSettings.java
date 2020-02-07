@@ -17,9 +17,9 @@
 package stroom.dashboard.shared;
 
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
 
-public interface CoprocessorSettings extends SharedObject {
+
+public interface CoprocessorSettings {
     boolean extractValues();
 
     DocRef getExtractionPipeline();

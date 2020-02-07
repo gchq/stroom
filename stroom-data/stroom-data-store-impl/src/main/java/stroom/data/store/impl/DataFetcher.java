@@ -61,7 +61,6 @@ import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 import stroom.util.shared.Severity;
-import stroom.util.shared.SharedList;
 
 import javax.inject.Provider;
 import javax.xml.transform.TransformerException;
@@ -190,7 +189,7 @@ public class DataFetcher {
 //                    // If we got something then change the stream.
 //                    if (childStreamSource != null) {
 //                        streamSource = childStreamSource;
-                        streamTypeName = childStreamTypeName;
+                    streamTypeName = childStreamTypeName;
 //                    }
 //                    streamCloser.add(streamSource);
                 }
@@ -285,7 +284,7 @@ public class DataFetcher {
 
         return new FetchMarkerResult(streamTypeName, classification, resultStreamsRange,
                 streamsRowCount, resultPageRange, pageRowCount, availableChildStreamTypes,
-                new SharedList<>(resultList));
+                new ArrayList<>(resultList));
     }
 
     private FetchDataResult createDataResult(final String feedName, final String streamTypeName, final SegmentInputStream segmentInputStream, final OffsetRange<Long> pageRange, final List<String> availableChildStreamTypes, final DocRef pipeline, final boolean showAsHtml, final Source streamSource, final InputStreamProvider inputStreamProvider) throws IOException {

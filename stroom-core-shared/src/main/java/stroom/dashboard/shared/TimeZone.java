@@ -21,7 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
-import stroom.docref.SharedObject;
+
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -34,7 +34,7 @@ import javax.xml.bind.annotation.XmlType;
 @JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "timeZone")
 @XmlType(name = "TimeZone", propOrder = {"use", "id", "offsetHours", "offsetMinutes"})
-public class TimeZone implements SharedObject {
+public class TimeZone {
     private static final long serialVersionUID = 1200175661441813029L;
 
     @XmlElement(name = "use")

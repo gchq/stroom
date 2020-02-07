@@ -42,6 +42,11 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         eventBus.fireEvent(event);
     }
 
+    @Override
+    public String getImportFileURL() {
+        return GWT.getHostPageBaseURL() + "importfile.rpc";
+    }
+
     private static class RestImpl<R> implements Rest<R> {
         private final HasHandlers hasHandlers;
         private final REST<R> rest;

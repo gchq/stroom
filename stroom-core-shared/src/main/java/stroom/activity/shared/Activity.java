@@ -17,7 +17,7 @@
 package stroom.activity.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.HasAuditInfo;
 
 import java.util.ArrayList;

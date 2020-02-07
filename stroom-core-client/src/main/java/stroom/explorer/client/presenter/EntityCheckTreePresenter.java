@@ -25,7 +25,6 @@ import com.gwtplatform.mvp.client.View;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
 

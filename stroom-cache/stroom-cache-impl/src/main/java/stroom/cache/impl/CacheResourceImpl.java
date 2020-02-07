@@ -25,7 +25,7 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.HasHealthCheck;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -74,8 +74,7 @@ class CacheResourceImpl implements CacheResource, RestResource, HasHealthCheck {
                 final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
                 criteria.setName(new StringCriteria(cacheName, null));
                 final List<CacheInfo> list = cacheManagerService.find(criteria);
-                result = new CacheInfoResponse();
-                result.init(list);
+                result = new CacheInfoResponse().unlimited(list);
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);

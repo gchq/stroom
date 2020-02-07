@@ -22,10 +22,14 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.shared.DashboardQueryKey;
-import stroom.dashboard.shared.SearchBusPollAction;
+import stroom.dashboard.shared.DashboardResource;
+import stroom.dashboard.shared.SearchBusPollRequest;
+import stroom.dashboard.shared.SearchBusPollResult;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.ApplicationInstanceIdProvider;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.event.LogoutEvent;
 
 import java.util.HashMap;
@@ -34,11 +38,14 @@ import java.util.Map.Entry;
 
 @Singleton
 public class SearchBus {
+    private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
+
     private static final int ONE_SECOND = 1000;
     private static final int DEFAULT_POLL_INTERVAL = ONE_SECOND;
     private static final int QUICK_POLL_INTERVAL = 10;
 
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
+    private final ApplicationInstanceIdProvider applicationInstanceIdProvider;
 
     private final Map<DashboardQueryKey, SearchModel> activeSearchMap = new HashMap<>();
     private final Timer pollingTimer;
@@ -47,8 +54,11 @@ public class SearchBus {
     private boolean polling;
 
     @Inject
-    public SearchBus(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
-        this.dispatcher = dispatcher;
+    public SearchBus(final EventBus eventBus,
+                     final RestFactory restFactory,
+                     final ApplicationInstanceIdProvider applicationInstanceIdProvider) {
+        this.restFactory = restFactory;
+        this.applicationInstanceIdProvider = applicationInstanceIdProvider;
 
         pollingTimer = new Timer() {
             @Override
@@ -106,33 +116,36 @@ public class SearchBus {
             searchActionMap.put(queryKey, searchAction);
         }
 
-        final SearchBusPollAction action = new SearchBusPollAction(searchActionMap);
-        dispatcher.exec(action, false).onSuccess(result -> {
-            try {
-                final Map<DashboardQueryKey, SearchResponse> searchResultMap = result.getSearchResultMap();
-                for (final Entry<DashboardQueryKey, SearchResponse> entry : searchResultMap.entrySet()) {
-                    final DashboardQueryKey queryKey = entry.getKey();
-                    final SearchResponse searchResult = entry.getValue();
-                    final SearchModel searchModel = activeSearchMap.get(queryKey);
-                    if (searchModel != null) {
-                        searchModel.update(searchResult);
+        final Rest<SearchBusPollResult> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    try {
+                        final Map<DashboardQueryKey, SearchResponse> searchResultMap = result.getSearchResultMap();
+                        for (final Entry<DashboardQueryKey, SearchResponse> entry : searchResultMap.entrySet()) {
+                            final DashboardQueryKey queryKey = entry.getKey();
+                            final SearchResponse searchResult = entry.getValue();
+                            final SearchModel searchModel = activeSearchMap.get(queryKey);
+                            if (searchModel != null) {
+                                searchModel.update(searchResult);
+                            }
+                        }
+
+                        polling = false;
+
+                        // Remember and reset delay.
+                        final int delay = delayMillis;
+                        delayMillis = DEFAULT_POLL_INTERVAL;
+
+                        if (forcePoll || activeSearchMap.size() > 0) {
+                            // Reset force.
+                            forcePoll = false;
+                            poll(delay);
+                        }
+                    } catch (final RuntimeException e) {
+                        GWT.log(e.getMessage());
                     }
-                }
-
-                polling = false;
-
-                // Remember and reset delay.
-                final int delay = delayMillis;
-                delayMillis = DEFAULT_POLL_INTERVAL;
-
-                if (forcePoll || activeSearchMap.size() > 0) {
-                    // Reset force.
-                    forcePoll = false;
-                    poll(delay);
-                }
-            } catch (final RuntimeException e) {
-                GWT.log(e.getMessage());
-            }
-        });
+                })
+                .call(DASHBOARD_RESOURCE)
+                .poll(new SearchBusPollRequest(applicationInstanceIdProvider.get(), searchActionMap));
     }
 }

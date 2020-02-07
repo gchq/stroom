@@ -19,7 +19,6 @@ package stroom.meta.api;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.StandardHeaderArguments;
 import stroom.util.date.DateUtil;
 import stroom.util.io.StreamUtil;
 

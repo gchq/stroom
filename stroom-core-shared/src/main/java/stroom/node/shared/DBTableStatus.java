@@ -16,12 +16,12 @@
 
 package stroom.node.shared;
 
-import stroom.docref.SharedObject;
+
 
 /**
  * API to table status
  */
-public class DBTableStatus implements SharedObject {
+public class DBTableStatus {
     public static final String FIELD_DATABASE = "Database";
     public static final String FIELD_TABLE = "Table";
     public static final String FIELD_ROW_COUNT = "Count";
