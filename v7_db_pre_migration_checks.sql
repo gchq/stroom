@@ -40,4 +40,17 @@ WHERE NOT EXISTS (
     WHERE UUID = ap.USR_UUID)
 ORDER BY ap.ID;
 
+\! echo 'Find IDX/IDX_VOL records that would violate new primary key';
+
+SELECT 
+  iv.FK_VOL_ID, 
+  i.UUID, 
+  COUNT(*)
+FROM IDX i
+INNER JOIN IDX_VOL iv on i.ID = iv.FK_IDX_ID
+GROUP BY
+  iv.FK_VOL_ID, 
+  i.UUID
+HAVING COUNT(*) > 1;
+
 \! echo 'Finished';
