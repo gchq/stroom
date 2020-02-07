@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#655** : Fixed SQL Stats queries ignoring the enabled state of the dashboard query terms.
+
 
 ## [v6.0.32] - 2020-01-31
 
