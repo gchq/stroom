@@ -102,7 +102,7 @@ BEGIN
             PRIOR,
             ENBL
         FROM STRM_PROC_FILT
-        WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor)
+        WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor_filter)
         ORDER BY ID;
 
         -- Work out what to set our auto_increment start value to
