@@ -26,7 +26,6 @@ import stroom.cluster.task.api.ClusterDispatchAsync;
 import stroom.cluster.task.api.ClusterResultCollector;
 import stroom.cluster.task.api.ClusterTask;
 import stroom.cluster.task.api.CollectorId;
-import stroom.docref.SharedObject;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskManager;
@@ -50,7 +49,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     static final String RECEIVE_RESULT_METHOD = "receiveResult";
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(5);
     static final Class<?>[] RECEIVE_RESULT_METHOD_ARGS = {ClusterTask.class, String.class, TaskId.class,
-            CollectorId.class, SharedObject.class, Throwable.class, Boolean.class};
+            CollectorId.class, Throwable.class, Boolean.class};
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDispatchAsyncImpl.class);
     private static final String RECEIVE_RESULT = "receiveResult";
 

@@ -71,11 +71,11 @@ public class VisComponentSettings extends ComponentSettings {
         this.visualisation = visualisation;
     }
 
-    public String getJSON() {
+    public String getjson() {
         return json;
     }
 
-    public void setJSON(final String json) {
+    public void setJson(final String json) {
         this.json = json;
     }
 

@@ -19,18 +19,18 @@ package stroom.receive.rules.impl;
 import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
-import stroom.importexport.shared.DocRefs;
 import stroom.importexport.shared.DocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
+import stroom.receive.rules.shared.ReceiveDataRules;
 import stroom.util.HasHealthCheck;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 
 public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResource, RestResource, HasHealthCheck {
     private final ReceiveDataRuleSetService ruleSetService;
@@ -54,8 +54,8 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
     }
 
     @Override
-    public DocRefs listDocuments() {
-        return new DocRefs(ruleSetService.listDocuments());
+    public Set<DocRef> listDocuments() {
+        return ruleSetService.listDocuments();
     }
 
     @Override

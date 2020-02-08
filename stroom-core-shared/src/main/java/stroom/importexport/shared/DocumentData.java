@@ -29,7 +29,7 @@ public class DocumentData implements Serializable {
             required = true)
     private Map<String, byte[]> dataMap;
 
-    private DocumentData() {
+    public DocumentData() {
     }
 
     public DocumentData(final DocRef docRef, final Map<String, byte[]> dataMap) {
@@ -41,7 +41,15 @@ public class DocumentData implements Serializable {
         return docRef;
     }
 
+    public void setDocRef(final DocRef docRef) {
+        this.docRef = docRef;
+    }
+
     public Map<String, byte[]> getDataMap() {
         return dataMap;
+    }
+
+    public void setDataMap(final Map<String, byte[]> dataMap) {
+        this.dataMap = dataMap;
     }
 }

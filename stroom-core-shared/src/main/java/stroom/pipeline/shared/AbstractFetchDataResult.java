@@ -17,14 +17,22 @@
 package stroom.pipeline.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 
 import java.util.List;
 
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = FetchDataResult.class, name = "data"),
+        @JsonSubTypes.Type(value = FetchMarkerResult.class, name = "marker")
+})
 public abstract class AbstractFetchDataResult {
-    private static final long serialVersionUID = 7559713171858774241L;
-
     private String streamType;
     private String classification;
     private OffsetRange<Long> streamRange;

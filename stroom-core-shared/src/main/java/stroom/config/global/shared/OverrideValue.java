@@ -61,7 +61,7 @@ public class OverrideValue<T> {
     }
 
     @JsonCreator
-    private OverrideValue(final @JsonProperty("hasOverride") boolean hasOverride,
+    public OverrideValue(final @JsonProperty("hasOverride") boolean hasOverride,
                           final @JsonProperty("value") T value) {
         this.hasOverride = hasOverride;
         this.value = value;

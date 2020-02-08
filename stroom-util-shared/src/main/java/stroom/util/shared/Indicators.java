@@ -16,6 +16,8 @@
 
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -45,6 +47,50 @@ public class Indicators implements Serializable {
      */
     public Indicators(final Indicators indicators) {
         addAll(indicators);
+    }
+
+    public Map<Severity, Integer> getErrorCount() {
+        return errorCount;
+    }
+
+    public void setErrorCount(final Map<Severity, Integer> errorCount) {
+        this.errorCount = errorCount;
+    }
+
+    public Set<StoredError> getUniqueErrorSet() {
+        return uniqueErrorSet;
+    }
+
+    public void setUniqueErrorSet(final Set<StoredError> uniqueErrorSet) {
+        this.uniqueErrorSet = uniqueErrorSet;
+    }
+
+    public List<StoredError> getErrorList() {
+        return errorList;
+    }
+
+    public void setErrorList(final List<StoredError> errorList) {
+        this.errorList = errorList;
+    }
+
+    @JsonIgnore
+    public Map<Integer, Indicator> getMap() {
+        if (map == null) {
+            map = new HashMap<>();
+            for (final StoredError storedError : errorList) {
+                int lineNo = 1;
+                if (storedError.getLocation() != null) {
+                    lineNo = storedError.getLocation().getLineNo();
+                }
+                if (lineNo <= 0) {
+                    lineNo = 1;
+                }
+
+                map.computeIfAbsent(lineNo, k -> new Indicator()).add(storedError.getSeverity(), storedError);
+            }
+        }
+
+        return map;
     }
 
     /**
@@ -113,6 +159,7 @@ public class Indicators implements Serializable {
         return html.toString();
     }
 
+    @JsonIgnore
     public Collection<Integer> getLineNumbers() {
         return getMap().keySet();
     }
@@ -121,24 +168,7 @@ public class Indicators implements Serializable {
         return getMap().get(lineNo);
     }
 
-    private Map<Integer, Indicator> getMap() {
-        if (map == null) {
-            map = new HashMap<>();
-            for (final StoredError storedError : errorList) {
-                int lineNo = 1;
-                if (storedError.getLocation() != null) {
-                    lineNo = storedError.getLocation().getLineNo();
-                }
-                if (lineNo <= 0) {
-                    lineNo = 1;
-                }
 
-                map.computeIfAbsent(lineNo, k -> new Indicator()).add(storedError.getSeverity(), storedError);
-            }
-        }
-
-        return map;
-    }
 
     public void append(final StringBuilder sb) {
         for (final StoredError storedError : errorList) {

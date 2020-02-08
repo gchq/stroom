@@ -16,8 +16,17 @@
 
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = StoredError.class, name = "storedError"),
+        @JsonSubTypes.Type(value = Summary.class, name = "summary")
+})
 public interface Marker {
     Severity getSeverity();
 }

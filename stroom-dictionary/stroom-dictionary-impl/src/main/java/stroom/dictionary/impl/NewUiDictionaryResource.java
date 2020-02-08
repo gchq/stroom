@@ -23,7 +23,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
-import stroom.importexport.shared.DocRefs;
 import stroom.importexport.api.OldDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
@@ -112,8 +111,8 @@ public class NewUiDictionaryResource implements RestResource, HasHealthCheck {
     @ApiOperation(
             value = "Submit a request for a list of doc refs held by this service",
             response = Set.class)
-    public DocRefs listDocuments() {
-        return new DocRefs(dictionaryStore.listDocuments());
+    public Set<DocRef> listDocuments() {
+        return dictionaryStore.listDocuments();
     }
 
     @POST

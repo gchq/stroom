@@ -21,7 +21,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
-import stroom.importexport.shared.DocRefs;
 import stroom.importexport.shared.DocumentData;
 import stroom.util.shared.RestResource;
 
@@ -32,6 +31,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.util.Set;
 
 @Api(value = "ruleset - /v2")
 @Path("/ruleset/v2")
@@ -60,8 +60,8 @@ public interface ReceiveDataRuleSetResource extends RestResource, DirectRestServ
     @Path("/list")
     @ApiOperation(
             value = "Submit a request for a list of doc refs held by this service",
-            response = DocRefs.class)
-    DocRefs listDocuments();
+            response = Set.class)
+    Set<DocRef> listDocuments();
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)

@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.OffsetRange;
@@ -62,6 +63,10 @@ public class TableResultRequest extends ComponentResultRequest {
         return requestedRange;
     }
 
+    public void setRequestedRange(final OffsetRange<Integer> requestedRange) {
+        this.requestedRange = requestedRange;
+    }
+
     public Set<String> getOpenGroups() {
         return openGroups;
     }
@@ -90,6 +95,7 @@ public class TableResultRequest extends ComponentResultRequest {
         return openGroups != null && openGroups.contains(group);
     }
 
+    @JsonIgnore
     @Override
     @XmlTransient
     public ComponentType getComponentType() {

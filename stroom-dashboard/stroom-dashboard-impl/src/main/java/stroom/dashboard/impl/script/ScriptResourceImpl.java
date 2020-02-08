@@ -19,6 +19,7 @@ package stroom.dashboard.impl.script;
 import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.security.api.SecurityContext;
@@ -54,19 +55,19 @@ class ScriptResourceImpl implements ScriptResource, RestResource, HasHealthCheck
     }
 
     @Override
-    public List<ScriptDoc> fetchLinkedScripts(final DocRef script, final Set<DocRef> loadedScripts) {
+    public List<ScriptDoc> fetchLinkedScripts(final FetchLinkedScriptRequest request) {
         return securityContext.secureResult(() -> {
             // Elevate the users permissions for the duration of this task so they can read the script if they have 'use' permission.
             return securityContext.useAsReadResult(() -> {
                 final List<ScriptDoc> scripts = new ArrayList<>();
 
-                Set<DocRef> uiLoadedScripts = loadedScripts;
+                Set<DocRef> uiLoadedScripts = request.getLoadedScripts();
                 if (uiLoadedScripts == null) {
                     uiLoadedScripts = new HashSet<>();
                 }
 
                 // Load the script and it's dependencies.
-                loadScripts(script, uiLoadedScripts, new HashSet<>(), scripts);
+                loadScripts(request.getScript(), uiLoadedScripts, new HashSet<>(), scripts);
 
                 return scripts;
             });

@@ -60,5 +60,5 @@ public interface ScriptResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Fetch related scripts",
             response = ScriptDoc.class)
-    List<ScriptDoc> fetchLinkedScripts(DocRef script, Set<DocRef> loadedScripts);
+    List<ScriptDoc> fetchLinkedScripts(FetchLinkedScriptRequest request);
 }

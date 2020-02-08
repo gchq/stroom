@@ -51,6 +51,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.script.client.ScriptCache;
+import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.util.client.JSONUtil;
@@ -336,9 +337,9 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         // Turn JSON settings into an object.
         JSONObject settingsObject = null;
         final VisComponentSettings visDashboardSettings = getSettings();
-        if (visDashboardSettings != null && visDashboardSettings.getJSON() != null) {
+        if (visDashboardSettings != null && visDashboardSettings.getjson() != null) {
             try {
-                settingsObject = JSONUtil.getObject(JSONUtil.parse(visDashboardSettings.getJSON()));
+                settingsObject = JSONUtil.getObject(JSONUtil.parse(visDashboardSettings.getjson()));
             } catch (final RuntimeException e) {
                 getView().showMessage("Unable to parse settings");
             }
@@ -403,7 +404,7 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         rest
                 .onSuccess(result -> startInjectingScripts(result, function))
                 .call(SCRIPT_RESOURCE)
-                .fetchLinkedScripts(scriptRef, scriptCache.getLoadedScripts());
+                .fetchLinkedScripts(new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts()));
     }
 
     private void startInjectingScripts(final List<ScriptDoc> scripts, final VisFunction function) {

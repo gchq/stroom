@@ -39,7 +39,7 @@ public interface StatsStoreRollupResource extends RestResource, DirectRestServic
     @ApiOperation(
             value = "Create rollup bit mask",
             response = List.class)
-    List<CustomRollUpMask> bitMaskPermGeneration(int fieldCount);
+    List<CustomRollUpMask> bitMaskPermGeneration(Integer fieldCount);
 
     @POST
     @Path("/bitMaskConversion")

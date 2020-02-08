@@ -16,11 +16,19 @@
 
 package stroom.dashboard.shared;
 
-
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import stroom.query.api.v2.ResultRequest.Fetch;
 
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = TableResultRequest.class, name = "table"),
+        @JsonSubTypes.Type(value = VisResultRequest.class, name = "vis")
+})
 public abstract class ComponentResultRequest {
-    private static final long serialVersionUID = -7455554742243923562L;
     private Fetch fetch;
 
     public abstract ComponentType getComponentType();

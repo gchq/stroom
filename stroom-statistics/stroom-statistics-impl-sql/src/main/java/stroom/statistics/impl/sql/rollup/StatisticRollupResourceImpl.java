@@ -35,7 +35,7 @@ import java.util.Set;
 
 class StatisticRollupResourceImpl implements StatisticRollupResource, RestResource, HasHealthCheck {
     @Override
-    public List<CustomRollUpMask> bitMaskPermGeneration(final int fieldCount) {
+    public List<CustomRollUpMask> bitMaskPermGeneration(final Integer fieldCount) {
         final Set<List<Integer>> perms = RollUpBitMask.getRollUpPermutationsAsPositions(fieldCount);
         final List<CustomRollUpMask> masks = new ArrayList<>();
         for (final List<Integer> perm : perms) {

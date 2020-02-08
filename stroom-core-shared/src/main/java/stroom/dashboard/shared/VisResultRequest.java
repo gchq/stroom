@@ -16,11 +16,10 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.util.shared.OffsetRange;
 
 public class VisResultRequest extends ComponentResultRequest {
-    private static final long serialVersionUID = 8683770109061652092L;
-
     private VisComponentSettings visDashboardSettings;
     private OffsetRange<Integer> requestedRange = new OffsetRange<>(0, 100);
 
@@ -44,10 +43,15 @@ public class VisResultRequest extends ComponentResultRequest {
         return requestedRange;
     }
 
+    public void setRequestedRange(final OffsetRange<Integer> requestedRange) {
+        this.requestedRange = requestedRange;
+    }
+
     public void setRange(final int offset, final int length) {
         requestedRange = new OffsetRange<>(offset, length);
     }
 
+    @JsonIgnore
     @Override
     public ComponentType getComponentType() {
         return ComponentType.VIS;
