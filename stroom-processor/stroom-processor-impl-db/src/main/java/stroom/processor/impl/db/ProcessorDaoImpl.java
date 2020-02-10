@@ -10,7 +10,7 @@ import stroom.processor.impl.ProcessorDao;
 import stroom.processor.impl.db.jooq.tables.records.ProcessorRecord;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -94,7 +94,7 @@ class ProcessorDaoImpl implements ProcessorDao {
     }
 
     @Override
-    public BaseResultList<Processor> find(final ExpressionCriteria criteria) {
+    public ResultList<Processor> find(final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 
 //        final Collection<Condition> conditions = JooqUtil.conditions(
@@ -109,6 +109,6 @@ class ProcessorDaoImpl implements ProcessorDao {
                 .fetch()
                 .into(Processor.class));
 
-        return BaseResultList.createUnboundedList(list);
+        return ResultList.createUnboundedList(list);
     }
 }

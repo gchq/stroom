@@ -13,7 +13,7 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
@@ -126,7 +126,7 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     }
 
     @Override
-    public BaseResultList<ProcessorTask> find(final ExpressionCriteria criteria) {
+    public ResultList<ProcessorTask> find(final ExpressionCriteria criteria) {
         final List<ProcessorTask> list = dao
                 .getMap()
                 .values()
@@ -148,11 +148,11 @@ public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
                 })
                 .collect(Collectors.toList());
 
-        return BaseResultList.createCriterialBasedList(list, criteria);
+        return ResultList.createCriterialBasedList(list, criteria);
     }
 
     @Override
-    public BaseResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
+    public ResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         return null;
     }
 

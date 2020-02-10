@@ -2,12 +2,12 @@ package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FsVolume;
 
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import java.util.List;
 
 public interface DataVolumeDao {
-    BaseResultList<DataVolume> find(FindDataVolumeCriteria criteria);
+    ResultList<DataVolume> find(FindDataVolumeCriteria criteria);
 
     DataVolume findDataVolume(long dataId);
 

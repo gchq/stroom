@@ -21,7 +21,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
 import stroom.util.shared.Sort.Direction;
@@ -171,15 +171,15 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> fsVolumeDao.fetch(id));
     }
 
-    public BaseResultList<FsVolume> find(final FindFsVolumeCriteria criteria) {
+    public ResultList<FsVolume> find(final FindFsVolumeCriteria criteria) {
         return securityContext.insecureResult(() -> {
             ensureDefaultVolumes();
             return doFind(criteria);
         });
     }
 
-    private BaseResultList<FsVolume> doFind(final FindFsVolumeCriteria criteria) {
-        return BaseResultList.createCriterialBasedList(fsVolumeDao.find(criteria), criteria);
+    private ResultList<FsVolume> doFind(final FindFsVolumeCriteria criteria) {
+        return ResultList.createCriterialBasedList(fsVolumeDao.find(criteria), criteria);
     }
 
     FsVolume getVolume() {

@@ -22,7 +22,6 @@ import stroom.cluster.task.api.DefaultClusterResultCollector;
 import stroom.cluster.task.api.TargetType;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
@@ -60,7 +59,7 @@ class SessionListHandler extends AbstractTaskHandler<SessionListTask, ResultList
                     }
                 }
             }
-            return BaseResultList.createUnboundedList(rtnList);
+            return ResultList.createUnboundedList(rtnList);
         });
     }
 }

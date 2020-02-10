@@ -20,10 +20,10 @@ package stroom.processor.api;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskSummary;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 public interface ProcessorTaskService {
-    BaseResultList<ProcessorTask> find(final ExpressionCriteria criteria);
+    ResultList<ProcessorTask> find(final ExpressionCriteria criteria);
 
-    BaseResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria);
+    ResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria);
 }

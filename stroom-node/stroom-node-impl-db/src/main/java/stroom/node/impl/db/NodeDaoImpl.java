@@ -24,7 +24,7 @@ import stroom.node.impl.NodeDao;
 import stroom.node.impl.db.jooq.tables.records.NodeRecord;
 import stroom.node.shared.FindNodeCriteria;
 import stroom.node.shared.Node;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -68,7 +68,7 @@ public class NodeDaoImpl implements NodeDao {
     }
 
     @Override
-    public BaseResultList<Node> find(final FindNodeCriteria criteria) {
+    public ResultList<Node> find(final FindNodeCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getStringCondition(NODE.NAME, criteria.getName()));
 
@@ -83,7 +83,7 @@ public class NodeDaoImpl implements NodeDao {
                         .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                         .fetch()
                         .map(r -> r.into(Node.class)));
-        return BaseResultList.createCriterialBasedList(list, criteria);
+        return ResultList.createCriterialBasedList(list, criteria);
     }
 
     @Override

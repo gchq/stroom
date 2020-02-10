@@ -10,7 +10,7 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import java.util.Map;
 import java.util.function.Consumer;
@@ -50,9 +50,9 @@ public interface ProcessorTaskDao {
                                          Long startTime,
                                          Long endTime);
 
-    BaseResultList<ProcessorTask> find(final ExpressionCriteria criteria);
+    ResultList<ProcessorTask> find(final ExpressionCriteria criteria);
 
-    BaseResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria);
+    ResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria);
 
     void search(ExpressionCriteria criteria, AbstractField[] fields, Consumer<Val[]> consumer);
 }

@@ -27,7 +27,7 @@ import stroom.job.shared.ListJobResponse;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -63,7 +63,7 @@ class JobResourceImpl implements JobResource, RestResource, HasHealthCheck {
             findJobCriteria.setSort(FindJobCriteria.FIELD_ADVANCED);
             findJobCriteria.addSort(FindJobCriteria.FIELD_NAME);
 
-            final BaseResultList<Job> results = jobService.find(findJobCriteria);
+            final ResultList<Job> results = jobService.find(findJobCriteria);
             response = results.toResultPage(new ListJobResponse());
             documentEventLog.search("ListJobs", query, Job.class.getSimpleName(), results.getPageResponse(), null);
         } catch (final RuntimeException e) {

@@ -5,7 +5,7 @@ import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -34,7 +34,7 @@ public class FsVolumeResource implements RestResource {
     public Response fetchAll(){
         var findAll = new FindFsVolumeCriteria();
         findAll.getStatusSet().setMatchAll(true);
-        BaseResultList<FsVolume> volumes = fsVolumeService.find(findAll);
+        ResultList<FsVolume> volumes = fsVolumeService.find(findAll);
         return Response.ok(volumes).build();
     }
 

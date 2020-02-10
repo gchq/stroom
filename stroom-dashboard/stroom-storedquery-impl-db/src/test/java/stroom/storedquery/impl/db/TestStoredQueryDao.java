@@ -40,7 +40,7 @@ import stroom.storedquery.impl.StoredQueryHistoryCleanExecutor;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.AuditUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.Sort.Direction;
 
 import java.sql.SQLException;
@@ -113,7 +113,7 @@ class TestStoredQueryDao {
         criteria.setComponentId(QUERY_COMPONENT);
         criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
 
-        final BaseResultList<StoredQuery> list = storedQueryDao.find(criteria);
+        final ResultList<StoredQuery> list = storedQueryDao.find(criteria);
 
         assertThat(list.size()).isEqualTo(2);
 
@@ -155,7 +155,7 @@ class TestStoredQueryDao {
         criteria.setComponentId(QUERY_COMPONENT);
         criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
 
-        BaseResultList<StoredQuery> list = storedQueryDao.find(criteria);
+        ResultList<StoredQuery> list = storedQueryDao.find(criteria);
         assertThat(list.size()).isEqualTo(2);
 
         StoredQuery query = list.get(0);

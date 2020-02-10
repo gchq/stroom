@@ -33,7 +33,7 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -83,7 +83,7 @@ class JobNodeResourceImpl implements JobNodeResource, RestResource, HasHealthChe
                 findJobNodeCriteria.getNodeName().setString(nodeName);
             }
 
-            final BaseResultList<JobNode> results = jobNodeService.find(findJobNodeCriteria);
+            final ResultList<JobNode> results = jobNodeService.find(findJobNodeCriteria);
             response = results.toResultPage(new ListJobNodeResponse());
             documentEventLog.search("ListJobNodes", query, JobNode.class.getSimpleName(), results.getPageResponse(), null);
         } catch (final RuntimeException e) {

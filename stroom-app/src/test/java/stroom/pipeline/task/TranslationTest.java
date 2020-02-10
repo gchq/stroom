@@ -67,7 +67,7 @@ import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.Indicators;
 
 import javax.inject.Inject;
@@ -545,7 +545,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private long getLatestStreamId() {
-        final BaseResultList<Meta> list = metaService.find(new FindMetaCriteria());
+        final ResultList<Meta> list = metaService.find(new FindMetaCriteria());
         if (list == null || list.size() == 0) {
             return 0;
         }

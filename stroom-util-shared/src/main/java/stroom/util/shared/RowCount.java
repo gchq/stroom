@@ -17,12 +17,9 @@
 package stroom.util.shared;
 
 
-
 import java.util.Objects;
 
 public class RowCount<T extends Number> {
-    private static final long serialVersionUID = 1435183608704221253L;
-
     private T count;
     private boolean exact;
 
@@ -39,8 +36,16 @@ public class RowCount<T extends Number> {
         return count;
     }
 
+    public void setCount(final T count) {
+        this.count = count;
+    }
+
     public boolean isExact() {
         return exact;
+    }
+
+    public void setExact(final boolean exact) {
+        this.exact = exact;
     }
 
     @Override

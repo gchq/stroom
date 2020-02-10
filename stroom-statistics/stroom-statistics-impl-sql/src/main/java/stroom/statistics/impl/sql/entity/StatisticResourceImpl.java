@@ -19,25 +19,12 @@ package stroom.statistics.impl.sql.entity;
 import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
-import stroom.statistics.impl.sql.rollup.RollUpBitMask;
-import stroom.statistics.impl.sql.shared.CustomRollUpMask;
-import stroom.statistics.impl.sql.shared.CustomRollUpMaskFields;
-import stroom.statistics.impl.sql.shared.StatisticField;
 import stroom.statistics.impl.sql.shared.StatisticResource;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeRequest;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.BaseResultList;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 class StatisticResourceImpl implements StatisticResource, RestResource, HasHealthCheck {
     private final StatisticStoreStore statisticStoreStore;

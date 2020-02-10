@@ -16,14 +16,10 @@
 
 package stroom.meta.shared;
 
-
-
 import java.util.HashMap;
 import java.util.Map;
 
 public class MetaRow {
-    private static final long serialVersionUID = -8198186456924478908L;
-
     private Meta meta;
     private Map<String, String> attributes = new HashMap<>();
 

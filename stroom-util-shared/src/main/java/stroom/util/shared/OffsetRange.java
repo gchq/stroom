@@ -17,12 +17,9 @@
 package stroom.util.shared;
 
 
-
 import java.util.Objects;
 
 public class OffsetRange<T extends Number> {
-    private static final long serialVersionUID = 5045453517852867315L;
-
     private T offset;
     private T length;
 
@@ -39,8 +36,16 @@ public class OffsetRange<T extends Number> {
         return offset;
     }
 
+    public void setOffset(final T offset) {
+        this.offset = offset;
+    }
+
     public T getLength() {
         return length;
+    }
+
+    public void setLength(final T length) {
+        this.length = length;
     }
 
     @Override

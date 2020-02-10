@@ -22,8 +22,6 @@ import stroom.util.shared.RowCount;
 import java.util.List;
 
 public class FetchDataResult extends AbstractFetchDataResult {
-    private static final long serialVersionUID = 7559713171858774241L;
-
     private String data;
     private boolean html;
 
@@ -45,7 +43,15 @@ public class FetchDataResult extends AbstractFetchDataResult {
         return data;
     }
 
+    public void setData(final String data) {
+        this.data = data;
+    }
+
     public boolean isHtml() {
         return html;
+    }
+
+    public void setHtml(final boolean html) {
+        this.html = html;
     }
 }

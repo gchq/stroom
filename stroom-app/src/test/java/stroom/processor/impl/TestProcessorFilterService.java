@@ -35,7 +35,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -127,7 +127,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
         processorFilterService.create(pipelineRef, findStreamQueryData, 1, true);
         assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
 
-        final BaseResultList<ProcessorFilter> filters = processorFilterService
+        final ResultList<ProcessorFilter> filters = processorFilterService
                 .find(findProcessorFilterCriteria);
         ProcessorFilter filter = filters.getFirst();
         String xml = buildXML(new String[]{feedName1, feedName2}, null);

@@ -6,7 +6,7 @@ import stroom.docref.DocRef;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
 import stroom.importexport.shared.DependencyResultPage;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
 
@@ -83,8 +83,8 @@ public class DependencyServiceImpl implements DependencyService {
             return diff;
         });
 
-        final BaseResultList<Dependency> baseResultList = BaseResultList.createPageLimitedList(dependencies, criteria.getPageRequest());
-        return baseResultList.toResultPage(new DependencyResultPage());
+        final ResultList<Dependency> resultList = ResultList.createPageLimitedList(dependencies, criteria.getPageRequest());
+        return resultList.toResultPage(new DependencyResultPage());
     }
 
     private Comparator<DocRef> getDocRefComparator() {

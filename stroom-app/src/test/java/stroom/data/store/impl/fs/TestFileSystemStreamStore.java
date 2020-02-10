@@ -50,7 +50,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Period;
 
@@ -229,7 +229,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         createMeta(FEED3, null);
 
 //        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        final BaseResultList<Meta> streams = metaService.find(criteria);
+        final ResultList<Meta> streams = metaService.find(criteria);
         assertThat(streams.size()).isEqualTo(expectedStreams);
 
         metaService.updateStatus(new FindMetaCriteria(), Status.DELETED);

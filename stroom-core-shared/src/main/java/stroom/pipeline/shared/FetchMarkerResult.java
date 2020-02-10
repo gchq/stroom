@@ -25,7 +25,7 @@ import java.util.List;
 public class FetchMarkerResult extends AbstractFetchDataResult {
     public static final int MAX_MARKERS = 100;
     public static final int MAX_TOTAL_MARKERS = 1000;
-    private static final long serialVersionUID = 7559713171858774241L;
+
     private List<Marker> markers;
 
     public FetchMarkerResult() {
@@ -43,5 +43,9 @@ public class FetchMarkerResult extends AbstractFetchDataResult {
 
     public List<Marker> getMarkers() {
         return markers;
+    }
+
+    public void setMarkers(final List<Marker> markers) {
+        this.markers = markers;
     }
 }

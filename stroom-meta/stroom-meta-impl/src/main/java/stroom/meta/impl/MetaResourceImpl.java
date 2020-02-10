@@ -34,7 +34,7 @@ import stroom.util.HasHealthCheck;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -70,7 +70,7 @@ class MetaResourceImpl implements MetaResource, RestResource, HasHealthCheck {
 
     @Override
     public MetaRowResultPage findMetaRow(final FindMetaCriteria criteria) {
-        final BaseResultList<MetaRow> list = metaService.findRows(criteria);
+        final ResultList<MetaRow> list = metaService.findRows(criteria);
         list.forEach(metaRow -> ruleDecorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
 
         return list.toResultPage(new MetaRowResultPage());

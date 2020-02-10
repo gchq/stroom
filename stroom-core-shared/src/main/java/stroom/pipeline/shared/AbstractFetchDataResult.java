@@ -61,27 +61,55 @@ public abstract class AbstractFetchDataResult {
         return streamType;
     }
 
+    public void setStreamType(final String streamType) {
+        this.streamType = streamType;
+    }
+
     public String getClassification() {
         return classification;
+    }
+
+    public void setClassification(final String classification) {
+        this.classification = classification;
     }
 
     public OffsetRange<Long> getStreamRange() {
         return streamRange;
     }
 
+    public void setStreamRange(final OffsetRange<Long> streamRange) {
+        this.streamRange = streamRange;
+    }
+
     public RowCount<Long> getStreamRowCount() {
         return streamRowCount;
+    }
+
+    public void setStreamRowCount(final RowCount<Long> streamRowCount) {
+        this.streamRowCount = streamRowCount;
     }
 
     public OffsetRange<Long> getPageRange() {
         return pageRange;
     }
 
+    public void setPageRange(final OffsetRange<Long> pageRange) {
+        this.pageRange = pageRange;
+    }
+
     public RowCount<Long> getPageRowCount() {
         return pageRowCount;
     }
 
+    public void setPageRowCount(final RowCount<Long> pageRowCount) {
+        this.pageRowCount = pageRowCount;
+    }
+
     public List<String> getAvailableChildStreamTypes() {
         return availableChildStreamTypes;
+    }
+
+    public void setAvailableChildStreamTypes(final List<String> availableChildStreamTypes) {
+        this.availableChildStreamTypes = availableChildStreamTypes;
     }
 }

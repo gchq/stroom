@@ -18,7 +18,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.pipeline.scope.PipelineScoped;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 import java.util.Collections;
@@ -99,7 +99,7 @@ public class SupersededOutputHelperImpl implements SupersededOutputHelper {
                         .addTerm(ProcessorTaskDataSource.PROCESSOR_ID, Condition.EQUALS, processor.getId())
                         .addTerm(ProcessorTaskDataSource.TASK_ID, Condition.GREATER_THAN, processorTask.getId())
                         .build();
-                final BaseResultList<ProcessorTask> tasks = processorTaskService.find(new ExpressionCriteria(findTaskExpression));
+                final ResultList<ProcessorTask> tasks = processorTaskService.find(new ExpressionCriteria(findTaskExpression));
                 final OptionalLong maxTaskId = tasks.stream().mapToLong(ProcessorTask::getId).max();
 
                 // Is our task old?

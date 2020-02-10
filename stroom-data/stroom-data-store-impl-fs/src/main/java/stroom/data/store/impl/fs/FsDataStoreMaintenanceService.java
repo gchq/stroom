@@ -33,7 +33,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.io.FileUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.CriteriaSet;
 import stroom.util.shared.PageRequest;
 
@@ -170,7 +170,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                                              final Map<String, DataVolume> streamsKeyedByBaseName) {
         try {
             // We need to find streams that match the repo path.
-            final BaseResultList<Meta> matchingStreams = findMatchingStreams(repoPath);
+            final ResultList<Meta> matchingStreams = findMatchingStreams(repoPath);
 
             // If we haven't found any streams then give up.
             if (matchingStreams.size() > 0) {
@@ -207,7 +207,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
      * @param repoPath The repository path to find relevant streams for.
      * @return A list of streams that are relevant to the supplied repository path.
      */
-    private BaseResultList<Meta> findMatchingStreams(final String repoPath) {
+    private ResultList<Meta> findMatchingStreams(final String repoPath) {
         try {
             // We need to find streams that match the repo path.
             final Optional<ExpressionOperator> optional = pathToStreamExpression(repoPath);
@@ -215,13 +215,13 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                 final FindMetaCriteria criteria = new FindMetaCriteria(expression);
                 criteria.setPageRequest(new PageRequest(0L, 1000));
                 return metaService.find(criteria);
-            }).orElseGet(() -> BaseResultList.createUnboundedList(Collections.emptyList()));
+            }).orElseGet(() -> ResultList.createUnboundedList(Collections.emptyList()));
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
             LOGGER.warn(e.getMessage());
         }
 
-        return BaseResultList.createUnboundedList(Collections.emptyList());
+        return ResultList.createUnboundedList(Collections.emptyList());
     }
 
     /**

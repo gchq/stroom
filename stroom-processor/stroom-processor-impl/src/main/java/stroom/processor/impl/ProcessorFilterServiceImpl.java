@@ -49,7 +49,7 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.CriteriaSet;
 import stroom.util.shared.Expander;
 import stroom.util.shared.Severity;
@@ -230,7 +230,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 //    }
 
     @Override
-    public BaseResultList<ProcessorFilter> find(final ExpressionCriteria criteria) {
+    public ResultList<ProcessorFilter> find(final ExpressionCriteria criteria) {
         return securityContext.secureResult(PERMISSION, () ->
                 processorFilterDao.find(criteria));
     }
@@ -257,9 +257,9 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 criteria.setExpression(builder.build());
             }
 
-            final BaseResultList<Processor> streamProcessors = processorService.find(criteriaRoot);
+            final ResultList<Processor> streamProcessors = processorService.find(criteriaRoot);
 
-            final BaseResultList<ProcessorFilter> processorFilters = find(criteria);
+            final ResultList<ProcessorFilter> processorFilters = find(criteria);
 
             // Get unique processors.
             final Set<Processor> processors = new HashSet<>(streamProcessors);
@@ -388,7 +388,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 criteria.obtainPageRequest().setOffset(0L);
                 criteria.obtainPageRequest().setLength(MAX_STREAM_TO_REPROCESS);
 
-                final BaseResultList<Meta> metaList = metaService.find(criteria);
+                final ResultList<Meta> metaList = metaService.find(criteria);
 
                 if (!metaList.isExact()) {
                     info.add(new ReprocessDataInfo(Severity.ERROR, "Results exceed " + MAX_STREAM_TO_REPROCESS

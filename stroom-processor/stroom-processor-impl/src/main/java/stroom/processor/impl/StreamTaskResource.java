@@ -32,7 +32,7 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.RestResource;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
 
@@ -189,7 +189,7 @@ public class StreamTaskResource implements RestResource {
 
     private List<StreamTask> find(final ExpressionCriteria criteria) {
 
-        final BaseResultList<ProcessorFilter> processorFilters = processorFilterService
+        final ResultList<ProcessorFilter> processorFilters = processorFilterService
                 .find(criteria);
 
 

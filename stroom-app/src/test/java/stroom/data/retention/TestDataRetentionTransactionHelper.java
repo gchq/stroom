@@ -31,7 +31,7 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.Period;
 
 import javax.inject.Inject;
@@ -86,12 +86,12 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
         final Period ageRange = new Period(null, timeOutsideRetentionPeriod + 1);
 
         final FindMetaCriteria findMetaCriteria = DataRetentionMetaCriteriaUtil.createCriteria(ageRange, Collections.emptyList(), 100);
-        final BaseResultList<Meta> list = metaService.find(findMetaCriteria);
+        final ResultList<Meta> list = metaService.find(findMetaCriteria);
         assertThat(list.size()).isEqualTo(1);
     }
 
     private void dumpStreams() {
-        final BaseResultList<Meta> list = metaService.find(new FindMetaCriteria());
+        final ResultList<Meta> list = metaService.find(new FindMetaCriteria());
 
         assertThat(list.size()).isEqualTo(2);
 

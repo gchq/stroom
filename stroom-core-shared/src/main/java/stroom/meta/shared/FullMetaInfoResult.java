@@ -1,7 +1,6 @@
 package stroom.meta.shared;
 
 
-
 import java.util.List;
 
 public class FullMetaInfoResult {
@@ -16,6 +15,10 @@ public class FullMetaInfoResult {
 
     public List<Section> getSections() {
         return sections;
+    }
+
+    public void setSections(final List<Section> sections) {
+        this.sections = sections;
     }
 
     public static class Section {
@@ -34,8 +37,16 @@ public class FullMetaInfoResult {
             return title;
         }
 
+        public void setTitle(final String title) {
+            this.title = title;
+        }
+
         public List<Entry> getEntries() {
             return entries;
+        }
+
+        public void setEntries(final List<Entry> entries) {
+            this.entries = entries;
         }
     }
 
@@ -55,8 +66,16 @@ public class FullMetaInfoResult {
             return key;
         }
 
+        public void setKey(final String key) {
+            this.key = key;
+        }
+
         public String getValue() {
             return value;
+        }
+
+        public void setValue(final String value) {
+            this.value = value;
         }
     }
 }

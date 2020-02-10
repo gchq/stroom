@@ -20,11 +20,9 @@ package stroom.processor.api;
 import stroom.docref.DocRef;
 
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.HasIntCrud;
 import stroom.util.shared.ResultList;
+import stroom.util.shared.HasIntCrud;
 
 public interface ProcessorService extends HasIntCrud<Processor> {
     Processor create(DocRef pipelineRef, boolean enabled);
@@ -37,7 +35,7 @@ public interface ProcessorService extends HasIntCrud<Processor> {
 //                        LogUtil.message("Could not find processor with UUID {}", uuid)));
 //    }
 
-    BaseResultList<Processor> find(ExpressionCriteria criteria);
+    ResultList<Processor> find(ExpressionCriteria criteria);
 
     void setEnabled(Integer id, Boolean enabled);
 }

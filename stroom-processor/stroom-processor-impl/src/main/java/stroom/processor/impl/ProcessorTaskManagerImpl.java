@@ -55,7 +55,7 @@ import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.Sort.Direction;
 import stroom.util.shared.VoidResult;
 
@@ -638,7 +638,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 //            findProcessorTaskCriteria.obtainProcessorFilterIdSet().add(filter.getId());
             findProcessorTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
 
-            final BaseResultList<ProcessorTask> processorTasks = processorTaskDao.find(findProcessorTaskCriteria);
+            final ResultList<ProcessorTask> processorTasks = processorTaskDao.find(findProcessorTaskCriteria);
             final int size = processorTasks.size();
 
             taskStatusTraceLog.addUnownedTasks(ProcessorTaskManagerImpl.class, processorTasks);
@@ -655,7 +655,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
                 findMetaCriteria.setSort(MetaFields.ID.getName(), Direction.ASCENDING, false);
-                final BaseResultList<Meta> metaList = metaService.find(findMetaCriteria);
+                final ResultList<Meta> metaList = metaService.find(findMetaCriteria);
 
                 if (metaList.size() > 0) {
                     // Change the ownership of tasks where we have unlocked meta data.

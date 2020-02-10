@@ -24,7 +24,7 @@ import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
 import stroom.task.shared.ThreadPool;
 import stroom.util.entity.FindService;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 public interface TaskManager extends FindService<TaskProgress, FindTaskProgressCriteria> {
     void startup();
@@ -94,7 +94,7 @@ public interface TaskManager extends FindService<TaskProgress, FindTaskProgressC
      */
     void terminate(TaskId taskId);
 
-    BaseResultList<TaskProgress> terminate(FindTaskCriteria criteria, boolean kill);
+    ResultList<TaskProgress> terminate(FindTaskCriteria criteria, boolean kill);
 
     int getCurrentTaskCount();
 }

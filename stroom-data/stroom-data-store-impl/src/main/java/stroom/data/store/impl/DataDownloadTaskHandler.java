@@ -40,7 +40,7 @@ import stroom.util.io.BufferFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogItemProgress;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -88,7 +88,7 @@ public class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTas
     private DataDownloadResult downloadData(final DataDownloadTask task) {
         final FindMetaCriteria criteria = task.getCriteria();
         final DataDownloadSettings settings = task.getSettings();
-        final BaseResultList<Meta> list = metaService.find(criteria);
+        final ResultList<Meta> list = metaService.find(criteria);
         final DataDownloadResult result = new DataDownloadResult();
         if (list.size() == 0) {
             return result;

@@ -24,7 +24,7 @@ import stroom.statistics.impl.hbase.shared.StatsStoreRollupResource;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreFieldChangeRequest;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.RestResource;
 
 import java.util.ArrayList;
@@ -45,7 +45,7 @@ class StatStoreRollupResourceImpl implements StatsStoreRollupResource, RestResou
             masks.add(new CustomRollUpMask(perm));
         }
 
-        return BaseResultList.createUnboundedList(masks);
+        return ResultList.createUnboundedList(masks);
     }
 
     @Override
@@ -61,7 +61,7 @@ class StatStoreRollupResourceImpl implements StatsStoreRollupResource, RestResou
 
         Collections.sort(customRollUpMaskFieldsList);
 
-        return BaseResultList.createUnboundedList(customRollUpMaskFieldsList);
+        return ResultList.createUnboundedList(customRollUpMaskFieldsList);
     }
 
     @Override

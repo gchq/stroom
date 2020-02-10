@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.security.api.UserIdentity;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Singleton;
 import javax.servlet.http.HttpSession;
@@ -51,7 +51,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     }
 
     @Override
-    public BaseResultList<SessionDetails> find(final BaseCriteria criteria) {
+    public ResultList<SessionDetails> find(final BaseCriteria criteria) {
         final ArrayList<SessionDetails> rtn = new ArrayList<>();
         for (final HttpSession httpSession : sessionMap.values()) {
             final SessionDetails sessionDetails = new SessionDetails();
@@ -67,7 +67,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
 
             rtn.add(sessionDetails);
         }
-        return BaseResultList.createUnboundedList(rtn);
+        return ResultList.createUnboundedList(rtn);
     }
 
     @Override

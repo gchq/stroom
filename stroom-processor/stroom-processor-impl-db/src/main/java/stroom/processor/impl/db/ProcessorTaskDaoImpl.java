@@ -47,7 +47,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.CriteriaSet;
 import stroom.util.shared.PageRequest;
 
@@ -857,11 +857,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
     }
 
     @Override
-    public BaseResultList<ProcessorTask> find(final ExpressionCriteria criteria) {
+    public ResultList<ProcessorTask> find(final ExpressionCriteria criteria) {
         return JooqUtil.contextResult(processorDbConnProvider, context -> find(context, criteria));
     }
 
-    BaseResultList<ProcessorTask> find(final DSLContext context, final ExpressionCriteria criteria) {
+    ResultList<ProcessorTask> find(final DSLContext context, final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 //        final Collection<Condition> conditions = convertCriteria(criteria);
 
@@ -898,11 +898,11 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     return processorTask;
                 });
 
-        return BaseResultList.createCriterialBasedList(list, criteria);
+        return ResultList.createCriterialBasedList(list, criteria);
     }
 
     @Override
-    public BaseResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
+    public ResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 //        final Collection<Condition> conditions = convertCriteria(criteria);
 
@@ -934,7 +934,7 @@ class ProcessorTaskDaoImpl implements ProcessorTaskDao {
                     return new ProcessorTaskSummary(new DocRef("Pipeline", pipelineUuid), feed, priority, status, count);
                 }));
 
-        return BaseResultList.createUnboundedList(list);
+        return ResultList.createUnboundedList(list);
     }
 
     @Override

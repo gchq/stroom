@@ -20,7 +20,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.test.common.util.db.DbTestModule;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 
@@ -59,7 +59,7 @@ class TestMetaServiceImpl {
                 .build();
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);
 
-        final BaseResultList<Meta> list = metaService.find(criteria);
+        final ResultList<Meta> list = metaService.find(criteria);
 
         assertThat(list.size()).isEqualTo(1);
 

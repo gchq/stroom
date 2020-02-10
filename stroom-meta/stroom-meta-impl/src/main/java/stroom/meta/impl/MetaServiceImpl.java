@@ -26,7 +26,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Sort.Direction;
@@ -202,7 +202,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public BaseResultList<Meta> find(final FindMetaCriteria criteria) {
+    public ResultList<Meta> find(final FindMetaCriteria criteria) {
         final boolean fetchRelationships = criteria.isFetchRelationships();
         final PageRequest pageRequest = criteria.getPageRequest();
         if (fetchRelationships) {
@@ -212,7 +212,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         final IdSet idSet = criteria.getSelectedIdSet();
         // If for some reason we have been asked to match nothing then return nothing.
         if (idSet != null && idSet.getMatchNull() != null && idSet.getMatchNull()) {
-            return BaseResultList.createPageResultList(Collections.emptyList(), criteria.getPageRequest(), null);
+            return ResultList.createPageResultList(Collections.emptyList(), criteria.getPageRequest(), null);
         }
 
         List<Meta> results = secureFind(criteria);
@@ -267,9 +267,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 }
             }
             criteria.setPageRequest(pageRequest);
-            return BaseResultList.createCriterialBasedList(results, criteria, maxSize);
+            return ResultList.createCriterialBasedList(results, criteria, maxSize);
         } else {
-            return BaseResultList.createCriterialBasedList(results, criteria);
+            return ResultList.createCriterialBasedList(results, criteria);
         }
     }
 
@@ -397,7 +397,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public BaseResultList<MetaRow> findRows(final FindMetaCriteria criteria) {
+    public ResultList<MetaRow> findRows(final FindMetaCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
             // Cache Call
 
@@ -409,7 +409,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 //            findDataCriteria.setFetchSet(new HashSet<>());
 
             // Share the page criteria
-            final BaseResultList<Meta> list = find(findMetaCriteria);
+            final ResultList<Meta> list = find(findMetaCriteria);
 
             if (list.size() > 0) {
 //                // We need to decorate data with retention rules as a processing user.
@@ -436,11 +436,11 @@ public class MetaServiceImpl implements MetaService, Searchable {
 //                    }
 //                });
 
-                return new BaseResultList<>(result, list.getPageResponse().getOffset(),
+                return new ResultList<>(result, list.getPageResponse().getOffset(),
                         list.getPageResponse().getTotal(), list.getPageResponse().isExact());
             }
 
-            return new BaseResultList<>(Collections.emptyList(), list.getPageResponse().getOffset(),
+            return new ResultList<>(Collections.emptyList(), list.getPageResponse().getOffset(),
                     list.getPageResponse().getTotal(), list.getPageResponse().isExact());
         });
     }
@@ -449,7 +449,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     public List<MetaRow> findRelatedData(final long id, final boolean anyStatus) {
         // Get the starting row.
         final FindMetaCriteria findDataCriteria = new FindMetaCriteria(getIdExpression(id, anyStatus));
-        BaseResultList<Meta> rows = find(findDataCriteria);
+        ResultList<Meta> rows = find(findDataCriteria);
         final List<Meta> result = new ArrayList<>(rows);
 
         if (rows.size() > 0) {
@@ -464,7 +464,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private void addChildren(final Meta parent, final boolean anyStatus, final List<Meta> result) {
-        final BaseResultList<Meta> children = find(new FindMetaCriteria(getParentIdExpression(parent.getId(), anyStatus)));
+        final ResultList<Meta> children = find(new FindMetaCriteria(getParentIdExpression(parent.getId(), anyStatus)));
         children.forEach(child -> {
             result.add(child);
             addChildren(child, anyStatus, result);
@@ -473,7 +473,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     private void addParents(final Meta child, final boolean anyStatus, final List<Meta> result) {
         if (child.getParentMetaId() != null) {
-            final BaseResultList<Meta> parents = find(new FindMetaCriteria(getIdExpression(child.getParentMetaId(), anyStatus)));
+            final ResultList<Meta> parents = find(new FindMetaCriteria(getIdExpression(child.getParentMetaId(), anyStatus)));
             if (parents != null && parents.size() > 0) {
                 parents.forEach(parent -> {
                     result.add(parent);

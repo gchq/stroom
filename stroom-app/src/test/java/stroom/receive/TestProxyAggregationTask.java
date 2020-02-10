@@ -50,7 +50,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
@@ -160,7 +160,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
         findMetaCriteria.setExpression(MetaExpressionUtil.createFeedExpression(feedName1));
-        final BaseResultList<Meta> resultList1 = metaService.find(findMetaCriteria);
+        final ResultList<Meta> resultList1 = metaService.find(findMetaCriteria);
         assertThat(resultList1.size()).as("Expecting 2 files to get merged").isEqualTo(1);
 
         try (final Source streamSource = store.openSource(resultList1.getFirst().getId())) {
@@ -188,7 +188,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final FindMetaCriteria findMetaCriteria2 = new FindMetaCriteria();
         findMetaCriteria2.setExpression(MetaExpressionUtil.createFeedExpression(feedName2));
 
-        final BaseResultList<Meta> resultList2 = metaService.find(findMetaCriteria2);
+        final ResultList<Meta> resultList2 = metaService.find(findMetaCriteria2);
 
         assertThat(resultList2.size()).as("Expecting file 1 ").isEqualTo(1);
     }

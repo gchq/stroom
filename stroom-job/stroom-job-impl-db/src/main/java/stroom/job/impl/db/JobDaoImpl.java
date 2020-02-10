@@ -25,7 +25,7 @@ import stroom.job.impl.JobDao;
 import stroom.job.impl.db.jooq.tables.records.JobRecord;
 import stroom.job.impl.FindJobCriteria;
 import stroom.job.shared.Job;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.HasIntCrud;
 
 import javax.annotation.Nonnull;
@@ -85,7 +85,7 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
     }
 
     @Override
-    public BaseResultList<Job> find(FindJobCriteria criteria) {
+    public ResultList<Job> find(FindJobCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getStringCondition(JOB.NAME, criteria.getName()));
 
@@ -101,7 +101,7 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
                 .fetch()
                 .into(Job.class));
 
-        return BaseResultList.createUnboundedList(list);
+        return ResultList.createUnboundedList(list);
     }
 
     @Override

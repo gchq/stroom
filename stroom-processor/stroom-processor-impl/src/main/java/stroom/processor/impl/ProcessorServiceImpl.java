@@ -24,7 +24,7 @@ import stroom.processor.shared.Processor;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 import java.util.Optional;
@@ -101,7 +101,7 @@ public class ProcessorServiceImpl implements ProcessorService {
     }
 
     @Override
-    public BaseResultList<Processor> find(final ExpressionCriteria criteria) {
+    public ResultList<Processor> find(final ExpressionCriteria criteria) {
         return securityContext.secureResult(() ->
                 processorDao.find(criteria));
     }

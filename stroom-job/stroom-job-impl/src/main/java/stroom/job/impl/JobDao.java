@@ -1,7 +1,7 @@
 package stroom.job.impl;
 
 import stroom.job.shared.Job;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import java.util.Optional;
 
@@ -14,7 +14,7 @@ public interface JobDao {
 
     Optional<Job> fetch(int id);
 
-    BaseResultList<Job> find(FindJobCriteria findJobCriteria);
+    ResultList<Job> find(FindJobCriteria findJobCriteria);
 
     int deleteOrphans();
 }

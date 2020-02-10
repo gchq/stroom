@@ -26,7 +26,7 @@ import stroom.node.shared.Node;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 
@@ -60,7 +60,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         return nodeDao.update(node);
     }
 
-    BaseResultList<Node> find(final FindNodeCriteria criteria) {
+    ResultList<Node> find(final FindNodeCriteria criteria) {
         if (!securityContext.hasAppPermission(PermissionNames.MANAGE_NODES_PERMISSION)) {
             throw new PermissionException(securityContext.getUserId(), "You are not authorised to find nodes");
         }

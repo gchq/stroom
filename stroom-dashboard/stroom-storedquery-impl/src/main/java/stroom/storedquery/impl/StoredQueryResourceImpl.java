@@ -27,7 +27,7 @@ import stroom.dashboard.shared.StoredQueryResultPage;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -48,7 +48,7 @@ class StoredQueryResourceImpl implements StoredQueryResource, RestResource, HasH
 
     @Override
     public StoredQueryResultPage find(final FindStoredQueryCriteria criteria) {
-        BaseResultList<StoredQuery> result;
+        ResultList<StoredQuery> result;
 
         final Query query = new Query();
         final Advanced advanced = new Advanced();

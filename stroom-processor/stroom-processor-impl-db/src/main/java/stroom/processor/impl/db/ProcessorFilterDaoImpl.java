@@ -20,7 +20,7 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -136,11 +136,11 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     @Override
-    public BaseResultList<ProcessorFilter> find(final ExpressionCriteria criteria) {
+    public ResultList<ProcessorFilter> find(final ExpressionCriteria criteria) {
         return JooqUtil.contextResult(processorDbConnProvider, context -> find(context, criteria));
     }
 
-    private BaseResultList<ProcessorFilter> find(final DSLContext context, final ExpressionCriteria criteria) {
+    private ResultList<ProcessorFilter> find(final DSLContext context, final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 
         final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
@@ -164,7 +164,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                     return marshaller.unmarshal(processorFilter);
                 });
 
-        return BaseResultList.createCriterialBasedList(list, criteria);
+        return ResultList.createCriterialBasedList(list, criteria);
     }
 
 //    private Collection<Condition> convertCriteria(final FindProcessorFilterCriteria criteria) {

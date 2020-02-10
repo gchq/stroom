@@ -40,40 +40,80 @@ public class Meta {
         return id;
     }
 
+    public void setId(final long id) {
+        this.id = id;
+    }
+
     public String getFeedName() {
         return feedName;
+    }
+
+    public void setFeedName(final String feedName) {
+        this.feedName = feedName;
     }
 
     public String getTypeName() {
         return typeName;
     }
 
+    public void setTypeName(final String typeName) {
+        this.typeName = typeName;
+    }
+
     public String getProcessorUuid() {
         return processorUuid;
+    }
+
+    public void setProcessorUuid(final String processorUuid) {
+        this.processorUuid = processorUuid;
     }
 
     public String getPipelineUuid() {
         return pipelineUuid;
     }
 
+    public void setPipelineUuid(final String pipelineUuid) {
+        this.pipelineUuid = pipelineUuid;
+    }
+
     public Long getParentMetaId() {
         return parentDataId;
+    }
+
+    public void setParentDataId(final Long parentDataId) {
+        this.parentDataId = parentDataId;
     }
 
     public Status getStatus() {
         return status;
     }
 
+    public void setStatus(final Status status) {
+        this.status = status;
+    }
+
     public Long getStatusMs() {
         return statusMs;
+    }
+
+    public void setStatusMs(final Long statusMs) {
+        this.statusMs = statusMs;
     }
 
     public long getCreateMs() {
         return createMs;
     }
 
+    public void setCreateMs(final long createMs) {
+        this.createMs = createMs;
+    }
+
     public Long getEffectiveMs() {
         return effectiveMs;
+    }
+
+    public void setEffectiveMs(final Long effectiveMs) {
+        this.effectiveMs = effectiveMs;
     }
 
     @Override

@@ -29,7 +29,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultList;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -61,7 +61,7 @@ class FsVolumeResourceImpl implements FsVolumeResource, RestResource, HasHealthC
         advanced.getAdvancedQueryItems().add(and);
 
         return securityContext.secureResult(() -> {
-            BaseResultList<FsVolume> result = null;
+            ResultList<FsVolume> result = null;
 
             try {
                 result = volumeService.find(criteria);
