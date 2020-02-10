@@ -23,7 +23,7 @@ import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.receive.common.FeedStatusResource;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResource;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;

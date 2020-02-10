@@ -1,4 +1,4 @@
-package stroom.util.guice;
+package stroom.util.shared;
 
 import java.util.Objects;
 

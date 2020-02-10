@@ -28,7 +28,7 @@ import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.HasHealthCheck;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

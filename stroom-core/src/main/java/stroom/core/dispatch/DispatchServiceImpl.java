@@ -27,7 +27,7 @@ import stroom.task.impl.TaskHandlerRegistry;
 import stroom.task.shared.Action;
 import stroom.task.shared.Task;
 import stroom.util.EntityServiceExceptionUtil;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.servlet.SessionIdProvider;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.EntityServiceException;

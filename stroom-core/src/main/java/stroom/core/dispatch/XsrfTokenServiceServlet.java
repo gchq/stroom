@@ -19,7 +19,7 @@ import com.google.gwt.user.client.rpc.XsrfToken;
 import com.google.gwt.user.client.rpc.XsrfTokenService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.IsServlet;
 
 import java.util.Set;

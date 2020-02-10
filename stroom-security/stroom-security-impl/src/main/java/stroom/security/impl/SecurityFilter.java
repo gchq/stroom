@@ -30,7 +30,7 @@ import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.shared.User;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;

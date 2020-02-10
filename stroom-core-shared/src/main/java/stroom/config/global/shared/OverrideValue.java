@@ -45,9 +45,10 @@ public class OverrideValue<T> implements SharedObject {
         }
     }
 
+    // pkg private so GWT can see it
     @JsonCreator
-    private OverrideValue(final @JsonProperty("hasOverride") boolean hasOverride,
-                          final @JsonProperty("value") T value) {
+    OverrideValue(final @JsonProperty("hasOverride") boolean hasOverride,
+                  final @JsonProperty("value") T value) {
         this.hasOverride = hasOverride;
         this.value = value;
     }
