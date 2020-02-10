@@ -27,6 +27,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.app.commands.DbMigrationCommand;
@@ -54,6 +55,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.logging.Level;
 
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
@@ -109,6 +111,10 @@ public class App extends Application<Config> {
     @Override
     public void run(final Config configuration, final Environment environment) {
         LOGGER.info("Using application configuration file {}", configFile.toAbsolutePath().normalize());
+
+        // Turn on Jersey logging.
+        environment.jersey().register(
+                new LoggingFeature(java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME), Level.INFO, LoggingFeature.Verbosity.PAYLOAD_ANY, LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
 
         if (configuration.getAppConfig().isSuperDevMode()) {
             configuration.getAppConfig().getSecurityConfig().getAuthenticationConfig().setAuthenticationRequired(false);

@@ -19,10 +19,12 @@ package stroom.pipeline;
 import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.document.shared.PermissionException;
 import stroom.pipeline.factory.ElementRegistryFactory;
 import stroom.pipeline.factory.PipelineDataValidator;
 import stroom.pipeline.factory.PipelineStackLoader;
+import stroom.pipeline.shared.FetchPipelineXmlResponse;
 import stroom.pipeline.shared.FetchPropertyTypesResult;
 import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineDoc;
@@ -93,16 +95,17 @@ class PipelineResourceImpl implements PipelineResource, RestResource, HasHealthC
     }
 
     @Override
-    public String fetchPipelineXml(final DocRef pipeline) {
+    public FetchPipelineXmlResponse fetchPipelineXml(final DocRef pipeline) {
         return securityContext.secureResult(() -> {
-            String result = null;
+            FetchPipelineXmlResponse response = null;
 
             final PipelineDoc pipelineDoc = pipelineStore.readDocument(pipeline);
             if (pipelineDoc != null) {
-                result = pipelineSerialiser.getXmlFromPipelineData(pipelineDoc.getPipelineData());
+                final String xml = pipelineSerialiser.getXmlFromPipelineData(pipelineDoc.getPipelineData());
+                response = new FetchPipelineXmlResponse(DocRefUtil.create(pipelineDoc), xml);
             }
 
-            return result;
+            return response;
         });
     }
 

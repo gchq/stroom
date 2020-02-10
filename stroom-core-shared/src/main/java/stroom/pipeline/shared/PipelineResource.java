@@ -69,8 +69,8 @@ public interface PipelineResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch the XML for a pipeline",
-            response = String.class)
-    String fetchPipelineXml(DocRef pipeline);
+            response = FetchPipelineXmlResponse.class)
+    FetchPipelineXmlResponse fetchPipelineXml(DocRef pipeline);
 
     @POST
     @Path("/fetchPipelineData")

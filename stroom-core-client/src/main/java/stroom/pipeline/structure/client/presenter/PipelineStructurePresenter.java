@@ -42,6 +42,7 @@ import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.pipeline.shared.FetchPipelineXmlResponse;
 import stroom.pipeline.shared.FetchPropertyTypesResult;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
@@ -502,12 +503,12 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                 }
             };
 
-            final Rest<String> rest = restFactory.create();
+            final Rest<FetchPipelineXmlResponse> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
                         String text = "";
                         if (result != null) {
-                            text = result;
+                            text = result.getXml();
                         }
                         xmlEditor.setText(text, true);
                         ShowPopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, PopupType.OK_CANCEL_DIALOG,

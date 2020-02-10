@@ -32,7 +32,7 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Links", propOrder = {"add", "remove"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"add", "remove"})
 public class PipelineLinks {
     @XmlElementWrapper(name = "add", required = false)
