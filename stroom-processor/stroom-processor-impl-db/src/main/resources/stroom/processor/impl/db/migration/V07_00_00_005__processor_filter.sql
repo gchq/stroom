@@ -57,8 +57,12 @@ CREATE TABLE IF NOT EXISTS processor_filter (
     UNIQUE KEY                        uuid (uuid),
     KEY processor_filter_fk_processor_id (fk_processor_id),
     KEY processor_filter_fk_processor_filter_tracker_id (fk_processor_filter_tracker_id),
-    CONSTRAINT processor_filter_fk_processor_filter_tracker_id FOREIGN KEY (fk_processor_filter_tracker_id) REFERENCES processor_filter_tracker (id),
-    CONSTRAINT processor_filter_fk_processor_id FOREIGN KEY (fk_processor_id) REFERENCES processor (id)
+    CONSTRAINT processor_filter_fk_processor_filter_tracker_id
+        FOREIGN KEY (fk_processor_filter_tracker_id)
+        REFERENCES processor_filter_tracker (id),
+    CONSTRAINT processor_filter_fk_processor_id
+        FOREIGN KEY (fk_processor_id)
+        REFERENCES processor (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP PROCEDURE IF EXISTS copy_processor_filter;
@@ -98,7 +102,7 @@ BEGIN
             PRIOR,
             ENBL
         FROM STRM_PROC_FILT
-        WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor)
+        WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor_filter)
         ORDER BY ID;
 
         -- Work out what to set our auto_increment start value to

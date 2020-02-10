@@ -18,18 +18,24 @@
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 --
--- Rename the old QUERY table
+-- Rename the old QUERY table, idempotent
 --
 DROP PROCEDURE IF EXISTS rename_query;
 DELIMITER //
 CREATE PROCEDURE rename_query ()
 BEGIN
-    IF EXISTS (
+    IF NOT EXISTS (
+        SELECT TABLE_NAME
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_NAME = 'OLD_QUERY') THEN
+
+        IF EXISTS (
             SELECT TABLE_NAME
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_NAME = 'QUERY') THEN
 
-        RENAME TABLE QUERY TO OLD_QUERY;
+            RENAME TABLE QUERY TO OLD_QUERY;
+        END IF;
     END IF;
 END//
 DELIMITER ;
@@ -40,18 +46,18 @@ DROP PROCEDURE rename_query;
 -- Create the query table
 --
 CREATE TABLE IF NOT EXISTS query (
-  id                    int(11) NOT NULL AUTO_INCREMENT,
-  version               int(11) NOT NULL,
-  create_time_ms        bigint(20) NOT NULL,
-  create_user           varchar(255) NOT NULL,
-  update_time_ms        bigint(20) NOT NULL,
-  update_user           varchar(255) NOT NULL,
-  dashboard_uuid        varchar(255) NOT NULL,
-  component_id          varchar(255) NOT NULL,
-  name                  varchar(255) NOT NULL,
-  data                  longtext,
-  favourite             bit(1) NOT NULL,
-  PRIMARY KEY           (id)
+    id                    int(11) NOT NULL AUTO_INCREMENT,
+    version               int(11) NOT NULL,
+    create_time_ms        bigint(20) NOT NULL,
+    create_user           varchar(255) NOT NULL,
+    update_time_ms        bigint(20) NOT NULL,
+    update_user           varchar(255) NOT NULL,
+    dashboard_uuid        varchar(255) NOT NULL,
+    component_id          varchar(255) NOT NULL,
+    name                  varchar(255) NOT NULL,
+    data                  longtext,
+    favourite             bit(1) NOT NULL,
+    PRIMARY KEY           (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
@@ -62,9 +68,9 @@ DELIMITER //
 CREATE PROCEDURE copy_query ()
 BEGIN
     IF EXISTS (
-            SELECT TABLE_NAME
-            FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'OLD_QUERY') THEN
+        SELECT TABLE_NAME
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_NAME = 'OLD_QUERY') THEN
 
         INSERT INTO query (
             id,
@@ -109,4 +115,4 @@ DROP PROCEDURE copy_query;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
 
--- vim: set shiftwidth=2 tabstop=2 expandtab:
+-- vim: set shiftwidth=4 tabstop=4 expandtab:
