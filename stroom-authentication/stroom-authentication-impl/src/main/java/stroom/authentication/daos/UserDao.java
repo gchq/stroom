@@ -174,7 +174,28 @@ public class UserDao {
         return userQuery.map(usersRecord -> UserMapper.map(usersRecord));
     }
 
-    public String getAll() {
+    public void update(User user) {
+        UsersRecord usersRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(USERS)
+                .where(USERS.EMAIL.eq(user.getEmail())).fetchSingle());
+
+        UsersRecord updatedUsersRecord = UserMapper.updateUserRecordWithUser(user, usersRecord);
+
+        JooqUtil.contextResult(authDbConnProvider, context -> context
+            .update((Table) USERS)
+               .set(updatedUsersRecord)
+                .where(new Condition[]{USERS.ID.eq(user.getId())}).execute());
+    }
+
+    public Optional<User> get(int id) {
+        Optional<UsersRecord> userQuery = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(USERS)
+                .where(USERS.ID.eq(id)).fetchOptional());
+
+        return userQuery.map(usersRecord -> UserMapper.map(usersRecord));
+    }
+
+        public String getAll() {
         TableField orderByEmailField = USERS.EMAIL;
         String usersAsJson = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(USERS)
