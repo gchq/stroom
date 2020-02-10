@@ -44,7 +44,6 @@ import java.util.Objects;
 @XmlType(name = "TableComponentSettings", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
 public class TableComponentSettings extends ComponentSettings {
     public static final int[] DEFAULT_MAX_RESULTS = {1000000};
-    private static final long serialVersionUID = -2530827581046882396L;
     @XmlElement(name = "queryId")
     @JsonProperty("queryId")
     private String queryId;

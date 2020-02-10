@@ -22,7 +22,8 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
-import stroom.importexport.shared.DocumentData;
+import stroom.importexport.shared.Base64EncodedDocumentData;
+import stroom.importexport.api.DocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.HasHealthCheck;
@@ -71,7 +72,8 @@ public class NewUiDictionaryResource2 implements RestResource, HasHealthCheck {
     @ApiOperation(
             value = "Submit an import request",
             response = DocRef.class)
-    public DocRef importDocument(@ApiParam("DocumentData") final DocumentData documentData) {
+    public DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData encodedDocumentData) {
+        final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
         return dictionaryStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
     }
@@ -83,10 +85,10 @@ public class NewUiDictionaryResource2 implements RestResource, HasHealthCheck {
     @Timed
     @ApiOperation(
             value = "Submit an export request",
-            response = DocumentData.class)
-    public DocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
+            response = Base64EncodedDocumentData.class)
+    public Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
         final Map<String, byte[]> map = dictionaryStore.exportDocument(docRef, true, new ArrayList<>());
-        return new DocumentData(docRef, map);
+        return DocumentData.toBase64EncodedDocumentData(new DocumentData(docRef, map));
     }
 
     @Override

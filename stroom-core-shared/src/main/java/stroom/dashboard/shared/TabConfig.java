@@ -85,10 +85,12 @@ public class TabConfig {
         this.settings = settings;
     }
 
+    @JsonIgnore
     public TabLayoutConfig getParent() {
         return parent;
     }
 
+    @JsonIgnore
     public void setParent(final TabLayoutConfig parent) {
         this.parent = parent;
     }

@@ -16,7 +16,6 @@
 
 package stroom.pipeline.shared;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -26,15 +25,12 @@ import stroom.util.shared.HasData;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "converterType"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "converterType"})
 @JsonInclude(Include.NON_DEFAULT)
 public class TextConverterDoc extends Doc implements HasData {
-    private static final long serialVersionUID = 4519634323788508083L;
-
     public static final String DOCUMENT_TYPE = "TextConverter";
 
     private String description;
-    @JsonIgnore
     private String data;
     private TextConverterType converterType = TextConverterType.NONE;
 

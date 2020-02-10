@@ -19,7 +19,8 @@ package stroom.receive.rules.impl;
 import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
-import stroom.importexport.shared.DocumentData;
+import stroom.importexport.shared.Base64EncodedDocumentData;
+import stroom.importexport.api.DocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
@@ -59,15 +60,16 @@ public class ReceiveDataRuleSetResourceImpl implements ReceiveDataRuleSetResourc
     }
 
     @Override
-    public DocRef importDocument(final DocumentData documentData) {
+    public DocRef importDocument(final Base64EncodedDocumentData encodedDocumentData) {
+        final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
         return ruleSetService.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
     }
 
     @Override
-    public DocumentData exportDocument(final DocRef docRef) {
+    public Base64EncodedDocumentData exportDocument(final DocRef docRef) {
         final Map<String, byte[]> map = ruleSetService.exportDocument(docRef, true, new ArrayList<>());
-        return new DocumentData(docRef, map);
+        return DocumentData.toBase64EncodedDocumentData(new DocumentData(docRef, map));
     }
 
     @Override

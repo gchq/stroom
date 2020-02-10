@@ -37,20 +37,13 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public interface FsVolumeResource extends RestResource, DirectRestService {
     @POST
+    @Path("/find")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Finds volumes",
             response = List.class)
     FsVolumeResultPage find(FindFsVolumeCriteria criteria);
-
-    @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Create a volume",
-            response = FsVolume.class)
-    FsVolume create();
 
     @GET
     @Path("/{id}")

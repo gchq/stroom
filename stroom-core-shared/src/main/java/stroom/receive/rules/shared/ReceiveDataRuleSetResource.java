@@ -21,7 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
-import stroom.importexport.shared.DocumentData;
+import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -70,7 +70,7 @@ public interface ReceiveDataRuleSetResource extends RestResource, DirectRestServ
     @ApiOperation(
             value = "Submit an import request",
             response = DocRef.class)
-    DocRef importDocument(@ApiParam("DocumentData") DocumentData documentData);
+    DocRef importDocument(@ApiParam("DocumentData") Base64EncodedDocumentData documentData);
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -78,6 +78,6 @@ public interface ReceiveDataRuleSetResource extends RestResource, DirectRestServ
     @Path("/export")
     @ApiOperation(
             value = "Submit an export request",
-            response = DocumentData.class)
-    DocumentData exportDocument(@ApiParam("DocRef") DocRef docRef);
+            response = Base64EncodedDocumentData.class)
+    Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") DocRef docRef);
 }

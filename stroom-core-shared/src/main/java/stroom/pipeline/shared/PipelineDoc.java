@@ -16,7 +16,6 @@
 
 package stroom.pipeline.shared;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -29,16 +28,13 @@ import java.util.Objects;
 /**
  * This entity is used to persist pipeline configuration.
  */
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "parentPipeline"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "parentPipeline", "pipelineData"})
 @JsonInclude(Include.NON_DEFAULT)
 public class PipelineDoc extends Doc {
-    private static final long serialVersionUID = 4519634323788508083L;
-
     public static final String DOCUMENT_TYPE = "Pipeline";
 
     private String description;
     private DocRef parentPipeline;
-    @JsonIgnore
     private PipelineData pipelineData;
 
     public PipelineDoc() {

@@ -21,7 +21,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -34,8 +33,6 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "automate")
 @XmlType(name = "Automate", propOrder = {"open", "refresh", "refreshInterval"})
 public class Automate {
-    private static final long serialVersionUID = -2530827581046882396L;
-
     @XmlElement(name = "open")
     @JsonProperty("open")
     private boolean open;

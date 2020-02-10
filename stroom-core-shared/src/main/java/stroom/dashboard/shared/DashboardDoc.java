@@ -16,7 +16,6 @@
 
 package stroom.dashboard.shared;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -24,14 +23,11 @@ import stroom.docstore.shared.Doc;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "dashboardConfig"})
 @JsonInclude(Include.NON_DEFAULT)
 public class DashboardDoc extends Doc {
-    private static final long serialVersionUID = 3598996730392094523L;
-
     public static final String DOCUMENT_TYPE = "Dashboard";
 
-    @JsonIgnore
     private DashboardConfig dashboardConfig;
 
     public DashboardDoc() {

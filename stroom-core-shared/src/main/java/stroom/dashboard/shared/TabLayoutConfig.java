@@ -39,8 +39,6 @@ import java.util.stream.Collectors;
 @XmlRootElement(name = "tabLayout")
 @XmlType(name = "TabLayoutConfig", propOrder = {"preferredSize", "tabs", "selected"})
 public class TabLayoutConfig extends LayoutConfig {
-    private static final long serialVersionUID = -2105048053435792675L;
-
     /**
      * The preferred size of this layout in width, height.
      */
@@ -160,6 +158,10 @@ public class TabLayoutConfig extends LayoutConfig {
             tabConfig.setParent(this);
         }
         return tabs;
+    }
+
+    public void setTabs(final List<TabConfig> tabs) {
+        this.tabs = tabs;
     }
 
     public Integer getSelected() {

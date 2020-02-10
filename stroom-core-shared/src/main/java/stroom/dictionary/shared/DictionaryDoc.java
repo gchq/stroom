@@ -16,7 +16,6 @@
 
 package stroom.dictionary.shared;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -26,15 +25,12 @@ import stroom.docstore.shared.Doc;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "imports"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
 @JsonInclude(Include.NON_DEFAULT)
 public class DictionaryDoc extends Doc {
-    private static final long serialVersionUID = -4208920620555926044L;
-
     public static final String ENTITY_TYPE = "Dictionary";
 
     private String description;
-    @JsonIgnore
     private String data;
     private List<DocRef> imports;
 

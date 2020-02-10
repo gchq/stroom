@@ -337,9 +337,9 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         // Turn JSON settings into an object.
         JSONObject settingsObject = null;
         final VisComponentSettings visDashboardSettings = getSettings();
-        if (visDashboardSettings != null && visDashboardSettings.getjson() != null) {
+        if (visDashboardSettings != null && visDashboardSettings.getJson() != null) {
             try {
-                settingsObject = JSONUtil.getObject(JSONUtil.parse(visDashboardSettings.getjson()));
+                settingsObject = JSONUtil.getObject(JSONUtil.parse(visDashboardSettings.getJson()));
             } catch (final RuntimeException e) {
                 getView().showMessage("Unable to parse settings");
             }

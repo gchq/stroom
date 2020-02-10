@@ -53,7 +53,7 @@ public interface DashboardResource extends RestResource, DirectRestService {
             response = DashboardDoc.class)
     DashboardDoc update(DashboardDoc doc);
 
-    @GET
+    @POST
     @Path("/validateExpression")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)

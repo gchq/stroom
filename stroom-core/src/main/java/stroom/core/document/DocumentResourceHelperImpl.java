@@ -27,12 +27,15 @@ import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
+import javax.inject.Inject;
+
 public class DocumentResourceHelperImpl implements DocumentResourceHelper {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentResourceHelperImpl.class);
 
     private final DocumentEventLog documentEventLog;
     private final SecurityContext securityContext;
 
+    @Inject
     public DocumentResourceHelperImpl(final DocumentEventLog documentEventLog,
                                       final SecurityContext securityContext) {
         this.documentEventLog = documentEventLog;

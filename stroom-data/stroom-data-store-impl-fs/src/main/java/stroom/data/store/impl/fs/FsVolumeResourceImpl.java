@@ -76,11 +76,6 @@ class FsVolumeResourceImpl implements FsVolumeResource, RestResource, HasHealthC
     }
 
     @Override
-    public FsVolume create() {
-        return null;
-    }
-
-    @Override
     public FsVolume read(final Integer id) {
         return securityContext.secureResult(() -> {
             FsVolume result;

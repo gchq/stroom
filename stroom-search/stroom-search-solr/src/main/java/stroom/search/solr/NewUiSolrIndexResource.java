@@ -22,12 +22,13 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
-import stroom.importexport.shared.DocumentData;
+import stroom.importexport.shared.Base64EncodedDocumentData;
+import stroom.importexport.api.DocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 import stroom.util.shared.DocRefs;
+import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -77,7 +78,8 @@ public class NewUiSolrIndexResource implements RestResource, HasHealthCheck {
     @ApiOperation(
             value = "Submit an import request",
             response = DocRef.class)
-    public DocRef importDocument(@ApiParam("DocumentData") final DocumentData documentData) {
+    public DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData base64EncodedDocumentData) {
+        final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(base64EncodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
         return solrIndexStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
     }
@@ -89,10 +91,10 @@ public class NewUiSolrIndexResource implements RestResource, HasHealthCheck {
     @Timed
     @ApiOperation(
             value = "Submit an export request",
-            response = DocumentData.class)
-    public DocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
+            response = Base64EncodedDocumentData.class)
+    public Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
         final Map<String, byte[]> map = solrIndexStore.exportDocument(docRef, true, new ArrayList<>());
-        return new DocumentData(docRef, map);
+        return DocumentData.toBase64EncodedDocumentData(new DocumentData(docRef, map));
     }
 
     @Override

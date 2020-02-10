@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -37,8 +36,6 @@ import java.util.Arrays;
 @XmlRootElement(name = "size")
 @XmlType(name = "Size", propOrder = {"width", "height"})
 public class Size {
-    private static final long serialVersionUID = 8201392610412513780L;
-
     @XmlTransient
     @JsonIgnore
     private int[] size = new int[]{200, 200};
@@ -53,6 +50,7 @@ public class Size {
         return size[0];
     }
 
+    @JsonProperty("width")
     public void setWidth(final int width) {
         size[0] = width;
     }
@@ -63,23 +61,28 @@ public class Size {
         return size[1];
     }
 
+    @JsonProperty("height")
     public void setHeight(final int height) {
         size[1] = height;
     }
 
+    @JsonIgnore
     public void set(final int dimension, final int size) {
         this.size[dimension] = size;
     }
 
+    @JsonIgnore
     public void set(final int[] size) {
         this.size[0] = size[0];
         this.size[1] = size[1];
     }
 
+    @JsonIgnore
     public int get(final int dimension) {
         return this.size[dimension];
     }
 
+    @JsonIgnore
     public int[] get() {
         return size;
     }

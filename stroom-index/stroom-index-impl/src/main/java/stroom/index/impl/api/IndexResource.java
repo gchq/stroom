@@ -4,10 +4,10 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
-import stroom.importexport.api.OldDocumentData;
+import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.index.shared.IndexDoc;
-import stroom.util.shared.RestResource;
 import stroom.util.shared.DocRefs;
+import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -23,7 +23,6 @@ import java.util.Set;
 @Path("/index/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public interface IndexResource extends RestResource {
-
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/list")
@@ -39,7 +38,7 @@ public interface IndexResource extends RestResource {
     @ApiOperation(
             value = "Submit an import request",
             response = DocRef.class)
-    DocRef importDocument(@ApiParam("DocumentData") OldDocumentData documentData);
+    DocRef importDocument(@ApiParam("DocumentData") Base64EncodedDocumentData documentData);
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
@@ -47,8 +46,8 @@ public interface IndexResource extends RestResource {
     @Path("/export")
     @ApiOperation(
             value = "Submit an export request",
-            response = OldDocumentData.class)
-    OldDocumentData exportDocument(@ApiParam("DocRef") DocRef docRef);
+            response = Base64EncodedDocumentData.class)
+    Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") DocRef docRef);
 
     @GET
     @Path("/{indexUuid}")

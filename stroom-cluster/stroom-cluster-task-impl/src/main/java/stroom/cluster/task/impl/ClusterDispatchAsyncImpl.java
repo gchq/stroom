@@ -49,7 +49,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     static final String RECEIVE_RESULT_METHOD = "receiveResult";
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(5);
     static final Class<?>[] RECEIVE_RESULT_METHOD_ARGS = {ClusterTask.class, String.class, TaskId.class,
-            CollectorId.class, Throwable.class, Boolean.class};
+            CollectorId.class, Object.class, Throwable.class, Boolean.class};
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDispatchAsyncImpl.class);
     private static final String RECEIVE_RESULT = "receiveResult";
 

@@ -400,7 +400,7 @@ public class SearchRequestMapper {
 
             final VisSettings visSettings = mapper.readValue(visualisation.getSettings(), VisSettings.class);
             if (visSettings != null && visSettings.getData() != null) {
-                final SettingResolver settingResolver = new SettingResolver(visSettings, visComponentSettings.getjson());
+                final SettingResolver settingResolver = new SettingResolver(visSettings, visComponentSettings.getJson());
                 final Structure structure = visSettings.getData().getStructure();
                 if (structure != null) {
 

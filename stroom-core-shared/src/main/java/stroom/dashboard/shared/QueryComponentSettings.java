@@ -35,8 +35,6 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "query")
 @XmlType(name = "QueryComponentSettings", propOrder = {"dataSource", "expression", "automate"})
 public class QueryComponentSettings extends ComponentSettings {
-    private static final long serialVersionUID = -2530827581046882396L;
-
     @XmlElement(name = "dataSource")
     @JsonProperty("dataSource")
     private DocRef dataSource;

@@ -29,10 +29,15 @@ public class XsltSerialiser implements DocumentSerialiser2<XsltDoc> {
 
     @Override
     public Map<String, byte[]> write(final XsltDoc document) throws IOException {
+        final String xsl = document.getData();
+        document.setData(null);
+
         final Map<String, byte[]> data = delegate.write(document);
-        if (document.getData() != null) {
-            data.put(XSL, EncodingUtil.asBytes(document.getData()));
+        if (xsl != null) {
+            data.put(XSL, EncodingUtil.asBytes(xsl));
+            document.setData(xsl);
         }
+
         return data;
     }
 }

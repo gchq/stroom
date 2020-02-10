@@ -34,8 +34,6 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "text")
 @XmlType(name = "text", propOrder = {"tableId", "streamIdField", "partNoField", "recordNoField", "lineFromField", "colFromField", "lineToField", "colToField", "pipeline", "showAsHtml", "showStepping"})
 public class TextComponentSettings extends ComponentSettings {
-    private static final long serialVersionUID = -2530827581046882396L;
-
     @XmlElement(name = "tableId")
     @JsonProperty("tableId")
     private String tableId;

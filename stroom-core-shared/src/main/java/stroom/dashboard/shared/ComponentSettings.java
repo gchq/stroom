@@ -28,7 +28,6 @@ import java.io.Serializable;
 @XmlSeeAlso({QueryComponentSettings.class, TableComponentSettings.class, VisComponentSettings.class, TextComponentSettings.class})
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
         property = "type"
 )
 @JsonSubTypes({
@@ -37,9 +36,7 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = VisComponentSettings.class, name = "vis"),
         @JsonSubTypes.Type(value = TextComponentSettings.class, name = "text")
 })
-public abstract class ComponentSettings implements Serializable {
-    private static final long serialVersionUID = 2110282486749818888L;
-
+public abstract class ComponentSettings {
     public ComponentSettings() {
         // Default constructor necessary for GWT serialisation.
     }

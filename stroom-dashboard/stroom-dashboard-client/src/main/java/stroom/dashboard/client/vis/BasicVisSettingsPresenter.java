@@ -178,7 +178,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         getView().setTable(getComponents().get(settings.getTableId()));
         updateFieldNames(getView().getTable());
 
-        dynamicSettings = JSONUtil.getObject(JSONUtil.parse(settings.getjson()));
+        dynamicSettings = JSONUtil.getObject(JSONUtil.parse(settings.getJson()));
         if (dynamicSettings == null) {
             dynamicSettings = new JSONObject();
         }
@@ -236,7 +236,7 @@ public class BasicVisSettingsPresenter extends BasicSettingsTabPresenter<BasicVi
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(settings.getTableId(), getTableId());
         builder.append(settings.getVisualisation(), getSelectedVisualisation());
-        builder.append(settings.getjson(), getJSON());
+        builder.append(settings.getJson(), getJSON());
 
         return !builder.isEquals();
     }

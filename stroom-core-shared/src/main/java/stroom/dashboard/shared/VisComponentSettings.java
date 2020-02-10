@@ -36,8 +36,6 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "vis")
 @XmlType(name = "VisComponentSettings", propOrder = {"tableId", "visualisation", "json"})
 public class VisComponentSettings extends ComponentSettings {
-    private static final long serialVersionUID = -2530827581046882396L;
-
     @XmlElement(name = "tableId")
     @JsonProperty("tableId")
     private String tableId;
@@ -71,7 +69,7 @@ public class VisComponentSettings extends ComponentSettings {
         this.visualisation = visualisation;
     }
 
-    public String getjson() {
+    public String getJson() {
         return json;
     }
 

@@ -18,9 +18,8 @@ package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-
-import stroom.util.shared.BuildInfo;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.BuildInfo;
 import stroom.util.shared.validation.ValidRegex;
 
 import javax.inject.Singleton;
@@ -43,8 +42,6 @@ public class UiConfig extends AbstractConfig {
     private SplashConfig splashConfig = new SplashConfig();
     private ActivityConfig activityConfig = new ActivityConfig();
     private UrlConfig urlConfig = new UrlConfig();
-
-    private static final long serialVersionUID = 8717922468620533698L;
 
     public UiConfig() {
         // Default constructor necessary for GWT serialisation.

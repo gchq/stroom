@@ -41,10 +41,14 @@ public class ScriptSerialiser implements DocumentSerialiser2<ScriptDoc> {
 
     @Override
     public Map<String, byte[]> write(final ScriptDoc document) throws IOException {
+        final String js = document.getData();
+        document.setData(null);
+
         final Map<String, byte[]> data = delegate.write(document);
 
-        if (document.getData() != null) {
-            data.put(JS, EncodingUtil.asBytes(document.getData()));
+        if (js != null) {
+            data.put(JS, EncodingUtil.asBytes(js));
+            document.setData(js);
         }
 
         return data;

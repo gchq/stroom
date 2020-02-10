@@ -16,7 +16,6 @@
 
 package stroom.xmlschema.shared;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -25,7 +24,7 @@ import stroom.util.shared.HasData;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "namespaceURI", "systemId", "deprecated", "schemaGroup"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "namespaceURI", "data", "systemId", "deprecated", "schemaGroup"})
 @JsonInclude(Include.NON_DEFAULT)
 public class XmlSchemaDoc extends Doc implements HasData {
     private static final long serialVersionUID = 4519634323788508083L;
@@ -35,7 +34,6 @@ public class XmlSchemaDoc extends Doc implements HasData {
     private String description;
     private String namespaceURI;
     private String systemId;
-    @JsonIgnore
     private String data;
     private boolean deprecated;
     private String schemaGroup;

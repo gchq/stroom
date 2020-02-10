@@ -42,10 +42,14 @@ public class VisualisationSerialiser implements DocumentSerialiser2<Visualisatio
 
     @Override
     public Map<String, byte[]> write(final VisualisationDoc document) throws IOException {
+        final String settings = document.getSettings();
+        document.setSettings(null);
+
         final Map<String, byte[]> data = delegate.write(document);
 
-        if (document.getSettings() != null) {
-            data.put(JSON, EncodingUtil.asBytes(document.getSettings()));
+        if (settings != null) {
+            data.put(JSON, EncodingUtil.asBytes(settings));
+            document.setSettings(settings);
         }
 
         return data;

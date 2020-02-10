@@ -29,10 +29,15 @@ public class XmlSchemaSerialiser implements DocumentSerialiser2<XmlSchemaDoc> {
 
     @Override
     public Map<String, byte[]> write(final XmlSchemaDoc document) throws IOException {
+        final String xsd = document.getData();
+        document.setData(null);
+
         final Map<String, byte[]> data = delegate.write(document);
-        if (document.getData() != null) {
-            data.put(XSD, EncodingUtil.asBytes(document.getData()));
+        if (xsd != null) {
+            data.put(XSD, EncodingUtil.asBytes(xsd));
+            document.setData(xsd);
         }
+
         return data;
     }
 }
