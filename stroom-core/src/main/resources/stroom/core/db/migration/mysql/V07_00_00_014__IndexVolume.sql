@@ -29,14 +29,16 @@ SET iv.IDX_UUID = (
     FROM IDX i
     WHERE i.ID = iv.FK_IDX_ID);
 
+-- idempotent
 CALL core_drop_constraint_v1(
     'IDX_VOL',
     'VOL_FK_IDX_ID',
     'FOREIGN KEY');
 
--- idempotent
+-- idempotent (drops then adds)
 ALTER TABLE IDX_VOL DROP PRIMARY KEY, ADD PRIMARY KEY(FK_VOL_ID, IDX_UUID);
 
+-- idempotent
 CALL core_drop_column_v1(
     'IDX_VOL',
     'FK_IDX_ID');

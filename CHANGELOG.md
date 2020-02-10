@@ -6,14 +6,16 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix bugs in DB migration scripts.
+
 
 ## [v7.0-beta.18] - 2020-02-05
 
-* Re-locate index database migrations
+* Re-locate index database migrations.
 
-* Fix issues with migrating null audit columns
+* Fix issues with migrating null audit columns.
 
-* Improve output of TestYamlUtil
+* Improve output of TestYamlUtil.
 
 
 ## [v7.0-beta.17] - 2020-01-29

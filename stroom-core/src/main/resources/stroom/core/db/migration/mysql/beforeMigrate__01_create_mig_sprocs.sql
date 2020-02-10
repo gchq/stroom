@@ -24,6 +24,7 @@ DELIMITER $$
 
 DROP PROCEDURE IF EXISTS core_run_sql_v1 $$
 
+-- DO NOT change this without reading the header!
 CREATE PROCEDURE core_run_sql_v1 (
     p_sql_stmt varchar(1000)
 )
@@ -42,6 +43,7 @@ END $$
 
 DROP PROCEDURE IF EXISTS core_create_index_v1$$
 
+-- DO NOT change this without reading the header!
 CREATE PROCEDURE core_create_index_v1 (
     p_table_name varchar(64),
     p_index_name varchar(64),
@@ -85,6 +87,7 @@ END $$
 
 DROP PROCEDURE IF EXISTS core_add_column_v1$$
 
+-- DO NOT change this without reading the header!
 CREATE PROCEDURE core_add_column_v1 (
     p_table_name varchar(64),
     p_column_name varchar(64),
@@ -119,6 +122,7 @@ END $$
 
 DROP PROCEDURE IF EXISTS core_drop_column_v1$$
 
+-- DO NOT change this without reading the header!
 CREATE PROCEDURE core_drop_column_v1 (
     p_table_name varchar(64),
     p_column_name varchar(64)
@@ -152,6 +156,7 @@ END $$
 
 DROP PROCEDURE IF EXISTS core_rename_column_v1$$
 
+-- DO NOT change this without reading the header!
 CREATE PROCEDURE core_rename_column_v1 (
     p_table_name varchar(64),
     p_old_column_name varchar(64),
@@ -191,6 +196,7 @@ DROP PROCEDURE IF EXISTS core_drop_constraint_v1 $$
 -- e.g. core_drop_constraint_v1('MY_TABLE', 'MY_FK', 'FOREIGN KEY');
 --      core_drop_constraint_v1('MY_TABLE', 'MY_UNIQ_IDX', 'INDEX');
 --      core_drop_constraint_v1('MY_TABLE', 'PRIMARY', 'INDEX');
+-- DO NOT change this without reading the header!
 CREATE PROCEDURE core_drop_constraint_v1 (
     p_table_name varchar(64),
     p_constraint_name varchar(64),
