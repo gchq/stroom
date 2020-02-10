@@ -16,7 +16,9 @@
 
 package stroom.pipeline.shared.data;
 
-
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -47,9 +49,9 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Element", propOrder = {"id", "type"})
+@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder({"elementType", "source", "id", "type"})
 public class PipelineElement implements Comparable<PipelineElement> {
-    private static final long serialVersionUID = -8891708244423055172L;
-
     @XmlTransient
     private PipelineElementType elementType;
     @XmlTransient
@@ -68,6 +70,22 @@ public class PipelineElement implements Comparable<PipelineElement> {
         this.type = type;
     }
 
+    public PipelineElementType getElementType() {
+        return elementType;
+    }
+
+    public void setElementType(final PipelineElementType elementType) {
+        this.elementType = elementType;
+    }
+
+    public SourcePipeline getSource() {
+        return source;
+    }
+
+    public void setSource(final SourcePipeline source) {
+        this.source = source;
+    }
+
     public String getId() {
         return id;
     }
@@ -82,14 +100,6 @@ public class PipelineElement implements Comparable<PipelineElement> {
 
     public void setType(final String value) {
         this.type = value;
-    }
-
-    public SourcePipeline getSource() {
-        return source;
-    }
-
-    public void setSource(final SourcePipeline source) {
-        this.source = source;
     }
 
     @Override
@@ -120,13 +130,5 @@ public class PipelineElement implements Comparable<PipelineElement> {
     @Override
     public String toString() {
         return "id=" + id + ", type=" + type;
-    }
-
-    public PipelineElementType getElementType() {
-        return elementType;
-    }
-
-    public void setElementType(final PipelineElementType elementType) {
-        this.elementType = elementType;
     }
 }

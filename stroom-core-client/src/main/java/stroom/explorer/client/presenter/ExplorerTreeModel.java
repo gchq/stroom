@@ -32,6 +32,7 @@ import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -86,8 +87,16 @@ public class ExplorerTreeModel {
         explorerTreeFilterBuilder.setRequiredPermissions(requiredPermissions);
     }
 
-    public void setEnsureVisible(final String... ensureVisible) {
-        this.ensureVisible = SetUtil.toSet(ensureVisible);
+    public void setEnsureVisible(final ExplorerNode... ensureVisible) {
+        this.ensureVisible = null;
+        if (ensureVisible != null) {
+            this.ensureVisible = new HashSet<>();
+            for (ExplorerNode node : ensureVisible) {
+                if (node != null && node.getUuid() != null) {
+                    this.ensureVisible.add(node.getUuid());
+                }
+            }
+        }
     }
 
     public void refresh() {

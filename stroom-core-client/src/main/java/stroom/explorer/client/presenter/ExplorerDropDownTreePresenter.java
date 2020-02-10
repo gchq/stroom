@@ -89,7 +89,7 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     public void refresh() {
         explorerTree.setSelectedItem(selectedExplorerNode);
         explorerTree.getTreeModel().reset();
-        explorerTree.getTreeModel().setEnsureVisible(selectedExplorerNode.getUuid());
+        explorerTree.getTreeModel().setEnsureVisible(selectedExplorerNode);
         explorerTree.getTreeModel().refresh();
     }
 

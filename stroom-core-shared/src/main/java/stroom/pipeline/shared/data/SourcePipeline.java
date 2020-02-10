@@ -16,14 +16,16 @@
 
 package stroom.pipeline.shared.data;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
-
 import stroom.docstore.shared.DocRefUtil;
 import stroom.pipeline.shared.PipelineDoc;
 
+@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder({"pipeline"})
 public class SourcePipeline {
-    private static final long serialVersionUID = -3209898449831302066L;
-
     private DocRef pipeline;
 
     public SourcePipeline() {

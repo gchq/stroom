@@ -17,6 +17,9 @@
 package stroom.pipeline.shared.data;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -47,9 +50,9 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Link", propOrder = {"from", "to"})
+@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder({"source", "from", "to"})
 public class PipelineLink implements Comparable<PipelineLink> {
-    private static final long serialVersionUID = 8520066243443177869L;
-
     @XmlTransient
     private SourcePipeline source;
 
@@ -67,6 +70,14 @@ public class PipelineLink implements Comparable<PipelineLink> {
         this.to = to;
     }
 
+    public SourcePipeline getSource() {
+        return source;
+    }
+
+    public void setSource(final SourcePipeline source) {
+        this.source = source;
+    }
+
     public String getFrom() {
         return from;
     }
@@ -81,14 +92,6 @@ public class PipelineLink implements Comparable<PipelineLink> {
 
     public void setTo(final String value) {
         this.to = value;
-    }
-
-    public SourcePipeline getSource() {
-        return source;
-    }
-
-    public void setSource(final SourcePipeline source) {
-        this.source = source;
     }
 
     @Override

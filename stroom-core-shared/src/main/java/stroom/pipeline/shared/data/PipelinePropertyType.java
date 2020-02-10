@@ -17,13 +17,16 @@
 package stroom.pipeline.shared.data;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HasType;
 import stroom.util.shared.HashCodeBuilder;
 
+@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder({"elementType", "name", "type", "description", "defaultValue", "pipelineReference", "docRefTypes", "displayPriority"})
 public class PipelinePropertyType implements Comparable<PipelinePropertyType>, HasType {
-    private static final long serialVersionUID = 2290622144151007980L;
-
     private PipelineElementType elementType;
     private String name;
     private String type;
@@ -41,8 +44,16 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
         return elementType;
     }
 
+    public void setElementType(final PipelineElementType elementType) {
+        this.elementType = elementType;
+    }
+
     public String getName() {
         return name;
+    }
+
+    public void setName(final String name) {
+        this.name = name;
     }
 
     @Override
@@ -50,24 +61,48 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
         return type;
     }
 
+    public void setType(final String type) {
+        this.type = type;
+    }
+
     public String getDescription() {
         return description;
+    }
+
+    public void setDescription(final String description) {
+        this.description = description;
     }
 
     public String getDefaultValue() {
         return defaultValue;
     }
 
+    public void setDefaultValue(final String defaultValue) {
+        this.defaultValue = defaultValue;
+    }
+
     public boolean isPipelineReference() {
         return pipelineReference;
+    }
+
+    public void setPipelineReference(final boolean pipelineReference) {
+        this.pipelineReference = pipelineReference;
     }
 
     public String[] getDocRefTypes() {
         return docRefTypes;
     }
 
+    public void setDocRefTypes(final String[] docRefTypes) {
+        this.docRefTypes = docRefTypes;
+    }
+
     public int getDisplayPriority() {
         return displayPriority;
+    }
+
+    public void setDisplayPriority(final int displayPriority) {
+        this.displayPriority = displayPriority;
     }
 
     @Override
@@ -155,7 +190,5 @@ public class PipelinePropertyType implements Comparable<PipelinePropertyType>, H
         public PipelinePropertyType build() {
             return instance;
         }
-
-
     }
 }

@@ -16,7 +16,9 @@
 
 package stroom.pipeline.shared.data;
 
-
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.CompareBuilder;
 import stroom.util.shared.Copyable;
 import stroom.util.shared.EqualsBuilder;
@@ -52,9 +54,9 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Property", propOrder = {"element", "name", "value"})
+@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder({"propertyType", "source", "element", "name", "value"})
 public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<PipelineProperty> {
-    private static final long serialVersionUID = -4634337435985272473L;
-
     @XmlTransient
     private PipelinePropertyType propertyType;
     @XmlTransient
@@ -73,6 +75,22 @@ public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<
     public PipelineProperty(final String element, final String name) {
         this.element = element;
         this.name = name;
+    }
+
+    public PipelinePropertyType getPropertyType() {
+        return propertyType;
+    }
+
+    public void setPropertyType(final PipelinePropertyType propertyType) {
+        this.propertyType = propertyType;
+    }
+
+    public SourcePipeline getSource() {
+        return source;
+    }
+
+    public void setSource(final SourcePipeline source) {
+        this.source = source;
     }
 
     public String getElement() {
@@ -97,14 +115,6 @@ public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<
 
     public void setValue(final PipelinePropertyValue value) {
         this.value = value;
-    }
-
-    public SourcePipeline getSource() {
-        return source;
-    }
-
-    public void setSource(final SourcePipeline source) {
-        this.source = source;
     }
 
     @Override
@@ -141,14 +151,6 @@ public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<
     @Override
     public String toString() {
         return "element=" + element + ", name=" + name + ", value=" + value;
-    }
-
-    public PipelinePropertyType getPropertyType() {
-        return propertyType;
-    }
-
-    public void setPropertyType(final PipelinePropertyType propertyType) {
-        this.propertyType = propertyType;
     }
 
     @Override

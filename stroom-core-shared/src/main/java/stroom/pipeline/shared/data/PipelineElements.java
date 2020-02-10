@@ -18,6 +18,10 @@ package stroom.pipeline.shared.data;
 
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -28,9 +32,9 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Elements", propOrder = {"add", "remove"})
+@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder({"add, remove"})
 public class PipelineElements {
-    private static final long serialVersionUID = -2207621085023679751L;
-
     @XmlElementWrapper(name = "add", required = false)
     @XmlElement(name = "element", required = false)
     private List<PipelineElement> add = new ArrayList<>();
@@ -43,7 +47,15 @@ public class PipelineElements {
         return add;
     }
 
+    public void setAdd(final List<PipelineElement> add) {
+        this.add = add;
+    }
+
     public List<PipelineElement> getRemove() {
         return remove;
+    }
+
+    public void setRemove(final List<PipelineElement> remove) {
+        this.remove = remove;
     }
 }

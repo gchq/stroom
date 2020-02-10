@@ -17,6 +17,9 @@
 package stroom.pipeline.shared.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 
 import stroom.util.shared.CompareBuilder;
@@ -55,8 +58,9 @@ import java.util.Objects;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "PipelineReference", propOrder = {"element", "name", "pipeline", "feed", "streamType"})
+@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder({"element", "name", "pipeline", "feed", "streamType"})
 public final class PipelineReference implements Comparable<PipelineReference>, Copyable<PipelineReference> {
-    private static final long serialVersionUID = -8037614920682819123L;
     @XmlElement(name = "element", required = true)
     protected String element;
     @XmlElement(name = "name", required = true)
@@ -68,6 +72,7 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
     @XmlElement(name = "streamType", required = true)
     protected String streamType;
 
+    @JsonIgnore
     @XmlTransient
     private SourcePipeline source;
 
@@ -133,10 +138,12 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
         this.streamType = value;
     }
 
+    @JsonIgnore
     public SourcePipeline getSource() {
         return source;
     }
 
+    @JsonIgnore
     public void setSource(final SourcePipeline source) {
         this.source = source;
     }

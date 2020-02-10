@@ -16,8 +16,10 @@
 
 package stroom.pipeline.shared.data;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
-
 import stroom.util.shared.Copyable;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
@@ -52,9 +54,9 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Value", propOrder = {"string", "integer", "_long", "_boolean", "entity"})
+@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder({"string", "integer", "_long", "_boolean", "entity"})
 public class PipelinePropertyValue implements Copyable<PipelinePropertyValue> {
-    private static final long serialVersionUID = 1247638056133627349L;
-
     protected String string;
     protected Integer integer;
     @XmlElement(name = "long")

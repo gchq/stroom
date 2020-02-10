@@ -16,6 +16,9 @@
 
 package stroom.pipeline.shared.data;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 
 import stroom.util.shared.HasType;
@@ -24,6 +27,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder({"type", "category", "roles", "icon"})
 public class PipelineElementType implements Comparable<PipelineElementType>, HasType {
     public static final String ROLE_SOURCE = "source";
     public static final String ROLE_DESTINATION = "destination";
@@ -57,11 +62,12 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
      * stepping mode.
      */
     public static final String VISABILITY_STEPPING = "stepping";
-    private static final long serialVersionUID = -5605044940329810364L;
+
     private String type;
     private Category category;
     private Set<String> roles;
     private String icon;
+
     public PipelineElementType() {
         // Default constructor necessary for GWT serialisation.
     }
@@ -84,16 +90,32 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
         return type;
     }
 
+    public void setType(final String type) {
+        this.type = type;
+    }
+
     public Category getCategory() {
         return category;
+    }
+
+    public void setCategory(final Category category) {
+        this.category = category;
     }
 
     public Set<String> getRoles() {
         return roles;
     }
 
+    public void setRoles(final Set<String> roles) {
+        this.roles = roles;
+    }
+
     public String getIcon() {
         return icon;
+    }
+
+    public void setIcon(final String icon) {
+        this.icon = icon;
     }
 
     public boolean hasRole(final String role) {

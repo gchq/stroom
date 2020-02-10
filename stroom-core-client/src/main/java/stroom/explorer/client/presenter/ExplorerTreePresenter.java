@@ -221,7 +221,7 @@ public class ExplorerTreePresenter
     @Override
     public void onHighlight(final HighlightExplorerNodeEvent event) {
         explorerTree.setSelectedItem(event.getExplorerNode());
-        explorerTree.getTreeModel().setEnsureVisible(event.getExplorerNode().getUuid());
+        explorerTree.getTreeModel().setEnsureVisible(event.getExplorerNode());
         explorerTree.getTreeModel().refresh();
     }
 
