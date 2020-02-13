@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1362** : Fixed issue where hiding dashboard annotation fields removed them.
+
 * Issue **#1357** : Fixed dragging tabs in dashboard with hidden panes to create a new split.
 
 
