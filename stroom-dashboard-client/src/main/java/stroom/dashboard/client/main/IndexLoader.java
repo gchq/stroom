@@ -60,7 +60,7 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
             dispatcher.exec(new FetchDataSourceFieldsAction(dataSourceRef)).onSuccess(result -> {
                 loadedDataSourceRef = dataSourceRef;
 
-                if (result != null) {
+                if (result != null && result.getFields() != null) {
                     dataSourceFieldsMap = new DataSourceFieldsMap(result.getFields());
                     indexFieldNames = new ArrayList<>(dataSourceFieldsMap.keySet());
                     Collections.sort(indexFieldNames);
