@@ -14,6 +14,7 @@ public class OverrideValue<T> implements SharedObject {
     private static final OverrideValue UNSET =  new OverrideValue<>(false, null);
     private static final OverrideValue NULL_VALUE =  new OverrideValue<>(true, null);
 
+    @JsonProperty("hasOverride")
     private boolean hasOverride;
     @JsonProperty("value")
     private T value;
@@ -53,7 +54,6 @@ public class OverrideValue<T> implements SharedObject {
         this.value = value;
     }
 
-    @JsonProperty("hasOverride")
     public boolean hasOverride() {
         return hasOverride;
     }
