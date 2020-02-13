@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1-beta.19] - 2020-02-13
+
 * Issue **#1362** : Fixed issue where hiding dashboard annotation fields removed them.
 
 * Issue **#1357** : Fixed dragging tabs in dashboard with hidden panes to create a new split.
@@ -2072,7 +2075,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.18...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1-beta.19...6.1
+[v6.1-beta.19]: https://github.com/gchq/stroom/compare/v6.1-beta.18...v6.1-beta.19
 [v6.1-beta.18]: https://github.com/gchq/stroom/compare/v6.1-beta.17...v6.1-beta.18
 [v6.1-beta.17]: https://github.com/gchq/stroom/compare/v6.1-beta.16...v6.1-beta.17
 [v6.1-beta.16]: https://github.com/gchq/stroom/compare/v6.1-beta.15...v6.1-beta.16
