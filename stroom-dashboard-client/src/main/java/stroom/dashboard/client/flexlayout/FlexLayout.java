@@ -336,65 +336,6 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
     }
 
     private boolean moveTabOntoTab(final MouseTarget mouseTarget, final List<TabConfig> tabGroup, final TabLayoutConfig targetTabLayoutData, final Pos targetPos) {
-       boolean moved = false;
-
-        for (final TabConfig tabConfig : tabGroup) {
-           final TabLayoutConfig currentParent = tabConfig.getParent();
-
-           // If dropping a tab onto the same container that
-           // only has this one tab then do nothing.
-           if (!currentParent.equals(targetTabLayoutData) || currentParent.getVisibleTabCount() > 1) {
-               // Change the selected tab in the source tab
-               // layout if we have moved the selected tab.
-               final int sourceIndex = currentParent.indexOf(tabConfig);
-               final Integer selectedIndex = currentParent.getSelected();
-               if (selectedIndex != null && selectedIndex.equals(sourceIndex)) {
-                   currentParent.setSelected(sourceIndex - 1);
-               }
-
-               // Figure out what the target index ought to be.
-               int targetIndex = targetTabLayoutData.getTabs().size();
-               if (mouseTarget.tabIndex != -1) {
-                   targetIndex = mouseTarget.tabIndex;
-               }
-
-               boolean move = true;
-               if (currentParent.equals(targetTabLayoutData)) {
-                   // If we are dropping a tab onto itself then don't move.
-                   if (targetIndex == sourceIndex || targetIndex == sourceIndex + 1) {
-                      move = false;
-
-                   } else {
-                       // If we are dropping a tab after itself then remove 1 from target as we will be removing the
-                       // tab from a previous index.
-                       if (sourceIndex < targetIndex) {
-                           targetIndex--;
-                       }
-                   }
-               }
-
-               if (move) {
-                   // Remove the tab if we can.
-                   currentParent.remove(tabConfig);
-
-                   // Add the tab to the target tab layout.
-                   targetTabLayoutData.add(targetIndex, tabConfig);
-
-                   // Select the new tab.
-                   targetTabLayoutData.setSelected(targetIndex);
-
-                   // Cascade removal if necessary.
-                   cascadeRemoval(currentParent);
-
-                   moved = true;
-               }
-           }
-       }
-
-        return moved;
-    }
-
-    private boolean moveTabOutside(final MouseTarget mouseTarget, final List<TabConfig> tabGroup, final TabLayoutConfig targetTabLayoutData, final Pos targetPos) {
         boolean moved = false;
 
         for (final TabConfig tabConfig : tabGroup) {
@@ -403,12 +344,73 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
             // If dropping a tab onto the same container that
             // only has this one tab then do nothing.
             if (!currentParent.equals(targetTabLayoutData) || currentParent.getVisibleTabCount() > 1) {
-                int dim = Direction.ACROSS.getDimension();
-                if (Pos.TOP == targetPos || Pos.BOTTOM == targetPos) {
-                    dim = Direction.DOWN.getDimension();
+                // Change the selected tab in the source tab
+                // layout if we have moved the selected tab.
+                final int sourceIndex = currentParent.indexOf(tabConfig);
+                final Integer selectedIndex = currentParent.getSelected();
+                if (selectedIndex != null && selectedIndex.equals(sourceIndex)) {
+                    currentParent.setSelected(sourceIndex - 1);
                 }
-                final SplitLayoutConfig parent = targetTabLayoutData.getParent();
 
+                // Figure out what the target index ought to be.
+                int targetIndex = targetTabLayoutData.getTabs().size();
+                if (mouseTarget.tabIndex != -1) {
+                    targetIndex = mouseTarget.tabIndex;
+                }
+
+                boolean move = true;
+                if (currentParent.equals(targetTabLayoutData)) {
+                    // If we are dropping a tab onto itself then don't move.
+                    if (targetIndex == sourceIndex || targetIndex == sourceIndex + 1) {
+                        move = false;
+
+                    } else {
+                        // If we are dropping a tab after itself then remove 1 from target as we will be removing the
+                        // tab from a previous index.
+                        if (sourceIndex < targetIndex) {
+                            targetIndex--;
+                        }
+                    }
+                }
+
+                if (move) {
+                    // Remove the tab if we can.
+                    currentParent.remove(tabConfig);
+
+                    // Add the tab to the target tab layout.
+                    targetTabLayoutData.add(targetIndex, tabConfig);
+
+                    // Select the new tab.
+                    targetTabLayoutData.setSelected(targetIndex);
+
+                    // Cascade removal if necessary.
+                    cascadeRemoval(currentParent);
+
+                    moved = true;
+                }
+            }
+        }
+
+        return moved;
+    }
+
+    private boolean moveTabOutside(final MouseTarget mouseTarget, final List<TabConfig> tabGroup, final TabLayoutConfig targetTabLayoutData, final Pos targetPos) {
+        boolean moved = false;
+
+        final SplitLayoutConfig parent = targetTabLayoutData.getParent();
+        // Get the index of the target layout and
+        // therefore the insert position.
+        int insertPos = parent.indexOf(targetTabLayoutData);
+        final TabLayoutConfig newTabLayout = new TabLayoutConfig();
+        newTabLayout.setSelected(0);
+
+        // Move all tabs from the tab group onto the new tab layout.
+        for (final TabConfig tabConfig : tabGroup) {
+            final TabLayoutConfig currentParent = tabConfig.getParent();
+
+            // If dropping a tab onto the same container that
+            // only has this one tab then do nothing.
+            if (!currentParent.equals(targetTabLayoutData) || currentParent.getVisibleTabCount() > 1) {
                 // Change the selected tab in the source tab
                 // layout if we have moved the selected tab.
                 final int tabIndex = currentParent.indexOf(tabConfig);
@@ -417,58 +419,61 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                     currentParent.setSelected(tabIndex - 1);
                 }
 
-                // Get the index of the target layout and
-                // therefore the insert position.
-                int insertPos = parent.indexOf(targetTabLayoutData);
-
                 // Remove the tab.
                 currentParent.remove(tabConfig);
-
-                // Recalculate the sizes for the parent so that
-                // the target layout is resized.
-                recalculateSingleLayout(parent);
-
-                final TabLayoutConfig newTabLayout = new TabLayoutConfig(tabConfig);
-                newTabLayout.setSelected(0);
-
-                // Set the size of the target layout and the new
-                // layout to be half the size of the original so
-                // combined they take up the same space.
-                final int oldLayoutSize = positionAndSizeMap.get(targetTabLayoutData).getSize(dim);
-                int newLayoutSize = oldLayoutSize / 2;
-                newLayoutSize = Math.max(newLayoutSize, MIN_COMPONENT_WIDTH);
-
-                targetTabLayoutData.getPreferredSize().set(dim, newLayoutSize);
-                newTabLayout.getPreferredSize().set(dim, newLayoutSize);
-
-                if (parent.getDimension() == dim) {
-                    if (Pos.RIGHT == targetPos || Pos.BOTTOM == targetPos) {
-                        insertPos++;
-                    }
-
-                    // If the parent direction is already across
-                    // then just add the tab in.
-                    parent.add(insertPos, newTabLayout);
-
-                } else {
-                    // We need to replace the target layout with
-                    // a new split layout.
-                    parent.remove(targetTabLayoutData);
-
-                    SplitLayoutConfig newSplit;
-                    if (Pos.RIGHT == targetPos || Pos.BOTTOM == targetPos) {
-                        newSplit = new SplitLayoutConfig(dim, targetTabLayoutData, newTabLayout);
-                    } else {
-                        newSplit = new SplitLayoutConfig(dim, newTabLayout, targetTabLayoutData);
-                    }
-                    parent.add(insertPos, newSplit);
-                }
 
                 // Cascade removal if necessary.
                 cascadeRemoval(currentParent);
 
-                moved = true;
+                newTabLayout.add(tabConfig);
             }
+        }
+
+        // If tabs have been moved to the new tab layout then add the new layout.
+        if (newTabLayout.getTabs().size() > 0) {
+            // Recalculate the sizes for the parent so that
+            // the target layout is resized.
+            recalculateSingleLayout(parent);
+
+            int dim = Direction.ACROSS.getDimension();
+            if (Pos.TOP == targetPos || Pos.BOTTOM == targetPos) {
+                dim = Direction.DOWN.getDimension();
+            }
+
+            // Set the size of the target layout and the new
+            // layout to be half the size of the original so
+            // combined they take up the same space.
+            final int oldLayoutSize = positionAndSizeMap.get(targetTabLayoutData).getSize(dim);
+            int newLayoutSize = oldLayoutSize / 2;
+            newLayoutSize = Math.max(newLayoutSize, MIN_COMPONENT_WIDTH);
+
+            targetTabLayoutData.getPreferredSize().set(dim, newLayoutSize);
+            newTabLayout.getPreferredSize().set(dim, newLayoutSize);
+
+            if (parent.getDimension() == dim) {
+                if (Pos.RIGHT == targetPos || Pos.BOTTOM == targetPos) {
+                    insertPos++;
+                }
+
+                // If the parent direction is already across
+                // then just add the new tab layout in.
+                parent.add(insertPos, newTabLayout);
+
+            } else {
+                // We need to replace the target layout with
+                // a new split layout.
+                parent.remove(targetTabLayoutData);
+
+                SplitLayoutConfig newSplit;
+                if (Pos.RIGHT == targetPos || Pos.BOTTOM == targetPos) {
+                    newSplit = new SplitLayoutConfig(dim, targetTabLayoutData, newTabLayout);
+                } else {
+                    newSplit = new SplitLayoutConfig(dim, newTabLayout, targetTabLayoutData);
+                }
+                parent.add(insertPos, newSplit);
+            }
+
+            moved = true;
         }
 
         return moved;
