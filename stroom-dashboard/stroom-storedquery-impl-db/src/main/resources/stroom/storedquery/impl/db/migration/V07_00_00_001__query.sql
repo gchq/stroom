@@ -98,6 +98,9 @@ BEGIN
             FAVOURITE
         FROM OLD_QUERY
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM query)
+        AND DASH_UUID IS NOT NULL
+        AND QUERY_ID IS NOT NULL
+        AND NAME IS NOT NULL
         ORDER BY ID;
 
         -- Work out what to set our auto_increment start value to
