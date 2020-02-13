@@ -6,10 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add null checks to DB migration.
+
 
 ## [v7.0-beta.20] - 2020-02-13
 
-* Fix bug in `processor_task` migration script
+* Fix bug in `processor_task` migration script.
 
 
 ## [v7.0-beta.19] - 2020-02-10
