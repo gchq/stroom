@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1357** : Fixed dragging tabs in dashboard with hidden panes to create a new split.
+
 
 ## [v6.1-beta.18] - 2020-02-03
 
