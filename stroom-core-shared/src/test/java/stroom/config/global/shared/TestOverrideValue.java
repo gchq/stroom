@@ -7,22 +7,33 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.ws.rs.core.Response;
-
 import java.io.IOException;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 class TestOverrideValue {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestOverrideValue.class);
 
     @Test
-    void testSerde() throws IOException {
-        final OverrideValue<String> overrideValue = new OverrideValue<>(true, "someValue");
-
+    void testSerde_withValueString() throws IOException {
         doSerdeTest(OverrideValue.with("someValue"), OverrideValue.class);
+    }
+
+    @Test
+    void testSerde_withValueInt() throws IOException {
+        doSerdeTest(OverrideValue.with(123), OverrideValue.class);
+    }
+
+    @Test
+    void testSerde_withNull() throws IOException {
+        doSerdeTest(OverrideValue.with(null), OverrideValue.class);
+    }
+
+    @Test
+    void testSerde_unset() throws IOException {
+        doSerdeTest(OverrideValue.unSet(), OverrideValue.class);
     }
 
     private <T> void doSerdeTest(final T entity, final Class<T> clazz) throws IOException {

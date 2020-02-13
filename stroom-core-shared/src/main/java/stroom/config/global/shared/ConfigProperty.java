@@ -19,6 +19,7 @@ package stroom.config.global.shared;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.PropertyPath;
@@ -51,12 +52,19 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
 
     private static final long serialVersionUID = 8440384191352234225L;
 
+    @JsonProperty("id")
     private Integer id;
+    @JsonProperty("version")
     private Integer version;
+    @JsonProperty("createTimeMs")
     private Long createTimeMs;
+    @JsonProperty("createUser")
     private String createUser;
+    @JsonProperty("updateTimeMs")
     private Long updateTimeMs;
+    @JsonProperty("updateUser")
     private String updateUser;
+    @JsonProperty("name")
     private PropertyPath name;
 
     // TODO now that properties are typed in AppConfig we should really be dealing with typed
@@ -73,27 +81,40 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     private String defaultValue = null;
 
     // The cluster wide value held in the database and set by the user in the UI, may be null.
+    @JsonProperty("databaseOverrideValue")
     private OverrideValue<String> databaseOverrideValue = OverrideValue.unSet();
 
     // These fields are not saved to the database,
     // they come from the annotations on the java config classes
 
     // The node specific value as set by the dropwizard YAML file
+    @JsonProperty("yamlOverrideValue")
     private OverrideValue<String> yamlOverrideValue = OverrideValue.unSet();
 
+    @JsonProperty("description")
     private String description;
+    @JsonProperty("isEditable")
     private boolean isEditable;
+    @JsonProperty("isPassword")
     private boolean isPassword;
+    @JsonProperty("requireRestart")
     private boolean requireRestart;
+    @JsonProperty("requireUiRestart")
     private boolean requireUiRestart;
     // TODO this is a stopgap until we have fully typed values
+    @JsonProperty("dataTypeName")
     private String dataTypeName;
 
     public ConfigProperty() {
         // Required for GWT serialisation
     }
 
-    @JsonProperty("id")
+    public ConfigProperty(@JsonProperty("name") PropertyPath name,
+                          @JsonProperty("defaultValue") String defaultValue) {
+        this.name = name;
+        this.defaultValue = defaultValue;
+    }
+
     public Integer getId() {
         return id;
     }
@@ -102,7 +123,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         this.id = id;
     }
 
-    @JsonProperty("version")
     public Integer getVersion() {
         return version;
     }
@@ -112,7 +132,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     }
 
     @Override
-    @JsonProperty("createTimeMs")
     public Long getCreateTimeMs() {
         return createTimeMs;
     }
@@ -122,7 +141,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     }
 
     @Override
-    @JsonProperty("createUser")
     public String getCreateUser() {
         return createUser;
     }
@@ -132,7 +150,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     }
 
     @Override
-    @JsonProperty("updateTimeMs")
     public Long getUpdateTimeMs() {
         return updateTimeMs;
     }
@@ -142,7 +159,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     }
 
     @Override
-    @JsonProperty("updateUser")
     public String getUpdateUser() {
         return updateUser;
     }
@@ -154,28 +170,23 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * @return The fully qualified name of the property, e.g. "stroom.temp.path"
      */
-    @JsonProperty("name")
     public String getNameAsString() {
         return name == null ? null : name.toString();
     }
 
-    @JsonIgnore
+//    @JsonIgnore
     public PropertyPath getName() {
         return name;
     }
 
-    @JsonIgnore
+//    @JsonIgnore
     public void setName(final PropertyPath name) {
         this.name = name;
     }
 
-    @JsonProperty("name")
     public void setName(final String propertyPathString) {
-        if (propertyPathString == null) {
-            this.name = null;
-        } else {
-            this.name = PropertyPath.fromPathString(propertyPathString);
-        }
+        Objects.requireNonNull(propertyPathString);
+        this.name = PropertyPath.fromPathString(propertyPathString);
     }
 
     /**
@@ -187,7 +198,11 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         return getEffectiveValue(defaultValue, databaseOverrideValue, yamlOverrideValue);
     }
 
-    static Optional<String> getEffectiveValue(final String defaultValue,
+    public Optional<String> getEffectiveValue(final OverrideValue<String> yamlOverrideValue) {
+        return getEffectiveValue(defaultValue, databaseOverrideValue, yamlOverrideValue);
+    }
+
+    public static Optional<String> getEffectiveValue(final String defaultValue,
                                        final OverrideValue<String> databaseOverrideValue,
                                        final OverrideValue<String> yamlOverrideValue) {
         if (yamlOverrideValue.hasOverride()) {
@@ -217,7 +232,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
      * If no database override value has been set an exception will be thrown.
      * Test with hasDatabaseOverride() first.
      */
-    @JsonProperty("databaseOverrideValue")
     public OverrideValue<String> getDatabaseOverrideValue() {
         return databaseOverrideValue;
     }
@@ -264,7 +278,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * @return The node specific value from the dropwizard YAML file on this node, if present.
      */
-    @JsonProperty("yamlOverrideValue")
     public OverrideValue<String> getYamlOverrideValue() {
         return yamlOverrideValue;
     }
@@ -311,7 +324,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         return description;
     }
 
-    @JsonProperty("description")
     public void setDescription(final String description) {
         this.description = description;
     }
@@ -319,7 +331,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * @return True if the databaseValue for this property can be changed in the UI.
      */
-    @JsonProperty("isEditable")
     public boolean isEditable() {
         return isEditable;
     }
@@ -331,7 +342,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * @return True if a change to the value requires a full cluster restart to take affect.
      */
-    @JsonProperty("requireRestart")
     public boolean isRequireRestart() {
         return requireRestart;
     }
@@ -351,7 +361,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         this.requireUiRestart = requireUiRestart;
     }
 
-    @JsonProperty("isPassword")
     public boolean isPassword() {
         return isPassword;
     }
@@ -371,7 +380,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         }
     }
 
-    @JsonProperty("dataTypeName")
     public String getDataTypeName() {
         return dataTypeName;
     }

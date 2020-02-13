@@ -25,11 +25,9 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.config.global.shared.ClusterConfigProperty;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.OverrideValue;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.FetchNodeStatusResponse;
@@ -42,6 +40,12 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 public final class ManageGlobalPropertyEditPresenter
         extends MyPresenterWidget<ManageGlobalPropertyEditPresenter.GlobalPropertyEditView>
         implements ManageGlobalPropertyEditUiHandlers {
@@ -49,24 +53,23 @@ public final class ManageGlobalPropertyEditPresenter
     private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
     private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
 
+    private static final String MAGIC_NULL = "NULL";
 
     private final RestFactory restFactory;
-    private final ClientDispatchAsync dispatcher;
     private final ClientSecurityContext securityContext;
     private final UiConfigCache clientPropertyCache;
     private ConfigProperty configProperty;
-    private ClusterConfigProperty clusterConfigProperty;
+    private Map<String, OverrideValue<String>> clusterYamlOverrides = new HashMap<>();
+    private Map<String, List<String>> effectiveValueToNodes = new HashMap<>();
 
     @Inject
     public ManageGlobalPropertyEditPresenter(final EventBus eventBus,
                                              final GlobalPropertyEditView view,
                                              final RestFactory restFactory,
-                                             final ClientDispatchAsync dispatcher,
                                              final ClientSecurityContext securityContext,
                                              final UiConfigCache clientPropertyCache) {
         super(eventBus, view);
         this.restFactory = restFactory;
-        this.dispatcher = dispatcher;
         this.securityContext = securityContext;
         this.clientPropertyCache = clientPropertyCache;
         view.setUiHandlers(this);
@@ -77,41 +80,9 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     void showEntity(final ConfigProperty configProperty, final PopupUiHandlers popupUiHandlers) {
-//        final String caption = getEntityDisplayType() + " - " + configProperty.getName();
-//
-//        final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
-//            @Override
-//            public void onHideRequest(final boolean autoClose, final boolean ok) {
-//                if (ok) {
-//                    write(true);
-//                } else {
-//                    hide();
-//                }
-//
-//                popupUiHandlers.onHideRequest(autoClose, ok);
-//            }
-//
-//            @Override
-//            public void onHide(final boolean autoClose, final boolean ok) {
-//                popupUiHandlers.onHide(autoClose, ok);
-//            }
-//        };
-//
-//        final PopupType popupType = PopupType.OK_CANCEL_DIALOG;
 
         if (configProperty.getId() != null) {
-
             updateValuesFromResource(configProperty.getName().getPropertyName(), popupUiHandlers);
-
-            // Reload it so we always have the latest version
-//            final FetchGlobalConfigAction action = new FetchGlobalConfigAction(configProperty.getId());
-//            dispatcher.exec(action).onSuccess(result -> {
-//                setEntity(result);
-//
-//                read();
-//                ShowPopupEvent.fire(ManageGlobalPropertyEditPresenter.this, ManageGlobalPropertyEditPresenter.this, popupType,
-//                        getPopupSize(), caption, internalPopupUiHandlers);
-//            });
         } else {
             // new configProperty
             setEntity(configProperty);
@@ -120,7 +91,6 @@ public final class ManageGlobalPropertyEditPresenter
     }
     
     private void updateValuesFromResource(final String propertyName, final PopupUiHandlers popupUiHandlers) {
-        final Rest<FetchNodeStatusResponse> fetchNodesRest = restFactory.create();
         final Rest<ConfigProperty> fetchPropertyRest = restFactory.create();
 
         fetchPropertyRest
@@ -129,11 +99,62 @@ public final class ManageGlobalPropertyEditPresenter
                 showPopup(popupUiHandlers);
             })
             .onFailure(throwable -> {
-                // TODO
+                showError(throwable, "Error fetching property " + propertyName);
             })
             .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
             .getPropertyByName(propertyName);
+    }
 
+    private long getUniqueYamlOverrideValues() {
+        return clusterYamlOverrides.values()
+                .stream()
+                .distinct()
+                .count();
+    }
+
+    private Map<String, String> getEffectiveValues() {
+        return clusterYamlOverrides.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .map(entry -> {
+                            String effectiveValue = configProperty.getEffectiveValue(entry.getValue())
+                                    .orElse(null);
+                            return new AbstractMap.SimpleEntry<>(entry.getKey(), effectiveValue);
+                        })
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    private void refreshYamlOverrideForAllNodes() {
+        final Rest<FetchNodeStatusResponse> fetchAllNodes = restFactory.create();
+
+        // For each node fire off a request to get the yaml override for that node
+        fetchAllNodes
+                .onSuccess(response -> {
+                    response.getValues().forEach(nodeStatus -> {
+                        refreshYamlOverrideForNode(nodeStatus.getNode().getName());
+                    });
+                })
+                .onFailure(throwable -> {
+                    showError(throwable, "Error getting list of all nodes");
+                })
+                .call(NODE_RESOURCE)
+                .list();
+    }
+
+    private void refreshYamlOverrideForNode(final String nodeName) {
+        final Rest<OverrideValue<String>> fetchNodeYamlOverrideRest = restFactory.create();
+
+        fetchNodeYamlOverrideRest
+                .onSuccess(yamlOverride -> {
+                    clusterYamlOverrides.put(nodeName, yamlOverride);
+                    String effectiveValue = configProperty.getEffectiveValue(yamlOverride)
+                            .orElse(MAGIC_NULL);
+                })
+                .onFailure(throwable -> {
+                    clusterYamlOverrides.remove(nodeName);
+                    showError(throwable, "Error getting YAML override for node " + nodeName);
+                })
+                .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                .getYamlValueByNodeAndName(configProperty.getNameAsString(), nodeName);
     }
 
     private void showPopup(final PopupUiHandlers popupUiHandlers) {
@@ -164,7 +185,6 @@ public final class ManageGlobalPropertyEditPresenter
             ManageGlobalPropertyEditPresenter.this,
             popupType,
             getPopupSize(), caption, internalPopupUiHandlers);
-
     }
 
     protected void hide() {
@@ -225,6 +245,7 @@ public final class ManageGlobalPropertyEditPresenter
             });
 
         if (configPropertyToSave.getId() == null) {
+            // No ID so this doesn't exist in the DB
             restCall
                 .onFailure(throwable ->
                    showError(throwable, "Error creating property"))
@@ -237,24 +258,6 @@ public final class ManageGlobalPropertyEditPresenter
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .update(configPropertyToSave.getNameAsString(), configPropertyToSave);
         }
-
-        // Save.
-//        dispatcher.exec(new UpdateGlobalConfigAction(getEntity()))
-//                .onSuccess(result -> {
-//                    setEntity(result);
-//                    if (hideOnSave) {
-//                        hide();
-//
-//                        // Refresh client properties in case they were affected by this change.
-//                        clientPropertyCache.refresh();
-//                    }
-//                })
-//                .onFailure(throwable ->
-//                    showError(throwable, "Error saving property")
-//                        AlertEvent.fireError(ManageGlobalPropertyEditPresenter.this,
-//                                "Error saving property",
-//                                throwable.getMessage(),
-//                                null));
     }
 
     private void showError(final Throwable throwable, final String message) {

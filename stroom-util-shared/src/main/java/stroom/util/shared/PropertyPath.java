@@ -1,5 +1,8 @@
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
 import stroom.docref.SharedObject;
 
 import java.util.ArrayList;
@@ -40,8 +43,13 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
     /**
      * Create a {@link PropertyPath} from a path string, e.g "stroom.node.name"
      */
+    @JsonCreator
     public static PropertyPath fromPathString(final String propertyPath) {
-        return PropertyPath.fromParts(propertyPath.split(DELIMITER_REGEX));
+        if (propertyPath == null || propertyPath.isBlank()) {
+            return EMPTY_INSTANCE;
+        } else {
+            return PropertyPath.fromParts(propertyPath.split(DELIMITER_REGEX));
+        }
     }
 
     /**
@@ -100,6 +108,7 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
     }
 
     @Override
+    @JsonValue
     public String toString() {
         return String.join(DELIMITER, parts);
     }

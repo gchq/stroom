@@ -279,23 +279,9 @@ class TestConfigProperty {
     }
 
     @Test
-    void testOverrideValueSerialisation() throws JsonProcessingException {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
-        OverrideValue<String> overrideValue = OverrideValue.with("someValue");
-
-        String json = mapper.writeValueAsString(overrideValue);
-        LOGGER.info(json);
-
-    }
-
-    @Test
     void testSerialisation1() throws IOException {
 
-        ConfigProperty configProperty = new ConfigProperty();
+        final ConfigProperty configProperty = new ConfigProperty();
         configProperty.setId(123);
         configProperty.setName(PropertyPath.fromPathString("stroom.node.name"));
         configProperty.setEditable(true);
@@ -325,7 +311,7 @@ class TestConfigProperty {
         assertThat(mapper.canSerialize(OverrideValue.class)).isTrue();
 
         String json = mapper.writeValueAsString(configProperty);
-        LOGGER.info(json);
+        LOGGER.info("\n" + json);
 
         final ConfigProperty configProperty2 = mapper.readValue(json, ConfigProperty.class);
 
