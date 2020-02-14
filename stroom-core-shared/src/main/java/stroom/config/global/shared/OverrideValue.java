@@ -14,9 +14,9 @@ public class OverrideValue<T> implements SharedObject {
     private static final OverrideValue<?> UNSET =  new OverrideValue<>(false, null);
     private static final OverrideValue<?> NULL_VALUE =  new OverrideValue<>(true, null);
 
-    @JsonProperty("hasOverride")
+    @JsonProperty
     private boolean hasOverride;
-    @JsonProperty("value")
+    @JsonProperty
     private T value;
 
     @SuppressWarnings("unused")
@@ -54,17 +54,22 @@ public class OverrideValue<T> implements SharedObject {
         this.value = value;
     }
 
-    public boolean hasOverride() {
+    // Horrible name, but can't seem to get RestyGWT to use @JsonGetter
+    boolean isHasOverride() {
         return hasOverride;
+    }
+
+    T getValue() {
+        return value;
     }
 
     /**
      * @return The override value if present or empty if the override has been explicitly set to
      * null/empty. If there is no override then a {@link RuntimeException} will be thrown.
-     * Use {@link OverrideValue#hasOverride()} to check if there is an override value.
+     * Use {@link OverrideValue#isHasOverride()} to check if there is an override value.
      */
     @JsonIgnore
-    public Optional<T> getValue() {
+    public Optional<T> getValueAsOptional() {
         if (!hasOverride) {
             throw new RuntimeException("No override present");
         }

@@ -426,9 +426,9 @@ class TestConfigMapper {
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
-        assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
+        assertThat(configProperty.getDatabaseOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(configProperty.getYamlOverrideValue().hasOverride())
+        assertThat(configProperty.getYamlOverrideValue().isHasOverride())
                 .isFalse();
         assertThat(configProperty.getEffectiveValue().orElseThrow())
                 .isEqualTo(defaultValue);

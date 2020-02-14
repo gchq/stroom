@@ -107,10 +107,12 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         // Required for GWT serialisation
     }
 
+    @JsonIgnore
     public ConfigProperty(final PropertyPath name) {
         this.name = name;
     }
 
+    @JsonIgnore
     public ConfigProperty(final PropertyPath name,
                           final String defaultValue) {
         this.name = name;
@@ -208,10 +210,10 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     public static Optional<String> getEffectiveValue(final String defaultValue,
                                        final OverrideValue<String> databaseOverrideValue,
                                        final OverrideValue<String> yamlOverrideValue) {
-        if (yamlOverrideValue.hasOverride()) {
-            return yamlOverrideValue.getValue();
-        } else if (databaseOverrideValue.hasOverride()) {
-            return databaseOverrideValue.getValue();
+        if (yamlOverrideValue.isHasOverride()) {
+            return yamlOverrideValue.getValueAsOptional();
+        } else if (databaseOverrideValue.isHasOverride()) {
+            return databaseOverrideValue.getValueAsOptional();
         } else {
             return Optional.ofNullable(defaultValue);
         }
@@ -245,8 +247,10 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         this.databaseOverrideValue = OverrideValue.with(databaseOverrideValue);
     }
 
-    public void setDatabaseOverride(final OverrideValue<String> databaseOverride) {
-        this.databaseOverrideValue = databaseOverride;
+    public void setDatabaseOverrideValue(final OverrideValue<String> databaseOverride) {
+        this.databaseOverrideValue = databaseOverride != null
+            ?  databaseOverride
+            : OverrideValue.unSet(String.class);
     }
 
     /**
@@ -254,7 +258,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
      */
     @JsonIgnore
     public boolean hasDatabaseOverride() {
-        return this.databaseOverrideValue.hasOverride();
+        return this.databaseOverrideValue.isHasOverride();
     }
 
     /**
@@ -290,7 +294,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
      */
     @JsonIgnore
     public boolean hasYamlOverride() {
-        return yamlOverrideValue.hasOverride();
+        return yamlOverrideValue.isHasOverride();
     }
 
     /**
@@ -315,10 +319,11 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         }
     }
 
-    @JsonIgnore
-    public void setYamlOverride(final OverrideValue<String> yamlOverride) {
-        if (yamlOverride.hasOverride()) {
-            setYamlOverrideValue(yamlOverride.getValue().orElse(null));
+    public void setYamlOverrideValue(final OverrideValue<String> yamlOverride) {
+        if (yamlOverride == null) {
+            this.yamlOverrideValue = OverrideValue.unSet(String.class);
+        } else if (yamlOverride.isHasOverride()) {
+            setYamlOverrideValue(yamlOverride.getValueAsOptional().orElse(null));
         } else {
             this.yamlOverrideValue = yamlOverride;
         }
@@ -374,9 +379,9 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     }
 
     public SourceType getSource() {
-        if (yamlOverrideValue.hasOverride()) {
+        if (yamlOverrideValue.isHasOverride()) {
             return SourceType.YAML;
-        } else if (databaseOverrideValue.hasOverride()) {
+        } else if (databaseOverrideValue.isHasOverride()) {
             return SourceType.DATABASE;
         } else {
             return SourceType.DEFAULT;

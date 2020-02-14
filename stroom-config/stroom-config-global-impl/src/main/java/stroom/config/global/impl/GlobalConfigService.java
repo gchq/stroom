@@ -140,19 +140,19 @@ public class GlobalConfigService {
     }
 
     /**
-     * @param propertyName The name of the prop to fetch, e.g. stroom.path.temp
+     * @param propertyPath The name of the prop to fetch, e.g. stroom.path.temp
      * @return A {@link ConfigProperty} if it is a valid prop name. The prop may or may not exist in the
      * DB. If it doesn't exist in the db then the property will be obtained from the object model.
      */
-    public Optional<ConfigProperty> fetch(final String propertyName) {
+    public Optional<ConfigProperty> fetch(final PropertyPath propertyPath) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
             // update the global config from the returned db record then return the corresponding
             // object from global properties which may have a yaml value in it and a different
             // effective value
-            return dao.fetch(propertyName)
+            return dao.fetch(propertyPath.toString())
                     .map(configMapper::decorateDbConfigProperty)
                     .or(() ->
-                            configMapper.getGlobalProperty(PropertyPath.fromPathString(propertyName)));
+                            configMapper.getGlobalProperty(propertyPath));
         });
     }
 

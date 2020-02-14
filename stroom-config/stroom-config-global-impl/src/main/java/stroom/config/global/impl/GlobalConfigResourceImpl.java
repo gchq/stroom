@@ -12,6 +12,7 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.util.HasHealthCheck;
 import stroom.util.rest.RestUtil;
+import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
@@ -67,11 +68,12 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
 
     @Timed
     @Override
-    public ConfigProperty getPropertyByName(final String propertyName) {
-        RestUtil.requireNonNull(propertyName, "propertyName not supplied");
+    public ConfigProperty getPropertyByName(final String propertyPath) {
+        RestUtil.requireNonNull(propertyPath, "propertyPath not supplied");
         return securityContext.secureResult(() -> {
             try {
-                final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(propertyName);
+                final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(
+                    PropertyPath.fromPathString(propertyPath));
                 return optConfigProperty.orElseThrow(NotFoundException::new);
             } catch (final RuntimeException e) {
                 throw new ServerErrorException(e.getMessage() != null
@@ -83,14 +85,15 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
 
     @Timed
     @Override
-    public OverrideValue<String> getYamlValueByName(final String propertyName) {
-        RestUtil.requireNonNull(propertyName, "propertyName not supplied");
+    public OverrideValue<String> getYamlValueByName(final String propertyPath) {
+        RestUtil.requireNonNull(propertyPath, "propertyPath not supplied");
         return securityContext.secureResult(() -> {
             try {
-                final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(propertyName);
+                final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(
+                    PropertyPath.fromPathString(propertyPath));
                 return optConfigProperty
                     .map(ConfigProperty::getYamlOverrideValue)
-                    .orElseThrow(() -> new NotFoundException(LogUtil.message("Property {} not found", propertyName)));
+                    .orElseThrow(() -> new NotFoundException(LogUtil.message("Property {} not found", propertyPath)));
             } catch (final RuntimeException e) {
                 throw new ServerErrorException(e.getMessage() != null
                     ? e.getMessage()

@@ -76,6 +76,14 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
         }
     }
 
+    List<String> getParts() {
+        if (parts.isEmpty()) {
+            return Collections.emptyList();
+        } else {
+            return new ArrayList<>(parts);
+        }
+    }
+
     /**
      * Merge otherPath onto the end of this and return a new {@link PropertyPath}
      */

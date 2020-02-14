@@ -82,7 +82,7 @@ public final class ManageGlobalPropertyEditPresenter
     void showEntity(final ConfigProperty configProperty, final PopupUiHandlers popupUiHandlers) {
 
         if (configProperty.getId() != null) {
-            updateValuesFromResource(configProperty.getName().getPropertyName(), popupUiHandlers);
+            updateValuesFromResource(configProperty.getName().toString(), popupUiHandlers);
         } else {
             // new configProperty
             setEntity(configProperty);
@@ -272,9 +272,9 @@ public final class ManageGlobalPropertyEditPresenter
     private void refreshValuesOnChange() {
         if (getView().getUseOverride()) {
             final String value = getView().getDatabaseValue().getText();
-            getEntity().setDatabaseOverride(OverrideValue.with(value.trim()));
+            getEntity().setDatabaseOverrideValue(OverrideValue.with(value.trim()));
         } else {
-            getEntity().setDatabaseOverride(OverrideValue.unSet(String.class));
+            getEntity().setDatabaseOverrideValue(OverrideValue.unSet(String.class));
             // no override so clear the value
             getView().getDatabaseValue().setText(null);
         }

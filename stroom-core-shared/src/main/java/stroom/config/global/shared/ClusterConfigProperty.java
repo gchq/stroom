@@ -43,10 +43,10 @@ public class ClusterConfigProperty implements SharedObject {
 
     public Map<String, String> getYamlOverrideValues() {
         return nodeToOverrideMap.entrySet().stream()
-                .filter(entry -> entry.getValue().hasOverride())
+                .filter(entry -> entry.getValue().isHasOverride())
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        entry -> entry.getValue().getValue().orElse(null)));
+                        entry -> entry.getValue().getValueAsOptional().orElse(null)));
     }
 
     @JsonProperty("id")
