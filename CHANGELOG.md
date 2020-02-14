@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1382** : Added `decode-url` and `encode-url` XSLT functions.
+
 * Issue **#655** : Fixed SQL Stats queries ignoring the enabled state of the dashboard query terms.
 
 

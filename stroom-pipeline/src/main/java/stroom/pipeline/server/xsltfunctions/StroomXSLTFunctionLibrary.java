@@ -68,9 +68,33 @@ public class StroomXSLTFunctionLibrary {
                 .build());
 
         config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("decode-url")
+                .library(this)
+                .delegateClass(DecodeUrl.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
                 .functionName("dictionary")
                 .library(this)
                 .delegateClass(Dictionary.class)
+                .minArgs(1)
+                .maxArgs(1)
+                .argTypes(new SequenceType[]{
+                        SequenceType.SINGLE_STRING
+                })
+                .resultType(SequenceType.OPTIONAL_STRING)
+                .build());
+
+        config.registerExtensionFunction(DelegateExtensionFunctionDefinition.startBuild()
+                .functionName("encode-url")
+                .library(this)
+                .delegateClass(EncodeUrl.class)
                 .minArgs(1)
                 .maxArgs(1)
                 .argTypes(new SequenceType[]{
