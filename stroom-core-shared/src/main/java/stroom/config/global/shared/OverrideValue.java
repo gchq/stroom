@@ -11,8 +11,8 @@ import java.util.function.Consumer;
 
 public class OverrideValue<T> implements SharedObject {
 
-    private static final OverrideValue UNSET =  new OverrideValue<>(false, null);
-    private static final OverrideValue NULL_VALUE =  new OverrideValue<>(true, null);
+    private static final OverrideValue<?> UNSET =  new OverrideValue<>(false, null);
+    private static final OverrideValue<?> NULL_VALUE =  new OverrideValue<>(true, null);
 
     @JsonProperty("hasOverride")
     private boolean hasOverride;
@@ -26,13 +26,13 @@ public class OverrideValue<T> implements SharedObject {
 
     @JsonIgnore
     @SuppressWarnings("unchecked")
-    public static <T> OverrideValue<T> unSet() {
+    public static <T> OverrideValue<T> unSet(final Class<T> type) {
         return (OverrideValue<T>) UNSET;
     }
 
     @JsonIgnore
     @SuppressWarnings("unchecked")
-    public static <T> OverrideValue<T> withNullValue() {
+    public static <T> OverrideValue<T> withNullValue(final Class<T> type) {
         return (OverrideValue<T>) NULL_VALUE;
     }
 

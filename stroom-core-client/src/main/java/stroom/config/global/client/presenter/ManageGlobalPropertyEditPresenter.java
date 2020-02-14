@@ -274,7 +274,7 @@ public final class ManageGlobalPropertyEditPresenter
             final String value = getView().getDatabaseValue().getText();
             getEntity().setDatabaseOverride(OverrideValue.with(value.trim()));
         } else {
-            getEntity().setDatabaseOverride(OverrideValue.unSet());
+            getEntity().setDatabaseOverride(OverrideValue.unSet(String.class));
             // no override so clear the value
             getView().getDatabaseValue().setText(null);
         }

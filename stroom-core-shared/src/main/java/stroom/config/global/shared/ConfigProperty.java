@@ -18,8 +18,6 @@ package stroom.config.global.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonValue;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.PropertyPath;
@@ -82,14 +80,14 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
 
     // The cluster wide value held in the database and set by the user in the UI, may be null.
     @JsonProperty("databaseOverrideValue")
-    private OverrideValue<String> databaseOverrideValue = OverrideValue.unSet();
+    private OverrideValue<String> databaseOverrideValue = OverrideValue.unSet(String.class);
 
     // These fields are not saved to the database,
     // they come from the annotations on the java config classes
 
     // The node specific value as set by the dropwizard YAML file
     @JsonProperty("yamlOverrideValue")
-    private OverrideValue<String> yamlOverrideValue = OverrideValue.unSet();
+    private OverrideValue<String> yamlOverrideValue = OverrideValue.unSet(String.class);
 
     @JsonProperty("description")
     private String description;
@@ -105,12 +103,16 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     @JsonProperty("dataTypeName")
     private String dataTypeName;
 
-    public ConfigProperty() {
+    ConfigProperty() {
         // Required for GWT serialisation
     }
 
-    public ConfigProperty(@JsonProperty("name") PropertyPath name,
-                          @JsonProperty("defaultValue") String defaultValue) {
+    public ConfigProperty(final PropertyPath name) {
+        this.name = name;
+    }
+
+    public ConfigProperty(final PropertyPath name,
+                          final String defaultValue) {
         this.name = name;
         this.defaultValue = defaultValue;
     }
@@ -170,20 +172,20 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     /**
      * @return The fully qualified name of the property, e.g. "stroom.temp.path"
      */
+    @JsonIgnore
     public String getNameAsString() {
         return name == null ? null : name.toString();
     }
 
-//    @JsonIgnore
     public PropertyPath getName() {
         return name;
     }
 
-//    @JsonIgnore
     public void setName(final PropertyPath name) {
         this.name = name;
     }
 
+    @JsonIgnore
     public void setName(final String propertyPathString) {
         Objects.requireNonNull(propertyPathString);
         this.name = PropertyPath.fromPathString(propertyPathString);
@@ -198,6 +200,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         return getEffectiveValue(defaultValue, databaseOverrideValue, yamlOverrideValue);
     }
 
+    @JsonIgnore
     public Optional<String> getEffectiveValue(final OverrideValue<String> yamlOverrideValue) {
         return getEffectiveValue(defaultValue, databaseOverrideValue, yamlOverrideValue);
     }
@@ -259,7 +262,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
      */
     @JsonIgnore
     public void removeDatabaseOverride() {
-        this.databaseOverrideValue = OverrideValue.unSet();
+        this.databaseOverrideValue = OverrideValue.unSet(String.class);
     }
 
     /**
@@ -295,7 +298,7 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
      */
     @JsonIgnore
     public void removeYamlOverride() {
-        this.yamlOverrideValue = OverrideValue.unSet();
+        this.yamlOverrideValue = OverrideValue.unSet(String.class);
     }
 
     @JsonIgnore
@@ -306,12 +309,13 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         // yaml as unset.
         if (Objects.equals(defaultValue, yamlOverrideValue)) {
             // matches default so remove the yaml value
-            this.yamlOverrideValue = OverrideValue.unSet();
+            this.yamlOverrideValue = OverrideValue.unSet(String.class);
         } else {
             this.yamlOverrideValue = OverrideValue.with(yamlOverrideValue);
         }
     }
 
+    @JsonIgnore
     public void setYamlOverride(final OverrideValue<String> yamlOverride) {
         if (yamlOverride.hasOverride()) {
             setYamlOverrideValue(yamlOverride.getValue().orElse(null));
@@ -369,7 +373,6 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         this.isPassword = password;
     }
 
-    @JsonProperty("source")
     public SourceType getSource() {
         if (yamlOverrideValue.hasOverride()) {
             return SourceType.YAML;
@@ -454,12 +457,10 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
 
         private final String name;
 
-        SourceType(final String name) {
+        SourceType(@JsonProperty("name") final String name) {
             this.name = name;
         }
 
-        @JsonValue
-        @JsonProperty("name")
         public String getName() {
             return name;
         }

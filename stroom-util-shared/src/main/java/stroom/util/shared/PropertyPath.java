@@ -1,7 +1,8 @@
 package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.SharedObject;
 
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
 
     // Held in part form to reduce memory overhead as some parts will be used
     // many times over all the config objects
+    @JsonProperty("parts")
     private List<String> parts;
 
     @SuppressWarnings("unused")
@@ -32,8 +34,13 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
         // Pkg private for GWT
     }
 
-    private PropertyPath(final List<String> parts) {
-        this.parts = new ArrayList<>(parts);
+    @JsonCreator
+    PropertyPath(@JsonProperty("parts") final List<String> parts) {
+        if (parts == null) {
+            this.parts = Collections.emptyList();
+        } else {
+            this.parts = new ArrayList<>(parts);
+        }
     }
 
     public static PropertyPath blank() {
@@ -43,7 +50,6 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
     /**
      * Create a {@link PropertyPath} from a path string, e.g "stroom.node.name"
      */
-    @JsonCreator
     public static PropertyPath fromPathString(final String propertyPath) {
         if (propertyPath == null || propertyPath.isEmpty()) {
             return EMPTY_INSTANCE;
@@ -91,6 +97,7 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
     /**
      * @return The property name from a property path, i.e. "name" from "stroom.node.name"
      */
+    @JsonIgnore
     public String getPropertyName() {
         if (parts.isEmpty()) {
             throw new RuntimeException("Unable to get property name from empty path");
@@ -108,9 +115,12 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
     }
 
     @Override
-    @JsonValue
     public String toString() {
-        return String.join(DELIMITER, parts);
+        if (parts == null || parts.isEmpty()) {
+            return null;
+        } else {
+            return String.join(DELIMITER, parts);
+        }
     }
 
     @Override

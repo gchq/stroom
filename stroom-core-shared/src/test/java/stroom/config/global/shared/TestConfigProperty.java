@@ -1,14 +1,10 @@
 package stroom.config.global.shared;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.shared.PropertyPath;
 
 import java.io.IOException;
@@ -17,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestConfigProperty {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestConfigProperty.class);
+    // No LOGGER, due to GWT
 
     @Test
     void testPrecedenceNullDefaultOnly() {
@@ -297,7 +293,7 @@ class TestConfigProperty {
     @Test
     void testSerialisation2() throws IOException {
 
-        ConfigProperty configProperty = new ConfigProperty();
+        ConfigProperty configProperty = new ConfigProperty(PropertyPath.fromPathString("some.name"));
         doSerdeTest(configProperty);
     }
 
@@ -311,7 +307,7 @@ class TestConfigProperty {
         assertThat(mapper.canSerialize(OverrideValue.class)).isTrue();
 
         String json = mapper.writeValueAsString(configProperty);
-        LOGGER.info("\n" + json);
+        System.out.println("\n" + json);
 
         final ConfigProperty configProperty2 = mapper.readValue(json, ConfigProperty.class);
 

@@ -167,7 +167,7 @@ class TestConfigMapper {
 
         assertValues(configProperty,
                 initialValue,
-                OverrideValue.unSet(),
+                OverrideValue.unSet(String.class),
                 OverrideValue.with(newValue),
                 newValue);
     }
@@ -194,7 +194,7 @@ class TestConfigMapper {
         assertValues(
                 configProperty,
                 initialValue,
-                OverrideValue.unSet(),
+                OverrideValue.unSet(String.class),
                 OverrideValue.with(newYamlValue),
                 newYamlValue);
 

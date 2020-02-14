@@ -4,17 +4,14 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TestOverrideValue {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestOverrideValue.class);
+    // No LOGGER due to gwt
 
     @Test
     void testSerde_withValueString() throws IOException {
@@ -33,7 +30,7 @@ class TestOverrideValue {
 
     @Test
     void testSerde_unset() throws IOException {
-        doSerdeTest(OverrideValue.unSet(), OverrideValue.class);
+        doSerdeTest(OverrideValue.unSet(String.class), OverrideValue.class);
     }
 
     private <T> void doSerdeTest(final T entity, final Class<T> clazz) throws IOException {
@@ -46,7 +43,7 @@ class TestOverrideValue {
                 .isTrue();
 
         String json = mapper.writeValueAsString(entity);
-        LOGGER.info("\n" + json);
+        System.out.println("\n" + json);
 
         final T entity2 = (T) mapper.readValue(json, clazz);
 

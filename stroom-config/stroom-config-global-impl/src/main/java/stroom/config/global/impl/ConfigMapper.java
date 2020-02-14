@@ -336,9 +336,7 @@ public class ConfigMapper {
         final String defaultValueAsStr = getDefaultValue(defaultProp);
 
         // build a new ConfigProperty object from our Prop and our defaults
-        final ConfigProperty configProperty = new ConfigProperty();
-        configProperty.setName(fullPath);
-        configProperty.setDefaultValue(defaultValueAsStr);
+        final ConfigProperty configProperty = new ConfigProperty(fullPath, defaultValueAsStr);
         // Add all the meta data for the prop
         updatePropertyFromConfigAnnotations(configProperty, defaultProp);
 
