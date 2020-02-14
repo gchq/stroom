@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1379** : Fixed issue where you couldn't open a processor filter if parts of the filter referenced deleted items.
+
+* Issue **#1378** : Improved logging detail when processor filters fail.
+
+* Issue **#1382** : Added `decode-url` and `encode-url` XSLT functions.
+
+* Issue **#655** : Fixed SQL Stats queries ignoring the enabled state of the dashboard query terms.
+
 
 ## [v6.1-beta.19] - 2020-02-13
 

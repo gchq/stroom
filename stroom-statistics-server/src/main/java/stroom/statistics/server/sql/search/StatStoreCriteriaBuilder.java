@@ -58,25 +58,27 @@ public class StatStoreCriteriaBuilder {
         ExpressionTerm dateTerm = null;
         if (childExpressions != null) {
             for (final ExpressionItem expressionItem : childExpressions) {
-                if (expressionItem instanceof ExpressionTerm) {
-                    final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
+                if (expressionItem.enabled()) {
+                    if (expressionItem instanceof ExpressionTerm) {
+                        final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
 
-                    if (expressionTerm.getField() == null) {
-                        throw new IllegalArgumentException("Expression term does not have a field specified");
-                    }
-
-                    if (expressionTerm.getField().equals(StatisticStoreEntity.FIELD_NAME_DATE_TIME)) {
-                        dateTermsFound++;
-
-                        if (SUPPORTED_DATE_CONDITIONS.contains(expressionTerm.getCondition())) {
-                            dateTerm = expressionTerm;
-                            validDateTermsFound++;
+                        if (expressionTerm.getField() == null) {
+                            throw new IllegalArgumentException("Expression term does not have a field specified");
                         }
-                    }
-                } else if (expressionItem instanceof ExpressionOperator) {
-                    if (((ExpressionOperator) expressionItem).getOp() == null) {
-                        throw new IllegalArgumentException(
+
+                        if (expressionTerm.getField().equals(StatisticStoreEntity.FIELD_NAME_DATE_TIME)) {
+                            dateTermsFound++;
+
+                            if (SUPPORTED_DATE_CONDITIONS.contains(expressionTerm.getCondition())) {
+                                dateTerm = expressionTerm;
+                                validDateTermsFound++;
+                            }
+                        }
+                    } else if (expressionItem instanceof ExpressionOperator) {
+                        if (((ExpressionOperator) expressionItem).getOp() == null) {
+                            throw new IllegalArgumentException(
                                 "An operator in the query is missing a type, it should be one of " + ExpressionOperator.Op.values());
+                        }
                     }
                 }
             }
