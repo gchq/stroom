@@ -500,6 +500,8 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private void createTasksForFilter(final TaskMonitor taskMonitor, final Node node,
                                       final StreamProcessorFilter filter, final StreamTaskQueue queue, final int maxQueueSize,
                                       final StreamTaskCreatorRecentStreamDetails recentStreamInfo) {
+        String pipelineDetails = "";
+
         boolean searching = false;
         try {
             // Reload as it could have changed
@@ -508,6 +510,12 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
 
             // The filter might have been deleted since we found it.
             if (loadedFilter != null) {
+
+                if (loadedFilter.getStreamProcessor() != null &&
+                        loadedFilter.getStreamProcessor().getPipeline() != null &&
+                        loadedFilter.getStreamProcessor().getPipeline().getName() != null) {
+                    pipelineDetails = loadedFilter.getStreamProcessor().getPipeline().getName();
+                }
 
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
                 try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, securityContext.createIdentity(loadedFilter.getCreateUser()))) {
@@ -649,7 +657,11 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 }
             }
         } catch (final Throwable t) {
-            LOGGER.error("Error processing filter with id = " + filter.getId());
+            if (pipelineDetails.length() > 0) {
+                pipelineDetails = " for pipeline " + pipelineDetails;
+            }
+
+            LOGGER.error("Error processing filter with id = " + filter.getId() + pipelineDetails);
             LOGGER.error(t.getMessage(), t);
         } finally {
             if (!searching) {
