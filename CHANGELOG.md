@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1378** : Improved logging detail when processor filters fail.
+
 
 ## [v6.0.33] - 2020-02-14
 

@@ -25,6 +25,8 @@ import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.Node;
+import stroom.pipeline.server.PipelineService;
+import stroom.pipeline.shared.PipelineEntity;
 import stroom.query.api.v2.Query;
 import stroom.search.server.EventRef;
 import stroom.search.server.EventRefs;
@@ -102,6 +104,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private final StreamTaskService streamTaskService;
     private final StreamTaskHelper streamTaskHelper;
     private final StroomPropertyService propertyService;
+    private final PipelineService pipelineService;
     private final InternalStatisticsReceiver internalStatisticsReceiver;
     private final StreamStore streamStore;
     private final SecurityContext securityContext;
@@ -154,6 +157,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                           final StreamTaskService streamTaskService,
                           final StreamTaskHelper streamTaskHelper,
                           final StroomPropertyService propertyService,
+                          final PipelineService pipelineService,
                           final InternalStatisticsReceiver internalStatisticsReceiver,
                           final StreamStore streamStore,
                           final SecurityContext securityContext,
@@ -166,6 +170,7 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
         this.streamTaskService = streamTaskService;
         this.streamTaskHelper = streamTaskHelper;
         this.propertyService = propertyService;
+        this.pipelineService = pipelineService;
         this.internalStatisticsReceiver = internalStatisticsReceiver;
         this.streamStore = streamStore;
         this.securityContext = securityContext;
@@ -500,23 +505,16 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
     private void createTasksForFilter(final TaskMonitor taskMonitor, final Node node,
                                       final StreamProcessorFilter filter, final StreamTaskQueue queue, final int maxQueueSize,
                                       final StreamTaskCreatorRecentStreamDetails recentStreamInfo) {
-        String pipelineDetails = "";
+        StreamProcessorFilter loadedFilter = null;
 
         boolean searching = false;
         try {
             // Reload as it could have changed
-            final StreamProcessorFilter loadedFilter = streamProcessorFilterService.load(filter,
+            loadedFilter = streamProcessorFilterService.load(filter,
                     Collections.singleton(StreamProcessor.ENTITY_TYPE));
 
             // The filter might have been deleted since we found it.
             if (loadedFilter != null) {
-
-                if (loadedFilter.getStreamProcessor() != null &&
-                        loadedFilter.getStreamProcessor().getPipeline() != null &&
-                        loadedFilter.getStreamProcessor().getPipeline().getName() != null) {
-                    pipelineDetails = loadedFilter.getStreamProcessor().getPipeline().getName();
-                }
-
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
                 try (final SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, securityContext.createIdentity(loadedFilter.getCreateUser()))) {
                     LOGGER.debug("createTasksForFilter() - streamProcessorFilter {}", loadedFilter.toString());
@@ -657,8 +655,19 @@ public class StreamTaskCreatorImpl implements StreamTaskCreator {
                 }
             }
         } catch (final Throwable t) {
-            if (pipelineDetails.length() > 0) {
-                pipelineDetails = " for pipeline " + pipelineDetails;
+            String pipelineDetails = "";
+
+            try {
+                if (loadedFilter != null &&
+                        loadedFilter.getStreamProcessor() != null &&
+                        loadedFilter.getStreamProcessor().getPipeline() != null) {
+                    final PipelineEntity loadedPipeline = pipelineService.load(loadedFilter.getStreamProcessor().getPipeline());
+                    if (loadedPipeline != null && loadedPipeline.getName() != null) {
+                        pipelineDetails = " for pipeline " + loadedPipeline.getName();
+                    }
+                }
+            } catch (final RuntimeException e) {
+                LOGGER.debug(e.getMessage(), e);
             }
 
             LOGGER.error("Error processing filter with id = " + filter.getId() + pipelineDetails);
