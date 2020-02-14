@@ -23,8 +23,6 @@ import org.springframework.context.annotation.Scope;
 import stroom.entity.shared.BaseResultList;
 import stroom.entity.shared.ResultList;
 import stroom.explorer.server.ExplorerService;
-import stroom.pipeline.server.PipelineService;
-import stroom.pipeline.shared.PipelineEntity;
 import stroom.process.shared.FetchProcessorAction;
 import stroom.process.shared.StreamProcessorFilterRow;
 import stroom.process.shared.StreamProcessorRow;
@@ -177,17 +175,18 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
                     ExpressionTerm term = (ExpressionTerm) child;
                     DocRef docRef = term.getDocRef();
 
-                    if (docRef != null) {
-                        final DocRefInfo docRefInfo = explorerService.info(docRef);
-                        if (docRefInfo != null) {
-                            term = new ExpressionTerm.Builder()
-                                    .enabled(term.getEnabled())
-                                    .field(term.getField())
-                                    .condition(term.getCondition())
-                                    .value(term.getValue())
-                                    .docRef(docRefInfo.getDocRef())
-                                    .build();
-                        }
+                    try {
+                        if (docRef != null) {
+                            final DocRefInfo docRefInfo = explorerService.info(docRef);
+                            if (docRefInfo != null) {
+                                term = new ExpressionTerm.Builder()
+                                        .enabled(term.getEnabled())
+                                        .field(term.getField())
+                                        .condition(term.getCondition())
+                                        .value(term.getValue())
+                                        .docRef(docRefInfo.getDocRef())
+                                        .build();
+                            }
 //
 //                        if (DictionaryDoc.ENTITY_TYPE.equals(docRef.getType())) {
 //                            try {
@@ -222,6 +221,9 @@ public class FetchProcessorHandler extends AbstractTaskHandler<FetchProcessorAct
 //                                    .docRef(docRef)
 //                                    .build();
 //                        }
+                        }
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e.getMessage(), e);
                     }
 
                     builder.addTerm(term);
