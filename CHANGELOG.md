@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+## [v5.5.13] - 2020-02-14
+
 * Issue **#1382** : Added `decode-url` and `encode-url` XSLT functions.
 
 ## [v5.5.12] - 2019-11-22
@@ -1006,7 +1008,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.12...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v5.5.13...HEAD
+[v5.5.13]: https://github.com/gchq/stroom/compare/v5.5.12...v5.5.13
 [v5.5.12]: https://github.com/gchq/stroom/compare/v5.5.11...v5.5.12
 [v5.5.11]: https://github.com/gchq/stroom/compare/v5.5.10...v5.5.11
 [v5.5.10]: https://github.com/gchq/stroom/compare/v5.5.9...v5.5.10
