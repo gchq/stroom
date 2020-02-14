@@ -40,7 +40,9 @@ public class StroomXSLTFunctionLibrary {
             register("classification", Classification.class, 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING);
             register("current-time", CurrentTime.class, 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING);
             register("current-user", CurrentUser.class, 0, 0, new SequenceType[]{}, SequenceType.OPTIONAL_STRING);
+            register("decode-url", DecodeUrl.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);
             register("dictionary", Dictionary.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);
+            register("encode-url", EncodeUrl.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);
 
             // TODO : Deprecate
             register("feed-attribute", Meta.class, 1, 1, new SequenceType[]{SequenceType.SINGLE_STRING}, SequenceType.OPTIONAL_STRING);

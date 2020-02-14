@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1382** : Added `decode-url` and `encode-url` XSLT functions.
+
 ## [v5.5.12] - 2019-11-22
 
 * Issue **#1341** : Added XSRF protection to GWT PRC requests.
