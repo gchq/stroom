@@ -1,7 +1,6 @@
 package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
 import stroom.docref.SharedObject;
 
@@ -28,8 +27,9 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
     // many times over all the config objects
     private List<String> parts;
 
-    @SuppressWarnings("unused") // Needed for GWT
-    private PropertyPath() {
+    @SuppressWarnings("unused")
+    PropertyPath() {
+        // Pkg private for GWT
     }
 
     private PropertyPath(final List<String> parts) {
@@ -45,7 +45,7 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
      */
     @JsonCreator
     public static PropertyPath fromPathString(final String propertyPath) {
-        if (propertyPath == null || propertyPath.isBlank()) {
+        if (propertyPath == null || propertyPath.isEmpty()) {
             return EMPTY_INSTANCE;
         } else {
             return PropertyPath.fromParts(propertyPath.split(DELIMITER_REGEX));
