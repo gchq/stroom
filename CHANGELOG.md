@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.0.33] - 2020-02-14
+
 * Issue **#1379** : Fixed issue where you couldn't open a processor filter if parts of the filter referenced deleted items.
 
 * Issue **#1378** : Improved logging detail when processor filters fail.
@@ -2059,7 +2062,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.32...6.0
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.0.33...6.0
+[v6.0.33]: https://github.com/gchq/stroom/compare/v6.0.32...v6.0.33
 [v6.0.32]: https://github.com/gchq/stroom/compare/v6.0.31...v6.0.32
 [v6.0.31]: https://github.com/gchq/stroom/compare/v6.0.30...v6.0.31
 [v6.0.30]: https://github.com/gchq/stroom/compare/v6.0.29...v6.0.30
