@@ -55,7 +55,7 @@ public class OverrideValue<T> implements SharedObject {
     }
 
     // Horrible name, but can't seem to get RestyGWT to use @JsonGetter
-    boolean isHasOverride() {
+    public boolean isHasOverride() {
         return hasOverride;
     }
 

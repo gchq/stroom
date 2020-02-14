@@ -18,6 +18,7 @@
 package stroom.config.global.client.presenter;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -33,7 +34,10 @@ import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.NodeResource;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.svg.client.SvgPreset;
+import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -42,8 +46,9 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.AbstractMap;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class ManageGlobalPropertyEditPresenter
@@ -60,7 +65,8 @@ public final class ManageGlobalPropertyEditPresenter
     private final UiConfigCache clientPropertyCache;
     private ConfigProperty configProperty;
     private Map<String, OverrideValue<String>> clusterYamlOverrides = new HashMap<>();
-    private Map<String, List<String>> effectiveValueToNodes = new HashMap<>();
+    private Map<String, Set<String>> effectiveValueToNodesMap = new HashMap<>();
+    private final ButtonView warningsButton;
 
     @Inject
     public ManageGlobalPropertyEditPresenter(final EventBus eventBus,
@@ -72,7 +78,18 @@ public final class ManageGlobalPropertyEditPresenter
         this.restFactory = restFactory;
         this.securityContext = securityContext;
         this.clientPropertyCache = clientPropertyCache;
+        this.warningsButton = view.addButton(SvgPresets.ALERT.title("Node values differ"));
+        this.warningsButton.setVisible(false);
         view.setUiHandlers(this);
+    }
+
+    @Override
+    protected void onBind() {
+        registerHandler(warningsButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                // TODO Open popup showing all values
+            }
+        }));
     }
 
     protected ClientSecurityContext getSecurityContext() {
@@ -83,13 +100,24 @@ public final class ManageGlobalPropertyEditPresenter
 
         if (configProperty.getId() != null) {
             updateValuesFromResource(configProperty.getName().toString(), popupUiHandlers);
+
         } else {
             // new configProperty
             setEntity(configProperty);
             showPopup(popupUiHandlers);
         }
+        // find out the yaml values for each node in the cluster
+        refreshYamlOverrideForAllNodes();
     }
-    
+
+    private void updateWarningState() {
+        final long uniqueYamlOverrideValues = getUniqueYamlOverrideValues();
+        // TODO here just for testing
+        warningsButton.setVisible(true);
+        warningsButton.setTitle("Unique value(s): " + uniqueYamlOverrideValues);
+//        warningsButton.setVisible(uniqueYamlOverrideValues > 1);
+    }
+
     private void updateValuesFromResource(final String propertyName, final PopupUiHandlers popupUiHandlers) {
         final Rest<ConfigProperty> fetchPropertyRest = restFactory.create();
 
@@ -108,6 +136,7 @@ public final class ManageGlobalPropertyEditPresenter
     private long getUniqueYamlOverrideValues() {
         return clusterYamlOverrides.values()
                 .stream()
+            .filter(OverrideValue::isHasOverride)
                 .distinct()
                 .count();
     }
@@ -145,9 +174,22 @@ public final class ManageGlobalPropertyEditPresenter
 
         fetchNodeYamlOverrideRest
                 .onSuccess(yamlOverride -> {
+                    // Add the node's result to our maps
                     clusterYamlOverrides.put(nodeName, yamlOverride);
-                    String effectiveValue = configProperty.getEffectiveValue(yamlOverride)
-                            .orElse(MAGIC_NULL);
+                    final String effectiveValueFromNode = configProperty.getEffectiveValue(yamlOverride)
+                        .orElse(MAGIC_NULL);
+                    if (yamlOverride == null) {
+                        effectiveValueToNodesMap.forEach((effectiveValue, nodes) -> {
+                            if (effectiveValue.equals(effectiveValueFromNode))
+                            nodes.remove(nodeName);
+                        });
+                    } else {
+                        this.effectiveValueToNodesMap.computeIfAbsent(
+                            effectiveValueFromNode,
+                            k -> new HashSet<>())
+                            .add(nodeName);
+                    }
+                    updateWarningState();
                 })
                 .onFailure(throwable -> {
                     clusterYamlOverrides.remove(nodeName);
@@ -332,6 +374,8 @@ public final class ManageGlobalPropertyEditPresenter
         void setUseOverride(boolean useOverride);
 
         void setEditable(boolean edit);
+
+        ButtonView addButton(SvgPreset preset);
     }
 
 }

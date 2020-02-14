@@ -36,17 +36,17 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     List<ConfigProperty> getAllConfig();
 
     @GET
-    @Path(PROPERTIES_SUB_PATH + "/{propertyName}")
+    @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)
     @Produces(MediaType.APPLICATION_JSON)
     ConfigProperty getPropertyByName(final @PathParam("propertyName") String propertyName);
 
     @GET
-    @Path(PROPERTIES_SUB_PATH + "/{propertyName}" + YAML_OVERRIDE_VALUE_SUB_PATH)
+    @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH)
     @Produces(MediaType.TEXT_PLAIN)
     OverrideValue<String> getYamlValueByName(final @PathParam("propertyName") String propertyName);
 
     @GET
-    @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}" + YAML_OVERRIDE_VALUE_SUB_PATH)
+    @Path(CLUSTER_PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH + NODE_NAME_PATH_PARAM)
     @Produces(MediaType.APPLICATION_JSON)
     OverrideValue<String> getYamlValueByNodeAndName(final @PathParam("propertyName") String propertyName,
                                                     final @PathParam("nodeName") String nodeName);

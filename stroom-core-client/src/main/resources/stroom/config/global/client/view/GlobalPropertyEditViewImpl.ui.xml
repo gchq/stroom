@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <ui:style>
         .max {
@@ -55,7 +56,12 @@
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>YAML Value:</g:cell>
+            <g:customCell>
+                <g:FlowPanel>
+                    <g:Label ui:text="Node YAML Value:"/>
+                    <b:ButtonPanel ui:field="buttonPanel"/>
+                </g:FlowPanel>
+            </g:customCell>
             <g:customCell>
                 <g:TextArea ui:field="yamlValue" width="100%" addStyleNames="globalProperties {style.textAreaReducedHeight}"/>
             </g:customCell>
