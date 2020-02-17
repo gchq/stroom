@@ -16,6 +16,8 @@
 
 package stroom.pipeline.shared.stepping;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 import stroom.meta.shared.FindMetaCriteria;
 
@@ -27,15 +29,40 @@ public class PipelineStepRequest {
     /**
      * This is what chooses the input to the translation.
      */
+    @JsonProperty
     private FindMetaCriteria criteria;
+    @JsonProperty
     private String childStreamType;
+    @JsonProperty
     private StepLocation stepLocation;
+    @JsonProperty
     private StepType stepType;
-
+    @JsonProperty
     private Map<String, SteppingFilterSettings> stepFilterMap;
-
+    @JsonProperty
     private DocRef pipeline;
+    @JsonProperty
     private Map<String, String> code;
+
+    public PipelineStepRequest() {
+    }
+
+    @JsonCreator
+    public PipelineStepRequest(@JsonProperty("criteria") final FindMetaCriteria criteria,
+                               @JsonProperty("childStreamType") final String childStreamType,
+                               @JsonProperty("stepLocation") final StepLocation stepLocation,
+                               @JsonProperty("stepType") final StepType stepType,
+                               @JsonProperty("stepFilterMap") final Map<String, SteppingFilterSettings> stepFilterMap,
+                               @JsonProperty("pipeline") final DocRef pipeline,
+                               @JsonProperty("code") final Map<String, String> code) {
+        this.criteria = criteria;
+        this.childStreamType = childStreamType;
+        this.stepLocation = stepLocation;
+        this.stepType = stepType;
+        this.stepFilterMap = stepFilterMap;
+        this.pipeline = pipeline;
+        this.code = code;
+    }
 
     public FindMetaCriteria getCriteria() {
         return criteria;
@@ -77,16 +104,10 @@ public class PipelineStepRequest {
         this.stepLocation = stepLocation;
     }
 
-    /**
-     * @return The step type.
-     */
     public StepType getStepType() {
         return stepType;
     }
 
-    /**
-     * @param stepType the stepType to set.
-     */
     public void setStepType(final StepType stepType) {
         this.stepType = stepType;
     }
@@ -95,12 +116,7 @@ public class PipelineStepRequest {
         if (stepFilterMap == null) {
             stepFilterMap = new HashMap<>();
         }
-        SteppingFilterSettings settings = stepFilterMap.get(elementId);
-        if (settings == null) {
-            settings = new SteppingFilterSettings();
-            stepFilterMap.put(elementId, settings);
-        }
-        return settings;
+        return stepFilterMap.computeIfAbsent(elementId, k -> new SteppingFilterSettings());
     }
 
     public Map<String, SteppingFilterSettings> getStepFilterMap() {

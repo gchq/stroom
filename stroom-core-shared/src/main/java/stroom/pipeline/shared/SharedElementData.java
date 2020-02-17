@@ -17,24 +17,31 @@
 package stroom.pipeline.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.Indicators;
 
 public class SharedElementData {
-    private static final long serialVersionUID = -1614851794579868895L;
+    @JsonProperty
+    private final String input;
+    @JsonProperty
+    private final String output;
+    @JsonProperty
+    private final Indicators codeIndicators;
+    @JsonProperty
+    private final Indicators outputIndicators;
+    @JsonProperty
+    private final boolean formatInput;
+    @JsonProperty
+    private final boolean formatOutput;
 
-    private String input;
-    private String output;
-    private Indicators codeIndicators;
-    private Indicators outputIndicators;
-    private boolean formatInput;
-    private boolean formatOutput;
-
-    public SharedElementData() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public SharedElementData(final String input, final String output, final Indicators codeIndicators,
-                             final Indicators outputIndicators, final boolean formatInput, final boolean formatOutput) {
+    @JsonCreator
+    public SharedElementData(@JsonProperty("input") final String input,
+                             @JsonProperty("output") final String output,
+                             @JsonProperty("codeIndicators") final Indicators codeIndicators,
+                             @JsonProperty("outputIndicators") final Indicators outputIndicators,
+                             @JsonProperty("formatInput") final boolean formatInput,
+                             @JsonProperty("formatOutput") final boolean formatOutput) {
         this.input = input;
         this.output = output;
         this.codeIndicators = codeIndicators;
@@ -47,47 +54,24 @@ public class SharedElementData {
         return input;
     }
 
-    public void setInput(final String input) {
-        this.input = input;
-    }
-
     public String getOutput() {
         return output;
-    }
-
-    public void setOutput(final String output) {
-        this.output = output;
     }
 
     public Indicators getCodeIndicators() {
         return codeIndicators;
     }
 
-    public void setCodeIndicators(final Indicators codeIndicators) {
-        this.codeIndicators = codeIndicators;
-    }
-
     public Indicators getOutputIndicators() {
         return outputIndicators;
-    }
-
-    public void setOutputIndicators(final Indicators outputIndicators) {
-        this.outputIndicators = outputIndicators;
     }
 
     public boolean isFormatInput() {
         return formatInput;
     }
 
-    public void setFormatInput(final boolean formatInput) {
-        this.formatInput = formatInput;
-    }
-
     public boolean isFormatOutput() {
         return formatOutput;
     }
-
-    public void setFormatOutput(final boolean formatOutput) {
-        this.formatOutput = formatOutput;
-    }
 }
+

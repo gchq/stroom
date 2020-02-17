@@ -16,24 +16,20 @@
 
 package stroom.security.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 
 public class FetchAllDocumentPermissionsRequest {
-    private DocRef docRef;
+    @JsonProperty
+    private final DocRef docRef;
 
-    public FetchAllDocumentPermissionsRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public FetchAllDocumentPermissionsRequest(final DocRef docRef) {
+    @JsonCreator
+    public FetchAllDocumentPermissionsRequest(@JsonProperty("docRef") final DocRef docRef) {
         this.docRef = docRef;
     }
 
     public DocRef getDocRef() {
         return docRef;
-    }
-
-    public void setDocRef(final DocRef docRef) {
-        this.docRef = docRef;
     }
 }

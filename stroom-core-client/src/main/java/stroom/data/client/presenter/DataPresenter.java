@@ -353,7 +353,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
         ignoreActions = true;
         this.lastResult = result;
 
-        if (result == null || result.getStreamType() == null || steppingSource) {
+        if (result == null || result.getStreamTypeName() == null || steppingSource) {
             playButtonVisible = false;
         } else {
             playButtonVisible = beginSteppingHandler != null && userHasPipelineSteppingPermission;
@@ -382,7 +382,7 @@ public class DataPresenter extends MyPresenterWidget<DataPresenter.DataView> imp
             classificationUiHandlers.setClassification(result.getClassification());
 
             refresh(result);
-            updateTabs(result.getStreamType(), result.getAvailableChildStreamTypes());
+            updateTabs(result.getStreamTypeName(), result.getAvailableChildStreamTypes());
 
         } else {
             getView().showSegmentPager(false);

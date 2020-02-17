@@ -17,18 +17,28 @@
 package stroom.security.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.HashSet;
 import java.util.Set;
 
 public class ChangeSet<T> {
-    private static final long serialVersionUID = -1740543177783532223L;
-
-    private Set<T> addSet = new HashSet<>();
-    private Set<T> removeSet = new HashSet<>();
+    @JsonProperty
+    private final Set<T> addSet;
+    @JsonProperty
+    private final Set<T> removeSet;
 
     public ChangeSet() {
-        // Default constructor necessary for GWT serialisation.
+        addSet = new HashSet<>();
+        removeSet = new HashSet<>();
+    }
+
+    @JsonCreator
+    public ChangeSet(@JsonProperty("addSet") final Set<T> addSet,
+                     @JsonProperty("removeSet") final Set<T> removeSet) {
+        this.addSet = addSet;
+        this.removeSet = removeSet;
     }
 
     public void add(final T item) {

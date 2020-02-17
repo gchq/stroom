@@ -17,6 +17,7 @@
 package stroom.pipeline.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import stroom.util.shared.OffsetRange;
@@ -33,22 +34,29 @@ import java.util.List;
         @JsonSubTypes.Type(value = FetchMarkerResult.class, name = "marker")
 })
 public abstract class AbstractFetchDataResult {
-    private String streamType;
-    private String classification;
-    private OffsetRange<Long> streamRange;
-    private RowCount<Long> streamRowCount;
-    private OffsetRange<Long> pageRange;
-    private RowCount<Long> pageRowCount;
-    private List<String> availableChildStreamTypes;
+    @JsonProperty
+    private final String streamTypeName;
+    @JsonProperty
+    private final String classification;
+    @JsonProperty
+    private final OffsetRange<Long> streamRange;
+    @JsonProperty
+    private final RowCount<Long> streamRowCount;
+    @JsonProperty
+    private final OffsetRange<Long> pageRange;
+    @JsonProperty
+    private final RowCount<Long> pageRowCount;
+    @JsonProperty
+    private final List<String> availableChildStreamTypes;
 
-    public AbstractFetchDataResult() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public AbstractFetchDataResult(final String streamType, final String classification,
-                                   final OffsetRange<Long> streamRange, final RowCount<Long> streamRowCount, final OffsetRange<Long> pageRange,
-                                   final RowCount<Long> pageRowCount, final List<String> availableChildStreamTypes) {
-        this.streamType = streamType;
+    public AbstractFetchDataResult(final String streamTypeName,
+                                   final String classification,
+                                   final OffsetRange<Long> streamRange,
+                                   final RowCount<Long> streamRowCount,
+                                   final OffsetRange<Long> pageRange,
+                                   final RowCount<Long> pageRowCount,
+                                   final List<String> availableChildStreamTypes) {
+        this.streamTypeName = streamTypeName;
         this.classification = classification;
         this.streamRange = streamRange;
         this.streamRowCount = streamRowCount;
@@ -57,59 +65,31 @@ public abstract class AbstractFetchDataResult {
         this.availableChildStreamTypes = availableChildStreamTypes;
     }
 
-    public String getStreamType() {
-        return streamType;
-    }
-
-    public void setStreamType(final String streamType) {
-        this.streamType = streamType;
+    public String getStreamTypeName() {
+        return streamTypeName;
     }
 
     public String getClassification() {
         return classification;
     }
 
-    public void setClassification(final String classification) {
-        this.classification = classification;
-    }
-
     public OffsetRange<Long> getStreamRange() {
         return streamRange;
-    }
-
-    public void setStreamRange(final OffsetRange<Long> streamRange) {
-        this.streamRange = streamRange;
     }
 
     public RowCount<Long> getStreamRowCount() {
         return streamRowCount;
     }
 
-    public void setStreamRowCount(final RowCount<Long> streamRowCount) {
-        this.streamRowCount = streamRowCount;
-    }
-
     public OffsetRange<Long> getPageRange() {
         return pageRange;
-    }
-
-    public void setPageRange(final OffsetRange<Long> pageRange) {
-        this.pageRange = pageRange;
     }
 
     public RowCount<Long> getPageRowCount() {
         return pageRowCount;
     }
 
-    public void setPageRowCount(final RowCount<Long> pageRowCount) {
-        this.pageRowCount = pageRowCount;
-    }
-
     public List<String> getAvailableChildStreamTypes() {
         return availableChildStreamTypes;
-    }
-
-    public void setAvailableChildStreamTypes(final List<String> availableChildStreamTypes) {
-        this.availableChildStreamTypes = availableChildStreamTypes;
     }
 }

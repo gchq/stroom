@@ -16,19 +16,22 @@
 
 package stroom.pipeline.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 
 import java.util.Map;
 
 public class FetchPropertyTypesResult {
-    private PipelineElementType pipelineElementType;
-    private Map<String, PipelinePropertyType> propertyTypes;
+    @JsonProperty
+    private final PipelineElementType pipelineElementType;
+    @JsonProperty
+    private final Map<String, PipelinePropertyType> propertyTypes;
 
-    public FetchPropertyTypesResult() {
-    }
-
-    public FetchPropertyTypesResult(final PipelineElementType pipelineElementType, final Map<String, PipelinePropertyType> propertyTypes) {
+    @JsonCreator
+    public FetchPropertyTypesResult(@JsonProperty("pipelineElementType") final PipelineElementType pipelineElementType,
+                                    @JsonProperty("propertyTypes") final Map<String, PipelinePropertyType> propertyTypes) {
         this.pipelineElementType = pipelineElementType;
         this.propertyTypes = propertyTypes;
     }
@@ -37,15 +40,7 @@ public class FetchPropertyTypesResult {
         return pipelineElementType;
     }
 
-    public void setPipelineElementType(final PipelineElementType pipelineElementType) {
-        this.pipelineElementType = pipelineElementType;
-    }
-
     public Map<String, PipelinePropertyType> getPropertyTypes() {
         return propertyTypes;
-    }
-
-    public void setPropertyTypes(final Map<String, PipelinePropertyType> propertyTypes) {
-        this.propertyTypes = propertyTypes;
     }
 }

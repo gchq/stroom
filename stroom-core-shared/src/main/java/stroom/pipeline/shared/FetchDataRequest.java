@@ -16,40 +16,56 @@
 
 package stroom.pipeline.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 
 public class FetchDataRequest {
+    @JsonProperty
     private Long streamId;
+    @JsonProperty
     private String childStreamType;
-
-    private OffsetRange<Long> streamRange;
-    private OffsetRange<Long> pageRange;
-    private boolean showAsHtml;
-    private boolean markerMode;
-    private Severity[] expandedSeverities;
-    private transient boolean fireEvents;
-
+    @JsonProperty
     private DocRef pipeline;
+    @JsonProperty
+    private OffsetRange<Long> streamRange;
+    @JsonProperty
+    private OffsetRange<Long> pageRange;
+    @JsonProperty
+    private boolean showAsHtml;
+    @JsonProperty
+    private boolean markerMode;
+    @JsonProperty
+    private Severity[] expandedSeverities;
+
+    @JsonIgnore
+    private transient boolean fireEvents;
 
     public FetchDataRequest() {
         streamRange = new OffsetRange<>(0L, 1L);
         pageRange = new OffsetRange<>(0L, 100L);
     }
 
-    public FetchDataRequest(final Long streamId, final Long segmentId, final boolean showAsHtml) {
+    @JsonCreator
+    public FetchDataRequest(@JsonProperty("streamId") final Long streamId,
+                            @JsonProperty("childStreamType") final String childStreamType,
+                            @JsonProperty("pipeline") final DocRef pipeline,
+                            @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
+                            @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
+                            @JsonProperty("showAsHtml") final boolean showAsHtml,
+                            @JsonProperty("markerMode")  final boolean markerMode,
+                            @JsonProperty("expandedSeverities") final Severity[] expandedSeverities) {
         this.streamId = streamId;
-
-        streamRange = new OffsetRange<>(0L, 1L);
-        if (segmentId != null) {
-            pageRange = new OffsetRange<>(segmentId - 1, 1L);
-        } else {
-            pageRange = new OffsetRange<>(0L, 100L);
-        }
-
+        this.childStreamType = childStreamType;
+        this.pipeline = pipeline;
+        this.streamRange = streamRange;
+        this.pageRange = pageRange;
         this.showAsHtml = showAsHtml;
+        this.markerMode = markerMode;
+        this.expandedSeverities = expandedSeverities;
     }
 
     public Long getStreamId() {
@@ -121,7 +137,6 @@ public class FetchDataRequest {
         return fireEvents;
     }
 
-    @JsonIgnore
     public void setFireEvents(final boolean fireEvents) {
         this.fireEvents = fireEvents;
     }

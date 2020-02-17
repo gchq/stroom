@@ -16,9 +16,10 @@
 
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,22 +31,39 @@ import java.util.Set;
 /**
  * A map of indicators to show in the XML editor.
  */
-public class Indicators implements Serializable {
-    private static final long serialVersionUID = 1445199511079506470L;
+public class Indicators {
+    @JsonProperty
+    private final Map<Severity, Integer> errorCount;
+    @JsonProperty
+    private final Set<StoredError> uniqueErrorSet;
+    @JsonProperty
+    private final List<StoredError> errorList;
 
-    private Map<Severity, Integer> errorCount = new HashMap<>();
-    private Set<StoredError> uniqueErrorSet = new HashSet<>();
-    private List<StoredError> errorList = new ArrayList<>();
+    @JsonIgnore
     private Map<Integer, Indicator> map;
 
     public Indicators() {
-        // Default constructor necessary for GWT serialisation.
+        errorCount = new HashMap<>();
+        uniqueErrorSet = new HashSet<>();
+        errorList = new ArrayList<>();
+    }
+
+    @JsonCreator
+    public Indicators(@JsonProperty("errorCount") final Map<Severity, Integer> errorCount,
+                      @JsonProperty("uniqueErrorSet") final Set<StoredError> uniqueErrorSet,
+                      @JsonProperty("errorList") final List<StoredError> errorList) {
+        this.errorCount = errorCount;
+        this.uniqueErrorSet = uniqueErrorSet;
+        this.errorList = errorList;
     }
 
     /**
      * Copying constructor.
      */
     public Indicators(final Indicators indicators) {
+        errorCount = new HashMap<>();
+        uniqueErrorSet = new HashSet<>();
+        errorList = new ArrayList<>();
         addAll(indicators);
     }
 
@@ -53,24 +71,12 @@ public class Indicators implements Serializable {
         return errorCount;
     }
 
-    public void setErrorCount(final Map<Severity, Integer> errorCount) {
-        this.errorCount = errorCount;
-    }
-
     public Set<StoredError> getUniqueErrorSet() {
         return uniqueErrorSet;
     }
 
-    public void setUniqueErrorSet(final Set<StoredError> uniqueErrorSet) {
-        this.uniqueErrorSet = uniqueErrorSet;
-    }
-
     public List<StoredError> getErrorList() {
         return errorList;
-    }
-
-    public void setErrorList(final List<StoredError> errorList) {
-        this.errorList = errorList;
     }
 
     @JsonIgnore
@@ -159,7 +165,6 @@ public class Indicators implements Serializable {
         return html.toString();
     }
 
-    @JsonIgnore
     public Collection<Integer> getLineNumbers() {
         return getMap().keySet();
     }
@@ -167,8 +172,6 @@ public class Indicators implements Serializable {
     public Indicator getIndicator(final int lineNo) {
         return getMap().get(lineNo);
     }
-
-
 
     public void append(final StringBuilder sb) {
         for (final StoredError storedError : errorList) {

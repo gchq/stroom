@@ -16,19 +16,33 @@
 
 package stroom.pipeline.shared.stepping;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.util.shared.OutputState;
 import stroom.util.shared.Severity;
 
-import java.io.Serializable;
 import java.util.Set;
 
-public class SteppingFilterSettings implements Serializable {
-    private static final long serialVersionUID = -762132068286021618L;
-
+public class SteppingFilterSettings {
+    @JsonProperty
     private Severity skipToSeverity;
+    @JsonProperty
     private OutputState skipToOutput;
+    @JsonProperty
     private Set<XPathFilter> xPathFilters;
+
+    public SteppingFilterSettings() {
+    }
+
+    @JsonCreator
+    public SteppingFilterSettings(@JsonProperty("skipToSeverity") final Severity skipToSeverity,
+                                  @JsonProperty("skipToOutput") final OutputState skipToOutput,
+                                  @JsonProperty("xPathFilters") final Set<XPathFilter> xPathFilters) {
+        this.skipToSeverity = skipToSeverity;
+        this.skipToOutput = skipToOutput;
+        this.xPathFilters = xPathFilters;
+    }
 
     public Severity getSkipToSeverity() {
         return skipToSeverity;
@@ -72,6 +86,5 @@ public class SteppingFilterSettings implements Serializable {
         }
 
         return xPathFilters != null && xPathFilters.size() > 0;
-
     }
 }

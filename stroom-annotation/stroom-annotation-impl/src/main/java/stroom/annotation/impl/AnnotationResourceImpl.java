@@ -43,8 +43,8 @@ class AnnotationResourceImpl implements AnnotationResource, RestResource, HasHea
 
     @Inject
     AnnotationResourceImpl(final AnnotationService annotationService,
-                                  final DocumentEventLog documentEventLog,
-                                  final AnnotationConfig annotationConfig) {
+                           final DocumentEventLog documentEventLog,
+                           final AnnotationConfig annotationConfig) {
         this.annotationService = annotationService;
         this.documentEventLog = documentEventLog;
         this.annotationConfig = annotationConfig;

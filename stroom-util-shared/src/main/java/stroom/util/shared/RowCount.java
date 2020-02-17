@@ -17,17 +17,20 @@
 package stroom.util.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
 public class RowCount<T extends Number> {
-    private T count;
-    private boolean exact;
+    @JsonProperty
+    private final T count;
+    @JsonProperty
+    private final boolean exact;
 
-    public RowCount() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public RowCount(final T count, final boolean exact) {
+    @JsonCreator
+    public RowCount(@JsonProperty("count") final T count,
+                    @JsonProperty("exact") final boolean exact) {
         this.count = count;
         this.exact = exact;
     }
@@ -36,16 +39,8 @@ public class RowCount<T extends Number> {
         return count;
     }
 
-    public void setCount(final T count) {
-        this.count = count;
-    }
-
     public boolean isExact() {
         return exact;
-    }
-
-    public void setExact(final boolean exact) {
-        this.exact = exact;
     }
 
     @Override

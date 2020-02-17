@@ -31,7 +31,7 @@ public enum Severity implements HasDisplayValue {
     private String displayValue;
     private String summaryValue;
 
-    private Severity(final int id, final String displayValue, final String summaryValue) {
+    Severity(final int id, final String displayValue, final String summaryValue) {
         this.id = id;
         this.displayValue = displayValue;
         this.summaryValue = summaryValue;

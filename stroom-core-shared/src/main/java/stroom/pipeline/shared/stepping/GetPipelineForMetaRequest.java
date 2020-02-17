@@ -16,15 +16,18 @@
 
 package stroom.pipeline.shared.stepping;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class GetPipelineForMetaRequest {
-    private Long metaId;
-    private Long childMetaId;
+    @JsonProperty
+    private final Long metaId;
+    @JsonProperty
+    private final Long childMetaId;
 
-    public GetPipelineForMetaRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public GetPipelineForMetaRequest(final Long metaId, final Long childMetaId) {
+    @JsonCreator
+    public GetPipelineForMetaRequest(@JsonProperty("metaId") final Long metaId,
+                                     @JsonProperty("childMetaId") final Long childMetaId) {
         this.metaId = metaId;
         this.childMetaId = childMetaId;
     }
@@ -33,15 +36,7 @@ public class GetPipelineForMetaRequest {
         return metaId;
     }
 
-    public void setMetaId(final Long metaId) {
-        this.metaId = metaId;
-    }
-
     public Long getChildMetaId() {
         return childMetaId;
-    }
-
-    public void setChildMetaId(final Long childMetaId) {
-        this.childMetaId = childMetaId;
     }
 }

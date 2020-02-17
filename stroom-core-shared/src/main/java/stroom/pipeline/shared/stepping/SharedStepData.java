@@ -16,34 +16,30 @@
 
 package stroom.pipeline.shared.stepping;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SourceLocation;
 
 import java.util.Map;
 
 public class SharedStepData {
-    private static final long serialVersionUID = 8988595868257312081L;
+    @JsonProperty
+    private final SourceLocation sourceLocation;
+    @JsonProperty
+    private final Map<String, SharedElementData> elementMap;
 
-    private SourceLocation sourceLocation;
-    private Map<String, SharedElementData> elementMap;
-
-    public SharedStepData() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public SharedStepData(final SourceLocation sourceLocation, final Map<String, SharedElementData> elementMap) {
+    @JsonCreator
+    public SharedStepData(@JsonProperty("sourceLocation") final SourceLocation sourceLocation,
+                          @JsonProperty("elementMap") final Map<String, SharedElementData> elementMap) {
         this.sourceLocation = sourceLocation;
         this.elementMap = elementMap;
     }
 
     public SourceLocation getSourceLocation() {
         return sourceLocation;
-    }
-
-    public void setSourceLocation(final SourceLocation sourceLocation) {
-        this.sourceLocation = sourceLocation;
     }
 
     @JsonIgnore
@@ -54,9 +50,5 @@ public class SharedStepData {
     // For testing.
     public Map<String, SharedElementData> getElementMap() {
         return elementMap;
-    }
-
-    public void setElementMap(final Map<String, SharedElementData> elementMap) {
-        this.elementMap = elementMap;
     }
 }

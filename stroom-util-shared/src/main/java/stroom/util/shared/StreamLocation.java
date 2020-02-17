@@ -16,24 +16,23 @@
 
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Objects;
+
 public class StreamLocation implements Location {
-    private static final long serialVersionUID = 6492056020779177117L;
+    @JsonProperty
+    private final long streamNo;
+    @JsonProperty
+    private final int lineNo;
+    @JsonProperty
+    private final int colNo;
 
-    private long streamNo;
-    private int lineNo;
-    private int colNo;
-
-    public StreamLocation() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public StreamLocation(final StreamLocation location) {
-        this.streamNo = location.streamNo;
-        this.lineNo = location.lineNo;
-        this.colNo = location.colNo;
-    }
-
-    public StreamLocation(final long streamNo, final int lineNo, final int colNo) {
+    @JsonCreator
+    public StreamLocation(@JsonProperty("streamNo") final long streamNo,
+                          @JsonProperty("lineNo") final int lineNo,
+                          @JsonProperty("colNo") final int colNo) {
         this.streamNo = streamNo;
         this.lineNo = lineNo;
         this.colNo = colNo;
@@ -53,41 +52,19 @@ public class StreamLocation implements Location {
         return colNo;
     }
 
-    public void incStreamNo() {
-        lineNo++;
-    }
-
-    public void incLineNo() {
-        lineNo++;
-    }
-
-    public void incColNo() {
-        colNo++;
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final StreamLocation that = (StreamLocation) o;
+        return streamNo == that.streamNo &&
+                lineNo == that.lineNo &&
+                colNo == that.colNo;
     }
 
     @Override
     public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(streamNo);
-        builder.append(lineNo);
-        builder.append(colNo);
-        return builder.toHashCode();
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (o == null || !(o instanceof StreamLocation)) {
-            return false;
-        }
-
-        final StreamLocation location = (StreamLocation) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(streamNo, location.streamNo);
-        builder.append(lineNo, location.lineNo);
-        builder.append(colNo, location.colNo);
-        return builder.isEquals();
+        return Objects.hash(streamNo, lineNo, colNo);
     }
 
     @Override
@@ -95,7 +72,7 @@ public class StreamLocation implements Location {
         if (o == this) {
             return 0;
         }
-        if (o == null || !(o instanceof StreamLocation)) {
+        if (!(o instanceof StreamLocation)) {
             return -1;
         }
 
@@ -109,12 +86,10 @@ public class StreamLocation implements Location {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(streamNo);
-        sb.append(":");
-        sb.append(lineNo);
-        sb.append(":");
-        sb.append(colNo);
-        return sb.toString();
+        return streamNo +
+                ":" +
+                lineNo +
+                ":" +
+                colNo;
     }
 }

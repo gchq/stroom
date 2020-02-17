@@ -16,17 +16,19 @@
 
 package stroom.pipeline.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 
 public class FetchPipelineXmlResponse {
-    private DocRef pipeline;
-    private String xml;
+    @JsonProperty
+    private final DocRef pipeline;
+    @JsonProperty
+    private final String xml;
 
-    public FetchPipelineXmlResponse() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public FetchPipelineXmlResponse(final DocRef pipeline, final String xml) {
+    @JsonCreator
+    public FetchPipelineXmlResponse(@JsonProperty("pipeline") final DocRef pipeline,
+                                    @JsonProperty("xml") final String xml) {
         this.pipeline = pipeline;
         this.xml = xml;
     }
@@ -35,15 +37,7 @@ public class FetchPipelineXmlResponse {
         return pipeline;
     }
 
-    public void setPipeline(final DocRef pipeline) {
-        this.pipeline = pipeline;
-    }
-
     public String getXml() {
         return xml;
-    }
-
-    public void setXml(final String xml) {
-        this.xml = xml;
     }
 }

@@ -73,40 +73,4 @@ public class AnnotationEntry {
     public void setData(final String data) {
         this.data = data;
     }
-
-//    public enum EntryType implements HasDisplayValue {
-//        TITLE("Title", 0),
-//        SUBJECT("Subject", 1),
-//        COMMENT("Comment", 2),
-//        STATUS("Status", 3),
-//        ASSIGNED_TO("Assigned", 4);
-//
-//        private static EntryType[] values = new EntryType[] {TITLE, SUBJECT, COMMENT, STATUS, ASSIGNED_TO};
-//        public static EntryType fromPrimitive(int index) {
-//            if (index >= 0 && index < values.length) {
-//                return values[index];
-//            }
-//            return null;
-//        }
-//
-//        private final String displayValue;
-//        private final int primitiveValue;
-//
-//        EntryType(final String displayValue, int primitiveValue) {
-//            this.displayValue = displayValue;
-//            this.primitiveValue = primitiveValue;
-//        }
-//
-//        /**
-//         * @return drop down string value.
-//         */
-//        @Override
-//        public String getDisplayValue() {
-//            return displayValue;
-//        }
-//
-//        public int getPrimitiveValue() {
-//            return primitiveValue;
-//        }
-//    }
 }

@@ -16,28 +16,36 @@
 
 package stroom.pipeline.shared.stepping;
 
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Map;
 import java.util.Set;
 
 public class SteppingResult {
-    private static final long serialVersionUID = 111359625573465578L;
-
+    @JsonProperty
     private Map<String, SteppingFilterSettings> stepFilterMap;
+    @JsonProperty
     private StepLocation stepLocation;
+    @JsonProperty
     private SharedStepData stepData;
+    @JsonProperty
     private Integer currentStreamOffset;
+    @JsonProperty
     private boolean foundRecord;
+    @JsonProperty
     private Set<String> generalErrors;
 
     public SteppingResult() {
-        // Default constructor necessary for GWT serialisation.
     }
 
-    public SteppingResult(final Map<String, SteppingFilterSettings> stepFilterMap, final StepLocation stepLocation,
-                          final SharedStepData stepData, final Integer currentStreamOffset, final boolean foundRecord,
-                          final Set<String> generalErrors) {
+    @JsonCreator
+    public SteppingResult(@JsonProperty("stepFilterMap") final Map<String, SteppingFilterSettings> stepFilterMap,
+                          @JsonProperty("stepLocation") final StepLocation stepLocation,
+                          @JsonProperty("stepData") final SharedStepData stepData,
+                          @JsonProperty("currentStreamOffset") final Integer currentStreamOffset,
+                          @JsonProperty("foundRecord") final boolean foundRecord,
+                          @JsonProperty("generalErrors") final Set<String> generalErrors) {
         // Copy the step filter map so it can be remembered across multiple
         // requests.
         this.stepFilterMap = stepFilterMap;

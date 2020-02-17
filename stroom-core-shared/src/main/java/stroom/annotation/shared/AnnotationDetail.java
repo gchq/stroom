@@ -1,15 +1,19 @@
 package stroom.annotation.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 public class AnnotationDetail {
-    private Annotation annotation;
-    private List<AnnotationEntry> entries;
+    @JsonProperty
+    private final Annotation annotation;
+    @JsonProperty
+    private final List<AnnotationEntry> entries;
 
-    public AnnotationDetail() {
-    }
-
-    public AnnotationDetail(final Annotation annotation, final List<AnnotationEntry> entries) {
+    @JsonCreator
+    public AnnotationDetail(@JsonProperty("annotation") final Annotation annotation,
+                            @JsonProperty("entries") final List<AnnotationEntry> entries) {
         this.annotation = annotation;
         this.entries = entries;
     }
@@ -18,15 +22,7 @@ public class AnnotationDetail {
         return annotation;
     }
 
-    public void setAnnotation(final Annotation annotation) {
-        this.annotation = annotation;
-    }
-
     public List<AnnotationEntry> getEntries() {
         return entries;
-    }
-
-    public void setEntries(final List<AnnotationEntry> entries) {
-        this.entries = entries;
     }
 }

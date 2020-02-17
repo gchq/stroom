@@ -16,22 +16,20 @@
 
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Objects;
+
 public class DefaultLocation implements Location {
-    private static final long serialVersionUID = 6492056020779177117L;
+    @JsonProperty
+    private final int lineNo;
+    @JsonProperty
+    private final int colNo;
 
-    private int lineNo;
-    private int colNo;
-
-    public DefaultLocation() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public DefaultLocation(final DefaultLocation location) {
-        this.lineNo = location.lineNo;
-        this.colNo = location.colNo;
-    }
-
-    public DefaultLocation(final int lineNo, final int colNo) {
+    @JsonCreator
+    public DefaultLocation(@JsonProperty("lineNo") final int lineNo,
+                           @JsonProperty("colNo") final int colNo) {
         this.lineNo = lineNo;
         this.colNo = colNo;
     }
@@ -46,35 +44,18 @@ public class DefaultLocation implements Location {
         return colNo;
     }
 
-    public void incLineNo() {
-        lineNo++;
-    }
-
-    public void incColNo() {
-        colNo++;
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final DefaultLocation that = (DefaultLocation) o;
+        return lineNo == that.lineNo &&
+                colNo == that.colNo;
     }
 
     @Override
     public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(lineNo);
-        builder.append(colNo);
-        return builder.toHashCode();
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (o == null || !(o instanceof DefaultLocation)) {
-            return false;
-        }
-
-        final DefaultLocation location = (DefaultLocation) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(lineNo, location.lineNo);
-        builder.append(colNo, location.colNo);
-        return builder.isEquals();
+        return Objects.hash(lineNo, colNo);
     }
 
     @Override
@@ -82,7 +63,7 @@ public class DefaultLocation implements Location {
         if (o == this) {
             return 0;
         }
-        if (o == null || !(o instanceof DefaultLocation)) {
+        if (!(o instanceof DefaultLocation)) {
             return 1;
         }
 
@@ -95,10 +76,8 @@ public class DefaultLocation implements Location {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append(lineNo);
-        sb.append(":");
-        sb.append(colNo);
-        return sb.toString();
+        return lineNo +
+                ":" +
+                colNo;
     }
 }

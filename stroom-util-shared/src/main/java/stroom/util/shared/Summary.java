@@ -17,20 +17,24 @@
 package stroom.util.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Summary implements Marker, TreeRow {
-    private static final long serialVersionUID = -2158641083789509554L;
+    @JsonProperty
+    private final Severity severity;
+    @JsonProperty
+    private final int count;
+    @JsonProperty
+    private final int total;
+    @JsonProperty
+    private final Expander expander;
 
-    private Severity severity;
-    private int count;
-    private int total;
-    private Expander expander;
-
-    public Summary() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public Summary(final Severity severity, final int count, final int total, final Expander expander) {
+    @JsonCreator
+    public Summary(@JsonProperty("severity") final Severity severity,
+                   @JsonProperty("count") final int count,
+                   @JsonProperty("total") final int total,
+                   @JsonProperty("expander") final Expander expander) {
         this.severity = severity;
         this.count = count;
         this.total = total;

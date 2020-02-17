@@ -17,17 +17,20 @@
 package stroom.util.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
 public class OffsetRange<T extends Number> {
-    private T offset;
-    private T length;
+    @JsonProperty
+    private final T offset;
+    @JsonProperty
+    private final T length;
 
-    public OffsetRange() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public OffsetRange(final T offset, final T length) {
+    @JsonCreator
+    public OffsetRange(@JsonProperty("offset") final T offset,
+                       @JsonProperty("length") final T length) {
         this.offset = offset;
         this.length = length;
     }
@@ -36,16 +39,8 @@ public class OffsetRange<T extends Number> {
         return offset;
     }
 
-    public void setOffset(final T offset) {
-        this.offset = offset;
-    }
-
     public T getLength() {
         return length;
-    }
-
-    public void setLength(final T length) {
-        this.length = length;
     }
 
     @Override

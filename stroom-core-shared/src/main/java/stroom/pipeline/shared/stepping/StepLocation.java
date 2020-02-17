@@ -17,22 +17,24 @@
 package stroom.pipeline.shared.stepping;
 
 
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Objects;
 
 public class StepLocation {
-    private static final long serialVersionUID = 6018818196613322322L;
-
-    private long id;
+    @JsonProperty
+    private final long id;
     // The stream number is 1 based and not 0 based as in the stream store.
-    private long partNo;
-    private long recordNo;
+    @JsonProperty
+    private final long partNo;
+    @JsonProperty
+    private final long recordNo;
 
-    public StepLocation() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public StepLocation(final long id, final long partNo, final long recordNo) {
+    @JsonCreator
+    public StepLocation(@JsonProperty("id") final long id,
+                        @JsonProperty("partNo") final long partNo,
+                        @JsonProperty("recordNo") final long recordNo) {
         this.id = id;
         this.partNo = partNo;
         this.recordNo = recordNo;
@@ -42,50 +44,27 @@ public class StepLocation {
         return id;
     }
 
-    public void setId(final long id) {
-        this.id = id;
-    }
-
     public long getPartNo() {
         return partNo;
-    }
-
-    public void setPartNo(final long partNo) {
-        this.partNo = partNo;
     }
 
     public long getRecordNo() {
         return recordNo;
     }
 
-    public void setRecordNo(final long recordNo) {
-        this.recordNo = recordNo;
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final StepLocation that = (StepLocation) o;
+        return id == that.id &&
+                partNo == that.partNo &&
+                recordNo == that.recordNo;
     }
 
     @Override
     public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(id);
-        builder.append(partNo);
-        builder.append(recordNo);
-        return builder.toHashCode();
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || !(o instanceof StepLocation)) {
-            return false;
-        }
-
-        final StepLocation stepLocation = (StepLocation) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(id, stepLocation.id);
-        builder.append(partNo, stepLocation.partNo);
-        builder.append(recordNo, stepLocation.recordNo);
-        return builder.isEquals();
+        return Objects.hash(id, partNo, recordNo);
     }
 
     public String getEventId() {
