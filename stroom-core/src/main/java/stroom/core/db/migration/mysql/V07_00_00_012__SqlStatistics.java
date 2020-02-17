@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public class V07_00_00_012__SqlStatistics extends BaseJavaMigration {
 
     @Override
@@ -38,7 +39,20 @@ public class V07_00_00_012__SqlStatistics extends BaseJavaMigration {
         final _V07_00_00_StatisticStoreSerialiser serialiser = new _V07_00_00_StatisticStoreSerialiser();
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, STAT_TP, ROLLUP_TP, PRES, ENBL, DAT FROM STAT_DAT_SRC")) {
+                "SELECT " +
+                    "  CRT_MS, " +
+                    "  CRT_USER, " +
+                    "  UPD_MS, " +
+                    "  UPD_USER, " +
+                    "  NAME, " +
+                    "  UUID, " +
+                    "  DESCRIP, " +
+                    "  STAT_TP, " +
+                    "  ROLLUP_TP, " +
+                    "  PRES, " +
+                    "  ENBL, " +
+                    "  DAT " +
+                    "FROM STAT_DAT_SRC")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);

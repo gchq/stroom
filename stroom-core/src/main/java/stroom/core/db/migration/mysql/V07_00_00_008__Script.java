@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@SuppressWarnings("unused")
 public class V07_00_00_008__Script extends BaseJavaMigration {
 
     @Override

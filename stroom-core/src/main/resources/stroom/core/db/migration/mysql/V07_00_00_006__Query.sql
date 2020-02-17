@@ -17,6 +17,7 @@
 -- stop note level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
+-- idempotent
 CALL core_add_column_v1(
     'QUERY',
     'DASH_UUID',
@@ -27,6 +28,7 @@ UPDATE QUERY
 INNER JOIN DASH ON (QUERY.DASH_ID = DASH.ID)
 SET QUERY.DASH_UUID = DASH.UUID;
 
+-- idempotent
 CALL core_drop_column_v1(
     'QUERY',
     'DASH_ID');
