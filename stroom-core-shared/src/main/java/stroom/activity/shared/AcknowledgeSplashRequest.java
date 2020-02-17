@@ -16,15 +16,21 @@
 
 package stroom.activity.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(Include.NON_DEFAULT)
 public class AcknowledgeSplashRequest {
+    @JsonProperty
     private String message;
+    @JsonProperty
     private String version;
 
-    public AcknowledgeSplashRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public AcknowledgeSplashRequest(final String message, final String version) {
+    @JsonCreator
+    public AcknowledgeSplashRequest(@JsonProperty("message") final String message,
+                                    @JsonProperty("version") final String version) {
         this.message = message;
         this.version = version;
     }
@@ -33,15 +39,7 @@ public class AcknowledgeSplashRequest {
         return message;
     }
 
-    public void setMessage(final String message) {
-        this.message = message;
-    }
-
     public String getVersion() {
         return version;
-    }
-
-    public void setVersion(final String version) {
-        this.version = version;
     }
 }

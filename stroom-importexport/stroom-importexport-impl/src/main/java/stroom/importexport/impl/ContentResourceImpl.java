@@ -61,7 +61,7 @@ class ContentResourceImpl implements ContentResource, RestResource, HasHealthChe
     public ResourceKey importContent(final ImportConfigRequest request) {
         return securityContext.secureResult(PermissionNames.IMPORT_CONFIGURATION, () -> {
             // Import file.
-            final Path file = resourceStore.getTempFile(request.getKey());
+            final Path file = resourceStore.getTempFile(request.getResourceKey());
 
             // Log the import.
             eventLog._import(request);
@@ -74,15 +74,15 @@ class ContentResourceImpl implements ContentResource, RestResource, HasHealthChe
                 }
             }
             if (!foundOneAction) {
-                return request.getKey();
+                return request.getResourceKey();
             }
 
             importExportService.performImportWithConfirmation(file, request.getConfirmList());
 
             // Delete the import if it was successful
-            resourceStore.deleteTempFile(request.getKey());
+            resourceStore.deleteTempFile(request.getResourceKey());
 
-            return request.getKey();
+            return request.getResourceKey();
         });
     }
 

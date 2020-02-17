@@ -16,7 +16,11 @@
 
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,8 +28,11 @@ import java.util.List;
 /**
  * List that knows how big the whole set is.
  */
+@JsonInclude(Include.NON_DEFAULT)
 public class ResultPage<T> {
+    @JsonProperty
     private List<T> values;
+    @JsonProperty
     private PageResponse pageResponse;
 
     public ResultPage() {
@@ -37,7 +44,9 @@ public class ResultPage<T> {
         this.pageResponse = new PageResponse(0L, values.size(), (long) values.size(), true);
     }
 
-    public ResultPage(final List<T> values, final PageResponse pageResponse) {
+    @JsonCreator
+    public ResultPage(@JsonProperty("values") final List<T> values,
+                      @JsonProperty("pageResponse") final PageResponse pageResponse) {
         this.values = values;
         this.pageResponse = pageResponse;
     }

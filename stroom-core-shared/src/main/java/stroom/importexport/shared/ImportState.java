@@ -16,10 +16,13 @@
 
 package stroom.importexport.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
-
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -29,39 +32,53 @@ import java.util.List;
 /**
  * This has been put here as import export API is not Serializable.
  */
+@JsonInclude(Include.NON_DEFAULT)
 public class ImportState {
-    private static final long serialVersionUID = -5451928033766595954L;
-    private DocRef docRef;
+    @JsonProperty
+    private final DocRef docRef;
+    @JsonProperty
     private String sourcePath;
+    @JsonProperty
     private String destPath;
+    @JsonProperty
     private boolean action;
-    private List<Message> messageList = new ArrayList<>();
-    private List<String> updatedFieldList = new ArrayList<>();
+    @JsonProperty
+    private final List<Message> messageList;
+    @JsonProperty
+    private final List<String> updatedFieldList;
+    @JsonProperty
     private State state;
 
-    public ImportState() {
-        // Default constructor for GWT serialisation.
+    @JsonCreator
+    public ImportState(@JsonProperty("docRef") final DocRef docRef,
+                       @JsonProperty("sourcePath") final String sourcePath,
+                       @JsonProperty("destPath") final String destPath,
+                       @JsonProperty("action") final boolean action,
+                       @JsonProperty("messageList") final List<Message> messageList,
+                       @JsonProperty("updatedFieldList") final List<String> updatedFieldList,
+                       @JsonProperty("state") final State state) {
+        this.docRef = docRef;
+        this.sourcePath = sourcePath;
+        this.destPath = destPath;
+        this.action = action;
+        this.messageList = messageList;
+        this.updatedFieldList = updatedFieldList;
+        this.state = state;
     }
 
     public ImportState(final DocRef docRef, final String sourcePath) {
         this.docRef = docRef;
         this.sourcePath = sourcePath;
+        this.messageList = new ArrayList<>();
+        this.updatedFieldList = new ArrayList<>();
     }
 
     public DocRef getDocRef() {
         return docRef;
     }
 
-    public void setDocRef(final DocRef docRef) {
-        this.docRef = docRef;
-    }
-
     public String getSourcePath() {
         return sourcePath;
-    }
-
-    public void setSourcePath(final String sourcePath) {
-        this.sourcePath = sourcePath;
     }
 
     public String getDestPath() {
@@ -82,16 +99,12 @@ public class ImportState {
         return action;
     }
 
-    public void setAction(boolean action) {
+    public void setAction(final boolean action) {
         this.action = action;
     }
 
     public List<Message> getMessageList() {
         return messageList;
-    }
-
-    public void setMessageList(final List<Message> messageList) {
-        this.messageList = messageList;
     }
 
     @JsonIgnore
@@ -112,10 +125,6 @@ public class ImportState {
 
     public List<String> getUpdatedFieldList() {
         return updatedFieldList;
-    }
-
-    public void setUpdatedFieldList(final List<String> updatedFieldList) {
-        this.updatedFieldList = updatedFieldList;
     }
 
     public State getState() {

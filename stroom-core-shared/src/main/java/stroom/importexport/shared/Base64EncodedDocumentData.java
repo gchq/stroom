@@ -1,18 +1,23 @@
 package stroom.importexport.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 
-import java.io.Serializable;
 import java.util.Map;
 
-public class Base64EncodedDocumentData implements Serializable {
-    private DocRef docRef;
-    private Map<String, String> dataMap;
+@JsonInclude(Include.NON_DEFAULT)
+public class Base64EncodedDocumentData {
+    @JsonProperty
+    private final DocRef docRef;
+    @JsonProperty
+    private final Map<String, String> dataMap;
 
-    public Base64EncodedDocumentData() {
-    }
-
-    public Base64EncodedDocumentData(final DocRef docRef, final Map<String, String> dataMap) {
+    @JsonCreator
+    public Base64EncodedDocumentData(@JsonProperty("docRef") final DocRef docRef,
+                                     @JsonProperty("dataMap") final Map<String, String> dataMap) {
         this.docRef = docRef;
         this.dataMap = dataMap;
     }
@@ -21,15 +26,7 @@ public class Base64EncodedDocumentData implements Serializable {
         return docRef;
     }
 
-    public void setDocRef(final DocRef docRef) {
-        this.docRef = docRef;
-    }
-
     public Map<String, String> getDataMap() {
         return dataMap;
-    }
-
-    public void setDataMap(final Map<String, String> dataMap) {
-        this.dataMap = dataMap;
     }
 }

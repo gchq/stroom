@@ -16,49 +16,68 @@
 
 package stroom.activity.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasAuditInfo;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class Activity implements HasAuditInfo {
     public static final String ENTITY_TYPE = "Activity";
 
+    @JsonProperty
     private Integer id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTimeMs;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private Long updateTimeMs;
+    @JsonProperty
     private String updateUser;
+    @JsonProperty
     private String userId;
+    @JsonProperty
     private String json;
+    @JsonProperty
     private ActivityDetails details = new ActivityDetails();
 
-    public Activity() {
+    @JsonCreator
+    public Activity(@JsonProperty("id") final Integer id,
+                    @JsonProperty("version") final Integer version,
+                    @JsonProperty("createTimeMs") final Long createTimeMs,
+                    @JsonProperty("createUser") final String createUser,
+                    @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                    @JsonProperty("updateUser") final String updateUser,
+                    @JsonProperty("userId") final String userId,
+                    @JsonProperty("json") final String json) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.createUser = createUser;
+        this.updateTimeMs = updateTimeMs;
+        this.updateUser = updateUser;
+        this.userId = userId;
+        this.json = json;
     }
 
-    public Activity(final String userId, final ActivityDetails details) {
-        this.userId = userId;
-        this.details = details;
+    public Activity() {
     }
 
     public Integer getId() {
         return id;
     }
 
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
     public Integer getVersion() {
         return version;
-    }
-
-    public void setVersion(final Integer version) {
-        this.version = version;
     }
 
     @Override
@@ -127,17 +146,20 @@ public class Activity implements HasAuditInfo {
     }
 
     public static class ActivityDetails {
-        private List<Prop> properties = new ArrayList<>();
+        @JsonProperty
+        private final List<Prop> properties;
+
+        @JsonCreator
+        public ActivityDetails(@JsonProperty("properties") final List<Prop> properties) {
+            this.properties = properties;
+        }
 
         public ActivityDetails() {
+            properties = new ArrayList<>();
         }
 
         public List<Prop> getProperties() {
             return properties;
-        }
-
-        public void setProperties(final List<Prop> properties) {
-            this.properties = properties;
         }
 
         @JsonIgnore

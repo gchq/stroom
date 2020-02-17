@@ -1,10 +1,13 @@
 package stroom.annotation.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class AnnotationDetail {
     @JsonProperty
     private final Annotation annotation;

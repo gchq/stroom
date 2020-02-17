@@ -17,6 +17,10 @@
 package stroom.util.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Map;
 
@@ -24,14 +28,19 @@ import java.util.Map;
  * Class that represents a key to a resource. This key has a name and a string
  * key.
  */
+@JsonInclude(Include.NON_DEFAULT)
 public class ResourceKey {
     public static final String NAME = "name";
     public static final String KEY = "key";
-    private static final long serialVersionUID = 8764851638854986846L;
-    private String name;
-    private String key;
 
-    public ResourceKey(final String name, final String key) {
+    @JsonProperty
+    private final String name;
+    @JsonProperty
+    private final String key;
+
+    @JsonCreator
+    public ResourceKey(@JsonProperty("name") final String name,
+                       @JsonProperty("key") final String key) {
         this.name = name;
         this.key = key;
     }
@@ -41,24 +50,12 @@ public class ResourceKey {
         this.key = map.get(KEY);
     }
 
-    public ResourceKey() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
     public String getKey() {
         return key;
     }
 
-    public void setKey(final String key) {
-        this.key = key;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(final String name) {
-        this.name = name;
     }
 
     @Override

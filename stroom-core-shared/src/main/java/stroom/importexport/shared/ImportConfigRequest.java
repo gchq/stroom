@@ -16,36 +16,33 @@
 
 package stroom.importexport.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.ResourceKey;
 
 import java.util.List;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class ImportConfigRequest {
-    private ResourceKey key;
-    private List<ImportState> confirmList;
+    @JsonProperty
+    private final ResourceKey resourceKey;
+    @JsonProperty
+    private final List<ImportState> confirmList;
 
-    public ImportConfigRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ImportConfigRequest(final ResourceKey resourceKey, final List<ImportState> confirmList) {
-        this.key = resourceKey;
+    @JsonCreator
+    public ImportConfigRequest(@JsonProperty("resourceKey") final ResourceKey resourceKey,
+                               @JsonProperty("confirmList") final List<ImportState> confirmList) {
+        this.resourceKey = resourceKey;
         this.confirmList = confirmList;
     }
 
-    public ResourceKey getKey() {
-        return key;
-    }
-
-    public void setKey(final ResourceKey key) {
-        this.key = key;
+    public ResourceKey getResourceKey() {
+        return resourceKey;
     }
 
     public List<ImportState> getConfirmList() {
         return confirmList;
-    }
-
-    public void setConfirmList(final List<ImportState> confirmList) {
-        this.confirmList = confirmList;
     }
 }
