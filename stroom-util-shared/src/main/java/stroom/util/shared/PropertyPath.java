@@ -1,6 +1,8 @@
 package stroom.util.shared;
 
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -13,9 +15,6 @@ import java.util.Objects;
  * stroom.node.name
  */
 public class PropertyPath implements Comparable<PropertyPath> {
-
-    private static final long serialVersionUID = 4298017138182350850L;
-
     private static final String DELIMITER = ".";
     private static final String DELIMITER_REGEX = "\\" + DELIMITER;
 
@@ -23,14 +22,21 @@ public class PropertyPath implements Comparable<PropertyPath> {
 
     // Held in part form to reduce memory overhead as some parts will be used
     // many times over all the config objects
+    @JsonProperty("parts")
     private List<String> parts;
 
-    @SuppressWarnings("unused") // Needed for GWT
-    private PropertyPath() {
+    @SuppressWarnings("unused")
+    PropertyPath() {
+        // Pkg private for GWT
     }
 
-    private PropertyPath(final List<String> parts) {
-        this.parts = new ArrayList<>(parts);
+    @JsonCreator
+    PropertyPath(@JsonProperty("parts") final List<String> parts) {
+        if (parts == null) {
+            this.parts = Collections.emptyList();
+        } else {
+            this.parts = new ArrayList<>(parts);
+        }
     }
 
     public static PropertyPath blank() {
@@ -41,7 +47,11 @@ public class PropertyPath implements Comparable<PropertyPath> {
      * Create a {@link PropertyPath} from a path string, e.g "stroom.node.name"
      */
     public static PropertyPath fromPathString(final String propertyPath) {
-        return PropertyPath.fromParts(propertyPath.split(DELIMITER_REGEX));
+        if (propertyPath == null || propertyPath.isEmpty()) {
+            return EMPTY_INSTANCE;
+        } else {
+            return PropertyPath.fromParts(propertyPath.split(DELIMITER_REGEX));
+        }
     }
 
     /**
@@ -59,6 +69,14 @@ public class PropertyPath implements Comparable<PropertyPath> {
             return EMPTY_INSTANCE;
         } else {
             return new PropertyPath(parts);
+        }
+    }
+
+    List<String> getParts() {
+        if (parts.isEmpty()) {
+            return Collections.emptyList();
+        } else {
+            return new ArrayList<>(parts);
         }
     }
 
@@ -83,6 +101,7 @@ public class PropertyPath implements Comparable<PropertyPath> {
     /**
      * @return The property name from a property path, i.e. "name" from "stroom.node.name"
      */
+    @JsonIgnore
     public String getPropertyName() {
         if (parts.isEmpty()) {
             throw new RuntimeException("Unable to get property name from empty path");
@@ -101,7 +120,11 @@ public class PropertyPath implements Comparable<PropertyPath> {
 
     @Override
     public String toString() {
-        return String.join(DELIMITER, parts);
+        if (parts == null || parts.isEmpty()) {
+            return null;
+        } else {
+            return String.join(DELIMITER, parts);
+        }
     }
 
     @Override
@@ -132,9 +155,6 @@ public class PropertyPath implements Comparable<PropertyPath> {
     }
 
     public static class Builder {
-
-        private static final long serialVersionUID = 4646431868659034045L;
-
         private List<String> parts = null;
 
         @SuppressWarnings("unused") // Needed for GWT

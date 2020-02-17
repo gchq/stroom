@@ -22,7 +22,7 @@ public class GlobalConfigModule extends AbstractModule {
                 .addBinding(AppConfigMonitor.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(ConfigResourceImpl.class);
+                .addBinding(GlobalConfigResourceImpl.class);
 
         install(new ValidationModule());
     }

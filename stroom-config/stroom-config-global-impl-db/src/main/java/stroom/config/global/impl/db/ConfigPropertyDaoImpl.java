@@ -21,14 +21,13 @@ import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
 class ConfigPropertyDaoImpl implements ConfigPropertyDao {
 
     private static final Function<Record, ConfigProperty> RECORD_TO_CONFIG_PROPERTY_MAPPER = record -> {
-        final ConfigProperty configProperty = new ConfigProperty();
+        final ConfigProperty configProperty = new ConfigProperty(PropertyPath.fromPathString(record.get(CONFIG.NAME)));
         configProperty.setId(record.get(CONFIG.ID));
         configProperty.setVersion(record.get(CONFIG.VERSION));
         configProperty.setCreateTimeMs(record.get(CONFIG.CREATE_TIME_MS));
         configProperty.setCreateUser(record.get(CONFIG.CREATE_USER));
         configProperty.setUpdateTimeMs(record.get(CONFIG.UPDATE_TIME_MS));
         configProperty.setUpdateUser(record.get(CONFIG.UPDATE_USER));
-        configProperty.setName(PropertyPath.fromPathString(record.get(CONFIG.NAME)));
         String value = record.get(CONFIG.VAL);
         // value col is not-null
         if (value.isEmpty()) {
@@ -54,7 +53,7 @@ class ConfigPropertyDaoImpl implements ConfigPropertyDao {
             throw new RuntimeException(LogUtil.message("Trying to save a config record when there is no databaseValue {}",
                     configProperty));
         }
-        record.set(CONFIG.VAL, configProperty.getDatabaseOverrideValue().getValOrElse(""));
+        record.set(CONFIG.VAL, configProperty.getDatabaseOverrideValue().getValueOrElse(""));
         return record;
     };
 

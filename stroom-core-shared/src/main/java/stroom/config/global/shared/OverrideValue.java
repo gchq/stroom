@@ -4,49 +4,33 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 public class OverrideValue<T> {
-    private static final OverrideValue UNSET =  new OverrideValue<>(false, null);
-    private static final OverrideValue NULL_VALUE =  new OverrideValue<>(true, null);
+    private static final OverrideValue<?> UNSET = new OverrideValue<>(false, null);
+    private static final OverrideValue<?> NULL_VALUE = new OverrideValue<>(true, null);
 
+    @JsonProperty
     private boolean hasOverride;
-    @JsonProperty("value")
+    @JsonProperty
     private T value;
 
     @SuppressWarnings("unused")
-    public OverrideValue() {
+    OverrideValue() {
         // Required for GWT serialisation
-    }
-
-    public boolean isHasOverride() {
-        return hasOverride;
-    }
-
-    public void setHasOverride(final boolean hasOverride) {
-        this.hasOverride = hasOverride;
-    }
-
-    public T getValue() {
-        return value;
-    }
-
-    public void setValue(final T value) {
-        this.value = value;
     }
 
     @JsonIgnore
     @SuppressWarnings("unchecked")
-    public static <T> OverrideValue<T> unSet() {
+    public static <T> OverrideValue<T> unSet(final Class<T> type) {
         return (OverrideValue<T>) UNSET;
     }
 
     @JsonIgnore
     @SuppressWarnings("unchecked")
-    public static <T> OverrideValue<T> withNullValue() {
+    public static <T> OverrideValue<T> withNullValue(final Class<T> type) {
         return (OverrideValue<T>) NULL_VALUE;
     }
 
@@ -60,25 +44,30 @@ public class OverrideValue<T> {
         }
     }
 
+    // pkg private so GWT can see it
     @JsonCreator
-    public OverrideValue(final @JsonProperty("hasOverride") boolean hasOverride,
-                          final @JsonProperty("value") T value) {
+    OverrideValue(final @JsonProperty("hasOverride") boolean hasOverride,
+                  final @JsonProperty("value") T value) {
         this.hasOverride = hasOverride;
         this.value = value;
     }
 
-    @JsonProperty("hasOverride")
-    public boolean hasOverride() {
+    // Horrible name, but can't seem to get RestyGWT to use @JsonGetter
+    public boolean isHasOverride() {
         return hasOverride;
+    }
+
+    T getValue() {
+        return value;
     }
 
     /**
      * @return The override value if present or empty if the override has been explicitly set to
      * null/empty. If there is no override then a {@link RuntimeException} will be thrown.
-     * Use {@link OverrideValue#hasOverride()} to check if there is an override value.
+     * Use {@link OverrideValue#isHasOverride()} to check if there is an override value.
      */
     @JsonIgnore
-    public Optional<T> getVal() {
+    public Optional<T> getValueAsOptional() {
         if (!hasOverride) {
             throw new RuntimeException("No override present");
         }
@@ -89,7 +78,7 @@ public class OverrideValue<T> {
      * Return the non-null override value or other if the override has explicitly been set to null/empty
      */
     @JsonIgnore
-    public T getValOrElse(final T other) {
+    public T getValueOrElse(final T other) {
         if (!hasOverride) {
             throw new RuntimeException("No override present");
         }
@@ -101,7 +90,7 @@ public class OverrideValue<T> {
     }
 
     @JsonIgnore
-    public T getValOrElse(final T valueIfUnSet, final T valueIfNull) {
+    public T getValueOrElse(final T valueIfUnSet, final T valueIfNull) {
         if (!hasOverride) {
             return valueIfUnSet;
         } else if (value == null) {

@@ -20,8 +20,6 @@ import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.StringCriteria;
 
 public class FindGlobalConfigCriteria extends BaseCriteria {
-    private static final long serialVersionUID = 1451984883275627717L;
-
     private StringCriteria name = new StringCriteria();
 
     public FindGlobalConfigCriteria() {

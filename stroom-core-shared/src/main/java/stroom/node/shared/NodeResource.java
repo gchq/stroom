@@ -34,14 +34,6 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public interface NodeResource extends RestResource, DirectRestService {
     @GET
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Lists nodes",
-            response = FetchNodeStatusResponse.class)
-    FetchNodeStatusResponse list();
-
-    @GET
     @Path("/{nodeName}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -49,6 +41,14 @@ public interface NodeResource extends RestResource, DirectRestService {
             value = "Gets detailed information about a node",
             response = Long.class)
     ClusterNodeInfo info(@PathParam("nodeName") String nodeName);
+
+    @GET
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+        value = "Lists nodes",
+        response = FetchNodeStatusResponse.class)
+    FetchNodeStatusResponse list();
 
     @GET
     @Path("/{nodeName}/ping")

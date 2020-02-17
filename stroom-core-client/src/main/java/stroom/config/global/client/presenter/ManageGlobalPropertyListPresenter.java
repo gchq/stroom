@@ -24,8 +24,8 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyResultPage;
-import stroom.config.global.shared.ConfigResource;
 import stroom.config.global.shared.FindGlobalConfigCriteria;
+import stroom.config.global.shared.GlobalConfigResource;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
@@ -40,7 +40,7 @@ import java.util.function.Consumer;
 
 public class ManageGlobalPropertyListPresenter
         extends MyPresenterWidget<DataGridView<ConfigProperty>> implements Refreshable {
-    private static final ConfigResource CONFIG_RESOURCE = GWT.create(ConfigResource.class);
+    private static final GlobalConfigResource CONFIG_RESOURCE = GWT.create(GlobalConfigResource.class);
     private final RestDataProvider<ConfigProperty, ConfigPropertyResultPage> dataProvider;
     private final FindGlobalConfigCriteria criteria = new FindGlobalConfigCriteria();
 

@@ -1,19 +1,3 @@
-/*
- * Copyright 2017 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package stroom.config.global.shared;
 
 import io.swagger.annotations.Api;
@@ -34,25 +18,38 @@ import javax.ws.rs.core.MediaType;
 import java.util.List;
 
 @Api(value = "config - /v1")
-@Path(ConfigResource.BASE_PATH)
+@Path(GlobalConfigResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
-public interface ConfigResource extends RestResource, DirectRestService {
-    String BASE_PATH = "/config/" + ResourcePaths.V1;
-    String YAML_VALUE_SUB_PATH = "yamlValue";
+public interface GlobalConfigResource extends RestResource, DirectRestService {
+    String BASE_PATH = "/config" + ResourcePaths.V1;
+    String PROPERTIES_SUB_PATH = "/properties";
+    String YAML_OVERRIDE_VALUE_SUB_PATH = "/yamlOverrideValue";
+    String DB_OVERRIDE_VALUE_SUB_PATH = "/dbOverrideValue";
+    String CLUSTER_PROPERTIES_SUB_PATH = "/clusterProperties";
+
+    String PROP_NAME_PATH_PARAM = "/{propertyName}";
+    String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
     @GET
+    @Path(PROPERTIES_SUB_PATH)
     @Produces(MediaType.APPLICATION_JSON)
     List<ConfigProperty> getAllConfig();
 
     @GET
-    @Path("/{propertyName}")
+    @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)
     @Produces(MediaType.APPLICATION_JSON)
     ConfigProperty getPropertyByName(final @PathParam("propertyName") String propertyName);
 
     @GET
-    @Path("/" + YAML_VALUE_SUB_PATH + "/{propertyName}")
+    @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH)
     @Produces(MediaType.TEXT_PLAIN)
-    String getYamlValueByName(final @PathParam("propertyName") String propertyName);
+    OverrideValue<String> getYamlValueByName(final @PathParam("propertyName") String propertyName);
+
+    @GET
+    @Path(CLUSTER_PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH + NODE_NAME_PATH_PARAM)
+    @Produces(MediaType.APPLICATION_JSON)
+    OverrideValue<String> getYamlValueByNodeAndName(final @PathParam("propertyName") String propertyName,
+                                                    final @PathParam("nodeName") String nodeName);
 
     @POST
     @Path("/find")
@@ -63,23 +60,23 @@ public interface ConfigResource extends RestResource, DirectRestService {
             response = ConfigPropertyResultPage.class)
     ConfigPropertyResultPage find(FindGlobalConfigCriteria criteria);
 
-    @GET
-    @Path("/read/{id}")
+    @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Get config property",
-            response = ConfigProperty.class)
-    ConfigProperty read(@PathParam("id") Integer id);
+        value = "Update a ConfigProperty",
+        response = ConfigProperty.class)
+    ConfigProperty create(final ConfigProperty configProperty);
 
     @PUT
-    @Path("/update")
+    @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}" + DB_OVERRIDE_VALUE_SUB_PATH)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Update a config property",
-            response = ConfigProperty.class)
-    ConfigProperty update(ConfigProperty doc);
+        value = "Update a ConfigProperty",
+        response = ConfigProperty.class)
+    ConfigProperty update(final @PathParam("propertyName") String propertyName,
+                          final ConfigProperty configProperty);
 
     @GET
     @Path("/fetchUiConfig")

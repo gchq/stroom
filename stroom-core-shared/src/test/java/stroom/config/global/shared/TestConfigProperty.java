@@ -1,14 +1,10 @@
 package stroom.config.global.shared;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.util.shared.PropertyPath;
 
 import java.io.IOException;
@@ -17,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestConfigProperty {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestConfigProperty.class);
+    // No LOGGER, due to GWT
 
     @Test
     void testPrecedenceNullDefaultOnly() {
@@ -27,14 +23,14 @@ class TestConfigProperty {
         assertThat(configProperty.getDefaultValue())
                 .isEmpty();
 
-        assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
+        assertThat(configProperty.getDatabaseOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getVal()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getValueAsOptional()))
                 .isInstanceOf(RuntimeException.class);
 
-        assertThat(configProperty.getYamlOverrideValue().hasOverride())
+        assertThat(configProperty.getYamlOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getVal()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getValueAsOptional()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getEffectiveValue())
@@ -50,13 +46,13 @@ class TestConfigProperty {
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
-        assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
+        assertThat(configProperty.getDatabaseOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getVal()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getValueAsOptional()))
                 .isInstanceOf(RuntimeException.class);
-        assertThat(configProperty.getYamlOverrideValue().hasOverride())
+        assertThat(configProperty.getYamlOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getVal()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getValueAsOptional()))
                 .isInstanceOf(RuntimeException.class);
         assertThat(configProperty.getEffectiveValue().orElseThrow())
                 .isEqualTo(defaultValue);
@@ -74,14 +70,14 @@ class TestConfigProperty {
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
 
-        assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
+        assertThat(configProperty.getDatabaseOverrideValue().isHasOverride())
                 .isTrue();
-        assertThat(configProperty.getDatabaseOverrideValue().getVal().orElseThrow())
+        assertThat(configProperty.getDatabaseOverrideValue().getValueAsOptional().orElseThrow())
                 .isEqualTo(dbValue);
 
-        assertThat(configProperty.getYamlOverrideValue().hasOverride())
+        assertThat(configProperty.getYamlOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getVal()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getValueAsOptional()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getEffectiveValue().orElseThrow())
@@ -99,13 +95,13 @@ class TestConfigProperty {
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
-        assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
+        assertThat(configProperty.getDatabaseOverrideValue().isHasOverride())
                 .isTrue();
-        assertThat(configProperty.getDatabaseOverrideValue().getVal())
+        assertThat(configProperty.getDatabaseOverrideValue().getValueAsOptional())
                 .isEmpty();
-        assertThat(configProperty.getYamlOverrideValue().hasOverride())
+        assertThat(configProperty.getYamlOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getVal()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getValueAsOptional()))
                 .isInstanceOf(RuntimeException.class);
         assertThat(configProperty.getEffectiveValue())
                 .isEmpty();
@@ -123,14 +119,14 @@ class TestConfigProperty {
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
 
-        assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
+        assertThat(configProperty.getDatabaseOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getVal()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getValueAsOptional()))
                 .isInstanceOf(RuntimeException.class);
 
-        assertThat(configProperty.getYamlOverrideValue().hasOverride())
+        assertThat(configProperty.getYamlOverrideValue().isHasOverride())
                 .isTrue();
-        assertThat(configProperty.getYamlOverrideValue().getVal().orElseThrow())
+        assertThat(configProperty.getYamlOverrideValue().getValueAsOptional().orElseThrow())
                 .isEqualTo(yamlValue);
 
         assertThat(configProperty.getEffectiveValue().orElseThrow())
@@ -149,14 +145,14 @@ class TestConfigProperty {
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
 
-        assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
+        assertThat(configProperty.getDatabaseOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getVal()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getValueAsOptional()))
                 .isInstanceOf(RuntimeException.class);
 
-        assertThat(configProperty.getYamlOverrideValue().hasOverride())
+        assertThat(configProperty.getYamlOverrideValue().isHasOverride())
                 .isTrue();
-        assertThat(configProperty.getYamlOverrideValue().getVal())
+        assertThat(configProperty.getYamlOverrideValue().getValueAsOptional())
                 .isEmpty();
 
         assertThat(configProperty.getEffectiveValue())
@@ -177,14 +173,14 @@ class TestConfigProperty {
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
 
-        assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
+        assertThat(configProperty.getDatabaseOverrideValue().isHasOverride())
                 .isTrue();
-        assertThat(configProperty.getDatabaseOverrideValue().getVal().orElseThrow())
+        assertThat(configProperty.getDatabaseOverrideValue().getValueAsOptional().orElseThrow())
                 .isEqualTo(dbValue);
 
-        assertThat(configProperty.getYamlOverrideValue().hasOverride())
+        assertThat(configProperty.getYamlOverrideValue().isHasOverride())
                 .isTrue();
-        assertThat(configProperty.getYamlOverrideValue().getVal().orElseThrow())
+        assertThat(configProperty.getYamlOverrideValue().getValueAsOptional().orElseThrow())
                 .isEqualTo(yamlValue);
 
         assertThat(configProperty.getEffectiveValue().orElseThrow())
@@ -205,14 +201,14 @@ class TestConfigProperty {
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
 
-        assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
+        assertThat(configProperty.getDatabaseOverrideValue().isHasOverride())
                 .isTrue();
-        assertThat(configProperty.getDatabaseOverrideValue().getVal().orElseThrow())
+        assertThat(configProperty.getDatabaseOverrideValue().getValueAsOptional().orElseThrow())
                 .isEqualTo(dbValue);
 
-        assertThat(configProperty.getYamlOverrideValue().hasOverride())
+        assertThat(configProperty.getYamlOverrideValue().isHasOverride())
                 .isTrue();
-        assertThat(configProperty.getYamlOverrideValue().getVal())
+        assertThat(configProperty.getYamlOverrideValue().getValueAsOptional())
                 .isEmpty();
 
         assertThat(configProperty.getEffectiveValue())
@@ -224,14 +220,14 @@ class TestConfigProperty {
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
 
-        assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
+        assertThat(configProperty.getDatabaseOverrideValue().isHasOverride())
                 .isTrue();
-        assertThat(configProperty.getDatabaseOverrideValue().getVal().orElseThrow())
+        assertThat(configProperty.getDatabaseOverrideValue().getValueAsOptional().orElseThrow())
                 .isEqualTo(dbValue);
 
-        assertThat(configProperty.getYamlOverrideValue().hasOverride())
+        assertThat(configProperty.getYamlOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getVal()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getValueAsOptional()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getEffectiveValue().orElseThrow())
@@ -243,14 +239,14 @@ class TestConfigProperty {
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
 
-        assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
+        assertThat(configProperty.getDatabaseOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getVal()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getDatabaseOverrideValue().getValueAsOptional()))
                 .isInstanceOf(RuntimeException.class);
 
-        assertThat(configProperty.getYamlOverrideValue().hasOverride())
+        assertThat(configProperty.getYamlOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getVal()))
+        assertThat(Assertions.catchThrowable(() -> configProperty.getYamlOverrideValue().getValueAsOptional()))
                 .isInstanceOf(RuntimeException.class);
 
         assertThat(configProperty.getEffectiveValue().orElseThrow())
@@ -279,23 +275,9 @@ class TestConfigProperty {
     }
 
     @Test
-    void testOverrideValueSerialisation() throws JsonProcessingException {
-        final ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
-        mapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-
-        OverrideValue<String> overrideValue = OverrideValue.with("someValue");
-
-        String json = mapper.writeValueAsString(overrideValue);
-        LOGGER.info(json);
-
-    }
-
-    @Test
     void testSerialisation1() throws IOException {
 
-        ConfigProperty configProperty = new ConfigProperty();
+        final ConfigProperty configProperty = new ConfigProperty();
         configProperty.setId(123);
         configProperty.setName(PropertyPath.fromPathString("stroom.node.name"));
         configProperty.setEditable(true);
@@ -311,7 +293,7 @@ class TestConfigProperty {
     @Test
     void testSerialisation2() throws IOException {
 
-        ConfigProperty configProperty = new ConfigProperty();
+        ConfigProperty configProperty = new ConfigProperty(PropertyPath.fromPathString("some.name"));
         doSerdeTest(configProperty);
     }
 
@@ -325,7 +307,7 @@ class TestConfigProperty {
         assertThat(mapper.canSerialize(OverrideValue.class)).isTrue();
 
         String json = mapper.writeValueAsString(configProperty);
-        LOGGER.info(json);
+        System.out.println("\n" + json);
 
         final ConfigProperty configProperty2 = mapper.readValue(json, ConfigProperty.class);
 

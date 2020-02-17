@@ -23,7 +23,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.google.web.bindery.event.shared.SimpleEventBus;
-import stroom.config.global.shared.ConfigResource;
+import stroom.config.global.shared.GlobalConfigResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
@@ -36,7 +36,7 @@ import javax.inject.Singleton;
 
 @Singleton
 public class UiConfigCache implements HasHandlers {
-    private static final ConfigResource CONFIG_RESOURCE = GWT.create(ConfigResource.class);
+    private static final GlobalConfigResource CONFIG_RESOURCE = GWT.create(GlobalConfigResource.class);
     private static final int ONE_MINUTE = 1000 * 60;
 
     private final RestFactory restFactory;
