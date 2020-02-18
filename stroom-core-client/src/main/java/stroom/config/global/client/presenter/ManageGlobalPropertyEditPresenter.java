@@ -305,10 +305,9 @@ public final class ManageGlobalPropertyEditPresenter
     private void showError(final Throwable throwable, final String message) {
         AlertEvent.fireError(
             ManageGlobalPropertyEditPresenter.this,
-            message,
-            throwable.getMessage(),
+            message + " - " + throwable.getMessage(),
+            null,
             null);
-
     }
 
     private void refreshValuesOnChange() {
