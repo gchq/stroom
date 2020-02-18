@@ -196,7 +196,7 @@ public final class ManageGlobalPropertyEditPresenter
                     showError(throwable, "Error getting YAML override for node " + nodeName);
                 })
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-                .getYamlValueByNodeAndName(configProperty.getNameAsString(), nodeName);
+                .getYamlValueByNodeAndName(configProperty.getName().toString(), nodeName);
     }
 
     private void showPopup(final PopupUiHandlers popupUiHandlers) {
@@ -298,7 +298,7 @@ public final class ManageGlobalPropertyEditPresenter
                 .onFailure(throwable ->
                     showError(throwable, "Error updating property"))
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-                .update(configPropertyToSave.getNameAsString(), configPropertyToSave);
+                .update(configPropertyToSave.getName().toString(), configPropertyToSave);
         }
     }
 
@@ -306,7 +306,7 @@ public final class ManageGlobalPropertyEditPresenter
         AlertEvent.fireError(
             ManageGlobalPropertyEditPresenter.this,
             message,
-            throwable.toString(),
+            throwable.getMessage(),
             null);
 
     }
@@ -317,8 +317,9 @@ public final class ManageGlobalPropertyEditPresenter
             getEntity().setDatabaseOverrideValue(OverrideValue.with(value.trim()));
         } else {
             getEntity().setDatabaseOverrideValue(OverrideValue.unSet(String.class));
-            // no override so clear the value
-            getView().getDatabaseValue().setText(null);
+
+            // Don't clear the db override field on screen in case they unticked
+            // by accident
         }
 
         getView().getEffectiveValue().setText(getEntity().getEffectiveValue().orElse(null));

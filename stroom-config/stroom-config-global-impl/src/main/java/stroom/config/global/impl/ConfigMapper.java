@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.docref.DocRef;
 import stroom.util.config.FieldMapper;
 import stroom.util.config.PropertyUtil;
@@ -586,13 +587,13 @@ public class ConfigMapper {
             LOGGER.debug(LogUtil.message(
                 "Unable to convert value [{}] to type {} due to: {}",
                     value, genericType, e.getMessage()), e);
-            throw new RuntimeException(LogUtil.message(
+            throw new ConfigPropertyValidationException(LogUtil.message(
                 "Unable to convert value [{}] to type {} due to: {}",
                     value, getDataTypeName(genericType), e.getMessage()), e);
         }
 
         LOGGER.error("Unable to convert value [{}] of type [{}] to an Object", value, type);
-        throw new RuntimeException(LogUtil.message(
+        throw new ConfigPropertyValidationException(LogUtil.message(
             "Type [{}] is not supported for value [{}]", genericType, value));
     }
 

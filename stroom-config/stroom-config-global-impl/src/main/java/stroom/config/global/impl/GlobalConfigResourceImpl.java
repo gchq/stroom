@@ -3,6 +3,7 @@ package stroom.config.global.impl;
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;
 import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.OverrideValue;
 import stroom.node.api.NodeCallUtil;
@@ -152,7 +153,13 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
         RestUtil.requireNonNull(configProperty, "configProperty not supplied");
         RestUtil.requireNonNull(configProperty.getName(), "configProperty name cannot be null");
 
-        return globalConfigService.update(configProperty);
+        try {
+            return globalConfigService.update(configProperty);
+        } catch (ConfigPropertyValidationException e) {
+            throw new BadRequestException(e.getMessage(), e);
+        } catch (RuntimeException e) {
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
     @Timed
@@ -166,7 +173,13 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
                 propertyName, configProperty.getNameAsString()));
         }
 
-        return globalConfigService.update(configProperty);
+        try {
+            return globalConfigService.update(configProperty);
+        } catch (ConfigPropertyValidationException e) {
+            throw new BadRequestException(e.getMessage(), e);
+        } catch (RuntimeException e) {
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
     //    @Override

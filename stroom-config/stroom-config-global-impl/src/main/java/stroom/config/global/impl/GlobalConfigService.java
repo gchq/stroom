@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.FindGlobalConfigCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -287,7 +288,7 @@ public class GlobalConfigService {
                         .append("\n")
                         .append(error.getMessage());
             });
-            throw new RuntimeException(stringBuilder.toString());
+            throw new ConfigPropertyValidationException(stringBuilder.toString());
         }
     }
 
