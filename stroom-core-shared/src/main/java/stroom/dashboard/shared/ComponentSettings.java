@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlSeeAlso;
-import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlSeeAlso({QueryComponentSettings.class, TableComponentSettings.class, VisComponentSettings.class, TextComponentSettings.class})
@@ -37,7 +36,4 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = TextComponentSettings.class, name = "text")
 })
 public abstract class ComponentSettings {
-    public ComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
-    }
 }

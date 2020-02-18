@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -47,6 +48,15 @@ public class Automate {
 
     public Automate() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public Automate(@JsonProperty("open") final boolean open,
+                    @JsonProperty("refresh") final boolean refresh,
+                    @JsonProperty("refreshInterval") final String refreshInterval) {
+        this.open = open;
+        this.refresh = refresh;
+        this.refreshInterval = refreshInterval;
     }
 
     public boolean isOpen() {

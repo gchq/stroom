@@ -16,7 +16,10 @@
 
 package stroom.index.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
@@ -38,26 +41,34 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "indexField", propOrder = {"analyzerType", "caseSensitive", "fieldName", "fieldType", "indexed",
         "stored", "termPositions"})
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class IndexField implements HasDisplayValue, Comparable<IndexField>, Serializable {
     private static final long serialVersionUID = 3100770758821157580L;
 
     @XmlElement(name = "fieldType")
+    @JsonProperty
     private IndexFieldType fieldType;
     @XmlElement(name = "fieldName")
+    @JsonProperty
     private String fieldName;
     @XmlElement(name = "stored")
+    @JsonProperty
     private boolean stored = false;
 
     /**
      * Determines whether the field can be queried or not
      */
     @XmlElement(name = "indexed")
+    @JsonProperty
     private boolean indexed = true;
     @XmlElement(name = "termPositions")
+    @JsonProperty
     private boolean termPositions = false;
     @XmlElement(name = "analyzerType")
+    @JsonProperty
     private AnalyzerType analyzerType;
     @XmlElement(name = "caseSensitive")
+    @JsonProperty
     private boolean caseSensitive = false;
 
     /**
@@ -73,8 +84,33 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         // Default constructor necessary for GWT serialisation.
     }
 
-    private IndexField(final IndexFieldType fieldType, final String fieldName, final AnalyzerType analyzerType,
-                       final boolean caseSensitive, final boolean stored, final boolean indexed, final boolean termPositions,
+    @JsonCreator
+    public IndexField((@JsonProperty("fieldType") final IndexFieldType fieldType,
+                      (@JsonProperty("fieldName") final String fieldName,
+                      (@JsonProperty("stored") final boolean stored,
+                      (@JsonProperty("indexed") final boolean indexed,
+                      (@JsonProperty("termPositions") final boolean termPositions,
+                      (@JsonProperty("analyzerType") final AnalyzerType analyzerType,
+                      (@JsonProperty("caseSensitive") final boolean caseSensitive,
+                      (@JsonProperty("supportedConditions") final List<Condition> supportedConditions) {
+        this.fieldType = fieldType;
+        this.fieldName = fieldName;
+        this.stored = stored;
+        this.indexed = indexed;
+        this.termPositions = termPositions;
+        this.analyzerType = analyzerType;
+        this.caseSensitive = caseSensitive;
+        this.supportedConditions = supportedConditions;
+    }
+
+
+    private IndexField(final IndexFieldType fieldType,
+                       final String fieldName,
+                       final AnalyzerType analyzerType,
+                       final boolean caseSensitive,
+                       final boolean stored,
+                       final boolean indexed,
+                       final boolean termPositions,
                        final List<Condition> supportedConditions) {
         setFieldType(fieldType);
         setFieldName(fieldName);

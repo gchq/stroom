@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -35,8 +36,6 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "component")
 @XmlType(name = "ComponentConfig", propOrder = {"type", "id", "name", "settings"})
 public class ComponentConfig {
-    private static final long serialVersionUID = -2530827581046882396L;
-
     @XmlElement(name = "type")
     @JsonProperty("type")
     private String type;
@@ -55,6 +54,17 @@ public class ComponentConfig {
 
     public ComponentConfig() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public ComponentConfig(@JsonProperty("type") final String type,
+                           @JsonProperty("id") final String id,
+                           @JsonProperty("name") final String name,
+                           @JsonProperty("settings") final ComponentSettings settings) {
+        this.type = type;
+        this.id = id;
+        this.name = name;
+        this.settings = settings;
     }
 
     public String getType() {

@@ -16,8 +16,10 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 
@@ -28,10 +30,25 @@ import java.util.Objects;
 public class DashboardDoc extends Doc {
     public static final String DOCUMENT_TYPE = "Dashboard";
 
+    @JsonProperty
     private DashboardConfig dashboardConfig;
 
     public DashboardDoc() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public DashboardDoc(@JsonProperty("type") final String type,
+                        @JsonProperty("uuid") final String uuid,
+                        @JsonProperty("name") final String name,
+                        @JsonProperty("version") final String version,
+                        @JsonProperty("createTime") final Long createTime,
+                        @JsonProperty("updateTime") final Long updateTime,
+                        @JsonProperty("createUser") final String createUser,
+                        @JsonProperty("updateUser") final String updateUser,
+                        @JsonProperty("dashboardConfig") final DashboardConfig dashboardConfig) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.dashboardConfig = dashboardConfig;
     }
 
     public DashboardConfig getDashboardConfig() {

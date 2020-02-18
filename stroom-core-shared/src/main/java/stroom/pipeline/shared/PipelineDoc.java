@@ -18,6 +18,7 @@ package stroom.pipeline.shared;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
@@ -33,8 +34,11 @@ import java.util.Objects;
 public class PipelineDoc extends Doc {
     public static final String DOCUMENT_TYPE = "Pipeline";
 
+    @JsonProperty
     private String description;
+    @JsonProperty
     private DocRef parentPipeline;
+    @JsonProperty
     private PipelineData pipelineData;
 
     public PipelineDoc() {

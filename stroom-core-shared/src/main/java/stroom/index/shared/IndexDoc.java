@@ -16,8 +16,10 @@
 
 package stroom.index.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.Doc;
@@ -29,8 +31,6 @@ import java.util.Objects;
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "maxDocsPerShard", "partitionBy", "partitionSize", "shardsPerPartition", "retentionDayAge", "fields", "volumeGroupName"})
 @JsonInclude(Include.NON_DEFAULT)
 public class IndexDoc extends Doc {
-    private static final long serialVersionUID = 2648729644398564919L;
-
     public static final int DEFAULT_MAX_DOCS_PER_SHARD = 1000000000;
     private static final int DEFAULT_SHARDS_PER_PARTITION = 1;
     private static final PartitionBy DEFAULT_PARTITION_BY = PartitionBy.MONTH;
@@ -38,14 +38,50 @@ public class IndexDoc extends Doc {
 
     public static final String DOCUMENT_TYPE = "Index";
 
+    @JsonProperty
     private String description;
+    @JsonProperty
     private int maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
+    @JsonProperty
     private PartitionBy partitionBy = DEFAULT_PARTITION_BY;
+    @JsonProperty
     private int partitionSize = DEFAULT_PARTITION_SIZE;
+    @JsonProperty
     private int shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
+    @JsonProperty
     private Integer retentionDayAge;
+    @JsonProperty
     private List<IndexField> fields;
+    @JsonProperty
     private String volumeGroupName;
+
+    @JsonCreator
+    public IndexDoc(@JsonProperty("type") final String type,
+                    @JsonProperty("uuid") final String uuid,
+                    @JsonProperty("name") final String name,
+                    @JsonProperty("version") final String version,
+                    @JsonProperty("createTime") final Long createTime,
+                    @JsonProperty("updateTime") final Long updateTime,
+                    @JsonProperty("createUser") final String createUser,
+                    @JsonProperty("updateUser") final String updateUser,
+                    @JsonProperty("description") final String description,
+                    @JsonProperty("maxDocsPerShard") final int maxDocsPerShard,
+                    @JsonProperty("partitionBy") final PartitionBy partitionBy,
+                    @JsonProperty("partitionSize") final int partitionSize,
+                    @JsonProperty("shardsPerPartition") final int shardsPerPartition,
+                    @JsonProperty("retentionDayAge") final Integer retentionDayAge,
+                    @JsonProperty("fields") final List<IndexField> fields,
+                    @JsonProperty("volumeGroupName") final String volumeGroupName) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.maxDocsPerShard = maxDocsPerShard;
+        this.partitionBy = partitionBy;
+        this.partitionSize = partitionSize;
+        this.shardsPerPartition = shardsPerPartition;
+        this.retentionDayAge = retentionDayAge;
+        this.fields = fields;
+        this.volumeGroupName = volumeGroupName;
+    }
 
     public String getDescription() {
         return description;

@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -47,6 +48,15 @@ public class QueryComponentSettings extends ComponentSettings {
 
     public QueryComponentSettings() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public QueryComponentSettings(@JsonProperty("dataSource") final DocRef dataSource,
+                                  @JsonProperty("expression") final ExpressionOperator expression,
+                                  @JsonProperty("automate") final Automate automate) {
+        this.dataSource = dataSource;
+        this.expression = expression;
+        this.automate = automate;
     }
 
     public DocRef getDataSource() {

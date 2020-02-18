@@ -17,6 +17,8 @@
 package stroom.meta.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.Copyable;
@@ -24,10 +26,11 @@ import stroom.util.shared.IdSet;
 
 import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class FindMetaCriteria extends ExpressionCriteria implements Copyable<FindMetaCriteria> {
-    private static final long serialVersionUID = -4777723504698304778L;
-
+    @JsonProperty
     private IdSet selectedIdSet;
+    @JsonProperty
     private boolean fetchRelationships;
 
     public FindMetaCriteria() {
