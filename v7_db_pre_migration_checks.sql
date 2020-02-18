@@ -53,4 +53,14 @@ GROUP BY
   i.UUID
 HAVING COUNT(*) > 1;
 
+\! echo 'Find IDX/IDX_VOL records that would violate NOT NULL conditions in new query table';
+
+SELECT
+  *
+FROM
+  QUERY
+WHERE NAME IS NULL
+OR DASH_UUID IS NULL
+OR QUERY_ID IS NULL;
+
 \! echo 'Finished';
