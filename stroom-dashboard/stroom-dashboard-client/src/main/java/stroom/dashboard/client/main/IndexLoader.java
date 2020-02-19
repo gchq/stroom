@@ -21,7 +21,7 @@ import com.google.gwt.event.shared.GwtEvent;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.dashboard.shared.DataSourceFieldsMap;
-import stroom.datasource.shared.DataSourceFields;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -62,13 +62,13 @@ public class IndexLoader implements HasChangeDataHandlers<IndexLoader> {
 
     public void loadDataSource(final DocRef dataSourceRef) {
         if (dataSourceRef != null) {
-            final Rest<DataSourceFields> rest = restFactory.create();
+            final Rest<List<AbstractField>> rest = restFactory.create();
             rest
                     .onSuccess(result -> {
                         loadedDataSourceRef = dataSourceRef;
 
                         if (result != null) {
-                            dataSourceFieldsMap = new DataSourceFieldsMap(result.getFields());
+                            dataSourceFieldsMap = new DataSourceFieldsMap(result);
                             indexFieldNames = new ArrayList<>(dataSourceFieldsMap.keySet());
                             Collections.sort(indexFieldNames);
                         } else {

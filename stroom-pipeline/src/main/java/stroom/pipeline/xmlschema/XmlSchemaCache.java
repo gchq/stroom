@@ -81,7 +81,7 @@ public class XmlSchemaCache implements EntityEvent.Handler {
                 final List<String> systemIdList = new ArrayList<>();
 
                 // Get a list of matching schemas.
-                final List<XmlSchemaDoc> schemas = xmlSchemaStore.find(criteria);
+                final List<XmlSchemaDoc> schemas = xmlSchemaStore.find(criteria).getValues();
                 schemas.forEach(schema -> {
                     addToMap(schemaNameMap, schema.getName(), schema);
                     addToMap(schemaNamespaceURIMap, schema.getNamespaceURI(), schema);

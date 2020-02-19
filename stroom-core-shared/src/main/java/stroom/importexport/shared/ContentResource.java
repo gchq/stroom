@@ -23,6 +23,7 @@ import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -68,6 +69,6 @@ public interface ContentResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch content dependencies",
-            response = DependencyResultPage.class)
-    DependencyResultPage fetchDependencies(DependencyCriteria criteria);
+            response = ResultPage.class)
+    ResultPage<Dependency> fetchDependencies(DependencyCriteria criteria);
 }

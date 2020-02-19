@@ -25,12 +25,12 @@ import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.StoredQueryResource;
-import stroom.dashboard.shared.StoredQueryResultPage;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.client.ExpressionTreePresenter;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -98,13 +98,13 @@ public class QueryHistoryPresenter extends MyPresenterWidget<QueryHistoryPresent
         criteria.setFavourite(false);
         criteria.setPageRequest(new PageRequest(0L, 100));
 
-        final Rest<StoredQueryResultPage> rest = restFactory.create();
+        final Rest<ResultPage<StoredQuery>> rest = restFactory.create();
         rest
                 .onSuccess(result -> {
                     selectionModel.clear();
 
                     ExpressionOperator lastExpression = null;
-                    final List<StoredQuery> dedupedList = new ArrayList<>(result.getValues().size());
+                    final List<StoredQuery> dedupedList = new ArrayList<>(result.size());
                     for (final StoredQuery queryEntity : result.getValues()) {
                         if (queryEntity != null && queryEntity.getQuery() != null && queryEntity.getQuery().getExpression() != null) {
                             final ExpressionOperator expression = queryEntity.getQuery().getExpression();

@@ -387,7 +387,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
             }
 
             // Find streams.
-            final List<Meta> allStreamList = metaService.find(criteria);
+            final List<Meta> allStreamList = metaService.find(criteria).getValues();
             allStreamIdList = new ArrayList<>(allStreamList.size());
             for (final Meta meta : allStreamList) {
                 allStreamIdList.add(meta.getId());

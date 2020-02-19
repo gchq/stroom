@@ -24,7 +24,7 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.TimeUnit;
-import stroom.datasource.shared.DataSourceFields;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -32,6 +32,8 @@ import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.receive.rules.client.presenter.DataRetentionRulePresenter.DataRetentionRuleView;
+
+import java.util.List;
 
 public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionRuleView> {
     private static final DataSourceResource DATA_SOURCE_RESOURCE = GWT.create(DataSourceResource.class);
@@ -47,9 +49,9 @@ public class DataRetentionRulePresenter extends MyPresenterWidget<DataRetentionR
         this.editExpressionPresenter = editExpressionPresenter;
         view.setExpressionView(editExpressionPresenter.getView());
 
-        final Rest<DataSourceFields> rest = restFactory.create();
+        final Rest<List<AbstractField>> rest = restFactory.create();
         rest
-                .onSuccess(result -> editExpressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, result.getFields()))
+                .onSuccess(result -> editExpressionPresenter.init(restFactory, MetaFields.STREAM_STORE_DOC_REF, result))
                 .call(DATA_SOURCE_RESOURCE)
                 .fetchFields(MetaFields.STREAM_STORE_DOC_REF);
     }

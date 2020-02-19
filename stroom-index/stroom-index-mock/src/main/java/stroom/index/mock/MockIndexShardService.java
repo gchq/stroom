@@ -26,12 +26,13 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.util.io.FileUtil;
-import stroom.util.shared.ResultList;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -88,8 +89,8 @@ public class MockIndexShardService
     }
 
     @Override
-    public ResultList<IndexShard> find(final FindIndexShardCriteria criteria) {
-        final ResultList<IndexShard> results = new ResultList<>();
+    public List<IndexShard> find(final FindIndexShardCriteria criteria) {
+        final List<IndexShard> results = new ArrayList<>();
         for (final IndexShard indexShard : map.values()) {
             boolean include = true;
 

@@ -19,6 +19,7 @@ package stroom.datasource.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.util.shared.RestResource;
@@ -40,6 +41,6 @@ public interface DataSourceResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch data source fields",
-            response = DataSourceFields.class)
-    DataSourceFields fetchFields(DocRef dataSourceRef);
+            response = List.class)
+    List<AbstractField> fetchFields(DocRef dataSourceRef);
 }

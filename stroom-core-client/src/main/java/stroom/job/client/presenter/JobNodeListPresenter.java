@@ -42,8 +42,8 @@ import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeResource;
-import stroom.job.shared.ListJobNodeResponse;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResultPage;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
@@ -57,7 +57,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
     private final RestFactory restFactory;
     private final SchedulePresenter schedulePresenter;
 
-    private final RestDataProvider<JobNode, ListJobNodeResponse> dataProvider;
+    private final RestDataProvider<JobNode, ResultPage<JobNode>> dataProvider;
     private final Map<JobNode, JobNodeInfo> latestNodeInfo = new HashMap<>();
 
     private String jobName;
@@ -72,15 +72,15 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
 
         initTable();
 
-        dataProvider = new RestDataProvider<JobNode, ListJobNodeResponse>(eventBus) {
+        dataProvider = new RestDataProvider<JobNode, ResultPage<JobNode>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ListJobNodeResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<ListJobNodeResponse> rest = restFactory.create();
+            protected void exec(final Consumer<ResultPage<JobNode>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<JobNode>> rest = restFactory.create();
                 rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(JOB_NODE_RESOURCE).list(jobName, null);
             }
 
             @Override
-            protected void changeData(final ListJobNodeResponse data) {
+            protected void changeData(final ResultPage<JobNode> data) {
                 // Ping each node.
                 data.getValues().forEach(row -> {
                     final Rest<JobNodeInfo> rest = restFactory.create();

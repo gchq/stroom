@@ -55,7 +55,6 @@ import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.ResultList;
 import stroom.util.shared.Sort.Direction;
 import stroom.util.shared.VoidResult;
 
@@ -402,7 +401,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
         final List<ProcessorFilter> filters = processorFilterService
-                .find(findProcessorFilterCriteria);
+                .find(findProcessorFilterCriteria).getValues();
         LOGGER.trace("Found {} stream processor filters", filters.size());
 
         // Sort the stream processor filters by priority.
@@ -638,7 +637,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 //            findProcessorTaskCriteria.obtainProcessorFilterIdSet().add(filter.getId());
             findProcessorTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
 
-            final ResultList<ProcessorTask> processorTasks = processorTaskDao.find(findProcessorTaskCriteria);
+            final List<ProcessorTask> processorTasks = processorTaskDao.find(findProcessorTaskCriteria).getValues();
             final int size = processorTasks.size();
 
             taskStatusTraceLog.addUnownedTasks(ProcessorTaskManagerImpl.class, processorTasks);
@@ -655,7 +654,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
                 findMetaCriteria.setSort(MetaFields.ID.getName(), Direction.ASCENDING, false);
-                final ResultList<Meta> metaList = metaService.find(findMetaCriteria);
+                final List<Meta> metaList = metaService.find(findMetaCriteria).getValues();
 
                 if (metaList.size() > 0) {
                     // Change the ownership of tasks where we have unlocked meta data.
@@ -948,7 +947,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 //        findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
         findMetaCriteria.obtainPageRequest().setLength(max);
 
-        return metaService.find(findMetaCriteria);
+        return metaService.find(findMetaCriteria).getValues();
     }
 
 //    private Long min(final Long l1, final Long l2) {

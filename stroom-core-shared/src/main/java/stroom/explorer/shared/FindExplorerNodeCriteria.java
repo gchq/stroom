@@ -1,24 +1,32 @@
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 import java.util.Set;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class FindExplorerNodeCriteria {
-    private Set<String> openItems;
-    private Set<String> temporaryOpenedItems;
-    private ExplorerTreeFilter filter;
-    private Integer minDepth;
-    private Set<String> ensureVisible;
+    @JsonProperty
+    private final Set<String> openItems;
+    @JsonProperty
+    private final Set<String> temporaryOpenedItems;
+    @JsonProperty
+    private final ExplorerTreeFilter filter;
+    @JsonProperty
+    private final Integer minDepth;
+    @JsonProperty
+    private final Set<String> ensureVisible;
 
-    public FindExplorerNodeCriteria() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public FindExplorerNodeCriteria(final Set<String> openItems,
-                                    final Set<String> temporaryOpenedItems,
-                                    final ExplorerTreeFilter filter,
-                                    final Integer minDepth,
-                                    final Set<String> ensureVisible) {
+    @JsonCreator
+    public FindExplorerNodeCriteria(@JsonProperty("openItems") final Set<String> openItems,
+                                    @JsonProperty("temporaryOpenedItems") final Set<String> temporaryOpenedItems,
+                                    @JsonProperty("filter") final ExplorerTreeFilter filter,
+                                    @JsonProperty("minDepth") final Integer minDepth,
+                                    @JsonProperty("ensureVisible") final Set<String> ensureVisible) {
         this.openItems = openItems;
         this.temporaryOpenedItems = temporaryOpenedItems;
         this.filter = filter;
@@ -30,40 +38,20 @@ public class FindExplorerNodeCriteria {
         return openItems;
     }
 
-    public void setOpenItems(final Set<String> openItems) {
-        this.openItems = openItems;
-    }
-
     public Set<String> getTemporaryOpenedItems() {
         return temporaryOpenedItems;
-    }
-
-    public void setTemporaryOpenedItems(final Set<String> temporaryOpenedItems) {
-        this.temporaryOpenedItems = temporaryOpenedItems;
     }
 
     public ExplorerTreeFilter getFilter() {
         return filter;
     }
 
-    public void setFilter(final ExplorerTreeFilter filter) {
-        this.filter = filter;
-    }
-
     public Integer getMinDepth() {
         return minDepth;
     }
 
-    public void setMinDepth(final Integer minDepth) {
-        this.minDepth = minDepth;
-    }
-
     public Set<String> getEnsureVisible() {
         return ensureVisible;
-    }
-
-    public void setEnsureVisible(final Set<String> ensureVisible) {
-        this.ensureVisible = ensureVisible;
     }
 
     @Override

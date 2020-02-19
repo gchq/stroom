@@ -27,7 +27,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
@@ -67,7 +67,7 @@ class JobNodeService {
         });
     }
 
-    ResultList<JobNode> find(final FindJobNodeCriteria findJobNodeCriteria) {
+    ResultPage<JobNode> find(final FindJobNodeCriteria findJobNodeCriteria) {
         return securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobNodeDao.find(findJobNodeCriteria));
     }
 

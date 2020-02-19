@@ -171,7 +171,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         taskManager.exec(new StreamUploadTask("test.zip", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, extraMeta));
 
-        final List<Meta> streamList = metaService.find(findMetaCriteria);
+        final List<Meta> streamList = metaService.find(findMetaCriteria).getValues();
 
         assertThat(streamList.size()).isEqualTo(2);
 

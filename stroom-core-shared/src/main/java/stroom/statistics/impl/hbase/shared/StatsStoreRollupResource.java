@@ -20,6 +20,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -39,7 +40,7 @@ public interface StatsStoreRollupResource extends RestResource, DirectRestServic
     @ApiOperation(
             value = "Create rollup bit mask",
             response = List.class)
-    List<CustomRollUpMask> bitMaskPermGeneration(Integer fieldCount);
+    ResultPage<CustomRollUpMask> bitMaskPermGeneration(Integer fieldCount);
 
     @POST
     @Path("/bitMaskConversion")
@@ -48,7 +49,7 @@ public interface StatsStoreRollupResource extends RestResource, DirectRestServic
     @ApiOperation(
             value = "Get rollup bit mask",
             response = List.class)
-    List<CustomRollUpMaskFields> bitMaskConversion(List<Short> maskValues);
+    ResultPage<CustomRollUpMaskFields> bitMaskConversion(List<Short> maskValues);
 
     @POST
     @Path("/dataSourceFieldChange")

@@ -119,7 +119,7 @@ class TestMetaService {
                 final Meta meta2 = metaService.create(createProps(FEED_USE_PERMISSION));
                 final Meta meta3 = metaService.create(createProps(FEED_READ_PERMISSION));
 
-                final List<Meta> readList = metaService.find(new FindMetaCriteria());
+                final List<Meta> readList = metaService.find(new FindMetaCriteria()).getValues();
                 assertThat(readList.size()).isEqualTo(1);
 
                 securityContext.useAsRead(() -> {
@@ -131,7 +131,7 @@ class TestMetaService {
                     assertThat(readExpression2).isNotEmpty();
                     assertThat(readExpression2.get().getChildren().size() == 1);
 
-                    final List<Meta> useAndReadList = metaService.find(new FindMetaCriteria());
+                    final List<Meta> useAndReadList = metaService.find(new FindMetaCriteria()).getValues();
                     assertThat(useAndReadList.size()).isEqualTo(2);
                 });
             });

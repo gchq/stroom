@@ -21,7 +21,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskManagerFields;
 import stroom.task.shared.TaskProgress;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -62,7 +62,7 @@ class SearchableTaskProgress implements Searchable {
     public void search(final ExpressionCriteria criteria, final AbstractField[] fields, final Consumer<Val[]> consumer) {
         securityContext.secure(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
             final FindTaskProgressClusterTask clusterTask = new FindTaskProgressClusterTask("Search Task Progress", new FindTaskProgressCriteria());
-            final DefaultClusterResultCollector<ResultList<TaskProgress>> collector = dispatchHelper
+            final DefaultClusterResultCollector<ResultPage<TaskProgress>> collector = dispatchHelper
                     .execAsync(clusterTask, TargetType.ACTIVE);
 
             final ExpressionMatcher expressionMatcher = expressionMatcherFactory.create(TaskManagerFields.getFieldMap());
@@ -70,7 +70,7 @@ class SearchableTaskProgress implements Searchable {
                     .stream()
                     .filter(value -> value.getResult() != null)
                     .map(ClusterCallEntry::getResult)
-                    .map(ResultList::getValues)
+                    .map(ResultPage::getValues)
                     .flatMap(List::stream)
                     .map(taskProgress -> {
                         final Map<String, Object> attributeMap = new HashMap<>();

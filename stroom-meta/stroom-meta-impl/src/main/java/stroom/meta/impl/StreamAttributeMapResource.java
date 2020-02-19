@@ -31,7 +31,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
@@ -88,7 +88,7 @@ public class StreamAttributeMapResource implements RestResource {
             ExpressionOperator expressionOperator = new ExpressionOperator(true, ExpressionOperator.Op.AND, expressionTerm);
             criteria.setExpression(expressionOperator);
 
-            ResultList<MetaRow> results = dataMetaService.findRows(criteria);
+            ResultPage<MetaRow> results = dataMetaService.findRows(criteria);
             Object response = new Object() {
                 public PageResponse pageResponse = results.getPageResponse();
                 public List<MetaRow> streamAttributeMaps = results.getValues();
@@ -125,7 +125,7 @@ public class StreamAttributeMapResource implements RestResource {
 
             criteria.setExpression(expression);
 
-            ResultList<MetaRow> results = dataMetaService.findRows(criteria);
+            ResultPage<MetaRow> results = dataMetaService.findRows(criteria);
             Object response = new Object() {
                 public PageResponse pageResponse = results.getPageResponse();
                 public List<MetaRow> streamAttributeMaps = results.getValues();
@@ -164,7 +164,7 @@ public class StreamAttributeMapResource implements RestResource {
             idSet.add(id);
             criteria.setSelectedIdSet(idSet);
 
-            ResultList<MetaRow> results = dataMetaService.findRows(criteria);
+            ResultPage<MetaRow> results = dataMetaService.findRows(criteria);
             if (results.size() == 0) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }

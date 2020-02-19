@@ -21,13 +21,13 @@ import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.processor.shared.FetchProcessorRequest;
-import stroom.processor.shared.FetchProcessorResponse;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
-import stroom.util.shared.ResultList;
 import stroom.util.shared.HasIntCrud;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
 
@@ -42,9 +42,9 @@ public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
                            final int priority,
                            final boolean enabled);
 
-    ResultList<ProcessorFilter> find(ExpressionCriteria criteria);
+    ResultPage<ProcessorFilter> find(ExpressionCriteria criteria);
 
-    FetchProcessorResponse find(FetchProcessorRequest request);
+    ResultPage<ProcessorListRow> find(FetchProcessorRequest request);
 
     void setPriority(Integer id, Integer priority);
 

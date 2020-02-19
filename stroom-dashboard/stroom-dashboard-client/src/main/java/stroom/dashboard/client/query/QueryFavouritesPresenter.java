@@ -29,7 +29,6 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.StoredQueryResource;
-import stroom.dashboard.shared.StoredQueryResultPage;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -39,6 +38,7 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -223,12 +223,12 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         criteria.setFavourite(true);
         criteria.setPageRequest(new PageRequest(0L, 100));
 
-        final Rest<StoredQueryResultPage> rest = restFactory.create();
+        final Rest<ResultPage<StoredQuery>> rest = restFactory.create();
         rest
                 .onSuccess(result -> {
                     selectionModel.clear();
                     getView().getCellList().setRowData(result.getValues());
-                    getView().getCellList().setRowCount(result.getValues().size(), true);
+                    getView().getCellList().setRowCount(result.size(), true);
 
                     if (showAfterRefresh) {
                         final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {

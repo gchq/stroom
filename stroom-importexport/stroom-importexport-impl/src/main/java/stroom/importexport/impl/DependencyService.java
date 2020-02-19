@@ -1,8 +1,9 @@
 package stroom.importexport.impl;
 
+import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.importexport.shared.DependencyResultPage;
+import stroom.util.shared.ResultPage;
 
 public interface DependencyService {
-    DependencyResultPage getDependencies(DependencyCriteria criteria);
+    ResultPage<Dependency> getDependencies(DependencyCriteria criteria);
 }

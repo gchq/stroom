@@ -29,7 +29,7 @@ import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -52,13 +52,13 @@ class ProcessorTaskServiceImpl implements ProcessorTaskService, Searchable {
     }
 
     @Override
-    public ResultList<ProcessorTask> find(final ExpressionCriteria criteria) {
+    public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
         return securityContext.secureResult(PERMISSION, () ->
                 processorTaskDao.find(criteria));
     }
 
     @Override
-    public ResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
+    public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         return securityContext.secureResult(PERMISSION, () ->
                 processorTaskDao.findSummary(criteria));
     }

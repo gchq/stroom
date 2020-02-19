@@ -3,7 +3,6 @@ package stroom.config.global.impl;
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck;
 import stroom.config.global.shared.ConfigProperty;
-import stroom.config.global.shared.ConfigPropertyResultPage;
 import stroom.config.global.shared.FindGlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.OverrideValue;
@@ -18,6 +17,7 @@ import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -150,8 +150,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
 
     @Timed
     @Override
-    public ConfigPropertyResultPage find(final FindGlobalConfigCriteria criteria) {
-        return new ConfigPropertyResultPage().limited(globalConfigService.list(criteria), criteria.obtainPageRequest());
+    public ResultPage<ConfigProperty> find(final FindGlobalConfigCriteria criteria) {
+        return ResultPage.createPageLimitedList(globalConfigService.list(criteria), criteria.obtainPageRequest());
     }
 
     @Timed

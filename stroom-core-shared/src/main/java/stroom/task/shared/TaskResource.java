@@ -19,7 +19,6 @@ package stroom.task.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.job.shared.ListJobNodeResponse;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -40,7 +39,7 @@ public interface TaskResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Lists tasks for a node",
-            response = ListJobNodeResponse.class)
+            response = TaskProgressResponse.class)
     TaskProgressResponse list(@PathParam("nodeName") String nodeName);
 
     @POST
@@ -49,7 +48,7 @@ public interface TaskResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Finds tasks for a node",
-            response = ListJobNodeResponse.class)
+            response = TaskProgressResponse.class)
     TaskProgressResponse find(@PathParam("nodeName") String nodeName, FindTaskProgressRequest request);
 
     @GET
@@ -58,7 +57,7 @@ public interface TaskResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Lists tasks for a node",
-            response = ListJobNodeResponse.class)
+            response = TaskProgressResponse.class)
     TaskProgressResponse userTasks(@PathParam("nodeName") String nodeName);
 
     @POST

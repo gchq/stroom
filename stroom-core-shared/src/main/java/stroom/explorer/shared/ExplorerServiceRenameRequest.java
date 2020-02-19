@@ -17,17 +17,22 @@
 
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class ExplorerServiceRenameRequest {
-    private DocRef docRef;
-    private String docName;
+    @JsonProperty
+    private final DocRef docRef;
+    @JsonProperty
+    private final String docName;
 
-    public ExplorerServiceRenameRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ExplorerServiceRenameRequest(final DocRef docRef, final String docName) {
+    @JsonCreator
+    public ExplorerServiceRenameRequest(@JsonProperty("docRef") final DocRef docRef,
+                                        @JsonProperty("docName") final String docName) {
         this.docRef = docRef;
         this.docName = docName;
     }
@@ -36,15 +41,7 @@ public class ExplorerServiceRenameRequest {
         return docRef;
     }
 
-    public void setDocRef(final DocRef docRef) {
-        this.docRef = docRef;
-    }
-
     public String getDocName() {
         return docName;
-    }
-
-    public void setDocName(final String docName) {
-        this.docName = docName;
     }
 }

@@ -16,20 +16,34 @@
 
 package stroom.pool.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
+import stroom.util.shared.StringCriteria;
 
 import java.util.Comparator;
+import java.util.List;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class FindPoolInfoCriteria extends FindNamedEntityCriteria implements Comparator<PoolInfo> {
     public static final String FIELD_LAST_ACCESS = "Last Access";
     public static final String FIELD_IN_USE = "In Use";
     public static final String FIELD_IN_POOL = "In Pool";
     public static final String FIELD_IDLE_TIME = "Idle Time (s)";
     public static final String FIELD_LIVE_TIME = "Live Time (s)";
-    private static final long serialVersionUID = 2756271393367666136L;
+
+    @JsonCreator
+    public FindPoolInfoCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                @JsonProperty("sortList") final List<Sort> sortList,
+                                @JsonProperty("name") final StringCriteria name) {
+        super(pageRequest, sortList, name);
+    }
 
     @Override
     public int compare(final PoolInfo o1, final PoolInfo o2) {

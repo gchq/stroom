@@ -17,6 +17,10 @@
 package stroom.processor.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -27,20 +31,31 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "limits", propOrder = {"streamCount", "eventCount", "durationMs"})
 @XmlRootElement(name = "limits")
+@JsonInclude(Include.NON_DEFAULT)
 public class Limits {
-    private static final long serialVersionUID = -2530827581046882396L;
-
     @XmlElement(name = "streamCount")
+    @JsonProperty
     private Long streamCount;
 
     @XmlElement(name = "eventCount")
+    @JsonProperty
     private Long eventCount;
 
     @XmlElement(name = "durationMs")
+    @JsonProperty
     private Long durationMs;
 
     public Limits() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public Limits(@JsonProperty("streamCount") final Long streamCount,
+                  @JsonProperty("eventCount") final Long eventCount,
+                  @JsonProperty("durationMs") final Long durationMs) {
+        this.streamCount = streamCount;
+        this.eventCount = eventCount;
+        this.durationMs = durationMs;
     }
 
     public Long getStreamCount() {

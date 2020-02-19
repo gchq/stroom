@@ -16,23 +16,36 @@
 
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 
 import java.util.List;
 import java.util.Objects;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class ExplorerNode implements HasDisplayValue {
+    @JsonProperty
     private String type;
+    @JsonProperty
     private String uuid;
+    @JsonProperty
     private String name;
+    @JsonProperty
     private String tags;
 
+    @JsonProperty
     private int depth;
+    @JsonProperty
     private String iconUrl;
+    @JsonProperty
     private NodeState nodeState;
 
+    @JsonProperty
     private List<ExplorerNode> children;
 
     public ExplorerNode() {
@@ -44,6 +57,25 @@ public class ExplorerNode implements HasDisplayValue {
         this.uuid = uuid;
         this.name = name;
         this.tags = tags;
+    }
+
+    @JsonCreator
+    public ExplorerNode(@JsonProperty("type") final String type,
+                        @JsonProperty("uuid") final String uuid,
+                        @JsonProperty("name") final String name,
+                        @JsonProperty("tags") final String tags,
+                        @JsonProperty("depth") final int depth,
+                        @JsonProperty("iconUrl") final String iconUrl,
+                        @JsonProperty("nodeState") final NodeState nodeState,
+                        @JsonProperty("children") final List<ExplorerNode> children) {
+        this.type = type;
+        this.uuid = uuid;
+        this.name = name;
+        this.tags = tags;
+        this.depth = depth;
+        this.iconUrl = iconUrl;
+        this.nodeState = nodeState;
+        this.children = children;
     }
 
     public static ExplorerNode create(final DocRef docRef) {

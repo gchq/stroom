@@ -16,20 +16,47 @@
 
 package stroom.xmlschema.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.FindDocumentEntityCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
+import stroom.util.shared.StringCriteria;
 
+import java.util.List;
 import java.util.Objects;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
-    private static final long serialVersionUID = 8723582276742882390L;
-
+    @JsonProperty
     private String namespaceURI;
+    @JsonProperty
     private String systemId;
+    @JsonProperty
     private String schemaGroup;
+    @JsonProperty
     private String user;
 
     public FindXMLSchemaCriteria() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public FindXMLSchemaCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                 @JsonProperty("sortList") final List<Sort> sortList,
+                                 @JsonProperty("name") final StringCriteria name,
+                                 @JsonProperty("requiredPermission") final String requiredPermission,
+                                 @JsonProperty("namespaceURI") final String namespaceURI,
+                                 @JsonProperty("systemId") final String systemId,
+                                 @JsonProperty("schemaGroup") final String schemaGroup,
+                                 @JsonProperty("user") final String user) {
+        super(pageRequest, sortList, name, requiredPermission);
+        this.namespaceURI = namespaceURI;
+        this.systemId = systemId;
+        this.schemaGroup = schemaGroup;
+        this.user = user;
     }
 
     public FindXMLSchemaCriteria(final String name) {

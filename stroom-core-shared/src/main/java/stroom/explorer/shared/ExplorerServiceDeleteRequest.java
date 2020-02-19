@@ -17,26 +17,25 @@
 
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 
 import java.util.List;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class ExplorerServiceDeleteRequest {
-    private List<DocRef> docRefs;
+    @JsonProperty
+    private final List<DocRef> docRefs;
 
-    public ExplorerServiceDeleteRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ExplorerServiceDeleteRequest(final List<DocRef> docRefs) {
+    @JsonCreator
+    public ExplorerServiceDeleteRequest(@JsonProperty("docRefs") final List<DocRef> docRefs) {
         this.docRefs = docRefs;
     }
 
     public List<DocRef> getDocRefs() {
         return docRefs;
-    }
-
-    public void setDocRefs(final List<DocRef> docRefs) {
-        this.docRefs = docRefs;
     }
 }

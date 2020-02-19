@@ -17,23 +17,61 @@
 package stroom.meta.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class Meta {
+    @JsonProperty
     private long id;
+    @JsonProperty
     private String feedName;
+    @JsonProperty
     private String typeName;
+    @JsonProperty
     private String processorUuid;
+    @JsonProperty
     private String pipelineUuid;
+    @JsonProperty
     private Long parentDataId;
+    @JsonProperty
     private Status status;
+    @JsonProperty
     private Long statusMs;
+    @JsonProperty
     private long createMs;
+    @JsonProperty
     private Long effectiveMs;
 
     public Meta() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public Meta(@JsonProperty("id") final long id,
+                @JsonProperty("feedName") final String feedName,
+                @JsonProperty("typeName") final String typeName,
+                @JsonProperty("processorUuid") final String processorUuid,
+                @JsonProperty("pipelineUuid") final String pipelineUuid,
+                @JsonProperty("parentDataId") final Long parentDataId,
+                @JsonProperty("status") final Status status,
+                @JsonProperty("statusMs") final Long statusMs,
+                @JsonProperty("createMs") final long createMs,
+                @JsonProperty("effectiveMs") final Long effectiveMs) {
+        this.id = id;
+        this.feedName = feedName;
+        this.typeName = typeName;
+        this.processorUuid = processorUuid;
+        this.pipelineUuid = pipelineUuid;
+        this.parentDataId = parentDataId;
+        this.status = status;
+        this.statusMs = statusMs;
+        this.createMs = createMs;
+        this.effectiveMs = effectiveMs;
     }
 
     public long getId() {

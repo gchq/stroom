@@ -135,27 +135,27 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
         }
 
         List<DataVolume> oldVolumeList = dataVolumeService
-                .find(FindDataVolumeCriteria.create(oldFileMeta));
+                .find(FindDataVolumeCriteria.create(oldFileMeta)).getValues();
         assertThat(oldVolumeList.size()).as("Expecting 1 stream volumes").isEqualTo(REPLICATION_COUNT);
 
         List<DataVolume> newVolumeList = dataVolumeService
-                .find(FindDataVolumeCriteria.create(newFileMeta));
+                .find(FindDataVolumeCriteria.create(newFileMeta)).getValues();
         assertThat(newVolumeList.size()).as("Expecting 1 stream volumes").isEqualTo(REPLICATION_COUNT);
 
         dataRetentionPolicyExecutor.exec();
         physicalDeleteExecutor.exec();
 
         // Test Again
-        oldVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(oldFileMeta));
+        oldVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(oldFileMeta)).getValues();
         assertThat(oldVolumeList.size()).as("Expecting 0 stream volumes").isEqualTo(0);
 
-        newVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(newFileMeta));
+        newVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(newFileMeta)).getValues();
         assertThat(newVolumeList.size()).as("Expecting 1 stream volumes").isEqualTo(REPLICATION_COUNT);
 
         // Test they are
-        oldVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(oldFileMeta));
+        oldVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(oldFileMeta)).getValues();
         assertThat(oldVolumeList.size()).as("Expecting 0 stream volumes").isEqualTo(0);
-        newVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(newFileMeta));
+        newVolumeList = dataVolumeService.find(FindDataVolumeCriteria.create(newFileMeta)).getValues();
         assertThat(newVolumeList.size()).as("Expecting 1 stream volumes").isEqualTo(REPLICATION_COUNT);
     }
 

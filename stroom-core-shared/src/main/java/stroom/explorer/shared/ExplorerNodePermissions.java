@@ -16,24 +16,30 @@
 
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Set;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class ExplorerNodePermissions {
-    private ExplorerNode explorerNode;
-    private Set<String> createPermissions;
-    private Set<String> documentPermissions;
-    private boolean admin;
+    @JsonProperty
+    private final ExplorerNode explorerNode;
+    @JsonProperty
+    private final Set<String> createPermissions;
+    @JsonProperty
+    private final Set<String> documentPermissions;
+    @JsonProperty
+    private final boolean admin;
 
-    public ExplorerNodePermissions() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ExplorerNodePermissions(final ExplorerNode explorerNode,
-                                   final Set<String> createPermissions,
-                                   final Set<String> documentPermissions,
-                                   final boolean admin) {
+    @JsonCreator
+    public ExplorerNodePermissions(@JsonProperty("explorerNode") final ExplorerNode explorerNode,
+                                   @JsonProperty("createPermissions") final Set<String> createPermissions,
+                                   @JsonProperty("documentPermissions") final Set<String> documentPermissions,
+                                   @JsonProperty("admin") final boolean admin) {
         this.explorerNode = explorerNode;
         this.createPermissions = createPermissions;
         this.documentPermissions = documentPermissions;
@@ -44,32 +50,16 @@ public class ExplorerNodePermissions {
         return explorerNode;
     }
 
-    public void setExplorerNode(final ExplorerNode explorerNode) {
-        this.explorerNode = explorerNode;
-    }
-
     public Set<String> getCreatePermissions() {
         return createPermissions;
-    }
-
-    public void setCreatePermissions(final Set<String> createPermissions) {
-        this.createPermissions = createPermissions;
     }
 
     public Set<String> getDocumentPermissions() {
         return documentPermissions;
     }
 
-    public void setDocumentPermissions(final Set<String> documentPermissions) {
-        this.documentPermissions = documentPermissions;
-    }
-
     public boolean isAdmin() {
         return admin;
-    }
-
-    public void setAdmin(final boolean admin) {
-        this.admin = admin;
     }
 
     @JsonIgnore

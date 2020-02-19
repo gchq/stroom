@@ -25,15 +25,13 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskResource;
-import stroom.processor.shared.ProcessorTaskResultPage;
 import stroom.processor.shared.ProcessorTaskSummary;
-import stroom.processor.shared.ProcessorTaskSummaryResultPage;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ResultList;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 
@@ -55,9 +53,9 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource, RestResource, 
     }
 
     @Override
-    public ProcessorTaskResultPage find(final ExpressionCriteria criteria) {
+    public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
         return securityContext.secureResult(() -> {
-            ResultList<ProcessorTask> result;
+            ResultPage<ProcessorTask> result;
 
             final Query query = new Query();
             final Advanced advanced = new Advanced();
@@ -73,14 +71,14 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource, RestResource, 
                 throw e;
             }
 
-            return result.toResultPage(new ProcessorTaskResultPage());
+            return result;
         });
     }
 
     @Override
-    public ProcessorTaskSummaryResultPage findSummary(final ExpressionCriteria criteria) {
+    public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
         return securityContext.secureResult(() -> {
-            ResultList<ProcessorTaskSummary> result;
+            ResultPage<ProcessorTaskSummary> result;
 
             final Query query = new Query();
             final Advanced advanced = new Advanced();
@@ -96,7 +94,7 @@ class ProcessorTaskResourceImpl implements ProcessorTaskResource, RestResource, 
                 throw e;
             }
 
-            return result.toResultPage(new ProcessorTaskSummaryResultPage());
+            return result;
         });
     }
 

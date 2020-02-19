@@ -19,8 +19,8 @@ package stroom.dashboard.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
-import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -40,8 +40,8 @@ public interface StoredQueryResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Find stored queries",
-            response = StoredQueryResultPage.class)
-    StoredQueryResultPage find(FindStoredQueryCriteria criteria);
+            response = ResultPage.class)
+    ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria);
 
     @POST
     @Path("/create")

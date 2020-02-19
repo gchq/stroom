@@ -17,20 +17,27 @@
 
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 
 import java.util.List;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class ExplorerServiceCopyRequest {
-    private List<DocRef> docRefs;
-    private DocRef destinationFolderRef;
-    private PermissionInheritance permissionInheritance;
+    @JsonProperty
+    private final List<DocRef> docRefs;
+    @JsonProperty
+    private final DocRef destinationFolderRef;
+    @JsonProperty
+    private final PermissionInheritance permissionInheritance;
 
-    public ExplorerServiceCopyRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ExplorerServiceCopyRequest(final List<DocRef> docRefs, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    @JsonCreator
+    public ExplorerServiceCopyRequest(@JsonProperty("docRefs") final List<DocRef> docRefs,
+                                      @JsonProperty("destinationFolderRef") final DocRef destinationFolderRef,
+                                      @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
         this.docRefs = docRefs;
         this.destinationFolderRef = destinationFolderRef;
         this.permissionInheritance = permissionInheritance;
@@ -40,23 +47,11 @@ public class ExplorerServiceCopyRequest {
         return docRefs;
     }
 
-    public void setDocRefs(final List<DocRef> docRefs) {
-        this.docRefs = docRefs;
-    }
-
     public DocRef getDestinationFolderRef() {
         return destinationFolderRef;
     }
 
-    public void setDestinationFolderRef(final DocRef destinationFolderRef) {
-        this.destinationFolderRef = destinationFolderRef;
-    }
-
     public PermissionInheritance getPermissionInheritance() {
         return permissionInheritance;
-    }
-
-    public void setPermissionInheritance(final PermissionInheritance permissionInheritance) {
-        this.permissionInheritance = permissionInheritance;
     }
 }

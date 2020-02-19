@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -30,6 +31,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.util.List;
 
 @Api(value = "meta")
 @Path("/meta")
@@ -51,7 +53,7 @@ public interface MetaResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Find matching meta data",
             response = ResourceGeneration.class)
-    MetaRowResultPage findMetaRow(FindMetaCriteria criteria);
+    ResultPage<MetaRow> findMetaRow(FindMetaCriteria criteria);
 
     @GET
     @Path("info/{id}")
@@ -59,6 +61,6 @@ public interface MetaResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Find full info about some meta item",
-            response = FullMetaInfoResult.class)
-    FullMetaInfoResult fetchFullMetaInfo(@PathParam("id") long id);
+            response = MetaInfoSection.class)
+    List<MetaInfoSection> fetchFullMetaInfo(@PathParam("id") long id);
 }

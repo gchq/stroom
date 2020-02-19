@@ -212,7 +212,7 @@ public class PhysicalDeleteExecutor {
         criteria.setSort(MetaFields.ID.getDisplayValue());
         criteria.obtainPageRequest().setLength(batchSize);
 
-        return metaService.find(criteria);
+        return metaService.find(criteria).getValues();
     }
 
     private Long getDeleteThresholdEpochMs(final DataStoreServiceConfig config) {

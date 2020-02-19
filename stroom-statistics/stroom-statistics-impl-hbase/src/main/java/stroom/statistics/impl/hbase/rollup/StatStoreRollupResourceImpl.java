@@ -24,7 +24,7 @@ import stroom.statistics.impl.hbase.shared.StatsStoreRollupResource;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreFieldChangeRequest;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.RestResource;
 
 import java.util.ArrayList;
@@ -36,7 +36,7 @@ import java.util.Set;
 
 class StatStoreRollupResourceImpl implements StatsStoreRollupResource, RestResource, HasHealthCheck {
     @Override
-    public List<CustomRollUpMask> bitMaskPermGeneration(final Integer fieldCount) {
+    public ResultPage<CustomRollUpMask> bitMaskPermGeneration(final Integer fieldCount) {
         final Set<List<Integer>> perms = RollUpBitMask.getRollUpPermutationsAsPositions(fieldCount);
 
         final List<CustomRollUpMask> masks = new ArrayList<>();
@@ -45,11 +45,11 @@ class StatStoreRollupResourceImpl implements StatsStoreRollupResource, RestResou
             masks.add(new CustomRollUpMask(perm));
         }
 
-        return ResultList.createUnboundedList(masks);
+        return ResultPage.createUnboundedList(masks);
     }
 
     @Override
-    public List<CustomRollUpMaskFields> bitMaskConversion(final List<Short> maskValues) {
+    public ResultPage<CustomRollUpMaskFields> bitMaskConversion(final List<Short> maskValues) {
         final List<CustomRollUpMaskFields> customRollUpMaskFieldsList = new ArrayList<>();
 
         int id = 0;
@@ -61,7 +61,7 @@ class StatStoreRollupResourceImpl implements StatsStoreRollupResource, RestResou
 
         Collections.sort(customRollUpMaskFieldsList);
 
-        return ResultList.createUnboundedList(customRollUpMaskFieldsList);
+        return ResultPage.createUnboundedList(customRollUpMaskFieldsList);
     }
 
     @Override

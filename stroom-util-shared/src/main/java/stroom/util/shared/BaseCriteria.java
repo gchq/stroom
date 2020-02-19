@@ -17,6 +17,10 @@
 package stroom.util.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.Sort.Direction;
 
 import java.util.ArrayList;
@@ -28,10 +32,22 @@ import java.util.Set;
 /**
  * Base criteria object used to aid getting pages of data.
  */
+@JsonInclude(Include.NON_DEFAULT)
 public abstract class BaseCriteria {
-    private static final long serialVersionUID = 779306892977183446L;
-    private PageRequest pageRequest = null;
+    @JsonProperty
+    private PageRequest pageRequest;
+    @JsonProperty
     private List<Sort> sortList;
+
+    public BaseCriteria() {
+    }
+
+    @JsonCreator
+    public BaseCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                        @JsonProperty("sortList") final List<Sort> sortList) {
+        this.pageRequest = pageRequest;
+        this.sortList = sortList;
+    }
 
     public PageRequest getPageRequest() {
         return pageRequest;

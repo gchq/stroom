@@ -28,13 +28,13 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaRowResultPage;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
@@ -82,7 +82,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
     }
 
     @Override
-    protected MetaRowResultPage onProcessData(final MetaRowResultPage data) {
+    protected ResultPage<MetaRow> onProcessData(final ResultPage<MetaRow> data) {
         // Store streams against id.
         streamMap.clear();
         for (final MetaRow row : data.getValues()) {
@@ -103,13 +103,13 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
             getView().setColumnWidth(expanderColumn, 0, Unit.PX);
         }
 
-        final MetaRowResultPage processed = new MetaRowResultPage();
+        final ResultPage<MetaRow> processed = new ResultPage<MetaRow>();
         processed.setValues(newData);
         processed.setPageResponse(data.getPageResponse());
         return super.onProcessData(processed);
     }
 
-    private void addChildren(final MetaRow parent, final MetaRowResultPage data,
+    private void addChildren(final MetaRow parent, final ResultPage<MetaRow> data,
                              final List<MetaRow> newData, final int depth) {
         for (final MetaRow row : data.getValues()) {
             final Meta meta = row.getMeta();

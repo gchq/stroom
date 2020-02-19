@@ -29,7 +29,6 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.shared.ExplorerConstants;
@@ -37,14 +36,13 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaRowResultPage;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
 import stroom.processor.shared.ProcessorTaskResource;
-import stroom.processor.shared.ProcessorTaskResultPage;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.util.shared.ResultPage;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -60,7 +58,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
 
     private final TooltipPresenter tooltipPresenter;
-    private final RestDataProvider<ProcessorTask, ProcessorTaskResultPage> dataProvider;
+    private final RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>> dataProvider;
     private final ExpressionCriteria criteria;
 
     @Inject
@@ -74,11 +72,11 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         getView().addColumn(new InfoColumn<ProcessorTask>() {
             @Override
             protected void showInfo(final ProcessorTask row, final int x, final int y) {
-                final Rest<MetaRowResultPage> rest = restFactory.create();
+                final Rest<ResultPage<MetaRow>> rest = restFactory.create();
                 rest
                         .onSuccess(metaRows -> {
-                            if (metaRows != null && metaRows.getValues().size() == 1) {
-                                final MetaRow metaRow = metaRows.getValues().get(0);
+                            if (metaRows != null && metaRows.size() == 1) {
+                                final MetaRow metaRow = metaRows.getFirst();
                                 showTooltip(x, y, row, metaRow);
                             }
                         })
@@ -168,10 +166,10 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         getView().addEndColumn(new EndColumn<>());
 
         criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<ProcessorTask, ProcessorTaskResultPage>(eventBus) {
+        dataProvider = new RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ProcessorTaskResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<ProcessorTaskResultPage> rest = restFactory.create();
+            protected void exec(final Consumer<ResultPage<ProcessorTask>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<ProcessorTask>> rest = restFactory.create();
                 rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_TASK_RESOURCE).find(criteria);
             }
         };

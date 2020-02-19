@@ -25,7 +25,7 @@ import stroom.job.shared.Job;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 
 import javax.inject.Inject;
@@ -81,14 +81,14 @@ class JobService {
             });
     }
 
-    ResultList<Job> find(final FindJobCriteria findJobCriteria) {
-        final ResultList<Job> results = securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobDao.find(findJobCriteria));
-        results.forEach(this::decorate);
+    ResultPage<Job> find(final FindJobCriteria findJobCriteria) {
+        final ResultPage<Job> results = securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobDao.find(findJobCriteria));
+        results.getValues().forEach(this::decorate);
 
         if (findJobCriteria.getSortList().size() > 0) {
             final Sort sort = findJobCriteria.getSortList().get(0);
             if (sort.getField().equals(FindJobCriteria.FIELD_ADVANCED)) {
-                results.sort(Comparator.comparing(Job::isAdvanced).thenComparing(Job::getName));
+                results.getValues().sort(Comparator.comparing(Job::isAdvanced).thenComparing(Job::getName));
             }
         }
 

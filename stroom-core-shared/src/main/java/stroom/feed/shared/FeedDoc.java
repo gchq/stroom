@@ -33,13 +33,21 @@ import stroom.util.shared.PrimitiveValueConverter;
 public class FeedDoc extends Doc {
     public static final String DOCUMENT_TYPE = "Feed";
 
+    @JsonProperty
     private String description;
+    @JsonProperty
     private String classification;
+    @JsonProperty
     private String encoding;
+    @JsonProperty
     private String contextEncoding;
+    @JsonProperty
     private Integer retentionDayAge;
+    @JsonProperty
     private boolean reference;
+    @JsonProperty
     private String streamType;
+    @JsonProperty
     private FeedStatus feedStatus;
 
     public FeedDoc() {

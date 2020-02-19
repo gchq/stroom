@@ -20,6 +20,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -39,8 +40,8 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Lists job nodes",
-            response = ListJobNodeResponse.class)
-    ListJobNodeResponse list(@QueryParam("jobName") String jobName, @QueryParam("nodeName") String nodeName);
+            response = ResultPage.class)
+    ResultPage<JobNode> list(@QueryParam("jobName") String jobName, @QueryParam("nodeName") String nodeName);
 
     @GET
     @Path("/info")
@@ -48,7 +49,7 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Gets current info for a job node",
-            response = ListJobNodeResponse.class)
+            response = JobNodeInfo.class)
     JobNodeInfo info(@QueryParam("jobName") String jobName, @QueryParam("nodeName") String nodeName);
 
     @PUT

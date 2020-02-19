@@ -5,7 +5,7 @@ import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
@@ -16,7 +16,6 @@ import javax.ws.rs.core.Response;
 @Path("/datavolumes/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class FsVolumeResource implements RestResource {
-
     private FsVolumeService fsVolumeService;
 
     @Inject
@@ -34,7 +33,7 @@ public class FsVolumeResource implements RestResource {
     public Response fetchAll(){
         var findAll = new FindFsVolumeCriteria();
         findAll.getStatusSet().setMatchAll(true);
-        ResultList<FsVolume> volumes = fsVolumeService.find(findAll);
+        ResultPage<FsVolume> volumes = fsVolumeService.find(findAll);
         return Response.ok(volumes).build();
     }
 

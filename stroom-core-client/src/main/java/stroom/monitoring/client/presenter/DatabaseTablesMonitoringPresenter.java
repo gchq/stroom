@@ -31,11 +31,11 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.DbStatusResource;
-import stroom.node.shared.DbTableStatusResultPage;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 
 import java.util.function.Consumer;
@@ -44,7 +44,7 @@ public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataG
     private static final DbStatusResource DB_STATUS_RESOURCE = GWT.create(DbStatusResource.class);
 
     private final FindDBTableCriteria criteria;
-    private final RestDataProvider<DBTableStatus, DbTableStatusResultPage> dataProvider;
+    private final RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>> dataProvider;
 
     @Inject
     public DatabaseTablesMonitoringPresenter(final EventBus eventBus, final RestFactory restFactory) {
@@ -90,10 +90,10 @@ public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataG
         getView().addColumnSortHandler(this);
 
         criteria = new FindDBTableCriteria();
-        dataProvider = new RestDataProvider<DBTableStatus, DbTableStatusResultPage>(eventBus) {
+        dataProvider = new RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>>(eventBus) {
             @Override
-            protected void exec(final Consumer<DbTableStatusResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<DbTableStatusResultPage> rest = restFactory.create();
+            protected void exec(final Consumer<ResultPage<DBTableStatus>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<DBTableStatus>> rest = restFactory.create();
                 rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(DB_STATUS_RESOURCE).findSystemTableStatus(criteria);
             }
         };

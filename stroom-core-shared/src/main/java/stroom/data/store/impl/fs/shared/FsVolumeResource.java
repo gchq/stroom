@@ -20,6 +20,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -43,7 +44,7 @@ public interface FsVolumeResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Finds volumes",
             response = List.class)
-    FsVolumeResultPage find(FindFsVolumeCriteria criteria);
+    ResultPage<FsVolume> find(FindFsVolumeCriteria criteria);
 
     @GET
     @Path("/{id}")

@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -43,8 +44,8 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Finds processors and filters matching request",
-            response = Processor.class)
-    FetchProcessorResponse find(FetchProcessorRequest request);
+            response = ResultPage.class)
+    ResultPage<ProcessorListRow> find(FetchProcessorRequest request);
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)

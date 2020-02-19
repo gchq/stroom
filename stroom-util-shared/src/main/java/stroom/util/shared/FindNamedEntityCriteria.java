@@ -16,9 +16,18 @@
 
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
+
+@JsonInclude(Include.NON_DEFAULT)
 public abstract class FindNamedEntityCriteria extends BaseCriteria {
     public static final String FIELD_NAME = "Name";
-    private static final long serialVersionUID = -970306839701196839L;
+
+    @JsonProperty
     private StringCriteria name = new StringCriteria();
 
     public FindNamedEntityCriteria() {
@@ -27,6 +36,14 @@ public abstract class FindNamedEntityCriteria extends BaseCriteria {
 
     public FindNamedEntityCriteria(final String name) {
         this.name.setString(name);
+    }
+
+    @JsonCreator
+    public FindNamedEntityCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                   @JsonProperty("sortList") final List<Sort> sortList,
+                                   @JsonProperty("name") final StringCriteria name) {
+        super(pageRequest, sortList);
+        this.name = name;
     }
 
     public StringCriteria getName() {

@@ -30,11 +30,11 @@ import stroom.data.grid.client.EndColumn;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
-import stroom.data.store.impl.fs.shared.FsVolumeResultPage;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.util.client.BorderUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResultPage;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -43,7 +43,7 @@ import java.util.function.Consumer;
 public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<FsVolume>> {
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
-    private final RestDataProvider<FsVolume, FsVolumeResultPage> dataProvider;
+    private final RestDataProvider<FsVolume, ResultPage<FsVolume>> dataProvider;
 
     @Inject
     public FSVolumeStatusListPresenter(final EventBus eventBus, final RestFactory restFactory) {
@@ -54,10 +54,10 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
 
         initTableColumns();
 
-        dataProvider = new RestDataProvider<FsVolume, FsVolumeResultPage>(eventBus) {
+        dataProvider = new RestDataProvider<FsVolume, ResultPage<FsVolume>>(eventBus) {
             @Override
-            protected void exec(final Consumer<FsVolumeResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<FsVolumeResultPage> rest = restFactory.create();
+            protected void exec(final Consumer<ResultPage<FsVolume>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<FsVolume>> rest = restFactory.create();
                 rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(FS_VOLUME_RESOURCE).find(new FindFsVolumeCriteria());
             }
         };

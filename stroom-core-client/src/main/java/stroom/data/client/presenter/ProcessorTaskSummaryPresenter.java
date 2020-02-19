@@ -29,7 +29,6 @@ import stroom.data.grid.client.OrderByColumn;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.shared.FeedDoc;
@@ -37,9 +36,9 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
-import stroom.processor.shared.ProcessorTaskSummaryResultPage;
 import stroom.task.shared.ExpressionUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -53,7 +52,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         implements HasDocumentRead<Object> {
     private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
 
-    private final RestDataProvider<ProcessorTaskSummary, ProcessorTaskSummaryResultPage> dataProvider;
+    private final RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>> dataProvider;
     private final ExpressionCriteria criteria;
 
     @Inject
@@ -126,15 +125,15 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         getView().addEndColumn(new EndColumn<>());
 
         criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<ProcessorTaskSummary, ProcessorTaskSummaryResultPage>(eventBus) {
+        dataProvider = new RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ProcessorTaskSummaryResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<ProcessorTaskSummaryResultPage> rest = restFactory.create();
+            protected void exec(final Consumer<ResultPage<ProcessorTaskSummary>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<ProcessorTaskSummary>> rest = restFactory.create();
                 rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_TASK_RESOURCE).findSummary(criteria);
             }
 
             @Override
-            protected void changeData(final ProcessorTaskSummaryResultPage data) {
+            protected void changeData(final ResultPage<ProcessorTaskSummary> data) {
                 final ProcessorTaskSummary selected = getView().getSelectionModel().getSelected();
                 if (selected != null) {
                     // Reselect the task set.

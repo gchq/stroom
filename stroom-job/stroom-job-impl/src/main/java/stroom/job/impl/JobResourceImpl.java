@@ -23,12 +23,11 @@ import event.logging.Query.Advanced;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobResource;
-import stroom.job.shared.ListJobResponse;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ResultList;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.ws.rs.ServerErrorException;
@@ -43,14 +42,14 @@ class JobResourceImpl implements JobResource, RestResource, HasHealthCheck {
 
     @Inject
     JobResourceImpl(final JobService jobService,
-                            final DocumentEventLog documentEventLog) {
+                    final DocumentEventLog documentEventLog) {
         this.jobService = jobService;
         this.documentEventLog = documentEventLog;
     }
 
     @Override
-    public ListJobResponse list() {
-        ListJobResponse response = null;
+    public ResultPage<Job> list() {
+        ResultPage<Job> response = null;
 
         final Query query = new Query();
         final Advanced advanced = new Advanced();
@@ -63,9 +62,8 @@ class JobResourceImpl implements JobResource, RestResource, HasHealthCheck {
             findJobCriteria.setSort(FindJobCriteria.FIELD_ADVANCED);
             findJobCriteria.addSort(FindJobCriteria.FIELD_NAME);
 
-            final ResultList<Job> results = jobService.find(findJobCriteria);
-            response = results.toResultPage(new ListJobResponse());
-            documentEventLog.search("ListJobs", query, Job.class.getSimpleName(), results.getPageResponse(), null);
+            response = jobService.find(findJobCriteria);
+            documentEventLog.search("ListJobs", query, Job.class.getSimpleName(), response.getPageResponse(), null);
         } catch (final RuntimeException e) {
             documentEventLog.search("ListJobs", query, Job.class.getSimpleName(), null, e);
             throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);

@@ -5,8 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.importexport.shared.DependencyResultPage;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
 
@@ -29,7 +28,7 @@ public class DependencyServiceImpl implements DependencyService {
     }
 
     @Override
-    public DependencyResultPage getDependencies(final DependencyCriteria criteria) {
+    public ResultPage<Dependency> getDependencies(final DependencyCriteria criteria) {
         final Map<DocRef, Set<DocRef>> allDependencies = new ConcurrentHashMap<>();
         importExportActionHandlers.getHandlers()
                 .values()
@@ -83,8 +82,7 @@ public class DependencyServiceImpl implements DependencyService {
             return diff;
         });
 
-        final ResultList<Dependency> resultList = ResultList.createPageLimitedList(dependencies, criteria.getPageRequest());
-        return resultList.toResultPage(new DependencyResultPage());
+        return ResultPage.createPageLimitedList(dependencies, criteria.getPageRequest());
     }
 
     private Comparator<DocRef> getDocRefComparator() {

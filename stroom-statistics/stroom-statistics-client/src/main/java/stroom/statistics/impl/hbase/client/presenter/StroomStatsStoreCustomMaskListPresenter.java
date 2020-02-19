@@ -48,6 +48,7 @@ import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreFieldChangeRequest;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 
 import java.util.ArrayList;
@@ -190,10 +191,10 @@ public class StroomStatsStoreCustomMaskListPresenter
                 "Are you sure you want to clear the existing roll-ups and generate all possible permutations for the field list?",
                 result -> {
                     if (result) {
-                        final Rest<List<CustomRollUpMask>> rest = restFactory.create();
+                        final Rest<ResultPage<CustomRollUpMask>> rest = restFactory.create();
                         rest
                                 .onSuccess(res -> {
-                                    updateState(new HashSet<>(res));
+                                    updateState(new HashSet<>(res.getValues()));
                                     DirtyEvent.fire(thisInstance, true);
                                 })
                                 .call(STATS_STORE_ROLLUP_RESOURCE)

@@ -109,8 +109,7 @@ class FsCleanExecutor {
 
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
 
-        final List<FsVolume> volumeList = volumeService.find(new FindFsVolumeCriteria());
-
+        final List<FsVolume> volumeList = volumeService.find(new FindFsVolumeCriteria()).getValues();
         try {
             if (volumeList != null && volumeList.size() > 0) {
                 // Add to the task steps remaining.

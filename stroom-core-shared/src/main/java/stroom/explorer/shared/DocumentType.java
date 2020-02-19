@@ -17,17 +17,23 @@
 
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(Include.NON_DEFAULT)
 public class DocumentType {
     public static final String DOC_IMAGE_URL = "document/";
 
-    private int priority;
-    private String type;
-    private String displayType;
-    private String iconUrl;
-
-    public DocumentType() {
-        // Default constructor necessary for GWT serialisation.
-    }
+    @JsonProperty
+    private final int priority;
+    @JsonProperty
+    private final String type;
+    @JsonProperty
+    private final String displayType;
+    @JsonProperty
+    private final String iconUrl;
 
     public DocumentType(final int priority, final String type, final String displayType) {
         this.priority = priority;
@@ -36,7 +42,11 @@ public class DocumentType {
         this.iconUrl = getIconUrl(type);
     }
 
-    public DocumentType(final int priority, final String type, final String displayType, final String iconUrl) {
+    @JsonCreator
+    public DocumentType(@JsonProperty("priority") final int priority,
+                        @JsonProperty("type") final String type,
+                        @JsonProperty("displayType") final String displayType,
+                        @JsonProperty("iconUrl") final String iconUrl) {
         this.priority = priority;
         this.type = type;
         this.displayType = displayType;
@@ -47,32 +57,16 @@ public class DocumentType {
         return priority;
     }
 
-    public void setPriority(final int priority) {
-        this.priority = priority;
-    }
-
     public String getDisplayType() {
         return displayType;
-    }
-
-    public void setDisplayType(final String displayType) {
-        this.displayType = displayType;
     }
 
     public String getType() {
         return type;
     }
 
-    public void setType(final String type) {
-        this.type = type;
-    }
-
     public String getIconUrl() {
         return iconUrl;
-    }
-
-    public void setIconUrl(final String iconUrl) {
-        this.iconUrl = iconUrl;
     }
 
     private String getIconUrl(final String type) {

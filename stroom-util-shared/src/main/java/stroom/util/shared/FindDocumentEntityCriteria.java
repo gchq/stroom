@@ -16,10 +16,17 @@
 
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.List;
+
+@JsonInclude(Include.NON_DEFAULT)
 public abstract class FindDocumentEntityCriteria extends FindNamedEntityCriteria
         implements Copyable<FindDocumentEntityCriteria> {
-    private static final long serialVersionUID = -970306839701196839L;
-
+    @JsonProperty
     private String requiredPermission;
 
     public FindDocumentEntityCriteria() {
@@ -28,6 +35,15 @@ public abstract class FindDocumentEntityCriteria extends FindNamedEntityCriteria
 
     public FindDocumentEntityCriteria(final String name) {
         super(name);
+    }
+
+    @JsonCreator
+    public FindDocumentEntityCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                      @JsonProperty("sortList") final List<Sort> sortList,
+                                      @JsonProperty("name") final StringCriteria name,
+                                      @JsonProperty("requiredPermission") final String requiredPermission) {
+        super(pageRequest, sortList, name);
+        this.requiredPermission = requiredPermission;
     }
 
     public String getRequiredPermission() {

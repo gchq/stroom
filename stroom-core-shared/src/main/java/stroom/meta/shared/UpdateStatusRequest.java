@@ -1,13 +1,20 @@
 package stroom.meta.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(Include.NON_DEFAULT)
 public class UpdateStatusRequest {
-    private FindMetaCriteria criteria;
-    private Status newStatus;
+    @JsonProperty
+    private final FindMetaCriteria criteria;
+    @JsonProperty
+    private final Status newStatus;
 
-    public UpdateStatusRequest() {
-    }
-
-    public UpdateStatusRequest(final FindMetaCriteria criteria, final Status newStatus) {
+    @JsonCreator
+    public UpdateStatusRequest(@JsonProperty("criteria") final FindMetaCriteria criteria,
+                               @JsonProperty("newStatus") final Status newStatus) {
         this.criteria = criteria;
         this.newStatus = newStatus;
     }

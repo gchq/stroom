@@ -16,7 +16,10 @@
 
 package stroom.config.global.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.PropertyPath;
@@ -45,10 +48,8 @@ import java.util.Optional;
  * <p>
  * TODO At present the UI is unable to show the value from the YAML so may give a misleading picture
  */
+@JsonInclude(Include.NON_DEFAULT)
 public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> {
-
-    private static final long serialVersionUID = 8440384191352234225L;
-
     @JsonProperty("id")
     private Integer id;
     @JsonProperty("version")
@@ -116,6 +117,41 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
                           final String defaultValue) {
         this.name = name;
         this.defaultValue = defaultValue;
+    }
+
+    @JsonCreator
+    public ConfigProperty(@JsonProperty("id") final Integer id,
+                          @JsonProperty("version") final Integer version,
+                          @JsonProperty("createTimeMs") final Long createTimeMs,
+                          @JsonProperty("createUser") final String createUser,
+                          @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                          @JsonProperty("updateUser") final String updateUser,
+                          @JsonProperty("name") final PropertyPath name,
+                          @JsonProperty("defaultValue") final String defaultValue,
+                          @JsonProperty("databaseOverrideValue") final OverrideValue<String> databaseOverrideValue,
+                          @JsonProperty("yamlOverrideValue") final OverrideValue<String> yamlOverrideValue,
+                          @JsonProperty("description") final String description,
+                          @JsonProperty("isEditable") final boolean isEditable,
+                          @JsonProperty("isPassword") final boolean isPassword,
+                          @JsonProperty("requireRestart") final boolean requireRestart,
+                          @JsonProperty("requireUiRestart") final boolean requireUiRestart,
+                          @JsonProperty("dataTypeName") final String dataTypeName) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.createUser = createUser;
+        this.updateTimeMs = updateTimeMs;
+        this.updateUser = updateUser;
+        this.name = name;
+        this.defaultValue = defaultValue;
+        this.databaseOverrideValue = databaseOverrideValue;
+        this.yamlOverrideValue = yamlOverrideValue;
+        this.description = description;
+        this.isEditable = isEditable;
+        this.isPassword = isPassword;
+        this.requireRestart = requireRestart;
+        this.requireUiRestart = requireUiRestart;
+        this.dataTypeName = dataTypeName;
     }
 
     public Integer getId() {

@@ -70,7 +70,7 @@ class TestMockStreamStore {
 
         assertThat(mockMetaService.find(FindMetaCriteria.createFromMeta(meta)).size()).isEqualTo(1);
 
-        final Meta reload = mockMetaService.find(FindMetaCriteria.createFromMeta(meta)).get(0);
+        final Meta reload = mockMetaService.find(FindMetaCriteria.createFromMeta(meta)).getFirst();
 
         try (final Source streamSource = mockStreamStore.openSource(reload.getId())) {
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {

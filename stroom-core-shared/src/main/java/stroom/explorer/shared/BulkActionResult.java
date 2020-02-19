@@ -17,20 +17,24 @@
 
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
-
 
 import java.util.List;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class BulkActionResult {
-    private List<DocRef> docRefs;
-    private String message;
+    @JsonProperty
+    private final List<DocRef> docRefs;
+    @JsonProperty
+    private final String message;
 
-    public BulkActionResult() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public BulkActionResult(final List<DocRef> docRefs, final String message) {
+    @JsonCreator
+    public BulkActionResult(@JsonProperty("docRefs") final List<DocRef> docRefs,
+                            @JsonProperty("message") final String message) {
         this.docRefs = docRefs;
         this.message = message;
     }
@@ -39,15 +43,7 @@ public class BulkActionResult {
         return docRefs;
     }
 
-    public void setDocRefs(final List<DocRef> docRefs) {
-        this.docRefs = docRefs;
-    }
-
     public String getMessage() {
         return message;
-    }
-
-    public void setMessage(final String message) {
-        this.message = message;
     }
 }

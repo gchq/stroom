@@ -243,7 +243,7 @@ public class ManualProxyAggregationTest {
         eventFeeds.forEach(feed -> {
             final FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setExpression(MetaExpressionUtil.createFeedExpression(feed));
-            final List<Meta> streams = metaService.find(criteria);
+            final List<Meta> streams = metaService.find(criteria).getValues();
             assertThat(streams.size()).isEqualTo(expectedStreamsPerFeed);
 
             streams.forEach(stream -> {

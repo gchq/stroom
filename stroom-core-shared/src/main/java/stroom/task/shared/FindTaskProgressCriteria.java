@@ -16,20 +16,23 @@
 
 package stroom.task.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.CompareUtil;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-public class FindTaskProgressCriteria extends BaseCriteria{
-    private static final long serialVersionUID = 2014515855795611224L;
-
+@JsonInclude(Include.NON_DEFAULT)
+public class FindTaskProgressCriteria extends BaseCriteria {
     public static final String FIELD_NODE = "Node";
     public static final String FIELD_NAME = "Name";
     public static final String FIELD_USER = "User";
@@ -37,9 +40,27 @@ public class FindTaskProgressCriteria extends BaseCriteria{
     public static final String FIELD_AGE = "Age";
     public static final String FIELD_INFO = "Info";
 
+    @JsonProperty
     private Set<TaskProgress> expandedTasks;
+    @JsonProperty
     private String nameFilter;
+    @JsonProperty
     private String sessionId;
+
+    public FindTaskProgressCriteria() {
+    }
+
+    @JsonCreator
+    public FindTaskProgressCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                    @JsonProperty("sortList") final List<Sort> sortList,
+                                    @JsonProperty("expandedTasks") final Set<TaskProgress> expandedTasks,
+                                    @JsonProperty("nameFilter") final String nameFilter,
+                                    @JsonProperty("sessionId") final String sessionId) {
+        super(pageRequest, sortList);
+        this.expandedTasks = expandedTasks;
+        this.nameFilter = nameFilter;
+        this.sessionId = sessionId;
+    }
 
     public Set<TaskProgress> getExpandedTasks() {
         return expandedTasks;

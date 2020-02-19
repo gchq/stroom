@@ -7,7 +7,7 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
@@ -26,7 +26,7 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
                 .build();
         final ExpressionCriteria findProcessorCriteria = new ExpressionCriteria(findProcessorExpression);
 //        findProcessorCriteria.obtainPipelineUuidCriteria().setString(processor.getPipelineUuid());
-        final ResultList<Processor> list = find(findProcessorCriteria);
+        final ResultPage<Processor> list = find(findProcessorCriteria);
         final Processor existingProcessor = list.getFirst();
         if (existingProcessor != null) {
             return existingProcessor;
@@ -51,7 +51,7 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
     }
 
     @Override
-    public ResultList<Processor> find(final ExpressionCriteria criteria) {
+    public ResultPage<Processor> find(final ExpressionCriteria criteria) {
         final List<Processor> list = dao
                 .getMap()
                 .values()
@@ -62,7 +62,7 @@ public class MockProcessorDao implements ProcessorDao, Clearable {
                 })
                 .collect(Collectors.toList());
 
-        return ResultList.createCriterialBasedList(list, criteria);
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override

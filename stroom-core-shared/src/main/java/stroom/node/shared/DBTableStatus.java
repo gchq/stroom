@@ -17,22 +17,45 @@
 package stroom.node.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * API to table status
  */
+@JsonInclude(Include.NON_DEFAULT)
 public class DBTableStatus {
     public static final String FIELD_DATABASE = "Database";
     public static final String FIELD_TABLE = "Table";
     public static final String FIELD_ROW_COUNT = "Count";
     public static final String FIELD_DATA_SIZE = "Data Size";
     public static final String FIELD_INDEX_SIZE = "Index Size";
-    private static final long serialVersionUID = -5061144975403180924L;
+
+    @JsonProperty
     private String db;
+    @JsonProperty
     private String table;
+    @JsonProperty
     private Long count;
+    @JsonProperty
     private Long dataSize;
+    @JsonProperty
     private Long indexSize;
+
+    @JsonCreator
+    public DBTableStatus(@JsonProperty("db") final String db,
+                         @JsonProperty("table") final String table,
+                         @JsonProperty("count") final Long count,
+                         @JsonProperty("dataSize") final Long dataSize,
+                         @JsonProperty("indexSize") final Long indexSize) {
+        this.db = db;
+        this.table = table;
+        this.count = count;
+        this.dataSize = dataSize;
+        this.indexSize = indexSize;
+    }
 
     public String getDb() {
         return db;

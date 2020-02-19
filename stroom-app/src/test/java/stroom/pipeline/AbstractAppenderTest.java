@@ -220,7 +220,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     void validateOuptut(final String outputReference,
                         final String type) {
         try {
-            final List<Meta> list = dataMetaService.find(new FindMetaCriteria());
+            final List<Meta> list = dataMetaService.find(new FindMetaCriteria()).getValues();
             assertThat(list.size()).isEqualTo(1);
 
             final long id = list.get(0).getId();

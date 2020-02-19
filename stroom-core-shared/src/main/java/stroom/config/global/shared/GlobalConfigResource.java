@@ -6,6 +6,7 @@ import org.fusesource.restygwt.client.DirectRestService;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -57,15 +58,15 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get global config properties",
-            response = ConfigPropertyResultPage.class)
-    ConfigPropertyResultPage find(FindGlobalConfigCriteria criteria);
+            response = ResultPage.class)
+    ResultPage<ConfigProperty> find(FindGlobalConfigCriteria criteria);
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-        value = "Update a ConfigProperty",
-        response = ConfigProperty.class)
+            value = "Update a ConfigProperty",
+            response = ConfigProperty.class)
     ConfigProperty create(final ConfigProperty configProperty);
 
     @PUT
@@ -73,8 +74,8 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-        value = "Update a ConfigProperty",
-        response = ConfigProperty.class)
+            value = "Update a ConfigProperty",
+            response = ConfigProperty.class)
     ConfigProperty update(final @PathParam("propertyName") String propertyName,
                           final ConfigProperty configProperty);
 

@@ -50,7 +50,7 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.Period;
 
@@ -229,7 +229,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         createMeta(FEED3, null);
 
 //        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        final ResultList<Meta> streams = metaService.find(criteria);
+        final ResultPage<Meta> streams = metaService.find(criteria);
         assertThat(streams.size()).isEqualTo(expectedStreams);
 
         metaService.updateStatus(new FindMetaCriteria(), Status.DELETED);
@@ -383,7 +383,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             assertThat(streamSource.getMeta().getFeedName()).isNotNull();
         }
 
-        final List<Meta> list = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
+        final List<Meta> list = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS)).getValues();
 
         boolean foundOne = false;
         for (final Meta result : list) {
@@ -555,7 +555,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), "20");
         }
 
-        final Meta reloadMetaData = metaService.find(FindMetaCriteria.createFromMeta(exactMetaData)).get(0);
+        final Meta reloadMetaData = metaService.find(FindMetaCriteria.createFromMeta(exactMetaData)).getFirst();
 
         try (final Source streamSource = streamStore.openSource(reloadMetaData.getId())) {
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
@@ -587,7 +587,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             exactMetaData = streamTarget.getMeta();
         }
 
-        final Meta reloadMetaData = metaService.find(FindMetaCriteria.createFromMeta(exactMetaData)).get(0);
+        final Meta reloadMetaData = metaService.find(FindMetaCriteria.createFromMeta(exactMetaData)).getFirst();
 
         try (final Source streamSource = streamStore.openSource(reloadMetaData.getId())) {
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {

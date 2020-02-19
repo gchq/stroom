@@ -16,8 +16,26 @@
 
 package stroom.cache.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
+import stroom.util.shared.StringCriteria;
 
+import java.util.List;
+
+@JsonInclude(Include.NON_DEFAULT)
 public class FindCacheInfoCriteria extends FindNamedEntityCriteria {
-    private static final long serialVersionUID = 2756271393367666136L;
+    public FindCacheInfoCriteria() {
+    }
+
+    @JsonCreator
+    public FindCacheInfoCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                 @JsonProperty("sortList") final List<Sort> sortList,
+                                 @JsonProperty("name") final StringCriteria name) {
+        super(pageRequest, sortList, name);
+    }
 }

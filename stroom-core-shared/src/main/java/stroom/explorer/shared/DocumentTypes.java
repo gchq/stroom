@@ -16,19 +16,25 @@
 
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class DocumentTypes {
     public static final String[] FOLDER_TYPES = new String[]{ExplorerConstants.SYSTEM, ExplorerConstants.FOLDER};
 
-    private List<DocumentType> nonSystemTypes;
-    private List<DocumentType> visibleTypes;
+    @JsonProperty
+    private final List<DocumentType> nonSystemTypes;
+    @JsonProperty
+    private final List<DocumentType> visibleTypes;
 
-    public DocumentTypes() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public DocumentTypes(final List<DocumentType> nonSystemTypes, final List<DocumentType> visibleTypes) {
+    @JsonCreator
+    public DocumentTypes(@JsonProperty("nonSystemTypes") final List<DocumentType> nonSystemTypes,
+                         @JsonProperty("visibleTypes") final List<DocumentType> visibleTypes) {
         this.nonSystemTypes = nonSystemTypes;
         this.visibleTypes = visibleTypes;
     }
@@ -37,16 +43,8 @@ public class DocumentTypes {
         return nonSystemTypes;
     }
 
-    public void setNonSystemTypes(final List<DocumentType> nonSystemTypes) {
-        this.nonSystemTypes = nonSystemTypes;
-    }
-
     public List<DocumentType> getVisibleTypes() {
         return visibleTypes;
-    }
-
-    public void setVisibleTypes(final List<DocumentType> visibleTypes) {
-        this.visibleTypes = visibleTypes;
     }
 
     public static boolean isFolder(final String type) {

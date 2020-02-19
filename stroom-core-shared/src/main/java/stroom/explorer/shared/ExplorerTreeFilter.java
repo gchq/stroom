@@ -16,21 +16,33 @@
 
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 import java.util.Set;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class ExplorerTreeFilter {
-    private Set<String> includedTypes;
-    private Set<String> tags;
-    private Set<String> requiredPermissions;
-    private String nameFilter;
-    private boolean nameFilterChange;
+    @JsonProperty
+    private final Set<String> includedTypes;
+    @JsonProperty
+    private final Set<String> tags;
+    @JsonProperty
+    private final Set<String> requiredPermissions;
+    @JsonProperty
+    private final String nameFilter;
+    @JsonProperty
+    private final boolean nameFilterChange;
 
-    public ExplorerTreeFilter() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ExplorerTreeFilter(final Set<String> includedTypes, final Set<String> tags, final Set<String> requiredPermissions, final String nameFilter, final boolean nameFilterChange) {
+    @JsonCreator
+    public ExplorerTreeFilter(@JsonProperty("includedTypes") final Set<String> includedTypes,
+                              @JsonProperty("tags") final Set<String> tags,
+                              @JsonProperty("requiredPermissions") final Set<String> requiredPermissions,
+                              @JsonProperty("nameFilter") final String nameFilter,
+                              @JsonProperty("nameFilterChange") final boolean nameFilterChange) {
         this.includedTypes = includedTypes;
         this.tags = tags;
         this.requiredPermissions = requiredPermissions;
@@ -42,40 +54,20 @@ public class ExplorerTreeFilter {
         return includedTypes;
     }
 
-    public void setIncludedTypes(final Set<String> includedTypes) {
-        this.includedTypes = includedTypes;
-    }
-
     public Set<String> getTags() {
         return tags;
-    }
-
-    public void setTags(final Set<String> tags) {
-        this.tags = tags;
     }
 
     public Set<String> getRequiredPermissions() {
         return requiredPermissions;
     }
 
-    public void setRequiredPermissions(final Set<String> requiredPermissions) {
-        this.requiredPermissions = requiredPermissions;
-    }
-
     public String getNameFilter() {
         return nameFilter;
     }
 
-    public void setNameFilter(final String nameFilter) {
-        this.nameFilter = nameFilter;
-    }
-
     public boolean isNameFilterChange() {
         return nameFilterChange;
-    }
-
-    public void setNameFilterChange(final boolean nameFilterChange) {
-        this.nameFilterChange = nameFilterChange;
     }
 
     @Override

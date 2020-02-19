@@ -31,7 +31,6 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaRowResultPage;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.stepping.GetPipelineForMetaRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
@@ -39,6 +38,7 @@ import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.ResultPage;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
     private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
@@ -93,11 +93,11 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
                 findMetaCriteria.obtainSelectedIdSet().add(stepLocation.getId());
 
-                final Rest<MetaRowResultPage> rest = restFactory.create();
+                final Rest<ResultPage<MetaRow>> rest = restFactory.create();
                 rest
                         .onSuccess(result -> {
-                            if (result != null && result.getValues().size() == 1) {
-                                final MetaRow row = result.getValues().get(0);
+                            if (result != null && result.size() == 1) {
+                                final MetaRow row = result.getFirst();
                                 openEditor(pipeline, stepLocation, row.getMeta(), childStreamType);
                             }
                         })

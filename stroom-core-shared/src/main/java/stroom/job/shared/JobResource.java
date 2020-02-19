@@ -20,6 +20,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -38,8 +39,8 @@ public interface JobResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Lists jobs",
-            response = ListJobResponse.class)
-    ListJobResponse list();
+            response = ResultPage.class)
+    ResultPage<Job> list();
 
     @PUT
     @Path("/{id}/enabled")

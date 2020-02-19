@@ -16,14 +16,21 @@
 
 package stroom.task.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class TaskId implements Serializable {
     private static final long serialVersionUID = -8404944210149631124L;
 
+    @JsonProperty
     private String id;
+    @JsonProperty
     private TaskId parentId;
 
     /**
@@ -36,7 +43,9 @@ public class TaskId implements Serializable {
     /**
      * Do not use this constructor directly, instead please use TaskIdFactory.
      */
-    public TaskId(final String id, final TaskId parentId) {
+    @JsonCreator
+    public TaskId(@JsonProperty("id") final String id,
+                  @JsonProperty("parentId") final TaskId parentId) {
         this.id = id;
         this.parentId = parentId;
     }

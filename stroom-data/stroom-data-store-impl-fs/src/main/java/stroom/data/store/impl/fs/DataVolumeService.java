@@ -4,7 +4,7 @@ import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 
@@ -19,7 +19,7 @@ public class DataVolumeService {
         this.securityContext = securityContext;
     }
 
-    public ResultList<DataVolume> find(final FindDataVolumeCriteria criteria) {
+    public ResultPage<DataVolume> find(final FindDataVolumeCriteria criteria) {
         if (!criteria.isValidCriteria()) {
             throw new IllegalArgumentException("Not enough criteria to run");
         }

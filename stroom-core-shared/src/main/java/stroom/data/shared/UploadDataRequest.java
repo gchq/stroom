@@ -16,26 +16,35 @@
 
 package stroom.data.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.ResourceKey;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class UploadDataRequest {
-    private ResourceKey key;
-    private String feedName;
-    private String streamTypeName;
-    private Long effectiveMs;
-    private String metaData;
-    private String fileName;
+    @JsonProperty
+    private final ResourceKey key;
+    @JsonProperty
+    private final String feedName;
+    @JsonProperty
+    private final String streamTypeName;
+    @JsonProperty
+    private final Long effectiveMs;
+    @JsonProperty
+    private final String metaData;
+    @JsonProperty
+    private final String fileName;
 
-    public UploadDataRequest() {
-    }
-
-    public UploadDataRequest(final ResourceKey resourceKey,
-                             final String feedName,
-                             final String streamTypeName,
-                             final Long effectiveMs,
-                             final String metaData,
-                             final String fileName) {
-        this.key = resourceKey;
+    @JsonCreator
+    public UploadDataRequest(@JsonProperty("key") final ResourceKey key,
+                             @JsonProperty("feedName") final String feedName,
+                             @JsonProperty("streamTypeName") final String streamTypeName,
+                             @JsonProperty("effectiveMs") final Long effectiveMs,
+                             @JsonProperty("metaData") final String metaData,
+                             @JsonProperty("fileName") final String fileName) {
+        this.key = key;
         this.feedName = feedName;
         this.streamTypeName = streamTypeName;
         this.effectiveMs = effectiveMs;
@@ -47,47 +56,23 @@ public class UploadDataRequest {
         return key;
     }
 
-    public void setKey(final ResourceKey key) {
-        this.key = key;
-    }
-
     public String getFeedName() {
         return feedName;
-    }
-
-    public void setFeedName(final String feedName) {
-        this.feedName = feedName;
     }
 
     public String getStreamTypeName() {
         return streamTypeName;
     }
 
-    public void setStreamTypeName(final String streamTypeName) {
-        this.streamTypeName = streamTypeName;
-    }
-
     public Long getEffectiveMs() {
         return effectiveMs;
-    }
-
-    public void setEffectiveMs(final Long effectiveMs) {
-        this.effectiveMs = effectiveMs;
     }
 
     public String getMetaData() {
         return metaData;
     }
 
-    public void setMetaData(final String metaData) {
-        this.metaData = metaData;
-    }
-
     public String getFileName() {
         return fileName;
-    }
-
-    public void setFileName(final String fileName) {
-        this.fileName = fileName;
     }
 }

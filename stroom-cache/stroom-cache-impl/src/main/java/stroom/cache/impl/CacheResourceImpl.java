@@ -74,7 +74,7 @@ class CacheResourceImpl implements CacheResource, RestResource, HasHealthCheck {
                 final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
                 criteria.setName(new StringCriteria(cacheName, null));
                 final List<CacheInfo> list = cacheManagerService.find(criteria);
-                result = new CacheInfoResponse().unlimited(list);
+                result = new CacheInfoResponse(list);
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);

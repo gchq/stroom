@@ -28,11 +28,11 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.api.AttributeMapUtil;
+import stroom.meta.api.MetaService;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.api.MetaService;
-import stroom.meta.api.StandardHeaderArguments;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
@@ -40,7 +40,6 @@ import stroom.util.io.BufferFactory;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.logging.LogItemProgress;
-import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -49,6 +48,7 @@ import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTask, DataDownloadResult> {
@@ -88,7 +88,7 @@ public class DataDownloadTaskHandler extends AbstractTaskHandler<DataDownloadTas
     private DataDownloadResult downloadData(final DataDownloadTask task) {
         final FindMetaCriteria criteria = task.getCriteria();
         final DataDownloadSettings settings = task.getSettings();
-        final ResultList<Meta> list = metaService.find(criteria);
+        final List<Meta> list = metaService.find(criteria).getValues();
         final DataDownloadResult result = new DataDownloadResult();
         if (list.size() == 0) {
             return result;

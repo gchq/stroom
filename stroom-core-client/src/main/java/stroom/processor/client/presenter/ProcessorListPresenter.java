@@ -47,7 +47,6 @@ import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.FetchProcessorRequest;
-import stroom.processor.shared.FetchProcessorResponse;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
@@ -61,6 +60,7 @@ import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.TreeRow;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -77,7 +77,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
-    private final RestDataProvider<ProcessorListRow, FetchProcessorResponse> dataProvider;
+    private final RestDataProvider<ProcessorListRow, ResultPage<ProcessorListRow>> dataProvider;
     private final TooltipPresenter tooltipPresenter;
     private final FetchProcessorRequest request;
     private boolean doneDataDisplay = false;
@@ -98,15 +98,15 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         this.tooltipPresenter = tooltipPresenter;
 
         request = new FetchProcessorRequest();
-        dataProvider = new RestDataProvider<ProcessorListRow, FetchProcessorResponse>(eventBus) {
+        dataProvider = new RestDataProvider<ProcessorListRow, ResultPage<ProcessorListRow>>(eventBus) {
             @Override
-            protected void exec(final Consumer<FetchProcessorResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<FetchProcessorResponse> rest = restFactory.create();
+            protected void exec(final Consumer<ResultPage<ProcessorListRow>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<ProcessorListRow>> rest = restFactory.create();
                 rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_FILTER_RESOURCE).find(request);
             }
 
             @Override
-            protected void changeData(final FetchProcessorResponse data) {
+            protected void changeData(final ResultPage<ProcessorListRow> data) {
                 super.changeData(data);
                 onChangeData(data);
             }
@@ -142,7 +142,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         }
     }
 
-    private void onChangeData(final FetchProcessorResponse data) {
+    private void onChangeData(final ResultPage<ProcessorListRow> data) {
         ProcessorListRow selected = getView().getSelectionModel().getSelected();
 
         if (nextSelection != null) {

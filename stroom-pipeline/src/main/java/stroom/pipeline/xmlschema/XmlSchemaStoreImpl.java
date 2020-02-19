@@ -31,7 +31,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.pipeline.xmlschema.migration.OldXMLSchema;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 import stroom.xmlschema.shared.FindXMLSchemaCriteria;
@@ -219,7 +219,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
     ////////////////////////////////////////////////////////////////////////
 
     @Override
-    public ResultList<XmlSchemaDoc> find(final FindXMLSchemaCriteria criteria) {
+    public ResultPage<XmlSchemaDoc> find(final FindXMLSchemaCriteria criteria) {
         final List<XmlSchemaDoc> result = new ArrayList<>();
 
         final List<DocRef> docRefs = list();
@@ -234,7 +234,7 @@ public class XmlSchemaStoreImpl implements XmlSchemaStore {
                 LOGGER.debug(e.getMessage(), e);
             }
         });
-        return ResultList.createCriterialBasedList(result, criteria);
+        return ResultPage.createCriterialBasedList(result, criteria);
     }
 
     @Override

@@ -17,31 +17,75 @@
 package stroom.processor.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
 /**
  * Class used to represent processing a stream.
  */
+@JsonInclude(Include.NON_DEFAULT)
 public class ProcessorTask {
-    private static final long serialVersionUID = 3926403008832938745L;
-
     // standard id and OCC fields
+    @JsonProperty
     private long id;
+    @JsonProperty
     private Integer version;
-
+    @JsonProperty
     private Long metaId;
+    @JsonProperty
     private String data;
+    @JsonProperty
     private String nodeName;
+    @JsonProperty
     private String feedName;
+    @JsonProperty
     private Long createTimeMs;
+    @JsonProperty
     private Long statusTimeMs;
+    @JsonProperty
     private Long startTimeMs;
+    @JsonProperty
     private Long endTimeMs;
+    @JsonProperty
     private TaskStatus status = TaskStatus.UNPROCESSED;
 
     // parent filter
+    @JsonProperty
     private ProcessorFilter processorFilter;
+
+    public ProcessorTask() {
+    }
+
+    @JsonCreator
+    public ProcessorTask(@JsonProperty("id") final long id,
+                         @JsonProperty("version") final Integer version,
+                         @JsonProperty("metaId") final Long metaId,
+                         @JsonProperty("data") final String data,
+                         @JsonProperty("nodeName") final String nodeName,
+                         @JsonProperty("feedName") final String feedName,
+                         @JsonProperty("createTimeMs") final Long createTimeMs,
+                         @JsonProperty("statusTimeMs") final Long statusTimeMs,
+                         @JsonProperty("startTimeMs") final Long startTimeMs,
+                         @JsonProperty("endTimeMs") final Long endTimeMs,
+                         @JsonProperty("status") final TaskStatus status,
+                         @JsonProperty("processorFilter") final ProcessorFilter processorFilter) {
+        this.id = id;
+        this.version = version;
+        this.metaId = metaId;
+        this.data = data;
+        this.nodeName = nodeName;
+        this.feedName = feedName;
+        this.createTimeMs = createTimeMs;
+        this.statusTimeMs = statusTimeMs;
+        this.startTimeMs = startTimeMs;
+        this.endTimeMs = endTimeMs;
+        this.status = status;
+        this.processorFilter = processorFilter;
+    }
 
     public long getId() {
         return id;

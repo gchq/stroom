@@ -21,15 +21,14 @@ import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.api.ExplorerService;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaService;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.FetchProcessorRequest;
-import stroom.processor.shared.FetchProcessorResponse;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
 import stroom.processor.shared.ProcessorFilter;
@@ -49,9 +48,9 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
-import stroom.util.shared.ResultList;
 import stroom.util.shared.CriteriaSet;
 import stroom.util.shared.Expander;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -230,7 +229,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 //    }
 
     @Override
-    public ResultList<ProcessorFilter> find(final ExpressionCriteria criteria) {
+    public ResultPage<ProcessorFilter> find(final ExpressionCriteria criteria) {
         return securityContext.secureResult(PERMISSION, () ->
                 processorFilterDao.find(criteria));
     }
@@ -238,7 +237,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     // TODO : The following method combines results from the processor and processor filter services so should possibly
     //  be in another class that controls the collaboration.
     @Override
-    public FetchProcessorResponse find(final FetchProcessorRequest request) {
+    public ResultPage<ProcessorListRow> find(final FetchProcessorRequest request) {
         return securityContext.secureResult(PERMISSION, () -> {
             final List<ProcessorListRow> values = new ArrayList<>();
 
@@ -257,12 +256,12 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 criteria.setExpression(builder.build());
             }
 
-            final ResultList<Processor> streamProcessors = processorService.find(criteriaRoot);
+            final ResultPage<Processor> streamProcessors = processorService.find(criteriaRoot);
 
-            final ResultList<ProcessorFilter> processorFilters = find(criteria);
+            final ResultPage<ProcessorFilter> processorFilters = find(criteria);
 
             // Get unique processors.
-            final Set<Processor> processors = new HashSet<>(streamProcessors);
+            final Set<Processor> processors = new HashSet<>(streamProcessors.getValues());
 
             final List<Processor> sorted = new ArrayList<>(processors);
             sorted.sort((o1, o2) -> {
@@ -289,7 +288,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                     processorExpander.setExpanded(true);
 
                     // Add filters.
-                    for (final ProcessorFilter processorFilter : processorFilters) {
+                    for (final ProcessorFilter processorFilter : processorFilters.getValues()) {
                         if (processor.equals(processorFilter.getProcessor())) {
                             // Decorate the expression with resolved dictionaries etc.
                             final QueryData queryData = processorFilter.getQueryData();
@@ -304,7 +303,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 }
             }
 
-            return new FetchProcessorResponse().unlimited(values);
+            return ResultPage.createUnboundedList(values);
         });
     }
 
@@ -388,7 +387,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 criteria.obtainPageRequest().setOffset(0L);
                 criteria.obtainPageRequest().setLength(MAX_STREAM_TO_REPROCESS);
 
-                final ResultList<Meta> metaList = metaService.find(criteria);
+                final ResultPage<Meta> metaList = metaService.find(criteria);
 
                 if (!metaList.isExact()) {
                     info.add(new ReprocessDataInfo(Severity.ERROR, "Results exceed " + MAX_STREAM_TO_REPROCESS
@@ -401,7 +400,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
                     final Map<Processor, CriteriaSet<Long>> streamToProcessorSet = new HashMap<>();
 
-                    for (final Meta meta : metaList) {
+                    for (final Meta meta : metaList.getValues()) {
                         // We can only reprocess streams that have a stream processor and a parent stream id.
                         if (meta.getProcessorUuid() != null && meta.getParentMetaId() != null) {
                             final ExpressionCriteria findProcessorCriteria = new ExpressionCriteria(new ExpressionOperator.Builder()

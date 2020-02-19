@@ -16,26 +16,39 @@
 
 package stroom.index.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.Range;
+import stroom.util.shared.Sort;
 import stroom.util.shared.StringCriteria;
 
+import java.util.List;
 import java.util.Objects;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class FindIndexShardCriteria extends BaseCriteria {
-    private static final long serialVersionUID = 3552286394659242683L;
-
     public static final String FIELD_ID = "Id";
     public static final String FIELD_PARTITION = "Partition";
 
+    @JsonProperty
     private Range<Integer> documentCountRange = new Range<>();
+    @JsonProperty
     private CriteriaSet<String> nodeNameSet = new CriteriaSet<>();
+    @JsonProperty
     private CriteriaSet<Integer> volumeIdSet = new CriteriaSet<>();
+    @JsonProperty
     private CriteriaSet<String> indexUuidSet = new CriteriaSet<>();
+    @JsonProperty
     private CriteriaSet<Long> indexShardIdSet = new CriteriaSet<>();
+    @JsonProperty
     private CriteriaSet<IndexShardStatus> indexShardStatusSet = new CriteriaSet<>();
+    @JsonProperty
     private StringCriteria partition = new StringCriteria();
 
     public FindIndexShardCriteria() {
@@ -51,6 +64,26 @@ public class FindIndexShardCriteria extends BaseCriteria {
         indexShardIdSet.copyFrom(criteria.indexShardIdSet);
         indexShardStatusSet.copyFrom(criteria.indexShardStatusSet);
         partition.copyFrom(criteria.partition);
+    }
+
+    @JsonCreator
+    public FindIndexShardCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                  @JsonProperty("sortList") final List<Sort> sortList,
+                                  @JsonProperty("documentCountRange") final Range<Integer> documentCountRange,
+                                  @JsonProperty("nodeNameSet") final CriteriaSet<String> nodeNameSet,
+                                  @JsonProperty("volumeIdSet") final CriteriaSet<Integer> volumeIdSet,
+                                  @JsonProperty("indexUuidSet") final CriteriaSet<String> indexUuidSet,
+                                  @JsonProperty("indexShardIdSet") final CriteriaSet<Long> indexShardIdSet,
+                                  @JsonProperty("indexShardStatusSet") final CriteriaSet<IndexShardStatus> indexShardStatusSet,
+                                  @JsonProperty("partition") final StringCriteria partition) {
+        super(pageRequest, sortList);
+        this.documentCountRange = documentCountRange;
+        this.nodeNameSet = nodeNameSet;
+        this.volumeIdSet = volumeIdSet;
+        this.indexUuidSet = indexUuidSet;
+        this.indexShardIdSet = indexShardIdSet;
+        this.indexShardStatusSet = indexShardStatusSet;
+        this.partition = partition;
     }
 
     public CriteriaSet<IndexShardStatus> getIndexShardStatusSet() {

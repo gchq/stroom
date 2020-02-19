@@ -16,34 +16,45 @@
 
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class FetchExplorerNodeResult {
-    private List<ExplorerNode> rootNodes = new ArrayList<>();
-    private List<String> openedItems = new ArrayList<>();
+    @JsonProperty
+    private List<ExplorerNode> rootNodes;
+    @JsonProperty
+    private List<String> openedItems;
+    @JsonProperty
     private Set<String> temporaryOpenedItems;
 
     public FetchExplorerNodeResult() {
-        // Default constructor necessary for GWT serialisation.
+        rootNodes = new ArrayList<>();
+        openedItems = new ArrayList<>();
+    }
+
+    @JsonCreator
+    public FetchExplorerNodeResult(@JsonProperty("rootNodes") final List<ExplorerNode> rootNodes,
+                                   @JsonProperty("openedItems") final List<String> openedItems,
+                                   @JsonProperty("temporaryOpenedItems") final Set<String> temporaryOpenedItems) {
+        this.rootNodes = rootNodes;
+        this.openedItems = openedItems;
+        this.temporaryOpenedItems = temporaryOpenedItems;
     }
 
     public List<ExplorerNode> getRootNodes() {
         return rootNodes;
     }
 
-    public void setRootNodes(final List<ExplorerNode> rootNodes) {
-        this.rootNodes = rootNodes;
-    }
-
     public List<String> getOpenedItems() {
         return openedItems;
-    }
-
-    public void setOpenedItems(final List<String> openedItems) {
-        this.openedItems = openedItems;
     }
 
     public Set<String> getTemporaryOpenedItems() {

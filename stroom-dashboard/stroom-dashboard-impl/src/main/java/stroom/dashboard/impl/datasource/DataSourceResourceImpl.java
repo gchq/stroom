@@ -17,7 +17,7 @@
 package stroom.dashboard.impl.datasource;
 
 import com.codahale.metrics.health.HealthCheck.Result;
-import stroom.datasource.shared.DataSourceFields;
+import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.shared.DataSourceResource;
 import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
@@ -26,6 +26,7 @@ import stroom.util.HasHealthCheck;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
+import java.util.List;
 
 class DataSourceResourceImpl implements DataSourceResource, RestResource, HasHealthCheck {
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
@@ -39,16 +40,15 @@ class DataSourceResourceImpl implements DataSourceResource, RestResource, HasHea
     }
 
     @Override
-    public DataSourceFields fetchFields(final DocRef dataSourceRef) {
+    public List<AbstractField> fetchFields(final DocRef dataSourceRef) {
         return securityContext.secureResult(() -> {
             if (dataSourceRef.equals(MetaFields.STREAM_STORE_DOC_REF)) {
-                return new DataSourceFields(MetaFields.getFields());
+                return MetaFields.getFields();
             }
 
             // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
             return securityContext.useAsReadResult(() -> dataSourceProviderRegistry.getDataSourceProvider(dataSourceRef)
-                    .map(provider ->
-                            new DataSourceFields(provider.getDataSource(dataSourceRef).getFields()))
+                    .map(provider -> provider.getDataSource(dataSourceRef).getFields())
                     .orElse(null));
         });
     }

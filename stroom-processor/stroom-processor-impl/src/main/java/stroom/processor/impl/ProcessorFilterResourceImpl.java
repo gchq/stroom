@@ -22,14 +22,15 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.shared.CreateProcessorFilterRequest;
 import stroom.processor.shared.FetchProcessorRequest;
-import stroom.processor.shared.FetchProcessorResponse;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
+import stroom.processor.shared.ProcessorListRow;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.ws.rs.ServerErrorException;
@@ -105,7 +106,7 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource, RestResour
     }
 
     @Override
-    public FetchProcessorResponse find(final FetchProcessorRequest request) {
+    public ResultPage<ProcessorListRow> find(final FetchProcessorRequest request) {
         try {
             return processorFilterService.find(request);
         } catch (final RuntimeException e) {

@@ -16,20 +16,32 @@
 
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class Sort implements Serializable {
     private static final long serialVersionUID = -5994197736743037915L;
 
+    @JsonProperty
     private String field;
+    @JsonProperty
     private Direction direction;
+    @JsonProperty
     private boolean ignoreCase;
 
     public Sort() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public Sort(final String field, final Direction direction, final boolean ignoreCase) {
+    @JsonCreator
+    public Sort(@JsonProperty("field") final String field,
+                @JsonProperty("direction") final Direction direction,
+                @JsonProperty("ignoreCase") final boolean ignoreCase) {
         this.field = field;
         this.direction = direction;
         this.ignoreCase = ignoreCase;

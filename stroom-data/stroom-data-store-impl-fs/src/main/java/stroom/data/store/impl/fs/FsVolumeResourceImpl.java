@@ -23,14 +23,13 @@ import event.logging.Query.Advanced;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolumeResource;
-import stroom.data.store.impl.fs.shared.FsVolumeResultPage;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ResultList;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 
@@ -52,7 +51,7 @@ class FsVolumeResourceImpl implements FsVolumeResource, RestResource, HasHealthC
     }
 
     @Override
-    public FsVolumeResultPage find(final FindFsVolumeCriteria criteria) {
+    public ResultPage<FsVolume> find(final FindFsVolumeCriteria criteria) {
         // TODO : @66 fill out query
         final Query query = new Query();
         final Advanced advanced = new Advanced();
@@ -61,7 +60,7 @@ class FsVolumeResourceImpl implements FsVolumeResource, RestResource, HasHealthC
         advanced.getAdvancedQueryItems().add(and);
 
         return securityContext.secureResult(() -> {
-            ResultList<FsVolume> result = null;
+            ResultPage<FsVolume> result = null;
 
             try {
                 result = volumeService.find(criteria);
@@ -71,7 +70,7 @@ class FsVolumeResourceImpl implements FsVolumeResource, RestResource, HasHealthC
                 throw e;
             }
 
-            return result.toResultPage(new FsVolumeResultPage());
+            return result;
         });
     }
 

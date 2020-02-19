@@ -18,8 +18,8 @@ package stroom.importexport.impl;
 
 import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.importexport.shared.ContentResource;
+import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.importexport.shared.DependencyResultPage;
 import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportState;
 import stroom.resource.api.ResourceStore;
@@ -31,6 +31,7 @@ import stroom.util.shared.Message;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
@@ -115,7 +116,7 @@ class ContentResourceImpl implements ContentResource, RestResource, HasHealthChe
     }
 
     @Override
-    public DependencyResultPage fetchDependencies(final DependencyCriteria criteria) {
+    public ResultPage<Dependency> fetchDependencies(final DependencyCriteria criteria) {
         return securityContext.secureResult(() -> dependencyService.getDependencies(criteria));
     }
 

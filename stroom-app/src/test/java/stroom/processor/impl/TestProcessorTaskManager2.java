@@ -65,7 +65,7 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
 
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
         assertThat(processorTaskService.find(new ExpressionCriteria()).size()).isZero();
-        final List<Meta> streams = metaService.find(new FindMetaCriteria());
+        final List<Meta> streams = metaService.find(new FindMetaCriteria()).getValues();
         assertThat(streams.size()).isEqualTo(1);
 
         ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND).build();

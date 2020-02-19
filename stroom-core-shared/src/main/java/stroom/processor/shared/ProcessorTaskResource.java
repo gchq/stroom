@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -38,8 +39,8 @@ public interface ProcessorTaskResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Finds processors tasks",
-            response = ProcessorTaskResultPage.class)
-    ProcessorTaskResultPage find(ExpressionCriteria expressionCriteria);
+            response = ResultPage.class)
+    ResultPage<ProcessorTask> find(ExpressionCriteria expressionCriteria);
 
     @POST
     @Path("summary")
@@ -47,6 +48,6 @@ public interface ProcessorTaskResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Finds processor task summaries",
-            response = ProcessorTaskSummaryResultPage.class)
-    ProcessorTaskSummaryResultPage findSummary(ExpressionCriteria expressionCriteria);
+            response = ResultPage.class)
+    ResultPage<ProcessorTaskSummary> findSummary(ExpressionCriteria expressionCriteria);
 }

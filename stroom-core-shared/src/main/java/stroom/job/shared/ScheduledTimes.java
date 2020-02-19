@@ -16,18 +16,21 @@
 
 package stroom.job.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-
+@JsonInclude(Include.NON_DEFAULT)
 public class ScheduledTimes {
-    private static final long serialVersionUID = 3064047113379759479L;
-    private String lastExecutedTime;
-    private String nextScheduledTime;
+    @JsonProperty
+    private final String lastExecutedTime;
+    @JsonProperty
+    private final String nextScheduledTime;
 
-    public ScheduledTimes() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ScheduledTimes(final String lastExecutedTime, final String nextScheduledTime) {
+    @JsonCreator
+    public ScheduledTimes(@JsonProperty("lastExecutedTime") final String lastExecutedTime,
+                          @JsonProperty("nextScheduledTime") final String nextScheduledTime) {
         this.lastExecutedTime = lastExecutedTime;
         this.nextScheduledTime = nextScheduledTime;
     }

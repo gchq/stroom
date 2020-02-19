@@ -3,7 +3,7 @@ package stroom.processor.impl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterTracker;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
@@ -39,7 +39,7 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
     }
 
     @Override
-    public ResultList<ProcessorFilter> find(final ExpressionCriteria criteria) {
+    public ResultPage<ProcessorFilter> find(final ExpressionCriteria criteria) {
         final List<ProcessorFilter> list = dao
                 .getMap()
                 .values()
@@ -47,7 +47,7 @@ public class MockProcessorFilterDao implements ProcessorFilterDao, Clearable {
 //                .filter(pf -> criteria.getPipelineUuidCriteria().getString().equals(pf.getPipelineUuid()))
                 .collect(Collectors.toList());
 
-        return ResultList.createCriterialBasedList(list, criteria);
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override

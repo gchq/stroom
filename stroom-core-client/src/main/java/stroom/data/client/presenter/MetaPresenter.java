@@ -49,7 +49,6 @@ import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaRowResultPage;
 import stroom.meta.shared.Status;
 import stroom.meta.shared.UpdateStatusRequest;
 import stroom.pipeline.shared.PipelineDoc;
@@ -65,6 +64,7 @@ import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.IdSet;
 import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -182,7 +182,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
 //    }
 
     private static Meta getMeta(final AbstractMetaListPresenter streamListPresenter, final long id) {
-        final MetaRowResultPage list = streamListPresenter.getResultList();
+        final ResultPage<MetaRow> list = streamListPresenter.getResultPage();
         if (list != null) {
             if (list.getValues() != null) {
                 for (final MetaRow metaRow : list.getValues()) {
@@ -521,7 +521,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
 
     public boolean isSomeSelected(final AbstractMetaListPresenter streamListPresenter,
                                   final IdSet selectedIdSet) {
-        if (streamListPresenter.getResultList() == null || streamListPresenter.getResultList().getValues().size() == 0) {
+        if (streamListPresenter.getResultPage() == null || streamListPresenter.getResultPage().size() == 0) {
             return false;
         }
         return selectedIdSet != null && (Boolean.TRUE.equals(selectedIdSet.getMatchAll()) || selectedIdSet.size() > 0);

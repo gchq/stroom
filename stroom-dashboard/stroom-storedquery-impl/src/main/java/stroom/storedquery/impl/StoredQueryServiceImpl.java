@@ -6,7 +6,7 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionException;
 import stroom.storedquery.api.StoredQueryService;
 import stroom.util.AuditUtil;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -44,7 +44,7 @@ public class StoredQueryServiceImpl implements StoredQueryService {
         return storedQuery;
     }
 
-    ResultList<StoredQuery> find(FindStoredQueryCriteria criteria) {
+    ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria) {
         final String userId = securityContext.getUserId();
         criteria.setUserId(userId);
 

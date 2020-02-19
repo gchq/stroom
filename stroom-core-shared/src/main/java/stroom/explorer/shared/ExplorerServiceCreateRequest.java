@@ -17,19 +17,32 @@
 
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class ExplorerServiceCreateRequest {
+    @JsonProperty
     private String docType;
+    @JsonProperty
     private String docName;
+    @JsonProperty
     private DocRef destinationFolderRef;
+    @JsonProperty
     private PermissionInheritance permissionInheritance;
 
     public ExplorerServiceCreateRequest() {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public ExplorerServiceCreateRequest(final String docType, final String docName, final DocRef destinationFolderRef, final PermissionInheritance permissionInheritance) {
+    @JsonCreator
+    public ExplorerServiceCreateRequest(@JsonProperty("docType") final String docType,
+                                        @JsonProperty("docName") final String docName,
+                                        @JsonProperty("destinationFolderRef") final DocRef destinationFolderRef,
+                                        @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
         this.docType = docType;
         this.docName = docName;
         this.destinationFolderRef = destinationFolderRef;

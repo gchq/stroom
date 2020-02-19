@@ -33,9 +33,9 @@ import stroom.docref.DocRef;
 import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.importexport.shared.DependencyResultPage;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 
 import java.util.function.Consumer;
@@ -44,7 +44,7 @@ public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Depe
     private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
 
     private final DependencyCriteria criteria;
-    private final RestDataProvider<Dependency, DependencyResultPage> dataProvider;
+    private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
 
     @Inject
     public DependenciesPresenter(final EventBus eventBus, final RestFactory restFactory) {
@@ -79,10 +79,10 @@ public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Depe
         getView().addColumnSortHandler(this);
 
         criteria = new DependencyCriteria();
-        dataProvider = new RestDataProvider<Dependency, DependencyResultPage>(eventBus) {
+        dataProvider = new RestDataProvider<Dependency, ResultPage<Dependency>>(eventBus) {
             @Override
-            protected void exec(final Consumer<DependencyResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<DependencyResultPage> rest = restFactory.create();
+            protected void exec(final Consumer<ResultPage<Dependency>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<Dependency>> rest = restFactory.create();
                 rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(CONTENT_RESOURCE).fetchDependencies(criteria);
             }
         };

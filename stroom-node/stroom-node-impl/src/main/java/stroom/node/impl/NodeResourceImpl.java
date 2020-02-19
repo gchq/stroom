@@ -81,7 +81,7 @@ class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
         advanced.getAdvancedQueryItems().add(and);
 
         try {
-            final List<Node> nodes = nodeService.find(new FindNodeCriteria());
+            final List<Node> nodes = nodeService.find(new FindNodeCriteria()).getValues();
             Node master = null;
             for (final Node node : nodes) {
                 if (node.isEnabled()) {
@@ -95,7 +95,7 @@ class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
             for (final Node node : nodes) {
                 resultList.add(new NodeStatusResult(node, node.equals(master)));
             }
-            response = new FetchNodeStatusResponse().unlimited(resultList);
+            response = new FetchNodeStatusResponse(resultList);
 
             documentEventLog.search("List Nodes", query, Node.class.getSimpleName(), response.getPageResponse(), null);
         } catch (final RuntimeException e) {

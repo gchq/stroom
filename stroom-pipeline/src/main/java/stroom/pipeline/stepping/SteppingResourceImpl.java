@@ -154,7 +154,7 @@ class SteppingResourceImpl implements SteppingResource, RestResource, HasHealthC
 
         return securityContext.asProcessingUserResult(() -> {
             final FindMetaCriteria criteria = new FindMetaCriteria(MetaExpressionUtil.createDataIdExpression(id));
-            final List<Meta> streamList = metaService.find(criteria);
+            final List<Meta> streamList = metaService.find(criteria).getValues();
             if (streamList != null && streamList.size() > 0) {
                 return streamList.get(0);
             }

@@ -16,16 +16,36 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
 
+import java.util.List;
+
+@JsonInclude(Include.NON_DEFAULT)
 public class FindFsVolumeCriteria extends BaseCriteria {
-    private static final long serialVersionUID = 3581257401217841946L;
-
     public static final String FIELD_ID = "Id";
 
-    private CriteriaSet<VolumeUseStatus> statusSet = new CriteriaSet<>();
+    @JsonProperty
+    private final CriteriaSet<VolumeUseStatus> statusSet;
+
+    public FindFsVolumeCriteria() {
+        statusSet = new CriteriaSet<>();
+    }
+
+    @JsonCreator
+    public FindFsVolumeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                @JsonProperty("sortList") final List<Sort> sortList,
+                                @JsonProperty("statusSet") final CriteriaSet<VolumeUseStatus> statusSet) {
+        super(pageRequest, sortList);
+        this.statusSet = statusSet;
+    }
 
     public CriteriaSet<VolumeUseStatus> getStatusSet() {
         return statusSet;

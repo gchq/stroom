@@ -4,18 +4,18 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskSummary;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 
 import java.util.Collections;
 
 public class MockProcessorTaskService implements ProcessorTaskService {
     @Override
-    public ResultList<ProcessorTask> find(final ExpressionCriteria criteria) {
-        return ResultList.createUnboundedList(Collections.emptyList());
+    public ResultPage<ProcessorTask> find(final ExpressionCriteria criteria) {
+        return ResultPage.createUnboundedList(Collections.emptyList());
     }
 
     @Override
-    public ResultList<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
-        return ResultList.createUnboundedList(Collections.emptyList());
+    public ResultPage<ProcessorTaskSummary> findSummary(final ExpressionCriteria criteria) {
+        return ResultPage.createUnboundedList(Collections.emptyList());
     }
 }

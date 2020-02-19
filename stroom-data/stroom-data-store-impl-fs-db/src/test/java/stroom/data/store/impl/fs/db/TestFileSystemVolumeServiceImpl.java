@@ -99,10 +99,10 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
 
     @Test
     void test() {
-        List<FsVolume> list = volumeService.find(new FindFsVolumeCriteria());
+        List<FsVolume> list = volumeService.find(new FindFsVolumeCriteria()).getValues();
         list.forEach(v -> volumeService.delete(v.getId()));
 
-        list = volumeService.find(new FindFsVolumeCriteria());
+        list = volumeService.find(new FindFsVolumeCriteria()).getValues();
         assertThat(list.size()).isZero();
 
         // Create
@@ -113,7 +113,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
         fileVolume = volumeService.update(fileVolume);
 
         // Find
-        list = volumeService.find(new FindFsVolumeCriteria());
+        list = volumeService.find(new FindFsVolumeCriteria()).getValues();
         assertThat(list.size()).isOne();
         assertThat(list.get(0)).isEqualTo(fileVolume);
 
@@ -123,7 +123,7 @@ class TestFileSystemVolumeServiceImpl extends StroomUnitTest {
         // Delete
         final int count = volumeService.delete(fileVolume.getId());
         assertThat(count).isOne();
-        list = volumeService.find(new FindFsVolumeCriteria());
+        list = volumeService.find(new FindFsVolumeCriteria()).getValues();
         assertThat(list.size()).isZero();
     }
 

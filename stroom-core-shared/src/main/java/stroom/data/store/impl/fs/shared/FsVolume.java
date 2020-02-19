@@ -16,9 +16,12 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.HasDisplayValue;
-
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
@@ -28,22 +31,56 @@ import java.util.Objects;
 /**
  * Some path on the network where we can store stuff.
  */
+@JsonInclude(Include.NON_DEFAULT)
 public class FsVolume implements HasAuditInfo {
     private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
     private static final double NINETY_NINE_PERCENT = 0.99D;
 
+    @JsonProperty
     private Integer id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTimeMs;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private Long updateTimeMs;
+    @JsonProperty
     private String updateUser;
+    @JsonProperty
     private String path;
+    @JsonProperty
     private VolumeUseStatus status = VolumeUseStatus.ACTIVE;
+    @JsonProperty
     private Long byteLimit;
+    @JsonProperty
     private FsVolumeState volumeState;
 
     public FsVolume() {
+    }
+
+    @JsonCreator
+    public FsVolume(@JsonProperty("id") final Integer id,
+                    @JsonProperty("version") final Integer version,
+                    @JsonProperty("createTimeMs") final Long createTimeMs,
+                    @JsonProperty("createUser") final String createUser,
+                    @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                    @JsonProperty("updateUser") final String updateUser,
+                    @JsonProperty("path") final String path,
+                    @JsonProperty("status") final VolumeUseStatus status,
+                    @JsonProperty("byteLimit") final Long byteLimit,
+                    @JsonProperty("volumeState") final FsVolumeState volumeState) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.createUser = createUser;
+        this.updateTimeMs = updateTimeMs;
+        this.updateUser = updateUser;
+        this.path = path;
+        this.status = status;
+        this.byteLimit = byteLimit;
+        this.volumeState = volumeState;
     }
 
     public static FsVolume create(final String path) {

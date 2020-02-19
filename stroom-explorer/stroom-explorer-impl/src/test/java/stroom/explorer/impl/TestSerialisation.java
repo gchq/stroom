@@ -22,12 +22,12 @@ public class TestSerialisation {
 
         final ExplorerTreeFilter explorerTreeFilter = new ExplorerTreeFilter(Set.of("t1", "t2"), Set.of("t1", "t2"), Set.of("p1", "p2"), "blah", true);
 
-        final FindExplorerNodeCriteria criteria1 = new FindExplorerNodeCriteria();
-        criteria1.setOpenItems(Set.of(explorerNode.getUuid()));
-        criteria1.setTemporaryOpenedItems(Set.of(explorerNode.getUuid()));
-        criteria1.setFilter(explorerTreeFilter);
-        criteria1.setMinDepth(2);
-        criteria1.setEnsureVisible(Set.of(explorerNode.getUuid()));
+        final FindExplorerNodeCriteria criteria1 = new FindExplorerNodeCriteria(
+                Set.of(explorerNode.getUuid()),
+                Set.of(explorerNode.getUuid()),
+                explorerTreeFilter,
+                2,
+                Set.of(explorerNode.getUuid()));
 
         final ObjectMapper objectMapper = JsonUtil.getMapper();
         final String result1 = objectMapper.writeValueAsString(criteria1);
@@ -49,10 +49,10 @@ public class TestSerialisation {
         parent.setNodeState(NodeState.OPEN);
         parent.setChildren(List.of(child));
 
-        final FetchExplorerNodeResult result1 = new FetchExplorerNodeResult();
-        result1.getRootNodes().add(parent);
-        result1.setTemporaryOpenedItems(Set.of(parent.getUuid()));
-        result1.setOpenedItems(List.of(parent.getUuid()));
+        final FetchExplorerNodeResult result1 = new FetchExplorerNodeResult(
+                List.of(parent),
+                List.of(parent.getUuid()),
+                Set.of(parent.getUuid()));
 
         final ObjectMapper objectMapper = JsonUtil.getMapper();
         final String string1 = objectMapper.writeValueAsString(result1);

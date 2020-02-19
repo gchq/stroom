@@ -16,24 +16,31 @@
 
 package stroom.security.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.FindDocumentEntityCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
+import stroom.util.shared.StringCriteria;
+
+import java.util.List;
 
 /**
  * Criteria class.
  */
+@JsonInclude(Include.NON_DEFAULT)
 public class FindUserCriteria extends FindDocumentEntityCriteria {
     public static final String FIELD_STATUS = "Status";
     public static final String FIELD_LAST_LOGIN = "Last Login";
-    /**
-     * Order by types.
-     */
-    private static final long serialVersionUID = -6584216681046824635L;
 
     /**
      * Find user groups
      */
+    @JsonProperty
     private Boolean group;
-
+    @JsonProperty
     private User relatedUser;
 
     public FindUserCriteria() {
@@ -42,6 +49,18 @@ public class FindUserCriteria extends FindDocumentEntityCriteria {
     public FindUserCriteria(final String name, final Boolean group) {
         super(name);
         this.group = group;
+    }
+
+    @JsonCreator
+    public FindUserCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                            @JsonProperty("sortList") final List<Sort> sortList,
+                            @JsonProperty("name") final StringCriteria name,
+                            @JsonProperty("requiredPermission") final String requiredPermission,
+                            @JsonProperty("group") final Boolean group,
+                            @JsonProperty("relatedUser") final User relatedUser) {
+        super(pageRequest, sortList, name, requiredPermission);
+        this.group = group;
+        this.relatedUser = relatedUser;
     }
 
     public FindUserCriteria(final Boolean group) {

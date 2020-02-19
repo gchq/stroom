@@ -24,17 +24,16 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
 import stroom.job.shared.JobNodeResource;
-import stroom.job.shared.ListJobNodeResponse;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.ResourcePaths;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -53,10 +52,10 @@ class JobNodeResourceImpl implements JobNodeResource, RestResource, HasHealthChe
 
     @Inject
     JobNodeResourceImpl(final JobNodeService jobNodeService,
-                                final NodeService nodeService,
-                                final NodeInfo nodeInfo,
-                                final WebTargetFactory webTargetFactory,
-                                final DocumentEventLog documentEventLog) {
+                        final NodeService nodeService,
+                        final NodeInfo nodeInfo,
+                        final WebTargetFactory webTargetFactory,
+                        final DocumentEventLog documentEventLog) {
         this.jobNodeService = jobNodeService;
         this.nodeService = nodeService;
         this.nodeInfo = nodeInfo;
@@ -65,8 +64,8 @@ class JobNodeResourceImpl implements JobNodeResource, RestResource, HasHealthChe
     }
 
     @Override
-    public ListJobNodeResponse list(final String jobName, final String nodeName) {
-        ListJobNodeResponse response = null;
+    public ResultPage<JobNode> list(final String jobName, final String nodeName) {
+        ResultPage<JobNode> response = null;
 
         final Query query = new Query();
         final Advanced advanced = new Advanced();
@@ -83,9 +82,8 @@ class JobNodeResourceImpl implements JobNodeResource, RestResource, HasHealthChe
                 findJobNodeCriteria.getNodeName().setString(nodeName);
             }
 
-            final ResultList<JobNode> results = jobNodeService.find(findJobNodeCriteria);
-            response = results.toResultPage(new ListJobNodeResponse());
-            documentEventLog.search("ListJobNodes", query, JobNode.class.getSimpleName(), results.getPageResponse(), null);
+            response = jobNodeService.find(findJobNodeCriteria);
+            documentEventLog.search("ListJobNodes", query, JobNode.class.getSimpleName(), response.getPageResponse(), null);
         } catch (final RuntimeException e) {
             documentEventLog.search("ListJobNodes", query, JobNode.class.getSimpleName(), null, e);
         }

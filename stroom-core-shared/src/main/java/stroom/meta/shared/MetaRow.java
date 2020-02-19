@@ -16,11 +16,19 @@
 
 package stroom.meta.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.HashMap;
 import java.util.Map;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class MetaRow {
+    @JsonProperty
     private Meta meta;
+    @JsonProperty
     private Map<String, String> attributes = new HashMap<>();
 
     public MetaRow() {
@@ -29,6 +37,13 @@ public class MetaRow {
 
     public MetaRow(Meta meta) {
         setMeta(meta);
+    }
+
+    @JsonCreator
+    public MetaRow(@JsonProperty("meta") final Meta meta,
+                   @JsonProperty("attributes") final Map<String, String> attributes) {
+        this.meta = meta;
+        this.attributes = attributes;
     }
 
     public Meta getMeta() {

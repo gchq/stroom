@@ -17,20 +17,25 @@
 package stroom.processor.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.Severity;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class ReprocessDataInfo {
-    private static final long serialVersionUID = 7549523500761890727L;
+    @JsonProperty
+    private final Severity severity;
+    @JsonProperty
+    private final String message;
+    @JsonProperty
+    private final String details;
 
-    private Severity severity;
-    private String message;
-    private String details;
-
-    public ReprocessDataInfo() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ReprocessDataInfo(Severity severity, String message, String details) {
+    @JsonCreator
+    public ReprocessDataInfo(@JsonProperty("severity") final Severity severity,
+                             @JsonProperty("message") final String message,
+                             @JsonProperty("details") final String details) {
         this.severity = severity;
         this.message = message;
         this.details = details;
@@ -40,23 +45,11 @@ public class ReprocessDataInfo {
         return severity;
     }
 
-    public void setSeverity(Severity severity) {
-        this.severity = severity;
-    }
-
     public String getMessage() {
         return message;
     }
 
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
     public String getDetails() {
         return details;
-    }
-
-    public void setDetails(String details) {
-        this.details = details;
     }
 }

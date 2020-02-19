@@ -21,13 +21,11 @@ import stroom.meta.api.AttributeMapFactory;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.FullMetaInfoResult;
-import stroom.meta.shared.FullMetaInfoResult.Entry;
-import stroom.meta.shared.FullMetaInfoResult.Section;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaInfoSection;
+import stroom.meta.shared.MetaInfoSection.Entry;
 import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaRowResultPage;
 import stroom.meta.shared.UpdateStatusRequest;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
@@ -35,7 +33,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -70,37 +68,37 @@ class MetaResourceImpl implements MetaResource, RestResource, HasHealthCheck {
     }
 
     @Override
-    public MetaRowResultPage findMetaRow(final FindMetaCriteria criteria) {
-        final ResultList<MetaRow> list = metaService.findRows(criteria);
-        list.forEach(metaRow -> ruleDecorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
+    public ResultPage<MetaRow> findMetaRow(final FindMetaCriteria criteria) {
+        final ResultPage<MetaRow> list = metaService.findRows(criteria);
+        list.getValues().forEach(metaRow -> ruleDecorator.addMatchingRetentionRuleInfo(metaRow.getMeta(), metaRow.getAttributes()));
 
-        return list.toResultPage(new MetaRowResultPage());
+        return list;
     }
 
     @Override
-    public FullMetaInfoResult fetchFullMetaInfo(final long id) {
+    public List<MetaInfoSection> fetchFullMetaInfo(final long id) {
         final Meta meta = metaService.getMeta(id, true);
-        final List<Section> sections = new ArrayList<>();
+        final List<MetaInfoSection> sections = new ArrayList<>();
 
         final Map<String, String> attributeMap = attributeMapFactory.map(amf -> amf.getAttributes(meta)).orElse(null);
         if (attributeMap == null) {
             final List<Entry> entries = new ArrayList<>(1);
             entries.add(new Entry("Deleted Stream Id", String.valueOf(meta.getId())));
-            sections.add(new Section("Stream", entries));
+            sections.add(new MetaInfoSection("Stream", entries));
 
         } else {
-            sections.add(new Section("Stream", getStreamEntries(meta)));
+            sections.add(new MetaInfoSection("Stream", getStreamEntries(meta)));
 
             final List<Entry> entries = new ArrayList<>();
             final List<String> sortedKeys = attributeMap.keySet().stream().sorted(Comparator.naturalOrder()).collect(Collectors.toList());
             sortedKeys.forEach(key -> entries.add(new Entry(key, attributeMap.get(key))));
-            sections.add(new Section("Attributes", entries));
+            sections.add(new MetaInfoSection("Attributes", entries));
 
             // Add additional data retention information.
-            sections.add(new Section("Retention", getDataRententionEntries(meta, attributeMap)));
+            sections.add(new MetaInfoSection("Retention", getDataRententionEntries(meta, attributeMap)));
         }
 
-        return new FullMetaInfoResult(sections);
+        return sections;
     }
 
     private List<Entry> getStreamEntries(final Meta meta) {

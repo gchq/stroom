@@ -10,7 +10,7 @@ import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
@@ -154,7 +154,7 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public ResultList<Meta> find(final FindMetaCriteria criteria) {
+    public ResultPage<Meta> find(final FindMetaCriteria criteria) {
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaFields.getAllFieldMap());
         final List<Meta> list = new ArrayList<>();
         for (final Entry<Long, Meta> entry : metaMap.entrySet()) {
@@ -170,7 +170,7 @@ public class MockMetaService implements MetaService, Clearable {
             }
         }
 
-        return ResultList.createUnboundedList(list);
+        return ResultPage.createUnboundedList(list);
     }
 
     /**
@@ -229,7 +229,7 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public ResultList<MetaRow> findRows(final FindMetaCriteria criteria) {
+    public ResultPage<MetaRow> findRows(final FindMetaCriteria criteria) {
         return null;
     }
 

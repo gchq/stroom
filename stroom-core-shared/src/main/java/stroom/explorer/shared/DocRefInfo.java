@@ -1,26 +1,35 @@
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 
 @JsonPropertyOrder({"otherInfo", "createTime", "updateTime", "createUser", "updateUser"})
+@JsonInclude(Include.NON_DEFAULT)
 public class DocRefInfo {
-    private DocRef docRef;
-    private String otherInfo;
-    private Long createTime;
-    private Long updateTime;
-    private String createUser;
-    private String updateUser;
+    @JsonProperty
+    private final DocRef docRef;
+    @JsonProperty
+    private final String otherInfo;
+    @JsonProperty
+    private final Long createTime;
+    @JsonProperty
+    private final Long updateTime;
+    @JsonProperty
+    private final String createUser;
+    @JsonProperty
+    private final String updateUser;
 
-    public DocRefInfo() {
-    }
-
-    public DocRefInfo(final DocRef docRef,
-                      final String otherInfo,
-                      final Long createTime,
-                      final String createUser,
-                      final Long updateTime,
-                      final String updateUser) {
+    @JsonCreator
+    public DocRefInfo(@JsonProperty("docRef") final DocRef docRef,
+                      @JsonProperty("otherInfo") final String otherInfo,
+                      @JsonProperty("createTime") final Long createTime,
+                      @JsonProperty("createUser") final String createUser,
+                      @JsonProperty("updateTime") final Long updateTime,
+                      @JsonProperty("updateUser") final String updateUser) {
         this.docRef = docRef;
         this.otherInfo = otherInfo;
         this.createTime = createTime;
@@ -33,48 +42,24 @@ public class DocRefInfo {
         return docRef;
     }
 
-    public void setDocRef(final DocRef docRef) {
-        this.docRef = docRef;
-    }
-
     public String getOtherInfo() {
         return otherInfo;
-    }
-
-    public void setOtherInfo(final String otherInfo) {
-        this.otherInfo = otherInfo;
     }
 
     public Long getCreateTime() {
         return createTime;
     }
 
-    public void setCreateTime(Long createTime) {
-        this.createTime = createTime;
-    }
-
     public Long getUpdateTime() {
         return updateTime;
-    }
-
-    public void setUpdateTime(Long updateTime) {
-        this.updateTime = updateTime;
     }
 
     public String getCreateUser() {
         return createUser;
     }
 
-    public void setCreateUser(String createUser) {
-        this.createUser = createUser;
-    }
-
     public String getUpdateUser() {
         return updateUser;
-    }
-
-    public void setUpdateUser(String updateUser) {
-        this.updateUser = updateUser;
     }
 
     public static class Builder {

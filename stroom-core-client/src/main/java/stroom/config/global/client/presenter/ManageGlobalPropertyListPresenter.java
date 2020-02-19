@@ -23,7 +23,6 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.config.global.shared.ConfigProperty;
-import stroom.config.global.shared.ConfigPropertyResultPage;
 import stroom.config.global.shared.FindGlobalConfigCriteria;
 import stroom.config.global.shared.GlobalConfigResource;
 import stroom.data.client.presenter.RestDataProvider;
@@ -34,6 +33,7 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPreset;
+import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 
 import java.util.function.Consumer;
@@ -41,7 +41,7 @@ import java.util.function.Consumer;
 public class ManageGlobalPropertyListPresenter
         extends MyPresenterWidget<DataGridView<ConfigProperty>> implements Refreshable {
     private static final GlobalConfigResource CONFIG_RESOURCE = GWT.create(GlobalConfigResource.class);
-    private final RestDataProvider<ConfigProperty, ConfigPropertyResultPage> dataProvider;
+    private final RestDataProvider<ConfigProperty, ResultPage<ConfigProperty>> dataProvider;
     private final FindGlobalConfigCriteria criteria = new FindGlobalConfigCriteria();
 
     @Inject
@@ -89,10 +89,10 @@ public class ManageGlobalPropertyListPresenter
         }, "Description", 400);
         getView().addEndColumn(new EndColumn<>());
 
-        this.dataProvider = new RestDataProvider<ConfigProperty, ConfigPropertyResultPage>(eventBus) {
+        this.dataProvider = new RestDataProvider<ConfigProperty, ResultPage<ConfigProperty>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ConfigPropertyResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<ConfigPropertyResultPage> rest = restFactory.create();
+            protected void exec(final Consumer<ResultPage<ConfigProperty>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<ConfigProperty>> rest = restFactory.create();
                 rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(CONFIG_RESOURCE).find(criteria);
             }
         };

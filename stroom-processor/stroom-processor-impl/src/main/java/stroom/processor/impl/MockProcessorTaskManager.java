@@ -27,7 +27,6 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 import stroom.task.api.TaskContext;
-import stroom.util.shared.ResultList;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
@@ -59,8 +58,8 @@ public class MockProcessorTaskManager implements ProcessorTaskManager, Clearable
     public List<ProcessorTask> assignTasks(final String nodeName, final int count) {
         List<ProcessorTask> taskList = Collections.emptyList();
         final ExpressionCriteria criteria = new ExpressionCriteria();
-        final ResultList<ProcessorFilter> processorFilters = processorFilterService
-                .find(criteria);
+        final List<ProcessorFilter> processorFilters = processorFilterService
+                .find(criteria).getValues();
         if (processorFilters != null && processorFilters.size() > 0) {
             // Sort by priority.
             processorFilters.sort((o1, o2) -> o2.getPriority() - o1.getPriority());
@@ -72,7 +71,7 @@ public class MockProcessorTaskManager implements ProcessorTaskManager, Clearable
 
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
                 findMetaCriteria.setExpression(queryData.getExpression());
-                final ResultList<Meta> streams = metaService.find(findMetaCriteria);
+                final List<Meta> streams = metaService.find(findMetaCriteria).getValues();
 
                 streams.sort(Comparator.comparing(Meta::getId));
 

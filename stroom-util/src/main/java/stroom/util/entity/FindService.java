@@ -19,10 +19,10 @@ package stroom.util.entity;
 
 
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 
 public interface FindService<E, C extends BaseCriteria> {
-    ResultList<E> find(C criteria);
+    ResultPage<E> find(C criteria);
 
     C createCriteria();
 }

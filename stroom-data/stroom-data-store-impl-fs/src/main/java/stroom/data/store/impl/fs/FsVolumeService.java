@@ -21,7 +21,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Flushable;
 import stroom.util.shared.Sort.Direction;
@@ -171,15 +171,15 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
         return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION, () -> fsVolumeDao.fetch(id));
     }
 
-    public ResultList<FsVolume> find(final FindFsVolumeCriteria criteria) {
+    public ResultPage<FsVolume> find(final FindFsVolumeCriteria criteria) {
         return securityContext.insecureResult(() -> {
             ensureDefaultVolumes();
             return doFind(criteria);
         });
     }
 
-    private ResultList<FsVolume> doFind(final FindFsVolumeCriteria criteria) {
-        return ResultList.createCriterialBasedList(fsVolumeDao.find(criteria), criteria);
+    private ResultPage<FsVolume> doFind(final FindFsVolumeCriteria criteria) {
+        return ResultPage.createCriterialBasedList(fsVolumeDao.find(criteria), criteria);
     }
 
     FsVolume getVolume() {
@@ -298,7 +298,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
 
         final FindFsVolumeCriteria findVolumeCriteria = new FindFsVolumeCriteria();
         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
-        final List<FsVolume> volumeList = find(findVolumeCriteria);
+        final List<FsVolume> volumeList = find(findVolumeCriteria).getValues();
         for (final FsVolume volume : volumeList) {
             FsVolumeState volumeState = updateVolumeState(volume);
             volumeState = saveVolumeState(volumeState);
@@ -414,7 +414,7 @@ public class FsVolumeService implements EntityEvent.Handler, Clearable, Flushabl
                     if (isEnabled) {
                         final FindFsVolumeCriteria findVolumeCriteria = new FindFsVolumeCriteria();
                         findVolumeCriteria.addSort(FindFsVolumeCriteria.FIELD_ID, Direction.ASCENDING, false);
-                        final List<FsVolume> existingVolumes = doFind(findVolumeCriteria);
+                        final List<FsVolume> existingVolumes = doFind(findVolumeCriteria).getValues();
                         if (existingVolumes.size() == 0) {
                             final Optional<Path> optDefaultVolumePath = getDefaultVolumesPath();
                             if (optDefaultVolumePath.isPresent()) {

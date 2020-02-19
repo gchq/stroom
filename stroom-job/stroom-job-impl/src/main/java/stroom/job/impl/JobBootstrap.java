@@ -28,7 +28,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -239,7 +239,7 @@ class JobBootstrap {
         // See if the job exists in the database.
         final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
         criteria.getNodeName().setString(nodeName);
-        return jobNodeDao.find(criteria);
+        return jobNodeDao.find(criteria).getValues();
 
     }
 
@@ -251,7 +251,7 @@ class JobBootstrap {
         criteria.getName().setString(job.getName());
 
         // Add the job to the DB if it isn't there already.
-        final ResultList<Job> existingJob = jobDao.find(criteria);
+        final ResultPage<Job> existingJob = jobDao.find(criteria);
         if (existingJob != null && existingJob.size() > 0) {
             result = existingJob.getFirst();
 

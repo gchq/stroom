@@ -7,7 +7,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
 import java.util.Set;
@@ -127,7 +127,7 @@ public interface MetaService {
      * @param criteria The criteria to find matching meta data records with.
      * @return A list of matching meta data records.
      */
-    ResultList<Meta> find(FindMetaCriteria criteria);
+    ResultPage<Meta> find(FindMetaCriteria criteria);
 
     /**
      * Find meta data records and attributes that match the specified criteria.
@@ -135,7 +135,7 @@ public interface MetaService {
      * @param criteria The criteria to find matching meta data records with.
      * @return A list of matching meta data records that includes attributes.
      */
-    ResultList<MetaRow> findRows(FindMetaCriteria criteria);
+    ResultPage<MetaRow> findRows(FindMetaCriteria criteria);
 
     /**
      * Find meta data records and attributes that are related to the supplied record id.

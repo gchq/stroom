@@ -23,12 +23,11 @@ import event.logging.Query.Advanced;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.StoredQueryResource;
-import stroom.dashboard.shared.StoredQueryResultPage;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.ResultList;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 
@@ -39,16 +38,16 @@ class StoredQueryResourceImpl implements StoredQueryResource, RestResource, HasH
 
     @Inject
     StoredQueryResourceImpl(final StoredQueryServiceImpl storedQueryService,
-                                    final DocumentEventLog documentEventLog,
-                                    final SecurityContext securityContext) {
+                            final DocumentEventLog documentEventLog,
+                            final SecurityContext securityContext) {
         this.storedQueryService = storedQueryService;
         this.documentEventLog = documentEventLog;
         this.securityContext = securityContext;
     }
 
     @Override
-    public StoredQueryResultPage find(final FindStoredQueryCriteria criteria) {
-        ResultList<StoredQuery> result;
+    public ResultPage<StoredQuery> find(final FindStoredQueryCriteria criteria) {
+        ResultPage<StoredQuery> result;
 
         final Query query = new Query();
         final Advanced advanced = new Advanced();
@@ -64,7 +63,7 @@ class StoredQueryResourceImpl implements StoredQueryResource, RestResource, HasH
             throw e;
         }
 
-        return result.toResultPage(new StoredQueryResultPage());
+        return result;
     }
 
     @Override
