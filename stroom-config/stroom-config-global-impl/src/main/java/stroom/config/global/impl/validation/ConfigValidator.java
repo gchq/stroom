@@ -1,7 +1,7 @@
 package stroom.config.global.impl.validation;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidationSeverity;
@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 
 public class ConfigValidator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ConfigValidator.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConfigValidator.class);
 
     private final Validator validator;
 
@@ -90,10 +90,12 @@ public class ConfigValidator {
                 int warningCount = 0;
 
                 for (final ConstraintViolation<? extends AbstractConfig> constraintViolation : constraintViolations) {
-                    LOGGER.debug("constraintViolation - prop: {}, value: [{}], object: {}",
+                    LOGGER.debug(() -> LogUtil.message("constraintViolation - prop: {}, value: [{}], object: {}",
                             constraintViolation.getPropertyPath().toString(),
                             constraintViolation.getInvalidValue(),
-                            constraintViolation.getLeafBean().getClass().getCanonicalName());
+                            constraintViolation.getLeafBean() != null
+                                ? constraintViolation.getLeafBean().getClass().getCanonicalName()
+                                : "NULL"));
 
                     final ValidationSeverity severity = ValidationSeverity.fromPayloads(
                             constraintViolation.getConstraintDescriptor().getPayload());
