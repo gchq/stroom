@@ -556,7 +556,7 @@ public class ConfigMapper {
             } else if (type.equals(Double.class) || type.equals(double.class)) {
                 return Double.valueOf(value);
             } else if (type.equals(Boolean.class) || type.equals(boolean.class)) {
-                return Boolean.valueOf(value);
+                return parseBoolean(value);
             } else if ((type.equals(Character.class) || type.equals(char.class)) && value.length() > 0) {
                 return value.charAt(0);
             } else if (type.equals(Duration.class)) {
@@ -612,6 +612,16 @@ public class ConfigMapper {
         return getDataType(genericsParamTypes.get(index));
     }
 
+    private static Boolean parseBoolean(final String str) {
+       if (str.equalsIgnoreCase("true")) {
+           return Boolean.TRUE;
+       } else if (str.equalsIgnoreCase("false")) {
+           return Boolean.FALSE;
+       } else {
+           throw new ConfigPropertyValidationException(
+               LogUtil.message("Cannot convert [{}] into a boolean. Valid values are [true|false] ignoring case.", str));
+       }
+    }
 
 
     private static String listToString(final List<?> list,
