@@ -31,8 +31,10 @@ public abstract class MonitoringPlugin<P extends MyPresenterWidget<?>> extends C
     private final ClientSecurityContext securityContext;
 
     @Inject
-    public MonitoringPlugin(final EventBus eventBus, final ContentManager eventManager,
-                            final Provider<P> presenterProvider, final ClientSecurityContext securityContext) {
+    public MonitoringPlugin(final EventBus eventBus,
+                            final ContentManager eventManager,
+                            final Provider<P> presenterProvider,
+                            final ClientSecurityContext securityContext) {
         super(eventBus, eventManager, presenterProvider);
         this.securityContext = securityContext;
     }

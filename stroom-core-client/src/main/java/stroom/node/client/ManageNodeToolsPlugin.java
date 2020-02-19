@@ -33,9 +33,6 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UiConfig;
 import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class ManageNodeToolsPlugin extends NodeToolsPlugin {
     private final Provider<ManageGlobalPropertyPresenter> manageGlobalPropertyPresenter;
@@ -60,14 +57,6 @@ public class ManageNodeToolsPlugin extends NodeToolsPlugin {
                     addIndexVolumesMenuItem(event, uiConfig);
                 })
                 .onFailure(caught -> AlertEvent.fireError(ManageNodeToolsPlugin.this, caught.getMessage(), null));
-        }
-        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_PROPERTIES_PERMISSION)) {
-            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(90, SvgPresets.PROPERTIES, SvgPresets.PROPERTIES, "Properties", null, true, () -> {
-                        final PopupSize popupSize = new PopupSize(1000, 600, true);
-                        ShowPopupEvent.fire(ManageNodeToolsPlugin.this, manageGlobalPropertyPresenter.get(),
-                                PopupType.CLOSE_DIALOG, null, popupSize, "System Properties", null, null);
-                    }));
         }
     }
 

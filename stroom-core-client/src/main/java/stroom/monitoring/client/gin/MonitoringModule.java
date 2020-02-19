@@ -16,6 +16,8 @@
 
 package stroom.monitoring.client.gin;
 
+import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
+import stroom.config.global.client.view.GlobalPropertyTabViewImpl;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter;
 import stroom.config.global.client.presenter.ManageGlobalPropertyListPresenter;
 import stroom.config.global.client.presenter.ManageGlobalPropertyPresenter;
@@ -28,6 +30,7 @@ import stroom.job.client.view.JobViewImpl;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
+import stroom.node.client.ManageGlobalPropertiesPlugin;
 import stroom.task.client.TaskManagerPlugin;
 import stroom.job.client.presenter.SchedulePresenter;
 import stroom.job.client.presenter.SchedulePresenter.ScheduleView;
@@ -51,25 +54,51 @@ public class MonitoringModule extends PluginModule {
 
         // Job management.
         bindPlugin(JobListPlugin.class);
-        bindPresenterWidget(SchedulePresenter.class, ScheduleView.class, ScheduleViewImpl.class);
+        bindPresenterWidget(
+            SchedulePresenter.class,
+            ScheduleView.class,
+            ScheduleViewImpl.class);
 
         // Node management.
         bindPlugin(NodeMonitoringPlugin.class);
 
         bindPlugin(ManageNodeToolsPlugin.class);
+        bindPlugin(ManageGlobalPropertiesPlugin.class);
 
         bindSharedView(WrapperView.class, WrapperViewImpl.class);
 
-        bindPresenterWidget(NodeEditPresenter.class, NodeEditPresenter.NodeEditView.class, NodeEditViewImpl.class);
+        bindPresenterWidget(
+            NodeEditPresenter.class,
+            NodeEditPresenter.NodeEditView.class,
+            NodeEditViewImpl.class);
 
-        bindPresenterWidget(JobPresenter.class, JobView.class, JobViewImpl.class);
+        bindPresenterWidget(
+            JobPresenter.class,
+            JobView.class,
+            JobViewImpl.class);
 
         // Global properties.
         bind(ManageGlobalPropertyListPresenter.class);
-        bindPresenterWidget(ManageGlobalPropertyPresenter.class, ManageGlobalPropertyPresenter.ManageGlobalPropertyView.class, ManageGlobalPropertyViewImpl.class);
-        bindPresenterWidget(ManageGlobalPropertyEditPresenter.class, ManageGlobalPropertyEditPresenter.GlobalPropertyEditView.class, GlobalPropertyEditViewImpl.class);
+
+        bindPresenterWidget(
+            GlobalPropertyTabPresenter.class,
+            GlobalPropertyTabPresenter.GlobalPropertyTabView.class,
+            GlobalPropertyTabViewImpl.class);
+
+        bindPresenterWidget(
+            ManageGlobalPropertyPresenter.class,
+            ManageGlobalPropertyPresenter.ManageGlobalPropertyView.class,
+            ManageGlobalPropertyViewImpl.class);
+
+        bindPresenterWidget(
+            ManageGlobalPropertyEditPresenter.class,
+            ManageGlobalPropertyEditPresenter.GlobalPropertyEditView.class,
+            GlobalPropertyEditViewImpl.class);
 
         bindPlugin(TaskManagerPlugin.class);
-        bindPresenterWidget(TaskManagerPresenter.class, TaskManagerView.class, TaskManagerViewImpl.class);
+        bindPresenterWidget(
+            TaskManagerPresenter.class,
+            TaskManagerView.class,
+            TaskManagerViewImpl.class);
     }
 }

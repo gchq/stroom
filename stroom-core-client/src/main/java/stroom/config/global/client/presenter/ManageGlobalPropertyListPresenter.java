@@ -34,7 +34,9 @@ import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonView;
 
 public class ManageGlobalPropertyListPresenter
-        extends MyPresenterWidget<DataGridView<ConfigProperty>> implements Refreshable {
+    extends MyPresenterWidget<DataGridView<ConfigProperty>>
+    implements Refreshable {
+
     private final FindActionDataProvider<FindGlobalConfigCriteria, ConfigProperty> dataProvider;
 
     @Inject
@@ -50,7 +52,7 @@ public class ManageGlobalPropertyListPresenter
                 }
                 return row.getName().toString();
             }
-        }, "Name", 350);
+        }, "Name", 450);
         getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
             @Override
             public String getValue(final ConfigProperty row) {
@@ -59,7 +61,7 @@ public class ManageGlobalPropertyListPresenter
                 }
                 return row.getEffectiveValueMasked().orElse(null);
             }
-        }, "Effective Value", 150);
+        }, "Effective Value", 300);
 
         getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
             @Override
@@ -79,7 +81,7 @@ public class ManageGlobalPropertyListPresenter
                 }
                 return row.getDescription();
             }
-        }, "Description", 400);
+        }, "Description", 750);
         getView().addEndColumn(new EndColumn<>());
 
 
