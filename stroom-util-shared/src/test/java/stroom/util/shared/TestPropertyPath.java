@@ -5,8 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
@@ -14,7 +12,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPropertyPath {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(TestPropertyPath.class);
 
     @Test
     void getPropertyPath() {
@@ -94,7 +91,7 @@ class TestPropertyPath {
                 .isTrue();
 
         String json = mapper.writeValueAsString(entity);
-        LOGGER.info("\n" + json);
+        System.out.println("\n" + json);
 
         final T entity2 = (T) mapper.readValue(json, clazz);
 
