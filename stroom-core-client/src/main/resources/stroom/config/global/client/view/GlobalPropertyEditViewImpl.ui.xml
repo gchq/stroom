@@ -59,7 +59,7 @@
             <g:customCell>
                 <g:FlowPanel>
                     <g:Label ui:text="Node YAML Value:"/>
-                    <b:ButtonPanel ui:field="buttonPanel"/>
+                    <b:ButtonPanel ui:field="yamlValueButtonPanel"/>
                 </g:FlowPanel>
             </g:customCell>
             <g:customCell>
@@ -67,7 +67,12 @@
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>Effective Value:</g:cell>
+            <g:customCell>
+                <g:FlowPanel>
+                    <g:Label ui:text="Effective Value:"/>
+                    <b:ButtonPanel ui:field="effectiveValueButtonPanel"/>
+                </g:FlowPanel>
+            </g:customCell>
             <g:customCell>
                 <g:TextArea ui:field="effectiveValue" width="100%" addStyleNames="globalProperties {style.textAreaReducedHeight}"/>
             </g:customCell>

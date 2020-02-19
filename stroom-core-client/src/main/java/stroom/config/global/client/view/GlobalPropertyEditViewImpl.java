@@ -68,7 +68,9 @@ public final class GlobalPropertyEditViewImpl
     @UiField
     TickBox readOnly;
     @UiField
-    ButtonPanel buttonPanel;
+    ButtonPanel yamlValueButtonPanel;
+    @UiField
+    ButtonPanel effectiveValueButtonPanel;
 
     private boolean password;
 //    private static volatile Resources RESOURCES;
@@ -203,8 +205,13 @@ public final class GlobalPropertyEditViewImpl
     }
 
     @Override
-    public ButtonView addButton(final SvgPreset preset) {
-        return buttonPanel.add(preset);
+    public ButtonView addYamlValueWarningIcon(final SvgPreset preset) {
+        return yamlValueButtonPanel.add(preset);
+    }
+
+    @Override
+    public ButtonView addEffectiveValueWarningIcon(final SvgPreset preset) {
+        return effectiveValueButtonPanel.add(preset);
     }
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {

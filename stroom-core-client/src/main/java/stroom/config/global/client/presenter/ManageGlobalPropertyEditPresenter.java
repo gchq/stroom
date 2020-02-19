@@ -66,7 +66,8 @@ public final class ManageGlobalPropertyEditPresenter
     private ConfigProperty configProperty;
     private Map<String, OverrideValue<String>> clusterYamlOverrides = new HashMap<>();
     private Map<String, Set<String>> effectiveValueToNodesMap = new HashMap<>();
-    private final ButtonView warningsButton;
+    private final ButtonView yamlValueWarningsButton;
+    private final ButtonView effectiveValueWarningsButton;
 
     @Inject
     public ManageGlobalPropertyEditPresenter(final EventBus eventBus,
@@ -78,14 +79,25 @@ public final class ManageGlobalPropertyEditPresenter
         this.restFactory = restFactory;
         this.securityContext = securityContext;
         this.clientPropertyCache = clientPropertyCache;
-        this.warningsButton = view.addButton(SvgPresets.ALERT.title("Node values differ"));
-        this.warningsButton.setVisible(false);
+
+        this.yamlValueWarningsButton = view.addYamlValueWarningIcon(SvgPresets.ALERT.title("Node values differ"));
+        this.yamlValueWarningsButton.setVisible(false);
+
+        this.effectiveValueWarningsButton = view.addEffectiveValueWarningIcon(SvgPresets.ALERT.title("Node values differ"));
+        this.effectiveValueWarningsButton.setVisible(false);
+
         view.setUiHandlers(this);
     }
 
     @Override
     protected void onBind() {
-        registerHandler(warningsButton.addClickHandler(event -> {
+        registerHandler(yamlValueWarningsButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                // TODO Open popup showing all values
+            }
+        }));
+
+        registerHandler(effectiveValueWarningsButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 // TODO Open popup showing all values
             }
@@ -113,8 +125,12 @@ public final class ManageGlobalPropertyEditPresenter
     private void updateWarningState() {
         final long uniqueYamlOverrideValues = getUniqueYamlOverrideValues();
         // TODO here just for testing
-        warningsButton.setVisible(true);
-        warningsButton.setTitle("Unique value(s): " + uniqueYamlOverrideValues);
+        yamlValueWarningsButton.setVisible(true);
+        yamlValueWarningsButton.setTitle("Unique value(s): " + uniqueYamlOverrideValues);
+
+        effectiveValueWarningsButton.setVisible(true);
+        effectiveValueWarningsButton.setTitle("Unique value(s): " + uniqueYamlOverrideValues);
+
 //        warningsButton.setVisible(uniqueYamlOverrideValues > 1);
     }
 
@@ -375,7 +391,9 @@ public final class ManageGlobalPropertyEditPresenter
 
         void setEditable(boolean edit);
 
-        ButtonView addButton(SvgPreset preset);
+        ButtonView addYamlValueWarningIcon(SvgPreset preset);
+
+        ButtonView addEffectiveValueWarningIcon(SvgPreset preset);
     }
 
 }
