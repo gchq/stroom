@@ -34,27 +34,28 @@ import stroom.util.HasHealthCheck;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ResultList;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 class MetaResourceImpl implements MetaResource, RestResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaResourceImpl.class);
 
     private final MetaService metaService;
-    private final AttributeMapFactory attributeMapFactory;
+    private final Optional<AttributeMapFactory> attributeMapFactory;
     private final StreamAttributeMapRetentionRuleDecorator ruleDecorator;
     private final SecurityContext securityContext;
 
     @Inject
     MetaResourceImpl(final MetaService metaService,
-                     final AttributeMapFactory attributeMapFactory,
+                     final Optional<AttributeMapFactory> attributeMapFactory,
                      final StreamAttributeMapRetentionRuleDecorator ruleDecorator,
                      final SecurityContext securityContext) {
         this.metaService = metaService;
@@ -81,8 +82,7 @@ class MetaResourceImpl implements MetaResource, RestResource, HasHealthCheck {
         final Meta meta = metaService.getMeta(id, true);
         final List<Section> sections = new ArrayList<>();
 
-        final Map<String, String> attributeMap = attributeMapFactory.getAttributes(meta);
-
+        final Map<String, String> attributeMap = attributeMapFactory.map(amf -> amf.getAttributes(meta)).orElse(null);
         if (attributeMap == null) {
             final List<Entry> entries = new ArrayList<>(1);
             entries.add(new Entry("Deleted Stream Id", String.valueOf(meta.getId())));

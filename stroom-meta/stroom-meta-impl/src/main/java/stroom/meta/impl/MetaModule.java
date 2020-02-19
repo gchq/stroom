@@ -3,6 +3,7 @@ package stroom.meta.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.OptionalBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
+import stroom.meta.api.AttributeMapFactory;
 import stroom.meta.api.PhysicalDelete;
 import stroom.meta.shared.Meta;
 import stroom.meta.api.MetaSecurityFilter;
@@ -18,6 +19,7 @@ public class MetaModule extends AbstractModule {
         bind(PhysicalDelete.class).to(PhysicalDeleteImpl.class);
 
         OptionalBinder.newOptionalBinder(binder(), MetaSecurityFilter.class);
+        OptionalBinder.newOptionalBinder(binder(), AttributeMapFactory.class);
 
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
