@@ -16,8 +16,10 @@
 
 package stroom.pipeline.shared.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
@@ -26,21 +28,15 @@ import stroom.pipeline.shared.PipelineDoc;
 @JsonInclude(Include.NON_DEFAULT)
 @JsonPropertyOrder({"pipeline"})
 public class SourcePipeline {
-    private DocRef pipeline;
+    @JsonProperty
+    private final DocRef pipeline;
 
-    public SourcePipeline() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public SourcePipeline(final PipelineDoc pipeline) {
+    @JsonCreator
+    public SourcePipeline(@JsonProperty("pipeline") final PipelineDoc pipeline) {
         this.pipeline = DocRefUtil.create(pipeline);
     }
 
     public DocRef getPipeline() {
         return pipeline;
-    }
-
-    public void setPipeline(final DocRef pipeline) {
-        this.pipeline = pipeline;
     }
 }

@@ -16,12 +16,12 @@
 
 package stroom.statistics.impl.sql.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -41,8 +41,6 @@ import java.util.Set;
 @JsonPropertyOrder({"field", "customRollUpMask"})
 @JsonInclude(Include.NON_DEFAULT)
 public class StatisticsDataSourceData {
-    private static final long serialVersionUID = -9071682094300037627L;
-
     /**
      * Should be a SortedSet but GWT doesn't support that. Contents should be
      * sorted and not contain duplicates
@@ -51,7 +49,7 @@ public class StatisticsDataSourceData {
      */
 
     @XmlTransient
-    @JsonIgnore
+    @JsonProperty
     private List<StatisticField> statisticFields;
 
     /**
@@ -60,13 +58,13 @@ public class StatisticsDataSourceData {
      * XMLTransient to force JAXB to use the setter
      */
     @XmlTransient
-    @JsonIgnore
+    @JsonProperty
     private Set<CustomRollUpMask> customRollUpMasks;
 
     // cache the positions of the
     @XmlTransient
     @JsonIgnore
-    private Map<String, Integer> fieldPositionMap = new HashMap<>();
+    private final Map<String, Integer> fieldPositionMap = new HashMap<>();
 
     public StatisticsDataSourceData() {
         this(new ArrayList<>(), new HashSet<>());
@@ -76,8 +74,9 @@ public class StatisticsDataSourceData {
         this(new ArrayList<>(statisticFields), new HashSet<>());
     }
 
-    public StatisticsDataSourceData(final List<StatisticField> statisticFields,
-                                    final Set<CustomRollUpMask> customRollUpMasks) {
+    @JsonCreator
+    public StatisticsDataSourceData(@JsonProperty("statisticFields") final List<StatisticField> statisticFields,
+                                    @JsonProperty("customRollUpMasks") final Set<CustomRollUpMask> customRollUpMasks) {
         this.statisticFields = statisticFields;
         this.customRollUpMasks = customRollUpMasks;
 
@@ -87,7 +86,6 @@ public class StatisticsDataSourceData {
     }
 
     @XmlElement(name = "field")
-    @JsonProperty("fields")
     public List<StatisticField> getStatisticFields() {
         return statisticFields;
     }
@@ -98,7 +96,6 @@ public class StatisticsDataSourceData {
     }
 
     @XmlElement(name = "customRollUpMask")
-    @JsonProperty("customRollUpMasks")
     public Set<CustomRollUpMask> getCustomRollUpMasks() {
         return customRollUpMasks;
     }
@@ -254,13 +251,5 @@ public class StatisticsDataSourceData {
         }
 
         return new StatisticsDataSourceData(newFieldList, newMaskList);
-    }
-
-    /**
-     * Added to ensure map is not made final which would break GWT
-     * serialisation.
-     */
-    public void setFieldPositionMap(final Map<String, Integer> fieldPositionMap) {
-        this.fieldPositionMap = fieldPositionMap;
     }
 }

@@ -16,8 +16,10 @@
 
 package stroom.pipeline.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.Doc;
@@ -30,9 +32,33 @@ import java.util.Objects;
 public class TextConverterDoc extends Doc implements HasData {
     public static final String DOCUMENT_TYPE = "TextConverter";
 
+    @JsonProperty
     private String description;
+    @JsonProperty
     private String data;
+    @JsonProperty
     private TextConverterType converterType = TextConverterType.NONE;
+
+    public TextConverterDoc() {
+    }
+
+    @JsonCreator
+    public TextConverterDoc(@JsonProperty("type") final String type,
+                            @JsonProperty("uuid") final String uuid,
+                            @JsonProperty("name") final String name,
+                            @JsonProperty("version") final String version,
+                            @JsonProperty("createTime") final Long createTime,
+                            @JsonProperty("updateTime") final Long updateTime,
+                            @JsonProperty("createUser") final String createUser,
+                            @JsonProperty("updateUser") final String updateUser,
+                            @JsonProperty("description") final String description,
+                            @JsonProperty("data") final String data,
+                            @JsonProperty("converterType") final TextConverterType converterType) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.data = data;
+        this.converterType = converterType;
+    }
 
     public String getDescription() {
         return description;

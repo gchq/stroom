@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -50,7 +51,9 @@ public class DateTimeFormatSettings implements FormatSettings {
     public DateTimeFormatSettings() {
     }
 
-    public DateTimeFormatSettings(final String pattern, final TimeZone timeZone) {
+    @JsonCreator
+    public DateTimeFormatSettings(@JsonProperty("pattern") final String pattern,
+                                  @JsonProperty("timeZone") final TimeZone timeZone) {
         this.pattern = pattern;
         this.timeZone = timeZone;
     }

@@ -24,7 +24,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.SearchBusPollRequest;
-import stroom.dashboard.shared.SearchBusPollResult;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
 import stroom.dispatch.client.ApplicationInstanceIdProvider;
@@ -33,8 +32,10 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.event.LogoutEvent;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 @Singleton
 public class SearchBus {
@@ -102,31 +103,22 @@ public class SearchBus {
 
     private void doPoll() {
         polling = true;
-        final Map<DashboardQueryKey, SearchRequest> searchActionMap = new HashMap<>();
+        final Set<SearchRequest> searchRequests = new HashSet<>();
         for (final Entry<DashboardQueryKey, SearchModel> entry : activeSearchMap.entrySet()) {
-            final DashboardQueryKey queryKey = entry.getKey();
-
-
-//            final String json = JsonUtil.encode(queryKey);
-//            final DashboardQueryKey test = JsonUtil.decode(json);
-
-
             final SearchModel searchModel = entry.getValue();
-            final SearchRequest searchAction = searchModel.getCurrentRequest();
-            searchActionMap.put(queryKey, searchAction);
+            final SearchRequest searchRequest = searchModel.getCurrentRequest();
+            searchRequests.add(searchRequest);
         }
 
-        final Rest<SearchBusPollResult> rest = restFactory.create();
+        final Rest<Set<SearchResponse>> rest = restFactory.create();
         rest
                 .onSuccess(result -> {
                     try {
-                        final Map<DashboardQueryKey, SearchResponse> searchResultMap = result.getSearchResultMap();
-                        for (final Entry<DashboardQueryKey, SearchResponse> entry : searchResultMap.entrySet()) {
-                            final DashboardQueryKey queryKey = entry.getKey();
-                            final SearchResponse searchResult = entry.getValue();
+                        for (final SearchResponse searchResponse : result) {
+                            final DashboardQueryKey queryKey = searchResponse.getDashboardQueryKey();
                             final SearchModel searchModel = activeSearchMap.get(queryKey);
                             if (searchModel != null) {
-                                searchModel.update(searchResult);
+                                searchModel.update(searchResponse);
                             }
                         }
 
@@ -146,6 +138,6 @@ public class SearchBus {
                     }
                 })
                 .call(DASHBOARD_RESOURCE)
-                .poll(new SearchBusPollRequest(applicationInstanceIdProvider.get(), searchActionMap));
+                .poll(new SearchBusPollRequest(applicationInstanceIdProvider.get(), searchRequests));
     }
 }

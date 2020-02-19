@@ -695,7 +695,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     dashboard.getUuid(),
                     dashboard.getName(),
                     getComponentConfig().getId());
-            final DashboardQueryKey dashboardQueryKey = DashboardQueryKey.create(
+            final DashboardQueryKey dashboardQueryKey = new DashboardQueryKey(
                     dashboardUUID.getUUID(),
                     dashboard.getUuid(),
                     dashboardUUID.getComponentId());

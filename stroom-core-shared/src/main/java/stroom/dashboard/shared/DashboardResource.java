@@ -30,6 +30,8 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.util.List;
+import java.util.Set;
 
 @Api(value = "dashboard")
 @Path("/dashboard")
@@ -86,8 +88,8 @@ public interface DashboardResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Poll for new search results",
-            response = SearchBusPollResult.class)
-    SearchBusPollResult poll(SearchBusPollRequest request);
+            response = Set.class)
+    Set<SearchResponse> poll(SearchBusPollRequest request);
 
     @GET
     @Path("/fetchTimeZones")
@@ -95,6 +97,6 @@ public interface DashboardResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Fetch time zone data from the server",
-            response = TimeZoneData.class)
-    TimeZoneData fetchTimeZones();
+            response = List.class)
+    List<String> fetchTimeZones();
 }

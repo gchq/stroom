@@ -140,7 +140,7 @@ public class SearchModel {
                 replaceExpressionParameters(builder, expression, currentParameterMap);
                 currentExpression = builder.build();
 
-                currentQueryKey = DashboardQueryKey.create(
+                currentQueryKey = new DashboardQueryKey(
                         dashboardUUID.getUUID(),
                         dashboardUUID.getDashboardUuid(),
                         dashboardUUID.getComponentId());
@@ -354,7 +354,7 @@ public class SearchModel {
             requestMap.put(componentId, componentResultRequest);
         }
 
-        return new SearchRequest(search, requestMap, timeZones.getTimeZone());
+        return new SearchRequest(currentQueryKey, search, requestMap, timeZones.getTimeZone());
     }
 
     /**
@@ -391,7 +391,7 @@ public class SearchModel {
     public void setDashboardUUID(final DashboardUUID dashboardUUID) {
         this.dashboardUUID = dashboardUUID;
         destroy();
-        currentQueryKey = DashboardQueryKey.create(
+        currentQueryKey = new DashboardQueryKey(
                 dashboardUUID.getUUID(),
                 dashboardUUID.getDashboardUuid(),
                 dashboardUUID.getComponentId());

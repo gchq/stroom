@@ -42,6 +42,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGridView<StatisticField>>
@@ -233,7 +234,7 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
 
     public void refresh() {
         if (stroomStatsStoreEntityData == null) {
-            stroomStatsStoreEntityData = new StroomStatsStoreEntityData(new ArrayList<>());
+            stroomStatsStoreEntityData = new StroomStatsStoreEntityData();
         }
 
         getView().setRowData(0, new ArrayList<>(stroomStatsStoreEntityData.getStatisticFields()));

@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -51,6 +52,15 @@ public class VisComponentSettings extends ComponentSettings {
 
     public VisComponentSettings() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public VisComponentSettings(@JsonProperty("tableId") final String tableId,
+                                @JsonProperty("visualisation") final DocRef visualisation,
+                                @JsonProperty("json") final String json) {
+        this.tableId = tableId;
+        this.visualisation = visualisation;
+        this.json = json;
     }
 
     public String getTableId() {

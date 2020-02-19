@@ -16,8 +16,10 @@
 
 package stroom.script.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
@@ -31,9 +33,33 @@ import java.util.Objects;
 public class ScriptDoc extends Doc implements HasData {
     public static final String DOCUMENT_TYPE = "Script";
 
+    @JsonProperty
     private String description;
+    @JsonProperty
     private List<DocRef> dependencies;
+    @JsonProperty
     private String data;
+
+    public ScriptDoc() {
+    }
+
+    @JsonCreator
+    public ScriptDoc(@JsonProperty("type") final String type,
+                     @JsonProperty("uuid") final String uuid,
+                     @JsonProperty("name") final String name,
+                     @JsonProperty("version") final String version,
+                     @JsonProperty("createTime") final Long createTime,
+                     @JsonProperty("updateTime") final Long updateTime,
+                     @JsonProperty("createUser") final String createUser,
+                     @JsonProperty("updateUser") final String updateUser,
+                     @JsonProperty("description") final String description,
+                     @JsonProperty("dependencies") final List<DocRef> dependencies,
+                     @JsonProperty("data") final String data) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.dependencies = dependencies;
+        this.data = data;
+    }
 
     public String getDescription() {
         return description;

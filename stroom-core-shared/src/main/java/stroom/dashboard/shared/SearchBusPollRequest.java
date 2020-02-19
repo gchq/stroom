@@ -16,35 +16,32 @@
 
 package stroom.dashboard.shared;
 
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Set;
+
+@JsonInclude(Include.NON_DEFAULT)
 public class SearchBusPollRequest {
-    private String applicationInstanceId;
-    private Map<DashboardQueryKey, SearchRequest> searchActionMap;
+    @JsonProperty
+    private final String applicationInstanceId;
+    @JsonProperty
+    private final Set<SearchRequest> searchRequests;
 
-    public SearchBusPollRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public SearchBusPollRequest(final String applicationInstanceId,
-                                final Map<DashboardQueryKey, SearchRequest> searchActionMap) {
+    @JsonCreator
+    public SearchBusPollRequest(@JsonProperty("applicationInstanceId") final String applicationInstanceId,
+                                @JsonProperty("searchRequests") final Set<SearchRequest> searchRequests) {
         this.applicationInstanceId = applicationInstanceId;
-        this.searchActionMap = searchActionMap;
+        this.searchRequests = searchRequests;
     }
 
     public String getApplicationInstanceId() {
         return applicationInstanceId;
     }
 
-    public void setApplicationInstanceId(final String applicationInstanceId) {
-        this.applicationInstanceId = applicationInstanceId;
-    }
-
-    public Map<DashboardQueryKey, SearchRequest> getSearchActionMap() {
-        return searchActionMap;
-    }
-
-    public void setSearchActionMap(final Map<DashboardQueryKey, SearchRequest> searchActionMap) {
-        this.searchActionMap = searchActionMap;
+    public Set<SearchRequest> getSearchRequests() {
+        return searchRequests;
     }
 }

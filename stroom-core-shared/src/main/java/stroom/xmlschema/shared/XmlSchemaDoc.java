@@ -16,8 +16,10 @@
 
 package stroom.xmlschema.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 import stroom.util.shared.HasData;
@@ -27,16 +29,47 @@ import java.util.Objects;
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "namespaceURI", "data", "systemId", "deprecated", "schemaGroup"})
 @JsonInclude(Include.NON_DEFAULT)
 public class XmlSchemaDoc extends Doc implements HasData {
-    private static final long serialVersionUID = 4519634323788508083L;
-
     public static final String DOCUMENT_TYPE = "XMLSchema";
 
+    @JsonProperty
     private String description;
+    @JsonProperty
     private String namespaceURI;
+    @JsonProperty
     private String systemId;
+    @JsonProperty
     private String data;
+    @JsonProperty
     private boolean deprecated;
+    @JsonProperty
     private String schemaGroup;
+
+    public XmlSchemaDoc() {
+    }
+
+    @JsonCreator
+    public XmlSchemaDoc(@JsonProperty("type") final String type,
+                        @JsonProperty("uuid") final String uuid,
+                        @JsonProperty("name") final String name,
+                        @JsonProperty("version") final String version,
+                        @JsonProperty("createTime") final Long createTime,
+                        @JsonProperty("updateTime") final Long updateTime,
+                        @JsonProperty("createUser") final String createUser,
+                        @JsonProperty("updateUser") final String updateUser,
+                        @JsonProperty("description") final String description,
+                        @JsonProperty("namespaceURI") final String namespaceURI,
+                        @JsonProperty("systemId") final String systemId,
+                        @JsonProperty("data") final String data,
+                        @JsonProperty("deprecated") final boolean deprecated,
+                        @JsonProperty("schemaGroup") final String schemaGroup) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.namespaceURI = namespaceURI;
+        this.systemId = systemId;
+        this.data = data;
+        this.deprecated = deprecated;
+        this.schemaGroup = schemaGroup;
+    }
 
     public String getDescription() {
         return description;

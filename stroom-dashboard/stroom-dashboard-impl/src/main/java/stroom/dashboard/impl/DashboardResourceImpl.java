@@ -40,12 +40,10 @@ import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchBusPollRequest;
-import stroom.dashboard.shared.SearchBusPollResult;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.dashboard.shared.SearchResponse;
 import stroom.dashboard.shared.StoredQuery;
 import stroom.dashboard.shared.TableResultRequest;
-import stroom.dashboard.shared.TimeZoneData;
 import stroom.dashboard.shared.ValidateExpressionResult;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
@@ -74,13 +72,15 @@ import java.nio.file.Path;
 import java.text.ParseException;
 import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 class DashboardResourceImpl implements DashboardResource, RestResource, HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardResourceImpl.class);
@@ -201,8 +201,8 @@ class DashboardResourceImpl implements DashboardResource, RestResource, HasHealt
         return securityContext.secureResult(PermissionNames.DOWNLOAD_SEARCH_RESULTS_PERMISSION, () -> {
             ResourceKey resourceKey;
 
-            final DashboardQueryKey queryKey = request.getQueryKey();
             final stroom.dashboard.shared.SearchRequest searchRequest = request.getSearchRequest();
+            final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
             final Search search = searchRequest.getSearch();
 
             try {
@@ -211,7 +211,7 @@ class DashboardResourceImpl implements DashboardResource, RestResource, HasHealt
                 // Make sure we have active queries for all current UI queries.
                 // Note: This also ensures that the active query cache is kept alive
                 // for all open UI components.
-                final ActiveQuery activeQuery = activeQueries.getExistingQuery(request.getQueryKey());
+                final ActiveQuery activeQuery = activeQueries.getExistingQuery(queryKey);
                 if (activeQuery == null) {
                     throw new EntityServiceException("The requested search data is not available");
                 }
@@ -254,7 +254,7 @@ class DashboardResourceImpl implements DashboardResource, RestResource, HasHealt
                 final stroom.query.api.v2.TableResult tableResult = (stroom.query.api.v2.TableResult) result;
 
                 // Import file.
-                String fileName = request.getQueryKey().toString();
+                String fileName = queryKey.toString();
                 fileName = NON_BASIC_CHARS.matcher(fileName).replaceAll("");
                 fileName = MULTIPLE_SPACE.matcher(fileName).replaceAll(" ");
                 fileName = fileName + "." + request.getFileType().getExtension();
@@ -315,7 +315,7 @@ class DashboardResourceImpl implements DashboardResource, RestResource, HasHealt
     }
 
     @Override
-    public SearchBusPollResult poll(final SearchBusPollRequest request) {
+    public Set<SearchResponse> poll(final SearchBusPollRequest request) {
         return securityContext.secureResult(() -> {
             // Elevate the users permissions for the duration of this task so they can read the index if they have 'use' permission.
             return securityContext.useAsReadResult(() -> {
@@ -324,15 +324,15 @@ class DashboardResourceImpl implements DashboardResource, RestResource, HasHealt
                             "Only the following search queries should be active for session '");
                     sb.append(activeQueriesManager.createKey(securityContext.getUserIdentity(), request.getApplicationInstanceId()));
                     sb.append("'\n");
-                    for (final DashboardQueryKey queryKey : request.getSearchActionMap().keySet()) {
+                    for (final SearchRequest searchRequest : request.getSearchRequests()) {
                         sb.append("\t");
-                        sb.append(queryKey.toString());
+                        sb.append(searchRequest.getDashboardQueryKey().toString());
                     }
                     LOGGER.debug(sb.toString());
                 }
 
                 final ActiveQueries activeQueries = activeQueriesManager.get(securityContext.getUserIdentity(), request.getApplicationInstanceId());
-                final Map<DashboardQueryKey, SearchResponse> searchResultMap = new HashMap<>();
+                final Set<SearchResponse> searchResults = new HashSet<>();
 
 //            // Fix query keys so they have session and user info.
 //            for (final Entry<DashboardQueryKey, SearchRequest> entry : request.getSearchActionMap().entrySet()) {
@@ -342,23 +342,22 @@ class DashboardResourceImpl implements DashboardResource, RestResource, HasHealt
 //            }
 
                 // Kill off any queries that are no longer required by the UI.
-                activeQueries.destroyUnusedQueries(request.getSearchActionMap().keySet());
+                final Set<DashboardQueryKey> keys = request.getSearchRequests().stream()
+                        .map(SearchRequest::getDashboardQueryKey).collect(Collectors.toSet());
+                activeQueries.destroyUnusedQueries(keys);
 
                 // Get query results for every active query.
-                for (final Entry<DashboardQueryKey, SearchRequest> entry : request.getSearchActionMap().entrySet()) {
-                    final DashboardQueryKey queryKey = entry.getKey();
-
-                    final SearchRequest searchRequest = entry.getValue();
-
-                    if (searchRequest != null && searchRequest.getSearch() != null) {
+                for (final SearchRequest searchRequest : request.getSearchRequests()) {
+                    final DashboardQueryKey queryKey = searchRequest.getDashboardQueryKey();
+                    if (searchRequest.getSearch() != null) {
                         final SearchResponse searchResponse = processRequest(activeQueries, queryKey, searchRequest);
                         if (searchResponse != null) {
-                            searchResultMap.put(queryKey, searchResponse);
+                            searchResults.add(searchResponse);
                         }
                     }
                 }
 
-                return new SearchBusPollResult(searchResultMap);
+                return searchResults;
             });
         });
     }
@@ -474,10 +473,10 @@ class DashboardResourceImpl implements DashboardResource, RestResource, HasHealt
     }
 
     @Override
-    public TimeZoneData fetchTimeZones() {
+    public List<String> fetchTimeZones() {
         final List<String> ids = new ArrayList<>(ZoneId.getAvailableZoneIds());
         ids.sort(Comparator.naturalOrder());
-        return new TimeZoneData(ids);
+        return ids;
     }
 
     @Override

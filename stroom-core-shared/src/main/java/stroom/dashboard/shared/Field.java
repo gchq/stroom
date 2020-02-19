@@ -16,15 +16,13 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
-import stroom.util.shared.ToStringBuilder;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -44,6 +42,7 @@ public class Field implements Serializable, HasDisplayValue {
     private static final long serialVersionUID = 7327802315955158337L;
 
     @XmlElement(name = "id")
+    @JsonProperty("id")
     private String id;
     @XmlElement(name = "name")
     @JsonProperty("name")
@@ -81,15 +80,17 @@ public class Field implements Serializable, HasDisplayValue {
         this.name = name;
     }
 
-    public Field(final String id,
-                 final String name,
-                 final String expression,
-                 final Sort sort,
-                 final Filter filter,
-                 final Format format,
-                 final Integer group,
-                 final int width,
-                 final boolean visible) {
+    @JsonCreator
+    public Field(@JsonProperty("id") final String id,
+                 @JsonProperty("name") final String name,
+                 @JsonProperty("expression") final String expression,
+                 @JsonProperty("sort") final Sort sort,
+                 @JsonProperty("filter") final Filter filter,
+                 @JsonProperty("format") final Format format,
+                 @JsonProperty("group") final Integer group,
+                 @JsonProperty("width") final int width,
+                 @JsonProperty("visible") final boolean visible,
+                 @JsonProperty("special") final boolean special) {
         this.id = id;
         this.name = name;
         this.expression = expression;
@@ -99,6 +100,7 @@ public class Field implements Serializable, HasDisplayValue {
         this.group = group;
         this.width = width;
         this.visible = visible;
+        this.special = special;
     }
 
     public String getId() {

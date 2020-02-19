@@ -36,6 +36,7 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -226,7 +227,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
                 if (inheritedProperty != null) {
                     final PipelinePropertyValue value = inheritedProperty.getValue();
                     if (value != null) {
-                        return getSafeHtml(inheritedProperty.getSource().getPipeline().getName());
+                        return getSafeHtml(inheritedProperty.getSourcePipeline().getName());
                     }
                 }
                 return null;
@@ -350,7 +351,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
             final PipelineProperty editing = new PipelineProperty();
             editing.copyFrom(localProperty);
-            editing.setSource(new SourcePipeline(pipelineDoc));
+            editing.setSourcePipeline(DocRefUtil.create(pipelineDoc));
             editing.setValue(localProperty.getValue());
 
             final Source source = getSource(editing);

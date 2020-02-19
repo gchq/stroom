@@ -38,6 +38,7 @@ import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -48,7 +49,6 @@ import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -186,11 +186,11 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
         getView().addResizableColumn(new Column<PipelineReference, String>(new TextCell()) {
             @Override
             public String getValue(final PipelineReference pipelineReference) {
-                if (pipelineReference.getSource().getPipeline() == null
-                        || pipelineReference.getSource().getPipeline().equals(pipeline)) {
+                if (pipelineReference.getSourcePipeline() == null
+                        || pipeline.getUuid().equals(pipelineReference.getSourcePipeline().getUuid())) {
                     return null;
                 }
-                return pipelineReference.getSource().getPipeline().getName();
+                return pipelineReference.getSourcePipeline().getName();
             }
         }, "Inherited From", 100);
     }
@@ -260,7 +260,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
         if (currentElement != null) {
             final PipelineReference pipelineReference = new PipelineReference(currentElement.getId(),
                     propertyType.getName(), null, null, null);
-            pipelineReference.setSource(new SourcePipeline(pipeline));
+            pipelineReference.setSourcePipeline(DocRefUtil.create(pipeline));
             showEditor(pipelineReference, true);
         }
     }

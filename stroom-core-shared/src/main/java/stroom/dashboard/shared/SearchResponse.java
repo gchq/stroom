@@ -17,13 +17,16 @@
 package stroom.dashboard.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.ToStringBuilder;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 import java.util.HashMap;
@@ -33,34 +36,60 @@ import java.util.Set;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "searchResponse", propOrder = {"highlights", "errors", "complete", "results"})
 @XmlRootElement(name = "searchResponse")
+@JsonInclude(Include.NON_DEFAULT)
 public class SearchResponse {
-    private static final long serialVersionUID = -2964122512841756795L;
+    /**
+     * The dashboard component that this search response is for.
+     */
+    @JsonProperty
+    private DashboardQueryKey dashboardQueryKey;
 
     /**
      * A set of strings to highlight in the UI that should correlate with the
      * search query.
      */
-    @XmlElement
+    @JsonProperty
     private Set<String> highlights;
 
     /**
      * Any errors that have been generated during searching.
      */
-    @XmlElement
+    @JsonProperty
     private String errors;
 
     /**
      * Complete means that all index shards have been searched across the
      * cluster and there are no more results to come.
      **/
-    @XmlElement
+    @JsonProperty
     private boolean complete;
 
-    @XmlElement
+    @JsonProperty
     private Map<String, ComponentResult> results;
 
     public SearchResponse() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public SearchResponse(@JsonProperty("dashboardQueryKey") final DashboardQueryKey dashboardQueryKey,
+                          @JsonProperty("highlights") final Set<String> highlights,
+                          @JsonProperty("errors") final String errors,
+                          @JsonProperty("complete") final boolean complete,
+                          @JsonProperty("results") final Map<String, ComponentResult> results) {
+        this.dashboardQueryKey = dashboardQueryKey;
+        this.highlights = highlights;
+        this.errors = errors;
+        this.complete = complete;
+        this.results = results;
+    }
+
+    public DashboardQueryKey getDashboardQueryKey() {
+        return dashboardQueryKey;
+    }
+
+    public void setDashboardQueryKey(final DashboardQueryKey dashboardQueryKey) {
+        this.dashboardQueryKey = dashboardQueryKey;
     }
 
     public Set<String> getHighlights() {

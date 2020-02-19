@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -51,7 +52,9 @@ public class Sort implements Serializable {
         // Default constructor necessary for GWT serialisation.
     }
 
-    public Sort(final int order, final SortDirection direction) {
+    @JsonCreator
+    public Sort(@JsonProperty("order") final int order,
+                @JsonProperty("direction") final SortDirection direction) {
         this.order = order;
         this.direction = direction;
     }

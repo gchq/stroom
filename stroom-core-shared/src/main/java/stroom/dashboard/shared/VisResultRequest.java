@@ -16,19 +16,29 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.OffsetRange;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class VisResultRequest extends ComponentResultRequest {
+    @JsonProperty
     private VisComponentSettings visDashboardSettings;
-    private OffsetRange<Integer> requestedRange = new OffsetRange<>(0, 100);
-
-    public VisResultRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
+    @JsonProperty
+    private OffsetRange<Integer> requestedRange;
 
     public VisResultRequest(final int offset, final int length) {
         requestedRange = new OffsetRange<>(offset, length);
+    }
+
+    @JsonCreator
+    public VisResultRequest(@JsonProperty("visDashboardSettings") final VisComponentSettings visDashboardSettings,
+                            @JsonProperty("requestedRange") final OffsetRange<Integer> requestedRange) {
+        this.visDashboardSettings = visDashboardSettings;
+        this.requestedRange = requestedRange;
     }
 
     public VisComponentSettings getVisDashboardSettings() {

@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -38,8 +39,6 @@ import java.util.List;
 @XmlRootElement(name = "dashboard")
 @XmlType(name = "DashboardConfig", propOrder = {"parameters", "components", "layout", "tabVisibility"})
 public class DashboardConfig {
-    private static final long serialVersionUID = -2530827581046882396L;
-
     @XmlElement(name = "parameters")
     @JsonProperty("parameters")
     private String parameters;
@@ -54,6 +53,20 @@ public class DashboardConfig {
     @XmlElement(name = "tabVisibility")
     @JsonProperty("tabVisibility")
     private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
+
+    public DashboardConfig() {
+    }
+
+    @JsonCreator
+    public DashboardConfig(@JsonProperty("parameters") final String parameters,
+                           @JsonProperty("components") final List<ComponentConfig> components,
+                           @JsonProperty("layout") final LayoutConfig layout,
+                           @JsonProperty("tabVisibility") final TabVisibility tabVisibility) {
+        this.parameters = parameters;
+        this.components = components;
+        this.layout = layout;
+        this.tabVisibility = tabVisibility;
+    }
 
     public String getParameters() {
         return parameters;

@@ -16,59 +16,52 @@
 
 package stroom.dashboard.shared;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 import java.util.Map;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "searchRequest", propOrder = {"search", "componentResultRequests", "dateTimeLocale"})
-@XmlRootElement(name = "searchRequest")
+@JsonInclude(Include.NON_DEFAULT)
 public class SearchRequest implements Serializable {
     private static final long serialVersionUID = -6668626615097471925L;
 
-    @XmlElement
-    private Search search;
-    @XmlElement
-    private Map<String, ComponentResultRequest> componentResultRequests;
-    @XmlElement
-    private String dateTimeLocale;
+    @JsonProperty
+    private final DashboardQueryKey dashboardQueryKey;
+    @JsonProperty
+    private final Search search;
+    @JsonProperty
+    private final Map<String, ComponentResultRequest> componentResultRequests;
+    @JsonProperty
+    private final String dateTimeLocale;
 
-    public SearchRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public SearchRequest(final Search search, final Map<String, ComponentResultRequest> componentResultRequests, final String dateTimeLocale) {
+    @JsonCreator
+    public SearchRequest(@JsonProperty("dashboardQueryKey") final DashboardQueryKey dashboardQueryKey,
+                         @JsonProperty("search") final Search search,
+                         @JsonProperty("componentResultRequests") final Map<String, ComponentResultRequest> componentResultRequests,
+                         @JsonProperty("dateTimeLocale") final String dateTimeLocale) {
+        this.dashboardQueryKey = dashboardQueryKey;
         this.search = search;
         this.componentResultRequests = componentResultRequests;
         this.dateTimeLocale = dateTimeLocale;
+    }
+
+    public DashboardQueryKey getDashboardQueryKey() {
+        return dashboardQueryKey;
     }
 
     public Search getSearch() {
         return search;
     }
 
-    public void setSearch(final Search search) {
-        this.search = search;
-    }
-
     public Map<String, ComponentResultRequest> getComponentResultRequests() {
         return componentResultRequests;
     }
 
-    public void setComponentResultRequests(final Map<String, ComponentResultRequest> componentResultRequests) {
-        this.componentResultRequests = componentResultRequests;
-    }
-
     public String getDateTimeLocale() {
         return dateTimeLocale;
-    }
-
-    public void setDateTimeLocale(final String dateTimeLocale) {
-        this.dateTimeLocale = dateTimeLocale;
     }
 
     @Override

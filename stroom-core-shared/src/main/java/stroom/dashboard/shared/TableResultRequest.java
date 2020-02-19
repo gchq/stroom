@@ -16,7 +16,11 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.OffsetRange;
@@ -31,16 +35,18 @@ import java.util.Set;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "tableResultRequest", propOrder = {"tableSettings", "requestedRange", "openGroups"})
+@JsonInclude(Include.NON_DEFAULT)
 public class TableResultRequest extends ComponentResultRequest {
-    private static final long serialVersionUID = 8683770109061652092L;
-
     @XmlElement
+    @JsonProperty
     private TableComponentSettings tableSettings;
 
     @XmlElement
+    @JsonProperty
     private OffsetRange<Integer> requestedRange = new OffsetRange<>(0, 100);
 
     @XmlElement
+    @JsonProperty
     private Set<String> openGroups;
 
     public TableResultRequest() {
@@ -49,6 +55,15 @@ public class TableResultRequest extends ComponentResultRequest {
 
     public TableResultRequest(final int offset, final int length) {
         requestedRange = new OffsetRange<>(offset, length);
+    }
+
+    @JsonCreator
+    public TableResultRequest(@JsonProperty("tableSettings") final TableComponentSettings tableSettings,
+                              @JsonProperty("requestedRange") final OffsetRange<Integer> requestedRange,
+                              @JsonProperty("openGroups") final Set<String> openGroups) {
+        this.tableSettings = tableSettings;
+        this.requestedRange = requestedRange;
+        this.openGroups = openGroups;
     }
 
     public TableComponentSettings getTableSettings() {

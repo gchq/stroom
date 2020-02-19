@@ -17,9 +17,10 @@
 package stroom.pipeline.shared.data;
 
 
-
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -35,27 +36,33 @@ import java.util.List;
 @JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"add", "remove"})
 public class PipelineProperties {
-    @XmlElementWrapper(name = "add", required = false)
-    @XmlElement(name = "property", required = false)
-    private List<PipelineProperty> add = new ArrayList<>();
+    @XmlElementWrapper(name = "add")
+    @XmlElement(name = "property")
+    @JsonProperty
+    private final List<PipelineProperty> add;
 
-    @XmlElementWrapper(name = "remove", required = false)
-    @XmlElement(name = "property", required = false)
-    private List<PipelineProperty> remove = new ArrayList<>();
+    @XmlElementWrapper(name = "remove")
+    @XmlElement(name = "property")
+    @JsonProperty
+    private final List<PipelineProperty> remove;
+
+    public PipelineProperties() {
+        add = new ArrayList<>();
+        remove = new ArrayList<>();
+    }
+
+    @JsonCreator
+    public PipelineProperties(@JsonProperty("add") final List<PipelineProperty> add,
+                              @JsonProperty("remove") final List<PipelineProperty> remove) {
+        this.add = add;
+        this.remove = remove;
+    }
 
     public List<PipelineProperty> getAdd() {
         return add;
     }
 
-    public void setAdd(final List<PipelineProperty> add) {
-        this.add = add;
-    }
-
     public List<PipelineProperty> getRemove() {
         return remove;
-    }
-
-    public void setRemove(final List<PipelineProperty> remove) {
-        this.remove = remove;
     }
 }

@@ -16,9 +16,11 @@
 
 package stroom.statistics.impl.hbase.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 
@@ -30,21 +32,49 @@ import java.util.Set;
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
 @JsonInclude(Include.NON_DEFAULT)
 public class StroomStatsStoreDoc extends Doc {
-    private static final long serialVersionUID = -1667372785365881297L;
-
     public static final String DOCUMENT_TYPE = "StroomStatsStore";
 
     private static final EventStoreTimeIntervalEnum DEFAULT_PRECISION_INTERVAL = EventStoreTimeIntervalEnum.HOUR;
 
+    @JsonProperty
     private String description;
+    @JsonProperty
     private StatisticType statisticType = StatisticType.COUNT;
+    @JsonProperty
     private StatisticRollUpType statisticRollUpType = StatisticRollUpType.NONE;
+    @JsonProperty
     private EventStoreTimeIntervalEnum precision;
+    @JsonProperty
     private Boolean enabled;
+    @JsonProperty
     private StroomStatsStoreEntityData config;
 
     public StroomStatsStoreDoc() {
         setDefaults();
+    }
+
+    @JsonCreator
+    public StroomStatsStoreDoc(@JsonProperty("type") final String type,
+                               @JsonProperty("uuid") final String uuid,
+                               @JsonProperty("name") final String name,
+                               @JsonProperty("version") final String version,
+                               @JsonProperty("createTime") final Long createTime,
+                               @JsonProperty("updateTime") final Long updateTime,
+                               @JsonProperty("createUser") final String createUser,
+                               @JsonProperty("updateUser") final String updateUser,
+                               @JsonProperty("description") final String description,
+                               @JsonProperty("statisticType") final StatisticType statisticType,
+                               @JsonProperty("statisticRollUpType") final StatisticRollUpType statisticRollUpType,
+                               @JsonProperty("precision") final EventStoreTimeIntervalEnum precision,
+                               @JsonProperty("enabled") final Boolean enabled,
+                               @JsonProperty("config") final StroomStatsStoreEntityData config) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.statisticType = statisticType;
+        this.statisticRollUpType = statisticRollUpType;
+        this.precision = precision;
+        this.enabled = enabled;
+        this.config = config;
     }
 
     private void setDefaults() {

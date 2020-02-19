@@ -74,10 +74,7 @@ public class PipelineDataUtil {
     }
 
     public static PipelineLink createLink(final String from, final String to) {
-        final PipelineLink link = new PipelineLink();
-        link.setFrom(from);
-        link.setTo(to);
-        return link;
+        return new PipelineLink(from, to);
     }
 
     public static void normalise(final PipelineData pipelineData) {

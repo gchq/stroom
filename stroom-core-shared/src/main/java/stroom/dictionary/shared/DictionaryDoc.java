@@ -16,8 +16,10 @@
 
 package stroom.dictionary.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
@@ -30,12 +32,33 @@ import java.util.Objects;
 public class DictionaryDoc extends Doc {
     public static final String ENTITY_TYPE = "Dictionary";
 
+    @JsonProperty
     private String description;
+    @JsonProperty
     private String data;
+    @JsonProperty
     private List<DocRef> imports;
 
     public DictionaryDoc() {
         // Default constructor for GWT serialisation.
+    }
+
+    @JsonCreator
+    public DictionaryDoc(@JsonProperty("type") final String type,
+                         @JsonProperty("uuid") final String uuid,
+                         @JsonProperty("name") final String name,
+                         @JsonProperty("version") final String version,
+                         @JsonProperty("createTime") final Long createTime,
+                         @JsonProperty("updateTime") final Long updateTime,
+                         @JsonProperty("createUser") final String createUser,
+                         @JsonProperty("updateUser") final String updateUser,
+                         @JsonProperty("description") final String description,
+                         @JsonProperty("data") final String data,
+                         @JsonProperty("imports") final List<DocRef> imports) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.data = data;
+        this.imports = imports;
     }
 
     public String getDescription() {

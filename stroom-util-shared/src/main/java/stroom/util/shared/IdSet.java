@@ -23,8 +23,6 @@ import java.util.Set;
 import java.util.TreeSet;
 
 public class IdSet extends CriteriaSet<Long> {
-    private static final long serialVersionUID = 1L;
-
     public IdSet() {
         super(new TreeSet<>());
     }

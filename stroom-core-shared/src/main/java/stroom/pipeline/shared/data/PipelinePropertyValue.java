@@ -16,6 +16,7 @@
 
 package stroom.pipeline.shared.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -74,6 +75,19 @@ public class PipelinePropertyValue implements Copyable<PipelinePropertyValue> {
 
     public PipelinePropertyValue() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public PipelinePropertyValue(@JsonProperty("string") final String string,
+                                 @JsonProperty("integer") final Integer integer,
+                                 @JsonProperty("long") final Long _long,
+                                 @JsonProperty("boolean") final Boolean _boolean,
+                                 @JsonProperty("entity") final DocRef entity) {
+        this.string = string;
+        this.integer = integer;
+        this._long = _long;
+        this._boolean = _boolean;
+        this.entity = entity;
     }
 
     public PipelinePropertyValue(final String string) {

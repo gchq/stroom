@@ -16,9 +16,11 @@
 
 package stroom.search.solr.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -61,24 +63,43 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
 
     public static final String VALID_FIELD_NAME_PATTERN = "[a-zA-Z_](?:[a-zA-Z0-9_])*";
 
+    @JsonProperty
     private SolrIndexFieldType fieldUse = SolrIndexFieldType.FIELD;
+    @JsonProperty
     private String fieldName;
+    @JsonProperty
     private String fieldType;
+    @JsonProperty
     private String defaultValue;
+    @JsonProperty
     private boolean stored;
+    @JsonProperty
     private boolean indexed = true;
+    @JsonProperty
     private boolean uninvertible;
+    @JsonProperty
     private boolean docValues;
+    @JsonProperty
     private boolean multiValued;
+    @JsonProperty
     private boolean required;
+    @JsonProperty
     private boolean omitNorms;
+    @JsonProperty
     private boolean omitTermFreqAndPositions;
+    @JsonProperty
     private boolean omitPositions;
+    @JsonProperty
     private boolean termVectors;
+    @JsonProperty
     private boolean termPositions;
+    @JsonProperty
     private boolean termOffsets;
+    @JsonProperty
     private boolean termPayloads;
+    @JsonProperty
     private boolean sortMissingFirst;
+    @JsonProperty
     private boolean sortMissingLast;
 
     /**
@@ -109,6 +130,49 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         if (supportedConditions != null) {
             this.supportedConditions = new ArrayList<>(supportedConditions);
         }
+    }
+
+    @JsonCreator
+    public SolrIndexField(@JsonProperty("fieldUse") final SolrIndexFieldType fieldUse,
+                          @JsonProperty("fieldName") final String fieldName,
+                          @JsonProperty("fieldType") final String fieldType,
+                          @JsonProperty("defaultValue") final String defaultValue,
+                          @JsonProperty("stored") final boolean stored,
+                          @JsonProperty("indexed") final boolean indexed,
+                          @JsonProperty("uninvertible") final boolean uninvertible,
+                          @JsonProperty("docValues") final boolean docValues,
+                          @JsonProperty("multiValued") final boolean multiValued,
+                          @JsonProperty("required") final boolean required,
+                          @JsonProperty("omitNorms") final boolean omitNorms,
+                          @JsonProperty("omitTermFreqAndPositions") final boolean omitTermFreqAndPositions,
+                          @JsonProperty("omitPositions") final boolean omitPositions,
+                          @JsonProperty("termVectors") final boolean termVectors,
+                          @JsonProperty("termPositions") final boolean termPositions,
+                          @JsonProperty("termOffsets") final boolean termOffsets,
+                          @JsonProperty("termPayloads") final boolean termPayloads,
+                          @JsonProperty("sortMissingFirst") final boolean sortMissingFirst,
+                          @JsonProperty("sortMissingLast") final boolean sortMissingLast,
+                          @JsonProperty("supportedConditions") final List<Condition> supportedConditions) {
+        this.fieldUse = fieldUse;
+        this.fieldName = fieldName;
+        this.fieldType = fieldType;
+        this.defaultValue = defaultValue;
+        this.stored = stored;
+        this.indexed = indexed;
+        this.uninvertible = uninvertible;
+        this.docValues = docValues;
+        this.multiValued = multiValued;
+        this.required = required;
+        this.omitNorms = omitNorms;
+        this.omitTermFreqAndPositions = omitTermFreqAndPositions;
+        this.omitPositions = omitPositions;
+        this.termVectors = termVectors;
+        this.termPositions = termPositions;
+        this.termOffsets = termOffsets;
+        this.termPayloads = termPayloads;
+        this.sortMissingFirst = sortMissingFirst;
+        this.sortMissingLast = sortMissingLast;
+        this.supportedConditions = supportedConditions;
     }
 
     public static SolrIndexField createIdField(final String fieldName) {

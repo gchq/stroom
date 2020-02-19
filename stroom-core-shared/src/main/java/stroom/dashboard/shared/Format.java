@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -67,7 +68,10 @@ public class Format implements Serializable {
         this.settings = settings;
     }
 
-    public Format(Type type, FormatSettings settings, Boolean wrap) {
+    @JsonCreator
+    public Format(@JsonProperty("type") final Type type,
+                  @JsonProperty("settings") final FormatSettings settings,
+                  @JsonProperty("wrap") final Boolean wrap) {
         this.type = type;
         this.settings = settings;
         this.wrap = wrap;

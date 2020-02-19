@@ -76,7 +76,7 @@ public class PipelineDataValidator {
             }
 
             element.setElementType(elementType);
-            element.setSource(source);
+//            element.setSource(source);
             final PipelineElementType existing = elementMap.put(element.getId(), elementType);
             if (existing != null && !existing.getType().equals(elementType.getType())) {
                 throw new PipelineFactoryException("Attempt to add element with id=" + element.getId()
@@ -112,7 +112,7 @@ public class PipelineDataValidator {
                 }
 
                 property.setPropertyType(propertyType);
-                property.setSource(source);
+                property.setSourcePipeline(source.getPipeline());
             }
         }
     }
@@ -145,7 +145,7 @@ public class PipelineDataValidator {
                             + "\" on element \"" + pipelineReference.getElement() + "\" but property is unknown.");
                 }
 
-                pipelineReference.setSource(source);
+                pipelineReference.setSourcePipeline(source.getPipeline());
             }
         }
     }
@@ -164,7 +164,7 @@ public class PipelineDataValidator {
 //                throw new PipelineFactoryException("Attempt to link from \"" + link.getFrom() + "\" to \""
 //                        + link.getTo() + "\" but \"" + link.getTo() + "\" is unknown");
             } else {
-                link.setSource(source);
+                link.setSourcePipeline(source.getPipeline());
             }
         }
     }

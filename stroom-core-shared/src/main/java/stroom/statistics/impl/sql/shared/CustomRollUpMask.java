@@ -16,12 +16,12 @@
 
 package stroom.statistics.impl.sql.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
-
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -33,11 +33,9 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "customRollUpMask")
-@JsonPropertyOrder({"rolledUpTagPosition"})
+@JsonPropertyOrder({"rolledUpTagPositions"})
 @JsonInclude(Include.NON_DEFAULT)
 public class CustomRollUpMask implements HasDisplayValue {
-    private static final long serialVersionUID = 5978256629347842695L;
-
     /**
      * Holds a list of the positions of tags that are rolled up, zero based. The
      * position number is based on the alphanumeric sorted list of tag/field
@@ -47,25 +45,21 @@ public class CustomRollUpMask implements HasDisplayValue {
      * correctly.
      */
     @XmlElement(name = "rolledUpTagPosition")
-    @JsonProperty("rolledUpTagPosition")
-    private List<Integer> rolledUpTagPositions = new ArrayList<>();
+    @JsonProperty
+    private final List<Integer> rolledUpTagPositions;
 
     public CustomRollUpMask() {
-        // Default constructor necessary for GWT serialisation.
+        rolledUpTagPositions = new ArrayList<>();
     }
 
-    public CustomRollUpMask(final List<Integer> rolledUpTagPositions) {
+    @JsonCreator
+    public CustomRollUpMask(@JsonProperty("rolledUpTagPositions") final List<Integer> rolledUpTagPositions) {
         this.rolledUpTagPositions = new ArrayList<>(rolledUpTagPositions);
         Collections.sort(this.rolledUpTagPositions);
     }
 
     public List<Integer> getRolledUpTagPositions() {
         return rolledUpTagPositions;
-    }
-
-    public void setRolledUpTagPositions(final List<Integer> rolledUpTagPositions) {
-        this.rolledUpTagPositions = new ArrayList<>(rolledUpTagPositions);
-        Collections.sort(this.rolledUpTagPositions);
     }
 
     public boolean isTagRolledUp(final int position) {
@@ -84,7 +78,6 @@ public class CustomRollUpMask implements HasDisplayValue {
                 // no need to re-sort on remove as already in order
             }
         }
-
     }
 
     @Override

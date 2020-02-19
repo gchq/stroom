@@ -16,30 +16,37 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(Include.NON_DEFAULT)
 public class DownloadSearchResultsRequest {
-    private String applicationInstanceId;
-    private DashboardQueryKey queryKey;
-    private SearchRequest searchRequest;
-    private String componentId;
-    private DownloadSearchResultFileType fileType;
-    private boolean sample;
-    private int percent;
-    private String dateTimeLocale;
+    @JsonProperty
+    private final String applicationInstanceId;
+    @JsonProperty
+    private final SearchRequest searchRequest;
+    @JsonProperty
+    private final String componentId;
+    @JsonProperty
+    private final DownloadSearchResultFileType fileType;
+    @JsonProperty
+    private final boolean sample;
+    @JsonProperty
+    private final int percent;
+    @JsonProperty
+    private final String dateTimeLocale;
 
-    public DownloadSearchResultsRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public DownloadSearchResultsRequest(final String applicationInstanceId,
-                                        final DashboardQueryKey queryKey,
-                                        final SearchRequest searchRequest,
-                                        final String componentId,
-                                        final DownloadSearchResultFileType fileType,
-                                        final boolean sample,
-                                        final int percent,
-                                        final String dateTimeLocale) {
+    @JsonCreator
+    public DownloadSearchResultsRequest(@JsonProperty("applicationInstanceId") final String applicationInstanceId,
+                                        @JsonProperty("searchRequest") final SearchRequest searchRequest,
+                                        @JsonProperty("componentId") final String componentId,
+                                        @JsonProperty("fileType") final DownloadSearchResultFileType fileType,
+                                        @JsonProperty("sample") final boolean sample,
+                                        @JsonProperty("percent") final int percent,
+                                        @JsonProperty("dateTimeLocale") final String dateTimeLocale) {
         this.applicationInstanceId = applicationInstanceId;
-        this.queryKey = queryKey;
         this.searchRequest = searchRequest;
         this.componentId = componentId;
         this.fileType = fileType;
@@ -52,63 +59,27 @@ public class DownloadSearchResultsRequest {
         return applicationInstanceId;
     }
 
-    public void setApplicationInstanceId(final String applicationInstanceId) {
-        this.applicationInstanceId = applicationInstanceId;
-    }
-
-    public DashboardQueryKey getQueryKey() {
-        return queryKey;
-    }
-
-    public void setQueryKey(final DashboardQueryKey queryKey) {
-        this.queryKey = queryKey;
-    }
-
     public SearchRequest getSearchRequest() {
         return searchRequest;
-    }
-
-    public void setSearchRequest(final SearchRequest searchRequest) {
-        this.searchRequest = searchRequest;
     }
 
     public String getComponentId() {
         return componentId;
     }
 
-    public void setComponentId(final String componentId) {
-        this.componentId = componentId;
-    }
-
     public DownloadSearchResultFileType getFileType() {
         return fileType;
-    }
-
-    public void setFileType(final DownloadSearchResultFileType fileType) {
-        this.fileType = fileType;
     }
 
     public boolean isSample() {
         return sample;
     }
 
-    public void setSample(final boolean sample) {
-        this.sample = sample;
-    }
-
     public int getPercent() {
         return percent;
     }
 
-    public void setPercent(final int percent) {
-        this.percent = percent;
-    }
-
     public String getDateTimeLocale() {
         return dateTimeLocale;
-    }
-
-    public void setDateTimeLocale(final String dateTimeLocale) {
-        this.dateTimeLocale = dateTimeLocale;
     }
 }

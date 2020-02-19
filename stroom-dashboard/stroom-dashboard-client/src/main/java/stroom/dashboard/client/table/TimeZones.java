@@ -20,7 +20,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import stroom.dashboard.shared.DashboardResource;
-import stroom.dashboard.shared.TimeZoneData;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 
@@ -40,9 +39,9 @@ public class TimeZones {
         } catch (final RuntimeException e) {
         }
 
-        final Rest<TimeZoneData> rest = restFactory.create();
+        final Rest<List<String>> rest = restFactory.create();
         rest
-                .onSuccess(result -> ids = result.getIds())
+                .onSuccess(result -> ids = result)
                 .call(DASHBOARD_RESOURCE)
                 .fetchTimeZones();
     }

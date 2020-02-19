@@ -16,16 +16,21 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(Include.NON_DEFAULT)
 public class DownloadQueryRequest {
-    private DashboardQueryKey dashboardQueryKey;
-    private SearchRequest searchRequest;
+    @JsonProperty
+    private final DashboardQueryKey dashboardQueryKey;
+    @JsonProperty
+    private final SearchRequest searchRequest;
 
-    public DownloadQueryRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public DownloadQueryRequest(final DashboardQueryKey dashboardQueryKey,
-                                final SearchRequest searchRequest) {
+    @JsonCreator
+    public DownloadQueryRequest(@JsonProperty("dashboardQueryKey") final DashboardQueryKey dashboardQueryKey,
+                                @JsonProperty("searchRequest") final SearchRequest searchRequest) {
         this.dashboardQueryKey = dashboardQueryKey;
         this.searchRequest = searchRequest;
     }
@@ -34,15 +39,7 @@ public class DownloadQueryRequest {
         return dashboardQueryKey;
     }
 
-    public void setDashboardQueryKey(final DashboardQueryKey dashboardQueryKey) {
-        this.dashboardQueryKey = dashboardQueryKey;
-    }
-
     public SearchRequest getSearchRequest() {
         return searchRequest;
-    }
-
-    public void setSearchRequest(final SearchRequest searchRequest) {
-        this.searchRequest = searchRequest;
     }
 }

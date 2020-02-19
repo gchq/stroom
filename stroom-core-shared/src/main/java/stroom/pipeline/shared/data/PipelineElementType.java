@@ -16,15 +16,19 @@
 
 package stroom.pipeline.shared.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
-
 import stroom.util.shared.HasType;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 @JsonInclude(Include.NON_DEFAULT)
@@ -63,25 +67,26 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
      */
     public static final String VISABILITY_STEPPING = "stepping";
 
-    private String type;
-    private Category category;
-    private Set<String> roles;
-    private String icon;
+    @JsonProperty
+    private final String type;
+    @JsonProperty
+    private final Category category;
+    @JsonProperty
+    private final String[] roles;
+    @JsonProperty
+    private final String icon;
 
-    public PipelineElementType() {
-        // Default constructor necessary for GWT serialisation.
-    }
+    @JsonIgnore
+    private Set<String> roleSet;
 
-    public PipelineElementType(final String type, final Category category, final String[] roles, final String icon) {
+    @JsonCreator
+    public PipelineElementType(@JsonProperty("type") final String type,
+                               @JsonProperty("category") final Category category,
+                               @JsonProperty("roles") final String[] roles,
+                               @JsonProperty("icon") final String icon) {
         this.type = type;
         this.category = category;
-
-        if (roles == null || roles.length == 0) {
-            this.roles = new HashSet<>(0);
-        } else {
-            this.roles = new HashSet<>(Arrays.asList(roles));
-        }
-
+        this.roles = roles;
         this.icon = icon;
     }
 
@@ -90,51 +95,40 @@ public class PipelineElementType implements Comparable<PipelineElementType>, Has
         return type;
     }
 
-    public void setType(final String type) {
-        this.type = type;
-    }
-
     public Category getCategory() {
         return category;
     }
 
-    public void setCategory(final Category category) {
-        this.category = category;
-    }
-
-    public Set<String> getRoles() {
+    public String[] getRoles() {
         return roles;
-    }
-
-    public void setRoles(final Set<String> roles) {
-        this.roles = roles;
     }
 
     public String getIcon() {
         return icon;
     }
 
-    public void setIcon(final String icon) {
-        this.icon = icon;
+    public boolean hasRole(final String role) {
+        if (roleSet == null) {
+            if (roles == null || roles.length == 0) {
+                roleSet = Collections.emptySet();
+            } else {
+                roleSet = new HashSet<>(Arrays.asList(roles));
+            }
+        }
+        return roleSet.contains(role);
     }
 
-    public boolean hasRole(final String role) {
-        return roles.contains(role);
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final PipelineElementType that = (PipelineElementType) o;
+        return type.equals(that.type);
     }
 
     @Override
     public int hashCode() {
-        return type.hashCode();
-    }
-
-    @Override
-    public boolean equals(final Object obj) {
-        if (obj == null || !(obj instanceof PipelineElementType)) {
-            return false;
-        }
-
-        final PipelineElementType elementType = (PipelineElementType) obj;
-        return type.equals(elementType.type);
+        return Objects.hash(type);
     }
 
     @Override

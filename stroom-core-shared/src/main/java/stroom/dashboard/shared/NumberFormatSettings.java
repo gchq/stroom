@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -36,8 +37,6 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "numberFormatSettings")
 @XmlType(name = "NumberFormatSettings", propOrder = {"decimalPlaces", "useSeparator"})
 public class NumberFormatSettings implements FormatSettings {
-    private static final long serialVersionUID = 9145624653060319801L;
-
     private static final int DEFAULT_DECIMAL_PLACES = 0;
     private static final boolean DEFAULT_USE_SEPARATOR = false;
 
@@ -51,7 +50,9 @@ public class NumberFormatSettings implements FormatSettings {
     public NumberFormatSettings() {
     }
 
-    public NumberFormatSettings(Integer decimalPlaces, Boolean useSeparator) {
+    @JsonCreator
+    public NumberFormatSettings(@JsonProperty("decimalPlaces") final Integer decimalPlaces,
+                                @JsonProperty("useSeparator") final Boolean useSeparator) {
         this.decimalPlaces = decimalPlaces;
         this.useSeparator = useSeparator;
     }

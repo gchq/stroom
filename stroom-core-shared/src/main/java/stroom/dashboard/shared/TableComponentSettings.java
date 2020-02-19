@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -73,7 +74,13 @@ public class TableComponentSettings extends ComponentSettings {
         this.fields = fields;
     }
 
-    public TableComponentSettings(final String queryId, final List<Field> fields, final Boolean extractValues, final DocRef extractionPipeline, final int[] maxResults, final Boolean showDetail) {
+    @JsonCreator
+    public TableComponentSettings(@JsonProperty("queryId") final String queryId,
+                                  @JsonProperty("fields") final List<Field> fields,
+                                  @JsonProperty("extractValues") final Boolean extractValues,
+                                  @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
+                                  @JsonProperty("maxResults") final int[] maxResults,
+                                  @JsonProperty("showDetail") final Boolean showDetail) {
         this.queryId = queryId;
         this.fields = fields;
         this.extractValues = extractValues;

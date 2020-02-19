@@ -16,6 +16,7 @@
 
 package stroom.statistics.impl.sql.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -59,6 +60,30 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
 
     public StatisticStoreDoc() {
         setDefaults();
+    }
+
+    @JsonCreator
+    public StatisticStoreDoc(@JsonProperty("type") final String type,
+                             @JsonProperty("uuid") final String uuid,
+                             @JsonProperty("name") final String name,
+                             @JsonProperty("version") final String version,
+                             @JsonProperty("createTime") final Long createTime,
+                             @JsonProperty("updateTime") final Long updateTime,
+                             @JsonProperty("createUser") final String createUser,
+                             @JsonProperty("updateUser") final String updateUser,
+                             @JsonProperty("description") final String description,
+                             @JsonProperty("statisticType") final StatisticType statisticType,
+                             @JsonProperty("rollUpType") final StatisticRollUpType rollUpType,
+                             @JsonProperty("precision") final Long precision,
+                             @JsonProperty("enabled") final Boolean enabled,
+                             @JsonProperty("config") final StatisticsDataSourceData config) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.statisticType = statisticType;
+        this.rollUpType = rollUpType;
+        this.precision = precision;
+        this.enabled = enabled;
+        this.config = config;
     }
 
     private void setDefaults() {

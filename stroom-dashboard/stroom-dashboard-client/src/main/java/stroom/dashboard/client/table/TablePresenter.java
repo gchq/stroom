@@ -372,11 +372,10 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                     .queryInfo(activeSearch.getQueryInfo())
                                     .build();
 
-                            final SearchRequest searchRequest = new SearchRequest(search, requestMap, timeZones.getTimeZone());
+                            final SearchRequest searchRequest = new SearchRequest(queryKey, search, requestMap, timeZones.getTimeZone());
 
                             final DownloadSearchResultsRequest downloadSearchResultsRequest = new DownloadSearchResultsRequest(
                                     applicationInstanceIdProvider.get(),
-                                    queryKey,
                                     searchRequest,
                                     getComponentConfig().getId(),
                                     downloadPresenter.getFileType(),

@@ -16,12 +16,13 @@
 
 package stroom.pipeline.shared.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
-
 import stroom.util.shared.CompareBuilder;
 import stroom.util.shared.Copyable;
 
@@ -62,19 +63,23 @@ import java.util.Objects;
 @JsonPropertyOrder({"element", "name", "pipeline", "feed", "streamType"})
 public final class PipelineReference implements Comparable<PipelineReference>, Copyable<PipelineReference> {
     @XmlElement(name = "element", required = true)
+    @JsonProperty
     protected String element;
     @XmlElement(name = "name", required = true)
+    @JsonProperty
     protected String name;
     @XmlElement(name = "pipeline", required = true)
+    @JsonProperty
     protected DocRef pipeline;
     @XmlElement(name = "feed", required = true)
+    @JsonProperty
     protected DocRef feed;
     @XmlElement(name = "streamType", required = true)
+    @JsonProperty
     protected String streamType;
 
-    @JsonIgnore
     @XmlTransient
-    private SourcePipeline source;
+    private DocRef sourcePipeline;
 
     @XmlTransient
     @JsonIgnore
@@ -89,8 +94,12 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
         this(null, null, pipeline, feed, streamType);
     }
 
-    public PipelineReference(final String element, final String name, final DocRef pipeline,
-                             final DocRef feed, final String streamType) {
+    @JsonCreator
+    public PipelineReference(@JsonProperty("element") final String element,
+                             @JsonProperty("name") final String name,
+                             @JsonProperty("pipeline") final DocRef pipeline,
+                             @JsonProperty("feed") final DocRef feed,
+                             @JsonProperty("streamType") final String streamType) {
         this.element = element;
         this.name = name;
         this.pipeline = pipeline;
@@ -138,14 +147,12 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
         this.streamType = value;
     }
 
-    @JsonIgnore
-    public SourcePipeline getSource() {
-        return source;
+    public DocRef getSourcePipeline() {
+        return sourcePipeline;
     }
 
-    @JsonIgnore
-    public void setSource(final SourcePipeline source) {
-        this.source = source;
+    public void setSourcePipeline(final DocRef sourcePipeline) {
+        this.sourcePipeline = sourcePipeline;
     }
 
     @Override
@@ -187,7 +194,7 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
 
     @Override
     public void copyFrom(final PipelineReference other) {
-        this.source = other.source;
+        this.sourcePipeline = other.sourcePipeline;
         this.element = other.element;
         this.name = other.name;
         this.pipeline = other.pipeline;

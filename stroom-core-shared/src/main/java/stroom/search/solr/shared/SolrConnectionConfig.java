@@ -1,7 +1,9 @@
 package stroom.search.solr.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 
@@ -19,11 +21,32 @@ import java.util.Objects;
 @XmlRootElement(name = "connection")
 @XmlType(name = "SolrConnectionConfig", propOrder = {"useZk", "instanceType", "solrUrls", "zkHosts", "zkPath"})
 public class SolrConnectionConfig implements Serializable {
+    @JsonProperty
     private InstanceType instanceType = InstanceType.SINGLE_NOOE;
+    @JsonProperty
     private boolean useZk;
+    @JsonProperty
     private List<String> solrUrls;
+    @JsonProperty
     private List<String> zkHosts;
+    @JsonProperty
     private String zkPath;
+
+    public SolrConnectionConfig() {
+    }
+
+    @JsonCreator
+    public SolrConnectionConfig(@JsonProperty("instanceType") final InstanceType instanceType,
+                                @JsonProperty("useZk") final boolean useZk,
+                                @JsonProperty("solrUrls") final List<String> solrUrls,
+                                @JsonProperty("zkHosts") final List<String> zkHosts,
+                                @JsonProperty("zkPath") final String zkPath) {
+        this.instanceType = instanceType;
+        this.useZk = useZk;
+        this.solrUrls = solrUrls;
+        this.zkHosts = zkHosts;
+        this.zkPath = zkPath;
+    }
 
     public InstanceType getInstanceType() {
         return instanceType;

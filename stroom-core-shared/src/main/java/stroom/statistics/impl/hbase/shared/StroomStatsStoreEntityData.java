@@ -16,16 +16,15 @@
 
 package stroom.statistics.impl.hbase.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
@@ -38,67 +37,49 @@ import java.util.Set;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "data")
-@JsonPropertyOrder({"field", "customRollUpMask"})
+@JsonPropertyOrder({"statisticFields", "customRollUpMasks"})
 @JsonInclude(Include.NON_DEFAULT)
 public class StroomStatsStoreEntityData {
-
-    private static final long serialVersionUID = -2754817144611481958L;
     /**
      * Should be a SortedSet but GWT doesn't support that. Contents should be
      * sorted and not contain duplicates
-     * <p>
-     * XMLTransient to force JAXB to use the setter
      */
-
-    @XmlTransient
-    @JsonIgnore
+    @JsonProperty
     private List<StatisticField> statisticFields;
 
     /**
      * Held in a set to prevent duplicates.
-     * <p>
-     * XMLTransient to force JAXB to use the setter
+     */
+    @JsonProperty
+    private Set<CustomRollUpMask> customRollUpMasks;
+
+    /**
+     * Cache the positions of the fields.
      */
     @XmlTransient
     @JsonIgnore
-    private Set<CustomRollUpMask> customRollUpMasks;
+    private Map<String, Integer> cachedFieldPositions;
 
-    // cache the positions of the
-    @XmlTransient
-    @JsonIgnore
-    private Map<String, Integer> fieldPositionMap = new HashMap<>();
 
     public StroomStatsStoreEntityData() {
         this(new ArrayList<>(), new HashSet<>());
     }
 
-    public StroomStatsStoreEntityData(final List<StatisticField> statisticFields) {
-        this(new ArrayList<>(statisticFields), new HashSet<>());
-    }
-
-    public StroomStatsStoreEntityData(final List<StatisticField> statisticFields,
-                                      final Set<CustomRollUpMask> customRollUpMasks) {
+    @JsonCreator
+    public StroomStatsStoreEntityData(@JsonProperty("statisticFields") final List<StatisticField> statisticFields,
+                                      @JsonProperty("customRollUpMasks") final Set<CustomRollUpMask> customRollUpMasks) {
         this.statisticFields = statisticFields;
         this.customRollUpMasks = customRollUpMasks;
-
-        // sort the list of fields as this will help us later when generating
-        // StatisticEvents
-        sortFieldListAndCachePositions();
     }
 
-    @XmlElement(name = "field")
-    @JsonProperty("fields")
     public List<StatisticField> getStatisticFields() {
         return statisticFields;
     }
 
     public void setStatisticFields(final List<StatisticField> statisticFields) {
         this.statisticFields = statisticFields;
-        sortFieldListAndCachePositions();
     }
 
-    @XmlElement(name = "customRollUpMask")
-    @JsonProperty("customRollUpMasks")
     public Set<CustomRollUpMask> getCustomRollUpMasks() {
         return customRollUpMasks;
     }
@@ -106,6 +87,7 @@ public class StroomStatsStoreEntityData {
     public void setCustomRollUpMasks(final Set<CustomRollUpMask> customRollUpMasks) {
         this.customRollUpMasks = customRollUpMasks;
     }
+
 
     public void addStatisticField(final StatisticField statisticField) {
         if (statisticFields == null) {
@@ -173,13 +155,13 @@ public class StroomStatsStoreEntityData {
         if (rolledUpFieldNames.size() > statisticFields.size()) {
             throw new RuntimeException(
                     "isRollUpCombinationSupported called with more rolled up fields (" + rolledUpFieldNames.toString()
-                            + ") than there are statistic fields (" + fieldPositionMap.keySet() + ")");
+                            + ") than there are statistic fields (" + getCachedFieldPositions().keySet() + ")");
         }
 
-        if (!fieldPositionMap.keySet().containsAll(rolledUpFieldNames)) {
+        if (!getCachedFieldPositions().keySet().containsAll(rolledUpFieldNames)) {
             throw new RuntimeException(
                     "isRollUpCombinationSupported called rolled up fields (" + rolledUpFieldNames.toString()
-                            + ") that don't exist in the statistic fields list (" + fieldPositionMap.keySet() + ")");
+                            + ") that don't exist in the statistic fields list (" + getCachedFieldPositions().keySet() + ")");
         }
 
         final List<Integer> rolledUpFieldPositions = new ArrayList<>();
@@ -191,7 +173,15 @@ public class StroomStatsStoreEntityData {
     }
 
     public Integer getFieldPositionInList(final String fieldName) {
-        return fieldPositionMap.get(fieldName);
+        return getCachedFieldPositions().get(fieldName);
+    }
+
+    private Map<String, Integer> getCachedFieldPositions() {
+        if (cachedFieldPositions == null) {
+            // sort the list of fields as this will help us later when generating StatisticEvents.
+            sortFieldListAndCachePositions();
+        }
+        return cachedFieldPositions;
     }
 
     @Override
@@ -224,19 +214,15 @@ public class StroomStatsStoreEntityData {
         return "StatisticFields [statisticFields=" + statisticFields + "]";
     }
 
-    private void sortFieldListAndCachePositions() {
+    private synchronized void sortFieldListAndCachePositions() {
         // de-dup the list
-        Set<StatisticField> tempSet = new HashSet<>(statisticFields);
-        statisticFields.clear();
-        statisticFields.addAll(tempSet);
-        tempSet = null;
-
+        statisticFields = new ArrayList<>(new HashSet<>(statisticFields));
         Collections.sort(statisticFields);
 
-        fieldPositionMap.clear();
+        cachedFieldPositions = new HashMap<>();
         int i = 0;
         for (final StatisticField field : statisticFields) {
-            fieldPositionMap.put(field.getFieldName(), i++);
+            cachedFieldPositions.put(field.getFieldName(), i++);
         }
     }
 
@@ -254,13 +240,5 @@ public class StroomStatsStoreEntityData {
         }
 
         return new StroomStatsStoreEntityData(newFieldList, newMaskList);
-    }
-
-    /**
-     * Added to ensure map is not made final which would break GWT
-     * serialisation.
-     */
-    public void setFieldPositionMap(final Map<String, Integer> fieldPositionMap) {
-        this.fieldPositionMap = fieldPositionMap;
     }
 }
