@@ -50,7 +50,6 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
         view.setUiHandlers(this);
-//        view.setList(listPresenter.getWidget());
         setInSlot(LIST, listPresenter);
         openButton = listPresenter.addButton(SvgPresets.EDIT);
     }
@@ -122,15 +121,13 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
             listPresenter.getFindGlobalPropertyCriteria().getName()
                 .setMatchStyle(StringCriteria.MatchStyle.WildStandAndEnd);
             listPresenter.getFindGlobalPropertyCriteria().getName().setCaseInsensitive(true);
-            listPresenter.refresh();
         } else {
             listPresenter.getFindGlobalPropertyCriteria().getName().clear();
-            listPresenter.refresh();
         }
+        listPresenter.refresh();
     }
 
     public interface GlobalPropertyTabView
         extends View, HasUiHandlers<ManageGlobalPropertyUiHandlers> {
-//        void setList(Widget widget);
     }
 }

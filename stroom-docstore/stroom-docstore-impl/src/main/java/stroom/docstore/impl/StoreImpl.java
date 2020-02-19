@@ -86,6 +86,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Override
     public final DocRef createDocument(final String name) {
+        Objects.requireNonNull(name);
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
 
@@ -104,6 +105,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     public final DocRef copyDocument(final String originalUuid,
                                      final String copyUuid,
                                      final Map<String, String> otherCopiesByOriginalUuid) {
+        Objects.requireNonNull(originalUuid);
+        Objects.requireNonNull(copyUuid);
         final long now = System.currentTimeMillis();
         final String userId = securityContext.getUserId();
 
@@ -123,6 +126,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Override
     public final DocRef moveDocument(final String uuid) {
+        Objects.requireNonNull(uuid);
         final D document = read(uuid);
 
 //        // If we are moving folder then make sure we are allowed to create items in the target folder.
@@ -137,6 +141,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Override
     public DocRef renameDocument(final String uuid, final String name) {
+        Objects.requireNonNull(uuid);
+        Objects.requireNonNull(name);
         final D document = read(uuid);
 
         // Only update the document if the name has actually changed.
@@ -151,6 +157,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Override
     public final void deleteDocument(final String uuid) {
+        Objects.requireNonNull(uuid);
         // Check that the user has permission to delete this item.
         if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.DELETE)) {
             throw new PermissionException(securityContext.getUserId(), "You are not authorised to delete this item");
@@ -164,6 +171,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Override
     public DocRefInfo info(final String uuid) {
+        Objects.requireNonNull(uuid);
         final D document = read(uuid);
         return new DocRefInfo.Builder()
                 .docRef(new DocRef.Builder()
@@ -188,11 +196,13 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Override
     public D readDocument(final DocRef docRef) {
+        Objects.requireNonNull(docRef);
         return read(docRef.getUuid());
     }
 
     @Override
     public D writeDocument(final D document) {
+        Objects.requireNonNull(document);
         return update(document);
     }
 
@@ -207,6 +217,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Override
     public boolean exists(final DocRef docRef) {
+        Objects.requireNonNull(docRef);
         return persistence.exists(docRef);
     }
 
@@ -240,11 +251,13 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     }
 
     private boolean canRead(final DocRef docRef) {
+        Objects.requireNonNull(docRef);
         return securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ);
     }
 
     @Override
     public DocRef importDocument(final DocRef docRef, final Map<String, byte[]> dataMap, final ImportState importState, final ImportMode importMode) {
+        Objects.requireNonNull(docRef);
         final String uuid = docRef.getUuid();
         try {
             final boolean exists = exists(docRef);

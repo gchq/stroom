@@ -37,10 +37,14 @@ public class ManageGlobalPropertyListPresenter
     extends MyPresenterWidget<DataGridView<ConfigProperty>>
     implements Refreshable {
 
+    // TODO change to use a rest dataprovider, see NodeMonitoringPresenter
+    //   Need to figure out how best to handle the fuzzy criteria with rest, i.e. POST
+    //   of the criteria object or query params
     private final FindActionDataProvider<FindGlobalConfigCriteria, ConfigProperty> dataProvider;
 
     @Inject
-    public ManageGlobalPropertyListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+    public ManageGlobalPropertyListPresenter(final EventBus eventBus,
+                                             final ClientDispatchAsync dispatcher) {
         super(eventBus, new DataGridViewImpl<>(true));
 
         // Name.

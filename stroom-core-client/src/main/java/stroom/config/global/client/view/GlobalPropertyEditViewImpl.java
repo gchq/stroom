@@ -76,7 +76,8 @@ public final class GlobalPropertyEditViewImpl
 //    private static volatile Resources RESOURCES;
 
     @Inject
-    public GlobalPropertyEditViewImpl(final EventBus eventBus, final Binder binder) {
+    public GlobalPropertyEditViewImpl(final EventBus eventBus,
+                                      final Binder binder) {
         widget = binder.createAndBindUi(this);
 //        RESOURCES = GWT.create(Resources.class);
 //        RESOURCES.style().ensureInjected();

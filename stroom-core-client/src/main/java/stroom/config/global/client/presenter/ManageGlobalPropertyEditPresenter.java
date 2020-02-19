@@ -21,6 +21,7 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -40,6 +41,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -67,6 +69,7 @@ public final class ManageGlobalPropertyEditPresenter
     private Map<String, OverrideValue<String>> clusterYamlOverrides = new HashMap<>();
     private Map<String, Set<String>> effectiveValueToNodesMap = new HashMap<>();
     private final ButtonView yamlValueWarningsButton;
+    private Provider<ConfigPropertyClusterValuesPresenter> configPropertyClusterValuesPresenterProvider;
     private final ButtonView effectiveValueWarningsButton;
 
     @Inject
@@ -74,13 +77,16 @@ public final class ManageGlobalPropertyEditPresenter
                                              final GlobalPropertyEditView view,
                                              final RestFactory restFactory,
                                              final ClientSecurityContext securityContext,
-                                             final UiConfigCache clientPropertyCache) {
+                                             final UiConfigCache clientPropertyCache,
+                                             final Provider<ConfigPropertyClusterValuesPresenter> configPropertyClusterValuesPresenterProvider) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.securityContext = securityContext;
         this.clientPropertyCache = clientPropertyCache;
+        this.configPropertyClusterValuesPresenterProvider = configPropertyClusterValuesPresenterProvider;
 
         this.yamlValueWarningsButton = view.addYamlValueWarningIcon(SvgPresets.ALERT.title("Node values differ"));
+        this.configPropertyClusterValuesPresenterProvider = configPropertyClusterValuesPresenterProvider;
         this.yamlValueWarningsButton.setVisible(false);
 
         this.effectiveValueWarningsButton = view.addEffectiveValueWarningIcon(SvgPresets.ALERT.title("Node values differ"));
@@ -94,14 +100,31 @@ public final class ManageGlobalPropertyEditPresenter
         registerHandler(yamlValueWarningsButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 // TODO Open popup showing all values
+                onOpenClusterValues();
             }
         }));
 
         registerHandler(effectiveValueWarningsButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 // TODO Open popup showing all values
+                onOpenClusterValues();
             }
         }));
+    }
+
+    private void onOpenClusterValues() {
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+            @Override
+            public void onHide(final boolean autoClose, final boolean ok) {
+
+            }
+        };
+
+        if (configPropertyClusterValuesPresenterProvider != null) {
+            final ConfigPropertyClusterValuesPresenter clusterValuesPresenter = configPropertyClusterValuesPresenterProvider.get();
+            clusterValuesPresenter.show(getEntity(), effectiveValueToNodesMap, popupUiHandlers);
+        }
+
     }
 
     protected ClientSecurityContext getSecurityContext() {
