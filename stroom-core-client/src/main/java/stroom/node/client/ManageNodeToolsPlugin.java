@@ -17,10 +17,8 @@
 package stroom.node.client;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
-import stroom.config.global.client.presenter.ManageGlobalPropertyPresenter;
 import stroom.core.client.MenuKeys;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
@@ -35,17 +33,14 @@ import stroom.ui.config.shared.UiConfig;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 
 public class ManageNodeToolsPlugin extends NodeToolsPlugin {
-    private final Provider<ManageGlobalPropertyPresenter> manageGlobalPropertyPresenter;
 
     private final UiConfigCache clientPropertyCache;
 
     @Inject
     public ManageNodeToolsPlugin(final EventBus eventBus,
                                  final ClientSecurityContext securityContext,
-                                 final UiConfigCache clientPropertyCache,
-                                 final Provider<ManageGlobalPropertyPresenter> manageGlobalPropertyPresenter) {
+                                 final UiConfigCache clientPropertyCache) {
         super(eventBus, securityContext);
-        this.manageGlobalPropertyPresenter = manageGlobalPropertyPresenter;
         this.clientPropertyCache = clientPropertyCache;
     }
 
