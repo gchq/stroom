@@ -7,6 +7,7 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
+import javax.validation.constraints.Pattern;
 
 @Singleton
 public class FsVolumeConfig extends AbstractConfig {
@@ -14,6 +15,17 @@ public class FsVolumeConfig extends AbstractConfig {
 //    private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";
     private boolean createDefaultOnStart = true;
+
+    private static final String VOLUME_SELECTOR_PATTERN = "^(" +
+        RoundRobinVolumeSelector.NAME + "|" +
+        MostFreePercentVolumeSelector.NAME + "|" +
+        MostFreeVolumeSelector.NAME + "|" +
+        RandomVolumeSelector.NAME + "|" +
+        RoundRobinIgnoreLeastFreePercentVolumeSelector.NAME + "|" +
+        RoundRobinIgnoreLeastFreeVolumeSelector.NAME + "|" +
+        RoundRobinVolumeSelector.NAME + "|" +
+        WeightedFreePercentRandomVolumeSelector.NAME + "|" +
+        WeightedFreeRandomVolumeSelector.NAME + ")$";
 
     private CacheConfig feedPathCache = new CacheConfig.Builder()
             .maximumSize(1000L)
@@ -47,6 +59,7 @@ public class FsVolumeConfig extends AbstractConfig {
             "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +
             "'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') " +
             "default is 'RoundRobin'")
+    @Pattern(regexp = VOLUME_SELECTOR_PATTERN)
     public String getVolumeSelector() {
         return volumeSelector;
     }
