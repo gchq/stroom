@@ -23,7 +23,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -52,9 +51,10 @@ public class DashboardConfig {
     private LayoutConfig layout;
     @XmlElement(name = "tabVisibility")
     @JsonProperty("tabVisibility")
-    private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
+    private TabVisibility tabVisibility;
 
     public DashboardConfig() {
+        tabVisibility = TabVisibility.SHOW_ALL;
     }
 
     @JsonCreator
@@ -65,7 +65,11 @@ public class DashboardConfig {
         this.parameters = parameters;
         this.components = components;
         this.layout = layout;
-        this.tabVisibility = tabVisibility;
+        if (tabVisibility != null) {
+            this.tabVisibility = tabVisibility;
+        } else {
+            this.tabVisibility = TabVisibility.SHOW_ALL;
+        }
     }
 
     public String getParameters() {

@@ -46,7 +46,11 @@ public class FindActivityCriteria extends BaseCriteria {
                                 @JsonProperty("name") final StringCriteria name) {
         super(pageRequest, sortList);
         this.userId = userId;
-        this.name = name;
+        if (name != null) {
+            this.name = name;
+        } else {
+            this.name = new StringCriteria();
+        }
     }
 
     public static FindActivityCriteria create(final String name) {

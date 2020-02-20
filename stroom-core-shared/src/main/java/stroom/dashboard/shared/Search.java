@@ -41,7 +41,7 @@ public class Search implements Serializable {
     private Map<String, ComponentSettings> componentSettingsMap;
     @XmlElement
     @JsonProperty
-    private Map<String, String> paramMap = Collections.emptyMap();
+    private Map<String, String> paramMap;
     @XmlElement
     @JsonProperty
     private boolean incremental;
@@ -53,6 +53,7 @@ public class Search implements Serializable {
     private String queryInfo;
 
     public Search() {
+        paramMap = Collections.emptyMap();
     }
 
     @JsonCreator
@@ -66,7 +67,11 @@ public class Search implements Serializable {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
-        this.paramMap = paramMap;
+        if (paramMap != null) {
+            this.paramMap = paramMap;
+        } else {
+            this.paramMap = Collections.emptyMap();
+        }
         this.incremental = incremental;
         this.storeHistory = storeHistory;
         this.queryInfo = queryInfo;

@@ -34,11 +34,11 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
     @JsonProperty
     private String stringUpper;
     @JsonProperty
-    private MatchStyle matchStyle = null;
+    private MatchStyle matchStyle;
     @JsonProperty
     private boolean caseInsensitive;
     @JsonProperty
-    private Boolean matchNull = null;
+    private Boolean matchNull;
 
     public StringCriteria() {
     }
