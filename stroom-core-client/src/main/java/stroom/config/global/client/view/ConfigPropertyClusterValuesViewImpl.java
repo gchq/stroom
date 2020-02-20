@@ -1,6 +1,8 @@
 package stroom.config.global.client.view;
 
 import com.google.gwt.uibinder.client.UiBinder;
+import com.google.gwt.uibinder.client.UiField;
+import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.Widget;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -14,6 +16,9 @@ public class ConfigPropertyClusterValuesViewImpl
 
     private final Widget widget;
 
+    @UiField
+    SimplePanel dataGrid;
+
     @Inject
     ConfigPropertyClusterValuesViewImpl(final EventBus eventBus,
                                         final Binder binder) {
@@ -23,6 +28,11 @@ public class ConfigPropertyClusterValuesViewImpl
     @Override
     public Widget asWidget() {
         return widget;
+    }
+
+    @Override
+    public void setList(final Widget widget) {
+        dataGrid.setWidget(widget);
     }
 
     public interface Binder extends UiBinder<Widget, ConfigPropertyClusterValuesViewImpl> {

@@ -21,6 +21,7 @@ public class GlobalPropertyTabViewImpl
     QuickFilter nameFilter;
     @UiField
     ResizeSimplePanel dataGrid;
+
     private Widget widget;
 
     @Inject

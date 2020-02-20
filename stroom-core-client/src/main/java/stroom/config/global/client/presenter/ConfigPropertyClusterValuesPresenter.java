@@ -1,5 +1,6 @@
 package stroom.config.global.client.presenter;
 
+import com.google.gwt.user.client.ui.Widget;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -24,10 +25,15 @@ public class ConfigPropertyClusterValuesPresenter
 
     private Map<String, Set<String>> effectiveValueToNodesMap;
     private ConfigProperty configProperty;
+    private ConfigPropertyClusterValuesListPresenter listPresenter;
 
     @Inject
-    public ConfigPropertyClusterValuesPresenter(final EventBus eventBus) {
+    public ConfigPropertyClusterValuesPresenter(final EventBus eventBus,
+                                                final ConfigPropertyClusterValuesView view,
+                                                final ConfigPropertyClusterValuesListPresenter listPresenter) {
         super(eventBus, new DataGridViewImpl<>(false));
+        this.listPresenter = listPresenter;
+        view.setList(listPresenter.getWidget());
     }
 
     void show(final ConfigProperty configProperty,
@@ -37,6 +43,7 @@ public class ConfigPropertyClusterValuesPresenter
 
         this.effectiveValueToNodesMap = effectiveValueToNodesMap;
         this.configProperty = configProperty;
+        this.listPresenter.setData(effectiveValueToNodesMap);
 
         final String caption = getEntityDisplayType() + " - " + configProperty.getName();
         final PopupView.PopupType popupType = PopupView.PopupType.CLOSE_DIALOG;
@@ -85,5 +92,6 @@ public class ConfigPropertyClusterValuesPresenter
     public interface ConfigPropertyClusterValuesView
         extends View, HasUiHandlers<ConfigPropertyClusterValuesUiHandlers> {
 
+        void setList(Widget widget);
     }
 }

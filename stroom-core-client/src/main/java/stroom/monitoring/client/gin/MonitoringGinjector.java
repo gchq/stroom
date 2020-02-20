@@ -17,6 +17,7 @@
 package stroom.monitoring.client.gin;
 
 import com.google.gwt.inject.client.AsyncProvider;
+import stroom.config.global.client.presenter.ConfigPropertyClusterValuesListPresenter;
 import stroom.config.global.client.presenter.ConfigPropertyClusterValuesPresenter;
 import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter;
@@ -57,6 +58,8 @@ public interface MonitoringGinjector {
     AsyncProvider<ManageGlobalPropertyEditPresenter> getManageGlobalPropertyEditPresenter();
 
     AsyncProvider<ConfigPropertyClusterValuesPresenter> getConfigPropertyClusterValuesPresenter();
+
+    AsyncProvider<ConfigPropertyClusterValuesListPresenter> getConfigPropertyClusterValuesListPresenter();
 
     AsyncProvider<TaskManagerPlugin> getTaskProgressMonitoringPlugin();
 

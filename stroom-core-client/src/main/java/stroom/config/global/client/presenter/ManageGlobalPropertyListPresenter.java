@@ -17,6 +17,7 @@
 package stroom.config.global.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -44,6 +45,7 @@ public class ManageGlobalPropertyListPresenter
 
     @Inject
     public ManageGlobalPropertyListPresenter(final EventBus eventBus,
+                                             final ManageGlobalPropertyEditPresenter.GlobalPropertyEditView globalPropertyEditView,
                                              final ClientDispatchAsync dispatcher) {
         super(eventBus, new DataGridViewImpl<>(true));
 
