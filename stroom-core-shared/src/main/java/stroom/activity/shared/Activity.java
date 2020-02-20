@@ -48,7 +48,7 @@ public class Activity implements HasAuditInfo {
     @JsonProperty
     private String json;
     @JsonProperty
-    private ActivityDetails details = new ActivityDetails();
+    private ActivityDetails details;
 
     @JsonCreator
     public Activity(@JsonProperty("id") final Integer id,

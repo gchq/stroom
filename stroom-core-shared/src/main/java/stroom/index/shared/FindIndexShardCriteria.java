@@ -37,25 +37,40 @@ public class FindIndexShardCriteria extends BaseCriteria {
     public static final String FIELD_PARTITION = "Partition";
 
     @JsonProperty
-    private Range<Integer> documentCountRange = new Range<>();
+    private Range<Integer> documentCountRange;
     @JsonProperty
-    private CriteriaSet<String> nodeNameSet = new CriteriaSet<>();
+    private CriteriaSet<String> nodeNameSet;
     @JsonProperty
-    private CriteriaSet<Integer> volumeIdSet = new CriteriaSet<>();
+    private CriteriaSet<Integer> volumeIdSet;
     @JsonProperty
-    private CriteriaSet<String> indexUuidSet = new CriteriaSet<>();
+    private CriteriaSet<String> indexUuidSet;
     @JsonProperty
-    private CriteriaSet<Long> indexShardIdSet = new CriteriaSet<>();
+    private CriteriaSet<Long> indexShardIdSet;
     @JsonProperty
-    private CriteriaSet<IndexShardStatus> indexShardStatusSet = new CriteriaSet<>();
+    private CriteriaSet<IndexShardStatus> indexShardStatusSet;
     @JsonProperty
-    private StringCriteria partition = new StringCriteria();
+    private StringCriteria partition;
 
     public FindIndexShardCriteria() {
+        documentCountRange = new Range<>();
+        nodeNameSet = new CriteriaSet<>();
+        volumeIdSet = new CriteriaSet<>();
+        indexUuidSet = new CriteriaSet<>();
+        indexShardIdSet = new CriteriaSet<>();
+        indexShardStatusSet = new CriteriaSet<>();
+        partition = new StringCriteria();
     }
 
     public FindIndexShardCriteria(final FindIndexShardCriteria criteria) {
         // Copy constructor.
+        documentCountRange = new Range<>();
+        nodeNameSet = new CriteriaSet<>();
+        volumeIdSet = new CriteriaSet<>();
+        indexUuidSet = new CriteriaSet<>();
+        indexShardIdSet = new CriteriaSet<>();
+        indexShardStatusSet = new CriteriaSet<>();
+        partition = new StringCriteria();
+
         nodeNameSet.copyFrom(criteria.nodeNameSet);
         volumeIdSet.copyFrom(criteria.volumeIdSet);
         documentCountRange = criteria.documentCountRange;
@@ -76,13 +91,41 @@ public class FindIndexShardCriteria extends BaseCriteria {
                                   @JsonProperty("indexShardStatusSet") final CriteriaSet<IndexShardStatus> indexShardStatusSet,
                                   @JsonProperty("partition") final StringCriteria partition) {
         super(pageRequest, sortList);
-        this.documentCountRange = documentCountRange;
-        this.nodeNameSet = nodeNameSet;
-        this.volumeIdSet = volumeIdSet;
-        this.indexUuidSet = indexUuidSet;
-        this.indexShardIdSet = indexShardIdSet;
-        this.indexShardStatusSet = indexShardStatusSet;
-        this.partition = partition;
+        if (documentCountRange != null) {
+            this.documentCountRange = documentCountRange;
+        } else {
+            this.documentCountRange = new Range<>();
+        }
+        if (nodeNameSet != null) {
+            this.nodeNameSet = nodeNameSet;
+        } else {
+            this.nodeNameSet = new CriteriaSet<>();
+        }
+        if (volumeIdSet != null) {
+            this.volumeIdSet = volumeIdSet;
+        } else {
+            this.volumeIdSet = new CriteriaSet<>();
+        }
+        if (indexUuidSet != null) {
+            this.indexUuidSet = indexUuidSet;
+        } else {
+            this.indexUuidSet = new CriteriaSet<>();
+        }
+        if (indexShardIdSet != null) {
+            this.indexShardIdSet = indexShardIdSet;
+        } else {
+            this.indexShardIdSet = new CriteriaSet<>();
+        }
+        if (indexShardStatusSet != null) {
+            this.indexShardStatusSet = indexShardStatusSet;
+        } else {
+            this.indexShardStatusSet = new CriteriaSet<>();
+        }
+        if (partition != null) {
+            this.partition = partition;
+        } else {
+            this.partition = new StringCriteria();
+        }
     }
 
     public CriteriaSet<IndexShardStatus> getIndexShardStatusSet() {

@@ -51,13 +51,14 @@ public class FsVolume implements HasAuditInfo {
     @JsonProperty
     private String path;
     @JsonProperty
-    private VolumeUseStatus status = VolumeUseStatus.ACTIVE;
+    private VolumeUseStatus status;
     @JsonProperty
     private Long byteLimit;
     @JsonProperty
     private FsVolumeState volumeState;
 
     public FsVolume() {
+        status = VolumeUseStatus.ACTIVE;
     }
 
     @JsonCreator
@@ -78,7 +79,11 @@ public class FsVolume implements HasAuditInfo {
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
         this.path = path;
-        this.status = status;
+        if (status != null) {
+            this.status = status;
+        } else {
+            this.status = VolumeUseStatus.ACTIVE;
+        }
         this.byteLimit = byteLimit;
         this.volumeState = volumeState;
     }

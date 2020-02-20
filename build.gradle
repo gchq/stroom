@@ -156,6 +156,7 @@ ext.libs = [
         commons_lang                   : "org.apache.commons:commons-lang3", // version controlled by DW BOM
         commons_pool2                  : "org.apache.commons:commons-pool2:2.6.0",
         commons_text                   : "org.apache.commons:commons-text:1.4", // 1.4 needed by YamlUtil
+        classgraph                     : "io.github.classgraph:classgraph:4.8.64",
         curator_client                 : "org.apache.curator:curator-client:$versions.curator",
         curator_framework              : "org.apache.curator:curator-framework:$versions.curator",
         curator_x_discovery            : "org.apache.curator:curator-x-discovery:$versions.curator",

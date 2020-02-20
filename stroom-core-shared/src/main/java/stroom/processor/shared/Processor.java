@@ -28,10 +28,7 @@ import java.util.Objects;
 
 @JsonInclude(Include.NON_DEFAULT)
 public class Processor implements HasAuditInfo, HasUuid {
-//    public static final String ENTITY_TYPE = "StreamProcessor";
-
     private static final String PIPELINE_STREAM_PROCESSOR_TASK_TYPE = "pipelineStreamProcessor";
-    private static final long serialVersionUID = -958099873937223257L;
 
     // standard id, OCC and audit fields
     @JsonProperty
@@ -51,7 +48,7 @@ public class Processor implements HasAuditInfo, HasUuid {
 
     // Only One type for the moment
     @JsonProperty
-    private String taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
+    private String taskType;
     @JsonProperty
     private String pipelineUuid;
     @JsonProperty
@@ -61,9 +58,11 @@ public class Processor implements HasAuditInfo, HasUuid {
 //    private String pipelineName;
 
     public Processor() {
+        taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
     }
 
     public Processor(final DocRef pipelineRef) {
+        taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
         this.pipelineUuid = pipelineRef.getUuid();
     }
 
@@ -85,7 +84,11 @@ public class Processor implements HasAuditInfo, HasUuid {
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
         this.uuid = uuid;
-        this.taskType = taskType;
+        if (taskType != null) {
+            this.taskType = taskType;
+        } else {
+            this.taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
+        }
         this.pipelineUuid = pipelineUuid;
         this.enabled = enabled;
     }

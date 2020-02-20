@@ -28,12 +28,14 @@ public abstract class FindNamedEntityCriteria extends BaseCriteria {
     public static final String FIELD_NAME = "Name";
 
     @JsonProperty
-    private StringCriteria name = new StringCriteria();
+    private StringCriteria name;
 
     public FindNamedEntityCriteria() {
+        this.name = new StringCriteria();
     }
 
     public FindNamedEntityCriteria(final String name) {
+        this.name = new StringCriteria();
         this.name.setString(name);
     }
 
@@ -42,7 +44,11 @@ public abstract class FindNamedEntityCriteria extends BaseCriteria {
                                    @JsonProperty("sortList") final List<Sort> sortList,
                                    @JsonProperty("name") final StringCriteria name) {
         super(pageRequest, sortList);
-        this.name = name;
+        if (name != null) {
+            this.name = name;
+        } else {
+            this.name = new StringCriteria();
+        }
     }
 
     public StringCriteria getName() {

@@ -70,11 +70,10 @@ public class StroomStatsStoreCustomMaskListPresenter
     private final RestFactory restFactory;
     private MaskHolder selectedElement;
     private StroomStatsStoreDoc stroomStatsStoreEntity;
-    private MaskHolderList maskList = new MaskHolderList();
+    private MaskHolderList maskList;
 
     private boolean readOnly = true;
 
-    @SuppressWarnings("unchecked")
     @Inject
     public StroomStatsStoreCustomMaskListPresenter(final EventBus eventBus, final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<>(true, true));

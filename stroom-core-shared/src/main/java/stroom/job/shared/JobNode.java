@@ -28,7 +28,7 @@ public class JobNode implements HasAuditInfo {
     @JsonProperty
     private Job job;
     @JsonProperty
-    private JobType jobType = JobType.UNKNOWN;
+    private JobType jobType;
     @JsonProperty
     private String nodeName;
     @JsonProperty
@@ -79,7 +79,9 @@ public class JobNode implements HasAuditInfo {
         this.job = job;
         this.jobType = jobType;
         this.nodeName = nodeName;
-        this.taskLimit = taskLimit;
+        if (taskLimit > 0) {
+            this.taskLimit = taskLimit;
+        }
         this.schedule = schedule;
         this.enabled = enabled;
     }

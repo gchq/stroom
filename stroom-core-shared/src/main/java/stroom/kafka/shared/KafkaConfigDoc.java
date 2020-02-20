@@ -46,25 +46,13 @@ public class KafkaConfigDoc extends Doc {
     @JsonProperty
     private String description;
     @JsonProperty
-    private String kafkaVersion = "2.2.1";
+    private String kafkaVersion;
     @JsonProperty
     private Map<String, Object> properties;
 
     public KafkaConfigDoc() {
-        properties = new HashMap<>();
-
-        // Set some useful defaults.
-        properties.put(BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        properties.put(ACKS_CONFIG, "all");
-        properties.put(RETRIES_CONFIG, 0);
-        properties.put(BATCH_SIZE_CONFIG, 16384);
-        properties.put(LINGER_MS_CONFIG, 1);
-        properties.put(BUFFER_MEMORY_CONFIG, 33554432);
-
-        // TODO not sure if these should be strings or Class objects (the latter will be awkward)
-        // Serializers are hard coded as we have to specify the types when creating the
-        properties.put(KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
-        properties.put(VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
+        kafkaVersion = "2.2.1";
+        setDefaultProperties();
     }
 
     @JsonCreator
@@ -81,8 +69,34 @@ public class KafkaConfigDoc extends Doc {
                           @JsonProperty("properties") final Map<String, Object> properties) {
         super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
         this.description = description;
-        this.kafkaVersion = kafkaVersion;
-        this.properties = properties;
+        if (kafkaVersion != null) {
+            this.kafkaVersion = kafkaVersion;
+        } else {
+            this.kafkaVersion = "2.2.1";
+        }
+
+        if (properties != null) {
+            this.properties = properties;
+        } else {
+            setDefaultProperties();
+        }
+    }
+
+    private void setDefaultProperties() {
+        properties = new HashMap<>();
+
+        // Set some useful defaults.
+        properties.put(BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        properties.put(ACKS_CONFIG, "all");
+        properties.put(RETRIES_CONFIG, 0);
+        properties.put(BATCH_SIZE_CONFIG, 16384);
+        properties.put(LINGER_MS_CONFIG, 1);
+        properties.put(BUFFER_MEMORY_CONFIG, 33554432);
+
+        // TODO not sure if these should be strings or Class objects (the latter will be awkward)
+        // Serializers are hard coded as we have to specify the types when creating the
+        properties.put(KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+        properties.put(VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
     }
 
     public String getDescription() {

@@ -22,7 +22,7 @@ import java.util.Objects;
 @XmlType(name = "SolrConnectionConfig", propOrder = {"useZk", "instanceType", "solrUrls", "zkHosts", "zkPath"})
 public class SolrConnectionConfig implements Serializable {
     @JsonProperty
-    private InstanceType instanceType = InstanceType.SINGLE_NOOE;
+    private InstanceType instanceType;
     @JsonProperty
     private boolean useZk;
     @JsonProperty

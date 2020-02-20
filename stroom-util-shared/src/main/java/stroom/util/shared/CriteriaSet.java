@@ -46,9 +46,9 @@ public class CriteriaSet<T>
      * setting match all it will match all regardless.
      */
     @JsonProperty
-    private Boolean matchAll = null;
+    private Boolean matchAll;
     @JsonProperty
-    private Boolean matchNull = null;
+    private Boolean matchNull;
     @JsonProperty
     private Set<T> set;
 

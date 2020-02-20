@@ -81,11 +81,12 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
      * 20 is high.
      */
     @JsonProperty
-    private int priority = 10;
+    private int priority;
     @JsonProperty
     private boolean enabled;
 
     public ProcessorFilter() {
+        priority = 10;
     }
 
     @JsonCreator
@@ -113,7 +114,11 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
         this.queryData = queryData;
         this.processor = processor;
         this.processorFilterTracker = processorFilterTracker;
-        this.priority = priority;
+        if (priority > 0) {
+            this.priority = priority;
+        } else {
+            this.priority = 10;
+        }
         this.enabled = enabled;
     }
 

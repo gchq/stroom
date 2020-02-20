@@ -80,14 +80,14 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
 
     // The cluster wide value held in the database and set by the user in the UI, may be null.
     @JsonProperty("databaseOverrideValue")
-    private OverrideValue<String> databaseOverrideValue = OverrideValue.unSet(String.class);
+    private OverrideValue<String> databaseOverrideValue;
 
     // These fields are not saved to the database,
     // they come from the annotations on the java config classes
 
     // The node specific value as set by the dropwizard YAML file
     @JsonProperty("yamlOverrideValue")
-    private OverrideValue<String> yamlOverrideValue = OverrideValue.unSet(String.class);
+    private OverrideValue<String> yamlOverrideValue;
 
     @JsonProperty("description")
     private String description;
@@ -104,12 +104,15 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
     private String dataTypeName;
 
     ConfigProperty() {
-        // Required for GWT serialisation
+        databaseOverrideValue = OverrideValue.unSet(String.class);
+        yamlOverrideValue = OverrideValue.unSet(String.class);
     }
 
     @JsonIgnore
     public ConfigProperty(final PropertyPath name) {
         this.name = name;
+        databaseOverrideValue = OverrideValue.unSet(String.class);
+        yamlOverrideValue = OverrideValue.unSet(String.class);
     }
 
     @JsonIgnore
@@ -117,6 +120,8 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
                           final String defaultValue) {
         this.name = name;
         this.defaultValue = defaultValue;
+        databaseOverrideValue = OverrideValue.unSet(String.class);
+        yamlOverrideValue = OverrideValue.unSet(String.class);
     }
 
     @JsonCreator
@@ -144,8 +149,16 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
         this.updateUser = updateUser;
         this.name = name;
         this.defaultValue = defaultValue;
-        this.databaseOverrideValue = databaseOverrideValue;
-        this.yamlOverrideValue = yamlOverrideValue;
+        if (databaseOverrideValue != null) {
+            this.databaseOverrideValue = databaseOverrideValue;
+        } else {
+            this.databaseOverrideValue = OverrideValue.unSet(String.class);
+        }
+        if (yamlOverrideValue != null) {
+            this.yamlOverrideValue = yamlOverrideValue;
+        } else {
+            this.yamlOverrideValue = OverrideValue.unSet(String.class);
+        }
         this.description = description;
         this.isEditable = isEditable;
         this.isPassword = isPassword;

@@ -51,13 +51,14 @@ public class ProcessorTask {
     @JsonProperty
     private Long endTimeMs;
     @JsonProperty
-    private TaskStatus status = TaskStatus.UNPROCESSED;
+    private TaskStatus status;
 
     // parent filter
     @JsonProperty
     private ProcessorFilter processorFilter;
 
     public ProcessorTask() {
+        status = TaskStatus.UNPROCESSED;
     }
 
     @JsonCreator
@@ -83,7 +84,11 @@ public class ProcessorTask {
         this.statusTimeMs = statusTimeMs;
         this.startTimeMs = startTimeMs;
         this.endTimeMs = endTimeMs;
-        this.status = status;
+        if (status != null){
+            this.status = status;
+        } else {
+            this.status = TaskStatus.UNPROCESSED;
+        }
         this.processorFilter = processorFilter;
     }
 

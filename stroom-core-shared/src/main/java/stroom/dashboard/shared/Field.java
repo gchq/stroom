@@ -64,13 +64,13 @@ public class Field implements Serializable, HasDisplayValue {
     private Integer group;
     @XmlElement(name = "width")
     @JsonProperty("width")
-    private int width = 200;
+    private Integer width = 200;
     @XmlElement(name = "visible")
     @JsonProperty("visible")
-    private boolean visible = true;
+    private Boolean visible = true;
     @XmlElement(name = "special")
     @JsonProperty(value = "special")
-    private boolean special = false;
+    private Boolean special = false;
 
     public Field() {
     }
@@ -87,9 +87,9 @@ public class Field implements Serializable, HasDisplayValue {
                  @JsonProperty("filter") final Filter filter,
                  @JsonProperty("format") final Format format,
                  @JsonProperty("group") final Integer group,
-                 @JsonProperty("width") final int width,
-                 @JsonProperty("visible") final boolean visible,
-                 @JsonProperty("special") final boolean special) {
+                 @JsonProperty("width") final Integer width,
+                 @JsonProperty("visible") final Boolean visible,
+                 @JsonProperty("special") final Boolean special) {
         this.id = id;
         this.name = name;
         this.expression = expression;
@@ -97,9 +97,15 @@ public class Field implements Serializable, HasDisplayValue {
         this.filter = filter;
         this.format = format;
         this.group = group;
-        this.width = width;
-        this.visible = visible;
-        this.special = special;
+        if (width != null) {
+            this.width = width;
+        }
+        if (visible != null) {
+            this.visible = visible;
+        }
+        if (special != null) {
+            this.special = special;
+        }
     }
 
     public String getId() {
@@ -158,27 +164,27 @@ public class Field implements Serializable, HasDisplayValue {
         this.group = group;
     }
 
-    public int getWidth() {
+    public Integer getWidth() {
         return width;
     }
 
-    public void setWidth(final int width) {
+    public void setWidth(final Integer width) {
         this.width = width;
     }
 
-    public boolean isVisible() {
+    public Boolean isVisible() {
         return visible;
     }
 
-    public void setVisible(final boolean visible) {
+    public void setVisible(final Boolean visible) {
         this.visible = visible;
     }
 
-    public boolean isSpecial() {
+    public Boolean isSpecial() {
         return special;
     }
 
-    public void setSpecial(final boolean special) {
+    public void setSpecial(final Boolean special) {
         this.special = special;
     }
 

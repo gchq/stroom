@@ -64,12 +64,14 @@ public class TextComponentSettings extends ComponentSettings {
     private DocRef pipeline;
     @XmlElement(name = "showAsHtml")
     @JsonProperty("showAsHtml")
-    private boolean showAsHtml;
+    private Boolean showAsHtml;
     @XmlElement(name = "showStepping")
     @JsonProperty
-    private boolean showStepping = true;
+    private Boolean showStepping;
 
     public TextComponentSettings() {
+        showAsHtml = false;
+        showStepping = true;
     }
 
     @JsonCreator
@@ -82,8 +84,8 @@ public class TextComponentSettings extends ComponentSettings {
                                  @JsonProperty("lineToField") final Field lineToField,
                                  @JsonProperty("colToField") final Field colToField,
                                  @JsonProperty("pipeline") final DocRef pipeline,
-                                 @JsonProperty("showAsHtml") final boolean showAsHtml,
-                                 @JsonProperty("showStepping") final boolean showStepping) {
+                                 @JsonProperty("showAsHtml") final Boolean showAsHtml,
+                                 @JsonProperty("showStepping") final Boolean showStepping) {
         this.tableId = tableId;
         this.streamIdField = streamIdField;
         this.partNoField = partNoField;
@@ -93,8 +95,16 @@ public class TextComponentSettings extends ComponentSettings {
         this.lineToField = lineToField;
         this.colToField = colToField;
         this.pipeline = pipeline;
-        this.showAsHtml = showAsHtml;
-        this.showStepping = showStepping;
+        if (showAsHtml != null) {
+            this.showAsHtml = showAsHtml;
+        } else {
+            this.showAsHtml = false;
+        }
+        if (showStepping != null) {
+            this.showStepping = showStepping;
+        } else {
+            this.showStepping = true;
+        }
     }
 
     public String getTableId() {
@@ -169,19 +179,19 @@ public class TextComponentSettings extends ComponentSettings {
         this.pipeline = pipeline;
     }
 
-    public boolean isShowAsHtml() {
+    public Boolean isShowAsHtml() {
         return showAsHtml;
     }
 
-    public void setShowAsHtml(boolean showAsHtml) {
+    public void setShowAsHtml(Boolean showAsHtml) {
         this.showAsHtml = showAsHtml;
     }
 
-    public boolean isShowStepping() {
+    public Boolean isShowStepping() {
         return showStepping;
     }
 
-    public void setShowStepping(final boolean showStepping) {
+    public void setShowStepping(final Boolean showStepping) {
         this.showStepping = showStepping;
     }
 }

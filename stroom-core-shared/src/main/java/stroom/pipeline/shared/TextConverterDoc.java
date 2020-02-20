@@ -37,9 +37,10 @@ public class TextConverterDoc extends Doc implements HasData {
     @JsonProperty
     private String data;
     @JsonProperty
-    private TextConverterType converterType = TextConverterType.NONE;
+    private TextConverterType converterType;
 
     public TextConverterDoc() {
+        converterType = TextConverterType.NONE;
     }
 
     @JsonCreator
@@ -57,7 +58,12 @@ public class TextConverterDoc extends Doc implements HasData {
         super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
         this.description = description;
         this.data = data;
-        this.converterType = converterType;
+
+        if (converterType != null) {
+            this.converterType = converterType;
+        } else {
+            this.converterType = TextConverterType.NONE;
+        }
     }
 
     public String getDescription() {

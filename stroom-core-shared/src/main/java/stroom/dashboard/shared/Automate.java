@@ -44,9 +44,10 @@ public class Automate {
 
     @XmlElement(name = "refreshInterval")
     @JsonProperty("refreshInterval")
-    private String refreshInterval = "10s";
+    private String refreshInterval;
 
     public Automate() {
+        refreshInterval = "10s";
     }
 
     @JsonCreator
@@ -55,7 +56,12 @@ public class Automate {
                     @JsonProperty("refreshInterval") final String refreshInterval) {
         this.open = open;
         this.refresh = refresh;
-        this.refreshInterval = refreshInterval;
+
+        if (refreshInterval != null) {
+            this.refreshInterval = refreshInterval;
+        } else {
+            this.refreshInterval = "10s";
+        }
     }
 
     public boolean isOpen() {

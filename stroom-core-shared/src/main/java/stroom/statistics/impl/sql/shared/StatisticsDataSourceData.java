@@ -77,8 +77,16 @@ public class StatisticsDataSourceData {
     @JsonCreator
     public StatisticsDataSourceData(@JsonProperty("statisticFields") final List<StatisticField> statisticFields,
                                     @JsonProperty("customRollUpMasks") final Set<CustomRollUpMask> customRollUpMasks) {
-        this.statisticFields = statisticFields;
-        this.customRollUpMasks = customRollUpMasks;
+        if (statisticFields != null) {
+            this.statisticFields = statisticFields;
+        } else {
+            this.statisticFields = new ArrayList<>();
+        }
+        if (customRollUpMasks != null) {
+            this.customRollUpMasks = customRollUpMasks;
+        } else {
+            this.customRollUpMasks = new HashSet<>();
+        }
 
         // sort the list of fields as this will help us later when generating
         // StatisticEvents

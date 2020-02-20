@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @Singleton
@@ -119,7 +120,7 @@ class JobBootstrap {
                     jobNodeDao.create(newJobNode);
                     existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
 
-                } else if (!newJobNode.getJobType().equals(existingJobNode.getJobType())) {
+                } else if (!Objects.equals(newJobNode.getJobType(), existingJobNode.getJobType())) {
                     // If the job type has changed then update the job node.
                     existingJobNode.setJobType(newJobNode.getJobType());
                     existingJobNode.setSchedule(newJobNode.getSchedule());

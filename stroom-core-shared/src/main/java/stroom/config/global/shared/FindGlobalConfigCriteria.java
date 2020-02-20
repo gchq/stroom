@@ -30,9 +30,10 @@ import java.util.List;
 @JsonInclude(Include.NON_DEFAULT)
 public class FindGlobalConfigCriteria extends BaseCriteria {
     @JsonProperty
-    private StringCriteria name = new StringCriteria();
+    private StringCriteria name;
 
     public FindGlobalConfigCriteria() {
+        name = new StringCriteria();
     }
 
     @JsonCreator
@@ -40,7 +41,11 @@ public class FindGlobalConfigCriteria extends BaseCriteria {
                                     @JsonProperty("sortList") final List<Sort> sortList,
                                     @JsonProperty("name") final StringCriteria name) {
         super(pageRequest, sortList);
-        this.name = name;
+        if (name != null) {
+            this.name = name;
+        } else {
+            this.name = new StringCriteria();
+        }
     }
 
     public static FindGlobalConfigCriteria create(final String name) {

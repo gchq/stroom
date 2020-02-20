@@ -77,10 +77,18 @@ public class IndexDoc extends Doc {
                     @JsonProperty("volumeGroupName") final String volumeGroupName) {
         super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
         this.description = description;
-        this.maxDocsPerShard = maxDocsPerShard;
-        this.partitionBy = partitionBy;
-        this.partitionSize = partitionSize;
-        this.shardsPerPartition = shardsPerPartition;
+        if (maxDocsPerShard > 0) {
+            this.maxDocsPerShard = maxDocsPerShard;
+        }
+        if (partitionBy != null) {
+            this.partitionBy = partitionBy;
+        }
+        if (partitionSize > 0) {
+            this.partitionSize = partitionSize;
+        }
+        if (shardsPerPartition > 0) {
+            this.shardsPerPartition = shardsPerPartition;
+        }
         this.retentionDayAge = retentionDayAge;
         this.fields = fields;
         this.volumeGroupName = volumeGroupName;

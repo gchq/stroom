@@ -139,6 +139,9 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         final Column<JobNode, JobType> typeEditColumn = new Column<JobNode, JobType>(new JobTypeCell()) {
             @Override
             public JobType getValue(final JobNode row) {
+                if (row.getJobType() == null) {
+                    return JobType.UNKNOWN;
+                }
                 return row.getJobType();
             }
 
@@ -170,7 +173,7 @@ public class JobNodeListPresenter extends MyPresenterWidget<DataGridView<JobNode
         final Column<JobNode, Number> maxColumn = new Column<JobNode, Number>(new ValueSpinnerCell(1, 1000)) {
             @Override
             public Number getValue(final JobNode row) {
-                if (row.getJobType().equals(JobType.DISTRIBUTED)) {
+                if (JobType.DISTRIBUTED.equals(row.getJobType())) {
                     return new EditableInteger(row.getTaskLimit());
                 }
                 return null;

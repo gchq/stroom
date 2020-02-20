@@ -6,14 +6,14 @@ import org.jooq.OrderField;
 import org.jooq.Record;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.job.impl.FindJobNodeCriteria;
 import stroom.job.impl.JobNodeDao;
 import stroom.job.impl.db.jooq.tables.records.JobNodeRecord;
-import stroom.job.impl.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.HasIntCrud;
+import stroom.util.shared.ResultPage;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -68,7 +68,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
     private static final BiFunction<JobNode, JobNodeRecord, JobNodeRecord> JOB_NODE_TO_RECORD_MAPPER = (jobNode, record) -> {
         record.from(jobNode);
         record.set(JOB_NODE.JOB_ID, jobNode.getJob().getId());
-        record.set(JOB_NODE.JOB_TYPE, jobNode.getJobType().getPrimitiveValue());
+        record.set(JOB_NODE.JOB_TYPE, jobNode.getJobType() != null ? jobNode.getJobType().getPrimitiveValue() : JobType.UNKNOWN.getPrimitiveValue());
         return record;
     };
 
@@ -120,7 +120,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
 
     @Override
     public Optional<JobNode> fetch(int id) {
-       return JooqUtil.contextResult(jobDbConnProvider, context -> context
+        return JooqUtil.contextResult(jobDbConnProvider, context -> context
                 .select()
                 .from(JOB_NODE)
                 .join(JOB).on(JOB_NODE.JOB_ID.eq(JOB.ID))
