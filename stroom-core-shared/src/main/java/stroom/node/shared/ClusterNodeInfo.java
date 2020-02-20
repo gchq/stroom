@@ -43,7 +43,6 @@ public class ClusterNodeInfo {
     private String error;
 
     public ClusterNodeInfo() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public ClusterNodeInfo(final String discoverTime, final BuildInfo buildInfo, final String nodeName, final String clusterURL) {

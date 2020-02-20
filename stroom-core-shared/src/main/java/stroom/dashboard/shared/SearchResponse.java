@@ -68,7 +68,6 @@ public class SearchResponse {
     private Map<String, ComponentResult> results;
 
     public SearchResponse() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

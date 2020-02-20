@@ -34,7 +34,6 @@ public class ProcessorRow extends ProcessorListRow {
     private Expander expander;
 
     public ProcessorRow() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

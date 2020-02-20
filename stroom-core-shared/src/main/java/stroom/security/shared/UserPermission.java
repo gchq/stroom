@@ -28,7 +28,6 @@ public class UserPermission implements Serializable, Comparable<UserPermission> 
     private String permission;
 
     public UserPermission() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public UserPermission(final String userUuid, final String permission) {

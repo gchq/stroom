@@ -63,10 +63,13 @@ public class PipelineLink implements Comparable<PipelineLink> {
 
     @XmlElement(required = true)
     @JsonProperty
-    private final String from;
+    private String from;
     @XmlElement(required = true)
     @JsonProperty
-    private final String to;
+    private String to;
+
+    public PipelineLink() {
+    }
 
     public PipelineLink(final String from, final String to) {
         this.from = from;

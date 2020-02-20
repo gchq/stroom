@@ -51,7 +51,6 @@ public class FeedDoc extends Doc {
     private FeedStatus feedStatus;
 
     public FeedDoc() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public FeedDoc(final String name) {

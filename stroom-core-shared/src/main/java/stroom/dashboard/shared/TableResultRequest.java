@@ -50,7 +50,6 @@ public class TableResultRequest extends ComponentResultRequest {
     private Set<String> openGroups;
 
     public TableResultRequest() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public TableResultRequest(final int offset, final int length) {

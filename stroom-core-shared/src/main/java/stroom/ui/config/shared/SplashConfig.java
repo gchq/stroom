@@ -1,7 +1,6 @@
 package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
@@ -14,7 +13,6 @@ public class SplashConfig extends AbstractConfig {
     private String version = "v0.1";
 
     public SplashConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonPropertyDescription("If you would like users to see a splash screen on login.")

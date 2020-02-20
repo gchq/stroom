@@ -23,8 +23,6 @@ import stroom.util.shared.HasAuditInfo;
  * Represents a node for storage and processing.
  */
 public class Node implements HasAuditInfo {
-    private static final long serialVersionUID = 3578705325508265924L;
-
     public static final String ENTITY_TYPE = "Node";
 
     private Integer id;
@@ -45,7 +43,6 @@ public class Node implements HasAuditInfo {
     private boolean enabled = true;
 
     public Node() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     /**

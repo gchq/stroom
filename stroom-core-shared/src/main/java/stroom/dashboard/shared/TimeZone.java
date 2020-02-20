@@ -49,7 +49,6 @@ public class TimeZone {
     private Integer offsetMinutes;
 
     public TimeZone() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

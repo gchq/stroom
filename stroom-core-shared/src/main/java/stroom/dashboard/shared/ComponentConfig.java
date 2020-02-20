@@ -22,7 +22,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
@@ -53,7 +52,6 @@ public class ComponentConfig {
     private ComponentSettings settings;
 
     public ComponentConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

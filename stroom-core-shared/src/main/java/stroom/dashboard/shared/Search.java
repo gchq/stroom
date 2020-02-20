@@ -53,7 +53,6 @@ public class Search implements Serializable {
     private String queryInfo;
 
     public Search() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

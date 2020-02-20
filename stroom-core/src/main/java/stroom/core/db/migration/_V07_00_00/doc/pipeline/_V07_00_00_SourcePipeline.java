@@ -26,7 +26,6 @@ public class _V07_00_00_SourcePipeline implements _V07_00_00_SharedObject {
     private _V07_00_00_DocRef pipeline;
 
     public _V07_00_00_SourcePipeline() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_SourcePipeline(final _V07_00_00_PipelineDoc pipeline) {

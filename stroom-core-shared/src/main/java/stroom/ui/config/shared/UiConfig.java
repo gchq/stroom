@@ -44,7 +44,6 @@ public class UiConfig extends AbstractConfig {
     private UrlConfig urlConfig = new UrlConfig();
 
     public UiConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonPropertyDescription("HTML")

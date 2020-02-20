@@ -49,7 +49,6 @@ public class ExplorerNode implements HasDisplayValue {
     private List<ExplorerNode> children;
 
     public ExplorerNode() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public ExplorerNode(final String type, final String uuid, final String name, final String tags) {
@@ -187,6 +186,10 @@ public class ExplorerNode implements HasDisplayValue {
         return getDisplayValue();
     }
 
+    public enum NodeState {
+        OPEN, CLOSED, LEAF
+    }
+
     public static class Builder {
         private final ExplorerNode instance;
 
@@ -232,9 +235,5 @@ public class ExplorerNode implements HasDisplayValue {
         public ExplorerNode build() {
             return instance;
         }
-    }
-
-    public enum NodeState {
-        OPEN, CLOSED, LEAF
     }
 }

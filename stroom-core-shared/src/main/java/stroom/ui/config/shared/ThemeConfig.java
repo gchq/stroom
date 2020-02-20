@@ -1,7 +1,6 @@
 package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
@@ -19,7 +18,6 @@ public class ThemeConfig extends AbstractConfig {
     private String labelColours = "TEST1=#FF0000,TEST2=#FF9900";
 
     public ThemeConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonPropertyDescription("GUI")

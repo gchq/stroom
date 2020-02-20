@@ -70,7 +70,6 @@ public class TextComponentSettings extends ComponentSettings {
     private boolean showStepping = true;
 
     public TextComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

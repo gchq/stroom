@@ -40,7 +40,6 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
     private String user;
 
     public FindXMLSchemaCriteria() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator
@@ -105,10 +104,7 @@ public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
         if (systemId != null && !systemId.equals(doc.getSystemId())) {
             return false;
         }
-        if (schemaGroup != null && !schemaGroup.equals(doc.getSchemaGroup())) {
-            return false;
-        }
-        return true;
+        return schemaGroup == null || schemaGroup.equals(doc.getSchemaGroup());
     }
 
     @Override

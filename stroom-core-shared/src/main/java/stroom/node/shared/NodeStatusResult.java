@@ -23,7 +23,6 @@ public class NodeStatusResult {
     private boolean master;
 
     public NodeStatusResult() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public NodeStatusResult(final Node node, final boolean master) {

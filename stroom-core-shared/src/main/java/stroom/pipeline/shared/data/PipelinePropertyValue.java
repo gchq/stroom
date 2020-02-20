@@ -74,7 +74,6 @@ public class PipelinePropertyValue implements Copyable<PipelinePropertyValue> {
     protected DocRef entity;
 
     public PipelinePropertyValue() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

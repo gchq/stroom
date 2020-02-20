@@ -46,7 +46,6 @@ public class Limits {
     private Long durationMs;
 
     public Limits() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

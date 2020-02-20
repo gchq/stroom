@@ -35,7 +35,6 @@ public class Sort implements Serializable {
     private boolean ignoreCase;
 
     public Sort() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

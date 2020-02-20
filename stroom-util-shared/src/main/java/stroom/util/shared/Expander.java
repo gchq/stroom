@@ -32,7 +32,6 @@ public class Expander {
     private boolean leaf;
 
     public Expander() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

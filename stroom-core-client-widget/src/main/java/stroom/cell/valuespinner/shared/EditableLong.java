@@ -23,7 +23,6 @@ public class EditableLong extends Number implements Comparable<EditableLong>, Ed
     private boolean editable = true;
 
     public EditableLong() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public EditableLong(final Long _long) {

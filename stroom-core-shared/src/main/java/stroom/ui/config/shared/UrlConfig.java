@@ -1,7 +1,6 @@
 package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-
 import stroom.util.shared.AbstractConfig;
 
 public class UrlConfig extends AbstractConfig {
@@ -22,7 +21,6 @@ public class UrlConfig extends AbstractConfig {
     private String documentPermissions = "http://IP_ADDRESS/s/authorisationManager/document/";
 
     public UrlConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonPropertyDescription("The URL of Stroom as provided to the browser")

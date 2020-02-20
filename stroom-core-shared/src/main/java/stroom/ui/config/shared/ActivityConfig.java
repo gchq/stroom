@@ -1,7 +1,6 @@
 package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
@@ -19,7 +18,6 @@ public class ActivityConfig extends AbstractConfig {
             "Explain what the activity is";
 
     public ActivityConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonPropertyDescription("If you would like users to be able to record some info about the activity they are performing set this property to true.")

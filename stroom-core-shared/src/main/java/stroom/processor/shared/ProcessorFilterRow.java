@@ -35,7 +35,6 @@ public class ProcessorFilterRow extends ProcessorListRow {
     private ProcessorFilter processorFilter;
 
     public ProcessorFilterRow() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

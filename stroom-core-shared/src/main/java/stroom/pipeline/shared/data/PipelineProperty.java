@@ -76,7 +76,6 @@ public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<
     private PipelinePropertyValue value;
 
     public PipelineProperty() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public PipelineProperty(final String element, final String name) {

@@ -29,7 +29,6 @@ public class OrderBy implements HasDisplayValue, Serializable {
     private boolean caseInsensitive;
 
     public OrderBy() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public OrderBy(final String displayValue) {

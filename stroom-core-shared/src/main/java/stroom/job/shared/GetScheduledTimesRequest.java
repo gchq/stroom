@@ -25,7 +25,6 @@ public class GetScheduledTimesRequest {
     private String schedule;
 
     public GetScheduledTimesRequest() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public GetScheduledTimesRequest(final JobType jobType,

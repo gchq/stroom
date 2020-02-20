@@ -61,7 +61,6 @@ public class Processor implements HasAuditInfo, HasUuid {
 //    private String pipelineName;
 
     public Processor() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public Processor(final DocRef pipelineRef) {

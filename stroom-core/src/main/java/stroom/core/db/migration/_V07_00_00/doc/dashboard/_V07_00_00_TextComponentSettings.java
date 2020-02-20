@@ -40,7 +40,6 @@ public class _V07_00_00_TextComponentSettings extends _V07_00_00_ComponentSettin
     private boolean showAsHtml;
 
     public _V07_00_00_TextComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public String getTableId() {

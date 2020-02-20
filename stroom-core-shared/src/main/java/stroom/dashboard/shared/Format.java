@@ -56,7 +56,6 @@ public class Format implements Serializable {
     private Boolean wrap;
 
     public Format() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public Format(final Type type) {

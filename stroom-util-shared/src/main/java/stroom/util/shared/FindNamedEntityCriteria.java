@@ -31,7 +31,6 @@ public abstract class FindNamedEntityCriteria extends BaseCriteria {
     private StringCriteria name = new StringCriteria();
 
     public FindNamedEntityCriteria() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public FindNamedEntityCriteria(final String name) {

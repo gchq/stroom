@@ -23,7 +23,6 @@ public class EditableInteger extends Number implements Comparable<EditableIntege
     private boolean editable = true;
 
     public EditableInteger() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public EditableInteger(final Integer _integer) {

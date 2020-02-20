@@ -22,12 +22,10 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
@@ -37,8 +35,6 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "tab")
 @XmlType(name = "tab", propOrder = {"id", "visible", "settings"})
 public class TabConfig {
-    private static final long serialVersionUID = -2105048053435792675L;
-
     @XmlElement(name = "id")
     @JsonProperty("id")
     private String id;
@@ -58,7 +54,6 @@ public class TabConfig {
     private transient TabLayoutConfig parent;
 
     public TabConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public String getId() {

@@ -30,7 +30,6 @@ import java.util.List;
 @JsonInclude(Include.NON_DEFAULT)
 public class FindIndexCriteria extends FindDocumentEntityCriteria {
     public FindIndexCriteria() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public FindIndexCriteria(final String name) {

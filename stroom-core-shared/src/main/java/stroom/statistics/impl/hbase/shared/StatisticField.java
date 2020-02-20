@@ -38,7 +38,6 @@ public class StatisticField implements HasDisplayValue, Comparable<StatisticFiel
     private String fieldName;
 
     public StatisticField() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator
@@ -82,11 +81,8 @@ public class StatisticField implements HasDisplayValue, Comparable<StatisticFiel
             return false;
         final StatisticField other = (StatisticField) obj;
         if (fieldName == null) {
-            if (other.fieldName != null)
-                return false;
-        } else if (!fieldName.equals(other.fieldName))
-            return false;
-        return true;
+            return other.fieldName == null;
+        } else return fieldName.equals(other.fieldName);
     }
 
     @Override
@@ -95,7 +91,7 @@ public class StatisticField implements HasDisplayValue, Comparable<StatisticFiel
     }
 
     public StatisticField deepCopy() {
-        return new StatisticField(new String(fieldName));
+        return new StatisticField(fieldName);
     }
 
 }

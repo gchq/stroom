@@ -41,7 +41,6 @@ public class Size {
     private int[] size = new int[]{200, 200};
 
     public Size() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @XmlElement(name = "width")

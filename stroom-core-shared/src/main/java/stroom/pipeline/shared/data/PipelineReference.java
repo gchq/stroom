@@ -86,7 +86,6 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
     private int hashCode = -1;
 
     public PipelineReference() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public PipelineReference(final DocRef pipeline, final DocRef feed,

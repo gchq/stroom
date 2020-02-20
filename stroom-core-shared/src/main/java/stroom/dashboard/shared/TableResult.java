@@ -59,7 +59,6 @@ public class TableResult implements ComponentResult {
     private String error;
 
     public TableResult() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

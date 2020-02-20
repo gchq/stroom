@@ -41,7 +41,6 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
     private Boolean matchNull = null;
 
     public StringCriteria() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public StringCriteria(final String string) {

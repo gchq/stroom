@@ -51,7 +51,6 @@ public class VisComponentSettings extends ComponentSettings {
     private TableComponentSettings tableSettings;
 
     public VisComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

@@ -31,7 +31,6 @@ public class JobNodeInfo {
     private Long lastExecutedTime;
 
     public JobNodeInfo() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

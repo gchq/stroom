@@ -18,7 +18,6 @@ package stroom.util.shared;
 
 import stroom.docref.DocRef;
 
-
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Collection;
 import java.util.Iterator;
@@ -27,11 +26,9 @@ import java.util.TreeSet;
 
 @XmlRootElement(name = "docs")
 public class DocRefs implements Iterable<DocRef> {
-    private static final long serialVersionUID = 8637215303311013483L;
     private Set<DocRef> set = new TreeSet<>();
 
     public DocRefs() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public boolean add(DocRef docRef) {

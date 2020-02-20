@@ -47,7 +47,6 @@ public class QueryComponentSettings extends ComponentSettings {
     private Automate automate;
 
     public QueryComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

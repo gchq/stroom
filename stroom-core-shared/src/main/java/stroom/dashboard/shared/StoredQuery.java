@@ -50,7 +50,6 @@ public class StoredQuery implements HasAuditInfo {
     private Query query;
 
     public StoredQuery() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

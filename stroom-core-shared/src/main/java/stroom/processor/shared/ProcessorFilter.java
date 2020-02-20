@@ -86,7 +86,6 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
     private boolean enabled;
 
     public ProcessorFilter() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

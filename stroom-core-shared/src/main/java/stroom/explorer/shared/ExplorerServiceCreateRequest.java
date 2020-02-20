@@ -35,7 +35,6 @@ public class ExplorerServiceCreateRequest {
     private PermissionInheritance permissionInheritance;
 
     public ExplorerServiceCreateRequest() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

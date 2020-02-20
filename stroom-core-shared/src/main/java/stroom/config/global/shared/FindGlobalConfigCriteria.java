@@ -33,7 +33,6 @@ public class FindGlobalConfigCriteria extends BaseCriteria {
     private StringCriteria name = new StringCriteria();
 
     public FindGlobalConfigCriteria() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

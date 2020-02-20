@@ -48,7 +48,6 @@ public class Meta {
     private Long effectiveMs;
 
     public Meta() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

@@ -24,15 +24,13 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 public class _V07_00_00_DashboardDoc extends _V07_00_00_Doc {
-    private static final long serialVersionUID = 3598996730392094523L;
-
     public static final String DOCUMENT_TYPE = "Dashboard";
+    private static final long serialVersionUID = 3598996730392094523L;
 
     @JsonIgnore
     private _V07_00_00_DashboardConfig dashboardConfig;
 
     public _V07_00_00_DashboardDoc() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_DashboardConfig getDashboardConfig() {

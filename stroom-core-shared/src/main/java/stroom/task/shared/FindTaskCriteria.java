@@ -35,7 +35,6 @@ public class FindTaskCriteria implements HasIsConstrained {
     private Set<TaskId> idSet;
 
     public FindTaskCriteria() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

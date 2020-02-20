@@ -34,7 +34,6 @@ public class DashboardDoc extends Doc {
     private DashboardConfig dashboardConfig;
 
     public DashboardDoc() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

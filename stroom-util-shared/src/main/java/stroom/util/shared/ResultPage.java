@@ -33,7 +33,6 @@ public class ResultPage<T> {
     private PageResponse pageResponse;
 
     public ResultPage() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public ResultPage(final List<T> values) {

@@ -32,7 +32,6 @@ public class Indicator implements Serializable {
     private Map<Severity, Set<StoredError>> errorMap = new HashMap<>();
 
     public Indicator() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public Indicator(final Indicator indicator) {

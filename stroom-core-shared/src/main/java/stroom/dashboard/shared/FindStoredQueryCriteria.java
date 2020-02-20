@@ -42,7 +42,6 @@ public class FindStoredQueryCriteria extends FindDocumentEntityCriteria {
     private Boolean favourite;
 
     public FindStoredQueryCriteria() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public FindStoredQueryCriteria(final String name) {

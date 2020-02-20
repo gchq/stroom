@@ -30,7 +30,6 @@ public abstract class FindDocumentEntityCriteria extends FindNamedEntityCriteria
     private String requiredPermission;
 
     public FindDocumentEntityCriteria() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public FindDocumentEntityCriteria(final String name) {

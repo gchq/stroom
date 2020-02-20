@@ -67,7 +67,6 @@ public class TableComponentSettings extends ComponentSettings {
     private Boolean showDetail;
 
     public TableComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public TableComponentSettings(final List<Field> fields) {

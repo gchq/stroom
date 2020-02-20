@@ -49,7 +49,6 @@ public class CustomRollUpMask implements HasDisplayValue {
     private List<Integer> rolledUpTagPositions = new ArrayList<>();
 
     public CustomRollUpMask() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator
@@ -73,10 +72,8 @@ public class CustomRollUpMask implements HasDisplayValue {
                 Collections.sort(this.rolledUpTagPositions);
             }
         } else {
-            if (rolledUpTagPositions.contains(position)) {
-                rolledUpTagPositions.remove(position);
-                // no need to re-sort on remove as already in order
-            }
+            // no need to re-sort on remove as already in order
+            rolledUpTagPositions.remove(position);
         }
 
     }
@@ -108,11 +105,8 @@ public class CustomRollUpMask implements HasDisplayValue {
             return false;
         final CustomRollUpMask other = (CustomRollUpMask) obj;
         if (rolledUpTagPositions == null) {
-            if (other.rolledUpTagPositions != null)
-                return false;
-        } else if (!rolledUpTagPositions.equals(other.rolledUpTagPositions))
-            return false;
-        return true;
+            return other.rolledUpTagPositions == null;
+        } else return rolledUpTagPositions.equals(other.rolledUpTagPositions);
     }
 
     @Override

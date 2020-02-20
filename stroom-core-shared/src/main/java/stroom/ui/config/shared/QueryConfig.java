@@ -1,7 +1,6 @@
 package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Inject;
@@ -12,7 +11,6 @@ public class QueryConfig extends AbstractConfig {
     private InfoPopupConfig infoPopupConfig = new InfoPopupConfig();
 
     public QueryConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @Inject

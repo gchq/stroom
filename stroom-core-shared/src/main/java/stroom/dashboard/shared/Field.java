@@ -73,7 +73,6 @@ public class Field implements Serializable, HasDisplayValue {
     private boolean special = false;
 
     public Field() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public Field(final String name) {

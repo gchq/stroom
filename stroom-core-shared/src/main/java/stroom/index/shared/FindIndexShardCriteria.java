@@ -52,7 +52,6 @@ public class FindIndexShardCriteria extends BaseCriteria {
     private StringCriteria partition = new StringCriteria();
 
     public FindIndexShardCriteria() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public FindIndexShardCriteria(final FindIndexShardCriteria criteria) {

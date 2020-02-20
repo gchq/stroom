@@ -59,9 +59,8 @@ import java.util.Objects;
 })
 @JsonInclude(Include.NON_DEFAULT)
 public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexField>, Serializable {
-    private static final long serialVersionUID = 3100770758821157580L;
-
     public static final String VALID_FIELD_NAME_PATTERN = "[a-zA-Z_](?:[a-zA-Z0-9_])*";
+    private static final long serialVersionUID = 3100770758821157580L;
 
     @JsonProperty
     private SolrIndexFieldType fieldUse = SolrIndexFieldType.FIELD;
@@ -112,7 +111,6 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
     private List<Condition> supportedConditions;
 
     public SolrIndexField() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     private SolrIndexField(final SolrIndexFieldType fieldUse,

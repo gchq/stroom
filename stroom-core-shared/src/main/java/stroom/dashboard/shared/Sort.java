@@ -49,7 +49,6 @@ public class Sort implements Serializable {
     private SortDirection direction = SortDirection.ASCENDING;
 
     public Sort() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

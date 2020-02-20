@@ -37,7 +37,6 @@ public class TaskId implements Serializable {
      * Do not use this constructor directly, instead please use TaskIdFactory.
      */
     public TaskId() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     /**

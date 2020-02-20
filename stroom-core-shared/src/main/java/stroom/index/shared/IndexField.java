@@ -81,7 +81,6 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     private List<Condition> supportedConditions;
 
     public IndexField() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

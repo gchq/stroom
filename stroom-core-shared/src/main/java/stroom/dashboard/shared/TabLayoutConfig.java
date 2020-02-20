@@ -54,7 +54,6 @@ public class TabLayoutConfig extends LayoutConfig {
     private Integer selected;
 
     public TabLayoutConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public TabLayoutConfig(final TabConfig... tabs) {

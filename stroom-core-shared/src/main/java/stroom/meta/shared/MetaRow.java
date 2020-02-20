@@ -32,7 +32,6 @@ public class MetaRow {
     private Map<String, String> attributes = new HashMap<>();
 
     public MetaRow() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public MetaRow(Meta meta) {

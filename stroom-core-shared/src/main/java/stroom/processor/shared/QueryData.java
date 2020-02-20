@@ -42,7 +42,6 @@ public class QueryData implements Serializable {
     private Limits limits;
 
     public QueryData() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

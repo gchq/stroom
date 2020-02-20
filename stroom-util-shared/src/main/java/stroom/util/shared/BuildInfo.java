@@ -15,7 +15,6 @@ public class BuildInfo extends AbstractConfig {
     private String buildVersion = "TBD";
 
     public BuildInfo() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

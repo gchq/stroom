@@ -39,7 +39,6 @@ public class Period extends Range<Long> {
     private static final long MS_IN_DAY = 1000 * 60 * 60 * 24;
 
     public Period() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public Period(final Long fromMs, final Long toMs) {

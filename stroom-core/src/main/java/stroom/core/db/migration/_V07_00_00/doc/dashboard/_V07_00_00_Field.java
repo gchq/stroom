@@ -53,7 +53,6 @@ public class _V07_00_00_Field implements Serializable {
     private boolean visible = true;
 
     public _V07_00_00_Field() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_Field(final String name) {

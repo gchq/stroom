@@ -59,7 +59,6 @@ public class ProcessorFilterTracker {
     private Long eventCount;
 
     public ProcessorFilterTracker() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public Integer getId() {

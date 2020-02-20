@@ -37,7 +37,6 @@ public class FetchProcessorRequest implements TreeAction<ProcessorListRow>, HasI
     private Set<ProcessorListRow> expandedRows;
 
     public FetchProcessorRequest() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public FetchProcessorRequest(final ExpressionOperator expression) {

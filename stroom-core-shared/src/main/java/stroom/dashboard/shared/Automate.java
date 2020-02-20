@@ -47,7 +47,6 @@ public class Automate {
     private String refreshInterval = "10s";
 
     public Automate() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonCreator

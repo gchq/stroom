@@ -17,7 +17,6 @@
 package stroom.core.db.migration._V07_00_00.streamstore.shared;
 
 import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_BaseEntity;
-
 import stroom.util.shared.Clearable;
 import stroom.util.shared.Copyable;
 import stroom.util.shared.EqualsBuilder;
@@ -40,7 +39,6 @@ public class _V07_00_00_IncludeExcludeEntityIdSet<T extends _V07_00_00_BaseEntit
     private _V07_00_00_EntityIdSet<T> exclude;
 
     public _V07_00_00_IncludeExcludeEntityIdSet() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_IncludeExcludeEntityIdSet(final _V07_00_00_EntityIdSet<T> include, final _V07_00_00_EntityIdSet<T> exclude) {
@@ -96,9 +94,7 @@ public class _V07_00_00_IncludeExcludeEntityIdSet<T extends _V07_00_00_BaseEntit
             }
         }
         if (getExclude() != null) {
-            if (getExclude().isMatch(e)) {
-                return false;
-            }
+            return !getExclude().isMatch(e);
         }
 
         return true;

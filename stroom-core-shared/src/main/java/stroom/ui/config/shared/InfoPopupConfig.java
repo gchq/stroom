@@ -1,7 +1,6 @@
 package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-
 import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
 
@@ -14,7 +13,6 @@ public class InfoPopupConfig extends AbstractConfig {
     private String validationRegex = "^[\\s\\S]{3,}$";
 
     public InfoPopupConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonPropertyDescription("If you would like users to provide some query info when performing a query set this property to true.")

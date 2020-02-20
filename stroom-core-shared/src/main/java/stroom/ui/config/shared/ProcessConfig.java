@@ -1,7 +1,6 @@
 package stroom.ui.config.shared;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
@@ -15,7 +14,6 @@ public class ProcessConfig extends AbstractConfig {
     private volatile long defaultRecordLimit = DEFAULT_RECORD_LIMIT;
 
     public ProcessConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @JsonPropertyDescription("The default number of minutes that batch search processing will be limited by.")

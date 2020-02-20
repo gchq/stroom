@@ -43,6 +43,5 @@ public abstract class _V07_00_00_ComponentSettings implements Serializable {
     private static final long serialVersionUID = 2110282486749818888L;
 
     public _V07_00_00_ComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
     }
 }
