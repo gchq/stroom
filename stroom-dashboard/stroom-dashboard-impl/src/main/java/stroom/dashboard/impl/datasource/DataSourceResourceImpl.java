@@ -23,12 +23,11 @@ import stroom.docref.DocRef;
 import stroom.meta.shared.MetaFields;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import java.util.List;
 
-class DataSourceResourceImpl implements DataSourceResource, RestResource, HasHealthCheck {
+class DataSourceResourceImpl implements DataSourceResource, HasHealthCheck {
     private final DataSourceProviderRegistry dataSourceProviderRegistry;
     private final SecurityContext securityContext;
 

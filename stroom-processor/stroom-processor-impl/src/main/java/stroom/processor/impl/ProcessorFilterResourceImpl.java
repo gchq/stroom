@@ -29,7 +29,6 @@ import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
@@ -38,7 +37,7 @@ import javax.ws.rs.core.Response.Status;
 import java.util.List;
 
 // TODO : @66 add event logging
-class ProcessorFilterResourceImpl implements ProcessorFilterResource, RestResource, HasHealthCheck {
+class ProcessorFilterResourceImpl implements ProcessorFilterResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterResourceImpl.class);
 
     private final ProcessorFilterService processorFilterService;
@@ -46,7 +45,7 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource, RestResour
 
     @Inject
     ProcessorFilterResourceImpl(final ProcessorFilterService processorFilterService,
-                                       final DocumentEventLog documentEventLog) {
+                                final DocumentEventLog documentEventLog) {
         this.processorFilterService = processorFilterService;
         this.documentEventLog = documentEventLog;
     }

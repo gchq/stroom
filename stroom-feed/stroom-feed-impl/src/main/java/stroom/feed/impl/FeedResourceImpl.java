@@ -23,14 +23,13 @@ import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedResource;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
-class FeedResourceImpl implements FeedResource, RestResource, HasHealthCheck {
+class FeedResourceImpl implements FeedResource, HasHealthCheck {
     private static final List<String> SUPPORTED_ENCODINGS;
 
     static {

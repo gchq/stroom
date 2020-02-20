@@ -28,7 +28,6 @@ import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexResource;
 import stroom.util.HasHealthCheck;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -36,7 +35,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-class SolrIndexResourceImpl implements SolrIndexResource, RestResource, HasHealthCheck {
+class SolrIndexResourceImpl implements SolrIndexResource, HasHealthCheck {
     private final SolrIndexStore solrIndexStore;
     private final DocumentResourceHelper documentResourceHelper;
 

@@ -26,7 +26,6 @@ import stroom.query.shared.FetchSuggestionsRequest;
 import stroom.query.shared.SuggestionsResource;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -35,7 +34,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
-class SuggestionsResourceImpl implements SuggestionsResource, RestResource, HasHealthCheck {
+class SuggestionsResourceImpl implements SuggestionsResource, HasHealthCheck {
     private static final int LIMIT = 20;
 
     private final MetaService metaService;

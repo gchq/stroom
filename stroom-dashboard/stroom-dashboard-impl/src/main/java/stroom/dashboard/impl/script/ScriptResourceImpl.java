@@ -24,7 +24,6 @@ import stroom.script.shared.ScriptDoc;
 import stroom.script.shared.ScriptResource;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -32,7 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class ScriptResourceImpl implements ScriptResource, RestResource, HasHealthCheck {
+class ScriptResourceImpl implements ScriptResource, HasHealthCheck {
     private final ScriptStore scriptStore;
     private final SecurityContext securityContext;
     private final DocumentResourceHelper documentResourceHelper;

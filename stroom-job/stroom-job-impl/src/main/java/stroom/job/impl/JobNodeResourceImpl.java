@@ -32,7 +32,6 @@ import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
@@ -41,7 +40,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.function.Consumer;
 
-class JobNodeResourceImpl implements JobNodeResource, RestResource, HasHealthCheck {
+class JobNodeResourceImpl implements JobNodeResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobNodeResourceImpl.class);
 
     private final JobNodeService jobNodeService;
@@ -100,7 +99,7 @@ class JobNodeResourceImpl implements JobNodeResource, RestResource, HasHealthChe
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_ROOT_PATH + "/jobNode/info";
+                url += ResourcePaths.API_ROOT_PATH + JobNodeResource.INFO_PATH;
                 final Response response = webTargetFactory
                         .create(url)
                         .queryParam("jobName", jobName)

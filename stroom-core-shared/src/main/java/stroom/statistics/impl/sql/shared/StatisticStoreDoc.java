@@ -43,8 +43,6 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
 
     private static final Long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
 
-    private static final long serialVersionUID = -649286188919707915L;
-
     @JsonProperty("description")
     private String description;
     @JsonProperty("statisticType")

@@ -35,12 +35,11 @@ import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskManager;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import java.util.List;
 
-class SteppingResourceImpl implements SteppingResource, RestResource, HasHealthCheck {
+class SteppingResourceImpl implements SteppingResource, HasHealthCheck {
     private final MetaService metaService;
     private final PipelineStore pipelineStore;
     private final TaskManager taskManager;

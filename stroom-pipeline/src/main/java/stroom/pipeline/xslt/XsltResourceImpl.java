@@ -22,11 +22,10 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.pipeline.shared.XsltResource;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 
-class XsltResourceImpl implements XsltResource, RestResource, HasHealthCheck {
+class XsltResourceImpl implements XsltResource, HasHealthCheck {
     private final XsltStore xsltStore;
     private final DocumentResourceHelper documentResourceHelper;
 

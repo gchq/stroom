@@ -32,7 +32,6 @@ import stroom.util.HasHealthCheck;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
@@ -43,7 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-class MetaResourceImpl implements MetaResource, RestResource, HasHealthCheck {
+class MetaResourceImpl implements MetaResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(MetaResourceImpl.class);
 
     private final MetaService metaService;

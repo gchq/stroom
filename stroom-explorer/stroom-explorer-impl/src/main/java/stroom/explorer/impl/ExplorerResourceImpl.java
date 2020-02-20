@@ -40,7 +40,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import java.util.HashSet;
@@ -48,7 +47,7 @@ import java.util.List;
 import java.util.Set;
 
 // TODO : @66 add event logging
-class ExplorerResourceImpl implements ExplorerResource, RestResource, HasHealthCheck {
+class ExplorerResourceImpl implements ExplorerResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ExplorerResourceImpl.class);
 
     private final ExplorerService explorerService;

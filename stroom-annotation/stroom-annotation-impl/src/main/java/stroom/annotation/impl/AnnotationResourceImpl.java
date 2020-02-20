@@ -28,13 +28,12 @@ import stroom.event.logging.api.DocumentEventLog;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import java.util.List;
 import java.util.stream.Collectors;
 
-class AnnotationResourceImpl implements AnnotationResource, RestResource, HasHealthCheck {
+class AnnotationResourceImpl implements AnnotationResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AnnotationResourceImpl.class);
 
     private final AnnotationService annotationService;

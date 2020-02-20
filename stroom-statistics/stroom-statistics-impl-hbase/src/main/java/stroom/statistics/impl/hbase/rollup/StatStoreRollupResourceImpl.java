@@ -25,7 +25,6 @@ import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreFieldChangeRequest;
 import stroom.util.HasHealthCheck;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.RestResource;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-class StatStoreRollupResourceImpl implements StatsStoreRollupResource, RestResource, HasHealthCheck {
+class StatStoreRollupResourceImpl implements StatsStoreRollupResource, HasHealthCheck {
     @Override
     public ResultPage<CustomRollUpMask> bitMaskPermGeneration(final Integer fieldCount) {
         final Set<List<Integer>> perms = RollUpBitMask.getRollUpPermutationsAsPositions(fieldCount);

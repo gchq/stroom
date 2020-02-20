@@ -28,13 +28,12 @@ import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 
 // TODO : @66 add event logging
-class FsVolumeResourceImpl implements FsVolumeResource, RestResource, HasHealthCheck {
+class FsVolumeResourceImpl implements FsVolumeResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(FsVolumeResourceImpl.class);
 
     private final FsVolumeService volumeService;

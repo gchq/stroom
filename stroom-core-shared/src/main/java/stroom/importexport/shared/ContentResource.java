@@ -22,6 +22,7 @@ import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
@@ -33,7 +34,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.List;
 
 @Api(value = "content")
-@Path("/content")
+@Path("/content" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface ContentResource extends RestResource, DirectRestService {
     @POST

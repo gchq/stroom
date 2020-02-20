@@ -21,13 +21,12 @@ import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.DbStatusResource;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 
 // TODO : @66 add event logging
-class DbStatusResourceImpl implements DbStatusResource, RestResource, HasHealthCheck {
+class DbStatusResourceImpl implements DbStatusResource, HasHealthCheck {
     private final DBTableService dbTableService;
 
     @Inject

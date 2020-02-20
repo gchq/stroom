@@ -35,7 +35,6 @@ import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -43,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-class PipelineResourceImpl implements PipelineResource, RestResource, HasHealthCheck {
+class PipelineResourceImpl implements PipelineResource, HasHealthCheck {
     private final PipelineStore pipelineStore;
     private final DocumentResourceHelper documentResourceHelper;
     private final PipelineStackLoader pipelineStackLoader;

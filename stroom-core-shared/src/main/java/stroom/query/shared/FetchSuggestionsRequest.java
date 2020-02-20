@@ -16,19 +16,25 @@
 
 package stroom.query.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class FetchSuggestionsRequest {
-    private DocRef dataSource;
-    private AbstractField field;
-    private String text;
+    @JsonProperty
+    private final DocRef dataSource;
+    @JsonProperty
+    private final AbstractField field;
+    @JsonProperty
+    private final String text;
 
-    public FetchSuggestionsRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public FetchSuggestionsRequest(final DocRef dataSource, final AbstractField field, final String text) {
+    @JsonCreator
+    public FetchSuggestionsRequest(@JsonProperty("dataSource") final DocRef dataSource,
+                                   @JsonProperty("field") final AbstractField field,
+                                   @JsonProperty("text") final String text) {
         this.dataSource = dataSource;
         this.field = field;
         this.text = text;
@@ -38,23 +44,11 @@ public class FetchSuggestionsRequest {
         return dataSource;
     }
 
-    public void setDataSource(final DocRef dataSource) {
-        this.dataSource = dataSource;
-    }
-
     public AbstractField getField() {
         return field;
     }
 
-    public void setField(final AbstractField field) {
-        this.field = field;
-    }
-
     public String getText() {
         return text;
-    }
-
-    public void setText(final String text) {
-        this.text = text;
     }
 }

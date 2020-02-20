@@ -18,11 +18,13 @@ package stroom.pipeline.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.Severity;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class FetchDataRequest {
     @JsonProperty
     private Long streamId;

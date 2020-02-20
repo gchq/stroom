@@ -19,6 +19,7 @@ package stroom.job.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
@@ -31,10 +32,14 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "jobNode")
-@Path("/jobNode")
+@Api(value = "jobNode - v1")
+@Path(JobNodeResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public interface JobNodeResource extends RestResource, DirectRestService {
+    String BASE_PATH = "/jobNode" + ResourcePaths.V1;
+    String INFO = "/info";
+    String INFO_PATH = BASE_PATH + INFO;
+
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -44,7 +49,7 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     ResultPage<JobNode> list(@QueryParam("jobName") String jobName, @QueryParam("nodeName") String nodeName);
 
     @GET
-    @Path("/info")
+    @Path(INFO)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(

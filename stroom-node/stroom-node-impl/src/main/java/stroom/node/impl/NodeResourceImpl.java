@@ -34,7 +34,6 @@ import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import javax.ws.rs.ServerErrorException;
@@ -48,7 +47,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 // TODO : @66 add event logging
-class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
+class NodeResourceImpl implements NodeResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeResourceImpl.class);
 
     private final NodeServiceImpl nodeService;
@@ -59,10 +58,10 @@ class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
 
     @Inject
     NodeResourceImpl(final NodeServiceImpl nodeService,
-                             final NodeInfo nodeInfo,
-                             final ClusterNodeManager clusterNodeManager,
-                             final WebTargetFactory webTargetFactory,
-                             final DocumentEventLog documentEventLog) {
+                     final NodeInfo nodeInfo,
+                     final ClusterNodeManager clusterNodeManager,
+                     final WebTargetFactory webTargetFactory,
+                     final DocumentEventLog documentEventLog) {
         this.nodeService = nodeService;
         this.nodeInfo = nodeInfo;
         this.clusterNodeManager = clusterNodeManager;

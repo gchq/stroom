@@ -34,7 +34,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.SessionIdProvider;
 import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 
@@ -47,7 +46,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 // TODO : @66 add event logging
-class TaskResourceImpl implements TaskResource, RestResource, HasHealthCheck {
+class TaskResourceImpl implements TaskResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskResourceImpl.class);
 
     private final TaskManager taskManager;

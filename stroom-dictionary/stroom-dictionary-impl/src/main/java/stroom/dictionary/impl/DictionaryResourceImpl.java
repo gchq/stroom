@@ -29,7 +29,6 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -38,7 +37,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
-class DictionaryResourceImpl implements DictionaryResource, RestResource, HasHealthCheck {
+class DictionaryResourceImpl implements DictionaryResource, HasHealthCheck {
     private final DictionaryStore dictionaryStore;
     private final DocumentResourceHelper documentResourceHelper;
     private final ResourceStore resourceStore;

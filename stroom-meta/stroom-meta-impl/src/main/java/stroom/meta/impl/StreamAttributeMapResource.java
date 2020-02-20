@@ -54,7 +54,6 @@ import static stroom.query.api.v2.ExpressionTerm.Condition;
 @Path("/streamattributemap/v1")
 @Produces(MediaType.APPLICATION_JSON)
 public class StreamAttributeMapResource implements RestResource {
-
     private MetaService dataMetaService;
     private SecurityContext securityContext;
 

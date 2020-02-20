@@ -34,12 +34,11 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.HasHealthCheck;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 
-class ViewDataResourceImpl implements ViewDataResource, RestResource, HasHealthCheck {
+class ViewDataResourceImpl implements ViewDataResource, HasHealthCheck {
     private final SecurityContext securityContext;
     private final DataFetcher dataFetcher;
 

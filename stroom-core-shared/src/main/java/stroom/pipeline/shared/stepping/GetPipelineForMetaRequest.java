@@ -17,8 +17,10 @@
 package stroom.pipeline.shared.stepping;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class GetPipelineForMetaRequest {
     @JsonProperty
     private final Long metaId;

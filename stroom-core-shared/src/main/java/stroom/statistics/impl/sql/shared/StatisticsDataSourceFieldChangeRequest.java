@@ -16,16 +16,20 @@
 
 package stroom.statistics.impl.sql.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class StatisticsDataSourceFieldChangeRequest {
-    private StatisticsDataSourceData oldStatisticsDataSourceData;
-    private StatisticsDataSourceData newStatisticsDataSourceData;
+    @JsonProperty
+    private final StatisticsDataSourceData oldStatisticsDataSourceData;
+    @JsonProperty
+    private final StatisticsDataSourceData newStatisticsDataSourceData;
 
-    public StatisticsDataSourceFieldChangeRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public StatisticsDataSourceFieldChangeRequest(final StatisticsDataSourceData oldStatisticsDataSourceData,
-                                                  final StatisticsDataSourceData newStatisticsDataSourceData) {
+    @JsonCreator
+    public StatisticsDataSourceFieldChangeRequest(@JsonProperty("oldStatisticsDataSourceData") final StatisticsDataSourceData oldStatisticsDataSourceData,
+                                                  @JsonProperty("newStatisticsDataSourceData") final StatisticsDataSourceData newStatisticsDataSourceData) {
         this.oldStatisticsDataSourceData = oldStatisticsDataSourceData;
         this.newStatisticsDataSourceData = newStatisticsDataSourceData;
     }
@@ -34,15 +38,7 @@ public class StatisticsDataSourceFieldChangeRequest {
         return oldStatisticsDataSourceData;
     }
 
-    public void setOldStatisticsDataSourceData(final StatisticsDataSourceData oldStatisticsDataSourceData) {
-        this.oldStatisticsDataSourceData = oldStatisticsDataSourceData;
-    }
-
     public StatisticsDataSourceData getNewStatisticsDataSourceData() {
         return newStatisticsDataSourceData;
-    }
-
-    public void setNewStatisticsDataSourceData(final StatisticsDataSourceData newStatisticsDataSourceData) {
-        this.newStatisticsDataSourceData = newStatisticsDataSourceData;
     }
 }

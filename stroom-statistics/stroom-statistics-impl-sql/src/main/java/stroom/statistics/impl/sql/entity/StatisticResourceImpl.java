@@ -22,11 +22,10 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.statistics.impl.sql.shared.StatisticResource;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 
-class StatisticResourceImpl implements StatisticResource, RestResource, HasHealthCheck {
+class StatisticResourceImpl implements StatisticResource, HasHealthCheck {
     private final StatisticStoreStore statisticStoreStore;
     private final DocumentResourceHelper documentResourceHelper;
 

@@ -25,11 +25,10 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.ResourcePaths;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.RestResource;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.StringCriteria;
 
 import javax.inject.Inject;
@@ -41,7 +40,7 @@ import javax.ws.rs.core.Response.Status;
 import java.util.List;
 
 // TODO : @66 add event logging
-class CacheResourceImpl implements CacheResource, RestResource, HasHealthCheck {
+class CacheResourceImpl implements CacheResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CacheResourceImpl.class);
 
     private final NodeService nodeService;

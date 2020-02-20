@@ -21,11 +21,10 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.DataRetentionRulesResource;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 
-class DataRetentionRulesResourceImpl implements DataRetentionRulesResource, RestResource, HasHealthCheck {
+class DataRetentionRulesResourceImpl implements DataRetentionRulesResource, HasHealthCheck {
     private final DataRetentionRulesService dataRetentionRulesService;
     private final SecurityContext securityContext;
 

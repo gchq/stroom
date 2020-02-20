@@ -17,21 +17,25 @@
 package stroom.statistics.impl.sql.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Set;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class CustomRollUpMaskFields implements Comparable<CustomRollUpMaskFields> {
-    private static final long serialVersionUID = 5490835313079322510L;
+    @JsonProperty
+    private final int id;
+    @JsonProperty
+    private final short maskValue;
+    @JsonProperty
+    private final Set<Integer> rolledUpFieldPositions;
 
-    private int id;
-    private short maskValue;
-    private Set<Integer> rolledUpFieldPositions;
-
-    public CustomRollUpMaskFields() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public CustomRollUpMaskFields(final int id, final short maskValue, final Set<Integer> rolledUpFieldPositions) {
+    @JsonCreator
+    public CustomRollUpMaskFields(@JsonProperty("id") final int id,
+                                  @JsonProperty("maskValue") final short maskValue,
+                                  @JsonProperty("rolledUpFieldPositions") final Set<Integer> rolledUpFieldPositions) {
         this.id = id;
         this.maskValue = maskValue;
         this.rolledUpFieldPositions = rolledUpFieldPositions;
@@ -41,24 +45,12 @@ public class CustomRollUpMaskFields implements Comparable<CustomRollUpMaskFields
         return id;
     }
 
-    public void setId(final int id) {
-        this.id = id;
-    }
-
     public short getMaskValue() {
         return maskValue;
     }
 
-    public void setMaskValue(final short maskValue) {
-        this.maskValue = maskValue;
-    }
-
     public Set<Integer> getRolledUpFieldPositions() {
         return rolledUpFieldPositions;
-    }
-
-    public void setRolledUpFieldPositions(final Set<Integer> rolledUpFieldPositions) {
-        this.rolledUpFieldPositions = rolledUpFieldPositions;
     }
 
     public boolean isFieldRolledUp(final int position) {

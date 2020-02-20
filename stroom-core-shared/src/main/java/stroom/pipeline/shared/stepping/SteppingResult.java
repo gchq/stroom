@@ -17,11 +17,13 @@
 package stroom.pipeline.shared.stepping;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Map;
 import java.util.Set;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class SteppingResult {
     @JsonProperty
     private Map<String, SteppingFilterSettings> stepFilterMap;

@@ -16,16 +16,20 @@
 
 package stroom.statistics.impl.hbase.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class StroomStatsStoreFieldChangeRequest {
-    private StroomStatsStoreEntityData oldEntityData;
-    private StroomStatsStoreEntityData newEntityData;
+    @JsonProperty
+    private final StroomStatsStoreEntityData oldEntityData;
+    @JsonProperty
+    private final StroomStatsStoreEntityData newEntityData;
 
-    public StroomStatsStoreFieldChangeRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public StroomStatsStoreFieldChangeRequest(final StroomStatsStoreEntityData oldEntityData,
-                                              final StroomStatsStoreEntityData newEntityData) {
+    @JsonCreator
+    public StroomStatsStoreFieldChangeRequest(@JsonProperty("oldEntityData") final StroomStatsStoreEntityData oldEntityData,
+                                              @JsonProperty("newEntityData") final StroomStatsStoreEntityData newEntityData) {
         this.oldEntityData = oldEntityData;
         this.newEntityData = newEntityData;
     }
@@ -34,15 +38,7 @@ public class StroomStatsStoreFieldChangeRequest {
         return oldEntityData;
     }
 
-    public void setOldEntityData(final StroomStatsStoreEntityData oldEntityData) {
-        this.oldEntityData = oldEntityData;
-    }
-
     public StroomStatsStoreEntityData getNewEntityData() {
         return newEntityData;
-    }
-
-    public void setNewEntityData(final StroomStatsStoreEntityData newEntityData) {
-        this.newEntityData = newEntityData;
     }
 }

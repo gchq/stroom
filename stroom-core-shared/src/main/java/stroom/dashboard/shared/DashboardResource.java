@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 @Api(value = "dashboard")
-@Path("/dashboard")
+@Path("/dashboard" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface DashboardResource extends RestResource, DirectRestService {
     @POST

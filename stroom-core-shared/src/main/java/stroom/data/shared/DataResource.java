@@ -22,6 +22,7 @@ import org.fusesource.restygwt.client.DirectRestService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -31,7 +32,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 @Api(value = "data")
-@Path("/data")
+@Path("/data" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface DataResource extends RestResource, DirectRestService {
     @POST

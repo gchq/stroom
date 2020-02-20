@@ -22,11 +22,10 @@ import stroom.docstore.api.DocumentResourceHelper;
 import stroom.pipeline.shared.TextConverterDoc;
 import stroom.pipeline.shared.TextConverterResource;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 
-class TextConverterResourceImpl implements TextConverterResource, RestResource, HasHealthCheck {
+class TextConverterResourceImpl implements TextConverterResource, HasHealthCheck {
     private final TextConverterStore textConverterStore;
     private final DocumentResourceHelper documentResourceHelper;
 

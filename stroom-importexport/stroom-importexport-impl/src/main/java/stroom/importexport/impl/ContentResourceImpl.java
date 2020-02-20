@@ -30,7 +30,6 @@ import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
@@ -38,7 +37,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-class ContentResourceImpl implements ContentResource, RestResource, HasHealthCheck {
+class ContentResourceImpl implements ContentResource, HasHealthCheck {
     private final ImportExportService importExportService;
     private final ImportExportEventLog eventLog;
     private final ResourceStore resourceStore;

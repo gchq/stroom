@@ -19,6 +19,7 @@ package stroom.activity.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -33,8 +34,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "activity")
-@Path("/activity")
+@Api(value = "activity - v1")
+@Path("/activity" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface ActivityResource extends RestResource, DirectRestService {
     @GET

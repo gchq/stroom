@@ -26,7 +26,6 @@ import stroom.job.shared.JobResource;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
@@ -34,7 +33,7 @@ import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.core.Response.Status;
 import java.util.function.Consumer;
 
-class JobResourceImpl implements JobResource, RestResource, HasHealthCheck {
+class JobResourceImpl implements JobResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JobResourceImpl.class);
 
     private final JobService jobService;

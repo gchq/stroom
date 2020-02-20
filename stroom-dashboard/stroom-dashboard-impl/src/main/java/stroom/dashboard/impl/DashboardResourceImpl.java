@@ -61,7 +61,6 @@ import stroom.util.json.JsonUtil;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import java.io.BufferedOutputStream;
@@ -82,7 +81,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-class DashboardResourceImpl implements DashboardResource, RestResource, HasHealthCheck {
+class DashboardResourceImpl implements DashboardResource, HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(DashboardResourceImpl.class);
 
     private static final Pattern NON_BASIC_CHARS = Pattern.compile("[^A-Za-z0-9-_ ]");

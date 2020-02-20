@@ -22,6 +22,7 @@ import org.fusesource.restygwt.client.DirectRestService;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 import stroom.query.shared.FetchSuggestionsRequest;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -32,7 +33,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.List;
 
 @Api(value = "dataSource")
-@Path("/dataSource")
+@Path("/dataSource" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface DataSourceResource extends RestResource, DirectRestService {
     @POST

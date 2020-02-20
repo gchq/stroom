@@ -16,22 +16,35 @@
 
 package stroom.task.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasIsConstrained;
 
 import java.util.HashSet;
 import java.util.Set;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class FindTaskCriteria implements HasIsConstrained {
-    private static final long serialVersionUID = 2759048534848720682L;
-
+    @JsonProperty
     private String sessionId;
+    @JsonProperty
     private Set<TaskId> ancestorIdSet;
+    @JsonProperty
     private Set<TaskId> idSet;
 
     public FindTaskCriteria() {
         // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public FindTaskCriteria(@JsonProperty("sessionId") final String sessionId,
+                            @JsonProperty("ancestorIdSet") final Set<TaskId> ancestorIdSet,
+                            @JsonProperty("idSet") final Set<TaskId> idSet) {
+        this.sessionId = sessionId;
+        this.ancestorIdSet = ancestorIdSet;
+        this.idSet = idSet;
     }
 
     public String getSessionId() {
@@ -50,7 +63,6 @@ public class FindTaskCriteria implements HasIsConstrained {
         this.ancestorIdSet = ancestorIdSet;
     }
 
-    @JsonIgnore
     public void addAncestorId(final TaskId ancestorId) {
         if (ancestorIdSet == null) {
             ancestorIdSet = new HashSet<>();
@@ -66,7 +78,6 @@ public class FindTaskCriteria implements HasIsConstrained {
         this.idSet = idSet;
     }
 
-    @JsonIgnore
     public void addId(final TaskId id) {
         if (idSet == null) {
             idSet = new HashSet<>();

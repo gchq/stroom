@@ -20,13 +20,12 @@ import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 import stroom.visualisation.shared.VisualisationDoc;
 import stroom.visualisation.shared.VisualisationResource;
 
 import javax.inject.Inject;
 
-class VisualisationResourceImpl implements VisualisationResource, RestResource, HasHealthCheck {
+class VisualisationResourceImpl implements VisualisationResource, HasHealthCheck {
     private final VisualisationStore visualisationStore;
     private final DocumentResourceHelper documentResourceHelper;
 

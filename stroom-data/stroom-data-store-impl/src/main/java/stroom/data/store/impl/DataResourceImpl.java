@@ -29,13 +29,12 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
-class DataResourceImpl implements DataResource, RestResource, HasHealthCheck {
+class DataResourceImpl implements DataResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataResourceImpl.class);
 
     private final ResourceStore resourceStore;

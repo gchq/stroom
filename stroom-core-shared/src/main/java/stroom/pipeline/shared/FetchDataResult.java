@@ -17,12 +17,14 @@
 package stroom.pipeline.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class FetchDataResult extends AbstractFetchDataResult {
     @JsonProperty
     private final String data;

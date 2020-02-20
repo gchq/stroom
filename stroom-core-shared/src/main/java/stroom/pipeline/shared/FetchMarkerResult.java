@@ -17,6 +17,7 @@
 package stroom.pipeline.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
@@ -24,6 +25,7 @@ import stroom.util.shared.RowCount;
 
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class FetchMarkerResult extends AbstractFetchDataResult {
     public static final int MAX_MARKERS = 100;
     public static final int MAX_TOTAL_MARKERS = 1000;

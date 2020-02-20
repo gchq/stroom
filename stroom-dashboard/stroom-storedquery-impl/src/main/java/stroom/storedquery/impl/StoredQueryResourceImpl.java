@@ -26,12 +26,11 @@ import stroom.dashboard.shared.StoredQueryResource;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 
-class StoredQueryResourceImpl implements StoredQueryResource, RestResource, HasHealthCheck {
+class StoredQueryResourceImpl implements StoredQueryResource, HasHealthCheck {
     private final StoredQueryServiceImpl storedQueryService;
     private final DocumentEventLog documentEventLog;
     private final SecurityContext securityContext;
