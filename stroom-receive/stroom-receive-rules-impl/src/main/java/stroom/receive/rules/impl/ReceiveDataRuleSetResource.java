@@ -27,6 +27,7 @@ import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.HasHealthCheck;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -44,7 +45,7 @@ import java.util.Set;
 @Path(ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck {
-    public static final String BASE_RESOURCE_PATH = "/ruleset/v1";
+    public static final String BASE_RESOURCE_PATH = "/ruleset" + ResourcePaths.V1;
 
     private final ReceiveDataRuleSetService ruleSetService;
 

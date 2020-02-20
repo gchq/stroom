@@ -19,6 +19,7 @@ package stroom.data.store.impl.fs.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
@@ -33,8 +34,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "fsVolume")
-@Path("/fsVolume")
+@Api(value = "fsVolume - /v1")
+@Path("/fsVolume" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface FsVolumeResource extends RestResource, DirectRestService {
     @POST

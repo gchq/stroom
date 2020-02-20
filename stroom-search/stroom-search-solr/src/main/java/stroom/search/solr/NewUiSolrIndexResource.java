@@ -28,6 +28,7 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.HasHealthCheck;
 import stroom.util.shared.DocRefs;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -47,7 +48,7 @@ import java.util.Set;
 @Path(NewUiSolrIndexResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public class NewUiSolrIndexResource implements RestResource, HasHealthCheck {
-    public static final String BASE_RESOURCE_PATH = "/solr/index/v1";
+    public static final String BASE_RESOURCE_PATH = "/solr/index" + ResourcePaths.V1;
 
     private final SolrIndexStore solrIndexStore;
 

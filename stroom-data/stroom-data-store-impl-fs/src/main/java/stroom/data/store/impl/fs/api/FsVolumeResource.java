@@ -4,6 +4,7 @@ import io.swagger.annotations.Api;
 import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
@@ -13,7 +14,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Api(value = "datavolumes - /v1")
-@Path("/datavolumes/v1")
+@Path("/datavolumes" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class FsVolumeResource implements RestResource {
     private FsVolumeService fsVolumeService;

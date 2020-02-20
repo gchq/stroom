@@ -31,10 +31,14 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "cache")
-@Path("/cache" + ResourcePaths.V1)
+@Api(value = "cache - /v1")
+@Path(CacheResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public interface CacheResource extends RestResource, DirectRestService {
+    String BASE_PATH = "/cache" + ResourcePaths.V1;
+    String INFO = "/info";
+    String INFO_PATH = BASE_PATH + INFO;
+
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -44,7 +48,7 @@ public interface CacheResource extends RestResource, DirectRestService {
     List<String> list();
 
     @GET
-    @Path("/info")
+    @Path(INFO)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(

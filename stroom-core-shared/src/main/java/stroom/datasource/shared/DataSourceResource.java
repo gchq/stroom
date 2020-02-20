@@ -32,7 +32,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "dataSource")
+@Api(value = "dataSource - /v1")
 @Path("/dataSource" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface DataSourceResource extends RestResource, DirectRestService {

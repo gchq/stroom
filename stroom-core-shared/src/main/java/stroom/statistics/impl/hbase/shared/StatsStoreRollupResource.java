@@ -19,6 +19,7 @@ package stroom.statistics.impl.hbase.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
@@ -29,8 +30,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "statsStore/rollUp")
-@Path("/statsStore/rollUp")
+@Api(value = "statsStore/rollUp - /v1")
+@Path("/statsStore/rollUp" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface StatsStoreRollupResource extends RestResource, DirectRestService {
     @POST

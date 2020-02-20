@@ -19,6 +19,7 @@ package stroom.dashboard.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
@@ -30,8 +31,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "storedQuery")
-@Path("/storedQuery")
+@Api(value = "storedQuery - /v1")
+@Path("/storedQuery" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface StoredQueryResource extends RestResource, DirectRestService {
     @POST

@@ -27,6 +27,7 @@ import stroom.importexport.api.DocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.HasHealthCheck;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -44,7 +45,7 @@ import java.util.Set;
 @Path(NewUiDictionaryResource2.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public class NewUiDictionaryResource2 implements RestResource, HasHealthCheck {
-    public static final String BASE_RESOURCE_PATH = "/dictionary/v2";
+    public static final String BASE_RESOURCE_PATH = "/dictionary" + ResourcePaths.V2;
 
     private final DictionaryStore dictionaryStore;
 

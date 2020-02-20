@@ -7,6 +7,7 @@ import stroom.docref.DocRef;
 import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.index.shared.IndexDoc;
 import stroom.util.shared.DocRefs;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -20,7 +21,7 @@ import javax.ws.rs.core.Response;
 import java.util.Set;
 
 @Api(value = "index - /v1")
-@Path("/index/v1")
+@Path("/index" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface IndexResource extends RestResource {
     @GET

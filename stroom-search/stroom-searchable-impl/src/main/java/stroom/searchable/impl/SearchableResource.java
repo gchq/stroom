@@ -28,6 +28,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.util.json.JsonUtil;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -38,7 +39,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 @Api(value = "searchable - /v2")
-@Path("/searchable/v2")
+@Path("/searchable" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 public class SearchableResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchableResource.class);

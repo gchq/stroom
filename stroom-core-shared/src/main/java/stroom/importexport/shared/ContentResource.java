@@ -33,7 +33,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "content")
+@Api(value = "content - /v1")
 @Path("/content" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface ContentResource extends RestResource, DirectRestService {

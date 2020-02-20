@@ -19,6 +19,7 @@ package stroom.task.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -29,10 +30,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "task")
-@Path("/task")
+@Api(value = "task - /v1")
+@Path(TaskResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public interface TaskResource extends RestResource, DirectRestService {
+    String BASE_PATH = "/task" + ResourcePaths.V1;
+
     @GET
     @Path("/{nodeName}")
     @Consumes(MediaType.APPLICATION_JSON)

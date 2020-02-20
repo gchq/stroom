@@ -32,6 +32,7 @@ import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.state.PipelineHolder;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.OffsetRange;
@@ -47,7 +48,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Api(value = "data - /v1")
-@Path("/data/v1")
+@Path("/data" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class NewUiDataResource implements RestResource {
     private final DataFetcher dataFetcher;

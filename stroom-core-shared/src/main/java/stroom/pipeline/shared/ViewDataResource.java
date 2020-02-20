@@ -19,6 +19,7 @@ package stroom.pipeline.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -27,8 +28,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "viewData")
-@Path("/viewData")
+@Api(value = "viewData - /v1")
+@Path("/viewData" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface ViewDataResource extends RestResource, DirectRestService {
     @POST

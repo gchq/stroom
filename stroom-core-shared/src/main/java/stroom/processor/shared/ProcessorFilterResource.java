@@ -20,6 +20,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.meta.shared.FindMetaCriteria;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 
@@ -34,8 +35,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "processorFilter")
-@Path("/processorFilter")
+@Api(value = "processorFilter - /v1")
+@Path("/processorFilter" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface ProcessorFilterResource extends RestResource, DirectRestService {
     @POST

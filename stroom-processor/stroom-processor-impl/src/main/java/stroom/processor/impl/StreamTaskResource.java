@@ -30,6 +30,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResultPage;
@@ -55,7 +56,7 @@ import static stroom.processor.impl.SearchKeywords.addFiltering;
 import static stroom.processor.impl.SearchKeywords.addSorting;
 
 @Api(value = "stream task - /v1")
-@Path("/streamtasks/v1")
+@Path("/streamtasks" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class StreamTaskResource implements RestResource {
     private static final String FIELD_PROGRESS = "progress";

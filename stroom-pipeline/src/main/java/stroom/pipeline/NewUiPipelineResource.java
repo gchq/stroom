@@ -12,6 +12,7 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
@@ -32,7 +33,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Api(value = "pipeline - /v1")
-@Path("/pipelines/v1")
+@Path("/pipelines" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class NewUiPipelineResource implements RestResource {
     private final PipelineStore pipelineStore;

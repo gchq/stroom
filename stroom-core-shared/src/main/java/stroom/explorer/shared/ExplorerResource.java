@@ -20,6 +20,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -34,8 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Api(value = "explorer")
-@Path("/explorer")
+@Api(value = "explorer - /v1")
+@Path("/explorer" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface ExplorerResource extends RestResource, DirectRestService {
     @POST

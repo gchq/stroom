@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.data.PipelineData;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -32,8 +33,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "pipeline")
-@Path("/pipeline")
+@Api(value = "pipeline - /v1")
+@Path("/pipeline" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface PipelineResource extends RestResource, DirectRestService {
     @POST

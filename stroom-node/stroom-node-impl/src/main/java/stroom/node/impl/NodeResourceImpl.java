@@ -34,6 +34,7 @@ import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.ws.rs.ServerErrorException;
@@ -116,9 +117,9 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
                 clusterNodeInfo = clusterNodeManager.getClusterNodeInfo();
 
             } else {
-                nodeUrl = NodeCallUtil.getUrl(nodeService, nodeName);
-                String url = nodeUrl;
-                url += "/api/node/" + nodeName;
+                String url = NodeCallUtil.getUrl(nodeService, nodeName);
+                url += ResourcePaths.API_ROOT_PATH + NodeResource.BASE_PATH;
+                url += nodeName;
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
@@ -158,7 +159,9 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
                 return System.currentTimeMillis() - now;
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += "/api/node/" + nodeName + "/ping";
+                url += ResourcePaths.API_ROOT_PATH + NodeResource.BASE_PATH;
+                url += nodeName;
+                url += "/ping";
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)

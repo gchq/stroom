@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docref.DocRef;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -30,8 +31,8 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "statsStore")
-@Path("/statsStore")
+@Api(value = "statsStore - /v1")
+@Path("/statsStore" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface StatsStoreResource extends RestResource, DirectRestService {
     @POST

@@ -32,7 +32,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "jobNode - v1")
+@Api(value = "jobNode - /v1")
 @Path(JobNodeResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public interface JobNodeResource extends RestResource, DirectRestService {

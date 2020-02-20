@@ -73,7 +73,7 @@ class TaskResourceImpl implements TaskResource, HasHealthCheck {
 
     @Override
     public TaskProgressResponse list(final String nodeName) {
-        return find(nodeName, new FindTaskProgressRequest());
+        return find(nodeName, new FindTaskProgressRequest(new FindTaskProgressCriteria()));
     }
 
     @Override
@@ -87,7 +87,8 @@ class TaskResourceImpl implements TaskResource, HasHealthCheck {
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_ROOT_PATH + "/task/" + nodeName;
+                url += ResourcePaths.API_ROOT_PATH + TaskResource.BASE_PATH;
+                url += nodeName;
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
@@ -136,7 +137,9 @@ class TaskResourceImpl implements TaskResource, HasHealthCheck {
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_ROOT_PATH + "/task/" + nodeName + "/terminate";
+                url += ResourcePaths.API_ROOT_PATH + TaskResource.BASE_PATH;
+                url += nodeName;
+                url += "/terminate";
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)

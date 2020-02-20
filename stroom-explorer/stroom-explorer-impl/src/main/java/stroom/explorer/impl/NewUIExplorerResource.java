@@ -11,6 +11,7 @@ import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -32,7 +33,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Api(value = "explorer - /v1")
-@Path("/explorer/v1")
+@Path("/explorer" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class NewUIExplorerResource implements RestResource {

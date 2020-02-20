@@ -21,6 +21,7 @@ import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.receive.rules.shared.ReceiveDataRules;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -31,8 +32,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "solrIndex")
-@Path("/solrIndex")
+@Api(value = "solrIndex - /v1")
+@Path("/solrIndex" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface SolrIndexResource extends RestResource, DirectRestService {
     @POST

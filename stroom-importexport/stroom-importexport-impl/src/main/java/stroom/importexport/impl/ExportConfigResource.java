@@ -8,6 +8,7 @@ import stroom.util.io.StreamUtil;
 import stroom.util.shared.DocRefs;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -23,7 +24,7 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 
 @Api(value = "export - /v1")
-@Path("/export/v1")
+@Path("/export" + ResourcePaths.V1)
 public class ExportConfigResource implements RestResource {
     private final transient ImportExportService importExportService;
     private final transient ResourceStore resourceStore;

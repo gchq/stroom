@@ -32,7 +32,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-@Api(value = "annotations - v1")
+@Api(value = "annotations - /v1")
 @Path("/annotation" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface AnnotationResource extends RestResource, DirectRestService {

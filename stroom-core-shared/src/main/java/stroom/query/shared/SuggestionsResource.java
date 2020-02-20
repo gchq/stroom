@@ -19,6 +19,7 @@ package stroom.query.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -28,8 +29,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.List;
 
-@Api(value = "suggest")
-@Path("/suggest")
+@Api(value = "suggest - /v1")
+@Path("/suggest" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface SuggestionsResource extends RestResource, DirectRestService {
     @POST

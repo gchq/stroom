@@ -30,6 +30,7 @@ import stroom.meta.api.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.IdSet;
@@ -51,7 +52,7 @@ import java.util.List;
 import static stroom.query.api.v2.ExpressionTerm.Condition;
 
 @Api(value = "stream attribute map - /v1")
-@Path("/streamattributemap/v1")
+@Path("/streamattributemap" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class StreamAttributeMapResource implements RestResource {
     private MetaService dataMetaService;

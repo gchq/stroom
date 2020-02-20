@@ -4,6 +4,7 @@ import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -18,7 +19,7 @@ import javax.ws.rs.core.Response;
 
 @Deprecated
 @Api(value = "xslt - /v1")
-@Path("/xslt/v1")
+@Path("/xslt" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class NewUiXsltResource implements RestResource {
     private final XsltStore xsltStore;

@@ -22,6 +22,7 @@ import io.swagger.annotations.ApiParam;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.importexport.shared.Base64EncodedDocumentData;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -34,7 +35,7 @@ import javax.ws.rs.core.MediaType;
 import java.util.Set;
 
 @Api(value = "ruleset - /v2")
-@Path("/ruleset/v2")
+@Path("/ruleset" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 public interface ReceiveDataRuleSetResource extends RestResource, DirectRestService {
     @POST
