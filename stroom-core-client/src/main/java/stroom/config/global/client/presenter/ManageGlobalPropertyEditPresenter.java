@@ -42,6 +42,7 @@ import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
@@ -69,7 +70,7 @@ public final class ManageGlobalPropertyEditPresenter
     private Map<String, OverrideValue<String>> clusterYamlOverrides = new HashMap<>();
     private Map<String, Set<String>> effectiveValueToNodesMap = new HashMap<>();
     private final ButtonView yamlValueWarningsButton;
-    private Provider<ConfigPropertyClusterValuesPresenter> configPropertyClusterValuesPresenterProvider;
+    private Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider;
     private final ButtonView effectiveValueWarningsButton;
 
     @Inject
@@ -78,15 +79,15 @@ public final class ManageGlobalPropertyEditPresenter
                                              final RestFactory restFactory,
                                              final ClientSecurityContext securityContext,
                                              final UiConfigCache clientPropertyCache,
-                                             final Provider<ConfigPropertyClusterValuesPresenter> configPropertyClusterValuesPresenterProvider) {
+                                             final Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider) {
         super(eventBus, view);
         this.restFactory = restFactory;
         this.securityContext = securityContext;
         this.clientPropertyCache = clientPropertyCache;
-        this.configPropertyClusterValuesPresenterProvider = configPropertyClusterValuesPresenterProvider;
+        this.clusterValuesPresenterProvider = clusterValuesPresenterProvider;
 
         this.yamlValueWarningsButton = view.addYamlValueWarningIcon(SvgPresets.ALERT.title("Node values differ"));
-        this.configPropertyClusterValuesPresenterProvider = configPropertyClusterValuesPresenterProvider;
+        this.clusterValuesPresenterProvider = clusterValuesPresenterProvider;
         this.yamlValueWarningsButton.setVisible(false);
 
         this.effectiveValueWarningsButton = view.addEffectiveValueWarningIcon(SvgPresets.ALERT.title("Node values differ"));
@@ -120,11 +121,17 @@ public final class ManageGlobalPropertyEditPresenter
             }
         };
 
-        if (configPropertyClusterValuesPresenterProvider != null) {
-            final ConfigPropertyClusterValuesPresenter clusterValuesPresenter = configPropertyClusterValuesPresenterProvider.get();
-            clusterValuesPresenter.show(getEntity(), effectiveValueToNodesMap, popupUiHandlers);
-        }
+        if (clusterValuesPresenterProvider != null) {
+            final ConfigPropertyClusterValuesPresenter clusterValuesPresenter = clusterValuesPresenterProvider.get();
+            // Get the position of this popup so we can show the cluster values popup at a slight
+            // offset to make it clear it is above the other one. Offsets are not equal to account
+            // for the title bar
+            final PopupPosition offsetPopupPosition = new PopupPosition(
+                    getView().asWidget().getElement().getAbsoluteLeft() + 20,
+                    getView().asWidget().getElement().getAbsoluteTop() + 10);
 
+            clusterValuesPresenter.show(getEntity(), effectiveValueToNodesMap, offsetPopupPosition, popupUiHandlers);
+        }
     }
 
     protected ClientSecurityContext getSecurityContext() {
@@ -262,14 +269,18 @@ public final class ManageGlobalPropertyEditPresenter
 
         read();
         ShowPopupEvent.fire(
-            ManageGlobalPropertyEditPresenter.this,
-            ManageGlobalPropertyEditPresenter.this,
-            popupType,
-            getPopupSize(), caption, internalPopupUiHandlers);
+                ManageGlobalPropertyEditPresenter.this,
+                ManageGlobalPropertyEditPresenter.this,
+                popupType,
+                getPopupSize(),
+                caption,
+                internalPopupUiHandlers);
     }
 
     protected void hide() {
-        HidePopupEvent.fire(ManageGlobalPropertyEditPresenter.this, ManageGlobalPropertyEditPresenter.this);
+        HidePopupEvent.fire(
+                ManageGlobalPropertyEditPresenter.this,
+                ManageGlobalPropertyEditPresenter.this);
     }
 
     private ConfigProperty getEntity() {
@@ -292,16 +303,24 @@ public final class ManageGlobalPropertyEditPresenter
         getView().setUseOverride(getEntity().hasDatabaseOverride());
         String databaseOverrideValue = "";
         if (getEntity().hasDatabaseOverride()) {
-            databaseOverrideValue = getEntity().getDatabaseOverrideValue().getValueOrElse("");
+            databaseOverrideValue = getEntity()
+                    .getDatabaseOverrideValue()
+                    .getValueOrElse("");
         }
         String yamlOverrideValue = "";
         if (getEntity().hasYamlOverride()) {
-            yamlOverrideValue = getEntity().getYamlOverrideValue().getValueOrElse("");
+            yamlOverrideValue = getEntity()
+                    .getYamlOverrideValue()
+                    .getValueOrElse("");
         }
-        getView().getDefaultValue().setText(getEntity().getDefaultValue().orElse(""));
+        getView().getDefaultValue().setText(getEntity()
+                .getDefaultValue()
+                .orElse(""));
         getView().getYamlValue().setText(yamlOverrideValue);
         getView().getDatabaseValue().setText(databaseOverrideValue);
-        getView().getEffectiveValue().setText(getEntity().getEffectiveValue().orElse(""));
+        getView().getEffectiveValue().setText(getEntity()
+                .getEffectiveValue()
+                .orElse(""));
         getView().getDescription().setText(getEntity().getDescription());
         getView().getDataType().setText(getEntity().getDataTypeName());
         getView().getSource().setText(getEntity().getSource().getName());

@@ -9,6 +9,7 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
+import stroom.widget.popup.client.presenter.PopupPosition;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView;
@@ -31,6 +32,7 @@ public class ConfigPropertyClusterValuesPresenter
 
     void show(final ConfigProperty configProperty,
               final Map<String, Set<String>> effectiveValueToNodesMap,
+              final PopupPosition popupPosition,
               final PopupUiHandlers popupUiHandlers) {
 
         this.effectiveValueToNodesMap = effectiveValueToNodesMap;
@@ -42,14 +44,7 @@ public class ConfigPropertyClusterValuesPresenter
         final PopupUiHandlers internalPopupUiHandlers = new PopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
-//                if (ok) {
-//                    write(true);
-//                } else {
-//                    hide();
-//                }
-
                 hide();
-
                 popupUiHandlers.onHideRequest(autoClose, ok);
             }
 
@@ -60,11 +55,13 @@ public class ConfigPropertyClusterValuesPresenter
         };
 
         ShowPopupEvent.fire(
-            ConfigPropertyClusterValuesPresenter.this,
-            ConfigPropertyClusterValuesPresenter.this,
-            popupType,
-            getPopupSize(), caption, internalPopupUiHandlers);
-
+                ConfigPropertyClusterValuesPresenter.this,
+                ConfigPropertyClusterValuesPresenter.this,
+                popupType,
+                getPopupSize(),
+                popupPosition,
+                caption,
+                internalPopupUiHandlers);
     }
 
     protected void hide() {
