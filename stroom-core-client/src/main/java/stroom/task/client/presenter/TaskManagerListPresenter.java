@@ -46,7 +46,6 @@ import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
-import stroom.processor.shared.ProcessorListRow;
 import stroom.svg.client.SvgPresets;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
