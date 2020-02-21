@@ -22,7 +22,6 @@ import stroom.annotation.api.AnnotationCreator;
 import stroom.annotation.impl.AnnotationService;
 import stroom.annotation.shared.*;
 import stroom.event.logging.api.DocumentEventLog;
-import stroom.hadoopcommonshaded.org.apache.zookeeper.proto.CreateRequest;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.factory.ConfigurableElement;
