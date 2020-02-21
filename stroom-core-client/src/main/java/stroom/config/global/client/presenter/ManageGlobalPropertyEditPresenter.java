@@ -48,8 +48,10 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -71,6 +73,7 @@ public final class ManageGlobalPropertyEditPresenter
     private Map<String, Set<String>> effectiveValueToNodesMap = new HashMap<>();
     private final ButtonView yamlValueWarningsButton;
     private Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider;
+//    private ConfigPropertyClusterValuesPresenter clusterValuesPresenterProvider;
     private final ButtonView effectiveValueWarningsButton;
 
     @Inject
@@ -100,14 +103,12 @@ public final class ManageGlobalPropertyEditPresenter
     protected void onBind() {
         registerHandler(yamlValueWarningsButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                // TODO Open popup showing all values
                 onOpenClusterValues();
             }
         }));
 
         registerHandler(effectiveValueWarningsButton.addClickHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                // TODO Open popup showing all values
                 onOpenClusterValues();
             }
         }));
@@ -123,6 +124,7 @@ public final class ManageGlobalPropertyEditPresenter
 
         if (clusterValuesPresenterProvider != null) {
             final ConfigPropertyClusterValuesPresenter clusterValuesPresenter = clusterValuesPresenterProvider.get();
+
             // Get the position of this popup so we can show the cluster values popup at a slight
             // offset to make it clear it is above the other one. Offsets are not equal to account
             // for the title bar
@@ -130,6 +132,7 @@ public final class ManageGlobalPropertyEditPresenter
                     getView().asWidget().getElement().getAbsoluteLeft() + 20,
                     getView().asWidget().getElement().getAbsoluteTop() + 10);
 
+            // TODO Need to re-compute the map of effective values based on any change to the DB value.
             clusterValuesPresenter.show(getEntity(), effectiveValueToNodesMap, offsetPopupPosition, popupUiHandlers);
         }
     }
@@ -215,6 +218,42 @@ public final class ManageGlobalPropertyEditPresenter
                 .list();
     }
 
+    private void updateNodeEffectiveValue(final String nodeName, final OverrideValue<String> yamlOverride) {
+
+        final String effectiveValueFromNode;
+
+
+        if (yamlOverride == null) {
+            effectiveValueFromNode = "UNKNOWN";
+        } else {
+            effectiveValueFromNode = configProperty.getEffectiveValue(yamlOverride)
+                .orElse(MAGIC_NULL);
+        }
+
+        // Add our value into the map
+        this.effectiveValueToNodesMap.computeIfAbsent(
+            effectiveValueFromNode,
+            k -> new HashSet<>())
+            .add(nodeName);
+
+        final List<String> keysToRemove = new ArrayList<>();
+        effectiveValueToNodesMap.forEach((effectiveValue, nodes) -> {
+
+            if (!effectiveValue.equals(effectiveValueFromNode)) {
+                nodes.remove(nodeName);
+                if (nodes.isEmpty()) {
+                    keysToRemove.add(effectiveValue);
+                }
+            }
+        });
+        // Remove entries with no nodes
+        keysToRemove.forEach(key -> effectiveValueToNodesMap.remove(key));
+    }
+
+    private void updateAllNodeEffectiveValues() {
+        clusterYamlOverrides.forEach(this::updateNodeEffectiveValue);
+    }
+
     private void refreshYamlOverrideForNode(final String nodeName) {
         final Rest<OverrideValue<String>> fetchNodeYamlOverrideRest = restFactory.create();
 
@@ -222,19 +261,7 @@ public final class ManageGlobalPropertyEditPresenter
                 .onSuccess(yamlOverride -> {
                     // Add the node's result to our maps
                     clusterYamlOverrides.put(nodeName, yamlOverride);
-                    final String effectiveValueFromNode = configProperty.getEffectiveValue(yamlOverride)
-                        .orElse(MAGIC_NULL);
-                    if (yamlOverride == null) {
-                        effectiveValueToNodesMap.forEach((effectiveValue, nodes) -> {
-                            if (effectiveValue.equals(effectiveValueFromNode))
-                            nodes.remove(nodeName);
-                        });
-                    } else {
-                        this.effectiveValueToNodesMap.computeIfAbsent(
-                            effectiveValueFromNode,
-                            k -> new HashSet<>())
-                            .add(nodeName);
-                    }
+                    updateNodeEffectiveValue(nodeName, yamlOverride);
                     updateWarningState();
                 })
                 .onFailure(throwable -> {
@@ -384,6 +411,8 @@ public final class ManageGlobalPropertyEditPresenter
 
         // Refresh the edit status of the override fields
         getView().setEditable(getEntity().isEditable());
+
+        updateAllNodeEffectiveValues();
     }
 
     protected PopupSize getPopupSize() {

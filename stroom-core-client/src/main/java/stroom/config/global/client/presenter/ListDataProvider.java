@@ -16,7 +16,6 @@
 
 package stroom.config.global.client.presenter;
 
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.view.client.AsyncDataProvider;
 import com.google.gwt.view.client.HasData;
 import com.google.gwt.view.client.Range;
@@ -28,7 +27,7 @@ import java.util.List;
 public class ListDataProvider<R> extends AsyncDataProvider<R> {
     private List<R> list;
     private Range requestedRange;
-//    private TreeRowHandler<R> treeRowHandler;
+    private TreeRowHandler<R> treeRowHandler;
 
     @Override
     protected void onRangeChanged(final HasData<R> display) {
@@ -37,6 +36,7 @@ public class ListDataProvider<R> extends AsyncDataProvider<R> {
 
     public void setList(final List<R> list) {
         this.list = list;
+        this.requestedRange = new Range(0, list.size());
     }
 
     private void fetch(final Range range) {
@@ -47,9 +47,9 @@ public class ListDataProvider<R> extends AsyncDataProvider<R> {
                 for (int i = range.getStart(); i < (range.getStart() + range.getLength()) && i < list.size(); i++) {
                     subList.add(list.get(i));
                 }
-//                if (treeRowHandler != null) {
-//                    treeRowHandler.handle(list);
-//                }
+                if (treeRowHandler != null) {
+                    treeRowHandler.handle(list);
+                }
                 updateRowData(range.getStart(), subList);
                 updateRowCount(list.size(), true);
             }
@@ -60,11 +60,11 @@ public class ListDataProvider<R> extends AsyncDataProvider<R> {
         fetch(requestedRange);
     }
 
-//    public TreeRowHandler<R> getTreeRowHandler() {
-//        return treeRowHandler;
-//    }
-//
-//    void setTreeRowHandler(final TreeRowHandler<R> treeRowHandler) {
-//        this.treeRowHandler = treeRowHandler;
-//    }
+    public TreeRowHandler<R> getTreeRowHandler() {
+        return treeRowHandler;
+    }
+
+    void setTreeRowHandler(final TreeRowHandler<R> treeRowHandler) {
+        this.treeRowHandler = treeRowHandler;
+    }
 }
