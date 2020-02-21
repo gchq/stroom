@@ -26,11 +26,6 @@ public class ManageGlobalPropertiesPlugin extends NodeToolsContentPlugin<GlobalP
     protected void addChildItems(final BeforeRevealMenubarEvent event) {
         if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_PROPERTIES_PERMISSION)) {
             event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-//                    new IconMenuItem(90, SvgPresets.PROPERTIES, SvgPresets.PROPERTIES, "Properties", null, true, () -> {
-//                        final PopupSize popupSize = new PopupSize(1000, 600, true);
-//                        ShowPopupEvent.fire(ManageNodeToolsPlugin.this, manageGlobalPropertyPresenter.get(),
-//                                PopupType.CLOSE_DIALOG, null, popupSize, "System Properties", null, null);
-//                    }));
                 new IconMenuItem(
                     90,
                     SvgPresets.PROPERTIES,
