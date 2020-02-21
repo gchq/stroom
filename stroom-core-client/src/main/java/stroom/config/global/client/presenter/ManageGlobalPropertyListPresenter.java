@@ -95,7 +95,8 @@ public class ManageGlobalPropertyListPresenter
             @Override
             public String getCellStyleNames(Cell.Context context, ConfigProperty object) {
                 return super.getCellStyleNames(context, object) + " "
-                    + getView().getResources().dataGridStyle().dataGridCellWrapText();
+                    + getView().getResources().dataGridStyle().dataGridCellWrapText() + " "
+                    + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
             }
         };
     }
@@ -114,6 +115,11 @@ public class ManageGlobalPropertyListPresenter
                     return null;
                 }
                 return valueFunc.apply(row);
+            }
+            @Override
+            public String getCellStyleNames(Cell.Context context, ConfigProperty object) {
+                return super.getCellStyleNames(context, object) + " "
+                    + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
             }
         };
     }

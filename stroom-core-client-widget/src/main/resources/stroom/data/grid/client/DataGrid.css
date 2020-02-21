@@ -110,6 +110,10 @@
     white-space: normal;
 }
 
+.dataGridCellVerticalTop {
+	vertical-align: top;
+}
+
 .dataGridFirstColumnFooter {
 	
 }

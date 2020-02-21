@@ -76,6 +76,11 @@ public class ConfigPropertyClusterValuesListPresenter
             public Expander getValue(final ClusterValuesRow row) {
                 return buildExpander(row);
             }
+            @Override
+            public String getCellStyleNames(Cell.Context context, ClusterValuesRow object) {
+                return super.getCellStyleNames(context, object) + " "
+                    + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
+            }
         };
         expanderColumn.setFieldUpdater((index, row, value) -> {
             treeAction.setRowExpanded(row, !value.isExpanded());
@@ -113,8 +118,8 @@ public class ConfigPropertyClusterValuesListPresenter
 
             @Override
             public String getCellStyleNames(Cell.Context context, ClusterValuesRow object) {
-                return super.getCellStyleNames(context, object) + " " +
-                    getView().getResources().dataGridStyle().dataGridCellWrapText();
+                return super.getCellStyleNames(context, object) + " "
+                    + getView().getResources().dataGridStyle().dataGridCellWrapText();
             }
         };
         return column;
