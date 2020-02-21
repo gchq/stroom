@@ -17,6 +17,7 @@
 
 package stroom.dashboard.impl;
 
+import javassist.expr.Expr;
 import org.apache.commons.text.StringEscapeUtils;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -112,15 +113,17 @@ public class SearchRequestMapper {
             ObjectMapper mapper = new ObjectMapper();
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
             mapper.setSerializationInclusion(Include.NON_NULL);
-
+            String expressionJson = "null";
             try {
-                final String expressionJson = StringEscapeUtils.unescapeXml(searchExpressionParam.getValue());
-                final ExpressionOperator expression = mapper.readValue(expressionJson, ExpressionOperator.class);
+                expressionJson = StringEscapeUtils.unescapeXml(searchExpressionParam.getValue());
+                final ExpressionOperator suppliedExpression = mapper.readValue(expressionJson, ExpressionOperator.class);
+                ExpressionOperator expression = new ExpressionOperator(true, ExpressionOperator.Op.AND,
+                        searchRequest.getSearch().getExpression(), suppliedExpression);
                 final Query query = new Query(searchRequest.getSearch().getDataSourceRef(), expression, params);
                 return query;
 
             }catch (IOException ex){
-                throw new UncheckedIOException("Invalid JSON for expression", ex);
+                throw new UncheckedIOException("Invalid JSON for expression.  Got: " + expressionJson, ex);
             }
 
         }else {
