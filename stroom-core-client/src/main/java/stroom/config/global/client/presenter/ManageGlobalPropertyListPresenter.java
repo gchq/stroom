@@ -16,8 +16,10 @@
 
 package stroom.config.global.client.presenter;
 
+import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -32,6 +34,8 @@ import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.entity.client.presenter.FindActionDataProvider;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonView;
+
+import java.util.function.Function;
 
 public class ManageGlobalPropertyListPresenter
     extends MyPresenterWidget<DataGridView<ConfigProperty>>
@@ -48,44 +52,23 @@ public class ManageGlobalPropertyListPresenter
         super(eventBus, new DataGridViewImpl<>(true));
 
         // Name.
-        getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
-            @Override
-            public String getValue(final ConfigProperty row) {
-                if (row == null) {
-                    return null;
-                }
-                return row.getName().toString();
-            }
-        }, "Name", 450);
-        getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
-            @Override
-            public String getValue(final ConfigProperty row) {
-                if (row == null) {
-                    return null;
-                }
-                return row.getEffectiveValueMasked().orElse(null);
-            }
-        }, "Effective Value", 300);
+        addColumn(buildBasicColumn(
+            row ->
+                row.getName().toString()),
+            "Name",
+            450);
+        addColumn(buildBasicColumn(
+            row ->
+                row.getEffectiveValueMasked().orElse(null)),
+            "Effective Value",
+            300);
+        addColumn(buildBasicColumn(
+            row ->
+                row.getSource().getName()),
+            "Source",
+            75);
 
-        getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
-            @Override
-            public String getValue(final ConfigProperty row) {
-                if (row == null) {
-                    return null;
-                }
-                return row.getSource().getName();
-            }
-        }, "Source", 75);
-
-        getView().addResizableColumn(new Column<ConfigProperty, String>(new TextCell()) {
-            @Override
-            public String getValue(final ConfigProperty row) {
-                if (row == null) {
-                    return null;
-                }
-                return row.getDescription();
-            }
-        }, "Description", 750);
+        addColumn(buildDescriptionColumn(), "Description", 750);
         getView().addEndColumn(new EndColumn<>());
 
 
@@ -100,11 +83,45 @@ public class ManageGlobalPropertyListPresenter
 //        refresh();
     }
 
+    private Column<ConfigProperty, String> buildDescriptionColumn() {
+        return new Column<ConfigProperty, String>(new TextCell()) {
+            @Override
+            public String getValue(final ConfigProperty row) {
+                if (row == null) {
+                    return null;
+                }
+                return row.getDescription();
+            }
+            @Override
+            public String getCellStyleNames(Cell.Context context, ConfigProperty object) {
+                return super.getCellStyleNames(context, object) + " "
+                    + getView().getResources().dataGridStyle().dataGridCellWrapText();
+            }
+        };
+    }
+
 //    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
 //                                     final ImageResource disabledImage, final boolean enabled) {
 //        return getView().addButton(title, enabledImage, disabledImage, enabled);
 //    }
 
+
+    private Column<ConfigProperty, String> buildBasicColumn(final Function<ConfigProperty, String> valueFunc) {
+        return new Column<ConfigProperty, String>(new TextCell()) {
+            @Override
+            public String getValue(final ConfigProperty row) {
+                if (row == null) {
+                    return null;
+                }
+                return valueFunc.apply(row);
+            }
+        };
+    }
+
+    private void addColumn(Column<ConfigProperty, String> column, String name, int width) {
+        column.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
+        getView().addResizableColumn(column, name, width);
+    }
 
     public ButtonView addButton(final SvgPreset preset) {
         return getView().addButton(preset);

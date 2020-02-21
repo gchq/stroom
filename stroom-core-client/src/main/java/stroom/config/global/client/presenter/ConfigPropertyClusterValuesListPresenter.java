@@ -1,5 +1,6 @@
 package stroom.config.global.client.presenter;
 
+import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
@@ -82,18 +83,13 @@ public class ConfigPropertyClusterValuesListPresenter
         });
 
         getView().addColumn(expanderColumn, "");
+        getView().addResizableColumn(buildEffectiveValueColumn(), "Effective Value", 550);
+        getView().addResizableColumn(buildNodeColumn(), "Node", 300);
+        getView().addEndColumn(new EndColumn<>());
+    }
 
-        getView().addResizableColumn(new Column<ClusterValuesRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final ClusterValuesRow row) {
-                if (row == null) {
-                    return null;
-                }
-                return row.getEffectiveValue();
-            }
-        }, "Effective Value", 550);
-
-        getView().addResizableColumn(new Column<ClusterValuesRow, String>(new TextCell()) {
+    private Column<ClusterValuesRow, String> buildNodeColumn() {
+        final Column<ClusterValuesRow, String> column = new Column<ClusterValuesRow, String>(new TextCell()) {
             @Override
             public String getValue(final ClusterValuesRow row) {
                 if (row == null) {
@@ -101,8 +97,27 @@ public class ConfigPropertyClusterValuesListPresenter
                 }
                 return row.getNodeName();
             }
-        }, "Node", 300);
-        getView().addEndColumn(new EndColumn<>());
+        };
+        return column;
+    }
+
+    private Column<ClusterValuesRow, String> buildEffectiveValueColumn() {
+        final Column<ClusterValuesRow, String> column = new Column<ClusterValuesRow, String>(new TextCell()) {
+            @Override
+            public String getValue(final ClusterValuesRow row) {
+                if (row == null) {
+                    return null;
+                }
+                return row.getEffectiveValue();
+            }
+
+            @Override
+            public String getCellStyleNames(Cell.Context context, ClusterValuesRow object) {
+                return super.getCellStyleNames(context, object) + " " +
+                    getView().getResources().dataGridStyle().dataGridCellWrapText();
+            }
+        };
+        return column;
     }
 
     private Expander buildExpander(final ClusterValuesRow row) {

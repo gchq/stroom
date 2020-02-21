@@ -14,10 +14,6 @@
   </ui:style>
 
   <g:DockLayoutPanel unit="PX" width="100%" height="100%">
-<!--    <g:north size="19">-->
-<!--      <view:QuickFilter ui:field="nameFilter"-->
-<!--        addStyleNames="{style.nameFilter}" />-->
-<!--    </g:north>-->
     <g:center>
       <layout:ResizeSimplePanel ui:field="dataGrid"
         styleName="dataGrid {style.outer}" width="100%" height="100%" />
