@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v7.0-beta.21] - 2020-02-24
+
 * Add null checks to DB migration.
 
 * Add deletion of constraint `IDX_SHARD_FK_IDX_ID` to migration script.
@@ -1966,7 +1969,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.20...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.21...HEAD
+[v7.0-beta.21]: https://github.com/gchq/stroom/compare/v7.0-beta.20...v7.0-beta.21
 [v7.0-beta.20]: https://github.com/gchq/stroom/compare/v7.0-beta.19...v7.0-beta.20
 [v7.0-beta.19]: https://github.com/gchq/stroom/compare/v7.0-beta.18...v7.0-beta.19
 [v7.0-beta.18]: https://github.com/gchq/stroom/compare/v7.0-beta.17...v7.0-beta.18
