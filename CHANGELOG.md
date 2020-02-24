@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Add null checks to DB migration.
 
+* Add deletion of constraint `IDX_SHARD_FK_IDX_ID` to migration script.
+
 
 ## [v7.0-beta.20] - 2020-02-13
 
