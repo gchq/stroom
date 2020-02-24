@@ -38,29 +38,29 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 
 /**
- * This class processes XML documents that conform to a particular schema that hasn't been formalised/published yet.
+ * This class processes XML documents that conform to annotation:1 schema.
  * Example follows:
 
  <?xml version="1.1" encoding="UTF-8"?>
- <Annotations xmlns="annotation" xmlns:stroom="stroom" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-     <Annotation>
-     <CreateTime>2020-01-23 11:11:11.111Z</CreateTime>
-     <Title>Something important happened</Title>
-     <Description>The important thing detector noticed a HOLE in object BUCKET1 </Description>
-     <AssociateEvents>
-       <AssociatedEvent>
-         <StreamId>1234</StreamId>
-         <EventId>56</EventId>
-       </AssociatedEvent>
-       <AssociatedEvent>
-         <StreamId>9876</StreamId>
-         <EventId>54</EventId>
-       </AssociatedEvent>
-     </AssociateEvents>
-     <Data Name="object" Value="BUCKET1" />
-     <Data Name="importance" Value="Rather Insignificant" />
-   </Annotation>
- </Annotations>
+ <annotations xmlns="annotation:1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="annotation:1 file://annotation-v1.0.xsd">
+ <annotation>
+     <createTime>2020-01-23 11:11:11.111Z</createTime>
+     <title>Something important happened</title>
+     <description>The important thing detector noticed a HOLE in object BUCKET1 </description>
+     <associateEvents>
+       <associatedEvent>
+         <streamId>1234</streamId>
+         <eventId>56</eventId>
+       </associatedEvent>
+       <associatedEvent>
+         <streamId>9876</streamId>
+         <eventId>54</eventId>
+       </associatedEvent>
+     </associateEvents>
+     <data Name="object" Value="BUCKET1" />
+     <data Name="importance" Value="Rather Insignificant" />
+   </annotation>
+ </annotations>
 
 
  */
@@ -74,12 +74,12 @@ import java.util.ArrayList;
                 PipelineElementType.VISABILITY_SIMPLE},
         icon = ElementIcons.TEXT)
 class AnnotationWriter extends AbstractXMLFilter {
-    private static final String ANNOTATION_TAG = "Annotation";
-    private static final String TITLE_TAG = "Title";
-    private static final String DESCRIPTION_TAG = "Description";
-    private static final String EVENTID_TAG = "EventId";
-    private static final String STREAMID_TAG = "StreamId";
-    private static final String EVENT_TAG = "AssociatedEvent";
+    private static final String ANNOTATION_TAG = "annotation";
+    private static final String TITLE_TAG = "title";
+    private static final String DESCRIPTION_TAG = "description";
+    private static final String EVENTID_TAG = "eventId";
+    private static final String STREAMID_TAG = "streamId";
+    private static final String EVENT_TAG = "associatedEvent";
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AnnotationWriter.class);
 
