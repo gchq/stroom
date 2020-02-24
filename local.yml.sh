@@ -18,8 +18,9 @@ set -e
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 SOURCE_CONF_FILE=${SCRIPT_DIR}/stroom-app/dev.yml
 LOCAL_CONF_FILE_NAME=local.yml
+LOCAL_2_CONF_FILE_NAME=local2.yml
 LOCAL_CONF_FILE=${SCRIPT_DIR}/${LOCAL_CONF_FILE_NAME}
-
+LOCAL_2_CONF_FILE=${SCRIPT_DIR}/${LOCAL_2_CONF_FILE_NAME}
 
 setIpAddress(){
     if [ "$(uname)" == "Darwin" ]; then
@@ -43,13 +44,15 @@ setIpAddress(){
             | awk 'match($0,"src [0-9\\.]+") {print substr($0,RSTART+4,RLENGTH-4)}')
     fi
     echo
-    echo -e "Using IP ${GREEN}${ip}${NC} as the IP, as determined from the operating system"
+    echo -e "Using IP ${GREEN}${ip}${NC} as the IP, as determined from" \
+      "the operating system"
 }
 
 checkSourceExists(){
     if [ ! -f ${SOURCE_CONF_FILE} ]; then
         exit
-        echo -e "${RED}Source file ${GREEN}${SOURCE_CONF_FILE}${RED} does not exist${NC}"
+        echo -e "${RED}Source file ${GREEN}${SOURCE_CONF_FILE}${RED}" \
+          "does not exist${NC}"
         exit 1
     fi
 }
@@ -64,6 +67,19 @@ backupCurrentLocalFile(){
     fi
 }
 
+makeLocal2File() {
+  echo -e "Overwriting ${GREEN}${LOCAL_2_CONF_FILE}${NC} as a node 2" \
+    "variant of ${GREEN}${LOCAL_2_CONF_FILE}${NC}"
+
+  sed \
+    -r \
+    -e 's/name: node1a/name: node2a/' \
+    -e 's/(port:.*)8080/\110080/' \
+    -e 's/(port:.*)8081/\110081/' \
+    < "${LOCAL_CONF_FILE}" \
+    > "${LOCAL_2_CONF_FILE}"
+}
+
 main(){
     setIpAddress
 
@@ -74,22 +90,27 @@ main(){
 
     backupCurrentLocalFile
 
-    echo -e "Overwriting ${GREEN}${LOCAL_CONF_FILE}${NC} with a version templated from ${GREEN}${SOURCE_CONF_FILE}${NC}"
+    echo -e "Overwriting ${GREEN}${LOCAL_CONF_FILE}${NC} with a version" \
+      "templated from ${GREEN}${SOURCE_CONF_FILE}${NC}"
     #Use '#' delimiter in HOME_DIR sed script as HOME contains '\'
     cat ${SOURCE_CONF_FILE} \
         | sed "s/<<<IP_ADDRESS>>>/${ip}/g" \
         | sed "s#\${HOME_DIR[^}]*}#${HOME}#g" \
         > ${LOCAL_CONF_FILE}
 
+    makeLocal2File
+
     if [[ "x${backupFile}" != "x" ]]; then
 
         if ! diff -q ${backupFile} ${LOCAL_CONF_FILE} > /dev/null; then
             echo
-            echo -e "Run the following to see the changes made to your ${LOCAL_CONF_FILE_NAME} file"
+            echo -e "Run the following to see the changes made to your" \
+              "${LOCAL_CONF_FILE_NAME} file"
             echo -e "${GREEN}vimdiff ${backupFile} ${LOCAL_CONF_FILE}${NC}"
         else
             echo
-            echo -e "Backup file is identical to new local config file, deleting backup file ${backupFile}"
+            echo -e "Backup file is identical to new local config file," \
+              "deleting backup file ${backupFile}"
             rm ${backupFile}
         fi
     fi
