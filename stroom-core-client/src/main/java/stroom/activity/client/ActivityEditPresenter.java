@@ -190,36 +190,32 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
     }
 
     protected void write(final Consumer<Activity> consumer) {
-        final ActivityDetails details = new ActivityDetails();
-
         final List<Element> inputElements = new ArrayList<>();
         findInputElements(getView().getHtml().getElement().getChildNodes(), inputElements);
 
+        final List<Prop> properties = new ArrayList<>();
         for (final Element element : inputElements) {
             final String tagName = element.getTagName();
             if ("input".equalsIgnoreCase(tagName)) {
-                final Prop prop = createProp(element);
                 final InputElement inputElement = element.cast();
-
                 if ("checkbox".equalsIgnoreCase(inputElement.getType()) || "radio".equalsIgnoreCase(inputElement.getType())) {
-                    details.add(prop, Boolean.toString(inputElement.isChecked()));
+                    properties.add(createProp(element, Boolean.toString(inputElement.isChecked())));
                 } else {
-                    details.add(prop, inputElement.getValue());
+                    properties.add(createProp(element, inputElement.getValue()));
                 }
             } else if ("text".equalsIgnoreCase(tagName)) {
-                final Prop prop = createProp(element);
                 final InputElement inputElement = element.cast();
-                details.add(prop, inputElement.getValue());
+                properties.add(createProp(element, inputElement.getValue()));
             } else if ("textarea".equalsIgnoreCase(tagName)) {
-                final Prop prop = createProp(element);
                 final TextAreaElement inputElement = element.cast();
-                details.add(prop, inputElement.getValue());
+                properties.add(createProp(element, inputElement.getValue()));
             } else if ("select".equalsIgnoreCase(tagName)) {
-                final Prop prop = createProp(element);
                 final SelectElement selectElement = element.cast();
-                details.add(prop, selectElement.getValue());
+                properties.add(createProp(element, selectElement.getValue()));
             }
         }
+
+        final ActivityDetails details = new ActivityDetails(properties);
         activity.setDetails(details);
 
         // Validate the activity.
@@ -317,6 +313,12 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
             prop.setName(prop.getId());
         }
 
+        return prop;
+    }
+
+    private Prop createProp(final Element element, final String value) {
+        final Prop prop = createProp(element);
+        prop.setValue(value);
         return prop;
     }
 

@@ -6,7 +6,6 @@ import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
 import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.index.shared.IndexDoc;
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -30,7 +29,7 @@ public interface IndexResource extends RestResource {
     @ApiOperation(
             value = "Submit a request for a list of doc refs held by this service",
             response = Set.class)
-    DocRefs listDocuments();
+    Set<DocRef> listDocuments();
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)

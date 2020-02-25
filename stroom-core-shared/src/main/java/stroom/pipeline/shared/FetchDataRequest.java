@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 import stroom.util.shared.OffsetRange;
+import stroom.util.shared.PageResponse;
 import stroom.util.shared.Severity;
 
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
@@ -63,8 +64,16 @@ public class FetchDataRequest {
         this.streamId = streamId;
         this.childStreamType = childStreamType;
         this.pipeline = pipeline;
-        this.streamRange = streamRange;
-        this.pageRange = pageRange;
+        if (streamRange != null) {
+            this.streamRange = streamRange;
+        } else {
+            this.streamRange = new OffsetRange<>(0L, 1L);
+        }
+        if (pageRange != null) {
+            this.pageRange = pageRange;
+        } else {
+            this.pageRange = new OffsetRange<>(0L, 100L);
+        }
         this.showAsHtml = showAsHtml;
         this.markerMode = markerMode;
         this.expandedSeverities = expandedSeverities;
@@ -139,6 +148,7 @@ public class FetchDataRequest {
         return fireEvents;
     }
 
+    @JsonIgnore
     public void setFireEvents(final boolean fireEvents) {
         this.fireEvents = fireEvents;
     }

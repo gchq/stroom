@@ -36,7 +36,7 @@ public class ClusterNodeInfo {
     @JsonProperty
     private String clusterURL;
     @JsonProperty
-    private List<ClusterNodeInfoItem> itemList = new ArrayList<>();
+    private List<ClusterNodeInfoItem> itemList;
     @JsonProperty
     private Long ping;
     @JsonProperty
@@ -70,6 +70,9 @@ public class ClusterNodeInfo {
     }
 
     public void addItem(final String nodeName, final boolean active, final boolean master) {
+        if (itemList == null) {
+            itemList = new ArrayList<>();
+        }
         itemList.add(new ClusterNodeInfoItem(nodeName, active, master));
     }
 

@@ -50,6 +50,7 @@ public class Format implements Serializable {
     private Type type;
     @XmlElements({@XmlElement(name = "numberFormatSettings", type = NumberFormatSettings.class),
             @XmlElement(name = "dateTimeFormatSettings", type = DateTimeFormatSettings.class)})
+    @JsonProperty("settings")
     private FormatSettings settings;
     @XmlElement(name = "wrap")
     @JsonProperty("wrap")

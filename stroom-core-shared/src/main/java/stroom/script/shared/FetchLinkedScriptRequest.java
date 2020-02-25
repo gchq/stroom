@@ -1,17 +1,28 @@
 package stroom.script.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 
 import java.util.Set;
 
+@JsonPropertyOrder({"script", "loadedScripts"})
+@JsonInclude(Include.NON_DEFAULT)
 public class FetchLinkedScriptRequest {
+    @JsonProperty
     private DocRef script;
+    @JsonProperty
     private Set<DocRef> loadedScripts;
 
     public FetchLinkedScriptRequest() {
     }
 
-    public FetchLinkedScriptRequest(final DocRef script, final Set<DocRef> loadedScripts) {
+    @JsonCreator
+    public FetchLinkedScriptRequest(@JsonProperty("script") final DocRef script,
+                                    @JsonProperty("loadedScripts") final Set<DocRef> loadedScripts) {
         this.script = script;
         this.loadedScripts = loadedScripts;
     }

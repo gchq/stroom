@@ -30,6 +30,7 @@ import stroom.core.client.LocationManager;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.client.event.ExportConfigEvent;
@@ -46,6 +47,7 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class ExportConfigPresenter
@@ -105,7 +107,7 @@ public class ExportConfigPresenter
             EnablePopupEvent.fire(this, this);
 
         } else {
-            final DocRefs docRefs = new DocRefs();
+            final Set<DocRef> docRefs = new HashSet<>();
             for (final ExplorerNode explorerNode : dataItems) {
                 docRefs.add(explorerNode.getDocRef());
             }
@@ -115,7 +117,7 @@ public class ExportConfigPresenter
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
                     .onFailure(throwable -> ExportFileCompleteUtil.onFailure(this, throwable))
                     .call(CONTENT_RESOURCE)
-                    .exportContent(docRefs);
+                    .exportContent(new DocRefs(docRefs));
         }
     }
 

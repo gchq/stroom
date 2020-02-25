@@ -1,29 +1,130 @@
 package stroom.ui.config.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.AbstractConfig;
 
+@JsonPropertyOrder({"ui", "authenticationService", "users", "apiKeys", "indexVolumes", "indexVolumeGroups", "userAuthorisation", "groupAuthorisation", "editDoc", "changepassword", "kibana", "trackers", "annotations", "elastic", "documentPermissions"})
+@JsonInclude(Include.NON_DEFAULT)
 public class UrlConfig extends AbstractConfig {
-    private String ui = "http://IP_ADDRESS";
-    private String authenticationService = "http://auth-service:8099/authentication/v1";
-    private String users = "http://IP_ADDRESS/users";
-    private String apiKeys = "http://IP_ADDRESS/tokens";
-    private String indexVolumes = "http://IP_ADDRESS/s/indexing/volumes";
-    private String indexVolumeGroups = "http://IP_ADDRESS/s/indexing/groups";
-    private String userAuthorisation = "http://IP_ADDRESS/s/authorisationManager/false";
-    private String groupAuthorisation = "http://IP_ADDRESS/s/authorisationManager/true";
-    private String editDoc = "http://IP_ADDRESS/s/doc/";
-    private String changepassword = "http://IP_ADDRESS/changepassword";
-    private String kibana = null;
-    private String trackers = null;
-    private String annotations = "http://IP_ADDRESS/annotationsService/queryApi/v1";
-    private String elastic = "http://IP_ADDRESS/queryElasticService/queryApi/v1";
-    private String documentPermissions = "http://IP_ADDRESS/s/authorisationManager/document/";
+    @JsonProperty
+    @JsonPropertyDescription("The URL of Stroom as provided to the browser")
+    private String ui;
+    @JsonProperty
+    @JsonPropertyDescription("The URL of the authentication service")
+    private String authenticationService;
+    @JsonProperty
+    private String users;
+    @JsonProperty
+    private String apiKeys;
+    @JsonProperty
+    private String indexVolumes;
+    @JsonProperty
+    private String indexVolumeGroups;
+    @JsonProperty
+    private String userAuthorisation;
+    @JsonProperty
+    private String groupAuthorisation;
+    @JsonProperty
+    private String editDoc;
+    @JsonProperty
+    private String changepassword;
+    @JsonProperty
+    private String kibana;
+    @JsonProperty
+    private String trackers;
+    @JsonProperty
+    private String annotations;
+    @JsonProperty
+    private String elastic;
+    @JsonProperty
+    private String documentPermissions;
 
     public UrlConfig() {
+        setDefaults();
     }
 
-    @JsonPropertyDescription("The URL of Stroom as provided to the browser")
+    @JsonCreator
+    public UrlConfig(@JsonProperty("ui") final String ui,
+                     @JsonProperty("authenticationService") final String authenticationService,
+                     @JsonProperty("users") final String users,
+                     @JsonProperty("apiKeys") final String apiKeys,
+                     @JsonProperty("indexVolumes") final String indexVolumes,
+                     @JsonProperty("indexVolumeGroups") final String indexVolumeGroups,
+                     @JsonProperty("userAuthorisation") final String userAuthorisation,
+                     @JsonProperty("groupAuthorisation") final String groupAuthorisation,
+                     @JsonProperty("editDoc") final String editDoc,
+                     @JsonProperty("changepassword") final String changepassword,
+                     @JsonProperty("kibana") final String kibana,
+                     @JsonProperty("trackers") final String trackers,
+                     @JsonProperty("annotations") final String annotations,
+                     @JsonProperty("elastic") final String elastic,
+                     @JsonProperty("documentPermissions") final String documentPermissions) {
+        this.ui = ui;
+        this.authenticationService = authenticationService;
+        this.users = users;
+        this.apiKeys = apiKeys;
+        this.indexVolumes = indexVolumes;
+        this.indexVolumeGroups = indexVolumeGroups;
+        this.userAuthorisation = userAuthorisation;
+        this.groupAuthorisation = groupAuthorisation;
+        this.editDoc = editDoc;
+        this.changepassword = changepassword;
+        this.kibana = kibana;
+        this.trackers = trackers;
+        this.annotations = annotations;
+        this.elastic = elastic;
+        this.documentPermissions = documentPermissions;
+
+        setDefaults();
+    }
+
+    private void setDefaults() {
+        if (ui == null) {
+            ui = "http://IP_ADDRESS";
+        }
+        if (authenticationService == null) {
+            authenticationService = "http://auth-service:8099/authentication/v1";
+        }
+        if (users == null) {
+            users = "http://IP_ADDRESS/users";
+        }
+        if (apiKeys == null) {
+            apiKeys = "http://IP_ADDRESS/tokens";
+        }
+        if (indexVolumes == null) {
+            indexVolumes = "http://IP_ADDRESS/s/indexing/volumes";
+        }
+        if (indexVolumeGroups == null) {
+            indexVolumeGroups = "http://IP_ADDRESS/s/indexing/groups";
+        }
+        if (userAuthorisation == null) {
+            userAuthorisation = "http://IP_ADDRESS/s/authorisationManager/false";
+        }
+        if (groupAuthorisation == null) {
+            groupAuthorisation = "http://IP_ADDRESS/s/authorisationManager/true";
+        }
+        if (editDoc == null) {
+            editDoc = "http://IP_ADDRESS/s/doc/";
+        }
+        if (changepassword == null) {
+            changepassword = "http://IP_ADDRESS/changepassword";
+        }
+        if (annotations == null) {
+            annotations = "http://IP_ADDRESS/annotationsService/queryApi/v1";
+        }
+        if (elastic == null) {
+            elastic = "http://IP_ADDRESS/queryElasticService/queryApi/v1";
+        }
+        if (documentPermissions == null) {
+            documentPermissions = "http://IP_ADDRESS/s/authorisationManager/document/";
+        }
+    }
+
     public String getUi() {
         return ui;
     }
@@ -32,7 +133,6 @@ public class UrlConfig extends AbstractConfig {
         this.ui = ui;
     }
 
-    @JsonPropertyDescription("The URL of the authentication service")
     public String getAuthenticationService() {
         return authenticationService;
     }

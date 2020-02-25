@@ -38,6 +38,7 @@ import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
+import stroom.editor.client.view.IndicatorLines;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.shared.PipelineModelException;
@@ -245,7 +246,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                 final Indicators codeIndicators = elementData.getCodeIndicators();
                 // Always set the indicators for the code pane as errors in the
                 // code pane could be responsible for no record being found.
-                editorPresenter.setCodeIndicators(codeIndicators);
+                editorPresenter.setCodeIndicators(new IndicatorLines(codeIndicators));
             }
         }
     }
@@ -265,7 +266,7 @@ public class SteppingPresenter extends MyPresenterWidget<SteppingPresenter.Stepp
                     editorPresenter.setOutput(outputIndicators.toString(), 1, false, null);
                 } else {
                     // Don't try and format text output.
-                    editorPresenter.setOutput(output, 1, elementData.isFormatOutput(), outputIndicators);
+                    editorPresenter.setOutput(output, 1, elementData.isFormatOutput(), new IndicatorLines(outputIndicators));
                 }
             } else {
                 // // if we didn't find a record then it could be the input that

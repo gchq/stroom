@@ -109,52 +109,42 @@ public class PipelinePropertyValue implements Copyable<PipelinePropertyValue> {
         this.entity = entity;
     }
 
-    @JsonProperty("string")
     public String getString() {
         return string;
     }
 
-    @JsonProperty("string")
     public void setString(final String value) {
         this.string = value;
     }
 
-    @JsonProperty("integer")
     public Integer getInteger() {
         return integer;
     }
 
-    @JsonProperty("integer")
     public void setInteger(final Integer value) {
         this.integer = value;
     }
 
-    @JsonProperty("long")
     public Long getLong() {
         return _long;
     }
 
-    @JsonProperty("long")
     public void setLong(final Long value) {
         this._long = value;
     }
 
-    @JsonProperty("boolean")
     public Boolean isBoolean() {
         return _boolean;
     }
 
-    @JsonProperty("boolean")
     public void setBoolean(final Boolean value) {
         this._boolean = value;
     }
 
-    @JsonProperty("entity")
     public DocRef getEntity() {
         return entity;
     }
 
-    @JsonProperty("entity")
     public void setEntity(final DocRef value) {
         this.entity = value;
     }

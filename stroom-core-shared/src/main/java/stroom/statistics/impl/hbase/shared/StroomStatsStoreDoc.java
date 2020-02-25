@@ -39,9 +39,9 @@ public class StroomStatsStoreDoc extends Doc {
     @JsonProperty
     private String description;
     @JsonProperty
-    private StatisticType statisticType = StatisticType.COUNT;
+    private StatisticType statisticType;
     @JsonProperty
-    private StatisticRollUpType statisticRollUpType = StatisticRollUpType.NONE;
+    private StatisticRollUpType rollUpType;
     @JsonProperty
     private EventStoreTimeIntervalEnum precision;
     @JsonProperty
@@ -64,23 +64,31 @@ public class StroomStatsStoreDoc extends Doc {
                                @JsonProperty("updateUser") final String updateUser,
                                @JsonProperty("description") final String description,
                                @JsonProperty("statisticType") final StatisticType statisticType,
-                               @JsonProperty("statisticRollUpType") final StatisticRollUpType statisticRollUpType,
+                               @JsonProperty("rollUpType") final StatisticRollUpType rollUpType,
                                @JsonProperty("precision") final EventStoreTimeIntervalEnum precision,
                                @JsonProperty("enabled") final Boolean enabled,
                                @JsonProperty("config") final StroomStatsStoreEntityData config) {
         super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
         this.description = description;
         this.statisticType = statisticType;
-        this.statisticRollUpType = statisticRollUpType;
+        this.rollUpType = rollUpType;
         this.precision = precision;
         this.enabled = enabled;
         this.config = config;
+
+        setDefaults();
     }
 
     private void setDefaults() {
-        this.statisticType = StatisticType.COUNT;
-        this.statisticRollUpType = StatisticRollUpType.NONE;
-        setPrecision(DEFAULT_PRECISION_INTERVAL);
+        if (statisticType == null) {
+            statisticType = StatisticType.COUNT;
+        }
+        if (rollUpType == null) {
+            rollUpType = StatisticRollUpType.NONE;
+        }
+        if (precision == null) {
+            setPrecision(DEFAULT_PRECISION_INTERVAL);
+        }
     }
 
     public String getDescription() {
@@ -100,11 +108,11 @@ public class StroomStatsStoreDoc extends Doc {
     }
 
     public StatisticRollUpType getRollUpType() {
-        return statisticRollUpType;
+        return rollUpType;
     }
 
     public void setRollUpType(final StatisticRollUpType rollUpType) {
-        this.statisticRollUpType = rollUpType;
+        this.rollUpType = rollUpType;
     }
 
     public EventStoreTimeIntervalEnum getPrecision() {
@@ -162,7 +170,7 @@ public class StroomStatsStoreDoc extends Doc {
         final StroomStatsStoreDoc that = (StroomStatsStoreDoc) o;
         return Objects.equals(description, that.description) &&
                 statisticType == that.statisticType &&
-                statisticRollUpType == that.statisticRollUpType &&
+                rollUpType == that.rollUpType &&
                 precision == that.precision &&
                 Objects.equals(enabled, that.enabled) &&
                 Objects.equals(config, that.config);
@@ -170,6 +178,6 @@ public class StroomStatsStoreDoc extends Doc {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, statisticType, statisticRollUpType, precision, enabled, config);
+        return Objects.hash(super.hashCode(), description, statisticType, rollUpType, precision, enabled, config);
     }
 }

@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -35,5 +37,6 @@ import javax.xml.bind.annotation.XmlSeeAlso;
         @JsonSubTypes.Type(value = VisComponentSettings.class, name = "vis"),
         @JsonSubTypes.Type(value = TextComponentSettings.class, name = "text")
 })
+@JsonInclude(Include.NON_DEFAULT)
 public abstract class ComponentSettings {
 }

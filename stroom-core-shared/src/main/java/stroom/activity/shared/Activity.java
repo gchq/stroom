@@ -145,36 +145,33 @@ public class Activity implements HasAuditInfo {
         return details.toString();
     }
 
+    @JsonInclude(Include.NON_DEFAULT)
     public static class ActivityDetails {
         @JsonProperty
         private final List<Prop> properties;
 
         @JsonCreator
         public ActivityDetails(@JsonProperty("properties") final List<Prop> properties) {
-            this.properties = properties;
-        }
-
-        public ActivityDetails() {
-            properties = new ArrayList<>();
+            if (properties != null) {
+                this.properties = properties;
+            } else {
+                this.properties = new ArrayList<>();
+            }
         }
 
         public List<Prop> getProperties() {
             return properties;
         }
 
-        @JsonIgnore
         public void add(final Prop prop, final String value) {
             prop.setValue(value);
             properties.add(prop);
         }
 
-        @JsonIgnore
         public String value(final String propertyId) {
-            if (properties != null) {
-                for (final Prop prop : properties) {
-                    if (prop.getId() != null && prop.getId().equals(propertyId)) {
-                        return prop.getValue();
-                    }
+            for (final Prop prop : properties) {
+                if (prop.getId() != null && prop.getId().equals(propertyId)) {
+                    return prop.getValue();
                 }
             }
             return null;
@@ -186,16 +183,53 @@ public class Activity implements HasAuditInfo {
         }
     }
 
+    @JsonInclude(Include.NON_DEFAULT)
     public static class Prop {
+        @JsonProperty
         private String id;
+        @JsonProperty
         private String name;
+        @JsonProperty
         private String validation;
+        @JsonProperty
         private String validationMessage;
+        @JsonProperty
         private String value;
-        private boolean showInSelection = true;
-        private boolean showInList = true;
+        @JsonProperty
+        private Boolean showInSelection;
+        @JsonProperty
+        private Boolean showInList;
 
         public Prop() {
+            setDefaultValues();
+        }
+
+        @JsonCreator
+        public Prop(@JsonProperty("id") final String id,
+                    @JsonProperty("name") final String name,
+                    @JsonProperty("validation") final String validation,
+                    @JsonProperty("validationMessage") final String validationMessage,
+                    @JsonProperty("value") final String value,
+                    @JsonProperty("showInSelection") final Boolean showInSelection,
+                    @JsonProperty("showInList") final Boolean showInList) {
+            this.id = id;
+            this.name = name;
+            this.validation = validation;
+            this.validationMessage = validationMessage;
+            this.value = value;
+            this.showInSelection = showInSelection;
+            this.showInList = showInList;
+
+            setDefaultValues();
+        }
+
+        private void setDefaultValues() {
+            if (showInSelection == null) {
+                showInSelection = true;
+            }
+            if (showInList == null) {
+                showInList = true;
+            }
         }
 
         public String getId() {
@@ -226,7 +260,7 @@ public class Activity implements HasAuditInfo {
             return validationMessage;
         }
 
-        public void setValidationMessage(String validationMessage) {
+        public void setValidationMessage(final String validationMessage) {
             this.validationMessage = validationMessage;
         }
 

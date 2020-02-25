@@ -17,7 +17,6 @@
 package stroom.dashboard.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -28,7 +27,6 @@ import stroom.util.shared.OffsetRange;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.util.HashSet;
 import java.util.Set;
@@ -43,13 +41,14 @@ public class TableResultRequest extends ComponentResultRequest {
 
     @XmlElement
     @JsonProperty
-    private OffsetRange<Integer> requestedRange = new OffsetRange<>(0, 100);
+    private OffsetRange<Integer> requestedRange;
 
     @XmlElement
     @JsonProperty
     private Set<String> openGroups;
 
     public TableResultRequest() {
+        requestedRange = new OffsetRange<>(0, 100);
     }
 
     public TableResultRequest(final int offset, final int length) {
@@ -61,7 +60,11 @@ public class TableResultRequest extends ComponentResultRequest {
                               @JsonProperty("requestedRange") final OffsetRange<Integer> requestedRange,
                               @JsonProperty("openGroups") final Set<String> openGroups) {
         this.tableSettings = tableSettings;
-        this.requestedRange = requestedRange;
+        if (requestedRange != null) {
+            this.requestedRange = requestedRange;
+        } else {
+            this.requestedRange = new OffsetRange<>(0, 100);
+        }
         this.openGroups = openGroups;
     }
 
@@ -107,13 +110,6 @@ public class TableResultRequest extends ComponentResultRequest {
 
     public boolean isGroupOpen(final String group) {
         return openGroups != null && openGroups.contains(group);
-    }
-
-    @JsonIgnore
-    @Override
-    @XmlTransient
-    public ComponentType getComponentType() {
-        return ComponentType.TABLE;
     }
 
     @Override

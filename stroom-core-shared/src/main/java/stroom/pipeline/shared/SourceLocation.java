@@ -17,12 +17,15 @@
 package stroom.pipeline.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.CompareBuilder;
 import stroom.util.shared.Highlight;
 
 import java.util.Objects;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class SourceLocation implements Comparable<SourceLocation> {
     @JsonProperty
     private final long id;

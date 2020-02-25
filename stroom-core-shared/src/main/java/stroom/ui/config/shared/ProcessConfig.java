@@ -1,22 +1,49 @@
 package stroom.ui.config.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
+@JsonPropertyOrder({"defaultTimeLimit", "defaultRecordLimit"})
+@JsonInclude(Include.NON_DEFAULT)
 public class ProcessConfig extends AbstractConfig {
     private static final long DEFAULT_TIME_LIMIT = 30L;
     private static final long DEFAULT_RECORD_LIMIT = 1000000L;
 
-    private volatile long defaultTimeLimit = DEFAULT_TIME_LIMIT;
-    private volatile long defaultRecordLimit = DEFAULT_RECORD_LIMIT;
+    @JsonProperty
+    @JsonPropertyDescription("The default number of minutes that batch search processing will be limited by.")
+    private volatile long defaultTimeLimit;
+    @JsonProperty
+    @JsonPropertyDescription("The default number of records that batch search processing will be limited by.")
+    private volatile long defaultRecordLimit;
 
     public ProcessConfig() {
+        defaultTimeLimit = DEFAULT_TIME_LIMIT;
+        defaultRecordLimit = DEFAULT_RECORD_LIMIT;
     }
 
-    @JsonPropertyDescription("The default number of minutes that batch search processing will be limited by.")
+    @JsonCreator
+    public ProcessConfig(@JsonProperty("defaultTimeLimit") final long defaultTimeLimit,
+                         @JsonProperty("defaultRecordLimit") final long defaultRecordLimit) {
+        if (defaultTimeLimit > 0) {
+            this.defaultTimeLimit = defaultTimeLimit;
+        } else {
+            this.defaultTimeLimit = DEFAULT_TIME_LIMIT;
+        }
+        if (defaultRecordLimit > 0) {
+            this.defaultRecordLimit = defaultRecordLimit;
+        } else {
+            this.defaultRecordLimit = DEFAULT_RECORD_LIMIT;
+        }
+    }
+
     public long getDefaultTimeLimit() {
         return defaultTimeLimit;
     }
@@ -25,7 +52,6 @@ public class ProcessConfig extends AbstractConfig {
         this.defaultTimeLimit = defaultTimeLimit;
     }
 
-    @JsonPropertyDescription("The default number of records that batch search processing will be limited by.")
     public long getDefaultRecordLimit() {
         return defaultRecordLimit;
     }

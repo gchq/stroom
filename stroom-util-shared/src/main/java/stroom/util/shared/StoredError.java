@@ -17,10 +17,15 @@
 package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@JsonPropertyOrder({"severity", "location", "elementId", "message"})
+@JsonInclude(Include.NON_DEFAULT)
 public class StoredError implements Marker, Comparable<StoredError> {
     private static final String SPACE = " ";
     private static final String CLOSE_BRACKET = "] ";

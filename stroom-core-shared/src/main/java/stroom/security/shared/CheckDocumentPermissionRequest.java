@@ -17,8 +17,13 @@
 package stroom.security.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@JsonPropertyOrder({"documentType", "documentId", "permission"})
+@JsonInclude(Include.NON_DEFAULT)
 public class CheckDocumentPermissionRequest {
     @JsonProperty
     private final String documentType;

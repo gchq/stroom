@@ -60,10 +60,4 @@ public class VisResultRequest extends ComponentResultRequest {
     public void setRange(final int offset, final int length) {
         requestedRange = new OffsetRange<>(offset, length);
     }
-
-    @JsonIgnore
-    @Override
-    public ComponentType getComponentType() {
-        return ComponentType.VIS;
-    }
 }

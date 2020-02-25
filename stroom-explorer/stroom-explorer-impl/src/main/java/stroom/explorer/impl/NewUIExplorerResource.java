@@ -1,5 +1,9 @@
 package stroom.explorer.impl;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -131,42 +135,42 @@ public class NewUIExplorerResource implements RestResource {
         return Response.ok(docRefTypes).build();
     }
 
+    @JsonInclude(Include.NON_DEFAULT)
     static class CreateOp {
+        @JsonProperty
         private String docRefType;
+        @JsonProperty
         private String docRefName;
+        @JsonProperty
         private DocRef destinationFolderRef;
+        @JsonProperty
         private PermissionInheritance permissionInheritance;
+
+        @JsonCreator
+        public CreateOp(@JsonProperty("docRefType") final String docRefType,
+                        @JsonProperty("docRefName") final String docRefName,
+                        @JsonProperty("destinationFolderRef") final DocRef destinationFolderRef,
+                        @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
+            this.docRefType = docRefType;
+            this.docRefName = docRefName;
+            this.destinationFolderRef = destinationFolderRef;
+            this.permissionInheritance = permissionInheritance;
+        }
 
         public String getDocRefType() {
             return docRefType;
-        }
-
-        public void setDocRefType(String docRefType) {
-            this.docRefType = docRefType;
         }
 
         public String getDocRefName() {
             return docRefName;
         }
 
-        public void setDocRefName(String docRefName) {
-            this.docRefName = docRefName;
-        }
-
         public DocRef getDestinationFolderRef() {
             return destinationFolderRef;
         }
 
-        public void setDestinationFolderRef(DocRef destinationFolderRef) {
-            this.destinationFolderRef = destinationFolderRef;
-        }
-
         public PermissionInheritance getPermissionInheritance() {
             return permissionInheritance;
-        }
-
-        public void setPermissionInheritance(PermissionInheritance permissionInheritance) {
-            this.permissionInheritance = permissionInheritance;
         }
     }
 
@@ -178,33 +182,34 @@ public class NewUIExplorerResource implements RestResource {
         return getExplorerTree();
     }
 
+    @JsonInclude(Include.NON_DEFAULT)
     static class CopyOp {
+        @JsonProperty
         private List<DocRef> docRefs;
+        @JsonProperty
         private DocRef destinationFolderRef;
+        @JsonProperty
         private PermissionInheritance permissionInheritance;
+
+        @JsonCreator
+        public CopyOp(@JsonProperty("docRefs") final List<DocRef> docRefs,
+                      @JsonProperty("destinationFolderRef") final DocRef destinationFolderRef,
+                      @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
+            this.docRefs = docRefs;
+            this.destinationFolderRef = destinationFolderRef;
+            this.permissionInheritance = permissionInheritance;
+        }
 
         public List<DocRef> getDocRefs() {
             return docRefs;
-        }
-
-        public void setDocRefs(List<DocRef> docRefs) {
-            this.docRefs = docRefs;
         }
 
         public DocRef getDestinationFolderRef() {
             return destinationFolderRef;
         }
 
-        public void setDestinationFolderRef(DocRef destinationFolderRef) {
-            this.destinationFolderRef = destinationFolderRef;
-        }
-
         public PermissionInheritance getPermissionInheritance() {
             return permissionInheritance;
-        }
-
-        public void setPermissionInheritance(PermissionInheritance permissionInheritance) {
-            this.permissionInheritance = permissionInheritance;
         }
     }
 
@@ -219,33 +224,34 @@ public class NewUIExplorerResource implements RestResource {
         }
     }
 
+    @JsonInclude(Include.NON_DEFAULT)
     static class MoveOp {
+        @JsonProperty
         private List<DocRef> docRefs;
+        @JsonProperty
         private DocRef destinationFolderRef;
+        @JsonProperty
         private PermissionInheritance permissionInheritance;
+
+        @JsonCreator
+        public MoveOp(@JsonProperty("docRefs") final List<DocRef> docRefs,
+                      @JsonProperty("destinationFolderRef") final DocRef destinationFolderRef,
+                      @JsonProperty("permissionInheritance") final PermissionInheritance permissionInheritance) {
+            this.docRefs = docRefs;
+            this.destinationFolderRef = destinationFolderRef;
+            this.permissionInheritance = permissionInheritance;
+        }
 
         public List<DocRef> getDocRefs() {
             return docRefs;
-        }
-
-        public void setDocRefs(List<DocRef> docRefs) {
-            this.docRefs = docRefs;
         }
 
         public DocRef getDestinationFolderRef() {
             return destinationFolderRef;
         }
 
-        public void setDestinationFolderRef(DocRef destinationFolderRef) {
-            this.destinationFolderRef = destinationFolderRef;
-        }
-
         public PermissionInheritance getPermissionInheritance() {
             return permissionInheritance;
-        }
-
-        public void setPermissionInheritance(PermissionInheritance permissionInheritance) {
-            this.permissionInheritance = permissionInheritance;
         }
     }
 
@@ -260,24 +266,26 @@ public class NewUIExplorerResource implements RestResource {
         }
     }
 
+    @JsonInclude(Include.NON_DEFAULT)
     static class RenameOp {
+        @JsonProperty
         private DocRef docRef;
+        @JsonProperty
         private String name;
+
+        @JsonCreator
+        public RenameOp(@JsonProperty("docRef") final DocRef docRef,
+                        @JsonProperty("name") final String name) {
+            this.docRef = docRef;
+            this.name = name;
+        }
 
         public DocRef getDocRef() {
             return docRef;
         }
 
-        public void setDocRef(DocRef docRef) {
-            this.docRef = docRef;
-        }
-
         public String getName() {
             return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
         }
     }
 

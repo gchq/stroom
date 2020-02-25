@@ -18,6 +18,9 @@ package stroom.util.shared;
 
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
@@ -26,6 +29,7 @@ import java.util.List;
 /**
  * List that knows how big the whole set is.
  */
+@JsonInclude(Include.NON_DEFAULT)
 public class ResultPage<T> {
     @JsonProperty
     private List<T> values;
@@ -189,6 +193,7 @@ public class ResultPage<T> {
     /**
      * @return the first item or null if the list is empty
      */
+    @JsonIgnore
     public T getFirst() {
         if (values.size() > 0) {
             return values.get(0);
@@ -197,6 +202,7 @@ public class ResultPage<T> {
         }
     }
 
+    @JsonIgnore
     public int getPageStart() {
         if (pageResponse.getOffset() == null) {
             return 0;
@@ -204,6 +210,7 @@ public class ResultPage<T> {
         return pageResponse.getOffset().intValue();
     }
 
+    @JsonIgnore
     public int getPageSize() {
         if (pageResponse.getTotal() == null) {
             return getPageStart() + values.size();
@@ -211,6 +218,7 @@ public class ResultPage<T> {
         return pageResponse.getTotal().intValue();
     }
 
+    @JsonIgnore
     public boolean isExact() {
         return pageResponse.isExact();
     }

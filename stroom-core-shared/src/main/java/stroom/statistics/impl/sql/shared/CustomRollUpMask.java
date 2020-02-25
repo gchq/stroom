@@ -17,6 +17,7 @@
 package stroom.statistics.impl.sql.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -85,6 +86,7 @@ public class CustomRollUpMask implements HasDisplayValue {
     }
 
     @Override
+    @JsonIgnore
     public String getDisplayValue() {
         return null;
     }

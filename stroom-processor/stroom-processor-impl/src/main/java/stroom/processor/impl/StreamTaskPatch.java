@@ -18,11 +18,28 @@
 
 package stroom.processor.impl;
 
-public class StreamTaskPatch {
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(Include.NON_DEFAULT)
+public class StreamTaskPatch {
+    @JsonProperty
     private String op;
+    @JsonProperty
     private String path;
+    @JsonProperty
     private String value;
+
+    @JsonCreator
+    public StreamTaskPatch(@JsonProperty("op") final String op,
+                           @JsonProperty("path") final String path,
+                           @JsonProperty("value") final String value) {
+        this.op = op;
+        this.path = path;
+        this.value = value;
+    }
 
     public String getOp() {
         return op;

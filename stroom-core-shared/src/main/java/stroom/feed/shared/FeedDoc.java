@@ -48,7 +48,7 @@ public class FeedDoc extends Doc {
     @JsonProperty
     private String streamType;
     @JsonProperty
-    private FeedStatus feedStatus;
+    private FeedStatus status;
 
     public FeedDoc() {
     }
@@ -73,7 +73,7 @@ public class FeedDoc extends Doc {
                    @JsonProperty("retentionDayAge") final Integer retentionDayAge,
                    @JsonProperty("reference") final boolean reference,
                    @JsonProperty("streamType") final String streamType,
-                   @JsonProperty("feedStatus") final FeedStatus feedStatus) {
+                   @JsonProperty("feedStatus") final FeedStatus status) {
         super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
         this.description = description;
         this.classification = classification;
@@ -82,7 +82,7 @@ public class FeedDoc extends Doc {
         this.retentionDayAge = retentionDayAge;
         this.reference = reference;
         this.streamType = streamType;
-        this.feedStatus = feedStatus;
+        this.status = status;
     }
 
     public String getDescription() {
@@ -126,15 +126,15 @@ public class FeedDoc extends Doc {
     }
 
     public FeedStatus getStatus() {
-        if (feedStatus == null) {
+        if (status == null) {
             return FeedStatus.RECEIVE;
         }
 
-        return feedStatus;
+        return status;
     }
 
     public void setStatus(final FeedStatus feedStatus) {
-        this.feedStatus = feedStatus;
+        this.status = feedStatus;
     }
 
     @JsonIgnore

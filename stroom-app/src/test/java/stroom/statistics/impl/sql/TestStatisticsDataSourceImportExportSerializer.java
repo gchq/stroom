@@ -35,11 +35,12 @@ import stroom.statistics.impl.sql.shared.StatisticType;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.FileUtil;
-import stroom.util.shared.DocRefs;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -53,8 +54,8 @@ class TestStatisticsDataSourceImportExportSerializer extends AbstractCoreIntegra
     @Inject
     private ExplorerService explorerService;
 
-    private DocRefs buildFindFolderCriteria() {
-        final DocRefs docRefs = new DocRefs();
+    private Set<DocRef> buildFindFolderCriteria() {
+        final Set<DocRef> docRefs = new HashSet<>();
         docRefs.add(ExplorerConstants.ROOT_DOC_REF);
         return docRefs;
     }

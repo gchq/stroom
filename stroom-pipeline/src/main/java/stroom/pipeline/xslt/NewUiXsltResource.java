@@ -1,5 +1,9 @@
 package stroom.pipeline.xslt;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
 import stroom.pipeline.shared.XsltDoc;
@@ -38,18 +42,31 @@ public class NewUiXsltResource implements RestResource {
                 .build();
     }
 
+    @JsonInclude(Include.NON_DEFAULT)
     private static class XsltDTO extends DocRef {
+        @JsonProperty
         private String description;
+        @JsonProperty
         private String data;
 
         XsltDTO() {
-
         }
 
         XsltDTO(final XsltDoc doc) {
             super(XsltDoc.DOCUMENT_TYPE, doc.getUuid(), doc.getName());
             setData(doc.getData());
             setDescription(doc.getDescription());
+        }
+
+        @JsonCreator
+        public XsltDTO(@JsonProperty("type") final String type,
+                       @JsonProperty("uuid") final String uuid,
+                       @JsonProperty("name") final String name,
+                       @JsonProperty("description") final String description,
+                       @JsonProperty("data") final String data) {
+            super(type, uuid, name);
+            this.description = description;
+            this.data = data;
         }
 
         public String getDescription() {

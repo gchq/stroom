@@ -87,8 +87,7 @@ ext.versions = [
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v7.0-beta.4', // Needed for the correct version of the client API
         stroomExpression  : 'v3.0.3',
-        stroomProxyApi    : 'v5.1.2',
-        stroomQuery       : 'v4.0-beta.52', // same version for stroom-docref, stroom-query-api and stroom-query-common
+        stroomQuery       : 'v4.0-beta.57', // same version for stroom-docref, stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
@@ -136,7 +135,6 @@ ext.libs = [
         stroomAuthApi                  : "stroom:stroom-auth-service-api:$versions.stroomAuth",
         stroomDocRef                   : "stroom:stroom-docref:$versions.stroomQuery",
         stroomExpression               : "stroom:stroom-expression:$versions.stroomExpression",
-        stroomProxyRemoteApi           : "stroom:stroom-proxy-remote-api:$versions.stroomProxyApi",
         stroomQueryApi                 : "stroom:stroom-query-api:$versions.stroomQuery",
         stroomQueryAudit               : "stroom:stroom-query-audit:$versions.stroomQuery",
         stroomQueryAuthorisation       : "stroom:stroom-query-authorisation:$versions.stroomQuery",

@@ -17,10 +17,15 @@
 package stroom.security.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 
+@JsonPropertyOrder({"docRef", "changeSet", "cascade"})
+@JsonInclude(Include.NON_DEFAULT)
 public class ChangeDocumentPermissionsRequest {
     @JsonProperty
     private final DocRef docRef;

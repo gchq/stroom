@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -30,10 +31,10 @@ import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"id", "visible", "settings"})
-@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "tab")
 @XmlType(name = "tab", propOrder = {"id", "visible", "settings"})
+@JsonPropertyOrder({"id", "visible", "settings"})
+@JsonInclude(Include.NON_DEFAULT)
 public class TabConfig {
     @XmlElement(name = "id")
     @JsonProperty("id")
@@ -41,7 +42,7 @@ public class TabConfig {
 
     @XmlElement(name = "visible")
     @JsonProperty("visible")
-    private boolean visible = true;
+    private boolean visible;
 
     @XmlElements({@XmlElement(name = "query", type = QueryComponentSettings.class),
             @XmlElement(name = "table", type = TableComponentSettings.class),
@@ -54,6 +55,20 @@ public class TabConfig {
     private transient TabLayoutConfig parent;
 
     public TabConfig() {
+        visible = true;
+    }
+
+    @JsonCreator
+    public TabConfig(@JsonProperty("id") final String id,
+                     @JsonProperty("visible") final Boolean visible,
+                     @JsonProperty("settings") final ComponentSettings settings) {
+        this.id = id;
+        if (visible != null) {
+            this.visible = visible;
+        } else {
+            this.visible = true;
+        }
+        this.settings = settings;
     }
 
     public String getId() {

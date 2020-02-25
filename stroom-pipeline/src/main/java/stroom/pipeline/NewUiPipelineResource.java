@@ -1,5 +1,9 @@
 package stroom.pipeline;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Strings;
 import io.swagger.annotations.Api;
 import stroom.docref.DocRef;
@@ -12,9 +16,9 @@ import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.security.api.SecurityContext;
+import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
-import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -42,33 +46,53 @@ public class NewUiPipelineResource implements RestResource {
     private final SecurityContext securityContext;
     private final PipelineScopeRunnable pipelineScopeRunnable;
 
-    private static class PipelineDTO extends DocRef {
+    @JsonInclude(Include.NON_DEFAULT)
+    private static class PipelineDTO {
+        @JsonProperty
+        private DocRef docRef;
+        @JsonProperty
         private DocRef parentPipeline;
+        @JsonProperty
         private String description;
+        @JsonProperty
         private List<PipelineData> configStack;
+        @JsonProperty
         private PipelineData merged;
-
-        PipelineDTO() {
-
-        }
 
         PipelineDTO(final DocRef parentPipeline,
                     final DocRef docRef,
                     final String description,
                     final List<PipelineData> configStack) {
-            super(docRef.getType(), docRef.getUuid(),docRef.getName());
+            this.docRef = docRef;
             this.parentPipeline = parentPipeline;
             this.description = description;
             this.configStack = configStack;
             this.merged = new PipelineDataMerger().merge(configStack).createMergedData();
         }
 
-        public String getDescription() {
-            return description;
+        @JsonCreator
+        public PipelineDTO(@JsonProperty("docRef") final DocRef docRef,
+                           @JsonProperty("parentPipeline") final DocRef parentPipeline,
+                           @JsonProperty("description") final String description,
+                           @JsonProperty("configStack") final List<PipelineData> configStack,
+                           @JsonProperty("merged") final PipelineData merged) {
+            this.docRef = docRef;
+            this.parentPipeline = parentPipeline;
+            this.description = description;
+            this.configStack = configStack;
+            this.merged = merged;
+        }
+
+        public DocRef getDocRef() {
+            return docRef;
         }
 
         public DocRef getParentPipeline() {
             return parentPipeline;
+        }
+
+        public String getDescription() {
+            return description;
         }
 
         public List<PipelineData> getConfigStack() {

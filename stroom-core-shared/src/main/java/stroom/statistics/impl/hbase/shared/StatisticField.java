@@ -17,6 +17,7 @@
 package stroom.statistics.impl.hbase.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -59,6 +60,7 @@ public class StatisticField implements HasDisplayValue, Comparable<StatisticFiel
     }
 
     @Override
+    @JsonIgnore
     public String getDisplayValue() {
         return null;
     }

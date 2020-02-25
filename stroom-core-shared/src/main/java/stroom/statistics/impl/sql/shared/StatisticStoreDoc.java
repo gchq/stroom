@@ -82,12 +82,20 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         this.precision = precision;
         this.enabled = enabled;
         this.config = config;
+
+        setDefaults();
     }
 
     private void setDefaults() {
-        this.statisticType = StatisticType.COUNT;
-        this.rollUpType = StatisticRollUpType.NONE;
-        this.precision = DEFAULT_PRECISION;
+        if (statisticType == null) {
+            this.statisticType = StatisticType.COUNT;
+        }
+        if (rollUpType == null) {
+            this.rollUpType = StatisticRollUpType.NONE;
+        }
+        if (precision == null) {
+            this.precision = DEFAULT_PRECISION;
+        }
     }
 
     public String getDescription() {
@@ -138,7 +146,6 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         this.config = config;
     }
 
-    @JsonIgnore
     public boolean isValidField(final String fieldName) {
         if (config == null) {
             return false;
@@ -151,7 +158,6 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         }
     }
 
-    @JsonIgnore
     public boolean isRollUpCombinationSupported(final Set<String> rolledUpFieldNames) {
         if (rolledUpFieldNames == null || rolledUpFieldNames.isEmpty()) {
             return true;
@@ -175,7 +181,6 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         return config.isRollUpCombinationSupported(rolledUpFieldNames);
     }
 
-    @JsonIgnore
     public Integer getPositionInFieldList(final String fieldName) {
         return config.getFieldPositionInList(fieldName);
     }

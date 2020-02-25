@@ -57,7 +57,7 @@ import java.util.Objects;
         "sortMissingFirst",
         "sortMissingLast"
 })
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexField>, Serializable {
     public static final String VALID_FIELD_NAME_PATTERN = "[a-zA-Z_](?:[a-zA-Z0-9_])*";
     private static final long serialVersionUID = 3100770758821157580L;
@@ -390,6 +390,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         this.sortMissingLast = sortMissingLast;
     }
 
+    @JsonIgnore
     public List<Condition> getSupportedConditions() {
         if (supportedConditions == null) {
             return getDefaultConditions();
@@ -398,6 +399,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         }
     }
 
+    @JsonIgnore
     public void setSupportedConditions(final List<Condition> supportedConditions) {
         if (supportedConditions == null) {
             this.supportedConditions = null;

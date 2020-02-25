@@ -32,6 +32,7 @@ import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
+import stroom.editor.client.view.IndicatorLines;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
@@ -55,7 +56,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     private boolean dirtyCode;
     private DocRef loadedDoc;
     private HasData hasData;
-    private Indicators codeIndicators;
+    private IndicatorLines codeIndicators;
     private EditorPresenter codePresenter;
     private EditorPresenter inputPresenter;
     private EditorPresenter outputPresenter;
@@ -211,7 +212,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         return codePresenter.getText();
     }
 
-    public void setCode(final String code, final Indicators codeIndicators) {
+    public void setCode(final String code, final IndicatorLines codeIndicators) {
         if (codePresenter != null) {
             this.codeIndicators = codeIndicators;
 
@@ -223,7 +224,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         }
     }
 
-    public void setCodeIndicators(final Indicators codeIndicators) {
+    public void setCodeIndicators(final IndicatorLines codeIndicators) {
         if (codePresenter != null) {
             this.codeIndicators = codeIndicators;
             codePresenter.setIndicators(codeIndicators);
@@ -231,7 +232,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     }
 
     public void setInput(final String input, final int inputStartLineNo, final boolean formatInput,
-                         final Indicators inputIndicators) {
+                         final IndicatorLines inputIndicators) {
         if (inputPresenter != null) {
             inputPresenter.getStylesOption().setOn(formatInput);
 
@@ -245,7 +246,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     }
 
     public void setOutput(final String output, final int outputStartLineNo, final boolean formatOutput,
-                          final Indicators outputIndicators) {
+                          final IndicatorLines outputIndicators) {
         if (outputPresenter != null) {
             outputPresenter.getStylesOption().setOn(formatOutput);
 

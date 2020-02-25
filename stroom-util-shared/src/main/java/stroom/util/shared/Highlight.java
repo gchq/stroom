@@ -17,10 +17,15 @@
 package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
+@JsonPropertyOrder({"from", "to"})
+@JsonInclude(Include.NON_DEFAULT)
 public class Highlight implements Comparable<Highlight> {
     @JsonProperty
     private final Location from;

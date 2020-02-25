@@ -17,12 +17,17 @@
 package stroom.security.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
+@JsonPropertyOrder({"docRefUuid", "userPermissions"})
+@JsonInclude(Include.NON_DEFAULT)
 public class DocumentPermissions {
     @JsonProperty
     private final String docRefUuid;

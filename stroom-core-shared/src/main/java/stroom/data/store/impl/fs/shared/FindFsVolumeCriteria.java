@@ -44,7 +44,11 @@ public class FindFsVolumeCriteria extends BaseCriteria {
                                 @JsonProperty("sortList") final List<Sort> sortList,
                                 @JsonProperty("statusSet") final CriteriaSet<VolumeUseStatus> statusSet) {
         super(pageRequest, sortList);
-        this.statusSet = statusSet;
+        if (statusSet != null) {
+            this.statusSet = statusSet;
+        } else {
+            this.statusSet = new CriteriaSet<>();
+        }
     }
 
     public CriteriaSet<VolumeUseStatus> getStatusSet() {

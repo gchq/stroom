@@ -90,7 +90,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     @UiField
     Image filterActive;
 
-    private Indicators indicators;
+    private IndicatorLines indicators;
     private AceEditorMode mode = AceEditorMode.XML;
     private int firstLineNumber = 1;
 
@@ -181,7 +181,7 @@ public class EditorViewImpl extends ViewWithUiHandlers<EditorUiHandlers> impleme
     }
 
     @Override
-    public void setIndicators(final Indicators indicators) {
+    public void setIndicators(final IndicatorLines indicators) {
         this.indicators = indicators;
         final List<Annotation> annotations = new ArrayList<>();
 

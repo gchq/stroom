@@ -8,7 +8,6 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
-import stroom.util.shared.DocRefs;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
@@ -26,13 +25,8 @@ public class IndexResourceImpl implements IndexResource {
 
     @Override
     @Timed
-    public DocRefs listDocuments() {
-
-        final Set<DocRef> docRefSet = indexStore.listDocuments();
-
-        final DocRefs result = new DocRefs();
-        result.setDoc(docRefSet);
-        return result;
+    public Set<DocRef> listDocuments() {
+        return indexStore.listDocuments();
     }
 
     @Override

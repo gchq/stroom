@@ -148,7 +148,6 @@ public class ExplorerNode implements HasDisplayValue {
         this.children = children;
     }
 
-    @JsonIgnore
     public ExplorerNode copy() {
         final ExplorerNode copy = new ExplorerNode(type, uuid, name, tags);
         copy.depth = depth;

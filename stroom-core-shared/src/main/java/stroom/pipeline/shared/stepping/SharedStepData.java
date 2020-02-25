@@ -19,12 +19,15 @@ package stroom.pipeline.shared.stepping;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.pipeline.shared.SharedElementData;
 import stroom.pipeline.shared.SourceLocation;
 
 import java.util.Map;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class SharedStepData {
     @JsonProperty
     private final SourceLocation sourceLocation;
@@ -42,13 +45,11 @@ public class SharedStepData {
         return sourceLocation;
     }
 
-    @JsonIgnore
-    public SharedElementData getElementData(final String elementId) {
-        return elementMap.get(elementId);
-    }
-
-    // For testing.
     public Map<String, SharedElementData> getElementMap() {
         return elementMap;
+    }
+
+    public SharedElementData getElementData(final String elementId) {
+        return elementMap.get(elementId);
     }
 }

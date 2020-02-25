@@ -54,7 +54,6 @@ public class OldDictionaryDoc extends Doc {
     private List<DocRef> imports;
 
     public OldDictionaryDoc() {
-        // Default constructor for GWT serialisation.
     }
 
     public String getDescription() {

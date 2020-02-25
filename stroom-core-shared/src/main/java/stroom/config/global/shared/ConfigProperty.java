@@ -92,9 +92,9 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
     @JsonProperty("description")
     private String description;
     @JsonProperty("isEditable")
-    private boolean isEditable;
+    private boolean editable;
     @JsonProperty("isPassword")
-    private boolean isPassword;
+    private boolean password;
     @JsonProperty("requireRestart")
     private boolean requireRestart;
     @JsonProperty("requireUiRestart")
@@ -136,8 +136,8 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
                           @JsonProperty("databaseOverrideValue") final OverrideValue<String> databaseOverrideValue,
                           @JsonProperty("yamlOverrideValue") final OverrideValue<String> yamlOverrideValue,
                           @JsonProperty("description") final String description,
-                          @JsonProperty("isEditable") final boolean isEditable,
-                          @JsonProperty("isPassword") final boolean isPassword,
+                          @JsonProperty("isEditable") final boolean editable,
+                          @JsonProperty("isPassword") final boolean password,
                           @JsonProperty("requireRestart") final boolean requireRestart,
                           @JsonProperty("requireUiRestart") final boolean requireUiRestart,
                           @JsonProperty("dataTypeName") final String dataTypeName) {
@@ -160,8 +160,8 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
             this.yamlOverrideValue = OverrideValue.unSet(String.class);
         }
         this.description = description;
-        this.isEditable = isEditable;
-        this.isPassword = isPassword;
+        this.editable = editable;
+        this.password = password;
         this.requireRestart = requireRestart;
         this.requireUiRestart = requireUiRestart;
         this.dataTypeName = dataTypeName;
@@ -250,7 +250,6 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
         return getEffectiveValue(defaultValue, databaseOverrideValue, yamlOverrideValue);
     }
 
-    @JsonIgnore
     public Optional<String> getEffectiveValue(final OverrideValue<String> yamlOverrideValue) {
         return getEffectiveValue(defaultValue, databaseOverrideValue, yamlOverrideValue);
     }
@@ -273,7 +272,7 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
      */
     @JsonIgnore
     public Optional<String> getEffectiveValueMasked() {
-        if (isPassword) {
+        if (password) {
             return Optional.of("********************");
         } else {
             return getEffectiveValue();
@@ -304,7 +303,6 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
     /**
      * @return True if a value has been supplied to override the defaultValue, even it is null
      */
-    @JsonIgnore
     public boolean hasDatabaseOverride() {
         return this.databaseOverrideValue.isHasOverride();
     }
@@ -312,7 +310,6 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
     /**
      * Remove any override value at the database level, whether null or non-null
      */
-    @JsonIgnore
     public void removeDatabaseOverride() {
         this.databaseOverrideValue = OverrideValue.unSet(String.class);
     }
@@ -340,7 +337,6 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
     /**
      * @return True if a value has been supplied to override the defaultValue, even it is null
      */
-    @JsonIgnore
     public boolean hasYamlOverride() {
         return yamlOverrideValue.isHasOverride();
     }
@@ -348,7 +344,6 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
     /**
      * Remove any override value at the yaml level, whether null or non-null
      */
-    @JsonIgnore
     public void removeYamlOverride() {
         this.yamlOverrideValue = OverrideValue.unSet(String.class);
     }
@@ -389,11 +384,11 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
      * @return True if the databaseValue for this property can be changed in the UI.
      */
     public boolean isEditable() {
-        return isEditable;
+        return editable;
     }
 
     public void setEditable(final boolean editable) {
-        this.isEditable = editable;
+        this.editable = editable;
     }
 
     /**
@@ -419,13 +414,14 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
     }
 
     public boolean isPassword() {
-        return isPassword;
+        return password;
     }
 
     public void setPassword(final boolean password) {
-        this.isPassword = password;
+        this.password = password;
     }
 
+    @JsonIgnore
     public SourceType getSource() {
         if (yamlOverrideValue.isHasOverride()) {
             return SourceType.YAML;
@@ -444,7 +440,6 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
         this.dataTypeName = dataTypeName;
     }
 
-    @JsonIgnore
     @Override
     public int compareTo(final ConfigProperty o) {
         return name.compareTo(o.name);
@@ -468,8 +463,8 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final ConfigProperty that = (ConfigProperty) o;
-        return isEditable == that.isEditable &&
-                isPassword == that.isPassword &&
+        return editable == that.editable &&
+                password == that.password &&
                 requireRestart == that.requireRestart &&
                 requireUiRestart == that.requireUiRestart &&
                 Objects.equals(id, that.id) &&
@@ -488,7 +483,7 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, version, createTimeMs, createUser, updateTimeMs, updateUser, name, defaultValue, databaseOverrideValue, yamlOverrideValue, description, isEditable, isPassword, requireRestart, requireUiRestart, dataTypeName);
+        return Objects.hash(id, version, createTimeMs, createUser, updateTimeMs, updateUser, name, defaultValue, databaseOverrideValue, yamlOverrideValue, description, editable, password, requireRestart, requireUiRestart, dataTypeName);
     }
 
     /**

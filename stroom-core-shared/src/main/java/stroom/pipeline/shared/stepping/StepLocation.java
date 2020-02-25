@@ -16,12 +16,15 @@
 
 package stroom.pipeline.shared.stepping;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class StepLocation {
     @JsonProperty
     private final long id;
@@ -67,6 +70,7 @@ public class StepLocation {
         return Objects.hash(id, partNo, recordNo);
     }
 
+    @JsonIgnore
     public String getEventId() {
         return id + ":" + partNo + ":" + recordNo;
     }

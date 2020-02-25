@@ -16,7 +16,7 @@
 
 package stroom.dashboard.shared;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -26,68 +26,64 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Arrays;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"width", "height"})
-@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "size")
 @XmlType(name = "Size", propOrder = {"width", "height"})
+@JsonPropertyOrder({"width", "height"})
+@JsonInclude(Include.NON_DEFAULT)
 public class Size {
-    @XmlTransient
-    @JsonIgnore
-    private int[] size = new int[]{200, 200};
+    @XmlElement(name = "width")
+    @JsonProperty("width")
+    private int width;
+    @XmlElement(name = "height")
+    @JsonProperty("height")
+    private int height;
 
     public Size() {
     }
 
-    @XmlElement(name = "width")
-    @JsonProperty("width")
+    @JsonCreator
+    public Size(@JsonProperty("width") final int width,
+                @JsonProperty("height") final int height) {
+        this.width = width;
+        this.height = height;
+    }
+
     public int getWidth() {
-        return size[0];
+        return width;
     }
 
-    @JsonProperty("width")
     public void setWidth(final int width) {
-        size[0] = width;
+        this.width = width;
     }
 
-    @XmlElement(name = "height")
-    @JsonProperty("height")
     public int getHeight() {
-        return size[1];
+        return height;
     }
 
-    @JsonProperty("height")
     public void setHeight(final int height) {
-        size[1] = height;
+        this.height = height;
     }
 
-    @JsonIgnore
     public void set(final int dimension, final int size) {
-        this.size[dimension] = size;
+        if (dimension == 0) {
+            width = size;
+        } else {
+            height = size;
+        }
     }
 
-    @JsonIgnore
-    public void set(final int[] size) {
-        this.size[0] = size[0];
-        this.size[1] = size[1];
-    }
-
-    @JsonIgnore
     public int get(final int dimension) {
-        return this.size[dimension];
-    }
-
-    @JsonIgnore
-    public int[] get() {
-        return size;
+        if (dimension == 0) {
+            return width;
+        }
+        return height;
     }
 
     @Override
     public String toString() {
-        return Arrays.toString(size);
+        return "[" + width + ", " + height + "]";
     }
 }

@@ -64,7 +64,6 @@ public class FetchProcessorRequest implements TreeAction<ProcessorListRow>, HasI
         this.expression = expression;
     }
 
-    @JsonIgnore
     @Override
     public void setRowExpanded(final ProcessorListRow row, final boolean open) {
         if (open) {
@@ -79,7 +78,6 @@ public class FetchProcessorRequest implements TreeAction<ProcessorListRow>, HasI
         }
     }
 
-    @JsonIgnore
     @Override
     public boolean isRowExpanded(final ProcessorListRow row) {
         if (expandedRows == null) {

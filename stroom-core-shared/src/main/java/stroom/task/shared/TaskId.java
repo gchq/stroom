@@ -65,12 +65,10 @@ public class TaskId implements Serializable {
         this.parentId = parentId;
     }
 
-    @JsonIgnore
     public boolean isOrHasAncestor(final TaskId id) {
         return recursiveEquals(id, this);
     }
 
-    @JsonIgnore
     private boolean recursiveEquals(final TaskId id, final TaskId ancestorId) {
         if (id == null || ancestorId == null) {
             return false;

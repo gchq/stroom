@@ -262,15 +262,17 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
 
             TooltipUtil.addBreak(html);
             TooltipUtil.addHeading(html, "Node List");
-            for (final ClusterNodeInfo.ClusterNodeInfoItem info : result.getItemList()) {
-                html.append(info.getNodeName());
-                if (!info.isActive()) {
-                    html.append(" (Unknown)");
+            if (result.getItemList() != null) {
+                for (final ClusterNodeInfo.ClusterNodeInfoItem info : result.getItemList()) {
+                    html.append(info.getNodeName());
+                    if (!info.isActive()) {
+                        html.append(" (Unknown)");
+                    }
+                    if (info.isMaster()) {
+                        html.append(" (Master)");
+                    }
+                    html.append("<br/>");
                 }
-                if (info.isMaster()) {
-                    html.append(" (Master)");
-                }
-                html.append("<br/>");
             }
 
         } else {

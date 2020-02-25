@@ -68,8 +68,16 @@ public class StroomStatsStoreEntityData {
     @JsonCreator
     public StroomStatsStoreEntityData(@JsonProperty("statisticFields") final List<StatisticField> statisticFields,
                                       @JsonProperty("customRollUpMasks") final Set<CustomRollUpMask> customRollUpMasks) {
-        this.statisticFields = statisticFields;
-        this.customRollUpMasks = customRollUpMasks;
+        if (statisticFields != null) {
+            this.statisticFields = statisticFields;
+        } else {
+            this.statisticFields = new ArrayList<>();
+        }
+        if (customRollUpMasks != null) {
+            this.customRollUpMasks = customRollUpMasks;
+        } else {
+            this.customRollUpMasks = new HashSet<>();
+        }
     }
 
     public List<StatisticField> getStatisticFields() {

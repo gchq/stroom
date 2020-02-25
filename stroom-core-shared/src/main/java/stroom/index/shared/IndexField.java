@@ -53,23 +53,23 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     private String fieldName;
     @XmlElement(name = "stored")
     @JsonProperty
-    private boolean stored = false;
+    private boolean stored;
 
     /**
      * Determines whether the field can be queried or not
      */
     @XmlElement(name = "indexed")
     @JsonProperty
-    private boolean indexed = true;
+    private Boolean indexed;
     @XmlElement(name = "termPositions")
     @JsonProperty
-    private boolean termPositions = false;
+    private boolean termPositions;
     @XmlElement(name = "analyzerType")
     @JsonProperty
     private AnalyzerType analyzerType;
     @XmlElement(name = "caseSensitive")
     @JsonProperty
-    private boolean caseSensitive = false;
+    private boolean caseSensitive;
 
     /**
      * Defines a list of the {@link Condition} values supported by this field,
@@ -81,13 +81,14 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     private List<Condition> supportedConditions;
 
     public IndexField() {
+        indexed = true;
     }
 
     @JsonCreator
     public IndexField(@JsonProperty("fieldType") final IndexFieldType fieldType,
                       @JsonProperty("fieldName") final String fieldName,
                       @JsonProperty("stored") final boolean stored,
-                      @JsonProperty("indexed") final boolean indexed,
+                      @JsonProperty("indexed") final Boolean indexed,
                       @JsonProperty("termPositions") final boolean termPositions,
                       @JsonProperty("analyzerType") final AnalyzerType analyzerType,
                       @JsonProperty("caseSensitive") final boolean caseSensitive,
@@ -95,7 +96,11 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         this.fieldType = fieldType;
         this.fieldName = fieldName;
         this.stored = stored;
-        this.indexed = indexed;
+        if (indexed != null) {
+            this.indexed = indexed;
+        } else {
+            this.indexed = true;
+        }
         this.termPositions = termPositions;
         this.analyzerType = analyzerType;
         this.caseSensitive = caseSensitive;

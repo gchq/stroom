@@ -86,7 +86,6 @@ public class FindTaskProgressCriteria extends BaseCriteria {
         this.sessionId = sessionId;
     }
 
-    @JsonIgnore
     public void setExpanded(final TaskProgress taskProgress, final boolean expanded) {
         if (expanded) {
             if (expandedTasks == null) {
@@ -103,7 +102,6 @@ public class FindTaskProgressCriteria extends BaseCriteria {
         }
     }
 
-    @JsonIgnore
     public boolean isExpanded(final TaskProgress taskProgress) {
         if (expandedTasks != null) {
             return expandedTasks.contains(taskProgress);
@@ -111,7 +109,6 @@ public class FindTaskProgressCriteria extends BaseCriteria {
         return false;
     }
 
-    @JsonIgnore
     public void validateSortField() {
         if (this.getSortList().isEmpty()) {
             Sort defaultSort = new Sort(FindTaskProgressCriteria.FIELD_SUBMIT_TIME, Direction.ASCENDING, true);
@@ -132,7 +129,6 @@ public class FindTaskProgressCriteria extends BaseCriteria {
         }
     }
 
-    @JsonIgnore
     public boolean isMatch(final String sessionId) {
         return true;
     }

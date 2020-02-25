@@ -89,7 +89,6 @@ public class ImportState {
         this.destPath = destPath;
     }
 
-    @JsonIgnore
     public boolean ok(final ImportMode importMode) {
         return importMode == ImportMode.IGNORE_CONFIRMATION
                 || (importMode == ImportMode.ACTION_CONFIRMATION && action);
@@ -107,7 +106,6 @@ public class ImportState {
         return messageList;
     }
 
-    @JsonIgnore
     public void addMessage(final Severity severity, final String message) {
         messageList.add(new Message(severity, message));
     }

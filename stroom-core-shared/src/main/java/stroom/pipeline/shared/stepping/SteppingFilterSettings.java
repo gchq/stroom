@@ -17,6 +17,9 @@
 package stroom.pipeline.shared.stepping;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.util.shared.OutputState;
@@ -24,6 +27,7 @@ import stroom.util.shared.Severity;
 
 import java.util.Set;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class SteppingFilterSettings {
     @JsonProperty
     private Severity skipToSeverity;
@@ -76,6 +80,7 @@ public class SteppingFilterSettings {
         }
     }
 
+    @JsonIgnore
     public boolean isActive() {
         if (skipToSeverity != null) {
             return true;

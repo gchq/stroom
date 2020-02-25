@@ -17,6 +17,7 @@
 package stroom.search.solr.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -38,7 +39,7 @@ public class SolrIndexDoc extends Doc {
     @JsonProperty
     private String collection;
     @JsonProperty
-    private SolrConnectionConfig solrConnectionConfig = new SolrConnectionConfig();
+    private SolrConnectionConfig solrConnectionConfig;
 
     @JsonProperty
     private List<SolrIndexField> fields;
@@ -51,10 +52,7 @@ public class SolrIndexDoc extends Doc {
     private ExpressionOperator retentionExpression;
 
     public SolrIndexDoc() {
-        fields = new ArrayList<>();
-        // Always add standard id fields for now.
-        fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
-        fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
+        setDefaults();
     }
 
     @JsonCreator
@@ -81,6 +79,20 @@ public class SolrIndexDoc extends Doc {
         this.deletedFields = deletedFields;
         this.solrSynchState = solrSynchState;
         this.retentionExpression = retentionExpression;
+
+        setDefaults();
+    }
+
+    private void setDefaults() {
+        if (solrConnectionConfig == null) {
+            solrConnectionConfig = new SolrConnectionConfig();
+        }
+        if (fields == null) {
+            fields = new ArrayList<>();
+            // Always add standard id fields for now.
+            fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
+            fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
+        }
     }
 
     public String getDescription() {
@@ -143,6 +155,7 @@ public class SolrIndexDoc extends Doc {
     }
 
     @Override
+    @JsonIgnore
     public final String getType() {
         return DOCUMENT_TYPE;
     }

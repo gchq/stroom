@@ -40,7 +40,6 @@ public class DictionaryDoc extends Doc {
     private List<DocRef> imports;
 
     public DictionaryDoc() {
-        // Default constructor for GWT serialisation.
     }
 
     @JsonCreator

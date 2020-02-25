@@ -91,7 +91,6 @@ public class FindTaskCriteria implements HasIsConstrained {
         return (ancestorIdSet != null && ancestorIdSet.size() > 0) || (idSet != null && idSet.size() > 0);
     }
 
-    @JsonIgnore
     public boolean isMatch(final Task<?> task, final String sessionId) {
         if (ancestorIdSet != null && ancestorIdSet.size() > 0) {
             for (final TaskId ancestorId : ancestorIdSet) {

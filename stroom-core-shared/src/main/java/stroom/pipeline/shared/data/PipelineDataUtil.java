@@ -70,7 +70,7 @@ public class PipelineDataUtil {
                                                     final DocRef pipeline,
                                                     final DocRef feed,
                                                     final String streamType) {
-        return new PipelineReference(element, name, pipeline, feed, streamType);
+        return new PipelineReference(element, name, pipeline, feed, streamType, null);
     }
 
     public static PipelineLink createLink(final String from, final String to) {

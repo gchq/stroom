@@ -19,7 +19,10 @@ package stroom.receive.rules.shared;
 
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.query.api.v2.ExpressionOperator;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -32,6 +35,8 @@ import java.util.Objects;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "DataReceiptRule", propOrder = {"ruleNumber", "creationTime", "name", "enabled", "expression", "action"})
 @XmlRootElement(name = "dataReceiptRule")
+@JsonPropertyOrder({"ruleNumber", "creationTime", "name", "enabled", "expression", "action"})
+@JsonInclude(Include.NON_DEFAULT)
 public class ReceiveDataRule {
     @XmlElement(name = "ruleNumber")
     @JsonProperty

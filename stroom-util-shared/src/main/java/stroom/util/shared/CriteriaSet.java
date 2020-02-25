@@ -18,6 +18,7 @@ package stroom.util.shared;
 
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -66,7 +67,11 @@ public class CriteriaSet<T>
                        @JsonProperty("set") final Set<T> set) {
         this.matchAll = matchAll;
         this.matchNull = matchNull;
-        this.set = set;
+        if (set != null) {
+            this.set = set;
+        } else {
+            this.set = new HashSet<>();
+        }
     }
 
     public Boolean getMatchAll() {
@@ -85,11 +90,13 @@ public class CriteriaSet<T>
         this.matchNull = matchNull;
     }
 
+    @JsonIgnore
     public boolean isMatchNothing() {
         return Boolean.FALSE.equals(matchAll) && set.isEmpty() && !Boolean.TRUE.equals(matchNull);
     }
 
     @Override
+    @JsonIgnore
     public boolean isConstrained() {
         if (Boolean.TRUE.equals(matchAll)) {
             return false;
@@ -142,6 +149,7 @@ public class CriteriaSet<T>
     }
 
     @XmlTransient
+    @JsonIgnore
     public T getSingleItem() {
         if (!isConstrained()) {
             return null;
@@ -152,6 +160,7 @@ public class CriteriaSet<T>
         return set.iterator().next();
     }
 
+    @JsonIgnore
     public void setSingleItem(final T item) {
         clear();
         if (item != null) {

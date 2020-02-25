@@ -79,6 +79,7 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
     protected String streamType;
 
     @XmlTransient
+    @JsonProperty
     private DocRef sourcePipeline;
 
     @XmlTransient
@@ -90,7 +91,7 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
 
     public PipelineReference(final DocRef pipeline, final DocRef feed,
                              final String streamType) {
-        this(null, null, pipeline, feed, streamType);
+        this(null, null, pipeline, feed, streamType, null);
     }
 
     @JsonCreator
@@ -98,12 +99,14 @@ public final class PipelineReference implements Comparable<PipelineReference>, C
                              @JsonProperty("name") final String name,
                              @JsonProperty("pipeline") final DocRef pipeline,
                              @JsonProperty("feed") final DocRef feed,
-                             @JsonProperty("streamType") final String streamType) {
+                             @JsonProperty("streamType") final String streamType,
+                             @JsonProperty("sourcePipeline") final DocRef sourcePipeline) {
         this.element = element;
         this.name = name;
         this.pipeline = pipeline;
         this.feed = feed;
         this.streamType = streamType;
+        this.sourcePipeline = sourcePipeline;
     }
 
     public String getElement() {

@@ -108,7 +108,7 @@ class ContentResourceImpl implements ContentResource, HasHealthCheck {
 
             final ResourceKey guiKey = resourceStore.createTempFile("StroomConfig.zip");
             final Path file = resourceStore.getTempFile(guiKey);
-            importExportService.exportConfig(docRefs, file, messageList);
+            importExportService.exportConfig(docRefs.getDocRefs(), file, messageList);
 
             return new ResourceGeneration(guiKey, messageList);
         });

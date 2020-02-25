@@ -38,7 +38,6 @@ public class ReceiveDataRules extends Doc {
     private List<ReceiveDataRule> rules;
 
     public ReceiveDataRules() {
-        // Default constructor for GWT serialisation.
     }
 
     @JsonCreator

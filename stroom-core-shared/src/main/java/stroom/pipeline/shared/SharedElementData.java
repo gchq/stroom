@@ -16,11 +16,13 @@
 
 package stroom.pipeline.shared;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.Indicators;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class SharedElementData {
     @JsonProperty
     private final String input;

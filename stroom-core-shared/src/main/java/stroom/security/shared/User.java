@@ -30,6 +30,14 @@ public class User implements HasAuditInfo {
     @JsonProperty
     private String uuid;
 
+    /**
+     * Is this user a user group or a regular user?
+     */
+    @JsonProperty
+    private boolean group;
+    @JsonProperty
+    private boolean enabled = true;
+
     public User() {
     }
 
@@ -43,7 +51,7 @@ public class User implements HasAuditInfo {
                 @JsonProperty("name") final String name,
                 @JsonProperty("uuid") final String uuid,
                 @JsonProperty("group") final boolean group,
-                @JsonProperty("enabled") final boolean enabled) {
+                @JsonProperty("enabled") final Boolean enabled) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -53,15 +61,10 @@ public class User implements HasAuditInfo {
         this.name = name;
         this.uuid = uuid;
         this.group = group;
-        this.enabled = enabled;
+        if (enabled != null) {
+            this.enabled = enabled;
+        }
     }
-
-    /**
-     * Is this user a user group or a regular user?
-     */
-    private boolean group;
-
-    private boolean enabled = true;
 
     public Integer getId() {
         return id;
@@ -191,43 +194,44 @@ public class User implements HasAuditInfo {
     }
 
     public static class Builder {
-        private final User instance;
-
-        public Builder(final User instance) {
-            this.instance = instance;
-        }
-
-        public Builder() {
-            this(new User());
-        }
+        private Integer id;
+        private Integer version;
+        private Long createTimeMs;
+        private String createUser;
+        private Long updateTimeMs;
+        private String updateUser;
+        private String name;
+        private String uuid;
+        private boolean group;
+        private boolean enabled = true;
 
         public Builder id(final int value) {
-            instance.setId(value);
+            id = value;
             return this;
         }
 
         public Builder name(final String value) {
-            instance.setName(value);
+            name = value;
             return this;
         }
 
         public Builder uuid(final String value) {
-            instance.setUuid(value);
+            uuid = value;
             return this;
         }
 
         public Builder group(final boolean value) {
-            instance.setGroup(value);
+            group = value;
             return this;
         }
 
-        public Builder enabled(final boolean enabled) {
-            instance.setEnabled(enabled);
+        public Builder enabled(final boolean value) {
+            enabled = value;
             return this;
         }
 
         public User build() {
-            return this.instance;
+            return new User(id, version, createTimeMs, createUser, updateTimeMs, updateUser, name, uuid, group, enabled);
         }
     }
 }

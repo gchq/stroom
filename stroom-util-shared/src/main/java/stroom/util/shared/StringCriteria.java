@@ -17,6 +17,7 @@
 package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -104,6 +105,7 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
     }
 
     @Override
+    @JsonIgnore
     public boolean isConstrained() {
         return (string != null && (matchStyle == null || string.length() != 0)) || Boolean.TRUE.equals(matchNull);
     }
@@ -126,6 +128,7 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
         return test.equals(compareString);
     }
 
+    @JsonIgnore
     public String getMatchString() {
         if (string == null) {
             return null;

@@ -22,12 +22,11 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
-import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.importexport.api.DocumentData;
+import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -64,11 +63,8 @@ public class NewUiSolrIndexResource implements RestResource, HasHealthCheck {
     @ApiOperation(
             value = "Submit a request for a list of doc refs held by this service",
             response = Set.class)
-    public DocRefs listDocuments() {
-        final Set<DocRef> docRefSet = solrIndexStore.listDocuments();
-        final DocRefs result = new DocRefs();
-        result.setDoc(docRefSet);
-        return result;
+    public Set<DocRef> listDocuments() {
+        return solrIndexStore.listDocuments();
     }
 
     @POST

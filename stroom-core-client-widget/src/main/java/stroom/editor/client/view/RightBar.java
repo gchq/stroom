@@ -35,7 +35,7 @@ public class RightBar extends Composite {
     private static final int OVERVIEW_WIDTH = 13;
     private static final IndicatorPopup indicatorPopup = new IndicatorPopup();
     private static volatile Resources resources;
-    private Indicators indicators;
+    private IndicatorLines indicators;
     private int width;
     private Editor editor;
     public RightBar() {
@@ -89,7 +89,7 @@ public class RightBar extends Composite {
      * added/removed, when indicators are set to be displayed and when the
      * widget is resized.
      */
-    public void render(final Indicators indicators, final boolean visible) {
+    public void render(final IndicatorLines indicators, final boolean visible) {
         this.indicators = indicators;
         final StringBuilder sb = new StringBuilder();
         int width = 0;

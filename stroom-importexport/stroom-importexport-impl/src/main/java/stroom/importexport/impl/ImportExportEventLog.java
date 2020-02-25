@@ -126,7 +126,7 @@ public class ImportExportEventLog {
             final Or or = new Or();
             advanced.getAdvancedQueryItems().add(or);
 
-            docRefs.forEach(docRef -> {
+            docRefs.getDocRefs().forEach(docRef -> {
                 final event.logging.Term term = new event.logging.Term();
                 term.setName(docRef.getType());
                 term.setCondition(TermCondition.EQUALS);

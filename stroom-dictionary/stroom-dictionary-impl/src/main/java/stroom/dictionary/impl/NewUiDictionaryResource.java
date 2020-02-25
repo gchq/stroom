@@ -18,6 +18,10 @@ package stroom.dictionary.impl;
 
 import com.codahale.metrics.annotation.Timed;
 import com.codahale.metrics.health.HealthCheck.Result;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -55,13 +59,16 @@ public class NewUiDictionaryResource implements RestResource, HasHealthCheck {
     private final DictionaryStore dictionaryStore;
     private final SecurityContext securityContext;
 
+    @JsonInclude(Include.NON_DEFAULT)
     private static class DictionaryDTO extends DocRef {
+        @JsonProperty
         private String description;
+        @JsonProperty
         private String data;
+        @JsonProperty
         private List<DocRef> imports;
 
         public DictionaryDTO() {
-
         }
 
         public DictionaryDTO(final DictionaryDoc doc) {
@@ -69,6 +76,19 @@ public class NewUiDictionaryResource implements RestResource, HasHealthCheck {
             this.description = doc.getDescription();
             this.data = doc.getData();
             this.imports = doc.getImports();
+        }
+
+        @JsonCreator
+        public DictionaryDTO(@JsonProperty("type") final String type,
+                             @JsonProperty("uuid") final String uuid,
+                             @JsonProperty("name") final String name,
+                             @JsonProperty("description") final String description,
+                             @JsonProperty("data") final String data,
+                             @JsonProperty("imports") final List<DocRef> imports) {
+            super(type, uuid, name);
+            this.description = description;
+            this.data = data;
+            this.imports = imports;
         }
 
         public String getDescription() {

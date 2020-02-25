@@ -62,7 +62,6 @@ public class ExplorerNodePermissions {
         return admin;
     }
 
-    @JsonIgnore
     public boolean hasCreatePermission(final DocumentType type) {
         if (admin) {
             return true;
@@ -70,7 +69,6 @@ public class ExplorerNodePermissions {
         return createPermissions.contains(type.getType());
     }
 
-    @JsonIgnore
     public boolean hasDocumentPermission(final String permission) {
         if (admin) {
             return true;

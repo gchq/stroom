@@ -17,6 +17,9 @@
 package stroom.pipeline.shared;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -33,6 +36,7 @@ import java.util.List;
         @JsonSubTypes.Type(value = FetchDataResult.class, name = "data"),
         @JsonSubTypes.Type(value = FetchMarkerResult.class, name = "marker")
 })
+@JsonInclude(Include.NON_DEFAULT)
 public abstract class AbstractFetchDataResult {
     @JsonProperty
     private final String streamTypeName;
@@ -49,13 +53,14 @@ public abstract class AbstractFetchDataResult {
     @JsonProperty
     private final List<String> availableChildStreamTypes;
 
-    public AbstractFetchDataResult(final String streamTypeName,
-                                   final String classification,
-                                   final OffsetRange<Long> streamRange,
-                                   final RowCount<Long> streamRowCount,
-                                   final OffsetRange<Long> pageRange,
-                                   final RowCount<Long> pageRowCount,
-                                   final List<String> availableChildStreamTypes) {
+    @JsonCreator
+    public AbstractFetchDataResult(@JsonProperty("streamTypeName") final String streamTypeName,
+                                   @JsonProperty("classification") final String classification,
+                                   @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
+                                   @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
+                                   @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
+                                   @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
+                                   @JsonProperty("availableChildStreamTypes") final List<String> availableChildStreamTypes) {
         this.streamTypeName = streamTypeName;
         this.classification = classification;
         this.streamRange = streamRange;

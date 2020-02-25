@@ -36,8 +36,7 @@ public class FetchExplorerNodeResult {
     private Set<String> temporaryOpenedItems;
 
     public FetchExplorerNodeResult() {
-        rootNodes = new ArrayList<>();
-        openedItems = new ArrayList<>();
+        setDefaults();
     }
 
     @JsonCreator
@@ -47,6 +46,17 @@ public class FetchExplorerNodeResult {
         this.rootNodes = rootNodes;
         this.openedItems = openedItems;
         this.temporaryOpenedItems = temporaryOpenedItems;
+
+        setDefaults();
+    }
+
+    private void setDefaults() {
+        if (rootNodes == null) {
+            rootNodes = new ArrayList<>();
+        }
+        if (openedItems == null) {
+            openedItems = new ArrayList<>();
+        }
     }
 
     public List<ExplorerNode> getRootNodes() {

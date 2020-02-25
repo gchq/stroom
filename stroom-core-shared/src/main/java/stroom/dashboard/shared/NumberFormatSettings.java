@@ -17,6 +17,7 @@
 package stroom.dashboard.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -75,6 +76,7 @@ public class NumberFormatSettings implements FormatSettings {
 
     @Override
     @XmlTransient
+    @JsonIgnore
     public boolean isDefault() {
         return (decimalPlaces == null || decimalPlaces.equals(DEFAULT_DECIMAL_PLACES))
                 && (useSeparator == null || useSeparator.equals(DEFAULT_USE_SEPARATOR));

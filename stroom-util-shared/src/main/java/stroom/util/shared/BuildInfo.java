@@ -8,14 +8,11 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 @JsonInclude(Include.NON_DEFAULT)
 public class BuildInfo extends AbstractConfig {
     @JsonProperty
-    private String upDate;
+    private final String upDate;
     @JsonProperty
-    private String buildDate = "TBD";
+    private final String buildDate;
     @JsonProperty
-    private String buildVersion = "TBD";
-
-    public BuildInfo() {
-    }
+    private final String buildVersion;
 
     @JsonCreator
     public BuildInfo(@JsonProperty("upDate") final String upDate,
@@ -30,23 +27,11 @@ public class BuildInfo extends AbstractConfig {
         return buildVersion;
     }
 
-    public void setBuildVersion(final String buildVersion) {
-        this.buildVersion = buildVersion;
-    }
-
     public String getBuildDate() {
         return buildDate;
     }
 
-    public void setBuildDate(final String buildDate) {
-        this.buildDate = buildDate;
-    }
-
     public String getUpDate() {
         return upDate;
-    }
-
-    public void setUpDate(final String upDate) {
-        this.upDate = upDate;
     }
 }

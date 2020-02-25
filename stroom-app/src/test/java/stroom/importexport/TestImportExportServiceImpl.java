@@ -33,11 +33,12 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.resource.api.ResourceStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -102,7 +103,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         final int startFeedSize = feedStore.list().size();
 
         final ResourceKey file = resourceStore.createTempFile("Export.zip");
-        final DocRefs docRefs = new DocRefs();
+        final Set<DocRef> docRefs = new HashSet<>();
         docRefs.add(folder1);
         docRefs.add(folder2);
 
@@ -134,7 +135,7 @@ class TestImportExportServiceImpl extends AbstractCoreIntegrationTest {
         assertThat(pipelineStore.list().size()).isEqualTo(startTranslationSize);
 
         final ResourceKey fileChild = resourceStore.createTempFile("ExportChild.zip");
-        final DocRefs criteriaChild = new DocRefs();
+        final Set<DocRef> criteriaChild = new HashSet<>();
         criteriaChild.add(folder2child2);
 
         // Export

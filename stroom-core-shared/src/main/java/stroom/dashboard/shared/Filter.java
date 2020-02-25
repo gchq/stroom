@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -49,7 +50,9 @@ public class Filter implements Serializable {
     public Filter() {
     }
 
-    public Filter(String includes, String excludes) {
+    @JsonCreator
+    public Filter(@JsonProperty("includes") final String includes,
+                  @JsonProperty("excludes") final String excludes) {
         this.includes = includes;
         this.excludes = excludes;
     }
