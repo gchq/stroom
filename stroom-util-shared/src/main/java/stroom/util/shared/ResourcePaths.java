@@ -31,38 +31,42 @@ public interface ResourcePaths {
     String V3 = "/v3";
 
 
-    static String buildUnauthenticatedServletPath(final String path) {
-        return buildPath(
-                ROOT_PATH,
-                NO_AUTH_PATH,
-                path);
+    static String buildUnauthenticatedServletPath(final String... parts) {
+        return new Builder()
+            .addPart(ROOT_PATH)
+            .addPart(NO_AUTH_PATH)
+            .addParts(parts)
+            .build();
     }
 
-    static String buildAuthenticatedServletPath(final String path) {
-        return buildPath(
-                ROOT_PATH,
-                path);
+    static String buildAuthenticatedServletPath(final String... parts) {
+        return new Builder()
+            .addPart(ROOT_PATH)
+            .addParts(parts)
+            .build();
     }
 
     /**
-     * @param path The path to append onto the base path.
+     * @param parts The path or parts of a path to append onto the base path.
      * @return The full path to the authenticated resource, e.g. /api/node
      */
-    static String buildAuthenticatedApiPath(final String path) {
-        return buildPath(
-            API_ROOT_PATH,
-            path);
+    static String buildAuthenticatedApiPath(final String... parts) {
+        return new Builder()
+            .addPart(API_ROOT_PATH)
+            .addParts(parts)
+            .build();
     }
 
     /**
-     * @param path The path to append onto the base path.
+     * @param parts The path or parts of a path to append onto the base path.
      * @return The full path to the unauthenticated resource, e.g. /api/noauth/node
      */
-    static String buildUnauthenticatedApiPath(final String path) {
-        return buildPath(
-            API_ROOT_PATH,
-            NO_AUTH_PATH,
-            path);
+    static String buildUnauthenticatedApiPath(final String... parts) {
+        return new Builder()
+            .addPart(API_ROOT_PATH)
+            .addPart(NO_AUTH_PATH)
+            .addParts(parts)
+            .build();
     }
 
     static String buildPath(final String... parts) {
@@ -70,5 +74,31 @@ public interface ResourcePaths {
         return String
                 .join("/", parts)
                 .replace("//", "/");
+    }
+
+
+
+    class Builder {
+        private final StringBuilder stringBuilder = new StringBuilder();
+
+        Builder addPart(final String part) {
+            stringBuilder
+                .append("/")
+                .append(part);
+            return this;
+        }
+
+        Builder addParts(final String... parts) {
+            for (String part : parts) {
+                stringBuilder
+                    .append("/")
+                    .append(part);
+            }
+            return this;
+        }
+
+        String build() {
+            return stringBuilder.toString().replace("//","/");
+        }
     }
 }

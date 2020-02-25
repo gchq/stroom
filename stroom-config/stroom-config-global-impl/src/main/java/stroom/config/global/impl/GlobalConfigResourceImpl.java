@@ -112,7 +112,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
 
         OverrideValue<String> yamlOverride;
 
-        final String resourcePath = ResourcePaths.buildPath(
+        final String resourcePath = ResourcePaths.buildAuthenticatedApiPath(
                 GlobalConfigResource.BASE_PATH,
                 GlobalConfigResource.PROPERTIES_SUB_PATH,
                 propertyName,

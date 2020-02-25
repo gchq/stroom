@@ -12,7 +12,6 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.util.shared.Expander;
-import stroom.util.shared.TreeAction;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +26,7 @@ public class ConfigPropertyClusterValuesListPresenter
 
     private Column<ClusterValuesRow, Expander> expanderColumn;
     private ListDataProvider<ClusterValuesRow> dataProvider;
-    private TreeAction<ClusterValuesRow> treeAction = new ClusterValuesTreeAction();
+    private ClusterValuesTreeAction treeAction = new ClusterValuesTreeAction();
     private Map<String, Set<String>> effectiveValueToNodesMap;
 
     @Inject
@@ -62,9 +61,9 @@ public class ConfigPropertyClusterValuesListPresenter
 
     public void setData(final Map<String, Set<String>> effectiveValueToNodesMap) {
 
-        // TODO remove
-        this.effectiveValueToNodesMap = makeDemoData();
-//        this.effectiveValueToNodesMap = effectiveValueToNodesMap;
+        // For dev testing only
+//        this.effectiveValueToNodesMap = makeDemoData();
+        this.effectiveValueToNodesMap = effectiveValueToNodesMap;
 
         refresh();
     }
@@ -88,9 +87,23 @@ public class ConfigPropertyClusterValuesListPresenter
         });
 
         getView().addColumn(expanderColumn, "");
-        getView().addResizableColumn(buildEffectiveValueColumn(), "Effective Value", 550);
+        getView().addResizableColumn(buildEffectiveValueColumn(), "Effective Value", 500);
+        getView().addResizableColumn(buildNodeCountColumn(), "Count", 50);
         getView().addResizableColumn(buildNodeColumn(), "Node", 300);
         getView().addEndColumn(new EndColumn<>());
+    }
+
+    private Column<ClusterValuesRow, String> buildNodeCountColumn() {
+        final Column<ClusterValuesRow, String> column = new Column<ClusterValuesRow, String>(new TextCell()) {
+            @Override
+            public String getValue(final ClusterValuesRow row) {
+                if (row == null) {
+                    return null;
+                }
+                return (row.getNodeCount() != null ? row.getNodeCount().toString() : "");
+            }
+        };
+        return column;
     }
 
     private Column<ClusterValuesRow, String> buildNodeColumn() {

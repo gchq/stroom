@@ -42,7 +42,7 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
 
     @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH)
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     OverrideValue<String> getYamlValueByName(final @PathParam("propertyName") String propertyName);
 
     @GET

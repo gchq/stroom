@@ -157,14 +157,18 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void updateWarningState() {
         final long uniqueYamlOverrideValues = getUniqueYamlOverrideValues();
-        // TODO here just for testing
+        final String msg = "Unique values in cluster: " + uniqueYamlOverrideValues;
         yamlValueWarningsButton.setVisible(true);
-        yamlValueWarningsButton.setTitle("Unique value(s): " + uniqueYamlOverrideValues);
+        yamlValueWarningsButton.setTitle(msg);
 
         effectiveValueWarningsButton.setVisible(true);
-        effectiveValueWarningsButton.setTitle("Unique value(s): " + uniqueYamlOverrideValues);
+        effectiveValueWarningsButton.setTitle(msg);
 
-//        warningsButton.setVisible(uniqueYamlOverrideValues > 1);
+        // TODO here just for testing
+        final boolean areWarningsVisible = true;
+//        boolean areWarningsVisible = uniqueYamlOverrideValues > 1;
+        yamlValueWarningsButton.setVisible(areWarningsVisible);
+        effectiveValueWarningsButton.setVisible(areWarningsVisible);
     }
 
     private void updateValuesFromResource(final String propertyName, final PopupUiHandlers popupUiHandlers) {
