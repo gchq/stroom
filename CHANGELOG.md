@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix missing $ in start.sh
+
 
 ## [v6.0.34] - 2020-02-14
 
