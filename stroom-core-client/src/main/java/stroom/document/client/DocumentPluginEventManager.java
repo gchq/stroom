@@ -96,7 +96,6 @@ import stroom.widget.util.client.MultiSelectionModel;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -201,7 +200,7 @@ public class DocumentPluginEventManager extends Plugin {
                             getEventBus().addHandler(ShowPermissionsDialogEvent.getType(), event -> {
                                 final Hyperlink hyperlink = new Hyperlink.Builder()
                                         .text("Permissions")
-                                        .href(uiConfig.getUrlConfig().getDocumentPermissions() + event.getExplorerNode().getUuid())
+                                        .href(uiConfig.getUrl().getDocumentPermissions() + event.getExplorerNode().getUuid())
                                         .type(HyperlinkType.TAB + "|Document Permissions")
                                         .icon(SvgPresets.PERMISSIONS)
                                         .build();

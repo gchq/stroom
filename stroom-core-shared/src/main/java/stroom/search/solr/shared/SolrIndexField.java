@@ -21,11 +21,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
-import javax.xml.bind.annotation.XmlTransient;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,27 +34,28 @@ import java.util.Objects;
  * Wrapper for index field info
  * </p>
  */
-@JsonPropertyOrder({
-        "fieldUse",
-        "fieldName",
-        "fieldType",
-        "defaultValue",
-        "stored",
-        "indexed",
-        "uninvertible",
-        "docValues",
-        "multiValued",
-        "required",
-        "omitNorms",
-        "omitTermFreqAndPositions",
-        "omitPositions",
-        "termVectors",
-        "termPositions",
-        "termOffsets",
-        "termPayloads",
-        "sortMissingFirst",
-        "sortMissingLast"
-})
+//@JsonPropertyOrder({
+//        "fieldUse",
+//        "fieldName",
+//        "fieldType",
+//        "defaultValue",
+//        "stored",
+//        "indexed",
+//        "uninvertible",
+//        "docValues",
+//        "multiValued",
+//        "required",
+//        "omitNorms",
+//        "omitTermFreqAndPositions",
+//        "omitPositions",
+//        "termVectors",
+//        "termPositions",
+//        "termOffsets",
+//        "termPayloads",
+//        "sortMissingFirst",
+//        "sortMissingLast",
+//        "supportedConditions"
+//})
 @JsonInclude(Include.NON_NULL)
 public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexField>, Serializable {
     public static final String VALID_FIELD_NAME_PATTERN = "[a-zA-Z_](?:[a-zA-Z0-9_])*";
@@ -106,8 +105,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
      * can be null in which case a default set will be returned. Not persisted
      * in the XML
      */
-    @JsonIgnore
-    @XmlTransient
+    @JsonProperty
     private List<Condition> supportedConditions;
 
     public SolrIndexField() {
@@ -152,8 +150,12 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
                           @JsonProperty("sortMissingFirst") final boolean sortMissingFirst,
                           @JsonProperty("sortMissingLast") final boolean sortMissingLast,
                           @JsonProperty("supportedConditions") final List<Condition> supportedConditions) {
+        this.fieldUse = fieldUse;
+        this.fieldName = fieldName;
         this.fieldType = fieldType;
         this.defaultValue = defaultValue;
+        this.stored = stored;
+        this.indexed = indexed;
         this.uninvertible = uninvertible;
         this.docValues = docValues;
         this.multiValued = multiValued;
@@ -162,10 +164,12 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         this.omitTermFreqAndPositions = omitTermFreqAndPositions;
         this.omitPositions = omitPositions;
         this.termVectors = termVectors;
+        this.termPositions = termPositions;
         this.termOffsets = termOffsets;
         this.termPayloads = termPayloads;
         this.sortMissingFirst = sortMissingFirst;
         this.sortMissingLast = sortMissingLast;
+        this.supportedConditions = supportedConditions;
 
         setFieldUse(fieldUse);
         setFieldName(fieldName);

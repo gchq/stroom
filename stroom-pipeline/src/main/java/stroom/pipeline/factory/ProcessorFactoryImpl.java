@@ -28,7 +28,7 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskCallback;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Severity;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.util.List;

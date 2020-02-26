@@ -16,7 +16,6 @@
 
 package stroom.dashboard.client.text;
 
-import com.google.gwt.thirdparty.guava.common.base.Objects;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
@@ -35,6 +34,7 @@ import stroom.util.shared.EqualsBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class BasicTextSettingsPresenter
         extends BasicSettingsTabPresenter<BasicTextSettingsPresenter.BasicTextSettingsView> implements BasicTextSettingsUiHandlers {
@@ -211,8 +211,8 @@ public class BasicTextSettingsPresenter
         builder.appendSuper(Field.equalsId(settings.getLineToField(), getView().getLineToField()));
         builder.appendSuper(Field.equalsId(settings.getColToField(), getView().getColToField()));
         builder.append(settings.getPipeline(), getPipeline());
-        builder.appendSuper(Objects.equal(settings.isShowAsHtml(), getView().isShowAsHtml()));
-        builder.appendSuper(Objects.equal(settings.isShowStepping(), getView().isShowStepping()));
+        builder.appendSuper(Objects.equals(settings.isShowAsHtml(), getView().isShowAsHtml()));
+        builder.appendSuper(Objects.equals(settings.isShowStepping(), getView().isShowStepping()));
 
         return !builder.isEquals();
     }

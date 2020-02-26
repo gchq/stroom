@@ -39,9 +39,7 @@ import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.explorer.shared.SharedDocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -580,7 +578,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     public void beginStepping(final long streamId, final String childStreamType) {
         // Try and get a pipeline id to use as a starting point for
         // stepping.
-        SharedDocRef pipelineRef = null;
+        DocRef pipelineRef = null;
 
         // TODO : Fix by making entity id sets docref sets.
 //            final EntityIdSet<PipelineEntity> entityIdSet = findMetaCriteria

@@ -29,14 +29,13 @@ import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.document.client.DocumentTabData;
 import stroom.explorer.shared.ExplorerConstants;
-import stroom.explorer.shared.SharedDocRef;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.client.TaskEndEvent;
 
 import java.util.function.Consumer;
 
-public class FolderPlugin extends DocumentPlugin<SharedDocRef> {
+public class FolderPlugin extends DocumentPlugin<DocRef> {
     private final Provider<FolderPresenter> editorProvider;
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
@@ -67,12 +66,12 @@ public class FolderPlugin extends DocumentPlugin<SharedDocRef> {
     }
 
     @Override
-    public void load(final DocRef docRef, final Consumer<SharedDocRef> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void load(final DocRef docRef, final Consumer<DocRef> resultConsumer, final Consumer<Throwable> errorConsumer) {
 
     }
 
     @Override
-    public void save(final DocRef docRef, final SharedDocRef document, final Consumer<SharedDocRef> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    public void save(final DocRef docRef, final DocRef document, final Consumer<DocRef> resultConsumer, final Consumer<Throwable> errorConsumer) {
 
     }
 
@@ -92,7 +91,7 @@ public class FolderPlugin extends DocumentPlugin<SharedDocRef> {
     }
 
     @Override
-    protected DocRef getDocRef(final SharedDocRef document) {
+    protected DocRef getDocRef(final DocRef document) {
         return document;
     }
 

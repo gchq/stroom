@@ -41,7 +41,7 @@ import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
-import stroom.dashboard.shared.DataSourceFieldsMap;
+import stroom.dashboard.client.main.DataSourceFieldsMap;
 import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.SearchRequest;
@@ -193,8 +193,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    defaultProcessorTimeLimit = result.getProcessConfig().getDefaultTimeLimit();
-                    defaultProcessorRecordLimit = result.getProcessConfig().getDefaultRecordLimit();
+                    defaultProcessorTimeLimit = result.getProcess().getDefaultTimeLimit();
+                    defaultProcessorRecordLimit = result.getProcess().getDefaultRecordLimit();
                 })
                 .onFailure(caught -> AlertEvent.fireError(QueryPresenter.this, caught.getMessage(), null));
     }

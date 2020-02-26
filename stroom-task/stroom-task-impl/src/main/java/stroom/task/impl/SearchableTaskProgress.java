@@ -19,7 +19,6 @@ import stroom.searchable.api.Searchable;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.task.shared.FindTaskProgressCriteria;
-import stroom.task.shared.TaskManagerFields;
 import stroom.task.shared.TaskProgress;
 import stroom.util.shared.ResultPage;
 

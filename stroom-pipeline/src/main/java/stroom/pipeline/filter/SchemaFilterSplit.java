@@ -22,7 +22,7 @@ import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
 import stroom.security.api.SecurityContext;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 
 import javax.inject.Inject;
 import javax.xml.XMLConstants;

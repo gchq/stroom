@@ -14,6 +14,12 @@ public class BuildInfo extends AbstractConfig {
     @JsonProperty
     private final String buildVersion;
 
+    public BuildInfo() {
+        upDate = null;
+        buildDate = null;
+        buildVersion = null;
+    }
+
     @JsonCreator
     public BuildInfo(@JsonProperty("upDate") final String upDate,
                      @JsonProperty("buildVersion") final String buildVersion,

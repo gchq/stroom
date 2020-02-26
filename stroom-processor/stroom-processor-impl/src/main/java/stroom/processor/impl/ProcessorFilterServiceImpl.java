@@ -34,6 +34,7 @@ import stroom.processor.shared.ProcessorDataSource;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
+import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
@@ -237,7 +238,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     // TODO : The following method combines results from the processor and processor filter services so should possibly
     //  be in another class that controls the collaboration.
     @Override
-    public ResultPage<ProcessorListRow> find(final FetchProcessorRequest request) {
+    public ProcessorListRowResultPage find(final FetchProcessorRequest request) {
         return securityContext.secureResult(PERMISSION, () -> {
             final List<ProcessorListRow> values = new ArrayList<>();
 
@@ -303,7 +304,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 }
             }
 
-            return ResultPage.createUnboundedList(values);
+            return new ProcessorListRowResultPage(values, ResultPage.createUnboundedPageResponse(values));
         });
     }
 

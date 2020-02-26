@@ -28,7 +28,7 @@ import stroom.docstore.shared.Doc;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "classification", "encoding", "contextEncoding", "retentionDayAge", "reference", "streamType", "feedStatus"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "classification", "encoding", "contextEncoding", "retentionDayAge", "reference", "streamType", "status"})
 @JsonInclude(Include.NON_DEFAULT)
 public class FeedDoc extends Doc {
     public static final String DOCUMENT_TYPE = "Feed";
@@ -73,7 +73,7 @@ public class FeedDoc extends Doc {
                    @JsonProperty("retentionDayAge") final Integer retentionDayAge,
                    @JsonProperty("reference") final boolean reference,
                    @JsonProperty("streamType") final String streamType,
-                   @JsonProperty("feedStatus") final FeedStatus status) {
+                   @JsonProperty("status") final FeedStatus status) {
         super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
         this.description = description;
         this.classification = classification;

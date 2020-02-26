@@ -46,7 +46,7 @@ public interface ProcessorFilterResource extends RestResource, DirectRestService
     @ApiOperation(
             value = "Finds processors and filters matching request",
             response = ResultPage.class)
-    ResultPage<ProcessorListRow> find(FetchProcessorRequest request);
+    ProcessorListRowResultPage find(FetchProcessorRequest request);
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)

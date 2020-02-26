@@ -51,7 +51,7 @@ import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.StoredError;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.io.IOException;

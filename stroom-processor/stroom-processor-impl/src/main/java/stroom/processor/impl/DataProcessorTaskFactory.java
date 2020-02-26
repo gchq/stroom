@@ -20,7 +20,7 @@ import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.DistributedTaskFactoryDescription;
 import stroom.processor.api.JobNames;
 import stroom.processor.shared.ProcessorTask;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

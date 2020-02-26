@@ -18,7 +18,7 @@ package stroom.pipeline.cache;
 
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 
 import java.io.Serializable;
 

@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 
 class ScheduledTaskHandler extends AbstractTaskHandler<ScheduledTask, VoidResult> {

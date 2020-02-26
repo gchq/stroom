@@ -21,7 +21,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.pipeline.ErrorWriterProxy;
@@ -52,7 +52,7 @@ import stroom.task.api.AbstractTaskHandler;
 import stroom.util.date.DateUtil;
 import stroom.util.io.IgnoreCloseInputStream;
 import stroom.util.shared.Severity;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.io.IOException;

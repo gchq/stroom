@@ -23,7 +23,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -32,7 +32,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Period;
+import stroom.util.Period;
 
 import javax.inject.Inject;
 import java.util.Collections;

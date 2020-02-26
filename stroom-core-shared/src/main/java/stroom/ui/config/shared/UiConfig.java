@@ -48,15 +48,15 @@ public class UiConfig extends AbstractConfig {
     @JsonProperty
     @JsonPropertyDescription("The default maximum number of search results to return to the dashboard, unless the user requests lower values")
     private String defaultMaxResults;
-    @JsonProperty("process")
-    private ProcessConfig processConfig;
+    @JsonProperty
+    private ProcessConfig process;
     @JsonProperty
     @JsonPropertyDescription("The URL of hosted help files.")
     private String helpUrl;
-    @JsonProperty("theme")
-    private ThemeConfig themeConfig;
-    @JsonProperty("query")
-    private QueryConfig queryConfig;
+    @JsonProperty
+    private ThemeConfig theme;
+    @JsonProperty
+    private QueryConfig query;
     @JsonProperty
     @JsonPropertyDescription("The regex pattern for entity names")
     @ValidRegex
@@ -65,12 +65,12 @@ public class UiConfig extends AbstractConfig {
     private String htmlTitle;
     @JsonProperty
     private String oncontextmenu;
-    @JsonProperty("splash")
-    private SplashConfig splashConfig;
-    @JsonProperty("activity")
-    private ActivityConfig activityConfig;
-    @JsonProperty("url")
-    private UrlConfig urlConfig;
+    @JsonProperty
+    private SplashConfig splash;
+    @JsonProperty
+    private ActivityConfig activity;
+    @JsonProperty
+    private UrlConfig url;
 
     public UiConfig() {
         setDefaults();
@@ -83,32 +83,32 @@ public class UiConfig extends AbstractConfig {
                     @JsonProperty("nodeName") final String nodeName,
                     @JsonProperty("maintenanceMessage") final String maintenanceMessage,
                     @JsonProperty("defaultMaxResults") final String defaultMaxResults,
-                    @JsonProperty("process") final ProcessConfig processConfig,
+                    @JsonProperty("process") final ProcessConfig process,
                     @JsonProperty("helpUrl") final String helpUrl,
-                    @JsonProperty("theme") final ThemeConfig themeConfig,
-                    @JsonProperty("query") final QueryConfig queryConfig,
+                    @JsonProperty("theme") final ThemeConfig theme,
+                    @JsonProperty("query") final QueryConfig query,
                     @JsonProperty("namePattern") @ValidRegex final String namePattern,
                     @JsonProperty("htmlTitle") final String htmlTitle,
                     @JsonProperty("oncontextmenu") final String oncontextmenu,
-                    @JsonProperty("splash") final SplashConfig splashConfig,
-                    @JsonProperty("activity") final ActivityConfig activityConfig,
-                    @JsonProperty("url") final UrlConfig urlConfig) {
+                    @JsonProperty("splash") final SplashConfig splash,
+                    @JsonProperty("activity") final ActivityConfig activity,
+                    @JsonProperty("url") final UrlConfig url) {
         this.welcomeHtml = welcomeHtml;
         this.aboutHtml = aboutHtml;
         this.buildInfo = buildInfo;
         this.nodeName = nodeName;
         this.maintenanceMessage = maintenanceMessage;
         this.defaultMaxResults = defaultMaxResults;
-        this.processConfig = processConfig;
+        this.process = process;
         this.helpUrl = helpUrl;
-        this.themeConfig = themeConfig;
-        this.queryConfig = queryConfig;
+        this.theme = theme;
+        this.query = query;
         this.namePattern = namePattern;
         this.htmlTitle = htmlTitle;
         this.oncontextmenu = oncontextmenu;
-        this.splashConfig = splashConfig;
-        this.activityConfig = activityConfig;
-        this.urlConfig = urlConfig;
+        this.splash = splash;
+        this.activity = activity;
+        this.url = url;
 
         setDefaults();
     }
@@ -126,14 +126,14 @@ public class UiConfig extends AbstractConfig {
         if (defaultMaxResults == null) {
             defaultMaxResults = "1000000,100,10,1";
         }
-        if (processConfig == null) {
-            processConfig = new ProcessConfig();
+        if (process == null) {
+            process = new ProcessConfig();
         }
-        if (themeConfig == null) {
-            themeConfig = new ThemeConfig();
+        if (theme == null) {
+            theme = new ThemeConfig();
         }
-        if (queryConfig == null) {
-            queryConfig = new QueryConfig();
+        if (query == null) {
+            query = new QueryConfig();
         }
         if (namePattern == null) {
             namePattern = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
@@ -144,14 +144,14 @@ public class UiConfig extends AbstractConfig {
         if (oncontextmenu == null) {
             oncontextmenu = "return false;";
         }
-        if (splashConfig == null) {
-            splashConfig = new SplashConfig();
+        if (splash == null) {
+            splash = new SplashConfig();
         }
-        if (activityConfig == null) {
-            activityConfig = new ActivityConfig();
+        if (activity == null) {
+            activity = new ActivityConfig();
         }
-        if (urlConfig == null) {
-            urlConfig = new UrlConfig();
+        if (url == null) {
+            url = new UrlConfig();
         }
     }
 
@@ -203,12 +203,12 @@ public class UiConfig extends AbstractConfig {
         this.defaultMaxResults = defaultMaxResults;
     }
 
-    public ProcessConfig getProcessConfig() {
-        return processConfig;
+    public ProcessConfig getProcess() {
+        return process;
     }
 
-    public void setProcessConfig(final ProcessConfig processConfig) {
-        this.processConfig = processConfig;
+    public void setProcess(final ProcessConfig process) {
+        this.process = process;
     }
 
     public String getHelpUrl() {
@@ -219,20 +219,20 @@ public class UiConfig extends AbstractConfig {
         this.helpUrl = helpUrl;
     }
 
-    public ThemeConfig getThemeConfig() {
-        return themeConfig;
+    public ThemeConfig getTheme() {
+        return theme;
     }
 
-    public void setThemeConfig(final ThemeConfig themeConfig) {
-        this.themeConfig = themeConfig;
+    public void setTheme(final ThemeConfig theme) {
+        this.theme = theme;
     }
 
-    public QueryConfig getQueryConfig() {
-        return queryConfig;
+    public QueryConfig getQuery() {
+        return query;
     }
 
-    public void setQueryConfig(final QueryConfig queryConfig) {
-        this.queryConfig = queryConfig;
+    public void setQuery(final QueryConfig query) {
+        this.query = query;
     }
 
     public String getNamePattern() {
@@ -243,28 +243,28 @@ public class UiConfig extends AbstractConfig {
         this.namePattern = namePattern;
     }
 
-    public SplashConfig getSplashConfig() {
-        return splashConfig;
+    public SplashConfig getSplash() {
+        return splash;
     }
 
-    public void setSplashConfig(final SplashConfig splashConfig) {
-        this.splashConfig = splashConfig;
+    public void setSplash(final SplashConfig splash) {
+        this.splash = splash;
     }
 
-    public ActivityConfig getActivityConfig() {
-        return activityConfig;
+    public ActivityConfig getActivity() {
+        return activity;
     }
 
-    public void setActivityConfig(final ActivityConfig activityConfig) {
-        this.activityConfig = activityConfig;
+    public void setActivity(final ActivityConfig activity) {
+        this.activity = activity;
     }
 
-    public UrlConfig getUrlConfig() {
-        return urlConfig;
+    public UrlConfig getUrl() {
+        return url;
     }
 
-    public void setUrlConfig(final UrlConfig urlConfig) {
-        this.urlConfig = urlConfig;
+    public void setUrl(final UrlConfig url) {
+        this.url = url;
     }
 
     public String getHtmlTitle() {

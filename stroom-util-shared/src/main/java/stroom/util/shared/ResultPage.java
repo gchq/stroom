@@ -100,10 +100,17 @@ public class ResultPage<T> {
      */
     public static <T> ResultPage<T> createUnboundedList(final List<T> realList) {
         if (realList != null) {
-            return new ResultPage<>(realList, 0L, (long) realList.size(), true);
+            return new ResultPage<>(realList, createUnboundedPageResponse(realList));
         } else {
             return new ResultPage<>(new ArrayList<>(), 0L, 0L, true);
         }
+    }
+
+    public static PageResponse createUnboundedPageResponse(final List<?> values) {
+        if (values != null) {
+            return new PageResponse(0L, values.size(), (long) values.size(), true);
+        }
+        return new PageResponse(0L, 0, 0L, true);
     }
 
     /**

@@ -31,7 +31,7 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.meta.api.AttributeMapFactory;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaProperties;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 

@@ -18,7 +18,7 @@ package stroom.core.entity.event;
 
 import stroom.cluster.task.api.ClusterTask;
 import stroom.util.entity.EntityEvent;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 public class ClusterEntityEventTask extends ClusterTask<VoidResult> {
     private static final long serialVersionUID = -1305243739417365803L;

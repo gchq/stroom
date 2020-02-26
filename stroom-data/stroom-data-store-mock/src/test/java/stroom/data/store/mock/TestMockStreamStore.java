@@ -25,7 +25,7 @@ import stroom.data.store.api.Target;
 import stroom.meta.mock.MockMetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
+import stroom.meta.api.MetaProperties;
 import stroom.util.io.StreamUtil;
 
 import java.io.IOException;

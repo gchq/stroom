@@ -30,7 +30,7 @@ import stroom.data.zip.StroomZipOutputStreamImpl;
 import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.security.api.SecurityContext;

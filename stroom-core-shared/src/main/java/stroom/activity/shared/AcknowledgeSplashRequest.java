@@ -20,13 +20,15 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@JsonPropertyOrder({"message", "version"})
 @JsonInclude(Include.NON_DEFAULT)
 public class AcknowledgeSplashRequest {
     @JsonProperty
-    private String message;
+    private final String message;
     @JsonProperty
-    private String version;
+    private final String version;
 
     @JsonCreator
     public AcknowledgeSplashRequest(@JsonProperty("message") final String message,

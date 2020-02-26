@@ -1,6 +1,7 @@
 package stroom.processor.shared;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import stroom.util.shared.TreeRow;
 
@@ -9,8 +10,8 @@ import stroom.util.shared.TreeRow;
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = ProcessorRow.class, name = "processor"),
-        @JsonSubTypes.Type(value = ProcessorFilterRow.class, name = "processorFilter")
+        @Type(value = ProcessorRow.class, name = "processor"),
+        @Type(value = ProcessorFilterRow.class, name = "processorFilter")
 })
 public abstract class ProcessorListRow implements TreeRow {
 }

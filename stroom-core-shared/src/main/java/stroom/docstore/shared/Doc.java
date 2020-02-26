@@ -28,7 +28,7 @@ import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 @JsonInclude(Include.NON_DEFAULT)
-public class Doc {
+public abstract class Doc {
     @JsonProperty
     private String type;
     @JsonProperty

@@ -18,8 +18,7 @@ package stroom.core.db.migration._V07_00_00.streamstore.shared;
 
 import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_BaseEntity;
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.IdRange;
-import stroom.util.shared.Period;
+import stroom.util.Period;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;

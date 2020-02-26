@@ -23,12 +23,12 @@ import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.node.shared.FindNodeCriteria;
+import stroom.node.api.FindNodeCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.util.Collections;

@@ -16,7 +16,6 @@
 
 package stroom.meta.shared;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -37,7 +36,7 @@ public class Meta {
     @JsonProperty
     private String pipelineUuid;
     @JsonProperty
-    private Long parentDataId;
+    private Long parentMetaId;
     @JsonProperty
     private Status status;
     @JsonProperty
@@ -56,7 +55,7 @@ public class Meta {
                 @JsonProperty("typeName") final String typeName,
                 @JsonProperty("processorUuid") final String processorUuid,
                 @JsonProperty("pipelineUuid") final String pipelineUuid,
-                @JsonProperty("parentDataId") final Long parentDataId,
+                @JsonProperty("parentMetaId") final Long parentMetaId,
                 @JsonProperty("status") final Status status,
                 @JsonProperty("statusMs") final Long statusMs,
                 @JsonProperty("createMs") final long createMs,
@@ -66,7 +65,7 @@ public class Meta {
         this.typeName = typeName;
         this.processorUuid = processorUuid;
         this.pipelineUuid = pipelineUuid;
-        this.parentDataId = parentDataId;
+        this.parentMetaId = parentMetaId;
         this.status = status;
         this.statusMs = statusMs;
         this.createMs = createMs;
@@ -114,11 +113,11 @@ public class Meta {
     }
 
     public Long getParentMetaId() {
-        return parentDataId;
+        return parentMetaId;
     }
 
-    public void setParentDataId(final Long parentDataId) {
-        this.parentDataId = parentDataId;
+    public void setParentMetaId(final Long parentMetaId) {
+        this.parentMetaId = parentMetaId;
     }
 
     public Status getStatus() {
@@ -216,7 +215,7 @@ public class Meta {
         }
 
         public Builder parentDataId(final Long parentDataId) {
-            meta.parentDataId = parentDataId;
+            meta.parentMetaId = parentDataId;
             return this;
         }
 

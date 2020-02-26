@@ -5,7 +5,7 @@ import org.slf4j.LoggerFactory;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.ThreadPool;
-import stroom.task.shared.ThreadPoolImpl;
+import stroom.task.api.ThreadPoolImpl;
 import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.date.DateUtil;
 import stroom.util.io.BufferFactory;

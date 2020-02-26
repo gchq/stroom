@@ -95,7 +95,7 @@ public class ExplorerTreePresenter
 
         // Add views.
         uiConfigCache.get().onSuccess(uiConfig -> {
-            final ActivityConfig activityConfig = uiConfig.getActivityConfig();
+            final ActivityConfig activityConfig = uiConfig.getActivity();
             if (activityConfig.isEnabled()) {
                 activityContainer.setStyleName("activityContainer");
 

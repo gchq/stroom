@@ -23,7 +23,7 @@ import stroom.data.store.api.OutputStreamProvider;
 import stroom.data.store.api.Target;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.api.MetaService;

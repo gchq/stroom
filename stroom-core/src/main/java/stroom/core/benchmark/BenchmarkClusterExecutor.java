@@ -57,8 +57,8 @@ import stroom.task.api.TaskContext;
 import stroom.task.shared.Task;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.Period;
-import stroom.util.shared.VoidResult;
+import stroom.util.Period;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.util.ArrayList;

@@ -30,7 +30,6 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.TimeZone;
 import stroom.docref.DocRef;
-import stroom.explorer.shared.SharedDocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -82,7 +81,7 @@ public class SearchRequestTestData {
                 , 2, 200, true, false));
         tableSettings.setExtractValues(false);
         tableSettings.setExtractionPipeline(
-                new SharedDocRef("docRefType2", "docRefUuid2", "docRefName2"));
+                new DocRef("docRefType2", "docRefUuid2", "docRefName2"));
         tableSettings.setMaxResults(new int[]{1, 2});
         tableSettings.setShowDetail(false);
 

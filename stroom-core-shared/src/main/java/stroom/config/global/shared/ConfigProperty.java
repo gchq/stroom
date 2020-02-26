@@ -50,19 +50,19 @@ import java.util.Optional;
  */
 @JsonInclude(Include.NON_DEFAULT)
 public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> {
-    @JsonProperty("id")
+    @JsonProperty
     private Integer id;
-    @JsonProperty("version")
+    @JsonProperty
     private Integer version;
-    @JsonProperty("createTimeMs")
+    @JsonProperty
     private Long createTimeMs;
-    @JsonProperty("createUser")
+    @JsonProperty
     private String createUser;
-    @JsonProperty("updateTimeMs")
+    @JsonProperty
     private Long updateTimeMs;
-    @JsonProperty("updateUser")
+    @JsonProperty
     private String updateUser;
-    @JsonProperty("name")
+    @JsonProperty
     private PropertyPath name;
 
     // TODO now that properties are typed in AppConfig we should really be dealing with typed
@@ -75,32 +75,32 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
     // A OverrideValue holding a non-null value - indicating a non-null value has been supplied
 
     // The cluster wide compile-time default value set in the AppConfig object tree
-    @JsonProperty("defaultValue")
-    private String defaultValue = null;
+    @JsonProperty
+    private String defaultValue;
 
     // The cluster wide value held in the database and set by the user in the UI, may be null.
-    @JsonProperty("databaseOverrideValue")
+    @JsonProperty
     private OverrideValue<String> databaseOverrideValue;
 
     // These fields are not saved to the database,
     // they come from the annotations on the java config classes
 
     // The node specific value as set by the dropwizard YAML file
-    @JsonProperty("yamlOverrideValue")
+    @JsonProperty
     private OverrideValue<String> yamlOverrideValue;
 
-    @JsonProperty("description")
+    @JsonProperty
     private String description;
-    @JsonProperty("isEditable")
+    @JsonProperty
     private boolean editable;
-    @JsonProperty("isPassword")
+    @JsonProperty
     private boolean password;
-    @JsonProperty("requireRestart")
+    @JsonProperty
     private boolean requireRestart;
-    @JsonProperty("requireUiRestart")
+    @JsonProperty
     private boolean requireUiRestart;
     // TODO this is a stopgap until we have fully typed values
-    @JsonProperty("dataTypeName")
+    @JsonProperty
     private String dataTypeName;
 
     ConfigProperty() {
@@ -136,8 +136,8 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
                           @JsonProperty("databaseOverrideValue") final OverrideValue<String> databaseOverrideValue,
                           @JsonProperty("yamlOverrideValue") final OverrideValue<String> yamlOverrideValue,
                           @JsonProperty("description") final String description,
-                          @JsonProperty("isEditable") final boolean editable,
-                          @JsonProperty("isPassword") final boolean password,
+                          @JsonProperty("editable") final boolean editable,
+                          @JsonProperty("password") final boolean password,
                           @JsonProperty("requireRestart") final boolean requireRestart,
                           @JsonProperty("requireUiRestart") final boolean requireUiRestart,
                           @JsonProperty("dataTypeName") final String dataTypeName) {

@@ -18,7 +18,7 @@ package stroom.job.impl;
 
 import stroom.job.api.DistributedTask;
 import stroom.task.api.ServerTask;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 /**
  * Mock Class.

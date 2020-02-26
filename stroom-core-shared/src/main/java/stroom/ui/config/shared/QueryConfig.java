@@ -14,28 +14,28 @@ import javax.inject.Singleton;
 @JsonPropertyOrder({"infoPopup"})
 @JsonInclude(Include.NON_DEFAULT)
 public class QueryConfig extends AbstractConfig {
-    @JsonProperty("infoPopup")
-    private InfoPopupConfig infoPopupConfig;
+    @JsonProperty
+    private InfoPopupConfig infoPopup;
 
     public QueryConfig() {
-        infoPopupConfig = new InfoPopupConfig();
+        infoPopup = new InfoPopupConfig();
     }
 
     @Inject
     @JsonCreator
-    public QueryConfig(@JsonProperty("infoPopup") final InfoPopupConfig infoPopupConfig) {
-        if (infoPopupConfig != null) {
-            this.infoPopupConfig = infoPopupConfig;
+    public QueryConfig(@JsonProperty("infoPopup") final InfoPopupConfig infoPopup) {
+        if (infoPopup != null) {
+            this.infoPopup = infoPopup;
         } else {
-            this.infoPopupConfig = new InfoPopupConfig();
+            this.infoPopup = new InfoPopupConfig();
         }
     }
 
-    public InfoPopupConfig getInfoPopupConfig() {
-        return infoPopupConfig;
+    public InfoPopupConfig getInfoPopup() {
+        return infoPopup;
     }
 
-    public void setInfoPopupConfig(final InfoPopupConfig infoPopupConfig) {
-        this.infoPopupConfig = infoPopupConfig;
+    public void setInfoPopup(final InfoPopupConfig infoPopup) {
+        this.infoPopup = infoPopup;
     }
 }

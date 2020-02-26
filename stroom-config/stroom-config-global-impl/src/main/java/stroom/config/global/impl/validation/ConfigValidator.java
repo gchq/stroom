@@ -4,7 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.validation.ValidationSeverity;
+import stroom.security.impl.ValidationSeverity;
 
 import javax.inject.Inject;
 import javax.validation.ConstraintViolation;

@@ -39,7 +39,6 @@ import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.feed.shared.FeedResource;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
-import stroom.pipeline.shared.SupportedRetentionAge;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.tickbox.client.view.TickBox;
 

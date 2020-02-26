@@ -26,7 +26,7 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.feed.api.FeedProperties;
 import stroom.meta.api.AttributeMapUtil;
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.date.DateUtil;
 import stroom.util.io.AbstractFileVisitor;

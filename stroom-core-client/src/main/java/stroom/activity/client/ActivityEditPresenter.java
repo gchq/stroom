@@ -71,7 +71,7 @@ public class ActivityEditPresenter extends MyPresenterWidget<ActivityEditView> {
 
         uiConfigCache.get()
                 .onSuccess(result -> {
-                    final ActivityConfig activityConfig = result.getActivityConfig();
+                    final ActivityConfig activityConfig = result.getActivity();
                     activityRecordingEnabled = activityConfig.isEnabled();
                     activityEditorTitle = activityConfig.getEditorTitle();
                     activityEditorBody = activityConfig.getEditorBody();

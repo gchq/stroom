@@ -20,7 +20,6 @@ import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.cache.shared.CacheInfo;
 import stroom.cache.shared.CacheInfoResponse;
 import stroom.cache.shared.CacheResource;
-import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;

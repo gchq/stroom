@@ -21,7 +21,7 @@ import stroom.util.entity.EntityEvent;
 import stroom.util.entity.EntityEventHandler;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.node.shared.FindNodeCriteria;
+import stroom.node.api.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;

@@ -14,7 +14,6 @@ import stroom.pipeline.shared.PipelineDataMerger;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.security.api.SecurityContext;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.shared.ResourcePaths;

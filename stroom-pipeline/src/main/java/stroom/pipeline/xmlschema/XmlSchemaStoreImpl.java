@@ -34,7 +34,6 @@ import stroom.security.api.SecurityContext;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;

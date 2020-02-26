@@ -1,6 +1,5 @@
 package stroom.editor.client.view;
 
-import stroom.util.shared.Indicator;
 import stroom.util.shared.Indicators;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;

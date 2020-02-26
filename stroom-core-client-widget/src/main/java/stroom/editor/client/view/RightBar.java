@@ -26,8 +26,6 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.Composite;
 import com.google.gwt.user.client.ui.SimplePanel;
-import stroom.util.shared.Indicator;
-import stroom.util.shared.Indicators;
 import stroom.util.shared.Severity;
 
 public class RightBar extends Composite {

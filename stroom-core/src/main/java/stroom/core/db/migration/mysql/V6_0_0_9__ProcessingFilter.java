@@ -17,7 +17,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.IdRange;
+import stroom.core.db.migration._V07_00_00.streamstore.shared.IdRange;
 import stroom.util.shared.Range;
 import stroom.util.xml.XMLMarshallerUtil;
 

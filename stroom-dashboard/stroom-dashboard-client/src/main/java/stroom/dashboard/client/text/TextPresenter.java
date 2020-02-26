@@ -35,7 +35,7 @@ import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.IndexConstants;
+import stroom.dashboard.client.main.IndexConstants;
 import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.TextComponentSettings;
 import stroom.dispatch.client.Rest;

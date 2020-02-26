@@ -10,7 +10,7 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.task.impl.CurrentTaskState;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;
-import stroom.task.shared.ThreadPoolImpl;
+import stroom.task.api.ThreadPoolImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;

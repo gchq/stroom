@@ -29,12 +29,9 @@ import java.util.Objects;
 @JsonInclude(Include.NON_DEFAULT)
 public class ProcessorRow extends ProcessorListRow {
     @JsonProperty
-    private Processor processor;
+    private final Processor processor;
     @JsonProperty
-    private Expander expander;
-
-    public ProcessorRow() {
-    }
+    private final Expander expander;
 
     @JsonCreator
     public ProcessorRow(@JsonProperty("expander") final Expander expander,
@@ -47,17 +44,9 @@ public class ProcessorRow extends ProcessorListRow {
         return processor;
     }
 
-    public void setProcessor(final Processor processor) {
-        this.processor = processor;
-    }
-
     @Override
     public Expander getExpander() {
         return expander;
-    }
-
-    public void setExpander(final Expander expander) {
-        this.expander = expander;
     }
 
     @Override

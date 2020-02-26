@@ -16,23 +16,27 @@
 
 package stroom.data.retention.impl;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.data.retention.shared.DataRetentionRule;
 import stroom.data.retention.shared.DataRetentionRules;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.task.api.TaskContext;
+import stroom.util.Period;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.io.StreamUtil;
+import stroom.util.json.JsonUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.Period;
-import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -44,7 +48,11 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -259,27 +267,20 @@ public class DataRetentionPolicyExecutor {
         taskContext.info(messageSupplier);
     }
 
-    @XmlAccessorType(XmlAccessType.FIELD)
-    @XmlType(name = "Tracker", propOrder = {"lastRun", "dataRetentionRules", "rulesVersion", "rulesHash"})
-    @XmlRootElement(name = "tracker")
+    @JsonPropertyOrder({"lastRun", "dataRetentionRules", "rulesVersion", "rulesHash"})
+    @JsonInclude(Include.NON_DEFAULT)
     static class Tracker {
         private static final String FILE_NAME = "dataRetentionTracker.json";
 
-        @XmlElement(name = "lastRun")
+        @JsonProperty
         private Long lastRun;
 
-        @XmlElement(name = "dataRetentionRules")
+        @JsonProperty
         private DataRetentionRules dataRetentionRules;
-        @XmlElement(name = "rulesVersion")
+        @JsonProperty
         private String rulesVersion;
-        @XmlElement(name = "rulesHash")
+        @JsonProperty
         private int rulesHash;
-
-        @XmlTransient
-        private static JAXBContext jaxbContext;
-
-        Tracker() {
-        }
 
         Tracker(final Long lastRun, final DataRetentionRules dataRetentionRules) {
             this.lastRun = lastRun;
@@ -287,6 +288,17 @@ public class DataRetentionPolicyExecutor {
             this.dataRetentionRules = dataRetentionRules;
             this.rulesVersion = dataRetentionRules.getVersion();
             this.rulesHash = dataRetentionRules.hashCode();
+        }
+
+        @JsonCreator
+        Tracker(@JsonProperty("lastRun") final Long lastRun,
+                       @JsonProperty("dataRetentionRules") final DataRetentionRules dataRetentionRules,
+                       @JsonProperty("rulesVersion") final String rulesVersion,
+                       @JsonProperty("rulesHash") final int rulesHash) {
+            this.lastRun = lastRun;
+            this.dataRetentionRules = dataRetentionRules;
+            this.rulesVersion = rulesVersion;
+            this.rulesHash = rulesHash;
         }
 
         boolean rulesEquals(final DataRetentionRules dataRetentionRules) {
@@ -301,8 +313,9 @@ public class DataRetentionPolicyExecutor {
             try {
                 final Path path = FileUtil.getTempDir().resolve(FILE_NAME);
                 if (Files.isRegularFile(path)) {
-                    final String data = Files.readString(path, StreamUtil.DEFAULT_CHARSET);
-                    return XMLMarshallerUtil.unmarshal(getContext(), Tracker.class, data);
+                    try (final InputStream inputStream = new BufferedInputStream(Files.newInputStream(path))) {
+                        return JsonUtil.getMapper().readValue(inputStream, Tracker.class);
+                    }
                 }
             } catch (final IOException e) {
                 LOGGER.error(e::getMessage, e);
@@ -312,25 +325,13 @@ public class DataRetentionPolicyExecutor {
 
         void save() {
             try {
-                final String data = XMLMarshallerUtil.marshal(getContext(), this);
                 final Path path = FileUtil.getTempDir().resolve(FILE_NAME);
-                Files.writeString(path, data, StreamUtil.DEFAULT_CHARSET);
+                try (final OutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(path))) {
+                    JsonUtil.getMapper().writeValue(outputStream, this);
+                }
             } catch (final IOException e) {
                 LOGGER.error(e::getMessage, e);
             }
-        }
-
-        private static JAXBContext getContext() {
-            if (jaxbContext == null) {
-                try {
-                    jaxbContext = JAXBContext.newInstance(Tracker.class);
-                } catch (final JAXBException e) {
-                    LOGGER.error(e::getMessage, e);
-                    throw new RuntimeException(e.getMessage());
-                }
-            }
-
-            return jaxbContext;
         }
     }
 

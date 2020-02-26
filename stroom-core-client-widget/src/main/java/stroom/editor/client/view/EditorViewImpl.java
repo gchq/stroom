@@ -51,8 +51,6 @@ import stroom.editor.client.presenter.EditorUiHandlers;
 import stroom.editor.client.presenter.EditorView;
 import stroom.editor.client.presenter.Option;
 import stroom.util.shared.Highlight;
-import stroom.util.shared.Indicator;
-import stroom.util.shared.Indicators;
 import stroom.util.shared.Location;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;

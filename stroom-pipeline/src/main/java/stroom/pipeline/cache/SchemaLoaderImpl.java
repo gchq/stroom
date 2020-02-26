@@ -28,7 +28,7 @@ import stroom.pipeline.filter.LSResourceResolverImpl;
 import stroom.pipeline.xmlschema.XmlSchemaCache;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.Severity;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 
 import javax.inject.Inject;
 import javax.xml.transform.stream.StreamSource;

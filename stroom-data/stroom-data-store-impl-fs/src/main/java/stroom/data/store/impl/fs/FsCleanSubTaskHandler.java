@@ -25,7 +25,7 @@ import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskContext;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 

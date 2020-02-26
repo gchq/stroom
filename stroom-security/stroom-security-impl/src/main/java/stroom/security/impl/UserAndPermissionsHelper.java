@@ -17,7 +17,6 @@
 package stroom.security.impl;
 
 import stroom.security.shared.User;
-import stroom.security.shared.UserAppPermissions;
 
 import javax.inject.Inject;
 import java.util.HashSet;

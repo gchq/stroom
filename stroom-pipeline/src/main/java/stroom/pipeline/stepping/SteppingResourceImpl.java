@@ -19,7 +19,6 @@ package stroom.pipeline.stepping;
 import com.codahale.metrics.health.HealthCheck.Result;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.explorer.shared.SharedDocRef;
 import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -103,7 +102,7 @@ class SteppingResourceImpl implements SteppingResource, HasHealthCheck {
 //            }
 //        }
 
-            return SharedDocRef.create(docRef);
+            return docRef;
         });
     }
 

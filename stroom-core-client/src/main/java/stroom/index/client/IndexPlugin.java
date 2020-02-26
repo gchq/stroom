@@ -71,7 +71,7 @@ public class IndexPlugin extends DocumentPlugin<IndexDoc> {
         if(forceOpen) {
             clientPropertyCache.get()
                     .onSuccess(result -> {
-                        final String url = result.getUrlConfig().getEditDoc() + docRef.getUuid();
+                        final String url = result.getUrl().getEditDoc() + docRef.getUuid();
                         final SvgPreset icon = SvgPresets.DATABASE;
                         final Hyperlink hyperlink = new Hyperlink.Builder()
                                 .text("Indexes")

@@ -41,6 +41,9 @@ public class DataRetentionRules extends Doc {
     @JsonProperty
     private List<DataRetentionRule> rules;
 
+    public DataRetentionRules() {
+    }
+
     public DataRetentionRules(final List<DataRetentionRule> rules) {
         this.rules = rules;
     }

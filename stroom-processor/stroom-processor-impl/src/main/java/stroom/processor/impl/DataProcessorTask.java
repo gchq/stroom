@@ -20,9 +20,9 @@ import stroom.job.api.DistributedTask;
 import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.processor.shared.ProcessorTask;
 import stroom.task.api.ServerTask;
-import stroom.task.shared.SimpleThreadPool;
+import stroom.task.api.SimpleThreadPool;
 import stroom.task.shared.ThreadPool;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 public class DataProcessorTask extends ServerTask<VoidResult> implements DistributedTask<VoidResult> {
     private static final long serialVersionUID = 5719364078026952526L;

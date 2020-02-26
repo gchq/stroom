@@ -24,7 +24,6 @@ import stroom.util.entity.EntityEvent;
 import stroom.util.entity.EntityEventBus;
 import stroom.util.entity.EntityEventHandler;
 import stroom.security.shared.User;
-import stroom.security.shared.UserAppPermissions;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;

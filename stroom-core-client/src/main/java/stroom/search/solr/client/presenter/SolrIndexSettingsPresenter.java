@@ -30,7 +30,7 @@ import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.receive.rules.client.presenter.EditExpressionPresenter;
+import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.search.solr.client.presenter.SolrIndexSettingsPresenter.SolrIndexSettingsView;
 import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;

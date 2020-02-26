@@ -20,7 +20,6 @@ package stroom.pipeline.xmlschema;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
 import stroom.util.shared.ResultPage;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import java.util.List;

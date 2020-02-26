@@ -56,7 +56,7 @@ import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.Sort.Direction;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

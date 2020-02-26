@@ -30,7 +30,7 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaProperties;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;

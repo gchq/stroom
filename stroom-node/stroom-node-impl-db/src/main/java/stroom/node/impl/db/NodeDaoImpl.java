@@ -22,7 +22,7 @@ import org.jooq.OrderField;
 import stroom.db.util.JooqUtil;
 import stroom.node.impl.NodeDao;
 import stroom.node.impl.db.jooq.tables.records.NodeRecord;
-import stroom.node.shared.FindNodeCriteria;
+import stroom.node.api.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.util.shared.ResultPage;
 

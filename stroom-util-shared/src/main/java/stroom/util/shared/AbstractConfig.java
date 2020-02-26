@@ -11,9 +11,9 @@ import java.util.Objects;
  * are expected to be (de)serialised from/to YAML configuration files.
  */
 public abstract class AbstractConfig {
-
     // Held in part form to reduce memory overhead as some parts will be used
     // many times over all the config objects
+    @JsonIgnore
     private PropertyPath basePropertyPath = PropertyPath.blank();
 
     /**
@@ -29,13 +29,13 @@ public abstract class AbstractConfig {
      * @return The full property path, e.g. "stroom.node.status" for the named property on this config
      * object
      */
-    @JsonIgnore
     public String getFullPath(final String propertyName) {
         Objects.requireNonNull(basePropertyPath);
         Objects.requireNonNull(propertyName);
         return basePropertyPath.merge(propertyName).toString();
     }
 
+    @JsonIgnore
     public void setBasePath(final PropertyPath basePropertyPath) {
         this.basePropertyPath = basePropertyPath;
     }

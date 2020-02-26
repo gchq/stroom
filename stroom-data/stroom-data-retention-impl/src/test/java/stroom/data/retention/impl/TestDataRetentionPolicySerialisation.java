@@ -26,16 +26,14 @@ import stroom.meta.shared.MetaFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.xml.XMLMarshallerUtil;
+import stroom.util.json.JsonUtil;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import java.util.ArrayList;
 import java.util.List;
 
 class TestDataRetentionPolicySerialisation {
     @Test
-    void test() throws JAXBException {
+    void test() throws Exception {
         final ExpressionOperator.Builder builder = new ExpressionOperator.Builder(true, Op.AND);
         builder.addTerm(MetaFields.TYPE_NAME, Condition.EQUALS, "Raw Events");
         builder.addTerm(MetaFields.FEED_NAME, Condition.EQUALS, "TEST_FEED");
@@ -48,10 +46,9 @@ class TestDataRetentionPolicySerialisation {
 
         final DataRetentionRules policies = new DataRetentionRules(list);
 
-        final JAXBContext context = JAXBContext.newInstance(DataRetentionRules.class);
-        final String xml = XMLMarshallerUtil.marshal(context, policies);
+        final String json = JsonUtil.getMapper().writeValueAsString(policies);
 
-        System.out.println(xml);
+        System.out.println(json);
     }
 
     private DataRetentionRule createRule(final int num, final ExpressionOperator expression, final int age, final TimeUnit timeUnit) {

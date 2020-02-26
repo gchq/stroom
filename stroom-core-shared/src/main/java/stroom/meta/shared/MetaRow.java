@@ -21,22 +21,14 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.HashMap;
 import java.util.Map;
 
 @JsonInclude(Include.NON_DEFAULT)
 public class MetaRow {
     @JsonProperty
-    private Meta meta;
+    private final Meta meta;
     @JsonProperty
-    private Map<String, String> attributes = new HashMap<>();
-
-    public MetaRow() {
-    }
-
-    public MetaRow(Meta meta) {
-        setMeta(meta);
-    }
+    private final Map<String, String> attributes;
 
     @JsonCreator
     public MetaRow(@JsonProperty("meta") final Meta meta,
@@ -47,10 +39,6 @@ public class MetaRow {
 
     public Meta getMeta() {
         return meta;
-    }
-
-    public void setMeta(Meta meta) {
-        this.meta = meta;
     }
 
     public Map<String, String> getAttributes() {

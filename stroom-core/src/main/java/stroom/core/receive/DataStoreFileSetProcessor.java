@@ -19,7 +19,7 @@ package stroom.core.receive;
 import stroom.data.store.api.Store;
 import stroom.data.zip.StreamProgressMonitor;
 import stroom.feed.api.FeedProperties;
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.repo.ErrorFileUtil;

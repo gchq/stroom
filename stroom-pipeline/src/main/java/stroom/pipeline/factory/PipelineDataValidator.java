@@ -23,7 +23,7 @@ import stroom.pipeline.shared.data.PipelineLink;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelineReference;
-import stroom.pipeline.shared.data.SourcePipeline;
+import stroom.pipeline.SourcePipeline;
 
 import javax.inject.Inject;
 import java.util.Iterator;

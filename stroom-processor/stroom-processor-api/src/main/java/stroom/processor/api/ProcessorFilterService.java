@@ -24,6 +24,7 @@ import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorListRow;
+import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.shared.HasIntCrud;
@@ -44,7 +45,7 @@ public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
 
     ResultPage<ProcessorFilter> find(ExpressionCriteria criteria);
 
-    ResultPage<ProcessorListRow> find(FetchProcessorRequest request);
+    ProcessorListRowResultPage find(FetchProcessorRequest request);
 
     void setPriority(Integer id, Integer priority);
 

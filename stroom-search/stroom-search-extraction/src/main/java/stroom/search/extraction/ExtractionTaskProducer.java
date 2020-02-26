@@ -27,7 +27,7 @@ import stroom.search.coprocessor.Values;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.shared.ThreadPool;
-import stroom.task.shared.ThreadPoolImpl;
+import stroom.task.api.ThreadPoolImpl;
 import stroom.util.task.taskqueue.TaskExecutor;
 import stroom.util.task.taskqueue.TaskProducer;
 

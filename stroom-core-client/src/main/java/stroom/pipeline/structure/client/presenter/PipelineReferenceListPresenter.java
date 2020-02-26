@@ -259,7 +259,7 @@ public class PipelineReferenceListPresenter extends MyPresenterWidget<DataGridVi
     private void onAdd(final ClickEvent event) {
         if (currentElement != null) {
             final PipelineReference pipelineReference = new PipelineReference(currentElement.getId(),
-                    propertyType.getName(), null, null, null);
+                    propertyType.getName(), null, null, null, null);
             pipelineReference.setSourcePipeline(DocRefUtil.create(pipeline));
             showEditor(pipelineReference, true);
         }

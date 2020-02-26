@@ -1,10 +1,7 @@
 package stroom.meta.api;
 
-import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.util.shared.ResultPage;

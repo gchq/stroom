@@ -19,7 +19,7 @@ package stroom.pipeline.stepping.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.explorer.shared.SharedDocRef;
+import stroom.docref.DocRef;
 import stroom.pipeline.shared.stepping.StepLocation;
 
 public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEvent.Handler> {
@@ -28,13 +28,13 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
     private final Long childStreamId;
     private final String childStreamType;
     private final StepLocation stepLocation;
-    private final SharedDocRef pipelineRef;
+    private final DocRef pipelineRef;
 
     private BeginPipelineSteppingEvent(final long streamId,
                                        final Long childStreamId,
                                        final String childStreamType,
                                        final StepLocation stepLocation,
-                                       final SharedDocRef pipelineRef) {
+                                       final DocRef pipelineRef) {
         this.streamId = streamId;
         this.childStreamId = childStreamId;
         this.childStreamType = childStreamType;
@@ -47,7 +47,7 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
                             final Long childStreamId,
                             final String childStreamType,
                             final StepLocation stepLocation,
-                            final SharedDocRef pipelineRef) {
+                            final DocRef pipelineRef) {
         source.fireEvent(new BeginPipelineSteppingEvent(streamId, childStreamId, childStreamType, stepLocation, pipelineRef));
     }
 
@@ -84,7 +84,7 @@ public class BeginPipelineSteppingEvent extends GwtEvent<BeginPipelineSteppingEv
         return stepLocation;
     }
 
-    public SharedDocRef getPipelineRef() {
+    public DocRef getPipelineRef() {
         return pipelineRef;
     }
 

@@ -50,15 +50,14 @@ public class Activity implements HasAuditInfo {
     @JsonProperty
     private ActivityDetails details;
 
-    @JsonCreator
-    public Activity(@JsonProperty("id") final Integer id,
-                    @JsonProperty("version") final Integer version,
-                    @JsonProperty("createTimeMs") final Long createTimeMs,
-                    @JsonProperty("createUser") final String createUser,
-                    @JsonProperty("updateTimeMs") final Long updateTimeMs,
-                    @JsonProperty("updateUser") final String updateUser,
-                    @JsonProperty("userId") final String userId,
-                    @JsonProperty("json") final String json) {
+    public Activity(final Integer id,
+                    final Integer version,
+                    final Long createTimeMs,
+                    final String createUser,
+                    final Long updateTimeMs,
+                    final String updateUser,
+                    final String userId,
+                    final String json) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -67,9 +66,41 @@ public class Activity implements HasAuditInfo {
         this.updateUser = updateUser;
         this.userId = userId;
         this.json = json;
+        this.details = new ActivityDetails(new ArrayList<>());
     }
 
-    public Activity() {
+    @JsonCreator
+    public Activity(@JsonProperty("id") final Integer id,
+                    @JsonProperty("version") final Integer version,
+                    @JsonProperty("createTimeMs") final Long createTimeMs,
+                    @JsonProperty("createUser") final String createUser,
+                    @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                    @JsonProperty("updateUser") final String updateUser,
+                    @JsonProperty("userId") final String userId,
+                    @JsonProperty("json") final String json,
+                    @JsonProperty("details") ActivityDetails details) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.createUser = createUser;
+        this.updateTimeMs = updateTimeMs;
+        this.updateUser = updateUser;
+        this.userId = userId;
+        this.json = json;
+        this.details = details;
+    }
+
+    public static Activity create() {
+        return new Activity(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                new ActivityDetails(new ArrayList<>()));
     }
 
     public Integer getId() {

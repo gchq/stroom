@@ -30,7 +30,7 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskManager;
 import stroom.task.impl.CurrentTaskState;
-import stroom.task.shared.SimpleThreadPool;
+import stroom.task.api.SimpleThreadPool;
 import stroom.task.shared.Task;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;

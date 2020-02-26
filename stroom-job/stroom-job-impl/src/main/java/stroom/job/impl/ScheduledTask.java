@@ -20,7 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.task.api.ServerTask;
 import stroom.task.shared.Task;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;

@@ -32,7 +32,6 @@ import stroom.pipeline.shared.PipelineResource;
 import stroom.pipeline.shared.SavePipelineXmlRequest;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
 
