@@ -88,8 +88,12 @@ class TestIndexingFilter extends AbstractProcessIntegrationTest {
         final List<IndexField> indexFields = IndexFields.createStreamIndexFields();
         indexFields.add(IndexField.createField("sid"));
         indexFields.add(IndexField.createField("sid2", AnalyzerType.ALPHA_NUMERIC, false, true, true, false));
-        indexFields.add(IndexField.create(IndexFieldType.NUMERIC_FIELD, "size", AnalyzerType.KEYWORD, false, false,
-                false, false));
+        indexFields.add(new IndexField.Builder()
+                .fieldType(IndexFieldType.NUMERIC_FIELD)
+                .fieldName("size")
+                .analyzerType(AnalyzerType.KEYWORD)
+                .indexed(false)
+                .build());
         indexFields.add(IndexField.createDateField("eventTime"));
 
         final List<Document> documents = doTest("TestIndexDocumentFilter/SimpleDocuments.xml", indexFields);

@@ -189,8 +189,7 @@ public class NewUiPipelineResource implements RestResource {
 
             // Validate the pipeline data and add element and property type
             // information.
-            final SourcePipeline source = new SourcePipeline(pipe);
-            pipelineDataValidator.validate(source, pipelineData, elementMap);
+            pipelineDataValidator.validate( DocRefUtil.create(pipe), pipelineData, elementMap);
             configStack.add(pipelineData);
 
         }

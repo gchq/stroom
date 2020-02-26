@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
@@ -34,29 +35,29 @@ import java.util.Objects;
  * Wrapper for index field info
  * </p>
  */
-//@JsonPropertyOrder({
-//        "fieldUse",
-//        "fieldName",
-//        "fieldType",
-//        "defaultValue",
-//        "stored",
-//        "indexed",
-//        "uninvertible",
-//        "docValues",
-//        "multiValued",
-//        "required",
-//        "omitNorms",
-//        "omitTermFreqAndPositions",
-//        "omitPositions",
-//        "termVectors",
-//        "termPositions",
-//        "termOffsets",
-//        "termPayloads",
-//        "sortMissingFirst",
-//        "sortMissingLast",
-//        "supportedConditions"
-//})
-@JsonInclude(Include.NON_NULL)
+@JsonPropertyOrder({
+        "fieldUse",
+        "fieldName",
+        "fieldType",
+        "defaultValue",
+        "stored",
+        "indexed",
+        "uninvertible",
+        "docValues",
+        "multiValued",
+        "required",
+        "omitNorms",
+        "omitTermFreqAndPositions",
+        "omitPositions",
+        "termVectors",
+        "termPositions",
+        "termOffsets",
+        "termPayloads",
+        "sortMissingFirst",
+        "sortMissingLast",
+        "supportedConditions"
+})
+@JsonInclude(Include.NON_DEFAULT)
 public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexField>, Serializable {
     public static final String VALID_FIELD_NAME_PATTERN = "[a-zA-Z_](?:[a-zA-Z0-9_])*";
     private static final long serialVersionUID = 3100770758821157580L;
@@ -72,7 +73,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
     @JsonProperty
     private boolean stored;
     @JsonProperty
-    private boolean indexed = true;
+    private boolean indexed;
     @JsonProperty
     private boolean uninvertible;
     @JsonProperty
@@ -110,20 +111,28 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
 
     public SolrIndexField() {
         fieldUse = SolrIndexFieldType.FIELD;
+        indexed = true;
     }
 
     private SolrIndexField(final SolrIndexFieldType fieldUse,
                            final String fieldName,
                            final boolean stored,
-                           final boolean indexed,
+                           final Boolean indexed,
                            final boolean termPositions,
                            final List<Condition> supportedConditions) {
-        setFieldUse(fieldUse);
-        setFieldName(fieldName);
-        setStored(stored);
-        setIndexed(indexed);
-        setTermPositions(termPositions);
-
+        if (fieldUse != null) {
+            this.fieldUse = fieldUse;
+        } else {
+            this.fieldUse = SolrIndexFieldType.FIELD;
+        }
+        this.fieldName = fieldName;
+        this.stored = stored;
+        if (indexed != null) {
+            this.indexed = indexed;
+        } else {
+            this.indexed = true;
+        }
+        this.termPositions = termPositions;
         if (supportedConditions != null) {
             this.supportedConditions = new ArrayList<>(supportedConditions);
         }
@@ -135,7 +144,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
                           @JsonProperty("fieldType") final String fieldType,
                           @JsonProperty("defaultValue") final String defaultValue,
                           @JsonProperty("stored") final boolean stored,
-                          @JsonProperty("indexed") final boolean indexed,
+                          @JsonProperty("indexed") final Boolean indexed,
                           @JsonProperty("uninvertible") final boolean uninvertible,
                           @JsonProperty("docValues") final boolean docValues,
                           @JsonProperty("multiValued") final boolean multiValued,
@@ -150,12 +159,20 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
                           @JsonProperty("sortMissingFirst") final boolean sortMissingFirst,
                           @JsonProperty("sortMissingLast") final boolean sortMissingLast,
                           @JsonProperty("supportedConditions") final List<Condition> supportedConditions) {
-        this.fieldUse = fieldUse;
+        if (fieldUse != null) {
+            this.fieldUse = fieldUse;
+        } else {
+            this.fieldUse = SolrIndexFieldType.FIELD;
+        }
         this.fieldName = fieldName;
         this.fieldType = fieldType;
         this.defaultValue = defaultValue;
         this.stored = stored;
-        this.indexed = indexed;
+        if (indexed != null) {
+            this.indexed = indexed;
+        } else {
+            this.indexed = true;
+        }
         this.uninvertible = uninvertible;
         this.docValues = docValues;
         this.multiValued = multiValued;
@@ -169,14 +186,6 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         this.termPayloads = termPayloads;
         this.sortMissingFirst = sortMissingFirst;
         this.sortMissingLast = sortMissingLast;
-        this.supportedConditions = supportedConditions;
-
-        setFieldUse(fieldUse);
-        setFieldName(fieldName);
-        setStored(stored);
-        setIndexed(indexed);
-        setTermPositions(termPositions);
-
         if (supportedConditions != null) {
             this.supportedConditions = new ArrayList<>(supportedConditions);
         }
@@ -394,7 +403,6 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         this.sortMissingLast = sortMissingLast;
     }
 
-    @JsonIgnore
     public List<Condition> getSupportedConditions() {
         if (supportedConditions == null) {
             return getDefaultConditions();
@@ -403,7 +411,6 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
         }
     }
 
-    @JsonIgnore
     public void setSupportedConditions(final List<Condition> supportedConditions) {
         if (supportedConditions == null) {
             this.supportedConditions = null;

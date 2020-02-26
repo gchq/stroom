@@ -141,13 +141,13 @@ public class StroomStatsStoreDoc extends Doc {
 
     @JsonIgnore
     public int getStatisticFieldCount() {
-        return config == null ? 0 : config.getStatisticFields().size();
+        return config == null ? 0 : config.getFields().size();
     }
 
     @JsonIgnore
     public List<StatisticField> getStatisticFields() {
         if (config != null) {
-            return config.getStatisticFields();
+            return config.getFields();
         } else {
             return Collections.emptyList();
         }

@@ -124,8 +124,7 @@ class PipelineResourceImpl implements PipelineResource, HasHealthCheck {
 
                         // Validate the pipeline data and add element and property type
                         // information.
-                        final SourcePipeline source = new SourcePipeline(pipe);
-                        pipelineDataValidator.validate(source, pipelineData, elementMap);
+                        pipelineDataValidator.validate(DocRefUtil.create(pipe), pipelineData, elementMap);
                         result.add(pipelineData);
                     }
 

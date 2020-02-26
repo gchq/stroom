@@ -23,11 +23,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,9 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@XmlAccessorType(XmlAccessType.PROPERTY)
-@XmlRootElement(name = "data")
-@JsonPropertyOrder({"field", "customRollUpMask"})
+@JsonPropertyOrder({"fields", "customRollUpMasks"})
 @JsonInclude(Include.NON_DEFAULT)
 public class StatisticsDataSourceData {
     /**
@@ -47,22 +40,18 @@ public class StatisticsDataSourceData {
      * <p>
      * XMLTransient to force JAXB to use the setter
      */
-
-    @XmlTransient
     @JsonProperty
-    private List<StatisticField> statisticFields;
+    private List<StatisticField> fields;
 
     /**
      * Held in a set to prevent duplicates.
      * <p>
      * XMLTransient to force JAXB to use the setter
      */
-    @XmlTransient
     @JsonProperty
     private Set<CustomRollUpMask> customRollUpMasks;
 
     // cache the positions of the
-    @XmlTransient
     @JsonIgnore
     private final Map<String, Integer> fieldPositionMap = new HashMap<>();
 
@@ -70,17 +59,17 @@ public class StatisticsDataSourceData {
         this(new ArrayList<>(), new HashSet<>());
     }
 
-    public StatisticsDataSourceData(final List<StatisticField> statisticFields) {
-        this(new ArrayList<>(statisticFields), new HashSet<>());
+    public StatisticsDataSourceData(final List<StatisticField> fields) {
+        this(new ArrayList<>(fields), new HashSet<>());
     }
 
     @JsonCreator
-    public StatisticsDataSourceData(@JsonProperty("statisticFields") final List<StatisticField> statisticFields,
+    public StatisticsDataSourceData(@JsonProperty("fields") final List<StatisticField> fields,
                                     @JsonProperty("customRollUpMasks") final Set<CustomRollUpMask> customRollUpMasks) {
-        if (statisticFields != null) {
-            this.statisticFields = statisticFields;
+        if (fields != null) {
+            this.fields = fields;
         } else {
-            this.statisticFields = new ArrayList<>();
+            this.fields = new ArrayList<>();
         }
         if (customRollUpMasks != null) {
             this.customRollUpMasks = customRollUpMasks;
@@ -93,17 +82,15 @@ public class StatisticsDataSourceData {
         sortFieldListAndCachePositions();
     }
 
-    @XmlElement(name = "field")
-    public List<StatisticField> getStatisticFields() {
-        return statisticFields;
+    public List<StatisticField> getFields() {
+        return fields;
     }
 
-    public void setStatisticFields(final List<StatisticField> statisticFields) {
-        this.statisticFields = statisticFields;
+    public void setFields(final List<StatisticField> fields) {
+        this.fields = fields;
         sortFieldListAndCachePositions();
     }
 
-    @XmlElement(name = "customRollUpMask")
     public Set<CustomRollUpMask> getCustomRollUpMasks() {
         return customRollUpMasks;
     }
@@ -113,32 +100,32 @@ public class StatisticsDataSourceData {
     }
 
     public void addStatisticField(final StatisticField statisticField) {
-        if (statisticFields == null) {
-            statisticFields = new ArrayList<>();
+        if (fields == null) {
+            fields = new ArrayList<>();
         }
         // prevent duplicates
-        if (!statisticFields.contains(statisticField)) {
-            statisticFields.add(statisticField);
+        if (!fields.contains(statisticField)) {
+            fields.add(statisticField);
             sortFieldListAndCachePositions();
         }
     }
 
     public void removeStatisticField(final StatisticField statisticField) {
-        if (statisticFields != null) {
-            statisticFields.remove(statisticField);
+        if (fields != null) {
+            fields.remove(statisticField);
             sortFieldListAndCachePositions();
         }
     }
 
     public void reOrderStatisticFields() {
-        if (statisticFields != null) {
+        if (fields != null) {
             sortFieldListAndCachePositions();
         }
     }
 
     public boolean containsStatisticField(final StatisticField statisticField) {
-        if (statisticFields != null) {
-            return statisticFields.contains(statisticField);
+        if (fields != null) {
+            return fields.contains(statisticField);
         }
         return false;
     }
@@ -175,7 +162,7 @@ public class StatisticsDataSourceData {
             return true;
         }
 
-        if (rolledUpFieldNames.size() > statisticFields.size()) {
+        if (rolledUpFieldNames.size() > fields.size()) {
             throw new RuntimeException(
                     "isRollUpCombinationSupported called with more rolled up fields (" + rolledUpFieldNames.toString()
                             + ") than there are statistic fields (" + fieldPositionMap.keySet() + ")");
@@ -203,7 +190,7 @@ public class StatisticsDataSourceData {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((statisticFields == null) ? 0 : statisticFields.hashCode());
+        result = prime * result + ((fields == null) ? 0 : fields.hashCode());
         return result;
     }
 
@@ -216,31 +203,31 @@ public class StatisticsDataSourceData {
         if (getClass() != obj.getClass())
             return false;
         final StatisticsDataSourceData other = (StatisticsDataSourceData) obj;
-        if (statisticFields == null) {
-            if (other.statisticFields != null)
+        if (fields == null) {
+            if (other.fields != null)
                 return false;
-        } else if (!statisticFields.equals(other.statisticFields))
+        } else if (!fields.equals(other.fields))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "StatisticFields [statisticFields=" + statisticFields + "]";
+        return "StatisticFields [statisticFields=" + fields + "]";
     }
 
     private void sortFieldListAndCachePositions() {
         // de-dup the list
-        Set<StatisticField> tempSet = new HashSet<>(statisticFields);
-        statisticFields.clear();
-        statisticFields.addAll(tempSet);
+        Set<StatisticField> tempSet = new HashSet<>(fields);
+        fields.clear();
+        fields.addAll(tempSet);
         tempSet = null;
 
-        Collections.sort(statisticFields);
+        Collections.sort(fields);
 
         fieldPositionMap.clear();
         int i = 0;
-        for (final StatisticField field : statisticFields) {
+        for (final StatisticField field : fields) {
             fieldPositionMap.put(field.getFieldName(), i++);
         }
     }
@@ -248,7 +235,7 @@ public class StatisticsDataSourceData {
     public StatisticsDataSourceData deepCopy() {
         final List<StatisticField> newFieldList = new ArrayList<>();
 
-        for (final StatisticField statisticField : statisticFields) {
+        for (final StatisticField statisticField : fields) {
             newFieldList.add(statisticField.deepCopy());
         }
 

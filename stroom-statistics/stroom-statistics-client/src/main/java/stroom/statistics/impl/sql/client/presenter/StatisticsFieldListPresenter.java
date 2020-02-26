@@ -103,7 +103,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
 
     private void enableButtons() {
         newButton.setEnabled(!readOnly);
-        if (statisticsDataSourceData != null && statisticsDataSourceData.getStatisticFields() != null) {
+        if (statisticsDataSourceData != null && statisticsDataSourceData.getFields() != null) {
             StatisticField selected = getView().getSelectionModel().getSelected();
             final boolean enabled = !readOnly && selected != null;
             editButton.setEnabled(enabled);
@@ -142,7 +142,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
         if (!readOnly) {
             final StatisticField statisticField = new StatisticField();
             final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
-            final List<StatisticField> otherFields = statisticsDataSourceData.getStatisticFields();
+            final List<StatisticField> otherFields = statisticsDataSourceData.getFields();
 
             statisticsFieldEditPresenter.read(statisticField, otherFields);
             statisticsFieldEditPresenter.show("New Field", new PopupUiHandlers() {
@@ -179,7 +179,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
                 // editing so we can check the new value
                 // is not already in the list
                 final List<StatisticField> otherFields = new ArrayList<>(
-                        statisticsDataSourceData.getStatisticFields());
+                        statisticsDataSourceData.getFields());
                 otherFields.remove(statisticField);
 
                 statisticsFieldEditPresenter.read(statisticField, otherFields);
@@ -214,7 +214,7 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
             if (list != null && list.size() > 0) {
                 final StatisticsDataSourceData oldStatisticsDataSourceData = statisticsDataSourceData.deepCopy();
 
-                statisticsDataSourceData.getStatisticFields().removeAll(list);
+                statisticsDataSourceData.getFields().removeAll(list);
                 getView().getSelectionModel().clear();
                 reComputeRollUpBitMask(oldStatisticsDataSourceData, statisticsDataSourceData);
                 refresh();
@@ -235,8 +235,8 @@ public class StatisticsFieldListPresenter extends MyPresenterWidget<DataGridView
             statisticsDataSourceData = new StatisticsDataSourceData(new ArrayList<>());
         }
 
-        getView().setRowData(0, new ArrayList<>(statisticsDataSourceData.getStatisticFields()));
-        getView().setRowCount(statisticsDataSourceData.getStatisticFields().size(), true);
+        getView().setRowData(0, new ArrayList<>(statisticsDataSourceData.getFields()));
+        getView().setRowCount(statisticsDataSourceData.getFields().size(), true);
     }
 
     @Override

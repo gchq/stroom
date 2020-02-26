@@ -48,11 +48,24 @@ public class Sort implements Serializable {
     @JsonProperty("direction")
     private SortDirection direction;
 
+    public Sort() {
+        order = 1;
+        direction = SortDirection.ASCENDING;
+    }
+
     @JsonCreator
-    public Sort(@JsonProperty("order") final int order,
+    public Sort(@JsonProperty("order") final Integer order,
                 @JsonProperty("direction") final SortDirection direction) {
-        this.order = order;
-        this.direction = direction;
+        if (order != null) {
+            this.order = order;
+        } else {
+            this.order = 1;
+        }
+        if (direction != null) {
+            this.direction = direction;
+        } else {
+            this.direction = SortDirection.ASCENDING;
+        }
     }
 
     public int getOrder() {

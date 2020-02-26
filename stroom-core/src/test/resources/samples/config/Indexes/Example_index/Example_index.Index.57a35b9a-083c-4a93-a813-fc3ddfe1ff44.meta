@@ -6,129 +6,48 @@
   "fields" : [ {
     "fieldType" : "ID",
     "fieldName" : "StreamId",
-    "stored" : true,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "stored" : true
   }, {
     "fieldType" : "ID",
     "fieldName" : "EventId",
-    "stored" : true,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "stored" : true
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "Feed",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "ALPHA_NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "ALPHA_NUMERIC"
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "Feed (Keyword)",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "fieldName" : "Feed (Keyword)"
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "Action",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "ALPHA_NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "ALPHA_NUMERIC"
   }, {
     "fieldType" : "DATE_FIELD",
-    "fieldName" : "EventTime",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "fieldName" : "EventTime"
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "UserId",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "fieldName" : "UserId"
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "System",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "ALPHA_NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "ALPHA_NUMERIC"
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "Environment",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "ALPHA_NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "ALPHA_NUMERIC"
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "IPAddress",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "fieldName" : "IPAddress"
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "HostName",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "fieldName" : "HostName"
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "Generator",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "ALPHA_NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "ALPHA_NUMERIC"
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "Command",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "ALPHA_NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "ALPHA_NUMERIC"
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "Command (Keyword)",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
     "caseSensitive" : true
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "Description",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "ALPHA_NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "ALPHA_NUMERIC"
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "Description (Case Sensitive)",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
     "analyzerType" : "ALPHA_NUMERIC",
     "caseSensitive" : true
   } ],

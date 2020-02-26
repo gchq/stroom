@@ -23,10 +23,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -35,9 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "data")
-@JsonPropertyOrder({"statisticFields", "customRollUpMasks"})
+@JsonPropertyOrder({"fields", "customRollUpMasks"})
 @JsonInclude(Include.NON_DEFAULT)
 public class StroomStatsStoreEntityData {
     /**
@@ -45,7 +39,7 @@ public class StroomStatsStoreEntityData {
      * sorted and not contain duplicates
      */
     @JsonProperty
-    private List<StatisticField> statisticFields;
+    private List<StatisticField> fields;
 
     /**
      * Held in a set to prevent duplicates.
@@ -56,7 +50,6 @@ public class StroomStatsStoreEntityData {
     /**
      * Cache the positions of the fields.
      */
-    @XmlTransient
     @JsonIgnore
     private Map<String, Integer> cachedFieldPositions;
 
@@ -66,12 +59,12 @@ public class StroomStatsStoreEntityData {
     }
 
     @JsonCreator
-    public StroomStatsStoreEntityData(@JsonProperty("statisticFields") final List<StatisticField> statisticFields,
+    public StroomStatsStoreEntityData(@JsonProperty("fields") final List<StatisticField> fields,
                                       @JsonProperty("customRollUpMasks") final Set<CustomRollUpMask> customRollUpMasks) {
-        if (statisticFields != null) {
-            this.statisticFields = statisticFields;
+        if (fields != null) {
+            this.fields = fields;
         } else {
-            this.statisticFields = new ArrayList<>();
+            this.fields = new ArrayList<>();
         }
         if (customRollUpMasks != null) {
             this.customRollUpMasks = customRollUpMasks;
@@ -80,12 +73,12 @@ public class StroomStatsStoreEntityData {
         }
     }
 
-    public List<StatisticField> getStatisticFields() {
-        return statisticFields;
+    public List<StatisticField> getFields() {
+        return fields;
     }
 
-    public void setStatisticFields(final List<StatisticField> statisticFields) {
-        this.statisticFields = statisticFields;
+    public void setFields(final List<StatisticField> fields) {
+        this.fields = fields;
     }
 
     public Set<CustomRollUpMask> getCustomRollUpMasks() {
@@ -98,32 +91,32 @@ public class StroomStatsStoreEntityData {
 
 
     public void addStatisticField(final StatisticField statisticField) {
-        if (statisticFields == null) {
-            statisticFields = new ArrayList<>();
+        if (fields == null) {
+            fields = new ArrayList<>();
         }
         // prevent duplicates
-        if (!statisticFields.contains(statisticField)) {
-            statisticFields.add(statisticField);
+        if (!fields.contains(statisticField)) {
+            fields.add(statisticField);
             sortFieldListAndCachePositions();
         }
     }
 
     public void removeStatisticField(final StatisticField statisticField) {
-        if (statisticFields != null) {
-            statisticFields.remove(statisticField);
+        if (fields != null) {
+            fields.remove(statisticField);
             sortFieldListAndCachePositions();
         }
     }
 
     public void reOrderStatisticFields() {
-        if (statisticFields != null) {
+        if (fields != null) {
             sortFieldListAndCachePositions();
         }
     }
 
     public boolean containsStatisticField(final StatisticField statisticField) {
-        if (statisticFields != null) {
-            return statisticFields.contains(statisticField);
+        if (fields != null) {
+            return fields.contains(statisticField);
         }
         return false;
     }
@@ -160,7 +153,7 @@ public class StroomStatsStoreEntityData {
             return true;
         }
 
-        if (rolledUpFieldNames.size() > statisticFields.size()) {
+        if (rolledUpFieldNames.size() > fields.size()) {
             throw new RuntimeException(
                     "isRollUpCombinationSupported called with more rolled up fields (" + rolledUpFieldNames.toString()
                             + ") than there are statistic fields (" + getCachedFieldPositions().keySet() + ")");
@@ -196,7 +189,7 @@ public class StroomStatsStoreEntityData {
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((statisticFields == null) ? 0 : statisticFields.hashCode());
+        result = prime * result + ((fields == null) ? 0 : fields.hashCode());
         return result;
     }
 
@@ -209,27 +202,27 @@ public class StroomStatsStoreEntityData {
         if (getClass() != obj.getClass())
             return false;
         final StroomStatsStoreEntityData other = (StroomStatsStoreEntityData) obj;
-        if (statisticFields == null) {
-            if (other.statisticFields != null)
+        if (fields == null) {
+            if (other.fields != null)
                 return false;
-        } else if (!statisticFields.equals(other.statisticFields))
+        } else if (!fields.equals(other.fields))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "StatisticFields [statisticFields=" + statisticFields + "]";
+        return "StatisticFields [statisticFields=" + fields + "]";
     }
 
     private synchronized void sortFieldListAndCachePositions() {
         // de-dup the list
-        statisticFields = new ArrayList<>(new HashSet<>(statisticFields));
-        Collections.sort(statisticFields);
+        fields = new ArrayList<>(new HashSet<>(fields));
+        Collections.sort(fields);
 
         cachedFieldPositions = new HashMap<>();
         int i = 0;
-        for (final StatisticField field : statisticFields) {
+        for (final StatisticField field : fields) {
             cachedFieldPositions.put(field.getFieldName(), i++);
         }
     }
@@ -237,7 +230,7 @@ public class StroomStatsStoreEntityData {
     public StroomStatsStoreEntityData deepCopy() {
         final List<StatisticField> newFieldList = new ArrayList<>();
 
-        for (final StatisticField statisticField : statisticFields) {
+        for (final StatisticField statisticField : fields) {
             newFieldList.add(statisticField.deepCopy());
         }
 

@@ -69,12 +69,12 @@ class StatStoreRollupResourceImpl implements StatsStoreRollupResource, HasHealth
         final StroomStatsStoreEntityData newStatisticsDataSourceData = request.getNewEntityData();
         final StroomStatsStoreEntityData copy = newStatisticsDataSourceData.deepCopy();
 
-        if (!oldStatisticsDataSourceData.getStatisticFields()
-                .equals(newStatisticsDataSourceData.getStatisticFields())) {
+        if (!oldStatisticsDataSourceData.getFields()
+                .equals(newStatisticsDataSourceData.getFields())) {
             final Map<Integer, Integer> newToOldFieldPositionMap = new HashMap<>();
 
             int pos = 0;
-            for (final StatisticField newField : newStatisticsDataSourceData.getStatisticFields()) {
+            for (final StatisticField newField : newStatisticsDataSourceData.getFields()) {
                 // old position may be null if this is a new field
                 newToOldFieldPositionMap.put(pos++,
                         oldStatisticsDataSourceData.getFieldPositionInList(newField.getFieldName()));
@@ -84,7 +84,7 @@ class StatStoreRollupResourceImpl implements StatsStoreRollupResource, HasHealth
 
             for (final CustomRollUpMask oldCustomRollUpMask : oldStatisticsDataSourceData.getCustomRollUpMasks()) {
                 final RollUpBitMask oldRollUpBitMask = RollUpBitMask
-                        .fromTagPositions(oldCustomRollUpMask.getRolledUpTagPositions());
+                        .fromTagPositions(oldCustomRollUpMask.getRolledUpTagPosition());
 
                 final RollUpBitMask newRollUpBitMask = oldRollUpBitMask.convert(newToOldFieldPositionMap);
 

@@ -149,12 +149,12 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
     public boolean isValidField(final String fieldName) {
         if (config == null) {
             return false;
-        } else if (config.getStatisticFields() == null) {
+        } else if (config.getFields() == null) {
             return false;
-        } else if (config.getStatisticFields().size() == 0) {
+        } else if (config.getFields().size() == 0) {
             return false;
         } else {
-            return config.getStatisticFields().contains(new StatisticField(fieldName));
+            return config.getFields().contains(new StatisticField(fieldName));
         }
     }
 
@@ -189,7 +189,7 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
     public List<String> getFieldNames() {
         if (config != null) {
             final List<String> fieldNames = new ArrayList<>();
-            for (final StatisticField statisticField : config.getStatisticFields()) {
+            for (final StatisticField statisticField : config.getFields()) {
                 fieldNames.add(statisticField.getFieldName());
             }
             return fieldNames;
@@ -200,13 +200,13 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
 
     @JsonIgnore
     public int getStatisticFieldCount() {
-        return config == null ? 0 : config.getStatisticFields().size();
+        return config == null ? 0 : config.getFields().size();
     }
 
     @JsonIgnore
     public List<StatisticField> getStatisticFields() {
         if (config != null) {
-            return config.getStatisticFields();
+            return config.getFields();
         } else {
             return Collections.emptyList();
         }
