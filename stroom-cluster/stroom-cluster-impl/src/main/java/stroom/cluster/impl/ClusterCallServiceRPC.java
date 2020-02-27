@@ -22,6 +22,7 @@ import stroom.cluster.api.ClusterCallServiceLocal;
 import stroom.cluster.api.ServiceName;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
+import stroom.util.guice.ResourcePaths;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.IsServlet;
@@ -31,7 +32,7 @@ import java.util.Set;
 
 public class ClusterCallServiceRPC extends HessianServlet implements ClusterCallService, IsServlet {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterCallServiceRPC.class);
-    private static final Set<String> PATH_SPECS = Set.of("/clustercall.rpc");
+    private static final Set<String> PATH_SPECS = Set.of(ResourcePaths.CLUSTER_CALL_RPC_PATH);
 
     private final ClusterCallService clusterCallService;
     private final SecurityContext securityContext;
