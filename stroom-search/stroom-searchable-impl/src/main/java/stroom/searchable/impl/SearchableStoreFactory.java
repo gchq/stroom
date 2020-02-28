@@ -13,12 +13,14 @@ import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
-import stroom.task.server.ExecutorProvider;
+import stroom.util.concurrent.ExecutorProvider;
 import stroom.task.server.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.task.TaskWrapper;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -30,16 +32,19 @@ class SearchableStoreFactory implements StoreFactory {
 
     private final TaskContext taskContext;
     private final ExecutorProvider executorProvider;
+    private final Provider<TaskWrapper> taskWrapperProvider;
     private final SearchableProvider searchableProvider;
     private final StroomPropertyService stroomPropertyService;
 
     @Inject
     SearchableStoreFactory(final TaskContext taskContext,
                            final ExecutorProvider executorProvider,
+                           final Provider<TaskWrapper> taskWrapperProvider,
                            final SearchableProvider searchableProvider,
                            final StroomPropertyService stroomPropertyService) {
         this.taskContext = taskContext;
         this.executorProvider = executorProvider;
+        this.taskWrapperProvider = taskWrapperProvider;
         this.searchableProvider = searchableProvider;
         this.stroomPropertyService = stroomPropertyService;
     }
@@ -81,7 +86,8 @@ class SearchableStoreFactory implements StoreFactory {
                 searchable,
                 taskContext,
                 searchRequest,
-                executorProvider);
+                executorProvider,
+                taskWrapperProvider);
     }
 
     private Sizes getDefaultMaxResultsSizes() {

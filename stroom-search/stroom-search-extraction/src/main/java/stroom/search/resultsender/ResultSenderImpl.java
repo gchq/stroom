@@ -7,6 +7,7 @@ import stroom.search.coprocessor.Coprocessors;
 import stroom.task.server.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.task.TaskWrapper;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,11 +23,13 @@ class ResultSenderImpl implements ResultSender {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ResultSenderImpl.class);
 
     private final Executor executor;
+    private final TaskWrapper taskWrapper;
     private final TaskContext taskContext;
     private final CompletionState sendingData = new CompletionState();
 
-    ResultSenderImpl(final Executor executor, final TaskContext taskContext) {
+    ResultSenderImpl(final Executor executor, final TaskWrapper taskWrapper, final TaskContext taskContext) {
         this.executor = executor;
+        this.taskWrapper = taskWrapper;
         this.taskContext = taskContext;
     }
 
@@ -50,7 +53,7 @@ class ResultSenderImpl implements ResultSender {
 
         LOGGER.trace(() -> "sendData() called");
 
-        final Supplier<Boolean> supplier = () -> {
+        final Supplier<Boolean> supplier = taskWrapper.wrap(() -> {
             // Find out if searching is complete.
             final boolean complete = searchComplete.isComplete();
 
@@ -80,7 +83,7 @@ class ResultSenderImpl implements ResultSender {
             }
 
             return complete;
-        };
+        });
 
         // Run the sending code asynchronously.
         CompletableFuture.supplyAsync(supplier, executor)

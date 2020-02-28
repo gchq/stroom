@@ -18,7 +18,6 @@ import stroom.search.server.SearchException;
 import stroom.search.server.SearchExpressionQueryBuilder;
 import stroom.search.server.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
-import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
 import stroom.task.server.TaskTerminatedException;
 import stroom.util.config.PropertyUtil;
@@ -26,6 +25,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasTerminate;
 import stroom.util.spring.StroomScope;
+import stroom.util.task.TaskWrapper;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
@@ -52,7 +52,7 @@ public class IndexShardSearchFactory {
     private final IndexShardSearchTaskProperties indexShardSearchTaskProperties;
     private final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider;
     private final DictionaryStore dictionaryStore;
-    private final ExecutorProvider executorProvider;
+    private final Provider<TaskWrapper> taskWrapperProvider;
     private final int maxBooleanClauseCount;
 
     @Inject
@@ -61,14 +61,14 @@ public class IndexShardSearchFactory {
                             final IndexShardSearchTaskProperties indexShardSearchTaskProperties,
                             final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
                             final DictionaryStore dictionaryStore,
-                            final ExecutorProvider executorProvider,
+                            final Provider<TaskWrapper> taskWrapperProvider,
                             @Value("#{propertyConfigurer.getProperty('stroom.search.maxBooleanClauseCount')}") final String maxBooleanClauseCount) {
         this.indexService = indexService;
         this.indexShardSearchTaskExecutor = indexShardSearchTaskExecutor;
         this.indexShardSearchTaskProperties = indexShardSearchTaskProperties;
         this.indexShardSearchTaskHandlerProvider = indexShardSearchTaskHandlerProvider;
         this.dictionaryStore = dictionaryStore;
-        this.executorProvider = executorProvider;
+        this.taskWrapperProvider = taskWrapperProvider;
         this.maxBooleanClauseCount = PropertyUtil.toInt(maxBooleanClauseCount, DEFAULT_MAX_BOOLEAN_CLAUSE_COUNT);
     }
 
@@ -101,7 +101,7 @@ public class IndexShardSearchFactory {
                     queryFactory,
                     task.getStoredFields(),
                     indexShardSearchTaskProperties.getMaxThreadsPerTask(),
-                    executorProvider,
+                    taskWrapperProvider,
                     indexShardSearchTaskHandlerProvider,
                     tracker,
                     hasTerminate);

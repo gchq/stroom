@@ -26,7 +26,7 @@ import stroom.util.shared.TaskId;
 import stroom.util.shared.ThreadPool;
 
 public abstract class ServerTask<R> implements Task<R>, HasMonitor {
-    private static final ThreadPool THREAD_POOL = new SimpleThreadPool(2);
+    public static final ThreadPool THREAD_POOL = new SimpleThreadPool(2);
     private final TaskId id;
     private final UserIdentity userIdentity;
     private final MonitorImpl monitor;

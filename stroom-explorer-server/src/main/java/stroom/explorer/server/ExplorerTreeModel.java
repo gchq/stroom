@@ -18,9 +18,11 @@ package stroom.explorer.server;
 
 import org.springframework.stereotype.Component;
 import stroom.security.Insecure;
-import stroom.task.server.ExecutorProvider;
+import stroom.util.concurrent.ExecutorProvider;
+import stroom.util.task.TaskWrapper;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -35,6 +37,7 @@ class ExplorerTreeModel {
     private final ExplorerTreeDao explorerTreeDao;
     private final ExplorerSession explorerSession;
     private final ExecutorProvider executorProvider;
+    private final Provider<TaskWrapper> taskWrapperProvider;
 
     private volatile TreeModel currentModel;
     private final AtomicLong minExplorerTreeModelBuildTime = new AtomicLong();
@@ -43,10 +46,12 @@ class ExplorerTreeModel {
     @Inject
     ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao,
                       final ExplorerSession explorerSession,
-                      final ExecutorProvider executorProvider) {
+                      final ExecutorProvider executorProvider,
+                      final Provider<TaskWrapper> taskWrapperProvider) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerSession = explorerSession;
         this.executorProvider = executorProvider;
+        this.taskWrapperProvider = taskWrapperProvider;
     }
 
     @Insecure
@@ -77,8 +82,10 @@ class ExplorerTreeModel {
                 // Perform a build asynchronously if we aren't already building elsewhere.
                 if (performingRebuild.compareAndSet(0, 1)) {
                     final Executor executor = executorProvider.getExecutor();
+                    Runnable runnable = this::updateModel;
+                    runnable = taskWrapperProvider.get().wrap(runnable);
                     CompletableFuture
-                            .runAsync(this::updateModel, executor)
+                            .runAsync(runnable, executor)
                             .thenRun(performingRebuild::decrementAndGet);
                 }
             }

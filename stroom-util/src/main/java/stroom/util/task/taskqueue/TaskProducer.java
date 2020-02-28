@@ -18,8 +18,9 @@ package stroom.util.task.taskqueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.task.TaskWrapper;
 
-import java.util.concurrent.Executor;
+import javax.inject.Provider;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -32,7 +33,7 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
 
     private final TaskExecutor taskExecutor;
     private final int maxThreadsPerTask;
-    private final Executor executor;
+    private final TaskWrapper taskWrapper;
 
     private final AtomicBoolean finishedAddingTasks = new AtomicBoolean();
     private final AtomicInteger tasksTotal = new AtomicInteger();
@@ -40,19 +41,10 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
 
     public TaskProducer(final TaskExecutor taskExecutor,
                         final int maxThreadsPerTask,
-                        final Executor executor) {
+                        final Provider<TaskWrapper> taskWrapperProvider) {
         this.taskExecutor = taskExecutor;
         this.maxThreadsPerTask = maxThreadsPerTask;
-        this.executor = executor;
-    }
-
-    /**
-     * Get the executor to use to execute the provided runnable.
-     *
-     * @return The executor for the task executor to use.
-     */
-    final Executor getExecutor() {
-        return executor;
+        this.taskWrapper = taskWrapperProvider.get();
     }
 
     /**
@@ -88,6 +80,11 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
                     }
                 };
             }
+        }
+
+        // Wrap the runnable so that we get task info and execute with the right permissions etc.
+        if (runnable != null) {
+            runnable = taskWrapper.wrap(runnable);
         }
 
         return runnable;

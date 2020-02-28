@@ -29,9 +29,9 @@ import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.node.server.NodeCache;
 import stroom.node.server.StroomPropertyService;
 import stroom.node.shared.Node;
-import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
-import stroom.task.server.ThreadPoolImpl;
+import stroom.util.concurrent.ExecutorProvider;
+import stroom.util.concurrent.ThreadPoolImpl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
@@ -41,9 +41,11 @@ import stroom.util.spring.StroomFrequencySchedule;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.spring.StroomSpringProfiles;
 import stroom.util.spring.StroomStartup;
+import stroom.util.task.TaskWrapper;
 import stroom.util.thread.ThreadUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
@@ -92,6 +94,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
                                      final IndexConfigCache indexConfigCache,
                                      final IndexShardManager indexShardManager,
                                      final ExecutorProvider executorProvider,
+                                     final Provider<TaskWrapper> taskWrapperProvider,
                                      final TaskContext taskContext) {
         this.nodeCache = nodeCache;
         this.indexShardService = indexShardService;
@@ -101,7 +104,9 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
 
         final ThreadPool threadPool = new ThreadPoolImpl("Index Shard Writer Cache", 3, 0, Integer.MAX_VALUE);
         final Executor executor = executorProvider.getExecutor(threadPool);
-        asyncRunner = new AsyncRunner(executor);
+        final TaskWrapper taskWrapper = taskWrapperProvider.get();
+
+        asyncRunner = new AsyncRunner(executor, taskWrapper);
         syncRunner = new SyncRunner();
 
         this.taskContext = taskContext;
@@ -549,15 +554,18 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
     }
 
     private static class AsyncRunner implements Runner {
+        private final TaskWrapper taskWrapper;
         private final Executor executor;
 
-        AsyncRunner(final Executor executor) {
+        AsyncRunner(final Executor executor, final TaskWrapper taskWrapper) {
             this.executor = executor;
+            this.taskWrapper = taskWrapper;
         }
 
         @Override
         public CompletableFuture<IndexShardWriter> exec(final Supplier<IndexShardWriter> supplier) {
-            return CompletableFuture.supplyAsync(supplier, executor);
+            final Supplier<IndexShardWriter> wrappedSupplier = taskWrapper.wrap(supplier);
+            return CompletableFuture.supplyAsync(wrappedSupplier, executor);
         }
     }
 

@@ -36,14 +36,16 @@ import stroom.node.server.StroomPropertyService;
 import stroom.search.coprocessor.Error;
 import stroom.search.coprocessor.Values;
 import stroom.search.server.SearchException;
-import stroom.task.server.ExecutorProvider;
+import stroom.util.concurrent.ExecutorProvider;
 import stroom.task.server.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
+import stroom.util.task.TaskWrapper;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.IOException;
 import java.util.OptionalInt;
 import java.util.concurrent.CompletableFuture;
@@ -59,7 +61,8 @@ class IndexShardSearchTaskHandler {
     private final IndexShardWriterCache indexShardWriterCache;
     private final IndexShardService indexShardService;
     private final StroomPropertyService propertyService;
-    private final ExecutorProvider executorProvider;
+    private final Executor executor;
+    private final Provider<TaskWrapper> taskWrapperProvider;
     private final TaskContext taskContext;
 
     @Inject
@@ -67,11 +70,13 @@ class IndexShardSearchTaskHandler {
                                 final IndexShardService indexShardService,
                                 final StroomPropertyService propertyService,
                                 final ExecutorProvider executorProvider,
+                                final Provider<TaskWrapper> taskWrapperProvider,
                                 final TaskContext taskContext) {
         this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardService = indexShardService;
         this.propertyService = propertyService;
-        this.executorProvider = executorProvider;
+        this.executor = executorProvider.getExecutor(IndexShardSearchTaskExecutor.THREAD_POOL);
+        this.taskWrapperProvider = taskWrapperProvider;
         this.taskContext = taskContext;
     }
 
@@ -153,8 +158,7 @@ class IndexShardSearchTaskHandler {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
                 final IndexSearcher searcher = searcherManager.acquire();
                 try {
-                    final Executor executor = executorProvider.getExecutor(IndexShardSearchTaskProducer.THREAD_POOL);
-                    CompletableFuture.runAsync(() -> {
+                    final Runnable runnable = taskWrapperProvider.get().wrap(() -> {
                         taskContext.setName("Index Searcher");
                         LOGGER.logDurationIfDebugEnabled(
                                 () -> {
@@ -175,7 +179,8 @@ class IndexShardSearchTaskHandler {
                                     }
                                 },
                                 () -> "searcher.search()");
-                    }, executor);
+                    });
+                    CompletableFuture.runAsync(runnable, executor);
 
                     // Start converting found docIds into stored data values
                     while (!taskContext.isTerminated()) {

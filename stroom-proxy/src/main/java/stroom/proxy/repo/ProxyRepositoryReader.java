@@ -4,16 +4,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.proxy.handler.StreamHandler;
 import stroom.proxy.handler.StreamHandlerFactory;
-import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
-import stroom.task.server.ThreadPoolImpl;
+import stroom.util.concurrent.ExecutorProvider;
 import stroom.util.concurrent.ScalingThreadPoolExecutor;
+import stroom.util.concurrent.ThreadPoolImpl;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
 import stroom.util.shared.Monitor;
 import stroom.util.shared.ThreadPool;
+import stroom.util.task.TaskWrapper;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -29,6 +30,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 /**
  * Class that reads repositories.
@@ -62,6 +64,7 @@ public final class ProxyRepositoryReader {
     private final AtomicBoolean finish = new AtomicBoolean(false);
     private final TaskContext taskContext;
     private final ExecutorProvider executorProvider;
+    private final Provider<TaskWrapper> taskWrapperProvider;
     private final ThreadPool threadPool;
     private final Map<ThreadPool, ExecutorService> executorServiceMap = new ConcurrentHashMap<>();
 
@@ -113,6 +116,17 @@ public final class ProxyRepositoryReader {
                         threadPool.getMaxQueueSize(),
                         60L,
                         TimeUnit.SECONDS));
+            }
+        };
+        taskWrapperProvider = () -> new TaskWrapper() {
+            @Override
+            public <U> Supplier<U> wrap(final Supplier<U> supplier) {
+                return supplier;
+            }
+
+            @Override
+            public Runnable wrap(final Runnable runnable) {
+                return runnable;
             }
         };
     }
@@ -216,6 +230,7 @@ public final class ProxyRepositoryReader {
                 final RepositoryProcessor repositoryProcessor = new RepositoryProcessor(
                         taskContext,
                         executorProvider,
+                        taskWrapperProvider,
                         fileSetProcessorProvider,
                         FileUtil.getCanonicalPath(readyToProcess.getRootDir()),
                         proxyRepositoryReaderConfig.getForwardThreadCount(),
