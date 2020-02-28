@@ -5,9 +5,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.concurrent.ExecutorProvider;
 import stroom.util.concurrent.ThreadPoolImpl;
 import stroom.util.shared.ThreadPool;
-import stroom.util.concurrent.ExecutorProvider;
 import stroom.util.task.TaskWrapper;
 import stroom.util.thread.ThreadUtil;
 
@@ -131,21 +131,16 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
         try {
             final Executor executor = executorProvider.getExecutor();
-            final TaskWrapper taskWrapper = taskWrapperProvider.get();
 
-            Runnable runnable1 = () -> {
+            final Runnable runnable = () -> {
                 if (CurrentTaskState.isTerminated()) {
                     terminated.set(true);
                 }
                 throw new RuntimeException("Expected");
             };
-            runnable1 = taskWrapper.wrap(runnable1);
 
-            Runnable runnable2 = () -> completedNormally.set(true);
-            runnable2 = taskWrapper.wrap(runnable2);
-
-            CompletableFuture.runAsync(runnable1, executor)
-                    .thenRun(runnable2)
+            CompletableFuture.runAsync(taskWrapperProvider.get().wrap(runnable), executor)
+                    .thenRun(() -> completedNormally.set(true))
                     .exceptionally(t -> {
                         completedExceptionally.set(true);
                         return null;
@@ -164,7 +159,10 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
             throw new TaskTerminatedException();
         }
 
-        if (nested && exception != null) {
+        if (nested && (exception != null || completedExceptionally.get())) {
+            if (completedExceptionally.get()) {
+                throw new RuntimeException("Error");
+            }
             throw exception;
         }
     }
@@ -175,17 +173,12 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final AtomicBoolean completedExceptionally = new AtomicBoolean();
 
         final Executor executor = executorProvider.getExecutor();
-        final TaskWrapper taskWrapper = taskWrapperProvider.get();
 
-        Runnable runnable1 = () -> {
+        final Runnable runnable = () -> {
         };
-        runnable1 = taskWrapper.wrap(runnable1);
 
-        Runnable runnable2 = () -> completedNormally.set(true);
-        runnable2 = taskWrapper.wrap(runnable2);
-
-        CompletableFuture.runAsync(runnable1, executor)
-                .thenRun(runnable2)
+        CompletableFuture.runAsync(taskWrapperProvider.get().wrap(runnable), executor)
+                .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
                     return null;
@@ -202,19 +195,14 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final AtomicBoolean completedExceptionally = new AtomicBoolean();
 
         final Executor executor = executorProvider.getExecutor();
-        final TaskWrapper taskWrapper = taskWrapperProvider.get();
 
-        Runnable runnable1 = () -> {
+        final Runnable runnable = () -> {
             CurrentTaskState.currentTask().terminate();
-            testCompletedExceptionally();
+            testCompletedExceptionally(executorProvider, true);
         };
-        runnable1 = taskWrapper.wrap(runnable1);
 
-        Runnable runnable2 = () -> completedNormally.set(true);
-        runnable2 = taskWrapper.wrap(runnable2);
-
-        CompletableFuture.runAsync(runnable1, executor)
-                .thenRun(runnable2)
+        CompletableFuture.runAsync(taskWrapperProvider.get().wrap(runnable), executor)
+                .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
                     return null;
@@ -230,19 +218,14 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final AtomicBoolean completedExceptionally = new AtomicBoolean();
 
         final Executor executor = executorProviderOuter.getExecutor();
-        final TaskWrapper taskWrapper = taskWrapperProvider.get();
 
-        Runnable runnable1 = () -> {
+        final Runnable runnable = () -> {
             CurrentTaskState.currentTask().terminate();
             testCompletedExceptionally(executorProviderInner, true);
         };
-        runnable1 = taskWrapper.wrap(runnable1);
 
-        Runnable runnable2 = () -> completedNormally.set(true);
-        runnable2 = taskWrapper.wrap(runnable2);
-
-        CompletableFuture.runAsync(runnable1, executor)
-                .thenRun(runnable2)
+        CompletableFuture.runAsync(taskWrapperProvider.get().wrap(runnable), executor)
+                .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
                     return null;
@@ -259,19 +242,11 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final AtomicBoolean completedExceptionally = new AtomicBoolean();
 
         final Executor executor = executorProvider.getExecutor();
-        final TaskWrapper taskWrapper = taskWrapperProvider.get();
 
-        Runnable runnable1 = () -> {
-            CurrentTaskState.currentTask().terminate();
-            testCompletedNormally();
-        };
-        runnable1 = taskWrapper.wrap(runnable1);
+        final Runnable runnable = this::testCompletedNormally;
 
-        Runnable runnable2 = () -> completedNormally.set(true);
-        runnable2 = taskWrapper.wrap(runnable2);
-
-        CompletableFuture.runAsync(runnable1, executor)
-                .thenRun(runnable2)
+        CompletableFuture.runAsync(taskWrapperProvider.get().wrap(runnable), executor)
+                .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
                     return null;
@@ -293,11 +268,8 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
     }
 
     private ExecutorProvider createRejectedExecutorProvider() {
-        final Executor executor = new Executor() {
-            @Override
-            public void execute(final Runnable command) {
-                throw new RejectedExecutionException("Expected");
-            }
+        final Executor executor = command -> {
+            throw new RejectedExecutionException("Expected");
         };
         return new ExecutorProvider() {
             @Override
