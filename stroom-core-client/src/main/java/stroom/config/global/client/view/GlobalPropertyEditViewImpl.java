@@ -211,7 +211,7 @@ public final class GlobalPropertyEditViewImpl
     }
 
     @Override
-    public ButtonView addEffectiveValueWarningIcon(final SvgPreset preset) {
+    public ButtonView addEffectiveValueIcon(final SvgPreset preset) {
         return effectiveValueButtonPanel.add(preset);
     }
 

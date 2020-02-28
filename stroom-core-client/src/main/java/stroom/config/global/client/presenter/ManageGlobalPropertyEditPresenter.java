@@ -19,6 +19,7 @@ package stroom.config.global.client.presenter;
 
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
+import com.google.gwt.event.dom.client.ClickHandler;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -67,12 +68,13 @@ public final class ManageGlobalPropertyEditPresenter
     private final ClientSecurityContext securityContext;
     private final UiConfigCache clientPropertyCache;
     private ConfigProperty configProperty;
-    private Map<String, OverrideValue<String>> clusterYamlOverrides = new HashMap<>();
+    private Map<String, OverrideValue<String>> clusterYamlOverridesMap = new HashMap<>();
     private Map<String, Set<NodeSource>> effectiveValueToNodesMap = new HashMap<>();
-    private final ButtonView yamlValueWarningsButton;
+//    private final ButtonView yamlValueWarningsButton;
     private Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider;
 //    private ConfigPropertyClusterValuesPresenter clusterValuesPresenterProvider;
     private final ButtonView effectiveValueWarningsButton;
+    private final ButtonView effectiveValueInfoButton;
 
     @Inject
     public ManageGlobalPropertyEditPresenter(final EventBus eventBus,
@@ -87,11 +89,13 @@ public final class ManageGlobalPropertyEditPresenter
         this.clientPropertyCache = clientPropertyCache;
         this.clusterValuesPresenterProvider = clusterValuesPresenterProvider;
 
-        this.yamlValueWarningsButton = view.addYamlValueWarningIcon(SvgPresets.ALERT.title("Node values differ"));
-        this.clusterValuesPresenterProvider = clusterValuesPresenterProvider;
-        this.yamlValueWarningsButton.setVisible(false);
+//        this.yamlValueWarningsButton = view.addYamlValueWarningIcon(SvgPresets.ALERT.title("Node values differ"));
+//        this.yamlValueWarningsButton.setVisible(false);
 
-        this.effectiveValueWarningsButton = view.addEffectiveValueWarningIcon(SvgPresets.ALERT.title("Node values differ"));
+
+        this.effectiveValueWarningsButton = view.addEffectiveValueIcon(SvgPresets.ALERT.title("Click to see cluster values"));
+        this.effectiveValueInfoButton = view.addEffectiveValueIcon(SvgPresets.INFO.title("Click to see cluster values"));
+        this.effectiveValueWarningsButton.setVisible(false);
         this.effectiveValueWarningsButton.setVisible(false);
 
         view.setUiHandlers(this);
@@ -99,17 +103,19 @@ public final class ManageGlobalPropertyEditPresenter
 
     @Override
     protected void onBind() {
-        registerHandler(yamlValueWarningsButton.addClickHandler(event -> {
+//        registerHandler(yamlValueWarningsButton.addClickHandler(event -> {
+//            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+//                onOpenClusterValues();
+//            }
+//        }));
+        ClickHandler iconClickHandler = event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 onOpenClusterValues();
             }
-        }));
+        };
 
-        registerHandler(effectiveValueWarningsButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                onOpenClusterValues();
-            }
-        }));
+        registerHandler(effectiveValueInfoButton.addClickHandler(iconClickHandler));
+        registerHandler(effectiveValueWarningsButton.addClickHandler(iconClickHandler));
     }
 
     private void onOpenClusterValues() {
@@ -155,19 +161,34 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void updateWarningState() {
-        final long uniqueEffectiveValues = getUniqueEffectiveValues();
-        final String msg = "Unique values in cluster: " + uniqueEffectiveValues;
-        yamlValueWarningsButton.setVisible(true);
-        yamlValueWarningsButton.setTitle(msg);
+        final long uniqueEffectiveValuesCount = getUniqueEffectiveValuesCount();
+        final long uniqueSourcesCount = getUniqueSourcesCount();
+        final long nodeCount = getNodeCount();
 
-        effectiveValueWarningsButton.setVisible(true);
-        effectiveValueWarningsButton.setTitle(msg);
+        if (nodeCount == 1) {
+            // Single node cluster so no need for cluster values screen
+            effectiveValueInfoButton.setVisible(false);
+            effectiveValueWarningsButton.setVisible(false);
+        } else {
+            if (uniqueEffectiveValuesCount > 1 || uniqueSourcesCount > 1) {
+                String msg;
 
-        // TODO here just for testing
-        final boolean areWarningsVisible = true;
-//        boolean areWarningsVisible = uniqueYamlOverrideValues > 1;
-        yamlValueWarningsButton.setVisible(areWarningsVisible);
-        effectiveValueWarningsButton.setVisible(areWarningsVisible);
+                if (uniqueEffectiveValuesCount > 1 ) {
+                    msg = "Multiple unique values exist in the cluster (" + uniqueEffectiveValuesCount +")";
+                } else {
+                    msg = "Multiple value sources exist in the cluster (" + uniqueSourcesCount +")";
+                }
+
+                // show warning
+                effectiveValueWarningsButton.setTitle(msg);
+                effectiveValueInfoButton.setVisible(false);
+                effectiveValueWarningsButton.setVisible(true);
+            } else {
+                // All good so show info
+                effectiveValueInfoButton.setVisible(true);
+                effectiveValueWarningsButton.setVisible(false);
+            }
+        }
     }
 
     private void updateValuesFromResource(final String propertyName, final PopupUiHandlers popupUiHandlers) {
@@ -185,8 +206,21 @@ public final class ManageGlobalPropertyEditPresenter
             .getPropertyByName(propertyName);
     }
 
-    private long getUniqueEffectiveValues() {
+    private long getUniqueEffectiveValuesCount() {
         return effectiveValueToNodesMap.size();
+    }
+
+    private long getUniqueSourcesCount() {
+        return effectiveValueToNodesMap.values()
+            .stream()
+            .flatMap(Set::stream)
+            .map(NodeSource::getSource)
+            .distinct()
+            .count();
+    }
+
+    private long getNodeCount() {
+        return clusterYamlOverridesMap.size();
     }
 
     private void refreshYamlOverrideForAllNodes() {
@@ -245,7 +279,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void updateAllNodeEffectiveValues() {
-        clusterYamlOverrides.forEach(this::updateNodeEffectiveValue);
+        clusterYamlOverridesMap.forEach(this::updateNodeEffectiveValue);
     }
 
     private void refreshYamlOverrideForNode(final String nodeName) {
@@ -254,12 +288,12 @@ public final class ManageGlobalPropertyEditPresenter
         fetchNodeYamlOverrideRest
                 .onSuccess(yamlOverride -> {
                     // Add the node's result to our maps
-                    clusterYamlOverrides.put(nodeName, yamlOverride);
+                    clusterYamlOverridesMap.put(nodeName, yamlOverride);
                     updateNodeEffectiveValue(nodeName, yamlOverride);
                     updateWarningState();
                 })
                 .onFailure(throwable -> {
-                    clusterYamlOverrides.remove(nodeName);
+                    clusterYamlOverridesMap.remove(nodeName);
                     showError(throwable, "Error getting YAML override for node " + nodeName);
                 })
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
@@ -459,7 +493,7 @@ public final class ManageGlobalPropertyEditPresenter
 
         ButtonView addYamlValueWarningIcon(SvgPreset preset);
 
-        ButtonView addEffectiveValueWarningIcon(SvgPreset preset);
+        ButtonView addEffectiveValueIcon(SvgPreset preset);
     }
 
 }
