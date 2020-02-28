@@ -153,11 +153,12 @@ public final class ManageGlobalPropertyEditPresenter
         }
         // find out the yaml values for each node in the cluster
         refreshYamlOverrideForAllNodes();
+        updateAllNodeEffectiveValues();
     }
 
     private void updateWarningState() {
-        final long uniqueYamlOverrideValues = getUniqueYamlOverrideValues();
-        final String msg = "Unique values in cluster: " + uniqueYamlOverrideValues;
+        final long uniqueEffectiveValues = getUniqueEffectiveValues();
+        final String msg = "Unique values in cluster: " + uniqueEffectiveValues;
         yamlValueWarningsButton.setVisible(true);
         yamlValueWarningsButton.setTitle(msg);
 
@@ -186,12 +187,8 @@ public final class ManageGlobalPropertyEditPresenter
             .getPropertyByName(propertyName);
     }
 
-    private long getUniqueYamlOverrideValues() {
-        return clusterYamlOverrides.values()
-                .stream()
-            .filter(OverrideValue::isHasOverride)
-                .distinct()
-                .count();
+    private long getUniqueEffectiveValues() {
+        return effectiveValueToNodesMap.size();
     }
 
     private Map<String, String> getEffectiveValues() {
@@ -417,6 +414,7 @@ public final class ManageGlobalPropertyEditPresenter
         getView().setEditable(getEntity().isEditable());
 
         updateAllNodeEffectiveValues();
+        updateWarningState();
     }
 
     protected PopupSize getPopupSize() {
