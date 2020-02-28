@@ -71,6 +71,8 @@ public final class GlobalPropertyEditViewImpl
     ButtonPanel yamlValueButtonPanel;
     @UiField
     ButtonPanel effectiveValueButtonPanel;
+    @UiField
+    ButtonPanel dataTypeButtonPanel;
 
     private boolean password;
 //    private static volatile Resources RESOURCES;
@@ -213,6 +215,11 @@ public final class GlobalPropertyEditViewImpl
     @Override
     public ButtonView addEffectiveValueIcon(final SvgPreset preset) {
         return effectiveValueButtonPanel.add(preset);
+    }
+
+    @Override
+    public ButtonView addDataTypeHelpIcon(final SvgPreset preset) {
+        return dataTypeButtonPanel.add(preset);
     }
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {

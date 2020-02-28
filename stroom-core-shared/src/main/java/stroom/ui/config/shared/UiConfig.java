@@ -34,7 +34,7 @@ public class UiConfig extends AbstractConfig implements SharedObject {
     private String maintenanceMessage;
     private String defaultMaxResults = "1000000,100,10,1";
     private ProcessConfig processConfig = new ProcessConfig();
-    private String helpUrl;
+    private String helpUrl = "https://gchq.github.io/stroom-docs";
     private ThemeConfig themeConfig = new ThemeConfig();
     private QueryConfig queryConfig = new QueryConfig();
     private String namePattern = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";

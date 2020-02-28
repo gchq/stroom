@@ -78,7 +78,12 @@
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>Data Type:</g:cell>
+            <g:customCell>
+                <g:HorizontalPanel>
+                    <g:Label ui:text="Data Type:"/>
+                    <b:ButtonPanel ui:field="dataTypeButtonPanel"/>
+                </g:HorizontalPanel>
+            </g:customCell>
             <g:customCell>
                 <g:Label ui:field="dataType" width="100%" addStyleNames="globalProperties"/>
             </g:customCell>

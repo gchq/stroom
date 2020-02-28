@@ -20,6 +20,7 @@ package stroom.config.global.client.presenter;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
+import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -63,6 +64,8 @@ public final class ManageGlobalPropertyEditPresenter
     private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
 
     private static final String MAGIC_NULL = "NULL";
+    private static final String MULTIPLE_VALUES_MSG = "[Multiple values exist in the cluster]";
+    private static final String MULTIPLE_SOURCES_MSG = "[Configured from multiple sources]";
 
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
@@ -70,11 +73,10 @@ public final class ManageGlobalPropertyEditPresenter
     private ConfigProperty configProperty;
     private Map<String, OverrideValue<String>> clusterYamlOverridesMap = new HashMap<>();
     private Map<String, Set<NodeSource>> effectiveValueToNodesMap = new HashMap<>();
-//    private final ButtonView yamlValueWarningsButton;
     private Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider;
-//    private ConfigPropertyClusterValuesPresenter clusterValuesPresenterProvider;
     private final ButtonView effectiveValueWarningsButton;
     private final ButtonView effectiveValueInfoButton;
+    private final ButtonView dataTypeHelpButton;
 
     @Inject
     public ManageGlobalPropertyEditPresenter(final EventBus eventBus,
@@ -89,25 +91,19 @@ public final class ManageGlobalPropertyEditPresenter
         this.clientPropertyCache = clientPropertyCache;
         this.clusterValuesPresenterProvider = clusterValuesPresenterProvider;
 
-//        this.yamlValueWarningsButton = view.addYamlValueWarningIcon(SvgPresets.ALERT.title("Node values differ"));
-//        this.yamlValueWarningsButton.setVisible(false);
-
-
         this.effectiveValueWarningsButton = view.addEffectiveValueIcon(SvgPresets.ALERT.title("Click to see cluster values"));
-        this.effectiveValueInfoButton = view.addEffectiveValueIcon(SvgPresets.INFO.title("Click to see cluster values"));
+        this.effectiveValueInfoButton = view.addEffectiveValueIcon(SvgPresets.INFO.title("All nodes have the same effective value"));
+        this.dataTypeHelpButton = view.addDataTypeHelpIcon(SvgPresets.HELP);
+
         this.effectiveValueWarningsButton.setVisible(false);
         this.effectiveValueWarningsButton.setVisible(false);
+        this.dataTypeHelpButton.setVisible(true);
 
         view.setUiHandlers(this);
     }
 
     @Override
     protected void onBind() {
-//        registerHandler(yamlValueWarningsButton.addClickHandler(event -> {
-//            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-//                onOpenClusterValues();
-//            }
-//        }));
         ClickHandler iconClickHandler = event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 onOpenClusterValues();
@@ -116,6 +112,11 @@ public final class ManageGlobalPropertyEditPresenter
 
         registerHandler(effectiveValueInfoButton.addClickHandler(iconClickHandler));
         registerHandler(effectiveValueWarningsButton.addClickHandler(iconClickHandler));
+        registerHandler(dataTypeHelpButton.addClickHandler(event -> {
+            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+                showHelp("Data Types");
+            }
+        }));
     }
 
     private void onOpenClusterValues() {
@@ -210,6 +211,13 @@ public final class ManageGlobalPropertyEditPresenter
         return effectiveValueToNodesMap.size();
     }
 
+    private long getUniqueYamlValuesCount() {
+        return clusterYamlOverridesMap.values()
+            .stream()
+            .distinct()
+            .count();
+    }
+
     private long getUniqueSourcesCount() {
         return effectiveValueToNodesMap.values()
             .stream()
@@ -240,7 +248,8 @@ public final class ManageGlobalPropertyEditPresenter
                 .list();
     }
 
-    private void updateNodeEffectiveValue(final String nodeName, final OverrideValue<String> yamlOverride) {
+    private void updateEffectiveValueForNode(final String nodeName,
+                                             final OverrideValue<String> yamlOverride) {
 
         final String effectiveValueFromNode;
 
@@ -279,7 +288,7 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private void updateAllNodeEffectiveValues() {
-        clusterYamlOverridesMap.forEach(this::updateNodeEffectiveValue);
+        clusterYamlOverridesMap.forEach(this::updateEffectiveValueForNode);
     }
 
     private void refreshYamlOverrideForNode(final String nodeName) {
@@ -289,8 +298,9 @@ public final class ManageGlobalPropertyEditPresenter
                 .onSuccess(yamlOverride -> {
                     // Add the node's result to our maps
                     clusterYamlOverridesMap.put(nodeName, yamlOverride);
-                    updateNodeEffectiveValue(nodeName, yamlOverride);
+                    updateEffectiveValueForNode(nodeName, yamlOverride);
                     updateWarningState();
+                    refreshValuesOnChange();
                 })
                 .onFailure(throwable -> {
                     clusterYamlOverridesMap.remove(nodeName);
@@ -350,6 +360,40 @@ public final class ManageGlobalPropertyEditPresenter
         return "Application Property";
     }
 
+    private void setUiYamlValueText() {
+        String text = "";
+        if (getUniqueYamlValuesCount() > 1) {
+            text = MULTIPLE_VALUES_MSG;
+        } else {
+            if (getEntity().hasYamlOverride()) {
+                text = getEntity()
+                    .getYamlOverrideValue()
+                    .getValueOrElse("");
+            }
+        }
+        getView().getYamlValue().setText(text);
+    }
+
+    private void setUiSourceText() {
+        String text = "";
+        if (getUniqueSourcesCount() > 1) {
+            text = MULTIPLE_SOURCES_MSG;
+        } else {
+            text = getEntity().getSource().getName();
+        }
+        getView().getSource().setText(text);
+    }
+
+    private void setUiEffectiveValueText() {
+        String text = "";
+        if (getUniqueEffectiveValuesCount() > 1) {
+            text = MULTIPLE_VALUES_MSG;
+        } else {
+            text = getEntity().getEffectiveValue().orElse(null);
+        }
+        getView().getEffectiveValue().setText(text);
+    }
+
     private void read() {
         getView().setPasswordStyle(getEntity().isPassword());
         getView().setRequireRestart(getEntity().isRequireRestart());
@@ -362,23 +406,15 @@ public final class ManageGlobalPropertyEditPresenter
                     .getDatabaseOverrideValue()
                     .getValueOrElse("");
         }
-        String yamlOverrideValue = "";
-        if (getEntity().hasYamlOverride()) {
-            yamlOverrideValue = getEntity()
-                    .getYamlOverrideValue()
-                    .getValueOrElse("");
-        }
+        setUiYamlValueText();
         getView().getDefaultValue().setText(getEntity()
                 .getDefaultValue()
                 .orElse(""));
-        getView().getYamlValue().setText(yamlOverrideValue);
         getView().getDatabaseValue().setText(databaseOverrideValue);
-        getView().getEffectiveValue().setText(getEntity()
-                .getEffectiveValue()
-                .orElse(""));
+        setUiEffectiveValueText();
         getView().getDescription().setText(getEntity().getDescription());
         getView().getDataType().setText(getEntity().getDataTypeName());
-        getView().getSource().setText(getEntity().getSource().getName());
+        setUiSourceText();
 
         getView().setEditable(getEntity().isEditable());
     }
@@ -434,21 +470,25 @@ public final class ManageGlobalPropertyEditPresenter
             // by accident
         }
 
-        getView().getEffectiveValue().setText(getEntity().getEffectiveValue().orElse(null));
-        getView().getSource().setText(getEntity().getSource().getName());
 
         // Refresh the edit status of the override fields
         getView().setEditable(getEntity().isEditable());
 
         updateAllNodeEffectiveValues();
         updateWarningState();
+
+        getView().getSource().setText(getEntity().getSource().getName());
+
+        setUiYamlValueText();
+        setUiEffectiveValueText();
+        setUiSourceText();
     }
 
     protected PopupSize getPopupSize() {
         return new PopupSize(
-                700, 513,
-                700, 513,
-                1024, 513,
+                700, 519,
+                700, 519,
+                1024, 519,
                 true);
     }
 
@@ -460,6 +500,30 @@ public final class ManageGlobalPropertyEditPresenter
     @Override
     public void onChangeOverrideValue() {
         refreshValuesOnChange();
+    }
+
+    private void showHelp(final String anchor) {
+        clientPropertyCache.get()
+            .onSuccess(result -> {
+                final String helpUrl = result.getHelpUrl();
+                if (helpUrl != null && helpUrl.trim().length() > 0) {
+                    String url = helpUrl + "/user-guide/properties.html" + formatAnchor(anchor);
+                    Window.open(url, "_blank", "");
+                } else {
+                    AlertEvent.fireError(
+                        ManageGlobalPropertyEditPresenter.this,
+                        "Help is not configured!",
+                        null);
+                }
+            })
+            .onFailure(caught -> AlertEvent.fireError(
+                ManageGlobalPropertyEditPresenter.this,
+                caught.getMessage(),
+                null));
+    }
+
+    protected String formatAnchor(String name) {
+        return "#" + name.replace(" ", "_");
     }
 
     public interface GlobalPropertyEditView extends View, HasUiHandlers<ManageGlobalPropertyEditUiHandlers> {
@@ -494,6 +558,8 @@ public final class ManageGlobalPropertyEditPresenter
         ButtonView addYamlValueWarningIcon(SvgPreset preset);
 
         ButtonView addEffectiveValueIcon(SvgPreset preset);
+
+        ButtonView addDataTypeHelpIcon(SvgPreset preset);
     }
 
 }
