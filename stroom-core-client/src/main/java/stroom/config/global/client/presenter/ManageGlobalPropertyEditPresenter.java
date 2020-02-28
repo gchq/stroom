@@ -47,14 +47,12 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public final class ManageGlobalPropertyEditPresenter
         extends MyPresenterWidget<ManageGlobalPropertyEditPresenter.GlobalPropertyEditView>
@@ -70,7 +68,7 @@ public final class ManageGlobalPropertyEditPresenter
     private final UiConfigCache clientPropertyCache;
     private ConfigProperty configProperty;
     private Map<String, OverrideValue<String>> clusterYamlOverrides = new HashMap<>();
-    private Map<String, Set<String>> effectiveValueToNodesMap = new HashMap<>();
+    private Map<String, Set<NodeSource>> effectiveValueToNodesMap = new HashMap<>();
     private final ButtonView yamlValueWarningsButton;
     private Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider;
 //    private ConfigPropertyClusterValuesPresenter clusterValuesPresenterProvider;
@@ -191,17 +189,6 @@ public final class ManageGlobalPropertyEditPresenter
         return effectiveValueToNodesMap.size();
     }
 
-    private Map<String, String> getEffectiveValues() {
-        return clusterYamlOverrides.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
-                .map(entry -> {
-                            String effectiveValue = configProperty.getEffectiveValue(entry.getValue())
-                                    .orElse(null);
-                            return new AbstractMap.SimpleEntry<>(entry.getKey(), effectiveValue);
-                        })
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
     private void refreshYamlOverrideForAllNodes() {
         final Rest<FetchNodeStatusResponse> fetchAllNodes = restFactory.create();
 
@@ -231,18 +218,24 @@ public final class ManageGlobalPropertyEditPresenter
                 .orElse(MAGIC_NULL);
         }
 
+        final NodeSource newNodeSource = new NodeSource(
+            nodeName,
+            configProperty.getSource(configProperty.getDatabaseOverrideValue(), yamlOverride).getName());
+
         // Add our value into the map
         this.effectiveValueToNodesMap.computeIfAbsent(
             effectiveValueFromNode,
             k -> new HashSet<>())
-            .add(nodeName);
+            .add(newNodeSource);
 
         final List<String> keysToRemove = new ArrayList<>();
-        effectiveValueToNodesMap.forEach((effectiveValue, nodes) -> {
+        effectiveValueToNodesMap.forEach((effectiveValue, nodeSources) -> {
 
             if (!effectiveValue.equals(effectiveValueFromNode)) {
-                nodes.remove(nodeName);
-                if (nodes.isEmpty()) {
+                nodeSources.removeIf(existingNodeSource ->
+                    existingNodeSource.getNodeName().equals(nodeName));
+
+                if (nodeSources.isEmpty()) {
                     keysToRemove.add(effectiveValue);
                 }
             }

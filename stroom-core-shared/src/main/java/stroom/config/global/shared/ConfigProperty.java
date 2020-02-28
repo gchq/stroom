@@ -210,9 +210,9 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
     public static Optional<String> getEffectiveValue(final String defaultValue,
                                        final OverrideValue<String> databaseOverrideValue,
                                        final OverrideValue<String> yamlOverrideValue) {
-        if (yamlOverrideValue.isHasOverride()) {
+        if (yamlOverrideValue != null && yamlOverrideValue.isHasOverride()) {
             return yamlOverrideValue.getValueAsOptional();
-        } else if (databaseOverrideValue.isHasOverride()) {
+        } else if (databaseOverrideValue != null && databaseOverrideValue.isHasOverride()) {
             return databaseOverrideValue.getValueAsOptional();
         } else {
             return Optional.ofNullable(defaultValue);
@@ -378,14 +378,19 @@ public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<Co
         this.isPassword = password;
     }
 
-    public SourceType getSource() {
-        if (yamlOverrideValue.isHasOverride()) {
+    public SourceType getSource(final OverrideValue<String> databaseOverrideValue,
+                                final OverrideValue<String> yamlOverrideValue) {
+        if (yamlOverrideValue != null && yamlOverrideValue.isHasOverride()) {
             return SourceType.YAML;
-        } else if (databaseOverrideValue.isHasOverride()) {
+        } else if (databaseOverrideValue != null && databaseOverrideValue.isHasOverride()) {
             return SourceType.DATABASE;
         } else {
             return SourceType.DEFAULT;
         }
+    }
+
+    public SourceType getSource() {
+        return getSource(databaseOverrideValue, yamlOverrideValue);
     }
 
     public String getDataTypeName() {

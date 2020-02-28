@@ -42,7 +42,7 @@ public class ConfigPropertyClusterValuesPresenter
     }
 
     void show(final ConfigProperty configProperty,
-              final Map<String, Set<String>> effectiveValueToNodesMap,
+              final Map<String, Set<NodeSource>> effectiveValueToNodesMap,
               final PopupPosition popupPosition,
               final PopupUiHandlers popupUiHandlers) {
 

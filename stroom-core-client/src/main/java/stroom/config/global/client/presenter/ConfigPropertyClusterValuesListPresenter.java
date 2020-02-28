@@ -27,7 +27,7 @@ public class ConfigPropertyClusterValuesListPresenter
     private Column<ClusterValuesRow, Expander> expanderColumn;
     private ListDataProvider<ClusterValuesRow> dataProvider;
     private ClusterValuesTreeAction treeAction = new ClusterValuesTreeAction();
-    private Map<String, Set<String>> effectiveValueToNodesMap;
+    private Map<String, Set<NodeSource>> effectiveValueToNodesMap;
 
     @Inject
     public ConfigPropertyClusterValuesListPresenter(final EventBus eventBus) {
@@ -59,7 +59,7 @@ public class ConfigPropertyClusterValuesListPresenter
         return demoMap;
     }
 
-    public void setData(final Map<String, Set<String>> effectiveValueToNodesMap) {
+    public void setData(final Map<String, Set<NodeSource>> effectiveValueToNodesMap) {
 
         // For dev testing only
 //        this.effectiveValueToNodesMap = makeDemoData();
@@ -87,9 +87,10 @@ public class ConfigPropertyClusterValuesListPresenter
         });
 
         getView().addColumn(expanderColumn, "");
-        getView().addResizableColumn(buildEffectiveValueColumn(), "Effective Value", 500);
+        getView().addResizableColumn(buildEffectiveValueColumn(), "Effective Value", 475);
         getView().addResizableColumn(buildNodeCountColumn(), "Count", 50);
-        getView().addResizableColumn(buildNodeColumn(), "Node", 300);
+        getView().addResizableColumn(buildSourceColumn(), "Source", 75);
+        getView().addResizableColumn(buildNodeColumn(), "Node", 250);
         getView().addEndColumn(new EndColumn<>());
     }
 
@@ -101,6 +102,19 @@ public class ConfigPropertyClusterValuesListPresenter
                     return null;
                 }
                 return (row.getNodeCount() != null ? row.getNodeCount().toString() : "");
+            }
+        };
+        return column;
+    }
+
+    private Column<ClusterValuesRow, String> buildSourceColumn() {
+        final Column<ClusterValuesRow, String> column = new Column<ClusterValuesRow, String>(new TextCell()) {
+            @Override
+            public String getValue(final ClusterValuesRow row) {
+                if (row == null) {
+                    return null;
+                }
+                return row.getSource();
             }
         };
         return column;

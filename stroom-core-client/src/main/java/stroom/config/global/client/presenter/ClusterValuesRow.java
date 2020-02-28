@@ -15,13 +15,16 @@ class ClusterValuesRow implements TreeRow {
     private String effectiveValue;
     private Integer nodeCount;
     private String nodeName;
+    private String source;
     private Expander expander;
 
     ClusterValuesRow(final String effectiveValue,
                      final Integer nodeCount,
+                     final String source,
                      final String nodeName,
                      final Expander expander) {
         this.effectiveValue = effectiveValue;
+        this.source = source;
         this.nodeName = nodeName;
         this.nodeCount = nodeCount;
         this.expander = expander;
@@ -29,8 +32,10 @@ class ClusterValuesRow implements TreeRow {
 
     ClusterValuesRow(final String effectiveValue,
                      final Integer nodeCount,
+                     final String source,
                      final String nodeName) {
         this.effectiveValue = effectiveValue;
+        this.source = source;
         this.nodeName = nodeName;
         this.nodeCount = nodeCount;
         this.expander = null;
@@ -53,11 +58,15 @@ class ClusterValuesRow implements TreeRow {
         return nodeName;
     }
 
+    public String getSource() {
+        return source;
+    }
+
     public Integer getNodeCount() {
         return nodeCount;
     }
 
-    public static List<ClusterValuesRow> buildTree(final Map<String, Set<String>> effectiveValueToNodesMap,
+    public static List<ClusterValuesRow> buildTree(final Map<String, Set<NodeSource>> effectiveValueToNodesMap,
                                                    final ClusterValuesTreeAction treeAction) {
 
         final List<ClusterValuesRow> rows = new ArrayList<>();
@@ -68,32 +77,39 @@ class ClusterValuesRow implements TreeRow {
                 .sorted(Comparator.comparing(entry ->
                     entry.getValue()
                             .stream()
+                        .map(NodeSource::getNodeName)
                             .sorted()
                             .findFirst()
                             .orElse("")
                 ))
                 .forEach(entry -> {
                     final String effectiveValue = entry.getKey();
-                    final Set<String> nodes = entry.getValue();
+                    final Set<NodeSource> nodes = entry.getValue();
                     final int nodeCount = nodes != null ? nodes.size() : 0;
 
                     // If this value has only one node associated to it then just show all the detail
                     // in the master row
                     final boolean isLeaf;
                     final String groupRowNodeName;
+                    final String groupRowSource;
                     if (nodeCount == 0) {
                         isLeaf = true;
                         groupRowNodeName = null;
+                        groupRowSource = null;
                     } else if (nodeCount == 1) {
                         isLeaf = true;
-                        groupRowNodeName = nodes.iterator().next();
+                        NodeSource nodeSource = nodes.iterator().next();
+                        groupRowNodeName = nodeSource.getNodeName();
+                        groupRowSource = nodeSource.getSource();
                     } else {
                         isLeaf = false;
                         groupRowNodeName = null;
+                        groupRowSource = null;
                     }
                     final ClusterValuesRow row = new ClusterValuesRow(
                             effectiveValue,
                             nodeCount,
+                            groupRowSource,
                             groupRowNodeName);
 
                     boolean isExpanded = treeAction.isRowExpanded(row)
@@ -115,12 +131,13 @@ class ClusterValuesRow implements TreeRow {
                             // Add the detail rows with blank value
                             entry.getValue()
                                 .stream()
-                                .sorted()
-                                .map(nodeName ->
+                                .sorted(Comparator.comparing(NodeSource::getNodeName))
+                                .map(nodeEffectiveValue ->
                                     new ClusterValuesRow(
                                         null,
                                         null,
-                                        nodeName,
+                                        nodeEffectiveValue.getSource(),
+                                        nodeEffectiveValue.getNodeName(),
                                         new Expander(depth + 1, false, true)))
                                 .forEach(rows::add);
                         }

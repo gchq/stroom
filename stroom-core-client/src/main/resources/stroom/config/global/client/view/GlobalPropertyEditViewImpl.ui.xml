@@ -38,19 +38,19 @@
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>Use Global Override:</g:cell>
+            <g:cell>Set Database value:</g:cell>
             <g:customCell>
                 <tickbox:TickBox ui:field="useOverride"/>
             </g:customCell>
         </g:row>
         <g:row styleName="{style.textArea}">
-            <g:cell>Global Value:</g:cell>
+            <g:cell>Database Value:</g:cell>
             <g:customCell>
                 <g:TextArea ui:field="databaseValue" width="100%" addStyleNames="globalProperties"/>
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>Global Value:</g:cell>
+            <g:cell>Database Value:</g:cell>
             <g:customCell>
                 <g:PasswordTextBox ui:field="databaseValuePassword" width="100%" addStyleNames="globalProperties"/>
             </g:customCell>
@@ -69,7 +69,7 @@
         <g:row>
             <g:customCell>
                 <g:FlowPanel>
-                    <g:Label ui:text="Effective Value:"/>
+                    <g:Label ui:text="Node Effective Value:"/>
                     <b:ButtonPanel ui:field="effectiveValueButtonPanel"/>
                 </g:FlowPanel>
             </g:customCell>
