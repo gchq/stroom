@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -89,45 +90,24 @@ public class ConfigPropertyClusterValuesListPresenter
         getView().addColumn(expanderColumn, "");
         getView().addResizableColumn(buildEffectiveValueColumn(), "Effective Value", 475);
         getView().addResizableColumn(buildNodeCountColumn(), "Count", 50);
-        getView().addResizableColumn(buildSourceColumn(), "Source", 75);
-        getView().addResizableColumn(buildNodeColumn(), "Node", 250);
+        getView().addResizableColumn(buildBasicColumn(ClusterValuesRow::getSource), "Source", 75);
+        getView().addResizableColumn(buildBasicColumn(ClusterValuesRow::getNodeName), "Node", 250);
         getView().addEndColumn(new EndColumn<>());
     }
 
     private Column<ClusterValuesRow, String> buildNodeCountColumn() {
-        final Column<ClusterValuesRow, String> column = new Column<ClusterValuesRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final ClusterValuesRow row) {
-                if (row == null) {
-                    return null;
-                }
-                return (row.getNodeCount() != null ? row.getNodeCount().toString() : "");
-            }
-        };
-        return column;
+        return buildBasicColumn(row ->
+            (row.getNodeCount() != null ? row.getNodeCount().toString() : ""));
     }
 
-    private Column<ClusterValuesRow, String> buildSourceColumn() {
+    private Column<ClusterValuesRow, String> buildBasicColumn(final Function<ClusterValuesRow, String> valueFunc) {
         final Column<ClusterValuesRow, String> column = new Column<ClusterValuesRow, String>(new TextCell()) {
             @Override
             public String getValue(final ClusterValuesRow row) {
                 if (row == null) {
                     return null;
                 }
-                return row.getSource();
-            }
-        };
-        return column;
-    }
-
-    private Column<ClusterValuesRow, String> buildNodeColumn() {
-        final Column<ClusterValuesRow, String> column = new Column<ClusterValuesRow, String>(new TextCell()) {
-            @Override
-            public String getValue(final ClusterValuesRow row) {
-                if (row == null) {
-                    return null;
-                }
-                return row.getNodeName();
+                return valueFunc.apply(row);
             }
         };
         return column;

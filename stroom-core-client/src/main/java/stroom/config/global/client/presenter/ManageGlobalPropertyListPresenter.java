@@ -19,6 +19,7 @@ package stroom.config.global.client.presenter;
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.user.cellview.client.Column;
+import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -39,7 +40,7 @@ import java.util.function.Function;
 
 public class ManageGlobalPropertyListPresenter
     extends MyPresenterWidget<DataGridView<ConfigProperty>>
-    implements Refreshable {
+    implements Refreshable, ColumnSortEvent.Handler{
 
     // TODO change to use a rest dataprovider, see NodeMonitoringPresenter
     //   Need to figure out how best to handle the fuzzy criteria with rest, i.e. POST
@@ -108,6 +109,7 @@ public class ManageGlobalPropertyListPresenter
 
 
     private Column<ConfigProperty, String> buildBasicColumn(final Function<ConfigProperty, String> valueFunc) {
+        // TODO use OrderByColumn
         return new Column<ConfigProperty, String>(new TextCell()) {
             @Override
             public String getValue(final ConfigProperty row) {
@@ -163,5 +165,10 @@ public class ManageGlobalPropertyListPresenter
 //
     FindGlobalConfigCriteria getFindGlobalPropertyCriteria() {
         return dataProvider.getCriteria();
+    }
+
+    @Override
+    public void onColumnSort(final ColumnSortEvent event) {
+        // TODO implement sorting
     }
 }
