@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.2] - 2020-03-01
+
 * Issue **#1387** : Changed the way tasks are executed to reduce changes of unhandled execution errors.
 
 
@@ -2093,7 +2096,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.1...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.2...6.1
+[v6.1.2]: https://github.com/gchq/stroom/compare/v6.1.1...v6.1.2
 [v6.1.1]: https://github.com/gchq/stroom/compare/v6.1.0...v6.1.1
 [v6.1.0]: https://github.com/gchq/stroom/compare/v6.1-beta.19...v6.1.0
 [v6.1-beta.19]: https://github.com/gchq/stroom/compare/v6.1-beta.18...v6.1-beta.19
