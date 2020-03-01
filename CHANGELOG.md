@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1387** : Changed the way tasks are executed to reduce changes of unhandled execution errors.
+
 
 ## [v6.1.1] - 2020-02-14
 

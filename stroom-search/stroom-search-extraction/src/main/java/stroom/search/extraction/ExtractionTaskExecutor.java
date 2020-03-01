@@ -17,6 +17,9 @@
 package stroom.search.extraction;
 
 import org.springframework.stereotype.Component;
+import stroom.util.concurrent.ExecutorProvider;
+import stroom.util.concurrent.ThreadPoolImpl;
+import stroom.util.shared.ThreadPool;
 import stroom.util.task.taskqueue.TaskExecutor;
 
 import javax.inject.Singleton;
@@ -24,7 +27,13 @@ import javax.inject.Singleton;
 @Component
 @Singleton
 class ExtractionTaskExecutor extends TaskExecutor {
-    ExtractionTaskExecutor() {
-        super("Extraction Task Executor");
+    static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
+            "Extraction",
+            5,
+            0,
+            Integer.MAX_VALUE);
+
+    ExtractionTaskExecutor(final ExecutorProvider executorProvider) {
+        super("Extraction Task Executor",  executorProvider, THREAD_POOL);
     }
 }

@@ -5,10 +5,14 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.concurrent.ExecutorProvider;
+import stroom.util.concurrent.ThreadPoolImpl;
 import stroom.util.shared.ThreadPool;
+import stroom.util.task.TaskWrapper;
 import stroom.util.thread.ThreadUtil;
 
 import javax.annotation.Resource;
+import javax.inject.Provider;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -23,7 +27,9 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestTaskManagerImpl.class);
 
     @Resource
-    ExecutorProvider executorProvider;
+    private ExecutorProvider executorProvider;
+    @Resource
+    private Provider<TaskWrapper> taskWrapperProvider;
 
     @Test
     public void testMoreItemsThanThreads_boundedPool() throws ExecutionException, InterruptedException {
@@ -35,9 +41,10 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
                 poolSize);
 
         final Executor executor = executorProvider.getExecutor(threadPool);
+        final TaskWrapper taskWrapper = taskWrapperProvider.get();
 
-        CompletableFuture.runAsync(() ->
-                LOGGER.info("Warming up thread pool")).get();
+        CompletableFuture.runAsync(taskWrapper.wrap(() ->
+                LOGGER.info("Warming up thread pool"))).get();
 
         AtomicInteger counter = new AtomicInteger();
         final Queue<Thread> threadsUsed = new ConcurrentLinkedQueue<>();
@@ -80,6 +87,7 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
                 poolSize);
 
         final Executor executor = executorProvider.getExecutor(threadPool);
+        final TaskWrapper taskWrapper = taskWrapperProvider.get();
 
         AtomicInteger counter = new AtomicInteger();
         final Queue<Thread> threadsUsed = new ConcurrentLinkedQueue<>();
@@ -87,12 +95,12 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final int taskCount = 10;
         CompletableFuture[] futures = IntStream.rangeClosed(1, taskCount)
                 .mapToObj(i ->
-                        CompletableFuture.runAsync(() -> {
+                        CompletableFuture.runAsync(taskWrapper.wrap(() -> {
                                     ThreadUtil.sleep(50);
                                     LOGGER.info("Running task {}", i);
                                     counter.incrementAndGet();
                                     threadsUsed.add(Thread.currentThread());
-                                },
+                                }),
                                 executor))
                 .toArray(CompletableFuture[]::new);
 
@@ -123,12 +131,15 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
 
         try {
             final Executor executor = executorProvider.getExecutor();
-            CompletableFuture.runAsync(() -> {
+
+            final Runnable runnable = () -> {
                 if (CurrentTaskState.isTerminated()) {
                     terminated.set(true);
                 }
                 throw new RuntimeException("Expected");
-            }, executor)
+            };
+
+            CompletableFuture.runAsync(taskWrapperProvider.get().wrap(runnable), executor)
                     .thenRun(() -> completedNormally.set(true))
                     .exceptionally(t -> {
                         completedExceptionally.set(true);
@@ -148,7 +159,10 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
             throw new TaskTerminatedException();
         }
 
-        if (nested && exception != null) {
+        if (nested && (exception != null || completedExceptionally.get())) {
+            if (completedExceptionally.get()) {
+                throw new RuntimeException("Error");
+            }
             throw exception;
         }
     }
@@ -159,8 +173,11 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final AtomicBoolean completedExceptionally = new AtomicBoolean();
 
         final Executor executor = executorProvider.getExecutor();
-        CompletableFuture.runAsync(() -> {
-        }, executor)
+
+        final Runnable runnable = () -> {
+        };
+
+        CompletableFuture.runAsync(taskWrapperProvider.get().wrap(runnable), executor)
                 .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
@@ -178,10 +195,13 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final AtomicBoolean completedExceptionally = new AtomicBoolean();
 
         final Executor executor = executorProvider.getExecutor();
-        CompletableFuture.runAsync(() -> {
+
+        final Runnable runnable = () -> {
             CurrentTaskState.currentTask().terminate();
-            testCompletedExceptionally();
-        }, executor)
+            testCompletedExceptionally(executorProvider, true);
+        };
+
+        CompletableFuture.runAsync(taskWrapperProvider.get().wrap(runnable), executor)
                 .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
@@ -198,10 +218,13 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final AtomicBoolean completedExceptionally = new AtomicBoolean();
 
         final Executor executor = executorProviderOuter.getExecutor();
-        CompletableFuture.runAsync(() -> {
+
+        final Runnable runnable = () -> {
             CurrentTaskState.currentTask().terminate();
             testCompletedExceptionally(executorProviderInner, true);
-        }, executor)
+        };
+
+        CompletableFuture.runAsync(taskWrapperProvider.get().wrap(runnable), executor)
                 .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
@@ -219,10 +242,10 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final AtomicBoolean completedExceptionally = new AtomicBoolean();
 
         final Executor executor = executorProvider.getExecutor();
-        CompletableFuture.runAsync(() -> {
-            CurrentTaskState.currentTask().terminate();
-            testCompletedNormally();
-        }, executor)
+
+        final Runnable runnable = this::testCompletedNormally;
+
+        CompletableFuture.runAsync(taskWrapperProvider.get().wrap(runnable), executor)
                 .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
@@ -245,11 +268,8 @@ public class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
     }
 
     private ExecutorProvider createRejectedExecutorProvider() {
-        final Executor executor = new Executor() {
-            @Override
-            public void execute(final Runnable command) {
-                throw new RejectedExecutionException("Expected");
-            }
+        final Executor executor = command -> {
+            throw new RejectedExecutionException("Expected");
         };
         return new ExecutorProvider() {
             @Override

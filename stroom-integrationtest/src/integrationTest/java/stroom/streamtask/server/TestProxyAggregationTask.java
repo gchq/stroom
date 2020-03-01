@@ -38,7 +38,7 @@ import stroom.streamstore.shared.ExpressionUtil;
 import stroom.streamstore.shared.FindStreamCriteria;
 import stroom.streamstore.shared.Stream;
 import stroom.streamstore.shared.StreamType;
-import stroom.task.server.ExecutorProvider;
+import stroom.util.concurrent.ExecutorProvider;
 import stroom.task.server.TaskContext;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
@@ -49,6 +49,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.spring.DummyTask;
+import stroom.util.task.TaskWrapper;
 import stroom.util.test.FileSystemTestUtil;
 import stroom.util.test.StroomExpectedException;
 
@@ -88,6 +89,8 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
     @Resource
     private ExecutorProvider executorProvider;
     @Resource
+    private Provider<TaskWrapper> taskWrapperProvider;
+    @Resource
     private CommonTestScenarioCreator commonTestScenarioCreator;
     @Resource
     private Provider<FileSetProcessor> filePackProcessorProvider;
@@ -100,6 +103,7 @@ public class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
                 taskContext,
                 executorProvider,
+                taskWrapperProvider,
                 filePackProcessorProvider,
                 proxyDir,
                 10,

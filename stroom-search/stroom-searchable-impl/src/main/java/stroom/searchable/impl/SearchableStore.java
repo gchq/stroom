@@ -23,11 +23,13 @@ import stroom.query.common.v2.TableCoprocessor;
 import stroom.query.common.v2.TableCoprocessorSettings;
 import stroom.query.common.v2.TablePayload;
 import stroom.searchable.api.Searchable;
-import stroom.task.server.ExecutorProvider;
 import stroom.task.server.TaskContext;
+import stroom.util.concurrent.ExecutorProvider;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.task.TaskWrapper;
 
+import javax.inject.Provider;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -36,7 +38,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalInt;
-import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.LongAdder;
@@ -70,7 +71,8 @@ class SearchableStore implements Store {
                     final Searchable searchable,
                     final TaskContext taskContext,
                     final SearchRequest searchRequest,
-                    final ExecutorProvider executorProvider) {
+                    final ExecutorProvider executorProvider,
+                    final Provider<TaskWrapper> taskWrapperProvider) {
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.storeSize = storeSize;
         this.taskContext = taskContext;
@@ -104,8 +106,7 @@ class SearchableStore implements Store {
             fieldArray[v] = field;
         });
 
-        final Executor executor = executorProvider.getExecutor();
-        executor.execute(() -> {
+        Runnable runnable = () -> {
             synchronized (SearchableStore.class) {
                 thread = Thread.currentThread();
                 if (terminate.get()) {
@@ -175,7 +176,10 @@ class SearchableStore implements Store {
             }
 
             LOGGER.debug(() -> "Query finished in " + Duration.between(queryStart, Instant.now()));
-        });
+        };
+        runnable = taskWrapperProvider.get().wrap(runnable);
+
+        executorProvider.getExecutor().execute(runnable);
     }
 
     private Map<String, String> getParamMap(final SearchRequest searchRequest) {

@@ -18,12 +18,15 @@ package stroom.util.task.taskqueue;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.concurrent.ExecutorProvider;
+import stroom.util.shared.ThreadPool;
 import stroom.util.spring.StroomShutdown;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentSkipListSet;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -49,11 +52,14 @@ public abstract class TaskExecutor {
 
     private final String name;
     private volatile ExecutorService executor;
+    private final Executor taskExecutor;
+
     private volatile boolean running;
     private volatile boolean shutdown;
 
-    public TaskExecutor(final String name) {
+    public TaskExecutor(final String name, final ExecutorProvider executorProvider, final ThreadPool taskThreadPool) {
         this.name = name;
+        this.taskExecutor = executorProvider.getExecutor(taskThreadPool);
     }
 
     private synchronized void start() {
@@ -89,7 +95,10 @@ public abstract class TaskExecutor {
                         }
                     } catch (final InterruptedException e) {
                         // Clear the interrupt state.
-                        Thread.interrupted();
+                        final boolean wasInterrupted = Thread.interrupted();
+                        if (wasInterrupted) {
+                            LOGGER.debug("Thread was interrupted");
+                        }
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
                     } finally {
@@ -166,7 +175,6 @@ public abstract class TaskExecutor {
     }
 
     private Runnable execNextTask() {
-        TaskProducer producer = null;
         Runnable task = null;
 
         final int total = totalThreads.getAndIncrement();
@@ -177,24 +185,23 @@ public abstract class TaskExecutor {
                 // Try and get a task from usable producers.
                 final int tries = producers.size();
                 for (int i = 0; i < tries && task == null; i++) {
-                    producer = nextProducer();
+                    final TaskProducer producer = nextProducer();
                     if (producer != null) {
                         task = producer.next();
                     }
                 }
 
-                final TaskProducer currentProducer = producer;
                 final Runnable currentTask = task;
-
                 if (currentTask != null) {
                     executing = true;
                     try {
-                        CompletableFuture.runAsync(currentTask, currentProducer.getExecutor())
-                            .thenRun(this::complete)
-                                .exceptionally(t -> {
-                                    complete();
-                                    LOGGER.error(t.getMessage(), t);
-                                    return null;
+                        CompletableFuture.runAsync(currentTask, taskExecutor)
+                                .whenComplete((r, t) -> {
+                                    totalThreads.decrementAndGet();
+                                    signalAll();
+                                    if (t != null) {
+                                        LOGGER.error(t.getMessage(), t);
+                                    }
                                 });
                     } catch (final RuntimeException e) {
                         totalThreads.decrementAndGet();
@@ -209,11 +216,6 @@ public abstract class TaskExecutor {
         }
 
         return task;
-    }
-
-    private void complete() {
-        totalThreads.decrementAndGet();
-        signalAll();
     }
 
     private TaskProducer nextProducer() {

@@ -17,6 +17,9 @@
 package stroom.search.server.shard;
 
 import org.springframework.stereotype.Component;
+import stroom.util.concurrent.ExecutorProvider;
+import stroom.util.concurrent.ThreadPoolImpl;
+import stroom.util.shared.ThreadPool;
 import stroom.util.task.taskqueue.TaskExecutor;
 
 import javax.inject.Singleton;
@@ -24,7 +27,13 @@ import javax.inject.Singleton;
 @Component
 @Singleton
 class IndexShardSearchTaskExecutor extends TaskExecutor {
-    IndexShardSearchTaskExecutor() {
-        super("Stroom Search Index Shard Task Executor");
+    static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
+            "Search Index Shard",
+            5,
+            0,
+            Integer.MAX_VALUE);
+
+    IndexShardSearchTaskExecutor(final ExecutorProvider executorProvider) {
+        super("Stroom Search Index Shard Task Executor",  executorProvider, THREAD_POOL);
     }
 }

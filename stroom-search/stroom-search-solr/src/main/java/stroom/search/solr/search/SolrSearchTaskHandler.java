@@ -39,24 +39,25 @@ import stroom.search.solr.SolrIndexClientCache;
 import stroom.search.solr.shared.SolrConnectionConfig;
 import stroom.search.solr.shared.SolrIndex;
 import stroom.search.solr.shared.SolrIndexField;
-import stroom.task.server.ExecutorProvider;
+import stroom.util.concurrent.ExecutorProvider;
 import stroom.task.server.TaskContext;
-import stroom.task.server.ThreadPoolImpl;
+import stroom.util.concurrent.ThreadPoolImpl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasTerminate;
 import stroom.util.shared.ThreadPool;
 import stroom.util.shared.VoidResult;
 import stroom.util.spring.StroomScope;
+import stroom.util.task.TaskWrapper;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 @Component
@@ -71,15 +72,18 @@ public class SolrSearchTaskHandler {
             Integer.MAX_VALUE);
 
     private final SolrIndexClientCache solrIndexClientCache;
-    private final ExecutorProvider executorProvider;
+    private final Executor executor;
+    private final Provider<TaskWrapper> taskWrapperProvider;
     private final TaskContext taskContext;
 
     @Inject
     SolrSearchTaskHandler(final SolrIndexClientCache solrIndexClientCache,
                           final ExecutorProvider executorProvider,
+                          final Provider<TaskWrapper> taskWrapperProvider,
                           final TaskContext taskContext) {
         this.solrIndexClientCache = solrIndexClientCache;
-        this.executorProvider = executorProvider;
+        this.executor = executorProvider.getExecutor(THREAD_POOL);
+        this.taskWrapperProvider = taskWrapperProvider;
         this.taskContext = taskContext;
     }
 
@@ -112,8 +116,7 @@ public class SolrSearchTaskHandler {
 
         // If there is an error building the query then it will be null here.
         try {
-            final Executor executor = executorProvider.getExecutor(THREAD_POOL);
-            CompletableFuture.runAsync(() -> {
+            final Runnable runnable = taskWrapperProvider.get().wrap(() -> {
                 taskContext.setName("Index Searcher");
                 LOGGER.logDurationIfDebugEnabled(
                         () -> {
@@ -133,7 +136,8 @@ public class SolrSearchTaskHandler {
                             }
                         },
                         () -> "searcher.search()");
-            }, executor);
+            });
+            CompletableFuture.runAsync(runnable, executor);
         } catch (final RuntimeException e) {
             error(task, e.getMessage(), e);
         }

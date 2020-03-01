@@ -18,12 +18,10 @@ package stroom.search.server.shard;
 
 import stroom.search.coprocessor.Receiver;
 import stroom.search.server.shard.IndexShardSearchTask.IndexShardQueryFactory;
-import stroom.task.server.ExecutorProvider;
-import stroom.task.server.ThreadPoolImpl;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasTerminate;
-import stroom.util.shared.ThreadPool;
+import stroom.util.task.TaskWrapper;
 import stroom.util.task.taskqueue.TaskExecutor;
 import stroom.util.task.taskqueue.TaskProducer;
 
@@ -35,12 +33,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 class IndexShardSearchTaskProducer extends TaskProducer {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(IndexShardSearchTaskProducer.class);
-
-    static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
-            "Search Index Shard",
-            5,
-            0,
-            Integer.MAX_VALUE);
 
     private final Queue<IndexShardSearchRunnable> taskQueue = new ConcurrentLinkedQueue<>();
     private final AtomicInteger tasksRequested = new AtomicInteger();
@@ -54,11 +46,11 @@ class IndexShardSearchTaskProducer extends TaskProducer {
                                  final IndexShardQueryFactory queryFactory,
                                  final String[] fieldNames,
                                  final int maxThreadsPerTask,
-                                 final ExecutorProvider executorProvider,
+                                 final Provider<TaskWrapper> taskWrapperProvider,
                                  final Provider<IndexShardSearchTaskHandler> handlerProvider,
                                  final Tracker tracker,
                                  final HasTerminate hasTerminate) {
-        super(taskExecutor, maxThreadsPerTask, executorProvider.getExecutor(THREAD_POOL));
+        super(taskExecutor, maxThreadsPerTask, taskWrapperProvider);
         this.tracker = tracker;
         this.hasTerminate = hasTerminate;
 

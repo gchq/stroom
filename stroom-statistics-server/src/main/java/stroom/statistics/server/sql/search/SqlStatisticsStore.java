@@ -32,6 +32,7 @@ import stroom.task.server.TaskContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.HasTerminate;
+import stroom.util.task.TaskWrapper;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -216,9 +217,7 @@ public class SqlStatisticsStore implements Store {
         final Disposable searchResultsDisposable = Flowable.just(0)
                 .subscribeOn(scheduler)
                 .concatMap(val -> searchResultsFlowable)
-                .doOnSubscribe(subscription -> {
-                    LOGGER.debug("doOnSubscribeCalled");
-                })
+                .doOnSubscribe(subscription -> LOGGER.debug("doOnSubscribeCalled"))
                 .subscribe(
                         data -> {
                             counter.increment();

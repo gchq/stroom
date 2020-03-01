@@ -25,14 +25,14 @@ import org.springframework.stereotype.Component;
 import stroom.jobsystem.server.JobTrackedSchedule;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.proxy.repo.RepositoryProcessor;
-import stroom.proxy.repo.StroomZipRepository;
-import stroom.task.server.ExecutorProvider;
+import stroom.util.concurrent.ExecutorProvider;
 import stroom.task.server.TaskContext;
 import stroom.util.config.PropertyUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.Task;
 import stroom.util.spring.StroomScope;
 import stroom.util.spring.StroomSimpleCronSchedule;
+import stroom.util.task.TaskWrapper;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -58,6 +58,7 @@ public class ProxyAggregationExecutor {
     @Inject
     ProxyAggregationExecutor(final TaskContext taskContext,
                              final ExecutorProvider executorProvider,
+                             final Provider<TaskWrapper> taskWrapperProvider,
                              final Provider<FileSetProcessor> fileSetProcessorProvider,
                              @Value("#{propertyConfigurer.getProperty('stroom.proxyDir')}") final String proxyDir,
                              @Value("#{propertyConfigurer.getProperty('stroom.proxyThreads')}") final String threadCount,
@@ -68,6 +69,7 @@ public class ProxyAggregationExecutor {
         this(
                 taskContext,
                 executorProvider,
+                taskWrapperProvider,
                 fileSetProcessorProvider,
                 proxyDir,
                 PropertyUtil.toInt(threadCount, 10),
@@ -80,6 +82,7 @@ public class ProxyAggregationExecutor {
 
     ProxyAggregationExecutor(final TaskContext taskContext,
                              final ExecutorProvider executorProvider,
+                             final Provider<TaskWrapper> taskWrapperProvider,
                              final Provider<FileSetProcessor> fileSetProcessorProvider,
                              final String proxyDir,
                              final int threadCount,
@@ -90,6 +93,7 @@ public class ProxyAggregationExecutor {
         this.taskContext = taskContext;
         this.repositoryProcessor = new RepositoryProcessor(taskContext,
                 executorProvider,
+                taskWrapperProvider,
                 fileSetProcessorProvider,
                 proxyDir,
                 threadCount,

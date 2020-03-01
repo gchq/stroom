@@ -26,10 +26,9 @@ import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.coprocessor.Values;
 import stroom.security.SecurityContext;
 import stroom.security.SecurityHelper;
-import stroom.task.server.ExecutorProvider;
-import stroom.task.server.ThreadPoolImpl;
+import stroom.util.concurrent.ExecutorProvider;
 import stroom.util.shared.HasTerminate;
-import stroom.util.shared.ThreadPool;
+import stroom.util.task.TaskWrapper;
 import stroom.util.task.taskqueue.TaskExecutor;
 import stroom.util.task.taskqueue.TaskProducer;
 
@@ -47,11 +46,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 class ExtractionTaskProducer extends TaskProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskProducer.class);
-    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
-            "Extraction",
-            5,
-            0,
-            Integer.MAX_VALUE);
 
     private final HasTerminate clusterSearchTask;
     private final Receiver parentReceiver;
@@ -71,9 +65,10 @@ class ExtractionTaskProducer extends TaskProducer {
                            final int maxStoredDataQueueSize,
                            final int maxThreadsPerTask,
                            final ExecutorProvider executorProvider,
+                           final Provider<TaskWrapper> taskWrapperProvider,
                            final Provider<ExtractionTaskHandler> handlerProvider,
                            final SecurityContext securityContext) {
-        super(taskExecutor, maxThreadsPerTask, executorProvider.getExecutor(THREAD_POOL));
+        super(taskExecutor, maxThreadsPerTask, taskWrapperProvider);
         this.parentReceiver = parentReceiver;
         this.receivers = receivers;
         this.clusterSearchTask = hasTerminate;
@@ -102,8 +97,8 @@ class ExtractionTaskProducer extends TaskProducer {
 //        }));
 
         // Start mapping streams.
-        final Executor executor = executorProvider.getExecutor(THREAD_POOL);
-        CompletableFuture.runAsync(() -> {
+        final Executor executor = executorProvider.getExecutor(ExtractionTaskExecutor.THREAD_POOL);
+        final Runnable runnable = taskWrapperProvider.get().wrap(() -> {
             LOGGER.debug("Starting extraction task producer");
 
             // Elevate permissions so users with only `Use` feed permission can `Read` streams.
@@ -141,7 +136,9 @@ class ExtractionTaskProducer extends TaskProducer {
                 // Tell the supplied executor that we are ready to deliver final tasks.
                 signalAvailable();
             }
-        }, executor);
+        });
+
+        CompletableFuture.runAsync(runnable, executor);
     }
 
     Receiver process() {

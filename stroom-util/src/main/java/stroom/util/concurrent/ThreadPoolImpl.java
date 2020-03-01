@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.task.server;
+package stroom.util.concurrent;
 
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;

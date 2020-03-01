@@ -14,10 +14,11 @@ import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.coprocessor.Values;
 import stroom.security.SecurityContext;
 import stroom.streamstore.server.StreamStore;
-import stroom.task.server.ExecutorProvider;
+import stroom.util.concurrent.ExecutorProvider;
 import stroom.util.config.PropertyUtil;
 import stroom.util.shared.HasTerminate;
 import stroom.util.spring.StroomScope;
+import stroom.util.task.TaskWrapper;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -42,6 +43,7 @@ public class ExtractionDecoratorFactory {
     private final ExtractionTaskProperties extractionTaskProperties;
     private final StreamStore streamStore;
     private final ExecutorProvider executorProvider;
+    private final Provider<TaskWrapper> taskWrapperProvider;
     private final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider;
     private final AnnotationsDecoratorFactory receiverDecoratorFactory;
     private final SecurityContext securityContext;
@@ -52,6 +54,7 @@ public class ExtractionDecoratorFactory {
                                final ExtractionTaskProperties extractionTaskProperties,
                                final StreamStore streamStore,
                                final ExecutorProvider executorProvider,
+                               final Provider<TaskWrapper> taskWrapperProvider,
                                final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
                                final AnnotationsDecoratorFactory receiverDecoratorFactory,
                                final SecurityContext securityContext,
@@ -60,6 +63,7 @@ public class ExtractionDecoratorFactory {
         this.extractionTaskProperties = extractionTaskProperties;
         this.streamStore = streamStore;
         this.executorProvider = executorProvider;
+        this.taskWrapperProvider = taskWrapperProvider;
         this.extractionTaskHandlerProvider = extractionTaskHandlerProvider;
         this.receiverDecoratorFactory = receiverDecoratorFactory;
         this.securityContext = securityContext;
@@ -127,6 +131,7 @@ public class ExtractionDecoratorFactory {
                 maxStoredDataQueueSize,
                 extractionTaskProperties.getMaxThreadsPerTask(),
                 executorProvider,
+                taskWrapperProvider,
                 extractionTaskHandlerProvider,
                 securityContext);
 
