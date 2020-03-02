@@ -1,5 +1,6 @@
 package stroom.authentication;
 
+import stroom.authentication.impl.db.AuthDbConnProvider;
 import stroom.config.common.ConnectionConfig;
 import stroom.db.util.DbUtil;
 import stroom.test.common.util.db.DbTestUtil;

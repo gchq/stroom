@@ -29,7 +29,6 @@ import org.jooq.TableField;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.AuthDbConnProvider;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.auth.db.Tables;
 import stroom.auth.db.tables.records.UsersRecord;

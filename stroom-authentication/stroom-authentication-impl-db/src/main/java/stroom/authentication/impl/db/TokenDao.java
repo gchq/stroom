@@ -31,7 +31,6 @@ import org.jooq.SortField;
 import org.jooq.Table;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.AuthDbConnProvider;
 import stroom.authentication.TokenBuilder;
 import stroom.authentication.TokenBuilderFactory;
 import stroom.authentication.config.TokenConfig;

@@ -1,7 +1,7 @@
 package stroom.authentication.resources.support;
 
 import org.junit.Before;
-import stroom.authentication.AuthDbConnProvider;
+import stroom.authentication.impl.db.AuthDbConnProvider;
 import stroom.authentication.TestAuthDbConnProvider;
 import stroom.config.common.ConnectionConfig;
 import stroom.db.util.DbUtil;

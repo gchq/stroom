@@ -1,4 +1,4 @@
-package stroom.authentication;
+package stroom.authentication.impl.db;
 
 import javax.sql.DataSource;
 

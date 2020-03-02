@@ -1,7 +1,7 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
-import stroom.authentication.AuthDbModule;
+import stroom.authentication.impl.db.AuthDbModule;
 import stroom.authentication.AuthModule;
 import stroom.cache.impl.CacheResourceModule;
 import stroom.core.db.CoreDbModule;
