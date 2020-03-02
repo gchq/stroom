@@ -171,50 +171,8 @@ public final class UserResource implements RestResource {
             @Context @NotNull HttpServletRequest httpServletRequest,
             @ApiParam("user") @NotNull User user,
             @PathParam("id") int userId) {
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            final String loggedInUser = securityContext.getUserId();
-
-            Optional<User> optionalUser = userDao.get(userId);
-            Response response;
-            if (optionalUser.isEmpty()) {
-                response = Response.status(Response.Status.NOT_FOUND).build();
-                return response;
-            }
-
-            User foundUser = optionalUser.get();
-
-            // TODO: auth-into-stroom migration: change the Stroom user
-            boolean isEnabled = user.getState().equals("enabled");
-            stroom.security.shared.User userToUpdate = securityUserService.getUserByName(foundUser.getEmail());
-            userToUpdate.setEnabled(isEnabled);
-            securityUserService.update(userToUpdate);
-
-            user.setUpdatedByUser(loggedInUser);
-            user.setUpdatedOn(LocalDateTime.now().toString());
-            user.setId(userId);
-            userDao.update(user);
-//            UsersRecord updatedUsersRecord = UserMapper.updateUserRecordWithUser(user, usersRecord);
-//            database
-//                    .update((Table) USERS)
-//                    .set(updatedUsersRecord)
-//                    .where(new Condition[]{USERS.ID.eq(userId)}).execute();
-
-            event.logging.User eventUser = new event.logging.User();
-            eventUser.setId(Integer.valueOf(userId).toString());
-            MultiObject afterMultiObject = new MultiObject();
-            afterMultiObject.getObjects().add(eventUser);
-            Event.EventDetail.Update update = new Event.EventDetail.Update();
-            update.setAfter(afterMultiObject);
-            stroomEventLoggingService.update(
-                    "UpdateUser",
-                    httpServletRequest,
-                    loggedInUser,
-                    update,
-                    "Toggle whether a token is enabled or not.");
-
-            response = Response.status(Response.Status.NO_CONTENT).build();
-            return response;
-        });
+        userService.update(user, userId);
+        return Response.status(Response.Status.NO_CONTENT).build();
     }
 
     @ApiOperation(

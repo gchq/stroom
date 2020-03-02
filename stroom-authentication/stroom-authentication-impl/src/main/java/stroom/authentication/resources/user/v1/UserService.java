@@ -1,6 +1,8 @@
 package stroom.authentication.resources.user.v1;
 
 import com.google.common.base.Strings;
+import event.logging.Event;
+import event.logging.MultiObject;
 import event.logging.ObjectOutcome;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.Condition;
@@ -19,6 +21,7 @@ import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
 import javax.ws.rs.core.Response;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static stroom.auth.db.Tables.USERS;
@@ -26,14 +29,17 @@ import static stroom.auth.db.Tables.USERS;
 public class UserService {
     private UserDao userDao;
     private SecurityContext securityContext;
+    private stroom.security.impl.UserService securityUserService;
     private StroomEventLoggingService stroomEventLoggingService;
 
     @Inject
     UserService(final UserDao userDao,
                 final SecurityContext securityContext,
+                final stroom.security.impl.UserService securityUserService,
                 final StroomEventLoggingService stroomEventLoggingService){
         this.userDao = userDao;
         this.securityContext = securityContext;
+        this.securityUserService = securityUserService;
         this.stroomEventLoggingService = stroomEventLoggingService;
     }
 
@@ -61,6 +67,27 @@ public class UserService {
 
         }
         return optionalUser;
+    }
+
+    public void update(User user, int userId){
+        checkPermission();
+
+        // Update Stroom user
+        Optional<User> optionalUser = userDao.get(userId);
+        User foundUser = optionalUser.get();
+        boolean isEnabled = user.getState().equals("enabled");
+        stroom.security.shared.User userToUpdate = securityUserService.getUserByName(foundUser.getEmail());
+        userToUpdate.setEnabled(isEnabled);
+        securityUserService.update(userToUpdate);
+
+        final String loggedInUser = securityContext.getUserId();
+        user.setUpdatedByUser(loggedInUser);
+        user.setUpdatedOn(LocalDateTime.now().toString());
+        user.setId(userId);
+        userDao.update(user);
+
+        stroomEventLoggingService.createAction("UpdateUser",
+                "Toggle whether a token is enabled or not.");
     }
 
     public int create(User user){
