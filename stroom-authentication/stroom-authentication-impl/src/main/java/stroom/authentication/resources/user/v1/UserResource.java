@@ -418,13 +418,10 @@ public final class UserResource implements RestResource {
     @NotNull
     public final Response deleteUser(
             @Context @NotNull HttpServletRequest httpServletRequest,
-            @Context @NotNull DSLContext database,
             @PathParam("id") int userId) {
 
         return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            database
-                    .deleteFrom((Table) USERS)
-                    .where(new Condition[]{USERS.ID.eq(userId)}).execute();
+            userDao.delete(userId);
 
             event.logging.User user = new event.logging.User();
             user.setId(Integer.valueOf(userId).toString());

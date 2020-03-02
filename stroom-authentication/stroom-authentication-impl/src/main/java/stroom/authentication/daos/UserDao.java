@@ -187,6 +187,12 @@ public class UserDao {
                 .where(new Condition[]{USERS.ID.eq(user.getId())}).execute());
     }
 
+    public void delete(int id) {
+        JooqUtil.context(authDbConnProvider, context -> context
+                .deleteFrom((Table) USERS)
+                .where(new Condition[]{USERS.ID.eq(id)}).execute());
+    }
+
     public Optional<User> get(int id) {
         Optional<UsersRecord> userQuery = JooqUtil.contextResult(authDbConnProvider, context -> context
                 .selectFrom(USERS)
