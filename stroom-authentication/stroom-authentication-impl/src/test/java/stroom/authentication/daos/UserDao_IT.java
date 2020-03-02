@@ -5,6 +5,8 @@ import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.junit.Ignore;
 import org.junit.Test;
+import stroom.authentication.impl.db.UserDao;
+import stroom.authentication.impl.db.UserMapper;
 import stroom.authentication.resources.user.v1.User;
 import stroom.authentication.resources.support.Database_IT;
 

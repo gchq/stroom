@@ -19,7 +19,7 @@ package stroom.authentication.resources;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
-import stroom.authentication.daos.UserMapper;
+import stroom.authentication.impl.db.UserMapper;
 import stroom.auth.db.tables.records.UsersRecord;
 import stroom.authentication.resources.user.v1.User;
 

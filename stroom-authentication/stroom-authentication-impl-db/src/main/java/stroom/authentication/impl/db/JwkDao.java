@@ -1,4 +1,4 @@
-package stroom.authentication.daos;
+package stroom.authentication.impl.db;
 
 import org.jose4j.jwk.JsonWebKey;
 import org.jose4j.jwk.PublicJsonWebKey;

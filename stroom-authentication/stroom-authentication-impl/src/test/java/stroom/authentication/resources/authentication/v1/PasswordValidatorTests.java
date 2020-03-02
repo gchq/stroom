@@ -1,15 +1,15 @@
 package stroom.authentication.resources.authentication.v1;
 
 import org.junit.Test;
-import stroom.authentication.daos.UserDao;
+import stroom.authentication.impl.db.UserDao;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.authentication.daos.UserDao.LoginResult.BAD_CREDENTIALS;
-import static stroom.authentication.daos.UserDao.LoginResult.DISABLED_BAD_CREDENTIALS;
-import static stroom.authentication.daos.UserDao.LoginResult.LOCKED_BAD_CREDENTIALS;
-import static stroom.authentication.daos.UserDao.LoginResult.USER_DOES_NOT_EXIST;
+import static stroom.authentication.impl.db.UserDao.LoginResult.BAD_CREDENTIALS;
+import static stroom.authentication.impl.db.UserDao.LoginResult.DISABLED_BAD_CREDENTIALS;
+import static stroom.authentication.impl.db.UserDao.LoginResult.LOCKED_BAD_CREDENTIALS;
+import static stroom.authentication.impl.db.UserDao.LoginResult.USER_DOES_NOT_EXIST;
 import static stroom.authentication.resources.authentication.v1.PasswordValidationFailureType.BAD_OLD_PASSWORD;
 import static stroom.authentication.resources.authentication.v1.PasswordValidationFailureType.REUSE;
 import static stroom.authentication.resources.authentication.v1.PasswordValidator.validateAuthenticity;

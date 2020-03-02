@@ -16,7 +16,7 @@
  *
  */
 
-package stroom.authentication.daos;
+package stroom.authentication.impl.db;
 
 import org.jooq.Condition;
 import org.jooq.DSLContext;

@@ -31,8 +31,8 @@ import org.jose4j.lang.JoseException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.authentication.config.AuthenticationConfig;
-import stroom.authentication.daos.JwkDao;
-import stroom.authentication.daos.TokenDao;
+import stroom.authentication.impl.db.JwkDao;
+import stroom.authentication.impl.db.TokenDao;
 import stroom.authentication.resources.token.v1.Token;
 
 import javax.inject.Inject;

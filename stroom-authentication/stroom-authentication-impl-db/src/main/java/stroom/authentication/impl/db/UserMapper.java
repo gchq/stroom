@@ -16,7 +16,7 @@
  *
  */
 
-package stroom.authentication.daos;
+package stroom.authentication.impl.db;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
