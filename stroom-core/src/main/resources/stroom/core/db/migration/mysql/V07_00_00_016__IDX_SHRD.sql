@@ -31,9 +31,18 @@ SET shard.IDX_UUID = (
     WHERE ind.ID = shard.FK_IDX_ID);
 
 -- idempotent
+-- We need to drop the constraint so we can rename the column
 CALL core_drop_constraint_v1(
     'IDX_SHRD',
     'IDX_SHRD_FK_IDX_ID',
+    'FOREIGN KEY');
+
+-- idempotent
+-- On some existing databases the constraint is named _SHARD_ not _SHRD_
+-- so we attempt to delete both forms of the name.
+CALL core_drop_constraint_v1(
+    'IDX_SHRD',
+    'IDX_SHARD_FK_IDX_ID',
     'FOREIGN KEY');
 
 -- idempotent
