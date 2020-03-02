@@ -90,6 +90,15 @@ public class UserService {
                 "Toggle whether a token is enabled or not.");
     }
 
+
+    public void deleteUser(int userId) {
+        checkPermission();
+        userDao.delete(userId);
+        stroomEventLoggingService.createAction("DeleteUser",
+                "Delete a user by ID");
+    }
+
+
     public int create(User user){
         checkPermission();
 

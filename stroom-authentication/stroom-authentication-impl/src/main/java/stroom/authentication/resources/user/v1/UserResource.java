@@ -1,4 +1,3 @@
-
 /*
  *
  *   Copyright 2017 Crown Copyright
@@ -20,28 +19,9 @@
 package stroom.authentication.resources.user.v1;
 
 import com.codahale.metrics.annotation.Timed;
-import com.google.common.base.Strings;
-import event.logging.Event;
-import event.logging.MultiObject;
-import event.logging.ObjectOutcome;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.apache.commons.lang3.tuple.Pair;
-import org.jooq.Condition;
-import org.jooq.DSLContext;
-import org.jooq.JSONFormat;
-import org.jooq.Record;
-import org.jooq.Record13;
-import org.jooq.Result;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.authentication.clients.AuthorisationService;
-import stroom.authentication.clients.UserServiceClient;
-import stroom.authentication.impl.db.UserDao;
-import stroom.authentication.service.eventlogging.StroomEventLoggingService;
-import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -58,43 +38,20 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
 import java.util.Optional;
-
-import static stroom.auth.db.Tables.USERS;
 
 @Singleton
 @Path("/user/v1")
 @Produces({"application/json"})
 @Api(description = "Stroom User API", tags = {"User"})
 public final class UserResource implements RestResource {
-    private static final Logger LOGGER = LoggerFactory.getLogger(UserResource.class);
-
-    private AuthorisationService authorisationService;
-    private UserService userService;
-    private stroom.security.impl.UserService securityUserService;
-    private UserDao userDao;
-    private StroomEventLoggingService stroomEventLoggingService;
-    private SecurityContext securityContext;
+    private UserService service;
 
     @Inject
-    public UserResource(
-            @NotNull final AuthorisationService authorisationService,
-            final UserService userService,
-            final stroom.security.impl.UserService securityUserService,
-            final UserDao userDao,
-            final StroomEventLoggingService stroomEventLoggingService,
-            final SecurityContext securityContext) {
+    public UserResource(final UserService service) {
         super();
-        this.authorisationService = authorisationService;
-        this.userService = userService;
-        this.securityUserService = securityUserService;
-        this.userDao = userDao;
-        this.stroomEventLoggingService = stroomEventLoggingService;
-        this.securityContext = securityContext;
+        this.service = service;
     }
-
 
     @ApiOperation(
             value = "Get all users.",
@@ -105,7 +62,7 @@ public final class UserResource implements RestResource {
     @Timed
     @NotNull
     public final Response getAll(@Context @NotNull HttpServletRequest httpServletRequest ) {
-        String usersAsJson = userService.getAllAsJson();
+        String usersAsJson = service.getAllAsJson();
         return Response.status(Response.Status.OK).entity(usersAsJson).build();
     }
 
@@ -120,7 +77,7 @@ public final class UserResource implements RestResource {
     public final Response createUser(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @ApiParam("user") @NotNull User user) {
-        int newUserId = userService.create(user);
+        int newUserId = service.create(user);
         return Response.status(Response.Status.OK).entity(newUserId).build();
     }
 
@@ -135,7 +92,7 @@ public final class UserResource implements RestResource {
     public final Response searchUsers(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @QueryParam("email") String email) {
-        String usersAsJson = userService.search(email);
+        String usersAsJson = service.search(email);
         return Response.status(Response.Status.OK).entity(usersAsJson).build();
     }
 
@@ -150,7 +107,7 @@ public final class UserResource implements RestResource {
     public final Response getUser(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @PathParam("id") int userId) {
-        Optional<User> optionalUser = userService.get(userId);
+        Optional<User> optionalUser = service.get(userId);
         if(optionalUser.isPresent()){
             return Response.status(Response.Status.OK).entity(optionalUser.get()).build();
         }
@@ -171,7 +128,7 @@ public final class UserResource implements RestResource {
             @Context @NotNull HttpServletRequest httpServletRequest,
             @ApiParam("user") @NotNull User user,
             @PathParam("id") int userId) {
-        userService.update(user, userId);
+        service.update(user, userId);
         return Response.status(Response.Status.NO_CONTENT).build();
     }
 
@@ -186,24 +143,9 @@ public final class UserResource implements RestResource {
     public final Response deleteUser(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @PathParam("id") int userId) {
+        service.deleteUser(userId);
+        return Response.status(Response.Status.NO_CONTENT).build();
+   }
 
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            userDao.delete(userId);
-
-            event.logging.User user = new event.logging.User();
-            user.setId(Integer.valueOf(userId).toString());
-            ObjectOutcome objectOutcome = new ObjectOutcome();
-            objectOutcome.getObjects().add(user);
-            stroomEventLoggingService.delete(
-                    "DeleteUser",
-                    httpServletRequest,
-                    securityContext.getUserId(),
-                    objectOutcome,
-                    "Delete a user by ID");
-
-            Response response = Response.status(Response.Status.NO_CONTENT).build();
-            return response;
-        });
-    }
 }
 
