@@ -19,26 +19,10 @@
 package stroom.authentication.resources.token.v1;
 
 import com.codahale.metrics.annotation.Timed;
-import event.logging.Event;
-import event.logging.MultiObject;
-import event.logging.ObjectOutcome;
-import event.logging.Search;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.jose4j.jwk.JsonWebKey;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.authentication.TokenVerifier;
-import stroom.authentication.clients.AuthorisationService;
-import stroom.authentication.config.StroomConfig;
 import stroom.authentication.impl.db.TokenDao;
-import stroom.authentication.impl.db.UserDao;
-import stroom.authentication.resources.user.v1.User;
-import stroom.authentication.resources.user.v1.UserService;
-import stroom.authentication.service.eventlogging.StroomEventLoggingService;
-import stroom.security.api.SecurityContext;
-import stroom.security.shared.PermissionNames;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -46,20 +30,10 @@ import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.time.Instant;
-import java.util.Map;
-import java.util.Optional;
 
 @Singleton
 @Path("/token/v1")
@@ -67,37 +41,15 @@ import java.util.Optional;
 @Consumes(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom API Key API", tags = {"ApiKey"})
 public class TokenResource implements RestResource {
-    private static final Logger LOGGER = LoggerFactory.getLogger(TokenResource.class);
 
     private final TokenDao tokenDao;
-    private final UserDao userDao;
     private TokenService service;
-    private UserService userService;
-    private AuthorisationService authorisationService;
-    private TokenVerifier tokenVerifier;
-    private StroomEventLoggingService stroomEventLoggingService;
-    private StroomConfig stroomConfig;
-    private SecurityContext securityContext;
 
     @Inject
     public TokenResource(final TokenDao tokenDao,
-                         final UserDao userDao,
-                         final TokenService tokenService,
-                         final UserService userService,
-                         final AuthorisationService authorisationService,
-                         final TokenVerifier tokenVerifier,
-                         final StroomEventLoggingService stroomEventLoggingService,
-                         final StroomConfig stroomConfig,
-                         final SecurityContext securityContext) {
+                         final TokenService tokenService) {
         this.tokenDao = tokenDao;
-        this.userDao = userDao;
         this.service = tokenService;
-        this.userService = userService;
-        this.authorisationService = authorisationService;
-        this.tokenVerifier = tokenVerifier;
-        this.stroomEventLoggingService = stroomEventLoggingService;
-        this.stroomConfig = stroomConfig;
-        this.securityContext = securityContext;
     }
 
     /**
