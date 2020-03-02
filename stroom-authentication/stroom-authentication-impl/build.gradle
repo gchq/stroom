@@ -65,6 +65,7 @@ mainClassName = 'stroom.auth.service.App'
 //}
 
 dependencies {
+    compile project(':stroom-authentication:stroom-authentication-impl-db')
     compile project(':stroom-authentication:stroom-authentication-impl-db-jooq')
     compile project(':stroom-authentication:stroom-authentication-api-swagger')
     compile project(':stroom-util-shared')

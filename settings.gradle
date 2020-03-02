@@ -35,9 +35,10 @@ include 'stroom-annotation:stroom-config-common'
 include 'stroom-app'
 include 'stroom-app-gwt'
 
-// Auth
+// Authentication
 include 'stroom-authentication:stroom-authentication-api-swagger'
 include 'stroom-authentication:stroom-authentication-impl'
+include 'stroom-authentication:stroom-authentication-impl-db'
 include 'stroom-authentication:stroom-authentication-impl-db-jooq'
 
 // Cache
