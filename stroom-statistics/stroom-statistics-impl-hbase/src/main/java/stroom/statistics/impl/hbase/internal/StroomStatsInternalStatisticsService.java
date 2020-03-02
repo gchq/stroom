@@ -1,6 +1,7 @@
 package stroom.statistics.impl.hbase.internal;
 
 import com.google.common.base.Preconditions;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import stroom.docref.DocRef;
 import stroom.kafka.pipeline.KafkaProducer;
 import stroom.kafka.pipeline.KafkaProducerFactory;
@@ -12,6 +13,7 @@ import stroom.stats.schema.v4.ObjectFactory;
 import stroom.stats.schema.v4.Statistics;
 import stroom.stats.schema.v4.TagType;
 import stroom.util.collections.BatchingIterator;
+import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -40,7 +42,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
 
-    private final KafkaProducerFactory stroomKafkaProducerFactory;
+    private final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory;
     private final HBaseStatisticsConfig internalStatisticsConfig;
     private final String docRefType;
     private final DatatypeFactory datatypeFactory;
@@ -48,7 +50,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private JAXBContext jaxbContext;
 
     @Inject
-    StroomStatsInternalStatisticsService(final KafkaProducerFactory stroomKafkaProducerFactory,
+    StroomStatsInternalStatisticsService(final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory,
                                          final HBaseStatisticsConfig internalStatisticsConfig) {
         this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.internalStatisticsConfig = internalStatisticsConfig;
@@ -64,8 +66,8 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     @Override
     public void putEvents(final Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
         final DocRef kafkaConfigDocRef = new DocRef(KafkaConfigDoc.DOCUMENT_TYPE, internalStatisticsConfig.getKafkaConfigUuid());
-        KafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigDocRef).orElse(null);
-        if (stroomKafkaProducer == null) {
+        org.apache.kafka.clients.producer.KafkaProducer kafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigDocRef).orElse(null);
+        if (kafkaProducer == null) {
             throw new RuntimeException("The Kafka producer isn't initialised, unable to send any events");
         }
 
@@ -88,29 +90,30 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                     //heap histo stats, so break it down into batches for better scaling with kafka
                     BatchingIterator.batchedStreamOf(events.stream(), batchSize)
                             .forEach(eventsBatch ->
-                                    sendMessage(stroomKafkaProducer, topic, key, eventsBatch));
+                                    sendMessage(kafkaProducer, topic, key, eventsBatch));
                 });
     }
 
-    private void sendMessage(final KafkaProducer stroomKafkaProducer,
+    private void sendMessage(final org.apache.kafka.clients.producer.KafkaProducer kafkaProducer,
                              final String topic,
                              final String key,
                              final List<InternalStatisticEvent> events) {
 
         final byte[] message = buildMessage(events);
 
-        final KafkaProducerRecord<String, byte[]> producerRecord =
-                new KafkaProducerRecord.Builder<String, byte[]>()
-                        .topic(topic)
-                        .key(key)
-                        .value(message)
-                        .build();
+//        final KafkaProducerRecord<String, byte[]> producerRecord =
+//                new KafkaProducerRecord.Builder<String, byte[]>()
+//                        .topic(topic)
+//                        .key(key)
+//                        .value(message)
+//                        .build();
 
-        final Consumer<Throwable> exceptionHandler = KafkaProducer
-                .createLogOnlyExceptionHandler(LOGGER, topic, key);
+        final ProducerRecord<String, String> record = new ProducerRecord(topic,
+                key, message);
 
         //These are only internal stats so just send them async for performance
-        stroomKafkaProducer.sendAsync(producerRecord, exceptionHandler);
+        kafkaProducer.send(record);
+
     }
 
     private byte[] buildMessage(final List<InternalStatisticEvent> events) {

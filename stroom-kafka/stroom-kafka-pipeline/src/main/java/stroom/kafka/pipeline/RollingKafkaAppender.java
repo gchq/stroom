@@ -25,7 +25,7 @@ import javax.inject.Inject;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.KAFKA)
 class RollingKafkaAppender extends AbstractRollingAppender {
-    private final KafkaProducerFactory stroomKafkaProducerFactory;
+    private final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory;
     private final PathCreator pathCreator;
 
     private String topic;
@@ -38,7 +38,7 @@ class RollingKafkaAppender extends AbstractRollingAppender {
     @Inject
     RollingKafkaAppender(final RollingDestinations destinations,
                          final TaskContext taskContext,
-                         final KafkaProducerFactory stroomKafkaProducerFactory,
+                         final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory,
                          final PathCreator pathCreator) {
         super(destinations, taskContext);
         this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
@@ -72,7 +72,7 @@ class RollingKafkaAppender extends AbstractRollingAppender {
 
     @Override
     public RollingDestination createDestination() {
-        final KafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigRef)
+        final org.apache.kafka.clients.producer.KafkaProducer stroomKafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigRef)
                 .orElseThrow(() -> new ProcessException("No kafka producer available to use"));
         return new RollingKafkaDestination(
                 key,
@@ -120,8 +120,7 @@ class RollingKafkaAppender extends AbstractRollingAppender {
     }
 
     @PipelineProperty(
-            description = "Wait for acknowledgement from the Kafka broker when the appender is rolled" +
-                    "This is slower but catches errors in the pipeline process",
+            description = "Not available in this version.",
             defaultValue = "false",
             displayPriority = 6)
     public void setFlushOnSend(final boolean flushOnSend) {

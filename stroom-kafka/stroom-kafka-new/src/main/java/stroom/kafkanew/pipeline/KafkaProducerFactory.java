@@ -1,4 +1,4 @@
-package stroom.kafkademo.pipeline;
+package stroom.kafkanew.pipeline;
 
 import stroom.docref.DocRef;
 import org.apache.kafka.clients.producer.KafkaProducer;

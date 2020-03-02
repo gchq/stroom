@@ -1,7 +1,9 @@
 package stroom.kafka.pipeline;
 
+import org.apache.kafka.clients.producer.ProducerRecord;
 import stroom.pipeline.destination.RollingDestination;
 import stroom.util.io.ByteCountOutputStream;
+import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.scheduler.SimpleCron;
@@ -15,7 +17,7 @@ import java.util.function.Consumer;
 public class RollingKafkaDestination extends RollingDestination {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(RollingKafkaDestination.class);
 
-    private final KafkaProducer stroomKafkaProducer;
+    private final org.apache.kafka.clients.producer.KafkaProducer kafkaProducer;
 
     private final String topic;
     private final String recordKey;
@@ -29,12 +31,12 @@ public class RollingKafkaDestination extends RollingDestination {
                                    final SimpleCron schedule,
                                    final long rollSize,
                                    final long creationTime,
-                                   final KafkaProducer stroomKafkaProducer,
+                                   final org.apache.kafka.clients.producer.KafkaProducer kafkaProducer,
                                    final String recordKey,
                                    final String topic,
                                    final boolean flushOnSend) {
         super(key, frequency, schedule, rollSize, creationTime);
-        this.stroomKafkaProducer = stroomKafkaProducer;
+        this.kafkaProducer = kafkaProducer;
         this.recordKey = recordKey;
         this.topic = topic;
         this.flushOnSend = flushOnSend;
@@ -55,21 +57,18 @@ public class RollingKafkaDestination extends RollingDestination {
     protected void afterRoll(final Consumer<Throwable> exceptionConsumer) {
         byte[] msgValue = byteArrayOutputStream.toByteArray();
 
-        final KafkaProducerRecord<String, byte[]> newRecord =
-                new KafkaProducerRecord.Builder<String, byte[]>()
-                        .topic(topic)
-                        .key(recordKey)
-                        .value(msgValue)
-                        .build();
+        final ProducerRecord<String, String> record = new ProducerRecord(topic,
+                recordKey, msgValue);
+
         try {
+            kafkaProducer.send(record);
             if (flushOnSend) {
-                stroomKafkaProducer.sendSync(Collections.singletonList(newRecord));
-            } else {
-                stroomKafkaProducer.sendAsync(newRecord, logOnlyExceptionHandler);
+                throw new UnsupportedOperationException("Flush on send is not available in this version of Stroom");
             }
         } catch (RuntimeException e) {
             exceptionConsumer.accept(wrapRollException(e));
         }
+
     }
 
     private Throwable wrapRollException(final Throwable e) {

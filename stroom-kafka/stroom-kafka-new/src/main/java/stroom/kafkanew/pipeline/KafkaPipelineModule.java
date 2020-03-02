@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 Crown Copyright
+ * Copyright 2018 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,18 +12,15 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.kafkademo.pipeline;
+package stroom.kafkanew.pipeline;
 
-import stroom.docref.DocRef;
-import stroom.docstore.api.DocumentStore;
-import stroom.kafkaConfig.shared.KafkaConfigDoc;
+import stroom.pipeline.factory.PipelineElementModule;
 
-import java.util.List;
-
-public interface KafkaConfigStore extends DocumentStore<KafkaConfigDoc> {
-    List<DocRef> list();
-
+public class KafkaPipelineModule extends PipelineElementModule {
+    @Override
+    protected void configureElements() {
+        bindElement(StandardKafkaProducer.class);
+    }
 }

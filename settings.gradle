@@ -146,7 +146,7 @@ include 'stroom-job:stroom-job-impl-db-jooq'
 // Kafka
 include 'stroom-kafka:stroom-kafka-impl'
 include 'stroom-kafka:stroom-kafka-pipeline'
-include 'stroom-kafka:stroom-kafka-demo'
+include 'stroom-kafka:stroom-kafka-new'
 
 // Lifecycle
 include 'stroom-lifecycle:stroom-lifecycle-api'

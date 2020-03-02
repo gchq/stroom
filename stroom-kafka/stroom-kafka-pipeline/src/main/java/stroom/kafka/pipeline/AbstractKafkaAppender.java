@@ -17,6 +17,7 @@
 package stroom.kafka.pipeline;
 
 import com.google.common.base.Preconditions;
+import org.apache.kafka.clients.producer.ProducerRecord;
 import stroom.docref.DocRef;
 import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.pipeline.destination.Destination;
@@ -27,6 +28,7 @@ import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.writer.AbstractDestinationProvider;
+import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
@@ -43,8 +45,8 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractKafkaAppender.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
-    private KafkaProducer stroomKafkaProducer;
-    private final KafkaProducerFactory stroomKafkaProducerFactory;
+    private org.apache.kafka.clients.producer.KafkaProducer kafkaProducer;
+    private final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory;
 
     private final ByteArrayOutputStream byteArrayOutputStream;
     private final Queue<CompletableFuture<KafkaRecordMetaData>> kafkaMetaFutures;
@@ -57,7 +59,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     private byte[] footer;
 
     protected AbstractKafkaAppender(final ErrorReceiverProxy errorReceiverProxy,
-                                    final KafkaProducerFactory stroomKafkaProducerFactory) {
+                                    final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.byteArrayOutputStream = new ByteArrayOutputStream();
@@ -71,14 +73,14 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         }
 
         try {
-            this.stroomKafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigRef).orElse(null);
+            this.kafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigRef).orElse(null);
         } catch (final RuntimeException e) {
             String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
             throw new LoggedException(msg);
         }
 
-        if (stroomKafkaProducer == null) {
+        if (kafkaProducer == null) {
             String msg = "No Kafka producer connector is available, check Stroom's configuration";
             log(Severity.FATAL_ERROR, msg, null);
             throw new LoggedException(msg);
@@ -172,26 +174,19 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     }
 
     private void sendMessage(final byte[] messageValue) {
-        String topic = getTopic();
-        String recordKey = getRecordKey();
 
-        final KafkaProducerRecord<String, byte[]> newRecord =
-                new KafkaProducerRecord.Builder<String, byte[]>()
-                        .topic(topic)
-                        .key(recordKey)
-                        .value(messageValue)
-                        .build();
+        final ProducerRecord<String, String> record = new ProducerRecord(getTopic(),
+                getRecordKey(), messageValue);
+
         try {
-            final CompletableFuture<KafkaRecordMetaData> future = stroomKafkaProducer.sendAsync(
-                    newRecord,
-                    KafkaProducer.createLogOnlyExceptionHandler(LOGGER, topic, recordKey));
+            kafkaProducer.send(record);
             if (flushOnSend) {
-                //keep hold of the future so we can wait for it at the end of processing
-                kafkaMetaFutures.add(future);
+                throw new UnsupportedOperationException("Flush on send is not available in this version of Stroom");
             }
-        } catch (final RuntimeException e) {
+        } catch (RuntimeException e) {
             error(e);
         }
+
     }
 
     @SuppressWarnings("unused")

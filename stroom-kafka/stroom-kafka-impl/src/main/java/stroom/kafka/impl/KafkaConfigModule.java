@@ -36,6 +36,8 @@ public class KafkaConfigModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(KafkaConfigStoreImpl.class);
 
+
+
         DocumentActionHandlerBinder.create(binder())
                 .bind(KafkaConfigDoc.DOCUMENT_TYPE, KafkaConfigStoreImpl.class);
     }

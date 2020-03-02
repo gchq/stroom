@@ -30,7 +30,7 @@ class KafkaAppender extends AbstractKafkaAppender {
     @SuppressWarnings("unused")
     @Inject
     KafkaAppender(final ErrorReceiverProxy errorReceiverProxy,
-                  final KafkaProducerFactory stroomKafkaProducerFactory,
+                  final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory,
                   final PathCreator pathCreator) {
         super(errorReceiverProxy, stroomKafkaProducerFactory);
         this.pathCreator = pathCreator;

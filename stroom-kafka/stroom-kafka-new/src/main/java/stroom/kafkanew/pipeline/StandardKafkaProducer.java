@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.kafkademo.pipeline;
+package stroom.kafkanew.pipeline;
 
-import net.sf.saxon.event.ReceivingContentHandler;
 import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -29,7 +28,6 @@ import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
-import stroom.index.shared.IndexDoc;
 import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -40,7 +38,6 @@ import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
-import stroom.util.logging.LogUtil;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
@@ -50,7 +47,6 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Random;
-import java.util.Stack;
 
 
 @ConfigurableElement(
@@ -161,9 +157,6 @@ class StandardKafkaProducer extends AbstractXMLFilter {
             log(Severity.FATAL_ERROR, "Unable to create Kafka Producer using config " + configRef.getUuid(), ex);
         }
     }
-
-    private Random random = new Random();
-    private int id = random.nextInt(99);
 
     private static Long createTimestamp(String isoFormat){
         try {

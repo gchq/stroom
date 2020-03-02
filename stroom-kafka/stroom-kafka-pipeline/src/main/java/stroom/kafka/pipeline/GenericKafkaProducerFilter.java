@@ -54,7 +54,7 @@ class GenericKafkaProducerFilter extends AbstractKafkaProducerFilter {
     @Inject
     GenericKafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
                                final LocationFactoryProxy locationFactory,
-                               final KafkaProducerFactory stroomKafkaProducerFactory,
+                               final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory,
                                final PathCreator pathCreator) {
         super(errorReceiverProxy, locationFactory, stroomKafkaProducerFactory);
         this.pathCreator = pathCreator;

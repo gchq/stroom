@@ -8,7 +8,7 @@ import stroom.core.entity.event.EntityEventLifecycleModule;
 import stroom.importexport.impl.ImportExportLifecycleModule;
 import stroom.index.impl.IndexLifecycleModule;
 import stroom.job.impl.JobSystemLifecycleModule;
-import stroom.kafkademo.impl.KafkaLifecycleModule;
+import stroom.kafkanew.impl.KafkaLifecycleModule;
 import stroom.meta.impl.db.MetaDbLifecycleModule;
 import stroom.pipeline.destination.RollingDestinationsLifecycleModule;
 import stroom.processor.impl.StreamTaskLifecycleModule;

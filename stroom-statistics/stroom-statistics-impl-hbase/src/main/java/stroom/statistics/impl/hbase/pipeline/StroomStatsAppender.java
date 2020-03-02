@@ -40,7 +40,7 @@ class StroomStatsAppender extends AbstractKafkaAppender {
     @SuppressWarnings("unused")
     @Inject
     public StroomStatsAppender(final ErrorReceiverProxy errorReceiverProxy,
-                               final KafkaProducerFactory stroomKafkaProducerFactoryService,
+                               final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactoryService,
                                final HBaseStatisticsConfig hBaseStatisticsConfig,
                                final StroomStatsStoreStore stroomStatsStoreStore) {
         super(errorReceiverProxy, stroomKafkaProducerFactoryService);

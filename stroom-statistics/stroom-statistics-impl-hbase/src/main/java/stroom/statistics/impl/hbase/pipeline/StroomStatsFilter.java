@@ -37,7 +37,7 @@ class StroomStatsFilter extends AbstractKafkaProducerFilter {
     @Inject
     StroomStatsFilter(final ErrorReceiverProxy errorReceiverProxy,
                       final LocationFactoryProxy locationFactory,
-                      final KafkaProducerFactory kafkaProducerFactory,
+                      final stroom.kafkanew.pipeline.KafkaProducerFactory kafkaProducerFactory,
                       final HBaseStatisticsConfig hBaseStatisticsConfig,
                       final StroomStatsStoreStore stroomStatsStoreStore) {
         super(errorReceiverProxy, locationFactory, kafkaProducerFactory);

@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package stroom.kafkademo.impl;
+package stroom.kafkanew.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.kafkademo.pipeline.KafkaConfigStore;
-import stroom.kafkademo.pipeline.KafkaProducerFactory;
+import stroom.kafkanew.pipeline.KafkaConfigStore;
+import stroom.kafkanew.pipeline.KafkaProducerFactory;
 import stroom.kafkaConfig.shared.KafkaConfigDoc;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
