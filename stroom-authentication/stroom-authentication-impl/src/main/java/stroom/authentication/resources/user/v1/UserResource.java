@@ -150,35 +150,12 @@ public final class UserResource implements RestResource {
     public final Response getUser(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @PathParam("id") int userId) {
-        final String loggedInUser = securityContext.getUserId();
-
-        Optional<User> optionalUser = userDao.get(userId);
-        Response response;
-        if (optionalUser.isEmpty()) {
-            response = Response.status(Response.Status.NOT_FOUND).build();
-            return response;
-        } else {
-            User foundUser = optionalUser.get();
-            // We only need to check auth permissions if the user is trying to access a different user.
-            final boolean isUserAccessingThemselves = loggedInUser.equals(foundUser.getEmail());
-            boolean canManageUsers = securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION);
-            if (!isUserAccessingThemselves && !canManageUsers) {
-                return Response.status(Response.Status.UNAUTHORIZED).entity(UserServiceClient.UNAUTHORISED_USER_MESSAGE).build();
-            }
-
-            event.logging.User user = new event.logging.User();
-            user.setId(foundUser.getEmail());
-            ObjectOutcome objectOutcome = new ObjectOutcome();
-            objectOutcome.getObjects().add(user);
-            stroomEventLoggingService.view(
-                    "GetUser",
-                    httpServletRequest,
-                    loggedInUser,
-                    objectOutcome,
-                    "Read a specific user.");
-
-            response = Response.status(Response.Status.OK).entity(foundUser).build();
-            return response;
+        Optional<User> optionalUser = userService.get(userId);
+        if(optionalUser.isPresent()){
+            return Response.status(Response.Status.OK).entity(optionalUser.get()).build();
+        }
+        else {
+            return Response.status(Response.Status.NOT_FOUND).build();
         }
     }
 

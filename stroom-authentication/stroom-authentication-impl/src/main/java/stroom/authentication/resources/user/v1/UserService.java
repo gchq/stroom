@@ -1,11 +1,13 @@
 package stroom.authentication.resources.user.v1;
 
 import com.google.common.base.Strings;
+import event.logging.ObjectOutcome;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
 import org.jooq.JSONFormat;
 import org.jooq.Result;
+import stroom.authentication.clients.UserServiceClient;
 import stroom.authentication.exceptions.ConflictException;
 import stroom.authentication.impl.db.UserDao;
 import stroom.event.logging.api.StroomEventLoggingService;
@@ -15,6 +17,9 @@ import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.Response;
+
+import java.util.Optional;
 
 import static stroom.auth.db.Tables.USERS;
 
@@ -36,6 +41,26 @@ public class UserService {
         checkPermission();
         stroomEventLoggingService.createAction("GetAllUsers", "Read all users");
         return userDao.getAll();
+    }
+
+    public Optional<User> get(int userId) {
+        final String loggedInUser = securityContext.getUserId();
+
+        Optional<User> optionalUser = userDao.get(userId);
+        Response response;
+        if (!optionalUser.isEmpty()) {
+            User foundUser = optionalUser.get();
+            // We only need to check auth permissions if the user is trying to access a different user.
+            final boolean isUserAccessingThemselves = loggedInUser.equals(foundUser.getEmail());
+            boolean canManageUsers = securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION);
+            if (!isUserAccessingThemselves && !canManageUsers) {
+                throw new RuntimeException("Unauthorized");
+            }
+
+            stroomEventLoggingService.createAction("GetById", "Get a user by ID");
+
+        }
+        return optionalUser;
     }
 
     public int create(User user){
