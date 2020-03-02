@@ -21,11 +21,7 @@ package stroom.authentication.impl.db;
 import com.google.common.base.Strings;
 import event.logging.ObjectOutcome;
 import org.apache.commons.lang3.Validate;
-import org.jooq.Condition;
-import org.jooq.JSONFormat;
-import org.jooq.Result;
-import org.jooq.Table;
-import org.jooq.TableField;
+import org.jooq.*;
 import org.mindrot.jbcrypt.BCrypt;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -318,6 +314,26 @@ public class UserDao {
                 .execute());
 
         return usersToDeactivate.size();
+    }
+
+    public Result<Record13<Integer, String, String, String, String, String, Integer, Integer, Timestamp, Timestamp, String, Timestamp, String>> searchUsersForDisplay(String email){
+        return JooqUtil.contextResult(authDbConnProvider, context -> context
+                .select(USERS.ID,
+                        USERS.EMAIL,
+                        USERS.FIRST_NAME,
+                        USERS.LAST_NAME,
+                        USERS.COMMENTS,
+                        USERS.STATE,
+                        USERS.LOGIN_FAILURES,
+                        USERS.LOGIN_COUNT,
+                        USERS.LAST_LOGIN,
+                        USERS.UPDATED_ON,
+                        USERS.UPDATED_BY_USER,
+                        USERS.CREATED_ON,
+                        USERS.CREATED_BY_USER)
+                .from(USERS)
+                .where(new Condition[]{USERS.EMAIL.contains(email)})
+                .fetch());
     }
 
     public boolean exists(String id) {

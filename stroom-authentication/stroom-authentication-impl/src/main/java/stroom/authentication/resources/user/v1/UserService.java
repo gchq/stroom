@@ -1,13 +1,13 @@
 package stroom.authentication.resources.user.v1;
 
 import com.google.common.base.Strings;
-import event.logging.ObjectOutcome;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
+import org.jooq.JSONFormat;
+import org.jooq.Result;
 import stroom.authentication.exceptions.ConflictException;
 import stroom.authentication.impl.db.UserDao;
-import stroom.db.util.JooqUtil;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionException;
@@ -15,7 +15,6 @@ import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.Response;
 
 import static stroom.auth.db.Tables.USERS;
 
@@ -61,6 +60,16 @@ public class UserService {
 
         stroomEventLoggingService.createAction("CreateUser", "Create a user");
         return newUserId;
+    }
+
+    public String search(String email){
+        checkPermission();
+        Result foundUsers = userDao.searchUsersForDisplay(email);
+        String users = foundUsers.formatJSON((new JSONFormat())
+            .header(false)
+            .recordFormat(JSONFormat.RecordFormat.OBJECT));
+        stroomEventLoggingService.createAction("SearchUsers", "Search for users by email");
+        return users;
     }
 
     private void checkPermission() {

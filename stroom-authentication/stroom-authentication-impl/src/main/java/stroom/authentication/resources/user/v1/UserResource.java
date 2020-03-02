@@ -119,7 +119,6 @@ public final class UserResource implements RestResource {
     @NotNull
     public final Response createUser(
             @Context @NotNull HttpServletRequest httpServletRequest,
-            @Context @NotNull DSLContext database,
             @ApiParam("user") @NotNull User user) {
         int newUserId = userService.create(user);
         return Response.status(Response.Status.OK).entity(newUserId).build();
@@ -135,53 +134,9 @@ public final class UserResource implements RestResource {
     @NotNull
     public final Response searchUsers(
             @Context @NotNull HttpServletRequest httpServletRequest,
-            @Context @NotNull DSLContext database,
             @QueryParam("email") String email) {
-
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            // Get the users
-            Result<Record13<Integer, String, String, String, String, String, Integer, Integer, Timestamp, Timestamp, String, Timestamp, String>> foundUserRecord = database
-                    .select(USERS.ID,
-                            USERS.EMAIL,
-                            USERS.FIRST_NAME,
-                            USERS.LAST_NAME,
-                            USERS.COMMENTS,
-                            USERS.STATE,
-                            USERS.LOGIN_FAILURES,
-                            USERS.LOGIN_COUNT,
-                            USERS.LAST_LOGIN,
-                            USERS.UPDATED_ON,
-                            USERS.UPDATED_BY_USER,
-                            USERS.CREATED_ON,
-                            USERS.CREATED_BY_USER)
-                    .from(USERS)
-                    .where(new Condition[]{USERS.EMAIL.contains(email)})
-                    .fetch();
-
-            Response response;
-            if (foundUserRecord == null) {
-                response = Response.status(Response.Status.NOT_FOUND).build();
-                return response;
-            } else {
-                String users = foundUserRecord.formatJSON((new JSONFormat())
-                        .header(false)
-                        .recordFormat(JSONFormat.RecordFormat.OBJECT));
-
-                event.logging.User user = new event.logging.User();
-                user.setId(email);
-                ObjectOutcome objectOutcome = new ObjectOutcome();
-                objectOutcome.getObjects().add(user);
-                stroomEventLoggingService.view(
-                        "SearchUser",
-                        httpServletRequest,
-                        securityContext.getUserId(),
-                        objectOutcome,
-                        "Search for a user.");
-
-                response = Response.status(Response.Status.OK).entity(users).build();
-                return response;
-            }
-        });
+        String usersAsJson = userService.search(email);
+        return Response.status(Response.Status.OK).entity(usersAsJson).build();
     }
 
     @ApiOperation(
