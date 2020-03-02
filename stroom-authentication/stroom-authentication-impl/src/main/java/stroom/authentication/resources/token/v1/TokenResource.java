@@ -70,6 +70,7 @@ public class TokenResource implements RestResource {
 
     private final TokenDao tokenDao;
     private final UserDao userDao;
+    private TokenService service;
     private AuthorisationService authorisationService;
     private TokenVerifier tokenVerifier;
     private StroomEventLoggingService stroomEventLoggingService;
@@ -79,6 +80,7 @@ public class TokenResource implements RestResource {
     @Inject
     public TokenResource(final TokenDao tokenDao,
                          final UserDao userDao,
+                         final TokenService tokenService,
                          final AuthorisationService authorisationService,
                          final TokenVerifier tokenVerifier,
                          final StroomEventLoggingService stroomEventLoggingService,
@@ -86,6 +88,7 @@ public class TokenResource implements RestResource {
                          final SecurityContext securityContext) {
         this.tokenDao = tokenDao;
         this.userDao = userDao;
+        this.service = tokenService;
         this.authorisationService = authorisationService;
         this.tokenVerifier = tokenVerifier;
         this.stroomEventLoggingService = stroomEventLoggingService;
@@ -109,35 +112,8 @@ public class TokenResource implements RestResource {
     public final Response search(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @ApiParam("SearchRequest") @NotNull @Valid SearchRequest searchRequest) {
-        Map<String, String> filters = searchRequest.getFilters();
-
-        Search search = new Search();
-        search.setType("token");
-        // search.setQuery(); // TODO: More complete description of the search.
-        stroomEventLoggingService.search(
-                "SearchApiToken",
-                httpServletRequest,
-                securityContext.getUserId(),
-                search,
-                "The user searched for an API token.");
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            // Validate filters
-            if (filters != null) {
-                for (String key : filters.keySet()) {
-                    switch (key) {
-                        case "expiresOn":
-                        case "issuedOn":
-                        case "updatedOn":
-                            return Response.status(Response.Status.BAD_REQUEST).entity("Filtering by date is not supported.").build();
-                    }
-                }
-            }
-
-            SearchResponse results = tokenDao.searchTokens(searchRequest);
-
-            LOGGER.debug("Returning tokens: found " + results.getTokens().size());
-            return Response.status(Response.Status.OK).entity(results).build();
-        });
+        var results = service.search(searchRequest);
+        return Response.status(Response.Status.OK).entity(results).build();
     }
 
     @POST
