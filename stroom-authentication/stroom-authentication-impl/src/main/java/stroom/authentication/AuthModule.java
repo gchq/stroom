@@ -19,10 +19,8 @@ package stroom.authentication;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import org.jooq.Configuration;
-import stroom.authentication.exceptions.mappers.BadRequestExceptionMapper;
-import stroom.authentication.exceptions.mappers.NoSuchUserExceptionMapper;
-import stroom.authentication.exceptions.mappers.TokenCreationExceptionMapper;
-import stroom.authentication.exceptions.mappers.UnsupportedFilterExceptionMapper;
+import stroom.authentication.exceptions.ConflictException;
+import stroom.authentication.exceptions.mappers.*;
 import stroom.authentication.resources.authentication.v1.AuthenticationResource;
 import stroom.authentication.resources.token.v1.TokenResource;
 import stroom.authentication.resources.user.v1.UserResource;
@@ -51,6 +49,7 @@ public final class AuthModule extends AbstractModule {
         bind(TokenBuilderFactory.class);
         bind(StroomEventLoggingService.class);
 
+        bind(ConflictExceptionMapper.class);
         bind(BadRequestExceptionMapper.class);
         bind(TokenCreationExceptionMapper.class);
         bind(UnsupportedFilterExceptionMapper.class);

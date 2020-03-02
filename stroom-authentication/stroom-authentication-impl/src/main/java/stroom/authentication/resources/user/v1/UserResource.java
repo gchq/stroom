@@ -41,7 +41,6 @@ import stroom.authentication.clients.UserServiceClient;
 import stroom.authentication.impl.db.UserDao;
 import stroom.authentication.service.eventlogging.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
-import stroom.security.impl.UserService;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.RestResource;
 
@@ -74,6 +73,7 @@ public final class UserResource implements RestResource {
 
     private AuthorisationService authorisationService;
     private UserService userService;
+    private stroom.security.impl.UserService securityUserService;
     private UserDao userDao;
     private StroomEventLoggingService stroomEventLoggingService;
     private SecurityContext securityContext;
@@ -81,27 +81,20 @@ public final class UserResource implements RestResource {
     @Inject
     public UserResource(
             @NotNull final AuthorisationService authorisationService,
-            UserService userService,
+            final UserService userService,
+            final stroom.security.impl.UserService securityUserService,
             final UserDao userDao,
             final StroomEventLoggingService stroomEventLoggingService,
             final SecurityContext securityContext) {
         super();
         this.authorisationService = authorisationService;
         this.userService = userService;
+        this.securityUserService = securityUserService;
         this.userDao = userDao;
         this.stroomEventLoggingService = stroomEventLoggingService;
         this.securityContext = securityContext;
     }
 
-    private static Boolean doesUserAlreadyExist(DSLContext database, String email) {
-        int countOfSameName = database
-                .selectCount()
-                .from(USERS)
-                .where(new Condition[]{USERS.EMAIL.eq(email)})
-                .fetchOne(0, Integer.TYPE);
-
-        return countOfSameName > 0;
-    }
 
     @ApiOperation(
             value = "Get all users.",
@@ -112,22 +105,8 @@ public final class UserResource implements RestResource {
     @Timed
     @NotNull
     public final Response getAll(@Context @NotNull HttpServletRequest httpServletRequest ) {
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            String usersAsJson = userDao.getAll();
-
-            ObjectOutcome objectOutcome = new ObjectOutcome();
-            event.logging.Object object = new event.logging.Object();
-            object.setName("GetAllUsers");
-            objectOutcome.getObjects().add(object);
-            stroomEventLoggingService.view(
-                    "GetAllUsers",
-                    httpServletRequest,
-                    securityContext.getUserId(),
-                    objectOutcome,
-                    "Read all users.");
-
-            return Response.status(Response.Status.OK).entity(usersAsJson).build();
-        });
+        String usersAsJson = userService.getAllAsJson();
+        return Response.status(Response.Status.OK).entity(usersAsJson).build();
     }
 
     @ApiOperation(
@@ -142,37 +121,8 @@ public final class UserResource implements RestResource {
             @Context @NotNull HttpServletRequest httpServletRequest,
             @Context @NotNull DSLContext database,
             @ApiParam("user") @NotNull User user) {
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            final String userId = securityContext.getUserId();
-            Pair<Boolean, String> validationResults = User.isValidForCreate(user);
-            boolean isUserValid = validationResults.getLeft();
-            if (!isUserValid) {
-                return Response.status(Response.Status.BAD_REQUEST).entity(validationResults.getRight()).build();
-            }
-
-            if (doesUserAlreadyExist(database, user.getEmail())) {
-                return Response.status(Response.Status.CONFLICT).entity(UserValidationError.USER_ALREADY_EXISTS).build();
-            }
-
-            if (Strings.isNullOrEmpty(user.getState())) {
-                user.setState(User.UserState.ENABLED.getStateText());
-            }
-
-            int newUserId = userDao.create(user, userId);
-
-            event.logging.User loggingUser = new event.logging.User();
-            loggingUser.setId(user.getEmail());
-            ObjectOutcome objectOutcome = new ObjectOutcome();
-            objectOutcome.getObjects().add(loggingUser);
-            stroomEventLoggingService.create(
-                    "CreateUser",
-                    httpServletRequest,
-                    userId,
-                    objectOutcome,
-                    "Create a user");
-
-            return Response.status(Response.Status.OK).entity(newUserId).build();
-        });
+        int newUserId = userService.create(user);
+        return Response.status(Response.Status.OK).entity(newUserId).build();
     }
 
     @ApiOperation(
@@ -373,9 +323,9 @@ public final class UserResource implements RestResource {
 
             // TODO: auth-into-stroom migration: change the Stroom user
             boolean isEnabled = user.getState().equals("enabled");
-            stroom.security.shared.User userToUpdate = userService.getUserByName(foundUser.getEmail());
+            stroom.security.shared.User userToUpdate = securityUserService.getUserByName(foundUser.getEmail());
             userToUpdate.setEnabled(isEnabled);
-            userService.update(userToUpdate);
+            securityUserService.update(userToUpdate);
 
             user.setUpdatedByUser(loggedInUser);
             user.setUpdatedOn(LocalDateTime.now().toString());
