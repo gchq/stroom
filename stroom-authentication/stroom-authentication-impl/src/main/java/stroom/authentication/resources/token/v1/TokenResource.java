@@ -125,41 +125,8 @@ public class TokenResource implements RestResource {
     public final Response create(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @ApiParam("CreateTokenRequest") @NotNull CreateTokenRequest createTokenRequest) {
-
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            final String userId = securityContext.getUserId();
-
-            // Parse and validate tokenType
-            Optional<Token.TokenType> tokenTypeToCreate = createTokenRequest.getParsedTokenType();
-            if (!tokenTypeToCreate.isPresent()) {
-                return Response.status(Response.Status.BAD_REQUEST)
-                        .entity("Unknown token type:" + createTokenRequest.getTokenType()).build();
-            }
-
-            Instant expiryInstant = createTokenRequest.getExpiryDate() == null ? null : createTokenRequest.getExpiryDate().toInstant();
-            Token token = tokenDao.createToken(
-                    tokenTypeToCreate.get(),
-                    userId,
-                    expiryInstant,
-                    createTokenRequest.getUserEmail(),
-                    stroomConfig.getClientId(),
-                    createTokenRequest.isEnabled(),
-                    createTokenRequest.getComments());
-
-            event.logging.Object object = new event.logging.Object();
-            object.setId("NewToken");
-            object.setName(token.getTokenType());
-            ObjectOutcome objectOutcome = new ObjectOutcome();
-            objectOutcome.getObjects().add(object);
-            stroomEventLoggingService.create(
-                    "CreateApiToken",
-                    httpServletRequest,
-                    userId,
-                    objectOutcome,
-                    "Create a token");
-
-            return Response.status(Response.Status.OK).entity(token).build();
-        });
+        var token = service.create(createTokenRequest);
+        return Response.status(Response.Status.OK).entity(token).build();
     }
 
     @ApiOperation(
@@ -168,26 +135,9 @@ public class TokenResource implements RestResource {
             tags = {"ApiKey"})
     @DELETE
     @Timed
-    public final Response deleteAll(
-            @Context @NotNull HttpServletRequest httpServletRequest
-    ) {
-
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            tokenDao.deleteAllTokensExceptAdmins();
-
-            event.logging.Object object = new event.logging.Object();
-            object.setName("DeleteAllApiTokens");
-            ObjectOutcome objectOutcome = new ObjectOutcome();
-            objectOutcome.getObjects().add(object);
-            stroomEventLoggingService.delete(
-                    "DeleteAllApiTokens",
-                    httpServletRequest,
-                    securityContext.getUserId(),
-                    objectOutcome,
-                    "Delete all tokens");
-
-            return Response.status(Response.Status.OK).entity("All tokens deleted").build();
-        });
+    public final Response deleteAll(@Context @NotNull HttpServletRequest httpServletRequest) {
+        service.deleteAll();
+        return Response.status(Response.Status.OK).entity("All tokens deleted").build();
     }
 
     @ApiOperation(
