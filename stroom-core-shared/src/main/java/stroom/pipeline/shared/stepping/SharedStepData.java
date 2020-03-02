@@ -50,6 +50,9 @@ public class SharedStepData {
     }
 
     public SharedElementData getElementData(final String elementId) {
+        if (elementMap == null) {
+            return null;
+        }
         return elementMap.get(elementId);
     }
 }

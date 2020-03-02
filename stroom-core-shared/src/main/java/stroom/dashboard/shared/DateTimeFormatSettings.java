@@ -38,8 +38,6 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "dateTimeFormatSettings")
 @XmlType(name = "DateTimeFormatSettings", propOrder = {"pattern", "timeZone"})
 public class DateTimeFormatSettings implements FormatSettings {
-    private static final long serialVersionUID = 9145624653060319801L;
-
     private static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
     @XmlElement(name = "pattern")

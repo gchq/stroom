@@ -73,7 +73,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
     @JsonProperty
     private boolean stored;
     @JsonProperty
-    private boolean indexed;
+    private Boolean indexed;
     @JsonProperty
     private boolean uninvertible;
     @JsonProperty

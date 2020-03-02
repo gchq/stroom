@@ -32,7 +32,7 @@ public class JobNode implements HasAuditInfo {
     @JsonProperty
     private String nodeName;
     @JsonProperty
-    private int taskLimit = 20;
+    private Integer taskLimit = 20;
     @JsonProperty
     private String schedule;
     @JsonProperty
@@ -67,7 +67,7 @@ public class JobNode implements HasAuditInfo {
                    @JsonProperty("job") final Job job,
                    @JsonProperty("jobType") final JobType jobType,
                    @JsonProperty("nodeName") final String nodeName,
-                   @JsonProperty("taskLimit") final int taskLimit,
+                   @JsonProperty("taskLimit") final Integer taskLimit,
                    @JsonProperty("schedule") final String schedule,
                    @JsonProperty("enabled") final boolean enabled) {
         this.id = id;
@@ -79,8 +79,10 @@ public class JobNode implements HasAuditInfo {
         this.job = job;
         this.jobType = jobType;
         this.nodeName = nodeName;
-        if (taskLimit > 0) {
+        if (taskLimit != null) {
             this.taskLimit = taskLimit;
+        } else {
+            this.taskLimit = 20;
         }
         this.schedule = schedule;
         this.enabled = enabled;

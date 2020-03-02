@@ -35,8 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Api(value = "explorer - /v1")
-@Path("/explorer" + ResourcePaths.V1)
+@Api(value = "explorer - /v2")
+@Path("/explorer" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 public interface ExplorerResource extends RestResource, DirectRestService {
     @POST

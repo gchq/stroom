@@ -42,7 +42,7 @@ public class TabConfig {
 
     @XmlElement(name = "visible")
     @JsonProperty("visible")
-    private boolean visible;
+    private Boolean visible;
 
     @XmlElements({@XmlElement(name = "query", type = QueryComponentSettings.class),
             @XmlElement(name = "table", type = TableComponentSettings.class),

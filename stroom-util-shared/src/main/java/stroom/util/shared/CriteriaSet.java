@@ -16,14 +16,12 @@
 
 package stroom.util.shared;
 
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.xml.bind.annotation.XmlTransient;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -38,7 +36,7 @@ import java.util.stream.Collectors;
  * By default when created it has no criteria i.e. match anything. As soon as
  * you update it it will be restrictive until you setMatchAll
  */
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class CriteriaSet<T>
         implements Iterable<T>, Copyable<CriteriaSet<T>>, HasIsConstrained, Matcher<T>, Clearable {
     /**
@@ -148,7 +146,6 @@ public class CriteriaSet<T>
         set.add(id);
     }
 
-    @XmlTransient
     @JsonIgnore
     public T getSingleItem() {
         if (!isConstrained()) {
@@ -180,12 +177,10 @@ public class CriteriaSet<T>
         return set.remove(id);
     }
 
-    @XmlTransient
     public Set<T> getSet() {
         return set;
     }
 
-    @XmlTransient
     public void setSet(final Set<T> set) {
         this.set = set;
     }

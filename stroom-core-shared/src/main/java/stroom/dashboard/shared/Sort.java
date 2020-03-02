@@ -43,7 +43,7 @@ public class Sort implements Serializable {
 
     @XmlElement(name = "order")
     @JsonProperty("order")
-    private int order;
+    private Integer order;
     @XmlElement(name = "direction")
     @JsonProperty("direction")
     private SortDirection direction;

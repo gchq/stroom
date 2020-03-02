@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonPropertyOrder({"offset", "length"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class OffsetRange<T extends Number> {
     @JsonProperty
     private final T offset;

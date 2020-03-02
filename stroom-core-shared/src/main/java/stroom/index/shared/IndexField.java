@@ -55,7 +55,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     private AnalyzerType analyzerType;
     @XmlElement(name = "indexed")
     @JsonProperty
-    private boolean indexed;
+    private Boolean indexed;
     @XmlElement(name = "stored")
     @JsonProperty
     private boolean stored;

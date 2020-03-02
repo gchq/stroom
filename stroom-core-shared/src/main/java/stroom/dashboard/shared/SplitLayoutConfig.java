@@ -38,8 +38,6 @@ import java.util.List;
 @XmlRootElement(name = "splitLayout")
 @XmlType(name = "SplitLayoutConfig", propOrder = {"preferredSize", "dimension", "children"})
 public class SplitLayoutConfig extends LayoutConfig {
-    private static final long serialVersionUID = 8201392610412513780L;
-
     /**
      * The preferred size of this layout in width, height.
      */
@@ -55,13 +53,7 @@ public class SplitLayoutConfig extends LayoutConfig {
     @JsonProperty("children")
     private List<LayoutConfig> children;
 
-    @JsonCreator
-    public SplitLayoutConfig(@JsonProperty("preferredSize") Size preferredSize,
-                             @JsonProperty("dimension") int dimension,
-                             @JsonProperty("children") List<LayoutConfig> children) {
-        this.preferredSize = preferredSize;
-        this.dimension = dimension;
-        this.children = children;
+    public SplitLayoutConfig() {
     }
 
     public SplitLayoutConfig(final int dimension, final LayoutConfig... children) {
@@ -71,6 +63,15 @@ public class SplitLayoutConfig extends LayoutConfig {
                 add(child);
             }
         }
+    }
+
+    @JsonCreator
+    public SplitLayoutConfig(@JsonProperty("preferredSize") Size preferredSize,
+                             @JsonProperty("dimension") int dimension,
+                             @JsonProperty("children") List<LayoutConfig> children) {
+        this.preferredSize = preferredSize;
+        this.dimension = dimension;
+        this.children = children;
     }
 
     @Override

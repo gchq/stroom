@@ -15,7 +15,7 @@ public class IndicatorLines {
     public IndicatorLines(final Indicators indicators) {
         this.indicators = indicators;
         map = new HashMap<>();
-        if (indicators.getErrorList() != null) {
+        if (indicators != null && indicators.getErrorList() != null) {
             for (final StoredError storedError : indicators.getErrorList()) {
                 int lineNo = 1;
                 if (storedError.getLocation() != null) {
@@ -31,7 +31,7 @@ public class IndicatorLines {
     }
 
     public Severity getMaxSeverity() {
-        if (indicators.getErrorCount() != null) {
+        if (indicators != null && indicators.getErrorCount() != null) {
             for (final Severity sev : Severity.SEVERITIES) {
                 final Integer c = indicators.getErrorCount().get(sev);
                 if (c != null && c > 0) {
@@ -49,7 +49,7 @@ public class IndicatorLines {
      */
     public String getSummaryHTML() {
         final StringBuilder html = new StringBuilder();
-        if (indicators.getErrorCount() != null) {
+        if (indicators != null && indicators.getErrorCount() != null) {
             for (final Severity severity : Severity.SEVERITIES) {
                 final Integer count = indicators.getErrorCount().get(severity);
                 if (count != null && count > 0) {

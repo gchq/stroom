@@ -41,13 +41,13 @@ public class IndexDoc extends Doc {
     @JsonProperty
     private String description;
     @JsonProperty
-    private int maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
+    private Integer maxDocsPerShard;
     @JsonProperty
-    private PartitionBy partitionBy = DEFAULT_PARTITION_BY;
+    private PartitionBy partitionBy;
     @JsonProperty
-    private int partitionSize = DEFAULT_PARTITION_SIZE;
+    private Integer partitionSize;
     @JsonProperty
-    private int shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
+    private Integer shardsPerPartition;
     @JsonProperty
     private Integer retentionDayAge;
     @JsonProperty
@@ -56,6 +56,10 @@ public class IndexDoc extends Doc {
     private String volumeGroupName;
 
     public IndexDoc() {
+        maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
+        partitionBy = DEFAULT_PARTITION_BY;
+        partitionSize = DEFAULT_PARTITION_SIZE;
+        shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
     }
 
     @JsonCreator
@@ -68,26 +72,34 @@ public class IndexDoc extends Doc {
                     @JsonProperty("createUser") final String createUser,
                     @JsonProperty("updateUser") final String updateUser,
                     @JsonProperty("description") final String description,
-                    @JsonProperty("maxDocsPerShard") final int maxDocsPerShard,
+                    @JsonProperty("maxDocsPerShard") final Integer maxDocsPerShard,
                     @JsonProperty("partitionBy") final PartitionBy partitionBy,
-                    @JsonProperty("partitionSize") final int partitionSize,
-                    @JsonProperty("shardsPerPartition") final int shardsPerPartition,
+                    @JsonProperty("partitionSize") final Integer partitionSize,
+                    @JsonProperty("shardsPerPartition") final Integer shardsPerPartition,
                     @JsonProperty("retentionDayAge") final Integer retentionDayAge,
                     @JsonProperty("fields") final List<IndexField> fields,
                     @JsonProperty("volumeGroupName") final String volumeGroupName) {
         super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
         this.description = description;
-        if (maxDocsPerShard > 0) {
+        if (maxDocsPerShard != null) {
             this.maxDocsPerShard = maxDocsPerShard;
+        } else {
+            this.maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
         }
         if (partitionBy != null) {
             this.partitionBy = partitionBy;
+        } else {
+            this.partitionBy = DEFAULT_PARTITION_BY;
         }
-        if (partitionSize > 0) {
+        if (partitionSize != null) {
             this.partitionSize = partitionSize;
+        } else {
+            this.partitionSize = DEFAULT_PARTITION_SIZE;
         }
-        if (shardsPerPartition > 0) {
+        if (shardsPerPartition != null) {
             this.shardsPerPartition = shardsPerPartition;
+        } else {
+            this.shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
         }
         this.retentionDayAge = retentionDayAge;
         this.fields = fields;

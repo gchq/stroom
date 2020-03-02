@@ -55,9 +55,9 @@ public class Node implements HasAuditInfo {
      * master
      */
     @JsonProperty
-    private int priority;
+    private Integer priority;
     @JsonProperty
-    private boolean enabled;
+    private Boolean enabled;
 
     public Node() {
         priority = 1;

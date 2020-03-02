@@ -36,9 +36,10 @@ public class User implements HasAuditInfo {
     @JsonProperty
     private boolean group;
     @JsonProperty
-    private boolean enabled = true;
+    private Boolean enabled;
 
     public User() {
+        enabled = true;
     }
 
     @JsonCreator
@@ -63,6 +64,8 @@ public class User implements HasAuditInfo {
         this.group = group;
         if (enabled != null) {
             this.enabled = enabled;
+        } else {
+            this.enabled = true;
         }
     }
 
