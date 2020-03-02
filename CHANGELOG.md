@@ -6,6 +6,27 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add null checks to DB migration.
+
+
+## [v7.0-beta.20] - 2020-02-13
+
+* Fix bug in `processor_task` migration script.
+
+
+## [v7.0-beta.19] - 2020-02-10
+
+* Fix bugs in DB migration scripts.
+
+
+## [v7.0-beta.18] - 2020-02-05
+
+* Re-locate index database migrations.
+
+* Fix issues with migrating null audit columns.
+
+* Improve output of TestYamlUtil.
+
 
 ## [v7.0-beta.17] - 2020-01-29
 
@@ -1943,7 +1964,10 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.17...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.20...HEAD
+[v7.0-beta.20]: https://github.com/gchq/stroom/compare/v7.0-beta.19...v7.0-beta.20
+[v7.0-beta.19]: https://github.com/gchq/stroom/compare/v7.0-beta.18...v7.0-beta.19
+[v7.0-beta.18]: https://github.com/gchq/stroom/compare/v7.0-beta.17...v7.0-beta.18
 [v7.0-beta.17]: https://github.com/gchq/stroom/compare/v7.0-beta.16...v7.0-beta.17
 [v7.0-beta.16]: https://github.com/gchq/stroom/compare/v7.0-beta.15...v7.0-beta.16
 [v7.0-beta.15]: https://github.com/gchq/stroom/compare/v7.0-beta.14...v7.0-beta.15

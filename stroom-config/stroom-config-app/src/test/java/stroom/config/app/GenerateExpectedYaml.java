@@ -6,15 +6,20 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.kjetland.jackson.jsonSchema.JsonSchemaGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class GenerateExpectedYaml {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GenerateExpectedYaml.class);
+
+    private static final String APP_CONFIG = "appConfig";
 
     private static final String HEADER =
         "# This file is generated based on all the default configuration values that are built into stroom.\n" +
@@ -40,7 +45,7 @@ public class GenerateExpectedYaml {
             defaultsFile = Paths.get(args[0]);
             schemaFile = Paths.get(args[1]);
         } else {
-            defaultsFile = TestYamlUtil.getExpectedYamlFile();
+            defaultsFile = TestYamlUtil.getExpectedYamlFilePath();
             schemaFile = null;
         }
 
@@ -53,22 +58,38 @@ public class GenerateExpectedYaml {
 
         final String generatedYaml = TestYamlUtil.getYamlFromJavaModel();
 
-        String outputStr;
+
+        List<String> outputLines;
         if (args.length > 0) {
             // called for a specific output location so add a header
 
-            outputStr = generatedYaml.replace("---", "---\n" + HEADER);
+            outputLines = generatedYaml.replace("---", "---\n" + HEADER)
+                .lines()
+                .collect(Collectors.toList());
         } else {
             // called manually for TestYamlUtil so don't modify the content else it will break the test
-            outputStr = generatedYaml;
+            outputLines = removeDropWizardLines(generatedYaml);
         }
 
         LOGGER.info("Writing generated yaml to {}", defaultsFile.toAbsolutePath());
-        Files.writeString(defaultsFile, outputStr);
+        Files.write(defaultsFile, outputLines);
+
+        if (!generatedYaml.contains(APP_CONFIG + ":")) {
+            throw new RuntimeException(LogUtil.message("Expecting to find {} in {}",
+                APP_CONFIG + ":", defaultsFile.normalize().toAbsolutePath().toString()));
+        }
 
         if (schemaFile != null) {
             generateJsonSchema(schemaFile);
         }
+    }
+
+    public static List<String> removeDropWizardLines(final String value) {
+        return value.lines()
+            .sequential()
+            .takeWhile(line ->
+                line.startsWith("---") || line.startsWith(APP_CONFIG + ":") || line.startsWith(" "))
+            .collect(Collectors.toList());
     }
 
 

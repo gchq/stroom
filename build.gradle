@@ -175,7 +175,7 @@ ext.libs = [
         dropwizard_testing             : "io.dropwizard:dropwizard-testing", // version controlled by DW BOM
         dropwizard_validation          : "io.dropwizard:dropwizard-validation", // version controlled by DW BOM
         fast_infoset                   : "com.sun.xml.fastinfoset:FastInfoset:1.2.12",
-        flyway_core                    : "org.flywaydb:flyway-core:5.2.4",
+        flyway_core                    : "org.flywaydb:flyway-core:5.2.4", // We are stuck on 5.2.4 as newer non-enterprise versions don't support mysql 5.6
         gin                            : "com.google.gwt.inject:gin:2.1.2",
         google_findbugs                : "com.google.code.findbugs:jsr305:3.0.2",
         guava                          : "com.google.guava:guava", // version controlled by DW BOM
@@ -199,6 +199,7 @@ ext.libs = [
         jackson_databind               : "com.fasterxml.jackson.core:jackson-databind", // version controlled by DW BOM
         jackson_dataformat_yaml        : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", // version controlled by DW BOM
         jackson_datatype_jsr310        : "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", // version controlled by DW BOM
+        java_diff_utils                : "io.github.java-diff-utils:java-diff-utils:4.5",
         java_jwt                       : "com.auth0:java-jwt:3.1.0",
         javassist                      : "org.javassist:javassist", // version controlled by DW BOM
         javax_activation               : "javax.activation:javax.activation-api:1.2.0",
