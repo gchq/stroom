@@ -16,17 +16,23 @@
 
 package stroom.security.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Set;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class UserAndPermissions {
-    private String userId;
-    private Set<String> appPermissionSet;
+    @JsonProperty
+    private final String userId;
+    @JsonProperty
+    private final Set<String> appPermissionSet;
 
-    public UserAndPermissions() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public UserAndPermissions(final String userId, final Set<String> appPermissionSet) {
+    @JsonCreator
+    public UserAndPermissions(@JsonProperty("userId") final String userId,
+                              @JsonProperty("appPermissionSet") final Set<String> appPermissionSet) {
         this.userId = userId;
         this.appPermissionSet = appPermissionSet;
     }
@@ -35,15 +41,7 @@ public class UserAndPermissions {
         return userId;
     }
 
-    public void setUserId(final String userId) {
-        this.userId = userId;
-    }
-
     public Set<String> getAppPermissionSet() {
         return appPermissionSet;
-    }
-
-    public void setAppPermissionSet(final Set<String> appPermissionSet) {
-        this.appPermissionSet = appPermissionSet;
     }
 }

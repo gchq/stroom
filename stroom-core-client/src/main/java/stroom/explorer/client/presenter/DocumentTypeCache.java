@@ -16,42 +16,43 @@
 
 package stroom.explorer.client.presenter;
 
-import stroom.dispatch.client.ClientDispatchAsync;
+import com.google.gwt.core.client.GWT;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.DocumentTypes;
-import stroom.explorer.shared.FetchDocumentTypesAction;
-import stroom.widget.util.client.Future;
-import stroom.widget.util.client.FutureImpl;
+import stroom.explorer.shared.ExplorerResource;
 
 import javax.inject.Inject;
+import java.util.function.Consumer;
 
 public class DocumentTypeCache {
-    private final ClientDispatchAsync dispatcher;
+    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
+    private final RestFactory restFactory;
 
     private DocumentTypes documentTypes;
 
     @Inject
-    public DocumentTypeCache(final ClientDispatchAsync dispatcher) {
-        this.dispatcher = dispatcher;
+    public DocumentTypeCache(final RestFactory restFactory) {
+        this.restFactory = restFactory;
     }
 
     public void clear() {
         documentTypes = null;
     }
 
-    public Future<DocumentTypes> fetch() {
-        final FutureImpl<DocumentTypes> future = new FutureImpl<>();
-
+    public void fetch(final Consumer<DocumentTypes> consumer) {
         // Get the document types if they are null.
         if (documentTypes == null) {
-            final FetchDocumentTypesAction fetchDocumentTypesAction = new FetchDocumentTypesAction();
-            dispatcher.exec(fetchDocumentTypesAction).onSuccess(result -> {
-                documentTypes = result;
-                future.setResult(result);
-            });
+            final Rest<DocumentTypes> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        documentTypes = result;
+                        consumer.accept(result);
+                    })
+                    .call(EXPLORER_RESOURCE)
+                    .fetchDocumentTypes();
         } else {
-            future.setResult(documentTypes);
+            consumer.accept(documentTypes);
         }
-
-        return future;
     }
 }

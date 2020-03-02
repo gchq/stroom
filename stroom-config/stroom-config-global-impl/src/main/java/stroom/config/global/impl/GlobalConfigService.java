@@ -18,17 +18,12 @@
 package stroom.config.global.impl;
 
 
-import com.google.inject.internal.cglib.core.$DefaultNamingPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
-import stroom.cluster.task.api.DefaultClusterResultCollector;
-import stroom.cluster.task.api.TargetType;
 import stroom.config.global.impl.validation.ConfigValidator;
-import stroom.config.global.shared.ClusterConfigProperty;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.FindGlobalConfigCriteria;
-import stroom.config.global.shared.NodeConfigResult;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
@@ -45,7 +40,6 @@ import javax.inject.Singleton;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -146,19 +140,19 @@ public class GlobalConfigService {
     }
 
     /**
-     * @param propertyName The name of the prop to fetch, e.g. stroom.path.temp
+     * @param propertyPath The name of the prop to fetch, e.g. stroom.path.temp
      * @return A {@link ConfigProperty} if it is a valid prop name. The prop may or may not exist in the
      * DB. If it doesn't exist in the db then the property will be obtained from the object model.
      */
-    public Optional<ConfigProperty> fetch(final String propertyName) {
+    public Optional<ConfigProperty> fetch(final PropertyPath propertyPath) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
             // update the global config from the returned db record then return the corresponding
             // object from global properties which may have a yaml value in it and a different
             // effective value
-            return dao.fetch(propertyName)
+            return dao.fetch(propertyPath.toString())
                     .map(configMapper::decorateDbConfigProperty)
                     .or(() ->
-                            configMapper.getGlobalProperty(PropertyPath.fromPathString(propertyName)));
+                            configMapper.getGlobalProperty(propertyPath));
         });
     }
 
@@ -180,30 +174,30 @@ public class GlobalConfigService {
         });
     }
 
-    private ClusterConfigProperty buildClusterConfigProperty(final ConfigProperty configProperty) {
-        // TODO need to run this periodically and cache it, else we have to wait too long
-        //   for all nodes to answer
-        final DefaultClusterResultCollector<NodeConfigResult> collector = dispatchHelper
-                .execAsync(new NodeConfigClusterTask(),
-                        5,
-                        TimeUnit.SECONDS,
-                        TargetType.ENABLED);
-
-        ClusterConfigProperty clusterConfigProperty = new ClusterConfigProperty(configProperty);
-        collector.getResponseMap().forEach((nodeName, response) -> {
-            if (response == null) {
-                // TODO
-
-            } else if (response.getError() != null) {
-                // TODO
-
-            } else {
-                clusterConfigProperty.putYamlOverrideValue(
-                        nodeName, response.getResult().getYamlOverrideValue());
-            }
-        });
-        return clusterConfigProperty;
-    }
+//    private ClusterConfigProperty buildClusterConfigProperty(final ConfigProperty configProperty) {
+//        // TODO need to run this periodically and cache it, else we have to wait too long
+//        //   for all nodes to answer
+//        final DefaultClusterResultCollector<NodeConfigResult> collector = dispatchHelper
+//                .execAsync(new NodeConfigClusterTask(),
+//                        5,
+//                        TimeUnit.SECONDS,
+//                        TargetType.ENABLED);
+//
+//        ClusterConfigProperty clusterConfigProperty = new ClusterConfigProperty(configProperty);
+//        collector.getResponseMap().forEach((nodeName, response) -> {
+//            if (response == null) {
+//                // TODO
+//
+//            } else if (response.getError() != null) {
+//                // TODO
+//
+//            } else {
+//                clusterConfigProperty.putYamlOverrideValue(
+//                        nodeName, response.getResult().getYamlOverrideValue());
+//            }
+//        });
+//        return clusterConfigProperty;
+//    }
 
     public ConfigProperty update(final ConfigProperty configProperty) {
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {

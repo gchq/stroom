@@ -36,7 +36,7 @@ import stroom.pipeline.xmlschema.XmlSchemaCache.SchemaSet;
 import stroom.util.CharBuffer;
 import stroom.util.shared.Severity;
 import stroom.util.shared.StoredError;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;

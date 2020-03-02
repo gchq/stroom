@@ -16,18 +16,17 @@
 
 package stroom.cell.valuespinner.shared;
 
-import stroom.util.shared.SharedInteger;
+public class EditableInteger extends Number implements Comparable<EditableInteger>, Editable {
+    private static final long serialVersionUID = -6502263322370395720L;
 
-public class EditableInteger extends SharedInteger implements Editable {
-    private static final long serialVersionUID = -5468699731097143387L;
-
+    private Integer _integer;
     private boolean editable = true;
 
     public EditableInteger() {
     }
 
-    public EditableInteger(final Integer _int) {
-        super(_int);
+    public EditableInteger(final Integer _integer) {
+        this._integer = _integer;
     }
 
     @Override
@@ -38,5 +37,61 @@ public class EditableInteger extends SharedInteger implements Editable {
     @Override
     public void setEditable(final boolean editable) {
         this.editable = editable;
+    }
+
+    public Integer getInteger() {
+        return _integer;
+    }
+
+    public void setInteger(final Integer _integer) {
+        this._integer = _integer;
+    }
+
+    @Override
+    public int intValue() {
+        return _integer.intValue();
+    }
+
+    @Override
+    public long longValue() {
+        return _integer.longValue();
+    }
+
+    @Override
+    public float floatValue() {
+        return _integer.floatValue();
+    }
+
+    @Override
+    public double doubleValue() {
+        return _integer.doubleValue();
+    }
+
+    @Override
+    public int hashCode() {
+        return _integer.hashCode();
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj == null) {
+            return false;
+        }
+
+        if (obj instanceof EditableInteger) {
+            return ((EditableInteger) obj)._integer.equals(_integer);
+        }
+
+        return false;
+    }
+
+    @Override
+    public int compareTo(final EditableInteger sharedInteger) {
+        return _integer.compareTo(sharedInteger._integer);
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(_integer);
     }
 }

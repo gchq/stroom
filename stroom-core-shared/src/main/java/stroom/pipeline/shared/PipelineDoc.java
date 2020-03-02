@@ -16,9 +16,10 @@
 
 package stroom.pipeline.shared;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
@@ -29,19 +30,37 @@ import java.util.Objects;
 /**
  * This entity is used to persist pipeline configuration.
  */
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "parentPipeline"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "parentPipeline", "pipelineData"})
 @JsonInclude(Include.NON_DEFAULT)
 public class PipelineDoc extends Doc {
-    private static final long serialVersionUID = 4519634323788508083L;
-
     public static final String DOCUMENT_TYPE = "Pipeline";
 
+    @JsonProperty
     private String description;
+    @JsonProperty
     private DocRef parentPipeline;
-    @JsonIgnore
+    @JsonProperty
     private PipelineData pipelineData;
 
     public PipelineDoc() {
+    }
+
+    @JsonCreator
+    public PipelineDoc(@JsonProperty("type") final String type,
+                       @JsonProperty("uuid") final String uuid,
+                       @JsonProperty("name") final String name,
+                       @JsonProperty("version") final String version,
+                       @JsonProperty("createTime") final Long createTime,
+                       @JsonProperty("updateTime") final Long updateTime,
+                       @JsonProperty("createUser") final String createUser,
+                       @JsonProperty("updateUser") final String updateUser,
+                       @JsonProperty("description") final String description,
+                       @JsonProperty("parentPipeline") final DocRef parentPipeline,
+                       @JsonProperty("pipelineData") final PipelineData pipelineData) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.parentPipeline = parentPipeline;
+        this.pipelineData = pipelineData;
     }
 
     public String getDescription() {

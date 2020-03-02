@@ -7,7 +7,6 @@ import stroom.config.app.AppConfig;
 import stroom.config.app.AppConfigModule;
 import stroom.config.app.AppConfigModule.ConfigHolder;
 import stroom.config.app.Config;
-import stroom.core.dispatch.DispatchModule;
 import stroom.db.util.DbModule;
 import stroom.dropwizard.common.LogLevelInspector;
 import stroom.lifecycle.impl.LifecycleServiceModule;
@@ -60,7 +59,6 @@ public class AppModule extends AbstractModule {
         install(new SecurityContextModule());
         install(new MetaStatisticsModule());
         install(new stroom.statistics.impl.sql.search.SQLStatisticSearchModule());
-        install(new DispatchModule());
         install(new SessionResourceModule());
         install(new JerseyModule());
 

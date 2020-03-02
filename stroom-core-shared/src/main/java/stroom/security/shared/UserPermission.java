@@ -16,22 +16,28 @@
 
 package stroom.security.shared;
 
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.io.Serializable;
+import java.util.Objects;
 
+@JsonPropertyOrder({"userUuid", "permission"})
+@JsonInclude(Include.NON_DEFAULT)
 public class UserPermission implements Serializable, Comparable<UserPermission> {
     private static final long serialVersionUID = 2536752322307664050L;
 
-    private String userUuid;
-    private String permission;
+    @JsonProperty
+    private final String userUuid;
+    @JsonProperty
+    private final String permission;
 
-    public UserPermission() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public UserPermission(final String userUuid, final String permission) {
+    @JsonCreator
+    public UserPermission(@JsonProperty("userUuid") final String userUuid,
+                          @JsonProperty("permission") final String permission) {
         this.userUuid = userUuid;
         this.permission = permission;
     }
@@ -45,26 +51,17 @@ public class UserPermission implements Serializable, Comparable<UserPermission> 
     }
 
     @Override
-    public int hashCode() {
-        final HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
-        hashCodeBuilder.append(userUuid);
-        hashCodeBuilder.append(permission);
-        return hashCodeBuilder.toHashCode();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final UserPermission that = (UserPermission) o;
+        return Objects.equals(userUuid, that.userUuid) &&
+                Objects.equals(permission, that.permission);
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof UserPermission)) {
-            return false;
-        }
-
-        final UserPermission keyByName = (UserPermission) o;
-        final EqualsBuilder equalsBuilder = new EqualsBuilder();
-        equalsBuilder.append(userUuid, keyByName.userUuid);
-        equalsBuilder.append(permission, keyByName.permission);
-        return equalsBuilder.isEquals();
+    public int hashCode() {
+        return Objects.hash(userUuid, permission);
     }
 
     @Override

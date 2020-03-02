@@ -24,8 +24,9 @@ import com.gwtplatform.mvp.client.View;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
+import stroom.docref.DocRef;
 import stroom.document.client.event.ShowInfoDocumentDialogEvent;
-import stroom.explorer.shared.SharedDocRefInfo;
+import stroom.explorer.shared.DocRefInfo;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -51,7 +52,8 @@ public class InfoDocumentPresenter
     @ProxyEvent
     @Override
     public void onCreate(final ShowInfoDocumentDialogEvent event) {
-        final SharedDocRefInfo info = event.getInfo();
+        final DocRefInfo info = event.getInfo();
+        final DocRef docRef = info.getDocRef();
 
         final StringBuilder sb = new StringBuilder();
         if (info.getOtherInfo() != null) {
@@ -60,11 +62,11 @@ public class InfoDocumentPresenter
         }
 
         sb.append("UUID: ");
-        sb.append(info.getUuid());
+        sb.append(docRef.getUuid());
         sb.append("\nType: ");
-        sb.append(info.getType());
+        sb.append(docRef.getType());
         sb.append("\nName: ");
-        sb.append(info.getName());
+        sb.append(docRef.getName());
         if (info.getCreateUser() != null) {
             sb.append("\nCreated By: ");
             sb.append(info.getCreateUser());

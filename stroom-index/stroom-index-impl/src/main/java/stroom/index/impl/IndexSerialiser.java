@@ -40,13 +40,7 @@ public class IndexSerialiser implements DocumentSerialiser2<IndexDoc> {
 
     @Override
     public Map<String, byte[]> write(final IndexDoc document) throws IOException {
-        final Map<String, byte[]> data = delegate.write(document);
-
-//        if (document.getMeta() != null) {
-//            data.put(JS, EncodingUtil.asBytes(document.getMeta()));
-//        }
-
-        return data;
+        return delegate.write(document);
     }
 
     public IndexFields getIndexFieldsFromLegacyXML(final String xml) {

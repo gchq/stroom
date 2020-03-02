@@ -3,7 +3,7 @@ package stroom.search.resultsender;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.shared.ThreadPool;
-import stroom.task.shared.ThreadPoolImpl;
+import stroom.task.api.ThreadPoolImpl;
 
 import javax.inject.Inject;
 import java.util.concurrent.Executor;

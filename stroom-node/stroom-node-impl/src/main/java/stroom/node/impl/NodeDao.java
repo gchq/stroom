@@ -16,16 +16,16 @@
 
 package stroom.node.impl;
 
-import stroom.node.shared.FindNodeCriteria;
+import stroom.node.api.FindNodeCriteria;
 import stroom.node.shared.Node;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 
 public interface NodeDao {
     Node create(Node node);
 
     Node update(Node node);
 
-    BaseResultList<Node> find(FindNodeCriteria criteria);
+    ResultPage<Node> find(FindNodeCriteria criteria);
 
     Node getNode(String nodeName);
 }

@@ -41,7 +41,6 @@ public class _V07_00_00_Filter implements Serializable {
     private String excludes;
 
     public _V07_00_00_Filter() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_Filter(String includes, String excludes) {

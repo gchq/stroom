@@ -54,7 +54,7 @@ public class TrackersPlugin extends NodeToolsPlugin {
                     .onSuccess(result -> {
                         final IconMenuItem streamTaskMenuItem;
                         final SvgPreset icon = SvgPresets.MONITORING;
-                        final String stroomUi = result.getUrlConfig().getTrackers();
+                        final String stroomUi = result.getUrl().getTrackers();
                         if (stroomUi != null && stroomUi.trim().length() > 0) {
                             streamTaskMenuItem = new IconMenuItem(5, icon, null, "Stream Tasks", null, true, () -> {
                                 final Hyperlink hyperlink = new Builder()

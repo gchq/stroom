@@ -1,13 +1,20 @@
 package stroom.annotation.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(Include.NON_DEFAULT)
 public class EventLink {
+    @JsonProperty
     private long annotationId;
+    @JsonProperty
     private EventId eventId;
 
-    public EventLink() {
-    }
-
-    public EventLink(final long annotationId, final EventId eventId) {
+    @JsonCreator
+    public EventLink(@JsonProperty("annotationId") final long annotationId,
+                     @JsonProperty("eventId") final EventId eventId) {
         this.annotationId = annotationId;
         this.eventId = eventId;
     }

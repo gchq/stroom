@@ -17,11 +17,13 @@
 
 package stroom.pipeline.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
@@ -30,20 +32,27 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.pipeline.client.event.CreateProcessorEvent;
 import stroom.pipeline.client.presenter.PipelinePresenter;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.PipelineResource;
 import stroom.processor.client.presenter.ProcessorPresenter;
 import stroom.processor.shared.Processor;
 
+import java.util.function.Consumer;
+
 public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
+    private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
+
     private final Provider<PipelinePresenter> editorProvider;
+    private final RestFactory restFactory;
 
     @Inject
     public PipelinePlugin(final EventBus eventBus,
                           final Provider<PipelinePresenter> editorProvider,
-                          final ClientDispatchAsync dispatcher,
+                          final RestFactory restFactory,
                           final ContentManager contentManager,
                           final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, dispatcher, contentManager, entityPluginEventManager);
+        super(eventBus, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
+        this.restFactory = restFactory;
     }
 
     @Override
@@ -67,6 +76,26 @@ public class PipelinePlugin extends DocumentPlugin<PipelineDoc> {
     @Override
     protected DocumentEditPresenter<?, ?> createEditor() {
         return editorProvider.get();
+    }
+
+    @Override
+    public void load(final DocRef docRef, final Consumer<PipelineDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<PipelineDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(PIPELINE_RESOURCE)
+                .read(docRef);
+    }
+
+    @Override
+    public void save(final DocRef docRef, final PipelineDoc document, final Consumer<PipelineDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<PipelineDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(PIPELINE_RESOURCE)
+                .update(document);
     }
 
     @Override

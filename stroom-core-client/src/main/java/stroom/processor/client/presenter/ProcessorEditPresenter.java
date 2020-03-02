@@ -7,7 +7,6 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
@@ -20,7 +19,7 @@ import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.receive.rules.client.presenter.EditExpressionPresenter;
+import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -34,7 +33,6 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
     private final EditExpressionPresenter editExpressionPresenter;
-    private final ClientDispatchAsync dispatcher;
     private final RestFactory restFactory;
 
     private DocRef pipelineRef;
@@ -44,17 +42,15 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     public ProcessorEditPresenter(final EventBus eventBus,
                                   final ProcessorEditView view,
                                   final EditExpressionPresenter editExpressionPresenter,
-                                  final ClientDispatchAsync dispatcher,
                                   final RestFactory restFactory) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
-        this.dispatcher = dispatcher;
         this.restFactory = restFactory;
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
     public void read(final ExpressionOperator expression, final DocRef dataSource, final List<AbstractField> fields) {
-        editExpressionPresenter.init(dispatcher, dataSource, fields);
+        editExpressionPresenter.init(restFactory, dataSource, fields);
 
         if (expression != null) {
             editExpressionPresenter.read(expression);

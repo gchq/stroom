@@ -43,8 +43,6 @@ import java.util.Objects;
  **/
 @Deprecated
 public class OldDictionaryDoc extends Doc {
-    private static final long serialVersionUID = -4208920620555926044L;
-
     public static final String DOCUMENT_TYPE = "Dictionary";
 
     @XmlElement(name = "description")
@@ -56,7 +54,6 @@ public class OldDictionaryDoc extends Doc {
     private List<DocRef> imports;
 
     public OldDictionaryDoc() {
-        // Default constructor for GWT serialisation.
     }
 
     public String getDescription() {

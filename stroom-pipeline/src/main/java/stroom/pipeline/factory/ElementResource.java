@@ -3,6 +3,7 @@ package stroom.pipeline.factory;
 import io.swagger.annotations.Api;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelinePropertyType;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 
@@ -18,7 +19,7 @@ import java.util.Map;
 import java.util.Set;
 
 @Api(value = "elements - /v1")
-@Path("/elements/v1")
+@Path("/elements" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class ElementResource implements RestResource {
 

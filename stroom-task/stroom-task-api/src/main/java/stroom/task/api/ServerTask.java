@@ -16,7 +16,6 @@
 
 package stroom.task.api;
 
-import stroom.task.shared.SimpleThreadPool;
 import stroom.task.shared.Task;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.ThreadPool;

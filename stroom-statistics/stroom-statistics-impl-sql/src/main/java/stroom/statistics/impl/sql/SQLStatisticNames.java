@@ -16,8 +16,6 @@
 
 package stroom.statistics.impl.sql;
 
-import stroom.entity.shared.SQLNameConstants;
-
 public class SQLStatisticNames {
     public static final String FK_PREFIX = "FK_";
     public static final String ID_SUFFIX = "_ID";

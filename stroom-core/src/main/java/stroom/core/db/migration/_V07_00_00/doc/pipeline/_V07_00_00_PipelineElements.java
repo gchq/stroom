@@ -31,12 +31,12 @@ import java.util.List;
 public class _V07_00_00_PipelineElements implements _V07_00_00_SharedObject {
     private static final long serialVersionUID = -2207621085023679751L;
 
-    @XmlElementWrapper(name = "add", required = false)
-    @XmlElement(name = "element", required = false)
+    @XmlElementWrapper(name = "add")
+    @XmlElement(name = "element")
     private List<_V07_00_00_PipelineElement> add = new ArrayList<>();
 
-    @XmlElementWrapper(name = "remove", required = false)
-    @XmlElement(name = "element", required = false)
+    @XmlElementWrapper(name = "remove")
+    @XmlElement(name = "element")
     private List<_V07_00_00_PipelineElement> remove = new ArrayList<>();
 
     public List<_V07_00_00_PipelineElement> getAdd() {

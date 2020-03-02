@@ -30,9 +30,9 @@ import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaSecurityFilter;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaSecurityFilter;
+import stroom.meta.api.MetaService;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.resource.impl.ResourceModule;
@@ -119,7 +119,7 @@ class TestMetaService {
                 final Meta meta2 = metaService.create(createProps(FEED_USE_PERMISSION));
                 final Meta meta3 = metaService.create(createProps(FEED_READ_PERMISSION));
 
-                final List<Meta> readList = metaService.find(new FindMetaCriteria());
+                final List<Meta> readList = metaService.find(new FindMetaCriteria()).getValues();
                 assertThat(readList.size()).isEqualTo(1);
 
                 securityContext.useAsRead(() -> {
@@ -131,7 +131,7 @@ class TestMetaService {
                     assertThat(readExpression2).isNotEmpty();
                     assertThat(readExpression2.get().getChildren().size() == 1);
 
-                    final List<Meta> useAndReadList = metaService.find(new FindMetaCriteria());
+                    final List<Meta> useAndReadList = metaService.find(new FindMetaCriteria()).getValues();
                     assertThat(useAndReadList.size()).isEqualTo(2);
                 });
             });

@@ -17,7 +17,7 @@
 package stroom.meta.mock;
 
 import com.google.inject.AbstractModule;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 

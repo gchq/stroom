@@ -40,12 +40,12 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardDoc;
 import stroom.dashboard.shared.DashboardQueryKey;
-import stroom.dashboard.shared.DataSourceFieldsMap;
-import stroom.dashboard.shared.DownloadQueryAction;
+import stroom.dashboard.shared.DashboardResource;
+import stroom.dashboard.client.main.DataSourceFieldsMap;
+import stroom.dashboard.shared.DownloadQueryRequest;
 import stroom.dashboard.shared.QueryComponentSettings;
 import stroom.dashboard.shared.SearchRequest;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
@@ -73,6 +73,7 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -90,7 +91,7 @@ import java.util.List;
 
 public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.QueryView>
         implements QueryUiHandlers, HasDirtyHandlers, Queryable {
-
+    private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
     public static final ComponentType TYPE = new ComponentType(0, "query", "Query");
@@ -103,7 +104,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private final Provider<QueryInfoPresenter> queryInfoPresenterProvider;
     private final ProcessorLimitsPresenter processorLimitsPresenter;
     private final MenuListPresenter menuListPresenter;
-    private final ClientDispatchAsync dispatcher;
     private final RestFactory restFactory;
     private final LocationManager locationManager;
 
@@ -141,7 +141,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                           final Provider<QueryInfoPresenter> queryInfoPresenterProvider,
                           final ProcessorLimitsPresenter processorLimitsPresenter,
                           final MenuListPresenter menuListPresenter,
-                          final ClientDispatchAsync dispatcher,
                           final RestFactory restFactory,
                           final ClientSecurityContext securityContext,
                           final UiConfigCache clientPropertyCache,
@@ -155,7 +154,6 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         this.queryInfoPresenterProvider = queryInfoPresenterProvider;
         this.processorLimitsPresenter = processorLimitsPresenter;
         this.menuListPresenter = menuListPresenter;
-        this.dispatcher = dispatcher;
         this.restFactory = restFactory;
         this.locationManager = locationManager;
 
@@ -190,13 +188,13 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         warningsButton = view.addButton(SvgPresets.ALERT.title("Show Warnings"));
         warningsButton.setVisible(false);
 
-        indexLoader = new IndexLoader(getEventBus(), dispatcher);
+        indexLoader = new IndexLoader(getEventBus(), restFactory);
         searchModel = new SearchModel(searchBus, this, indexLoader, timeZones);
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    defaultProcessorTimeLimit = result.getProcessConfig().getDefaultTimeLimit();
-                    defaultProcessorRecordLimit = result.getProcessConfig().getDefaultRecordLimit();
+                    defaultProcessorTimeLimit = result.getProcess().getDefaultTimeLimit();
+                    defaultProcessorRecordLimit = result.getProcess().getDefaultRecordLimit();
                 })
                 .onFailure(caught -> AlertEvent.fireError(QueryPresenter.this, caught.getMessage(), null));
     }
@@ -318,7 +316,7 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
             }
         }
         fields.sort(Comparator.comparing(AbstractField::getName));
-        expressionPresenter.init(dispatcher, dataSourceRef, fields);
+        expressionPresenter.init(restFactory, dataSourceRef, fields);
 
         final EqualsBuilder builder = new EqualsBuilder();
         builder.append(queryComponentSettings.getDataSource(), dataSourceRef);
@@ -417,13 +415,16 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
         // Now create the processor filter using the find stream criteria.
         final CreateProcessorFilterRequest request = new CreateProcessorFilterRequest(pipeline, queryData, true, 1);
         final Rest<ProcessorFilter> rest = restFactory.create();
-        rest.onSuccess(streamProcessorFilter -> {
-            if (streamProcessorFilter != null) {
-                CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter);
-            } else {
-                AlertEvent.fireInfo(this, "Created batch processor", null);
-            }
-        }).call(PROCESSOR_FILTER_RESOURCE).create(request);
+        rest
+                .onSuccess(streamProcessorFilter -> {
+                    if (streamProcessorFilter != null) {
+                        CreateProcessorEvent.fire(QueryPresenter.this, streamProcessorFilter);
+                    } else {
+                        AlertEvent.fireInfo(this, "Created batch processor", null);
+                    }
+                })
+                .call(PROCESSOR_FILTER_RESOURCE)
+                .create(request);
     }
 
     private void showWarnings() {
@@ -694,17 +695,17 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
                     dashboard.getUuid(),
                     dashboard.getName(),
                     getComponentConfig().getId());
-            final DashboardQueryKey dashboardQueryKey = DashboardQueryKey.create(
+            final DashboardQueryKey dashboardQueryKey = new DashboardQueryKey(
                     dashboardUUID.getUUID(),
                     dashboard.getUuid(),
                     dashboardUUID.getComponentId());
 
-            if (dashboardQueryKey != null) {
-                dispatcher.exec(
-                        new DownloadQueryAction(dashboardQueryKey, searchRequest))
-                        .onSuccess(result ->
-                                ExportFileCompleteUtil.onSuccess(locationManager, null, result));
-            }
+            final Rest<ResourceGeneration> rest = restFactory.create();
+            rest
+                    .onSuccess(result ->
+                            ExportFileCompleteUtil.onSuccess(locationManager, null, result))
+                    .call(DASHBOARD_RESOURCE)
+                    .downloadQuery(new DownloadQueryRequest(dashboardQueryKey, searchRequest));
         }
     }
 

@@ -68,7 +68,6 @@ public class _V07_00_00_PipelineProperty
     private _V07_00_00_PipelinePropertyValue value;
 
     public _V07_00_00_PipelineProperty() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_PipelineProperty(final String element, final String name) {

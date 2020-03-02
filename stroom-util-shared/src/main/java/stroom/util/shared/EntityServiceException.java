@@ -42,7 +42,6 @@ public class EntityServiceException extends RuntimeException implements Serializ
     private String callStack;
 
     public EntityServiceException() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public EntityServiceException(final String message) {

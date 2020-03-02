@@ -96,9 +96,7 @@
         "tabs" : [ {
           "id" : "query-JT8D7"
         } ],
-        "selected" : 0,
-        "visibleTabCount" : 1,
-        "allTabCount" : 1
+        "selected" : 0
       }, {
         "type" : "tabLayout",
         "preferredSize" : {
@@ -107,9 +105,7 @@
         "tabs" : [ {
           "id" : "table-IIO1T"
         } ],
-        "selected" : 0,
-        "visibleTabCount" : 1,
-        "allTabCount" : 1
+        "selected" : 0
       } ]
     }, {
       "type" : "tabLayout",
@@ -119,9 +115,7 @@
       "tabs" : [ {
         "id" : "vis-BX59A"
       } ],
-      "selected" : 0,
-      "visibleTabCount" : 1,
-      "allTabCount" : 1
+      "selected" : 0
     } ]
   }
 }

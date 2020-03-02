@@ -27,7 +27,7 @@ import java.io.IOException;
 import java.util.Properties;
 
 @Singleton
-class BuildInfoProvider implements Provider<BuildInfo> {
+public class BuildInfoProvider implements Provider<BuildInfo> {
     private static final String upDate = DateUtil.createNormalDateTimeString();
     private static final Logger LOGGER = LoggerFactory.getLogger(BuildInfoProvider.class);
     private static final String BUILD_PROPERTIES = "META-INF/stroom-util-build.properties";

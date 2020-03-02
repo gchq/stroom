@@ -1,6 +1,10 @@
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,10 +16,8 @@ import java.util.Objects;
  * Class for representing a path to a property in an object tree, i.e
  * stroom.node.name
  */
-public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
-
-    private static final long serialVersionUID = 4298017138182350850L;
-
+@JsonInclude(Include.NON_DEFAULT)
+public class PropertyPath implements Comparable<PropertyPath> {
     private static final String DELIMITER = ".";
     private static final String DELIMITER_REGEX = "\\" + DELIMITER;
 
@@ -23,14 +25,16 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
 
     // Held in part form to reduce memory overhead as some parts will be used
     // many times over all the config objects
-    private List<String> parts;
+    @JsonProperty("parts")
+    private final List<String> parts;
 
-    @SuppressWarnings("unused") // Needed for GWT
-    private PropertyPath() {
-    }
-
-    private PropertyPath(final List<String> parts) {
-        this.parts = new ArrayList<>(parts);
+    @JsonCreator
+    PropertyPath(@JsonProperty("parts") final List<String> parts) {
+        if (parts == null) {
+            this.parts = Collections.emptyList();
+        } else {
+            this.parts = new ArrayList<>(parts);
+        }
     }
 
     public static PropertyPath blank() {
@@ -41,7 +45,11 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
      * Create a {@link PropertyPath} from a path string, e.g "stroom.node.name"
      */
     public static PropertyPath fromPathString(final String propertyPath) {
-        return PropertyPath.fromParts(propertyPath.split(DELIMITER_REGEX));
+        if (propertyPath == null || propertyPath.isEmpty()) {
+            return EMPTY_INSTANCE;
+        } else {
+            return PropertyPath.fromParts(propertyPath.split(DELIMITER_REGEX));
+        }
     }
 
     /**
@@ -59,6 +67,14 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
             return EMPTY_INSTANCE;
         } else {
             return new PropertyPath(parts);
+        }
+    }
+
+    List<String> getParts() {
+        if (parts.isEmpty()) {
+            return Collections.emptyList();
+        } else {
+            return new ArrayList<>(parts);
         }
     }
 
@@ -83,6 +99,7 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
     /**
      * @return The property name from a property path, i.e. "name" from "stroom.node.name"
      */
+    @JsonIgnore
     public String getPropertyName() {
         if (parts.isEmpty()) {
             throw new RuntimeException("Unable to get property name from empty path");
@@ -101,7 +118,11 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
 
     @Override
     public String toString() {
-        return String.join(DELIMITER, parts);
+        if (parts == null || parts.isEmpty()) {
+            return null;
+        } else {
+            return String.join(DELIMITER, parts);
+        }
     }
 
     @Override
@@ -131,10 +152,7 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
         return Objects.hash(parts);
     }
 
-    public static class Builder implements SharedObject {
-
-        private static final long serialVersionUID = 4646431868659034045L;
-
+    public static class Builder {
         private List<String> parts = null;
 
         @SuppressWarnings("unused") // Needed for GWT

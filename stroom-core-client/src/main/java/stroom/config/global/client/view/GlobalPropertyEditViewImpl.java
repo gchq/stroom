@@ -29,6 +29,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter.GlobalPropertyEditView;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditUiHandlers;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.tickbox.client.view.TickBox;
 
 public final class GlobalPropertyEditViewImpl
@@ -64,6 +67,8 @@ public final class GlobalPropertyEditViewImpl
     TickBox requireUiRestart;
     @UiField
     TickBox readOnly;
+    @UiField
+    ButtonPanel buttonPanel;
 
     private boolean password;
 //    private static volatile Resources RESOURCES;
@@ -195,6 +200,11 @@ public final class GlobalPropertyEditViewImpl
     @Override
     public void setUseOverride(final boolean useOverride) {
         this.useOverride.setBooleanValue(useOverride);
+    }
+
+    @Override
+    public ButtonView addButton(final SvgPreset preset) {
+        return buttonPanel.add(preset);
     }
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {

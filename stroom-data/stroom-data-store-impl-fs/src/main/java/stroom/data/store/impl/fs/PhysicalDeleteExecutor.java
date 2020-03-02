@@ -22,7 +22,7 @@ import stroom.meta.api.PhysicalDelete;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -212,7 +212,7 @@ public class PhysicalDeleteExecutor {
         criteria.setSort(MetaFields.ID.getDisplayValue());
         criteria.obtainPageRequest().setLength(batchSize);
 
-        return metaService.find(criteria);
+        return metaService.find(criteria).getValues();
     }
 
     private Long getDeleteThresholdEpochMs(final DataStoreServiceConfig config) {

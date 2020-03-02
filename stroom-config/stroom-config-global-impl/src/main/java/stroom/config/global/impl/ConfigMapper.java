@@ -237,7 +237,7 @@ public class ConfigMapper {
                 // Update all the DB related values from the passed DB config prop
                 globalConfigProperty.setId(dbConfigProperty.getId());
 
-                globalConfigProperty.setDatabaseOverride(dbConfigProperty.getDatabaseOverrideValue());
+                globalConfigProperty.setDatabaseOverrideValue(dbConfigProperty.getDatabaseOverrideValue());
                 globalConfigProperty.setVersion(dbConfigProperty.getVersion());
                 globalConfigProperty.setCreateTimeMs(dbConfigProperty.getCreateTimeMs());
                 globalConfigProperty.setCreateUser(dbConfigProperty.getCreateUser());
@@ -336,9 +336,7 @@ public class ConfigMapper {
         final String defaultValueAsStr = getDefaultValue(defaultProp);
 
         // build a new ConfigProperty object from our Prop and our defaults
-        final ConfigProperty configProperty = new ConfigProperty();
-        configProperty.setName(fullPath);
-        configProperty.setDefaultValue(defaultValueAsStr);
+        final ConfigProperty configProperty = new ConfigProperty(fullPath, defaultValueAsStr);
         // Add all the meta data for the prop
         updatePropertyFromConfigAnnotations(configProperty, defaultProp);
 

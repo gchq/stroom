@@ -22,12 +22,12 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
+
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.util.shared.IdSet;
 
 public class ClassificationWrappedMetaPresenter extends ClassificationWrapperPresenter
-        implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<SharedObject> {
+        implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<Object> {
     private final MetaPresenter metaPresenter;
 
     @Inject
@@ -41,7 +41,7 @@ public class ClassificationWrappedMetaPresenter extends ClassificationWrapperPre
     }
 
     @Override
-    public void read(final DocRef docRef, final SharedObject entity) {
+    public void read(final DocRef docRef, final Object entity) {
         metaPresenter.read(docRef, entity);
     }
 

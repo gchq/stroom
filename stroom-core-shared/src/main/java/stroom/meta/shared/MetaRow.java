@@ -16,31 +16,29 @@
 
 package stroom.meta.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.HashMap;
 import java.util.Map;
 
-public class MetaRow implements SharedObject {
-    private static final long serialVersionUID = -8198186456924478908L;
+@JsonInclude(Include.NON_DEFAULT)
+public class MetaRow {
+    @JsonProperty
+    private final Meta meta;
+    @JsonProperty
+    private final Map<String, String> attributes;
 
-    private Meta meta;
-    private Map<String, String> attributes = new HashMap<>();
-
-    public MetaRow() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public MetaRow(Meta meta) {
-        setMeta(meta);
+    @JsonCreator
+    public MetaRow(@JsonProperty("meta") final Meta meta,
+                   @JsonProperty("attributes") final Map<String, String> attributes) {
+        this.meta = meta;
+        this.attributes = attributes;
     }
 
     public Meta getMeta() {
         return meta;
-    }
-
-    public void setMeta(Meta meta) {
-        this.meta = meta;
     }
 
     public Map<String, String> getAttributes() {

@@ -29,7 +29,6 @@ public class Version implements Serializable, Comparable<Version> {
     private Integer patch;
 
     public Version() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public Version(final Integer major) {

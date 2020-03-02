@@ -16,19 +16,43 @@
 
 package stroom.job.impl;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
 import stroom.util.shared.StringCriteria;
+
+import java.util.List;
 
 /**
  * Criteria object used to fetch a job that matches the parameters specified.
  */
+@JsonInclude(Include.NON_DEFAULT)
 public class FindJobNodeCriteria extends BaseCriteria {
-    private static final long serialVersionUID = 71512228011037748L;
-
     public static final String FIELD_ID = "Id";
 
-    private StringCriteria jobName = new StringCriteria();
-    private StringCriteria nodeName = new StringCriteria();
+    @JsonProperty
+    private StringCriteria jobName;
+    @JsonProperty
+    private StringCriteria nodeName;
+
+    public FindJobNodeCriteria() {
+        jobName = new StringCriteria();
+        nodeName = new StringCriteria();
+    }
+
+    @JsonCreator
+    public FindJobNodeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                               @JsonProperty("sortList") final List<Sort> sortList,
+                               @JsonProperty("jobName") final StringCriteria jobName,
+                               @JsonProperty("nodeName") final StringCriteria nodeName) {
+        super(pageRequest, sortList);
+        this.jobName = jobName;
+        this.nodeName = nodeName;
+    }
 
     public StringCriteria getJobName() {
         return jobName;

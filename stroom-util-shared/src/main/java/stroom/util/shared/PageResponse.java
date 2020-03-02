@@ -16,22 +16,32 @@
 
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 import java.util.Objects;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class PageResponse implements Serializable {
     private static final long serialVersionUID = -8613411971150227752L;
 
+    @JsonProperty
     private Long offset;
+    @JsonProperty
     private Integer length;
+    @JsonProperty
     private Long total;
+    @JsonProperty
     private boolean exact;
 
-    public PageResponse() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public PageResponse(final Long offset, final Integer length, final Long total, final boolean exact) {
+    @JsonCreator
+    public PageResponse(@JsonProperty("offset") final Long offset,
+                        @JsonProperty("length") final Integer length,
+                        @JsonProperty("total") final Long total,
+                        @JsonProperty("exact") final boolean exact) {
         this.offset = offset;
         this.length = length;
         this.total = total;

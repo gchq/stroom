@@ -21,11 +21,10 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.dashboard.shared.DownloadSearchResultFileType;
-import stroom.dispatch.client.ClientDispatchAsync;
 
 public class DownloadPresenter extends MyPresenterWidget<DownloadPresenter.DownloadView> {
     @Inject
-    public DownloadPresenter(final EventBus eventBus, final DownloadView view, final ClientDispatchAsync dispatcher) {
+    public DownloadPresenter(final EventBus eventBus, final DownloadView view) {
         super(eventBus, view);
     }
 

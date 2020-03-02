@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -37,8 +38,6 @@ import java.util.List;
 @XmlRootElement(name = "splitLayout")
 @XmlType(name = "SplitLayoutConfig", propOrder = {"preferredSize", "dimension", "children"})
 public class SplitLayoutConfig extends LayoutConfig {
-    private static final long serialVersionUID = 8201392610412513780L;
-
     /**
      * The preferred size of this layout in width, height.
      */
@@ -55,7 +54,6 @@ public class SplitLayoutConfig extends LayoutConfig {
     private List<LayoutConfig> children;
 
     public SplitLayoutConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public SplitLayoutConfig(final int dimension, final LayoutConfig... children) {
@@ -65,6 +63,15 @@ public class SplitLayoutConfig extends LayoutConfig {
                 add(child);
             }
         }
+    }
+
+    @JsonCreator
+    public SplitLayoutConfig(@JsonProperty("preferredSize") Size preferredSize,
+                             @JsonProperty("dimension") int dimension,
+                             @JsonProperty("children") List<LayoutConfig> children) {
+        this.preferredSize = preferredSize;
+        this.dimension = dimension;
+        this.children = children;
     }
 
     @Override

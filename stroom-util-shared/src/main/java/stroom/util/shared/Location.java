@@ -16,9 +16,19 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
 
-public interface Location extends Comparable<Location>, SharedObject {
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = StreamLocation.class, name = "stream"),
+        @JsonSubTypes.Type(value = DefaultLocation.class, name = "default")
+})
+public interface Location extends Comparable<Location> {
     int getLineNo();
 
     int getColNo();

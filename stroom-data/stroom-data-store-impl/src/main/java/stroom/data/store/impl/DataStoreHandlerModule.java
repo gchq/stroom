@@ -17,37 +17,25 @@
 package stroom.data.store.impl;
 
 import com.google.inject.AbstractModule;
-import stroom.data.shared.DownloadDataAction;
-import stroom.data.shared.UploadDataAction;
-import stroom.meta.shared.FetchFullMetaInfoAction;
-import stroom.meta.shared.FindMetaRowAction;
-import stroom.meta.shared.UpdateStatusAction;
-import stroom.pipeline.shared.FetchDataAction;
-import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.ServletBinder;
+import stroom.util.shared.RestResource;
 
 public class DataStoreHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
         TaskHandlerBinder.create(binder())
-                .bind(FetchDataAction.class, FetchDataHandler.class)
-                .bind(FetchDataWithPipelineAction.class, FetchDataWithPipelineHandler.class)
-                .bind(FetchFullMetaInfoAction.class, FetchFullMetaInfoHandler.class)
-                .bind(FindMetaRowAction.class, FindMetaRowHandler.class)
-                .bind(UpdateStatusAction.class, UpdateStatusHandler.class)
-                .bind(DownloadDataAction.class, DownloadDataHandler.class)
                 .bind(DataDownloadTask.class, DataDownloadTaskHandler.class)
-                .bind(StreamUploadTask.class, StreamUploadTaskHandler.class)
-                .bind(UploadDataAction.class, UploadDataHandler.class);
+                .bind(StreamUploadTask.class, StreamUploadTaskHandler.class);
 
         ServletBinder.create(binder())
                 .bind(ImportFileServlet.class);
 
         // TODO probably not the right place for this binding
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(DataResource.class);
+                .addBinding(NewUiDataResource.class)
+                .addBinding(DataResourceImpl.class)
+                .addBinding(ViewDataResourceImpl.class);
     }
 }

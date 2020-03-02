@@ -27,7 +27,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.core.client.event.DirtyKeyDownHander;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -48,8 +47,7 @@ public class StroomStatsStoreSettingsPresenter
 
     @Inject
     public StroomStatsStoreSettingsPresenter(final EventBus eventBus,
-                                             final StroomStatsStoreSettingsPresenter.StroomStatsStoreSettingsView view,
-                                             final ClientDispatchAsync dispatcher) {
+                                             final StroomStatsStoreSettingsPresenter.StroomStatsStoreSettingsView view) {
         super(eventBus, view);
 
         final KeyDownHandler keyDownHander = new DirtyKeyDownHander() {

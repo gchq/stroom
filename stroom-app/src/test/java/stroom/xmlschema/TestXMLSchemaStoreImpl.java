@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 import stroom.pipeline.xmlschema.XmlSchemaStore;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
@@ -44,25 +44,25 @@ class TestXMLSchemaStoreImpl extends AbstractCoreIntegrationTest {
         // Now make sure we can find a resource that we expect to be there.
         FindXMLSchemaCriteria criteria = new FindXMLSchemaCriteria();
 
-        List<XmlSchemaDoc> list = xmlSchemaStore.find(criteria);
+        List<XmlSchemaDoc> list = xmlSchemaStore.find(criteria).getValues();
         assertThat(list).isNotNull();
         assertThat(list.size() > 1).isTrue();
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setNamespaceURI("event-logging:3");
-        list = xmlSchemaStore.find(criteria);
+        list = xmlSchemaStore.find(criteria).getValues();
         assertThat(list).isNotNull();
         assertThat(list.size()).isEqualTo(2);
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setSystemId("file://event-logging-v3.0.0.xsd");
-        list = xmlSchemaStore.find(criteria);
+        list = xmlSchemaStore.find(criteria).getValues();
         assertThat(list).isNotNull();
         assertThat(list.size()).isEqualTo(1);
 
         criteria = new FindXMLSchemaCriteria();
         criteria.setSchemaGroup("EVENTS");
-        list = xmlSchemaStore.find(criteria);
+        list = xmlSchemaStore.find(criteria).getValues();
         assertThat(list).isNotNull();
         assertThat(list.size()).isEqualTo(2);
     }

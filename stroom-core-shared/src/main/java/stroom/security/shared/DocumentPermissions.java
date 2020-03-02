@@ -16,34 +16,33 @@
 
 package stroom.security.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-public class DocumentPermissions implements SharedObject {
-    private static final long serialVersionUID = 5230917643321418827L;
+@JsonPropertyOrder({"docRefUuid", "userPermissions"})
+@JsonInclude(Include.NON_DEFAULT)
+public class DocumentPermissions {
+    @JsonProperty
+    private final String docRefUuid;
+    @JsonProperty
+    private final Map<String, Set<String>> userPermissions;
 
-    private String docRefUuid;
-    private Map<String, Set<String>> userPermissions;
-
-    public DocumentPermissions() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public DocumentPermissions(final String docRefUuid,
-                               final Map<String, Set<String>> userPermissions) {
+    @JsonCreator
+    public DocumentPermissions(@JsonProperty("docRefUuid") final String docRefUuid,
+                               @JsonProperty("userPermissions") final Map<String, Set<String>> userPermissions) {
         this.docRefUuid = docRefUuid;
         this.userPermissions = userPermissions;
     }
 
     public String getDocRefUuid() {
         return docRefUuid;
-    }
-
-    public void setDocRefUuid(String docRefUuid) {
-        this.docRefUuid = docRefUuid;
     }
 
     public Map<String, Set<String>> getUserPermissions() {

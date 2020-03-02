@@ -19,18 +19,12 @@ package stroom.dashboard.impl;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.dashboard.shared.DashboardDoc;
-import stroom.dashboard.shared.DownloadQueryAction;
-import stroom.dashboard.shared.DownloadSearchResultsAction;
-import stroom.dashboard.shared.FetchTimeZonesAction;
-import stroom.dashboard.shared.FetchVisualisationAction;
-import stroom.dashboard.shared.SearchBusPollAction;
-import stroom.dashboard.shared.ValidateExpressionAction;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.RestResource;
 
 public class DashboardModule extends AbstractModule {
     @Override
@@ -38,14 +32,6 @@ public class DashboardModule extends AbstractModule {
         bind(DashboardStore.class).to(DashboardStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ActiveQueriesManager.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(DownloadQueryAction.class, DownloadQueryActionHandler.class)
-                .bind(DownloadSearchResultsAction.class, DownloadSearchResultsHandler.class)
-                .bind(FetchTimeZonesAction.class, FetchTimeZonesHandler.class)
-                .bind(FetchVisualisationAction.class, FetchVisualisationHandler.class)
-                .bind(SearchBusPollAction.class, SearchBusPollActionHandler.class)
-                .bind(ValidateExpressionAction.class, ValidateExpressionHandler.class);
 
         final Multibinder<ExplorerActionHandler> explorerActionHandlerBinder = Multibinder.newSetBinder(binder(), ExplorerActionHandler.class);
         explorerActionHandlerBinder.addBinding().to(DashboardStoreImpl.class);
@@ -55,5 +41,8 @@ public class DashboardModule extends AbstractModule {
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(DashboardDoc.DOCUMENT_TYPE, DashboardStoreImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(DashboardResourceImpl.class);
     }
 }

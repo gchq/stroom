@@ -17,8 +17,6 @@
 package stroom.pipeline.shared.data;
 
 import stroom.docref.DocRef;
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.DocRefUtil;
 
 import java.util.Collections;
 
@@ -30,14 +28,14 @@ public class PipelineDataUtil {
         return element;
     }
 
-    public static PipelineProperty createProperty(final String element, final String name, final BaseEntity entity) {
-        final PipelinePropertyValue value = new PipelinePropertyValue(DocRefUtil.create(entity));
-        final PipelineProperty property = new PipelineProperty();
-        property.setElement(element);
-        property.setName(name);
-        property.setValue(value);
-        return property;
-    }
+//    public static PipelineProperty createProperty(final String element, final String name, final BaseEntity entity) {
+//        final PipelinePropertyValue value = new PipelinePropertyValue(DocRefUtil.create(entity));
+//        final PipelineProperty property = new PipelineProperty();
+//        property.setElement(element);
+//        property.setName(name);
+//        property.setValue(value);
+//        return property;
+//    }
 
     public static PipelineProperty createProperty(final String element, final String name,
                                                   final DocRef docRef) {
@@ -72,14 +70,11 @@ public class PipelineDataUtil {
                                                     final DocRef pipeline,
                                                     final DocRef feed,
                                                     final String streamType) {
-        return new PipelineReference(element, name, pipeline, feed, streamType);
+        return new PipelineReference(element, name, pipeline, feed, streamType, null);
     }
 
     public static PipelineLink createLink(final String from, final String to) {
-        final PipelineLink link = new PipelineLink();
-        link.setFrom(from);
-        link.setTo(to);
-        return link;
+        return new PipelineLink(from, to);
     }
 
     public static void normalise(final PipelineData pipelineData) {

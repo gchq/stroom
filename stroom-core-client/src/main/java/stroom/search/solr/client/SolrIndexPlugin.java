@@ -17,11 +17,13 @@
 
 package stroom.search.solr.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
@@ -29,23 +31,50 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.search.solr.client.presenter.SolrIndexPresenter;
 import stroom.search.solr.shared.SolrIndexDoc;
+import stroom.search.solr.shared.SolrIndexResource;
+
+import java.util.function.Consumer;
 
 public class SolrIndexPlugin extends DocumentPlugin<SolrIndexDoc> {
+    private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
+
     private final Provider<SolrIndexPresenter> editorProvider;
+    private final RestFactory restFactory;
 
     @Inject
     public SolrIndexPlugin(final EventBus eventBus,
                            final Provider<SolrIndexPresenter> editorProvider,
-                           final ClientDispatchAsync dispatcher,
+                           final RestFactory restFactory,
                            final ContentManager contentManager,
                            final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, dispatcher, contentManager, entityPluginEventManager);
+        super(eventBus, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
+        this.restFactory = restFactory;
     }
 
     @Override
     protected DocumentEditPresenter<?, ?> createEditor() {
         return editorProvider.get();
+    }
+
+    @Override
+    public void load(final DocRef docRef, final Consumer<SolrIndexDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<SolrIndexDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(SOLR_INDEX_RESOURCE)
+                .read(docRef);
+    }
+
+    @Override
+    public void save(final DocRef docRef, final SolrIndexDoc document, final Consumer<SolrIndexDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<SolrIndexDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(SOLR_INDEX_RESOURCE)
+                .update(document);
     }
 
     @Override

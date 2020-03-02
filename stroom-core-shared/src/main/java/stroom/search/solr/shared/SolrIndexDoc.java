@@ -16,6 +16,7 @@
 
 package stroom.search.solr.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -33,23 +34,65 @@ import java.util.Objects;
 public class SolrIndexDoc extends Doc {
     public static final String DOCUMENT_TYPE = "SolrIndex";
 
-    private static final long serialVersionUID = 2648729644398564919L;
-
+    @JsonProperty
     private String description;
+    @JsonProperty
     private String collection;
-    private SolrConnectionConfig solrConnectionConfig = new SolrConnectionConfig();
+    @JsonProperty
+    private SolrConnectionConfig solrConnectionConfig;
 
+    @JsonProperty
     private List<SolrIndexField> fields;
+    @JsonProperty
     private List<SolrIndexField> deletedFields;
+    @JsonProperty
     private SolrSynchState solrSynchState;
 
+    @JsonProperty
     private ExpressionOperator retentionExpression;
 
     public SolrIndexDoc() {
-        fields = new ArrayList<>();
-        // Always add standard id fields for now.
-        fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
-        fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
+        setDefaults();
+    }
+
+    @JsonCreator
+    public SolrIndexDoc(@JsonProperty("type") final String type,
+                        @JsonProperty("uuid") final String uuid,
+                        @JsonProperty("name") final String name,
+                        @JsonProperty("version") final String version,
+                        @JsonProperty("createTime") final Long createTime,
+                        @JsonProperty("updateTime") final Long updateTime,
+                        @JsonProperty("createUser") final String createUser,
+                        @JsonProperty("updateUser") final String updateUser,
+                        @JsonProperty("description") final String description,
+                        @JsonProperty("collection") final String collection,
+                        @JsonProperty("solrConnectionConfig") final SolrConnectionConfig solrConnectionConfig,
+                        @JsonProperty("fields") final List<SolrIndexField> fields,
+                        @JsonProperty("deletedFields") final List<SolrIndexField> deletedFields,
+                        @JsonProperty("solrSynchState") final SolrSynchState solrSynchState,
+                        @JsonProperty("retentionExpression") final ExpressionOperator retentionExpression) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.collection = collection;
+        this.solrConnectionConfig = solrConnectionConfig;
+        this.fields = fields;
+        this.deletedFields = deletedFields;
+        this.solrSynchState = solrSynchState;
+        this.retentionExpression = retentionExpression;
+
+        setDefaults();
+    }
+
+    private void setDefaults() {
+        if (solrConnectionConfig == null) {
+            solrConnectionConfig = new SolrConnectionConfig();
+        }
+        if (fields == null) {
+            fields = new ArrayList<>();
+            // Always add standard id fields for now.
+            fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
+            fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
+        }
     }
 
     public String getDescription() {
@@ -71,58 +114,48 @@ public class SolrIndexDoc extends Doc {
         this.collection = collection;
     }
 
-    @JsonProperty("connection")
     public SolrConnectionConfig getSolrConnectionConfig() {
         return solrConnectionConfig;
     }
 
-    @JsonProperty("connection")
     public void setSolrConnectionConfig(final SolrConnectionConfig solrConnectionConfig) {
         this.solrConnectionConfig = solrConnectionConfig;
     }
 
-    @JsonProperty("fields")
     public List<SolrIndexField> getFields() {
         return fields;
     }
 
-    @JsonProperty("fields")
     public void setFields(final List<SolrIndexField> fields) {
         this.fields = fields;
     }
 
-    @JsonIgnore
     public List<SolrIndexField> getDeletedFields() {
         return deletedFields;
     }
 
-    @JsonIgnore
     public void setDeletedFields(final List<SolrIndexField> deletedFields) {
         this.deletedFields = deletedFields;
     }
 
-    @JsonProperty("state")
     public SolrSynchState getSolrSynchState() {
         return solrSynchState;
     }
 
-    @JsonProperty("state")
     public void setSolrSynchState(final SolrSynchState solrSynchState) {
         this.solrSynchState = solrSynchState;
     }
 
-    @JsonProperty("retentionExpression")
     public ExpressionOperator getRetentionExpression() {
         return retentionExpression;
     }
 
-    @JsonProperty("retentionExpression")
     public void setRetentionExpression(final ExpressionOperator retentionExpression) {
         this.retentionExpression = retentionExpression;
     }
 
-    @JsonIgnore
     @Override
+    @JsonIgnore
     public final String getType() {
         return DOCUMENT_TYPE;
     }

@@ -3,6 +3,7 @@ package stroom.security.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -13,7 +14,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 @Api(value = "application permissions - /v1")
-@Path("/permission/doc/v1")
+@Path("/permission/doc" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface DocPermissionResource extends RestResource, DirectRestService {
     @POST

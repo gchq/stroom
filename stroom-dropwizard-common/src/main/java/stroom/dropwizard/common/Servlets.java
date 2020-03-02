@@ -8,7 +8,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.HasHealthCheck;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsServlet;
 import stroom.util.shared.Unauthenticated;

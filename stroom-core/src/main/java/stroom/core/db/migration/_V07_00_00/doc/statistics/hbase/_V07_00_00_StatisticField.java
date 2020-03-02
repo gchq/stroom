@@ -35,7 +35,6 @@ public class _V07_00_00_StatisticField
     private String fieldName;
 
     public _V07_00_00_StatisticField() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_StatisticField(final String fieldName) {
@@ -78,11 +77,8 @@ public class _V07_00_00_StatisticField
             return false;
         final _V07_00_00_StatisticField other = (_V07_00_00_StatisticField) obj;
         if (fieldName == null) {
-            if (other.fieldName != null)
-                return false;
-        } else if (!fieldName.equals(other.fieldName))
-            return false;
-        return true;
+            return other.fieldName == null;
+        } else return fieldName.equals(other.fieldName);
     }
 
     @Override
@@ -91,7 +87,7 @@ public class _V07_00_00_StatisticField
     }
 
     public _V07_00_00_StatisticField deepCopy() {
-        return new _V07_00_00_StatisticField(new String(fieldName));
+        return new _V07_00_00_StatisticField(fieldName);
     }
 
 }

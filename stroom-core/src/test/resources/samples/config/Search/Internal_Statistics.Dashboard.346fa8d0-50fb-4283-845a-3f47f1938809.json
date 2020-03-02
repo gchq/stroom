@@ -304,9 +304,7 @@
       }, {
         "id" : "query-JT8D7"
       } ],
-      "selected" : 0,
-      "visibleTabCount" : 3,
-      "allTabCount" : 3
+      "selected" : 0
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
@@ -319,9 +317,7 @@
       }, {
         "id" : "query-XOG4Q"
       } ],
-      "selected" : 0,
-      "visibleTabCount" : 3,
-      "allTabCount" : 3
+      "selected" : 0
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
@@ -334,9 +330,7 @@
       }, {
         "id" : "query-HXTW8"
       } ],
-      "selected" : 0,
-      "visibleTabCount" : 3,
-      "allTabCount" : 3
+      "selected" : 0
     }, {
       "type" : "tabLayout",
       "preferredSize" : { },
@@ -347,9 +341,7 @@
       }, {
         "id" : "query-GXYVJ"
       } ],
-      "selected" : 0,
-      "visibleTabCount" : 3,
-      "allTabCount" : 3
+      "selected" : 0
     } ]
   }
 }

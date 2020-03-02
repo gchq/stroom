@@ -1,13 +1,13 @@
 package stroom.data.store.impl.fs;
 
 import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.docref.SharedObject;
-import stroom.util.shared.BaseResultList;
+
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
 
 public interface DataVolumeDao {
-    BaseResultList<DataVolume> find(FindDataVolumeCriteria criteria);
+    ResultPage<DataVolume> find(FindDataVolumeCriteria criteria);
 
     DataVolume findDataVolume(long dataId);
 
@@ -15,7 +15,7 @@ public interface DataVolumeDao {
 
     int delete(List<Long> metaIdList);
 
-    interface DataVolume extends SharedObject {
+    interface DataVolume {
         long getStreamId();
 
         String getVolumePath();

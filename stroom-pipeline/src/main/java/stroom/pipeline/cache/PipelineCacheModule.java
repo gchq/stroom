@@ -18,8 +18,8 @@ package stroom.pipeline.cache;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.EntityEvent.Handler;
+import stroom.util.entity.EntityEvent;
+import stroom.util.entity.EntityEvent.Handler;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 

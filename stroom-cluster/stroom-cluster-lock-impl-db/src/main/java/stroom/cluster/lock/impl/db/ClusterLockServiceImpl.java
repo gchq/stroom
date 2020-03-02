@@ -22,7 +22,6 @@ import stroom.cluster.lock.api.ClusterLockService;
 import stroom.node.api.NodeInfo;
 import stroom.task.api.TaskManager;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.SharedBoolean;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -63,9 +62,9 @@ class ClusterLockServiceImpl implements ClusterLockService {
         if (clusterLockKey == null) {
             clusterLockKey = new ClusterLockKey(lockName, nodeInfo.getThisNodeName(),
                     System.currentTimeMillis());
-            final SharedBoolean didLock = taskManager.exec(new ClusterLockTask(clusterLockKey, ClusterLockStyle.Try));
+            final Boolean didLock = taskManager.exec(new ClusterLockTask(clusterLockKey, ClusterLockStyle.Try));
             if (didLock != null) {
-                success = Boolean.TRUE.equals(didLock.getBoolean());
+                success = Boolean.TRUE.equals(didLock);
             }
 
             if (success) {
@@ -97,10 +96,10 @@ class ClusterLockServiceImpl implements ClusterLockService {
         if (clusterLockKey == null) {
             LOGGER.error("releaseLock({}) - Lock not found", lockName);
         } else {
-            final SharedBoolean sharedBoolean = taskManager
+            final Boolean result = taskManager
                     .exec(new ClusterLockTask(clusterLockKey, ClusterLockStyle.Release));
-            if (sharedBoolean != null) {
-                success = sharedBoolean.getBoolean();
+            if (result != null) {
+                success = result;
             }
         }
 
@@ -115,7 +114,7 @@ class ClusterLockServiceImpl implements ClusterLockService {
             final ClusterLockKey clusterLockKey = entry.getValue();
 
             LOGGER.debug("keepAlive({}) - >>>", lockName);
-            final SharedBoolean success = taskManager
+            final Boolean success = taskManager
                     .exec(new ClusterLockTask(clusterLockKey, ClusterLockStyle.KeepAlive));
             LOGGER.debug("keepAlive({}) - <<< {}", lockName, success);
 
@@ -125,7 +124,7 @@ class ClusterLockServiceImpl implements ClusterLockService {
             // check that we expected to keep this lock alive as the map might
             // have coincidentally had the lock removed in the releaseLock()
             // method.
-            if (Boolean.FALSE.equals(success.getBoolean())) {
+            if (Boolean.FALSE.equals(success)) {
                 final ClusterLockKey currentKey = lockMap.get(lockName);
                 if (currentKey != null && currentKey.equals(clusterLockKey)) {
                     LOGGER.error("keepAlive() - Lock no longer exists - {}", clusterLockKey);

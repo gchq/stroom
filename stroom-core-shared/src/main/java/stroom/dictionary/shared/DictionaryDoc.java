@@ -16,9 +16,10 @@
 
 package stroom.dictionary.shared;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.Doc;
@@ -26,20 +27,37 @@ import stroom.docstore.shared.Doc;
 import java.util.List;
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "imports"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
 @JsonInclude(Include.NON_DEFAULT)
 public class DictionaryDoc extends Doc {
-    private static final long serialVersionUID = -4208920620555926044L;
-
     public static final String ENTITY_TYPE = "Dictionary";
 
+    @JsonProperty
     private String description;
-    @JsonIgnore
+    @JsonProperty
     private String data;
+    @JsonProperty
     private List<DocRef> imports;
 
     public DictionaryDoc() {
-        // Default constructor for GWT serialisation.
+    }
+
+    @JsonCreator
+    public DictionaryDoc(@JsonProperty("type") final String type,
+                         @JsonProperty("uuid") final String uuid,
+                         @JsonProperty("name") final String name,
+                         @JsonProperty("version") final String version,
+                         @JsonProperty("createTime") final Long createTime,
+                         @JsonProperty("updateTime") final Long updateTime,
+                         @JsonProperty("createUser") final String createUser,
+                         @JsonProperty("updateUser") final String updateUser,
+                         @JsonProperty("description") final String description,
+                         @JsonProperty("data") final String data,
+                         @JsonProperty("imports") final List<DocRef> imports) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.data = data;
+        this.imports = imports;
     }
 
     public String getDescription() {

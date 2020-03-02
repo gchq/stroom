@@ -25,7 +25,7 @@ import stroom.pipeline.errorhandler.FatalErrorReceiver;
 import stroom.pipeline.errorhandler.LoggedException;
 import stroom.task.api.TaskCallback;
 import stroom.util.shared.Severity;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;

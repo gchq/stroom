@@ -18,7 +18,7 @@
 package stroom.data.store.api;
 
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
+import stroom.meta.api.MetaProperties;
 
 /**
  * <p>
@@ -55,13 +55,6 @@ public interface Store {
      */
     Target openExistingTarget(Meta meta) throws DataException;
 
-//    /**
-//     * <p>
-//     * Close a open stream target so it can be read by someone else.
-//     * </p>
-//     */
-//    void closeStreamTarget(Target streamTarget);
-
     /**
      * <p>
      * Delete a open stream.
@@ -79,7 +72,7 @@ public interface Store {
      * @param streamId the id of the stream to open.
      * @return The stream source if the stream can be found.
      * @throws DataException in case of a IO error or stream volume not visible or non
-     *                         existent.
+     *                       existent.
      */
     Source openSource(long streamId) throws DataException;
 
@@ -99,20 +92,4 @@ public interface Store {
      * @throws DataException Could be thrown if no volume
      */
     Source openSource(long streamId, boolean anyStatus) throws DataException;
-
-
-//    /**
-//     * <p>
-//     * Close a open stream source so it can be read by someone else.
-//     * </p>
-//     */
-//    void closeStreamSource(Source streamSource);
-//
-//    /**
-//     * Gets the meta data that was stored in the stream store against the supplied stream id.
-//     *
-//     * @param streamId
-//     * @return
-//     */
-//    AttributeMap getStoredMeta(Meta meta);
 }

@@ -2,14 +2,10 @@
   "uuid" : "861c682d-a794-4e64-9963-4f4562fd1b54",
   "name" : "mycore",
   "version" : "f21d8c78-98c4-42e8-889f-4014912cbe64",
-  "connection" : {
-    "solrUrls" : [ "http://localhost:8983/solr/mycore" ],
-    "zkHosts" : [ "" ],
-    "zkPath" : ""
-  },
   "fields" : [ {
     "fieldName" : "_nest_path_",
-    "fieldType" : "_nest_path_"
+    "fieldType" : "_nest_path_",
+    "indexed" : false
   }, {
     "fieldName" : "_root_",
     "fieldType" : "string"
@@ -79,7 +75,8 @@
     "multiValued" : true,
     "omitNorms" : true,
     "omitTermFreqAndPositions" : true,
-    "omitPositions" : true
+    "omitPositions" : true,
+    "supportedConditions" : [ "EQUALS", "GREATER_THAN", "GREATER_THAN_OR_EQUAL_TO", "LESS_THAN", "LESS_THAN_OR_EQUAL_TO", "BETWEEN", "IN", "IN_DICTIONARY" ]
   }, {
     "fieldName" : "Feed",
     "fieldType" : "lowercase",

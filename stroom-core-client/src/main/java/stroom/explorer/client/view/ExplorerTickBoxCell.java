@@ -26,6 +26,7 @@ public class ExplorerTickBoxCell extends AbstractCell<ExplorerNode> {
     private static Resources resources;
     private final SelectionModel<ExplorerNode> selectionModel;
     private TickBoxCell tickBoxCell;
+
     public ExplorerTickBoxCell(final SelectionModel<ExplorerNode> selectionModel) {
         this.selectionModel = selectionModel;
 

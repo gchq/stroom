@@ -16,27 +16,32 @@
 
 package stroom.pipeline.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class FetchDataResult extends AbstractFetchDataResult {
-    private static final long serialVersionUID = 7559713171858774241L;
+    @JsonProperty
+    private final String data;
+    @JsonProperty
+    private final boolean html;
 
-    private String data;
-    private boolean html;
-
-    public FetchDataResult() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public FetchDataResult(final String streamTypeName, final String classification,
-                           final OffsetRange<Long> streamRange, final RowCount<Long> streamRowCount, final OffsetRange<Long> pageRange,
-                           final RowCount<Long> pageRowCount, final List<String> availableChildStreamTypes, final String data,
-                           final boolean html) {
-        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount,
-                availableChildStreamTypes);
+    @JsonCreator
+    public FetchDataResult(@JsonProperty("streamTypeName") final String streamTypeName,
+                           @JsonProperty("classification") final String classification,
+                           @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
+                           @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
+                           @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
+                           @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
+                           @JsonProperty("availableChildStreamTypes") final List<String> availableChildStreamTypes,
+                           @JsonProperty("data") final String data,
+                           @JsonProperty("html") final boolean html) {
+        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
         this.data = data;
         this.html = html;
     }

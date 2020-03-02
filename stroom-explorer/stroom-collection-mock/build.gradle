@@ -4,6 +4,7 @@ dependencies {
     compile project(':stroom-explorer:stroom-collection-api')
     
     compile libs.guice4
+    compile libs.jackson_annotations
     compile libs.jaxb_api
     compile libs.stroomDocRef
 }

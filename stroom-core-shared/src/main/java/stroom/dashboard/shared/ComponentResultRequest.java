@@ -16,14 +16,34 @@
 
 package stroom.dashboard.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import stroom.query.api.v2.ResultRequest.Fetch;
 
-public abstract class ComponentResultRequest implements SharedObject {
-    private static final long serialVersionUID = -7455554742243923562L;
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = TableResultRequest.class, name = "table"),
+        @JsonSubTypes.Type(value = VisResultRequest.class, name = "vis")
+})
+@JsonInclude(Include.NON_DEFAULT)
+public abstract class ComponentResultRequest {
+    @JsonProperty
     private Fetch fetch;
 
-    public abstract ComponentType getComponentType();
+    public ComponentResultRequest() {
+    }
+
+    @JsonCreator
+    public ComponentResultRequest(@JsonProperty("fetch") final Fetch fetch) {
+        this.fetch = fetch;
+    }
 
     public Fetch getFetch() {
         return fetch;

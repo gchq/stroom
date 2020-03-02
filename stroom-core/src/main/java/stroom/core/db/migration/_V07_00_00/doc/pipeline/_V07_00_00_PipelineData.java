@@ -31,13 +31,13 @@ import java.util.List;
 public class _V07_00_00_PipelineData implements _V07_00_00_SharedObject {
     private static final long serialVersionUID = -4874097335141550178L;
 
-    @XmlElement(name = "elements", required = false)
+    @XmlElement(name = "elements")
     private _V07_00_00_PipelineElements elements = new _V07_00_00_PipelineElements();
-    @XmlElement(name = "properties", required = false)
+    @XmlElement(name = "properties")
     private _V07_00_00_PipelineProperties properties = new _V07_00_00_PipelineProperties();
-    @XmlElement(name = "pipelineReferences", required = false)
+    @XmlElement(name = "pipelineReferences")
     private _V07_00_00_PipelineReferences pipelineReferences = new _V07_00_00_PipelineReferences();
-    @XmlElement(name = "links", required = false)
+    @XmlElement(name = "links")
     private _V07_00_00_PipelineLinks links = new _V07_00_00_PipelineLinks();
 
     public _V07_00_00_PipelineElements getElements() {

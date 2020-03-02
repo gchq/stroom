@@ -6,83 +6,35 @@
   "fields" : [ {
     "fieldType" : "ID",
     "fieldName" : "StreamId",
-    "stored" : true,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "stored" : true
   }, {
     "fieldType" : "ID",
     "fieldName" : "EventId",
-    "stored" : true,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "stored" : true
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "Feed",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "ALPHA_NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "ALPHA_NUMERIC"
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "Feed (Keyword)",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "fieldName" : "Feed (Keyword)"
   }, {
     "fieldType" : "DATE_FIELD",
-    "fieldName" : "DataExtractDate",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "fieldName" : "DataExtractDate"
   }, {
     "fieldType" : "DATE_FIELD",
-    "fieldName" : "ReportPeriod",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "fieldName" : "ReportPeriod"
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "Arrival_Departure",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "ALPHA",
-    "caseSensitive" : false
+    "analyzerType" : "ALPHA"
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "Domestic_International",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "ALPHA",
-    "caseSensitive" : false
+    "analyzerType" : "ALPHA"
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "CargoType",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "ALPHA_NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "ALPHA_NUMERIC"
   }, {
     "fieldType" : "NUMERIC_FIELD",
     "fieldName" : "AirCargoTons",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "NUMERIC"
   } ],
   "volumeGroupName" : "Default Volume Group"
 }

@@ -46,7 +46,8 @@ public class PipelineModule extends AbstractModule {
                 .addBinding(PipelineStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(PipelineResource.class);
+                .addBinding(PipelineResourceImpl.class)
+                .addBinding(NewUiPipelineResource.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(PipelineDoc.DOCUMENT_TYPE, PipelineStoreImpl.class);

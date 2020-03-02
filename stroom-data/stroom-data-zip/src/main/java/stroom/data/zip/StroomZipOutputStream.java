@@ -1,6 +1,6 @@
 package stroom.data.zip;
 
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 
 import java.io.Closeable;
 import java.io.IOException;

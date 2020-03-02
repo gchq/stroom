@@ -3,6 +3,7 @@ package stroom.security.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -21,7 +22,7 @@ import java.util.List;
 @Api(
         value = "authorisation - /v1",
         description = "Stroom Authorisation API")
-@Path("/users/v1")
+@Path("/users" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface UserResource extends RestResource, DirectRestService {
     @GET

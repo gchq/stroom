@@ -16,19 +16,42 @@
 
 package stroom.security.shared;
 
-import stroom.docref.SharedObject;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class ChangeSet<T> implements SharedObject {
-    private static final long serialVersionUID = -1740543177783532223L;
-
-    private Set<T> addSet = new HashSet<>();
-    private Set<T> removeSet = new HashSet<>();
+@JsonPropertyOrder({"addSet", "removeSet"})
+@JsonInclude(Include.NON_DEFAULT)
+public class ChangeSet<T> {
+    @JsonProperty
+    private final Set<T> addSet;
+    @JsonProperty
+    private final Set<T> removeSet;
 
     public ChangeSet() {
-        // Default constructor necessary for GWT serialisation.
+        addSet = new HashSet<>();
+        removeSet = new HashSet<>();
+    }
+
+    @JsonCreator
+    public ChangeSet(@JsonProperty("addSet") final Set<T> addSet,
+                     @JsonProperty("removeSet") final Set<T> removeSet) {
+        if (addSet != null) {
+            this.addSet = addSet;
+        } else {
+            this.addSet = new HashSet<>();
+        }
+        if (removeSet != null) {
+            this.removeSet = removeSet;
+        } else {
+            this.removeSet = new HashSet<>();
+        }
     }
 
     public void add(final T item) {

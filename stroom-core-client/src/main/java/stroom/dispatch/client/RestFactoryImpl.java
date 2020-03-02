@@ -42,6 +42,11 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         eventBus.fireEvent(event);
     }
 
+    @Override
+    public String getImportFileURL() {
+        return GWT.getHostPageBaseURL() + "importfile.rpc";
+    }
+
     private static class RestImpl<R> implements Rest<R> {
         private final HasHandlers hasHandlers;
         private final REST<R> rest;
@@ -57,9 +62,12 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                         if (errorConsumer != null) {
                             errorConsumer.accept(exception);
                         } else {
+                            GWT.log(exception.getMessage(), exception);
                             AlertEvent.fireError(hasHandlers, exception.getMessage(), null);
                         }
                     } catch (final Throwable t) {
+                        GWT.log(method.getRequest().toString());
+                        GWT.log(t.getMessage(), t);
                         AlertEvent.fireErrorFromException(hasHandlers, t, null);
                     } finally {
                         decrementTaskCount();
@@ -73,6 +81,8 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                             resultConsumer.accept(response);
                         }
                     } catch (final Throwable t) {
+                        GWT.log(method.getRequest().toString());
+                        GWT.log(t.getMessage(), t);
                         AlertEvent.fireErrorFromException(hasHandlers, t, null);
                     } finally {
                         decrementTaskCount();
