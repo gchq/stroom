@@ -150,22 +150,8 @@ public class TokenResource implements RestResource {
     public final Response delete(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @PathParam("id") int tokenId) {
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            tokenDao.deleteTokenById(tokenId);
-
-            event.logging.Object object = new event.logging.Object();
-            object.setId(Integer.valueOf(tokenId).toString());
-            ObjectOutcome objectOutcome = new ObjectOutcome();
-            objectOutcome.getObjects().add(object);
-            stroomEventLoggingService.delete(
-                    "DeleteApiToken",
-                    httpServletRequest,
-                    securityContext.getUserId(),
-                    objectOutcome,
-                    "Delete a token by ID");
-
-            return Response.status(Response.Status.NO_CONTENT).build();
-        });
+        service.delete(tokenId);
+        return Response.status(Response.Status.NO_CONTENT).build();
     }
 
     @ApiOperation(
@@ -178,23 +164,8 @@ public class TokenResource implements RestResource {
     public final Response delete(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @PathParam("token") String token) {
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-
-            tokenDao.deleteTokenByTokenString(token);
-
-            event.logging.Object object = new event.logging.Object();
-            object.setId(token);
-            ObjectOutcome objectOutcome = new ObjectOutcome();
-            objectOutcome.getObjects().add(object);
-            stroomEventLoggingService.delete(
-                    "DeleteApiToken",
-                    httpServletRequest,
-                    securityContext.getUserId(),
-                    objectOutcome,
-                    "Delete a token by the value of the actual token.");
-
-            return Response.status(Response.Status.OK).entity("Deleted token").build();
-        });
+        service.delete(token);
+        return Response.status(Response.Status.OK).entity("Deleted token").build();
     }
 
     @ApiOperation(
@@ -207,22 +178,9 @@ public class TokenResource implements RestResource {
     public final Response read(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @PathParam("token") String token) {
-        return securityContext.secureResult(PermissionNames.MANAGE_USERS_PERMISSION, () -> {
-            event.logging.Object object = new event.logging.Object();
-            object.setId(token);
-            ObjectOutcome objectOutcome = new ObjectOutcome();
-            objectOutcome.getObjects().add(object);
-            stroomEventLoggingService.view(
-                    "ReadApiToken",
-                    httpServletRequest,
-                    securityContext.getUserId(),
-                    objectOutcome,
-                    "Read a token by the string value of the token.");
-
-            return tokenDao.readByToken(token)
-                    .map(tokenResult -> Response.status(Response.Status.OK).entity(tokenResult).build())
-                    .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
-        });
+        return service.read(token)
+                .map(tokenResult -> Response.status(Response.Status.OK).entity(tokenResult).build())
+                .orElseGet(() -> Response.status(Response.Status.NOT_FOUND).build());
     }
 
     @ApiOperation(

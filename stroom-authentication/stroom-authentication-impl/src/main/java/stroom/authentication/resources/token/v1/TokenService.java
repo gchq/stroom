@@ -10,7 +10,6 @@ import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
-import javax.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -84,6 +83,24 @@ public class TokenService {
         checkPermission();
         dao.deleteAllTokensExceptAdmins();
         stroomEventLoggingService.createAction("DeleteAllApiTokens", "Delete all tokens");
+    }
+
+    public void delete(int tokenId) {
+        checkPermission();
+        dao.deleteTokenById(tokenId);
+        stroomEventLoggingService.createAction("DeleteApiToken", "Delete a token by ID");
+    }
+
+    public void delete(String token){
+        checkPermission();
+        dao.deleteTokenByTokenString(token);
+        stroomEventLoggingService.createAction("DeleteApiToken", "Delete a token by the value of the actual token.");
+    }
+
+    public Optional<Token> read(String token){
+        checkPermission();
+        stroomEventLoggingService.createAction("ReadApiToken", "Read a token by the string value of the token.");
+        return dao.readByToken(token);
     }
 
     private void checkPermission() {
