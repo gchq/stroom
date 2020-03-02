@@ -1,7 +1,10 @@
 package stroom.authentication.resources.token.v1;
 
+import org.jose4j.jwk.JsonWebKey;
+import stroom.authentication.TokenVerifier;
 import stroom.authentication.config.StroomConfig;
 import stroom.authentication.impl.db.TokenDao;
+import stroom.authentication.resources.user.v1.User;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.UserService;
@@ -10,6 +13,7 @@ import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
+import javax.ws.rs.core.Response;
 import java.time.Instant;
 import java.util.Optional;
 
@@ -17,6 +21,8 @@ public class TokenService {
     private final TokenDao dao;
     private final SecurityContext securityContext;
     private StroomConfig stroomConfig;
+    private TokenVerifier tokenVerifier;
+    private stroom.authentication.resources.user.v1.UserService userService;
     private final UserService securityUserService;
     private final StroomEventLoggingService stroomEventLoggingService;
 
@@ -24,12 +30,16 @@ public class TokenService {
     public TokenService(final TokenDao dao,
                         final SecurityContext securityContext,
                         final StroomConfig stroomConfig,
+                        final TokenVerifier tokenVerifier,
+                        final stroom.authentication.resources.user.v1.UserService userService,
                         final stroom.security.impl.UserService securityUserService,
                         final StroomEventLoggingService stroomEventLoggingService){
 
         this.dao = dao;
         this.securityContext = securityContext;
         this.stroomConfig = stroomConfig;
+        this.tokenVerifier = tokenVerifier;
+        this.userService = userService;
         this.securityUserService = securityUserService;
         this.stroomEventLoggingService = stroomEventLoggingService;
     }
@@ -101,6 +111,29 @@ public class TokenService {
         checkPermission();
         stroomEventLoggingService.createAction("ReadApiToken", "Read a token by the string value of the token.");
         return dao.readByToken(token);
+    }
+
+    public Optional<Token> read(int tokenId) {
+        checkPermission();
+        stroomEventLoggingService.createAction("ReadApiToken", "Read a token by the token ID.");
+        return dao.readById(tokenId);
+    }
+
+    public void toggleEnabled(int tokenId, boolean isEnabled){
+       checkPermission();
+        final String userId = securityContext.getUserId();
+        stroomEventLoggingService.createAction("ToggleApiTokenEnabled", "Toggle whether a token is enabled or not.");
+        Optional<User> updatingUser = userService.get(userId);
+
+        if (updatingUser.isPresent()) {
+            dao.enableOrDisableToken(tokenId, isEnabled, updatingUser.get());
+        }
+    }
+
+    public String getPublicKey() {
+        String jwkAsJson = tokenVerifier.getJwk().toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
+        stroomEventLoggingService.createAction("GetPublicApiKey", "Read a token by the token ID.");
+        return jwkAsJson;
     }
 
     private void checkPermission() {

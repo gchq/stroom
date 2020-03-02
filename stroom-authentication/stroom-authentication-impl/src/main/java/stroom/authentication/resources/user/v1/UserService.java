@@ -59,6 +59,11 @@ public class UserService {
         return optionalUser;
     }
 
+    public Optional<User> get(String email) {
+        checkPermission();
+        return userDao.get(email);
+    }
+
     public void update(User user, int userId){
         checkPermission();
 
