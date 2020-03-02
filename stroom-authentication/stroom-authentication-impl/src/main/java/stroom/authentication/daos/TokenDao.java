@@ -290,14 +290,12 @@ public class TokenDao {
     }
 
     public Optional<Token> readById(int tokenId) {
-
         // We need these aliased tables because we're joining tokens to users twice.
         Users issueingUsers = USERS.as("issueingUsers");
         Users tokenOwnerUsers = USERS.as("tokenOwnerUsers");
         Users updatingUsers = USERS.as("updatingUsers");
 
-        try {
-            DSLContext context = JooqUtil.createContext(authDbConnProvider.getConnection());
+        return JooqUtil.contextResult(authDbConnProvider, context -> {
             Field userEmail = tokenOwnerUsers.EMAIL.as("user_email");
             SelectJoinStep<Record11<Integer, Boolean, Timestamp, String, Timestamp, String, String, String, String, Timestamp, Integer>> selectFrom =
                     getSelectFrom(context, issueingUsers, tokenOwnerUsers, updatingUsers, userEmail);
@@ -311,10 +309,7 @@ public class TokenDao {
             }
 
             return Optional.of(token.into(Token.class));
-        } catch (SQLException e) {
-            LOGGER.error("Unable to execute querY!", e);
-            throw new RuntimeException(e);
-        }
+        });
     }
 
 
