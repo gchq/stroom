@@ -5,6 +5,7 @@ import com.codahale.metrics.health.HealthCheck;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
 import stroom.config.global.shared.GlobalConfigResource;
+import stroom.config.global.shared.ListConfigResponse;
 import stroom.config.global.shared.OverrideValue;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
@@ -12,11 +13,13 @@ import stroom.node.api.NodeService;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
 import stroom.util.HasHealthCheck;
-import stroom.util.rest.RestUtil;
-import stroom.util.shared.PropertyPath;
-import stroom.util.shared.ResourcePaths;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
+import stroom.util.rest.RestUtil;
+import stroom.util.shared.BaseResultList;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.PropertyPath;
+import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
@@ -29,6 +32,7 @@ import javax.ws.rs.core.Response.Status;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Predicate;
 
 public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealthCheck {
     private final GlobalConfigService globalConfigService;
@@ -55,16 +59,31 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
 
     @Timed
     @Override
-    public List<ConfigProperty> getAllConfig() {
+    public ListConfigResponse list(final String partialName,
+                                   final long offset,
+                                   final Integer size) {
         return securityContext.secureResult(() -> {
             try {
-                return globalConfigService.list();
+                final List<ConfigProperty> list = globalConfigService.list(buildPredicate(partialName));
+                final BaseResultList<ConfigProperty> baseResultList = BaseResultList.createPageLimitedList(
+                    list,
+                    new PageRequest(offset, size != null ? size : Integer.MAX_VALUE));
+                return baseResultList.toResultPage(new ListConfigResponse());
             } catch (final RuntimeException e) {
                 throw new ServerErrorException(e.getMessage() != null
                     ? e.getMessage()
                     : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
             }
         });
+    }
+
+    private Predicate<ConfigProperty> buildPredicate(final String partialName) {
+        if (partialName != null && !partialName.isEmpty()) {
+            return configProperty ->
+                configProperty.getNameAsString().toLowerCase().contains(partialName.toLowerCase());
+        } else {
+            return configProperty -> true;
+        }
     }
 
     @Timed

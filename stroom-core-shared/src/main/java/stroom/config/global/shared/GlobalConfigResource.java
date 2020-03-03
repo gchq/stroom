@@ -7,14 +7,15 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 
 @Api(value = "config - /v1")
 @Path(GlobalConfigResource.BASE_PATH)
@@ -33,7 +34,10 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     @GET
     @Path(PROPERTIES_SUB_PATH)
     @Produces(MediaType.APPLICATION_JSON)
-    List<ConfigProperty> getAllConfig();
+    ListConfigResponse list(
+        final @QueryParam("partialName") String partialName,
+        final @DefaultValue ("0") @QueryParam("offset") long offset,
+        final @QueryParam("size") Integer size);
 
     @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)

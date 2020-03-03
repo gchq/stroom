@@ -18,39 +18,52 @@ package stroom.config.global.client.presenter;
 
 import com.google.gwt.cell.client.Cell;
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.client.ui.HasVerticalAlignment;
+import com.google.gwt.view.client.Range;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.config.global.shared.ConfigProperty;
-import stroom.config.global.shared.FindGlobalConfigAction;
-import stroom.config.global.shared.FindGlobalConfigCriteria;
+import stroom.config.global.shared.GlobalConfigResource;
+import stroom.config.global.shared.ListConfigResponse;
+import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.presenter.FindActionDataProvider;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPreset;
 import stroom.widget.button.client.ButtonView;
 
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public class ManageGlobalPropertyListPresenter
     extends MyPresenterWidget<DataGridView<ConfigProperty>>
     implements Refreshable, ColumnSortEvent.Handler{
 
+    private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
+
     // TODO change to use a rest dataprovider, see NodeMonitoringPresenter
     //   Need to figure out how best to handle the fuzzy criteria with rest, i.e. POST
     //   of the criteria object or query params
-    private final FindActionDataProvider<FindGlobalConfigCriteria, ConfigProperty> dataProvider;
+//    private final FindActionDataProvider<FindGlobalConfigCriteria, ConfigProperty> dataProvider;
+    private final RestDataProvider<ConfigProperty, ListConfigResponse> dataProvider;
+    private final RestFactory restFactory;
+    private String partialName;
+
 
     @Inject
     public ManageGlobalPropertyListPresenter(final EventBus eventBus,
+                                             final RestFactory restFactory,
                                              final ClientDispatchAsync dispatcher) {
         super(eventBus, new DataGridViewImpl<>(true));
+        this.restFactory = restFactory;
 
         // Name.
         addColumn(buildBasicColumn(
@@ -72,15 +85,40 @@ public class ManageGlobalPropertyListPresenter
         addColumn(buildDescriptionColumn(), "Description", 750);
         getView().addEndColumn(new EndColumn<>());
 
+        dataProvider = new RestDataProvider<ConfigProperty, ListConfigResponse>(eventBus) {
+            @Override
+            protected void exec(final Consumer<ListConfigResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ListConfigResponse> rest = restFactory.create();
+                rest
+                    .onSuccess(listConfigResponse -> {
+                        dataConsumer.accept(listConfigResponse);
+                    })
+                    .onFailure(throwableConsumer)
+                    .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                    .list(
+                        partialName,
+                        getView().getDataDisplay().getVisibleRange().getStart(),
+                        getView().getDataDisplay().getVisibleRange().getLength());
+            }
+
+            @Override
+            protected void changeData(final ListConfigResponse data) {
+                super.changeData(data);
+            }
+        };
+        dataProvider.addDataDisplay(getView().getDataDisplay());
+
+//        dataProvider.refresh();
+
 
 //        this.dataProvider = new FindActionDataProvider(dispatcher, getView(),
 //                new FindGlobalConfigAction(
 //                        new FindGlobalConfigCriteria()));
-        this.dataProvider = new FindActionDataProvider<>(dispatcher, getView(), new FindGlobalConfigAction());
+//        this.dataProvider = new FindActionDataProvider<>(dispatcher, getView(), new FindGlobalConfigAction());
 
 //        dataProvider = new EntityServiceFindActionDataProvider<>(dispatcher,
 //                getView());
-        dataProvider.setCriteria(new FindGlobalConfigCriteria());
+//        dataProvider.setCriteria(new FindGlobalConfigCriteria());
 //        refresh();
     }
 
@@ -163,8 +201,20 @@ public class ManageGlobalPropertyListPresenter
 //        refresh();
 //    }
 //
-    FindGlobalConfigCriteria getFindGlobalPropertyCriteria() {
-        return dataProvider.getCriteria();
+//    FindGlobalConfigCriteria getFindGlobalPropertyCriteria() {
+//        return dataProvider.getCriteria();
+//    }
+
+    void setPartialName(final String partialName) {
+        this.partialName = partialName;
+        // Need to reset the range else the name criteria can push us outside the page we are on
+        Range range = getView().getVisibleRange();
+        getView().getDataDisplay().setVisibleRange(0, range.getLength());
+        refresh();
+    }
+    void clearPartialName() {
+        this.partialName = null;
+        refresh();
     }
 
     @Override

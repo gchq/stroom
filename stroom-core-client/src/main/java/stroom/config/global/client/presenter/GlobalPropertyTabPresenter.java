@@ -27,7 +27,6 @@ import stroom.content.client.presenter.ContentTabPresenter;
 import stroom.data.table.client.Refreshable;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.StringCriteria;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
@@ -117,12 +116,14 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
     @Override
     public void changeNameFilter(final String name) {
         if (name.length() > 0) {
-            listPresenter.getFindGlobalPropertyCriteria().getName().setString(name);
-            listPresenter.getFindGlobalPropertyCriteria().getName()
-                .setMatchStyle(StringCriteria.MatchStyle.WildStandAndEnd);
-            listPresenter.getFindGlobalPropertyCriteria().getName().setCaseInsensitive(true);
+            listPresenter.setPartialName(name);
+//            listPresenter.getFindGlobalPropertyCriteria().getName().setString(name);
+//            listPresenter.getFindGlobalPropertyCriteria().getName()
+//                .setMatchStyle(StringCriteria.MatchStyle.WildStandAndEnd);
+//            listPresenter.getFindGlobalPropertyCriteria().getName().setCaseInsensitive(true);
         } else {
-            listPresenter.getFindGlobalPropertyCriteria().getName().clear();
+            listPresenter.clearPartialName();
+//            listPresenter.getFindGlobalPropertyCriteria().getName().clear();
         }
         listPresenter.refresh();
     }
