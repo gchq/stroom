@@ -297,17 +297,21 @@ public final class ManageGlobalPropertyEditPresenter
         fetchNodeYamlOverrideRest
                 .onSuccess(yamlOverride -> {
                     // Add the node's result to our maps
-                    clusterYamlOverridesMap.put(nodeName, yamlOverride);
-                    updateEffectiveValueForNode(nodeName, yamlOverride);
-                    updateWarningState();
-                    refreshValuesOnChange();
+                    refreshYamlOverrideForNode(nodeName, yamlOverride);
                 })
                 .onFailure(throwable -> {
-                    clusterYamlOverridesMap.remove(nodeName);
-                    showError(throwable, "Error getting YAML override for node " + nodeName);
+                    refreshYamlOverrideForNode(
+                        nodeName, OverrideValue.with("[ERROR fetching YAML value for " + nodeName + "]"));
                 })
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .getYamlValueByNodeAndName(configProperty.getName().toString(), nodeName);
+    }
+
+    private void refreshYamlOverrideForNode(final String nodeName, final OverrideValue<String> yamlOverride) {
+        clusterYamlOverridesMap.put(nodeName, yamlOverride);
+        updateEffectiveValueForNode(nodeName, yamlOverride);
+        updateWarningState();
+        refreshValuesOnChange();
     }
 
     private void showPopup(final PopupUiHandlers popupUiHandlers) {
