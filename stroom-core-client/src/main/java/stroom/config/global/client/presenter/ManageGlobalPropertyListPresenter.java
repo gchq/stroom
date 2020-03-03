@@ -49,10 +49,6 @@ public class ManageGlobalPropertyListPresenter
 
     private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
 
-    // TODO change to use a rest dataprovider, see NodeMonitoringPresenter
-    //   Need to figure out how best to handle the fuzzy criteria with rest, i.e. POST
-    //   of the criteria object or query params
-//    private final FindActionDataProvider<FindGlobalConfigCriteria, ConfigProperty> dataProvider;
     private final RestDataProvider<ConfigProperty, ListConfigResponse> dataProvider;
     private final RestFactory restFactory;
     private String partialName;
@@ -107,19 +103,6 @@ public class ManageGlobalPropertyListPresenter
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
-
-//        dataProvider.refresh();
-
-
-//        this.dataProvider = new FindActionDataProvider(dispatcher, getView(),
-//                new FindGlobalConfigAction(
-//                        new FindGlobalConfigCriteria()));
-//        this.dataProvider = new FindActionDataProvider<>(dispatcher, getView(), new FindGlobalConfigAction());
-
-//        dataProvider = new EntityServiceFindActionDataProvider<>(dispatcher,
-//                getView());
-//        dataProvider.setCriteria(new FindGlobalConfigCriteria());
-//        refresh();
     }
 
     private Column<ConfigProperty, String> buildDescriptionColumn() {
@@ -139,12 +122,6 @@ public class ManageGlobalPropertyListPresenter
             }
         };
     }
-
-//    public ImageButtonView addButton(final String title, final ImageResource enabledImage,
-//                                     final ImageResource disabledImage, final boolean enabled) {
-//        return getView().addButton(title, enabledImage, disabledImage, enabled);
-//    }
-
 
     private Column<ConfigProperty, String> buildBasicColumn(final Function<ConfigProperty, String> valueFunc) {
         // TODO use OrderByColumn
@@ -182,10 +159,6 @@ public class ManageGlobalPropertyListPresenter
     @Override
     public void refresh() {
         dataProvider.refresh();
-//        dispatcher.exec(new FetchGlobalConfigAction(criteria)).onSuccess(result -> {
-//            getView().setRowData(0, result);
-//            getView().setRowCount(result.size(), true);
-//        });
     }
 
     public ConfigProperty getSelectedItem() {
@@ -195,15 +168,6 @@ public class ManageGlobalPropertyListPresenter
     public void setSelectedItem(final ConfigProperty row) {
         getView().getSelectionModel().setSelected(row);
     }
-
-//    public void setCriteria(final FindGlobalConfigCriteria criteria) {
-//        this.criteria = criteria;
-//        refresh();
-//    }
-//
-//    FindGlobalConfigCriteria getFindGlobalPropertyCriteria() {
-//        return dataProvider.getCriteria();
-//    }
 
     void setPartialName(final String partialName) {
         this.partialName = partialName;
