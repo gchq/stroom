@@ -29,7 +29,6 @@ import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -64,11 +63,11 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
                                    final Integer size) {
         return securityContext.secureResult(() -> {
             try {
-                final List<ConfigProperty> list = globalConfigService.list(buildPredicate(partialName));
-                final BaseResultList<ConfigProperty> baseResultList = BaseResultList.createPageLimitedList(
-                    list,
+                final BaseResultList<ConfigProperty> resultList = globalConfigService.list(
+                    buildPredicate(partialName),
                     new PageRequest(offset, size != null ? size : Integer.MAX_VALUE));
-                return baseResultList.toResultPage(new ListConfigResponse());
+
+                return resultList.toResultPage(new ListConfigResponse());
             } catch (final RuntimeException e) {
                 throw new ServerErrorException(e.getMessage() != null
                     ? e.getMessage()

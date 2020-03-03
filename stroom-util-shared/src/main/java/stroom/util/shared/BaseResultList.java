@@ -19,7 +19,14 @@ package stroom.util.shared;
 import stroom.docref.SharedObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
 
 /**
  * List that knows how big the whole set is.
@@ -198,5 +205,55 @@ public class BaseResultList<T extends SharedObject> extends SharedList<T> implem
     @Override
     public boolean isExact() {
         return pageResponse.isExact();
+    }
+
+    public static <T extends SharedObject> Collector<T, List<T>, BaseResultList<T>> collector(final PageRequest pageRequest) {
+
+        // Explicit typing needed for GWT
+        return new Collector<T, List<T>, BaseResultList<T>>() {
+
+            long counter = 0L;
+
+            @Override
+            public Supplier<List<T>> supplier() {
+                return ArrayList::new;
+            }
+
+            @Override
+            public BiConsumer<List<T>, T> accumulator() {
+                return (accumulator, item) -> {
+                    if (pageRequest == null
+                        || (
+                        counter++ >= pageRequest.getOffset()
+                            && accumulator.size() < pageRequest.getLength())) {
+
+                        accumulator.add(item);
+                    }
+                };
+            }
+
+            @Override
+            public BinaryOperator<List<T>> combiner() {
+                return (left, right) -> {
+                    left.addAll(right);
+                    return left;
+                };
+            }
+
+            @Override
+            public Function<List<T>, BaseResultList<T>> finisher() {
+                return accumulator ->
+                    new BaseResultList<>
+                        (accumulator,
+                            pageRequest != null ? pageRequest.getOffset() : 0,
+                            counter,
+                            true);
+            }
+
+            @Override
+            public Set<Characteristics> characteristics() {
+                return Collections.emptySet();
+            }
+        };
     }
 }
