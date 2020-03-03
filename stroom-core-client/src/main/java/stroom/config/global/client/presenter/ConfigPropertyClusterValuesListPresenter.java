@@ -42,6 +42,7 @@ public class ConfigPropertyClusterValuesListPresenter
         dataProvider.setTreeRowHandler(new TreeRowHandler<>(treeAction, getView(), expanderColumn));
     }
 
+    // For DEV testing only, when you don't have two nodes
     private Map<String, Set<String>> makeDemoData() {
         Supplier<String> junkTextSupplier = () ->
             IntStream.rangeClosed(1,5)
@@ -62,7 +63,7 @@ public class ConfigPropertyClusterValuesListPresenter
 
     public void setData(final Map<String, Set<NodeSource>> effectiveValueToNodesMap) {
 
-        // For dev testing only
+        // For DEV testing only, when you don't have two nodes
 //        this.effectiveValueToNodesMap = makeDemoData();
         this.effectiveValueToNodesMap = effectiveValueToNodesMap;
 

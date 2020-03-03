@@ -1,5 +1,7 @@
 package stroom.util.shared;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public interface ResourcePaths {
@@ -33,16 +35,16 @@ public interface ResourcePaths {
 
     static String buildUnauthenticatedServletPath(final String... parts) {
         return new Builder()
-            .addPart(ROOT_PATH)
-            .addPart(NO_AUTH_PATH)
-            .addParts(parts)
+            .addPathPart(ROOT_PATH)
+            .addPathPart(NO_AUTH_PATH)
+            .addPathParts(parts)
             .build();
     }
 
     static String buildAuthenticatedServletPath(final String... parts) {
         return new Builder()
-            .addPart(ROOT_PATH)
-            .addParts(parts)
+            .addPathPart(ROOT_PATH)
+            .addPathParts(parts)
             .build();
     }
 
@@ -50,11 +52,10 @@ public interface ResourcePaths {
      * @param parts The path or parts of a path to append onto the base path.
      * @return The full path to the authenticated resource, e.g. /api/node
      */
-    static String buildAuthenticatedApiPath(final String... parts) {
+    static Builder buildAuthenticatedApiPath(final String... parts) {
         return new Builder()
-            .addPart(API_ROOT_PATH)
-            .addParts(parts)
-            .build();
+            .addPathPart(API_ROOT_PATH)
+            .addPathParts(parts);
     }
 
     /**
@@ -63,9 +64,9 @@ public interface ResourcePaths {
      */
     static String buildUnauthenticatedApiPath(final String... parts) {
         return new Builder()
-            .addPart(API_ROOT_PATH)
-            .addPart(NO_AUTH_PATH)
-            .addParts(parts)
+            .addPathPart(API_ROOT_PATH)
+            .addPathPart(NO_AUTH_PATH)
+            .addPathParts(parts)
             .build();
     }
 
@@ -79,26 +80,43 @@ public interface ResourcePaths {
 
 
     class Builder {
-        private final StringBuilder stringBuilder = new StringBuilder();
+        final List<String> pathParts = new ArrayList<>();
+        final List<String> queryParams = new ArrayList<>();
 
-        Builder addPart(final String part) {
-            stringBuilder
-                .append("/")
-                .append(part);
+        public Builder addPathPart(final String part) {
+            if (!part.startsWith("/")) {
+                pathParts.add("/");
+            }
+            pathParts.add(part);
             return this;
         }
 
-        Builder addParts(final String... parts) {
+        public Builder addPathParts(final String... parts) {
             for (String part : parts) {
-                stringBuilder
-                    .append("/")
-                    .append(part);
+                if (!part.startsWith("/")) {
+                    pathParts.add("/");
+                }
+                pathParts.add(part);
             }
             return this;
         }
 
-        String build() {
-            return stringBuilder.toString().replace("//","/");
+        public Builder addQueryParam(final String paramName, final String value) {
+            Objects.requireNonNull(paramName);
+            if (value != null) {
+                queryParams.add(paramName + "=" + value);
+            }
+            return this;
+        }
+
+        public String build() {
+            final String pathStr = String.join("", pathParts).replace("//","/");
+            if (!queryParams.isEmpty()) {
+                final String queryParamsStr = String.join("&", queryParams);
+                return pathStr + "?" + queryParamsStr;
+            } else {
+                return pathStr;
+            }
         }
     }
 }

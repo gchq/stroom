@@ -40,6 +40,15 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
         final @QueryParam("size") Integer size);
 
     @GET
+    @Path(NODE_NAME_PATH_PARAM + PROPERTIES_SUB_PATH)
+    @Produces(MediaType.APPLICATION_JSON)
+    ListConfigResponse listByNode(
+        final @PathParam("nodeName") String nodeName,
+        final @QueryParam("partialName") String partialName,
+        final @DefaultValue ("0") @QueryParam("offset") long offset,
+        final @QueryParam("size") Integer size);
+
+    @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)
     @Produces(MediaType.APPLICATION_JSON)
     ConfigProperty getPropertyByName(final @PathParam("propertyName") String propertyName);

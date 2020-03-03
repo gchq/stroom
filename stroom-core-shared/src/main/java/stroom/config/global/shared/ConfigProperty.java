@@ -17,6 +17,7 @@
 package stroom.config.global.shared;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;
@@ -46,6 +47,7 @@ import java.util.Optional;
  *
  * TODO At present the UI is unable to show the value from the YAML so may give a misleading picture
  */
+@JsonIgnoreProperties(value={ "source" }, allowGetters=true)
 public class ConfigProperty implements HasAuditInfo, SharedObject, Comparable<ConfigProperty> {
 
     private static final long serialVersionUID = 8440384191352234225L;

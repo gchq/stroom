@@ -76,6 +76,52 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
         });
     }
 
+    @Timed
+    @Override
+    public ListConfigResponse listByNode(final String nodeName,
+                                         final String partialName,
+                                         final long offset,
+                                         final Integer size) {
+        RestUtil.requireNonNull(nodeName, "nodeName not supplied");
+
+        ListConfigResponse listConfigResponse;
+
+        final String resourcePath = ResourcePaths.buildAuthenticatedApiPath(
+            GlobalConfigResource.BASE_PATH, GlobalConfigResource.PROPERTIES_SUB_PATH)
+            .addQueryParam("partialName", partialName)
+            .addQueryParam("offset", String.valueOf(offset))
+            .addQueryParam("size", String.valueOf(size))
+            .build();
+
+        try {
+            // If this is the node that was contacted then just resolve it locally
+            if (NodeCallUtil.executeLocally(nodeService, nodeInfo, nodeName)) {
+                listConfigResponse = list(partialName, offset, size);
+            } else {
+                // A different node to make a rest call to the required node
+                String url = NodeCallUtil.getUrl(nodeService, nodeName);
+                url += resourcePath;
+                final Response response = webTargetFactory
+                    .create(url)
+                    .request(MediaType.APPLICATION_JSON)
+                    .get();
+
+                if (response.getStatus() != Status.OK.getStatusCode()) {
+                    throw new WebApplicationException(response);
+                }
+
+                listConfigResponse = response.readEntity(ListConfigResponse.class);
+
+                Objects.requireNonNull(listConfigResponse, "Null listConfigResponse");
+            }
+        } catch (final WebApplicationException e) {
+            throw e;
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        }
+        return listConfigResponse;
+    }
+
     private Predicate<ConfigProperty> buildPredicate(final String partialName) {
         if (partialName != null && !partialName.isEmpty()) {
             return configProperty ->
@@ -131,10 +177,11 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
         OverrideValue<String> yamlOverride;
 
         final String resourcePath = ResourcePaths.buildAuthenticatedApiPath(
-                GlobalConfigResource.BASE_PATH,
-                GlobalConfigResource.PROPERTIES_SUB_PATH,
-                propertyName,
-                GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH);
+            GlobalConfigResource.BASE_PATH,
+            GlobalConfigResource.PROPERTIES_SUB_PATH,
+            propertyName,
+            GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH)
+            .build();
         try {
             // If this is the node that was contacted then just resolve it locally
             if (NodeCallUtil.executeLocally(nodeService, nodeInfo, nodeName)) {
