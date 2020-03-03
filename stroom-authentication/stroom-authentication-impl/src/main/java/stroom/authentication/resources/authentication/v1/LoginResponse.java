@@ -4,6 +4,7 @@ public class LoginResponse {
     private boolean loginSuccessful;
     private String redirectUrl;
     private String message;
+    private int responseCode;
 
     public LoginResponse() {
 
@@ -13,6 +14,13 @@ public class LoginResponse {
         this.loginSuccessful = loginSuccessful;
         this.redirectUrl = redirectUrl;
         this.message = message;
+    }
+
+    public LoginResponse(final boolean loginSuccessful, String message, String redirectUrl, int responseCode) {
+        this.loginSuccessful = loginSuccessful;
+        this.redirectUrl = redirectUrl;
+        this.message = message;
+        this.responseCode = responseCode;
     }
 
     public boolean isLoginSuccessful() {
@@ -37,5 +45,13 @@ public class LoginResponse {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public int getResponseCode() {
+        return responseCode;
+    }
+
+    public void setResponseCode(int responseCode) {
+        this.responseCode = responseCode;
     }
 }

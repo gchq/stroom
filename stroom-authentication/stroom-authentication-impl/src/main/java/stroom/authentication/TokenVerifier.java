@@ -45,16 +45,14 @@ public class TokenVerifier {
     private static final Logger LOGGER = LoggerFactory.getLogger(TokenDao.class);
 
     private AuthenticationConfig config;
-    private TokenDao tokenDao;
     private JwkDao jwkDao;
 
     private JwtConsumer consumer;
     private PublicJsonWebKey jwk;
 
     @Inject
-    public TokenVerifier(AuthenticationConfig config, TokenDao tokenDao, JwkDao jwkDao) {
+    public TokenVerifier(AuthenticationConfig config, JwkDao jwkDao) {
         this.config = config;
-        this.tokenDao = tokenDao;
         this.jwkDao = jwkDao;
     }
 
@@ -83,18 +81,12 @@ public class TokenVerifier {
         consumer = builder.build();
     }
 
-    public Optional<String> verifyToken(String token) {
+    public Optional<String> verifyToken(String token, Optional<Token> tokenRecord) {
         try {
             final JwtClaims claims = consumer.processToClaims(token);
             claims.getSubject();
         } catch (InvalidJwtException | MalformedClaimException e) {
             LOGGER.warn("There was an issue with a token!", e);
-            return Optional.empty();
-        }
-
-        Optional<Token> tokenRecord = tokenDao.readByToken(token);
-        if (!tokenRecord.isPresent()) {
-            LOGGER.warn("I tried to verify a token but that token doesn't exist.");
             return Optional.empty();
         }
 

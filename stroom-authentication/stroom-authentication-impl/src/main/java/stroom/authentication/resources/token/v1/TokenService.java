@@ -129,6 +129,15 @@ public class TokenService {
         }
     }
 
+    public Optional<String> verifyToken(String token){
+        Optional<Token> tokenRecord = dao.readByToken(token);
+        if (!tokenRecord.isPresent()) {
+            return Optional.empty();
+        }
+        Optional<String> usersEmail = tokenVerifier.verifyToken(token, tokenRecord);
+        return usersEmail;
+    }
+
     public String getPublicKey() {
         String jwkAsJson = tokenVerifier.getJwk().toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
         stroomEventLoggingService.createAction("GetPublicApiKey", "Read a token by the token ID.");
