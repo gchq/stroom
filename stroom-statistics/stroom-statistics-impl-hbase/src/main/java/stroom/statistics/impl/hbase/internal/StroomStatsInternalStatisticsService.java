@@ -3,6 +3,7 @@ package stroom.statistics.impl.hbase.internal;
 import com.google.common.base.Preconditions;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import stroom.docref.DocRef;
+import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.impl.InternalStatisticsService;
@@ -30,7 +31,6 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
-import java.util.function.Consumer;
 
 @SuppressWarnings("unused")
 class StroomStatsInternalStatisticsService implements InternalStatisticsService {
@@ -39,7 +39,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private static final Class<Statistics> STATISTICS_CLASS = Statistics.class;
     private static final TimeZone TIME_ZONE_UTC = TimeZone.getTimeZone(ZoneId.from(ZoneOffset.UTC));
 
-    private final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory;
+    private final KafkaProducerFactory stroomKafkaProducerFactory;
     private final HBaseStatisticsConfig internalStatisticsConfig;
     private final String docRefType;
     private final DatatypeFactory datatypeFactory;
@@ -47,7 +47,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     private JAXBContext jaxbContext;
 
     @Inject
-    StroomStatsInternalStatisticsService(final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory,
+    StroomStatsInternalStatisticsService(final KafkaProducerFactory stroomKafkaProducerFactory,
                                          final HBaseStatisticsConfig internalStatisticsConfig) {
         this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.internalStatisticsConfig = internalStatisticsConfig;

@@ -5,6 +5,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
+import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -27,7 +28,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
     private DocRef kafkaConfigRef;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
-    private final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory;
+    private final KafkaProducerFactory stroomKafkaProducerFactory;
 
     private org.apache.kafka.clients.producer.KafkaProducer kafkaProducer;
 
@@ -35,7 +36,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
 
     protected AbstractKafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
                                           final LocationFactoryProxy locationFactory,
-                                          final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory) {
+                                          final KafkaProducerFactory stroomKafkaProducerFactory) {
 
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;

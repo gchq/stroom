@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.kafkanew.impl;
+package stroom.kafka.impl;
 
 import com.google.inject.AbstractModule;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.kafkanew.pipeline.KafkaConfigStore;
-import stroom.kafkanew.pipeline.KafkaProducerFactory;
+import stroom.kafka.pipeline.KafkaConfigStore;
+import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.util.guice.GuiceUtil;
 

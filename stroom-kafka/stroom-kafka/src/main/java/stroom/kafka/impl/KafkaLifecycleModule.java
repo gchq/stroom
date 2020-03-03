@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.kafkanew.impl;
+package stroom.kafka.impl;
 
 import stroom.lifecycle.api.AbstractLifecycleModule;
 import stroom.lifecycle.api.RunnableWrapper;

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.kafkanew.pipeline;
+package stroom.kafka.pipeline;
 
 import stroom.pipeline.factory.PipelineElementModule;
 

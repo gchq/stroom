@@ -19,6 +19,7 @@ package stroom.statistics.impl.hbase.pipeline;
 import com.google.common.base.Preconditions;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import stroom.docref.DocRef;
+import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -46,7 +47,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
 
     private final ErrorReceiverProxy errorReceiverProxy;
     private org.apache.kafka.clients.producer.KafkaProducer kafkaProducer;
-    private final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory;
+    private final KafkaProducerFactory stroomKafkaProducerFactory;
 
     private final ByteArrayOutputStream byteArrayOutputStream;
 
@@ -58,7 +59,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     private byte[] footer;
 
     protected AbstractKafkaAppender(final ErrorReceiverProxy errorReceiverProxy,
-                                    final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory) {
+                                    final KafkaProducerFactory stroomKafkaProducerFactory) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.byteArrayOutputStream = new ByteArrayOutputStream();

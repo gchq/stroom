@@ -60,8 +60,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.index.impl.IndexModule());
         install(new stroom.job.impl.db.JobDbModule());
         install(new stroom.job.impl.JobSystemModule());
-        install(new stroom.kafkanew.impl.KafkaConfigModule());
-        install(new stroom.kafkanew.pipeline.KafkaPipelineModule());
+        install(new stroom.kafka.impl.KafkaConfigModule());
+        install(new stroom.kafka.pipeline.KafkaPipelineModule());
         install(new stroom.meta.impl.db.MetaDbModule());
         install(new stroom.meta.impl.MetaModule());
         install(new stroom.meta.impl.StreamAttributeMapResourceModule());

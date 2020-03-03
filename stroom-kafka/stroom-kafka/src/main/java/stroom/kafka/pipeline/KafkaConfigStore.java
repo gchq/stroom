@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.kafkanew.pipeline;
+package stroom.kafka.pipeline;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package stroom.kafkanew.impl;
+package stroom.kafka.impl;
 
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
@@ -23,7 +23,7 @@ import stroom.docstore.api.StoreFactory;
 import stroom.explorer.shared.DocumentType;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.kafkanew.pipeline.KafkaConfigStore;
+import stroom.kafka.pipeline.KafkaConfigStore;
 import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.util.shared.Message;
 

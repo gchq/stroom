@@ -12,6 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
+import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 
@@ -36,7 +37,7 @@ class TestStroomStatsInternalStatisticsService {
     @Mock
     private org.apache.kafka.clients.producer.KafkaProducer mockKafkaProducer;
     @Mock
-    private stroom.kafkanew.pipeline.KafkaProducerFactory  mockStroomKafkaProducerFactory;
+    private KafkaProducerFactory mockStroomKafkaProducerFactory;
 
     @Test
     void putEvents_multipleEvents() {
