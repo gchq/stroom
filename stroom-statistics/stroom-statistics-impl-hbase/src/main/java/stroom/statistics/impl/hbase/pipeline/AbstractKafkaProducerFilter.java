@@ -1,4 +1,4 @@
-package stroom.kafka.pipeline;
+package stroom.statistics.impl.hbase.pipeline;
 
 import com.google.common.base.Strings;
 import org.apache.kafka.clients.producer.ProducerRecord;

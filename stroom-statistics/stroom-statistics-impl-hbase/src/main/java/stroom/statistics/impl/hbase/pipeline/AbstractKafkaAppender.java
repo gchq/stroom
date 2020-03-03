@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.kafka.pipeline;
+package stroom.statistics.impl.hbase.pipeline;
 
 import com.google.common.base.Preconditions;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -49,7 +49,6 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     private final stroom.kafkanew.pipeline.KafkaProducerFactory stroomKafkaProducerFactory;
 
     private final ByteArrayOutputStream byteArrayOutputStream;
-    private final Queue<CompletableFuture<KafkaRecordMetaData>> kafkaMetaFutures;
 
     private boolean flushOnSend = false;
     private DocRef kafkaConfigRef;
@@ -63,7 +62,6 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         this.errorReceiverProxy = errorReceiverProxy;
         this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.byteArrayOutputStream = new ByteArrayOutputStream();
-        this.kafkaMetaFutures = new ArrayDeque<>();
     }
 
     @Override
@@ -92,21 +90,6 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     public void endProcessing() {
         closeAndResetStream();
 
-        //If flushOnSend was set we will have futures in the queue
-        //so call get on each one
-        CompletableFuture<KafkaRecordMetaData> future;
-        while ((future = kafkaMetaFutures.poll()) != null) {
-            try {
-                future.get();
-            } catch (final InterruptedException e) {
-                // Continue to interrupt this thread.
-                Thread.currentThread().interrupt();
-
-                throw new ProcessException("Thread interrupted");
-            } catch (ExecutionException e) {
-                error(e);
-            }
-        }
         super.endProcessing();
     }
 

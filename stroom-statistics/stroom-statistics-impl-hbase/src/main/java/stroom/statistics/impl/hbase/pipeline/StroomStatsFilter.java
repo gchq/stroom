@@ -1,8 +1,6 @@
 package stroom.statistics.impl.hbase.pipeline;
 
 import stroom.docref.DocRef;
-import stroom.kafka.pipeline.AbstractKafkaProducerFilter;
-import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;

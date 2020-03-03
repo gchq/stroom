@@ -5,7 +5,7 @@ dependencies {
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-importexport:stroom-importexport-migration')
-    compile project(':stroom-kafka:stroom-kafka-pipeline')
+    compile project(':stroom-kafka:stroom-kafka-new')
     compile project(':stroom-pipeline')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-statistics:stroom-statistics-api')
