@@ -80,7 +80,7 @@ dependencies {
     compile project(':stroom-security:stroom-security-impl-db')
     compile project(':stroom-servicediscovery:stroom-servicediscovery-impl')
     compile project(':stroom-statistics:stroom-statistics-impl')
-//    compile project(':stroom-statistics:stroom-statistics-impl-hbase')
+    compile project(':stroom-statistics:stroom-statistics-impl-hbase')
     compile project(':stroom-statistics:stroom-statistics-impl-sql')
     compile project(':stroom-task:stroom-task-impl')
     compile project(':stroom-util')
