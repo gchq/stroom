@@ -16,16 +16,36 @@
 
 package stroom.config.global.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
 import stroom.util.shared.StringCriteria;
 
-public class FindGlobalConfigCriteria extends BaseCriteria {
-    private static final long serialVersionUID = 1451984883275627717L;
+import java.util.List;
 
-    private StringCriteria name = new StringCriteria();
+@JsonInclude(Include.NON_DEFAULT)
+public class FindGlobalConfigCriteria extends BaseCriteria {
+    @JsonProperty
+    private StringCriteria name;
 
     public FindGlobalConfigCriteria() {
-        // Default constructor necessary for GWT serialisation.
+        name = new StringCriteria();
+    }
+
+    @JsonCreator
+    public FindGlobalConfigCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                    @JsonProperty("sortList") final List<Sort> sortList,
+                                    @JsonProperty("name") final StringCriteria name) {
+        super(pageRequest, sortList);
+        if (name != null) {
+            this.name = name;
+        } else {
+            this.name = new StringCriteria();
+        }
     }
 
     public static FindGlobalConfigCriteria create(final String name) {

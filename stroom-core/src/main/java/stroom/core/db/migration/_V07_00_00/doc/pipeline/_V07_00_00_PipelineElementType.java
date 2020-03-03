@@ -63,8 +63,8 @@ public class _V07_00_00_PipelineElementType
     private Category category;
     private Set<String> roles;
     private String icon;
+
     public _V07_00_00_PipelineElementType() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_PipelineElementType(final String type, final Category category, final String[] roles, final String icon) {

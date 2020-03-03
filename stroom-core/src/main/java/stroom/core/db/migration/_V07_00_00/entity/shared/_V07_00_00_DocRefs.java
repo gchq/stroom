@@ -31,7 +31,6 @@ public class _V07_00_00_DocRefs implements Iterable<_V07_00_00_DocRef>, _V07_00_
     private Set<_V07_00_00_DocRef> set = new TreeSet<>();
 
     public _V07_00_00_DocRefs() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public boolean add(_V07_00_00_DocRef docRef) {

@@ -28,14 +28,17 @@ import stroom.data.store.api.Target;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.datasource.api.v2.AbstractField;
+import stroom.meta.api.AttributeMapFactory;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.io.IOException;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -48,7 +51,7 @@ import java.util.Objects;
  * </p>
  */
 @Singleton
-class FsStore implements Store {
+class FsStore implements Store, AttributeMapFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(FsStore.class);
 
     private final FsPathHelper fileSystemStreamPathHelper;
@@ -327,7 +330,16 @@ class FsStore implements Store {
         }
     }
 
-//    private Meta unLock(final Meta meta, final AttributeMap attributeMap) {
+    @Override
+    public Map<String, String> getAttributes(final Meta meta) {
+        try (final Source source = openSource(meta.getId())) {
+            return source.getAttributes();
+        } catch (final IOException e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
+    }
+
+    //    private Meta unLock(final Meta meta, final AttributeMap attributeMap) {
 //        if (Status.UNLOCKED.equals(meta.getStatus())) {
 //            throw new IllegalStateException("Attempt to unlock data that is already unlocked");
 //        }

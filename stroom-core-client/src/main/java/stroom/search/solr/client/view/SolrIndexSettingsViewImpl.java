@@ -17,13 +17,10 @@
 package stroom.search.solr.client.view;
 
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.uibinder.client.UiBinder;
 import com.google.gwt.uibinder.client.UiField;
 import com.google.gwt.uibinder.client.UiHandler;
 import com.google.gwt.user.client.ui.Button;
-import com.google.gwt.user.client.ui.HTML;
-import com.google.gwt.user.client.ui.SimplePanel;
 import com.google.gwt.user.client.ui.TextArea;
 import com.google.gwt.user.client.ui.TextBox;
 import com.google.gwt.user.client.ui.Widget;
@@ -37,7 +34,6 @@ import stroom.search.solr.client.presenter.SolrIndexSettingsUiHandlers;
 import stroom.search.solr.shared.SolrConnectionConfig.InstanceType;
 import stroom.widget.layout.client.view.ResizeSimplePanel;
 import stroom.widget.tickbox.client.view.TickBox;
-import stroom.widget.valuespinner.client.ValueSpinner;
 
 import java.util.Arrays;
 import java.util.List;
@@ -123,7 +119,11 @@ public class SolrIndexSettingsViewImpl extends ViewWithUiHandlers<SolrIndexSetti
 
     @Override
     public void setInstanceType(final InstanceType instanceType) {
-        this.instanceType.setSelectedItem(instanceType);
+        if (instanceType == null) {
+            this.instanceType.setSelectedItem(InstanceType.SINGLE_NOOE);
+        } else {
+            this.instanceType.setSelectedItem(instanceType);
+        }
     }
 
     @Override

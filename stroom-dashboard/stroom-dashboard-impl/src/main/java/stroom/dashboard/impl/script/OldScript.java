@@ -18,7 +18,6 @@ package stroom.dashboard.impl.script;
 
 import stroom.importexport.migration.DocumentEntity;
 import stroom.importexport.shared.ExternalFile;
-import stroom.util.shared.DocRefs;
 
 import javax.xml.bind.annotation.XmlTransient;
 
@@ -32,7 +31,7 @@ public class OldScript extends DocumentEntity {
     private String description;
     private String data;
     private String dependenciesXML;
-    private DocRefs dependencies;
+    private OldDocRefs dependencies;
 
     public String getDescription() {
         return description;
@@ -60,11 +59,11 @@ public class OldScript extends DocumentEntity {
     }
 
     @XmlTransient
-    public DocRefs getDependencies() {
+    public OldDocRefs getDependencies() {
         return dependencies;
     }
 
-    public void setDependencies(final DocRefs dependencies) {
+    public void setDependencies(final OldDocRefs dependencies) {
         this.dependencies = dependencies;
     }
 

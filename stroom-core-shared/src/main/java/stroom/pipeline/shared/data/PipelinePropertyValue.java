@@ -16,8 +16,12 @@
 
 package stroom.pipeline.shared.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
 import stroom.util.shared.Copyable;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
@@ -52,20 +56,37 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Value", propOrder = {"string", "integer", "_long", "_boolean", "entity"})
-public class PipelinePropertyValue implements SharedObject, Copyable<PipelinePropertyValue> {
-    private static final long serialVersionUID = 1247638056133627349L;
-
+@JsonInclude(Include.NON_NULL)
+@JsonPropertyOrder({"string", "integer", "long", "boolean", "entity"})
+public class PipelinePropertyValue implements Copyable<PipelinePropertyValue> {
+    @JsonProperty("string")
     protected String string;
+    @JsonProperty("integer")
     protected Integer integer;
+    @JsonProperty("long")
     @XmlElement(name = "long")
     protected Long _long;
+    @JsonProperty("boolean")
     @XmlElement(name = "boolean")
     protected Boolean _boolean;
+    @JsonProperty("entity")
     @XmlElement(name = "entity")
     protected DocRef entity;
 
     public PipelinePropertyValue() {
-        // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public PipelinePropertyValue(@JsonProperty("string") final String string,
+                                 @JsonProperty("integer") final Integer integer,
+                                 @JsonProperty("long") final Long _long,
+                                 @JsonProperty("boolean") final Boolean _boolean,
+                                 @JsonProperty("entity") final DocRef entity) {
+        this.string = string;
+        this.integer = integer;
+        this._long = _long;
+        this._boolean = _boolean;
+        this.entity = entity;
     }
 
     public PipelinePropertyValue(final String string) {

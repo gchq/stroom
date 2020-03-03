@@ -30,7 +30,6 @@ import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.script.shared.ScriptDoc;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 import stroom.util.shared.Severity;
 
@@ -208,7 +207,7 @@ class ScriptStoreImpl implements ScriptStore {
                     document.setCreateUser(userId);
                     document.setUpdateUser(userId);
 
-                    final DocRefs docRefs = serialiser.getDocRefsFromLegacyXML(oldScript.getDependenciesXML());
+                    final OldDocRefs docRefs = serialiser.getDocRefsFromLegacyXML(oldScript.getDependenciesXML());
                     if (docRefs != null) {
                         final List<DocRef> dependencies = new ArrayList<>(docRefs.getDoc());
                         dependencies.sort(DocRef::compareTo);

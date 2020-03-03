@@ -19,7 +19,7 @@ package stroom.dashboard.shared;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import stroom.docref.SharedObject;
+
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -31,16 +31,13 @@ import javax.xml.bind.annotation.XmlType;
 @XmlSeeAlso({SplitLayoutConfig.class, TabLayoutConfig.class})
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
         property = "type"
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SplitLayoutConfig.class, name = "splitLayout"),
         @JsonSubTypes.Type(value = TabLayoutConfig.class, name = "tabLayout")
 })
-public abstract class LayoutConfig implements SharedObject {
-    private static final long serialVersionUID = 8743223047838956165L;
-
+public abstract class LayoutConfig {
     @JsonIgnore
     private transient SplitLayoutConfig parent;
 
@@ -48,10 +45,12 @@ public abstract class LayoutConfig implements SharedObject {
 
     public abstract void setPreferredSize(Size preferredSize);
 
+    @JsonIgnore
     public SplitLayoutConfig getParent() {
         return parent;
     }
 
+    @JsonIgnore
     public void setParent(final SplitLayoutConfig parent) {
         this.parent = parent;
     }

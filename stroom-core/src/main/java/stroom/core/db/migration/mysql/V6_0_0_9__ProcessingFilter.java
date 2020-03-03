@@ -8,7 +8,7 @@ import stroom.core.db.migration._V07_00_00.streamstore.shared._V07_00_00_FindStr
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.docref.DocRef;
-import stroom.entity.shared.SQLNameConstants;
+import stroom.core.db.migration._V07_00_00.streamstore.shared.SQLNameConstants;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
@@ -17,7 +17,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.IdRange;
+import stroom.core.db.migration._V07_00_00.streamstore.shared.IdRange;
 import stroom.util.shared.Range;
 import stroom.util.xml.XMLMarshallerUtil;
 

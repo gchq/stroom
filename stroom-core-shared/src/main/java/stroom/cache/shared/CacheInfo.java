@@ -16,15 +16,29 @@
 
 package stroom.cache.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Map;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class CacheInfo {
-    private String name;
-    private Map<String, String> map;
+    @JsonProperty
+    private final String name;
+    @JsonProperty
+    private final Map<String, String> map;
+    @JsonProperty
     private String nodeName;
 
-    public CacheInfo() {
-        // Default constructor necessary for GWT serialisation.
+    @JsonCreator
+    public CacheInfo(@JsonProperty("name") final String name,
+                     @JsonProperty("map") final Map<String, String> map,
+                     @JsonProperty("nodeName") final String nodeName) {
+        this.name = name;
+        this.map = map;
+        this.nodeName = nodeName;
     }
 
     public CacheInfo(final String name, final Map<String, String> map) {
@@ -36,16 +50,8 @@ public class CacheInfo {
         return name;
     }
 
-    public void setName(final String name) {
-        this.name = name;
-    }
-
     public Map<String, String> getMap() {
         return map;
-    }
-
-    public void setMap(final Map<String, String> map) {
-        this.map = map;
     }
 
     public String getNodeName() {

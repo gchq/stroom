@@ -16,19 +16,23 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Message implements SharedObject {
-    private static final long serialVersionUID = -2467020756279078626L;
+import java.util.Objects;
 
-    private Severity severity;
-    private String message;
+@JsonInclude(Include.NON_DEFAULT)
+public class Message {
+    @JsonProperty
+    private final Severity severity;
+    @JsonProperty
+    private final String message;
 
-    public Message() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public Message(final Severity severity, final String message) {
+    @JsonCreator
+    public Message(@JsonProperty("severity") final Severity severity,
+                   @JsonProperty("message") final String message) {
         this.severity = severity;
         this.message = message;
     }
@@ -45,18 +49,14 @@ public class Message implements SharedObject {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
-        final Message that = (Message) o;
-
-        if (severity != that.severity) return false;
-        return message != null ? message.equals(that.message) : that.message == null;
+        final Message message1 = (Message) o;
+        return severity == message1.severity &&
+                Objects.equals(message, message1.message);
     }
 
     @Override
     public int hashCode() {
-        int result = severity != null ? severity.hashCode() : 0;
-        result = 31 * result + (message != null ? message.hashCode() : 0);
-        return result;
+        return Objects.hash(severity, message);
     }
 
     @Override

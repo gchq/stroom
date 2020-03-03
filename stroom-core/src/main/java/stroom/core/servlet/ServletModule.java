@@ -21,7 +21,7 @@ import stroom.receive.common.DebugServlet;
 import stroom.receive.common.ReceiveDataServlet;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.guice.ServletBinder;
 import stroom.util.servlet.HttpServletRequestHolder;
 import stroom.util.servlet.SessionIdProvider;

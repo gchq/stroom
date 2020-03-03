@@ -28,7 +28,7 @@ import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -37,6 +37,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @Singleton
@@ -119,7 +120,7 @@ class JobBootstrap {
                     jobNodeDao.create(newJobNode);
                     existingJobMap.put(newJobNode.getJob().getName(), newJobNode);
 
-                } else if (!newJobNode.getJobType().equals(existingJobNode.getJobType())) {
+                } else if (!Objects.equals(newJobNode.getJobType(), existingJobNode.getJobType())) {
                     // If the job type has changed then update the job node.
                     existingJobNode.setJobType(newJobNode.getJobType());
                     existingJobNode.setSchedule(newJobNode.getSchedule());
@@ -239,7 +240,7 @@ class JobBootstrap {
         // See if the job exists in the database.
         final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
         criteria.getNodeName().setString(nodeName);
-        return jobNodeDao.find(criteria);
+        return jobNodeDao.find(criteria).getValues();
 
     }
 
@@ -251,7 +252,7 @@ class JobBootstrap {
         criteria.getName().setString(job.getName());
 
         // Add the job to the DB if it isn't there already.
-        final BaseResultList<Job> existingJob = jobDao.find(criteria);
+        final ResultPage<Job> existingJob = jobDao.find(criteria);
         if (existingJob != null && existingJob.size() > 0) {
             result = existingJob.getFirst();
 

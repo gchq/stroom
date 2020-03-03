@@ -70,7 +70,6 @@ public class _V07_00_00_IndexField implements HasDisplayValue, Comparable<_V07_0
     private List<Condition> supportedConditions;
 
     public _V07_00_00_IndexField() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     private _V07_00_00_IndexField(final _V07_00_00_IndexFieldType fieldType, final String fieldName, final _V07_00_00_AnalyzerType analyzerType,

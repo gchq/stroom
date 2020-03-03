@@ -46,7 +46,6 @@ import stroom.entity.client.presenter.TreeRowHandler;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
-import stroom.processor.shared.ProcessorListRow;
 import stroom.svg.client.SvgPresets;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
@@ -58,6 +57,7 @@ import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
@@ -306,14 +306,13 @@ public class TaskManagerListPresenter
     private void combineNodeTasks(final Consumer<TaskProgressResponse> dataConsumer,
                                   final Consumer<Throwable> throwableConsumer) {
         // Combine data from all nodes.
-        final List<TaskProgress> list = TaskProgressUtil.combine(criteria, responseMap.values());
+        final ResultPage<TaskProgress> resultPage = TaskProgressUtil.combine(criteria, responseMap.values());
 
-        final HashSet<TaskProgress> currentTaskSet = new HashSet<>(list);
+        final HashSet<TaskProgress> currentTaskSet = new HashSet<TaskProgress>(resultPage.getValues());
         selectedTaskProgress.retainAll(currentTaskSet);
         requestedTerminateTaskProgress.retainAll(currentTaskSet);
 
-        final TaskProgressResponse response = new TaskProgressResponse();
-        response.init(list);
+        final TaskProgressResponse response = new TaskProgressResponse(resultPage.getValues(), resultPage.getPageResponse());
         dataConsumer.accept(response);
     }
 

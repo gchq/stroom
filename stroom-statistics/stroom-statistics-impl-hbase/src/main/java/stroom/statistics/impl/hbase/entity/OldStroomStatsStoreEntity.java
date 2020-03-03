@@ -155,12 +155,12 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
     public boolean isValidField(final String fieldName) {
         if (stroomStatsStoreDataObject == null) {
             return false;
-        } else if (stroomStatsStoreDataObject.getStatisticFields() == null) {
+        } else if (stroomStatsStoreDataObject.getFields() == null) {
             return false;
-        } else if (stroomStatsStoreDataObject.getStatisticFields().size() == 0) {
+        } else if (stroomStatsStoreDataObject.getFields().size() == 0) {
             return false;
         } else {
-            return stroomStatsStoreDataObject.getStatisticFields().contains(new StatisticField(fieldName));
+            return stroomStatsStoreDataObject.getFields().contains(new StatisticField(fieldName));
         }
     }
 
@@ -194,7 +194,7 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
     public List<String> getFieldNames() {
         if (stroomStatsStoreDataObject != null) {
             final List<String> fieldNames = new ArrayList<>();
-            for (final StatisticField statisticField : stroomStatsStoreDataObject.getStatisticFields()) {
+            for (final StatisticField statisticField : stroomStatsStoreDataObject.getFields()) {
                 fieldNames.add(statisticField.getFieldName());
             }
             return fieldNames;
@@ -204,12 +204,12 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
     }
 
     public int getStatisticFieldCount() {
-        return stroomStatsStoreDataObject == null ? 0 : stroomStatsStoreDataObject.getStatisticFields().size();
+        return stroomStatsStoreDataObject == null ? 0 : stroomStatsStoreDataObject.getFields().size();
     }
 
     public List<StatisticField> getStatisticFields() {
         if (stroomStatsStoreDataObject != null) {
-            return stroomStatsStoreDataObject.getStatisticFields();
+            return stroomStatsStoreDataObject.getFields();
         } else {
             return Collections.emptyList();
         }

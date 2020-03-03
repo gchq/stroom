@@ -16,22 +16,28 @@
 
 package stroom.processor.impl;
 
+import com.google.common.base.Strings;
 import stroom.docref.DocRef;
 import stroom.docref.DocRefInfo;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.explorer.api.ExplorerService;
+import stroom.meta.api.MetaService;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.FetchProcessorRequest;
-import stroom.processor.shared.FetchProcessorResponse;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
+import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.QueryData;
+import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
@@ -43,15 +49,19 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.CriteriaSet;
 import stroom.util.shared.Expander;
-import stroom.util.shared.PageResponse;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -59,19 +69,23 @@ import java.util.UUID;
 @Singleton
 class ProcessorFilterServiceImpl implements ProcessorFilterService {
     private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
+    private static final int MAX_STREAM_TO_REPROCESS = 1000;
 
     private final ProcessorService processorService;
     private final ProcessorFilterDao processorFilterDao;
+    private final MetaService metaService;
     private final SecurityContext securityContext;
     private final ExplorerService explorerService;
 
     @Inject
     ProcessorFilterServiceImpl(final ProcessorService processorService,
                                final ProcessorFilterDao processorFilterDao,
+                               final MetaService metaService,
                                final SecurityContext securityContext,
                                final ExplorerService explorerService) {
         this.processorService = processorService;
         this.processorFilterDao = processorFilterDao;
+        this.metaService = metaService;
         this.securityContext = securityContext;
         this.explorerService = explorerService;
     }
@@ -216,7 +230,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 //    }
 
     @Override
-    public BaseResultList<ProcessorFilter> find(final ExpressionCriteria criteria) {
+    public ResultPage<ProcessorFilter> find(final ExpressionCriteria criteria) {
         return securityContext.secureResult(PERMISSION, () ->
                 processorFilterDao.find(criteria));
     }
@@ -224,7 +238,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     // TODO : The following method combines results from the processor and processor filter services so should possibly
     //  be in another class that controls the collaboration.
     @Override
-    public FetchProcessorResponse find(final FetchProcessorRequest request) {
+    public ProcessorListRowResultPage find(final FetchProcessorRequest request) {
         return securityContext.secureResult(PERMISSION, () -> {
             final List<ProcessorListRow> values = new ArrayList<>();
 
@@ -243,12 +257,12 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 criteria.setExpression(builder.build());
             }
 
-            final BaseResultList<Processor> streamProcessors = processorService.find(criteriaRoot);
+            final ResultPage<Processor> streamProcessors = processorService.find(criteriaRoot);
 
-            final BaseResultList<ProcessorFilter> processorFilters = find(criteria);
+            final ResultPage<ProcessorFilter> processorFilters = find(criteria);
 
             // Get unique processors.
-            final Set<Processor> processors = new HashSet<>(streamProcessors);
+            final Set<Processor> processors = new HashSet<>(streamProcessors.getValues());
 
             final List<Processor> sorted = new ArrayList<>(processors);
             sorted.sort((o1, o2) -> {
@@ -275,7 +289,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                     processorExpander.setExpanded(true);
 
                     // Add filters.
-                    for (final ProcessorFilter processorFilter : processorFilters) {
+                    for (final ProcessorFilter processorFilter : processorFilters.getValues()) {
                         if (processor.equals(processorFilter.getProcessor())) {
                             // Decorate the expression with resolved dictionaries etc.
                             final QueryData queryData = processorFilter.getQueryData();
@@ -290,9 +304,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 }
             }
 
-            final FetchProcessorResponse response = new FetchProcessorResponse();
-            response.init(values);
-            return response;
+            return new ProcessorListRowResultPage(values, ResultPage.createUnboundedPageResponse(values));
         });
     }
 
@@ -365,8 +377,106 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
         return builder.build();
     }
 
+    @Override
+    public List<ReprocessDataInfo> reprocess(final FindMetaCriteria criteria) {
+        return securityContext.secureResult(PermissionNames.MANAGE_PROCESSORS_PERMISSION, () -> {
+            final List<ReprocessDataInfo> info = new ArrayList<>();
 
-//    @Override
+            try {
+                // We only want 1000 streams to be
+                // reprocessed at a maximum.
+                criteria.obtainPageRequest().setOffset(0L);
+                criteria.obtainPageRequest().setLength(MAX_STREAM_TO_REPROCESS);
+
+                final ResultPage<Meta> metaList = metaService.find(criteria);
+
+                if (!metaList.isExact()) {
+                    info.add(new ReprocessDataInfo(Severity.ERROR, "Results exceed " + MAX_STREAM_TO_REPROCESS
+                            + " configure a pipeline processor for large data sets", null));
+
+                } else {
+                    int skippingCount = 0;
+                    final StringBuilder unableListSB = new StringBuilder();
+                    final StringBuilder submittedListSB = new StringBuilder();
+
+                    final Map<Processor, CriteriaSet<Long>> streamToProcessorSet = new HashMap<>();
+
+                    for (final Meta meta : metaList.getValues()) {
+                        // We can only reprocess streams that have a stream processor and a parent stream id.
+                        if (meta.getProcessorUuid() != null && meta.getParentMetaId() != null) {
+                            final ExpressionCriteria findProcessorCriteria = new ExpressionCriteria(new ExpressionOperator.Builder()
+                                    .addTerm(ProcessorDataSource.PIPELINE, Condition.EQUALS, new DocRef(PipelineDoc.DOCUMENT_TYPE, meta.getPipelineUuid()))
+                                    .build());
+//                            findProcessorCriteria.obtainPipelineUuidCriteria().setString(meta.getPipelineUuid());
+                            final Processor processor = processorService.find(findProcessorCriteria).getFirst();
+                            streamToProcessorSet.computeIfAbsent(processor, k -> new CriteriaSet<>()).add(meta.getParentMetaId());
+                        } else {
+                            skippingCount++;
+                        }
+                    }
+
+                    final List<Processor> list = new ArrayList<>(streamToProcessorSet.keySet());
+                    list.sort(Comparator.comparing(Processor::getPipelineUuid));
+
+                    for (final Processor streamProcessor : list) {
+                        final QueryData queryData = new QueryData();
+                        final ExpressionOperator.Builder operator = new ExpressionOperator.Builder(ExpressionOperator.Op.AND);
+
+                        final CriteriaSet<Long> streamIdSet = streamToProcessorSet.get(streamProcessor);
+                        if (streamIdSet != null && streamIdSet.size() > 0) {
+                            if (streamIdSet.size() == 1) {
+                                operator.addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, streamIdSet.getSingleItem());
+                            } else {
+                                final ExpressionOperator.Builder streamIdTerms = new ExpressionOperator.Builder(ExpressionOperator.Op.OR);
+                                streamIdSet.forEach(streamId -> streamIdTerms.addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, streamId));
+                                operator.addOperator(streamIdTerms.build());
+                            }
+                        }
+
+                        queryData.setDataSource(MetaFields.STREAM_STORE_DOC_REF);
+                        queryData.setExpression(operator.build());
+
+                        if (!streamProcessor.isEnabled()) {
+                            unableListSB.append(streamProcessor.getPipelineUuid());
+                            unableListSB.append("\n");
+
+                        } else {
+                            final String padded = Strings.padEnd(streamProcessor.getPipelineUuid(), 40, ' ');
+                            submittedListSB.append(padded);
+                            submittedListSB.append("\t");
+                            submittedListSB.append(streamIdSet.size());
+                            submittedListSB.append(" streams\n");
+
+                            create(streamProcessor, queryData, 10, true);
+                        }
+                    }
+
+                    if (skippingCount > 0) {
+                        info.add(new ReprocessDataInfo(Severity.INFO,
+                                "Skipping " + skippingCount + " streams that are not a result of processing", null));
+                    }
+
+                    final String unableList = unableListSB.toString().trim();
+                    if (unableList.length() > 0) {
+                        info.add(new ReprocessDataInfo(Severity.WARNING,
+                                "Unable to reprocess all streams as some pipelines are not enabled", unableList));
+                    }
+
+                    final String submittedList = submittedListSB.toString().trim();
+                    if (submittedList.length() > 0) {
+                        info.add(new ReprocessDataInfo(Severity.INFO, "Created new processor filters to reprocess streams",
+                                submittedList));
+                    }
+                }
+            } catch (final RuntimeException e) {
+                info.add(new ReprocessDataInfo(Severity.ERROR, e.getMessage(), null));
+            }
+
+            return info;
+        });
+    }
+
+    //    @Override
 //    public ProcessorFilter createFilter(final Processor streamProcessor,
 //                                        final QueryData queryData,
 //                                        final boolean enabled,

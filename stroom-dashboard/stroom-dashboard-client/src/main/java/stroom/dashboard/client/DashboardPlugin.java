@@ -28,7 +28,9 @@ import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
 import stroom.dashboard.client.main.DashboardPresenter;
 import stroom.dashboard.shared.DashboardDoc;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dashboard.shared.DashboardResource;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
@@ -39,19 +41,24 @@ import stroom.task.client.TaskStartEvent;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
+    private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
+
     private final Provider<DashboardPresenter> editorProvider;
+    private final RestFactory restFactory;
     private String currentUuid;
 
     @Inject
     public DashboardPlugin(final EventBus eventBus,
                            final Provider<DashboardPresenter> editorProvider,
-                           final ClientDispatchAsync dispatcher,
+                           final RestFactory restFactory,
                            final ContentManager contentManager,
                            final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, dispatcher, contentManager, entityPluginEventManager);
+        super(eventBus, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
+        this.restFactory = restFactory;
 
         registerHandler(eventBus.addHandler(ShowDashboardEvent.getType(), event -> openParameterisedDashboard(event.getHref())));
     }
@@ -131,6 +138,26 @@ public class DashboardPlugin extends DocumentPlugin<DashboardDoc> {
     @Override
     protected DocumentEditPresenter<?, ?> createEditor() {
         return editorProvider.get();
+    }
+
+    @Override
+    public void load(final DocRef docRef, final Consumer<DashboardDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<DashboardDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(DASHBOARD_RESOURCE)
+                .read(docRef);
+    }
+
+    @Override
+    public void save(final DocRef docRef, final DashboardDoc document, final Consumer<DashboardDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<DashboardDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(DASHBOARD_RESOURCE)
+                .update(document);
     }
 
     @Override

@@ -17,7 +17,7 @@
 package stroom.security.impl.event;
 
 import stroom.cluster.task.api.ClusterTask;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 public class ClusterPermissionChangeEventTask extends ClusterTask<VoidResult> {
     private static final long serialVersionUID = -1305243739417365803L;

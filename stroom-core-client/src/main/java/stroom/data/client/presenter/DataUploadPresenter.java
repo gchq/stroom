@@ -16,6 +16,7 @@
 
 package stroom.data.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FileUpload;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.gwt.user.client.ui.FormPanel.SubmitEvent;
@@ -26,9 +27,11 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.view.FileData;
 import stroom.data.client.view.FileData.Status;
-import stroom.data.shared.UploadDataAction;
+import stroom.data.shared.DataResource;
+import stroom.data.shared.UploadDataRequest;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.item.client.StringListBox;
 import stroom.util.shared.ResourceKey;
@@ -41,16 +44,18 @@ import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.DataUploadView> {
+    private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
+
     private DocRef feedRef;
     private MetaPresenter metaPresenter;
 
     @Inject
     public DataUploadPresenter(final EventBus eventBus,
                                final DataUploadView view,
-                               final ClientDispatchAsync dispatcher) {
+                               final RestFactory restFactory) {
         super(eventBus, view);
 
-        view.getForm().setAction(dispatcher.getImportFileURL());
+        view.getForm().setAction(restFactory.getImportFileURL());
         view.getForm().setEncoding(FormPanel.ENCODING_MULTIPART);
         view.getForm().setMethod(FormPanel.METHOD_POST);
 
@@ -69,7 +74,7 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
             protected void onSuccess(final ResourceKey resourceKey) {
                 final String fileName = getView().getFileUpload().getFilename();
                 final Long effectiveMs = getView().getEffectiveDate();
-                final UploadDataAction action = new UploadDataAction(
+                final UploadDataRequest request = new UploadDataRequest(
                         resourceKey,
                         feedRef.getName(),
                         getView().getType().getSelected(),
@@ -77,13 +82,15 @@ public class DataUploadPresenter extends MyPresenterWidget<DataUploadPresenter.D
                         getView().getMetaData(),
                         fileName);
 
-                dispatcher.exec(action)
+                final Rest<ResourceKey> rest = restFactory.create();
+                rest
                         .onSuccess(result -> {
                             hide();
                             AlertEvent.fireInfo(DataUploadPresenter.this.metaPresenter, "Uploaded file", null);
                             metaPresenter.refresh();
                         })
-                        .onFailure(caught -> error(caught.getMessage()));
+                        .call(DATA_RESOURCE)
+                        .upload(request);
             }
 
             @Override

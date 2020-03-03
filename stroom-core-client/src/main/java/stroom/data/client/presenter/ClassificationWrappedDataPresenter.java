@@ -19,7 +19,7 @@ package stroom.data.client.presenter;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.pipeline.shared.StepLocation;
+import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 
 public class ClassificationWrappedDataPresenter extends ClassificationWrapperPresenter implements BeginSteppingHandler {

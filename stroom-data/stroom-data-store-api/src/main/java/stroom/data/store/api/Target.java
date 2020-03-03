@@ -16,7 +16,7 @@
 
 package stroom.data.store.api;
 
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
 
 import java.io.Closeable;

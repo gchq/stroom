@@ -24,13 +24,12 @@ import stroom.cluster.task.api.DefaultClusterResultCollector;
 import stroom.cluster.task.api.TargetType;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.util.shared.SharedBoolean;
 
 import javax.inject.Inject;
 import java.net.MalformedURLException;
 
 
-class ClusterLockHandler extends AbstractTaskHandler<ClusterLockTask, SharedBoolean> {
+class ClusterLockHandler extends AbstractTaskHandler<ClusterLockTask, Boolean> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockHandler.class);
 
     private final ClusterDispatchAsyncHelper dispatchHelper;
@@ -44,21 +43,21 @@ class ClusterLockHandler extends AbstractTaskHandler<ClusterLockTask, SharedBool
     }
 
     @Override
-    public SharedBoolean exec(final ClusterLockTask task) {
+    public Boolean exec(final ClusterLockTask task) {
         return securityContext.secureResult(() -> {
             // If the cluster state is not yet initialised then don't try and call
             // master.
             if (!dispatchHelper.isClusterStateInitialised()) {
-                return SharedBoolean.wrap(Boolean.FALSE);
+                return Boolean.FALSE;
             }
 
-            final DefaultClusterResultCollector<SharedBoolean> collector = dispatchHelper
+            final DefaultClusterResultCollector<Boolean> collector = dispatchHelper
                     .execAsync(new ClusterLockClusterTask(task), TargetType.MASTER);
-            final ClusterCallEntry<SharedBoolean> response = collector.getSingleResponse();
+            final ClusterCallEntry<Boolean> response = collector.getSingleResponse();
 
             if (response == null) {
                 LOGGER.error("No response");
-                return SharedBoolean.wrap(Boolean.FALSE);
+                return Boolean.FALSE;
             }
             if (response.getError() != null) {
                 try {
@@ -69,7 +68,7 @@ class ClusterLockHandler extends AbstractTaskHandler<ClusterLockTask, SharedBool
                     LOGGER.error(response.getError().getMessage(), response.getError());
                 }
 
-                return SharedBoolean.wrap(Boolean.FALSE);
+                return Boolean.FALSE;
             }
 
             return response.getResult();

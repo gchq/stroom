@@ -17,7 +17,12 @@
 
 package stroom.receive.rules.shared;
 
-import stroom.docref.SharedObject;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.query.api.v2.ExpressionOperator;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -25,36 +30,40 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "DataReceiptRule", propOrder = {"ruleNumber", "creationTime", "name", "enabled", "expression", "action"})
 @XmlRootElement(name = "dataReceiptRule")
-public class ReceiveDataRule implements SharedObject {
-    private static final long serialVersionUID = -4466080173384628077L;
-
+@JsonPropertyOrder({"ruleNumber", "creationTime", "name", "enabled", "expression", "action"})
+@JsonInclude(Include.NON_DEFAULT)
+public class ReceiveDataRule {
     @XmlElement(name = "ruleNumber")
-    private int ruleNumber;
+    @JsonProperty
+    private final int ruleNumber;
     @XmlElement(name = "creationTime")
-    private long creationTime;
+    @JsonProperty
+    private final long creationTime;
     @XmlElement(name = "name")
-    private String name;
+    @JsonProperty
+    private final String name;
     @XmlElement(name = "enabled")
-    private boolean enabled;
+    @JsonProperty
+    private final boolean enabled;
     @XmlElement(name = "expression")
-    private ExpressionOperator expression;
+    @JsonProperty
+    private final ExpressionOperator expression;
     @XmlElement(name = "action")
-    private RuleAction action;
+    @JsonProperty
+    private final RuleAction action;
 
-    public ReceiveDataRule() {
-        // Default constructor for GWT serialisation.
-    }
-
-    public ReceiveDataRule(final int ruleNumber,
-                           final long creationTime,
-                           final String name,
-                           final boolean enabled,
-                           final ExpressionOperator expression,
-                           final RuleAction action) {
+    @JsonCreator
+    public ReceiveDataRule(@JsonProperty("ruleNumber") final int ruleNumber,
+                           @JsonProperty("creationTime") final long creationTime,
+                           @JsonProperty("name") final String name,
+                           @JsonProperty("enabled") final boolean enabled,
+                           @JsonProperty("expression") final ExpressionOperator expression,
+                           @JsonProperty("action") final RuleAction action) {
         this.ruleNumber = ruleNumber;
         this.creationTime = creationTime;
         this.name = name;
@@ -91,26 +100,18 @@ public class ReceiveDataRule implements SharedObject {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         final ReceiveDataRule that = (ReceiveDataRule) o;
-
-        if (ruleNumber != that.ruleNumber) return false;
-        if (creationTime != that.creationTime) return false;
-        if (enabled != that.enabled) return false;
-        if (name != null ? !name.equals(that.name) : that.name != null) return false;
-        if (expression != null ? !expression.equals(that.expression) : that.expression != null) return false;
-        return action == that.action;
+        return ruleNumber == that.ruleNumber &&
+                creationTime == that.creationTime &&
+                enabled == that.enabled &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(expression, that.expression) &&
+                action == that.action;
     }
 
     @Override
     public int hashCode() {
-        int result = ruleNumber;
-        result = 31 * result + (int) (creationTime ^ (creationTime >>> 32));
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        result = 31 * result + (enabled ? 1 : 0);
-        result = 31 * result + (expression != null ? expression.hashCode() : 0);
-        result = 31 * result + (action != null ? action.hashCode() : 0);
-        return result;
+        return Objects.hash(ruleNumber, creationTime, name, enabled, expression, action);
     }
 
     @Override

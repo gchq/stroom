@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -34,19 +36,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"preferredSize", "tabs", "selected"})
-@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "tabLayout")
 @XmlType(name = "TabLayoutConfig", propOrder = {"preferredSize", "tabs", "selected"})
+@JsonPropertyOrder({"preferredSize", "tabs", "selected"})
+@JsonInclude(Include.NON_DEFAULT)
 public class TabLayoutConfig extends LayoutConfig {
-    private static final long serialVersionUID = -2105048053435792675L;
-
     /**
      * The preferred size of this layout in width, height.
      */
     @XmlElement(name = "preferredSize")
     @JsonProperty("preferredSize")
-    private Size preferredSize = new Size();
+    private Size preferredSize;
     @XmlElementWrapper(name = "tabs")
     @XmlElements({@XmlElement(name = "tab", type = TabConfig.class)})
     @JsonProperty("tabs")
@@ -56,15 +56,30 @@ public class TabLayoutConfig extends LayoutConfig {
     private Integer selected;
 
     public TabLayoutConfig() {
-        // Default constructor necessary for GWT serialisation.
+        preferredSize = new Size();
     }
 
     public TabLayoutConfig(final TabConfig... tabs) {
+        preferredSize = new Size();
+
         if (tabs != null) {
             for (final TabConfig tab : tabs) {
                 add(tab);
             }
         }
+    }
+
+    @JsonCreator
+    public TabLayoutConfig(@JsonProperty("preferredSize")final Size preferredSize,
+                           @JsonProperty("tabs")final List<TabConfig> tabs,
+                           @JsonProperty("selected")final Integer selected) {
+        if (preferredSize != null) {
+            this.preferredSize = preferredSize;
+        } else {
+            this.preferredSize = new Size();
+        }
+        this.tabs = tabs;
+        this.selected = selected;
     }
 
     @Override
@@ -141,10 +156,12 @@ public class TabLayoutConfig extends LayoutConfig {
         return getVisibleTabs().indexOf(tab);
     }
 
+    @JsonIgnore
     public int getVisibleTabCount() {
         return getVisibleTabs().size();
     }
 
+    @JsonIgnore
     public int getAllTabCount() {
         if (tabs == null) {
             return 0;
@@ -160,6 +177,10 @@ public class TabLayoutConfig extends LayoutConfig {
             tabConfig.setParent(this);
         }
         return tabs;
+    }
+
+    public void setTabs(final List<TabConfig> tabs) {
+        this.tabs = tabs;
     }
 
     public Integer getSelected() {

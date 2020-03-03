@@ -24,7 +24,7 @@ import stroom.annotation.client.ShowAnnotationEvent;
 import stroom.annotation.shared.Annotation;
 import stroom.annotation.shared.EventId;
 import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.IndexConstants;
+import stroom.dashboard.client.main.IndexConstants;
 import stroom.dashboard.shared.Row;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.svg.client.SvgPresets;

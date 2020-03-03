@@ -16,19 +16,43 @@
 
 package stroom.pipeline.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.HasDisplayValue;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class XPathFilter implements Serializable {
-    private static final long serialVersionUID = -5259490683649248946L;
+@JsonInclude(Include.NON_DEFAULT)
+public class XPathFilter {
+    @JsonProperty
     private String xPath;
+    @JsonProperty
     private MatchType matchType;
+    @JsonProperty
     private String value;
+    @JsonProperty
     private Boolean ignoreCase;
+    @JsonProperty
     private Map<String, Record> uniqueValues;
+
+    public XPathFilter() {
+    }
+
+    @JsonCreator
+    public XPathFilter(@JsonProperty("xPath") final String xPath,
+                       @JsonProperty("matchType") final MatchType matchType,
+                       @JsonProperty("value") final String value,
+                       @JsonProperty("ignoreCase") final Boolean ignoreCase,
+                       @JsonProperty("uniqueValues") final Map<String, Record> uniqueValues) {
+        this.xPath = xPath;
+        this.matchType = matchType;
+        this.value = value;
+        this.ignoreCase = ignoreCase;
+        this.uniqueValues = uniqueValues;
+    }
 
     public String getXPath() {
         return xPath;

@@ -33,8 +33,7 @@ public class StatisticStoreSerialiser implements DocumentSerialiser2<StatisticSt
 
     @Override
     public Map<String, byte[]> write(final StatisticStoreDoc document) throws IOException {
-        final Map<String, byte[]> data = delegate.write(document);
-        return data;
+        return delegate.write(document);
     }
 
     public StatisticsDataSourceData getDataFromLegacyXML(final String xml) {

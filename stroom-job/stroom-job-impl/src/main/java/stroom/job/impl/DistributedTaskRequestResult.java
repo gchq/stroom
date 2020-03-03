@@ -16,7 +16,7 @@
 
 package stroom.job.impl;
 
-import stroom.docref.SharedObject;
+
 import stroom.job.api.DistributedTask;
 import stroom.job.shared.JobNode;
 
@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class DistributedTaskRequestResult implements SharedObject {
+public class DistributedTaskRequestResult {
     private static final long serialVersionUID = -6827229808827594370L;
 
     private final int totalTasks;

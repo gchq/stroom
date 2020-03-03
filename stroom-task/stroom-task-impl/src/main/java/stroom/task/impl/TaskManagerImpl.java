@@ -41,7 +41,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.pipeline.scope.PipelineScopeRunnable;
 import stroom.util.servlet.SessionIdProvider;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
@@ -516,7 +516,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
     }
 
     @Override
-    public BaseResultList<TaskProgress> terminate(final FindTaskCriteria criteria, final boolean kill) {
+    public ResultPage<TaskProgress> terminate(final FindTaskCriteria criteria, final boolean kill) {
         return securityContext.secureResult(PermissionNames.MANAGE_TASKS_PERMISSION, () -> {
             // This can change a little between servers
             final long timeNowMs = System.currentTimeMillis();
@@ -545,7 +545,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
                 doTerminated(kill, timeNowMs, taskProgressList, terminateList);
             }
 
-            return BaseResultList.createUnboundedList(taskProgressList);
+            return ResultPage.createUnboundedList(taskProgressList);
         });
     }
 
@@ -579,7 +579,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
     }
 
     @Override
-    public BaseResultList<TaskProgress> find(final FindTaskProgressCriteria findTaskProgressCriteria) {
+    public ResultPage<TaskProgress> find(final FindTaskProgressCriteria findTaskProgressCriteria) {
         final boolean sessionMatch = findTaskProgressCriteria != null &&
                 findTaskProgressCriteria.getSessionId() != null &&
                 findTaskProgressCriteria.getSessionId().equals(sessionIdProvider.get());
@@ -593,7 +593,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
         }
     }
 
-    private BaseResultList<TaskProgress> doFind(final FindTaskProgressCriteria findTaskProgressCriteria) {
+    private ResultPage<TaskProgress> doFind(final FindTaskProgressCriteria findTaskProgressCriteria) {
         LOGGER.debug("getTaskProgressMap()");
         // This can change a little between servers.
         final long timeNowMs = System.currentTimeMillis();
@@ -614,7 +614,7 @@ class TaskManagerImpl implements TaskManager {//}, SupportsCriteriaLogging<FindT
             }
         });
 
-        return BaseResultList.createUnboundedList(taskProgressList);
+        return ResultPage.createUnboundedList(taskProgressList);
     }
 
     private TaskProgress buildTaskProgress(final long timeNowMs, final TaskThread taskThread, final Task<?> task) {

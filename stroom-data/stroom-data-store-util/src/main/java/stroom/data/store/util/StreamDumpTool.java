@@ -23,7 +23,7 @@ import stroom.data.store.impl.DataDownloadTask;
 import stroom.data.store.impl.DataDownloadTaskHandler;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;

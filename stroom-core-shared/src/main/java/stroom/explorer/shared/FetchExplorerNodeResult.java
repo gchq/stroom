@@ -16,36 +16,77 @@
 
 package stroom.explorer.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
-public class FetchExplorerNodeResult implements SharedObject {
-    private static final long serialVersionUID = 6474393620176001063L;
-
-    private TreeStructure treeStructure = new TreeStructure();
-    private List<ExplorerNode> openedItems = new ArrayList<>();
-    private Set<ExplorerNode> temporaryOpenedItems;
+@JsonInclude(Include.NON_DEFAULT)
+public class FetchExplorerNodeResult {
+    @JsonProperty
+    private List<ExplorerNode> rootNodes;
+    @JsonProperty
+    private List<String> openedItems;
+    @JsonProperty
+    private Set<String> temporaryOpenedItems;
 
     public FetchExplorerNodeResult() {
-        // Default constructor necessary for GWT serialisation.
+        setDefaults();
     }
 
-    public TreeStructure getTreeStructure() {
-        return treeStructure;
+    @JsonCreator
+    public FetchExplorerNodeResult(@JsonProperty("rootNodes") final List<ExplorerNode> rootNodes,
+                                   @JsonProperty("openedItems") final List<String> openedItems,
+                                   @JsonProperty("temporaryOpenedItems") final Set<String> temporaryOpenedItems) {
+        this.rootNodes = rootNodes;
+        this.openedItems = openedItems;
+        this.temporaryOpenedItems = temporaryOpenedItems;
+
+        setDefaults();
     }
 
-    public List<ExplorerNode> getOpenedItems() {
+    private void setDefaults() {
+        if (rootNodes == null) {
+            rootNodes = new ArrayList<>();
+        }
+        if (openedItems == null) {
+            openedItems = new ArrayList<>();
+        }
+    }
+
+    public List<ExplorerNode> getRootNodes() {
+        return rootNodes;
+    }
+
+    public List<String> getOpenedItems() {
         return openedItems;
     }
 
-    public Set<ExplorerNode> getTemporaryOpenedItems() {
+    public Set<String> getTemporaryOpenedItems() {
         return temporaryOpenedItems;
     }
 
-    public void setTemporaryOpenedItems(final Set<ExplorerNode> temporaryOpenedItems) {
+    public void setTemporaryOpenedItems(final Set<String> temporaryOpenedItems) {
         this.temporaryOpenedItems = temporaryOpenedItems;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final FetchExplorerNodeResult that = (FetchExplorerNodeResult) o;
+        return Objects.equals(rootNodes, that.rootNodes) &&
+                Objects.equals(openedItems, that.openedItems) &&
+                Objects.equals(temporaryOpenedItems, that.temporaryOpenedItems);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(rootNodes, openedItems, temporaryOpenedItems);
     }
 }

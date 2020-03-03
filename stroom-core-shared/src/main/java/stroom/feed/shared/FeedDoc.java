@@ -16,9 +16,11 @@
 
 package stroom.feed.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.HasDisplayValue;
@@ -26,28 +28,61 @@ import stroom.docstore.shared.Doc;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "classification", "encoding", "contextEncoding", "retentionDayAge", "reference", "streamType", "feedStatus"})
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "classification", "encoding", "contextEncoding", "retentionDayAge", "reference", "streamType", "status"})
 @JsonInclude(Include.NON_DEFAULT)
 public class FeedDoc extends Doc {
     public static final String DOCUMENT_TYPE = "Feed";
 
-    private static final long serialVersionUID = -5311839753276287820L;
-
+    @JsonProperty
     private String description;
+    @JsonProperty
     private String classification;
+    @JsonProperty
     private String encoding;
+    @JsonProperty
     private String contextEncoding;
+    @JsonProperty
     private Integer retentionDayAge;
+    @JsonProperty
     private boolean reference;
+    @JsonProperty
     private String streamType;
-    private FeedStatus feedStatus;
+    @JsonProperty
+    private FeedStatus status;
 
     public FeedDoc() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public FeedDoc(final String name) {
         setName(name);
+    }
+
+    @JsonCreator
+    public FeedDoc(@JsonProperty("type") final String type,
+                   @JsonProperty("uuid") final String uuid,
+                   @JsonProperty("name") final String name,
+                   @JsonProperty("version") final String version,
+                   @JsonProperty("createTime") final Long createTime,
+                   @JsonProperty("updateTime") final Long updateTime,
+                   @JsonProperty("createUser") final String createUser,
+                   @JsonProperty("updateUser") final String updateUser,
+                   @JsonProperty("description") final String description,
+                   @JsonProperty("classification") final String classification,
+                   @JsonProperty("encoding") final String encoding,
+                   @JsonProperty("contextEncoding") final String contextEncoding,
+                   @JsonProperty("retentionDayAge") final Integer retentionDayAge,
+                   @JsonProperty("reference") final boolean reference,
+                   @JsonProperty("streamType") final String streamType,
+                   @JsonProperty("status") final FeedStatus status) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.classification = classification;
+        this.encoding = encoding;
+        this.contextEncoding = contextEncoding;
+        this.retentionDayAge = retentionDayAge;
+        this.reference = reference;
+        this.streamType = streamType;
+        this.status = status;
     }
 
     public String getDescription() {
@@ -91,15 +126,15 @@ public class FeedDoc extends Doc {
     }
 
     public FeedStatus getStatus() {
-        if (feedStatus == null) {
+        if (status == null) {
             return FeedStatus.RECEIVE;
         }
 
-        return feedStatus;
+        return status;
     }
 
     public void setStatus(final FeedStatus feedStatus) {
-        this.feedStatus = feedStatus;
+        this.status = feedStatus;
     }
 
     @JsonIgnore

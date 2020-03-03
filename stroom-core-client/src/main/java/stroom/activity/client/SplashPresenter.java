@@ -77,7 +77,7 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
 
     public void show(final Consumer<Boolean> consumer) {
         uiConfigCache.get().onSuccess(uiConfig -> {
-            final SplashConfig splashConfig = uiConfig.getSplashConfig();
+            final SplashConfig splashConfig = uiConfig.getSplash();
             final boolean enableSplashScreen = splashConfig.isEnabled();
             if (enableSplashScreen && !urlParameters.isEmbedded()) {
                 final String title = splashConfig.getTitle();

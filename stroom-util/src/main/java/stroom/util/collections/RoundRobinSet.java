@@ -16,7 +16,7 @@
 
 package stroom.util.collections;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.AbstractCollection;
 import java.util.ArrayList;
@@ -29,7 +29,7 @@ import java.util.Set;
  *
  * @param <E> type of set
  */
-public class RoundRobinSet<E extends SharedObject> extends AbstractCollection<E> implements Set<E> {
+public class RoundRobinSet<E> extends AbstractCollection<E> implements Set<E> {
     private ArrayList<E> realList = new ArrayList<>();
     private int startCursor = 0;
 

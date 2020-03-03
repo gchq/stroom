@@ -5,9 +5,8 @@ import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.importexport.api.DocRefs;
-import stroom.importexport.api.DocumentData;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.importexport.api.DocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.security.api.ClientSecurityUtil;
@@ -82,8 +81,8 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                     if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
                         LOGGER.error(response.getStatusInfo().getReasonPhrase());
                     } else {
-                        final DocRefs docRefs = response.readEntity(DocRefs.class);
-                        docRefs.getSet().forEach(docRef -> importDocument(url, docRef, importExportActionHandler));
+                        final Set<DocRef> docRefs = response.readEntity(Set.class);
+                        docRefs.forEach(docRef -> importDocument(url, docRef, importExportActionHandler));
                     }
                 }
             } catch (final RuntimeException e) {

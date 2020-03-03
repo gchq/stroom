@@ -16,19 +16,19 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlSeeAlso;
-import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlSeeAlso({QueryComponentSettings.class, TableComponentSettings.class, VisComponentSettings.class, TextComponentSettings.class})
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
         property = "type"
 )
 @JsonSubTypes({
@@ -37,10 +37,6 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = VisComponentSettings.class, name = "vis"),
         @JsonSubTypes.Type(value = TextComponentSettings.class, name = "text")
 })
-public abstract class ComponentSettings implements Serializable {
-    private static final long serialVersionUID = 2110282486749818888L;
-
-    public ComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
-    }
+@JsonInclude(Include.NON_DEFAULT)
+public abstract class ComponentSettings {
 }

@@ -18,7 +18,7 @@ package stroom.pipeline.refdata;
 
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.task.api.TaskManager;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 

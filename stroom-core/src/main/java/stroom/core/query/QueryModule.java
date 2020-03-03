@@ -17,13 +17,14 @@
 package stroom.core.query;
 
 import com.google.inject.AbstractModule;
-import stroom.query.shared.FetchSuggestionsAction;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 public class QueryModule extends AbstractModule {
     @Override
     protected void configure() {
-        TaskHandlerBinder.create(binder())
-                .bind(FetchSuggestionsAction.class, FetchSuggestionsHandler.class);
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(SuggestionsResourceImpl.class);
     }
 }

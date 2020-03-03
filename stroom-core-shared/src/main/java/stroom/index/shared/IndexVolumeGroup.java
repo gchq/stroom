@@ -1,17 +1,49 @@
 package stroom.index.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasAuditInfo;
 
 import java.util.Objects;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class IndexVolumeGroup implements HasAuditInfo {
+    @JsonProperty
     private Integer id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTimeMs;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private Long updateTimeMs;
+    @JsonProperty
     private String updateUser;
+    @JsonProperty
     private String name;
+
+    public IndexVolumeGroup() {
+    }
+
+    @JsonCreator
+    public IndexVolumeGroup(@JsonProperty("id") final Integer id,
+                            @JsonProperty("version") final Integer version,
+                            @JsonProperty("createTimeMs") final Long createTimeMs,
+                            @JsonProperty("createUser") final String createUser,
+                            @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                            @JsonProperty("updateUser") final String updateUser,
+                            @JsonProperty("name") final String name) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.createUser = createUser;
+        this.updateTimeMs = updateTimeMs;
+        this.updateUser = updateUser;
+        this.name = name;
+    }
 
     public Integer getId() {
         return id;

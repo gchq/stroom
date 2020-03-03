@@ -16,9 +16,9 @@
 
 package stroom.core.entity.event;
 
-import stroom.entity.shared.EntityEvent;
+import stroom.util.entity.EntityEvent;
 import stroom.task.api.ServerTask;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import java.io.Serializable;
 

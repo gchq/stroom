@@ -22,6 +22,8 @@ import stroom.dictionary.shared.DictionaryDoc;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 public class DictionaryHandlerModule extends AbstractModule {
     @Override
@@ -34,5 +36,10 @@ public class DictionaryHandlerModule extends AbstractModule {
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(DictionaryDoc.ENTITY_TYPE, DictionaryStoreImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(NewUiDictionaryResource.class)
+                .addBinding(NewUiDictionaryResource2.class)
+                .addBinding(DictionaryResourceImpl.class);
     }
 }

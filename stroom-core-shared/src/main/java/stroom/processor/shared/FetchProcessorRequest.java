@@ -16,7 +16,11 @@
 
 package stroom.processor.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.HasIsConstrained;
@@ -25,16 +29,25 @@ import stroom.util.shared.TreeAction;
 import java.util.HashSet;
 import java.util.Set;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class FetchProcessorRequest implements TreeAction<ProcessorListRow>, HasIsConstrained {
+    @JsonProperty
     private ExpressionOperator expression;
+    @JsonProperty
     private Set<ProcessorListRow> expandedRows;
 
     public FetchProcessorRequest() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public FetchProcessorRequest(final ExpressionOperator expression) {
         this.expression = expression;
+    }
+
+    @JsonCreator
+    public FetchProcessorRequest(@JsonProperty("expression") final ExpressionOperator expression,
+                                 @JsonProperty("expandedRows") final Set<ProcessorListRow> expandedRows) {
+        this.expression = expression;
+        this.expandedRows = expandedRows;
     }
 
     @JsonIgnore
@@ -51,7 +64,6 @@ public class FetchProcessorRequest implements TreeAction<ProcessorListRow>, HasI
         this.expression = expression;
     }
 
-    @JsonIgnore
     @Override
     public void setRowExpanded(final ProcessorListRow row, final boolean open) {
         if (open) {
@@ -66,7 +78,6 @@ public class FetchProcessorRequest implements TreeAction<ProcessorListRow>, HasI
         }
     }
 
-    @JsonIgnore
     @Override
     public boolean isRowExpanded(final ProcessorListRow row) {
         if (expandedRows == null) {

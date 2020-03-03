@@ -77,7 +77,6 @@ public final class _V07_00_00_PipelineReference
     private int hashCode = -1;
 
     public _V07_00_00_PipelineReference() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_PipelineReference(final _V07_00_00_DocRef pipeline, final _V07_00_00_DocRef feed,

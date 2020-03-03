@@ -40,7 +40,6 @@ import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.shared.DocRefs;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
@@ -49,8 +48,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -70,8 +71,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     @Inject
     private ExplorerService explorerService;
 
-    private DocRefs buildFindFolderCriteria() {
-        final DocRefs criteria = new DocRefs();
+    private Set<DocRef> buildFindFolderCriteria() {
+        final Set<DocRef> criteria = new HashSet<>();
         criteria.add(ExplorerConstants.ROOT_DOC_REF);
         return criteria;
     }

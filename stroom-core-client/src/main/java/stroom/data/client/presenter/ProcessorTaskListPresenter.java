@@ -17,6 +17,7 @@
 package stroom.data.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
@@ -25,24 +26,23 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
-import stroom.entity.client.presenter.FindActionDataProvider;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.entity.shared.NamedEntity;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.FindMetaRowAction;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.processor.shared.FindProcessorTaskAction;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
+import stroom.processor.shared.ProcessorTaskResource;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.util.shared.ResultPage;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
@@ -51,15 +51,19 @@ import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
 
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
-public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<ProcessorTask>> implements HasDocumentRead<SharedObject> {
+public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<ProcessorTask>> implements HasDocumentRead<Object> {
+    private static final ProcessorTaskResource PROCESSOR_TASK_RESOURCE = GWT.create(ProcessorTaskResource.class);
+    private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
+
     private final TooltipPresenter tooltipPresenter;
-    private final FindActionDataProvider<ExpressionCriteria, ProcessorTask> dataProvider;
+    private final RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>> dataProvider;
     private final ExpressionCriteria criteria;
 
     @Inject
     public ProcessorTaskListPresenter(final EventBus eventBus,
-                                      final ClientDispatchAsync dispatcher,
+                                      final RestFactory restFactory,
                                       final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(false));
         this.tooltipPresenter = tooltipPresenter;
@@ -68,14 +72,16 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         getView().addColumn(new InfoColumn<ProcessorTask>() {
             @Override
             protected void showInfo(final ProcessorTask row, final int x, final int y) {
-                dispatcher
-                        .exec(new FindMetaRowAction(FindMetaCriteria.createFromId(row.getMetaId())))
+                final Rest<ResultPage<MetaRow>> rest = restFactory.create();
+                rest
                         .onSuccess(metaRows -> {
                             if (metaRows != null && metaRows.size() == 1) {
-                                final MetaRow metaRow = metaRows.get(0);
+                                final MetaRow metaRow = metaRows.getFirst();
                                 showTooltip(x, y, row, metaRow);
                             }
-                        });
+                        })
+                        .call(META_RESOURCE)
+                        .findMetaRow(FindMetaCriteria.createFromId(row.getMetaId()));
             }
         }, "<br/>", ColumnSizeConstants.ICON_COL);
 
@@ -160,7 +166,14 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         getView().addEndColumn(new EndColumn<>());
 
         criteria = new ExpressionCriteria();
-        dataProvider = new FindActionDataProvider<ExpressionCriteria, ProcessorTask>(dispatcher, getView(), new FindProcessorTaskAction());
+        dataProvider = new RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>>(eventBus) {
+            @Override
+            protected void exec(final Consumer<ResultPage<ProcessorTask>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<ProcessorTask>> rest = restFactory.create();
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_TASK_RESOURCE).find(criteria);
+            }
+        };
+        dataProvider.addDataDisplay(getView().getDataDisplay());
     }
 
     private void showTooltip(final int x, final int y, final ProcessorTask processorTask, final MetaRow metaRow) {
@@ -222,16 +235,8 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         }
     }
 
-    private String toNameString(final NamedEntity namedEntity) {
-        if (namedEntity != null) {
-            return namedEntity.getName() + " (" + namedEntity.getId() + ")";
-        } else {
-            return "";
-        }
-    }
-
     @Override
-    public void read(final DocRef docRef, final SharedObject entity) {
+    public void read(final DocRef docRef, final Object entity) {
         if (docRef == null) {
             setExpression(null);
         } else if (PipelineDoc.DOCUMENT_TYPE.equals(docRef.getType())) {
@@ -245,7 +250,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
 
     public void setExpression(final ExpressionOperator expression) {
         criteria.setExpression(expression);
-        dataProvider.setCriteria(criteria);
+        dataProvider.refresh();
     }
 
     public void clear() {

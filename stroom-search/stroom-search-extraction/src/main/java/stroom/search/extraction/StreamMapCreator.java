@@ -19,7 +19,7 @@ package stroom.search.extraction;
 import stroom.dashboard.expression.v1.Val;
 import stroom.index.shared.IndexConstants;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.search.coprocessor.Values;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;

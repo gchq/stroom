@@ -22,7 +22,7 @@ import stroom.cluster.api.ClusterCallServiceLocal;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterServiceBinder;
-import stroom.entity.shared.EntityEvent;
+import stroom.util.entity.EntityEvent;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.ServletBinder;
 

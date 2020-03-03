@@ -121,14 +121,14 @@ class TestActivityServiceImpl {
     @Test
     void testValidation() {
         // Save 1
-        Activity activity1 = new Activity();
+        Activity activity1 = Activity.create();
         activity1.getDetails().add(createProp("foo", "\\w{3,}"), "bar");
         activity1.getDetails().add(createProp("this", "\\w{4,}"), "that");
         activity1.setUserId("test");
         final ActivityValidationResult activityValidationResult1 = activityService.validate(activity1);
         assertThat(activityValidationResult1.isValid()).isTrue();
 
-        Activity activity2 = new Activity();
+        Activity activity2 = Activity.create();
         activity2.getDetails().add(createProp("foo", ".{3,}"), "bar");
         activity2.getDetails().add(createProp("this", ".{80,}"), "that");
         activity2.setUserId("test");

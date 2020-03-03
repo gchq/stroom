@@ -145,7 +145,7 @@ class TestJobDaoImpl {
 
     private void cleanup() {
         // Cleanup
-        final List<Job> jobs = dao.find(new FindJobCriteria());
+        final List<Job> jobs = dao.find(new FindJobCriteria()).getValues();
         jobs.forEach(job -> dao.delete(job.getId()));
     }
 }

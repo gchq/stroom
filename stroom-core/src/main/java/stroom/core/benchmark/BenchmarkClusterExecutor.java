@@ -31,7 +31,7 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.pipeline.PipelineStore;
 import stroom.processor.api.JobNames;
@@ -57,8 +57,8 @@ import stroom.task.api.TaskContext;
 import stroom.task.shared.Task;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.Period;
-import stroom.util.shared.VoidResult;
+import stroom.util.Period;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -236,7 +236,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private Processor initProcessor(final DocRef pipelineDoc) {
         // Clear off any old processor filters
         for (final ProcessorFilter processorFilter : processorFilterService
-                .find(new ExpressionCriteria(ProcessorTaskExpressionUtil.createPipelineExpression(pipelineDoc)))) {
+                .find(new ExpressionCriteria(ProcessorTaskExpressionUtil.createPipelineExpression(pipelineDoc))).getValues()) {
             processorFilterService.delete(processorFilter.getId());
         }
         Processor streamProcessor = streamProcessorService.find(new ExpressionCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineDoc)))
@@ -337,8 +337,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                     Thread.sleep(10000);
 
                     // Find out how many tasks are complete.
-                    final List<Meta> streams = metaService.find(processedCriteria);
-
+                    final List<Meta> streams = metaService.find(processedCriteria).getValues();
                     // Things moved on ?
                     if (streams.size() > completedTaskCount) {
                         // Move on the time out
@@ -448,9 +447,9 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                     .addTerm(ProcessorTaskDataSource.FEED_NAME, Condition.EQUALS, feedName)
                     .addTerm(ProcessorTaskDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
                     .build();
-            final List<ProcessorTask> processorTasks = processorTaskService.find(new ExpressionCriteria(taskExpression));
+            final List<ProcessorTask> processorTasks = processorTaskService.find(new ExpressionCriteria(taskExpression)).getValues();
             processorTasks.forEach(task -> {
-                final List<MetaRow> metaList = metaService.findRows(FindMetaCriteria.createFromId(task.getMetaId()));
+                final List<MetaRow> metaList = metaService.findRows(FindMetaCriteria.createFromId(task.getMetaId())).getValues();
 
                 if (metaList != null && metaList.size() == 1) {
                     final MetaRow meta = metaList.get(0);

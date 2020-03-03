@@ -18,7 +18,6 @@ package stroom.util;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.util.shared.Period;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

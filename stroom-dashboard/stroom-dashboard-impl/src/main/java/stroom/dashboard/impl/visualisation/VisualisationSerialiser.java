@@ -6,7 +6,6 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
-import stroom.util.shared.DocRefs;
 import stroom.util.string.EncodingUtil;
 import stroom.util.xml.XMLMarshallerUtil;
 import stroom.visualisation.shared.VisualisationDoc;
@@ -42,10 +41,14 @@ public class VisualisationSerialiser implements DocumentSerialiser2<Visualisatio
 
     @Override
     public Map<String, byte[]> write(final VisualisationDoc document) throws IOException {
+        final String settings = document.getSettings();
+        document.setSettings(null);
+
         final Map<String, byte[]> data = delegate.write(document);
 
-        if (document.getSettings() != null) {
-            data.put(JSON, EncodingUtil.asBytes(document.getSettings()));
+        if (settings != null) {
+            data.put(JSON, EncodingUtil.asBytes(settings));
+            document.setSettings(settings);
         }
 
         return data;
@@ -54,7 +57,7 @@ public class VisualisationSerialiser implements DocumentSerialiser2<Visualisatio
     public DocRef getDocRefFromLegacyXML(final String xml) {
         if (xml != null) {
             try {
-                final JAXBContext jaxbContext = JAXBContext.newInstance(DocRefs.class);
+                final JAXBContext jaxbContext = JAXBContext.newInstance(DocRef.class);
                 return XMLMarshallerUtil.unmarshal(jaxbContext, DocRef.class, xml);
             } catch (final JAXBException | RuntimeException e) {
                 LOGGER.error("Unable to unmarshal dashboard config", e);

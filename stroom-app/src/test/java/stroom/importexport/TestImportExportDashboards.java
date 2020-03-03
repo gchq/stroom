@@ -51,12 +51,12 @@ import stroom.resource.api.ResourceStore;
 import stroom.script.shared.ScriptDoc;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.ResourceKey;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -207,7 +207,7 @@ class TestImportExportDashboards extends AbstractCoreIntegrationTest {
         final int startDashboardSize = dashboardStore.list().size();
 
         final ResourceKey file = resourceStore.createTempFile("Export.zip");
-        final DocRefs docRefs = new DocRefs();
+        final Set<DocRef> docRefs = new HashSet<>();
         docRefs.add(folder1);
         if (!skipVisExport) {
             docRefs.add(folder2);

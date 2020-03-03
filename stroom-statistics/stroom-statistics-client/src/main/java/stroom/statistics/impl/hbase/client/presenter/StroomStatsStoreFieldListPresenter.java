@@ -104,7 +104,7 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
 
     private void enableButtons() {
         newButton.setEnabled(!readOnly);
-        if (stroomStatsStoreEntityData != null && stroomStatsStoreEntityData.getStatisticFields() != null) {
+        if (stroomStatsStoreEntityData != null && stroomStatsStoreEntityData.getFields() != null) {
             StatisticField selected = getView().getSelectionModel().getSelected();
             final boolean enabled = !readOnly && selected != null;
             editButton.setEnabled(enabled);
@@ -143,7 +143,7 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
         if (!readOnly) {
             final StatisticField statisticField = new StatisticField();
             final StroomStatsStoreEntityData oldStroomStatsStoreEntityData = stroomStatsStoreEntityData.deepCopy();
-            final List<StatisticField> otherFields = stroomStatsStoreEntityData.getStatisticFields();
+            final List<StatisticField> otherFields = stroomStatsStoreEntityData.getFields();
 
             stroomStatsStoreFieldEditPresenter.read(statisticField, otherFields);
             stroomStatsStoreFieldEditPresenter.show("New Field", new PopupUiHandlers() {
@@ -180,7 +180,7 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
                 // editing so we can check the new value
                 // is not already in the list
                 final List<StatisticField> otherFields = new ArrayList<>(
-                        stroomStatsStoreEntityData.getStatisticFields());
+                        stroomStatsStoreEntityData.getFields());
                 otherFields.remove(statisticField);
 
                 stroomStatsStoreFieldEditPresenter.read(statisticField, otherFields);
@@ -215,7 +215,7 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
             if (list != null && list.size() > 0) {
                 final StroomStatsStoreEntityData oldStroomStatsStoreEntityData = stroomStatsStoreEntityData.deepCopy();
 
-                stroomStatsStoreEntityData.getStatisticFields().removeAll(list);
+                stroomStatsStoreEntityData.getFields().removeAll(list);
                 getView().getSelectionModel().clear();
                 reComputeRollUpBitMask(oldStroomStatsStoreEntityData, stroomStatsStoreEntityData);
                 refresh();
@@ -233,11 +233,11 @@ public class StroomStatsStoreFieldListPresenter extends MyPresenterWidget<DataGr
 
     public void refresh() {
         if (stroomStatsStoreEntityData == null) {
-            stroomStatsStoreEntityData = new StroomStatsStoreEntityData(new ArrayList<>());
+            stroomStatsStoreEntityData = new StroomStatsStoreEntityData();
         }
 
-        getView().setRowData(0, new ArrayList<>(stroomStatsStoreEntityData.getStatisticFields()));
-        getView().setRowCount(stroomStatsStoreEntityData.getStatisticFields().size(), true);
+        getView().setRowData(0, new ArrayList<>(stroomStatsStoreEntityData.getFields()));
+        getView().setRowCount(stroomStatsStoreEntityData.getFields().size(), true);
     }
 
     @Override

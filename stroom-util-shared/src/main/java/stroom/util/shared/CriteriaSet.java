@@ -16,9 +16,12 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-import javax.xml.bind.annotation.XmlTransient;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -33,17 +36,19 @@ import java.util.stream.Collectors;
  * By default when created it has no criteria i.e. match anything. As soon as
  * you update it it will be restrictive until you setMatchAll
  */
+@JsonInclude(Include.NON_NULL)
 public class CriteriaSet<T>
-        implements SharedObject, Iterable<T>, Copyable<CriteriaSet<T>>, HasIsConstrained, Matcher<T>, Clearable {
-    private static final long serialVersionUID = 1L;
-
+        implements Iterable<T>, Copyable<CriteriaSet<T>>, HasIsConstrained, Matcher<T>, Clearable {
     /**
      * By default the criteria will match anything. NULL matchAll implies match
      * anything when nothing is in the set or we are to not matchNull. By
      * setting match all it will match all regardless.
      */
-    private Boolean matchAll = null;
-    private Boolean matchNull = null;
+    @JsonProperty
+    private Boolean matchAll;
+    @JsonProperty
+    private Boolean matchNull;
+    @JsonProperty
     private Set<T> set;
 
     public CriteriaSet() {
@@ -52,6 +57,19 @@ public class CriteriaSet<T>
 
     public CriteriaSet(final Set<T> set) {
         this.set = set;
+    }
+
+    @JsonCreator
+    public CriteriaSet(@JsonProperty("matchAll") final Boolean matchAll,
+                       @JsonProperty("matchNull") final Boolean matchNull,
+                       @JsonProperty("set") final Set<T> set) {
+        this.matchAll = matchAll;
+        this.matchNull = matchNull;
+        if (set != null) {
+            this.set = set;
+        } else {
+            this.set = new HashSet<>();
+        }
     }
 
     public Boolean getMatchAll() {
@@ -70,11 +88,13 @@ public class CriteriaSet<T>
         this.matchNull = matchNull;
     }
 
+    @JsonIgnore
     public boolean isMatchNothing() {
         return Boolean.FALSE.equals(matchAll) && set.isEmpty() && !Boolean.TRUE.equals(matchNull);
     }
 
     @Override
+    @JsonIgnore
     public boolean isConstrained() {
         if (Boolean.TRUE.equals(matchAll)) {
             return false;
@@ -126,7 +146,7 @@ public class CriteriaSet<T>
         set.add(id);
     }
 
-    @XmlTransient
+    @JsonIgnore
     public T getSingleItem() {
         if (!isConstrained()) {
             return null;
@@ -137,6 +157,7 @@ public class CriteriaSet<T>
         return set.iterator().next();
     }
 
+    @JsonIgnore
     public void setSingleItem(final T item) {
         clear();
         if (item != null) {
@@ -156,12 +177,10 @@ public class CriteriaSet<T>
         return set.remove(id);
     }
 
-    @XmlTransient
     public Set<T> getSet() {
         return set;
     }
 
-    @XmlTransient
     public void setSet(final Set<T> set) {
         this.set = set;
     }

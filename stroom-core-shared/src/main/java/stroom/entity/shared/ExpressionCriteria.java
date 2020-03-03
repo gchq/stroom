@@ -16,18 +16,34 @@
 
 package stroom.entity.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
 
+import java.util.List;
 import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class ExpressionCriteria extends BaseCriteria {
+    @JsonProperty
     private ExpressionOperator expression;
 
     public ExpressionCriteria() {
     }
 
     public ExpressionCriteria(final ExpressionOperator expression) {
+        this.expression = expression;
+    }
+
+    @JsonCreator
+    public ExpressionCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                              @JsonProperty("sortList") final List<Sort> sortList,
+                              @JsonProperty("expression") final ExpressionOperator expression) {
+        super(pageRequest, sortList);
         this.expression = expression;
     }
 

@@ -2,6 +2,7 @@ package stroom.index.impl.api;
 
 import io.swagger.annotations.Api;
 import stroom.index.shared.IndexVolumeGroup;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.DELETE;
@@ -15,10 +16,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Api(value = "stroom-index volumeGroup - /v1")
-@Path("/stroom-index/volumeGroup/v1")
+@Path("/stroom-index/volumeGroup" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface IndexVolumeGroupResource extends RestResource {
-
     @GET
     @Path("/names")
     Response getNames();

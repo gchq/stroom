@@ -18,6 +18,7 @@
 package stroom.statistics.impl.hbase.client.presenter;
 
 import com.google.gwt.cell.client.CheckboxCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.resources.client.ClientBundle;
@@ -31,7 +32,8 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -41,11 +43,12 @@ import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.statistics.impl.hbase.shared.CustomRollUpMask;
 import stroom.statistics.impl.hbase.shared.StatisticField;
-import stroom.statistics.impl.hbase.shared.StroomStatsRollUpBitMaskPermGenerationAction;
+import stroom.statistics.impl.hbase.shared.StatsStoreRollupResource;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
-import stroom.statistics.impl.hbase.shared.StroomStatsStoreFieldChangeAction;
+import stroom.statistics.impl.hbase.shared.StroomStatsStoreFieldChangeRequest;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 
 import java.util.ArrayList;
@@ -58,23 +61,23 @@ import java.util.Set;
 public class StroomStatsStoreCustomMaskListPresenter
         extends MyPresenterWidget<DataGridView<StroomStatsStoreCustomMaskListPresenter.MaskHolder>>
         implements HasDocumentRead<StroomStatsStoreDoc>, HasWrite<StroomStatsStoreDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+    private static final StatsStoreRollupResource STATS_STORE_ROLLUP_RESOURCE = GWT.create(StatsStoreRollupResource.class);
 
     private final ButtonView newButton;
     private final ButtonView removeButton;
     private final ButtonView autoGenerateButton;
     private final List<Column<MaskHolder, ?>> columns = new ArrayList<>();
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private MaskHolder selectedElement;
     private StroomStatsStoreDoc stroomStatsStoreEntity;
-    private MaskHolderList maskList = new MaskHolderList();
+    private MaskHolderList maskList;
 
     private boolean readOnly = true;
 
-    @SuppressWarnings("unchecked")
     @Inject
-    public StroomStatsStoreCustomMaskListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+    public StroomStatsStoreCustomMaskListPresenter(final EventBus eventBus, final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<>(true, true));
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         newButton = getView().addButton(SvgPresets.NEW_ITEM);
         autoGenerateButton = getView().addButton(SvgPresets.GENERATE);
@@ -187,11 +190,14 @@ public class StroomStatsStoreCustomMaskListPresenter
                 "Are you sure you want to clear the existing roll-ups and generate all possible permutations for the field list?",
                 result -> {
                     if (result) {
-                        dispatcher.exec(new StroomStatsRollUpBitMaskPermGenerationAction(
-                                stroomStatsStoreEntity.getStatisticFieldCount())).onSuccess(res -> {
-                            updateState(new HashSet<>(res.getValues()));
-                            DirtyEvent.fire(thisInstance, true);
-                        });
+                        final Rest<ResultPage<CustomRollUpMask>> rest = restFactory.create();
+                        rest
+                                .onSuccess(res -> {
+                                    updateState(new HashSet<>(res.getValues()));
+                                    DirtyEvent.fire(thisInstance, true);
+                                })
+                                .call(STATS_STORE_ROLLUP_RESOURCE)
+                                .bitMaskPermGeneration(stroomStatsStoreEntity.getStatisticFieldCount());
                     }
                 });
     }
@@ -285,11 +291,15 @@ public class StroomStatsStoreCustomMaskListPresenter
         // grab the mask list from this presenter
         oldEntityData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
 
-        dispatcher.exec(new StroomStatsStoreFieldChangeAction(oldEntityData, newEntityData)).onSuccess(result -> {
-            newEntityData.setCustomRollUpMasks(result.getCustomRollUpMasks());
+        final Rest<StroomStatsStoreEntityData> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    newEntityData.setCustomRollUpMasks(result.getCustomRollUpMasks());
 
-            updateState(result.getCustomRollUpMasks());
-        });
+                    updateState(result.getCustomRollUpMasks());
+                })
+                .call(STATS_STORE_ROLLUP_RESOURCE)
+                .fieldChange(new StroomStatsStoreFieldChangeRequest(oldEntityData, newEntityData));
     }
 
     public interface Resources extends ClientBundle {

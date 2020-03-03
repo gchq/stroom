@@ -46,12 +46,13 @@ import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
-import stroom.dashboard.shared.DataSourceFieldsMap;
-import stroom.dashboard.shared.DownloadSearchResultsAction;
+import stroom.dashboard.shared.DashboardResource;
+import stroom.dashboard.client.main.DataSourceFieldsMap;
+import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Format;
 import stroom.dashboard.shared.Format.Type;
-import stroom.dashboard.shared.IndexConstants;
+import stroom.dashboard.client.main.IndexConstants;
 import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
@@ -62,8 +63,10 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.FieldTypes;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.ApplicationInstanceIdProvider;
 import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
@@ -76,6 +79,7 @@ import stroom.ui.config.client.UiConfigCache;
 import stroom.util.client.RandomId;
 import stroom.util.shared.Expander;
 import stroom.util.shared.OffsetRange;
+import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.menu.client.presenter.MenuListPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -96,6 +100,7 @@ import java.util.stream.Collectors;
 
 public class TablePresenter extends AbstractComponentPresenter<TableView>
         implements HasDirtyHandlers, ResultComponent {
+    private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
     public static final ComponentType TYPE = new ComponentType(1, "table", "Table");
     private static final int MIN_EXPANDER_COL_WIDTH = 0;
 
@@ -109,7 +114,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     private final Provider<FieldAddPresenter> fieldAddPresenterProvider;
     private final DownloadPresenter downloadPresenter;
     private final AnnotationManager annotationManager;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
+    private final ApplicationInstanceIdProvider applicationInstanceIdProvider;
     private final TimeZones timeZones;
     private final FieldsManager fieldsManager;
     private final DataGridView<Row> dataGrid;
@@ -140,7 +146,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                           final Provider<TableSettingsPresenter> settingsPresenterProvider,
                           final DownloadPresenter downloadPresenter,
                           final AnnotationManager annotationManager,
-                          final ClientDispatchAsync dispatcher,
+                          final RestFactory restFactory,
+                          final ApplicationInstanceIdProvider applicationInstanceIdProvider,
                           final UiConfigCache clientPropertyCache,
                           final TimeZones timeZones) {
         super(eventBus, view, settingsPresenterProvider);
@@ -148,7 +155,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         this.fieldAddPresenterProvider = fieldAddPresenterProvider;
         this.downloadPresenter = downloadPresenter;
         this.annotationManager = annotationManager;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
+        this.applicationInstanceIdProvider = applicationInstanceIdProvider;
         this.timeZones = timeZones;
         this.dataGrid = new DataGridViewImpl<>(true, true);
 
@@ -364,13 +372,21 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                                     .queryInfo(activeSearch.getQueryInfo())
                                     .build();
 
-                            final SearchRequest searchRequest = new SearchRequest(search, requestMap, timeZones.getTimeZone());
+                            final SearchRequest searchRequest = new SearchRequest(queryKey, search, requestMap, timeZones.getTimeZone());
 
-                            dispatcher.exec(
-                                    new DownloadSearchResultsAction(queryKey, searchRequest, getComponentConfig().getId(),
-                                            downloadPresenter.getFileType(), downloadPresenter.isSample(),
-                                            downloadPresenter.getPercent(), timeZones.getTimeZone()))
-                                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result));
+                            final DownloadSearchResultsRequest downloadSearchResultsRequest = new DownloadSearchResultsRequest(
+                                    applicationInstanceIdProvider.get(),
+                                    searchRequest,
+                                    getComponentConfig().getId(),
+                                    downloadPresenter.getFileType(),
+                                    downloadPresenter.isSample(),
+                                    downloadPresenter.getPercent(),
+                                    timeZones.getTimeZone());
+                            final Rest<ResourceGeneration> rest = restFactory.create();
+                            rest
+                                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))
+                                    .call(DASHBOARD_RESOURCE)
+                                    .downloadSearchResults(downloadSearchResultsRequest);
                         }
 
                         HidePopupEvent.fire(TablePresenter.this, downloadPresenter);

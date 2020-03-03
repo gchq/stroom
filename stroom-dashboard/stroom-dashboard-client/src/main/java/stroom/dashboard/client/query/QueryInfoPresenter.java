@@ -51,10 +51,10 @@ public class QueryInfoPresenter extends MyPresenterWidget<QueryInfoPresenter.Que
 
         uiConfigCache.get()
                 .onSuccess(uiConfig -> {
-                    final QueryConfig queryConfig = uiConfig.getQueryConfig();
-                    queryInfoPopupEnabled = queryConfig.getInfoPopupConfig().isEnabled();
-                    queryInfoPopupTitle = queryConfig.getInfoPopupConfig().getTitle();
-                    queryInfoPopupValidationRegex = queryConfig.getInfoPopupConfig().getValidationRegex();
+                    final QueryConfig queryConfig = uiConfig.getQuery();
+                    queryInfoPopupEnabled = queryConfig.getInfoPopup().isEnabled();
+                    queryInfoPopupTitle = queryConfig.getInfoPopup().getTitle();
+                    queryInfoPopupValidationRegex = queryConfig.getInfoPopup().getValidationRegex();
                 })
                 .onFailure(caught -> AlertEvent.fireError(QueryInfoPresenter.this, caught.getMessage(), null));
     }

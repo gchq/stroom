@@ -17,34 +17,63 @@
 
 package stroom.receive.rules.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.DocumentPlugin;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.receive.rules.client.presenter.RuleSetPresenter;
 import stroom.receive.rules.shared.ReceiveDataRules;
+import stroom.receive.rules.shared.ReceiveDataRuleSetResource;
+
+import java.util.function.Consumer;
 
 public class RuleSetPlugin extends DocumentPlugin<ReceiveDataRules> {
+    private static final ReceiveDataRuleSetResource RULES_RESOURCE = GWT.create(ReceiveDataRuleSetResource.class);
+
     private final Provider<RuleSetPresenter> editorProvider;
+    private final RestFactory restFactory;
 
     @Inject
     public RuleSetPlugin(final EventBus eventBus,
                          final Provider<RuleSetPresenter> editorProvider,
-                         final ClientDispatchAsync dispatcher,
+                         final RestFactory restFactory,
                          final ContentManager contentManager,
                          final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, dispatcher, contentManager, entityPluginEventManager);
+        super(eventBus, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
+        this.restFactory = restFactory;
     }
 
     @Override
     protected DocumentEditPresenter<?, ?> createEditor() {
         return editorProvider.get();
+    }
+
+    @Override
+    public void load(final DocRef docRef, final Consumer<ReceiveDataRules> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<ReceiveDataRules> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(RULES_RESOURCE)
+                .read(docRef);
+    }
+
+    @Override
+    public void save(final DocRef docRef, final ReceiveDataRules document, final Consumer<ReceiveDataRules> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<ReceiveDataRules> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(RULES_RESOURCE)
+                .update(document);
     }
 
     @Override

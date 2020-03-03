@@ -17,7 +17,7 @@
 package stroom.index.shared;
 
 import stroom.docref.HasDisplayValue;
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PrimitiveValueConverter;
@@ -30,7 +30,7 @@ import java.util.Set;
 /**
  * A place where a indexUuid has been created.
  */
-public class IndexShard implements SharedObject {
+public class IndexShard {
     public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT)));
     public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Collections

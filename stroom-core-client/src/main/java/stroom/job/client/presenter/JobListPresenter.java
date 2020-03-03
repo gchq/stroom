@@ -35,10 +35,10 @@ import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobResource;
-import stroom.job.shared.ListJobResponse;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
@@ -119,19 +119,19 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
 
         getView().addEndColumn(new EndColumn<>());
 
-        final RestDataProvider<Job, ListJobResponse> dataProvider = new RestDataProvider<Job, ListJobResponse>(eventBus) {
+        final RestDataProvider<Job, ResultPage<Job>> dataProvider = new RestDataProvider<Job, ResultPage<Job>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ListJobResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<ListJobResponse> rest = restFactory.create();
+            protected void exec(final Consumer<ResultPage<Job>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<Job>> rest = restFactory.create();
                 rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(JOB_RESOURCE).list();
             }
 
             @Override
-            protected void changeData(final ListJobResponse data) {
+            protected void changeData(final ResultPage<Job> data) {
                 final List<Job> rtnList = new ArrayList<>();
 
                 boolean done = false;
-                for (int i = 0; i < data.getValues().size(); i++) {
+                for (int i = 0; i < data.size(); i++) {
                     rtnList.add(data.getValues().get(i));
                     if (data.getValues().get(i).isAdvanced() && !done) {
                         rtnList.add(i, null);

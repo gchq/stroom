@@ -31,11 +31,11 @@ import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy.KeyboardSe
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerCell;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.explorer.shared.HasNodeState;
+import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.DoubleSelectTester;
@@ -62,7 +62,7 @@ public class ExplorerTree extends AbstractExplorerTree {
     private ExplorerNode multiSelectStart;
     private List<ExplorerNode> rows;
 
-    ExplorerTree(final ClientDispatchAsync dispatcher, final boolean allowMultiSelect) {
+    ExplorerTree(final RestFactory restFactory, final boolean allowMultiSelect) {
         this.allowMultiSelect = allowMultiSelect;
 
         final SpinnerSmall spinnerSmall = new SpinnerSmall();
@@ -102,7 +102,7 @@ public class ExplorerTree extends AbstractExplorerTree {
 
         cellTable.getRowContainer().getStyle().setCursor(Style.Cursor.POINTER);
 
-        treeModel = new ExplorerTreeModel(this, spinnerSmall, dispatcher);
+        treeModel = new ExplorerTreeModel(this, spinnerSmall, restFactory);
 
         scrollPanel = new MaxScrollPanel();
         scrollPanel.setWidget(cellTable);
@@ -326,7 +326,7 @@ public class ExplorerTree extends AbstractExplorerTree {
                 } else if ((button & NativeEvent.BUTTON_LEFT) != 0) {
                     final ExplorerNode selectedItem = event.getValue();
                     if (selectedItem != null && (button & NativeEvent.BUTTON_LEFT) != 0) {
-                        if (HasNodeState.NodeState.LEAF.equals(selectedItem.getNodeState())) {
+                        if (NodeState.LEAF.equals(selectedItem.getNodeState())) {
                             final boolean doubleClick = doubleClickTest.test(selectedItem);
                             doSelect(selectedItem, new SelectionType(doubleClick, false, allowMultiSelect, event.getNativeEvent().getCtrlKey(), event.getNativeEvent().getShiftKey()));
                             super.onCellPreview(event);

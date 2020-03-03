@@ -2,7 +2,7 @@ package stroom.feed.impl;
 
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
-import stroom.meta.shared.MetaSecurityFilter;
+import stroom.meta.api.MetaSecurityFilter;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm;

@@ -663,71 +663,17 @@ appConfig:
         minimumIdle: null
         maxPoolSize: null
   ui:
-    welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
-      \ multiple systems.</p>"
-    aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
-      \ systems.</p>"
     buildInfo:
-      upDate: null
-      buildDate: "TBD"
+      upDate: "TBD"
       buildVersion: "TBD"
-    nodeName: null
-    maintenanceMessage: null
-    defaultMaxResults: "1000000,100,10,1"
-    helpUrl: null
-    namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
-    htmlTitle: "Stroom"
-    oncontextmenu: "return false;"
-    process:
-      defaultTimeLimit: 30
-      defaultRecordLimit: 1000000
-    theme:
-      backgroundAttachment: "scroll"
-      backgroundColor: "#1E88E5"
-      backgroundImage: "none"
-      backgroundPosition: "0 0"
-      backgroundRepeat: "repeat"
-      backgroundOpacity: "0"
-      tubeVisible: "hidden"
-      tubeOpacity: "0.6"
-      labelColours: "TEST1=#FF0000,TEST2=#FF9900"
+      buildDate: "TBD"
+    process: {}
+    theme: {}
     query:
-      infoPopup:
-        enabled: false
-        title: "Please Provide Query Info"
-        validationRegex: "^[\\s\\S]{3,}$"
-    splash:
-      enabled: false
-      title: "Splash Screen"
-      body: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
-        \ systems.</p>"
-      version: "v0.1"
-    activity:
-      enabled: false
-      chooseOnStartup: false
-      managerTitle: "Choose Activity"
-      editorTitle: "Edit Activity"
-      editorBody: "Activity Code:</br><input type=\"text\" name=\"code\"></input></br></br>Activity\
-        \ Description:</br><textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"\
-        description\" validation=\".{80,}\" validationMessage=\"The activity description\
-        \ must be at least 80 characters long.\" ></textarea>Explain what the activity\
-        \ is"
-    url:
-      ui: "http://IP_ADDRESS"
-      authenticationService: "http://auth-service:8099/authentication/v1"
-      users: "http://IP_ADDRESS/users"
-      apiKeys: "http://IP_ADDRESS/tokens"
-      indexVolumes: "http://IP_ADDRESS/s/indexing/volumes"
-      indexVolumeGroups: "http://IP_ADDRESS/s/indexing/groups"
-      userAuthorisation: "http://IP_ADDRESS/s/authorisationManager/false"
-      groupAuthorisation: "http://IP_ADDRESS/s/authorisationManager/true"
-      editDoc: "http://IP_ADDRESS/s/doc/"
-      changepassword: "http://IP_ADDRESS/changepassword"
-      kibana: null
-      trackers: null
-      annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
-      elastic: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
-      documentPermissions: "http://IP_ADDRESS/s/authorisationManager/document/"
+      infoPopup: {}
+    splash: {}
+    activity: {}
+    url: {}
   volumes:
     resilientReplicationCount: 1
     preferLocalVolumes: false

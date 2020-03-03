@@ -17,11 +17,13 @@
 
 package stroom.kafkaConfig.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
@@ -29,18 +31,25 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.kafkaConfig.client.presenter.KafkaConfigPresenter;
+import stroom.kafkaConfig.shared.KafkaConfigResource;
+
+import java.util.function.Consumer;
 
 public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
+    private static final KafkaConfigResource KAFKA_CONFIG_RESOURCE = GWT.create(KafkaConfigResource.class);
     private final Provider<KafkaConfigPresenter> editorProvider;
+
+    private final RestFactory restFactory;
 
     @Inject
     public KafkaConfigPlugin(final EventBus eventBus,
                             final Provider<KafkaConfigPresenter> editorProvider,
-                            final ClientDispatchAsync dispatcher,
+                             final RestFactory restFactory,
                             final ContentManager contentManager,
                             final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, dispatcher, contentManager, entityPluginEventManager);
+        super(eventBus, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
+        this.restFactory = restFactory;
     }
 
     @Override
@@ -56,5 +65,25 @@ public class KafkaConfigPlugin extends DocumentPlugin<KafkaConfigDoc> {
     @Override
     protected DocRef getDocRef(final KafkaConfigDoc document) {
         return DocRefUtil.create(document);
+    }
+
+    @Override
+    public void load(final DocRef docRef, final Consumer<KafkaConfigDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<KafkaConfigDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(KAFKA_CONFIG_RESOURCE)
+                .read(docRef);
+    }
+
+    @Override
+    public void save(final DocRef docRef, final KafkaConfigDoc document, final Consumer<KafkaConfigDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<KafkaConfigDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(KAFKA_CONFIG_RESOURCE)
+                .update(document);
     }
 }

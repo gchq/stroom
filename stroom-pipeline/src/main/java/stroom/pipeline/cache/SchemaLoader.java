@@ -16,7 +16,7 @@
 
 package stroom.pipeline.cache;
 
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 
 public interface SchemaLoader {
     StoredSchema load(String schemaLanguage, String data, FindXMLSchemaCriteria findXMLSchemaCriteria);

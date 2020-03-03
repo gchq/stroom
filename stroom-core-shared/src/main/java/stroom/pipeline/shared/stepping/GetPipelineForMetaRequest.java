@@ -1,0 +1,44 @@
+/*
+ * Copyright 2017 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package stroom.pipeline.shared.stepping;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+public class GetPipelineForMetaRequest {
+    @JsonProperty
+    private final Long metaId;
+    @JsonProperty
+    private final Long childMetaId;
+
+    @JsonCreator
+    public GetPipelineForMetaRequest(@JsonProperty("metaId") final Long metaId,
+                                     @JsonProperty("childMetaId") final Long childMetaId) {
+        this.metaId = metaId;
+        this.childMetaId = childMetaId;
+    }
+
+    public Long getMetaId() {
+        return metaId;
+    }
+
+    public Long getChildMetaId() {
+        return childMetaId;
+    }
+}

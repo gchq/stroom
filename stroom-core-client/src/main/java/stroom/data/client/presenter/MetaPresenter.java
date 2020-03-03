@@ -16,6 +16,7 @@
 
 package stroom.data.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.event.dom.client.ClickHandler;
@@ -32,26 +33,26 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.LocationManager;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.data.shared.DownloadDataAction;
+import stroom.data.shared.DataResource;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.explorer.shared.SharedDocRef;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
+import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
-import stroom.meta.shared.UpdateStatusAction;
+import stroom.meta.shared.UpdateStatusRequest;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.StepLocation;
+import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
-import stroom.processor.shared.ReprocessDataAction;
+import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.query.api.v2.ExpressionItem;
 import stroom.query.api.v2.ExpressionOperator;
@@ -60,7 +61,8 @@ import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.IdSet;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResourceGeneration;
+import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -75,7 +77,11 @@ import java.util.List;
 import java.util.Set;
 
 public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
-        implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<SharedObject>, BeginSteppingHandler {
+        implements HasDataSelectionHandlers<IdSet>, HasDocumentRead<Object>, BeginSteppingHandler {
+    private static final DataResource DATA_RESOURCE = GWT.create(DataResource.class);
+    private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
+    private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
+
     public static final String DATA = "DATA";
     public static final String STREAM_RELATION_LIST = "STREAM_RELATION_LIST";
     public static final String STREAM_LIST = "STREAM_LIST";
@@ -86,7 +92,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     private final DataPresenter dataPresenter;
     private final Provider<DataUploadPresenter> streamUploadPresenter;
     private final Provider<ExpressionPresenter> streamListFilterPresenter;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private final ButtonView streamListFilter;
 
     private FindMetaCriteria findMetaCriteria;
@@ -112,7 +118,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
                          final DataPresenter dataPresenter,
                          final Provider<ExpressionPresenter> streamListFilterPresenter,
                          final Provider<DataUploadPresenter> streamUploadPresenter,
-                         final ClientDispatchAsync dispatcher,
+                         final RestFactory restFactory,
                          final ClientSecurityContext securityContext) {
         super(eventBus, view);
         this.locationManager = locationManager;
@@ -121,7 +127,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         this.streamListFilterPresenter = streamListFilterPresenter;
         this.streamUploadPresenter = streamUploadPresenter;
         this.dataPresenter = dataPresenter;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         setInSlot(STREAM_LIST, metaListPresenter);
         setInSlot(STREAM_RELATION_LIST, metaRelationListPresenter);
@@ -174,7 +180,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
 //    }
 
     private static Meta getMeta(final AbstractMetaListPresenter streamListPresenter, final long id) {
-        final ResultList<MetaRow> list = streamListPresenter.getResultList();
+        final ResultPage<MetaRow> list = streamListPresenter.getResultPage();
         if (list != null) {
             if (list.getValues() != null) {
                 for (final MetaRow metaRow : list.getValues()) {
@@ -296,38 +302,38 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         }
         if (streamListDownload != null) {
             registerHandler(streamListDownload
-                    .addClickHandler(new DownloadStreamClickHandler(this, metaListPresenter, true, dispatcher, locationManager)));
+                    .addClickHandler(new DownloadStreamClickHandler(this, metaListPresenter, true, restFactory, locationManager)));
         }
         if (streamRelationListDownload != null) {
             registerHandler(streamRelationListDownload.addClickHandler(
-                    new DownloadStreamClickHandler(this, metaRelationListPresenter, false, dispatcher, locationManager)));
+                    new DownloadStreamClickHandler(this, metaRelationListPresenter, false, restFactory, locationManager)));
         }
         // Delete
         if (streamListDelete != null) {
             registerHandler(streamListDelete
-                    .addClickHandler(new UpdateStatusClickHandler(this, metaListPresenter, true, dispatcher, Status.DELETED)));
+                    .addClickHandler(new UpdateStatusClickHandler(this, metaListPresenter, true, restFactory, Status.DELETED)));
         }
         if (streamRelationListDelete != null) {
             registerHandler(streamRelationListDelete.addClickHandler(
-                    new UpdateStatusClickHandler(this, metaRelationListPresenter, false, dispatcher, Status.DELETED)));
+                    new UpdateStatusClickHandler(this, metaRelationListPresenter, false, restFactory, Status.DELETED)));
         }
         // UN-Delete
         if (streamListUndelete != null) {
             registerHandler(streamListUndelete
-                    .addClickHandler(new UpdateStatusClickHandler(this, metaListPresenter, true, dispatcher, Status.UNLOCKED)));
+                    .addClickHandler(new UpdateStatusClickHandler(this, metaListPresenter, true, restFactory, Status.UNLOCKED)));
         }
         if (streamRelationListUndelete != null) {
             registerHandler(streamRelationListUndelete.addClickHandler(
-                    new UpdateStatusClickHandler(this, metaRelationListPresenter, false, dispatcher, Status.UNLOCKED)));
+                    new UpdateStatusClickHandler(this, metaRelationListPresenter, false, restFactory, Status.UNLOCKED)));
         }
         // Process
         if (streamListProcess != null) {
             registerHandler(streamListProcess
-                    .addClickHandler(new ProcessStreamClickHandler(this, metaListPresenter, true, dispatcher)));
+                    .addClickHandler(new ProcessStreamClickHandler(this, metaListPresenter, true, restFactory)));
         }
         if (streamRelationListProcess != null) {
             registerHandler(streamRelationListProcess.addClickHandler(
-                    new ProcessStreamClickHandler(this, metaRelationListPresenter, false, dispatcher)));
+                    new ProcessStreamClickHandler(this, metaRelationListPresenter, false, restFactory)));
         }
     }
 
@@ -415,7 +421,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     }
 
     @Override
-    public void read(final DocRef docRef, final SharedObject entity) {
+    public void read(final DocRef docRef, final Object entity) {
         if (entity instanceof FeedDoc) {
             setFeedCriteria(docRef);
         } else if (entity instanceof PipelineDoc) {
@@ -513,7 +519,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
 
     public boolean isSomeSelected(final AbstractMetaListPresenter streamListPresenter,
                                   final IdSet selectedIdSet) {
-        if (streamListPresenter.getResultList() == null || streamListPresenter.getResultList().size() == 0) {
+        if (streamListPresenter.getResultPage() == null || streamListPresenter.getResultPage().size() == 0) {
             return false;
         }
         return selectedIdSet != null && (Boolean.TRUE.equals(selectedIdSet.getMatchAll()) || selectedIdSet.size() > 0);
@@ -572,7 +578,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
     public void beginStepping(final long streamId, final String childStreamType) {
         // Try and get a pipeline id to use as a starting point for
         // stepping.
-        SharedDocRef pipelineRef = null;
+        DocRef pipelineRef = null;
 
         // TODO : Fix by making entity id sets docref sets.
 //            final EntityIdSet<PipelineEntity> entityIdSet = findMetaCriteria
@@ -613,15 +619,15 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         private final MetaPresenter metaPresenter;
         private final AbstractMetaListPresenter streamListPresenter;
         private final boolean useCriteria;
-        private final ClientDispatchAsync dispatcher;
+        private final RestFactory restFactory;
 
         AbstractStreamClickHandler(final MetaPresenter metaPresenter,
                                    final AbstractMetaListPresenter streamListPresenter, final boolean useCriteria,
-                                   final ClientDispatchAsync dispatcher) {
+                                   final RestFactory restFactory) {
             this.metaPresenter = metaPresenter;
             this.streamListPresenter = streamListPresenter;
             this.useCriteria = useCriteria;
-            this.dispatcher = dispatcher;
+            this.restFactory = restFactory;
         }
 
         AbstractMetaListPresenter getStreamListPresenter() {
@@ -668,12 +674,12 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 final FindMetaCriteria criteria = createCriteria();
                 if (criteria != null) {
-                    performAction(criteria, dispatcher);
+                    performAction(criteria, restFactory);
                 }
             }
         }
 
-        protected abstract void performAction(FindMetaCriteria criteria, ClientDispatchAsync dispatcher);
+        protected abstract void performAction(FindMetaCriteria criteria, RestFactory restFactory);
 
         @Override
         public void fireEvent(final GwtEvent<?> event) {
@@ -690,14 +696,18 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
 
         public DownloadStreamClickHandler(final MetaPresenter streamPresenter,
                                           final AbstractMetaListPresenter streamListPresenter, final boolean useCriteria,
-                                          final ClientDispatchAsync dispatcher, final LocationManager locationManager) {
-            super(streamPresenter, streamListPresenter, useCriteria, dispatcher);
+                                          final RestFactory restFactory, final LocationManager locationManager) {
+            super(streamPresenter, streamListPresenter, useCriteria, restFactory);
             this.locationManager = locationManager;
         }
 
         @Override
-        protected void performAction(final FindMetaCriteria criteria, final ClientDispatchAsync dispatcher) {
-            dispatcher.exec(new DownloadDataAction(criteria)).onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result));
+        protected void performAction(final FindMetaCriteria criteria, final RestFactory restFactory) {
+            final Rest<ResourceGeneration> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))
+                    .call(DATA_RESOURCE)
+                    .download(criteria);
         }
     }
 
@@ -707,9 +717,9 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         public UpdateStatusClickHandler(final MetaPresenter streamPresenter,
                                         final AbstractMetaListPresenter streamListPresenter,
                                         final boolean useCriteria,
-                                        final ClientDispatchAsync dispatcher,
+                                        final RestFactory restFactory,
                                         final Status newStatus) {
-            super(streamPresenter, streamListPresenter, useCriteria, dispatcher);
+            super(streamPresenter, streamListPresenter, useCriteria, restFactory);
             this.newStatus = newStatus;
         }
 
@@ -722,7 +732,7 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
         }
 
         @Override
-        protected void performAction(final FindMetaCriteria initialCriteria, final ClientDispatchAsync dispatcher) {
+        protected void performAction(final FindMetaCriteria initialCriteria, final RestFactory restFactory) {
             final FindMetaCriteria deleteCriteria = new FindMetaCriteria();
             deleteCriteria.copyFrom(initialCriteria);
 
@@ -747,65 +757,73 @@ public class MetaPresenter extends MyPresenterWidget<MetaPresenter.StreamView>
                                                     + getText(false).toLowerCase() + " all the selected items?",
                                             confirm1 -> {
                                                 if (confirm1) {
-                                                    doUpdate(deleteCriteria, dispatcher);
+                                                    doUpdate(deleteCriteria, restFactory);
                                                 }
                                             });
 
                                 } else {
-                                    doUpdate(deleteCriteria, dispatcher);
+                                    doUpdate(deleteCriteria, restFactory);
                                 }
                             }
                         });
             }
         }
 
-        void doUpdate(final FindMetaCriteria criteria, final ClientDispatchAsync dispatcher) {
-            dispatcher.exec(new UpdateStatusAction(criteria, newStatus)).onSuccess(result -> {
-                getStreamListPresenter().getSelectedEntityIdSet().clear();
-                getStreamListPresenter().getSelectedEntityIdSet().setMatchAll(false);
+        void doUpdate(final FindMetaCriteria criteria, final RestFactory restFactory) {
+            final Rest<Integer> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        getStreamListPresenter().getSelectedEntityIdSet().clear();
+                        getStreamListPresenter().getSelectedEntityIdSet().setMatchAll(false);
 
-                AlertEvent.fireInfo(UpdateStatusClickHandler.this,
-                        getText(true) + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), this::refreshList);
-            });
+                        AlertEvent.fireInfo(UpdateStatusClickHandler.this,
+                                getText(true) + " " + result + " record" + ((result.longValue() > 1) ? "s" : ""), this::refreshList);
+                    })
+                    .call(META_RESOURCE)
+                    .updateStatus(new UpdateStatusRequest(criteria, newStatus));
         }
     }
 
     private static class ProcessStreamClickHandler extends AbstractStreamClickHandler {
         ProcessStreamClickHandler(final MetaPresenter streamPresenter,
                                   final AbstractMetaListPresenter streamListPresenter, final boolean useCriteria,
-                                  final ClientDispatchAsync dispatcher) {
-            super(streamPresenter, streamListPresenter, useCriteria, dispatcher);
+                                  final RestFactory restFactory) {
+            super(streamPresenter, streamListPresenter, useCriteria, restFactory);
         }
 
         @Override
-        protected void performAction(final FindMetaCriteria criteria, final ClientDispatchAsync dispatcher) {
+        protected void performAction(final FindMetaCriteria criteria, final RestFactory restFactory) {
             if (criteria != null) {
                 ConfirmEvent.fire(this, "Are you sure you want to reprocess the selected items", confirm -> {
                     if (confirm) {
-                        dispatcher.exec(new ReprocessDataAction(criteria)).onSuccess(result -> {
-                            if (result != null && result.size() > 0) {
-                                for (final ReprocessDataInfo info : result) {
-                                    switch (info.getSeverity()) {
-                                        case INFO:
-                                            AlertEvent.fireInfo(ProcessStreamClickHandler.this, info.getMessage(),
-                                                    info.getDetails(), null);
-                                            break;
-                                        case WARNING:
-                                            AlertEvent.fireWarn(ProcessStreamClickHandler.this, info.getMessage(),
-                                                    info.getDetails(), null);
-                                            break;
-                                        case ERROR:
-                                            AlertEvent.fireError(ProcessStreamClickHandler.this, info.getMessage(),
-                                                    info.getDetails(), null);
-                                            break;
-                                        case FATAL_ERROR:
-                                            AlertEvent.fireError(ProcessStreamClickHandler.this, info.getMessage(),
-                                                    info.getDetails(), null);
-                                            break;
+                        final Rest<List<ReprocessDataInfo>> rest = restFactory.create();
+                        rest
+                                .onSuccess(result -> {
+                                    if (result != null && result.size() > 0) {
+                                        for (final ReprocessDataInfo info : result) {
+                                            switch (info.getSeverity()) {
+                                                case INFO:
+                                                    AlertEvent.fireInfo(ProcessStreamClickHandler.this, info.getMessage(),
+                                                            info.getDetails(), null);
+                                                    break;
+                                                case WARNING:
+                                                    AlertEvent.fireWarn(ProcessStreamClickHandler.this, info.getMessage(),
+                                                            info.getDetails(), null);
+                                                    break;
+                                                case ERROR:
+                                                    AlertEvent.fireError(ProcessStreamClickHandler.this, info.getMessage(),
+                                                            info.getDetails(), null);
+                                                    break;
+                                                case FATAL_ERROR:
+                                                    AlertEvent.fireError(ProcessStreamClickHandler.this, info.getMessage(),
+                                                            info.getDetails(), null);
+                                                    break;
+                                            }
+                                        }
                                     }
-                                }
-                            }
-                        });
+                                })
+                                .call(PROCESSOR_FILTER_RESOURCE)
+                                .reprocess(criteria);
                     }
                 });
             }

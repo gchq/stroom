@@ -23,7 +23,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.presenter.Plugin;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.document.client.DocumentPluginEventManager;
 import stroom.explorer.client.event.ExplorerTreeSelectEvent;
 import stroom.explorer.client.presenter.ExplorerTreePresenter;
@@ -47,7 +46,7 @@ public class FolderRootPlugin extends Plugin implements TabData {
 
     @Inject
     public FolderRootPlugin(final EventBus eventBus, final ExplorerTreePresenter explorerTreePresenter,
-                            final Provider<FolderRootPresenter> editorProvider, final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext,
+                            final Provider<FolderRootPresenter> editorProvider, final ClientSecurityContext securityContext,
                             final ContentManager contentManager, final DocumentPluginEventManager entityPluginEventManager) {
         super(eventBus);
         this.contentManager = contentManager;

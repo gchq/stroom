@@ -59,7 +59,6 @@ public class _V07_00_00_PipelineLink implements Comparable<_V07_00_00_PipelineLi
     private String to;
 
     public _V07_00_00_PipelineLink() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_PipelineLink(final String from, final String to) {

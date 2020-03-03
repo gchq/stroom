@@ -198,7 +198,7 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
 
     public int getSize(final T data) {
         if (data.getPageResponse().getTotal() == null) {
-            return getStart(data) + data.getValues().size();
+            return getStart(data) + data.size();
         }
         return data.getPageResponse().getTotal().intValue();
     }

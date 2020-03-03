@@ -19,7 +19,7 @@ package stroom.core.benchmark;
 
 import org.junit.jupiter.api.Test;
 import stroom.test.common.util.test.StroomUnitTest;
-import stroom.util.shared.Period;
+import stroom.util.Period;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

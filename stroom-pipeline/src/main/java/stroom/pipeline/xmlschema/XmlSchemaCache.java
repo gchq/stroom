@@ -19,9 +19,8 @@ package stroom.pipeline.xmlschema;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.EntityEventHandler;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+import stroom.util.entity.EntityEvent;
+import stroom.util.entity.EntityEventHandler;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import javax.inject.Inject;
@@ -81,7 +80,7 @@ public class XmlSchemaCache implements EntityEvent.Handler {
                 final List<String> systemIdList = new ArrayList<>();
 
                 // Get a list of matching schemas.
-                final List<XmlSchemaDoc> schemas = xmlSchemaStore.find(criteria);
+                final List<XmlSchemaDoc> schemas = xmlSchemaStore.find(criteria).getValues();
                 schemas.forEach(schema -> {
                     addToMap(schemaNameMap, schema.getName(), schema);
                     addToMap(schemaNamespaceURIMap, schema.getNamespaceURI(), schema);

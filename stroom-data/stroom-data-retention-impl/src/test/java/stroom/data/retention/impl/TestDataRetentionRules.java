@@ -30,7 +30,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.Period;
+import stroom.util.Period;
 
 import java.util.ArrayList;
 import java.util.Collections;

@@ -17,6 +17,7 @@
 
 package stroom.feed.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.logical.shared.ValueChangeHandler;
@@ -28,46 +29,52 @@ import com.gwtplatform.mvp.client.View;
 import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.core.client.event.DirtyKeyDownHander;
 import stroom.data.client.presenter.DataTypeUiManager;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.entity.client.presenter.DocumentSettingsPresenter;
 import stroom.feed.client.presenter.FeedSettingsPresenter.FeedSettingsView;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
-import stroom.feed.shared.FetchSupportedEncodingsAction;
+import stroom.feed.shared.FeedResource;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
-import stroom.pipeline.shared.SupportedRetentionAge;
 import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.SharedString;
 import stroom.widget.tickbox.client.view.TickBox;
 
+import java.util.List;
+
 public class FeedSettingsPresenter extends DocumentSettingsPresenter<FeedSettingsView, FeedDoc> {
+    private static final FeedResource FEED_RESOURCE = GWT.create(FeedResource.class);
+
     @Inject
     public FeedSettingsPresenter(final EventBus eventBus,
                                  final FeedSettingsView view,
                                  final DataTypeUiManager streamTypeUiManager,
-                                 final ClientDispatchAsync dispatcher) {
+                                 final RestFactory restFactory) {
         super(eventBus, view);
 
-        dispatcher.exec(new FetchSupportedEncodingsAction()).onSuccess(result -> {
-            view.getDataEncoding().clear();
-            view.getContextEncoding().clear();
+        final Rest<List<String>> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    view.getDataEncoding().clear();
+                    view.getContextEncoding().clear();
 
-            if (result != null && result.size() > 0) {
-                for (final SharedString sharedString : result) {
-                    final String encoding = sharedString.toString();
-                    view.getDataEncoding().addItem(encoding);
-                    view.getContextEncoding().addItem(encoding);
-                }
-            }
+                    if (result != null && result.size() > 0) {
+                        for (final String encoding : result) {
+                            view.getDataEncoding().addItem(encoding);
+                            view.getContextEncoding().addItem(encoding);
+                        }
+                    }
 
-            final FeedDoc feed = getEntity();
-            if (feed != null) {
-                view.getDataEncoding().setSelected(ensureEncoding(feed.getEncoding()));
-                view.getContextEncoding().setSelected(ensureEncoding(feed.getContextEncoding()));
-            }
-        });
+                    final FeedDoc feed = getEntity();
+                    if (feed != null) {
+                        view.getDataEncoding().setSelected(ensureEncoding(feed.getEncoding()));
+                        view.getContextEncoding().setSelected(ensureEncoding(feed.getContextEncoding()));
+                    }
+                })
+                .call(FEED_RESOURCE)
+                .fetchSupportedEncodings();
 
         view.getRetentionAge().addItems(SupportedRetentionAge.values());
         view.getFeedStatus().addItems(FeedStatus.values());

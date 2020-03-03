@@ -23,19 +23,20 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.Period;
+import stroom.util.shared.ResultPage;
+import stroom.util.Period;
 
 import javax.inject.Inject;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -86,12 +87,12 @@ class TestDataRetentionTransactionHelper extends AbstractCoreIntegrationTest {
         final Period ageRange = new Period(null, timeOutsideRetentionPeriod + 1);
 
         final FindMetaCriteria findMetaCriteria = DataRetentionMetaCriteriaUtil.createCriteria(ageRange, Collections.emptyList(), 100);
-        final BaseResultList<Meta> list = metaService.find(findMetaCriteria);
+        final ResultPage<Meta> list = metaService.find(findMetaCriteria);
         assertThat(list.size()).isEqualTo(1);
     }
 
     private void dumpStreams() {
-        final BaseResultList<Meta> list = metaService.find(new FindMetaCriteria());
+        final List<Meta> list = metaService.find(new FindMetaCriteria()).getValues();
 
         assertThat(list.size()).isEqualTo(2);
 

@@ -29,7 +29,7 @@ import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.item.client.ItemListBox;
 import stroom.item.client.StringListBox;
-import stroom.pipeline.shared.SupportedRetentionAge;
+import stroom.feed.client.presenter.SupportedRetentionAge;
 import stroom.widget.tickbox.client.view.TickBox;
 
 public class FeedSettingsViewImpl extends ViewImpl implements FeedSettingsView, ReadOnlyChangeHandler {
