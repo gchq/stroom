@@ -65,7 +65,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-
 class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(SteppingTaskHandler.class);
 

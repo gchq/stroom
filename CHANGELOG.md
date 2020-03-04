@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+* Issue **#1399** : Removed error logging for expected exceptions in TaskExecutor. 
+
 * Fix missing $ in start.sh
 
 * Issue **#1387** : Changed the way tasks are executed to reduce changes of unhandled execution errors.
