@@ -136,6 +136,8 @@ class TestJsonSerialisation {
             }
         }
 
+        dumpErrors(classErrors);
+
         assertThat(classErrors.size()).isZero();
     }
 
@@ -169,6 +171,8 @@ class TestJsonSerialisation {
                 classErrors.put(className, e.getMessage());
             }
         }
+
+        dumpErrors(classErrors);
 
         assertThat(classErrors.size()).isZero();
     }
@@ -241,7 +245,14 @@ class TestJsonSerialisation {
             }
         }
 
+        dumpErrors(classErrors);
+
         assertThat(classErrors.size()).isZero();
+    }
+
+    private void dumpErrors(final Map<String, String> classErrors) {
+        classErrors.forEach((className, msg) ->
+            LOGGER.error("Class {} has error: {}", className, msg));
     }
 
     /**
@@ -324,6 +335,8 @@ class TestJsonSerialisation {
                 classErrors.put(className, e.getMessage());
             }
         }
+
+        dumpErrors(classErrors);
 
         assertThat(classErrors.size()).isZero();
     }

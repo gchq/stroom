@@ -47,7 +47,6 @@ import java.util.Optional;
  * child objects. Changes to the YAML or database will result in updates to the Guice bound AppConfig
  * object.
  * <p>
- * TODO At present the UI is unable to show the value from the YAML so may give a misleading picture
  */
 @JsonIgnoreProperties(value={ "source" }, allowGetters=true)
 @JsonInclude(Include.NON_DEFAULT)
@@ -435,6 +434,10 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
         }
     }
 
+    //TODO Don't want JsonIgnore here as the class level JsonIgnoreProperties annotation allows
+    //  us to keep the getter but make jackson ignore it.  Having source is useful if the rest
+    //  endpoint is hit manually or by something that doesn't have the java code.
+    @JsonIgnore
     public SourceType getSource() {
         return getSource(databaseOverrideValue, yamlOverrideValue);
     }
