@@ -26,23 +26,24 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.Set;
 
 public class ClusterSearchResultCollectorFactory {
     private final TaskManager taskManager;
-    private final TaskContext taskContext;
+    private final Provider<TaskContext> taskContextProvider;
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
     private final SecurityContext securityContext;
 
     @Inject
     private ClusterSearchResultCollectorFactory(final TaskManager taskManager,
-                                                final TaskContext taskContext,
+                                                final Provider<TaskContext> taskContextProvider,
                                                 final ClusterDispatchAsyncHelper dispatchHelper,
                                                 final ClusterResultCollectorCache clusterResultCollectorCache,
                                                 final SecurityContext securityContext) {
         this.taskManager = taskManager;
-        this.taskContext = taskContext;
+        this.taskContextProvider = taskContextProvider;
         this.dispatchHelper = dispatchHelper;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
         this.securityContext = securityContext;
@@ -56,7 +57,7 @@ public class ClusterSearchResultCollectorFactory {
                                                final Sizes storeSize,
                                                final CompletionState completionState) {
         return new ClusterSearchResultCollector(taskManager,
-                taskContext,
+                taskContextProvider.get(),
                 task,
                 dispatchHelper,
                 nodeName,

@@ -19,8 +19,10 @@ package stroom.explorer.impl;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -34,7 +36,8 @@ class ExplorerTreeModel {
 
     private final ExplorerTreeDao explorerTreeDao;
     private final ExplorerSession explorerSession;
-    private final ExecutorProvider executorProvider;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
     private final ExplorerActionHandlers explorerActionHandlers;
 
     private volatile TreeModel currentModel;
@@ -44,11 +47,13 @@ class ExplorerTreeModel {
     @Inject
     ExplorerTreeModel(final ExplorerTreeDao explorerTreeDao,
                       final ExplorerSession explorerSession,
-                      final ExecutorProvider executorProvider,
+                      final Executor executor,
+                      final Provider<TaskContext> taskContextProvider,
                       final ExplorerActionHandlers explorerActionHandlers) {
         this.explorerTreeDao = explorerTreeDao;
         this.explorerSession = explorerSession;
-        this.executorProvider = executorProvider;
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
         this.explorerActionHandlers = explorerActionHandlers;
     }
 
@@ -79,9 +84,10 @@ class ExplorerTreeModel {
                 // Perform a build asynchronously if we aren't already building elsewhere.
                 if (performingRebuild.compareAndSet(0, 1)) {
                     try {
-                        final Executor executor = executorProvider.getExecutor();
+                        Runnable runnable = this::updateModel;
+                        runnable = taskContextProvider.get().subTask(runnable);
                         CompletableFuture
-                                .runAsync(this::updateModel, executor)
+                                .runAsync(runnable, executor)
                                 .thenRun(performingRebuild::decrementAndGet)
                                 .exceptionally(t -> {
                                     performingRebuild.decrementAndGet();

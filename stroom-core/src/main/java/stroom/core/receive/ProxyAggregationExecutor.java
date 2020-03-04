@@ -38,13 +38,13 @@ public class ProxyAggregationExecutor {
     private final RepositoryProcessor repositoryProcessor;
 
     @Inject
-    ProxyAggregationExecutor(final TaskContext taskContext,
-                             final ExecutorProvider executorProvider,
+    ProxyAggregationExecutor(final ExecutorProvider executorProvider,
+                             final TaskContext taskContext,
                              final Provider<FileSetProcessor> fileSetProcessorProvider,
                              final ProxyAggregationConfig proxyAggregationConfig) {
         this(
-                taskContext,
                 executorProvider,
+                taskContext,
                 fileSetProcessorProvider,
                 proxyAggregationConfig.getProxyDir(),
                 proxyAggregationConfig.getProxyThreads(),
@@ -55,18 +55,18 @@ public class ProxyAggregationExecutor {
         );
     }
 
-    public ProxyAggregationExecutor(final TaskContext taskContext,
-                             final ExecutorProvider executorProvider,
-                             final Provider<FileSetProcessor> fileSetProcessorProvider,
-                             final String proxyDir,
-                             final int threadCount,
-                             final int maxFileScan,
-                             final int maxConcurrentMappedFiles,
-                             final int maxFilesPerAggregate,
-                             final long maxUncompressedFileSize) {
+    public ProxyAggregationExecutor(final ExecutorProvider executorProvider,
+                                    final TaskContext taskContext,
+                                    final Provider<FileSetProcessor> fileSetProcessorProvider,
+                                    final String proxyDir,
+                                    final int threadCount,
+                                    final int maxFileScan,
+                                    final int maxConcurrentMappedFiles,
+                                    final int maxFilesPerAggregate,
+                                    final long maxUncompressedFileSize) {
         this.repositoryProcessor = new RepositoryProcessor(
-                taskContext,
                 executorProvider,
+                taskContext,
                 fileSetProcessorProvider,
                 proxyDir,
                 threadCount,

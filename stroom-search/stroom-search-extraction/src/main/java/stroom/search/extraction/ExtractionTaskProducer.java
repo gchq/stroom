@@ -26,10 +26,9 @@ import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.coprocessor.Values;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.shared.ThreadPool;
-import stroom.task.api.ThreadPoolImpl;
-import stroom.util.task.taskqueue.TaskExecutor;
-import stroom.util.task.taskqueue.TaskProducer;
+import stroom.task.api.TaskContext;
+import stroom.task.api.TaskExecutor;
+import stroom.task.api.TaskProducer;
 
 import javax.inject.Provider;
 import java.util.Arrays;
@@ -45,11 +44,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 class ExtractionTaskProducer extends TaskProducer {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskProducer.class);
-    private static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
-            "Extraction",
-            5,
-            0,
-            Integer.MAX_VALUE);
 
     private final Receiver parentReceiver;
     private final Map<DocRef, Receiver> receivers;
@@ -67,9 +61,10 @@ class ExtractionTaskProducer extends TaskProducer {
                            final int maxStoredDataQueueSize,
                            final int maxThreadsPerTask,
                            final ExecutorProvider executorProvider,
+                           final TaskContext taskContext,
                            final Provider<ExtractionTaskHandler> handlerProvider,
                            final SecurityContext securityContext) {
-        super(taskExecutor, maxThreadsPerTask, executorProvider.getExecutor(THREAD_POOL));
+        super(taskExecutor, maxThreadsPerTask, taskContext);
         this.parentReceiver = parentReceiver;
         this.receivers = receivers;
         this.handlerProvider = handlerProvider;
@@ -97,46 +92,51 @@ class ExtractionTaskProducer extends TaskProducer {
 //        }));
 
         // Start mapping streams.
-        final Executor executor = executorProvider.getExecutor(THREAD_POOL);
-        // Elevate permissions so users with only `Use` feed permission can `Read` streams.
-        CompletableFuture.runAsync(() -> securityContext.asProcessingUser(() -> {
-            LOGGER.debug("Starting extraction task producer");
+        final Executor executor = executorProvider.get(ExtractionTaskExecutor.THREAD_POOL);
+        final Runnable runnable = taskContext.subTask(() -> {
 
-            try {
-                while (!streamMapCreatorCompletionState.isComplete() && !Thread.currentThread().isInterrupted()) {
-                    try {
-                        // Poll for the next set of values.
-                        final Values values = topic.get();
-                        if (values != null) {
-                            // If we have some values then map them.
-                            streamMapCreator.addEvent(streamEventMap, values.getValues());
+            // Elevate permissions so users with only `Use` feed permission can `Read` streams.
+            securityContext.asProcessingUser(() -> {
+                LOGGER.debug("Starting extraction task producer");
+
+                try {
+                    while (!streamMapCreatorCompletionState.isComplete() && !Thread.currentThread().isInterrupted()) {
+                        try {
+                            // Poll for the next set of values.
+                            final Values values = topic.get();
+                            if (values != null) {
+                                // If we have some values then map them.
+                                streamMapCreator.addEvent(streamEventMap, values.getValues());
+                            }
+                        } catch (final RuntimeException e) {
+                            LOGGER.debug(e.getMessage(), e);
+                            receivers.values().forEach(receiver -> {
+                                receiver.getErrorConsumer().accept(new Error(e.getMessage(), e));
+                                receiver.getCompletionCountConsumer().accept(1L);
+                            });
+                        } finally {
+                            // Tell the supplied executor that we are ready to deliver tasks.
+                            signalAvailable();
                         }
-                    } catch (final RuntimeException e) {
-                        LOGGER.debug(e.getMessage(), e);
-                        receivers.values().forEach(receiver -> {
-                            receiver.getErrorConsumer().accept(new Error(e.getMessage(), e));
-                            receiver.getCompletionCountConsumer().accept(1L);
-                        });
-                    } finally {
-                        // Tell the supplied executor that we are ready to deliver tasks.
-                        signalAvailable();
                     }
+
+                    // Clear the event map if we have terminated so that other processing does not occur.
+                    if (Thread.currentThread().isInterrupted()) {
+                        streamEventMap.clear();
+                    }
+
+                } catch (final RuntimeException e) {
+                    LOGGER.error(e.getMessage(), e);
+                } finally {
+                    streamMapCreatorCompletionState.complete();
+
+                    // Tell the supplied executor that we are ready to deliver final tasks.
+                    signalAvailable();
                 }
+            });
+        });
 
-                // Clear the event map if we have terminated so that other processing does not occur.
-                if (Thread.currentThread().isInterrupted()) {
-                    streamEventMap.clear();
-                }
-
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-            } finally {
-                streamMapCreatorCompletionState.complete();
-
-                // Tell the supplied executor that we are ready to deliver final tasks.
-                signalAvailable();
-            }
-        }), executor);
+        CompletableFuture.runAsync(runnable, executor);
     }
 
     Receiver process() {

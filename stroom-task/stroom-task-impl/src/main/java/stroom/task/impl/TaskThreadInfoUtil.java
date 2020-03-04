@@ -23,27 +23,27 @@ import java.util.Map;
 import java.util.Set;
 
 public class TaskThreadInfoUtil {
-    public static String getInfo(final Collection<TaskThread> taskThreads) {
-        if (taskThreads == null || taskThreads.size() == 0) {
+    public static String getInfo(final Collection<TaskState> taskStates) {
+        if (taskStates == null || taskStates.size() == 0) {
             return "";
         }
 
-        final Set<TaskThread> allTaskThreads = new HashSet<>();
+        final Set<TaskState> allTaskStates = new HashSet<>();
 
         // Build a tree map.
-        final Map<TaskThread, Set<TaskThread>> childMap = new HashMap<>();
-        for (final TaskThread taskThread : taskThreads) {
-            childMap.put(taskThread, taskThread.getChildren());
-            allTaskThreads.add(taskThread);
+        final Map<TaskState, Set<TaskState>> childMap = new HashMap<>();
+        for (final TaskState taskState : taskStates) {
+            childMap.put(taskState, taskState.getChildren());
+            allTaskStates.add(taskState);
         }
 
         final StringBuilder sb = new StringBuilder();
 
         // Get a list of taskThreads that have no parent taskThread or who have a
         // parent taskThread that no longer seems to exist.
-        final Set<TaskThread> roots = new HashSet<>(allTaskThreads);
-        for (final TaskThread taskThread : taskThreads) {
-            roots.removeAll(taskThread.getChildren());
+        final Set<TaskState> roots = new HashSet<>(allTaskStates);
+        for (final TaskState taskState : taskStates) {
+            roots.removeAll(taskState.getChildren());
         }
 
         // Build the tree with the root taskThreads.
@@ -52,18 +52,18 @@ public class TaskThreadInfoUtil {
         return sb.toString();
     }
 
-    private static void addLevel(final StringBuilder sb, final Map<TaskThread, Set<TaskThread>> map,
-                                 final Set<TaskThread> list, final String prefix) {
+    private static void addLevel(final StringBuilder sb, final Map<TaskState, Set<TaskState>> map,
+                                 final Set<TaskState> list, final String prefix) {
         if (list != null && list.size() > 0) {
-            for (final TaskThread taskThread : list) {
+            for (final TaskState taskState : list) {
                 // Indent the message if needed.
                 sb.append(prefix);
                 // Add the progress message.
                 sb.append("---o ");
-                sb.append(taskThread.getInfo());
+                sb.append(taskState.getInfo());
                 sb.append("\n");
 
-                final Set<TaskThread> children = map.get(taskThread);
+                final Set<TaskState> children = map.get(taskState);
                 addLevel(sb, map, children, "   +" + prefix);
             }
         }

@@ -17,59 +17,68 @@
 package stroom.task.impl;
 
 import stroom.task.shared.Task;
+import stroom.task.shared.TaskId;
 
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.function.Supplier;
 
 public final class CurrentTaskState {
-    private static final ThreadLocal<Deque<TaskThread>> THREAD_LOCAL = ThreadLocal.withInitial(ArrayDeque::new);
+    private static final ThreadLocal<Deque<TaskState>> THREAD_LOCAL = ThreadLocal.withInitial(ArrayDeque::new);
 
     private CurrentTaskState() {
         // Utility.
     }
 
-    static void pushState(final TaskThread taskThread) {
-        final Deque<TaskThread> deque = THREAD_LOCAL.get();
-        deque.push(taskThread);
+    static void pushState(final TaskState taskState) {
+        final Deque<TaskState> deque = THREAD_LOCAL.get();
+        deque.push(taskState);
     }
 
-    static TaskThread popState() {
-        final Deque<TaskThread> deque = THREAD_LOCAL.get();
+    static TaskState popState() {
+        final Deque<TaskState> deque = THREAD_LOCAL.get();
         return deque.pop();
     }
 
-    private static TaskThread currentState() {
-        final Deque<TaskThread> deque = THREAD_LOCAL.get();
+    static TaskState currentState() {
+        final Deque<TaskState> deque = THREAD_LOCAL.get();
         return deque.peek();
     }
 
-    public static Task<?> currentTask() {
-        final TaskThread taskThread = currentState();
-        if (taskThread != null) {
-            return taskThread.getTask();
+    public static TaskId currentTaskId() {
+        final TaskState taskState = currentState();
+        if (taskState != null) {
+            return taskState.getTaskId();
+        }
+        return null;
+    }
+
+    public static String currentName() {
+        final TaskState taskState = currentState();
+        if (taskState != null) {
+            return taskState.getName();
         }
         return null;
     }
 
     static void setName(final String name) {
-        final TaskThread taskThread = currentState();
-        if (taskThread != null) {
-            taskThread.setName(name);
+        final TaskState taskState = currentState();
+        if (taskState != null) {
+            taskState.setName(name);
         }
     }
 
     static void info(final Supplier<String> messageSupplier) {
-        final TaskThread taskThread = currentState();
-        if (taskThread != null) {
-            taskThread.info(messageSupplier);
+        final TaskState taskState = currentState();
+        if (taskState != null) {
+            taskState.info(messageSupplier);
         }
     }
 
     static void terminate() {
-        final TaskThread taskThread = currentState();
-        if (taskThread != null) {
-            taskThread.terminate();
+        final TaskState taskState = currentState();
+        if (taskState != null) {
+            taskState.terminate();
         }
     }
 }
