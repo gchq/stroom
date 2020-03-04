@@ -30,11 +30,11 @@ import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreEntityData;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.util.io.FileUtil;
-import stroom.util.shared.DocRefs;
 
 import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -45,12 +45,6 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
     private StroomStatsStoreStore stroomStatsStoreStore;
     @Inject
     private ExplorerService explorerService;
-
-    private DocRefs buildFindFolderCriteria(DocRef folderDocRef) {
-        final DocRefs docRefs = new DocRefs();
-        docRefs.add(folderDocRef);
-        return docRefs;
-    }
 
     /**
      * Create a populated {@link StatisticStore} object, serialise it to file,
@@ -75,9 +69,7 @@ class TestStroomStatsStoreImportExportSerializer extends AbstractCoreIntegration
         FileUtil.deleteDir(testDataDir);
         FileUtil.mkdirs(testDataDir);
 
-        final DocRefs docRefs = new DocRefs();
-        docRefs.add(docRef);
-        importExportSerializer.write(testDataDir, docRefs, true, null);
+        importExportSerializer.write(testDataDir, Set.of(docRef), true, null);
 
         assertThat(FileUtil.count(testDataDir)).isEqualTo(2);
 

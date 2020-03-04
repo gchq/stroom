@@ -19,6 +19,7 @@ package stroom.node.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
@@ -29,10 +30,12 @@ import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
-@Api(value = "node")
-@Path("/node")
+@Api(value = "node - /v1")
+@Path(NodeResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public interface NodeResource extends RestResource, DirectRestService {
+    String BASE_PATH = "/node" + ResourcePaths.V1;
+
     @GET
     @Path("/{nodeName}")
     @Consumes(MediaType.APPLICATION_JSON)

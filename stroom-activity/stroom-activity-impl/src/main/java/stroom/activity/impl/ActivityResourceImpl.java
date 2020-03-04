@@ -104,7 +104,7 @@ class ActivityResourceImpl implements ActivityResource {
                 result = activityService.create();
                 documentEventLog.create(result, null);
             } catch (final RuntimeException e) {
-                documentEventLog.create(new Activity(), e);
+                documentEventLog.create(Activity.create(), e);
                 throw e;
             }
 

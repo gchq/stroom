@@ -39,7 +39,6 @@ public class _V07_00_00_FeedDoc extends _V07_00_00_Doc {
     private _V07_00_00_FeedStatus feedStatus;
 
     public _V07_00_00_FeedDoc() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_FeedDoc(final String name) {

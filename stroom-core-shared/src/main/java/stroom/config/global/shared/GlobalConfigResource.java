@@ -3,6 +3,7 @@ package stroom.config.global.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.ui.config.shared.UiConfig;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -21,7 +22,6 @@ import javax.ws.rs.core.MediaType;
 @Path(GlobalConfigResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public interface GlobalConfigResource extends RestResource, DirectRestService {
-
     String BASE_PATH = "/config" + ResourcePaths.V1;
     String PROPERTIES_SUB_PATH = "/properties";
     String YAML_OVERRIDE_VALUE_SUB_PATH = "/yamlOverrideValue";
@@ -64,12 +64,21 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     OverrideValue<String> getYamlValueByNodeAndName(final @PathParam("propertyName") String propertyName,
                                                     final @PathParam("nodeName") String nodeName);
 
+//    @POST
+//    @Path("/find")
+//    @Consumes(MediaType.APPLICATION_JSON)
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @ApiOperation(
+//            value = "Get global config properties",
+//            response = ResultPage.class)
+//    ResultPage<ConfigProperty> find(FindGlobalConfigCriteria criteria);
+
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-        value = "Update a ConfigProperty",
-        response = ConfigProperty.class)
+            value = "Update a ConfigProperty",
+            response = ConfigProperty.class)
     ConfigProperty create(final ConfigProperty configProperty);
 
     @PUT
@@ -77,14 +86,17 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-        value = "Update a ConfigProperty",
-        response = ConfigProperty.class)
+            value = "Update a ConfigProperty",
+            response = ConfigProperty.class)
     ConfigProperty update(final @PathParam("propertyName") String propertyName,
                           final ConfigProperty configProperty);
 
-//    @GET
-//    @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}")
-//    @Produces(MediaType.APPLICATION_JSON)
-//    @Timed
-//    ClusterConfigProperty getClusterPropertyByName(final @PathParam("propertyName") String propertyName);
+    @GET
+    @Path("/fetchUiConfig")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Get config property",
+            response = UiConfig.class)
+    UiConfig fetchUiConfig();
 }

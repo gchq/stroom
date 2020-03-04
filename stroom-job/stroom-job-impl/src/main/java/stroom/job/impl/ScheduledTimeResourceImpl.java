@@ -22,11 +22,10 @@ import stroom.job.shared.ScheduledTimeResource;
 import stroom.job.shared.ScheduledTimes;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
 
-public class ScheduledTimeResourceImpl implements ScheduledTimeResource, RestResource, HasHealthCheck {
+public class ScheduledTimeResourceImpl implements ScheduledTimeResource, HasHealthCheck {
     private final ScheduleService scheduleService;
     private final SecurityContext securityContext;
 

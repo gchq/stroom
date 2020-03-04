@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.User;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -22,7 +23,7 @@ import javax.ws.rs.core.Response;
 @Api(
         value = "authorisation - /v1",
         description = "Stroom Authorisation API")
-@Path("/authorisation/v1")
+@Path("/authorisation" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class AuthorisationResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthorisationResource.class);

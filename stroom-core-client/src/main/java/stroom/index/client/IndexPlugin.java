@@ -5,7 +5,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
@@ -19,6 +19,8 @@ import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 
+import java.util.function.Consumer;
+
 /**
  * A plugin to allow Index documents to be loaded in an iFrame.
  *
@@ -31,12 +33,12 @@ public class IndexPlugin extends DocumentPlugin<IndexDoc> {
     @Inject
     public IndexPlugin(
             final EventBus eventBus,
-            final ClientDispatchAsync dispatcher,
+            final RestFactory restFactory,
             final ContentManager contentManager,
             final DocumentPluginEventManager documentPluginEventManager,
             final Provider<IFrameContentPresenter> iFrameContentPresenterProvider,
             final UiConfigCache clientPropertyCache) {
-        super(eventBus, dispatcher, contentManager, documentPluginEventManager);
+        super(eventBus, contentManager, documentPluginEventManager);
         this.iFrameContentPresenterProvider = iFrameContentPresenterProvider;
         this.clientPropertyCache = clientPropertyCache;
     }
@@ -44,6 +46,14 @@ public class IndexPlugin extends DocumentPlugin<IndexDoc> {
     @Override
     protected IFrameContentPresenter createEditor() {
         return iFrameContentPresenterProvider.get();
+    }
+
+    @Override
+    public void load(final DocRef docRef, final Consumer<IndexDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+    }
+
+    @Override
+    public void save(final DocRef docRef, final IndexDoc document, final Consumer<IndexDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
     }
 
     @Override
@@ -61,7 +71,7 @@ public class IndexPlugin extends DocumentPlugin<IndexDoc> {
         if(forceOpen) {
             clientPropertyCache.get()
                     .onSuccess(result -> {
-                        final String url = result.getUrlConfig().getEditDoc() + docRef.getUuid();
+                        final String url = result.getUrl().getEditDoc() + docRef.getUuid();
                         final SvgPreset icon = SvgPresets.DATABASE;
                         final Hyperlink hyperlink = new Hyperlink.Builder()
                                 .text("Indexes")

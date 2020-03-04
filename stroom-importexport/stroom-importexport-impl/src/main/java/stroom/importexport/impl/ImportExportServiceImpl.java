@@ -16,20 +16,21 @@
 
 package stroom.importexport.impl;
 
+import stroom.docref.DocRef;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.io.FileUtil;
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
-import stroom.util.shared.SharedList;
 import stroom.util.zip.ZipUtil;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Service to export standing data in and out from Stroom. It uses a ZIP format to
@@ -44,8 +45,8 @@ public class ImportExportServiceImpl implements ImportExportService {
     }
 
     @Override
-    public SharedList<ImportState> createImportConfirmationList(final Path data) {
-        final SharedList<ImportState> confirmList = new SharedList<>();
+    public List<ImportState> createImportConfirmationList(final Path data) {
+        final List<ImportState> confirmList = new ArrayList<>();
         doImport(data, confirmList, ImportMode.CREATE_CONFIRMATION);
         confirmList.sort(Comparator.comparing(ImportState::getSourcePath));
         return confirmList;
@@ -86,7 +87,7 @@ public class ImportExportServiceImpl implements ImportExportService {
      * Export the selected folder data.
      */
     @Override
-    public void exportConfig(final DocRefs docRefs, final Path zipFile,
+    public void exportConfig(final Set<DocRef> docRefs, final Path zipFile,
                              final List<Message> messageList) {
         final Path explodeDir = ZipUtil.workingZipDir(zipFile);
 

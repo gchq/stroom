@@ -16,6 +16,10 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.OffsetRange;
@@ -23,31 +27,45 @@ import stroom.util.shared.OffsetRange;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.util.HashSet;
 import java.util.Set;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "tableResultRequest", propOrder = {"tableSettings", "requestedRange", "openGroups"})
+@JsonInclude(Include.NON_DEFAULT)
 public class TableResultRequest extends ComponentResultRequest {
-    private static final long serialVersionUID = 8683770109061652092L;
-
     @XmlElement
+    @JsonProperty
     private TableComponentSettings tableSettings;
 
     @XmlElement
-    private OffsetRange<Integer> requestedRange = new OffsetRange<>(0, 100);
+    @JsonProperty
+    private OffsetRange<Integer> requestedRange;
 
     @XmlElement
+    @JsonProperty
     private Set<String> openGroups;
 
     public TableResultRequest() {
-        // Default constructor necessary for GWT serialisation.
+        requestedRange = new OffsetRange<>(0, 100);
     }
 
     public TableResultRequest(final int offset, final int length) {
         requestedRange = new OffsetRange<>(offset, length);
+    }
+
+    @JsonCreator
+    public TableResultRequest(@JsonProperty("tableSettings") final TableComponentSettings tableSettings,
+                              @JsonProperty("requestedRange") final OffsetRange<Integer> requestedRange,
+                              @JsonProperty("openGroups") final Set<String> openGroups) {
+        this.tableSettings = tableSettings;
+        if (requestedRange != null) {
+            this.requestedRange = requestedRange;
+        } else {
+            this.requestedRange = new OffsetRange<>(0, 100);
+        }
+        this.openGroups = openGroups;
     }
 
     public TableComponentSettings getTableSettings() {
@@ -60,6 +78,10 @@ public class TableResultRequest extends ComponentResultRequest {
 
     public OffsetRange<Integer> getRequestedRange() {
         return requestedRange;
+    }
+
+    public void setRequestedRange(final OffsetRange<Integer> requestedRange) {
+        this.requestedRange = requestedRange;
     }
 
     public Set<String> getOpenGroups() {
@@ -88,12 +110,6 @@ public class TableResultRequest extends ComponentResultRequest {
 
     public boolean isGroupOpen(final String group) {
         return openGroups != null && openGroups.contains(group);
-    }
-
-    @Override
-    @XmlTransient
-    public ComponentType getComponentType() {
-        return ComponentType.TABLE;
     }
 
     @Override

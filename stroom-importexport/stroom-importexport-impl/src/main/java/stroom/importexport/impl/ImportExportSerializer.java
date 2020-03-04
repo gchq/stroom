@@ -16,16 +16,17 @@
 
 package stroom.importexport.impl;
 
+import stroom.docref.DocRef;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.Message;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Set;
 
 public interface ImportExportSerializer {
     void read(Path dir, List<ImportState> importStateList, ImportMode importMode);
 
-    void write(Path dir, DocRefs docRefs, boolean omitAuditFields, List<Message> messageList);
+    void write(Path dir, Set<DocRef> docRefs, boolean omitAuditFields, List<Message> messageList);
 }

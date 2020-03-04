@@ -145,7 +145,7 @@ class TestConfigMapper {
     }
 
     @Test
-    void testGetGlobalProperties_defaultValueWithValue() throws IOException, ConfigurationException {
+    void testGetGlobalProperties_defaultValueWithValue() {
 
         AppConfig appConfig = getAppConfig();
 
@@ -160,8 +160,8 @@ class TestConfigMapper {
 
         final ConfigProperty configProperty = configProperties.stream()
                 .filter(confProp ->
-                    confProp.getName()
-                        .equalsIgnoreCase(PropertyPath.fromPathString("stroom.pipeline.referenceData.localDir")))
+                        confProp.getName()
+                                .equalsIgnoreCase(PropertyPath.fromPathString("stroom.pipeline.referenceData.localDir")))
                 .findFirst()
                 .orElseThrow();
 
@@ -173,8 +173,7 @@ class TestConfigMapper {
     }
 
     @Test
-    void testGetGlobalProperties_defaultValueWithNullValue() throws IOException, ConfigurationException {
-
+    void testGetGlobalProperties_defaultValueWithNullValue() {
         AppConfig appConfig = getAppConfig();
 
         // simulate a prop not being defined in the yaml
@@ -222,70 +221,70 @@ class TestConfigMapper {
     @Test
     void updateValues() {
         doUpdateValueTest(
-            "stroom.primitive.booleanProp",
-            tc -> tc.getTestPrimitiveConfig().isBooleanProp(),
-            "true",
-            Boolean::valueOf);
+                "stroom.primitive.booleanProp",
+                tc -> tc.getTestPrimitiveConfig().isBooleanProp(),
+                "true",
+                Boolean::valueOf);
 
         doUpdateValueTest(
-            "stroom.boxed.booleanProp",
-            tc -> tc.getTestBoxedConfig().getBooleanProp(),
-            "true",
-            Boolean::valueOf);
+                "stroom.boxed.booleanProp",
+                tc -> tc.getTestBoxedConfig().getBooleanProp(),
+                "true",
+                Boolean::valueOf);
 
         doUpdateValueTest(
-            "stroom.primitive.intProp",
-            tc -> tc.getTestPrimitiveConfig().getIntProp(),
-            "999",
-            Integer::parseInt);
+                "stroom.primitive.intProp",
+                tc -> tc.getTestPrimitiveConfig().getIntProp(),
+                "999",
+                Integer::parseInt);
 
         doUpdateValueTest(
-            "stroom.boxed.intProp",
-            tc -> tc.getTestBoxedConfig().getIntProp(),
-            "999",
-            Integer::parseInt);
+                "stroom.boxed.intProp",
+                tc -> tc.getTestBoxedConfig().getIntProp(),
+                "999",
+                Integer::parseInt);
 
         doUpdateValueTest(
-            "stroom.primitive.longProp",
-            tc -> tc.getTestPrimitiveConfig().getLongProp(),
-            "999",
-            Long::parseLong);
+                "stroom.primitive.longProp",
+                tc -> tc.getTestPrimitiveConfig().getLongProp(),
+                "999",
+                Long::parseLong);
 
         doUpdateValueTest(
-            "stroom.boxed.longProp",
-            tc -> tc.getTestBoxedConfig().getLongProp(),
-            "999",
-            Long::parseLong);
+                "stroom.boxed.longProp",
+                tc -> tc.getTestBoxedConfig().getLongProp(),
+                "999",
+                Long::parseLong);
 
         doUpdateValueTest(
-            "stroom.stringProp",
-            TestConfig::getStringProp,
-            "yyyyyy",
-            Function.identity());
+                "stroom.stringProp",
+                TestConfig::getStringProp,
+                "yyyyyy",
+                Function.identity());
 
         doUpdateValueTest(
-            "stroom.stroomDurationProp",
-            TestConfig::getStroomDurationProp,
-            "P1DT6H",
-            StroomDuration::parse);
+                "stroom.stroomDurationProp",
+                TestConfig::getStroomDurationProp,
+                "P1DT6H",
+                StroomDuration::parse);
 
         doUpdateValueTest(
-            "stroom.byteSizeProp",
-            TestConfig::getByteSizeProp,
-            "1MiB",
-            ByteSize::parse);
+                "stroom.byteSizeProp",
+                TestConfig::getByteSizeProp,
+                "1MiB",
+                ByteSize::parse);
 
         doUpdateValueTest(
-            "stroom.docRefProp",
-            TestConfig::getDocRefProp,
-            ",docRef(aaaaaa,bbbbbbb,ccccccc)",
-            str -> ConfigMapper.convertToObject(str, DocRef.class));
+                "stroom.docRefProp",
+                TestConfig::getDocRefProp,
+                ",docRef(aaaaaa,bbbbbbb,ccccccc)",
+                str -> ConfigMapper.convertToObject(str, DocRef.class));
 
         doUpdateValueTest(
-            "stroom.stateProp",
-            TestConfig::getStateProp,
-            "ON",
-            TestConfig.State::valueOf);
+                "stroom.stateProp",
+                TestConfig::getStateProp,
+                "ON",
+                TestConfig.State::valueOf);
     }
 
     <T> void doUpdateValueTest(final String path,
@@ -308,7 +307,7 @@ class TestConfigMapper {
         assertThat(isValidPath).isTrue();
 
         final ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath)
-            .orElseThrow();
+                .orElseThrow();
 
         // make sure our new value differs from the current one
         assertThat(configProperty.getDefaultValue().get()).isNotEqualTo(newValueAsStr);
@@ -421,8 +420,8 @@ class TestConfigMapper {
         ConfigMapper configMapper = new ConfigMapper(testConfig);
 
         ConfigProperty configProperty = configMapper
-            .getGlobalProperty(PropertyPath.fromPathString("stroom.stringProp"))
-            .orElseThrow();
+                .getGlobalProperty(PropertyPath.fromPathString("stroom.stringProp"))
+                .orElseThrow();
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);

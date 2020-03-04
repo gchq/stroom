@@ -19,13 +19,14 @@ package stroom.statistics.impl.sql.entity;
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.EntityEvent.Handler;
+import stroom.util.entity.EntityEvent;
+import stroom.util.entity.EntityEvent.Handler;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.RestResource;
 
 public class StatisticStoreModule extends AbstractModule {
     @Override
@@ -49,7 +50,7 @@ public class StatisticStoreModule extends AbstractModule {
         DocumentActionHandlerBinder.create(binder())
                 .bind(StatisticStoreDoc.DOCUMENT_TYPE, StatisticStoreStoreImpl.class);
 
-//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-//        findServiceBinder.addBinding().to(StatisticStoreStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(StatisticResourceImpl.class);
     }
 }

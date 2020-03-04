@@ -11,12 +11,11 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.ExecutorProvider;
+import stroom.ui.config.shared.UiConfig;
 import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.rest.RestUtil;
-import stroom.util.shared.BaseResultList;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
 import stroom.util.shared.ResourcePaths;
@@ -37,7 +36,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
     private final GlobalConfigService globalConfigService;
     private final SecurityContext securityContext;
     private final NodeService nodeService;
-    private final ExecutorProvider executorProvider;
+    private final UiConfig uiConfig;
     private final NodeInfo nodeInfo;
     private final WebTargetFactory webTargetFactory;
 
@@ -45,13 +44,13 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
     GlobalConfigResourceImpl(final GlobalConfigService globalConfigService,
                              final SecurityContext securityContext,
                              final NodeService nodeService,
-                             final ExecutorProvider executorProvider,
+                             final UiConfig uiConfig,
                              final NodeInfo nodeInfo,
                              final WebTargetFactory webTargetFactory) {
         this.globalConfigService = Objects.requireNonNull(globalConfigService);
         this.securityContext = Objects.requireNonNull(securityContext);
         this.nodeService = Objects.requireNonNull(nodeService);
-        this.executorProvider = Objects.requireNonNull(executorProvider);
+        this.uiConfig = uiConfig;
         this.nodeInfo = Objects.requireNonNull(nodeInfo);
         this.webTargetFactory = webTargetFactory;
     }
@@ -63,15 +62,15 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
                                    final Integer size) {
         return securityContext.secureResult(() -> {
             try {
-                final BaseResultList<ConfigProperty> resultList = globalConfigService.list(
+                final ListConfigResponse resultList = globalConfigService.list(
                     buildPredicate(partialName),
                     new PageRequest(offset, size != null ? size : Integer.MAX_VALUE));
 
-                return resultList.toResultPage(new ListConfigResponse());
+                return resultList;
             } catch (final RuntimeException e) {
                 throw new ServerErrorException(e.getMessage() != null
-                    ? e.getMessage()
-                    : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
+                        ? e.getMessage()
+                        : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
             }
         });
     }
@@ -138,12 +137,12 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
         return securityContext.secureResult(() -> {
             try {
                 final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(
-                    PropertyPath.fromPathString(propertyPath));
+                        PropertyPath.fromPathString(propertyPath));
                 return optConfigProperty.orElseThrow(NotFoundException::new);
             } catch (final RuntimeException e) {
                 throw new ServerErrorException(e.getMessage() != null
-                    ? e.getMessage()
-                    : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
+                        ? e.getMessage()
+                        : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
             }
         });
     }
@@ -155,14 +154,14 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
         return securityContext.secureResult(() -> {
             try {
                 final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(
-                    PropertyPath.fromPathString(propertyPath));
+                        PropertyPath.fromPathString(propertyPath));
                 return optConfigProperty
-                    .map(ConfigProperty::getYamlOverrideValue)
-                    .orElseThrow(() -> new NotFoundException(LogUtil.message("Property {} not found", propertyPath)));
+                        .map(ConfigProperty::getYamlOverrideValue)
+                        .orElseThrow(() -> new NotFoundException(LogUtil.message("Property {} not found", propertyPath)));
             } catch (final RuntimeException e) {
                 throw new ServerErrorException(e.getMessage() != null
-                    ? e.getMessage()
-                    : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
+                        ? e.getMessage()
+                        : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
             }
         });
     }
@@ -212,6 +211,12 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
         return yamlOverride;
     }
 
+//    @Timed
+//    @Override
+//    public ResultPage<ConfigProperty> find(final FindGlobalConfigCriteria criteria) {
+//        return ResultPage.createPageLimitedList(globalConfigService.list(criteria), criteria.obtainPageRequest());
+//    }
+
     @Timed
     @Override
     public ConfigProperty create(final ConfigProperty configProperty) {
@@ -235,7 +240,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
 
         if (!propertyName.equals(configProperty.getNameAsString())) {
             throw new BadRequestException(LogUtil.message("Property names don't match, {} & {}",
-                propertyName, configProperty.getNameAsString()));
+                    propertyName, configProperty.getNameAsString()));
         }
 
         try {
@@ -269,24 +274,16 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
 //        });
 //    }
 
+
+    @Timed
+    @Override
+    public UiConfig fetchUiConfig() {
+        return uiConfig;
+    }
+
     @Timed
     @Override
     public HealthCheck.Result getHealth() {
         return HealthCheck.Result.healthy();
     }
-
-//    private CompletableFuture<ClusterConfigProperty> getPropertyFromNode(final String nodeName) {
-//
-//        // TODO if we get an error we should return a ClusterConfigProperty with a YAML override value of
-//        // ERROR or UNKNOWN or similar.
-//        return CompletableFuture.supplyAsync(() -> {
-//
-//            ClusterConfigProperty clusterConfigProperty;
-//            try {
-//
-//            } catch (Throwable e) {
-//                return new ClusterConfigProperty()
-//            }
-//        }, executorProvider.getExecutor());
-//    }
 }

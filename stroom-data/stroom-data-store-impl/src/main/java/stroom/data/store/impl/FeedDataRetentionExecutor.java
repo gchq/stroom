@@ -20,7 +20,7 @@ package stroom.data.store.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;

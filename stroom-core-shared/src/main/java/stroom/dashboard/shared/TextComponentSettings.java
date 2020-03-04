@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -34,36 +35,76 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "text")
 @XmlType(name = "text", propOrder = {"tableId", "streamIdField", "partNoField", "recordNoField", "lineFromField", "colFromField", "lineToField", "colToField", "pipeline", "showAsHtml", "showStepping"})
 public class TextComponentSettings extends ComponentSettings {
-    private static final long serialVersionUID = -2530827581046882396L;
-
     @XmlElement(name = "tableId")
     @JsonProperty("tableId")
     private String tableId;
     @XmlElement(name = "streamIdField")
+    @JsonProperty
     private Field streamIdField;
     @XmlElement(name = "partNoField")
+    @JsonProperty
     private Field partNoField;
     @XmlElement(name = "recordNoField")
+    @JsonProperty
     private Field recordNoField;
     @XmlElement(name = "lineFromField")
+    @JsonProperty
     private Field lineFromField;
     @XmlElement(name = "colFromField")
+    @JsonProperty
     private Field colFromField;
     @XmlElement(name = "lineToField")
+    @JsonProperty
     private Field lineToField;
     @XmlElement(name = "colToField")
+    @JsonProperty
     private Field colToField;
     @XmlElement(name = "pipeline")
     @JsonProperty("pipeline")
     private DocRef pipeline;
     @XmlElement(name = "showAsHtml")
     @JsonProperty("showAsHtml")
-    private boolean showAsHtml;
+    private Boolean showAsHtml;
     @XmlElement(name = "showStepping")
-    private boolean showStepping = true;
+    @JsonProperty
+    private Boolean showStepping;
 
     public TextComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
+        showAsHtml = false;
+        showStepping = true;
+    }
+
+    @JsonCreator
+    public TextComponentSettings(@JsonProperty("tableId") final String tableId,
+                                 @JsonProperty("streamIdField") final Field streamIdField,
+                                 @JsonProperty("partNoField") final Field partNoField,
+                                 @JsonProperty("recordNoField") final Field recordNoField,
+                                 @JsonProperty("lineFromField") final Field lineFromField,
+                                 @JsonProperty("colFromField") final Field colFromField,
+                                 @JsonProperty("lineToField") final Field lineToField,
+                                 @JsonProperty("colToField") final Field colToField,
+                                 @JsonProperty("pipeline") final DocRef pipeline,
+                                 @JsonProperty("showAsHtml") final Boolean showAsHtml,
+                                 @JsonProperty("showStepping") final Boolean showStepping) {
+        this.tableId = tableId;
+        this.streamIdField = streamIdField;
+        this.partNoField = partNoField;
+        this.recordNoField = recordNoField;
+        this.lineFromField = lineFromField;
+        this.colFromField = colFromField;
+        this.lineToField = lineToField;
+        this.colToField = colToField;
+        this.pipeline = pipeline;
+        if (showAsHtml != null) {
+            this.showAsHtml = showAsHtml;
+        } else {
+            this.showAsHtml = false;
+        }
+        if (showStepping != null) {
+            this.showStepping = showStepping;
+        } else {
+            this.showStepping = true;
+        }
     }
 
     public String getTableId() {
@@ -138,19 +179,19 @@ public class TextComponentSettings extends ComponentSettings {
         this.pipeline = pipeline;
     }
 
-    public boolean isShowAsHtml() {
+    public Boolean isShowAsHtml() {
         return showAsHtml;
     }
 
-    public void setShowAsHtml(boolean showAsHtml) {
+    public void setShowAsHtml(Boolean showAsHtml) {
         this.showAsHtml = showAsHtml;
     }
 
-    public boolean isShowStepping() {
+    public Boolean isShowStepping() {
         return showStepping;
     }
 
-    public void setShowStepping(final boolean showStepping) {
+    public void setShowStepping(final Boolean showStepping) {
         this.showStepping = showStepping;
     }
 }

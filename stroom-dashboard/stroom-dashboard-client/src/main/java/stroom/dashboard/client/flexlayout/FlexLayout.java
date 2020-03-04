@@ -146,7 +146,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                     }
 
                     if (draggingTab) {
-                        final MouseTarget mouseTarget = getMouseTarget(x, y, true);
+                        final MouseTarget mouseTarget = getMouseTarget(x, y, true, false);
                         highlightMouseTarget(mouseTarget);
                     }
                 }
@@ -187,7 +187,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         // Find the target.
         final int x = event.getClientX();
         final int y = event.getClientY();
-        final MouseTarget mouseTarget = getMouseTarget(x, y, true);
+        final MouseTarget mouseTarget = getMouseTarget(x, y, true, true);
 
         // We need to know what the mouse is over.
         final Element element = event.getEventTarget().cast();
@@ -231,10 +231,10 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
             stopSplitResize(x, y);
 
         } else if (selection != null) {
-            // Find the target.
-            final MouseTarget mouseTarget = getMouseTarget(x, y, true);
-
             if (draggingTab) {
+                // Find the drop target.
+                final MouseTarget mouseTarget = getMouseTarget(x, y, true, false);
+
                 // If a drag target is found then move the selected tab.
                 if (mouseTarget != null) {
                     final Pos targetPos = mouseTarget.pos;
@@ -253,14 +253,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                         }
                     }
 
-                    boolean changed = false;
-                    // Move all tabs in the group.
-                    for (final TabConfig tabConfig : tabGroup) {
-                        final boolean change = moveTab(mouseTarget, tabConfig, targetLayout, targetPos);
-                        if (change) {
-                            changed = true;
-                        }
-                    }
+                    final boolean changed = moveTab(mouseTarget, tabGroup, targetLayout, targetPos);
 
                     if (changed) {
                         // Clear and refresh the layout.
@@ -275,22 +268,27 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                 // Remove the highlight from the hotspot.
                 selection.tabWidget.setHighlight(false);
 
-            } else if (mouseTarget != null) {
-                // If the event target was not a splitter then see if it was a tab.
-                final TabData tab = mouseTarget.tab;
-                if (selection.tab.equals(tab)) {
-                    final TabLayout tabLayout = mouseTarget.tabLayout;
-                    final int index = tabLayout.getTabBar().getTabs().indexOf(tab);
-                    if (tabLayout.getTabLayoutConfig().getSelected() == null
-                            || !tabLayout.getTabLayoutConfig().getSelected().equals(index)) {
-                        tabLayout.selectTab(index);
-                        tabLayout.getTabLayoutConfig().setSelected(index);
+            } else {
+                // Find the selection target.
+                final MouseTarget mouseTarget = getMouseTarget(x, y, true, true);
 
-                        // Let the handler know the layout is dirty.
-                        changeHandler.onDirty();
+                if (mouseTarget != null) {
+                    // If the event target was not a splitter then see if it was a tab.
+                    final TabData tab = mouseTarget.tab;
+                    if (selection.tab.equals(tab)) {
+                        final TabLayout tabLayout = mouseTarget.tabLayout;
+                        final int index = tabLayout.getTabBar().getTabs().indexOf(tab);
+                        if (tabLayout.getTabLayoutConfig().getSelected() == null
+                                || !tabLayout.getTabLayoutConfig().getSelected().equals(index)) {
+                            tabLayout.selectTab(index);
+                            tabLayout.getTabLayoutConfig().setSelected(index);
 
-                    } else if (tabManager != null) {
-                        tabManager.onMouseUp(mouseTarget.tabWidget, this, tabLayout, index);
+                            // Let the handler know the layout is dirty.
+                            changeHandler.onDirty();
+
+                        } else if (tabManager != null) {
+                            tabManager.onMouseUp(mouseTarget.tabWidget, this, tabLayout, mouseTarget.tabIndex);
+                        }
                     }
                 }
             }
@@ -315,120 +313,177 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         }
     }
 
-    private boolean moveTab(final MouseTarget mouseTarget, final TabConfig tabConfig, final LayoutConfig targetLayout, final Pos targetPos) {
-        final TabLayoutConfig currentParent = tabConfig.getParent();
+    private boolean moveTab(final MouseTarget mouseTarget, final List<TabConfig> tabGroup, final LayoutConfig targetLayout, final Pos targetPos) {
+        boolean moved = false;
+
         if (targetLayout instanceof TabLayoutConfig) {
-            final TabLayoutConfig targetTabLayoutData = (TabLayoutConfig) targetLayout;
+            final TabLayoutConfig targetTabLayoutConfig = (TabLayoutConfig) targetLayout;
 
             if (Pos.CENTER == targetPos || Pos.TAB == targetPos || Pos.AFTER_TAB == targetPos) {
-                // If dropping a tab onto the same container that
-                // only has this one tab then do nothing.
-                if (!currentParent.equals(targetTabLayoutData) || currentParent.getVisibleTabCount() > 1) {
-                    // Change the selected tab in the source tab
-                    // layout if we have moved the selected tab.
-                    final int tabIndex = currentParent.indexOf(tabConfig);
-                    final Integer selectedIndex = currentParent.getSelected();
-                    if (selectedIndex != null && selectedIndex.equals(tabIndex)) {
-                        currentParent.setSelected(tabIndex - 1);
-                    }
+                moved = moveTabOntoTab(mouseTarget, tabGroup, targetTabLayoutConfig, targetPos);
 
+            } else {
+                moved = moveTabOutside(mouseTarget, tabGroup, targetTabLayoutConfig, targetPos);
+            }
+
+        } else if (targetLayout instanceof SplitLayoutConfig) {
+            final SplitLayoutConfig targetSplitLayoutConfig = (SplitLayoutConfig) targetLayout;
+
+            moved = moveTabOntoSplit(mouseTarget, tabGroup, targetSplitLayoutConfig, targetPos);
+        }
+
+        return moved;
+    }
+
+    private boolean moveTabOntoTab(final MouseTarget mouseTarget, final List<TabConfig> tabGroup, final TabLayoutConfig targetTabLayoutData, final Pos targetPos) {
+        boolean moved = false;
+
+        for (final TabConfig tabConfig : tabGroup) {
+            final TabLayoutConfig currentParent = tabConfig.getParent();
+
+            // If dropping a tab onto the same container that
+            // only has this one tab then do nothing.
+            if (!currentParent.equals(targetTabLayoutData) || currentParent.getVisibleTabCount() > 1) {
+                // Change the selected tab in the source tab
+                // layout if we have moved the selected tab.
+                final int sourceIndex = currentParent.indexOf(tabConfig);
+                final Integer selectedIndex = currentParent.getSelected();
+                if (selectedIndex != null && selectedIndex.equals(sourceIndex)) {
+                    currentParent.setSelected(sourceIndex - 1);
+                }
+
+                // Figure out what the target index ought to be.
+                int targetIndex = targetTabLayoutData.getTabs().size();
+                if (mouseTarget.tabIndex != -1) {
+                    targetIndex = mouseTarget.tabIndex;
+                }
+
+                boolean move = true;
+                if (currentParent.equals(targetTabLayoutData)) {
+                    // If we are dropping a tab onto itself then don't move.
+                    if (targetIndex == sourceIndex || targetIndex == sourceIndex + 1) {
+                        move = false;
+
+                    } else {
+                        // If we are dropping a tab after itself then remove 1 from target as we will be removing the
+                        // tab from a previous index.
+                        if (sourceIndex < targetIndex) {
+                            targetIndex--;
+                        }
+                    }
+                }
+
+                if (move) {
                     // Remove the tab if we can.
                     currentParent.remove(tabConfig);
 
                     // Add the tab to the target tab layout.
-                    int index = targetTabLayoutData.getVisibleTabCount();
-                    if (mouseTarget.tabIndex != -1) {
-                        index = mouseTarget.tabIndex;
-                    }
-                    if (Pos.AFTER_TAB == targetPos) {
-                        index++;
-                    }
-                    targetTabLayoutData.add(index, tabConfig);
+                    targetTabLayoutData.add(targetIndex, tabConfig);
 
                     // Select the new tab.
-                    targetTabLayoutData.setSelected(index);
+                    targetTabLayoutData.setSelected(targetIndex);
 
                     // Cascade removal if necessary.
                     cascadeRemoval(currentParent);
 
-                    return true;
-                }
-
-            } else {
-                // If dropping a tab onto the same container that
-                // only has this one tab then do nothing.
-                if (!currentParent.equals(targetTabLayoutData) || currentParent.getVisibleTabCount() > 1) {
-                    int dim = Direction.ACROSS.getDimension();
-                    if (Pos.TOP == targetPos || Pos.BOTTOM == targetPos) {
-                        dim = Direction.DOWN.getDimension();
-                    }
-                    final SplitLayoutConfig parent = targetTabLayoutData.getParent();
-
-                    // Change the selected tab in the source tab
-                    // layout if we have moved the selected tab.
-                    final int tabIndex = currentParent.indexOf(tabConfig);
-                    final Integer selectedIndex = currentParent.getSelected();
-                    if (selectedIndex != null && selectedIndex.equals(tabIndex)) {
-                        currentParent.setSelected(tabIndex - 1);
-                    }
-
-                    // Get the index of the target layout and
-                    // therefore the insert position.
-                    int insertPos = parent.indexOf(targetTabLayoutData);
-
-                    // Remove the tab.
-                    currentParent.remove(tabConfig);
-
-                    // Recalculate the sizes for the parent so that
-                    // the target layout is resized.
-                    recalculateSingleLayout(parent);
-
-                    final TabLayoutConfig newTabLayout = new TabLayoutConfig(tabConfig);
-                    newTabLayout.setSelected(0);
-
-                    // Set the size of the target layout and the new
-                    // layout to be half the size of the original so
-                    // combined they take up the same space.
-                    final int oldLayoutSize = positionAndSizeMap.get(targetTabLayoutData).getSize(dim);
-                    int newLayoutSize = oldLayoutSize / 2;
-                    newLayoutSize = Math.max(newLayoutSize, MIN_COMPONENT_WIDTH);
-
-                    targetTabLayoutData.getPreferredSize().set(dim, newLayoutSize);
-                    newTabLayout.getPreferredSize().set(dim, newLayoutSize);
-
-                    if (parent.getDimension() == dim) {
-                        if (Pos.RIGHT == targetPos || Pos.BOTTOM == targetPos) {
-                            insertPos++;
-                        }
-
-                        // If the parent direction is already across
-                        // then just add the tab in.
-                        parent.add(insertPos, newTabLayout);
-
-                    } else {
-                        // We need to replace the target layout with
-                        // a new split layout.
-                        parent.remove(targetTabLayoutData);
-
-                        SplitLayoutConfig newSplit;
-                        if (Pos.RIGHT == targetPos || Pos.BOTTOM == targetPos) {
-                            newSplit = new SplitLayoutConfig(dim, targetTabLayoutData, newTabLayout);
-                        } else {
-                            newSplit = new SplitLayoutConfig(dim, newTabLayout, targetTabLayoutData);
-                        }
-                        parent.add(insertPos, newSplit);
-                    }
-
-                    // Cascade removal if necessary.
-                    cascadeRemoval(currentParent);
-
-                    return true;
+                    moved = true;
                 }
             }
+        }
 
-        } else if (targetLayout instanceof SplitLayoutConfig) {
-            final SplitLayoutConfig targetSplitLayoutData = (SplitLayoutConfig) targetLayout;
+        return moved;
+    }
 
+    private boolean moveTabOutside(final MouseTarget mouseTarget, final List<TabConfig> tabGroup, final TabLayoutConfig targetTabLayoutData, final Pos targetPos) {
+        boolean moved = false;
+
+        final SplitLayoutConfig parent = targetTabLayoutData.getParent();
+        // Get the index of the target layout and
+        // therefore the insert position.
+        int insertPos = parent.indexOf(targetTabLayoutData);
+        final TabLayoutConfig newTabLayout = new TabLayoutConfig();
+        newTabLayout.setSelected(0);
+
+        // Move all tabs from the tab group onto the new tab layout.
+        for (final TabConfig tabConfig : tabGroup) {
+            final TabLayoutConfig currentParent = tabConfig.getParent();
+
+            // If dropping a tab onto the same container that
+            // only has this one tab then do nothing.
+            if (!currentParent.equals(targetTabLayoutData) || currentParent.getVisibleTabCount() > 1) {
+                // Change the selected tab in the source tab
+                // layout if we have moved the selected tab.
+                final int tabIndex = currentParent.indexOf(tabConfig);
+                final Integer selectedIndex = currentParent.getSelected();
+                if (selectedIndex != null && selectedIndex.equals(tabIndex)) {
+                    currentParent.setSelected(tabIndex - 1);
+                }
+
+                // Remove the tab.
+                currentParent.remove(tabConfig);
+
+                // Cascade removal if necessary.
+                cascadeRemoval(currentParent);
+
+                newTabLayout.add(tabConfig);
+            }
+        }
+
+        // If tabs have been moved to the new tab layout then add the new layout.
+        if (newTabLayout.getTabs().size() > 0) {
+            // Recalculate the sizes for the parent so that
+            // the target layout is resized.
+            recalculateSingleLayout(parent);
+
+            int dim = Direction.ACROSS.getDimension();
+            if (Pos.TOP == targetPos || Pos.BOTTOM == targetPos) {
+                dim = Direction.DOWN.getDimension();
+            }
+
+            // Set the size of the target layout and the new
+            // layout to be half the size of the original so
+            // combined they take up the same space.
+            final int oldLayoutSize = positionAndSizeMap.get(targetTabLayoutData).getSize(dim);
+            int newLayoutSize = oldLayoutSize / 2;
+            newLayoutSize = Math.max(newLayoutSize, MIN_COMPONENT_WIDTH);
+
+            targetTabLayoutData.getPreferredSize().set(dim, newLayoutSize);
+            newTabLayout.getPreferredSize().set(dim, newLayoutSize);
+
+            if (parent.getDimension() == dim) {
+                if (Pos.RIGHT == targetPos || Pos.BOTTOM == targetPos) {
+                    insertPos++;
+                }
+
+                // If the parent direction is already across
+                // then just add the new tab layout in.
+                parent.add(insertPos, newTabLayout);
+
+            } else {
+                // We need to replace the target layout with
+                // a new split layout.
+                parent.remove(targetTabLayoutData);
+
+                SplitLayoutConfig newSplit;
+                if (Pos.RIGHT == targetPos || Pos.BOTTOM == targetPos) {
+                    newSplit = new SplitLayoutConfig(dim, targetTabLayoutData, newTabLayout);
+                } else {
+                    newSplit = new SplitLayoutConfig(dim, newTabLayout, targetTabLayoutData);
+                }
+                parent.add(insertPos, newSplit);
+            }
+
+            moved = true;
+        }
+
+        return moved;
+    }
+
+    private boolean moveTabOntoSplit(final MouseTarget mouseTarget, final List<TabConfig> tabGroup, final SplitLayoutConfig targetSplitLayoutData, final Pos targetPos) {
+        boolean moved = false;
+
+        for (final TabConfig tabConfig : tabGroup) {
+            final TabLayoutConfig currentParent = tabConfig.getParent();
             if (Pos.CENTER != targetPos) {
                 int dim = Direction.ACROSS.getDimension();
                 if (Pos.TOP == targetPos || Pos.BOTTOM == targetPos) {
@@ -471,11 +526,11 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                 // Cascade removal if necessary.
                 cascadeRemoval(currentParent);
 
-                return true;
+                moved = true;
             }
         }
 
-        return false;
+        return moved;
     }
 
     private void capture() {
@@ -621,13 +676,13 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
      * @param y The mouse y coordinate.
      * @return An object describing the target layout, tab and target position.
      */
-    private MouseTarget getMouseTarget(final int x, final int y, final boolean includeSplitLayout) {
+    private MouseTarget getMouseTarget(final int x, final int y, final boolean includeSplitLayout, final boolean selecting) {
         if (includeSplitLayout) {
             for (final Entry<Object, PositionAndSize> entry : positionAndSizeMap.entrySet()) {
                 if (entry.getKey() instanceof SplitLayoutConfig) {
                     final LayoutConfig layoutData = (LayoutConfig) entry.getKey();
                     final PositionAndSize positionAndSize = entry.getValue();
-                    final MouseTarget mouseTarget = findTargetLayout(x, y, true, layoutData, positionAndSize);
+                    final MouseTarget mouseTarget = findTargetLayout(x, y, true, layoutData, positionAndSize, selecting);
                     if (mouseTarget != null) {
                         return mouseTarget;
                     }
@@ -639,7 +694,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
             if (entry.getKey() instanceof TabLayoutConfig) {
                 final LayoutConfig layoutData = (LayoutConfig) entry.getKey();
                 final PositionAndSize positionAndSize = entry.getValue();
-                final MouseTarget mouseTarget = findTargetLayout(x, y, false, layoutData, positionAndSize);
+                final MouseTarget mouseTarget = findTargetLayout(x, y, false, layoutData, positionAndSize, selecting);
                 if (mouseTarget != null) {
                     return mouseTarget;
                 }
@@ -657,12 +712,16 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
      * @param y               The mouse y coordinate.
      * @param splitter        True if the layout is a splitter. Splitters are targeted
      *                        outside of their rect.
-     * @param layoutData      The layout data to test to see if it is a target.
+     * @param layoutConfig    The layout data to test to see if it is a target.
      * @param positionAndSize The position and size of the layout being tested.
      * @return The mouse target if the tested layout is the target, else null.
      */
-    private MouseTarget findTargetLayout(final int x, final int y, final boolean splitter,
-                                         final LayoutConfig layoutData, final PositionAndSize positionAndSize) {
+    private MouseTarget findTargetLayout(final int x,
+                                         final int y,
+                                         final boolean splitter,
+                                         final LayoutConfig layoutConfig,
+                                         final PositionAndSize positionAndSize,
+                                         final boolean selecting) {
         final int width = positionAndSize.getWidth();
         final int height = positionAndSize.getHeight();
         final int left = element.getAbsoluteLeft() + positionAndSize.getLeft();
@@ -680,9 +739,8 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         // First see if the mouse is even over the layout.
         if (x >= left - border && x <= right + border && y >= top - border && y <= bottom + border) {
             if (!splitter) {
-                // If this isn't a splitter then test if the mouse is over a
-                // tab.
-                final MouseTarget mouseTarget = findTargetTab(x, y, layoutData, positionAndSize);
+                // If this isn't a splitter then test if the mouse is over a tab.
+                final MouseTarget mouseTarget = findTargetTab(x, y, (TabLayoutConfig) layoutConfig, positionAndSize, selecting);
                 if (mouseTarget != null) {
                     return mouseTarget;
                 }
@@ -728,14 +786,19 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
                 return null;
             }
 
-            return new MouseTarget(layoutData, positionAndSize, pos, null, null, -1, null);
+            return new MouseTarget(layoutConfig, positionAndSize, pos, null, null, -1, null);
         }
 
         return null;
     }
 
-    private MouseTarget findTargetTab(final int x, final int y, final LayoutConfig layoutData,
-                                      final PositionAndSize positionAndSize) {
+    private MouseTarget findTargetTab(final int x,
+                                      final int y,
+                                      final TabLayoutConfig layoutConfig,
+                                      final PositionAndSize positionAndSize,
+                                      final boolean selecting) {
+        MouseTarget mouseTarget = null;
+
         final int width = positionAndSize.getWidth();
         final int height = positionAndSize.getHeight();
         final int left = element.getAbsoluteLeft() + positionAndSize.getLeft();
@@ -746,30 +809,45 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         // First see if the mouse is even over the layout.
         if (x >= left && x <= right && y >= top && y <= bottom) {
             // Test if the mouse is over a tab.
-            final TabLayout tabLayout = layoutToWidgetMap.get(layoutData);
+            final TabLayout tabLayout = layoutToWidgetMap.get(layoutConfig);
             if (tabLayout != null && tabLayout.getTabBar().getTabs() != null) {
                 final LinkTabBar tabBar = tabLayout.getTabBar();
                 if (x >= tabBar.getAbsoluteLeft() && x <= tabBar.getAbsoluteLeft() + tabBar.getOffsetWidth()
                         && y >= tabBar.getAbsoluteTop() && y <= tabBar.getAbsoluteTop() + tabBar.getOffsetHeight()) {
-                    for (int i = tabBar.getTabs().size() - 1; i >= 0; i--) {
-                        final TabData tabData = tabBar.getTabs().get(i);
-                        final LinkTab slideTab = (LinkTab) tabBar.getTab(tabData);
-                        final Element tabElement = slideTab.getElement();
-                        if (x >= tabElement.getAbsoluteLeft()) {
-                            if (x <= tabElement.getAbsoluteRight()) {
-                                return new MouseTarget(layoutData, positionAndSize, Pos.TAB, tabLayout, tabData, i,
-                                        slideTab);
-                            } else if (x - 20 <= tabElement.getAbsoluteRight()) {
-                                return new MouseTarget(layoutData, positionAndSize, Pos.AFTER_TAB, tabLayout, tabData,
-                                        i, slideTab);
+
+                    final List<TabConfig> tabConfigList = layoutConfig.getTabs();
+                    int visibleTabIndex = 0;
+                    for (int i = 0; i < tabConfigList.size(); i++) {
+                        final TabConfig tabConfig = tabConfigList.get(i);
+                        if (tabConfig.isVisible()) {
+
+                            final TabData tabData = tabBar.getTabs().get(visibleTabIndex);
+                            final LinkTab slideTab = (LinkTab) tabBar.getTab(tabData);
+                            final Element tabElement = slideTab.getElement();
+
+                            if (mouseTarget == null) {
+                                // Select the first tab by default.
+                                mouseTarget = new MouseTarget(layoutConfig, positionAndSize, Pos.TAB, tabLayout, tabData, i, slideTab);
                             }
+
+                            if (selecting) {
+                                if (x >= tabElement.getAbsoluteLeft()) {
+                                    // If the mouse position is left or equal to the right hand side of the tab then this tab might be the one to select.
+                                    mouseTarget = new MouseTarget(layoutConfig, positionAndSize, Pos.TAB, tabLayout, tabData, i, slideTab);
+                                }
+                            } else if (x > tabElement.getAbsoluteRight() && (selection == null || !tabData.equals(selection.tab))) {
+                                // IF the mouse position is right of the right hand side of the tab then we might want to insert the tab we are dragging after the current tab.
+                                mouseTarget = new MouseTarget(layoutConfig, positionAndSize, Pos.AFTER_TAB, tabLayout, tabData, i + 1, slideTab);
+                            }
+
+                            visibleTabIndex++;
                         }
                     }
                 }
             }
         }
 
-        return null;
+        return mouseTarget;
     }
 
     private void highlightMouseTarget(final MouseTarget mouseTarget) {
@@ -781,10 +859,10 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
 
             switch (mouseTarget.pos) {
                 case TAB:
-                    marker.show(tabElement.getAbsoluteLeft(), tabElement.getAbsoluteTop(), 4, tabElement.getOffsetHeight());
+                    marker.show(tabElement.getAbsoluteLeft(), tabElement.getAbsoluteTop(), 5, tabElement.getOffsetHeight());
                     break;
                 case AFTER_TAB:
-                    marker.show(tabElement.getAbsoluteLeft() + tabElement.getOffsetWidth(), tabElement.getAbsoluteTop(), 4,
+                    marker.show(tabElement.getAbsoluteLeft() + tabElement.getOffsetWidth() + 4, tabElement.getAbsoluteTop(), 5,
                             tabElement.getOffsetHeight());
                     break;
                 default:
@@ -1172,7 +1250,7 @@ public class FlexLayout extends Composite implements RequiresResize, ProvidesRes
         private final LinkTab tabWidget;
 
         MouseTarget(final LayoutConfig layoutData, final PositionAndSize positionAndSize, final Pos pos,
-                           final TabLayout tabLayout, final TabData tab, final int tabIndex, final LinkTab tabWidget) {
+                    final TabLayout tabLayout, final TabData tab, final int tabIndex, final LinkTab tabWidget) {
             this.layoutData = layoutData;
             this.positionAndSize = positionAndSize;
             this.pos = pos;

@@ -19,7 +19,6 @@ package stroom.meta.statistics.impl;
 import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.AttributeMap;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticsReceiver;
@@ -46,7 +45,7 @@ class MetaStatisticsImpl implements MetaStatistics {
     }
 
     @Override
-    public void recordStatistics(final AttributeMap metaData) {
+    public void recordStatistics(final Map<String, String> metaData) {
         final InternalStatisticsReceiver receiver = internalStatisticsReceiverProvider.get();
         if (receiver != null) {
             for (final MetaStatisticsTemplate template : templates) {
@@ -68,7 +67,7 @@ class MetaStatisticsImpl implements MetaStatistics {
      * @return build the STAT or return null for not valid
      */
     private InternalStatisticEvent buildStatisticEvent(final MetaStatisticsTemplate template,
-                                                       final AttributeMap metaData) {
+                                                       final Map<String, String> metaData) {
         Preconditions.checkNotNull(template);
         Preconditions.checkNotNull(template.getTimeMsAttribute());
         Preconditions.checkNotNull(template.getKey());

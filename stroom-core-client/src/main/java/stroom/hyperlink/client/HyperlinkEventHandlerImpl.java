@@ -20,7 +20,7 @@ import stroom.data.client.presenter.ShowDataEvent;
 import stroom.iframe.client.presenter.IFrameContentPresenter;
 import stroom.iframe.client.presenter.IFramePresenter;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.pipeline.shared.StepLocation;
+import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.util.shared.DefaultLocation;
 import stroom.util.shared.Highlight;
@@ -33,7 +33,6 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @Singleton
 public class HyperlinkEventHandlerImpl extends HandlerContainerImpl implements HyperlinkEvent.Handler, HasHandlers {

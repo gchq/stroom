@@ -20,7 +20,7 @@ package stroom.node.impl;
 
 import org.junit.jupiter.api.Test;
 import stroom.node.api.NodeService;
-import stroom.node.shared.FindNodeCriteria;
+import stroom.node.api.FindNodeCriteria;
 import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;

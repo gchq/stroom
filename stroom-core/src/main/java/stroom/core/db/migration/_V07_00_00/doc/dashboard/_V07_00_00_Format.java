@@ -49,7 +49,6 @@ public class _V07_00_00_Format implements Serializable {
     private Boolean wrap;
 
     public _V07_00_00_Format() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_Format(final _V07_00_00_Type type) {

@@ -21,7 +21,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
+
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.processor.shared.ProcessorTaskSummary;
@@ -30,7 +30,7 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
 public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPresenter.StreamTaskView>
-        implements HasDocumentRead<SharedObject> {
+        implements HasDocumentRead<Object> {
     public static final String STREAM_TASK_LIST = "STREAM_TASK_LIST";
     public static final String STREAM_TASK_SUMMARY = "STREAM_TASK_SUMMARY";
     private final ProcessorTaskSummaryPresenter processorTaskSummaryPresenter;
@@ -76,7 +76,7 @@ public class ProcessorTaskPresenter extends MyPresenterWidget<ProcessorTaskPrese
     }
 
     @Override
-    public void read(final DocRef docRef, final SharedObject entity) {
+    public void read(final DocRef docRef, final Object entity) {
         processorTaskSummaryPresenter.read(docRef, entity);
         processorTaskListPresenter.read(docRef, entity);
     }

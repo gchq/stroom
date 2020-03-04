@@ -16,16 +16,27 @@
 
 package stroom.job.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(Include.NON_DEFAULT)
 public class JobNodeInfo {
+    @JsonProperty
     private Integer currentTaskCount;
+    @JsonProperty
     private Long scheduleReferenceTime;
+    @JsonProperty
     private Long lastExecutedTime;
 
     public JobNodeInfo() {
-        // Default constructor necessary for GWT serialisation.
     }
 
-    public JobNodeInfo(final Integer currentTaskCount, final Long scheduleReferenceTime, final Long lastExecutedTime) {
+    @JsonCreator
+    public JobNodeInfo(@JsonProperty("currentTaskCount") final Integer currentTaskCount,
+                       @JsonProperty("scheduleReferenceTime") final Long scheduleReferenceTime,
+                       @JsonProperty("lastExecutedTime") final Long lastExecutedTime) {
         this.currentTaskCount = currentTaskCount;
         this.scheduleReferenceTime = scheduleReferenceTime;
         this.lastExecutedTime = lastExecutedTime;

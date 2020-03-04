@@ -16,23 +16,29 @@
 
 package stroom.dashboard.shared;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
-public class DashboardQueryKey implements Serializable {
-    private String uuid;
-    private String dashboardUuid;
-    private String componentId;
+@JsonInclude(Include.NON_DEFAULT)
+public class DashboardQueryKey {
+    @JsonProperty
+    private final String uuid;
+    @JsonProperty
+    private final String dashboardUuid;
+    @JsonProperty
+    private final String componentId;
 
-    public DashboardQueryKey() {
-    }
-
-    public static DashboardQueryKey create(final String uuid, final String dashboardUuid, final String componentId) {
-        final DashboardQueryKey dashboardQueryKey = new DashboardQueryKey();
-        dashboardQueryKey.uuid = uuid;
-        dashboardQueryKey.dashboardUuid = dashboardUuid;
-        dashboardQueryKey.componentId = componentId;
-        return dashboardQueryKey;
+    @JsonCreator
+    public DashboardQueryKey(@JsonProperty("uuid") final String uuid,
+                             @JsonProperty("dashboardUuid") final String dashboardUuid,
+                             @JsonProperty("componentId") final String componentId) {
+        this.uuid = uuid;
+        this.dashboardUuid = dashboardUuid;
+        this.componentId = componentId;
     }
 
     public String getUuid() {

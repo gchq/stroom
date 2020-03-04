@@ -17,13 +17,15 @@
 
 package stroom.statistics.impl.sql.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
@@ -33,24 +35,30 @@ import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.statistics.impl.sql.client.presenter.StatisticsDataSourcePresenter;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticField;
+import stroom.statistics.impl.sql.shared.StatisticResource;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticType;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
+    private static final StatisticResource STATISTIC_RESOURCE = GWT.create(StatisticResource.class);
+
     private final Provider<StatisticsDataSourcePresenter> editorProvider;
+    private final RestFactory restFactory;
 
     @Inject
     public StatisticsPlugin(final EventBus eventBus,
                             final Provider<StatisticsDataSourcePresenter> editorProvider,
-                            final ClientDispatchAsync dispatcher,
+                            final RestFactory restFactory,
                             final ContentManager contentManager,
                             final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, dispatcher, contentManager, entityPluginEventManager);
+        super(eventBus, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
+        this.restFactory = restFactory;
     }
 
     @Override
@@ -79,7 +87,8 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
                 // fields added/removed/changed
-                load(DocRefUtil.create(entity)).onSuccess(entityFromDb -> doConfirmSave(presenter, entity, entityFromDb));
+                load(DocRefUtil.create(entity), entityFromDb -> doConfirmSave(presenter, entity, entityFromDb), throwable -> {
+                });
             }
         }
     }
@@ -123,6 +132,27 @@ public class StatisticsPlugin extends DocumentPlugin<StatisticStoreDoc> {
 
     private void doSave(final DocumentEditPresenter<?, StatisticStoreDoc> presenter,
                         final StatisticStoreDoc entity) {
-        save(DocRefUtil.create(entity), entity).onSuccess(doc -> presenter.read(DocRefUtil.create(doc), doc));
+        save(DocRefUtil.create(entity), entity, doc -> presenter.read(DocRefUtil.create(doc), doc), throwable -> {
+        });
+    }
+
+    @Override
+    public void load(final DocRef docRef, final Consumer<StatisticStoreDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<StatisticStoreDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(STATISTIC_RESOURCE)
+                .read(docRef);
+    }
+
+    @Override
+    public void save(final DocRef docRef, final StatisticStoreDoc document, final Consumer<StatisticStoreDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<StatisticStoreDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(STATISTIC_RESOURCE)
+                .update(document);
     }
 }

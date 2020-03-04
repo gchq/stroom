@@ -1,7 +1,6 @@
 package stroom.task.api;
 
 import stroom.task.shared.Task;
-import stroom.util.shared.VoidResult;
 
 public final class GenericServerTask extends ServerTask<VoidResult> {
     private final String message;

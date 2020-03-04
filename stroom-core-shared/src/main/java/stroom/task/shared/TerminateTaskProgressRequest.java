@@ -16,15 +16,20 @@
 
 package stroom.task.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class TerminateTaskProgressRequest {
-    private FindTaskCriteria criteria;
-    private boolean kill;
+    @JsonProperty
+    private final FindTaskCriteria criteria;
+    @JsonProperty
+    private final boolean kill;
 
-    public TerminateTaskProgressRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public TerminateTaskProgressRequest(final FindTaskCriteria criteria, final boolean kill) {
+    @JsonCreator
+    public TerminateTaskProgressRequest(@JsonProperty("criteria") final FindTaskCriteria criteria,
+                                        @JsonProperty("kill") final boolean kill) {
         this.criteria = criteria;
         this.kill = kill;
     }
@@ -33,15 +38,7 @@ public class TerminateTaskProgressRequest {
         return criteria;
     }
 
-    public void setCriteria(final FindTaskCriteria criteria) {
-        this.criteria = criteria;
-    }
-
     public boolean isKill() {
         return kill;
-    }
-
-    public void setKill(final boolean kill) {
-        this.kill = kill;
     }
 }

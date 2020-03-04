@@ -2,41 +2,34 @@ package stroom.config.global.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.SharedObject;
 
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-public class OverrideValue<T> implements SharedObject {
-
-    private static final OverrideValue<?> UNSET =  new OverrideValue<>(false, null);
-    private static final OverrideValue<?> NULL_VALUE =  new OverrideValue<>(true, null);
+@JsonInclude(Include.NON_DEFAULT)
+public class OverrideValue<T> {
+    private static final OverrideValue<?> UNSET = new OverrideValue<>(false, null);
+    private static final OverrideValue<?> NULL_VALUE = new OverrideValue<>(true, null);
 
     @JsonProperty
     private boolean hasOverride;
     @JsonProperty
     private T value;
 
-    @SuppressWarnings("unused")
-    OverrideValue() {
-        // Required for GWT serialisation
-    }
-
-    @JsonIgnore
     @SuppressWarnings("unchecked")
     public static <T> OverrideValue<T> unSet(final Class<T> type) {
         return (OverrideValue<T>) UNSET;
     }
 
-    @JsonIgnore
     @SuppressWarnings("unchecked")
     public static <T> OverrideValue<T> withNullValue(final Class<T> type) {
         return (OverrideValue<T>) NULL_VALUE;
     }
 
-    @JsonIgnore
     @SuppressWarnings("unchecked")
     public static <T> OverrideValue<T> with(final T value) {
         if (value == null) {
@@ -79,7 +72,6 @@ public class OverrideValue<T> implements SharedObject {
     /**
      * Return the non-null override value or other if the override has explicitly been set to null/empty
      */
-    @JsonIgnore
     public T getValueOrElse(final T other) {
         if (!hasOverride) {
             throw new RuntimeException("No override present");
@@ -91,7 +83,6 @@ public class OverrideValue<T> implements SharedObject {
         }
     }
 
-    @JsonIgnore
     public T getValueOrElse(final T valueIfUnSet, final T valueIfNull) {
         if (!hasOverride) {
             return valueIfUnSet;
@@ -106,7 +97,6 @@ public class OverrideValue<T> implements SharedObject {
      * If an override value is present then the passed consumer will consume the override value
      * optional which may be empty if a null/empty override has explicitly been set.
      */
-    @JsonIgnore
     public void ifOverridePresent(final Consumer<Optional<T>> consumer) {
         if (hasOverride) {
             consumer.accept(Optional.ofNullable(value));

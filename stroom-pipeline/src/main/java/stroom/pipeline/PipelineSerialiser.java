@@ -42,9 +42,10 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
 
     @Override
     public Map<String, byte[]> write(final PipelineDoc document) throws IOException {
-        final Map<String, byte[]> data = delegate.write(document);
-
         PipelineData pipelineData = document.getPipelineData();
+        document.setPipelineData(null);
+
+        final Map<String, byte[]> data = delegate.write(document);
 
         // If the pipeline doesn't have data, it may be a new pipeline, create a blank one.
         if (pipelineData == null) {
@@ -52,6 +53,8 @@ public class PipelineSerialiser implements DocumentSerialiser2<PipelineDoc> {
         }
 
         data.put(XML, EncodingUtil.asBytes(getXmlFromPipelineData(pipelineData)));
+
+        document.setPipelineData(pipelineData);
 
         return data;
     }

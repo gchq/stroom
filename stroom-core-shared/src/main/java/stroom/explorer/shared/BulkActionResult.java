@@ -17,20 +17,24 @@
 
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
 
 import java.util.List;
 
-public class BulkActionResult implements SharedObject {
-    private List<DocRef> docRefs;
-    private String message;
+@JsonInclude(Include.NON_DEFAULT)
+public class BulkActionResult {
+    @JsonProperty
+    private final List<DocRef> docRefs;
+    @JsonProperty
+    private final String message;
 
-    public BulkActionResult() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public BulkActionResult(final List<DocRef> docRefs, final String message) {
+    @JsonCreator
+    public BulkActionResult(@JsonProperty("docRefs") final List<DocRef> docRefs,
+                            @JsonProperty("message") final String message) {
         this.docRefs = docRefs;
         this.message = message;
     }

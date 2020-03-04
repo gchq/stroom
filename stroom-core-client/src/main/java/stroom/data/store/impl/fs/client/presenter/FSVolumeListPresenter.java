@@ -25,7 +25,6 @@ import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.util.client.BorderUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -33,7 +32,7 @@ import java.util.List;
 
 public class FSVolumeListPresenter extends MyPresenterWidget<DataGridView<FsVolume>> {
     @Inject
-    public FSVolumeListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+    public FSVolumeListPresenter(final EventBus eventBus) {
         super(eventBus, new DataGridViewImpl<>(true, true));
 
         // Add a border to the list.

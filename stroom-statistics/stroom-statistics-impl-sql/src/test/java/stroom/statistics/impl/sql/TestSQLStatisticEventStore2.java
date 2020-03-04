@@ -241,7 +241,7 @@ class TestSQLStatisticEventStore2 extends StroomUnitTest {
         fields.add(new StatisticField(TAG1_NAME));
         fields.add(new StatisticField(TAG2_NAME));
 
-        statisticsDataSourceData.setStatisticFields(fields);
+        statisticsDataSourceData.setFields(fields);
 
         // add the custom rollup masks, which only come into play if the type is
         // CUSTOM

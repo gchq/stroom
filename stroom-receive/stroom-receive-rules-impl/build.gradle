@@ -7,6 +7,7 @@ dependencies {
     compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-importexport:stroom-importexport-api')
     compile project(':stroom-meta:stroom-meta-api')
+    compile project(':stroom-proxy:stroom-proxy-remote-api')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-search:stroom-expression-matcher')
     compile project(':stroom-util-shared')
@@ -20,7 +21,6 @@ dependencies {
     compile libs.jaxb_api
     compile libs.slf4j_api
     compile libs.stroomDocRef
-    compile libs.stroomProxyRemoteApi
     compile libs.swagger_annotations
     compile libs.ws_rs_api
     

@@ -59,7 +59,7 @@ public class ManageNodeToolsPlugin extends NodeToolsPlugin {
                                          final UiConfig uiConfig) {
         final IconMenuItem volumeMenuItem;
         final SvgPreset icon = SvgPresets.VOLUMES;
-        final String indexVolumesUiUrl = uiConfig.getUrlConfig().getIndexVolumes();
+        final String indexVolumesUiUrl = uiConfig.getUrl().getIndexVolumes();
         if (indexVolumesUiUrl != null && indexVolumesUiUrl.trim().length() > 0) {
             volumeMenuItem = new IconMenuItem(4, icon, null, "Index Volumes", null, true, () -> {
                 final Hyperlink hyperlink = new Hyperlink.Builder()

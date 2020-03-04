@@ -24,7 +24,7 @@ import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.util.Set;

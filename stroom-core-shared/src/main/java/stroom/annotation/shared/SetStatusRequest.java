@@ -1,16 +1,22 @@
 package stroom.annotation.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class SetStatusRequest {
-    private List<Long> annotationIdList;
-    private String status;
+    @JsonProperty
+    private final List<Long> annotationIdList;
+    @JsonProperty
+    private final String status;
 
-    public SetStatusRequest() {
-    }
-
-    public SetStatusRequest(final List<Long> annotationIdList,
-                            final String status) {
+    @JsonCreator
+    public SetStatusRequest(@JsonProperty("annotationIdList") final List<Long> annotationIdList,
+                            @JsonProperty("status") final String status) {
         this.annotationIdList = annotationIdList;
         this.status = status;
     }
@@ -19,15 +25,7 @@ public class SetStatusRequest {
         return annotationIdList;
     }
 
-    public void setAnnotationIdList(final List<Long> annotationIdList) {
-        this.annotationIdList = annotationIdList;
-    }
-
     public String getStatus() {
         return status;
-    }
-
-    public void setStatus(final String status) {
-        this.status = status;
     }
 }

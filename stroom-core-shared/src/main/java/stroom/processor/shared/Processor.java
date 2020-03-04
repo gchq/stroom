@@ -16,42 +16,81 @@
 
 package stroom.processor.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasUuid;
 
 import java.util.Objects;
 
-public class Processor implements HasAuditInfo, HasUuid, SharedObject {
-//    public static final String ENTITY_TYPE = "StreamProcessor";
-
+@JsonInclude(Include.NON_DEFAULT)
+public class Processor implements HasAuditInfo, HasUuid {
     private static final String PIPELINE_STREAM_PROCESSOR_TASK_TYPE = "pipelineStreamProcessor";
-    private static final long serialVersionUID = -958099873937223257L;
 
     // standard id, OCC and audit fields
+    @JsonProperty
     private Integer id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTimeMs;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private Long updateTimeMs;
+    @JsonProperty
     private String updateUser;
+    @JsonProperty
     private String uuid;
 
     // Only One type for the moment
-    private String taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
+    @JsonProperty
+    private String taskType;
+    @JsonProperty
     private String pipelineUuid;
+    @JsonProperty
     private boolean enabled;
 
     //TODO do we need pipelineName?
 //    private String pipelineName;
 
     public Processor() {
-        // Default constructor necessary for GWT serialisation.
+        taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
     }
 
     public Processor(final DocRef pipelineRef) {
+        taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
         this.pipelineUuid = pipelineRef.getUuid();
+    }
+
+    @JsonCreator
+    public Processor(@JsonProperty("id") final Integer id,
+                     @JsonProperty("version") final Integer version,
+                     @JsonProperty("createTimeMs") final Long createTimeMs,
+                     @JsonProperty("createUser") final String createUser,
+                     @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                     @JsonProperty("updateUser") final String updateUser,
+                     @JsonProperty("uuid") final String uuid,
+                     @JsonProperty("taskType") final String taskType,
+                     @JsonProperty("pipelineUuid") final String pipelineUuid,
+                     @JsonProperty("enabled") final boolean enabled) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.createUser = createUser;
+        this.updateTimeMs = updateTimeMs;
+        this.updateUser = updateUser;
+        this.uuid = uuid;
+        if (taskType != null) {
+            this.taskType = taskType;
+        } else {
+            this.taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
+        }
+        this.pipelineUuid = pipelineUuid;
+        this.enabled = enabled;
     }
 
     public Integer getId() {

@@ -26,7 +26,7 @@ import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.shared.Record;
-import stroom.pipeline.shared.SteppingFilterSettings;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.pipeline.state.MetaHolder;
 import stroom.pipeline.stepping.Recorder;

@@ -34,14 +34,12 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.entity.shared.NamedEntity;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.BaseResultList;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasUuid;
 import stroom.util.shared.PageResponse;
@@ -471,9 +469,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     private String getObjectName(final java.lang.Object object) {
-        if (object instanceof NamedEntity) {
-            return ((NamedEntity) object).getName();
-        } else if (object instanceof DocRef) {
+        if (object instanceof DocRef) {
             return ((DocRef) object).getName();
         }
         return null;

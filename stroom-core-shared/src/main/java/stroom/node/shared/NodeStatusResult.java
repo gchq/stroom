@@ -16,17 +16,25 @@
 
 package stroom.node.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.util.Objects;
 
+@JsonPropertyOrder({"node", "master"})
+@JsonInclude(Include.NON_DEFAULT)
 public class NodeStatusResult {
-    private Node node;
-    private boolean master;
+    @JsonProperty
+    private final Node node;
+    @JsonProperty
+    private final boolean master;
 
-    public NodeStatusResult() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public NodeStatusResult(final Node node, final boolean master) {
+    @JsonCreator
+    public NodeStatusResult(@JsonProperty("node") final Node node,
+                            @JsonProperty("master") final boolean master) {
         this.node = node;
         this.master = master;
     }
@@ -35,16 +43,8 @@ public class NodeStatusResult {
         return node;
     }
 
-    public void setNode(final Node node) {
-        this.node = node;
-    }
-
     public boolean isMaster() {
         return master;
-    }
-
-    public void setMaster(final boolean master) {
-        this.master = master;
     }
 
     @Override

@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -36,8 +38,6 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "dateTimeFormatSettings")
 @XmlType(name = "DateTimeFormatSettings", propOrder = {"pattern", "timeZone"})
 public class DateTimeFormatSettings implements FormatSettings {
-    private static final long serialVersionUID = 9145624653060319801L;
-
     private static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
     @XmlElement(name = "pattern")
@@ -50,7 +50,9 @@ public class DateTimeFormatSettings implements FormatSettings {
     public DateTimeFormatSettings() {
     }
 
-    public DateTimeFormatSettings(final String pattern, final TimeZone timeZone) {
+    @JsonCreator
+    public DateTimeFormatSettings(@JsonProperty("pattern") final String pattern,
+                                  @JsonProperty("timeZone") final TimeZone timeZone) {
         this.pattern = pattern;
         this.timeZone = timeZone;
     }
@@ -71,8 +73,9 @@ public class DateTimeFormatSettings implements FormatSettings {
         this.timeZone = timeZone;
     }
 
-    @XmlTransient
     @Override
+    @XmlTransient
+    @JsonIgnore
     public boolean isDefault() {
         return pattern == null || pattern.equals(DEFAULT_PATTERN);
     }

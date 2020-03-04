@@ -16,20 +16,29 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.OffsetRange;
 
+@JsonInclude(Include.NON_DEFAULT)
 public class VisResultRequest extends ComponentResultRequest {
-    private static final long serialVersionUID = 8683770109061652092L;
-
+    @JsonProperty
     private VisComponentSettings visDashboardSettings;
-    private OffsetRange<Integer> requestedRange = new OffsetRange<>(0, 100);
-
-    public VisResultRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
+    @JsonProperty
+    private OffsetRange<Integer> requestedRange;
 
     public VisResultRequest(final int offset, final int length) {
         requestedRange = new OffsetRange<>(offset, length);
+    }
+
+    @JsonCreator
+    public VisResultRequest(@JsonProperty("visDashboardSettings") final VisComponentSettings visDashboardSettings,
+                            @JsonProperty("requestedRange") final OffsetRange<Integer> requestedRange) {
+        this.visDashboardSettings = visDashboardSettings;
+        this.requestedRange = requestedRange;
     }
 
     public VisComponentSettings getVisDashboardSettings() {
@@ -44,12 +53,11 @@ public class VisResultRequest extends ComponentResultRequest {
         return requestedRange;
     }
 
-    public void setRange(final int offset, final int length) {
-        requestedRange = new OffsetRange<>(offset, length);
+    public void setRequestedRange(final OffsetRange<Integer> requestedRange) {
+        this.requestedRange = requestedRange;
     }
 
-    @Override
-    public ComponentType getComponentType() {
-        return ComponentType.VIS;
+    public void setRange(final int offset, final int length) {
+        requestedRange = new OffsetRange<>(offset, length);
     }
 }

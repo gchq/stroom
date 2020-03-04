@@ -50,7 +50,7 @@ public class ActivityServiceImpl implements ActivityService {
 
         final String userId = securityContext.getUserId();
 
-        final Activity activity = new Activity();
+        final Activity activity = Activity.create();
         activity.setUserId(userId);
 
         AuditUtil.stamp(userId, activity);

@@ -32,6 +32,8 @@ class HttpCall extends StroomExtensionFunctionCall {
 
     private static final AttributesImpl EMPTY_ATTS = new AttributesImpl();
     private static final String URI = "stroom-http";
+    private static final String HEADER_DELIMITER = "\n";
+    private static final String HEADER_KV_DELIMITER = ":";
 
     private final HttpClientCache httpClientCache;
 
@@ -85,12 +87,12 @@ class HttpCall extends StroomExtensionFunctionCall {
         }
 
         if (headers != null && headers.length() > 0) {
-            final String[] parts = headers.split("\n");
+            final String[] parts = headers.split(HEADER_DELIMITER);
             for (final String part : parts) {
-                int index = part.indexOf(": ");
+                int index = part.indexOf(HEADER_KV_DELIMITER);
                 if (index > 0) {
-                    final String key = part.substring(0, index);
-                    final String value = part.substring(index + 2);
+                    final String key = part.substring(0, index).trim();
+                    final String value = part.substring(index + HEADER_KV_DELIMITER.length()).trim();
                     builder = builder.addHeader(key, value);
                 }
             }

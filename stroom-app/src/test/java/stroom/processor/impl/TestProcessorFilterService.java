@@ -35,7 +35,7 @@ import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -62,12 +62,12 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
 
     private void deleteAll() {
         final List<ProcessorFilter> filters = processorFilterService
-                .find(new ExpressionCriteria());
+                .find(new ExpressionCriteria()).getValues();
         for (final ProcessorFilter filter : filters) {
             processorFilterService.delete(filter.getId());
         }
 
-        final List<Processor> streamProcessors = processorService.find(new ExpressionCriteria());
+        final List<Processor> streamProcessors = processorService.find(new ExpressionCriteria()).getValues();
         for (final Processor processor : streamProcessors) {
             processorService.delete(processor.getId());
         }
@@ -127,7 +127,7 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
         processorFilterService.create(pipelineRef, findStreamQueryData, 1, true);
         assertThat(processorService.find(new ExpressionCriteria()).size()).isEqualTo(1);
 
-        final BaseResultList<ProcessorFilter> filters = processorFilterService
+        final ResultPage<ProcessorFilter> filters = processorFilterService
                 .find(findProcessorFilterCriteria);
         ProcessorFilter filter = filters.getFirst();
         String xml = buildXML(new String[]{feedName1, feedName2}, null);
@@ -223,6 +223,6 @@ class TestProcessorFilterService extends AbstractCoreIntegrationTest {
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
 //        findProcessorFilterCriteria.setLastPollPeriod(new Period(1L, 1L));
 //        findProcessorFilterCriteria.setProcessorFilterEnabled(true);
-        assertThat(processorFilterService.find(findProcessorFilterCriteria).getSize()).isEqualTo(0);
+        assertThat(processorFilterService.find(findProcessorFilterCriteria).getPageSize()).isEqualTo(0);
     }
 }

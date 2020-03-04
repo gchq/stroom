@@ -1,7 +1,7 @@
 package stroom.proxy.app.handler;
 
 import org.slf4j.Logger;
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

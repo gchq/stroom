@@ -24,6 +24,7 @@ import io.swagger.annotations.ApiParam;
 import stroom.proxy.feed.remote.GetFeedStatusRequest;
 import stroom.proxy.feed.remote.GetFeedStatusResponse;
 import stroom.util.HasHealthCheck;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -37,7 +38,7 @@ import javax.ws.rs.core.MediaType;
 @Path(FeedStatusResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public class FeedStatusResource implements RestResource, HasHealthCheck {
-    public static final String BASE_RESOURCE_PATH = "/feedStatus/v1";
+    public static final String BASE_RESOURCE_PATH = "/feedStatus" + ResourcePaths.V1;
 
     private final FeedStatusService feedStatusService;
 

@@ -18,11 +18,11 @@ package stroom.security.impl.session;
 
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 
-class SessionListClusterHandler extends AbstractTaskHandler<SessionListClusterTask, ResultList<SessionDetails>> {
+class SessionListClusterHandler extends AbstractTaskHandler<SessionListClusterTask, ResultPage<SessionDetails>> {
     private final SessionListService sessionListService;
     private final SecurityContext securityContext;
 
@@ -34,7 +34,7 @@ class SessionListClusterHandler extends AbstractTaskHandler<SessionListClusterTa
     }
 
     @Override
-    public ResultList<SessionDetails> exec(final SessionListClusterTask task) {
+    public ResultPage<SessionDetails> exec(final SessionListClusterTask task) {
         return securityContext.insecureResult(() -> sessionListService.find(null));
     }
 }

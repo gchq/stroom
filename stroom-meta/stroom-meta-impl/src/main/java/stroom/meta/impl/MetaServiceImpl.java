@@ -7,15 +7,15 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.EffectiveMetaDataCriteria;
+import stroom.meta.api.MetaSecurityFilter;
+import stroom.meta.api.MetaService;
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaProperties;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaSecurityFilter;
-import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
@@ -26,9 +26,9 @@ import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.util.date.DateUtil;
-import stroom.util.shared.BaseResultList;
 import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
@@ -92,7 +92,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         final ExpressionOperator secureExpression = addPermissionConstraints(getIdExpression(id, anyStatus), DocumentPermissionNames.READ);
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
         findMetaCriteria.setPageRequest(new PageRequest(0L, 1));
-        final List<Meta> list = find(findMetaCriteria);
+        final List<Meta> list = find(findMetaCriteria).getValues();
         if (list == null || list.size() == 0) {
             return null;
         }
@@ -202,7 +202,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public BaseResultList<Meta> find(final FindMetaCriteria criteria) {
+    public ResultPage<Meta> find(final FindMetaCriteria criteria) {
         final boolean fetchRelationships = criteria.isFetchRelationships();
         final PageRequest pageRequest = criteria.getPageRequest();
         if (fetchRelationships) {
@@ -212,7 +212,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         final IdSet idSet = criteria.getSelectedIdSet();
         // If for some reason we have been asked to match nothing then return nothing.
         if (idSet != null && idSet.getMatchNull() != null && idSet.getMatchNull()) {
-            return BaseResultList.createPageResultList(Collections.emptyList(), criteria.getPageRequest(), null);
+            return ResultPage.createPageResultList(Collections.emptyList(), criteria.getPageRequest(), null);
         }
 
         List<Meta> results = secureFind(criteria);
@@ -267,9 +267,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 }
             }
             criteria.setPageRequest(pageRequest);
-            return BaseResultList.createCriterialBasedList(results, criteria, maxSize);
+            return ResultPage.createCriterialBasedList(results, criteria, maxSize);
         } else {
-            return BaseResultList.createCriterialBasedList(results, criteria);
+            return ResultPage.createCriterialBasedList(results, criteria);
         }
     }
 
@@ -397,7 +397,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     @Override
-    public BaseResultList<MetaRow> findRows(final FindMetaCriteria criteria) {
+    public ResultPage<MetaRow> findRows(final FindMetaCriteria criteria) {
         return securityContext.useAsReadResult(() -> {
             // Cache Call
 
@@ -409,7 +409,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 //            findDataCriteria.setFetchSet(new HashSet<>());
 
             // Share the page criteria
-            final BaseResultList<Meta> list = find(findMetaCriteria);
+            final ResultPage<Meta> list = find(findMetaCriteria);
 
             if (list.size() > 0) {
 //                // We need to decorate data with retention rules as a processing user.
@@ -428,7 +428,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 // Query the database for the attribute values
 //                        if (criteria.isUseCache()) {
                 LOGGER.info("Loading attribute map from DB");
-                final List<MetaRow> result = metaValueDao.decorateDataWithAttributes(list);
+                final List<MetaRow> result = metaValueDao.decorateDataWithAttributes(list.getValues());
 //                        } else {
 //                            LOGGER.info("Loading attribute map from filesystem");
 //                            loadAttributeMapFromFileSystem(criteria, result, result, ruleDecorator);
@@ -436,11 +436,11 @@ public class MetaServiceImpl implements MetaService, Searchable {
 //                    }
 //                });
 
-                return new BaseResultList<>(result, list.getPageResponse().getOffset(),
+                return new ResultPage<>(result, list.getPageResponse().getOffset(),
                         list.getPageResponse().getTotal(), list.getPageResponse().isExact());
             }
 
-            return new BaseResultList<>(Collections.emptyList(), list.getPageResponse().getOffset(),
+            return new ResultPage<>(Collections.emptyList(), list.getPageResponse().getOffset(),
                     list.getPageResponse().getTotal(), list.getPageResponse().isExact());
         });
     }
@@ -449,8 +449,8 @@ public class MetaServiceImpl implements MetaService, Searchable {
     public List<MetaRow> findRelatedData(final long id, final boolean anyStatus) {
         // Get the starting row.
         final FindMetaCriteria findDataCriteria = new FindMetaCriteria(getIdExpression(id, anyStatus));
-        BaseResultList<Meta> rows = find(findDataCriteria);
-        final List<Meta> result = new ArrayList<>(rows);
+        ResultPage<Meta> rows = find(findDataCriteria);
+        final List<Meta> result = new ArrayList<>(rows.getValues());
 
         if (rows.size() > 0) {
             Meta row = rows.getFirst();
@@ -464,7 +464,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
     }
 
     private void addChildren(final Meta parent, final boolean anyStatus, final List<Meta> result) {
-        final BaseResultList<Meta> children = find(new FindMetaCriteria(getParentIdExpression(parent.getId(), anyStatus)));
+        final List<Meta> children = find(new FindMetaCriteria(getParentIdExpression(parent.getId(), anyStatus))).getValues();
         children.forEach(child -> {
             result.add(child);
             addChildren(child, anyStatus, result);
@@ -473,7 +473,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
     private void addParents(final Meta child, final boolean anyStatus, final List<Meta> result) {
         if (child.getParentMetaId() != null) {
-            final BaseResultList<Meta> parents = find(new FindMetaCriteria(getIdExpression(child.getParentMetaId(), anyStatus)));
+            final List<Meta> parents = find(new FindMetaCriteria(getIdExpression(child.getParentMetaId(), anyStatus))).getValues();
             if (parents != null && parents.size() > 0) {
                 parents.forEach(parent -> {
                     result.add(parent);

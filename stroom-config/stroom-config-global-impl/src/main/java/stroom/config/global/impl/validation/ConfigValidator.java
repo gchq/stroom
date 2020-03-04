@@ -4,7 +4,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.validation.ValidationSeverity;
+import stroom.security.impl.ValidationSeverity;
 
 import javax.inject.Inject;
 import javax.validation.ConstraintViolation;

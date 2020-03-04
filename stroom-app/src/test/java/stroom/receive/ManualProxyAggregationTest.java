@@ -17,7 +17,7 @@ import stroom.feed.shared.FeedDoc.FeedStatus;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.task.api.ExecutorProvider;
@@ -243,7 +243,7 @@ public class ManualProxyAggregationTest {
         eventFeeds.forEach(feed -> {
             final FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setExpression(MetaExpressionUtil.createFeedExpression(feed));
-            final List<Meta> streams = metaService.find(criteria);
+            final List<Meta> streams = metaService.find(criteria).getValues();
             assertThat(streams.size()).isEqualTo(expectedStreamsPerFeed);
 
             streams.forEach(stream -> {
@@ -276,8 +276,8 @@ public class ManualProxyAggregationTest {
                            final int maxAggregation,
                            final long maxStreamSize) {
         final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
-                taskContext,
                 executorProvider,
+                taskContext,
                 filePackProcessorProvider,
                 proxyDir,
                 10,

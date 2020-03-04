@@ -2,8 +2,9 @@ package stroom.util.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.docref.SharedObject;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -15,10 +16,8 @@ import java.util.Objects;
  * Class for representing a path to a property in an object tree, i.e
  * stroom.node.name
  */
-public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
-
-    private static final long serialVersionUID = 4298017138182350850L;
-
+@JsonInclude(Include.NON_DEFAULT)
+public class PropertyPath implements Comparable<PropertyPath> {
     private static final String DELIMITER = ".";
     private static final String DELIMITER_REGEX = "\\" + DELIMITER;
 
@@ -27,12 +26,7 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
     // Held in part form to reduce memory overhead as some parts will be used
     // many times over all the config objects
     @JsonProperty("parts")
-    private List<String> parts;
-
-    @SuppressWarnings("unused")
-    PropertyPath() {
-        // Pkg private for GWT
-    }
+    private final List<String> parts;
 
     @JsonCreator
     PropertyPath(@JsonProperty("parts") final List<String> parts) {
@@ -158,10 +152,7 @@ public class PropertyPath implements SharedObject, Comparable<PropertyPath> {
         return Objects.hash(parts);
     }
 
-    public static class Builder implements SharedObject {
-
-        private static final long serialVersionUID = 4646431868659034045L;
-
+    public static class Builder {
         private List<String> parts = null;
 
         @SuppressWarnings("unused") // Needed for GWT

@@ -26,7 +26,7 @@ import stroom.data.store.api.Store;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
@@ -146,7 +146,7 @@ public class StreamGrepTool extends AbstractCommandLineTool {
         // Query the stream store
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(builder.build());
-        final List<Meta> results = metaService.find(criteria);
+        final List<Meta> results = metaService.find(criteria).getValues();
 
         int count = 0;
         for (final Meta meta : results) {

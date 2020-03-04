@@ -21,19 +21,8 @@ import stroom.collection.api.CollectionService;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.explorer.api.ExplorerNodeService;
 import stroom.explorer.api.ExplorerService;
-import stroom.explorer.shared.ExplorerServiceCopyAction;
-import stroom.explorer.shared.ExplorerServiceCreateAction;
-import stroom.explorer.shared.ExplorerServiceDeleteAction;
-import stroom.explorer.shared.ExplorerServiceInfoAction;
-import stroom.explorer.shared.ExplorerServiceMoveAction;
-import stroom.explorer.shared.ExplorerServiceRenameAction;
-import stroom.explorer.shared.FetchDocRefsAction;
-import stroom.explorer.shared.FetchDocumentTypesAction;
-import stroom.explorer.shared.FetchExplorerNodeAction;
-import stroom.explorer.shared.FetchExplorerPermissionsAction;
-import stroom.task.api.TaskHandlerBinder;
-import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 public class ExplorerModule extends AbstractModule {
     @Override
@@ -44,23 +33,12 @@ public class ExplorerModule extends AbstractModule {
         bind(ExplorerEventLog.class).to(ExplorerEventLogImpl.class);
         bind(CollectionService.class).to(ExplorerServiceImpl.class);
 
-        TaskHandlerBinder.create(binder())
-                .bind(ExplorerServiceCopyAction.class, ExplorerServiceCopyHandler.class)
-                .bind(ExplorerServiceCreateAction.class, ExplorerServiceCreateHandler.class)
-                .bind(ExplorerServiceDeleteAction.class, ExplorerServiceDeleteHandler.class)
-                .bind(ExplorerServiceInfoAction.class, ExplorerServiceInfoHandler.class)
-                .bind(ExplorerServiceMoveAction.class, ExplorerServiceMoveHandler.class)
-                .bind(ExplorerServiceRenameAction.class, ExplorerServiceRenameHandler.class)
-                .bind(FetchDocRefsAction.class, FetchDocRefsHandler.class)
-                .bind(FetchDocumentTypesAction.class, FetchDocumentTypesHandler.class)
-                .bind(FetchExplorerNodeAction.class, FetchExplorerNodeHandler.class)
-                .bind(FetchExplorerPermissionsAction.class, FetchExplorerPermissionsHandler.class);
-
         GuiceUtil.buildMultiBinder(binder(), ExplorerActionHandler.class)
                 .addBinding(FolderExplorerActionHandler.class)
                 .addBinding(SystemExplorerActionHandler.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(ExplorerResource.class);
+                .addBinding(ExplorerResourceImpl.class)
+                .addBinding(NewUIExplorerResource.class);
     }
 }

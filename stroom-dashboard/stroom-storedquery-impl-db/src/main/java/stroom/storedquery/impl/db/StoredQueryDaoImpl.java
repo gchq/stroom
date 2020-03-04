@@ -11,7 +11,7 @@ import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -67,7 +67,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
     }
 
     @Override
-    public BaseResultList<StoredQuery> find(FindStoredQueryCriteria criteria) {
+    public ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria) {
         List<StoredQuery> list = JooqUtil.contextResult(storedQueryDbConnProvider, context -> {
             final Collection<Condition> conditions = JooqUtil.conditions(
                     Optional.ofNullable(criteria.getUserId()).map(QUERY.CREATE_USER::eq),
@@ -90,7 +90,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
         });
 
         list = list.stream().map(StoredQuerySerialiser::deserialise).collect(Collectors.toList());
-        return BaseResultList.createUnboundedList(list);
+        return ResultPage.createUnboundedList(list);
     }
 
     @Override

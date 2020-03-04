@@ -22,9 +22,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.UserIdentity;
-import stroom.security.shared.DocumentPermissionJooq;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 
 import javax.inject.Inject;
@@ -58,11 +56,11 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         return documentPermissionDao.getPermissionsForDocumentForUser(docRefUuid, userUuid);
     }
 
-    public DocumentPermissions getPermissionsForDocument(final String docRefUuid) {
+    public stroom.security.shared.DocumentPermissions getPermissionsForDocument(final String docRefUuid) {
         final Map<String, Set<String>> userPermissions = new HashMap<>();
 
         try {
-            final DocumentPermissionJooq documentPermission = documentPermissionDao.getPermissionsForDocument(docRefUuid);
+            final DocumentPermissions documentPermission = documentPermissionDao.getPermissionsForDocument(docRefUuid);
 
             documentPermission.getPermissions().forEach((userUuid, permissions) -> {
                 final User user = userDao.getByUuid(userUuid);
@@ -75,7 +73,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             throw e;
         }
 
-        return new DocumentPermissions(docRefUuid, userPermissions);
+        return new stroom.security.shared.DocumentPermissions(docRefUuid, userPermissions);
     }
 
     public UserDocumentPermissions getPermissionsForUser(final String userUuid) {
@@ -150,7 +148,7 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
         if (sourceType != null && sourceUuid != null) {
             final DocRef sourceDocRef = new DocRef(sourceType, sourceUuid);
 
-            final DocumentPermissions documentPermissions = getPermissionsForDocument(sourceDocRef.getUuid());
+            final stroom.security.shared.DocumentPermissions documentPermissions = getPermissionsForDocument(sourceDocRef.getUuid());
             if (documentPermissions != null) {
                 final Map<String, Set<String>> userPermissions = documentPermissions.getUserPermissions();
                 if (userPermissions != null && userPermissions.size() > 0) {

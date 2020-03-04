@@ -33,8 +33,7 @@ public class StroomStatsStoreSerialiser implements DocumentSerialiser2<StroomSta
 
     @Override
     public Map<String, byte[]> write(final StroomStatsStoreDoc document) throws IOException {
-        final Map<String, byte[]> data = delegate.write(document);
-        return data;
+        return delegate.write(document);
     }
 
     public StroomStatsStoreEntityData getDataFromLegacyXML(final String xml) {

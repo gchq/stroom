@@ -5,9 +5,9 @@ import stroom.explorer.shared.ExplorerConstants;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.util.io.StreamUtil;
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -21,9 +21,10 @@ import javax.ws.rs.core.StreamingOutput;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Set;
 
 @Api(value = "export - /v1")
-@Path("/export/v1")
+@Path("/export" + ResourcePaths.V1)
 public class ExportConfigResource implements RestResource {
     private final transient ImportExportService importExportService;
     private final transient ResourceStore resourceStore;
@@ -53,11 +54,7 @@ public class ExportConfigResource implements RestResource {
 
             try {
                 final java.nio.file.Path tempFile = resourceStore.getTempFile(tempResourceKey);
-
-                final DocRefs docRefs = new DocRefs();
-                docRefs.add(ExplorerConstants.ROOT_DOC_REF);
-
-                importExportService.exportConfig(docRefs, tempFile, new ArrayList<>());
+                importExportService.exportConfig(Set.of(ExplorerConstants.ROOT_DOC_REF), tempFile, new ArrayList<>());
 
                 final StreamingOutput streamingOutput = output -> {
                     try (final InputStream is = Files.newInputStream(tempFile)) {

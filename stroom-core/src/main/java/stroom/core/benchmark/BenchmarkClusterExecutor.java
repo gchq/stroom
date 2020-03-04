@@ -27,11 +27,11 @@ import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.job.api.JobManager;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.pipeline.PipelineStore;
 import stroom.processor.api.JobNames;
@@ -52,19 +52,19 @@ import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.AsyncExecutorHelper;
-import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.api.VoidResult;
 import stroom.task.shared.Task;
+import stroom.util.Period;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.Period;
-import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class BenchmarkClusterExecutor extends AbstractBenchmark {
@@ -86,7 +86,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private final MetaService metaService;
     private final JobManager jobManager;
     private final TaskContext taskContext;
-    private final ExecutorProvider executorProvider;
+    private final Executor executor;
     private final InternalStatisticsReceiver statistics;
     private final BenchmarkClusterConfig benchmarkClusterConfig;
 
@@ -104,7 +104,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              final ProcessorTaskService processorTaskService,
                              final ClusterDispatchAsyncHelper dispatchHelper,
                              final JobManager jobManager,
-                             final ExecutorProvider executorProvider,
+                             final Executor executor,
                              final InternalStatisticsReceiver statistics,
                              final BenchmarkClusterConfig benchmarkClusterConfig) {
         super(streamStore, metaService, taskContext);
@@ -116,7 +116,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         this.metaService = metaService;
         this.jobManager = jobManager;
         this.taskContext = taskContext;
-        this.executorProvider = executorProvider;
+        this.executor = executor;
         this.statistics = statistics;
         this.benchmarkClusterConfig = benchmarkClusterConfig;
     }
@@ -236,7 +236,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private Processor initProcessor(final DocRef pipelineDoc) {
         // Clear off any old processor filters
         for (final ProcessorFilter processorFilter : processorFilterService
-                .find(new ExpressionCriteria(ProcessorTaskExpressionUtil.createPipelineExpression(pipelineDoc)))) {
+                .find(new ExpressionCriteria(ProcessorTaskExpressionUtil.createPipelineExpression(pipelineDoc))).getValues()) {
             processorFilterService.delete(processorFilter.getId());
         }
         Processor streamProcessor = streamProcessorService.find(new ExpressionCriteria(ProcessorExpressionUtil.createPipelineExpression(pipelineDoc)))
@@ -257,7 +257,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
 
             LOGGER.info("Writing data");
             final AsyncExecutorHelper<VoidResult> asyncTaskHelper = new AsyncExecutorHelper<>(
-                    "Writing test streams\n", taskContext, executorProvider, benchmarkClusterConfig.getConcurrentWriters());
+                    "Writing test streams\n", taskContext, executor, benchmarkClusterConfig.getConcurrentWriters());
             for (int i = 1; i <= streamCount && !isTerminated(); i++) {
                 final int count = i;
                 asyncTaskHelper.fork(() -> {
@@ -337,8 +337,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                     Thread.sleep(10000);
 
                     // Find out how many tasks are complete.
-                    final List<Meta> streams = metaService.find(processedCriteria);
-
+                    final List<Meta> streams = metaService.find(processedCriteria).getValues();
                     // Things moved on ?
                     if (streams.size() > completedTaskCount) {
                         // Move on the time out
@@ -448,9 +447,9 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                     .addTerm(ProcessorTaskDataSource.FEED_NAME, Condition.EQUALS, feedName)
                     .addTerm(ProcessorTaskDataSource.CREATE_TIME, Condition.BETWEEN, DateUtil.createNormalDateTimeString(processPeriod.getFromMs()) + "," + DateUtil.createNormalDateTimeString(processPeriod.getToMs()))
                     .build();
-            final List<ProcessorTask> processorTasks = processorTaskService.find(new ExpressionCriteria(taskExpression));
+            final List<ProcessorTask> processorTasks = processorTaskService.find(new ExpressionCriteria(taskExpression)).getValues();
             processorTasks.forEach(task -> {
-                final List<MetaRow> metaList = metaService.findRows(FindMetaCriteria.createFromId(task.getMetaId()));
+                final List<MetaRow> metaList = metaService.findRows(FindMetaCriteria.createFromId(task.getMetaId())).getValues();
 
                 if (metaList != null && metaList.size() == 1) {
                     final MetaRow meta = metaList.get(0);

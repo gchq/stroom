@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.data.zip.StroomFileNameUtil;
 import stroom.data.zip.StroomZipOutputStream;
 import stroom.data.zip.StroomZipOutputStreamImpl;
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 import stroom.util.io.AbstractFileVisitor;
 import stroom.util.io.FileUtil;
 

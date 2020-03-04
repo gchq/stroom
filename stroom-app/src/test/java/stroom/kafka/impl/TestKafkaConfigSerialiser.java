@@ -15,6 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.docstore.impl.Persistence;
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.security.api.SecurityContext;
 
@@ -31,6 +32,8 @@ public class TestKafkaConfigSerialiser {
     private SecurityContext securityContext;
     @Mock
     private Persistence persistence;
+    @Mock
+    private DocumentEventLog documentEventLog;
 
     @Inject
     private KafkaConfigSerialiser serialiser;
@@ -44,6 +47,7 @@ public class TestKafkaConfigSerialiser {
 
                 bind(SecurityContext.class).toInstance(securityContext);
                 bind(Persistence.class).toInstance(persistence);
+                bind(DocumentEventLog.class).toInstance(documentEventLog);
                 install(new DocStoreModule());
             }
         });

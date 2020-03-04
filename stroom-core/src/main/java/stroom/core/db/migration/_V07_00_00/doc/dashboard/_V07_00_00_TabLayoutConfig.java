@@ -47,7 +47,6 @@ public class _V07_00_00_TabLayoutConfig extends _V07_00_00_LayoutConfig {
     private Integer selected;
 
     public _V07_00_00_TabLayoutConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_TabLayoutConfig(final _V07_00_00_TabConfig... tabs) {

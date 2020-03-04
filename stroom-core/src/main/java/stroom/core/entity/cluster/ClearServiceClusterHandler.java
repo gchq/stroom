@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.util.Optional;

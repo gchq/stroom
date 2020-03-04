@@ -21,7 +21,7 @@ import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.entity.shared.SQLNameConstants;
+import stroom.core.db.migration._V07_00_00.streamstore.shared.SQLNameConstants;
 import stroom.explorer.shared.ExplorerConstants;
 
 import java.sql.Connection;

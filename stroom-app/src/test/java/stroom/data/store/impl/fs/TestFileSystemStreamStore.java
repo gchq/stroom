@@ -34,14 +34,14 @@ import stroom.explorer.shared.PermissionInheritance;
 import stroom.feed.api.FeedStore;
 import stroom.index.impl.selection.VolumeConfig;
 import stroom.meta.impl.db.MetaValueConfig;
-import stroom.meta.shared.EffectiveMetaDataCriteria;
+import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaProperties;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -50,9 +50,9 @@ import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.PageRequest;
-import stroom.util.shared.Period;
+import stroom.util.Period;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -229,7 +229,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
         createMeta(FEED3, null);
 
 //        criteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
-        final BaseResultList<Meta> streams = metaService.find(criteria);
+        final ResultPage<Meta> streams = metaService.find(criteria);
         assertThat(streams.size()).isEqualTo(expectedStreams);
 
         metaService.updateStatus(new FindMetaCriteria(), Status.DELETED);
@@ -383,7 +383,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             assertThat(streamSource.getMeta().getFeedName()).isNotNull();
         }
 
-        final List<Meta> list = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS));
+        final List<Meta> list = metaService.find(FindMetaCriteria.createWithType(StreamTypeNames.RAW_EVENTS)).getValues();
 
         boolean foundOne = false;
         for (final Meta result : list) {
@@ -555,7 +555,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             streamTarget.getAttributes().put(MetaFields.REC_WRITE.getName(), "20");
         }
 
-        final Meta reloadMetaData = metaService.find(FindMetaCriteria.createFromMeta(exactMetaData)).get(0);
+        final Meta reloadMetaData = metaService.find(FindMetaCriteria.createFromMeta(exactMetaData)).getFirst();
 
         try (final Source streamSource = streamStore.openSource(reloadMetaData.getId())) {
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
@@ -587,7 +587,7 @@ class TestFileSystemStreamStore extends AbstractCoreIntegrationTest {
             exactMetaData = streamTarget.getMeta();
         }
 
-        final Meta reloadMetaData = metaService.find(FindMetaCriteria.createFromMeta(exactMetaData)).get(0);
+        final Meta reloadMetaData = metaService.find(FindMetaCriteria.createFromMeta(exactMetaData)).getFirst();
 
         try (final Source streamSource = streamStore.openSource(reloadMetaData.getId())) {
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {

@@ -34,7 +34,6 @@ public class _V07_00_00_PipelinePropertyType
     private String[] docRefTypes;
 
     public _V07_00_00_PipelinePropertyType() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_PipelineElementType getElementType() {

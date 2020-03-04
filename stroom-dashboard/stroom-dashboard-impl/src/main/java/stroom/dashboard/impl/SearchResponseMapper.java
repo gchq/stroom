@@ -111,7 +111,8 @@ public class SearchResponseMapper {
                         null,
                         null,
                         -1,
-                        true);
+                        true,
+                        false);
                 copy.add(item);
             }
         }

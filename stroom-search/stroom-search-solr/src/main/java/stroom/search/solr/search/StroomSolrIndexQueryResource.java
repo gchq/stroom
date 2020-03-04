@@ -36,6 +36,7 @@ import stroom.search.solr.shared.SolrIndexDataSourceFieldUtil;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -52,7 +53,7 @@ import java.util.stream.Collectors;
 @Api(
         value = "stroom-solr-index query - /v2",
         description = "Stroom Solr Index Query API")
-@Path("/stroom-solr-index/v2")
+@Path("/stroom-solr-index" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 public class StroomSolrIndexQueryResource implements HasHealthCheck, RestResource {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StroomSolrIndexQueryResource.class);

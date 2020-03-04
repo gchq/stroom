@@ -42,7 +42,7 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaProperties;
+import stroom.meta.api.MetaProperties;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.PipelineTestUtil;
 import stroom.pipeline.parser.CombinedParser;

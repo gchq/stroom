@@ -24,7 +24,7 @@ import stroom.datasource.api.v2.FieldTypes;
 import stroom.docref.DocRef;
 import stroom.expression.matcher.ExpressionMatcher;
 import stroom.expression.matcher.ExpressionMatcherFactory;
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.receive.rules.shared.ReceiveDataRule;
 import stroom.receive.rules.shared.ReceiveDataRules;

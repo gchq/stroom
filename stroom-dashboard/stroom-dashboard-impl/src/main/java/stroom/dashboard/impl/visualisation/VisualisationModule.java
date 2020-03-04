@@ -21,6 +21,8 @@ import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 import stroom.visualisation.shared.VisualisationDoc;
 
 public class VisualisationModule extends AbstractModule {
@@ -37,7 +39,7 @@ public class VisualisationModule extends AbstractModule {
         DocumentActionHandlerBinder.create(binder())
                 .bind(VisualisationDoc.DOCUMENT_TYPE, VisualisationStoreImpl.class);
 
-//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-//        findServiceBinder.addBinding().to(stroom.visualisation.VisualisationStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(VisualisationResourceImpl.class);
     }
 }

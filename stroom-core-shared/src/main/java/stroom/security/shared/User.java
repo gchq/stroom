@@ -1,28 +1,73 @@
 package stroom.security.shared;
 
-import stroom.docref.SharedObject;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasAuditInfo;
 
 import java.util.Objects;
 
-public class User implements HasAuditInfo, SharedObject {
+@JsonInclude(Include.NON_DEFAULT)
+public class User implements HasAuditInfo {
     public static final String ADMIN_USER_NAME = "admin";
 
+    @JsonProperty
     private Integer id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTimeMs;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private Long updateTimeMs;
+    @JsonProperty
     private String updateUser;
+    @JsonProperty
     private String name;
+    @JsonProperty
     private String uuid;
 
     /**
      * Is this user a user group or a regular user?
      */
+    @JsonProperty
     private boolean group;
+    @JsonProperty
+    private Boolean enabled;
 
-    private boolean enabled = true;
+    public User() {
+        enabled = true;
+    }
+
+    @JsonCreator
+    public User(@JsonProperty("id") final Integer id,
+                @JsonProperty("version") final Integer version,
+                @JsonProperty("createTimeMs") final Long createTimeMs,
+                @JsonProperty("createUser") final String createUser,
+                @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                @JsonProperty("updateUser") final String updateUser,
+                @JsonProperty("name") final String name,
+                @JsonProperty("uuid") final String uuid,
+                @JsonProperty("group") final boolean group,
+                @JsonProperty("enabled") final Boolean enabled) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.createUser = createUser;
+        this.updateTimeMs = updateTimeMs;
+        this.updateUser = updateUser;
+        this.name = name;
+        this.uuid = uuid;
+        this.group = group;
+        if (enabled != null) {
+            this.enabled = enabled;
+        } else {
+            this.enabled = true;
+        }
+    }
 
     public Integer getId() {
         return id;
@@ -152,43 +197,44 @@ public class User implements HasAuditInfo, SharedObject {
     }
 
     public static class Builder {
-        private final User instance;
-
-        public Builder(final User instance) {
-            this.instance = instance;
-        }
-
-        public Builder() {
-            this(new User());
-        }
+        private Integer id;
+        private Integer version;
+        private Long createTimeMs;
+        private String createUser;
+        private Long updateTimeMs;
+        private String updateUser;
+        private String name;
+        private String uuid;
+        private boolean group;
+        private boolean enabled = true;
 
         public Builder id(final int value) {
-            instance.setId(value);
+            id = value;
             return this;
         }
 
         public Builder name(final String value) {
-            instance.setName(value);
+            name = value;
             return this;
         }
 
         public Builder uuid(final String value) {
-            instance.setUuid(value);
+            uuid = value;
             return this;
         }
 
         public Builder group(final boolean value) {
-            instance.setGroup(value);
+            group = value;
             return this;
         }
 
-        public Builder enabled(final boolean enabled) {
-            instance.setEnabled(enabled);
+        public Builder enabled(final boolean value) {
+            enabled = value;
             return this;
         }
 
         public User build() {
-            return this.instance;
+            return new User(id, version, createTimeMs, createUser, updateTimeMs, updateUser, name, uuid, group, enabled);
         }
     }
 }

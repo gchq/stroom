@@ -19,7 +19,7 @@ package stroom.data.store.impl.fs;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.task.api.ServerTask;
 import stroom.task.shared.Task;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 class FsCleanSubTask extends ServerTask<VoidResult> {
     private final FsVolume volume;

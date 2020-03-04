@@ -16,6 +16,7 @@
 
 package stroom.importexport.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.FormPanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -26,10 +27,12 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.dispatch.client.AbstractSubmitCompleteHandler;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
 import stroom.importexport.client.event.ImportConfigEvent;
-import stroom.importexport.shared.ImportConfigConfirmationAction;
+import stroom.importexport.shared.ContentResource;
+import stroom.importexport.shared.ImportState;
 import stroom.util.shared.ResourceKey;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
@@ -39,18 +42,22 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import java.util.List;
+
 public class ImportConfigPresenter
         extends MyPresenter<ImportConfigPresenter.ImportConfigView, ImportConfigPresenter.ImportProxy>
         implements ImportConfigEvent.Handler {
-    private final ClientDispatchAsync dispatcher;
+    private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
+
+    private final RestFactory restFactory;
 
     @Inject
     public ImportConfigPresenter(final EventBus eventBus, final ImportConfigView view, final ImportProxy proxy,
-                                 final ClientDispatchAsync dispatcher) {
+                                 final RestFactory restFactory) {
         super(eventBus, view, proxy);
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
-        view.getForm().setAction(dispatcher.getImportFileURL());
+        view.getForm().setAction(restFactory.getImportFileURL());
         view.getForm().setEncoding(FormPanel.ENCODING_MULTIPART);
         view.getForm().setMethod(FormPanel.METHOD_POST);
     }
@@ -62,7 +69,8 @@ public class ImportConfigPresenter
         final AbstractSubmitCompleteHandler submitCompleteHandler = new AbstractSubmitCompleteHandler("Import", this) {
             @Override
             protected void onSuccess(final ResourceKey resourceKey) {
-                dispatcher.exec(new ImportConfigConfirmationAction(resourceKey))
+                final Rest<List<ImportState>> rest = restFactory.create();
+                rest
                         .onSuccess(result -> {
                             if (result.isEmpty()) {
                                 warning("The import package contains nothing that can be imported into this version of Stroom.");
@@ -71,7 +79,9 @@ public class ImportConfigPresenter
                                 ImportConfigConfirmEvent.fire(ImportConfigPresenter.this, resourceKey, result);
                             }
                         })
-                        .onFailure(caught -> error(caught.getMessage()));
+                        .onFailure(caught -> error(caught.getMessage()))
+                        .call(CONTENT_RESOURCE)
+                        .confirmImport(resourceKey);
             }
 
             @Override

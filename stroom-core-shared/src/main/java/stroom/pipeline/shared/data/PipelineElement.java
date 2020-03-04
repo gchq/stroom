@@ -16,13 +16,18 @@
 
 package stroom.pipeline.shared.data;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Objects;
 
 /**
  * <p>
@@ -47,17 +52,18 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Element", propOrder = {"id", "type"})
-public class PipelineElement implements Comparable<PipelineElement>, SharedObject {
-    private static final long serialVersionUID = -8891708244423055172L;
-
+@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder({"elementType", "source", "id", "type"})
+public class PipelineElement implements Comparable<PipelineElement> {
     @XmlTransient
+    @JsonProperty
     private PipelineElementType elementType;
-    @XmlTransient
-    private SourcePipeline source;
 
     @XmlElement(required = true)
+    @JsonProperty
     private String id;
     @XmlElement(required = true)
+    @JsonProperty
     private String type;
 
     public PipelineElement() {
@@ -66,6 +72,23 @@ public class PipelineElement implements Comparable<PipelineElement>, SharedObjec
     public PipelineElement(final String id, final String type) {
         this.id = id;
         this.type = type;
+    }
+
+    @JsonCreator
+    public PipelineElement(@JsonProperty("elementType") final PipelineElementType elementType,
+                           @JsonProperty("id") final String id,
+                           @JsonProperty("type") final String type) {
+        this.elementType = elementType;
+        this.id = id;
+        this.type = type;
+    }
+
+    public PipelineElementType getElementType() {
+        return elementType;
+    }
+
+    public void setElementType(final PipelineElementType elementType) {
+        this.elementType = elementType;
     }
 
     public String getId() {
@@ -84,49 +107,27 @@ public class PipelineElement implements Comparable<PipelineElement>, SharedObjec
         this.type = value;
     }
 
-    public SourcePipeline getSource() {
-        return source;
-    }
-
-    public void setSource(final SourcePipeline source) {
-        this.source = source;
-    }
-
     @Override
     public int compareTo(final PipelineElement o) {
         return id.compareTo(o.id);
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (obj == null || !(obj instanceof PipelineElement)) {
-            return false;
-        }
-
-        // Make sure types are the same if they have been set.
-        final PipelineElement element = (PipelineElement) obj;
-        if (type != null && element.type != null && !type.equals(element.type)) {
-            return false;
-        }
-
-        return id.equals(element.id);
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final PipelineElement that = (PipelineElement) o;
+        return id.equals(that.id) &&
+                type.equals(that.type);
     }
 
     @Override
     public int hashCode() {
-        return id.hashCode();
+        return Objects.hash(id, type);
     }
 
     @Override
     public String toString() {
         return "id=" + id + ", type=" + type;
-    }
-
-    public PipelineElementType getElementType() {
-        return elementType;
-    }
-
-    public void setElementType(final PipelineElementType elementType) {
-        this.elementType = elementType;
     }
 }

@@ -24,7 +24,7 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.shared.DocumentTypes;
 import stroom.explorer.shared.ExplorerNode;
@@ -40,10 +40,10 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
 
     @Inject
     ExplorerDropDownTreePresenter(final EventBus eventBus, final DropDownTreeView view,
-                                  final ClientDispatchAsync dispatcher) {
+                                  final RestFactory restFactory) {
         super(eventBus, view);
 
-        explorerTree = new ExtendedExplorerTree(this, dispatcher);
+        explorerTree = new ExtendedExplorerTree(this, restFactory);
         setIncludeNullSelection(true);
 
         // Add views.
@@ -168,8 +168,8 @@ class ExplorerDropDownTreePresenter extends DropDownTreePresenter
     private static class ExtendedExplorerTree extends ExplorerTree {
         private final ExplorerDropDownTreePresenter explorerDropDownTreePresenter;
 
-        public ExtendedExplorerTree(final ExplorerDropDownTreePresenter explorerDropDownTreePresenter, final ClientDispatchAsync dispatcher) {
-            super(dispatcher, false);
+        public ExtendedExplorerTree(final ExplorerDropDownTreePresenter explorerDropDownTreePresenter, final RestFactory restFactory) {
+            super(restFactory, false);
             this.explorerDropDownTreePresenter = explorerDropDownTreePresenter;
         }
 

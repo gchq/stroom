@@ -27,7 +27,7 @@ import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.widget.contextmenu.client.event.ContextMenuEvent.Handler;
@@ -45,8 +45,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
     private ExpressionUiHandlers uiHandlers;
 
     @Inject
-    public ExpressionTreePresenter(final EventBus eventBus, final ExpressionTreeView view,
-                                   final ClientDispatchAsync dispatcher) {
+    public ExpressionTreePresenter(final EventBus eventBus, final ExpressionTreeView view) {
         super(eventBus, view);
         selectionModel = new MySingleSelectionModel<>();
         view.setSelectionModel(selectionModel);
@@ -72,8 +71,8 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
         return selectionModel.addSelectionChangeHandler(handler);
     }
 
-    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<AbstractField> fields) {
-        getView().init(dispatcher, dataSource, fields);
+    public void init(final RestFactory restFactory, final DocRef dataSource, final List<AbstractField> fields) {
+        getView().init(restFactory, dataSource, fields);
     }
 
     public void read(final ExpressionOperator root) {
@@ -226,7 +225,7 @@ public class ExpressionTreePresenter extends MyPresenterWidget<ExpressionTreePre
 
         void setSelectionModel(MySingleSelectionModel<Item> selectionModel);
 
-        void init(ClientDispatchAsync dispatcher, DocRef dataSource, List<AbstractField> fields);
+        void init(RestFactory restFactory, DocRef dataSource, List<AbstractField> fields);
 
         void endEditing();
 

@@ -24,12 +24,12 @@ import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TaskProgress;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 
 
-class TerminateTaskClusterHandler extends AbstractTaskHandler<TerminateTaskClusterTask, BaseResultList<TaskProgress>> {
+class TerminateTaskClusterHandler extends AbstractTaskHandler<TerminateTaskClusterTask, ResultPage<TaskProgress>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminateTaskClusterHandler.class);
 
     private final TaskManager taskManager;
@@ -43,9 +43,9 @@ class TerminateTaskClusterHandler extends AbstractTaskHandler<TerminateTaskClust
     }
 
     @Override
-    public BaseResultList<TaskProgress> exec(final TerminateTaskClusterTask task) {
+    public ResultPage<TaskProgress> exec(final TerminateTaskClusterTask task) {
         return securityContext.secureResult(() -> {
-            BaseResultList<TaskProgress> taskedKilled = null;
+            ResultPage<TaskProgress> taskedKilled = null;
 
             final FindTaskCriteria criteria = task.getCriteria();
             if (criteria != null) {

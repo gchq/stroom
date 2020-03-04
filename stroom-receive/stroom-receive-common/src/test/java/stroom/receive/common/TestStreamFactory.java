@@ -18,7 +18,7 @@ package stroom.receive.common;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 import stroom.util.date.DateUtil;
 
 import static org.assertj.core.api.Assertions.assertThat;

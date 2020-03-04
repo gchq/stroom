@@ -16,24 +16,37 @@
 
 package stroom.node.shared;
 
-import stroom.docref.SharedObject;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.HasAuditInfo;
 
 /**
  * Represents a node for storage and processing.
  */
-public class Node implements HasAuditInfo, SharedObject {
-    private static final long serialVersionUID = 3578705325508265924L;
-
+@JsonPropertyOrder({"id", "version", "createTimeMs", "createUser", "updateTimeMs", "updateUser", "name", "url", "priority", "enabled"})
+@JsonInclude(Include.NON_DEFAULT)
+public class Node implements HasAuditInfo {
     public static final String ENTITY_TYPE = "Node";
 
+    @JsonProperty
     private Integer id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTimeMs;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private Long updateTimeMs;
+    @JsonProperty
     private String updateUser;
+    @JsonProperty
     private String name;
+    @JsonProperty
     private String url;
 
     /**
@@ -41,11 +54,45 @@ public class Node implements HasAuditInfo, SharedObject {
      * master node. The bigger the number the better chance it will become a
      * master
      */
-    private int priority = 1;
-    private boolean enabled = true;
+    @JsonProperty
+    private Integer priority;
+    @JsonProperty
+    private Boolean enabled;
 
     public Node() {
-        // Default constructor necessary for GWT serialisation.
+        priority = 1;
+        enabled = true;
+    }
+
+    @JsonCreator
+    public Node(@JsonProperty("id") final Integer id,
+                @JsonProperty("version") final Integer version,
+                @JsonProperty("createTimeMs") final Long createTimeMs,
+                @JsonProperty("createUser") final String createUser,
+                @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                @JsonProperty("updateUser") final String updateUser,
+                @JsonProperty("name") final String name,
+                @JsonProperty("url") final String url,
+                @JsonProperty("priority") final Integer priority,
+                @JsonProperty("enabled") final Boolean enabled) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.createUser = createUser;
+        this.updateTimeMs = updateTimeMs;
+        this.updateUser = updateUser;
+        this.name = name;
+        this.url = url;
+        if (priority != null) {
+            this.priority = priority;
+        } else {
+            this.priority = 1;
+        }
+        if (enabled != null) {
+            this.enabled = enabled;
+        } else {
+            this.enabled = true;
+        }
     }
 
     /**

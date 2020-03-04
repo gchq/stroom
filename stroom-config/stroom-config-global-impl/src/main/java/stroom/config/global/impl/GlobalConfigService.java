@@ -24,6 +24,7 @@ import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
+import stroom.config.global.shared.ListConfigResponse;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
@@ -33,7 +34,6 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.BaseResultList;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
 
@@ -123,8 +123,8 @@ public class GlobalConfigService {
 //        }
 //    }
 
-    public BaseResultList<ConfigProperty> list(final Predicate<ConfigProperty> filter,
-                                               final PageRequest pageRequest) {
+    public ListConfigResponse list(final Predicate<ConfigProperty> filter,
+                                   final PageRequest pageRequest) {
         Objects.requireNonNull(filter);
 
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
@@ -136,11 +136,11 @@ public class GlobalConfigService {
             return configMapper.getGlobalProperties().stream()
                     .sorted(Comparator.comparing(ConfigProperty::getName))
                     .filter(filter)
-                    .collect(BaseResultList.collector(pageRequest));
+                    .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
         });
     }
 
-    public BaseResultList<ConfigProperty> list() {
+    public ListConfigResponse list() {
         return list(v -> true, null);
     }
 

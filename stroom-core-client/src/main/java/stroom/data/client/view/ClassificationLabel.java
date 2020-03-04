@@ -41,7 +41,7 @@ public class ClassificationLabel extends Composite {
 
         clientPropertyCache.get()
                 .onSuccess(result -> {
-                    final String csv = result.getThemeConfig().getLabelColours();
+                    final String csv = result.getTheme().getLabelColours();
                     if (csv != null) {
                         final String[] parts = csv.split(",");
                         for (final String part : parts) {

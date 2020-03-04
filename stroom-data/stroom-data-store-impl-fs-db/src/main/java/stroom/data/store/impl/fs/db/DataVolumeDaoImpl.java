@@ -5,7 +5,7 @@ import stroom.data.store.impl.fs.DataVolumeDao;
 import stroom.data.store.impl.fs.FindDataVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.db.util.JooqUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -23,7 +23,7 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
     }
 
     @Override
-    public BaseResultList<DataVolume> find(final FindDataVolumeCriteria criteria) {
+    public ResultPage<DataVolume> find(final FindDataVolumeCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getSetCondition(FS_META_VOLUME.FS_VOLUME_ID, criteria.getVolumeIdSet()),
                 JooqUtil.getSetCondition(FS_META_VOLUME.META_ID, criteria.getMetaIdSet()));
@@ -37,7 +37,7 @@ public class DataVolumeDaoImpl implements DataVolumeDao {
                     .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                     .fetch()
                     .map(r -> new DataVolumeImpl(r.get(FS_META_VOLUME.META_ID), r.get(FS_VOLUME.PATH)));
-            return BaseResultList.createCriterialBasedList(list, criteria);
+            return ResultPage.createCriterialBasedList(list, criteria);
         });
     }
 

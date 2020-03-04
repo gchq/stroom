@@ -18,9 +18,8 @@ package stroom.cluster.lock.impl.db;
 
 import stroom.cluster.task.api.ClusterTask;
 import stroom.task.shared.Task;
-import stroom.util.shared.SharedBoolean;
 
-public class ClusterLockClusterTask extends ClusterTask<SharedBoolean> {
+public class ClusterLockClusterTask extends ClusterTask<Boolean> {
     private static final long serialVersionUID = -2025366263627949409L;
 
     private final Task<?> parentTask;

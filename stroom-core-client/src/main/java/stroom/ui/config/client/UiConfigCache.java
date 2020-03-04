@@ -16,15 +16,17 @@
 
 package stroom.ui.config.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.gwt.user.client.Timer;
 import com.google.web.bindery.event.shared.EventBus;
 import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.google.web.bindery.event.shared.SimpleEventBus;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.config.global.shared.GlobalConfigResource;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
-import stroom.ui.config.shared.FetchUiConfigAction;
 import stroom.ui.config.shared.UiConfig;
 import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
@@ -34,16 +36,17 @@ import javax.inject.Singleton;
 
 @Singleton
 public class UiConfigCache implements HasHandlers {
+    private static final GlobalConfigResource CONFIG_RESOURCE = GWT.create(GlobalConfigResource.class);
     private static final int ONE_MINUTE = 1000 * 60;
 
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private UiConfig clientProperties;
     private boolean refreshing;
     private EventBus eventBus;
 
     @Inject
-    public UiConfigCache(final ClientDispatchAsync dispatcher, final ClientSecurityContext securityContext) {
-        this.dispatcher = dispatcher;
+    public UiConfigCache(final RestFactory restFactory, final ClientSecurityContext securityContext) {
+        this.restFactory = restFactory;
 
         final Timer refreshTimer = new Timer() {
             @Override
@@ -68,12 +71,15 @@ public class UiConfigCache implements HasHandlers {
 
     public Future<UiConfig> refresh() {
         final FutureImpl<UiConfig> future = new FutureImpl<>();
-        dispatcher.exec(new FetchUiConfigAction())
+        final Rest<UiConfig> rest = restFactory.create();
+        rest
                 .onSuccess(result -> {
                     clientProperties = result;
                     future.setResult(result);
                     PropertyChangeEvent.fire(UiConfigCache.this, result);
-                }).onFailure(future::setThrowable);
+                }).onFailure(future::setThrowable)
+                .call(CONFIG_RESOURCE)
+                .fetchUiConfig();
         return future;
     }
 

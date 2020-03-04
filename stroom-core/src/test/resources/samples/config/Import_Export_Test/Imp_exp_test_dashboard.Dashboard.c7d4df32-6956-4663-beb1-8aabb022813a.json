@@ -93,36 +93,28 @@
       "tabs" : [ {
         "id" : "query-JT8D7"
       } ],
-      "selected" : 0,
-      "visibleTabCount" : 1,
-      "allTabCount" : 1
+      "selected" : 0
     }, {
       "type" : "tabLayout",
       "preferredSize" : { },
       "tabs" : [ {
         "id" : "table-IIO1T"
       } ],
-      "selected" : 0,
-      "visibleTabCount" : 1,
-      "allTabCount" : 1
+      "selected" : 0
     }, {
       "type" : "tabLayout",
       "preferredSize" : { },
       "tabs" : [ {
         "id" : "vis-8SIW1"
       } ],
-      "selected" : 0,
-      "visibleTabCount" : 1,
-      "allTabCount" : 1
+      "selected" : 0
     }, {
       "type" : "tabLayout",
       "preferredSize" : { },
       "tabs" : [ {
         "id" : "text-K9XC0"
       } ],
-      "selected" : 0,
-      "visibleTabCount" : 1,
-      "allTabCount" : 1
+      "selected" : 0
     } ]
   }
 }

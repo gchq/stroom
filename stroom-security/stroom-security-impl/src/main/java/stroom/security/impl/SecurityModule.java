@@ -18,7 +18,7 @@ package stroom.security.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.EntityEvent;
+import stroom.util.entity.EntityEvent;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;

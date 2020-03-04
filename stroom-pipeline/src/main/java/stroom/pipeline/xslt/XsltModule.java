@@ -48,7 +48,8 @@ public class XsltModule extends AbstractModule {
                 .bind(XsltDoc.DOCUMENT_TYPE, XsltStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(XsltResource.class);
+                .addBinding(XsltResourceImpl.class)
+                .addBinding(NewUiXsltResource.class);
 
     }
 }

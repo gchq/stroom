@@ -5,7 +5,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;

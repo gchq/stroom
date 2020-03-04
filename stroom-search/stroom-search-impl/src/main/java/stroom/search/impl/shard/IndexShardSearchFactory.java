@@ -16,7 +16,6 @@ import stroom.search.impl.SearchException;
 import stroom.search.impl.SearchExpressionQueryBuilder;
 import stroom.search.impl.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.impl.shard.IndexShardSearchTask.IndexShardQueryFactory;
-import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.logging.LambdaLogger;
@@ -37,7 +36,7 @@ public class IndexShardSearchFactory {
     private final IndexShardSearchConfig indexShardSearchConfig;
     private final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider;
     private final WordListProvider dictionaryStore;
-    private final ExecutorProvider executorProvider;
+    private final Provider<TaskContext> taskContextProvider;
     private final int maxBooleanClauseCount;
 
     @Inject
@@ -46,14 +45,14 @@ public class IndexShardSearchFactory {
                             final IndexShardSearchConfig indexShardSearchConfig,
                             final Provider<IndexShardSearchTaskHandler> indexShardSearchTaskHandlerProvider,
                             final WordListProvider dictionaryStore,
-                            final ExecutorProvider executorProvider,
+                            final Provider<TaskContext> taskContextProvider,
                             final SearchConfig searchConfig) {
         this.indexStore = indexStore;
         this.indexShardSearchTaskExecutor = indexShardSearchTaskExecutor;
         this.indexShardSearchConfig = indexShardSearchConfig;
         this.indexShardSearchTaskHandlerProvider = indexShardSearchTaskHandlerProvider;
         this.dictionaryStore = dictionaryStore;
-        this.executorProvider = executorProvider;
+        this.taskContextProvider = taskContextProvider;
         this.maxBooleanClauseCount = searchConfig.getMaxBooleanClauseCount();
     }
 
@@ -86,7 +85,7 @@ public class IndexShardSearchFactory {
                     queryFactory,
                     task.getStoredFields(),
                     indexShardSearchConfig.getMaxThreadsPerTask(),
-                    executorProvider,
+                    taskContextProvider.get(),
                     indexShardSearchTaskHandlerProvider,
                     tracker);
 

@@ -42,7 +42,7 @@ import stroom.task.api.TaskTerminatedException;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import java.util.ArrayList;
 import java.util.HashSet;

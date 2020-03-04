@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
-import stroom.security.shared.UserAppPermissions;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

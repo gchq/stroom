@@ -27,13 +27,15 @@ import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.RestResource;
 
 import javax.servlet.http.HttpSessionListener;
+import java.util.concurrent.Executor;
 
 public class TaskModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ExecutorProvider.class).to(ExecutorProviderImpl.class);
+        bind(Executor.class).toProvider(ExecutorProviderImpl.class);
         bind(TaskManager.class).to(TaskManagerImpl.class);
-        bind(TaskContext.class).to(TaskContextImpl.class);
+        bind(TaskContext.class).toProvider(TaskContextProvider.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(TaskResourceImpl.class);

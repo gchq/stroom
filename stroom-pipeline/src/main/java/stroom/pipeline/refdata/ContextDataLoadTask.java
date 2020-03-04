@@ -21,7 +21,7 @@ import stroom.meta.shared.Meta;
 import stroom.pipeline.refdata.store.RefDataStore;
 import stroom.pipeline.refdata.store.RefStreamDefinition;
 import stroom.task.api.ServerTask;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import java.io.InputStream;
 

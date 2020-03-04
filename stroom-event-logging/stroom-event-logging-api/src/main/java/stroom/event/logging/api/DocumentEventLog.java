@@ -19,9 +19,7 @@ package stroom.event.logging.api;
 
 import event.logging.Query;
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.BaseResultList;
 import stroom.util.shared.PageResponse;
-import stroom.util.shared.ResultPage;
 
 public interface DocumentEventLog {
     void create(Object entity, Throwable ex);

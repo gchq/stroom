@@ -6,7 +6,39 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+* Issue **#1399** : Removed error logging for expected exceptions in TaskExecutor. 
+
+* Fix missing $ in start.sh
+
+* Issue **#1387** : Changed the way tasks are executed to reduce changes of unhandled execution errors.
+
+* Issue **#1378** : Improved logging detail when processor filters fail.
+
+* Issue **#1379** : Fixed issue where you couldn't open a processor filter if parts of the filter referenced deleted items.
+
+* Issue **#1378** : Improved logging detail when processor filters fail.
+
+* Issue **#1382** : Added `decode-url` and `encode-url` XSLT functions.
+
+* Issue **#655** : Fixed SQL Stats queries ignoring the enabled state of the dashboard query terms.
+
+* Issue **#1362** : Fixed issue where hiding dashboard annotation fields removed them.
+
+* Issue **#1357** : Fixed dragging tabs in dashboard with hidden panes to create a new split.
+
+* Issue **#1357** : Fixed dragging tabs in dashboard with hidden panes.
+
+* Issue **#1368** : Fixed FindReplaceFilter as it wasn't working when used in conjunction with Data Splitter.
+
+* Issue **#1361** : Changed the way headers are parsed for the HttpCall XSLT function.
+
+
+## [v7.0-beta.21] - 2020-02-24
+
 * Add null checks to DB migration.
+
+* Add deletion of constraint `IDX_SHARD_FK_IDX_ID` to migration script.
 
 
 ## [v7.0-beta.20] - 2020-02-13
@@ -1964,7 +1996,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.20...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.21...HEAD
+[v7.0-beta.21]: https://github.com/gchq/stroom/compare/v7.0-beta.20...v7.0-beta.21
 [v7.0-beta.20]: https://github.com/gchq/stroom/compare/v7.0-beta.19...v7.0-beta.20
 [v7.0-beta.19]: https://github.com/gchq/stroom/compare/v7.0-beta.18...v7.0-beta.19
 [v7.0-beta.18]: https://github.com/gchq/stroom/compare/v7.0-beta.17...v7.0-beta.18

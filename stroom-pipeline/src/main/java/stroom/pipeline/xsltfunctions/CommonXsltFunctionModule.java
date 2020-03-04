@@ -20,7 +20,9 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         bindFunction(ColToFunction.class);
         bindFunction(CurrentTimeFunction.class);
         bindFunction(CurrentUserFunction.class);
+        bindFunction(DecodeUrlFunction.class);
         bindFunction(DictionaryFunction.class);
+        bindFunction(EncodeUrlFunction.class);
         bindFunction(FeedAttributeFunction.class);
         bindFunction(FeedNameFunction.class);
         bindFunction(FetchJsonFunction.class);
@@ -83,10 +85,28 @@ public class CommonXsltFunctionModule extends AbstractXsltFunctionModule {
         }
     }
 
+    private static class DecodeUrlFunction extends StroomExtensionFunctionDefinition<DecodeUrl> {
+        @Inject
+        DecodeUrlFunction(final Provider<DecodeUrl> functionCallProvider) {
+            super("decode-url", 1, 1, new SequenceType[]{
+                    SequenceType.SINGLE_STRING
+            }, SequenceType.OPTIONAL_STRING, functionCallProvider);
+        }
+    }
+
     private static class DictionaryFunction extends StroomExtensionFunctionDefinition<Dictionary> {
         @Inject
         DictionaryFunction(final Provider<Dictionary> functionCallProvider) {
             super("dictionary", 1, 1, new SequenceType[]{
+                    SequenceType.SINGLE_STRING
+            }, SequenceType.OPTIONAL_STRING, functionCallProvider);
+        }
+    }
+
+    private static class EncodeUrlFunction extends StroomExtensionFunctionDefinition<EncodeUrl> {
+        @Inject
+        EncodeUrlFunction(final Provider<EncodeUrl> functionCallProvider) {
+            super("encode-url", 1, 1, new SequenceType[]{
                     SequenceType.SINGLE_STRING
             }, SequenceType.OPTIONAL_STRING, functionCallProvider);
         }

@@ -18,25 +18,20 @@ package stroom.data.store.impl.fs;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.data.store.impl.fs.shared.DeleteFsVolumeAction;
-import stroom.data.store.impl.fs.shared.FetchFsVolumeAction;
-import stroom.data.store.impl.fs.shared.FindFsVolumeAction;
-import stroom.data.store.impl.fs.shared.FlushFsVolumeStatusAction;
-import stroom.data.store.impl.fs.shared.UpdateFsVolumeAction;
-import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.EntityEvent.Handler;
+import stroom.util.entity.EntityEvent;
+import stroom.util.entity.EntityEvent.Handler;
 import stroom.task.api.TaskHandlerBinder;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 public class FsDataStoreTaskHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
         TaskHandlerBinder.create(binder())
-                .bind(FsCleanSubTask.class, FsCleanSubTaskHandler.class)
-                .bind(DeleteFsVolumeAction.class, DeleteFSVolumeHandler.class)
-                .bind(FetchFsVolumeAction.class, FetchFSVolumeHandler.class)
-                .bind(FindFsVolumeAction.class, FindFsVolumeHandler.class)
-                .bind(FlushFsVolumeStatusAction.class, FlushFsVolumeStatusHandler.class)
-                .bind(UpdateFsVolumeAction.class, UpdateFsVolumeHandler.class);
+                .bind(FsCleanSubTask.class, FsCleanSubTaskHandler.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(FsVolumeResourceImpl.class);
 
         final Multibinder<Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(FsVolumeService.class);

@@ -18,8 +18,8 @@ package stroom.core.entity.event;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.EntityEventBus;
+import stroom.util.entity.EntityEvent;
+import stroom.util.entity.EntityEventBus;
 
 public class EntityEventModule extends AbstractModule {
     @Override

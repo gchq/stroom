@@ -16,19 +16,21 @@
 
 package stroom.task.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.TreeAction;
 
 import java.util.Set;
 
+@JsonInclude(JsonInclude.Include.NON_DEFAULT)
 public class FindTaskProgressRequest implements TreeAction<TaskProgress> {
-    private FindTaskProgressCriteria criteria;
+    @JsonProperty
+    private final FindTaskProgressCriteria criteria;
 
-    public FindTaskProgressRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public FindTaskProgressRequest(final FindTaskProgressCriteria criteria) {
+    @JsonCreator
+    public FindTaskProgressRequest(@JsonProperty("criteria") final FindTaskProgressCriteria criteria) {
         this.criteria = criteria;
     }
 
@@ -36,21 +38,15 @@ public class FindTaskProgressRequest implements TreeAction<TaskProgress> {
         return criteria;
     }
 
-    public void setCriteria(final FindTaskProgressCriteria criteria) {
-        this.criteria = criteria;
-    }
-
     @JsonIgnore
     public Set<TaskProgress> getExpandedRows() {
         return null;
     }
 
-    @JsonIgnore
     public void setRowExpanded(final TaskProgress row, final boolean open) {
         criteria.setExpanded(row, open);
     }
 
-    @JsonIgnore
     public boolean isRowExpanded(final TaskProgress row) {
         return criteria.isExpanded(row);
     }

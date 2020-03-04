@@ -17,21 +17,15 @@
 package stroom.importexport.impl;
 
 import com.google.inject.AbstractModule;
-import stroom.importexport.shared.ExportConfigAction;
-import stroom.importexport.shared.FetchDependenciesAction;
-import stroom.importexport.shared.ImportConfigAction;
-import stroom.importexport.shared.ImportConfigConfirmationAction;
-import stroom.task.api.TaskHandlerBinder;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 public class ImportExportHandlerModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(DependencyService.class).to(DependencyServiceImpl.class);
 
-        TaskHandlerBinder.create(binder())
-                .bind(ExportConfigAction.class, ExportConfigHandler.class)
-                .bind(FetchDependenciesAction.class, FetchDependenciesHandler.class)
-                .bind(ImportConfigConfirmationAction.class, ImportConfigConfirmationHandler.class)
-                .bind(ImportConfigAction.class, ImportConfigHandler.class);
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(ContentResourceImpl.class);
     }
 }
