@@ -57,6 +57,11 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         this.locator = locator;
     }
 
+    /*
+    Warning! This software has not been tested recently and is likely to need some rework as a number of things
+    have moved on, including the way that KafkaProducer works.
+    todo test and fix as appropriate!
+     */
     @Override
     public void startProcessing() {
         super.startProcessing();

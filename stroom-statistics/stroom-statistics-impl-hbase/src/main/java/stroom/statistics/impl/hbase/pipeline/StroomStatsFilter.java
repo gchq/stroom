@@ -55,6 +55,11 @@ class StroomStatsFilter extends AbstractKafkaProducerFilter {
         return recordKey;
     }
 
+    /*
+    Warning! This software has not been tested recently and is likely to need some rework as a number of things
+    have changed around it.
+    todo test and fix as appropriate!
+     */
     @Override
     public void startProcessing() {
         if (stroomStatStoreRef == null) {
