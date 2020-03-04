@@ -145,7 +145,7 @@ public class ConfigPropertyClusterValuesListPresenter
 
     public void refresh() {
         final List<ClusterValuesRow> rows = ClusterValuesRow.buildTree(effectiveValueToNodesMap, treeAction);
-        dataProvider.setList(rows);
-        dataProvider.refresh();
+        dataProvider.setCompleteList(rows);
+        dataProvider.refresh(true);
     }
 }

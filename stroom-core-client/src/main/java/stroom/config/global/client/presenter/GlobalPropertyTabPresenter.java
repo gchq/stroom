@@ -24,7 +24,6 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.data.table.client.Refreshable;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -32,7 +31,7 @@ import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
 public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalPropertyTabPresenter.GlobalPropertyTabView>
-        implements Refreshable, ManageGlobalPropertyUiHandlers {
+        implements ManageGlobalPropertyUiHandlers {
 
     public static final String LIST = "LIST";
 
@@ -64,11 +63,6 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
     }
 
     @Override
-    public void refresh() {
-        listPresenter.refresh();
-    }
-
-    @Override
     protected void onBind() {
         registerHandler(listPresenter.getView().getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
@@ -84,6 +78,7 @@ public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalProper
             }));
         }
         super.onBind();
+        listPresenter.refresh();
     }
 
     private void enableButtons() {

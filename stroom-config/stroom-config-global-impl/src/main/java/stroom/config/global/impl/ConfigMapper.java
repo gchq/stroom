@@ -28,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.ConfigPropertyValidationException;
+import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
 import stroom.util.config.FieldMapper;
 import stroom.util.config.PropertyUtil;
@@ -210,6 +211,41 @@ public class ConfigMapper {
             return convertToObject(valueAsString, genericType);
         } else {
             throw new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath));
+        }
+    }
+
+    void decorateAllDbConfigProperty(final Collection<ConfigProperty> dbConfigProperties) {
+
+        synchronized (this) {
+            // Ensure our in memory global prop
+            dbConfigProperties.forEach(this::decorateDbConfigProperty);
+
+            // Now ensure all propertyMap props not in the list of db props have no db override set.
+            // I.e. another node could have removed the db override.
+
+            Map<PropertyPath, ConfigProperty> dbPropsMap = dbConfigProperties.stream()
+                .collect(Collectors.toMap(ConfigProperty::getName, Function.identity()));
+
+            globalPropertiesMap.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().hasDatabaseOverride())
+                .filter(entry -> !dbPropsMap.containsKey(entry.getKey()))
+                .forEach(entry -> {
+                    final ConfigProperty globalProp = entry.getValue();
+                    globalProp.setDatabaseOverrideValue(OverrideValue.unSet(String.class));
+
+                    final Prop prop = propertyMap.get(entry.getKey());
+                    if (prop != null) {
+                        // Now set the new effective value on our guice bound appConfig instance
+                        final Type genericType = prop.getValueType();
+                        final Object typedValue = convertToObject(
+                            globalProp.getEffectiveValue().orElse(null), genericType);
+                        prop.setValueOnConfigObject(typedValue);
+                    } else {
+                        throw new RuntimeException(LogUtil.message(
+                            "Not expecting prop to be null for {}", entry.getKey().toString()));
+                    }
+                });
         }
     }
 

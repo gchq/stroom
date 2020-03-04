@@ -23,41 +23,104 @@ import stroom.entity.client.presenter.TreeRowHandler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class ListDataProvider<R> extends AsyncDataProvider<R> {
+    private Consumer<Range> listUpdater;
     private List<R> list;
     private Range requestedRange;
     private TreeRowHandler<R> treeRowHandler;
+    private int totalSize;
+    private boolean isFullList;
 
     @Override
     protected void onRangeChanged(final HasData<R> display) {
-        fetch(display.getVisibleRange());
+        fetch(display.getVisibleRange(), true);
     }
 
-    public void setList(final List<R> list) {
+    public void setCompleteList(final List<R> list) {
         this.list = list;
-        this.requestedRange = new Range(0, list.size());
+        this.isFullList = true;
+        if (this.requestedRange == null) {
+            this.requestedRange = new Range(0, list.size());
+        }
+        this.totalSize = list.size();
+        redraw(requestedRange);
     }
 
-    private void fetch(final Range range) {
+//    public void setPartialList(final List<R> list, final Range range, final int totalSize) {
+//        this.list = list;
+//        this.requestedRange = range;
+//        this.totalSize = totalSize;
+//    }
+    public void setPartialList(final List<R> partialList, final int totalSize) {
+        this.list = partialList;
+        this.isFullList = false;
+        if (this.requestedRange == null) {
+            this.requestedRange = new Range(0, partialList.size());
+        }
+        this.totalSize = totalSize;
+        redraw(requestedRange);
+    }
+
+    /**
+     * @param listUpdater This consumer is expected to get new data and
+     *                    call setCompleteList or setPartialList with the new data
+     */
+    void setListUpdater(final Consumer<Range> listUpdater) {
+        this.listUpdater = listUpdater;
+    }
+
+    public List<R> getList() {
+        return list;
+    }
+
+    public Range getRequestedRange() {
+        return requestedRange;
+    }
+
+    private void fetch(final Range range, final boolean isRedrawRequired) {
         if (range != null) {
             requestedRange = range;
-            if (list != null) {
-                final List<R> subList = new ArrayList<>();
-                for (int i = range.getStart(); i < (range.getStart() + range.getLength()) && i < list.size(); i++) {
-                    subList.add(list.get(i));
-                }
-                if (treeRowHandler != null) {
-                    treeRowHandler.handle(list);
-                }
-                updateRowData(range.getStart(), subList);
-                updateRowCount(list.size(), true);
+
+            if (listUpdater != null) {
+                listUpdater.accept(range);
+            }
+
+            if (isRedrawRequired) {
+                redraw(range);
             }
         }
     }
 
-    public void refresh() {
-        fetch(requestedRange);
+    private void redraw(final Range range) {
+        if (list != null) {
+            final List<R> subList;
+            if (isFullList) {
+                // list is ALL the data so make a sub list from the range
+                subList = new ArrayList<>();
+                for (int i = range.getStart(); i < (range.getStart() + range.getLength()) && i < list.size(); i++) {
+                    subList.add(list.get(i));
+                }
+            } else {
+                // list is not all the data so already represents a range, so use it as is
+                subList = list;
+            }
+            if (treeRowHandler != null) {
+                treeRowHandler.handle(list);
+            }
+
+            updateRowData(range.getStart(), subList);
+            updateRowCount(totalSize, true);
+        }
+    }
+
+    public void redraw() {
+        redraw(requestedRange);
+    }
+
+    public void refresh(final boolean isRedrawRequired) {
+        fetch(requestedRange, isRedrawRequired);
     }
 
     public TreeRowHandler<R> getTreeRowHandler() {

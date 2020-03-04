@@ -36,11 +36,12 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.BaseResultList;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
-import stroom.util.shared.ResultList;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
@@ -87,24 +88,23 @@ public class GlobalConfigService {
     private void updateConfigFromDb(final boolean deleteUnknownProps) {
         // Get all props held in the DB, which may be a subset of those in the config
         // object model
-        dao.list().forEach(dbConfigProperty -> {
-            final PropertyPath fullPath = dbConfigProperty.getName();
-            if (fullPath != null) {
 
-                try {
-                    // Update the object model and global config property with the value from the DB
-                    configMapper.decorateDbConfigProperty(dbConfigProperty);
-                } catch (ConfigMapper.UnknownPropertyException e) {
-                    LOGGER.debug("Property {} is in the database but not in the appConfig model", fullPath);
-                    if (deleteUnknownProps) {
-                        // Delete old property that is not in the object model
-                        deleteFromDb(dbConfigProperty.getName());
-                    }
+        final List<ConfigProperty> allDbProps = dao.list();
+        final List<ConfigProperty> validDbProps = new ArrayList<>(allDbProps.size());
+
+        allDbProps.forEach(dbConfigProp -> {
+            if (dbConfigProp.getName() == null || !configMapper.validatePropertyPath(dbConfigProp.getName())) {
+                LOGGER.debug("Property {} is in the database but not in the appConfig model",
+                    dbConfigProp.getName().toString());
+                if (deleteUnknownProps) {
+                    deleteFromDb(dbConfigProp.getName());
                 }
             } else {
-                LOGGER.warn("Bad config record in the database {}", dbConfigProperty);
+                validDbProps.add(dbConfigProp);
             }
         });
+
+        configMapper.decorateAllDbConfigProperty(validDbProps);
     }
 
     /**
@@ -124,7 +124,7 @@ public class GlobalConfigService {
 //    }
 
     public BaseResultList<ConfigProperty> list(final Predicate<ConfigProperty> filter,
-                                           final PageRequest pageRequest) {
+                                               final PageRequest pageRequest) {
         Objects.requireNonNull(filter);
 
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
