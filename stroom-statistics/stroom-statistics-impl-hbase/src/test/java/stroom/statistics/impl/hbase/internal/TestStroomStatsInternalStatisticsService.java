@@ -69,7 +69,7 @@ class TestStroomStatsInternalStatisticsService {
 
         //two different doc refs so two calls to producer
         Mockito.verify(mockKafkaProducer, Mockito.times(2))
-                .send(Mockito.any(ProducerRecord.class), Mockito.any());
+                .send(Mockito.any(ProducerRecord.class));
     }
 
     @Test
@@ -99,7 +99,7 @@ class TestStroomStatsInternalStatisticsService {
         //two different doc refs and batch size of 10,
         //so kafka msg count is 10 for A and 2 for B, thus 12
         Mockito.verify(mockKafkaProducer, Mockito.times(12))
-                .send(Mockito.any(ProducerRecord.class), Mockito.any());
+                .send(Mockito.any(ProducerRecord.class));
     }
 
     private List<InternalStatisticEvent> createNEvents(final InternalStatisticKey key, final int count) {
