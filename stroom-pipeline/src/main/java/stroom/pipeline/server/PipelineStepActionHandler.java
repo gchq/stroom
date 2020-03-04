@@ -28,7 +28,6 @@ import stroom.task.server.TaskManager;
 import stroom.util.spring.StroomScope;
 
 import javax.inject.Inject;
-import java.util.concurrent.CompletableFuture;
 
 @TaskHandlerBean(task = PipelineStepAction.class)
 @Scope(value = StroomScope.TASK)

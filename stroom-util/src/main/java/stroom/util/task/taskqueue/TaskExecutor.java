@@ -200,12 +200,12 @@ public abstract class TaskExecutor {
                                     totalThreads.decrementAndGet();
                                     signalAll();
                                     if (t != null) {
-                                        LOGGER.error(t.getMessage(), t);
+                                        LOGGER.debug(t.getMessage(), t);
                                     }
                                 });
                     } catch (final RuntimeException e) {
                         totalThreads.decrementAndGet();
-                        LOGGER.error(e.getMessage(), e);
+                        LOGGER.debug(e.getMessage(), e);
                     }
                 }
             }
