@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.3] - 2020-03-04
+
 * Issue **#1399** : Removed error logging for expected exceptions in TaskExecutor. 
 
 * Fix missing $ in start.sh
@@ -2100,7 +2103,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.2...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.3...6.1
+[v6.1.3]: https://github.com/gchq/stroom/compare/v6.1.2...v6.1.3
 [v6.1.2]: https://github.com/gchq/stroom/compare/v6.1.1...v6.1.2
 [v6.1.1]: https://github.com/gchq/stroom/compare/v6.1.0...v6.1.1
 [v6.1.0]: https://github.com/gchq/stroom/compare/v6.1-beta.19...v6.1.0
