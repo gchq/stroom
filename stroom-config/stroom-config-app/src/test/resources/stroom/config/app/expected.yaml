@@ -674,7 +674,7 @@ appConfig:
     nodeName: null
     maintenanceMessage: null
     defaultMaxResults: "1000000,100,10,1"
-    helpUrl: null
+    helpUrl: "https://gchq.github.io/stroom-docs"
     namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
     htmlTitle: "Stroom"
     oncontextmenu: "return false;"
