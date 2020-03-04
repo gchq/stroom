@@ -67,6 +67,17 @@ public class ShowPopupEvent extends GwtEvent<ShowPopupEvent.Handler> {
         fire(handlers, presenterWidget, popupType, null, popupSize, caption, popupUiHandlers, null, autoHidePartner);
     }
 
+    public static void fire(final HasHandlers handlers,
+                            final PresenterWidget<?> presenterWidget,
+                            final PopupType popupType,
+                            final PopupSize popupSize,
+                            final PopupPosition popupPosition,
+                            final String caption,
+                            final PopupUiHandlers popupUiHandlers,
+                            final Element... autoHidePartner) {
+        fire(handlers, presenterWidget, popupType, popupPosition, popupSize, caption, popupUiHandlers, null, autoHidePartner);
+    }
+
     /**
      * Show a popup center of the screen and sized to it's content with optional
      * modality.

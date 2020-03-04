@@ -38,19 +38,19 @@
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>Use Global Override:</g:cell>
+            <g:cell>Set Database value:</g:cell>
             <g:customCell>
                 <tickbox:TickBox ui:field="useOverride"/>
             </g:customCell>
         </g:row>
         <g:row styleName="{style.textArea}">
-            <g:cell>Global Value:</g:cell>
+            <g:cell>Database Value:</g:cell>
             <g:customCell>
                 <g:TextArea ui:field="databaseValue" width="100%" addStyleNames="globalProperties"/>
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>Global Value:</g:cell>
+            <g:cell>Database Value:</g:cell>
             <g:customCell>
                 <g:PasswordTextBox ui:field="databaseValuePassword" width="100%" addStyleNames="globalProperties"/>
             </g:customCell>
@@ -59,7 +59,7 @@
             <g:customCell>
                 <g:FlowPanel>
                     <g:Label ui:text="Node YAML Value:"/>
-                    <b:ButtonPanel ui:field="buttonPanel"/>
+                    <b:ButtonPanel ui:field="yamlValueButtonPanel"/>
                 </g:FlowPanel>
             </g:customCell>
             <g:customCell>
@@ -67,13 +67,23 @@
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>Effective Value:</g:cell>
+            <g:customCell>
+                <g:FlowPanel>
+                    <g:Label ui:text="Node Effective Value:"/>
+                    <b:ButtonPanel ui:field="effectiveValueButtonPanel"/>
+                </g:FlowPanel>
+            </g:customCell>
             <g:customCell>
                 <g:TextArea ui:field="effectiveValue" width="100%" addStyleNames="globalProperties {style.textAreaReducedHeight}"/>
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>Data Type:</g:cell>
+            <g:customCell>
+                <g:HorizontalPanel>
+                    <g:Label ui:text="Data Type:"/>
+                    <b:ButtonPanel ui:field="dataTypeButtonPanel"/>
+                </g:HorizontalPanel>
+            </g:customCell>
             <g:customCell>
                 <g:Label ui:field="dataType" width="100%" addStyleNames="globalProperties"/>
             </g:customCell>

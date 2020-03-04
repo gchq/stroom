@@ -23,7 +23,8 @@ import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.config.global.impl.validation.ConfigValidator;
 import stroom.config.global.shared.ConfigProperty;
-import stroom.config.global.shared.FindGlobalConfigCriteria;
+import stroom.config.global.shared.ConfigPropertyValidationException;
+import stroom.config.global.shared.ListConfigResponse;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
@@ -33,15 +34,17 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.PropertyPath;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 @Singleton // Needs to be singleton to prevent initialise being called multiple times
 public class GlobalConfigService {
@@ -85,24 +88,23 @@ public class GlobalConfigService {
     private void updateConfigFromDb(final boolean deleteUnknownProps) {
         // Get all props held in the DB, which may be a subset of those in the config
         // object model
-        dao.list().forEach(dbConfigProperty -> {
-            final PropertyPath fullPath = dbConfigProperty.getName();
-            if (fullPath != null) {
 
-                try {
-                    // Update the object model and global config property with the value from the DB
-                    configMapper.decorateDbConfigProperty(dbConfigProperty);
-                } catch (ConfigMapper.UnknownPropertyException e) {
-                    LOGGER.debug("Property {} is in the database but not in the appConfig model", fullPath);
-                    if (deleteUnknownProps) {
-                        // Delete old property that is not in the object model
-                        deleteFromDb(dbConfigProperty.getName());
-                    }
+        final List<ConfigProperty> allDbProps = dao.list();
+        final List<ConfigProperty> validDbProps = new ArrayList<>(allDbProps.size());
+
+        allDbProps.forEach(dbConfigProp -> {
+            if (dbConfigProp.getName() == null || !configMapper.validatePropertyPath(dbConfigProp.getName())) {
+                LOGGER.debug("Property {} is in the database but not in the appConfig model",
+                    dbConfigProp.getName().toString());
+                if (deleteUnknownProps) {
+                    deleteFromDb(dbConfigProp.getName());
                 }
             } else {
-                LOGGER.warn("Bad config record in the database {}", dbConfigProperty);
+                validDbProps.add(dbConfigProp);
             }
         });
+
+        configMapper.decorateAllDbConfigProperty(validDbProps);
     }
 
     /**
@@ -112,16 +114,19 @@ public class GlobalConfigService {
         updateConfigFromDb();
     }
 
-    public List<ConfigProperty> list(final FindGlobalConfigCriteria criteria) {
-        if (criteria.getName() != null) {
-            return list(configProperty ->
-                criteria.getName().isMatch(configProperty.getName().toString()));
-        } else {
-            return list();
-        }
-    }
+//    public List<ConfigProperty> list(final FindGlobalConfigCriteria criteria) {
+//        if (criteria.getName() != null) {
+//            return list(configProperty ->
+//                criteria.getName().isMatch(configProperty.getName().toString()));
+//        } else {
+//            return list();
+//        }
+//    }
 
-    private List<ConfigProperty> list(final Predicate<ConfigProperty> filter) {
+    public ListConfigResponse list(final Predicate<ConfigProperty> filter,
+                                   final PageRequest pageRequest) {
+        Objects.requireNonNull(filter);
+
         return securityContext.secureResult(PermissionNames.MANAGE_PROPERTIES_PERMISSION, () -> {
             // Ensure the global config properties are up to date with the db values
             // TODO This is not ideal as each time the filter is changed we hit the db to
@@ -131,12 +136,12 @@ public class GlobalConfigService {
             return configMapper.getGlobalProperties().stream()
                     .sorted(Comparator.comparing(ConfigProperty::getName))
                     .filter(filter)
-                    .collect(Collectors.toList());
+                    .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
         });
     }
 
-    public List<ConfigProperty> list() {
-        return list(v -> true);
+    public ListConfigResponse list() {
+        return list(v -> true, null);
     }
 
     /**
@@ -287,7 +292,7 @@ public class GlobalConfigService {
                         .append("\n")
                         .append(error.getMessage());
             });
-            throw new RuntimeException(stringBuilder.toString());
+            throw new ConfigPropertyValidationException(stringBuilder.toString());
         }
     }
 

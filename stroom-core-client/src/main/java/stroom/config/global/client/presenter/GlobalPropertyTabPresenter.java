@@ -17,23 +17,22 @@
 package stroom.config.global.client.presenter;
 
 import com.google.gwt.dom.client.NativeEvent;
-import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
-import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.config.global.shared.ConfigProperty;
-import stroom.config.global.client.presenter.ManageGlobalPropertyPresenter.ManageGlobalPropertyView;
+import stroom.content.client.presenter.ContentTabPresenter;
+import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
-import stroom.util.shared.StringCriteria.MatchStyle;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 
-public class ManageGlobalPropertyPresenter extends
-        MyPresenterWidget<ManageGlobalPropertyView> implements ManageGlobalPropertyUiHandlers, HasHandlers {
+public class GlobalPropertyTabPresenter extends ContentTabPresenter<GlobalPropertyTabPresenter.GlobalPropertyTabView>
+        implements ManageGlobalPropertyUiHandlers {
+
     public static final String LIST = "LIST";
 
     private final ManageGlobalPropertyListPresenter listPresenter;
@@ -41,18 +40,26 @@ public class ManageGlobalPropertyPresenter extends
     private ButtonView openButton;
 
     @Inject
-    public ManageGlobalPropertyPresenter(final EventBus eventBus, final ManageGlobalPropertyView view,
-                                         final ManageGlobalPropertyListPresenter listPresenter,
-                                         final Provider<ManageGlobalPropertyEditPresenter> editProvider) {
+    public GlobalPropertyTabPresenter(final EventBus eventBus,
+                                      final GlobalPropertyTabView view,
+                                      final ManageGlobalPropertyListPresenter listPresenter,
+                                      final Provider<ManageGlobalPropertyEditPresenter> editProvider) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
-
-        getView().setUiHandlers(this);
-
+        view.setUiHandlers(this);
         setInSlot(LIST, listPresenter);
-
         openButton = listPresenter.addButton(SvgPresets.EDIT);
+    }
+
+    @Override
+    public String getLabel() {
+        return "Properties";
+    }
+
+    @Override
+    public Icon getIcon() {
+        return SvgPresets.PROPERTIES;
     }
 
     @Override
@@ -71,6 +78,7 @@ public class ManageGlobalPropertyPresenter extends
             }));
         }
         super.onBind();
+        listPresenter.refresh();
     }
 
     private void enableButtons() {
@@ -103,17 +111,19 @@ public class ManageGlobalPropertyPresenter extends
     @Override
     public void changeNameFilter(final String name) {
         if (name.length() > 0) {
-            listPresenter.getFindGlobalPropertyCriteria().getName().setString(name);
-            listPresenter.getFindGlobalPropertyCriteria().getName()
-                    .setMatchStyle(MatchStyle.WildStandAndEnd);
-            listPresenter.getFindGlobalPropertyCriteria().getName().setCaseInsensitive(true);
-            listPresenter.refresh();
+            listPresenter.setPartialName(name);
+//            listPresenter.getFindGlobalPropertyCriteria().getName().setString(name);
+//            listPresenter.getFindGlobalPropertyCriteria().getName()
+//                .setMatchStyle(StringCriteria.MatchStyle.WildStandAndEnd);
+//            listPresenter.getFindGlobalPropertyCriteria().getName().setCaseInsensitive(true);
         } else {
-            listPresenter.getFindGlobalPropertyCriteria().getName().clear();
-            listPresenter.refresh();
+            listPresenter.clearPartialName();
+//            listPresenter.getFindGlobalPropertyCriteria().getName().clear();
         }
+        listPresenter.refresh();
     }
 
-    public interface ManageGlobalPropertyView extends View, HasUiHandlers<ManageGlobalPropertyUiHandlers> {
+    public interface GlobalPropertyTabView
+        extends View, HasUiHandlers<ManageGlobalPropertyUiHandlers> {
     }
 }

@@ -129,6 +129,9 @@ public class UiConfig extends AbstractConfig {
         if (process == null) {
             process = new ProcessConfig();
         }
+        if (helpUrl == null) {
+            helpUrl = "https://gchq.github.io/stroom-docs";
+        }
         if (theme == null) {
             theme = new ThemeConfig();
         }

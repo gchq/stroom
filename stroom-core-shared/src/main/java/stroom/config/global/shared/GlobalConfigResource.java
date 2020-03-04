@@ -6,17 +6,17 @@ import org.fusesource.restygwt.client.DirectRestService;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import java.util.List;
 
 @Api(value = "config - /v1")
 @Path(GlobalConfigResource.BASE_PATH)
@@ -34,7 +34,19 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     @GET
     @Path(PROPERTIES_SUB_PATH)
     @Produces(MediaType.APPLICATION_JSON)
-    List<ConfigProperty> getAllConfig();
+    ListConfigResponse list(
+        final @QueryParam("partialName") String partialName,
+        final @DefaultValue ("0") @QueryParam("offset") long offset,
+        final @QueryParam("size") Integer size);
+
+    @GET
+    @Path(NODE_NAME_PATH_PARAM + PROPERTIES_SUB_PATH)
+    @Produces(MediaType.APPLICATION_JSON)
+    ListConfigResponse listByNode(
+        final @PathParam("nodeName") String nodeName,
+        final @QueryParam("partialName") String partialName,
+        final @DefaultValue ("0") @QueryParam("offset") long offset,
+        final @QueryParam("size") Integer size);
 
     @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)
@@ -43,7 +55,7 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
 
     @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH)
-    @Produces(MediaType.TEXT_PLAIN)
+    @Produces(MediaType.APPLICATION_JSON)
     OverrideValue<String> getYamlValueByName(final @PathParam("propertyName") String propertyName);
 
     @GET
@@ -52,14 +64,14 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     OverrideValue<String> getYamlValueByNodeAndName(final @PathParam("propertyName") String propertyName,
                                                     final @PathParam("nodeName") String nodeName);
 
-    @POST
-    @Path("/find")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Get global config properties",
-            response = ResultPage.class)
-    ResultPage<ConfigProperty> find(FindGlobalConfigCriteria criteria);
+//    @POST
+//    @Path("/find")
+//    @Consumes(MediaType.APPLICATION_JSON)
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @ApiOperation(
+//            value = "Get global config properties",
+//            response = ResultPage.class)
+//    ResultPage<ConfigProperty> find(FindGlobalConfigCriteria criteria);
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)

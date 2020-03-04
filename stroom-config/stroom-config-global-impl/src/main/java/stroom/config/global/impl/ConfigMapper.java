@@ -27,6 +27,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.ConfigPropertyValidationException;
+import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
 import stroom.util.config.FieldMapper;
 import stroom.util.config.PropertyUtil;
@@ -209,6 +211,41 @@ public class ConfigMapper {
             return convertToObject(valueAsString, genericType);
         } else {
             throw new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath));
+        }
+    }
+
+    void decorateAllDbConfigProperty(final Collection<ConfigProperty> dbConfigProperties) {
+
+        synchronized (this) {
+            // Ensure our in memory global prop
+            dbConfigProperties.forEach(this::decorateDbConfigProperty);
+
+            // Now ensure all propertyMap props not in the list of db props have no db override set.
+            // I.e. another node could have removed the db override.
+
+            Map<PropertyPath, ConfigProperty> dbPropsMap = dbConfigProperties.stream()
+                .collect(Collectors.toMap(ConfigProperty::getName, Function.identity()));
+
+            globalPropertiesMap.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().hasDatabaseOverride())
+                .filter(entry -> !dbPropsMap.containsKey(entry.getKey()))
+                .forEach(entry -> {
+                    final ConfigProperty globalProp = entry.getValue();
+                    globalProp.setDatabaseOverrideValue(OverrideValue.unSet(String.class));
+
+                    final Prop prop = propertyMap.get(entry.getKey());
+                    if (prop != null) {
+                        // Now set the new effective value on our guice bound appConfig instance
+                        final Type genericType = prop.getValueType();
+                        final Object typedValue = convertToObject(
+                            globalProp.getEffectiveValue().orElse(null), genericType);
+                        prop.setValueOnConfigObject(typedValue);
+                    } else {
+                        throw new RuntimeException(LogUtil.message(
+                            "Not expecting prop to be null for {}", entry.getKey().toString()));
+                    }
+                });
         }
     }
 
@@ -555,7 +592,7 @@ public class ConfigMapper {
             } else if (type.equals(Double.class) || type.equals(double.class)) {
                 return Double.valueOf(value);
             } else if (type.equals(Boolean.class) || type.equals(boolean.class)) {
-                return Boolean.valueOf(value);
+                return parseBoolean(value);
             } else if ((type.equals(Character.class) || type.equals(char.class)) && value.length() > 0) {
                 return value.charAt(0);
             } else if (type.equals(Duration.class)) {
@@ -586,13 +623,13 @@ public class ConfigMapper {
             LOGGER.debug(LogUtil.message(
                 "Unable to convert value [{}] to type {} due to: {}",
                     value, genericType, e.getMessage()), e);
-            throw new RuntimeException(LogUtil.message(
+            throw new ConfigPropertyValidationException(LogUtil.message(
                 "Unable to convert value [{}] to type {} due to: {}",
                     value, getDataTypeName(genericType), e.getMessage()), e);
         }
 
         LOGGER.error("Unable to convert value [{}] of type [{}] to an Object", value, type);
-        throw new RuntimeException(LogUtil.message(
+        throw new ConfigPropertyValidationException(LogUtil.message(
             "Type [{}] is not supported for value [{}]", genericType, value));
     }
 
@@ -611,6 +648,16 @@ public class ConfigMapper {
         return getDataType(genericsParamTypes.get(index));
     }
 
+    private static Boolean parseBoolean(final String str) {
+       if (str.equalsIgnoreCase("true")) {
+           return Boolean.TRUE;
+       } else if (str.equalsIgnoreCase("false")) {
+           return Boolean.FALSE;
+       } else {
+           throw new ConfigPropertyValidationException(
+               LogUtil.message("Cannot convert [{}] into a boolean. Valid values are [true|false] ignoring case.", str));
+       }
+    }
 
 
     private static String listToString(final List<?> list,

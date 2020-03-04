@@ -24,7 +24,15 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
 
 /**
  * List that knows how big the whole set is.
@@ -228,5 +236,70 @@ public class ResultPage<T> {
     @JsonIgnore
     public boolean isExact() {
         return pageResponse.isExact();
+    }
+
+    private static <T, R extends ResultPage<T>> Collector<T, List<T>, R> createCollector(
+        final PageRequest pageRequest,
+        final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
+
+        // Explicit typing needed for GWT
+        return new Collector<T, List<T>, R>() {
+
+            long counter = 0L;
+
+            @Override
+            public Supplier<List<T>> supplier() {
+                return ArrayList::new;
+            }
+
+            @Override
+            public BiConsumer<List<T>, T> accumulator() {
+                return (accumulator, item) -> {
+                    if (pageRequest == null
+                        || (
+                        counter++ >= pageRequest.getOffset()
+                            && accumulator.size() < pageRequest.getLength())) {
+
+                        accumulator.add(item);
+                    }
+                };
+            }
+
+            @Override
+            public BinaryOperator<List<T>> combiner() {
+                return (left, right) -> {
+                    left.addAll(right);
+                    return left;
+                };
+            }
+
+            @Override
+            public Function<List<T>, R> finisher() {
+                return accumulator ->
+                    resultPageFactory.apply(
+                        accumulator,
+                        new PageResponse(
+                            pageRequest != null ? pageRequest.getOffset() : 0,
+                            accumulator.size(),
+                            counter,
+                            true));
+            }
+
+            @Override
+            public Set<Characteristics> characteristics() {
+                return Collections.emptySet();
+            }
+        };
+    }
+
+    public static <T, R extends ResultPage<T>> Collector<T, List<T>, R> collector(
+        final PageRequest pageRequest,
+        final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
+
+        return createCollector(pageRequest, resultPageFactory);
+    }
+
+    public static <T> Collector<T, List<T>, ResultPage<T>> collector(final PageRequest pageRequest) {
+        return createCollector(pageRequest, ResultPage::new);
     }
 }
