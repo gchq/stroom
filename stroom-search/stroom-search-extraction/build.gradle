@@ -21,6 +21,7 @@ dependencies {
 //    compile project(':stroom-index-shared')
 //    permitUnusedDeclared project(':stroom-index-shared') // not clear why it thinks this is unused
     compile project(':stroom-pipeline')
+    compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-search:stroom-search-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-util')

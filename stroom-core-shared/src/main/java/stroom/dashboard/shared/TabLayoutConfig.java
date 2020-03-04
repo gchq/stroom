@@ -99,23 +99,9 @@ public class TabLayoutConfig extends LayoutConfig {
         return tabs.stream().filter(TabConfig::isVisible).collect(Collectors.toList());
     }
 
-    private int visibleIndex(final int index) {
-        int realIndex = index;
-        for (int i = 0; i <= index && i < tabs.size(); i++) {
-            if (!tabs.get(i).isVisible()) {
-                realIndex++;
-            }
-        }
-        if (realIndex >= tabs.size()) {
-            realIndex = tabs.size() - 1;
-        }
-        return realIndex;
-    }
-
     public TabConfig get(final int index) {
         if (tabs != null && tabs.size() > 0) {
-            final int realIndex = visibleIndex(index);
-            final TabConfig tab = tabs.get(realIndex);
+            final TabConfig tab = tabs.get(index);
             if (tab != null) {
                 tab.setParent(this);
                 return tab;
@@ -133,14 +119,13 @@ public class TabLayoutConfig extends LayoutConfig {
     }
 
     public void add(final int index, final TabConfig tab) {
-        final int realIndex = visibleIndex(index);
         if (tabs == null) {
             tabs = new ArrayList<>();
         }
-        if (realIndex <= tabs.size()) {
-            tabs.add(realIndex, tab);
-        } else {
+        if (index >= tabs.size()) {
             tabs.add(tab);
+        } else {
+            tabs.add(index, tab);
         }
         tab.setParent(this);
     }
@@ -153,7 +138,7 @@ public class TabLayoutConfig extends LayoutConfig {
     }
 
     public int indexOf(final TabConfig tab) {
-        return getVisibleTabs().indexOf(tab);
+        return tabs.indexOf(tab);
     }
 
     @JsonIgnore

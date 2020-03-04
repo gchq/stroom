@@ -24,6 +24,7 @@ import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -57,7 +58,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
 
     private final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider;
     private final SearchConfig searchConfig;
-    private final TaskContext taskContext;
+    private final Provider<TaskContext> taskContextProvider;
 
     //defines how the entity fields relate to the table columns
     private static final Map<String, List<String>> STATIC_FIELDS_TO_COLUMNS_MAP = ImmutableMap.<String, List<String>>builder()
@@ -71,10 +72,10 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
     @Inject
     StatisticsSearchServiceImpl(final SQLStatisticsDbConnProvider SQLStatisticsDbConnProvider,
                                 final SearchConfig searchConfig,
-                                final TaskContext taskContext) {
+                                final Provider<TaskContext> taskContextProvider) {
         this.SQLStatisticsDbConnProvider = SQLStatisticsDbConnProvider;
         this.searchConfig = searchConfig;
-        this.taskContext = taskContext;
+        this.taskContextProvider = taskContextProvider;
     }
 
     @Override
@@ -366,6 +367,7 @@ class StatisticsSearchServiceImpl implements StatisticsSearchService {
                             return Flowable.generate(
                                     () -> {
                                         final Supplier<String> message = () -> "Executing query " + sql.toString();
+                                        final TaskContext taskContext = taskContextProvider.get();
                                         taskContext.setName(SqlStatisticsStore.TASK_NAME);
                                         taskContext.info(message);
                                         LAMBDA_LOGGER.debug(message);

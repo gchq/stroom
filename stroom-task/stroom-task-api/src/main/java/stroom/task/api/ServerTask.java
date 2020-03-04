@@ -24,7 +24,8 @@ import stroom.util.shared.ModelStringUtil;
 import java.io.Serializable;
 
 public abstract class ServerTask<R> implements Task<R>, Serializable {
-    private static final ThreadPool THREAD_POOL = new SimpleThreadPool(2);
+    public static final ThreadPool THREAD_POOL = new SimpleThreadPool(2);
+
     private final TaskId id;
     private final Task<?> parentTask;
     private volatile String taskName;

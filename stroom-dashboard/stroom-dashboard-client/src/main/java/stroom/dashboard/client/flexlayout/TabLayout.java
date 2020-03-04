@@ -37,11 +37,6 @@ import stroom.widget.tab.client.view.LinkTabBar;
 public class TabLayout extends Composite implements RequiresResize, ProvidesResize {
     private final TabLayoutConfig tabLayoutConfig;
     private final FlexLayoutChangeHandler changeHandler;
-    private final FlowPanel panel;
-    private final FlowPanel contentOuter;
-    private final FlowPanel contentInner;
-    private final FlowPanel barOuter;
-    private final FlowPanel buttons;
     private final Button settings;
     private final Button close;
     private final LinkTabBar tabBar;
@@ -55,19 +50,19 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         this.tabLayoutConfig = tabLayoutConfig;
         this.changeHandler = changeHandler;
 
-        panel = new FlowPanel();
+        final FlowPanel panel = new FlowPanel();
         panel.addStyleName("tabLayout");
         initWidget(panel);
 
-        contentOuter = new FlowPanel();
+        final FlowPanel contentOuter = new FlowPanel();
         contentOuter.setStyleName("contentOuter");
         panel.add(contentOuter);
 
-        contentInner = new FlowPanel();
+        final FlowPanel contentInner = new FlowPanel();
         contentInner.setStyleName("contentInner" + " " + StroomStyleNames.STROOM_CONTENT);
         contentOuter.add(contentInner);
 
-        barOuter = new FlowPanel();
+        final FlowPanel barOuter = new FlowPanel();
         barOuter.setStyleName("barOuter");
         contentInner.add(barOuter);
 
@@ -75,7 +70,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         tabBar.addStyleName("barInner");
         barOuter.add(tabBar);
 
-        buttons = new FlowPanel();
+        final FlowPanel buttons = new FlowPanel();
         buttons.setStyleName("buttons");
         contentInner.add(buttons);
 
@@ -113,7 +108,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         handlerRegistrations.add(settings.addDomHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 final TabData selectedTab = tabBar.getSelectedTab();
-                if (selectedTab != null && selectedTab instanceof Component) {
+                if (selectedTab instanceof Component) {
                     final Component component = (Component) selectedTab;
                     component.showSettings();
                 }
@@ -123,7 +118,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
         handlerRegistrations.add(close.addDomHandler(event -> {
             if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
                 final TabData selectedTab = tabBar.getSelectedTab();
-                if (selectedTab != null && selectedTab instanceof Component) {
+                if (selectedTab instanceof Component) {
                     final Component component = (Component) selectedTab;
                     changeHandler.requestTabClose(component.getTabConfig());
                 }
@@ -156,7 +151,7 @@ public class TabLayout extends Composite implements RequiresResize, ProvidesResi
     public void selectTab(final TabData tabData) {
         tabBar.selectTab(tabData);
         Component component = null;
-        if (tabData != null && tabData instanceof Component) {
+        if (tabData instanceof Component) {
             component = (Component) tabData;
         }
 

@@ -604,28 +604,50 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         updateColumns();
     }
 
-    private void removeInvisibleFields() {
-        tableSettings.getFields().removeIf(f -> !f.isVisible());
-    }
-
-    private void removeSpecialFields() {
-        tableSettings.getFields().removeIf(Field::isSpecial);
-    }
-
-    private void ensureSpecialField(final String... indexFieldNames) {
-        // Now add new hidden field.
+    private void ensureSpecialFields(final String... indexFieldNames) {
+        // See if any of the requested special fields exist in the current data source.
+        final List<AbstractField> foundSpecialFields = new ArrayList<>();
         final DataSourceFieldsMap dataSourceFieldsMap = getIndexFieldsMap();
         if (dataSourceFieldsMap != null) {
             for (final String indexFieldName : indexFieldNames) {
                 final AbstractField indexField = dataSourceFieldsMap.get(indexFieldName);
                 if (indexField != null) {
-                    final Field field = new Field(indexFieldName);
-                    field.setId(indexFieldName);
-                    field.setExpression(ParamUtil.makeParam(indexFieldName));
-                    field.setVisible(false);
-                    field.setSpecial(true);
-                    tableSettings.addField(field);
+                    foundSpecialFields.add(indexField);
                 }
+            }
+        }
+
+        // If the fields we want to make special do exist in the current data source then add them.
+        if (foundSpecialFields.size() > 0) {
+            // Get special field names.
+            final Set<String> specialFieldNames = foundSpecialFields.stream()
+                    .map(AbstractField::getName)
+                    .collect(Collectors.toSet());
+
+            // Are there any existing special fields?
+            final List<Field> existingSpecialFields = tableSettings.getFields()
+                    .stream()
+                    .filter(f -> f.isSpecial() && specialFieldNames.contains(f.getName()))
+                    .collect(Collectors.toList());
+            if (existingSpecialFields.size() == 0) {
+                // Prior to the introduction of the special field concept, special fields were treated as invisible fields.
+                // For this reason we need to remove old invisible fields if we haven't yet turned them into special fields.
+                for (final String specialFieldName : specialFieldNames) {
+                    tableSettings.getFields().removeIf(f -> specialFieldName.equals(f.getName()) && !f.isVisible());
+                }
+            } else {
+                // First remove existing special fields.
+                tableSettings.getFields().removeAll(existingSpecialFields);
+            }
+
+            // Now make sure special fields exist.
+            for (String specialFieldName : specialFieldNames) {
+                final Field field = new Field(specialFieldName);
+                field.setId(specialFieldName);
+                field.setExpression(ParamUtil.makeParam(specialFieldName));
+                field.setVisible(false);
+                field.setSpecial(true);
+                tableSettings.addField(field);
             }
         }
     }
@@ -640,25 +662,8 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     void updateColumns() {
-        final List<Field> fields = tableSettings.getFields();
-
-        // Are there any special fields?
-        final long specialFieldCount = tableSettings.getFields()
-                .stream()
-                .filter(Field::isSpecial)
-                .count();
-        if (specialFieldCount == 0) {
-            // If we don't yet have any special fields then remove all invisible fields.
-            removeInvisibleFields();
-        } else {
-            // First remove existing special fields.
-            removeSpecialFields();
-        }
-
-        // Now make sure special fields exist for stream id and event id and get
-        // their result index.
-        ensureSpecialField(IndexConstants.STREAM_ID, "Id");
-        ensureSpecialField(IndexConstants.EVENT_ID);
+        // Now make sure special fields exist for stream id and event id.
+        ensureSpecialFields(IndexConstants.STREAM_ID, IndexConstants.EVENT_ID, "Id");
 
         // Remove existing columns.
         for (final Column<Row, ?> column : existingColumns) {
@@ -670,6 +675,7 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
         // an expander column.
         int maxGroup = -1;
         final boolean showDetail = tableSettings.showDetail();
+        final List<Field> fields = tableSettings.getFields();
         for (final Field field : fields) {
             if (field.getGroup() != null) {
                 final int group = field.getGroup();

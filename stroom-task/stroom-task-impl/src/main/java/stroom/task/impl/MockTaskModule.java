@@ -21,17 +21,14 @@ import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 
+import java.util.concurrent.Executor;
+
 public class MockTaskModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ExecutorProvider.class).to(ExecutorProviderImpl.class);
+        bind(Executor.class).toProvider(ExecutorProviderImpl.class);
         bind(TaskManager.class).to(TaskManagerImpl.class);
-        bind(TaskContext.class).to(TaskContextImpl.class);
-//
-//        TaskHandlerBinder.create(binder())
-//        .bind(FindTaskProgressHandler.class);
-//        .bind(FindUserTaskProgressHandler.class);
-//        .bind(GenericServerTaskHandler.class);
-//        .bind(TerminateTaskProgressHandler.class);
+        bind(TaskContext.class).toProvider(TaskContextProvider.class);
     }
 }

@@ -17,7 +17,7 @@
 package stroom.task.impl;
 
 import stroom.security.api.UserIdentity;
-import stroom.task.shared.Task;
+import stroom.task.shared.TaskId;
 import stroom.util.shared.HasTerminate;
 
 import java.util.Collections;
@@ -25,25 +25,25 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-class TaskThread implements HasTerminate {
-    private final Task<?> task;
+class TaskState implements HasTerminate {
+    private final TaskId taskId;
     private final UserIdentity userIdentity;
     private final long submitTimeMs = System.currentTimeMillis();
 
-    private final Set<TaskThread> children = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<TaskState> children = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private volatile boolean terminate;
     private volatile Supplier<String> messageSupplier;
     private volatile String name;
 
     private volatile Thread thread;
 
-    TaskThread(final Task<?> task, final UserIdentity userIdentity) {
-        this.task = task;
+    TaskState(final TaskId taskId, final UserIdentity userIdentity) {
+        this.taskId = taskId;
         this.userIdentity = userIdentity;
     }
 
-    Task<?> getTask() {
-        return task;
+    TaskId getTaskId() {
+        return taskId;
     }
 
     String getUserId() {
@@ -84,7 +84,7 @@ class TaskThread implements HasTerminate {
     @Override
     public synchronized void terminate() {
         this.terminate = true;
-        children.forEach(TaskThread::terminate);
+        children.forEach(TaskState::terminate);
 
         interrupt();
     }
@@ -118,9 +118,9 @@ class TaskThread implements HasTerminate {
 
     String getName() {
         String name = this.name;
-        if (name == null) {
-            name = task.getTaskName();
-        }
+//        if (name == null) {
+//            name = task.getTaskName();
+//        }
         if (terminate) {
             name = "<<terminated>> " + name;
         }
@@ -144,18 +144,18 @@ class TaskThread implements HasTerminate {
         this.messageSupplier = messageSupplier;
     }
 
-    synchronized void addChild(final TaskThread taskThread) {
-        children.add(taskThread);
+    synchronized void addChild(final TaskState taskState) {
+        children.add(taskState);
         if (terminate) {
-            taskThread.terminate();
+            taskState.terminate();
         }
     }
 
-    void removeChild(final TaskThread taskThread) {
-        children.remove(taskThread);
+    void removeChild(final TaskState taskState) {
+        children.remove(taskState);
     }
 
-    Set<TaskThread> getChildren() {
+    Set<TaskState> getChildren() {
         return children;
     }
 

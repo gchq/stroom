@@ -32,10 +32,10 @@ import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
-import stroom.meta.api.MetaService;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.task.api.ExecutorProvider;
@@ -50,8 +50,8 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -105,8 +105,8 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                            final int maxAggregation,
                            final long maxStreamSize) {
         final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
-                taskContext,
                 executorProvider,
+                taskContext,
                 filePackProcessorProvider,
                 proxyDir,
                 10,
