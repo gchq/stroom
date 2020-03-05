@@ -676,8 +676,8 @@ public class QueryPresenter extends AbstractComponentPresenter<QueryPresenter.Qu
     private void downloadQuery() {
         if (queryComponentSettings.getDataSource() != null) {
 
-            SearchRequest searchRequest = searchModel.buildSearchRequest(
-                    queryComponentSettings.getExpression(),
+            final SearchRequest searchRequest = searchModel.createDownloadQueryRequest(
+                    expressionPresenter.write(),
                     params,
                     false,
                     false,

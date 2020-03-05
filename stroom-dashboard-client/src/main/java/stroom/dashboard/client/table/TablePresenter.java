@@ -762,6 +762,14 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
     }
 
     @Override
+    public ComponentResultRequest createDownloadQueryRequest() {
+        final TableResultRequest tableResultRequest = new TableResultRequest(0, Integer.MAX_VALUE);
+        tableResultRequest.setTableSettings(tableSettings);
+        tableResultRequest.setFetch(Fetch.ALL);
+        return tableResultRequest;
+    }
+
+    @Override
     public void reset() {
         final int length = Math.max(1, tableResultRequest.getRequestedRange().getLength());
         dataGrid.setRowData(0, new ArrayList<>());

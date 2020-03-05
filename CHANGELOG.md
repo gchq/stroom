@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1392** : Downloading dashboard queries now provides the current query without the need to save the dashboard.
+
 
 ## [v6.1.4] - 2020-03-04
 
