@@ -158,7 +158,7 @@ public class TaskFactory {
                         LOGGER.warn(() -> "exec() - Task killed! (" + task.getClass().getSimpleName() + ")");
                         LOGGER.debug(() -> "exec() (" + task.getClass().getSimpleName() + ")", t);
                     } else {
-                        LOGGER.error(() -> t.getMessage() + " (" + task.getClass().getSimpleName() + ")", t);
+                        LOGGER.debug(() -> t.getMessage() + " (" + task.getClass().getSimpleName() + ")", t);
                     }
 
                 } catch (final Throwable t2) {
