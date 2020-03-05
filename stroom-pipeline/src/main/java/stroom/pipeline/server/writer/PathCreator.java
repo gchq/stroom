@@ -47,7 +47,10 @@ public class PathCreator {
     private static final String[] NON_ENV_VARS = {
             "feed",
             "pipeline",
-            "streamId",
+            "sourceId",
+            "streamId", // TODO : DEPRECATED ALIAS FOR SOURCE ID.
+            "partNo",
+            "streamNo", // TODO : DEPRECATED ALIAS FOR PART NO.
             "searchId",
             "node",
             "year",
@@ -208,9 +211,15 @@ public class PathCreator {
             path = replace(path, "pipeline", () -> pipelineHolder.getPipeline().getName());
         }
         if (streamHolder != null && streamHolder.getStream() != null) {
+            path = replace(path, "sourceId", () -> streamHolder.getStream().getId(), 0);
+
+            // TODO : DEPRECATED ALIAS FOR SOURCE ID.
             path = replace(path, "streamId", () -> streamHolder.getStream().getId(), 0);
         }
         if (streamHolder != null) {
+            path = replace(path, "partNo", () -> String.valueOf(streamHolder.getStreamNo()));
+
+            // TODO : DEPRECATED ALIAS FOR PART NO.
             path = replace(path, "streamNo", () -> String.valueOf(streamHolder.getStreamNo()));
         }
         if (searchIdHolder != null && searchIdHolder.getSearchId() != null) {

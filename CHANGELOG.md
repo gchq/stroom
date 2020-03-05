@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1385** : File output param `streamId` now aliased to `sourceId` and `streamNo` is now aliased to `partNo` for consistency with new source tracking XSLT functions.
+
 * Issue **#1392** : Downloading dashboard queries now provides the current query without the need to save the dashboard.
 
 
