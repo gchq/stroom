@@ -133,7 +133,7 @@ public class App extends Application<Config> {
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
 
-        LOGGER.info("Starting Stroom Application");
+        LOGGER.info("Starting Stroom Application ({})", getNodeName(configuration.getAppConfig()));
 
         final AppModule appModule = new AppModule(configuration, environment, configFile);
         final Injector injector = Guice.createInjector(appModule);
@@ -175,6 +175,14 @@ public class App extends Application<Config> {
         sessionCookieConfig.setSecure(configuration.getAppConfig().getSessionCookieConfig().isSecure());
         sessionCookieConfig.setHttpOnly(configuration.getAppConfig().getSessionCookieConfig().isHttpOnly());
         // TODO : Add `SameSite=Strict` when supported by JEE
+    }
+
+    private String getNodeName(final AppConfig appConfig) {
+        return appConfig != null
+                ? (appConfig.getNodeConfig() != null
+                    ? appConfig.getNodeConfig().getNodeName()
+                    : null)
+                : null;
     }
 
     private void validateAppConfig(final Injector injector, final AppConfig appConfig) {
