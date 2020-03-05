@@ -16,6 +16,8 @@
 
 package stroom.node.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.util.entity.EntityAction;
 import stroom.util.entity.EntityEvent;
 import stroom.util.entity.EntityEventHandler;
@@ -38,6 +40,8 @@ import java.util.stream.Collectors;
 @Singleton
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
 public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Handler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NodeServiceImpl.class);
+
     private final SecurityContext securityContext;
     private final NodeDao nodeDao;
     private final NodeInfo nodeInfo;
@@ -50,6 +54,8 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         this.securityContext = securityContext;
         this.nodeDao = nodeDao;
         this.nodeInfo = nodeInfo;
+
+        ensureNodeCreated();
     }
 
     Node update(final Node node) {
@@ -124,6 +130,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                         // This will start a new mini transaction for the update
                         final Node node = new Node();
                         node.setName(nodeInfo.getThisNodeName());
+                        LOGGER.info("Creating node record for {}", node.getName());
                         thisNode = nodeDao.create(node);
                     }
                 }
