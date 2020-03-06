@@ -28,7 +28,8 @@ public class ConfigPropertyClusterValuesListPresenter
     private Column<ClusterValuesRow, Expander> expanderColumn;
     private ListDataProvider<ClusterValuesRow> dataProvider;
     private ClusterValuesTreeAction treeAction = new ClusterValuesTreeAction();
-    private Map<String, Set<NodeSource>> effectiveValueToNodesMap;
+
+    private Map<String, Set<NodeSource>> effectiveValueToNodeSourcesMap;
 
     @Inject
     public ConfigPropertyClusterValuesListPresenter(final EventBus eventBus) {
@@ -65,7 +66,7 @@ public class ConfigPropertyClusterValuesListPresenter
 
         // For DEV testing only, when you don't have two nodes
 //        this.effectiveValueToNodesMap = makeDemoData();
-        this.effectiveValueToNodesMap = effectiveValueToNodesMap;
+        this.effectiveValueToNodeSourcesMap = effectiveValueToNodesMap;
 
         refresh();
     }
@@ -144,7 +145,7 @@ public class ConfigPropertyClusterValuesListPresenter
     }
 
     public void refresh() {
-        final List<ClusterValuesRow> rows = ClusterValuesRow.buildTree(effectiveValueToNodesMap, treeAction);
+        final List<ClusterValuesRow> rows = ClusterValuesRow.buildTree(effectiveValueToNodeSourcesMap, treeAction);
         dataProvider.setCompleteList(rows);
         dataProvider.refresh(true);
     }

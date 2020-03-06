@@ -63,17 +63,26 @@ public final class ManageGlobalPropertyEditPresenter
     private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
     private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
 
+    private static final OverrideValue<String> ERROR_VALUE = OverrideValue.with("[[ERROR]]");
     private static final String MAGIC_NULL = "NULL";
-    private static final String MULTIPLE_VALUES_MSG = "[Multiple values exist in the cluster]";
+    private static final String NODES_UNAVAILABLE_MSG = "[Error getting values from some nodes]";
+    private static final String MULTIPLE_YAML_VALUES_MSG = "[Multiple YAML values exist in the cluster]";
+    private static final String MULTIPLE_EFFECTIVE_VALUES_MSG = "[Multiple effective values exist in the cluster]";
     private static final String MULTIPLE_SOURCES_MSG = "[Configured from multiple sources]";
 
     private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
     private final UiConfigCache clientPropertyCache;
     private ConfigProperty configProperty;
-    private Map<String, OverrideValue<String>> clusterYamlOverridesMap = new HashMap<>();
-    private Map<String, Set<NodeSource>> effectiveValueToNodesMap = new HashMap<>();
+
+    // node => yamlOverride
+    private Map<String, OverrideValue<String>> nodeToYamlOverrideMap = new HashMap<>();
+
+    // effectiveValue => (sources)
+    private Map<String, Set<NodeSource>> effectiveValueToNodeSourcesMap = new HashMap<>();
+
     private Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider;
+
     private final ButtonView effectiveValueWarningsButton;
     private final ButtonView effectiveValueInfoButton;
     private final ButtonView dataTypeHelpButton;
@@ -137,8 +146,11 @@ public final class ManageGlobalPropertyEditPresenter
                     getView().asWidget().getElement().getAbsoluteLeft() + 20,
                     getView().asWidget().getElement().getAbsoluteTop() + 10);
 
-            // TODO Need to re-compute the map of effective values based on any change to the DB value.
-            clusterValuesPresenter.show(getEntity(), effectiveValueToNodesMap, offsetPopupPosition, popupUiHandlers);
+            clusterValuesPresenter.show(
+                getEntity(),
+                effectiveValueToNodeSourcesMap,
+                offsetPopupPosition,
+                popupUiHandlers);
         }
     }
 
@@ -174,7 +186,9 @@ public final class ManageGlobalPropertyEditPresenter
             if (uniqueEffectiveValuesCount > 1 || uniqueSourcesCount > 1) {
                 String msg;
 
-                if (uniqueEffectiveValuesCount > 1 ) {
+                if (didAnyNodesError()) {
+                    msg = "Error fetching values from all nodes in the cluster";
+                } else if (uniqueEffectiveValuesCount > 1 ) {
                     msg = "Multiple unique values exist in the cluster (" + uniqueEffectiveValuesCount +")";
                 } else {
                     msg = "Multiple value sources exist in the cluster (" + uniqueSourcesCount +")";
@@ -208,18 +222,18 @@ public final class ManageGlobalPropertyEditPresenter
     }
 
     private long getUniqueEffectiveValuesCount() {
-        return effectiveValueToNodesMap.size();
+        return effectiveValueToNodeSourcesMap.size();
     }
 
     private long getUniqueYamlValuesCount() {
-        return clusterYamlOverridesMap.values()
+        return nodeToYamlOverrideMap.values()
             .stream()
             .distinct()
             .count();
     }
 
     private long getUniqueSourcesCount() {
-        return effectiveValueToNodesMap.values()
+        return effectiveValueToNodeSourcesMap.values()
             .stream()
             .flatMap(Set::stream)
             .map(NodeSource::getSource)
@@ -227,8 +241,12 @@ public final class ManageGlobalPropertyEditPresenter
             .count();
     }
 
+    private boolean didAnyNodesError() {
+        return nodeToYamlOverrideMap.containsValue(ERROR_VALUE);
+    }
+
     private long getNodeCount() {
-        return clusterYamlOverridesMap.size();
+        return nodeToYamlOverrideMap.size();
     }
 
     private void refreshYamlOverrideForAllNodes() {
@@ -238,7 +256,9 @@ public final class ManageGlobalPropertyEditPresenter
         fetchAllNodes
                 .onSuccess(response -> {
                     response.getValues().forEach(nodeStatus -> {
-                        refreshYamlOverrideForNode(nodeStatus.getNode().getName());
+                        if (nodeStatus.getNode().isEnabled()) {
+                            refreshYamlOverrideForNode(nodeStatus.getNode().getName());
+                        }
                     });
                 })
                 .onFailure(throwable -> {
@@ -256,6 +276,8 @@ public final class ManageGlobalPropertyEditPresenter
 
         if (yamlOverride == null) {
             effectiveValueFromNode = "UNKNOWN";
+        } else if (yamlOverride.equals(ERROR_VALUE)) {
+            effectiveValueFromNode = "Error fetching YAML value for node " + nodeName;
         } else {
             effectiveValueFromNode = configProperty.getEffectiveValue(yamlOverride)
                 .orElse(MAGIC_NULL);
@@ -263,16 +285,18 @@ public final class ManageGlobalPropertyEditPresenter
 
         final NodeSource newNodeSource = new NodeSource(
             nodeName,
-            configProperty.getSource(configProperty.getDatabaseOverrideValue(), yamlOverride).getName());
+            configProperty.getSource(
+                configProperty.getDatabaseOverrideValue(),
+                yamlOverride).getName());
 
         // Add our value into the map
-        this.effectiveValueToNodesMap.computeIfAbsent(
+        this.effectiveValueToNodeSourcesMap.computeIfAbsent(
             effectiveValueFromNode,
             k -> new HashSet<>())
             .add(newNodeSource);
 
         final List<String> keysToRemove = new ArrayList<>();
-        effectiveValueToNodesMap.forEach((effectiveValue, nodeSources) -> {
+        effectiveValueToNodeSourcesMap.forEach((effectiveValue, nodeSources) -> {
 
             if (!effectiveValue.equals(effectiveValueFromNode)) {
                 nodeSources.removeIf(existingNodeSource ->
@@ -284,11 +308,12 @@ public final class ManageGlobalPropertyEditPresenter
             }
         });
         // Remove entries with no nodes
-        keysToRemove.forEach(key -> effectiveValueToNodesMap.remove(key));
+        keysToRemove.forEach(key ->
+            effectiveValueToNodeSourcesMap.remove(key));
     }
 
     private void updateAllNodeEffectiveValues() {
-        clusterYamlOverridesMap.forEach(this::updateEffectiveValueForNode);
+        nodeToYamlOverrideMap.forEach(this::updateEffectiveValueForNode);
     }
 
     private void refreshYamlOverrideForNode(final String nodeName) {
@@ -301,14 +326,15 @@ public final class ManageGlobalPropertyEditPresenter
                 })
                 .onFailure(throwable -> {
                     refreshYamlOverrideForNode(
-                        nodeName, OverrideValue.with("[ERROR fetching YAML value for " + nodeName + "]"));
+                        nodeName, ERROR_VALUE);
                 })
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .getYamlValueByNodeAndName(configProperty.getName().toString(), nodeName);
     }
 
-    private void refreshYamlOverrideForNode(final String nodeName, final OverrideValue<String> yamlOverride) {
-        clusterYamlOverridesMap.put(nodeName, yamlOverride);
+    private void refreshYamlOverrideForNode(final String nodeName,
+                                            final OverrideValue<String> yamlOverride) {
+        nodeToYamlOverrideMap.put(nodeName, yamlOverride);
         updateEffectiveValueForNode(nodeName, yamlOverride);
         updateWarningState();
         refreshValuesOnChange();
@@ -366,8 +392,10 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void setUiYamlValueText() {
         String text = "";
-        if (getUniqueYamlValuesCount() > 1) {
-            text = MULTIPLE_VALUES_MSG;
+        if (didAnyNodesError()) {
+            text = NODES_UNAVAILABLE_MSG;
+        } else if (getUniqueYamlValuesCount() > 1) {
+            text = MULTIPLE_YAML_VALUES_MSG;
         } else {
             if (getEntity().hasYamlOverride()) {
                 text = getEntity()
@@ -380,7 +408,9 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void setUiSourceText() {
         String text = "";
-        if (getUniqueSourcesCount() > 1) {
+        if (didAnyNodesError()) {
+            text = NODES_UNAVAILABLE_MSG;
+        } else if (getUniqueSourcesCount() > 1) {
             text = MULTIPLE_SOURCES_MSG;
         } else {
             text = getEntity().getSource().getName();
@@ -390,8 +420,10 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void setUiEffectiveValueText() {
         String text = "";
-        if (getUniqueEffectiveValuesCount() > 1) {
-            text = MULTIPLE_VALUES_MSG;
+        if (didAnyNodesError()) {
+            text = NODES_UNAVAILABLE_MSG;
+        } else if (getUniqueEffectiveValuesCount() > 1) {
+            text = MULTIPLE_EFFECTIVE_VALUES_MSG;
         } else {
             text = getEntity().getEffectiveValue().orElse(null);
         }
