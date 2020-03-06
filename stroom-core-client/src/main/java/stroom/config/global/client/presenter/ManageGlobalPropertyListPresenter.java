@@ -53,26 +53,28 @@ public class ManageGlobalPropertyListPresenter
     extends MyPresenterWidget<DataGridView<ManageGlobalPropertyListPresenter.ConfigPropertyRow>>
     implements ColumnSortEvent.Handler{
 
-    private static final String MULTIPLE_VALUES_MSG = "[Multiple values exist in the cluster]";
+    private static final String NODES_UNAVAILABLE_MSG = "[Error getting values from some nodes]";
+    private static final String NODES_UNAVAILABLE_SHORT_MSG = "[Error]";
+    private static final String MULTIPLE_VALUES_MSG = "[Multiple effective values exist in the cluster]";
     private static final String MULTIPLE_SOURCES_MSG = "[Multiple]";
-    private static final int TIMER_DELAY_MS = 100;
+    private static final int TIMER_DELAY_MS = 50;
 
     private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
     private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
+    private static final String ERROR_VALUE = "[[ERROR]]";
 
     private final ListDataProvider<ConfigPropertyRow> dataProvider;
-//    private final RestDataProvider<ConfigProperty, ListConfigResponse> dataProvider;
     private final RestFactory restFactory;
     private String partialName;
 
     // propName => (node => effectiveValue)
-    private final Map<String, Map<String, String>> propertyClusterEffectiveValuesMap = new HashMap<>();
+    private final Map<String, Map<String, String>> nodeToClusterEffectiveValuesMap = new HashMap<>();
     // propName => (effectiveValues)
-    private Map<String, Set<String>> propertyClusterEffectiveValues = new HashMap<>();
+    private Map<String, Set<String>> propertyToUniqueEffectiveValuesMap = new HashMap<>();
     // propName => (node => source)
-    private final Map<String, Map<String, String>> propertyClusterSourceMap = new HashMap<>();
+    private final Map<String, Map<String, String>> nodeToClusterSourcesMap = new HashMap<>();
     // propName => (sources)
-    private Map<String, Set<String>> propertyClusterSources = new HashMap<>();
+    private Map<String, Set<String>> propertyToUniqueSourcesMap = new HashMap<>();
 
     private final Timer refreshAllNodesTimer = new Timer() {
         @Override
@@ -83,7 +85,7 @@ public class ManageGlobalPropertyListPresenter
     private final Timer updateChildMapsTimer = new Timer() {
         @Override
         public void run() {
-            updateChildMaps();
+            updatePropertyKeyedMaps();
         }
     };
 
@@ -98,10 +100,6 @@ public class ManageGlobalPropertyListPresenter
         dataProvider = new ListDataProvider<>();
         dataProvider.addDataDisplay(getView().getDataDisplay());
         dataProvider.setListUpdater(this::refreshTable);
-//        refreshTable();
-    }
-    private void refreshTable() {
-        refreshTable(getView().getDataDisplay().getVisibleRange());
     }
 
     private void refreshTable(final Range range) {
@@ -115,14 +113,10 @@ public class ManageGlobalPropertyListPresenter
                     .map(ConfigPropertyRow::new)
                     .collect(Collectors.toList());
 
-                GWT.log("Offset: " + listConfigResponse.getPageResponse().getOffset()
-                    + " total: " + listConfigResponse.getPageResponse().getTotal());
+//                GWT.log("Offset: " + listConfigResponse.getPageResponse().getOffset()
+//                    + " total: " + listConfigResponse.getPageResponse().getTotal());
 
                 dataProvider.setPartialList(rows, listConfigResponse.getPageResponse().getTotal().intValue());
-//                getView().getDataDisplay().setVisibleRange(
-//                    listConfigResponse.getPageResponse().getOffset().intValue(),
-//                    listConfigResponse.getPageResponse().getTotal().intValue());
-//                dataProvider.refresh();
 
                 // now we have the props from one node, go off and get all the values/sources
                 // from all the nodes. Use a timer to delay it a bit
@@ -144,11 +138,14 @@ public class ManageGlobalPropertyListPresenter
         fetchAllNodes
             .onSuccess(response -> {
                 response.getValues().forEach(nodeStatus -> {
-                    refreshPropertiesForNode(nodeStatus.getNode().getName());
+                    // Only care about enable nodes
+                    if (nodeStatus.getNode().isEnabled()) {
+                        refreshPropertiesForNode(nodeStatus.getNode().getName());
+                    }
                 });
             })
             .onFailure(throwable -> {
-                showError(throwable, "Error getting list of all nodes");
+                showError(throwable, "Error getting list of all nodes. Only properties for one node will be shown");
             })
             .call(NODE_RESOURCE)
             .list();
@@ -165,12 +162,18 @@ public class ManageGlobalPropertyListPresenter
                     final String effectiveValue = configProperty.getEffectiveValue().orElse(null);
                     final String source = configProperty.getSource().getName();
 
-                    updateMaps(nodeName, configProperty.getNameAsString(), effectiveValue, source);
+                    updateNodeKeyedMaps(nodeName, configProperty.getNameAsString(), effectiveValue, source);
+
+                    // kick off the delayed action to update the maps keyed on prop name,
+                    // unless another node has already kicked it off
+                    if (!updateChildMapsTimer.isRunning()) {
+                        updateChildMapsTimer.schedule(TIMER_DELAY_MS);
+                    }
                 });
             })
             .onFailure(throwable -> {
-                propertyClusterEffectiveValuesMap.keySet().forEach(propName -> {
-                    updateMaps(nodeName, propName, "[ERROR]", "[ERROR]");
+                nodeToClusterEffectiveValuesMap.keySet().forEach(propName -> {
+                    updateNodeKeyedMaps(nodeName, propName, ERROR_VALUE, ERROR_VALUE);
                 });
             })
             .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
@@ -181,24 +184,20 @@ public class ManageGlobalPropertyListPresenter
                 getView().getDataDisplay().getVisibleRange().getLength());
     }
 
-    private void updateMaps(final String nodeName,
-                            final String propName,
-                            final String effectiveValue,
-                            final String source) {
+    private void updateNodeKeyedMaps(final String nodeName,
+                                     final String propName,
+                                     final String effectiveValue,
+                                     final String source) {
 
-        propertyClusterEffectiveValuesMap.computeIfAbsent(
+        nodeToClusterEffectiveValuesMap.computeIfAbsent(
             propName,
             k -> new HashMap<>())
             .put(nodeName, effectiveValue);
 
-        propertyClusterSourceMap.computeIfAbsent(
+        nodeToClusterSourcesMap.computeIfAbsent(
             propName,
             k -> new HashMap<>())
             .put(nodeName, source);
-
-        if (!updateChildMapsTimer.isRunning()) {
-            updateChildMapsTimer.schedule(TIMER_DELAY_MS);
-        }
     }
 
     private void populateDataProviderFromMaps() {
@@ -206,25 +205,28 @@ public class ManageGlobalPropertyListPresenter
             .stream()
             .map(row -> {
                 final String effectiveValueStr;
-                final Set<String> effectiveValues = propertyClusterEffectiveValues.get(row.getNameAsString());
-                if (effectiveValues == null || effectiveValues.size() <= 1) {
-                    effectiveValueStr = row.getEffectiveValueAsString();
+                final Set<String> effectiveValues = propertyToUniqueEffectiveValuesMap.get(row.getNameAsString());
+
+                if (effectiveValues == null || effectiveValues.contains(ERROR_VALUE)) {
+                    effectiveValueStr = NODES_UNAVAILABLE_MSG;
                 } else {
-                    effectiveValues.forEach(val -> {
-                        GWT.log(row.getNameAsString() + " - effectiveValue: " + val);
-                    });
-                    effectiveValueStr = MULTIPLE_VALUES_MSG;
+                    if (effectiveValues.size() <= 1) {
+                        effectiveValueStr = row.getEffectiveValueAsString();
+                    } else {
+                        effectiveValueStr = MULTIPLE_VALUES_MSG;
+                    }
                 }
 
                 final String sourceStr;
-                final Set<String> sources = propertyClusterSources.get(row.getNameAsString());
-                if (sources == null || sources.size() <= 1) {
-                    sourceStr = row.getSourceAsString();
+                final Set<String> sources = propertyToUniqueSourcesMap.get(row.getNameAsString());
+                if (sources == null || sources.contains(ERROR_VALUE)) {
+                    sourceStr = NODES_UNAVAILABLE_SHORT_MSG;
                 } else {
-                    sourceStr = MULTIPLE_SOURCES_MSG;
-                    sources.forEach(val -> {
-                        GWT.log(row.getNameAsString() + " - source: " + val);
-                    });
+                    if (sources.size() <= 1) {
+                        sourceStr = row.getSourceAsString();
+                    } else {
+                        sourceStr = MULTIPLE_SOURCES_MSG;
+                    }
                 }
 
                 return new ConfigPropertyRow(row.getConfigProperty(), effectiveValueStr, sourceStr);
@@ -232,11 +234,12 @@ public class ManageGlobalPropertyListPresenter
             .collect(Collectors.toList());
         // We are not changing the total so re-use the existing one
         dataProvider.setPartialList(newRows, getView().getDataDisplay().getRowCount());
-//        dataProvider.refresh();
     }
 
-    private void updateChildMaps() {
-        propertyClusterEffectiveValues = propertyClusterEffectiveValuesMap.entrySet()
+    private void updatePropertyKeyedMaps() {
+        // Walk the node keyed maps to rebuild the property keyed maps
+        // to build a picture of all values over the cluster for each prop
+        propertyToUniqueEffectiveValuesMap = nodeToClusterEffectiveValuesMap.entrySet()
             .stream()
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
@@ -244,7 +247,7 @@ public class ManageGlobalPropertyListPresenter
                     new HashSet<>(entry.getValue().values())
             ));
 
-        propertyClusterSources = propertyClusterSourceMap.entrySet()
+        propertyToUniqueSourcesMap = nodeToClusterSourcesMap.entrySet()
             .stream()
             .collect(Collectors.toMap(
                 Map.Entry::getKey,
@@ -323,17 +326,12 @@ public class ManageGlobalPropertyListPresenter
     }
 
     public void refresh() {
-//        refreshTable();
         dataProvider.refresh(false);
     }
 
     public ConfigProperty getSelectedItem() {
         return getView().getSelectionModel().getSelected().getConfigProperty();
     }
-
-//    public void setSelectedItem(final ConfigProperty row) {
-//        getView().getSelectionModel().setSelected(row);
-//    }
 
     void setPartialName(final String partialName) {
         this.partialName = partialName;
