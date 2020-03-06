@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 @JsonPropertyOrder({"fields", "customRollUpMasks"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class StatisticsDataSourceData {
     /**
      * Should be a SortedSet but GWT doesn't support that. Contents should be
@@ -53,7 +53,7 @@ public class StatisticsDataSourceData {
 
     // cache the positions of the
     @JsonIgnore
-    private final Map<String, Integer> fieldPositionMap = new HashMap<>();
+    private Map<String, Integer> fieldPositionMap;
 
     public StatisticsDataSourceData() {
         this(new ArrayList<>(), new HashSet<>());
@@ -66,20 +66,8 @@ public class StatisticsDataSourceData {
     @JsonCreator
     public StatisticsDataSourceData(@JsonProperty("fields") final List<StatisticField> fields,
                                     @JsonProperty("customRollUpMasks") final Set<CustomRollUpMask> customRollUpMasks) {
-        if (fields != null) {
-            this.fields = fields;
-        } else {
-            this.fields = new ArrayList<>();
-        }
-        if (customRollUpMasks != null) {
-            this.customRollUpMasks = customRollUpMasks;
-        } else {
-            this.customRollUpMasks = new HashSet<>();
-        }
-
-        // sort the list of fields as this will help us later when generating
-        // StatisticEvents
-        sortFieldListAndCachePositions();
+        this.fields = fields;
+        this.customRollUpMasks = customRollUpMasks;
     }
 
     public List<StatisticField> getFields() {
@@ -88,7 +76,6 @@ public class StatisticsDataSourceData {
 
     public void setFields(final List<StatisticField> fields) {
         this.fields = fields;
-        sortFieldListAndCachePositions();
     }
 
     public Set<CustomRollUpMask> getCustomRollUpMasks() {
@@ -106,20 +93,20 @@ public class StatisticsDataSourceData {
         // prevent duplicates
         if (!fields.contains(statisticField)) {
             fields.add(statisticField);
-            sortFieldListAndCachePositions();
+            fieldPositionMap = null;
         }
     }
 
     public void removeStatisticField(final StatisticField statisticField) {
         if (fields != null) {
             fields.remove(statisticField);
-            sortFieldListAndCachePositions();
+            fieldPositionMap = null;
         }
     }
 
     public void reOrderStatisticFields() {
         if (fields != null) {
-            sortFieldListAndCachePositions();
+            fieldPositionMap = null;
         }
     }
 
@@ -158,6 +145,8 @@ public class StatisticsDataSourceData {
     }
 
     public boolean isRollUpCombinationSupported(final Set<String> rolledUpFieldNames) {
+        final Map<String, Integer> fieldPositionMap = getFieldPositionMap();
+
         if (rolledUpFieldNames == null || rolledUpFieldNames.isEmpty()) {
             return true;
         }
@@ -183,6 +172,7 @@ public class StatisticsDataSourceData {
     }
 
     public Integer getFieldPositionInList(final String fieldName) {
+        final Map<String, Integer> fieldPositionMap = getFieldPositionMap();
         return fieldPositionMap.get(fieldName);
     }
 
@@ -216,7 +206,21 @@ public class StatisticsDataSourceData {
         return "StatisticFields [statisticFields=" + fields + "]";
     }
 
-    private void sortFieldListAndCachePositions() {
+    private Map<String, Integer> getFieldPositionMap() {
+        if (fieldPositionMap != null) {
+            return fieldPositionMap;
+        }
+        return updateFieldPositionbMap();
+    }
+
+    private Map<String, Integer> updateFieldPositionbMap() {
+        final Map<String, Integer> fieldPositionMap = createFieldPositionMap();
+        this.fieldPositionMap = fieldPositionMap;
+        return fieldPositionMap;
+    }
+
+    private Map<String, Integer> createFieldPositionMap() {
+        final Map<String, Integer> fieldPositionMap = new HashMap<>();
         // de-dup the list
         Set<StatisticField> tempSet = new HashSet<>(fields);
         fields.clear();
@@ -225,11 +229,11 @@ public class StatisticsDataSourceData {
 
         Collections.sort(fields);
 
-        fieldPositionMap.clear();
         int i = 0;
         for (final StatisticField field : fields) {
             fieldPositionMap.put(field.getFieldName(), i++);
         }
+        return fieldPositionMap;
     }
 
     public StatisticsDataSourceData deepCopy() {

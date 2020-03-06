@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class MetaInfoSection {
     @JsonProperty
     private final String title;
@@ -30,7 +30,7 @@ public class MetaInfoSection {
         return entries;
     }
 
-    @JsonInclude(Include.NON_DEFAULT)
+    @JsonInclude(Include.NON_NULL)
     public static class Entry {
         @JsonProperty
         private final String key;

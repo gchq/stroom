@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * Criteria object used to fetch a job that matches the parameters specified.
  */
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FindJobCriteria extends FindNamedEntityCriteria {
     public static final String FIELD_ID = "Id";
     public static final String FIELD_ADVANCED = "Advanced";

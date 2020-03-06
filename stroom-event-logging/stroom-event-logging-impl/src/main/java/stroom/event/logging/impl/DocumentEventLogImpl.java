@@ -411,16 +411,9 @@ public class DocumentEventLogImpl implements DocumentEventLog {
 //    }
 
     private ResultPage getResultPage(final PageResponse pageResponse) {
-        ResultPage resultPage = null;
-        if (pageResponse.getOffset() != null) {
-            resultPage = new ResultPage();
-            resultPage.setFrom(BigInteger.valueOf(pageResponse.getOffset()));
-
-            if (pageResponse.getLength() != null) {
-                resultPage.setTo(BigInteger.valueOf(pageResponse.getOffset() + pageResponse.getLength()));
-            }
-        }
-
+        ResultPage resultPage = new ResultPage();
+        resultPage.setFrom(BigInteger.valueOf(pageResponse.getOffset()));
+        resultPage.setTo(BigInteger.valueOf(pageResponse.getOffset() + pageResponse.getLength()));
         return resultPage;
     }
 

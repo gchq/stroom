@@ -30,7 +30,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"open", "refresh", "refreshInterval"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "automate")
 @XmlType(name = "Automate", propOrder = {"open", "refresh", "refreshInterval"})
 public class Automate {
@@ -56,12 +56,7 @@ public class Automate {
                     @JsonProperty("refreshInterval") final String refreshInterval) {
         this.open = open;
         this.refresh = refresh;
-
-        if (refreshInterval != null) {
-            this.refreshInterval = refreshInterval;
-        } else {
-            this.refreshInterval = "10s";
-        }
+        this.refreshInterval = refreshInterval;
     }
 
     public boolean isOpen() {

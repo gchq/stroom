@@ -8,7 +8,7 @@ import stroom.docref.DocRef;
 
 import java.util.Map;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class Base64EncodedDocumentData {
     @JsonProperty
     private final DocRef docRef;

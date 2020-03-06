@@ -26,7 +26,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 @JsonPropertyOrder({"offset", "length"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class PageRequest implements Serializable, Copyable<PageRequest> {
     public static final int DEFAULT_PAGE_SIZE = 100;
     private static final long serialVersionUID = 6838082084157676358L;
@@ -48,11 +48,7 @@ public class PageRequest implements Serializable, Copyable<PageRequest> {
     @JsonCreator
     public PageRequest(@JsonProperty("offset") final Long offset,
                        @JsonProperty("length") final Integer length) {
-        if (offset != null) {
-            this.offset = offset;
-        } else {
-            this.offset = 0L;
-        }
+        this.offset = offset;
         this.length = length;
     }
 

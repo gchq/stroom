@@ -27,7 +27,7 @@ import javax.xml.bind.annotation.XmlTransient;
 import java.util.Comparator;
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ProcessorFilter implements HasAuditInfo, HasUuid {
     public static final String ENTITY_TYPE = "ProcessorFilter";
 

@@ -27,7 +27,7 @@ import stroom.util.shared.HasData;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class XsltDoc extends Doc implements HasData {
     public static final String DOCUMENT_TYPE = "XSLT";
 

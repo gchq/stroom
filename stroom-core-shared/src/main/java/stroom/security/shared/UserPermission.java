@@ -26,7 +26,7 @@ import java.io.Serializable;
 import java.util.Objects;
 
 @JsonPropertyOrder({"userUuid", "permission"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class UserPermission implements Serializable, Comparable<UserPermission> {
     private static final long serialVersionUID = 2536752322307664050L;
 

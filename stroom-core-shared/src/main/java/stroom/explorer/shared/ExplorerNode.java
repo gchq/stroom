@@ -27,7 +27,7 @@ import stroom.docref.HasDisplayValue;
 import java.util.List;
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ExplorerNode implements HasDisplayValue {
     @JsonProperty
     private String type;

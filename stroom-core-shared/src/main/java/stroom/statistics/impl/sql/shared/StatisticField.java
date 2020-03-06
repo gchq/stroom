@@ -32,7 +32,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "statisticField", propOrder = {"fieldName"})
 @JsonPropertyOrder({"fieldName"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class StatisticField implements HasDisplayValue, Comparable<StatisticField> {
     @XmlElement(name = "fieldName")
     @JsonProperty("fieldName")

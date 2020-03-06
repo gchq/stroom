@@ -9,7 +9,7 @@ import stroom.query.audit.model.DocRefEntity;
  * As loaded in from remote service
  */
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "elasticHttpUrl", "indexName", "indexedType", "mappingsJson"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ElasticIndexConfigDoc extends DocRefEntity {
     public static final String DOCUMENT_TYPE = "ElasticIndex";
 

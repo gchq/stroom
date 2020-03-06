@@ -27,7 +27,7 @@ import stroom.util.shared.Severity;
 
 import java.util.Set;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class SteppingFilterSettings {
     @JsonProperty
     private Severity skipToSeverity;

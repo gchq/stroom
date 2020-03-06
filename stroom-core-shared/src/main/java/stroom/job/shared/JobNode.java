@@ -11,7 +11,7 @@ import stroom.util.shared.PrimitiveValueConverter;
 
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class JobNode implements HasAuditInfo {
     @JsonProperty
     private Integer id;
@@ -32,13 +32,14 @@ public class JobNode implements HasAuditInfo {
     @JsonProperty
     private String nodeName;
     @JsonProperty
-    private Integer taskLimit = 20;
+    private Integer taskLimit;
     @JsonProperty
     private String schedule;
     @JsonProperty
     private boolean enabled;
 
     public JobNode() {
+        taskLimit = 20;
     }
 
     public JobNode(final Integer id,
@@ -79,11 +80,7 @@ public class JobNode implements HasAuditInfo {
         this.job = job;
         this.jobType = jobType;
         this.nodeName = nodeName;
-        if (taskLimit != null) {
-            this.taskLimit = taskLimit;
-        } else {
-            this.taskLimit = 20;
-        }
+        this.taskLimit = taskLimit;
         this.schedule = schedule;
         this.enabled = enabled;
     }

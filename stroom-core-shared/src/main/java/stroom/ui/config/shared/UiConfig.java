@@ -30,7 +30,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder({"welcomeHtml", "aboutHtml", "buildInfo", "nodeName", "maintenanceMessage", "defaultMaxResults", "process", "helpUrl", "theme", "query", "namePattern", "htmlTitle", "oncontextmenu", "splash", "activity", "url"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class UiConfig extends AbstractConfig {
     @JsonProperty
     @JsonPropertyDescription("HTML")

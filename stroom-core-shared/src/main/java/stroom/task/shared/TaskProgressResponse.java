@@ -8,7 +8,7 @@ import stroom.util.shared.ResultPage;
 
 import java.util.List;
 
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class TaskProgressResponse extends ResultPage<TaskProgress> {
     @JsonCreator
     public TaskProgressResponse(@JsonProperty("values") final List<TaskProgress> values,

@@ -26,7 +26,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class StringCriteria implements Serializable, HasIsConstrained, Clearable, Copyable<StringCriteria> {
     private static final long serialVersionUID = 4737939969786534908L;
 

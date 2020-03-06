@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 @XmlRootElement(name = "tabLayout")
 @XmlType(name = "TabLayoutConfig", propOrder = {"preferredSize", "tabs", "selected"})
 @JsonPropertyOrder({"preferredSize", "tabs", "selected"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class TabLayoutConfig extends LayoutConfig {
     /**
      * The preferred size of this layout in width, height.
@@ -70,14 +70,10 @@ public class TabLayoutConfig extends LayoutConfig {
     }
 
     @JsonCreator
-    public TabLayoutConfig(@JsonProperty("preferredSize")final Size preferredSize,
-                           @JsonProperty("tabs")final List<TabConfig> tabs,
-                           @JsonProperty("selected")final Integer selected) {
-        if (preferredSize != null) {
-            this.preferredSize = preferredSize;
-        } else {
-            this.preferredSize = new Size();
-        }
+    public TabLayoutConfig(@JsonProperty("preferredSize") final Size preferredSize,
+                           @JsonProperty("tabs") final List<TabConfig> tabs,
+                           @JsonProperty("selected") final Integer selected) {
+        this.preferredSize = preferredSize;
         this.tabs = tabs;
         this.selected = selected;
     }

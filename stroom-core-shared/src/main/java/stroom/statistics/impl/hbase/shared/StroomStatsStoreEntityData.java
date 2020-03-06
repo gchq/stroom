@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Set;
 
 @JsonPropertyOrder({"fields", "customRollUpMasks"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class StroomStatsStoreEntityData {
     /**
      * Should be a SortedSet but GWT doesn't support that. Contents should be
@@ -53,7 +53,6 @@ public class StroomStatsStoreEntityData {
     @JsonIgnore
     private Map<String, Integer> cachedFieldPositions;
 
-
     public StroomStatsStoreEntityData() {
         this(new ArrayList<>(), new HashSet<>());
     }
@@ -61,16 +60,8 @@ public class StroomStatsStoreEntityData {
     @JsonCreator
     public StroomStatsStoreEntityData(@JsonProperty("fields") final List<StatisticField> fields,
                                       @JsonProperty("customRollUpMasks") final Set<CustomRollUpMask> customRollUpMasks) {
-        if (fields != null) {
-            this.fields = fields;
-        } else {
-            this.fields = new ArrayList<>();
-        }
-        if (customRollUpMasks != null) {
-            this.customRollUpMasks = customRollUpMasks;
-        } else {
-            this.customRollUpMasks = new HashSet<>();
-        }
+        this.fields = fields;
+        this.customRollUpMasks = customRollUpMasks;
     }
 
     public List<StatisticField> getFields() {

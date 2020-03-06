@@ -25,7 +25,7 @@ import stroom.util.shared.BuildInfo;
 import java.util.ArrayList;
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ClusterNodeInfo {
     @JsonProperty
     private String discoverTime;
@@ -132,7 +132,7 @@ public class ClusterNodeInfo {
         this.error = error;
     }
 
-    @JsonInclude(Include.NON_DEFAULT)
+    @JsonInclude(Include.NON_NULL)
     public static class ClusterNodeInfoItem {
         @JsonProperty
         private final String nodeName;

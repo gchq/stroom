@@ -37,6 +37,6 @@ import javax.xml.bind.annotation.XmlSeeAlso;
         @JsonSubTypes.Type(value = VisComponentSettings.class, name = "vis"),
         @JsonSubTypes.Type(value = TextComponentSettings.class, name = "text")
 })
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public abstract class ComponentSettings {
 }

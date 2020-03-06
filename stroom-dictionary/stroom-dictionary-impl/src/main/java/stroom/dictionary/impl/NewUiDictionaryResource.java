@@ -59,7 +59,7 @@ public class NewUiDictionaryResource implements RestResource, HasHealthCheck {
     private final DictionaryStore dictionaryStore;
     private final SecurityContext securityContext;
 
-    @JsonInclude(Include.NON_DEFAULT)
+    @JsonInclude(Include.NON_NULL)
     private static class DictionaryDTO extends DocRef {
         @JsonProperty
         private String description;

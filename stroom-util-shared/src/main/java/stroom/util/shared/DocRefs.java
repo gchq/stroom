@@ -22,29 +22,16 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 
-import java.util.HashSet;
 import java.util.Set;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class DocRefs {
     @JsonProperty
     private final Set<DocRef> docRefs;
 
     @JsonCreator
     public DocRefs(@JsonProperty("docRefs") final Set<DocRef> docRefs) {
-        if (docRefs != null) {
-            this.docRefs = docRefs;
-        } else {
-            this.docRefs = new HashSet<>();
-        }
-    }
-
-    public boolean add(final DocRef docRef) {
-        return docRefs.add(docRef);
-    }
-
-    public boolean remove(final DocRef docRef) {
-        return docRefs.remove(docRef);
+        this.docRefs = docRefs;
     }
 
     public Set<DocRef> getDocRefs() {

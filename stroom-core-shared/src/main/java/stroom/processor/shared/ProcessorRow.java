@@ -26,7 +26,7 @@ import stroom.util.shared.Expander;
 import java.util.Objects;
 
 @JsonPropertyOrder({"processor", "expander"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ProcessorRow extends ProcessorListRow {
     @JsonProperty
     private final Processor processor;

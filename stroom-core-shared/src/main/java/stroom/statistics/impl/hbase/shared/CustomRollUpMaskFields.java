@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Set;
 
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class CustomRollUpMaskFields implements Comparable<CustomRollUpMaskFields> {
     @JsonProperty
     private final int id;
