@@ -4,18 +4,15 @@ import com.codahale.metrics.health.HealthCheck;
 import com.google.common.base.Strings;
 import org.apache.commons.lang3.StringUtils;
 import org.jose4j.jwa.AlgorithmConstraints;
-import org.jose4j.jwk.PublicJsonWebKey;
-import org.jose4j.jwk.RsaJsonWebKey;
+import org.jose4j.jwk.JsonWebKeySet;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jwt.JwtClaims;
-import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
+import org.jose4j.keys.resolvers.JwksVerificationKeyResolver;
+import org.jose4j.keys.resolvers.VerificationKeyResolver;
 import org.jose4j.lang.JoseException;
-import stroom.auth.service.ApiException;
-import stroom.auth.service.api.ApiKeyApi;
-import stroom.security.impl.AuthenticationConfig.JwtConfig;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
@@ -25,8 +22,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
-import java.time.Clock;
-import java.time.Instant;
+import javax.ws.rs.core.Response;
 import java.util.Optional;
 
 @Singleton
@@ -36,46 +32,32 @@ class JWTService implements HasHealthCheck {
     private static final String BEARER = "Bearer ";
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
-    private PublicJsonWebKey jwk;
-    private final boolean authenticationRequired;
-    private final String authenticationServiceUrl;
-    private final String authJwtIssuer;
-    private AuthenticationServiceClients authenticationServiceClients;
-    private final boolean checkTokenRevocation;
-    private Clock clock;
-    private String clientId;
+    private final OpenIdConfig openIdConfig;
+    private JsonWebKeySet jsonWebKeySet;
+
+    private final JerseyClientFactory jerseyClientFactory;
 
     @Inject
-    JWTService(final AuthenticationConfig securityConfig,
-               final JwtConfig jwtConfig,
-               final AuthenticationServiceClients authenticationServiceClients) {
-        this.clientId = securityConfig.getClientId();
-        this.authenticationRequired = securityConfig.isAuthenticationRequired();
-        this.authenticationServiceUrl = securityConfig.getAuthenticationServiceUrl();
-        this.authJwtIssuer = jwtConfig.getJwtIssuer();
-        this.authenticationServiceClients = authenticationServiceClients;
-        this.checkTokenRevocation = jwtConfig.isEnableTokenRevocationCheck();
+    JWTService(final AuthenticationConfig authenticationConfig,
+               final OpenIdConfig openIdConfig,
+               final JerseyClientFactory jerseyClientFactory) {
+        this.openIdConfig = openIdConfig;
+        this.jerseyClientFactory = jerseyClientFactory;
 
-        if (securityConfig.isAuthenticationRequired()) {
+        if (authenticationConfig.isAuthenticationRequired()) {
             updatePublicJsonWebKey();
 
-            if (securityConfig.getAuthServicesBaseUrl() == null) {
+            if (authenticationConfig.getAuthServicesBaseUrl() == null) {
                 throw new SecurityException("No authentication service URL is defined");
             }
         }
-
-        this.clock = Clock.systemDefaultZone();
-    }
-
-    public void setClock(Clock clock) {
-        this.clock = clock;
     }
 
     private void updatePublicJsonWebKey() {
         try {
-            String jwkAsJson = fetchNewPublicKey();
-            jwk = RsaJsonWebKey.Factory.newPublicJwk(jwkAsJson);
-        } catch (JoseException | ApiException e) {
+            final String json = fetchNewPublicKey();
+            jsonWebKeySet = new JsonWebKeySet(json);
+        } catch (JoseException e) {
             LOGGER.error(() -> "Unable to fetch the remote authentication service's public key!", e);
         }
     }
@@ -87,18 +69,9 @@ class JWTService implements HasHealthCheck {
      * <p>
      * We need to do this if the remote public key changes and verification fails.
      */
-    private String fetchNewPublicKey() throws ApiException {
-        try {
-            // We need to fetch the public key from the remote authentication service.
-            final ApiKeyApi apiKeyApi = authenticationServiceClients.newApiKeyApi();
-            return apiKeyApi.getPublicKey();
-        } catch (final ApiException | RuntimeException e) {
-            LOGGER.error(() -> "Error fetching new public API key from URL '" + authenticationServiceUrl + "'.");
-            if (authenticationServiceUrl != null && authenticationServiceUrl.toLowerCase().contains("https")) {
-                LOGGER.error(() -> "Are you sure you want to use HTTPS? IF so you will need to configure the trust store or disable SSL verification with 'stroom.auth.services.verifyingSsl=false'");
-            }
-            throw e;
-        }
+    private String fetchNewPublicKey() {
+        final Response res = jerseyClientFactory.create().target(openIdConfig.getJwksUri()).request().get();
+        return res.readEntity(String.class);
     }
 
     public Optional<String> getUserId(final Optional<String> optionalJws) {
@@ -110,11 +83,16 @@ class JWTService implements HasHealthCheck {
             final JwtClaims jwtClaims = verifyToken(jws);
             boolean isVerified = jwtClaims != null;
             boolean isRevoked = false;
-            if (checkTokenRevocation) {
-                LOGGER.debug(() -> "Checking token revocation status in remote auth service...");
-                final String userId = getUserIdFromToken(jws);
-                isRevoked = userId == null;
-            }
+
+            // TODO : @66 Check against blacklist to see if token has been revoked. Blacklist is a list of JWI (JWT IDs) on auth service.
+            //  only tokens with `jwi` claims are API keys so only those tokens need checking against the blacklist cache.
+
+
+//            if (checkTokenRevocation) {
+//                LOGGER.debug(() -> "Checking token revocation status in remote auth service...");
+//                final String userId = getUserIdFromToken(jws);
+//                isRevoked = userId == null;
+//            }
 
             if (isVerified && !isRevoked) {
                 return Optional.ofNullable(jwtClaims.getSubject());
@@ -127,32 +105,6 @@ class JWTService implements HasHealthCheck {
         }
 
         return Optional.empty();
-    }
-
-    public String refreshTokenIfExpired(String jws) {
-        if (!authenticationRequired) {
-            return null;
-        }
-
-        try {
-            verifyToken(jws);
-            return jws;
-        } catch (InvalidJwtException e) {
-            try {
-                JwtClaims claims = e.getJwtContext().getJwtClaims();
-                if (claims.getExpirationTime().getValueInMillis() < Instant.now().toEpochMilli()) {
-                    final String subject = claims.getSubject();
-                    LOGGER.info(() -> "The API key for user '" + subject + "' has expired. An API key is required, i.e. for queries. Creating a new one.");
-                    return authenticationServiceClients.createTokenForUser(claims.getSubject());
-                } else {
-                    return jws;
-                }
-            } catch (MalformedClaimException | ApiException innerEx) {
-                String error = "Unable to get new token! The error was: " + innerEx.getMessage();
-                LOGGER.error(() -> error);
-                throw new RuntimeException(error, innerEx);
-            }
-        }
     }
 
     public Optional<String> getJws(final ServletRequest request) {
@@ -168,19 +120,6 @@ class JWTService implements HasHealthCheck {
             LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jws);
             return jws;
         });
-    }
-
-    private String getUserIdFromToken(final String token) {
-        try {
-            LOGGER.debug(() -> "Checking with the Authentication Service that a token is valid.");
-            return authenticationServiceClients.newAuthenticationApi().verifyToken(token);
-        } catch (ApiException e) {
-            String message = String.format(
-                    "Unable to verify token remotely! Message was: %s. HTTP response code was: %s. Response body was: %s",
-                    e.getMessage(), e.getCode(), e.getResponseBody());
-            LOGGER.debug(() -> message);
-            throw new RuntimeException(message, e);
-        }
     }
 
     public JwtClaims verifyToken(final String token) throws InvalidJwtException {
@@ -212,20 +151,23 @@ class JWTService implements HasHealthCheck {
         // If we don't have a JWK we can't create a consumer to verify anything.
         // Why might we not have one? If the remote authentication service was down when Stroom started
         // then we wouldn't. It might not be up now but we're going to try and fetch it.
-        if (jwk == null) {
+        if (jsonWebKeySet == null) {
             updatePublicJsonWebKey();
         }
 
-        JwtConsumerBuilder builder = new JwtConsumerBuilder()
+        final VerificationKeyResolver verificationKeyResolver = new JwksVerificationKeyResolver(
+                jsonWebKeySet.getJsonWebKeys());
+
+        final JwtConsumerBuilder builder = new JwtConsumerBuilder()
                 .setAllowedClockSkewInSeconds(30) // allow some leeway in validating time based claims to account for clock skew
                 .setRequireSubject() // the JWT must have a subject claim
-                .setVerificationKey(this.jwk.getPublicKey()) // verify the signature with the public key
-                .setExpectedAudience(clientId)
+                .setVerificationKeyResolver(verificationKeyResolver)
+                .setExpectedAudience(openIdConfig.getClientId())
                 .setRelaxVerificationKeyValidation() // relaxes key length requirement
                 .setJwsAlgorithmConstraints( // only allow the expected signature algorithm(s) in the given context
                         new AlgorithmConstraints(AlgorithmConstraints.ConstraintType.WHITELIST, // which is only RS256 here
                                 AlgorithmIdentifiers.RSA_USING_SHA256))
-                .setExpectedIssuer(authJwtIssuer);
+                .setExpectedIssuer(openIdConfig.getIssuer());
         return builder.build();
     }
 
@@ -240,19 +182,18 @@ class JWTService implements HasHealthCheck {
     private void checkHealthForJwkRetrieval(HealthCheck.ResultBuilder resultBuilder) {
         final String KEY = "public_key_retrieval";
         try {
-            String publicJsonWebKey = fetchNewPublicKey();
+            final String publicJsonWebKey = fetchNewPublicKey();
             boolean canGetJwk = StringUtils.isNotBlank(publicJsonWebKey);
             if (!canGetJwk) {
                 resultBuilder.withDetail(KEY, "Cannot get stroom-auth-service's public key!\n");
                 resultBuilder.unhealthy();
             }
-        } catch (ApiException | RuntimeException e) {
+        } catch (RuntimeException e) {
             resultBuilder.withDetail(KEY, "Error fetching our identity provider's public key! " +
                     "This means we cannot verify clients' authentication tokens ourselves. " +
                     "This might mean the authentication service is down or unavailable. " +
                     "The error was: [" + e.getMessage() + "]");
             resultBuilder.unhealthy();
         }
-
     }
 }

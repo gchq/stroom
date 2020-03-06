@@ -133,7 +133,6 @@ ext.libs = [
         eventLogging                   : "event-logging:event-logging:$versions.eventLogging",
         hadoopCommonShaded             : "stroom:hadoop-common-shaded:$versions.hadoopCommonShaded",
         hadoopHdfsShaded               : "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
-        stroomAuthApi                  : "stroom:stroom-auth-service-api:$versions.stroomAuth",
         stroomDocRef                   : "stroom:stroom-docref:$versions.stroomQuery",
         stroomExpression               : "stroom:stroom-expression:$versions.stroomExpression",
         stroomProxyRemoteApi           : "stroom:stroom-proxy-remote-api:$versions.stroomProxyApi",

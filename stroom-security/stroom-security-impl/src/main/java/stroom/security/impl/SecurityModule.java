@@ -97,7 +97,6 @@ public class SecurityModule extends AbstractModule {
                 .bind(JWTService.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(AuthenticationResource.class)
                 .addBinding(AuthorisationResource.class)
                 .addBinding(DocumentPermissionResourceImpl.class)
                 .addBinding(UserResourceImpl.class)

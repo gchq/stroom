@@ -19,7 +19,9 @@ import javax.servlet.FilterRegistration;
 import java.util.EnumSet;
 
 public class App extends Application<Config> {
-        private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+
+    public static final String SESSION_COOKIE_NAME = "STROOM_SESSION_ID";
 
     public static void main(final String[] args) throws Exception {
         // Hibernate requires JBoss Logging. The SLF4J API jar wasn't being detected so this sets it manually.
@@ -42,8 +44,9 @@ public class App extends Application<Config> {
         registerLogConfiguration(environment);
 
         // Set up a session manager for Jetty
-        SessionHandler sessions = new SessionHandler();
-        environment.servlets().setSessionHandler(sessions);
+        SessionHandler sessionHandler = new SessionHandler();
+        sessionHandler.setSessionCookie(SESSION_COOKIE_NAME);
+        environment.servlets().setSessionHandler(sessionHandler);
 
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
