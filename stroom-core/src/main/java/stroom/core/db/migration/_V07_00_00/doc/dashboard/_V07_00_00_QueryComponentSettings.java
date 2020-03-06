@@ -41,7 +41,6 @@ public class _V07_00_00_QueryComponentSettings extends _V07_00_00_ComponentSetti
     private _V07_00_00_Automate automate;
 
     public _V07_00_00_QueryComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_DocRef getDataSource() {

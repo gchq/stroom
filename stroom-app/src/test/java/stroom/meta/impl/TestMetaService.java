@@ -17,7 +17,6 @@
 
 package stroom.meta.impl;
 
-
 import name.falgout.jeffrey.testing.junit.guice.GuiceExtension;
 import name.falgout.jeffrey.testing.junit.guice.IncludeModule;
 import org.junit.jupiter.api.BeforeAll;
@@ -25,14 +24,15 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import stroom.app.guice.CoreModule;
+import stroom.app.guice.JerseyModule;
 import stroom.docref.DocRef;
 import stroom.feed.api.FeedStore;
 import stroom.index.VolumeTestConfigModule;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaSecurityFilter;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaSecurityFilter;
+import stroom.meta.api.MetaService;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.resource.impl.ResourceModule;
@@ -45,7 +45,6 @@ import stroom.security.shared.User;
 import stroom.test.AppConfigTestModule;
 import stroom.test.IntegrationTestSetupUtil;
 import stroom.test.common.util.db.DbTestModule;
-import stroom.test.common.util.test.TempDirExtension;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -63,7 +62,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @IncludeModule(SecurityContextModule.class)
 @IncludeModule(MockMetaStatisticsModule.class)
 @IncludeModule(stroom.test.DatabaseTestControlModule.class)
-@ExtendWith(TempDirExtension.class)
+@IncludeModule(JerseyModule.class)
 class TestMetaService {
     private static final String TEST_USER = "test_user";
     private static final String FEED_NO_PERMISSION = "FEED_NO_PERMISSION";
@@ -120,7 +119,7 @@ class TestMetaService {
                 final Meta meta2 = metaService.create(createProps(FEED_USE_PERMISSION));
                 final Meta meta3 = metaService.create(createProps(FEED_READ_PERMISSION));
 
-                final List<Meta> readList = metaService.find(new FindMetaCriteria());
+                final List<Meta> readList = metaService.find(new FindMetaCriteria()).getValues();
                 assertThat(readList.size()).isEqualTo(1);
 
                 securityContext.useAsRead(() -> {
@@ -132,7 +131,7 @@ class TestMetaService {
                     assertThat(readExpression2).isNotEmpty();
                     assertThat(readExpression2.get().getChildren().size() == 1);
 
-                    final List<Meta> useAndReadList = metaService.find(new FindMetaCriteria());
+                    final List<Meta> useAndReadList = metaService.find(new FindMetaCriteria()).getValues();
                     assertThat(useAndReadList.size()).isEqualTo(2);
                 });
             });

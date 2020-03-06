@@ -16,13 +16,24 @@
 
 package stroom.search.impl.shard;
 
-import stroom.util.task.taskqueue.TaskExecutor;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskExecutor;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 
 @Singleton
 class IndexShardSearchTaskExecutor extends TaskExecutor {
-    IndexShardSearchTaskExecutor() {
-        super("Stroom Search Index Shard Task Executor");
+    static final ThreadPool THREAD_POOL = new ThreadPoolImpl(
+            "Search Index Shard",
+            5,
+            0,
+            Integer.MAX_VALUE);
+
+    @Inject
+    IndexShardSearchTaskExecutor(final ExecutorProvider executorProvider) {
+        super("Stroom Search Index Shard Task Executor", executorProvider, THREAD_POOL);
     }
 }

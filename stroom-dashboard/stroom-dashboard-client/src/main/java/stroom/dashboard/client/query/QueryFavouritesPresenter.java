@@ -17,6 +17,7 @@
 
 package stroom.dashboard.client.query;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.CellList;
 import com.google.inject.Inject;
@@ -25,13 +26,11 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dashboard.shared.CreateStoredQueryAction;
-import stroom.dashboard.shared.DeleteStoredQueryAction;
-import stroom.dashboard.shared.FindStoredQueryAction;
 import stroom.dashboard.shared.FindStoredQueryCriteria;
 import stroom.dashboard.shared.StoredQuery;
-import stroom.dashboard.shared.UpdateStoredQueryAction;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dashboard.shared.StoredQueryResource;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.Query;
@@ -39,6 +38,7 @@ import stroom.query.client.ExpressionTreePresenter;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -49,7 +49,9 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.util.client.MySingleSelectionModel;
 
 public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesPresenter.QueryFavouritesView> {
-    private final ClientDispatchAsync dispatcher;
+    private static final StoredQueryResource STORED_QUERY_RESOURCE = GWT.create(StoredQueryResource.class);
+
+    private final RestFactory restFactory;
     private final ExpressionTreePresenter expressionPresenter;
     private final MySingleSelectionModel<StoredQuery> selectionModel;
     private final NamePresenter namePresenter;
@@ -66,9 +68,9 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
                                     final QueryFavouritesView view,
                                     final ExpressionTreePresenter expressionPresenter,
                                     final NamePresenter namePresenter,
-                                    final ClientDispatchAsync dispatcher) {
+                                    final RestFactory restFactory) {
         super(eventBus, view);
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         this.expressionPresenter = expressionPresenter;
         this.namePresenter = namePresenter;
 
@@ -221,29 +223,32 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
         criteria.setFavourite(true);
         criteria.setPageRequest(new PageRequest(0L, 100));
 
-        final FindStoredQueryAction action = new FindStoredQueryAction(criteria);
-        dispatcher.exec(action).onSuccess(result -> {
-            selectionModel.clear();
-            getView().getCellList().setRowData(result);
-            getView().getCellList().setRowCount(result.size(), true);
+        final Rest<ResultPage<StoredQuery>> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    selectionModel.clear();
+                    getView().getCellList().setRowData(result.getValues());
+                    getView().getCellList().setRowCount(result.size(), true);
 
-            if (showAfterRefresh) {
-                final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-                    @Override
-                    public void onHideRequest(final boolean autoClose, final boolean ok) {
-                        close(ok);
+                    if (showAfterRefresh) {
+                        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+                            @Override
+                            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                                close(ok);
+                            }
+
+                            @Override
+                            public void onHide(final boolean autoClose, final boolean ok) {
+                            }
+                        };
+
+                        final PopupSize popupSize = new PopupSize(500, 400, true);
+                        ShowPopupEvent.fire(queryPresenter, QueryFavouritesPresenter.this, PopupType.OK_CANCEL_DIALOG,
+                                popupSize, "Query Favourites", popupUiHandlers);
                     }
-
-                    @Override
-                    public void onHide(final boolean autoClose, final boolean ok) {
-                    }
-                };
-
-                final PopupSize popupSize = new PopupSize(500, 400, true);
-                ShowPopupEvent.fire(queryPresenter, QueryFavouritesPresenter.this, PopupType.OK_CANCEL_DIALOG,
-                        popupSize, "Query Favourites", popupUiHandlers);
-            }
-        });
+                })
+                .call(STORED_QUERY_RESOURCE)
+                .find(criteria);
     }
 
     private void close(final boolean ok) {
@@ -258,21 +263,33 @@ public class QueryFavouritesPresenter extends MyPresenterWidget<QueryFavouritesP
     }
 
     private void create(final StoredQuery query, final boolean autoClose, final boolean ok) {
-        dispatcher.exec(new CreateStoredQueryAction(query)).onSuccess(result -> {
-            refresh(false);
-            HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
-        });
+        final Rest<StoredQuery> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    refresh(false);
+                    HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
+                })
+                .call(STORED_QUERY_RESOURCE)
+                .create(query);
     }
 
     private void update(final StoredQuery query, final boolean autoClose, final boolean ok) {
-        dispatcher.exec(new UpdateStoredQueryAction(query)).onSuccess(result -> {
-            refresh(false);
-            HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
-        });
+        final Rest<StoredQuery> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    refresh(false);
+                    HidePopupEvent.fire(QueryFavouritesPresenter.this, namePresenter, autoClose, ok);
+                })
+                .call(STORED_QUERY_RESOURCE)
+                .update(query);
     }
 
     private void delete(final StoredQuery query) {
-        dispatcher.exec(new DeleteStoredQueryAction(query)).onSuccess(result -> refresh(false));
+        final Rest<StoredQuery> rest = restFactory.create();
+        rest
+                .onSuccess(result -> refresh(false))
+                .call(STORED_QUERY_RESOURCE)
+                .delete(query);
     }
 
     public interface QueryFavouritesView extends View {

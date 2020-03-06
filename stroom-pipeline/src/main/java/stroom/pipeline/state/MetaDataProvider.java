@@ -1,6 +1,6 @@
 package stroom.pipeline.state;
 
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 
 public interface MetaDataProvider {
     String get(String key);

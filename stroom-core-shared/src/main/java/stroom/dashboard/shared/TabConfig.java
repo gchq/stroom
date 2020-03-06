@@ -16,36 +16,33 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElements;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"id", "visible", "settings"})
-@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "tab")
 @XmlType(name = "tab", propOrder = {"id", "visible", "settings"})
-public class TabConfig implements SharedObject {
-    private static final long serialVersionUID = -2105048053435792675L;
-
+@JsonPropertyOrder({"id", "visible", "settings"})
+@JsonInclude(Include.NON_DEFAULT)
+public class TabConfig {
     @XmlElement(name = "id")
     @JsonProperty("id")
     private String id;
 
     @XmlElement(name = "visible")
     @JsonProperty("visible")
-    private boolean visible = true;
+    private Boolean visible;
 
     @XmlElements({@XmlElement(name = "query", type = QueryComponentSettings.class),
             @XmlElement(name = "table", type = TableComponentSettings.class),
@@ -58,7 +55,20 @@ public class TabConfig implements SharedObject {
     private transient TabLayoutConfig parent;
 
     public TabConfig() {
-        // Default constructor necessary for GWT serialisation.
+        visible = true;
+    }
+
+    @JsonCreator
+    public TabConfig(@JsonProperty("id") final String id,
+                     @JsonProperty("visible") final Boolean visible,
+                     @JsonProperty("settings") final ComponentSettings settings) {
+        this.id = id;
+        if (visible != null) {
+            this.visible = visible;
+        } else {
+            this.visible = true;
+        }
+        this.settings = settings;
     }
 
     public String getId() {
@@ -85,10 +95,12 @@ public class TabConfig implements SharedObject {
         this.settings = settings;
     }
 
+    @JsonIgnore
     public TabLayoutConfig getParent() {
         return parent;
     }
 
+    @JsonIgnore
     public void setParent(final TabLayoutConfig parent) {
         this.parent = parent;
     }

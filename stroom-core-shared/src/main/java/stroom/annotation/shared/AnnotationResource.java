@@ -19,6 +19,8 @@ package stroom.annotation.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -30,12 +32,11 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-@Api(value = "annotations")
-@Path("/annotation")
+@Api(value = "annotations - /v1")
+@Path("/annotation" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
-public interface AnnotationResource extends DirectRestService {
+public interface AnnotationResource extends RestResource, DirectRestService {
     @GET
-    @Path("")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -44,7 +45,6 @@ public interface AnnotationResource extends DirectRestService {
     AnnotationDetail get(@QueryParam("annotationId") Long annotationId);
 
     @POST
-    @Path("")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     AnnotationDetail createEntry(CreateEntryRequest request);

@@ -10,14 +10,15 @@ import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.searchable.api.Searchable;
 import stroom.searchable.api.SearchableProvider;
-import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.Arrays;
+import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
@@ -25,20 +26,20 @@ class SearchableStoreFactory implements StoreFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(SearchableStoreFactory.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SearchableStoreFactory.class);
 
-    private final TaskContext taskContext;
-    private final ExecutorProvider executorProvider;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
     private final SearchableConfig config;
     private final UiConfig clientConfig;
     private final SearchableProvider searchableProvider;
 
     @Inject
-    SearchableStoreFactory(final TaskContext taskContext,
-                           final ExecutorProvider executorProvider,
+    SearchableStoreFactory(final Executor executor,
+                           final Provider<TaskContext> taskContextProvider,
                            final SearchableConfig config,
                            final UiConfig clientConfig,
                            final SearchableProvider searchableProvider) {
-        this.taskContext = taskContext;
-        this.executorProvider = executorProvider;
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
         this.config = config;
         this.clientConfig = clientConfig;
         this.searchableProvider = searchableProvider;
@@ -79,9 +80,9 @@ class SearchableStoreFactory implements StoreFactory {
                 storeSize,
                 resultHandlerBatchSize,
                 searchable,
-                taskContext,
+                taskContextProvider.get(),
                 searchRequest,
-                executorProvider);
+                executor);
     }
 
     private Sizes getDefaultMaxResultsSizes() {

@@ -34,7 +34,7 @@ import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStore;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.util.shared.ModelStringUtil;
+import stroom.util.time.TimeUtils;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -42,8 +42,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -138,7 +140,7 @@ public class SQLStatisticEventStore implements Statistics {
             final Set<List<Boolean>> perms = new HashSet<>();
             for (final CustomRollUpMask mask : statisticsDataSource.getConfig()
                     .getCustomRollUpMasks()) {
-                final RollUpBitMask rollUpBitMask = RollUpBitMask.fromTagPositions(mask.getRolledUpTagPositions());
+                final RollUpBitMask rollUpBitMask = RollUpBitMask.fromTagPositions(mask.getRolledUpTagPosition());
 
                 perms.add(rollUpBitMask.getBooleanMask(eventTagListSize));
             }
@@ -214,24 +216,17 @@ public class SQLStatisticEventStore implements Statistics {
     }
 
     /**
-     * Get the threshold datetime (ms) for processing a statistic
-     *
-     * @return The threshold in ms since unix epoch
+     * @return A predicate that will test if an event is within the processing age threshold, or if there
+     * is no configured max age then process all events
      */
-    private Long getEventProcessingThresholdMs() {
-        final String eventProcessingThresholdStr = config.getMaxProcessingAge();
-        if (eventProcessingThresholdStr != null && !eventProcessingThresholdStr.isEmpty()) {
-            final long duration = ModelStringUtil.parseDurationString(eventProcessingThresholdStr);
-            return System.currentTimeMillis() - duration;
-        } else {
-            return null;
-        }
-    }
-
-    private boolean isStatisticEventInsideProcessingThreshold(final StatisticEvent statisticEvent,
-                                                              final Long optionalEventProcessingThresholdMs) {
-        return statisticEvent
-                .getTimeMs() > (optionalEventProcessingThresholdMs != null ? optionalEventProcessingThresholdMs : 0);
+    private Predicate<StatisticEvent> getInsideProcessingThresholdPredicate() {
+        return Optional
+            .ofNullable(config.getMaxProcessingAge())
+            .map(TimeUtils::durationToThreshold)
+            .map(threshold ->
+                (Predicate<StatisticEvent>) statisticEvent ->
+                    statisticEvent.getTimeMs() > threshold.toEpochMilli())
+            .orElse(statisticEvent -> true);
     }
 
     public SQLStatisticAggregateMap createAggregateMap() {
@@ -249,8 +244,6 @@ public class SQLStatisticEventStore implements Statistics {
             LOGGER.debug("putEvents - count={}", statisticEvents.size());
         }
 
-        final Long optionalEventProcessingThresholdMs = getEventProcessingThresholdMs();
-
         final StatisticStoreDoc entity = (StatisticStoreDoc) Preconditions.checkNotNull(statisticStore);
 
         // validate the first stat in the batch to check we have a statistic
@@ -258,8 +251,11 @@ public class SQLStatisticEventStore implements Statistics {
         if (validateStatisticDataSource(statisticEvents.iterator().next(), entity) == false) {
             // no StatisticsDataSource entity so don't record the stat as we
             // will have no way of querying the stat
-            throw new RuntimeException(String.format("Invalid or missing statistic datasource with name %s", entity.getName()));
+            throw new RuntimeException(String.format("Invalid or missing statistic data source with name %s",
+                entity.getName()));
         }
+
+        final Predicate<StatisticEvent> insideProcessingThresholdPredicate = getInsideProcessingThresholdPredicate();
 
         try {
             final SQLStatisticAggregateMap statisticAggregateMap = objectPool.borrowObject();
@@ -267,7 +263,8 @@ public class SQLStatisticEventStore implements Statistics {
                 for (final StatisticEvent statisticEvent : statisticEvents) {
                     // Only process a stat if it is inside the processing
                     // threshold
-                    if (isStatisticEventInsideProcessingThreshold(statisticEvent, optionalEventProcessingThresholdMs)) {
+
+                    if (insideProcessingThresholdPredicate.test(statisticEvent)) {
                         final RolledUpStatisticEvent rolledUpStatisticEvent = generateTagRollUps(statisticEvent,
                                 entity);
                         statisticAggregateMap.addRolledUpEvent(rolledUpStatisticEvent, entity.getPrecision());
@@ -302,8 +299,10 @@ public class SQLStatisticEventStore implements Statistics {
             throw new RuntimeException(String.format("Invalid or missing statistic datasource with name %s", entity.getName()));
         }
 
+        final Predicate<StatisticEvent> insideProcessingThresholdPredicate = getInsideProcessingThresholdPredicate();
+
         // Only process a stat if it is inside the processing threshold
-        if (isStatisticEventInsideProcessingThreshold(statisticEvent, getEventProcessingThresholdMs())) {
+        if (insideProcessingThresholdPredicate.test(statisticEvent)) {
             final RolledUpStatisticEvent rolledUpStatisticEvent = generateTagRollUps(statisticEvent, entity);
             try {
                 final SQLStatisticAggregateMap statisticAggregateMap = objectPool.borrowObject();

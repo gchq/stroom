@@ -17,7 +17,7 @@
 package stroom.headless;
 
 import stroom.task.api.ServerTask;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import java.io.InputStream;
 

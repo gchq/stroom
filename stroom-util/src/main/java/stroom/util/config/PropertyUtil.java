@@ -150,7 +150,7 @@ public final class PropertyUtil {
      * Class to define a config property in the config object tree
      */
     public static class Prop {
-        // The unqualified name of the property, e.g. 'nodeName'
+        // The unqualified name of the property, e.g. 'node'
         private final String name;
         // The config object that the property exists in
         private final Object parentObject;
@@ -218,6 +218,22 @@ public final class PropertyUtil {
                     "name='" + name + '\'' +
                     ", parentObject=" + parentObject +
                     '}';
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final Prop prop = (Prop) o;
+            return Objects.equals(name, prop.name) &&
+                Objects.equals(parentObject, prop.parentObject) &&
+                Objects.equals(getter, prop.getter) &&
+                Objects.equals(setter, prop.setter);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(name, parentObject, getter, setter);
         }
     }
 

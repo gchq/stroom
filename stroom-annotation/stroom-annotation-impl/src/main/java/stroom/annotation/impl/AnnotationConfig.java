@@ -4,14 +4,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 
 @Singleton
-public class AnnotationConfig implements IsConfig, HasDbConfig {
+public class AnnotationConfig extends AbstractConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private List<String> statusValues = new ArrayList<>();
     private List<String> standardComments = new ArrayList<>();
@@ -43,7 +43,7 @@ public class AnnotationConfig implements IsConfig, HasDbConfig {
     }
 
     @JsonProperty("standardComments")
-    @JsonPropertyDescription("A comma separated list of standard comments that can be added to annotations")
+    @JsonPropertyDescription("A list of standard comments that can be added to annotations")
     public List<String> getStandardComments() {
         return standardComments;
     }

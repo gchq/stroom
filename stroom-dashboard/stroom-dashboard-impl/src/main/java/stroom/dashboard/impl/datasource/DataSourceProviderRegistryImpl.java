@@ -9,6 +9,7 @@ import stroom.servicediscovery.api.ServiceDiscoverer;
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
+import javax.ws.rs.client.Client;
 import java.util.Optional;
 
 @Singleton
@@ -22,18 +23,21 @@ public class DataSourceProviderRegistryImpl implements DataSourceProviderRegistr
     @Inject
     DataSourceProviderRegistryImpl(final SecurityContext securityContext,
                                    final Provider<ServiceDiscoverer> serviceDiscovererProvider,
-                                   final DataSourceUrlConfig dataSourceUrlConfig) {
+                                   final DataSourceUrlConfig dataSourceUrlConfig,
+                                   final Provider<Client> clientProvider) {
         final ServiceDiscoverer serviceDiscoverer = serviceDiscovererProvider.get();
         if (serviceDiscoverer.isEnabled()) {
             LOGGER.debug("Using service discovery for service lookup");
             delegateDataSourceProviderRegistry = new ServiceDiscoveryDataSourceProviderRegistry(
                     securityContext,
-                    serviceDiscoverer);
+                    serviceDiscoverer,
+                    clientProvider);
         } else {
             LOGGER.debug("Using local services");
             delegateDataSourceProviderRegistry = new SimpleDataSourceProviderRegistry(
                     securityContext,
-                    dataSourceUrlConfig);
+                    dataSourceUrlConfig,
+                    clientProvider);
         }
     }
 

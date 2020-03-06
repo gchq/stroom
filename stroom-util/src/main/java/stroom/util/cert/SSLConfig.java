@@ -3,7 +3,6 @@ package stroom.util.cert;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class SSLConfig {
-
     private String keyStorePath;
     private String keyStoreType = "JKS";
     private String keyStorePassword;

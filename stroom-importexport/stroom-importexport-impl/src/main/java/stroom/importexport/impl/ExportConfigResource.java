@@ -4,26 +4,27 @@ import io.swagger.annotations.Api;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
-import stroom.util.shared.RestResource;
 import stroom.util.io.StreamUtil;
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.ResourceKey;
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.ClientErrorException;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
-import javax.ws.rs.core.Context;
-import java.io.IOException;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.Response.Status;
+import javax.ws.rs.core.StreamingOutput;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Set;
 
 @Api(value = "export - /v1")
-@Path("/export/v1")
+@Path("/export" + ResourcePaths.V1)
 public class ExportConfigResource implements RestResource {
     private final transient ImportExportService importExportService;
     private final transient ResourceStore resourceStore;
@@ -42,11 +43,9 @@ public class ExportConfigResource implements RestResource {
     }
 
     @GET
-    public void export(@Context HttpServletRequest request,
-                       @Context HttpServletResponse response) throws IOException {
+    public Response export() {
         if (!securityContext.hasAppPermission("Export Configuration")) {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "You do not have permission");
-            return;
+            throw new ClientErrorException("You do not have permission", Status.FORBIDDEN);
         }
 
         final boolean enabled = exportConfig.isEnabled();
@@ -55,22 +54,28 @@ public class ExportConfigResource implements RestResource {
 
             try {
                 final java.nio.file.Path tempFile = resourceStore.getTempFile(tempResourceKey);
+                importExportService.exportConfig(Set.of(ExplorerConstants.ROOT_DOC_REF), tempFile, new ArrayList<>());
 
-                final DocRefs docRefs = new DocRefs();
-                docRefs.add(ExplorerConstants.ROOT_DOC_REF);
+                final StreamingOutput streamingOutput = output -> {
+                    try (final InputStream is = Files.newInputStream(tempFile)) {
+                        StreamUtil.streamToStream(is, output);
+                    }
+                };
 
-                importExportService.exportConfig(docRefs, tempFile, new ArrayList<>());
+                return Response
+                        .ok(streamingOutput, MediaType.APPLICATION_OCTET_STREAM)
+                        .header("Content-Disposition", "attachment; filename=\"" + tempFile.getFileName().toString() + "\"")
+                        .build();
 
-                try (final InputStream is = Files.newInputStream(tempFile); final OutputStream os = response.getOutputStream()) {
-                    StreamUtil.streamToStream(is, os);
-                }
             } catch (final EntityServiceException e) {
-                response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                return Response
+                        .status(Status.NO_CONTENT.getStatusCode(), "Export is not enabled")
+                        .build();
             } finally {
                 resourceStore.deleteTempFile(tempResourceKey);
             }
         } else {
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, "Export is not enabled");
+            throw new ClientErrorException("Export is not enabled", Status.FORBIDDEN);
         }
     }
 }

@@ -16,11 +16,12 @@
 
 package stroom.meta.statistics.impl;
 
-import stroom.meta.shared.AttributeMap;
 import stroom.meta.statistics.api.MetaStatistics;
+
+import java.util.Map;
 
 class MockMetaStatistics implements MetaStatistics {
     @Override
-    public void recordStatistics(AttributeMap metaData) {
+    public void recordStatistics(Map<String, String> metaData) {
     }
 }

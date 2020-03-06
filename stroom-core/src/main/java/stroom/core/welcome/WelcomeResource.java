@@ -2,6 +2,7 @@ package stroom.core.welcome;
 
 import io.swagger.annotations.Api;
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -12,7 +13,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Api(value = "welcome - /v1")
-@Path("/welcome/v1")
+@Path("/welcome" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class WelcomeResource implements RestResource {
     private final UiConfig uiConfig;
@@ -23,7 +24,6 @@ public class WelcomeResource implements RestResource {
     }
 
     @GET
-    @Path("/")
     public Response welcome() {
         Object response = new Object() {
             public String html = uiConfig.getWelcomeHtml();

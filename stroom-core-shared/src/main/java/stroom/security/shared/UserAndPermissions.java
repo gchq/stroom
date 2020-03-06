@@ -16,33 +16,29 @@
 
 package stroom.security.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Set;
 
-public class UserAndPermissions implements SharedObject {
-    private static final long serialVersionUID = -174816031610623504L;
+@JsonInclude(Include.NON_DEFAULT)
+public class UserAndPermissions {
+    @JsonProperty
+    private final String userId;
+    @JsonProperty
+    private final Set<String> appPermissionSet;
 
-    private User userRef;
-    private String apiToken;
-    private Set<String> appPermissionSet;
-
-    public UserAndPermissions() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public UserAndPermissions(final User userRef, final String apiToken, final Set<String> appPermissionSet) {
-        this.userRef = userRef;
-        this.apiToken = apiToken;
+    @JsonCreator
+    public UserAndPermissions(@JsonProperty("userId") final String userId,
+                              @JsonProperty("appPermissionSet") final Set<String> appPermissionSet) {
+        this.userId = userId;
         this.appPermissionSet = appPermissionSet;
     }
 
-    public User getUser() {
-        return userRef;
-    }
-
-    public String getApiToken() {
-        return apiToken;
+    public String getUserId() {
+        return userId;
     }
 
     public Set<String> getAppPermissionSet() {

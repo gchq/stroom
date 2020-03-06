@@ -18,37 +18,25 @@ package stroom.job.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.VoidResult;
-
-import javax.inject.Inject;
+import stroom.task.api.VoidResult;
 
 
 class ScheduledTaskHandler extends AbstractTaskHandler<ScheduledTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ScheduledTaskHandler.class);
 
-    private final SecurityContext securityContext;
-
-    @Inject
-    ScheduledTaskHandler(final SecurityContext securityContext) {
-        this.securityContext = securityContext;
-    }
-
     @Override
     public VoidResult exec(final ScheduledTask task) {
-        return securityContext.secureResult(() -> {
-            try {
-                final LogExecutionTime logExecutionTime = new LogExecutionTime();
-                LOGGER.debug("exec() - >>> {}", task.getTaskName());
-                task.exec(task);
-                LOGGER.debug("exec() - <<< {} took {}", task.getTaskName(), logExecutionTime);
-            } catch (final RuntimeException e) {
-                LOGGER.error(e.getMessage(), e);
-            }
+        try {
+            final LogExecutionTime logExecutionTime = new LogExecutionTime();
+            LOGGER.debug("exec() - >>> {}", task.getTaskName());
+            task.exec(task);
+            LOGGER.debug("exec() - <<< {} took {}", task.getTaskName(), logExecutionTime);
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
 
-            return new VoidResult();
-        });
+        return new VoidResult();
     }
 }

@@ -108,6 +108,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
 
         // Delete the contents of all stream store volumes.
         fsVolumeService.find(new FindFsVolumeCriteria())
+                .getValues()
                 .forEach(fsVolume -> {
                     LOGGER.info("Clearing fs volume {}", fsVolume.getPath());
                     FileUtil.deleteContents(Paths.get(fsVolume.getPath()));

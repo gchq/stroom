@@ -17,57 +17,113 @@
 package stroom.task.impl;
 
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskManager;
-import stroom.task.shared.Task;
+import stroom.task.api.ServerTask;
 import stroom.task.shared.ThreadPool;
+import stroom.util.concurrent.ScalingThreadPoolExecutor;
+import stroom.util.thread.CustomThreadFactory;
+import stroom.util.thread.StroomThreadGroup;
 
-import javax.inject.Inject;
+import javax.inject.Singleton;
+import java.util.Iterator;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 
-class ExecutorProviderImpl implements ExecutorProvider {
-    private final TaskManager taskManager;
+@Singleton
+public class ExecutorProviderImpl implements ExecutorProvider {
+    private final AtomicInteger currentAsyncTaskCount = new AtomicInteger();
 
-    @Inject
-    ExecutorProviderImpl(final TaskManager taskManager) {
-        this.taskManager = taskManager;
+    // The thread pools that will be used to execute tasks.
+    private final ConcurrentHashMap<ThreadPool, ThreadPoolExecutor> threadPoolMap = new ConcurrentHashMap<>();
+    private final ReentrantLock poolCreationLock = new ReentrantLock();
+    private final AtomicBoolean stop = new AtomicBoolean();
+
+    @Override
+    public Executor get() {
+        return get(ServerTask.THREAD_POOL);
     }
 
     @Override
-    public Executor getExecutor() {
-        final Task<?> parentTask = CurrentTaskState.currentTask();
-        return new ExecutorImpl(taskManager, null, parentTask, getTaskName(parentTask, "Generic Task"));
+    public Executor get(final ThreadPool threadPool) {
+        return command -> {
+            currentAsyncTaskCount.incrementAndGet();
+            try {
+                final Runnable outer = () -> {
+                    try {
+                        command.run();
+                    } finally {
+                        currentAsyncTaskCount.decrementAndGet();
+                    }
+                };
+                getRealExecutor(threadPool).execute(outer);
+            } catch (final Throwable t) {
+                currentAsyncTaskCount.decrementAndGet();
+                throw t;
+            }
+        };
     }
 
-    @Override
-    public Executor getExecutor(final ThreadPool threadPool) {
-        final Task<?> parentTask = CurrentTaskState.currentTask();
-        return new ExecutorImpl(taskManager, threadPool, parentTask, threadPool.getName());
+    private Executor getRealExecutor(final ThreadPool threadPool) {
+        Objects.requireNonNull(threadPool, "Null thread pool");
+        ThreadPoolExecutor executor = threadPoolMap.get(threadPool);
+        if (executor == null) {
+            poolCreationLock.lock();
+            try {
+                // Don't create a thread pool if we are supposed to be stopping
+                if (stop.get()) {
+                    throw new RejectedExecutionException("Stopping");
+                }
+
+                executor = threadPoolMap.computeIfAbsent(threadPool, k -> {
+                    // Create a thread factory for the thread pool
+                    final ThreadGroup poolThreadGroup = new ThreadGroup(StroomThreadGroup.instance(),
+                            threadPool.getName());
+                    final CustomThreadFactory taskThreadFactory = new CustomThreadFactory(
+                            threadPool.getName() + " #", poolThreadGroup, threadPool.getPriority());
+
+                    // Create the new thread pool for this priority
+                    return ScalingThreadPoolExecutor.newScalingThreadPool(
+                            threadPool.getCorePoolSize(),
+                            threadPool.getMaxPoolSize(),
+                            threadPool.getMaxQueueSize(),
+                            60L,
+                            TimeUnit.SECONDS,
+                            taskThreadFactory);
+                });
+            } finally {
+                poolCreationLock.unlock();
+            }
+        }
+        return executor;
     }
 
-    private String getTaskName(final Task<?> parentTask, final String defaultName) {
-        if (parentTask != null && parentTask.getTaskName() != null) {
-            return parentTask.getTaskName();
-        }
-
-        return defaultName;
+    void setStop(final boolean stop) {
+        this.stop.set(stop);
     }
 
-    private static class ExecutorImpl implements Executor {
-        private final TaskManager taskManager;
-        private final ThreadPool threadPool;
-        private final Task<?> parentTask;
-        private final String taskName;
-
-        ExecutorImpl(final TaskManager taskManager, final ThreadPool threadPool, final Task<?> parentTask, final String taskName) {
-            this.taskManager = taskManager;
-            this.threadPool = threadPool;
-            this.parentTask = parentTask;
-            this.taskName = taskName;
+    void shutdownExecutors() {
+        poolCreationLock.lock();
+        try {
+            final Iterator<ThreadPool> iter = threadPoolMap.keySet().iterator();
+            iter.forEachRemaining(threadPool -> {
+                final ThreadPoolExecutor executor = threadPoolMap.get(threadPool);
+                if (executor != null) {
+                    executor.shutdown();
+                    threadPoolMap.remove(threadPool);
+                }
+            });
+        } finally {
+            poolCreationLock.unlock();
         }
+    }
 
-        @Override
-        public void execute(final Runnable command) {
-            taskManager.execAsync(parentTask, taskName, command, threadPool);
-        }
+    public int getCurrentTaskCount() {
+        return currentAsyncTaskCount.get();
     }
 }

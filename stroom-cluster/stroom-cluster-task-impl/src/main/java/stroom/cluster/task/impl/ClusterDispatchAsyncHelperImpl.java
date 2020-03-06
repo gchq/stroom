@@ -26,7 +26,7 @@ import stroom.cluster.task.api.DefaultClusterResultCollector;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetType;
-import stroom.docref.SharedObject;
+
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -57,27 +57,35 @@ public class ClusterDispatchAsyncHelperImpl implements ClusterDispatchAsyncHelpe
         this.targetNodeSetFactory = targetNodeSetFactory;
     }
 
-    public <R extends SharedObject> DefaultClusterResultCollector<R> execAsync(final ClusterTask<R> task, final String targetNode) {
-        final long waitTimeMs = clusterConfig.getClusterResponseTimeoutMs();
+    public <R> DefaultClusterResultCollector<R> execAsync(final ClusterTask<R> task,
+                                                                               final String targetNode) {
+        final long waitTimeMs = clusterConfig.getClusterResponseTimeout().toMillis();
         final String sourceNode = targetNodeSetFactory.getSourceNode();
         final Set<String> targetNodes = Collections.singleton(targetNode);
         return execAsync(task, waitTimeMs, TimeUnit.MILLISECONDS, sourceNode, targetNodes);
     }
 
-    public <R extends SharedObject> DefaultClusterResultCollector<R> execAsync(final ClusterTask<R> task, final long waitTime, final TimeUnit timeUnit, final String targetNode) {
+    public <R> DefaultClusterResultCollector<R> execAsync( final ClusterTask<R> task,
+                                                                                final long waitTime,
+                                                                                final TimeUnit timeUnit,
+                                                                                final String targetNode) {
         final String sourceNode = targetNodeSetFactory.getSourceNode();
         final Set<String> targetNodes = Collections.singleton(targetNode);
         return execAsync(task, waitTime, timeUnit, sourceNode, targetNodes);
     }
 
-    public <R extends SharedObject> DefaultClusterResultCollector<R> execAsync(final ClusterTask<R> task, final TargetType targetType) {
-        final long waitTimeMs = clusterConfig.getClusterResponseTimeoutMs();
+    public <R> DefaultClusterResultCollector<R> execAsync(final ClusterTask<R> task,
+                                                                               final TargetType targetType) {
+        final long waitTimeMs = clusterConfig.getClusterResponseTimeout().toMillis();
         final String sourceNode = targetNodeSetFactory.getSourceNode();
         final Set<String> targetNodes = getTargetNodesByType(targetType);
         return execAsync(task, waitTimeMs, TimeUnit.MILLISECONDS, sourceNode, targetNodes);
     }
 
-    public <R extends SharedObject> DefaultClusterResultCollector<R> execAsync(final ClusterTask<R> task, final long waitTime, final TimeUnit timeUnit, final TargetType targetType) {
+    public <R> DefaultClusterResultCollector<R> execAsync(final ClusterTask<R> task,
+                                                                               final long waitTime,
+                                                                               final TimeUnit timeUnit,
+                                                                               final TargetType targetType) {
         final String sourceNode = targetNodeSetFactory.getSourceNode();
         final Set<String> targetNodes = getTargetNodesByType(targetType);
         return execAsync(task, waitTime, timeUnit, sourceNode, targetNodes);
@@ -99,9 +107,15 @@ public class ClusterDispatchAsyncHelperImpl implements ClusterDispatchAsyncHelpe
         return targetNodes;
     }
 
-    private <R extends SharedObject> DefaultClusterResultCollector<R> execAsync(final ClusterTask<R> task, final long waitTime, final TimeUnit timeUnit, final String sourceNode, final Set<String> targetNodes) {
-        final DefaultClusterResultCollectorImpl<R> collector = new DefaultClusterResultCollectorImpl<>(task, sourceNode,
-                targetNodes);
+    private <R> DefaultClusterResultCollector<R> execAsync(
+        final ClusterTask<R> task,
+        final long waitTime,
+        final TimeUnit timeUnit,
+        final String sourceNode,
+        final Set<String> targetNodes) {
+
+        final DefaultClusterResultCollectorImpl<R> collector = new DefaultClusterResultCollectorImpl<>(
+            task, sourceNode, targetNodes);
 
         try {
             if (targetNodes != null && targetNodes.size() > 0) {

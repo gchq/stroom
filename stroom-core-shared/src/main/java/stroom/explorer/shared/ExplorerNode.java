@@ -16,24 +16,39 @@
 
 package stroom.explorer.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
-import stroom.docref.SharedObject;
 
-public class ExplorerNode implements HasNodeState, HasDisplayValue, SharedObject {
-    private static final long serialVersionUID = -5216736591679930246L;
+import java.util.List;
+import java.util.Objects;
 
+@JsonInclude(Include.NON_DEFAULT)
+public class ExplorerNode implements HasDisplayValue {
+    @JsonProperty
     private String type;
+    @JsonProperty
     private String uuid;
+    @JsonProperty
     private String name;
+    @JsonProperty
     private String tags;
 
+    @JsonProperty
     private int depth;
+    @JsonProperty
     private String iconUrl;
+    @JsonProperty
     private NodeState nodeState;
 
+    @JsonProperty
+    private List<ExplorerNode> children;
+
     public ExplorerNode() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public ExplorerNode(final String type, final String uuid, final String name, final String tags) {
@@ -41,6 +56,25 @@ public class ExplorerNode implements HasNodeState, HasDisplayValue, SharedObject
         this.uuid = uuid;
         this.name = name;
         this.tags = tags;
+    }
+
+    @JsonCreator
+    public ExplorerNode(@JsonProperty("type") final String type,
+                        @JsonProperty("uuid") final String uuid,
+                        @JsonProperty("name") final String name,
+                        @JsonProperty("tags") final String tags,
+                        @JsonProperty("depth") final int depth,
+                        @JsonProperty("iconUrl") final String iconUrl,
+                        @JsonProperty("nodeState") final NodeState nodeState,
+                        @JsonProperty("children") final List<ExplorerNode> children) {
+        this.type = type;
+        this.uuid = uuid;
+        this.name = name;
+        this.tags = tags;
+        this.depth = depth;
+        this.iconUrl = iconUrl;
+        this.nodeState = nodeState;
+        this.children = children;
     }
 
     public static ExplorerNode create(final DocRef docRef) {
@@ -54,16 +88,32 @@ public class ExplorerNode implements HasNodeState, HasDisplayValue, SharedObject
         return type;
     }
 
+    public void setType(final String type) {
+        this.type = type;
+    }
+
     public String getUuid() {
         return uuid;
+    }
+
+    public void setUuid(final String uuid) {
+        this.uuid = uuid;
     }
 
     public String getName() {
         return name;
     }
 
+    public void setName(final String name) {
+        this.name = name;
+    }
+
     public String getTags() {
         return tags;
+    }
+
+    public void setTags(final String tags) {
+        this.tags = tags;
     }
 
     public int getDepth() {
@@ -82,11 +132,6 @@ public class ExplorerNode implements HasNodeState, HasDisplayValue, SharedObject
         this.iconUrl = iconUrl;
     }
 
-    public DocRef getDocRef() {
-        return new DocRef(type, uuid, name);
-    }
-
-    @Override
     public NodeState getNodeState() {
         return nodeState;
     }
@@ -95,29 +140,53 @@ public class ExplorerNode implements HasNodeState, HasDisplayValue, SharedObject
         this.nodeState = nodeState;
     }
 
+    public List<ExplorerNode> getChildren() {
+        return children;
+    }
+
+    public void setChildren(final List<ExplorerNode> children) {
+        this.children = children;
+    }
+
+    public ExplorerNode copy() {
+        final ExplorerNode copy = new ExplorerNode(type, uuid, name, tags);
+        copy.depth = depth;
+        copy.iconUrl = iconUrl;
+        copy.nodeState = nodeState;
+        return copy;
+    }
+
+    @JsonIgnore
+    public DocRef getDocRef() {
+        return new DocRef(type, uuid, name);
+    }
+
+    @JsonIgnore
     @Override
     public String getDisplayValue() {
         return name;
     }
 
     @Override
-    public int hashCode() {
-        return uuid.hashCode();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ExplorerNode that = (ExplorerNode) o;
+        return uuid.equals(that.uuid);
     }
 
     @Override
-    public boolean equals(final Object obj) {
-        if (!(obj instanceof ExplorerNode)) {
-            return false;
-        }
-
-        final ExplorerNode explorerNode = (ExplorerNode) obj;
-        return uuid.equals(explorerNode.uuid);
+    public int hashCode() {
+        return Objects.hash(uuid);
     }
 
     @Override
     public String toString() {
         return getDisplayValue();
+    }
+
+    public enum NodeState {
+        OPEN, CLOSED, LEAF
     }
 
     public static class Builder {

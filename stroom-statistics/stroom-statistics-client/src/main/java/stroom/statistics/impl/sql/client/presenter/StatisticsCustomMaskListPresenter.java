@@ -18,6 +18,7 @@
 package stroom.statistics.impl.sql.client.presenter;
 
 import com.google.gwt.cell.client.CheckboxCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.cellview.client.Column;
@@ -29,7 +30,8 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -39,11 +41,11 @@ import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
 import stroom.statistics.impl.sql.client.presenter.StatisticsCustomMaskListPresenter.MaskHolder;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
-import stroom.statistics.impl.sql.shared.RollUpBitMaskPermGenerationAction;
 import stroom.statistics.impl.sql.shared.StatisticField;
+import stroom.statistics.impl.sql.shared.StatisticRollupResource;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeAction;
+import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeRequest;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 
@@ -56,11 +58,13 @@ import java.util.Set;
 
 public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGridView<MaskHolder>>
         implements HasDocumentRead<StatisticStoreDoc>, HasWrite<StatisticStoreDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+    private static final StatisticRollupResource STATISTIC_ROLLUP_RESOURCE = GWT.create(StatisticRollupResource.class);
+
     private final ButtonView newButton;
     private final ButtonView removeButton;
     private final ButtonView autoGenerateButton;
     private final List<Column<MaskHolder, ?>> columns = new ArrayList<>();
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private MaskHolder selectedElement;
     private StatisticStoreDoc statisticsDataSource;
     private MaskHolderList maskList = new MaskHolderList();
@@ -70,7 +74,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
     @SuppressWarnings("unchecked")
     @Inject
     public StatisticsCustomMaskListPresenter(final EventBus eventBus,
-                                             final ClientDispatchAsync dispatcher) {
+                                             final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<>(true, true));
 
         newButton = getView().addButton(SvgPresets.NEW_ITEM);
@@ -79,7 +83,7 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
 
         maskList = new MaskHolderList();
 
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         refreshModel();
         enableButtons();
     }
@@ -185,11 +189,14 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
                 "Are you sure you want to clear the existing roll-ups and generate all possible permutations for the field list?",
                 result -> {
                     if (result) {
-                        dispatcher.exec(new RollUpBitMaskPermGenerationAction(
-                                statisticsDataSource.getStatisticFieldCount())).onSuccess(res -> {
-                            updateState(new HashSet<>(res.getValues()));
-                            DirtyEvent.fire(thisInstance, true);
-                        });
+                        final Rest<List<CustomRollUpMask>> rest = restFactory.create();
+                        rest
+                                .onSuccess(res -> {
+                                    updateState(new HashSet<>(res));
+                                    DirtyEvent.fire(thisInstance, true);
+                                })
+                                .call(STATISTIC_ROLLUP_RESOURCE)
+                                .bitMaskPermGeneration(statisticsDataSource.getStatisticFieldCount());
                     }
                 });
     }
@@ -283,11 +290,15 @@ public class StatisticsCustomMaskListPresenter extends MyPresenterWidget<DataGri
         // grab the mask list from this presenter
         oldStatisticsDataSourceData.setCustomRollUpMasks(new HashSet<>(maskList.getMasks()));
 
-        dispatcher.exec(new StatisticsDataSourceFieldChangeAction(oldStatisticsDataSourceData, newStatisticsDataSourceData)).onSuccess(result -> {
-            newStatisticsDataSourceData.setCustomRollUpMasks(result.getCustomRollUpMasks());
+        final Rest<StatisticsDataSourceData> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    newStatisticsDataSourceData.setCustomRollUpMasks(result.getCustomRollUpMasks());
 
-            updateState(result.getCustomRollUpMasks());
-        });
+                    updateState(result.getCustomRollUpMasks());
+                })
+                .call(STATISTIC_ROLLUP_RESOURCE)
+                .fieldChange(new StatisticsDataSourceFieldChangeRequest(oldStatisticsDataSourceData, newStatisticsDataSourceData));
     }
 
     /**

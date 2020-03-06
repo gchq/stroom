@@ -16,12 +16,11 @@
 
 package stroom.core.db.migration._V07_00_00.streamstore.shared;
 
-import stroom.entity.shared.EntityIdSet;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 
 @Deprecated
-public class _V07_00_00_FolderIdSet extends EntityIdSet<_V07_00_00_Folder> {
+public class _V07_00_00_FolderIdSet extends _V07_00_00_EntityIdSet<_V07_00_00_Folder> {
     private static final long serialVersionUID = -470516763097779743L;
     private boolean deep = true;
 

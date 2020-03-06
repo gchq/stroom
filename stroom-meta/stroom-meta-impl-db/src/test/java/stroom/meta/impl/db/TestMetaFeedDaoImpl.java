@@ -40,14 +40,15 @@ class TestMetaFeedDaoImpl {
     @BeforeEach
     void setup() {
         Guice.createInjector(
-                new MetaDbModule(),
-                new MockClusterLockModule(),
-                new MockSecurityContextModule(),
-                new MockCollectionModule(),
-                new MockWordListProviderModule(),
-                new CacheModule(),
-                new DbTestModule())
-                .injectMembers(this);
+            new MetaTestModule(),
+            new MetaDbModule(),
+            new MockClusterLockModule(),
+            new MockSecurityContextModule(),
+            new MockCollectionModule(),
+            new MockWordListProviderModule(),
+            new CacheModule(),
+            new DbTestModule())
+            .injectMembers(this);
         // Delete everything
         cleanup.clear();
     }

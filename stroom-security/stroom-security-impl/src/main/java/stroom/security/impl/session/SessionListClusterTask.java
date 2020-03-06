@@ -17,9 +17,9 @@
 package stroom.security.impl.session;
 
 import stroom.cluster.task.api.ClusterTask;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 
-public class SessionListClusterTask extends ClusterTask<ResultList<SessionDetails>> {
+public class SessionListClusterTask extends ClusterTask<ResultPage<SessionDetails>> {
     private static final long serialVersionUID = 7441063582135677305L;
 
     SessionListClusterTask(final String taskName) {

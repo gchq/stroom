@@ -16,7 +16,7 @@
 
 package stroom.job.api;
 
-import stroom.docref.SharedObject;
+
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ import java.util.List;
  * This interface is to be used by all classes that will create tasks for the
  * job system.
  */
-public interface DistributedTaskFactory<T extends DistributedTask<R>, R extends SharedObject> {
+public interface DistributedTaskFactory<T extends DistributedTask<R>, R> {
     /**
      * Gets a list of tasks if available up to the number requested.
      */

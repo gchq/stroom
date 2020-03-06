@@ -18,23 +18,11 @@ package stroom.security.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.entity.shared.EntityEvent;
-import stroom.security.api.AuthenticationService;
+import stroom.util.entity.EntityEvent;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
 import stroom.security.impl.event.PermissionChangeEventModule;
-import stroom.security.shared.ChangeDocumentPermissionsAction;
-import stroom.security.shared.ChangeUserAction;
-import stroom.security.shared.CheckDocumentPermissionAction;
-import stroom.security.shared.CopyPermissionsFromParentAction;
-import stroom.security.shared.CreateUserAction;
-import stroom.security.shared.DeleteUserAction;
-import stroom.security.shared.FetchAllDocumentPermissionsAction;
-import stroom.security.shared.FetchUserAction;
-import stroom.security.shared.FetchUserAndPermissionsAction;
-import stroom.security.shared.LogoutAction;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.FilterBinder;
 import stroom.util.guice.FilterInfo;
 import stroom.util.guice.GuiceUtil;
@@ -53,9 +41,6 @@ public class SecurityModule extends AbstractModule {
         install(new PermissionChangeEventLifecycleModule());
 
         bind(DocumentPermissionService.class).to(DocumentPermissionServiceImpl.class);
-        bind(AuthenticationService.class).to(AuthenticationServiceImpl.class);
-        bind(AuthorisationService.class).to(AuthorisationServiceImpl.class);
-        bind(UserAppPermissionService.class).to(UserAppPermissionServiceImpl.class);
         bind(UserService.class).to(UserServiceImpl.class);
 
         FilterBinder.create(binder())
@@ -74,18 +59,6 @@ public class SecurityModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
                 .addBinding(SessionMap.class);
 
-        TaskHandlerBinder.create(binder())
-                .bind(ChangeDocumentPermissionsAction.class, ChangeDocumentPermissionsHandler.class)
-                .bind(ChangeUserAction.class, ChangeUserHandler.class)
-                .bind(CheckDocumentPermissionAction.class, CheckDocumentPermissionHandler.class)
-                .bind(CreateUserAction.class, CreateUserHandler.class)
-                .bind(DeleteUserAction.class, DeleteUserHandler.class)
-                .bind(FetchAllDocumentPermissionsAction.class, FetchAllDocumentPermissionsHandler.class)
-                .bind(FetchUserAndPermissionsAction.class, FetchUserAndPermissionsHandler.class)
-                .bind(CopyPermissionsFromParentAction.class, CopyPermissionsFromParentHandler.class)
-                .bind(FetchUserAction.class, FetchUserHandler.class)
-                .bind(LogoutAction.class, LogoutHandler.class);
-
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(UserGroupsCache.class);
         entityEventHandlerBinder.addBinding().to(UserAppPermissionsCache.class);
@@ -97,7 +70,10 @@ public class SecurityModule extends AbstractModule {
                 .bind(JWTService.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(AppPermissionResourceImpl.class)
+                .addBinding(AuthenticationResourceImpl.class)
                 .addBinding(AuthorisationResource.class)
+                .addBinding(DocPermissionResourceImpl.class)
                 .addBinding(DocumentPermissionResourceImpl.class)
                 .addBinding(UserResourceImpl.class)
                 .addBinding(UserAppPermissionResourceImpl.class);

@@ -16,19 +16,31 @@
 
 package stroom.data.store.impl.fs.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.ModelStringUtil;
 
 /**
  * State of a volume.
  */
+@JsonInclude(Include.NON_DEFAULT)
 public class FsVolumeState {
     public static final String ENTITY_TYPE = "VolumeState";
+
+    @JsonProperty
     private int id;
+    @JsonProperty
     private int version;
+    @JsonProperty
     private Long bytesUsed;
+    @JsonProperty
     private Long bytesFree;
+    @JsonProperty
     private Long bytesTotal;
+    @JsonProperty
     private Long updateTimeMs;
 
     public static FsVolumeState create(final long bytesUsed, final long bytesTotal) {
@@ -43,7 +55,13 @@ public class FsVolumeState {
     public FsVolumeState() {
     }
 
-    public FsVolumeState(final int id, final int version, final Long bytesUsed, final Long bytesFree, final Long bytesTotal, final Long updateTimeMs) {
+    @JsonCreator
+    public FsVolumeState(@JsonProperty("id") final int id,
+                         @JsonProperty("version") final int version,
+                         @JsonProperty("bytesUsed") final Long bytesUsed,
+                         @JsonProperty("bytesFree") final Long bytesFree,
+                         @JsonProperty("bytesTotal") final Long bytesTotal,
+                         @JsonProperty("updateTimeMs") final Long updateTimeMs) {
         this.id = id;
         this.version = version;
         this.bytesUsed = bytesUsed;

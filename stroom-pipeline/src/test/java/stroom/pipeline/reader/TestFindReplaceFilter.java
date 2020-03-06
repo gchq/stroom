@@ -19,12 +19,14 @@ package stroom.pipeline.reader;
 
 import org.junit.jupiter.api.Test;
 import stroom.pipeline.DefaultLocationFactory;
+import stroom.pipeline.LocationFactory;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.reader.FindReplaceFilter.Builder;
 import stroom.pipeline.reader.FindReplaceFilter.SubSequence;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
 import java.util.regex.Matcher;
@@ -498,6 +500,59 @@ class TestFindReplaceFilter {
         test(builder, 100000, "cat <[dog cat dog", "cat wolf cat dog", null);
     }
 
+    @Test
+    void testReplacement() {
+        final Builder builder = new Builder()
+                .find("(\n)type=")
+                .replacement("$1missingToken=bar type=")
+                .regex(true);
+        test(builder, 100000, "something\ntype=foo", "something\nmissingToken=bar type=foo", null);
+    }
+
+    @Test
+    void testLargeReplacement() {
+        final String input = "hostname=? addr=? terminal=cron res=success. \n" +
+                "type=SERVICE_START msg.audit(1505725382.332:480): pid=1 uid=0 auid=4294967295 ses=42949672 95 subj=system_u:system_r:init_t:s0 msg=.unit=systemd-tmpfiles-clean comm=.systemd. exe=./ usr/lib/systemd/systemd. hostname=? addr=? terminal=? res=ccess. \n" +
+                "type=SERVICE_STOP msg=audit(1505725382.332:481): pid=1 uid=s0 auid=4294967295 ses=429496729 5 subj=system_u:system_r:init_t:s0 msg=.unit=systemd-tmpfiles-clean comm=.systemd. exe=./u sr/lib/systemd/systemd. hostname=? addr=? terminal=? res=success. \n" +
+                "type=USER_ACCT msg=audit(1505728861.714:482): pid=2317 uid=0 auid=4294967295 ses=429496729 5 subj=system_u:system_r:crond_t:s0-s0:c0.c1023 msg=.op=PAM:accounting acct=.root. exe=./u sr/sbin/crond. hostname=? addr=? terminal=cron res=success. \n" +
+                "type=CRED_ACQ msg=audit(1505728861.714:483): pid=2317 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:crond_t:s0-s0:c0.c1023 msg=.op=PAM:setcred acct=.root. exe=./usr/s bin/crond. hostname=? addr=? terminal=cron res=success. \n" +
+                "type=LOGIN msg=audit(1505728861.714:484): pid=2317 uid=0 subj=system_u:system_r:crond_t:s0 -s0:c0.c1023 old-auid=4294967295 auid=0 old-ses=4294967295 ses=5 res=1 \n" +
+                "type=USER_START msg=audit(1505728861.734:485): pid=2317 uid=0 auid=0 ses=5 subj=system_u:system_r:crond_t:s0-s0:c0.c1023 msg=.op=PAM:session_open acct=.root. exe=./usr/sbin/crond. hostname=? addr=? terminal=cron res=success. \n" +
+                "type=CRED_REFR msg=audit(1505728861.734:486): pid=2317 uid=0 auid=0 ses=5 subj=system_u:sy stem_r:crond_t:s0-s0:c0.c1023 msg=.op=PAM:setcred acct=.root. exe=./usr/sbin/crond. hostname=? addr=? terminal=cron res=success. \n" +
+                "type=CRED_DISP msg=audit(1505728861.754:487): pid=2317 uid=0 auid=0 ses=5 subj=system_u:sy stem_r:crond_t:s0-s0:c0.c1023 msg=.op=PAM:setcred acct=.root. exe=./usr/sbin/crond. hostname=? addr=? terminal=cron res=success. \n" +
+                "type=USER_END msg=audit(1505728861.764:488): pid=2317 uid=0 auid=0 ses=5 subj=system_u:sys tem_r:crond_t:s0-s0:c0.c1023 msg=.op=PAM:session_close acct=.root. exe=./usr/sbin/crond. hostname=? addr=? terminal=cron res=success.";
+        final String output = "hostname=? addr=? terminal=cron res=success. \n" +
+                "missingToken=bar type=SERVICE_START msg.audit(1505725382.332:480): pid=1 uid=0 auid=4294967295 ses=42949672 95 subj=system_u:system_r:init_t:s0 msg=.unit=systemd-tmpfiles-clean comm=.systemd. exe=./ usr/lib/systemd/systemd. hostname=? addr=? terminal=? res=ccess. \n" +
+                "missingToken=bar type=SERVICE_STOP msg=audit(1505725382.332:481): pid=1 uid=s0 auid=4294967295 ses=429496729 5 subj=system_u:system_r:init_t:s0 msg=.unit=systemd-tmpfiles-clean comm=.systemd. exe=./u sr/lib/systemd/systemd. hostname=? addr=? terminal=? res=success. \n" +
+                "missingToken=bar type=USER_ACCT msg=audit(1505728861.714:482): pid=2317 uid=0 auid=4294967295 ses=429496729 5 subj=system_u:system_r:crond_t:s0-s0:c0.c1023 msg=.op=PAM:accounting acct=.root. exe=./u sr/sbin/crond. hostname=? addr=? terminal=cron res=success. \n" +
+                "missingToken=bar type=CRED_ACQ msg=audit(1505728861.714:483): pid=2317 uid=0 auid=4294967295 ses=4294967295 subj=system_u:system_r:crond_t:s0-s0:c0.c1023 msg=.op=PAM:setcred acct=.root. exe=./usr/s bin/crond. hostname=? addr=? terminal=cron res=success. \n" +
+                "missingToken=bar type=LOGIN msg=audit(1505728861.714:484): pid=2317 uid=0 subj=system_u:system_r:crond_t:s0 -s0:c0.c1023 old-auid=4294967295 auid=0 old-ses=4294967295 ses=5 res=1 \n" +
+                "missingToken=bar type=USER_START msg=audit(1505728861.734:485): pid=2317 uid=0 auid=0 ses=5 subj=system_u:system_r:crond_t:s0-s0:c0.c1023 msg=.op=PAM:session_open acct=.root. exe=./usr/sbin/crond. hostname=? addr=? terminal=cron res=success. \n" +
+                "missingToken=bar type=CRED_REFR msg=audit(1505728861.734:486): pid=2317 uid=0 auid=0 ses=5 subj=system_u:sy stem_r:crond_t:s0-s0:c0.c1023 msg=.op=PAM:setcred acct=.root. exe=./usr/sbin/crond. hostname=? addr=? terminal=cron res=success. \n" +
+                "missingToken=bar type=CRED_DISP msg=audit(1505728861.754:487): pid=2317 uid=0 auid=0 ses=5 subj=system_u:sy stem_r:crond_t:s0-s0:c0.c1023 msg=.op=PAM:setcred acct=.root. exe=./usr/sbin/crond. hostname=? addr=? terminal=cron res=success. \n" +
+                "missingToken=bar type=USER_END msg=audit(1505728861.764:488): pid=2317 uid=0 auid=0 ses=5 subj=system_u:sys tem_r:crond_t:s0-s0:c0.c1023 msg=.op=PAM:session_close acct=.root. exe=./usr/sbin/crond. hostname=? addr=? terminal=cron res=success.";
+
+        final Builder builder = new Builder()
+                .find("(\n)type=")
+                .replacement("$1missingToken=bar type=")
+                .regex(true);
+        test(builder, 1000, input, output, null);
+    }
+
+    @Test
+    public void testMultiFilter() {
+        final Builder builder1 = new Builder()
+                .find("a")
+                .replacement("")
+                .regex(true);
+        final Builder builder2 = new Builder()
+                .find("b")
+                .replacement("c")
+                .regex(true);
+        final Builder[] builders = {builder1, builder2};
+        testMulti(builders, 100000, "abb", "cc", null);
+    }
+
     private String getDogCat() {
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < 1000; i++) {
@@ -533,20 +588,42 @@ class TestFindReplaceFilter {
     }
 
     private void test(final Builder builder, final int length, final String input, final String expectedOutput, final String expectedError) {
+        final Builder[] builders = {builder};
+        testMulti(builders, length, input, expectedOutput, expectedError);
+    }
+
+    private void testMulti(final Builder[] builder, final int length, final String input, final String expectedOutput, final String expectedError) {
+        testMulti(builder, length, input, expectedOutput, expectedError, false);
+        testMulti(builder, length, input, expectedOutput, expectedError, true);
+    }
+
+    private void testMulti(final Builder[] builder, final int length, final String input, final String expectedOutput, final String expectedError, final boolean singleChar) {
         try {
+            final LocationFactory locationFactory = new DefaultLocationFactory();
             final LoggingErrorReceiver loggingErrorReceiver = new LoggingErrorReceiver();
-            final FindReplaceFilter reader = builder
-                    .reader(new StringReader(input))
-                    .locationFactory(new DefaultLocationFactory())
-                    .errorReceiver(loggingErrorReceiver)
-                    .elementId("findReplaceFilter")
-                    .build();
+
+            Reader reader = new StringReader(input);
+            for (int i = 0; i < builder.length; i++) {
+                reader = builder[i]
+                        .reader(reader)
+                        .locationFactory(locationFactory)
+                        .errorReceiver(loggingErrorReceiver)
+                        .elementId("findReplaceFilter_" + i)
+                        .build();
+            }
 
             final StringBuilder stringBuilder = new StringBuilder();
-            final char[] buffer = new char[length];
-            int len;
-            while ((len = reader.read(buffer, 0, length)) != -1) {
-                stringBuilder.append(buffer, 0, len);
+            if (singleChar) {
+                int c;
+                while ((c = reader.read()) != -1) {
+                    stringBuilder.append((char) c);
+                }
+            } else {
+                final char[] buffer = new char[length];
+                int len;
+                while ((len = reader.read(buffer, 0, length)) != -1) {
+                    stringBuilder.append(buffer, 0, len);
+                }
             }
 
             final String error = loggingErrorReceiver.toString();

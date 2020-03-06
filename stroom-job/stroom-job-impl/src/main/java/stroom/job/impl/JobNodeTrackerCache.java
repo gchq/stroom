@@ -19,7 +19,6 @@ package stroom.job.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.node.api.NodeInfo;
@@ -124,8 +123,7 @@ class JobNodeTrackerCache {
                 final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
                 findJobNodeCriteria.getNodeName().setString(nodeName);
 
-                final List<JobNode> list = jobNodeDao.find(findJobNodeCriteria);
-
+                final List<JobNode> list = jobNodeDao.find(findJobNodeCriteria).getValues();
                 for (final JobNode jobNode : list) {
                     // Get the job name.
                     final String jobName = jobNode.getJob().getName();

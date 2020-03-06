@@ -32,10 +32,10 @@ import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.feed.shared.FeedDoc.FeedStatus;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
-import stroom.meta.shared.MetaService;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.proxy.repo.FileSetProcessor;
 import stroom.task.api.ExecutorProvider;
@@ -50,8 +50,8 @@ import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.BaseResultList;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -105,8 +105,8 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
                            final int maxAggregation,
                            final long maxStreamSize) {
         final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
-                taskContext,
                 executorProvider,
+                taskContext,
                 filePackProcessorProvider,
                 proxyDir,
                 10,
@@ -160,10 +160,10 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
         findMetaCriteria.setExpression(MetaExpressionUtil.createFeedExpression(feedName1));
-        final BaseResultList<Meta> resultList1 = metaService.find(findMetaCriteria);
-        assertThat(resultList1.size()).as("Expecting 2 files to get merged").isEqualTo(1);
+        final ResultPage<Meta> resultPage1 = metaService.find(findMetaCriteria);
+        assertThat(resultPage1.size()).as("Expecting 2 files to get merged").isEqualTo(1);
 
-        try (final Source streamSource = store.openSource(resultList1.getFirst().getId())) {
+        try (final Source streamSource = store.openSource(resultPage1.getFirst().getId())) {
             assertThat(streamSource.count()).isEqualTo(2);
 
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {
@@ -188,9 +188,9 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         final FindMetaCriteria findMetaCriteria2 = new FindMetaCriteria();
         findMetaCriteria2.setExpression(MetaExpressionUtil.createFeedExpression(feedName2));
 
-        final BaseResultList<Meta> resultList2 = metaService.find(findMetaCriteria2);
+        final ResultPage<Meta> resultPage2 = metaService.find(findMetaCriteria2);
 
-        assertThat(resultList2.size()).as("Expecting file 1 ").isEqualTo(1);
+        assertThat(resultPage2.size()).as("Expecting file 1 ").isEqualTo(1);
     }
 
     @Test
@@ -229,7 +229,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(MetaExpressionUtil.createFeedExpression(eventFeeds.get(0)));
-        final List<Meta> list = metaService.find(criteria);
+        final List<Meta> list = metaService.find(criteria).getValues();
         assertThat(list.size()).isEqualTo(2);
 
         try (final Source source = store.openSource(list.get(0).getId())) {
@@ -311,7 +311,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
         feeds.forEach(feed -> {
             final FindMetaCriteria criteria = new FindMetaCriteria();
             criteria.setExpression(MetaExpressionUtil.createFeedExpression(feed.getName()));
-            final List<Meta> metas = metaService.find(criteria);
+            final List<Meta> metas = metaService.find(criteria).getValues();
             assertThat(metas.size()).isEqualTo(expectedStreamsPerFeed);
 
             metas.forEach(meta -> {
@@ -426,7 +426,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(MetaExpressionUtil.createFeedExpression(feedName1));
-        final List<Meta> list = metaService.find(criteria);
+        final List<Meta> list = metaService.find(criteria).getValues();
         assertThat(list.size()).isEqualTo(1);
 
         try (final Source source = store.openSource(list.get(0).getId())) {
@@ -476,7 +476,7 @@ class TestProxyAggregationTask extends AbstractCoreIntegrationTest {
 
         final FindMetaCriteria criteria = new FindMetaCriteria();
         criteria.setExpression(MetaExpressionUtil.createFeedExpression(feedName1));
-        final List<Meta> list = metaService.find(criteria);
+        final List<Meta> list = metaService.find(criteria).getValues();
         assertThat(list.size()).isEqualTo(1);
 
         try (final Source source = store.openSource(list.get(0).getId())) {

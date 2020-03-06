@@ -16,19 +16,21 @@
 
 package stroom.pipeline.shared;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class Record implements Serializable {
-    private static final long serialVersionUID = -1327955728731376764L;
-
+@JsonInclude(Include.NON_DEFAULT)
+public class Record {
+    @JsonProperty
     private long streamId;
+    @JsonProperty
     private long recordNo;
 
-    public Record() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public Record(final long streamId, final long recordNo) {
+    @JsonCreator
+    public Record(@JsonProperty("streamId") final long streamId,
+                  @JsonProperty("recordNo") final long recordNo) {
         this.streamId = streamId;
         this.recordNo = recordNo;
     }

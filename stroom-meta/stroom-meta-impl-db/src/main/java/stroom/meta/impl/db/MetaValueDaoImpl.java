@@ -20,16 +20,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.JooqUtil;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.MetaValueDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaValRecord;
-import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -224,18 +225,18 @@ class MetaValueDaoImpl implements MetaValueDao {
     public void deleteOldValues() {
         // Acquire a cluster lock before performing a batch delete to reduce db contention and to let a single node do the job.
         clusterLockService.tryLock(LOCK_NAME, () -> {
-            final Long age = getAttributeDatabaseAgeMs();
+            final Long createTimeThresholdEpochMs = getAttributeCreateTimeThresholdEpochMs();
             final int batchSize = metaValueConfig.getDeleteBatchSize();
             int count = batchSize;
             while (count >= batchSize) {
-                count = deleteBatchOfOldValues(age, batchSize);
+                count = deleteBatchOfOldValues(createTimeThresholdEpochMs, batchSize);
             }
         });
     }
 
-    private int deleteBatchOfOldValues(final long age, final int batchSize) {
+    private int deleteBatchOfOldValues(final long createTimeThresholdEpochMs, final int batchSize) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        LOGGER.debug("Processing batch age {}, batch size is {}", age, batchSize);
+        LOGGER.debug("Processing batch age {}, batch size is {}", createTimeThresholdEpochMs, batchSize);
 
         final int count = JooqUtil.contextResult(metaDbConnProvider, context -> context
                         // TODO : @66 Maybe try delete with limits again after un upgrade to MySQL 5.7.
@@ -254,7 +255,7 @@ class MetaValueDaoImpl implements MetaValueDao {
                         .execute("DELETE FROM {0} WHERE {1} < {2} ORDER BY {3} LIMIT {4}",
                                 META_VAL,
                                 META_VAL.CREATE_TIME,
-                                age,
+                                createTimeThresholdEpochMs,
                                 META_VAL.ID,
                                 batchSize)
         );
@@ -286,9 +287,9 @@ class MetaValueDaoImpl implements MetaValueDao {
     /**
      * @return The oldest data attribute that we should keep
      */
-    private Long getAttributeDatabaseAgeMs() {
-        final long age = metaValueConfig.getDeleteAgeMs();
-        return System.currentTimeMillis() - age;
+    private Long getAttributeCreateTimeThresholdEpochMs() {
+        final Duration deleteAge = metaValueConfig.getDeleteAge().getDuration();
+        return System.currentTimeMillis() - deleteAge.toMillis();
     }
 
     /**
@@ -296,7 +297,7 @@ class MetaValueDaoImpl implements MetaValueDao {
      */
     @Override
     public List<MetaRow> decorateDataWithAttributes(final List<Meta> list) {
-        final Map<Long, MetaRow> rowMap = new HashMap<>();
+        final Map<Long, Map<String, String>> attributeMap = new HashMap<>();
 
         // Get a list of valid data ids.
         final List<Long> idList = list.parallelStream()
@@ -317,20 +318,15 @@ class MetaValueDaoImpl implements MetaValueDao {
                     metaKeyService.getNameForId(keyId).ifPresent(name -> {
                         final long dataId = r.get(META_VAL.META_ID);
                         final String value = String.valueOf(r.get(META_VAL.VAL));
-                        rowMap.computeIfAbsent(dataId, k -> new MetaRow()).getAttributes().put(name, value);
+                        attributeMap.computeIfAbsent(dataId, k -> new HashMap<>()).put(name, value);
                     });
                 })
         );
 
         final List<MetaRow> dataRows = new ArrayList<>();
         for (final Meta meta : list) {
-            MetaRow dataRow = rowMap.get(meta.getId());
-            if (dataRow != null) {
-                dataRow.setMeta(meta);
-            } else {
-                dataRow = new MetaRow(meta);
-            }
-            dataRows.add(dataRow);
+            final Map<String, String> attributes = attributeMap.getOrDefault(meta.getId(), new HashMap<>());
+            dataRows.add(new MetaRow(meta, attributes));
         }
 
         return dataRows;

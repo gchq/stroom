@@ -19,7 +19,6 @@ package stroom.search;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.dashboard.shared.DataSourceFieldsMap;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.TextField;
 import stroom.docref.DocRef;
@@ -37,6 +36,9 @@ import stroom.test.AbstractCoreIntegrationTest;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -60,7 +62,9 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
         final IndexDoc index = indexStore.readDocument(indexRef);
 
         // Create a map of index fields keyed by name.
-        final DataSourceFieldsMap dataSourceFieldsMap = new DataSourceFieldsMap(IndexDataSourceFieldUtil.getDataSourceFields(index));
+        final Map<String, AbstractField> dataSourceFieldsMap = IndexDataSourceFieldUtil.getDataSourceFields(index, null)
+                .stream()
+                .collect(Collectors.toMap(AbstractField::getName, Function.identity()));
         final AbstractField actual = dataSourceFieldsMap.get("Action");
 
         final AbstractField expected = new TextField("Action", true, actual.getConditions());

@@ -23,7 +23,7 @@ import java.util.List;
 public interface MultiSelectionModel<T> {
     Selection<T> getSelection();
 
-    void setSelection(Selection<T> selection);
+    void setSelection(Selection<T> selection, SelectionType selectionType);
 
     /**
      * Get a list of all selected items.
@@ -36,11 +36,6 @@ public interface MultiSelectionModel<T> {
     boolean isSelected(final T item);
 
     /**
-     * Sets the selected state of the specified item.
-     */
-    void setSelected(T item, boolean selected);
-
-    /**
      * Gets the most recently selected item or only selected item if an item is selected, null otherwise.
      */
     T getSelected();
@@ -48,7 +43,22 @@ public interface MultiSelectionModel<T> {
     /**
      * Sets the specified item as the only selected item, i.e. clears the current selection and sets a single item selected.
      */
-    void setSelected(final T item);
+    void setSelected( T item);
+
+    /**
+     * Sets the selected state of the specified item.
+     */
+    void setSelected(T item, boolean selected);
+
+    /**
+     * Sets the specified item as the only selected item, i.e. clears the current selection and sets a single item selected.
+     */
+    void setSelected( T item, SelectionType selectionType);
+
+    /**
+     * Sets the selected state of the specified item.
+     */
+    void setSelected(T item, boolean selected, SelectionType selectionType);
 
     /**
      * Clears all selected items.

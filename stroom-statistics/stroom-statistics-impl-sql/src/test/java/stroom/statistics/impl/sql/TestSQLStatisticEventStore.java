@@ -31,6 +31,7 @@ import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
 import stroom.test.common.util.test.StroomUnitTest;
 import stroom.util.concurrent.AtomicSequence;
 import stroom.util.concurrent.SimpleExecutor;
+import stroom.util.time.StroomDuration;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -155,7 +156,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
         final int eventCount = 100;
         final long firstEventTimeMs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1);
 
-        sqlStatisticsConfig.setMaxProcessingAge("");
+        sqlStatisticsConfig.setMaxProcessingAge(null);
 
         processEvents(eventCount, eventCount, firstEventTimeMs, TimeUnit.MINUTES.toMillis(1));
 
@@ -168,7 +169,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
         final long firstEventTimeMs = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(10);
 
         // only process stuff younger than a day
-        sqlStatisticsConfig.setMaxProcessingAge("1d");
+        sqlStatisticsConfig.setMaxProcessingAge(StroomDuration.ofDays(1));
 
         // no events should be processed
         processEvents(eventCount, 0, firstEventTimeMs, TimeUnit.MINUTES.toMillis(1));
@@ -185,7 +186,7 @@ class TestSQLStatisticEventStore extends StroomUnitTest {
                 + TimeUnit.SECONDS.toMillis(10);
 
         // only process stuff younger than 25days
-        sqlStatisticsConfig.setMaxProcessingAge("25d");
+        sqlStatisticsConfig.setMaxProcessingAge(StroomDuration.ofDays(25));
 
         // no events should be processed
         processEvents(eventCount, 25, firstEventTimeMs, TimeUnit.DAYS.toMillis(1));

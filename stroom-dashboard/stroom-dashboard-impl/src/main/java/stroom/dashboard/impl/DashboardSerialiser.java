@@ -57,14 +57,19 @@ public class DashboardSerialiser implements DocumentSerialiser2<DashboardDoc> {
 
     @Override
     public Map<String, byte[]> write(final DashboardDoc document) throws IOException {
+        final DashboardConfig dashboardConfig = document.getDashboardConfig();
+        document.setDashboardConfig(null);
+
         final Map<String, byte[]> data = delegate.write(document);
 
-        DashboardConfig dashboardConfig = document.getDashboardConfig();
         if (dashboardConfig != null) {
             final StringWriter stringWriter = new StringWriter();
             dashboardConfigSerialiser.write(stringWriter, dashboardConfig);
             data.put(JSON, EncodingUtil.asBytes(stringWriter.toString()));
+            document.setDashboardConfig(dashboardConfig);
         }
+
+
         return data;
     }
 

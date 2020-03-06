@@ -18,10 +18,10 @@ package stroom.pipeline.stepping;
 
 import stroom.docref.DocRef;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.pipeline.shared.StepLocation;
-import stroom.pipeline.shared.StepType;
-import stroom.pipeline.shared.SteppingFilterSettings;
-import stroom.pipeline.shared.SteppingResult;
+import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
+import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.task.api.ServerTask;
 
 import java.util.Map;

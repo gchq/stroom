@@ -40,7 +40,7 @@ import stroom.storedquery.impl.StoredQueryHistoryCleanExecutor;
 import stroom.task.api.SimpleTaskContext;
 import stroom.test.common.util.db.DbTestUtil;
 import stroom.util.AuditUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 
 import java.sql.SQLException;
@@ -113,11 +113,11 @@ class TestStoredQueryDao {
         criteria.setComponentId(QUERY_COMPONENT);
         criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
 
-        final BaseResultList<StoredQuery> list = storedQueryDao.find(criteria);
+        final ResultPage<StoredQuery> list = storedQueryDao.find(criteria);
 
         assertThat(list.size()).isEqualTo(2);
 
-        final StoredQuery query = list.get(0);
+        final StoredQuery query = list.getFirst();
 
         assertThat(query).isNotNull();
         assertThat(query.getName()).isEqualTo("Test query");
@@ -155,10 +155,10 @@ class TestStoredQueryDao {
         criteria.setComponentId(QUERY_COMPONENT);
         criteria.setSort(FindStoredQueryCriteria.FIELD_TIME, Direction.DESCENDING, false);
 
-        BaseResultList<StoredQuery> list = storedQueryDao.find(criteria);
+        ResultPage<StoredQuery> list = storedQueryDao.find(criteria);
         assertThat(list.size()).isEqualTo(2);
 
-        StoredQuery query = list.get(0);
+        StoredQuery query = list.getFirst();
 
         // Now insert the same query over 100 times.
         for (int i = 0; i < 120; i++) {

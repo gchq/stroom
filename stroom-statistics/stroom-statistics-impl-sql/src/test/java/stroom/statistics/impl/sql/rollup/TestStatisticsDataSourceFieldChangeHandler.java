@@ -20,8 +20,9 @@ package stroom.statistics.impl.sql.rollup;
 import org.junit.jupiter.api.Test;
 import stroom.statistics.impl.sql.shared.CustomRollUpMask;
 import stroom.statistics.impl.sql.shared.StatisticField;
+import stroom.statistics.impl.sql.shared.StatisticRollupResource;
 import stroom.statistics.impl.sql.shared.StatisticsDataSourceData;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeAction;
+import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeRequest;
 import stroom.test.common.util.test.StroomUnitTest;
 
 import java.util.ArrayList;
@@ -59,12 +60,12 @@ class TestStatisticsDataSourceFieldChangeHandler extends StroomUnitTest {
 
         final StatisticsDataSourceData newData = new StatisticsDataSourceData(newFields);
 
-        final StatisticsDataSourceFieldChangeAction action = new StatisticsDataSourceFieldChangeAction(oldData,
+        final StatisticsDataSourceFieldChangeRequest request = new StatisticsDataSourceFieldChangeRequest(oldData,
                 newData);
 
-        final StatisticsDataSourceFieldChangeHandler handler = new StatisticsDataSourceFieldChangeHandler();
+        final StatisticRollupResource resource = new StatisticRollupResourceImpl();
 
-        final StatisticsDataSourceData result = handler.exec(action);
+        final StatisticsDataSourceData result = resource.fieldChange(request);
 
         assertThat(result).isNotNull();
 

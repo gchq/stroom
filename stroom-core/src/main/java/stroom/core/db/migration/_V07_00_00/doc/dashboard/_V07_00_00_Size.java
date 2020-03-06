@@ -38,7 +38,6 @@ public class _V07_00_00_Size implements _V07_00_00_SharedObject {
     private int[] size = new int[]{200, 200};
 
     public _V07_00_00_Size() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @XmlElement(name = "width")

@@ -35,7 +35,7 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.proxy.app.guice.ProxyModule;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
@@ -75,7 +75,7 @@ public class App extends Application<Config> {
         registerLogConfiguration(environment);
 
         // We want Stroom to use the root path so we need to move Dropwizard's path.
-        environment.jersey().setUrlPattern(ResourcePaths.API_PATH + "/*");
+        environment.jersey().setUrlPattern(ResourcePaths.API_ROOT_PATH + "/*");
 
         // Set up a session handler for Jetty
         environment.servlets().setSessionHandler(new SessionHandler());

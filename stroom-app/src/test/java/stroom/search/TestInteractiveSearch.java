@@ -17,6 +17,7 @@
 
 package stroom.search;
 
+import org.apache.hadoop.util.ThreadUtil;
 import org.junit.jupiter.api.Test;
 import stroom.annotation.api.AnnotationDataSource;
 import stroom.dictionary.impl.DictionaryStore;
@@ -36,8 +37,10 @@ import stroom.query.shared.v2.ParamUtil;
 import stroom.search.api.EventRef;
 import stroom.search.api.EventRefs;
 import stroom.search.impl.EventSearchTask;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskManager;
+import stroom.task.impl.ExecutorProviderImpl;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -59,6 +62,8 @@ class TestInteractiveSearch extends AbstractSearchTest {
     private DictionaryStore dictionaryStore;
     @Inject
     private TaskManager taskManager;
+    @Inject
+    private ExecutorProviderImpl executorProvider;
 
     @Override
     protected boolean onAfterSetup() {
@@ -423,6 +428,11 @@ class TestInteractiveSearch extends AbstractSearchTest {
                 1,
                 1,
                 indexStore);
+
+        while (executorProvider.getCurrentTaskCount() > 0) {
+            ThreadUtil.sleepAtLeastIgnoreInterrupts(1000);
+        }
+        assertThat(executorProvider.getCurrentTaskCount()).isEqualTo(0);
     }
 
     private void testEvents(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {
@@ -469,6 +479,11 @@ class TestInteractiveSearch extends AbstractSearchTest {
         }
 
         assertThat(count).isEqualTo(expectResultCount);
+
+        while (executorProvider.getCurrentTaskCount() > 0) {
+            ThreadUtil.sleepAtLeastIgnoreInterrupts(1000);
+        }
+        assertThat(executorProvider.getCurrentTaskCount()).isEqualTo(0);
     }
 
     private TableSettings createTableSettings(final boolean extractValues) {

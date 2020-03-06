@@ -1,16 +1,16 @@
 package stroom.meta.mock;
 
 import stroom.expression.matcher.ExpressionMatcher;
-import stroom.meta.shared.AttributeMap;
-import stroom.meta.shared.EffectiveMetaDataCriteria;
+import stroom.meta.api.AttributeMap;
+import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaProperties;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Singleton;
@@ -154,7 +154,7 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public BaseResultList<Meta> find(final FindMetaCriteria criteria) {
+    public ResultPage<Meta> find(final FindMetaCriteria criteria) {
         final ExpressionMatcher expressionMatcher = new ExpressionMatcher(MetaFields.getAllFieldMap());
         final List<Meta> list = new ArrayList<>();
         for (final Entry<Long, Meta> entry : metaMap.entrySet()) {
@@ -170,7 +170,7 @@ public class MockMetaService implements MetaService, Clearable {
             }
         }
 
-        return BaseResultList.createUnboundedList(list);
+        return ResultPage.createUnboundedList(list);
     }
 
     /**
@@ -229,7 +229,7 @@ public class MockMetaService implements MetaService, Clearable {
     }
 
     @Override
-    public BaseResultList<MetaRow> findRows(final FindMetaCriteria criteria) {
+    public ResultPage<MetaRow> findRows(final FindMetaCriteria criteria) {
         return null;
     }
 

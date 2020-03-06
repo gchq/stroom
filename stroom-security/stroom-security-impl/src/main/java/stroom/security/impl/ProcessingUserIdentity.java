@@ -18,7 +18,7 @@ package stroom.security.impl;
 
 import stroom.security.api.UserIdentity;
 
-final class ProcessingUserIdentity implements UserIdentity {
+public final class ProcessingUserIdentity implements UserIdentity {
     private static final String INTERNAL_PROCESSING_USER = "INTERNAL_PROCESSING_USER";
 
     public static final UserIdentity INSTANCE = new ProcessingUserIdentity();
@@ -45,5 +45,16 @@ final class ProcessingUserIdentity implements UserIdentity {
     @Override
     public String toString() {
         return getId();
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        return o instanceof ProcessingUserIdentity;
+    }
+
+    @Override
+    public int hashCode() {
+        return 0;
     }
 }

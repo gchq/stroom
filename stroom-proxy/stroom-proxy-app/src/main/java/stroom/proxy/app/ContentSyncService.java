@@ -2,26 +2,23 @@ package stroom.proxy.app;
 
 import com.codahale.metrics.health.HealthCheck;
 import io.dropwizard.lifecycle.Managed;
-import org.glassfish.jersey.client.ClientConfig;
-import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.importexport.api.DocRefs;
-import stroom.importexport.api.DocumentData;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.importexport.api.DocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
+import stroom.security.api.ClientSecurityUtil;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
@@ -39,14 +36,17 @@ public class ContentSyncService implements Managed, HasHealthCheck {
 
     private final ContentSyncConfig contentSyncConfig;
     private final Set<ImportExportActionHandler> importExportActionHandlers;
+    private final Provider<Client> clientProvider;
 
     private volatile ScheduledExecutorService scheduledExecutorService;
 
     @Inject
     public ContentSyncService(final ContentSyncConfig contentSyncConfig,
-                              final Set<ImportExportActionHandler> importExportActionHandlers) {
+                              final Set<ImportExportActionHandler> importExportActionHandlers,
+                              final Provider<Client> clientProvider) {
         this.contentSyncConfig = contentSyncConfig;
         this.importExportActionHandlers = importExportActionHandlers;
+        this.clientProvider = clientProvider;
         contentSyncConfig.validateConfiguration();
     }
 
@@ -81,8 +81,8 @@ public class ContentSyncService implements Managed, HasHealthCheck {
                     if (response.getStatusInfo().getStatusCode() != Status.OK.getStatusCode()) {
                         LOGGER.error(response.getStatusInfo().getReasonPhrase());
                     } else {
-                        final DocRefs docRefs = response.readEntity(DocRefs.class);
-                        docRefs.getSet().forEach(docRef -> importDocument(url, docRef, importExportActionHandler));
+                        final Set<DocRef> docRefs = response.readEntity(Set.class);
+                        docRefs.forEach(docRef -> importDocument(url, docRef, importExportActionHandler));
                     }
                 }
             } catch (final RuntimeException e) {
@@ -104,10 +104,10 @@ public class ContentSyncService implements Managed, HasHealthCheck {
     }
 
     private Invocation.Builder createClient(final String url, final String path) {
-        final Client client = ClientBuilder.newClient(new ClientConfig().register(LoggingFeature.class));
+        final Client client = clientProvider.get();
         final WebTarget webTarget = client.target(url).path(path);
         final Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-        invocationBuilder.header(HttpHeaders.AUTHORIZATION, "Bearer " + contentSyncConfig.getApiKey());
+        ClientSecurityUtil.addAuthorisationHeader(invocationBuilder, contentSyncConfig.getApiKey());
         return invocationBuilder;
     }
 
@@ -120,7 +120,7 @@ public class ContentSyncService implements Managed, HasHealthCheck {
         final String path = "/list";
 
         // parallelStream so we can hit multiple URLs concurrently
-        if(contentSyncConfig.isContentSyncEnabled()) {
+        if (contentSyncConfig.isContentSyncEnabled()) {
             contentSyncConfig.getUpstreamUrl().entrySet().parallelStream()
                     .filter(entry ->
                             entry.getValue() != null)

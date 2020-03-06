@@ -5,38 +5,37 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
 import stroom.util.cache.CacheConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unused")
 @Singleton
-public class ProcessorConfig implements BatchDeleteConfig, IsConfig, HasDbConfig {
+public class ProcessorConfig extends AbstractConfig implements HasDbConfig {
     private DbConfig dbConfig = new DbConfig();
     private boolean assignTasks = true;
     private boolean createTasks = true;
-    private String deleteAge = "1d";
-    private String deletePurgeAge = "7d";
-    private int deleteBatchSize = 1000;
+    private StroomDuration deleteAge = StroomDuration.ofDays(1);
     private boolean fillTaskQueue = true;
     private int queueSize = 1000;
     private int databaseMultiInsertMaxBatchSize = 500;
+
     private CacheConfig processorCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.SECONDS)
+            .expireAfterAccess(StroomDuration.ofSeconds(10))
             .build();
     private CacheConfig processorFilterCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.SECONDS)
+            .expireAfterAccess(StroomDuration.ofSeconds(10))
             .build();
     private CacheConfig processorNodeCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
     private CacheConfig processorFeedCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
     @JsonProperty("db")
@@ -66,31 +65,14 @@ public class ProcessorConfig implements BatchDeleteConfig, IsConfig, HasDbConfig
         this.createTasks = createTasks;
     }
 
-    @JsonPropertyDescription("How long to keep tasks on the database for before deleting them (if they are complete)")
-    public String getDeleteAge() {
+    @JsonPropertyDescription("How long to keep tasks on the database for before deleting them (if they are complete). " +
+        "In ISO-8601 duration format, e.g. 'P1DT12H'")
+    public StroomDuration getDeleteAge() {
         return deleteAge;
     }
 
-    public void setDeleteAge(final String deleteAge) {
+    public void setDeleteAge(final StroomDuration deleteAge) {
         this.deleteAge = deleteAge;
-    }
-
-    @JsonPropertyDescription("How long a process task is left logically deleted before it is deleted from the database")
-    public String getDeletePurgeAge() {
-        return deletePurgeAge;
-    }
-
-    public void setDeletePurgeAge(final String deletePurgeAge) {
-        this.deletePurgeAge = deletePurgeAge;
-    }
-
-    @JsonPropertyDescription("How many process tasks we want to try and delete in a single batch")
-    public int getDeleteBatchSize() {
-        return deleteBatchSize;
-    }
-
-    public void setDeleteBatchSize(final int deleteBatchSize) {
-        this.deleteBatchSize = deleteBatchSize;
     }
 
     @JsonPropertyDescription("Should the master node fill the task queue ready for workers to fetch tasks?")
@@ -159,8 +141,6 @@ public class ProcessorConfig implements BatchDeleteConfig, IsConfig, HasDbConfig
                 ", assignTasks=" + assignTasks +
                 ", createTasks=" + createTasks +
                 ", deleteAge='" + deleteAge + '\'' +
-                ", deletePurgeAge='" + deletePurgeAge + '\'' +
-                ", deleteBatchSize=" + deleteBatchSize +
                 ", fillTaskQueue=" + fillTaskQueue +
                 ", queueSize=" + queueSize +
                 ", databaseMultiInsertMaxBatchSize=" + databaseMultiInsertMaxBatchSize +

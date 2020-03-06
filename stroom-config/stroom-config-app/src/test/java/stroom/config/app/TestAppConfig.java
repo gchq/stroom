@@ -5,36 +5,47 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.config.PropertyUtil;
-import stroom.util.shared.IsConfig;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import java.lang.reflect.Field;
+import java.util.Set;
 
 class TestAppConfig {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestAppConfig.class);
 
     private final static String STROOM_PACKAGE_PREFIX = "stroom.";
 
+    private static final Set<Class<?>> WHITE_LISTED_CLASSES = Set.of(
+        Logger.class,
+        LambdaLogger.class,
+        StroomDuration.class
+    );
+
     /**
      * Test to verify that all fields in the config tree of type stroom.*
-     * are marked with the IsConfig interface. Also useful for seeing the object tree
+     * extend AbstractConfig . Also useful for seeing the object tree
      * and the annotations
      */
     @Test
-    public void testIsConfigUse() {
+    public void testAbstractConfigUse() {
         checkProperties(AppConfig.class, "");
     }
 
     private void checkProperties(final Class<?> clazz, final String indent) {
         for (Field field : clazz.getDeclaredFields()) {
             final Class<?> fieldClass = field.getType();
-            if (fieldClass.getName().startsWith("stroom") &&
-                    ( !fieldClass.getSimpleName().equals("Logger") &&
-                            !fieldClass.getSimpleName().equals("LambdaLogger"))) {
+
+            // We are trying to inspect props that are themselves config objects
+            if (fieldClass.getName().startsWith("stroom")
+                    && fieldClass.getSimpleName().endsWith("Config")
+                    && !WHITE_LISTED_CLASSES.contains(fieldClass)) {
 
                 LOGGER.debug("{}Field {} : {} {}",
                         indent, field.getName(), fieldClass.getSimpleName(), fieldClass.getAnnotations());
 
-                Assertions.assertThat(IsConfig.class)
+                Assertions.assertThat(AbstractConfig.class)
                         .isAssignableFrom(fieldClass);
 
                 // This field is another config object so recurs into it

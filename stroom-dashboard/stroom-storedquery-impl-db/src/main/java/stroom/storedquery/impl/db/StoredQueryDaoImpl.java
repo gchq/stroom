@@ -11,7 +11,7 @@ import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.storedquery.impl.StoredQueryDao;
 import stroom.storedquery.impl.db.jooq.tables.records.QueryRecord;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -26,7 +26,7 @@ import static stroom.storedquery.impl.db.jooq.Tables.QUERY;
 class StoredQueryDaoImpl implements StoredQueryDao {
     private static final Logger LOGGER = LoggerFactory.getLogger(stroom.storedquery.impl.StoredQueryDao.class);
 
-    private static final Map<String, Field> FIELD_MAP = Map.of(
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindStoredQueryCriteria.FIELD_ID, QUERY.ID,
             FindStoredQueryCriteria.FIELD_NAME, QUERY.NAME,
             FindStoredQueryCriteria.FIELD_TIME, QUERY.CREATE_TIME_MS);
@@ -67,7 +67,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
     }
 
     @Override
-    public BaseResultList<StoredQuery> find(FindStoredQueryCriteria criteria) {
+    public ResultPage<StoredQuery> find(FindStoredQueryCriteria criteria) {
         List<StoredQuery> list = JooqUtil.contextResult(storedQueryDbConnProvider, context -> {
             final Collection<Condition> conditions = JooqUtil.conditions(
                     Optional.ofNullable(criteria.getUserId()).map(QUERY.CREATE_USER::eq),
@@ -76,7 +76,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
                     Optional.ofNullable(criteria.getComponentId()).map(QUERY.COMPONENT_ID::eq),
                     Optional.ofNullable(criteria.getFavourite()).map(QUERY.FAVOURITE::eq));
 
-            final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+            final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
             return context
                     .select()
@@ -90,7 +90,7 @@ class StoredQueryDaoImpl implements StoredQueryDao {
         });
 
         list = list.stream().map(StoredQuerySerialiser::deserialise).collect(Collectors.toList());
-        return BaseResultList.createUnboundedList(list);
+        return ResultPage.createUnboundedList(list);
     }
 
     @Override
@@ -119,32 +119,13 @@ class StoredQueryDaoImpl implements StoredQueryDao {
 
     @Override
     public List<String> getUsers(final boolean favourite) {
-        final List<String> list = JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
+        return JooqUtil.contextResult(storedQueryDbConnProvider, context -> context
                 .select(QUERY.CREATE_USER)
                 .from(QUERY)
                 .where(QUERY.FAVOURITE.eq(favourite))
                 .groupBy(QUERY.CREATE_USER)
                 .orderBy(QUERY.CREATE_USER)
                 .fetch(QUERY.CREATE_USER));
-
-
-//        final SqlBuilder sql = new SqlBuilder();
-//        sql.append("SELECT ");
-//        sql.append(StoredQuery.CREATE_USER);
-//        sql.append(" FROM ");
-//        sql.append(StoredQuery.TABLE_NAME);
-//        sql.append(" WHERE ");
-//        sql.append(StoredQuery.FAVOURITE);
-//        sql.append(" = ");
-//        sql.arg(favourite);
-//        sql.append(" GROUP BY ");
-//        sql.append(StoredQuery.CREATE_USER);
-//        sql.append(" ORDER BY ");
-//        sql.append(StoredQuery.CREATE_USER);
-//
-//        @SuppressWarnings("unchecked") final List<String> list = entityManager.executeNativeQueryResultList(sql);
-
-        return list;
     }
 
     @Override

@@ -32,7 +32,6 @@ import stroom.importexport.shared.ImportState.State;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.io.AbstractFileVisitor;
-import stroom.util.shared.DocRefs;
 import stroom.util.shared.EntityServiceException;
 import stroom.util.shared.Message;
 import stroom.util.shared.PermissionException;
@@ -51,10 +50,12 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -85,7 +86,6 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     /**
      * IMPORT
      */
-    @SuppressWarnings("unchecked")
     @Override
     public void read(final Path dir, List<ImportState> importStateList,
                      final ImportMode importMode) {
@@ -254,12 +254,12 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
      * EXPORT
      */
     @Override
-    public void write(final Path dir, final DocRefs docRefs, final boolean omitAuditFields,
+    public void write(final Path dir, final Set<DocRef> docRefs, final boolean omitAuditFields,
                       final List<Message> messageList) {
         // Create a set of all entities that we are going to try and export.
-        DocRefs expandedDocRefs = expandDocRefSet(docRefs);
+        Set<DocRef> expandedDocRefs = expandDocRefSet(docRefs);
 
-        if (expandedDocRefs.getDoc().size() == 0) {
+        if (expandedDocRefs.size() == 0) {
             throw new EntityServiceException("No documents were found that could be exported");
         }
 
@@ -306,8 +306,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         return parent;
     }
 
-    private DocRefs expandDocRefSet(final DocRefs set) {
-        final DocRefs expandedDocRefs = new DocRefs();
+    private Set<DocRef> expandDocRefSet(final Set<DocRef> set) {
+        final Set<DocRef> expandedDocRefs = new HashSet<>();
 
         if (set == null) {
             // If the set is null then add the whole tree of exportable items.
@@ -322,14 +322,14 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         return expandedDocRefs;
     }
 
-    private void addDescendants(final DocRef docRef, DocRefs expandedDocRefs) {
+    private void addDescendants(final DocRef docRef, Set<DocRef> expandedDocRefs) {
         final List<ExplorerNode> descendants = explorerNodeService.getDescendants(docRef);
         for (final ExplorerNode descendant : descendants) {
             addDocRef(descendant.getDocRef(), expandedDocRefs);
         }
     }
 
-    private void addDocRef(final DocRef docRef, final DocRefs docRefs) {
+    private void addDocRef(final DocRef docRef, final Set<DocRef> docRefs) {
         try {
             final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(docRef.getType());
             if (importExportActionHandler != null) {

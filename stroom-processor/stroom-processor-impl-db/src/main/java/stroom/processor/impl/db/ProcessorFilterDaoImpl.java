@@ -20,7 +20,7 @@ import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -35,7 +35,7 @@ import static stroom.processor.impl.db.jooq.tables.ProcessorFilterTracker.PROCES
 class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterDaoImpl.class);
 
-    private static final Map<String, Field> FIELD_MAP = Map.of(
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             ProcessorFilterDataSource.FIELD_ID, PROCESSOR_FILTER.ID);
 
     private static final Function<Record, Processor> RECORD_TO_PROCESSOR_MAPPER = new RecordToProcessorMapper();
@@ -98,7 +98,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
 
             processorFilterRecord.setFkProcessorFilterTrackerId(marshalled.getProcessorFilterTracker().getId());
             processorFilterRecord.setFkProcessorId(marshalled.getProcessor().getId());
-            processorFilterRecord.store();
+            processorFilterRecord.update();
 
             final ProcessorFilter result = processorFilterRecord.into(ProcessorFilter.class);
             result.setProcessorFilterTracker(marshalled.getProcessorFilterTracker());
@@ -136,14 +136,14 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
     }
 
     @Override
-    public BaseResultList<ProcessorFilter> find(final ExpressionCriteria criteria) {
+    public ResultPage<ProcessorFilter> find(final ExpressionCriteria criteria) {
         return JooqUtil.contextResult(processorDbConnProvider, context -> find(context, criteria));
     }
 
-    private BaseResultList<ProcessorFilter> find(final DSLContext context, final ExpressionCriteria criteria) {
+    private ResultPage<ProcessorFilter> find(final DSLContext context, final ExpressionCriteria criteria) {
         final Condition condition = expressionMapper.apply(criteria.getExpression());
 
-        final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<ProcessorFilter> list = context
                 .select()
@@ -164,7 +164,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
                     return marshaller.unmarshal(processorFilter);
                 });
 
-        return BaseResultList.createCriterialBasedList(list, criteria);
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
 //    private Collection<Condition> convertCriteria(final FindProcessorFilterCriteria criteria) {

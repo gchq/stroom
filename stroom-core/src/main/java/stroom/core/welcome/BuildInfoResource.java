@@ -4,6 +4,7 @@ import io.swagger.annotations.Api;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -14,7 +15,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 @Api(value = "build-info - /v1")
-@Path("/build-info/v1")
+@Path("/build-info" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class BuildInfoResource implements RestResource {
     private final UiConfig uiConfig;
@@ -31,7 +32,6 @@ public class BuildInfoResource implements RestResource {
     }
 
     @GET
-    @Path("/")
     public Response buildInfo() {
         Object response = new Object() {
             public String userName = securityContext.getUserId();

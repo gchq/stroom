@@ -28,11 +28,10 @@ import stroom.explorer.shared.BulkActionResult;
 import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.ExplorerTreeFilter;
 import stroom.explorer.shared.FetchExplorerNodeResult;
 import stroom.explorer.shared.FindExplorerNodeCriteria;
-import stroom.explorer.shared.HasNodeState;
-import stroom.explorer.shared.HasNodeState.NodeState;
 import stroom.explorer.shared.PermissionInheritance;
 import stroom.explorer.shared.StandardTagNames;
 import stroom.security.api.SecurityContext;
@@ -90,9 +89,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
         final TreeModel masterTreeModel = explorerTreeModel.getModel();
 
         // See if we need to open any more folders to see nodes we want to ensure are visible.
-        final Set<ExplorerNode> forcedOpenItems = getForcedOpenItems(masterTreeModel, criteria);
+        final Set<String> forcedOpenItems = getForcedOpenItems(masterTreeModel, criteria);
 
-        final Set<ExplorerNode> allOpenItems = new HashSet<>();
+        final Set<String> allOpenItems = new HashSet<>();
         allOpenItems.addAll(criteria.getOpenItems());
         allOpenItems.addAll(criteria.getTemporaryOpenedItems());
         allOpenItems.addAll(forcedOpenItems);
@@ -102,12 +101,12 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
 
         // If the name filter has changed then we want to temporarily expand all nodes.
         if (filter.isNameFilterChange()) {
-            final Set<ExplorerNode> temporaryOpenItems;
+            final Set<String> temporaryOpenItems;
 
             if (filter.getNameFilter() == null) {
                 temporaryOpenItems = new HashSet<>();
             } else {
-                temporaryOpenItems = new HashSet<>(filteredModel.getChildMap().keySet());
+                temporaryOpenItems = new HashSet<>(filteredModel.getAllParents());
             }
 
             addRoots(filteredModel, criteria.getOpenItems(), forcedOpenItems, temporaryOpenItems, result);
@@ -131,7 +130,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                     node.setNodeState(NodeState.LEAF);
                     node.setDepth(1);
                     node.setIconUrl(DocumentType.DOC_IMAGE_URL + "searchable.svg");
-                    result.getTreeStructure().add(result.getTreeStructure().getRoot(), node);
+                    result.getRootNodes().get(0).getChildren().add(node);
                 });
             }
         }
@@ -151,9 +150,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
 
     private Set<DocRef> getDescendants(final DocRef folder, final String type, final int maxDepth) {
         final TreeModel masterTreeModel = explorerTreeModel.getModel();
-        if (masterTreeModel != null && masterTreeModel.getChildMap() != null) {
+        if (masterTreeModel != null) {
             final Set<DocRef> refs = new HashSet<>();
-            addChildren(ExplorerNode.create(folder), type, 0, maxDepth, masterTreeModel.getChildMap(), refs);
+            addChildren(ExplorerNode.create(folder), type, 0, maxDepth, masterTreeModel, refs);
             return refs;
         }
 
@@ -164,9 +163,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                              final String type,
                              final int depth,
                              final int maxDepth,
-                             final Map<ExplorerNode, List<ExplorerNode>> childMap,
+                             final TreeModel treeModel,
                              final Set<DocRef> refs) {
-        final List<ExplorerNode> childNodes = childMap.get(parent);
+        final List<ExplorerNode> childNodes = treeModel.getChildren(parent);
         if (childNodes != null) {
             childNodes.forEach(node -> {
                 if (node.getType().equals(type)) {
@@ -176,24 +175,23 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                 }
 
                 if (depth < maxDepth) {
-                    addChildren(node, type, depth + 1, maxDepth, childMap, refs);
+                    addChildren(node, type, depth + 1, maxDepth, treeModel, refs);
                 }
             });
         }
     }
 
-    private Set<ExplorerNode> getForcedOpenItems(final TreeModel masterTreeModel,
-                                                 final FindExplorerNodeCriteria criteria) {
-        final Set<ExplorerNode> forcedOpen = new HashSet<>();
+    private Set<String> getForcedOpenItems(final TreeModel masterTreeModel,
+                                           final FindExplorerNodeCriteria criteria) {
+        final Set<String> forcedOpen = new HashSet<>();
 
         // Add parents of  nodes that we have been requested to ensure are visible.
         if (criteria.getEnsureVisible() != null && criteria.getEnsureVisible().size() > 0) {
-            for (final ExplorerNode ensureVisible : criteria.getEnsureVisible()) {
-
-                ExplorerNode parent = masterTreeModel.getParentMap().get(ensureVisible);
+            for (final String ensureVisible : criteria.getEnsureVisible()) {
+                ExplorerNode parent = masterTreeModel.getParent(ensureVisible);
                 while (parent != null) {
-                    forcedOpen.add(parent);
-                    parent = masterTreeModel.getParentMap().get(parent);
+                    forcedOpen.add(parent.getUuid());
+                    parent = masterTreeModel.getParent(parent);
                 }
             }
         }
@@ -207,14 +205,14 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
     }
 
     private void forceMinDepthOpen(final TreeModel masterTreeModel,
-                                   final Set<ExplorerNode> forcedOpen,
+                                   final Set<String> forcedOpen,
                                    final ExplorerNode parent,
                                    final int minDepth,
                                    final int depth) {
-        final List<ExplorerNode> children = masterTreeModel.getChildMap().get(parent);
+        final List<ExplorerNode> children = masterTreeModel.getChildren(parent);
         if (children != null) {
             for (final ExplorerNode child : children) {
-                forcedOpen.add(child);
+                forcedOpen.add(child.getUuid());
                 if (minDepth > depth) {
                     forceMinDepthOpen(masterTreeModel, forcedOpen, child, minDepth, depth + 1);
                 }
@@ -227,14 +225,14 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                                    final TreeModel treeModelOut,
                                    final ExplorerTreeFilter filter,
                                    final boolean ignoreNameFilter,
-                                   final Set<ExplorerNode> allOpenItems,
+                                   final Set<String> allOpenItems,
                                    final int currentDepth) {
         int added = 0;
 
-        final List<ExplorerNode> children = treeModelIn.getChildMap().get(parent);
+        final List<ExplorerNode> children = treeModelIn.getChildren(parent);
         if (children != null) {
             // Add all children if the name filter has changed or the parent item is open.
-            final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null) || allOpenItems.contains(parent);
+            final boolean addAllChildren = (filter.isNameFilterChange() && filter.getNameFilter() != null) || parent == null || allOpenItems.contains(parent.getUuid());
 
             // We need to add add least one item to the tree to be able to determine if the parent is a leaf node.
             final Iterator<ExplorerNode> iterator = children.iterator();
@@ -302,50 +300,56 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
     }
 
     private void addRoots(final TreeModel filteredModel,
-                          final Set<ExplorerNode> openItems,
-                          final Set<ExplorerNode> forcedOpenItems,
-                          final Set<ExplorerNode> temporaryOpenItems,
+                          final Set<String> openItems,
+                          final Set<String> forcedOpenItems,
+                          final Set<String> temporaryOpenItems,
                           final FetchExplorerNodeResult result) {
-        final List<ExplorerNode> children = filteredModel.getChildMap().get(null);
+        final List<ExplorerNode> children = filteredModel.getChildren(null);
         if (children != null) {
             for (final ExplorerNode child : children) {
-                result.getTreeStructure().add(null, child);
-                addChildren(child, filteredModel, openItems, forcedOpenItems, temporaryOpenItems, 0, result);
+                final ExplorerNode copy = child.copy();
+                result.getRootNodes().add(copy);
+                addChildren(copy, filteredModel, openItems, forcedOpenItems, temporaryOpenItems, 0, result);
             }
         }
     }
 
     private void addChildren(final ExplorerNode parent,
                              final TreeModel filteredModel,
-                             final Set<ExplorerNode> openItems,
-                             final Set<ExplorerNode> forcedOpenItems,
-                             final Set<ExplorerNode> temporaryOpenItems,
+                             final Set<String> openItems,
+                             final Set<String> forcedOpenItems,
+                             final Set<String> temporaryOpenItems,
                              final int currentDepth,
                              final FetchExplorerNodeResult result) {
+        final String parentUuid = parent.getUuid();
         parent.setDepth(currentDepth);
 
         // See if we need to force this item open.
         boolean force = false;
-        if (forcedOpenItems.contains(parent)) {
+        if (forcedOpenItems.contains(parentUuid)) {
             force = true;
-            result.getOpenedItems().add(parent);
-        } else if (temporaryOpenItems != null && temporaryOpenItems.contains(parent)) {
+            result.getOpenedItems().add(parentUuid);
+        } else if (temporaryOpenItems != null && temporaryOpenItems.contains(parentUuid)) {
             force = true;
         }
 
-        final List<ExplorerNode> children = filteredModel.getChildMap().get(parent);
+        final List<ExplorerNode> children = filteredModel.getChildren(parent);
         if (children == null) {
-            parent.setNodeState(HasNodeState.NodeState.LEAF);
+            parent.setNodeState(NodeState.LEAF);
 
-        } else if (force || openItems.contains(parent)) {
-            parent.setNodeState(HasNodeState.NodeState.OPEN);
+        } else if (force || openItems.contains(parentUuid)) {
+            parent.setNodeState(NodeState.OPEN);
+
+            final List<ExplorerNode> newChildren = new ArrayList<>();
+            parent.setChildren(newChildren);
             for (final ExplorerNode child : children) {
-                result.getTreeStructure().add(parent, child);
-                addChildren(child, filteredModel, openItems, forcedOpenItems, temporaryOpenItems, currentDepth + 1, result);
+                final ExplorerNode copy = child.copy();
+                newChildren.add(copy);
+                addChildren(copy, filteredModel, openItems, forcedOpenItems, temporaryOpenItems, currentDepth + 1, result);
             }
 
         } else {
-            parent.setNodeState(HasNodeState.NodeState.CLOSED);
+            parent.setNodeState(NodeState.CLOSED);
         }
     }
 
@@ -717,7 +721,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                              final Set<String> requiredPermissions) {
         boolean added = false;
 
-        final List<ExplorerNode> children = treeModel.getChildMap().get(parent);
+        final List<ExplorerNode> children = treeModel.getChildren(parent);
         if (children != null) {
             for (final ExplorerNode child : children) {
                 // Recurse right down to find out if a descendant is being added and therefore if we need to include this type as it is an ancestor.

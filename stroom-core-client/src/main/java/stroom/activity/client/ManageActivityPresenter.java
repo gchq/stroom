@@ -16,6 +16,7 @@
 
 package stroom.activity.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Provider;
@@ -25,15 +26,13 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.activity.client.ManageActivityPresenter.ManageActivityView;
 import stroom.activity.shared.Activity;
-import stroom.activity.shared.DeleteActivityAction;
-import stroom.activity.shared.FetchActivityAction;
-import stroom.activity.shared.FindActivityCriteria;
+import stroom.activity.shared.ActivityResource;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.UrlParameters;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.StringCriteria.MatchStyle;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
@@ -49,15 +48,15 @@ import java.util.function.Consumer;
 
 public class ManageActivityPresenter extends
         MyPresenterWidget<ManageActivityView> implements ManageActivityUiHandlers, HasHandlers {
+    private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
     public static final String LIST = "LIST";
 
     private final ActivityListPresenter listPresenter;
     private final Provider<ActivityEditPresenter> editProvider;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private final UiConfigCache uiConfigCache;
     private final UrlParameters urlParameters;
     private final CurrentActivity currentActivity;
-    private FindActivityCriteria criteria = new FindActivityCriteria();
     private ButtonView newButton;
     private ButtonView openButton;
     private ButtonView deleteButton;
@@ -67,14 +66,14 @@ public class ManageActivityPresenter extends
                                    final ManageActivityView view,
                                    final ActivityListPresenter listPresenter,
                                    final Provider<ActivityEditPresenter> editProvider,
-                                   final ClientDispatchAsync dispatcher,
+                                   final RestFactory restFactory,
                                    final UiConfigCache uiConfigCache,
                                    final UrlParameters urlParameters,
                                    final CurrentActivity currentActivity) {
         super(eventBus, view);
         this.listPresenter = listPresenter;
         this.editProvider = editProvider;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         this.uiConfigCache = uiConfigCache;
         this.urlParameters = urlParameters;
         this.currentActivity = currentActivity;
@@ -86,8 +85,6 @@ public class ManageActivityPresenter extends
         newButton = listPresenter.addButton(SvgPresets.NEW_ITEM);
         openButton = listPresenter.addButton(SvgPresets.EDIT);
         deleteButton = listPresenter.addButton(SvgPresets.DELETE);
-
-        listPresenter.setCriteria(criteria);
     }
 
     @Override
@@ -126,8 +123,8 @@ public class ManageActivityPresenter extends
 
     void showInitial(final Consumer<Activity> consumer) {
         uiConfigCache.get().onSuccess(uiConfig -> {
-            final boolean show = uiConfig.getActivityConfig().isChooseOnStartup() &&
-                    uiConfig.getActivityConfig().isEnabled();
+            final boolean show = uiConfig.getActivity().isChooseOnStartup() &&
+                    uiConfig.getActivity().isEnabled();
             if (show) {
                 if (urlParameters.isEmbedded()) {
                     // If we are in embedded more then see if we can find a current activity set in the session.
@@ -170,7 +167,7 @@ public class ManageActivityPresenter extends
             }
         };
         uiConfigCache.get().onSuccess(uiConfig -> {
-            final String title = uiConfig.getActivityConfig().getManagerTitle();
+            final String title = uiConfig.getActivity().getManagerTitle();
             final PopupSize popupSize = new PopupSize(1000, 600, true);
             ShowPopupEvent.fire(ManageActivityPresenter.this, ManageActivityPresenter.this,
                     PopupType.CLOSE_DIALOG, null, popupSize, title, popupUiHandlers, null);
@@ -201,7 +198,11 @@ public class ManageActivityPresenter extends
         final Activity e = getSelected();
         if (e != null) {
             // Load the activity.
-            dispatcher.exec(new FetchActivityAction(e)).onSuccess(this::onEdit);
+            final Rest<Activity> rest = restFactory.create();
+            rest
+                    .onSuccess(this::onEdit)
+                    .call(ACTIVITY_RESOURCE)
+                    .read(e.getId());
         }
     }
 
@@ -223,16 +224,15 @@ public class ManageActivityPresenter extends
             ConfirmEvent.fire(this, "Are you sure you want to delete the selected " + getEntityDisplayType() + "?",
                     result -> {
                         if (result) {
-                            // Load the activity.
-                            dispatcher.exec(new FetchActivityAction(entity)).onSuccess(e -> {
-                                if (e != null) {
-                                    // Delete the activity
-                                    dispatcher.exec(new DeleteActivityAction(e)).onSuccess(res -> {
+                            // Delete the activity
+                            final Rest<Activity> rest = restFactory.create();
+                            rest
+                                    .onSuccess(success -> {
                                         listPresenter.refresh();
                                         listPresenter.getView().getSelectionModel().clear();
-                                    });
-                                }
-                            });
+                                    })
+                                    .call(ACTIVITY_RESOURCE)
+                                    .delete(entity.getId());
                         }
                     });
         }
@@ -244,35 +244,12 @@ public class ManageActivityPresenter extends
 
     @Override
     public void changeNameFilter(final String name) {
-        if (criteria == null) {
-            return;
-        }
-
-        String filter = name;
-        if (filter != null) {
-            filter = filter.trim();
-            if (filter.length() == 0) {
-                filter = null;
-            }
-        }
-
-        if ((filter == null && criteria.getName() == null) || (filter != null && filter.equals(criteria.getName().getString()))) {
-            return;
-        }
-
-        if (name.length() > 0) {
-            criteria.getName().setString(name);
-            criteria.getName().setMatchStyle(MatchStyle.WildStandAndEnd);
-            criteria.getName().setCaseInsensitive(true);
-        } else {
-            criteria.getName().clear();
-        }
-
+        listPresenter.setCriteria(name);
         listPresenter.refresh();
     }
 
     private void onNew() {
-        onEdit(new Activity());
+        onEdit(Activity.create());
     }
 
     private void setSelected(final Activity activity) {

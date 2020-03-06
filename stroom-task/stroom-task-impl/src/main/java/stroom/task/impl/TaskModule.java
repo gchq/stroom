@@ -23,26 +23,26 @@ import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.task.api.TaskManager;
-import stroom.task.shared.FindTaskProgressAction;
-import stroom.task.shared.FindUserTaskProgressAction;
-import stroom.task.shared.TerminateTaskProgressAction;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 import javax.servlet.http.HttpSessionListener;
+import java.util.concurrent.Executor;
 
 public class TaskModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(ExecutorProvider.class).to(ExecutorProviderImpl.class);
+        bind(Executor.class).toProvider(ExecutorProviderImpl.class);
         bind(TaskManager.class).to(TaskManagerImpl.class);
-        bind(TaskContext.class).to(TaskContextImpl.class);
+        bind(TaskContext.class).toProvider(TaskContextProvider.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(TaskResourceImpl.class);
 
         TaskHandlerBinder.create(binder())
-                .bind(FindTaskProgressAction.class, FindTaskProgressHandler.class)
                 .bind(FindTaskProgressClusterTask.class, FindTaskProgressClusterHandler.class)
-                .bind(FindUserTaskProgressAction.class, FindUserTaskProgressHandler.class)
-                .bind(GenericServerTask.class, GenericServerTaskHandler.class)
-                .bind(TerminateTaskProgressAction.class, TerminateTaskProgressHandler.class);
+                .bind(GenericServerTask.class, GenericServerTaskHandler.class);
 
         GuiceUtil.buildMultiBinder(binder(), HttpSessionListener.class)
                 .addBinding(TaskManagerSessionListener.class);

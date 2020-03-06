@@ -3,13 +3,13 @@ package stroom.core.receive;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.data.zip.BufferSizeUtil;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ProxyAggregationConfig implements IsConfig {
+public class ProxyAggregationConfig extends AbstractConfig {
     private String proxyDir = "${stroom.temp}/proxy";
     private volatile int proxyThreads = 10;
 

@@ -43,7 +43,6 @@ public class _V07_00_00_TimeZone implements _V07_00_00_SharedObject {
     private Integer offsetMinutes;
 
     public _V07_00_00_TimeZone() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_TimeZone(final _V07_00_00_Use use, final String id, final Integer offsetHours, final Integer offsetMinutes) {

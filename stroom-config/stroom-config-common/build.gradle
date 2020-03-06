@@ -5,4 +5,5 @@ dependencies {
     compile project(':stroom-util-shared')
 
     compile libs.jackson_annotations
+    compile libs.hibernate_validator
 }

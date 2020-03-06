@@ -30,9 +30,10 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
 
@@ -55,7 +56,7 @@ import static stroom.processor.impl.SearchKeywords.addFiltering;
 import static stroom.processor.impl.SearchKeywords.addSorting;
 
 @Api(value = "stream task - /v1")
-@Path("/streamtasks/v1")
+@Path("/streamtasks" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class StreamTaskResource implements RestResource {
     private static final String FIELD_PROGRESS = "progress";
@@ -109,7 +110,6 @@ public class StreamTaskResource implements RestResource {
     }
 
     @GET
-    @Path("/")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response fetch(
@@ -190,7 +190,7 @@ public class StreamTaskResource implements RestResource {
 
     private List<StreamTask> find(final ExpressionCriteria criteria) {
 
-        final BaseResultList<ProcessorFilter> processorFilters = processorFilterService
+        final ResultPage<ProcessorFilter> processorFilters = processorFilterService
                 .find(criteria);
 
 

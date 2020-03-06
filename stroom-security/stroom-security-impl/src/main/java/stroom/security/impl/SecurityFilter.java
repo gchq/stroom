@@ -28,7 +28,7 @@ import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.shared.User;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -119,9 +119,6 @@ class SecurityFilter implements Filter {
         this.securityContext = securityContext;
         this.jerseyClientFactory = jerseyClientFactory;
 
-        if (!authenticationConfig.isAuthenticationRequired()) {
-            LOGGER.warn("All authentication is disabled");
-        }
         publicApiPathPattern = Pattern.compile(PUBLIC_API_PATH_REGEX);
     }
 
@@ -163,55 +160,57 @@ class SecurityFilter implements Filter {
             LOGGER.debug("Passing on to next filter");
             chain.doFilter(request, response);
         } else {
-            // We need to distinguish between requests from an API client and from the UI.
-            // - If a request is from the UI and fails authentication then we need to redirect to the login page.
-            // - If a request is from an API client and fails authentication then we need to return HTTP 403 UNAUTHORIZED.
-            // - If a request is for clustercall.rpc then it's a back-channel stroom-to-stroom request and we want to
-            //   let it through. It is essential that port 8080 is not exposed and that any reverse-proxy
-            //   blocks requests that look like '.*clustercall.rpc$'.
-            final String servletPath = request.getServletPath().toLowerCase();
-            final String fullPath = request.getRequestURI().toLowerCase();
-            if (isPublicApiRequest(fullPath)) {
-                authenticateAsProcUser(request, response, chain, false);
-            } else if (isApiRequest(servletPath)) {
-                LOGGER.debug("API request");
-                if (!authenticationConfig.isAuthenticationRequired()) {
-                    authenticateAsAdmin(request, response, chain, false);
-                } else {
-                    // Authenticate requests to the API.
-                    final UserIdentity token = loginAPI(request, response);
-                    continueAsUser(request, response, chain, token);
-                }
-            } else if (shouldBypassAuthentication(servletPath)) {
-                // Some servet requests need to bypass authentication -- this happens if the servlet class
-                // is annotated with @Unauthenticated. E.g. the status servlet doesn't require authentication.
-                authenticateAsProcUser(request, response, chain, false);
+            // See if we have an authenticated session.
+            final UserIdentity userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
+            if (userIdentity != null) {
+                continueAsUser(request, response, chain, userIdentity);
+
             } else {
-                // We assume all other requests are from the UI, and instigate an OpenID authentication flow
-                // like the good relying party we are.
-
-                // Try and get an existing authentication token from the session.
-                final UserIdentity userIdentity = UserIdentitySessionUtil.get(request.getSession(false));
-                if (userIdentity != null) {
-                    continueAsUser(request, response, chain, userIdentity);
-
-                } else if (!authenticationConfig.isAuthenticationRequired()) {
-                    authenticateAsAdmin(request, response, chain, true);
-
+                // We need to distinguish between requests from an API client and from the UI.
+                // - If a request is from the UI and fails authentication then we need to redirect to the login page.
+                // - If a request is from an API client and fails authentication then we need to return HTTP 403 UNAUTHORIZED.
+                // - If a request is for clustercall.rpc then it's a back-channel stroom-to-stroom request and we want to
+                //   let it through. It is essential that port 8080 is not exposed and that any reverse-proxy
+                //   blocks requests that look like '.*clustercall.rpc$'.
+                final String servletPath = request.getServletPath().toLowerCase();
+                final String fullPath = request.getRequestURI().toLowerCase();
+                if (isPublicApiRequest(fullPath)) {
+                    authenticateAsProcUser(request, response, chain, false);
+                } else if (isApiRequest(servletPath)) {
+                    LOGGER.debug("API request");
+                if (!authenticationConfig.isAuthenticationRequired()) {
+                        authenticateAsAdmin(request, response, chain, false);
+                    } else {
+                        // Authenticate requests to the API.
+                        final UserIdentity token = loginAPI(request, response);
+                        continueAsUser(request, response, chain, token);
+                    }
+                } else if (shouldBypassAuthentication(servletPath)) {
+                    // Some servet requests need to bypass authentication -- this happens if the servlet class
+                    // is annotated with @Unauthenticated. E.g. the status servlet doesn't require authentication.
+                    authenticateAsProcUser(request, response, chain, false);
                 } else {
-                    // If the session doesn't have a user ref then attempt login.
-                    final boolean loggedIn = loginUI(request, response);
+                    // We assume all other requests are from the UI, and instigate an OpenID authentication flow
+                    // like the good relying party we are.
 
-                    // If we're not logged in we need to start an AuthenticationRequest flow.
-                    // If this is a dispatch request then we won't try and log in. This avoids a race-condition:
-                    //   1. User logs out and a new authentication flow is started
-                    //   2. Before the browser is redirected GWT makes a dispatch.rpc request
-                    //   3. This request, not being logged in, starts a new authentication flow
-                    //   4. This new authentication flow partially over-writes the relying party data in auth.
-                    // This would manifest as a bad redirect_url, one which contains 'dispatch.rpc'.
-                    if (!loggedIn && !isDispatchRequest(servletPath)) {
-                        // We were unable to login so we're going to redirect with an AuthenticationRequest.
-                        redirectToAuthService(request, response);
+                    if (!config.isAuthenticationRequired()) {
+                        authenticateAsAdmin(request, response, chain, true);
+
+                    } else {
+                        // If the session doesn't have a user ref then attempt login.
+                        final boolean loggedIn = loginUI(request, response);
+
+                        // If we're not logged in we need to start an AuthenticationRequest flow.
+                        // If this is a dispatch request then we won't try and log in. This avoids a race-condition:
+                        //   1. User logs out and a new authentication flow is started
+                        //   2. Before the browser is redirected GWT makes a dispatch.rpc request
+                        //   3. This request, not being logged in, starts a new authentication flow
+                        //   4. This new authentication flow partially over-writes the relying party data in auth.
+                        // This would manifest as a bad redirect_url, one which contains 'dispatch.rpc'.
+                        if (!loggedIn && !isDispatchRequest(servletPath)) {
+                            // We were unable to login so we're going to redirect with an AuthenticationRequest.
+                            redirectToAuthService(request, response);
+                        }
                     }
                 }
             }
@@ -223,7 +222,7 @@ class SecurityFilter implements Filter {
     }
 
     private boolean isApiRequest(String servletPath) {
-        return servletPath.startsWith(ResourcePaths.API_PATH);
+        return servletPath.startsWith(ResourcePaths.API_ROOT_PATH);
     }
 
     private boolean isDispatchRequest(String servletPath) {
@@ -393,9 +392,9 @@ class SecurityFilter implements Filter {
 
         URI redirectUri = uriBuilder.build();
 
-        if (uiConfig.getUrlConfig() != null && uiConfig.getUrlConfig().getUi() != null && uiConfig.getUrlConfig().getUi().trim().length() > 0) {
+        if (uiConfig.getUrl() != null && uiConfig.getUrl().getUi() != null && uiConfig.getUrl().getUi().trim().length() > 0) {
             LOGGER.debug("Using the advertised URL as the OpenID redirect URL");
-            final UriBuilder builder = UriBuilder.fromUri(uiConfig.getUrlConfig().getUi());
+            final UriBuilder builder = UriBuilder.fromUri(uiConfig.getUrl().getUi());
             if (redirectUri.getPath() != null) {
                 builder.path(redirectUri.getPath());
             }

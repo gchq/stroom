@@ -24,7 +24,6 @@ import stroom.data.store.api.SegmentInputStream;
 import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
-import stroom.entity.shared.DocRefUtil;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -52,7 +51,7 @@ import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.StoredError;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -62,6 +61,7 @@ import java.util.List;
 class ExtractionTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ExtractionTaskHandler.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(ExtractionTaskHandler.class);
+    private static final DocRef NULL_SELECTION = new DocRef.Builder().uuid("").name("None").type("").build();
 
     private final Store streamStore;
     private final FeedHolder feedHolder;
@@ -134,7 +134,7 @@ class ExtractionTaskHandler {
             final DocRef pipelineRef = task.getPipelineRef();
 
             // Check the pipelineRef is not our 'NULL SELECTION'
-            if (DocRefUtil.NULL_SELECTION.compareTo(pipelineRef) == 0) {
+            if (pipelineRef == null || NULL_SELECTION.compareTo(pipelineRef) == 0) {
                 throw new ExtractionException("Extraction is enabled, but no extraction pipeline is configured.");
             }
 

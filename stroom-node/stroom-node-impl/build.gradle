@@ -9,6 +9,7 @@ dependencies {
     compile project(':stroom-job:stroom-job-api')
     compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-pipeline')
+    compile project(':stroom-proxy:stroom-proxy-remote-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-statistics:stroom-statistics-api')
     compile project(':stroom-task:stroom-task-api')
@@ -23,7 +24,7 @@ dependencies {
     compile libs.javax_servlet_api
     compile libs.slf4j_api
     compile libs.stroomDocRef
-    compile libs.stroomProxyRemoteApi
+    compile libs.validation_api
     
     testCompile libs.assertj_core
     testCompile libs.mockito_core

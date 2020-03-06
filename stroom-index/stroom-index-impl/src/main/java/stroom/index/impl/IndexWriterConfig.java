@@ -1,26 +1,26 @@
 package stroom.index.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class IndexWriterConfig implements IsConfig {
-    private CacheConfig cacheConfig;
+public class IndexWriterConfig extends AbstractConfig {
+    private IndexCacheConfig indexCacheConfig;
 
     public IndexWriterConfig() {
-        this.cacheConfig = new CacheConfig();
-        cacheConfig.setCoreItems(50);
-        cacheConfig.setMaxItems(100);
+        this.indexCacheConfig = new IndexCacheConfig();
+        indexCacheConfig.setCoreItems(50);
+        indexCacheConfig.setMaxItems(100);
     }
 
     @JsonProperty("cache")
-    public CacheConfig getCacheConfig() {
-        return cacheConfig;
+    public IndexCacheConfig getIndexCacheConfig() {
+        return indexCacheConfig;
     }
 
-    public void setCacheConfig(final CacheConfig cacheConfig) {
-        this.cacheConfig = cacheConfig;
+    public void setIndexCacheConfig(final IndexCacheConfig indexCacheConfig) {
+        this.indexCacheConfig = indexCacheConfig;
     }
 }

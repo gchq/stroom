@@ -19,10 +19,14 @@ import stroom.config.app.AppConfig;
 import stroom.config.global.shared.ConfigProperty;
 import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.PropertyPath;
+import stroom.util.time.StroomDuration;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -31,8 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.BooleanSupplier;
-import java.util.function.IntSupplier;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -109,7 +112,7 @@ class TestConfigMapper {
         AppConfig appConfig = new AppConfig();
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
-        boolean isValid = configMapper.validatePropertyPath("stroom.ui.aboutHtml");
+        boolean isValid = configMapper.validatePropertyPath(PropertyPath.fromPathString("stroom.ui.aboutHtml"));
 
         assertThat(isValid).isTrue();
     }
@@ -119,7 +122,7 @@ class TestConfigMapper {
         AppConfig appConfig = new AppConfig();
         ConfigMapper configMapper = new ConfigMapper(appConfig);
 
-        boolean isValid = configMapper.validatePropertyPath("stroom.unknown.prop");
+        boolean isValid = configMapper.validatePropertyPath(PropertyPath.fromPathString("stroom.unknown.prop"));
 
         assertThat(isValid).isFalse();
     }
@@ -142,7 +145,7 @@ class TestConfigMapper {
     }
 
     @Test
-    void testGetGlobalProperties_defaultValueWithValue() throws IOException, ConfigurationException {
+    void testGetGlobalProperties_defaultValueWithValue() {
 
         AppConfig appConfig = getAppConfig();
 
@@ -156,20 +159,21 @@ class TestConfigMapper {
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
         final ConfigProperty configProperty = configProperties.stream()
-                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.pipeline.referenceData.localDir"))
+                .filter(confProp ->
+                        confProp.getName()
+                                .equalsIgnoreCase(PropertyPath.fromPathString("stroom.pipeline.referenceData.localDir")))
                 .findFirst()
                 .orElseThrow();
 
         assertValues(configProperty,
                 initialValue,
-                OverrideValue.unSet(),
+                OverrideValue.unSet(String.class),
                 OverrideValue.with(newValue),
                 newValue);
     }
 
     @Test
-    void testGetGlobalProperties_defaultValueWithNullValue() throws IOException, ConfigurationException {
-
+    void testGetGlobalProperties_defaultValueWithNullValue() {
         AppConfig appConfig = getAppConfig();
 
         // simulate a prop not being defined in the yaml
@@ -182,14 +186,14 @@ class TestConfigMapper {
         final Collection<ConfigProperty> configProperties = configMapper.getGlobalProperties();
 
         final ConfigProperty configProperty = configProperties.stream()
-                .filter(confProp -> confProp.getName().equalsIgnoreCase("stroom.pipeline.referenceData.localDir"))
+                .filter(confProp -> confProp.getName().equalsIgnoreCase(PropertyPath.fromPathString("stroom.pipeline.referenceData.localDir")))
                 .findFirst()
                 .orElseThrow();
 
         assertValues(
                 configProperty,
                 initialValue,
-                OverrideValue.unSet(),
+                OverrideValue.unSet(String.class),
                 OverrideValue.with(newYamlValue),
                 newYamlValue);
 
@@ -197,55 +201,6 @@ class TestConfigMapper {
 //        assertThat(configProperty.getDefaultValue()).isEqualTo(initialValue);
     }
 
-    @Test
-    void update_string() throws IOException, ConfigurationException {
-        AppConfig appConfig = getAppConfig();
-
-        Supplier<String> getter = () -> appConfig.getPathConfig().getTemp();
-        String initialValue = getter.get();
-        String newValue = initialValue + "/xxx";
-        String fullPath = "stroom.path.temp";
-
-        ConfigMapper configMapper = new ConfigMapper(appConfig);
-        ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
-        configProperty.setDatabaseOverrideValue(newValue);
-        configMapper.decorateDbConfigProperty(configProperty);
-
-        assertThat(getter.get()).isEqualTo(newValue);
-    }
-    @Test
-    void update_boolean() throws IOException, ConfigurationException {
-        AppConfig appConfig = getAppConfig();
-
-        BooleanSupplier getter = () -> appConfig.getPipelineConfig().getReferenceDataConfig().isReadAheadEnabled();
-        boolean initialValue = getter.getAsBoolean();
-        boolean newValue = !initialValue;
-        String fullPath = "stroom.pipeline.referenceData.readAheadEnabled";
-
-        ConfigMapper configMapper = new ConfigMapper(appConfig);
-        ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
-        configProperty.setDatabaseOverrideValue(Boolean.valueOf(newValue).toString().toLowerCase());
-        configMapper.decorateDbConfigProperty(configProperty);
-
-        assertThat(getter.getAsBoolean()).isEqualTo(newValue);
-    }
-
-    @Test
-    void update_int() throws IOException, ConfigurationException {
-        AppConfig appConfig = getAppConfig();
-
-        IntSupplier getter = () -> appConfig.getPipelineConfig().getReferenceDataConfig().getMaxPutsBeforeCommit();
-        int initialValue = getter.getAsInt();
-        int newValue = initialValue + 1;
-        String fullPath = "stroom.pipeline.referenceData.maxPutsBeforeCommit";
-
-        ConfigMapper configMapper = new ConfigMapper(appConfig);
-        ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
-        configProperty.setDatabaseOverrideValue(Integer.valueOf(newValue).toString());
-        configMapper.decorateDbConfigProperty(configProperty);
-
-        assertThat(getter.getAsInt()).isEqualTo(newValue);
-    }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -264,97 +219,110 @@ class TestConfigMapper {
 
 
     @Test
-    void update_string2() {
-        TestConfig testConfig = new TestConfig();
+    void updateValues() {
+        doUpdateValueTest(
+                "stroom.primitive.booleanProp",
+                tc -> tc.getTestPrimitiveConfig().isBooleanProp(),
+                "true",
+                Boolean::valueOf);
 
-        Supplier<String> getter = testConfig::getStringProp;
-        String initialValue = getter.get();
-        String newValue = initialValue + "xxx";
-        String fullPath = "stroom.stringProp";
+        doUpdateValueTest(
+                "stroom.boxed.booleanProp",
+                tc -> tc.getTestBoxedConfig().getBooleanProp(),
+                "true",
+                Boolean::valueOf);
 
-        ConfigMapper configMapper = new ConfigMapper(testConfig);
-        ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
-        configProperty.setDatabaseOverrideValue(newValue);
-        configMapper.decorateDbConfigProperty(configProperty);
+        doUpdateValueTest(
+                "stroom.primitive.intProp",
+                tc -> tc.getTestPrimitiveConfig().getIntProp(),
+                "999",
+                Integer::parseInt);
 
-        assertThat(getter.get()).isEqualTo(newValue);
+        doUpdateValueTest(
+                "stroom.boxed.intProp",
+                tc -> tc.getTestBoxedConfig().getIntProp(),
+                "999",
+                Integer::parseInt);
+
+        doUpdateValueTest(
+                "stroom.primitive.longProp",
+                tc -> tc.getTestPrimitiveConfig().getLongProp(),
+                "999",
+                Long::parseLong);
+
+        doUpdateValueTest(
+                "stroom.boxed.longProp",
+                tc -> tc.getTestBoxedConfig().getLongProp(),
+                "999",
+                Long::parseLong);
+
+        doUpdateValueTest(
+                "stroom.stringProp",
+                TestConfig::getStringProp,
+                "yyyyyy",
+                Function.identity());
+
+        doUpdateValueTest(
+                "stroom.stroomDurationProp",
+                TestConfig::getStroomDurationProp,
+                "P1DT6H",
+                StroomDuration::parse);
+
+        doUpdateValueTest(
+                "stroom.byteSizeProp",
+                TestConfig::getByteSizeProp,
+                "1MiB",
+                ByteSize::parse);
+
+        doUpdateValueTest(
+                "stroom.docRefProp",
+                TestConfig::getDocRefProp,
+                ",docRef(aaaaaa,bbbbbbb,ccccccc)",
+                str -> ConfigMapper.convertToObject(str, DocRef.class));
+
+        doUpdateValueTest(
+                "stroom.stateProp",
+                TestConfig::getStateProp,
+                "ON",
+                TestConfig.State::valueOf);
     }
 
-    @Test
-    void update_primitiveInt() {
+    <T> void doUpdateValueTest(final String path,
+                               final Function<TestConfig, T> getter,
+                               final String newValueAsStr,
+                               final Function<String, T> parseFunc) {
+
+        LOGGER.info("Testing {}, with new value {}", path, newValueAsStr);
+
         TestConfig testConfig = new TestConfig();
 
-        IntSupplier getter = () -> testConfig.getTestPrimitiveConfig().getIntProp();
-        int initialValue = getter.getAsInt();
-        int newValue = initialValue + 1;
-        String fullPath = "stroom.primitive.intProp";
+        final T originalObj = getter.apply(testConfig);
 
-        ConfigMapper configMapper = new ConfigMapper(testConfig);
-        ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
-        configProperty.setDatabaseOverrideValue(Integer.valueOf(newValue).toString());
+        final PropertyPath fullPath = PropertyPath.fromPathString(path);
+
+        final ConfigMapper configMapper = new ConfigMapper(testConfig);
+
+        boolean isValidPath = configMapper.validatePropertyPath(PropertyPath.fromPathString(path));
+
+        assertThat(isValidPath).isTrue();
+
+        final ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath)
+                .orElseThrow();
+
+        // make sure our new value differs from the current one
+        assertThat(configProperty.getDefaultValue().get()).isNotEqualTo(newValueAsStr);
+
+        configProperty.setDatabaseOverrideValue(newValueAsStr);
         configMapper.decorateDbConfigProperty(configProperty);
 
-        assertThat(getter.getAsInt()).isEqualTo(newValue);
-    }
+        final T newObj = parseFunc.apply(newValueAsStr);
 
-    @Test
-    void update_boxedInt() {
-        TestConfig testConfig = new TestConfig();
+        LOGGER.info("{} - {} => {}", newObj.getClass().getSimpleName(), originalObj, newObj);
 
-        Supplier<Integer> getter = () -> testConfig.getTestBoxedConfig().getIntProp();
-        Integer initialValue = getter.get();
-        Integer newValue = initialValue + 1;
-        String fullPath = "stroom.boxed.intProp";
+        assertThat(newObj).isNotEqualTo(originalObj);
 
-        ConfigMapper configMapper = new ConfigMapper(testConfig);
-        ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
-        configProperty.setDatabaseOverrideValue(newValue.toString());
-        configMapper.decorateDbConfigProperty(configProperty);
-
-        assertThat(getter.get()).isEqualTo(newValue);
-    }
-
-    @Test
-    void update_docRef() {
-        TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(testConfig);
-
-        LOGGER.debug("Initial UUID {}", testConfig.getDocRefProp().getUuid());
-
-        Supplier<DocRef> getter = testConfig::getDocRefProp;
-        DocRef initialValue = getter.get();
-        DocRef newValue = new DocRef.Builder()
-                .type(initialValue.getType() + "xxx")
-                .uuid(UUID.randomUUID().toString())
-                .name(initialValue.getName() + "zzz")
-                .build();
-        String fullPath = "stroom.docRefProp";
-
-        LOGGER.debug("New UUID {}", newValue.getUuid());
-
-        ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
-        configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.decorateDbConfigProperty(configProperty);
-
-        assertThat(getter.get()).isEqualTo(newValue);
-    }
-
-    @Test
-    void update_enum() {
-        TestConfig testConfig = new TestConfig();
-        ConfigMapper configMapper = new ConfigMapper(testConfig);
-
-        Supplier<TestConfig.State> getter = testConfig::getStateProp;
-        TestConfig.State initialValue = getter.get();
-        TestConfig.State newValue = TestConfig.State.ON;
-        String fullPath = "stroom.stateProp";
-
-        ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
-        configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
-        configMapper.decorateDbConfigProperty(configProperty);
-
-        assertThat(initialValue).isEqualTo(TestConfig.State.OFF);
-        assertThat(getter.get()).isEqualTo(newValue);
+        // make sure the db override value has made it into the config obj
+        assertThat(getter.apply(testConfig)).isEqualTo(newObj);
     }
 
     @Test
@@ -375,7 +343,7 @@ class TestConfigMapper {
                 .type("NewDocRefType")
                 .uuid(UUID.randomUUID().toString())
                 .build());
-        String fullPath = "stroom.docRefListProp";
+        PropertyPath fullPath = PropertyPath.fromPathString("stroom.docRefListProp");
 
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
@@ -393,7 +361,7 @@ class TestConfigMapper {
         List<TestConfig.State> initialValue = getter.get();
         List<TestConfig.State> newValue = new ArrayList<>(initialValue);
         newValue.add(TestConfig.State.ON);
-        String fullPath = "stroom.stateListProp";
+        PropertyPath fullPath = PropertyPath.fromPathString("stroom.stateListProp");
 
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
@@ -407,13 +375,13 @@ class TestConfigMapper {
         TestConfig testConfig = new TestConfig();
         ConfigMapper configMapper = new ConfigMapper(testConfig);
 
-        Supplier<List<String>> getter = () -> testConfig.getStringListProp();
+        Supplier<List<String>> getter = testConfig::getStringListProp;
         List<String> initialValue = getter.get();
         List<String> newValue = Stream.of(initialValue, initialValue)
                 .flatMap(List::stream)
                 .map(str -> str + "x")
                 .collect(Collectors.toList());
-        String fullPath = "stroom.stringListProp";
+        PropertyPath fullPath = PropertyPath.fromPathString("stroom.stringListProp");
 
         ConfigProperty configProperty = configMapper.getGlobalProperty(fullPath).orElseThrow();
         configProperty.setDatabaseOverrideValue(ConfigMapper.convertToString(newValue));
@@ -433,7 +401,7 @@ class TestConfigMapper {
         initialValue.forEach((k, v) ->
                 newValue.put(k, v + 10));
         newValue.put("k4", 14L);
-        String fullPath = "stroom.stringLongMapProp";
+        PropertyPath fullPath = PropertyPath.fromPathString("stroom.stringLongMapProp");
 
         String newValueStr = ConfigMapper.convertToString(newValue);
 
@@ -451,13 +419,15 @@ class TestConfigMapper {
 
         ConfigMapper configMapper = new ConfigMapper(testConfig);
 
-        ConfigProperty configProperty = configMapper.getGlobalProperty("stroom.stringProp").orElseThrow();
+        ConfigProperty configProperty = configMapper
+                .getGlobalProperty(PropertyPath.fromPathString("stroom.stringProp"))
+                .orElseThrow();
 
         assertThat(configProperty.getDefaultValue().orElseThrow())
                 .isEqualTo(defaultValue);
-        assertThat(configProperty.getDatabaseOverrideValue().hasOverride())
+        assertThat(configProperty.getDatabaseOverrideValue().isHasOverride())
                 .isFalse();
-        assertThat(configProperty.getYamlOverrideValue().hasOverride())
+        assertThat(configProperty.getYamlOverrideValue().isHasOverride())
                 .isFalse();
         assertThat(configProperty.getEffectiveValue().orElseThrow())
                 .isEqualTo(defaultValue);
@@ -536,17 +506,44 @@ class TestConfigMapper {
         doValidateStringValueTest("stroom.docRefProp", ",docRef(type1,uuid1)", false);
     }
 
+    @Test
+    void testValidateStringValue_path_good() {
+        // $ not valid delimiter
+        doValidateStringValueTest("stroom.pathProp", "/h/j/k/l", true);
+    }
+
+    @Test
+    void testValidateStringValue_stroomDuration_good() {
+        doValidateStringValueTest("stroom.stroomDurationProp", "P1DT1M", true);
+    }
+
+    @Test
+    void testValidateStringValue_stroomDuration_bad() {
+        doValidateStringValueTest("stroom.stroomDurationProp", "xxxxx", false);
+    }
+
+    @Test
+    void testValidateStringValue_byteSize_good() {
+        doValidateStringValueTest("stroom.byteSizeProp", "5KiB", true);
+    }
+
+    @Test
+    void testValidateStringValue_byteSize_bad() {
+        doValidateStringValueTest("stroom.byteSizeProp", "xxxxx", false);
+    }
+
 
     private void doValidateStringValueTest(final String path, final String value, boolean shouldValidate) {
         TestConfig testConfig = new TestConfig();
         ConfigMapper configMapper = new ConfigMapper(testConfig);
+        PropertyPath propertyPath = PropertyPath.fromPathString(path);
 
         if (shouldValidate) {
-            configMapper.validateStringValue(path, value);
+            configMapper.validateValueSerialisation(propertyPath, value);
         } else {
             Assertions.assertThrows(RuntimeException.class, () -> {
                 // no leading delimiter
-                configMapper.validateStringValue(path, value);
+                configMapper.validateValueSerialisation(propertyPath, value);
             });
         }
     }
@@ -614,6 +611,10 @@ class TestConfigMapper {
                 new DocRef("MyType2", "56068221-1a7d-486c-9fa7-af8b98733e53", "MyDocRef2"));
         private State stateProp = State.OFF;
         private List<State> stateListProp = List.of(State.ON, State.IN_BETWEEN);
+        private Path pathProp = Path.of("/a/b/c/d");
+        private StroomDuration stroomDurationProp = StroomDuration.ofMinutes(5);
+        private ByteSize byteSizeProp = ByteSize.ofKibibytes(2);
+
         // sub-configs
         private TestPrimitiveConfig testPrimitiveConfig = new TestPrimitiveConfig();
         private TestBoxedConfig testBoxedConfig = new TestBoxedConfig();
@@ -714,13 +715,37 @@ class TestConfigMapper {
             this.stateListProp = stateListProp;
         }
 
+        public Path getPathProp() {
+            return pathProp;
+        }
+
+        public void setPathProp(final Path pathProp) {
+            this.pathProp = pathProp;
+        }
+
+        public StroomDuration getStroomDurationProp() {
+            return stroomDurationProp;
+        }
+
+        public void setStroomDurationProp(final StroomDuration stroomDurationProp) {
+            this.stroomDurationProp = stroomDurationProp;
+        }
+
+        public ByteSize getByteSizeProp() {
+            return byteSizeProp;
+        }
+
+        public void setByteSizeProp(final ByteSize byteSizeProp) {
+            this.byteSizeProp = byteSizeProp;
+        }
+
         public enum State {
             ON, IN_BETWEEN, OFF
         }
     }
 
 
-    public static class TestPrimitiveConfig implements IsConfig {
+    public static class TestPrimitiveConfig extends AbstractConfig {
         private boolean booleanProp = false;
         private int intProp = 123;
         private long longProp = 123L;
@@ -768,7 +793,7 @@ class TestConfigMapper {
         }
     }
 
-    public static class TestBoxedConfig implements IsConfig {
+    public static class TestBoxedConfig extends AbstractConfig {
         private Boolean booleanProp = false;
         private Integer intProp = 123;
         private Long longProp = 123L;
@@ -814,5 +839,10 @@ class TestConfigMapper {
         public void setShortProp(final Short shortProp) {
             this.shortProp = shortProp;
         }
+    }
+
+    public static class TestOtherTypesConfig extends AbstractConfig {
+
+
     }
 }

@@ -3,12 +3,13 @@ package stroom.security.impl;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class SecurityConfig implements IsConfig, HasDbConfig {
+public class SecurityConfig extends AbstractConfig implements HasDbConfig {
+
     private DbConfig dbConfig = new DbConfig();
     private AuthenticationConfig authenticationConfig = new AuthenticationConfig();
     private AuthorisationConfig authorisationConfig = new AuthorisationConfig();

@@ -46,7 +46,6 @@ public class _V07_00_00_ComponentConfig implements _V07_00_00_SharedObject {
     private _V07_00_00_ComponentSettings settings;
 
     public _V07_00_00_ComponentConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public String getType() {

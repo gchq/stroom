@@ -16,13 +16,20 @@
 
 package stroom.pipeline.shared.data;
 
-import stroom.docref.SharedObject;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.DocRef;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Objects;
 
 /**
  * <p>
@@ -47,19 +54,21 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Link", propOrder = {"from", "to"})
-public class PipelineLink implements Comparable<PipelineLink>, SharedObject {
-    private static final long serialVersionUID = 8520066243443177869L;
-
+@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder({"source", "from", "to"})
+public class PipelineLink implements Comparable<PipelineLink> {
     @XmlTransient
-    private SourcePipeline source;
+    @JsonProperty
+    private DocRef sourcePipeline;
 
     @XmlElement(required = true)
+    @JsonProperty
     private String from;
     @XmlElement(required = true)
+    @JsonProperty
     private String to;
 
     public PipelineLink() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public PipelineLink(final String from, final String to) {
@@ -67,76 +76,43 @@ public class PipelineLink implements Comparable<PipelineLink>, SharedObject {
         this.to = to;
     }
 
-    public String getFrom() {
-        return from;
+    @JsonCreator
+    public PipelineLink(@JsonProperty("sourcePipeline") final DocRef sourcePipeline,
+                        @JsonProperty("from") final String from,
+                        @JsonProperty("to") final String to) {
+        this.sourcePipeline = sourcePipeline;
+        this.from = from;
+        this.to = to;
     }
 
-    public void setFrom(final String value) {
-        this.from = value;
+    public DocRef getSourcePipeline() {
+        return sourcePipeline;
+    }
+
+    public void setSourcePipeline(final DocRef sourcePipeline) {
+        this.sourcePipeline = sourcePipeline;
+    }
+
+    public String getFrom() {
+        return from;
     }
 
     public String getTo() {
         return to;
     }
 
-    public void setTo(final String value) {
-        this.to = value;
-    }
-
-    public SourcePipeline getSource() {
-        return source;
-    }
-
-    public void setSource(final SourcePipeline source) {
-        this.source = source;
-    }
-
     @Override
     public boolean equals(final Object o) {
-        if (o == null) {
-            return false;
-        }
-
-        if (o == this) {
-            return true;
-        }
-
-        if (!(o instanceof PipelineLink)) {
-            return false;
-        }
-
-        final PipelineLink link = (PipelineLink) o;
-
-        if (from != null && !from.equals(link.from)) {
-            return false;
-        }
-
-        if (link.from != null && !link.from.equals(from)) {
-            return false;
-        }
-
-        if (to != null && !to.equals(link.to)) {
-            return false;
-        }
-
-        return !(link.to != null && !link.to.equals(to));
-
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final PipelineLink that = (PipelineLink) o;
+        return from.equals(that.from) &&
+                to.equals(that.to);
     }
 
     @Override
     public int hashCode() {
-        int code = 31;
-        if (from == null) {
-            code = code * 31;
-        } else {
-            code = code * 31 + from.hashCode();
-        }
-        if (to == null) {
-            code = code * 31;
-        } else {
-            code = code * 31 + to.hashCode();
-        }
-        return code;
+        return Objects.hash(from, to);
     }
 
     @Override

@@ -24,7 +24,7 @@ import stroom.cluster.task.api.ClusterTask;
 import stroom.cluster.task.api.CollectorId;
 import stroom.cluster.task.api.CollectorIdFactory;
 import stroom.cluster.task.api.DefaultClusterResultCollector;
-import stroom.docref.SharedObject;
+
 
 import java.util.Iterator;
 import java.util.Map;
@@ -34,7 +34,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
 
-class DefaultClusterResultCollectorImpl<R extends SharedObject> implements DefaultClusterResultCollector<R> {
+class DefaultClusterResultCollectorImpl<R> implements DefaultClusterResultCollector<R> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DefaultClusterResultCollectorImpl.class);
 
     private final CollectorId id;
@@ -175,7 +175,7 @@ class DefaultClusterResultCollectorImpl<R extends SharedObject> implements Defau
             }
         } catch (final InterruptedException e) {
             waitTimeRemainingNS = 0;
-            LOGGER.error(e.getMessage(), e);
+            LOGGER.debug(e.getMessage(), e);
 
             // Continue to interrupt this thread.
             Thread.currentThread().interrupt();

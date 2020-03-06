@@ -17,7 +17,7 @@
 package stroom.index.shared;
 
 import stroom.docref.HasDisplayValue;
-import stroom.docref.SharedObject;
+
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
@@ -25,7 +25,7 @@ import stroom.util.shared.PrimitiveValueConverter;
 /**
  * Some path on the network where we can store stuff.
  */
-public class IndexVolume implements HasAuditInfo, SharedObject {
+public class IndexVolume implements HasAuditInfo {
     private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
     private static final double NINETY_NINE_PERCENT = 0.99D;
     private static final double ONE_HUNDRED = 100D;

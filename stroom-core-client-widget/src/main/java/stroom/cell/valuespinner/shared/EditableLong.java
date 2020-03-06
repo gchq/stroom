@@ -16,27 +16,80 @@
 
 package stroom.cell.valuespinner.shared;
 
-import stroom.util.shared.SharedLong;
+public class EditableLong extends Number implements Comparable<EditableLong>, Editable {
+    private static final long serialVersionUID = 2999109513859666073L;
 
-public class EditableLong extends SharedLong implements Editable {
-    private static final long serialVersionUID = -5468699731097143387L;
-
+    private Long _long;
     private boolean editable = true;
 
     public EditableLong() {
     }
 
     public EditableLong(final Long _long) {
-        super(_long);
+        this._long = _long;
     }
 
-    @Override
     public boolean isEditable() {
         return editable;
     }
 
-    @Override
     public void setEditable(final boolean editable) {
         this.editable = editable;
+    }
+
+    public Long getLong() {
+        return _long;
+    }
+
+    public void setLong(final Long _long) {
+        this._long = _long;
+    }
+
+    @Override
+    public int intValue() {
+        return _long.intValue();
+    }
+
+    @Override
+    public long longValue() {
+        return _long.longValue();
+    }
+
+    @Override
+    public float floatValue() {
+        return _long.floatValue();
+    }
+
+    @Override
+    public double doubleValue() {
+        return _long.doubleValue();
+    }
+
+    @Override
+    public int hashCode() {
+        return _long.hashCode();
+    }
+
+    @Override
+    public boolean equals(final Object obj) {
+        if (obj == null) {
+            return false;
+        }
+
+        if (obj instanceof EditableLong) {
+            return ((EditableLong) obj)._long.equals(_long);
+        }
+
+        return false;
+    }
+
+    @Override
+    public int compareTo(final EditableLong sharedLong) {
+        return _long.compareTo(sharedLong._long);
+    }
+
+    @Override
+    public String toString() {
+        return String.valueOf(_long);
     }
 }

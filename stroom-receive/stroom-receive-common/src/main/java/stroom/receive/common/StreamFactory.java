@@ -16,7 +16,7 @@
 
 package stroom.receive.common;
 
-import stroom.meta.shared.StandardHeaderArguments;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.util.date.DateUtil;
 
 import java.util.Map;

@@ -32,19 +32,19 @@ import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaService;
-import stroom.meta.shared.StandardHeaderArguments;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.SharedElementData;
-import stroom.pipeline.shared.SharedStepData;
-import stroom.pipeline.shared.StepType;
-import stroom.pipeline.shared.SteppingResult;
+import stroom.pipeline.shared.stepping.SharedStepData;
+import stroom.pipeline.shared.stepping.StepType;
+import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.stepping.SteppingTask;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
@@ -67,7 +67,6 @@ import stroom.test.common.StroomCoreServerTestFileUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.io.FileUtil;
 import stroom.util.io.StreamUtil;
-import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Indicators;
 
 import javax.inject.Inject;
@@ -545,7 +544,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     }
 
     private long getLatestStreamId() {
-        final BaseResultList<Meta> list = metaService.find(new FindMetaCriteria());
+        final List<Meta> list = metaService.find(new FindMetaCriteria()).getValues();
         if (list == null || list.size() == 0) {
             return 0;
         }

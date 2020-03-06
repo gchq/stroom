@@ -17,10 +17,10 @@ import stroom.config.app.YamlUtil;
 import stroom.config.common.CommonDbConfig;
 import stroom.config.common.DbConfig;
 import stroom.config.common.HasDbConfig;
-import stroom.db.util.DbUtil;
+import stroom.util.config.FieldMapper;
 import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -93,8 +93,8 @@ class TestAppConfigModule {
                 })
                 .forEach(hasDbConfig -> {
                     final DbConfig mergedConfig = new DbConfig();
-                    DbUtil.copyConfig(commonDbConfig, mergedConfig);
-                    DbUtil.copyConfig(hasDbConfig.getDbConfig(), mergedConfig);
+                    FieldMapper.copy(commonDbConfig, mergedConfig, FieldMapper.CopyOption.DONT_COPY_NULLS);
+                    FieldMapper.copy(hasDbConfig.getDbConfig(), mergedConfig, FieldMapper.CopyOption.DONT_COPY_NULLS);
 
                     Assertions.assertThat(mergedConfig.getConnectionConfig())
                             .isEqualTo(commonDbConfig.getConnectionConfig());
@@ -109,7 +109,7 @@ class TestAppConfigModule {
      * IMPORTANT: This test must be run from stroom-app so it can see all the other modules
      */
     @Test
-    void testIsConfigPresence() throws IOException {
+    void testAbstractConfigPresence() throws IOException {
         final AppConfig appConfig = new AppConfig();
 
         Predicate<String> packageNameFilter = name ->
@@ -117,19 +117,21 @@ class TestAppConfigModule {
 
         Predicate<Class<?>> classFilter = clazz -> {
 
-            return !clazz.equals(IsConfig.class) && !clazz.equals(AppConfig.class);
+            return clazz.getSimpleName().endsWith("Config")
+                && !clazz.equals(AbstractConfig.class)
+                && !clazz.equals(AppConfig.class);
         };
 
         LOGGER.info("Finding all IsConfig classes");
 
         // Find all classes that implement IsConfig
         final ClassLoader classLoader = getClass().getClassLoader();
-        final Set<Class<?>> isConfigClasses = ClassPath.from(classLoader).getAllClasses()
+        final Set<Class<?>> abstractConfigClasses = ClassPath.from(classLoader).getAllClasses()
                 .stream()
                 .filter(classInfo -> packageNameFilter.test(classInfo.getPackageName()))
                 .map(ClassPath.ClassInfo::load)
                 .filter(classFilter)
-                .filter(IsConfig.class::isAssignableFrom)
+                .filter(AbstractConfig.class::isAssignableFrom)
                 .peek(clazz -> {
                     LOGGER.debug(clazz.getSimpleName());
                 })
@@ -164,10 +166,10 @@ class TestAppConfigModule {
         // the AppConfig tree. If there is a mismatch then it may be due to the getter/setter not
         // being public in the config class, else the config class may not be a property in the
         // AppConfig object tree
-        Assertions.assertThat(isConfigClasses)
+        Assertions.assertThat(abstractConfigClasses)
                 .containsAll(configClasses);
         Assertions.assertThat(configClasses)
-                .containsAll(isConfigClasses);
+                .containsAll(abstractConfigClasses);
     }
 
 

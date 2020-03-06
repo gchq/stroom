@@ -22,9 +22,9 @@ import org.jooq.OrderField;
 import stroom.db.util.JooqUtil;
 import stroom.node.impl.NodeDao;
 import stroom.node.impl.db.jooq.tables.records.NodeRecord;
-import stroom.node.shared.FindNodeCriteria;
+import stroom.node.api.FindNodeCriteria;
 import stroom.node.shared.Node;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -35,7 +35,7 @@ import java.util.Optional;
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 
 public class NodeDaoImpl implements NodeDao {
-    private final Map<String, Field> FIELD_MAP = Map.of(FindNodeCriteria.FIELD_ID, NODE.ID, FindNodeCriteria.FIELD_NAME, NODE.NAME);
+    private final Map<String, Field<?>> FIELD_MAP = Map.of(FindNodeCriteria.FIELD_ID, NODE.ID, FindNodeCriteria.FIELD_NAME, NODE.NAME);
 
     private final NodeDbConnProvider nodeDbConnProvider;
 
@@ -68,11 +68,11 @@ public class NodeDaoImpl implements NodeDao {
     }
 
     @Override
-    public BaseResultList<Node> find(final FindNodeCriteria criteria) {
+    public ResultPage<Node> find(final FindNodeCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getStringCondition(NODE.NAME, criteria.getName()));
 
-        final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<Node> list = JooqUtil.contextResult(nodeDbConnProvider, context ->
                 context
@@ -83,7 +83,7 @@ public class NodeDaoImpl implements NodeDao {
                         .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                         .fetch()
                         .map(r -> r.into(Node.class)));
-        return BaseResultList.createCriterialBasedList(list, criteria);
+        return ResultPage.createCriterialBasedList(list, criteria);
     }
 
     @Override

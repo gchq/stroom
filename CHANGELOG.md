@@ -6,11 +6,75 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-* Issue **#1353** : Removed session identities from tasks.
 
-* Issue **#1352** : Removed internal API token.
+* Issue **#1399** : Removed error logging for expected exceptions in TaskExecutor. 
 
-* Issue **#1347** : Added `http-call` method to XSLT.
+* Fix missing $ in start.sh
+
+* Issue **#1387** : Changed the way tasks are executed to reduce changes of unhandled execution errors.
+
+* Issue **#1378** : Improved logging detail when processor filters fail.
+
+* Issue **#1379** : Fixed issue where you couldn't open a processor filter if parts of the filter referenced deleted items.
+
+* Issue **#1378** : Improved logging detail when processor filters fail.
+
+* Issue **#1382** : Added `decode-url` and `encode-url` XSLT functions.
+
+* Issue **#655** : Fixed SQL Stats queries ignoring the enabled state of the dashboard query terms.
+
+* Issue **#1362** : Fixed issue where hiding dashboard annotation fields removed them.
+
+* Issue **#1357** : Fixed dragging tabs in dashboard with hidden panes to create a new split.
+
+* Issue **#1357** : Fixed dragging tabs in dashboard with hidden panes.
+
+* Issue **#1368** : Fixed FindReplaceFilter as it wasn't working when used in conjunction with Data Splitter.
+
+* Issue **#1361** : Changed the way headers are parsed for the HttpCall XSLT function.
+
+
+## [v7.0-beta.21] - 2020-02-24
+
+* Add null checks to DB migration.
+
+* Add deletion of constraint `IDX_SHARD_FK_IDX_ID` to migration script.
+
+
+## [v7.0-beta.20] - 2020-02-13
+
+* Fix bug in `processor_task` migration script.
+
+
+## [v7.0-beta.19] - 2020-02-10
+
+* Fix bugs in DB migration scripts.
+
+
+## [v7.0-beta.18] - 2020-02-05
+
+* Re-locate index database migrations.
+
+* Fix issues with migrating null audit columns.
+
+* Improve output of TestYamlUtil.
+
+
+## [v7.0-beta.17] - 2020-01-29
+
+* Issue **#1355** : Fixed stepping from dashboard text pane.
+
+* Issue **#1354** : Fixed double click to edit list items, e.g. properties.
+
+* Issue **#1340** : Fixed issue with FindReplaceFilter where it failed in some cases when more than one filter was chained together.
+
+* Issue **#1338** : You can now configure the max size of the map store cache.
+
+* Issue **#1350** : Fixed scope of dictionaries when loaded in multiple XSLT pipeline steps.
+
+* Issue **#1347** : Added SSL options to `http-call` XSLT method.
+
+* Issue **#1352** : Fixed Hessian serialisation of user identities on tasks.
 
 * Change docker image to allow us to pass in the dropwizard command to run, e.g. server|migrate.
 
@@ -1932,7 +1996,15 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.13...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.21...HEAD
+[v7.0-beta.21]: https://github.com/gchq/stroom/compare/v7.0-beta.20...v7.0-beta.21
+[v7.0-beta.20]: https://github.com/gchq/stroom/compare/v7.0-beta.19...v7.0-beta.20
+[v7.0-beta.19]: https://github.com/gchq/stroom/compare/v7.0-beta.18...v7.0-beta.19
+[v7.0-beta.18]: https://github.com/gchq/stroom/compare/v7.0-beta.17...v7.0-beta.18
+[v7.0-beta.17]: https://github.com/gchq/stroom/compare/v7.0-beta.16...v7.0-beta.17
+[v7.0-beta.16]: https://github.com/gchq/stroom/compare/v7.0-beta.15...v7.0-beta.16
+[v7.0-beta.15]: https://github.com/gchq/stroom/compare/v7.0-beta.14...v7.0-beta.15
+[v7.0-beta.14]: https://github.com/gchq/stroom/compare/v7.0-beta.13...v7.0-beta.14
 [v7.0-beta.13]: https://github.com/gchq/stroom/compare/v7.0-beta.12...v7.0-beta.13
 [v7.0-beta.12]: https://github.com/gchq/stroom/compare/v7.0-beta.11...v7.0-beta.12
 [v7.0-beta.11]: https://github.com/gchq/stroom/compare/v7.0-beta.10...v7.0-beta.11

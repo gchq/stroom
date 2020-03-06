@@ -34,14 +34,12 @@ import event.logging.util.EventLoggingUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.entity.shared.NamedEntity;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.event.logging.api.ObjectInfoProvider;
 import stroom.event.logging.api.ObjectType;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.BaseResultList;
 import stroom.util.shared.HasId;
 import stroom.util.shared.HasUuid;
 import stroom.util.shared.PageResponse;
@@ -359,18 +357,16 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     @Override
-    public void search(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
-                       final Throwable ex) {
+    public void search(final String typeId, final Query query, final String resultType, final PageResponse pageResponse, final Throwable ex) {
         securityContext.insecure(() -> {
             try {
-                final Event event = createAction(criteria.getClass().getSimpleName(), "Finding " + getObjectType(criteria),
+                final Event event = createAction(typeId, "Finding " + resultType,
                         null);
                 final Search search = new Search();
                 event.getEventDetail().setSearch(search);
                 search.setQuery(query);
 
-                if (results != null && results.getPageResponse() != null) {
-                    final PageResponse pageResponse = results.getPageResponse();
+                if (pageResponse != null) {
                     final ResultPage resultPage = getResultPage(pageResponse);
                     search.setResultPage(resultPage);
                     if (pageResponse.getTotal() != null) {
@@ -386,33 +382,33 @@ public class DocumentEventLogImpl implements DocumentEventLog {
         });
     }
 
-    @Override
-    public void searchSummary(final BaseCriteria criteria, final Query query, final BaseResultList<?> results,
-                              final Throwable ex) {
-        securityContext.insecure(() -> {
-            try {
-                final Event event = createAction(criteria.getClass().getSimpleName(),
-                        "Finding Summary " + getObjectType(criteria), null);
-                final Search search = new Search();
-                event.getEventDetail().setSearch(search);
-                search.setQuery(query);
-
-                if (results != null && results.getPageResponse() != null) {
-                    final PageResponse pageResponse = results.getPageResponse();
-                    final ResultPage resultPage = getResultPage(pageResponse);
-                    search.setResultPage(resultPage);
-                    if (pageResponse.getTotal() != null) {
-                        search.setTotalResults(BigInteger.valueOf(pageResponse.getTotal()));
-                    }
-                }
-
-                search.setOutcome(EventLoggingUtil.createOutcome(ex));
-                eventLoggingService.log(event);
-            } catch (final RuntimeException e) {
-                LOGGER.error("Unable to doSearchSummary", e);
-            }
-        });
-    }
+//    @Override
+//    public void searchSummary(final BaseCriteria criteria, final Query query, final String resultType, final BaseResultList<?> results,
+//                              final Throwable ex) {
+//        securityContext.insecure(() -> {
+//            try {
+//                final Event event = createAction(criteria.getClass().getSimpleName(),
+//                        "Finding Summary " + resultType, null);
+//                final Search search = new Search();
+//                event.getEventDetail().setSearch(search);
+//                search.setQuery(query);
+//
+//                if (results != null && results.getPageResponse() != null) {
+//                    final PageResponse pageResponse = results.getPageResponse();
+//                    final ResultPage resultPage = getResultPage(pageResponse);
+//                    search.setResultPage(resultPage);
+//                    if (pageResponse.getTotal() != null) {
+//                        search.setTotalResults(BigInteger.valueOf(pageResponse.getTotal()));
+//                    }
+//                }
+//
+//                search.setOutcome(EventLoggingUtil.createOutcome(ex));
+//                eventLoggingService.log(event);
+//            } catch (final RuntimeException e) {
+//                LOGGER.error("Unable to doSearchSummary", e);
+//            }
+//        });
+//    }
 
     private ResultPage getResultPage(final PageResponse pageResponse) {
         ResultPage resultPage = null;
@@ -473,9 +469,7 @@ public class DocumentEventLogImpl implements DocumentEventLog {
     }
 
     private String getObjectName(final java.lang.Object object) {
-        if (object instanceof NamedEntity) {
-            return ((NamedEntity) object).getName();
-        } else if (object instanceof DocRef) {
+        if (object instanceof DocRef) {
             return ((DocRef) object).getName();
         }
         return null;

@@ -4,11 +4,10 @@ import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.common.ConnectionConfig;
-import stroom.config.common.ConnectionPoolConfig;
-import stroom.config.common.DbConfig;
 import stroom.util.logging.LogUtil;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -23,52 +22,15 @@ public class DbUtil {
     private DbUtil() {
     }
 
-    public static void copyConfig(final DbConfig from, final DbConfig to) {
-        copyConnectionConfig(from.getConnectionConfig(), to.getConnectionConfig());
-        copyConnectionPoolConfig(from.getConnectionPoolConfig(), to.getConnectionPoolConfig());
-    }
-
-    public static void copyConnectionConfig(final ConnectionConfig from, final ConnectionConfig to) {
-        if (from.getJdbcDriverClassName() != null) {
-            to.setJdbcDriverClassName(from.getJdbcDriverClassName());
-        }
-        if (from.getJdbcDriverUrl() != null) {
-            to.setJdbcDriverUrl(from.getJdbcDriverUrl());
-        }
-        if (from.getJdbcDriverUsername() != null) {
-            to.setJdbcDriverUsername(from.getJdbcDriverUsername());
-        }
-        if (from.getJdbcDriverPassword() != null) {
-            to.setJdbcDriverPassword(from.getJdbcDriverPassword());
-        }
-    }
-
-    public static void copyConnectionPoolConfig(final ConnectionPoolConfig from, final ConnectionPoolConfig to) {
-        if (from.getCachePrepStmts() != null) {
-            to.setCachePrepStmts(from.getCachePrepStmts());
-        }
-        if (from.getPrepStmtCacheSize() != null) {
-            to.setPrepStmtCacheSize(from.getPrepStmtCacheSize());
-        }
-        if (from.getPrepStmtCacheSqlLimit() != null) {
-            to.setPrepStmtCacheSqlLimit(from.getPrepStmtCacheSqlLimit());
-        }
-        if (from.getIdleTimeout() != null) {
-            to.setIdleTimeout(from.getIdleTimeout());
-        }
-        if (from.getMaxLifetime() != null) {
-            to.setMaxLifetime(from.getMaxLifetime());
-        }
-        if (from.getMaxPoolSize() != null) {
-            to.setMaxPoolSize(from.getMaxPoolSize());
-        }
-    }
-
     public static void validate(final ConnectionConfig connectionConfig) {
-        Preconditions.checkNotNull(connectionConfig.getJdbcDriverClassName(), "The JDBC driver class has not been supplied");
-        Preconditions.checkNotNull(connectionConfig.getJdbcDriverUrl(), "The JDBC URL has not been supplied");
-        Preconditions.checkNotNull(connectionConfig.getJdbcDriverUsername(), "The JDBC username has not been supplied");
-        Preconditions.checkNotNull(connectionConfig.getJdbcDriverPassword(), "The JDBC password has not been supplied");
+        Preconditions.checkNotNull(connectionConfig.getJdbcDriverClassName(),
+            "The JDBC driver class has not been supplied");
+        Preconditions.checkNotNull(connectionConfig.getJdbcDriverUrl(),
+            "The JDBC URL has not been supplied");
+        Preconditions.checkNotNull(connectionConfig.getJdbcDriverUsername(),
+            "The JDBC username has not been supplied");
+        Preconditions.checkNotNull(connectionConfig.getJdbcDriverPassword(),
+            "The JDBC password has not been supplied");
 
         try {
             Class.forName(connectionConfig.getJdbcDriverClassName());
@@ -159,6 +121,17 @@ public class DbUtil {
         return 0;
     }
 
+    public static boolean doesTableExist(final Connection connection, final String tableName) {
+        try {
+            final DatabaseMetaData meta = connection.getMetaData();
+            try (ResultSet tables = meta.getTables(null, null, tableName, null)) {
+                return tables.next();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(
+                LogUtil.message("Error establishing if table {} exists in the database.", tableName), e);
+        }
+    }
 
 //    private void executeStatement(final Connection connection, final String sql) throws SQLException {
 //        executeStatements(connection, Collections.singletonList(sql));

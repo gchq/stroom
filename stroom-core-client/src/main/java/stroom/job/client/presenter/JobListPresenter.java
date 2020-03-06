@@ -17,6 +17,7 @@
 package stroom.job.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.client.Window;
 import com.google.inject.Inject;
@@ -26,36 +27,32 @@ import stroom.alert.client.event.AlertEvent;
 import stroom.cell.info.client.InfoHelpLinkColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
 import stroom.cell.tickbox.shared.TickBoxState;
+import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
-import stroom.entity.client.ActionQueue;
-import stroom.entity.client.presenter.FindActionDataProvider;
-import stroom.job.shared.FindJobAction;
-import stroom.job.shared.FindJobCriteria;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.job.shared.Job;
-import stroom.job.shared.UpdateJobAction;
+import stroom.job.shared.JobResource;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
-    private final ActionQueue<Job> actionQueue;
-    private FindActionDataProvider<FindJobCriteria, Job> dataProvider;
+    private static final JobResource JOB_RESOURCE = GWT.create(JobResource.class);
 
     @Inject
-    public JobListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher,
+    public JobListPresenter(final EventBus eventBus,
+                            final RestFactory restFactory,
                             final UiConfigCache clientPropertyCache) {
         super(eventBus, new DataGridViewImpl<>(true));
-
-        actionQueue = new ActionQueue<>(dispatcher);
 
         getView().addColumn(new InfoHelpLinkColumn<Job>() {
             @Override
@@ -104,9 +101,9 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
             }
         };
         enabledColumn.setFieldUpdater((index, row, value) -> {
-            final boolean newValue = value.toBoolean();
-            row.setEnabled(newValue);
-            actionQueue.dispatch(row, new UpdateJobAction(row));
+            row.setEnabled(value.toBoolean());
+            final Rest<Job> rest = restFactory.create();
+            rest.call(JOB_RESOURCE).setEnabled(row.getId(), value.toBoolean());
         });
         getView().addColumn(enabledColumn, "Enabled", 80);
 
@@ -122,28 +119,35 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
 
         getView().addEndColumn(new EndColumn<>());
 
-        this.dataProvider = new FindActionDataProvider<FindJobCriteria, Job>(dispatcher, getView(), new FindJobAction()) {
-            // Add in extra blank item
+        final RestDataProvider<Job, ResultPage<Job>> dataProvider = new RestDataProvider<Job, ResultPage<Job>>(eventBus) {
             @Override
-            protected ResultList<Job> processData(final ResultList<Job> data) {
+            protected void exec(final Consumer<ResultPage<Job>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<Job>> rest = restFactory.create();
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(JOB_RESOURCE).list();
+            }
+
+            @Override
+            protected void changeData(final ResultPage<Job> data) {
                 final List<Job> rtnList = new ArrayList<>();
 
                 boolean done = false;
                 for (int i = 0; i < data.size(); i++) {
-                    rtnList.add(data.get(i));
-                    if (data.get(i).isAdvanced() && !done) {
+                    rtnList.add(data.getValues().get(i));
+                    if (data.getValues().get(i).isAdvanced() && !done) {
                         rtnList.add(i, null);
                         done = true;
                     }
                 }
 
-                return new BaseResultList<>(rtnList, 0L, (long) rtnList.size(), true);
+                data.setValues(rtnList);
+                data.getPageResponse().setLength(rtnList.size());
+                data.getPageResponse().setTotal((long) rtnList.size());
+                data.getPageResponse().setExact(true);
+
+                super.changeData(data);
             }
         };
-        final FindJobCriteria findJobCriteria = new FindJobCriteria();
-        findJobCriteria.setSort(FindJobCriteria.FIELD_ADVANCED);
-        findJobCriteria.addSort(FindJobCriteria.FIELD_NAME);
-        this.dataProvider.setCriteria(findJobCriteria);
+        dataProvider.addDataDisplay(getView().getDataDisplay());
     }
 
     public MultiSelectionModel<Job> getSelectionModel() {

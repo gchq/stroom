@@ -3,21 +3,21 @@ package stroom.search.solr;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.search.solr.search.SolrSearchConfig;
 import stroom.util.cache.CacheConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class SolrConfig implements IsConfig {
+public class SolrConfig extends AbstractConfig {
     private SolrSearchConfig solrSearchConfig = new SolrSearchConfig();
     private CacheConfig indexClientCache = new CacheConfig.Builder()
             .maximumSize(100L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
     private CacheConfig indexCache = new CacheConfig.Builder()
             .maximumSize(100L)
-            .expireAfterWrite(10, TimeUnit.MINUTES)
+            .expireAfterWrite(StroomDuration.ofMinutes(10))
             .build();
 
     @JsonProperty("search")

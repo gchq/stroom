@@ -17,14 +17,12 @@
 
 package stroom.processor.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaService;
 import stroom.meta.shared.Status;
 import stroom.node.api.NodeInfo;
 import stroom.processor.api.InclusiveRanges;
@@ -52,12 +50,13 @@ import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
+import stroom.task.api.VoidResult;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
-import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Sort.Direction;
-import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -85,10 +84,10 @@ import java.util.stream.Collectors;
  */
 @Singleton
 class ProcessorTaskManagerImpl implements ProcessorTaskManager {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorTaskManagerImpl.class);
+
     private static final int POLL_INTERVAL_MS = 10000;
     private static final int DELETE_INTERVAL_MS = POLL_INTERVAL_MS * 10;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorTaskManagerImpl.class);
 
     private final ProcessorFilterService processorFilterService;
     private final ProcessorFilterTrackerDao processorFilterTrackerDao;
@@ -402,7 +401,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         final ExpressionCriteria findProcessorFilterCriteria = new ExpressionCriteria(expression);
         final List<ProcessorFilter> filters = processorFilterService
-                .find(findProcessorFilterCriteria);
+                .find(findProcessorFilterCriteria).getValues();
         LOGGER.trace("Found {} stream processor filters", filters.size());
 
         // Sort the stream processor filters by priority.
@@ -473,14 +472,15 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                                       final ProcessorFilter filter,
                                       final StreamTaskQueue queue,
                                       final int maxQueueSize) {
+        Optional<ProcessorFilter> optionalProcessorFilter = Optional.empty();
+
         final AtomicBoolean searching = new AtomicBoolean();
         try {
             // Reload as it could have changed
-            final Optional<ProcessorFilter> optionalProcessorFilter = processorFilterService.fetch(filter.getId());
+            optionalProcessorFilter = processorFilterService.fetch(filter.getId());
 
             // The filter might have been deleted since we found it.
             optionalProcessorFilter.ifPresent(loadedFilter -> {
-
                 // Set the current user to be the one who created the filter so that only streams that that user has access to are processed.
                 securityContext.asUser(securityContext.createIdentity(loadedFilter.getCreateUser()), () -> {
                     LOGGER.debug("createTasksForFilter() - processorFilter {}", loadedFilter.toString());
@@ -612,8 +612,18 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                 });
             });
         } catch (final RuntimeException e) {
-            LOGGER.error("Error processing filter with id = " + filter.getId());
-            LOGGER.error(e.getMessage(), e);
+            final String pipelineDetails = optionalProcessorFilter
+                    .map(loadedFilter -> {
+                        if (loadedFilter.getProcessor() != null &&
+                                loadedFilter.getProcessor().getPipelineUuid() != null) {
+                            return " for pipeline " + loadedFilter.getProcessor().getPipelineUuid();
+                        }
+                        return "";
+                    })
+                    .orElse("");
+
+            LOGGER.error(() -> "Error processing filter with id = " + filter.getId() + pipelineDetails);
+            LOGGER.error(e::getMessage, e);
         } finally {
             if (!searching.get()) {
                 queue.setFilling(false);
@@ -638,7 +648,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 //            findProcessorTaskCriteria.obtainProcessorFilterIdSet().add(filter.getId());
             findProcessorTaskCriteria.obtainPageRequest().setLength(tasksToCreate);
 
-            final BaseResultList<ProcessorTask> processorTasks = processorTaskDao.find(findProcessorTaskCriteria);
+            final List<ProcessorTask> processorTasks = processorTaskDao.find(findProcessorTaskCriteria).getValues();
             final int size = processorTasks.size();
 
             taskStatusTraceLog.addUnownedTasks(ProcessorTaskManagerImpl.class, processorTasks);
@@ -655,7 +665,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(findMetaExpression);
                 findMetaCriteria.setSort(MetaFields.ID.getName(), Direction.ASCENDING, false);
-                final BaseResultList<Meta> metaList = metaService.find(findMetaCriteria);
+                final List<Meta> metaList = metaService.find(findMetaCriteria).getValues();
 
                 if (metaList.size() > 0) {
                     // Change the ownership of tasks where we have unlocked meta data.
@@ -948,7 +958,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 //        findStreamCriteria.obtainStatusSet().add(StreamStatus.UNLOCKED);
         findMetaCriteria.obtainPageRequest().setLength(max);
 
-        return metaService.find(findMetaCriteria);
+        return metaService.find(findMetaCriteria).getValues();
     }
 
 //    private Long min(final Long l1, final Long l2) {

@@ -30,7 +30,7 @@ plugins {
 
     id "com.github.johnrengelman.shadow" version "4.0.3" apply false
 
-    id 'nu.studer.jooq' version '3.0.3' apply false
+    id 'nu.studer.jooq' version '4.1' apply false
 
     id 'org.flywaydb.flyway' version '5.2.4' apply false
 
@@ -87,8 +87,7 @@ ext.versions = [
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v7.0-beta.4', // Needed for the correct version of the client API
         stroomExpression  : 'v3.0.3',
-        stroomProxyApi    : 'v5.1.2',
-        stroomQuery       : 'v4.0-beta.45', // same version for stroom-docref, stroom-query-api and stroom-query-common
+        stroomQuery       : 'v4.0-beta.58', // same version for stroom-docref, stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
@@ -113,7 +112,7 @@ ext.versions = [
         gwt               : '2.8.2',
         hikari            : '3.2.0',
         jooq              : '3.12.3',
-        junit_jupiter     : '5.3.2',
+        junit_jupiter     : '5.6.0',
         kafka             : '2.2.1', // CDH 6.3 uses kafka 2.2.1
         lucene            : '5.5.3',
         mockito           : '2.23.4',
@@ -135,7 +134,6 @@ ext.libs = [
         hadoopHdfsShaded               : "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
         stroomDocRef                   : "stroom:stroom-docref:$versions.stroomQuery",
         stroomExpression               : "stroom:stroom-expression:$versions.stroomExpression",
-        stroomProxyRemoteApi           : "stroom:stroom-proxy-remote-api:$versions.stroomProxyApi",
         stroomQueryApi                 : "stroom:stroom-query-api:$versions.stroomQuery",
         stroomQueryAudit               : "stroom:stroom-query-audit:$versions.stroomQuery",
         stroomQueryAuthorisation       : "stroom:stroom-query-authorisation:$versions.stroomQuery",
@@ -155,6 +153,7 @@ ext.libs = [
         commons_lang                   : "org.apache.commons:commons-lang3", // version controlled by DW BOM
         commons_pool2                  : "org.apache.commons:commons-pool2:2.6.0",
         commons_text                   : "org.apache.commons:commons-text:1.4", // 1.4 needed by YamlUtil
+        classgraph                     : "io.github.classgraph:classgraph:4.8.64",
         curator_client                 : "org.apache.curator:curator-client:$versions.curator",
         curator_framework              : "org.apache.curator:curator-framework:$versions.curator",
         curator_x_discovery            : "org.apache.curator:curator-x-discovery:$versions.curator",
@@ -172,8 +171,9 @@ ext.libs = [
         dropwizard_metrics_healthchecks: "io.dropwizard.metrics:metrics-healthchecks", // version controlled by DW BOM
         dropwizard_servlets            : "io.dropwizard:dropwizard-servlets", // version controlled by DW BOM
         dropwizard_testing             : "io.dropwizard:dropwizard-testing", // version controlled by DW BOM
+        dropwizard_validation          : "io.dropwizard:dropwizard-validation", // version controlled by DW BOM
         fast_infoset                   : "com.sun.xml.fastinfoset:FastInfoset:1.2.12",
-        flyway_core                    : "org.flywaydb:flyway-core:5.2.4",
+        flyway_core                    : "org.flywaydb:flyway-core:5.2.4", // We are stuck on 5.2.4 as newer non-enterprise versions don't support mysql 5.6
         gin                            : "com.google.gwt.inject:gin:2.1.2",
         google_findbugs                : "com.google.code.findbugs:jsr305:3.0.2",
         guava                          : "com.google.guava:guava", // version controlled by DW BOM
@@ -196,6 +196,8 @@ ext.libs = [
         jackson_core                   : "com.fasterxml.jackson.core:jackson-core", // version controlled by DW BOM
         jackson_databind               : "com.fasterxml.jackson.core:jackson-databind", // version controlled by DW BOM
         jackson_dataformat_yaml        : "com.fasterxml.jackson.dataformat:jackson-dataformat-yaml", // version controlled by DW BOM
+        jackson_datatype_jsr310        : "com.fasterxml.jackson.datatype:jackson-datatype-jsr310", // version controlled by DW BOM
+        java_diff_utils                : "io.github.java-diff-utils:java-diff-utils:4.5",
         java_jwt                       : "com.auth0:java-jwt:3.1.0",
         javassist                      : "org.javassist:javassist", // version controlled by DW BOM
         javax_activation               : "javax.activation:javax.activation-api:1.2.0",
@@ -226,6 +228,7 @@ ext.libs = [
         jul_to_slf4j                   : "org.slf4j:jul-to-slf4j", // version controlled by DW BOM
         junit_jupiter_api              : "org.junit.jupiter:junit-jupiter-api:$versions.junit_jupiter",
         junit_jupiter_engine           : "org.junit.jupiter:junit-jupiter-engine:$versions.junit_jupiter",
+        junit_jupiter_params           : "org.junit.jupiter:junit-jupiter-params:$versions.junit_jupiter",
         kafka_clients                  : "org.apache.kafka:kafka-clients:$versions.kafka",
         kryo                           : "com.esotericsoftware:kryo-shaded:4.0.0",
         lmdbjava                       : "org.lmdbjava:lmdbjava:0.6.3",
@@ -236,6 +239,7 @@ ext.libs = [
         lucene_backward_codecs         : "org.apache.lucene:lucene-backward-codecs:$versions.lucene",
         lucene_core                    : "org.apache.lucene:lucene-core:$versions.lucene",
         lucene_queryparser             : "org.apache.lucene:lucene-queryparser:$versions.lucene",
+        mbknor_jackson_jsonSchema      : "com.kjetland:mbknor-jackson-jsonschema_2.12:1.0.36",
         mockito_core                   : "org.mockito:mockito-core:$versions.mockito",
         mockito_junit_jupiter          : "org.mockito:mockito-junit-jupiter:$versions.mockito",
         mysql_connector_java           : "mysql:mysql-connector-java:8.0.15",
@@ -252,6 +256,10 @@ ext.libs = [
         stax_api                       : "stax:stax-api:1.0.1",
         swagger_annotations            : "io.swagger:swagger-annotations:$versions.swagger",
         unirest                        : "com.mashape.unirest:unirest-java:$versions.unirest",
+        validation_api                 : "javax.validation:validation-api:1.0.0.GA",
+        //hibernate_validator            : "org.hibernate:hibernate-validator", // version controlled by DW BOM
+        //hibernate_validator            : "org.hibernate:hibernate-validator:6.1.0.Final",
+        hibernate_validator            : "org.hibernate:hibernate-validator:5.4.3.Final",
         vavr                           : "io.vavr:vavr:0.9.0",
         wix_embedded_mysql             : "com.wix:wix-embedded-mysql:4.6.1",
         ws_rs_api                      : "javax.ws.rs:javax.ws.rs-api:2.1",
@@ -442,6 +450,7 @@ subprojects {
     }
 
     task allDeps(type: DependencyReportTask) {}
+    task allDepInsight(type: DependencyInsightReportTask) {}
 
 //    // These lines pull the integration test task into our build process.
 //    tasks.check.dependsOn integrationTest

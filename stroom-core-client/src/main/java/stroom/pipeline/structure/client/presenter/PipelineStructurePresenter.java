@@ -17,6 +17,7 @@
 
 package stroom.pipeline.structure.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.dom.client.ClickEvent;
 import com.google.gwt.user.client.Command;
 import com.google.inject.Inject;
@@ -28,7 +29,8 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -38,15 +40,14 @@ import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.entity.shared.DocRefUtil;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.explorer.shared.ExplorerNode;
-import stroom.pipeline.shared.FetchPipelineDataAction;
-import stroom.pipeline.shared.FetchPipelineXmlAction;
-import stroom.pipeline.shared.FetchPropertyTypesAction;
+import stroom.pipeline.shared.FetchPipelineXmlResponse;
+import stroom.pipeline.shared.FetchPropertyTypesResult;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.PipelineModelException;
-import stroom.pipeline.shared.SavePipelineXmlAction;
+import stroom.pipeline.shared.PipelineResource;
+import stroom.pipeline.shared.SavePipelineXmlRequest;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
@@ -78,12 +79,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStructurePresenter.PipelineStructureView>
         implements HasDocumentRead<PipelineDoc>, HasWrite<PipelineDoc>, HasDirtyHandlers, ReadOnlyChangeHandler, PipelineStructureUiHandlers {
+    private static final PipelineResource PIPELINE_RESOURCE = GWT.create(PipelineResource.class);
+    private static final DocRef NULL_SELECTION = new DocRef.Builder().uuid("").name("None").type("").build();
+
     private final EntityDropDownPresenter pipelinePresenter;
     private final MenuListPresenter menuListPresenter;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private final NewElementPresenter newElementPresenter;
     private final PropertyListPresenter propertyListPresenter;
     private final PipelineReferenceListPresenter pipelineReferenceListPresenter;
@@ -107,7 +112,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                                       final PipelineStructureView view,
                                       final PipelineTreePresenter pipelineTreePresenter,
                                       final EntityDropDownPresenter pipelinePresenter,
-                                      final ClientDispatchAsync dispatcher,
+                                      final RestFactory restFactory,
                                       final MenuListPresenter menuListPresenter,
                                       final NewElementPresenter newElementPresenter,
                                       final PropertyListPresenter propertyListPresenter,
@@ -117,7 +122,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         this.pipelineTreePresenter = pipelineTreePresenter;
         this.pipelinePresenter = pipelinePresenter;
         this.menuListPresenter = menuListPresenter;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         this.newElementPresenter = newElementPresenter;
         this.propertyListPresenter = propertyListPresenter;
         this.pipelineReferenceListPresenter = pipelineReferenceListPresenter;
@@ -133,29 +138,33 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         pipelinePresenter.setRequiredPermissions(DocumentPermissionNames.USE);
 
         // Get a map of all available elements and properties.
-        dispatcher.exec(new FetchPropertyTypesAction()).onSuccess(result -> {
-            final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes = result
-                    .getPropertyTypes();
+        final Rest<List<FetchPropertyTypesResult>> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    final Map<PipelineElementType, Map<String, PipelinePropertyType>> propertyTypes =
+                            result.stream().collect(Collectors.toMap(FetchPropertyTypesResult::getPipelineElementType, FetchPropertyTypesResult::getPropertyTypes));
 
-            propertyListPresenter.setPropertyTypes(propertyTypes);
-            pipelineReferenceListPresenter.setPropertyTypes(propertyTypes);
+                    propertyListPresenter.setPropertyTypes(propertyTypes);
+                    pipelineReferenceListPresenter.setPropertyTypes(propertyTypes);
 
-            elementTypes = new HashMap<>();
+                    elementTypes = new HashMap<>();
 
-            for (final PipelineElementType elementType : propertyTypes.keySet()) {
-                List<PipelineElementType> list = elementTypes.get(elementType.getCategory());
-                if (list == null) {
-                    list = new ArrayList<>();
-                    elementTypes.put(elementType.getCategory(), list);
-                }
+                    for (final PipelineElementType elementType : propertyTypes.keySet()) {
+                        List<PipelineElementType> list = elementTypes.get(elementType.getCategory());
+                        if (list == null) {
+                            list = new ArrayList<>();
+                            elementTypes.put(elementType.getCategory(), list);
+                        }
 
-                list.add(elementType);
-            }
+                        list.add(elementType);
+                    }
 
-            for (final List<PipelineElementType> types : elementTypes.values()) {
-                Collections.sort(types);
-            }
-        });
+                    for (final List<PipelineElementType> types : elementTypes.values()) {
+                        Collections.sort(types);
+                    }
+                })
+                .call(PIPELINE_RESOURCE)
+                .getPropertyTypes();
 
         setAdvancedMode(true);
         enableButtons();
@@ -170,7 +179,7 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
         registerHandler(propertyListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelineReferenceListPresenter.addDirtyHandler(dirtyHandler));
         registerHandler(pipelinePresenter.addDataSelectionHandler(event -> {
-            if (event.getSelectedItem() != null && event.getSelectedItem().getDocRef().compareTo(DocRefUtil.NULL_SELECTION) != 0) {
+            if (event.getSelectedItem() != null && event.getSelectedItem().getDocRef().compareTo(NULL_SELECTION) != 0) {
                 final ExplorerNode entityData = event.getSelectedItem();
                 if (EqualsUtil.isEquals(entityData.getDocRef().getUuid(), pipelineDoc.getUuid())) {
                     AlertEvent.fireWarn(PipelineStructurePresenter.this, "A pipeline cannot inherit from itself",
@@ -230,31 +239,34 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             }
             pipelinePresenter.setSelectedEntityReference(pipelineDoc.getParentPipeline());
 
-            final FetchPipelineDataAction action = new FetchPipelineDataAction(docRef);
-            dispatcher.exec(action).onSuccess(result -> {
-                final PipelineData pipelineData = result.get(result.size() - 1);
-                final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
+            final Rest<List<PipelineData>> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        final PipelineData pipelineData = result.get(result.size() - 1);
+                        final List<PipelineData> baseStack = new ArrayList<>(result.size() - 1);
 
-                // If there is a stack of pipeline data then we need
-                // to make sure changes are reflected appropriately.
-                for (int i = 0; i < result.size() - 1; i++) {
-                    baseStack.add(result.get(i));
-                }
+                        // If there is a stack of pipeline data then we need
+                        // to make sure changes are reflected appropriately.
+                        for (int i = 0; i < result.size() - 1; i++) {
+                            baseStack.add(result.get(i));
+                        }
 
-                try {
-                    pipelineModel.setPipelineData(pipelineData);
-                    pipelineModel.setBaseStack(baseStack);
-                    pipelineModel.build();
+                        try {
+                            pipelineModel.setPipelineData(pipelineData);
+                            pipelineModel.setBaseStack(baseStack);
+                            pipelineModel.build();
 
-                    pipelineTreePresenter.getSelectionModel().setSelected(previousSelection, true);
+                            pipelineTreePresenter.getSelectionModel().setSelected(previousSelection, true);
 
-                    // We have just loaded the pipeline so set dirty to
-                    // false.
-                    setDirty(false);
-                } catch (final PipelineModelException e) {
-                    AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
-                }
-            });
+                            // We have just loaded the pipeline so set dirty to
+                            // false.
+                            setDirty(false);
+                        } catch (final PipelineModelException e) {
+                            AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
+                        }
+                    })
+                    .call(PIPELINE_RESOURCE)
+                    .fetchPipelineData(docRef);
         }
     }
 
@@ -491,15 +503,19 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
                 }
             };
 
-            dispatcher.exec(new FetchPipelineXmlAction(docRef)).onSuccess(result -> {
-                String text = "";
-                if (result != null) {
-                    text = result.toString();
-                }
-                xmlEditor.setText(text, true);
-                ShowPopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, PopupType.OK_CANCEL_DIALOG,
-                        popupSize, "Pipeline Source", popupUiHandlers);
-            });
+            final Rest<FetchPipelineXmlResponse> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        String text = "";
+                        if (result != null) {
+                            text = result.getXml();
+                        }
+                        xmlEditor.setText(text, true);
+                        ShowPopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, PopupType.OK_CANCEL_DIALOG,
+                                popupSize, "Pipeline Source", popupUiHandlers);
+                    })
+                    .call(PIPELINE_RESOURCE)
+                    .fetchPipelineXml(docRef);
         }
     }
 
@@ -515,12 +531,16 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
     }
 
     private void doActualSave(final EditorPresenter xmlEditor) {
-        dispatcher.exec(new SavePipelineXmlAction(docRef, xmlEditor.getText())).onSuccess(result -> {
-            // Hide the popup.
-            HidePopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, false, true);
-            // Reload the entity.
-            RefreshDocumentEvent.fire(PipelineStructurePresenter.this, docRef);
-        });
+        final Rest<Boolean> rest = restFactory.create();
+        rest
+                .onSuccess(result -> {
+                    // Hide the popup.
+                    HidePopupEvent.fire(PipelineStructurePresenter.this, xmlEditor, false, true);
+                    // Reload the entity.
+                    RefreshDocumentEvent.fire(PipelineStructurePresenter.this, docRef);
+                })
+                .call(PIPELINE_RESOURCE)
+                .savePipelineXml(new SavePipelineXmlRequest(docRef, xmlEditor.getText()));
     }
 
     private void enableButtons() {
@@ -571,16 +591,19 @@ public class PipelineStructurePresenter extends MyPresenterWidget<PipelineStruct
             }
 
         } else {
-            final FetchPipelineDataAction action = new FetchPipelineDataAction(parentPipeline);
-            dispatcher.exec(action).onSuccess(result -> {
-                pipelineModel.setBaseStack(result);
+            final Rest<List<PipelineData>> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        pipelineModel.setBaseStack(result);
 
-                try {
-                    pipelineModel.build();
-                } catch (final PipelineModelException e) {
-                    AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
-                }
-            });
+                        try {
+                            pipelineModel.build();
+                        } catch (final PipelineModelException e) {
+                            AlertEvent.fireError(PipelineStructurePresenter.this, e.getMessage(), null);
+                        }
+                    })
+                    .call(PIPELINE_RESOURCE)
+                    .fetchPipelineData(parentPipeline);
         }
 
         // We have changed the parent pipeline so set dirty.

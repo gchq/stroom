@@ -23,9 +23,9 @@ import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.job.impl.JobDao;
 import stroom.job.impl.db.jooq.tables.records.JobRecord;
-import stroom.job.shared.FindJobCriteria;
+import stroom.job.impl.FindJobCriteria;
 import stroom.job.shared.Job;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.HasIntCrud;
 
 import javax.annotation.Nonnull;
@@ -51,7 +51,7 @@ import static stroom.job.impl.db.jooq.Tables.JOB_NODE;
 public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(JobDao.class);
 
-    private static final Map<String, Field> FIELD_MAP = Map.of(
+    private static final Map<String, Field<?>> FIELD_MAP = Map.of(
             FindJobCriteria.FIELD_ID, JOB.ID,
             FindJobCriteria.FIELD_NAME, JOB.NAME);
 
@@ -85,11 +85,11 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
     }
 
     @Override
-    public BaseResultList<Job> find(FindJobCriteria criteria) {
+    public ResultPage<Job> find(FindJobCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getStringCondition(JOB.NAME, criteria.getName()));
 
-        final OrderField[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
+        final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
         final List<Job> list = JooqUtil.contextResult(jobDbConnProvider, context -> context
                 .select()
@@ -101,7 +101,7 @@ public class JobDaoImpl implements JobDao, HasIntCrud<Job> {
                 .fetch()
                 .into(Job.class));
 
-        return BaseResultList.createUnboundedList(list);
+        return ResultPage.createUnboundedList(list);
     }
 
     @Override

@@ -44,7 +44,6 @@ public class DocumentStoreResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("")
     @Timed
     public DocRef create(final String name) {
         return documentStore.createDocument(name);

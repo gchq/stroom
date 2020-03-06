@@ -2,13 +2,13 @@ package stroom.search.impl.shard;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class IndexShardSearchConfig implements IsConfig {
+public class IndexShardSearchConfig extends AbstractConfig {
     private static final int DEFAULT_MAX_THREADS = 4;
     private static final int DEFAULT_MAX_THREADS_PER_TASK = 2;
 
@@ -17,11 +17,11 @@ public class IndexShardSearchConfig implements IsConfig {
     private int maxThreadsPerTask = DEFAULT_MAX_THREADS_PER_TASK;
     private CacheConfig searchResultCache = new CacheConfig.Builder()
             .maximumSize(10000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
     private CacheConfig indexShardSearcherCache = new CacheConfig.Builder()
             .maximumSize(2L)
-            .expireAfterAccess(1, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(1))
             .build();
 
     @JsonPropertyDescription("The maximum number of doc ids that will be queued ready for stored data to be retrieved from the index shard")

@@ -21,7 +21,9 @@ import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_NamedEntity;
 import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_PrimitiveValueConverter;
 import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_SQLNameConstants;
 
-/** Used for legacy migration **/
+/**
+ * Used for legacy migration
+ **/
 public class _V07_00_00_StreamType extends _V07_00_00_NamedEntity implements _V07_00_00_HasPrimitiveValue {
     public static final String TABLE_NAME = _V07_00_00_SQLNameConstants.STREAM + _V07_00_00_SQLNameConstants.TYPE_SUFFIX;
     public static final String FOREIGN_KEY = FK_PREFIX + TABLE_NAME + ID_SUFFIX;
@@ -100,8 +102,8 @@ public class _V07_00_00_StreamType extends _V07_00_00_NamedEntity implements _V0
         this.setId(primitiveValue);
         this.setPurpose(purpose);
     }
+
     public _V07_00_00_StreamType() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public static final _V07_00_00_StreamType[] initialValues() {

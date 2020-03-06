@@ -16,12 +16,9 @@
 
 package stroom.core.db.migration._V07_00_00.streamstore.shared;
 
-import stroom.entity.shared.BaseEntity;
-import stroom.entity.shared.EntityIdSet;
-import stroom.entity.shared.IncludeExcludeEntityIdSet;
+import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_BaseEntity;
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.IdRange;
-import stroom.util.shared.Period;
+import stroom.util.Period;
 
 import javax.xml.bind.annotation.XmlRootElement;
 import java.util.List;
@@ -122,7 +119,7 @@ public class _V07_00_00_FindStreamCriteria extends BaseCriteria {
 //        this.feeds = feeds;
 //    }
 //
-    public IncludeExcludeEntityIdSet<BaseEntity> obtainFeeds() {
+    public _V07_00_00_IncludeExcludeEntityIdSet<_V07_00_00_BaseEntity> obtainFeeds() {
         throw new RuntimeException("Unexpected call to obtainFeeds");
     }
 //
@@ -156,7 +153,7 @@ public class _V07_00_00_FindStreamCriteria extends BaseCriteria {
 //        this.pipelineIdSet = pipelineIdSet;
 //    }
 //
-    public EntityIdSet<BaseEntity> obtainPipelineIdSet() {
+    public _V07_00_00_EntityIdSet<_V07_00_00_BaseEntity> obtainPipelineIdSet() {
         throw new RuntimeException("Unexpected call to obtainPipelineIdSet");
     }
 //
@@ -168,7 +165,7 @@ public class _V07_00_00_FindStreamCriteria extends BaseCriteria {
 //        this.streamTypeIdSet = streamTypeIdSet;
 //    }
 //
-    public EntityIdSet<BaseEntity> obtainStreamTypeIdSet() {
+    public _V07_00_00_EntityIdSet<_V07_00_00_BaseEntity> obtainStreamTypeIdSet() {
         throw new RuntimeException("Unexpected call to obtainStreamTypeIdSet");
     }
 //
@@ -180,7 +177,7 @@ public class _V07_00_00_FindStreamCriteria extends BaseCriteria {
 //        this.streamIdSet = streamIdSet;
 //    }
 //
-    public EntityIdSet<BaseEntity> obtainStreamIdSet() {
+    public _V07_00_00_EntityIdSet<_V07_00_00_BaseEntity> obtainStreamIdSet() {
         throw new RuntimeException("Unexpected call to obtainMetaIdSet");
     }
 //
@@ -204,7 +201,7 @@ public class _V07_00_00_FindStreamCriteria extends BaseCriteria {
 //        this.parentStreamIdSet = parentStreamIdSet;
 //    }
 //
-    public EntityIdSet<BaseEntity> obtainParentStreamIdSet() {
+    public _V07_00_00_EntityIdSet<_V07_00_00_BaseEntity> obtainParentStreamIdSet() {
         throw new RuntimeException("Unexpected call to obtainParentStreamIdSet");
     }
 //

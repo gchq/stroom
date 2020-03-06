@@ -17,29 +17,36 @@
 package stroom.data.store.impl.fs.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import stroom.data.client.presenter.ActionDataProvider;
 import stroom.data.client.presenter.ColumnSizeConstants;
+import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.data.store.impl.fs.shared.FindFsVolumeAction;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
 import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.data.store.impl.fs.shared.FsVolumeResource;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.util.client.BorderUtil;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResultPage;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
+import java.util.function.Consumer;
+
 public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<FsVolume>> {
-    private final ActionDataProvider<FsVolume> dataProvider;
+    private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
+
+    private final RestDataProvider<FsVolume, ResultPage<FsVolume>> dataProvider;
 
     @Inject
-    public FSVolumeStatusListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+    public FSVolumeStatusListPresenter(final EventBus eventBus, final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<>(true, true));
 
         // Add a border to the list.
@@ -47,8 +54,13 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
 
         initTableColumns();
 
-        final FindFsVolumeAction action = new FindFsVolumeAction(new FindFsVolumeCriteria());
-        dataProvider = new ActionDataProvider<>(dispatcher, action);
+        dataProvider = new RestDataProvider<FsVolume, ResultPage<FsVolume>>(eventBus) {
+            @Override
+            protected void exec(final Consumer<ResultPage<FsVolume>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<FsVolume>> rest = restFactory.create();
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(FS_VOLUME_RESOURCE).find(new FindFsVolumeCriteria());
+            }
+        };
         dataProvider.addDataDisplay(getView().getDataDisplay());
         dataProvider.refresh();
     }

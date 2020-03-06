@@ -28,7 +28,7 @@ import stroom.pipeline.refdata.store.offheapstore.lmdb.LmdbUtils;
 import stroom.pipeline.refdata.store.offheapstore.lmdb.serde.Serde;
 import stroom.pipeline.refdata.store.offheapstore.serdes.StringSerde;
 import stroom.pipeline.refdata.util.ByteBufferPool;
-import stroom.util.ByteSizeUnit;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -48,7 +48,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
     private static final Logger LOGGER = LoggerFactory.getLogger(TestByteBufferReusePerformance.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(TestByteBufferReusePerformance.class);
 
-    private static final long DB_MAX_SIZE = ByteSizeUnit.MEBIBYTE.longBytes(100);
+    private static final ByteSize DB_MAX_SIZE = ByteSize.ofMebibytes(100);
     private static final int VALUE_BUFFER_SIZE = 1_000;
     private final int recCount = 1_000_000;
     private Serde<String> stringSerde = new StringSerde();
@@ -66,7 +66,7 @@ class TestByteBufferReusePerformance extends AbstractLmdbDbTest {
     }
 
     @Override
-    protected long getMaxSizeBytes() {
+    protected ByteSize getMaxSizeBytes() {
         return DB_MAX_SIZE;
     }
 

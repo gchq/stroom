@@ -31,6 +31,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -138,7 +139,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
         assertThat(getRowCount()).isEqualTo(1);
 
-        sqlStatisticAggregationManager.aggregate(System.currentTimeMillis());
+        sqlStatisticAggregationManager.aggregate(Instant.now());
 
         aggregateMap.addRolledUpEvent(buildCustomCountEvent(1, 66666666666L), 1000);
 
@@ -148,7 +149,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
         assertThat(getRowCount()).isEqualTo(1);
 
-        sqlStatisticAggregationManager.aggregate(System.currentTimeMillis());
+        sqlStatisticAggregationManager.aggregate(Instant.now());
 
         assertThat(getRowCount()).isEqualTo(0);
     }

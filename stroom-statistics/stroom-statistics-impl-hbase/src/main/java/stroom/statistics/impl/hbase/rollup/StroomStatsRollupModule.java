@@ -17,17 +17,13 @@
 package stroom.statistics.impl.hbase.rollup;
 
 import com.google.inject.AbstractModule;
-import stroom.statistics.impl.hbase.shared.StroomStatsRollUpBitMaskConversionAction;
-import stroom.statistics.impl.hbase.shared.StroomStatsRollUpBitMaskPermGenerationAction;
-import stroom.statistics.impl.hbase.shared.StroomStatsStoreFieldChangeAction;
-import stroom.task.api.TaskHandlerBinder;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 public class StroomStatsRollupModule extends AbstractModule {
     @Override
     protected void configure() {
-        TaskHandlerBinder.create(binder())
-                .bind(StroomStatsRollUpBitMaskConversionAction.class, StroomStatsRollUpBitMaskConversionHandler.class)
-                .bind(StroomStatsRollUpBitMaskPermGenerationAction.class, StroomStatsRollUpBitMaskPermGenerationHandler.class)
-                .bind(StroomStatsStoreFieldChangeAction.class, StroomStatsStoreFieldChangeHandler.class);
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(StatStoreRollupResourceImpl.class);
     }
 }

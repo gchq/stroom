@@ -16,23 +16,26 @@
 
 package stroom.processor.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.Expander;
-import stroom.util.shared.TreeRow;
 
 import java.util.Objects;
 
-public class ProcessorRow implements SharedObject, TreeRow {
-    private static final long serialVersionUID = -2511849708703770119L;
+@JsonPropertyOrder({"processor", "expander"})
+@JsonInclude(Include.NON_DEFAULT)
+public class ProcessorRow extends ProcessorListRow {
+    @JsonProperty
+    private final Processor processor;
+    @JsonProperty
+    private final Expander expander;
 
-    private Processor processor;
-    private Expander expander;
-
-    public ProcessorRow() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ProcessorRow(final Expander expander, final Processor processor) {
+    @JsonCreator
+    public ProcessorRow(@JsonProperty("expander") final Expander expander,
+                        @JsonProperty("processor") final Processor processor) {
         this.processor = processor;
         this.expander = expander;
     }

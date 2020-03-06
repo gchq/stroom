@@ -3,25 +3,37 @@ package stroom.data.store.impl.fs;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.config.annotations.RequiresRestart;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
+import javax.validation.constraints.Pattern;
 
 @Singleton
-public class FsVolumeConfig implements IsConfig {
+public class FsVolumeConfig extends AbstractConfig {
 //    private int resilientReplicationCount = 1;
 //    private boolean preferLocalVolumes;
     private String volumeSelector = "RoundRobin";
     private boolean createDefaultOnStart = true;
 
+    private static final String VOLUME_SELECTOR_PATTERN = "^(" +
+        RoundRobinVolumeSelector.NAME + "|" +
+        MostFreePercentVolumeSelector.NAME + "|" +
+        MostFreeVolumeSelector.NAME + "|" +
+        RandomVolumeSelector.NAME + "|" +
+        RoundRobinIgnoreLeastFreePercentVolumeSelector.NAME + "|" +
+        RoundRobinIgnoreLeastFreeVolumeSelector.NAME + "|" +
+        RoundRobinVolumeSelector.NAME + "|" +
+        WeightedFreePercentRandomVolumeSelector.NAME + "|" +
+        WeightedFreeRandomVolumeSelector.NAME + ")$";
+
     private CacheConfig feedPathCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
     private CacheConfig typePathCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
 //    @JsonPropertyDescription("Set to determine how many volume locations will be used to store a single stream")
@@ -47,6 +59,7 @@ public class FsVolumeConfig implements IsConfig {
             "include ('MostFreePercent', 'MostFree', 'Random', 'RoundRobinIgnoreLeastFreePercent', " +
             "'RoundRobinIgnoreLeastFree', 'RoundRobin', 'WeightedFreePercentRandom', 'WeightedFreeRandom') " +
             "default is 'RoundRobin'")
+    @Pattern(regexp = VOLUME_SELECTOR_PATTERN)
     public String getVolumeSelector() {
         return volumeSelector;
     }

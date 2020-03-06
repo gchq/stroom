@@ -20,8 +20,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Style.Unit;
 import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
 import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownHandler;
 import com.google.gwt.event.dom.client.KeyPressHandler;
@@ -36,7 +34,7 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DocRefField;
 import stroom.datasource.api.v2.FieldTypes;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.ItemListBox;
@@ -132,8 +130,8 @@ public class TermEditor extends Composite {
         initWidget(layout);
     }
 
-    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<AbstractField> fields) {
-        suggestOracle.setDispatcher(dispatcher);
+    public void init(final RestFactory restFactory, final DocRef dataSource, final List<AbstractField> fields) {
+        suggestOracle.setRestFactory(restFactory);
         suggestOracle.setDataSource(dataSource);
         this.fields = fields;
         fieldListBox.clear();
@@ -290,6 +288,9 @@ public class TermEditor extends Composite {
                 );
             }
         }
+
+        // We no longer use CONTAINS.
+        conditions.remove(Condition.CONTAINS);
 
         return conditions;
     }

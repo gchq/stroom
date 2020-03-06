@@ -16,76 +16,74 @@
 
 package stroom.dashboard.shared;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
-import java.util.Arrays;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"width", "height"})
-@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "size")
 @XmlType(name = "Size", propOrder = {"width", "height"})
-public class Size implements SharedObject {
-    private static final long serialVersionUID = 8201392610412513780L;
-
-    @XmlTransient
-    @JsonIgnore
-    private int[] size = new int[]{200, 200};
-
-    public Size() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
+@JsonPropertyOrder({"width", "height"})
+@JsonInclude(Include.NON_DEFAULT)
+public class Size {
     @XmlElement(name = "width")
     @JsonProperty("width")
+    private int width;
+    @XmlElement(name = "height")
+    @JsonProperty("height")
+    private int height;
+
+    public Size() {
+    }
+
+    @JsonCreator
+    public Size(@JsonProperty("width") final int width,
+                @JsonProperty("height") final int height) {
+        this.width = width;
+        this.height = height;
+    }
+
     public int getWidth() {
-        return size[0];
+        return width;
     }
 
     public void setWidth(final int width) {
-        size[0] = width;
+        this.width = width;
     }
 
-    @XmlElement(name = "height")
-    @JsonProperty("height")
     public int getHeight() {
-        return size[1];
+        return height;
     }
 
     public void setHeight(final int height) {
-        size[1] = height;
+        this.height = height;
     }
 
     public void set(final int dimension, final int size) {
-        this.size[dimension] = size;
-    }
-
-    public void set(final int[] size) {
-        this.size[0] = size[0];
-        this.size[1] = size[1];
+        if (dimension == 0) {
+            width = size;
+        } else {
+            height = size;
+        }
     }
 
     public int get(final int dimension) {
-        return this.size[dimension];
-    }
-
-    public int[] get() {
-        return size;
+        if (dimension == 0) {
+            return width;
+        }
+        return height;
     }
 
     @Override
     public String toString() {
-        return Arrays.toString(size);
+        return "[" + width + ", " + height + "]";
     }
 }

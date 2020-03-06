@@ -2,24 +2,18 @@ package stroom.config.global.impl;
 
 import com.google.inject.AbstractModule;
 import io.dropwizard.lifecycle.Managed;
-import stroom.config.global.shared.FetchGlobalConfigAction;
-import stroom.config.global.shared.FindGlobalConfigAction;
-import stroom.config.global.shared.UpdateGlobalConfigAction;
-import stroom.task.api.TaskHandlerBinder;
+import stroom.config.global.impl.validation.ValidationModule;
+import stroom.util.BuildInfoProvider;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.HealthCheckBinder;
+import stroom.util.shared.BuildInfo;
 import stroom.util.shared.RestResource;
 
 public class GlobalConfigModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(AppConfigMonitor.class).asEagerSingleton();
-
-        TaskHandlerBinder.create(binder())
-                .bind(FindGlobalConfigAction.class, FindGlobalConfigHandler.class)
-//                .bind(ListGlobalConfigAction.class, ListGlobalConfigHandler.class)
-                .bind(FetchGlobalConfigAction.class, FetchGlobalConfigHandler.class)
-                .bind(UpdateGlobalConfigAction.class, UpdateGlobalConfigHandler.class);
+        bind(BuildInfo.class).toProvider(BuildInfoProvider.class);
 
         HealthCheckBinder.create(binder())
                 .bind(AppConfigMonitor.class);
@@ -29,6 +23,8 @@ public class GlobalConfigModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(GlobalConfigResourceImpl.class);
+
+        install(new ValidationModule());
     }
 
     @Override

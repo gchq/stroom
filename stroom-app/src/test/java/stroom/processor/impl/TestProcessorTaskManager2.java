@@ -26,7 +26,7 @@ import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorTaskService;
 import stroom.query.api.v2.ExpressionOperator;
@@ -38,6 +38,7 @@ import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;
+import java.time.Instant;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,7 +65,7 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
 
         commonTestScenarioCreator.createSample2LineRawFile(feedName, StreamTypeNames.RAW_EVENTS);
         assertThat(processorTaskService.find(new ExpressionCriteria()).size()).isZero();
-        final List<Meta> streams = metaService.find(new FindMetaCriteria());
+        final List<Meta> streams = metaService.find(new FindMetaCriteria()).getValues();
         assertThat(streams.size()).isEqualTo(1);
 
         ExpressionOperator expression = new ExpressionOperator.Builder(Op.AND).build();
@@ -82,7 +83,7 @@ class TestProcessorTaskManager2 extends AbstractCoreIntegrationTest {
         // Check DB cleanup.
         expression = new ExpressionOperator.Builder(Op.AND).build();
         assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
-        streamTaskDeleteExecutor.delete(0);
+        streamTaskDeleteExecutor.delete(Instant.EPOCH);
         assertThat(processorTaskManager.runSelectMetaQuery(expression, 0, 100).size()).isEqualTo(1);
     }
 

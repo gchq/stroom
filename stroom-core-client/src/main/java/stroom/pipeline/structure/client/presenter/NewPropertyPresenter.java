@@ -25,7 +25,6 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.item.client.ItemListBox;
@@ -38,7 +37,6 @@ import stroom.util.shared.EqualsUtil;
 import stroom.widget.valuespinner.client.ValueSpinner;
 
 public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter.NewPropertyView> {
-    private final ClientDispatchAsync dispatcher;
     private final EntityDropDownPresenter entityDropDownPresenter;
     private boolean dirty;
 
@@ -67,11 +65,9 @@ public class NewPropertyPresenter extends MyPresenterWidget<NewPropertyPresenter
 
     @Inject
     public NewPropertyPresenter(final EventBus eventBus, final NewPropertyView view,
-                                final EntityDropDownPresenter entityDropDownPresenter, final ClientDispatchAsync dispatcher) {
+                                final EntityDropDownPresenter entityDropDownPresenter) {
         super(eventBus, view);
         this.entityDropDownPresenter = entityDropDownPresenter;
-        this.dispatcher = dispatcher;
-
     }
 
     @Override

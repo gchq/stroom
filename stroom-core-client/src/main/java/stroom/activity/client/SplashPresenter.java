@@ -16,15 +16,18 @@
 
 package stroom.activity.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.MaxScrollPanel;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.activity.shared.AcknowledgeSplashAction;
+import stroom.activity.shared.AcknowledgeSplashRequest;
+import stroom.activity.shared.ActivityResource;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.UrlParameters;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.event.LogoutEvent;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.SplashConfig;
@@ -37,8 +40,10 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import java.util.function.Consumer;
 
 public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashView> {
+    private static final ActivityResource ACTIVITY_RESOURCE = GWT.create(ActivityResource.class);
+
     private final UiConfigCache uiConfigCache;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private final UrlParameters urlParameters;
 //    private boolean enabled;
 
@@ -46,11 +51,11 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
     public SplashPresenter(final EventBus eventBus,
                            final SplashView view,
                            final UiConfigCache uiConfigCache,
-                           final ClientDispatchAsync dispatcher,
+                           final RestFactory restFactory,
                            final UrlParameters urlParameters) {
         super(eventBus, view);
         this.uiConfigCache = uiConfigCache;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         this.urlParameters = urlParameters;
     }
 
@@ -72,7 +77,7 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
 
     public void show(final Consumer<Boolean> consumer) {
         uiConfigCache.get().onSuccess(uiConfig -> {
-            final SplashConfig splashConfig = uiConfig.getSplashConfig();
+            final SplashConfig splashConfig = uiConfig.getSplash();
             final boolean enableSplashScreen = splashConfig.isEnabled();
             if (enableSplashScreen && !urlParameters.isEmbedded()) {
                 final String title = splashConfig.getTitle();
@@ -83,7 +88,11 @@ public class SplashPresenter extends MyPresenterWidget<SplashPresenter.SplashVie
                     @Override
                     public void onHideRequest(final boolean autoClose, final boolean ok) {
                         if (ok) {
-                            dispatcher.exec(new AcknowledgeSplashAction(body, version)).onSuccess(result -> hide(autoClose, ok));
+                            final Rest<Boolean> rest = restFactory.create();
+                            rest
+                                    .onSuccess(result -> hide(autoClose, ok))
+                                    .call(ACTIVITY_RESOURCE)
+                                    .acknowledgeSplash(new AcknowledgeSplashRequest(body, version));
                         } else {
                             AlertEvent.fireWarn(SplashPresenter.this, "You must accept the terms to use this system", null, () -> {
                                 hide(autoClose, ok);

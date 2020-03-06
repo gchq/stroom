@@ -20,18 +20,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
-import stroom.entity.shared.EntityAction;
-import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.EntityEventHandler;
+import stroom.util.entity.EntityAction;
+import stroom.util.entity.EntityEvent;
+import stroom.util.entity.EntityEventHandler;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.Node;
+import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.BuildInfo;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -63,15 +64,18 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     private final NodeInfo nodeInfo;
     private final NodeService nodeService;
     private final TaskManager taskManager;
+    private final SecurityContext securityContext;
     private final BuildInfo buildInfo;
 
     @Inject
     ClusterNodeManagerImpl(final NodeInfo nodeInfo,
                            final NodeService nodeService,
                            final TaskManager taskManager,
+                           final SecurityContext securityContext,
                            final BuildInfo buildInfo) {
         this.nodeInfo = nodeInfo;
         this.nodeService = nodeService;
+        this.securityContext = securityContext;
         this.taskManager = taskManager;
         this.buildInfo = buildInfo;
     }
@@ -115,39 +119,41 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     }
 
     private void doUpdate(final int taskDelay) {
-        final UpdateClusterStateTask task = new UpdateClusterStateTask(clusterState, taskDelay, true);
+        securityContext.asProcessingUser(() -> {
+            final UpdateClusterStateTask task = new UpdateClusterStateTask(clusterState, taskDelay, true);
 
-        pendingUpdate.set(false);
-        taskManager.execAsync(task, new TaskCallbackAdaptor<>() {
-            @Override
-            public void onSuccess(final VoidResult result) {
-                try {
-                    // Output some debug about the state we are about to set.
-                    outputDebug(clusterState);
+            pendingUpdate.set(false);
+            taskManager.execAsync(task, new TaskCallbackAdaptor<>() {
+                @Override
+                public void onSuccess(final VoidResult result) {
+                    try {
+                        // Output some debug about the state we are about to set.
+                        outputDebug(clusterState);
 
-                    // Re-query cluster state if we are pending an update.
-                    if (pendingUpdate.get()) {
-                        // Wait a few seconds before we query again.
-                        Thread.sleep(REQUERY_DELAY);
-                        // Query again.
-                        doUpdate(0);
+                        // Re-query cluster state if we are pending an update.
+                        if (pendingUpdate.get()) {
+                            // Wait a few seconds before we query again.
+                            Thread.sleep(REQUERY_DELAY);
+                            // Query again.
+                            doUpdate(0);
+                        }
+                    } catch (final InterruptedException e) {
+                        LOGGER.error(e.getMessage(), e);
+
+                        // Continue to interrupt this thread.
+                        Thread.currentThread().interrupt();
+                    } catch (final RuntimeException e) {
+                        LOGGER.error(e.getMessage(), e);
+                    } finally {
+                        updatingState.set(false);
                     }
-                } catch (final InterruptedException e) {
-                    LOGGER.error(e.getMessage(), e);
+                }
 
-                    // Continue to interrupt this thread.
-                    Thread.currentThread().interrupt();
-                } catch (final RuntimeException e) {
-                    LOGGER.error(e.getMessage(), e);
-                } finally {
+                @Override
+                public void onFailure(final Throwable t) {
                     updatingState.set(false);
                 }
-            }
-
-            @Override
-            public void onFailure(final Throwable t) {
-                updatingState.set(false);
-            }
+            });
         });
     }
 
@@ -189,9 +195,11 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
     public ClusterState getQuickClusterState() {
         // Just get the current state if we can.
         if (clusterState.getUpdateTime() == 0) {
-            // Create a cluster state object but don't bother trying to contact
-            // remote nodes to determine active status.
-            taskManager.exec(new UpdateClusterStateTask(clusterState, 0, false));
+            securityContext.asProcessingUser(() -> {
+                // Create a cluster state object but don't bother trying to contact
+                // remote nodes to determine active status.
+                taskManager.exec(new UpdateClusterStateTask(clusterState, 0, false));
+            });
         }
         return clusterState;
     }

@@ -27,15 +27,16 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 import stroom.activity.api.ActivityService;
+import stroom.activity.api.FindActivityCriteria;
 import stroom.activity.impl.ActivityDao;
 import stroom.activity.impl.ActivityServiceImpl;
 import stroom.activity.shared.Activity;
 import stroom.activity.shared.Activity.Prop;
 import stroom.activity.shared.ActivityValidationResult;
-import stroom.activity.shared.FindActivityCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.test.common.util.db.DbTestUtil;
-import stroom.util.shared.BaseResultList;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -63,7 +64,7 @@ class TestActivityServiceImpl {
     @Test
     void test() {
         // Delete all existing.
-        BaseResultList<Activity> list = activityService.find(new FindActivityCriteria());
+        List<Activity> list = activityService.find(new FindActivityCriteria());
         list.forEach(activity -> activityService.delete(activity.getId()));
 
         // Create 1
@@ -94,40 +95,40 @@ class TestActivityServiceImpl {
         activity2 = activityService.update(activity2);
 
         // Find both
-        final BaseResultList<Activity> list1 = activityService.find(new FindActivityCriteria());
+        final List<Activity> list1 = activityService.find(new FindActivityCriteria());
         assertThat(list1.size()).isEqualTo(2);
 
         // Find each
-        final BaseResultList<Activity> list2 = activityService.find(FindActivityCriteria.create("bar"));
+        final List<Activity> list2 = activityService.find(FindActivityCriteria.create("bar"));
         assertThat(list2.size()).isEqualTo(1);
         assertThat(list2.get(0).getId()).isEqualTo(activity1.getId());
 
-        final BaseResultList<Activity> list3 = activityService.find(FindActivityCriteria.create("ipsum"));
+        final List<Activity> list3 = activityService.find(FindActivityCriteria.create("ipsum"));
         assertThat(list3.size()).isEqualTo(1);
         assertThat(list3.get(0).getId()).isEqualTo(activity2.getId());
 
         // Delete one
         activityService.delete(activity1.getId());
-        final BaseResultList<Activity> list4 = activityService.find(new FindActivityCriteria());
+        final List<Activity> list4 = activityService.find(new FindActivityCriteria());
         assertThat(list4.size()).isEqualTo(1);
 
         // Delete the other
         activityService.delete(activity2.getId());
-        final BaseResultList<Activity> list5 = activityService.find(new FindActivityCriteria());
+        final List<Activity> list5 = activityService.find(new FindActivityCriteria());
         assertThat(list5.size()).isEqualTo(0);
     }
 
     @Test
     void testValidation() {
         // Save 1
-        Activity activity1 = new Activity();
+        Activity activity1 = Activity.create();
         activity1.getDetails().add(createProp("foo", "\\w{3,}"), "bar");
         activity1.getDetails().add(createProp("this", "\\w{4,}"), "that");
         activity1.setUserId("test");
         final ActivityValidationResult activityValidationResult1 = activityService.validate(activity1);
         assertThat(activityValidationResult1.isValid()).isTrue();
 
-        Activity activity2 = new Activity();
+        Activity activity2 = Activity.create();
         activity2.getDetails().add(createProp("foo", ".{3,}"), "bar");
         activity2.getDetails().add(createProp("this", ".{80,}"), "that");
         activity2.setUserId("test");

@@ -18,12 +18,12 @@ package stroom.proxy.app.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.impl.DictionaryResource;
+import stroom.dictionary.impl.NewUiDictionaryResource;
 import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.receive.common.FeedStatusResource;
 import stroom.receive.rules.impl.ReceiveDataRuleSetResource;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
@@ -109,7 +109,7 @@ public class ProxySecurityFilter implements Filter {
             // If a request is from the UI and fails authentication then we need to redirect to the login page.
             // If a request is from an API client and fails authentication then we need to return HTTP 403 UNAUTHORIZED.
             final String requestURI = request.getRequestURI();
-            final boolean isApiRequest = requestURI.contains(ResourcePaths.API_PATH);
+            final boolean isApiRequest = requestURI.contains(ResourcePaths.API_ROOT_PATH);
 
             if (isApiRequest) {
                 try {
@@ -139,11 +139,11 @@ public class ProxySecurityFilter implements Filter {
     private String getConfiguredApiKey(final String requestUri) {
         // TODO it could be argued that we should have a single API key to use for all of these resources.
         final String apiKey;
-        if (requestUri.startsWith(ResourcePaths.API_PATH + FeedStatusResource.BASE_RESOURCE_PATH)) {
+        if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + FeedStatusResource.BASE_RESOURCE_PATH)) {
             apiKey = feedStatusConfig.getApiKey();
-        } else if (requestUri.startsWith(ResourcePaths.API_PATH + DictionaryResource.BASE_RESOURCE_PATH)) {
+        } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + NewUiDictionaryResource.BASE_RESOURCE_PATH)) {
             apiKey = contentSyncConfig.getApiKey();
-        } else if (requestUri.startsWith(ResourcePaths.API_PATH + ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)) {
+        } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)) {
             apiKey = contentSyncConfig.getApiKey();
         } else {
             throw new RuntimeException(LogUtil.message(

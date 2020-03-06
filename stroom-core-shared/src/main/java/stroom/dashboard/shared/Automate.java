@@ -16,11 +16,11 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -33,9 +33,7 @@ import javax.xml.bind.annotation.XmlType;
 @JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "automate")
 @XmlType(name = "Automate", propOrder = {"open", "refresh", "refreshInterval"})
-public class Automate implements SharedObject {
-    private static final long serialVersionUID = -2530827581046882396L;
-
+public class Automate {
     @XmlElement(name = "open")
     @JsonProperty("open")
     private boolean open;
@@ -46,10 +44,24 @@ public class Automate implements SharedObject {
 
     @XmlElement(name = "refreshInterval")
     @JsonProperty("refreshInterval")
-    private String refreshInterval = "10s";
+    private String refreshInterval;
 
     public Automate() {
-        // Default constructor necessary for GWT serialisation.
+        refreshInterval = "10s";
+    }
+
+    @JsonCreator
+    public Automate(@JsonProperty("open") final boolean open,
+                    @JsonProperty("refresh") final boolean refresh,
+                    @JsonProperty("refreshInterval") final String refreshInterval) {
+        this.open = open;
+        this.refresh = refresh;
+
+        if (refreshInterval != null) {
+            this.refreshInterval = refreshInterval;
+        } else {
+            this.refreshInterval = "10s";
+        }
     }
 
     public boolean isOpen() {

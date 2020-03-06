@@ -16,6 +16,7 @@
 
 package stroom.security.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
 import com.google.inject.Inject;
@@ -24,15 +25,16 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.activity.client.CurrentActivity;
 import stroom.activity.client.SplashPresenter;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.api.Future;
 import stroom.security.client.api.FutureImpl;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.RequestLogoutEvent;
-import stroom.security.shared.CheckDocumentPermissionAction;
+import stroom.security.shared.CheckDocumentPermissionRequest;
+import stroom.security.shared.DocPermissionResource;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.User;
 import stroom.security.shared.UserAndPermissions;
 
 import javax.inject.Singleton;
@@ -40,28 +42,28 @@ import java.util.Set;
 
 @Singleton
 public class CurrentUser implements ClientSecurityContext, HasHandlers {
+    private static final DocPermissionResource DOC_PERMISSION_RESOURCE = GWT.create(DocPermissionResource.class);
+
     private final EventBus eventBus;
-    private final Provider<ClientDispatchAsync> dispatcherProvider;
+    private final RestFactory restFactory;
     private final Provider<SplashPresenter> splashPresenterProvider;
     private final CurrentActivity currentActivity;
-    private User userRef;
-    private String apiToken;
+    private String userId;
     private Set<String> permissions;
 
     @Inject
     public CurrentUser(final EventBus eventBus,
-                       final Provider<ClientDispatchAsync> dispatcherProvider,
+                       final RestFactory restFactory,
                        final Provider<SplashPresenter> splashPresenterProvider,
                        final CurrentActivity currentActivity) {
         this.eventBus = eventBus;
-        this.dispatcherProvider = dispatcherProvider;
+        this.restFactory = restFactory;
         this.splashPresenterProvider = splashPresenterProvider;
         this.currentActivity = currentActivity;
     }
 
     public void clear() {
-        this.userRef = null;
-        this.apiToken = null;
+        this.userId = null;
         this.permissions = null;
     }
 
@@ -72,8 +74,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     public void setUserAndPermissions(final UserAndPermissions userAndPermissions, final boolean fireUserChangedEvent) {
         clear();
         if (userAndPermissions != null) {
-            this.userRef = userAndPermissions.getUser();
-            this.apiToken = userAndPermissions.getApiToken();
+            this.userId = userAndPermissions.getUserId();
             this.permissions = userAndPermissions.getAppPermissionSet();
         }
 
@@ -86,26 +87,14 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
         }
     }
 
-    public User getUser() {
-        return userRef;
-    }
-
     @Override
     public String getUserId() {
-        if (userRef == null) {
-            return null;
-        }
-        return userRef.getName();
-    }
-
-    @Override
-    public String getApiToken() {
-        return apiToken;
+        return userId;
     }
 
     @Override
     public boolean isLoggedIn() {
-        return userRef != null;
+        return userId != null;
     }
 
     private boolean isAdmin() {
@@ -129,11 +118,12 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
         // Set the default behaviour of the future to show an error.
         future.onFailure(throwable -> AlertEvent.fireErrorFromException(CurrentUser.this, throwable, null));
 
-        final ClientDispatchAsync dispatcher = dispatcherProvider.get();
-
-        dispatcher.exec(new CheckDocumentPermissionAction(documentType, documentId, permission))
-                .onSuccess(result -> future.setResult(result.getBoolean()))
-                .onFailure(future::setThrowable);
+        final Rest<Boolean> rest = restFactory.create();
+        rest
+                .onSuccess(future::setResult)
+                .onFailure(future::setThrowable)
+                .call(DOC_PERMISSION_RESOURCE)
+                .checkDocumentPermission(new CheckDocumentPermissionRequest(documentType, documentId, permission));
 
         return future;
     }

@@ -6,107 +6,47 @@
   "fields" : [ {
     "fieldType" : "ID",
     "fieldName" : "StreamId",
-    "stored" : true,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "stored" : true
   }, {
     "fieldType" : "ID",
     "fieldName" : "EventId",
-    "stored" : true,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "stored" : true
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "Feed",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "ALPHA_NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "ALPHA_NUMERIC"
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "Feed (Keyword)",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "fieldName" : "Feed (Keyword)"
   }, {
     "fieldType" : "DATE_FIELD",
-    "fieldName" : "timestamp",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "fieldName" : "timestamp"
   }, {
     "fieldType" : "NUMERIC_FIELD",
     "fieldName" : "actual_download",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "NUMERIC"
   }, {
     "fieldType" : "NUMERIC_FIELD",
     "fieldName" : "actual_upload",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "NUMERIC"
   }, {
     "fieldType" : "NUMERIC_FIELD",
     "fieldName" : "advertised_download",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "NUMERIC"
   }, {
     "fieldType" : "NUMERIC_FIELD",
     "fieldName" : "advertised_upload",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "NUMERIC"
   }, {
-    "fieldType" : "FIELD",
-    "fieldName" : "connection_type",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "fieldName" : "connection_type"
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "isp",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "STANDARD",
-    "caseSensitive" : false
+    "analyzerType" : "STANDARD"
   }, {
-    "fieldType" : "FIELD",
     "fieldName" : "isp_user",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "STANDARD",
-    "caseSensitive" : false
+    "analyzerType" : "STANDARD"
   }, {
     "fieldType" : "NUMERIC_FIELD",
     "fieldName" : "min_rtt",
-    "stored" : false,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "NUMERIC",
-    "caseSensitive" : false
+    "analyzerType" : "NUMERIC"
   } ],
   "volumeGroupName" : "Default Volume Group"
 }

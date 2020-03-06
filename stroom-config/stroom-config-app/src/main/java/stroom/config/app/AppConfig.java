@@ -2,11 +2,13 @@ package stroom.config.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import com.fasterxml.jackson.annotation.JsonRootName;
 import stroom.activity.impl.db.ActivityConfig;
 import stroom.annotation.impl.AnnotationConfig;
 import stroom.cluster.api.ClusterConfig;
 import stroom.cluster.lock.impl.db.ClusterLockConfig;
 import stroom.cluster.task.impl.ClusterTaskConfig;
+import stroom.config.common.ApiGatewayConfig;
 import stroom.config.common.CommonDbConfig;
 import stroom.core.benchmark.BenchmarkClusterConfig;
 import stroom.core.db.CoreConfig;
@@ -34,15 +36,65 @@ import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
+import stroom.security.impl.ValidationSeverity;
 
 import javax.inject.Singleton;
+import javax.validation.Valid;
+import javax.validation.constraints.AssertFalse;
 
+@JsonRootName(AppConfig.NAME)
 @Singleton
-public class AppConfig implements IsConfig {
+public class AppConfig extends AbstractConfig {
+
+    public static final String NAME = "stroom";
+
+    public static final String PROP_NAME_SUPER_DEV_MODE = "superDevMode";
+    public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
+    public static final String PROP_NAME_ACTIVITY = "activity";
+    public static final String PROP_NAME_ANNOTATION = "annotation";
+    public static final String PROP_NAME_API_GATEWAY = "apiGateway";
+    public static final String PROP_NAME_BENCHMARK = "benchmark";
+    public static final String PROP_NAME_CLUSTER = "cluster";
+    public static final String PROP_NAME_CLUSTER_LOCK = "clusterLock";
+    public static final String PROP_NAME_CLUSTER_TASK = "clusterTask";
+    public static final String PROP_NAME_COMMON_DB_DETAILS = "commonDbDetails";
+    public static final String PROP_NAME_CONTENT_PACK_IMPORT = "contentPackImport";
+    public static final String PROP_NAME_CORE = "core";
+    public static final String PROP_NAME_DASHBOARD = "dashboard";
+    public static final String PROP_NAME_DATA = "data";
+    public static final String PROP_NAME_DATA_SOURCE_URL = "dataSourceUrl";
+    public static final String PROP_NAME_DOCSTORE = "docstore";
+    public static final String PROP_NAME_EXPLORER = "explorer";
+    public static final String PROP_NAME_FEED = "feed";
+    public static final String PROP_NAME_EXPORT = "export";
+    public static final String PROP_NAME_INDEX = "index";
+    public static final String PROP_NAME_JOB = "job";
+    public static final String PROP_NAME_LIFECYCLE = "lifecycle";
+    public static final String PROP_NAME_NODE = "node";
+    public static final String PROP_NAME_PATH = "path";
+    public static final String PROP_NAME_PIPELINE = "pipeline";
+    public static final String PROP_NAME_PROCESSOR = "processor";
+    public static final String PROP_NAME_PROPERTIES = "properties";
+    public static final String PROP_NAME_PROXY_AGGREGATION = "proxyAggregation";
+    public static final String PROP_NAME_QUERY_HISTORY = "queryHistory";
+    public static final String PROP_NAME_RECEIVE = "receive";
+    public static final String PROP_NAME_SEARCH = "search";
+    public static final String PROP_NAME_SEARCHABLE = "searchable";
+    public static final String PROP_NAME_SOLR = "solr";
+    public static final String PROP_NAME_SECURITY = "security";
+    public static final String PROP_NAME_SERVICE_DISCOVERY = "serviceDiscovery";
+    public static final String PROP_NAME_SESSION_COOKIE = "sessionCookie";
+    public static final String PROP_NAME_STATISTICS = "statistics";
+    public static final String PROP_NAME_UI = "ui";
+    public static final String PROP_NAME_VOLUMES = "volumes";
+
     private boolean superDevMode;
+    private boolean haltBootOnConfigValidationFailure = true;
+
     private ActivityConfig activityConfig = new ActivityConfig();
     private AnnotationConfig annotationConfig = new AnnotationConfig();
+    private ApiGatewayConfig apiGatewayConfig = new ApiGatewayConfig();
     private BenchmarkClusterConfig benchmarkClusterConfig = new BenchmarkClusterConfig();
     private ClusterConfig clusterConfig = new ClusterConfig();
     private ClusterLockConfig clusterLockConfig = new ClusterLockConfig();
@@ -78,17 +130,28 @@ public class AppConfig implements IsConfig {
     private UiConfig uiConfig = new UiConfig();
     private VolumeConfig volumeConfig = new VolumeConfig();
 
-    @JsonProperty("superDevMode")
+    @AssertFalse(
+        message = "Super Dev Mode is enabled. This should only be used in development",
+        payload = ValidationSeverity.Warning.class)
+    @JsonProperty(PROP_NAME_SUPER_DEV_MODE)
     public boolean isSuperDevMode() {
         return superDevMode;
     }
 
-    @JsonProperty("superDevMode")
     public void setSuperDevMode(final boolean superDevMode) {
         this.superDevMode = superDevMode;
     }
 
-    @JsonProperty("activity")
+    @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE)
+    public boolean isHaltBootOnConfigValidationFailure() {
+        return haltBootOnConfigValidationFailure;
+    }
+
+    public void setHaltBootOnConfigValidationFailure(final boolean haltBootOnConfigValidationFailure) {
+        this.haltBootOnConfigValidationFailure = haltBootOnConfigValidationFailure;
+    }
+
+    @JsonProperty(PROP_NAME_ACTIVITY)
     public ActivityConfig getActivityConfig() {
         return activityConfig;
     }
@@ -97,7 +160,7 @@ public class AppConfig implements IsConfig {
         this.activityConfig = activityConfig;
     }
 
-    @JsonProperty("annotation")
+    @JsonProperty(PROP_NAME_ANNOTATION)
     public AnnotationConfig getAnnotationConfig() {
         return annotationConfig;
     }
@@ -106,7 +169,16 @@ public class AppConfig implements IsConfig {
         this.annotationConfig = annotationConfig;
     }
 
-    @JsonProperty("benchmark")
+    @JsonProperty(PROP_NAME_API_GATEWAY)
+    public ApiGatewayConfig getApiGatewayConfig() {
+        return apiGatewayConfig;
+    }
+
+    public void setApiGatewayConfig(final ApiGatewayConfig apiGatewayConfig) {
+        this.apiGatewayConfig = apiGatewayConfig;
+    }
+
+    @JsonProperty(PROP_NAME_BENCHMARK)
     public BenchmarkClusterConfig getBenchmarkClusterConfig() {
         return benchmarkClusterConfig;
     }
@@ -115,7 +187,7 @@ public class AppConfig implements IsConfig {
         this.benchmarkClusterConfig = benchmarkClusterConfig;
     }
 
-    @JsonProperty("cluster")
+    @JsonProperty(PROP_NAME_CLUSTER)
     public ClusterConfig getClusterConfig() {
         return clusterConfig;
     }
@@ -124,7 +196,7 @@ public class AppConfig implements IsConfig {
         this.clusterConfig = clusterConfig;
     }
 
-    @JsonProperty("clusterLock")
+    @JsonProperty(PROP_NAME_CLUSTER_LOCK)
     public ClusterLockConfig getClusterLockConfig() {
         return clusterLockConfig;
     }
@@ -133,7 +205,7 @@ public class AppConfig implements IsConfig {
         this.clusterLockConfig = clusterLockConfig;
     }
 
-    @JsonProperty("clusterTask")
+    @JsonProperty(PROP_NAME_CLUSTER_TASK)
     public ClusterTaskConfig getClusterTaskConfig() {
         return clusterTaskConfig;
     }
@@ -142,9 +214,10 @@ public class AppConfig implements IsConfig {
         this.clusterTaskConfig = clusterTaskConfig;
     }
 
-    @JsonProperty("commonDbDetails")
+    @JsonProperty(PROP_NAME_COMMON_DB_DETAILS)
     @JsonPropertyDescription("Defines a set of common database connection details to use if no connection details are " +
-            "defined for a service area in stroom, e.g. core or config")
+            "defined for a service area in stroom, e.g. core or config. This means you can have all service areas " +
+            "running in a single database, have each in their own database or a mixture.")
     public CommonDbConfig getCommonDbConfig() {
         return commonDbConfig;
     }
@@ -153,7 +226,7 @@ public class AppConfig implements IsConfig {
         this.commonDbConfig = commonDbConfig;
     }
 
-    @JsonProperty("contentPackImport")
+    @JsonProperty(PROP_NAME_CONTENT_PACK_IMPORT)
     public ContentPackImportConfig getContentPackImportConfig() {
         return contentPackImportConfig;
     }
@@ -162,7 +235,7 @@ public class AppConfig implements IsConfig {
         this.contentPackImportConfig = contentPackImportConfig;
     }
 
-    @JsonProperty("core")
+    @JsonProperty(PROP_NAME_CORE)
     @JsonPropertyDescription("Configuration for the core stroom DB")
     public CoreConfig getCoreConfig() {
         return coreConfig;
@@ -172,7 +245,7 @@ public class AppConfig implements IsConfig {
         this.coreConfig = coreConfig;
     }
 
-    @JsonProperty("dashboard")
+    @JsonProperty(PROP_NAME_DASHBOARD)
     public DashboardConfig getDashboardConfig() {
         return dashboardConfig;
     }
@@ -181,7 +254,7 @@ public class AppConfig implements IsConfig {
         this.dashboardConfig = dashboardConfig;
     }
 
-    @JsonProperty("data")
+    @JsonProperty(PROP_NAME_DATA)
     @JsonPropertyDescription("Configuration for the data layer of stroom")
     public DataConfig getDataConfig() {
         return dataConfig;
@@ -191,7 +264,7 @@ public class AppConfig implements IsConfig {
         this.dataConfig = dataConfig;
     }
 
-    @JsonProperty("dataSourceUrl")
+    @JsonProperty(PROP_NAME_DATA_SOURCE_URL)
     public DataSourceUrlConfig getDataSourceUrlConfig() {
         return dataSourceUrlConfig;
     }
@@ -200,7 +273,7 @@ public class AppConfig implements IsConfig {
         this.dataSourceUrlConfig = dataSourceUrlConfig;
     }
 
-    @JsonProperty("docstore")
+    @JsonProperty(PROP_NAME_DOCSTORE)
     public DocStoreConfig getDocStoreConfig() {
         return docStoreConfig;
     }
@@ -209,7 +282,7 @@ public class AppConfig implements IsConfig {
         this.docStoreConfig = docStoreConfig;
     }
 
-    @JsonProperty("explorer")
+    @JsonProperty(PROP_NAME_EXPLORER)
     public ExplorerConfig getExplorerConfig() {
         return explorerConfig;
     }
@@ -218,7 +291,7 @@ public class AppConfig implements IsConfig {
         this.explorerConfig = explorerConfig;
     }
 
-    @JsonProperty("feed")
+    @JsonProperty(PROP_NAME_FEED)
     public FeedConfig getFeedConfig() {
         return feedConfig;
     }
@@ -227,7 +300,7 @@ public class AppConfig implements IsConfig {
         this.feedConfig = feedConfig;
     }
 
-    @JsonProperty("export")
+    @JsonProperty(PROP_NAME_EXPORT)
     public ExportConfig getExportConfig() {
         return exportConfig;
     }
@@ -236,7 +309,7 @@ public class AppConfig implements IsConfig {
         this.exportConfig = exportConfig;
     }
 
-    @JsonProperty("index")
+    @JsonProperty(PROP_NAME_INDEX)
     public IndexConfig getIndexConfig() {
         return indexConfig;
     }
@@ -245,7 +318,7 @@ public class AppConfig implements IsConfig {
         this.indexConfig = indexConfig;
     }
 
-    @JsonProperty("job")
+    @JsonProperty(PROP_NAME_JOB)
     public JobSystemConfig getJobSystemConfig() {
         return jobSystemConfig;
     }
@@ -254,7 +327,7 @@ public class AppConfig implements IsConfig {
         this.jobSystemConfig = jobSystemConfig;
     }
 
-    @JsonProperty("lifecycle")
+    @JsonProperty(PROP_NAME_LIFECYCLE)
     public LifecycleConfig getLifecycleConfig() {
         return lifecycleConfig;
     }
@@ -263,7 +336,8 @@ public class AppConfig implements IsConfig {
         this.lifecycleConfig = lifecycleConfig;
     }
 
-    @JsonProperty("node")
+    @Valid
+    @JsonProperty(PROP_NAME_NODE)
     public NodeConfig getNodeConfig() {
         return nodeConfig;
     }
@@ -272,7 +346,7 @@ public class AppConfig implements IsConfig {
         this.nodeConfig = nodeConfig;
     }
 
-    @JsonProperty("path")
+    @JsonProperty(PROP_NAME_PATH)
     public PathConfig getPathConfig() {
         return pathConfig;
     }
@@ -281,7 +355,7 @@ public class AppConfig implements IsConfig {
         this.pathConfig = pathConfig;
     }
 
-    @JsonProperty("pipeline")
+    @JsonProperty(PROP_NAME_PIPELINE)
     public PipelineConfig getPipelineConfig() {
         return pipelineConfig;
     }
@@ -290,7 +364,7 @@ public class AppConfig implements IsConfig {
         this.pipelineConfig = pipelineConfig;
     }
 
-    @JsonProperty("processor")
+    @JsonProperty(PROP_NAME_PROCESSOR)
     public ProcessorConfig getProcessorConfig() {
         return processorConfig;
     }
@@ -299,7 +373,7 @@ public class AppConfig implements IsConfig {
         this.processorConfig = processorConfig;
     }
 
-    @JsonProperty("properties")
+    @JsonProperty(PROP_NAME_PROPERTIES)
     @JsonPropertyDescription("Configuration for the stroom property service")
     public PropertyServiceConfig getPropertyServiceConfig() {
         return propertyServiceConfig;
@@ -309,7 +383,7 @@ public class AppConfig implements IsConfig {
         this.propertyServiceConfig = propertyServiceConfig;
     }
 
-    @JsonProperty("proxyAggregation")
+    @JsonProperty(PROP_NAME_PROXY_AGGREGATION)
     public ProxyAggregationConfig getProxyAggregationConfig() {
         return proxyAggregationConfig;
     }
@@ -318,7 +392,7 @@ public class AppConfig implements IsConfig {
         this.proxyAggregationConfig = proxyAggregationConfig;
     }
 
-    @JsonProperty("queryHistory")
+    @JsonProperty(PROP_NAME_QUERY_HISTORY)
     public StoredQueryConfig getStoredQueryConfig() {
         return storedQueryConfig;
     }
@@ -327,7 +401,7 @@ public class AppConfig implements IsConfig {
         this.storedQueryConfig = storedQueryConfig;
     }
 
-    @JsonProperty("receive")
+    @JsonProperty(PROP_NAME_RECEIVE)
     public ReceiveDataConfig getReceiveDataConfig() {
         return receiveDataConfig;
     }
@@ -336,7 +410,7 @@ public class AppConfig implements IsConfig {
         this.receiveDataConfig = receiveDataConfig;
     }
 
-    @JsonProperty("search")
+    @JsonProperty(PROP_NAME_SEARCH)
     public SearchConfig getSearchConfig() {
         return searchConfig;
     }
@@ -345,7 +419,7 @@ public class AppConfig implements IsConfig {
         this.searchConfig = searchConfig;
     }
 
-    @JsonProperty("searchable")
+    @JsonProperty(PROP_NAME_SEARCHABLE)
     public SearchableConfig getSearchableConfig() {
         return searchableConfig;
     }
@@ -354,7 +428,7 @@ public class AppConfig implements IsConfig {
         this.searchableConfig = searchableConfig;
     }
 
-    @JsonProperty("solr")
+    @JsonProperty(PROP_NAME_SOLR)
     public SolrConfig getSolrConfig() {
         return solrConfig;
     }
@@ -363,7 +437,7 @@ public class AppConfig implements IsConfig {
         this.solrConfig = solrConfig;
     }
 
-    @JsonProperty("security")
+    @JsonProperty(PROP_NAME_SECURITY)
     public SecurityConfig getSecurityConfig() {
         return securityConfig;
     }
@@ -372,7 +446,7 @@ public class AppConfig implements IsConfig {
         this.securityConfig = securityConfig;
     }
 
-    @JsonProperty("serviceDiscovery")
+    @JsonProperty(PROP_NAME_SERVICE_DISCOVERY)
     public ServiceDiscoveryConfig getServiceDiscoveryConfig() {
         return serviceDiscoveryConfig;
     }
@@ -381,17 +455,16 @@ public class AppConfig implements IsConfig {
         this.serviceDiscoveryConfig = serviceDiscoveryConfig;
     }
 
-    @JsonProperty("sessionCookie")
+    @JsonProperty(PROP_NAME_SESSION_COOKIE)
     public SessionCookieConfig getSessionCookieConfig() {
         return sessionCookieConfig;
     }
 
-    @JsonProperty("sessionCookie")
     public void setSessionCookieConfig(final SessionCookieConfig sessionCookieConfig) {
         this.sessionCookieConfig = sessionCookieConfig;
     }
 
-    @JsonProperty("statistics")
+    @JsonProperty(PROP_NAME_STATISTICS)
     @JsonPropertyDescription("Configuration for the stroom statistics service")
     public StatisticsConfig getStatisticsConfig() {
         return statisticsConfig;
@@ -401,7 +474,8 @@ public class AppConfig implements IsConfig {
         this.statisticsConfig = statisticsConfig;
     }
 
-    @JsonProperty("ui")
+    @Valid
+    @JsonProperty(PROP_NAME_UI)
     public UiConfig getUiConfig() {
         return uiConfig;
     }
@@ -410,7 +484,7 @@ public class AppConfig implements IsConfig {
         this.uiConfig = uiConfig;
     }
 
-    @JsonProperty("volumes")
+    @JsonProperty(PROP_NAME_VOLUMES)
     public VolumeConfig getVolumeConfig() {
         return volumeConfig;
     }

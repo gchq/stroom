@@ -25,7 +25,7 @@ import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskContext;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 
@@ -59,8 +59,11 @@ class FsCleanSubTaskHandler extends AbstractTaskHandler<FsCleanSubTask, VoidResu
                 return VoidResult.INSTANCE;
             }
 
-            final ScanVolumePathResult result = streamMaintenanceService.scanVolumePath(task.getVolume(),
-                    task.getParentHandler().isDelete(), task.getPath(), task.getParentHandler().getOldAge());
+            final ScanVolumePathResult result = streamMaintenanceService.scanVolumePath(
+                task.getVolume(),
+                task.getParentHandler().isDelete(),
+                task.getPath(),
+                task.getParentHandler().getOldAge());
 
             task.getTaskProgress().addResult(result);
 

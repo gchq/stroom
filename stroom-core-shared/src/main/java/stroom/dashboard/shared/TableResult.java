@@ -16,6 +16,10 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.EqualsBuilder;
 import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.OffsetRange;
@@ -30,26 +34,44 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "tableResult", propOrder = {"rows", "resultRange", "totalResults", "error"})
 @XmlRootElement(name = "tableResult")
+@JsonInclude(Include.NON_DEFAULT)
 public class TableResult implements ComponentResult {
     private static final long serialVersionUID = -2964122512841756795L;
 
     @XmlElement
+    @JsonProperty
     private List<Field> fields;
 
     @XmlElement
+    @JsonProperty
     private List<Row> rows;
 
     @XmlElement
+    @JsonProperty
     private OffsetRange<Integer> resultRange;
 
     @XmlElement
+    @JsonProperty
     private Integer totalResults;
 
     @XmlElement
+    @JsonProperty
     private String error;
 
     public TableResult() {
-        // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public TableResult(@JsonProperty("fields") final List<Field> fields,
+                       @JsonProperty("rows") final List<Row> rows,
+                       @JsonProperty("resultRange") final OffsetRange<Integer> resultRange,
+                       @JsonProperty("totalResults") final Integer totalResults,
+                       @JsonProperty("error") final String error) {
+        this.fields = fields;
+        this.rows = rows;
+        this.resultRange = resultRange;
+        this.totalResults = totalResults;
+        this.error = error;
     }
 
     public List<Field> getFields() {

@@ -179,6 +179,7 @@ include 'stroom-processor:stroom-processor-mock'
 // Proxy
 include 'stroom-proxy:stroom-proxy-app'
 include 'stroom-proxy:stroom-proxy-repo'
+include 'stroom-proxy:stroom-proxy-remote-api'
 
 // Resource store
 include 'stroom-resource:stroom-resource-api'
@@ -231,3 +232,6 @@ include 'stroom-test-common'
 // Util
 include 'stroom-util'
 include 'stroom-util-shared'
+
+
+include 'stroom-ssl-test'

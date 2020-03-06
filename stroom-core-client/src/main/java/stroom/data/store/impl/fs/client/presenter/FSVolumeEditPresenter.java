@@ -17,6 +17,7 @@
 
 package stroom.data.store.impl.fs.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.HasText;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
@@ -25,11 +26,10 @@ import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.data.store.impl.fs.shared.FsVolume.VolumeUseStatus;
-import stroom.data.store.impl.fs.shared.UpdateFsVolumeAction;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.data.store.impl.fs.shared.FsVolumeResource;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.item.client.ItemListBox;
-import stroom.node.shared.FindNodeAction;
-import stroom.node.shared.FindNodeCriteria;
 import stroom.util.shared.ModelStringUtil;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -40,16 +40,18 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tab.client.event.CloseEvent;
 
 public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresenter.VolumeEditView> {
+    private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
+
     private final PopupSize popupSize = new PopupSize(400, 197, 400, 197, 1000, 197, true);
-    private final ClientDispatchAsync clientDispatchAsync;
+    private final RestFactory restFactory;
     private FsVolume volume;
     private boolean opening;
 
     @Inject
     public FSVolumeEditPresenter(final EventBus eventBus, final VolumeEditView view,
-                                 final ClientDispatchAsync clientDispatchAsync) {
+                                 final RestFactory restFactory) {
         super(eventBus, view);
-        this.clientDispatchAsync = clientDispatchAsync;
+        this.restFactory = restFactory;
     }
 
     public void addVolume(final FsVolume volume, final PopupUiHandlers popupUiHandlers) {
@@ -65,21 +67,20 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
             opening = true;
 
             this.volume = volume;
-            clientDispatchAsync.exec(new FindNodeAction(new FindNodeCriteria())).onSuccess(result -> {
-                getView().getPath().setText(volume.getPath());
-                getView().getStatus().addItems(VolumeUseStatus.values());
-                getView().getStatus().setSelectedItem(volume.getStatus());
 
-                if (volume.getByteLimit() != null) {
-                    getView().getByteLimit().setText(ModelStringUtil.formatIECByteSizeString(volume.getByteLimit()));
-                } else {
-                    getView().getByteLimit().setText("");
-                }
+            getView().getPath().setText(volume.getPath());
+            getView().getStatus().addItems(VolumeUseStatus.values());
+            getView().getStatus().setSelectedItem(volume.getStatus());
 
-                opening = false;
-                ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title,
-                        new DelegatePopupUiHandlers(popupUiHandlers));
-            });
+            if (volume.getByteLimit() != null) {
+                getView().getByteLimit().setText(ModelStringUtil.formatIECByteSizeString(volume.getByteLimit()));
+            } else {
+                getView().getByteLimit().setText("");
+            }
+
+            opening = false;
+            ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title,
+                    new DelegatePopupUiHandlers(popupUiHandlers));
         }
     }
 
@@ -95,14 +96,15 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
             }
             volume.setByteLimit(bytesLimit);
 
-            clientDispatchAsync.exec(new UpdateFsVolumeAction(volume)).onSuccess(result -> {
+            final Rest<FsVolume> rest = restFactory.create();
+            rest.onSuccess(result -> {
                 volume = result;
                 HidePopupEvent.fire(FSVolumeEditPresenter.this, FSVolumeEditPresenter.this, false, true);
                 // Only fire this event here as the parent only
                 // needs to
                 // refresh if there has been a change.
                 CloseEvent.fire(FSVolumeEditPresenter.this);
-            });
+            }).call(FS_VOLUME_RESOURCE).update(volume.getId(), volume);
 
         } catch (final RuntimeException e) {
             AlertEvent.fireError(this, e.getMessage(), null);

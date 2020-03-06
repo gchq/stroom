@@ -16,17 +16,21 @@
 
 package stroom.pipeline.shared.data;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import stroom.docref.DocRef;
 import stroom.util.shared.CompareBuilder;
 import stroom.util.shared.Copyable;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
+import java.util.Objects;
 
 /**
  * <p>
@@ -52,27 +56,60 @@ import javax.xml.bind.annotation.XmlType;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Property", propOrder = {"element", "name", "value"})
-public class PipelineProperty implements Comparable<PipelineProperty>, SharedObject, Copyable<PipelineProperty> {
-    private static final long serialVersionUID = -4634337435985272473L;
-
+@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder({"propertyType", "source", "element", "name", "value"})
+public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<PipelineProperty> {
     @XmlTransient
+    @JsonProperty
     private PipelinePropertyType propertyType;
     @XmlTransient
-    private SourcePipeline source;
+    @JsonProperty
+    private DocRef sourcePipeline;
 
     @XmlElement(required = true)
+    @JsonProperty
     private String element;
     @XmlElement(required = true)
+    @JsonProperty
     private String name;
+    @JsonProperty
     private PipelinePropertyValue value;
 
     public PipelineProperty() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public PipelineProperty(final String element, final String name) {
         this.element = element;
         this.name = name;
+    }
+
+    @JsonCreator
+    public PipelineProperty(@JsonProperty("propertyType") final PipelinePropertyType propertyType,
+                            @JsonProperty("sourcePipeline") final DocRef sourcePipeline,
+                            @JsonProperty("element") final String element,
+                            @JsonProperty("name") final String name,
+                            @JsonProperty("value") final PipelinePropertyValue value) {
+        this.propertyType = propertyType;
+        this.sourcePipeline = sourcePipeline;
+        this.element = element;
+        this.name = name;
+        this.value = value;
+    }
+
+    public PipelinePropertyType getPropertyType() {
+        return propertyType;
+    }
+
+    public void setPropertyType(final PipelinePropertyType propertyType) {
+        this.propertyType = propertyType;
+    }
+
+    public DocRef getSourcePipeline() {
+        return sourcePipeline;
+    }
+
+    public void setSourcePipeline(final DocRef sourcePipeline) {
+        this.sourcePipeline = sourcePipeline;
     }
 
     public String getElement() {
@@ -99,35 +136,18 @@ public class PipelineProperty implements Comparable<PipelineProperty>, SharedObj
         this.value = value;
     }
 
-    public SourcePipeline getSource() {
-        return source;
-    }
-
-    public void setSource(final SourcePipeline source) {
-        this.source = source;
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final PipelineProperty that = (PipelineProperty) o;
+        return element.equals(that.element) &&
+                name.equals(that.name);
     }
 
     @Override
     public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(element);
-        builder.append(name);
-        return builder.toHashCode();
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof PipelineProperty)) {
-            return false;
-        }
-
-        final PipelineProperty property = (PipelineProperty) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(element, property.element);
-        builder.append(name, property.name);
-        return builder.isEquals();
+        return Objects.hash(element, name);
     }
 
     @Override
@@ -143,18 +163,10 @@ public class PipelineProperty implements Comparable<PipelineProperty>, SharedObj
         return "element=" + element + ", name=" + name + ", value=" + value;
     }
 
-    public PipelinePropertyType getPropertyType() {
-        return propertyType;
-    }
-
-    public void setPropertyType(final PipelinePropertyType propertyType) {
-        this.propertyType = propertyType;
-    }
-
     @Override
     public void copyFrom(final PipelineProperty other) {
         this.propertyType = other.propertyType;
-        this.source = other.source;
+        this.sourcePipeline = other.sourcePipeline;
         this.element = other.element;
         this.name = other.name;
         if (other.value == null) {

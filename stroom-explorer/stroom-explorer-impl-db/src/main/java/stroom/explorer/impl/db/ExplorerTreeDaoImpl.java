@@ -1,5 +1,7 @@
 package stroom.explorer.impl.db;
 
+import org.jooq.Record;
+import org.jooq.Result;
 import org.jooq.impl.DSL;
 import stroom.db.util.JooqUtil;
 import stroom.explorer.impl.ExplorerTreeDao;
@@ -337,18 +339,17 @@ class ExplorerTreeDaoImpl implements ExplorerTreeDao {
     @Override
     public List<ExplorerTreeNode> getPath(final ExplorerTreeNode node) {
         return JooqUtil.contextResult(explorerDbConnProvider, context -> {
-            final List<ExplorerTreeNode> path = context
-                    .selectFrom(n)
-                    .where(n.ID.in(context
-                            .select(p.ANCESTOR)
-                            .from(p)
-                            .where(p.DESCENDANT.eq(node.getId()))
-                            .orderBy(p.DEPTH.desc())))
-                    .fetch()
-                    .stream()
-                    .map(r -> new ExplorerTreeNode(r.getId(), r.getType(), r.getUuid(), r.getName(), r.getTags()))
-                    .collect(Collectors.toList());
-            path.remove(path.size() - 1);
+
+            final Result<? extends Record> result = context
+                    .select(n.ID,n.TYPE,n.UUID,n.NAME,n.TAGS,p.DEPTH).from(n.innerJoin(p).on(n.ID.eq(p.ANCESTOR)))
+                    .where (p.DESCENDANT.eq(node.getId()).and(p.ANCESTOR.ne(node.getId())))
+                    .orderBy(p.DEPTH.desc())
+                    .fetch();
+
+            ArrayList <ExplorerTreeNode> path = new ArrayList<>();
+            for (Record r : result){
+                path.add (new ExplorerTreeNode(r.get(n.ID), r.get(n.TYPE), r.get(n.UUID), r.get(n.NAME), r.get(n.TAGS)));
+            }
             return path;
         });
     }

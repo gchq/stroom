@@ -3,16 +3,16 @@ package stroom.util.xml;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class ParserConfig implements IsConfig {
+public class ParserConfig extends AbstractConfig {
     private CacheConfig cacheConfig = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
     static boolean secureProcessing = true;
 
@@ -22,6 +22,7 @@ public class ParserConfig implements IsConfig {
         return cacheConfig;
     }
 
+    @SuppressWarnings("unused")
     public void setCacheConfig(final CacheConfig cacheConfig) {
         this.cacheConfig = cacheConfig;
     }
@@ -31,6 +32,7 @@ public class ParserConfig implements IsConfig {
         return secureProcessing;
     }
 
+    @SuppressWarnings("unused")
     public void setSecureProcessing(final boolean secureProcessing) {
         this.secureProcessing = secureProcessing;
     }

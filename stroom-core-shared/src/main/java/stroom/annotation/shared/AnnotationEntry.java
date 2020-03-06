@@ -1,14 +1,50 @@
 package stroom.annotation.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(Include.NON_DEFAULT)
 public class AnnotationEntry {
+    @JsonProperty
     private Long id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTime;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private Long updateTime;
+    @JsonProperty
     private String updateUser;
+    @JsonProperty
     private String entryType;
+    @JsonProperty
     private String data;
+
+    public AnnotationEntry() {
+    }
+
+    @JsonCreator
+    public AnnotationEntry(@JsonProperty("id") final Long id,
+                           @JsonProperty("version") final Integer version,
+                           @JsonProperty("createTime") final Long createTime,
+                           @JsonProperty("createUser") final String createUser,
+                           @JsonProperty("updateTime") final Long updateTime,
+                           @JsonProperty("updateUser") final String updateUser,
+                           @JsonProperty("entryType") final String entryType,
+                           @JsonProperty("data") final String data) {
+        this.id = id;
+        this.version = version;
+        this.createTime = createTime;
+        this.createUser = createUser;
+        this.updateTime = updateTime;
+        this.updateUser = updateUser;
+        this.entryType = entryType;
+        this.data = data;
+    }
 
     public Long getId() {
         return id;
@@ -73,40 +109,4 @@ public class AnnotationEntry {
     public void setData(final String data) {
         this.data = data;
     }
-
-//    public enum EntryType implements HasDisplayValue {
-//        TITLE("Title", 0),
-//        SUBJECT("Subject", 1),
-//        COMMENT("Comment", 2),
-//        STATUS("Status", 3),
-//        ASSIGNED_TO("Assigned", 4);
-//
-//        private static EntryType[] values = new EntryType[] {TITLE, SUBJECT, COMMENT, STATUS, ASSIGNED_TO};
-//        public static EntryType fromPrimitive(int index) {
-//            if (index >= 0 && index < values.length) {
-//                return values[index];
-//            }
-//            return null;
-//        }
-//
-//        private final String displayValue;
-//        private final int primitiveValue;
-//
-//        EntryType(final String displayValue, int primitiveValue) {
-//            this.displayValue = displayValue;
-//            this.primitiveValue = primitiveValue;
-//        }
-//
-//        /**
-//         * @return drop down string value.
-//         */
-//        @Override
-//        public String getDisplayValue() {
-//            return displayValue;
-//        }
-//
-//        public int getPrimitiveValue() {
-//            return primitiveValue;
-//        }
-//    }
 }

@@ -16,48 +16,99 @@
 
 package stroom.activity.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasAuditInfo;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class Activity implements HasAuditInfo, SharedObject {
+@JsonInclude(Include.NON_DEFAULT)
+public class Activity implements HasAuditInfo {
     public static final String ENTITY_TYPE = "Activity";
 
+    @JsonProperty
     private Integer id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTimeMs;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private Long updateTimeMs;
+    @JsonProperty
     private String updateUser;
+    @JsonProperty
     private String userId;
+    @JsonProperty
     private String json;
-    private ActivityDetails details = new ActivityDetails();
+    @JsonProperty
+    private ActivityDetails details;
 
-    public Activity() {
+    public Activity(final Integer id,
+                    final Integer version,
+                    final Long createTimeMs,
+                    final String createUser,
+                    final Long updateTimeMs,
+                    final String updateUser,
+                    final String userId,
+                    final String json) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.createUser = createUser;
+        this.updateTimeMs = updateTimeMs;
+        this.updateUser = updateUser;
+        this.userId = userId;
+        this.json = json;
+        this.details = new ActivityDetails(new ArrayList<>());
     }
 
-    public Activity(final String userId, final ActivityDetails details) {
+    @JsonCreator
+    public Activity(@JsonProperty("id") final Integer id,
+                    @JsonProperty("version") final Integer version,
+                    @JsonProperty("createTimeMs") final Long createTimeMs,
+                    @JsonProperty("createUser") final String createUser,
+                    @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                    @JsonProperty("updateUser") final String updateUser,
+                    @JsonProperty("userId") final String userId,
+                    @JsonProperty("json") final String json,
+                    @JsonProperty("details") ActivityDetails details) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.createUser = createUser;
+        this.updateTimeMs = updateTimeMs;
+        this.updateUser = updateUser;
         this.userId = userId;
+        this.json = json;
         this.details = details;
+    }
+
+    public static Activity create() {
+        return new Activity(
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                new ActivityDetails(new ArrayList<>()));
     }
 
     public Integer getId() {
         return id;
     }
 
-    public void setId(final Integer id) {
-        this.id = id;
-    }
-
     public Integer getVersion() {
         return version;
-    }
-
-    public void setVersion(final Integer version) {
-        this.version = version;
     }
 
     @Override
@@ -120,28 +171,27 @@ public class Activity implements HasAuditInfo, SharedObject {
         this.details = details;
     }
 
-//    @Override
-//    public String getType() {
-//        return ENTITY_TYPE;
-//    }
-
     @Override
     public String toString() {
         return details.toString();
     }
 
-    public static class ActivityDetails implements SharedObject {
-        private List<Prop> properties = new ArrayList<>();
+    @JsonInclude(Include.NON_DEFAULT)
+    public static class ActivityDetails {
+        @JsonProperty
+        private final List<Prop> properties;
 
-        public ActivityDetails() {
+        @JsonCreator
+        public ActivityDetails(@JsonProperty("properties") final List<Prop> properties) {
+            if (properties != null) {
+                this.properties = properties;
+            } else {
+                this.properties = new ArrayList<>();
+            }
         }
 
         public List<Prop> getProperties() {
             return properties;
-        }
-
-        public void setProperties(final List<Prop> properties) {
-            this.properties = properties;
         }
 
         public void add(final Prop prop, final String value) {
@@ -150,11 +200,9 @@ public class Activity implements HasAuditInfo, SharedObject {
         }
 
         public String value(final String propertyId) {
-            if (properties != null) {
-                for (final Prop prop : properties) {
-                    if (prop.getId() != null && prop.getId().equals(propertyId)) {
-                        return prop.getValue();
-                    }
+            for (final Prop prop : properties) {
+                if (prop.getId() != null && prop.getId().equals(propertyId)) {
+                    return prop.getValue();
                 }
             }
             return null;
@@ -166,16 +214,53 @@ public class Activity implements HasAuditInfo, SharedObject {
         }
     }
 
-    public static class Prop implements SharedObject {
+    @JsonInclude(Include.NON_DEFAULT)
+    public static class Prop {
+        @JsonProperty
         private String id;
+        @JsonProperty
         private String name;
+        @JsonProperty
         private String validation;
+        @JsonProperty
         private String validationMessage;
+        @JsonProperty
         private String value;
-        private boolean showInSelection = true;
-        private boolean showInList = true;
+        @JsonProperty
+        private Boolean showInSelection;
+        @JsonProperty
+        private Boolean showInList;
 
         public Prop() {
+            setDefaultValues();
+        }
+
+        @JsonCreator
+        public Prop(@JsonProperty("id") final String id,
+                    @JsonProperty("name") final String name,
+                    @JsonProperty("validation") final String validation,
+                    @JsonProperty("validationMessage") final String validationMessage,
+                    @JsonProperty("value") final String value,
+                    @JsonProperty("showInSelection") final Boolean showInSelection,
+                    @JsonProperty("showInList") final Boolean showInList) {
+            this.id = id;
+            this.name = name;
+            this.validation = validation;
+            this.validationMessage = validationMessage;
+            this.value = value;
+            this.showInSelection = showInSelection;
+            this.showInList = showInList;
+
+            setDefaultValues();
+        }
+
+        private void setDefaultValues() {
+            if (showInSelection == null) {
+                showInSelection = true;
+            }
+            if (showInList == null) {
+                showInList = true;
+            }
         }
 
         public String getId() {
@@ -206,7 +291,7 @@ public class Activity implements HasAuditInfo, SharedObject {
             return validationMessage;
         }
 
-        public void setValidationMessage(String validationMessage) {
+        public void setValidationMessage(final String validationMessage) {
             this.validationMessage = validationMessage;
         }
 

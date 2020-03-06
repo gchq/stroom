@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.text;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -25,6 +26,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.View;
+import stroom.alert.client.event.AlertEvent;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
@@ -33,19 +35,21 @@ import stroom.dashboard.client.table.TablePresenter;
 import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.IndexConstants;
+import stroom.dashboard.client.main.IndexConstants;
 import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.TextComponentSettings;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.editor.client.presenter.HtmlPresenter;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
-import stroom.pipeline.shared.FetchDataAction;
+import stroom.pipeline.shared.AbstractFetchDataResult;
+import stroom.pipeline.shared.FetchDataRequest;
 import stroom.pipeline.shared.FetchDataResult;
-import stroom.pipeline.shared.FetchDataWithPipelineAction;
 import stroom.pipeline.shared.SourceLocation;
-import stroom.pipeline.shared.StepLocation;
+import stroom.pipeline.shared.ViewDataResource;
+import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -60,13 +64,15 @@ import java.util.List;
 import java.util.Set;
 
 public class TextPresenter extends AbstractComponentPresenter<TextPresenter.TextView> implements TextUiHandlers {
+    private static final ViewDataResource VIEW_DATA_RESOURCE = GWT.create(ViewDataResource.class);
+
     public static final ComponentType TYPE = new ComponentType(2, "text", "Text");
     private final Provider<EditorPresenter> rawPresenterProvider;
     private final Provider<HtmlPresenter> htmlPresenterProvider;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private final ClientSecurityContext securityContext;
     private TextComponentSettings textSettings;
-    private List<FetchDataAction> fetchDataQueue;
+    private List<FetchDataRequest> fetchDataQueue;
     private Timer delayedFetchDataTimer;
     private Long currentStreamId;
     private Long currentPartNo;
@@ -87,12 +93,12 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                          final Provider<TextSettingsPresenter> settingsPresenterProvider,
                          final Provider<EditorPresenter> rawPresenterProvider,
                          final Provider<HtmlPresenter> htmlPresenterProvider,
-                         final ClientDispatchAsync dispatcher,
+                         final RestFactory restFactory,
                          final ClientSecurityContext securityContext) {
         super(eventBus, view, settingsPresenterProvider);
         this.rawPresenterProvider = rawPresenterProvider;
         this.htmlPresenterProvider = htmlPresenterProvider;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         this.securityContext = securityContext;
 
         view.setUiHandlers(this);
@@ -296,28 +302,16 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
                             currentPageRange = new OffsetRange<>(sourceLocation.getRecordNo() - 1L, 1L);
                         }
 
-                        FetchDataAction fetchDataAction;
-                        if (textSettings.getPipeline() != null) {
-                            final FetchDataWithPipelineAction action = new FetchDataWithPipelineAction();
-                            action.setStreamId(currentStreamId);
-                            action.setStreamRange(currentStreamRange);
-                            action.setPageRange(currentPageRange);
-                            action.setChildStreamType(null);
-                            action.setPipeline(textSettings.getPipeline());
-                            action.setShowAsHtml(textSettings.isShowAsHtml());
-                            fetchDataAction = action;
-                        } else {
-                            final FetchDataAction action = new FetchDataAction();
-                            action.setStreamId(currentStreamId);
-                            action.setStreamRange(currentStreamRange);
-                            action.setPageRange(currentPageRange);
-                            action.setChildStreamType(null);
-                            action.setShowAsHtml(textSettings.isShowAsHtml());
-                            fetchDataAction = action;
-                        }
+                        final FetchDataRequest request = new FetchDataRequest();
+                        request.setStreamId(currentStreamId);
+                        request.setStreamRange(currentStreamRange);
+                        request.setPageRange(currentPageRange);
+                        request.setChildStreamType(null);
+                        request.setPipeline(textSettings.getPipeline());
+                        request.setShowAsHtml(textSettings.isShowAsHtml());
 
                         ensureFetchDataQueue();
-                        fetchDataQueue.add(fetchDataAction);
+                        fetchDataQueue.add(request);
                         delayedFetchDataTimer.cancel();
                         delayedFetchDataTimer.schedule(250);
                         updating = true;
@@ -395,33 +389,37 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
             delayedFetchDataTimer = new Timer() {
                 @Override
                 public void run() {
-                    final FetchDataAction action = fetchDataQueue.get(fetchDataQueue.size() - 1);
+                    final FetchDataRequest request = fetchDataQueue.get(fetchDataQueue.size() - 1);
                     fetchDataQueue.clear();
 
-                    dispatcher.exec(action).onSuccess(result -> {
-                        // If we are queueing more actions then don't update
-                        // the text.
-                        if (fetchDataQueue.size() == 0) {
-                            String data = "The data has been deleted or reprocessed since this index was built";
-                            String classification = null;
-                            boolean isHtml = false;
-                            if (result != null) {
-                                if (result instanceof FetchDataResult) {
-                                    final FetchDataResult fetchDataResult = (FetchDataResult) result;
-                                    data = fetchDataResult.getData();
-                                    classification = result.getClassification();
-                                    isHtml = fetchDataResult.isHtml();
-                                } else {
-                                    data = "";
-                                    classification = null;
-                                    isHtml = false;
-                                }
-                            }
+                    final Rest<AbstractFetchDataResult> rest = restFactory.create();
+                    rest
+                            .onSuccess(result -> {
+                                // If we are queueing more actions then don't update
+                                // the text.
+                                if (fetchDataQueue.size() == 0) {
+                                    String data = "The data has been deleted or reprocessed since this index was built";
+                                    String classification = null;
+                                    boolean isHtml = false;
+                                    if (result != null) {
+                                        if (result instanceof FetchDataResult) {
+                                            final FetchDataResult fetchDataResult = (FetchDataResult) result;
+                                            data = fetchDataResult.getData();
+                                            classification = result.getClassification();
+                                            isHtml = fetchDataResult.isHtml();
+                                        } else {
+                                            data = "";
+                                            classification = null;
+                                            isHtml = false;
+                                        }
+                                    }
 
-                            TextPresenter.this.isHtml = isHtml;
-                            showData(data, classification, currentHighlightStrings, isHtml);
-                        }
-                    });
+                                    TextPresenter.this.isHtml = isHtml;
+                                    showData(data, classification, currentHighlightStrings, isHtml);
+                                }
+                            })
+                            .call(VIEW_DATA_RESOURCE)
+                            .fetch(request);
                 }
             };
         }
@@ -481,7 +479,15 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
 
     @Override
     public void beginStepping() {
-        BeginPipelineSteppingEvent.fire(this, currentStreamId, null, null, new StepLocation(currentStreamId, currentPartNo, currentRecordNo), null);
+        if (currentStreamId != null) {
+            final StepLocation stepLocation = new StepLocation(
+                    currentStreamId,
+                    currentPartNo != null ? currentPartNo : 1,
+                    currentRecordNo != null ? currentRecordNo : 1);
+            BeginPipelineSteppingEvent.fire(this, currentStreamId, null, null, stepLocation, null);
+        } else {
+            AlertEvent.fireError(this, "No stream id", null);
+        }
     }
 
     public interface TextView extends View, HasUiHandlers<TextUiHandlers> {

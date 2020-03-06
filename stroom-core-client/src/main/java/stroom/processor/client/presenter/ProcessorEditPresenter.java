@@ -1,23 +1,25 @@
 package stroom.processor.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.MetaFields;
 import stroom.processor.client.presenter.ProcessorEditPresenter.ProcessorEditView;
-import stroom.processor.shared.CreateProcessorFilterAction;
+import stroom.processor.shared.CreateProcessorFilterRequest;
 import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.QueryData;
-import stroom.processor.shared.UpdateProcessorFilterAction;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
-import stroom.receive.rules.client.presenter.EditExpressionPresenter;
+import stroom.data.client.presenter.EditExpressionPresenter;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -28,8 +30,10 @@ import java.util.List;
 import java.util.function.Consumer;
 
 public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView> {
+    private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
+
     private final EditExpressionPresenter editExpressionPresenter;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
 
     private DocRef pipelineRef;
     private Consumer<ProcessorFilter> consumer;
@@ -38,15 +42,15 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
     public ProcessorEditPresenter(final EventBus eventBus,
                                   final ProcessorEditView view,
                                   final EditExpressionPresenter editExpressionPresenter,
-                                  final ClientDispatchAsync dispatcher) {
+                                  final RestFactory restFactory) {
         super(eventBus, view);
         this.editExpressionPresenter = editExpressionPresenter;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         view.setExpressionView(editExpressionPresenter.getView());
     }
 
     public void read(final ExpressionOperator expression, final DocRef dataSource, final List<AbstractField> fields) {
-        editExpressionPresenter.init(dispatcher, dataSource, fields);
+        editExpressionPresenter.init(restFactory, dataSource, fields);
 
         if (expression != null) {
             editExpressionPresenter.read(expression);
@@ -171,11 +175,15 @@ public class ProcessorEditPresenter extends MyPresenterWidget<ProcessorEditView>
         if (filter != null) {
             // Now update the processor filter using the find stream criteria.
             filter.setQueryData(queryData);
-            dispatcher.exec(new UpdateProcessorFilterAction(filter)).onSuccess(this::hide);
+
+            final Rest<ProcessorFilter> rest = restFactory.create();
+            rest.onSuccess(this::hide).call(PROCESSOR_FILTER_RESOURCE).update(filter.getId(), filter);
 
         } else {
             // Now create the processor filter using the find stream criteria.
-            dispatcher.exec(new CreateProcessorFilterAction(pipelineRef, queryData, false, 10)).onSuccess(this::hide);
+            final CreateProcessorFilterRequest request = new CreateProcessorFilterRequest(pipelineRef, queryData, false, 10);
+            final Rest<ProcessorFilter> rest = restFactory.create();
+            rest.onSuccess(this::hide).call(PROCESSOR_FILTER_RESOURCE).create(request);
         }
     }
 

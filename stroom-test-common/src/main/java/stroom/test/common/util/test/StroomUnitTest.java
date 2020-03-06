@@ -17,17 +17,16 @@
 package stroom.test.common.util.test;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
 
-@ExtendWith(TempDirExtension.class)
 public abstract class StroomUnitTest implements StroomTest {
 
     private Path testDir;
 
     @BeforeEach
-    public void setup(@TempDir Path tempDir) {
+    public void setup(@TempDir final Path tempDir) {
         this.testDir = tempDir;
     }
 

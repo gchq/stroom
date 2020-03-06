@@ -18,6 +18,7 @@
 package stroom.pipeline.structure.client.presenter;
 
 import com.google.gwt.cell.client.SafeHtmlCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.safehtml.shared.SafeHtml;
 import com.google.gwt.safehtml.shared.SafeHtmlBuilder;
@@ -31,21 +32,22 @@ import com.gwtplatform.mvp.client.MyPresenterWidget;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.explorer.shared.FetchDocRefsAction;
+import stroom.explorer.shared.ExplorerResource;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineProperty;
 import stroom.pipeline.shared.data.PipelinePropertyType;
 import stroom.pipeline.shared.data.PipelinePropertyValue;
-import stroom.pipeline.shared.data.SourcePipeline;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -65,6 +67,8 @@ import java.util.stream.Collectors;
 
 public class PropertyListPresenter extends MyPresenterWidget<DataGridView<PipelineProperty>>
         implements HasDirtyHandlers, ReadOnlyChangeHandler {
+    private static final ExplorerResource EXPLORER_RESOURCE = GWT.create(ExplorerResource.class);
+
     private static final SafeHtml ADDED = SafeHtmlUtils.fromSafeConstant("<div style=\"font-weight:500\">");
     private static final SafeHtml REMOVED = SafeHtmlUtils
             .fromSafeConstant("<div style=\"font-weight:500;text-decoration:line-through\">");
@@ -73,7 +77,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     private static final SafeHtml END = SafeHtmlUtils.fromSafeConstant("</div>");
     private final ButtonView editButton;
     private final Provider<NewPropertyPresenter> newPropertyPresenter;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
 
     private Map<PipelineElementType, Map<String, PipelinePropertyType>> allPropertyTypes;
     private PipelineDoc pipelineDoc;
@@ -85,10 +89,10 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
     @Inject
     public PropertyListPresenter(final EventBus eventBus,
                                  final Provider<NewPropertyPresenter> newPropertyPresenter,
-                                 final ClientDispatchAsync dispatcher) {
+                                 final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.newPropertyPresenter = newPropertyPresenter;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         editButton = getView().addButton(SvgPresets.EDIT);
 
@@ -222,7 +226,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
                 if (inheritedProperty != null) {
                     final PipelinePropertyValue value = inheritedProperty.getValue();
                     if (value != null) {
-                        return getSafeHtml(inheritedProperty.getSource().getPipeline().getName());
+                        return getSafeHtml(inheritedProperty.getSourcePipeline().getName());
                     }
                 }
                 return null;
@@ -346,7 +350,7 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
             final PipelineProperty editing = new PipelineProperty();
             editing.copyFrom(localProperty);
-            editing.setSource(new SourcePipeline(pipelineDoc));
+            editing.setSourcePipeline(DocRefUtil.create(pipelineDoc));
             editing.setValue(localProperty.getValue());
 
             final Source source = getSource(editing);
@@ -432,24 +436,27 @@ public class PropertyListPresenter extends MyPresenterWidget<DataGridView<Pipeli
 
         if (docRefs.size() > 0) {
             // Load entities.
-            dispatcher.exec(new FetchDocRefsAction(docRefs)).onSuccess(result -> {
-                final Map<DocRef, DocRef> fetchedDocRefs = result
-                        .stream()
-                        .collect(Collectors.toMap(Function.identity(), Function.identity()));
+            final Rest<Set<DocRef>> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        final Map<DocRef, DocRef> fetchedDocRefs = result
+                                .stream()
+                                .collect(Collectors.toMap(Function.identity(), Function.identity()));
 
-                for (final PipelineProperty property : propertyList) {
-                    final DocRef docRef = property.getValue().getEntity();
-                    if (docRef != null) {
-                        final DocRef fetchedDocRef = fetchedDocRefs.get(docRef);
-                        if (fetchedDocRef != null) {
-                            property.getValue().setEntity(fetchedDocRef);
+                        for (final PipelineProperty property : propertyList) {
+                            final DocRef docRef = property.getValue().getEntity();
+                            if (docRef != null) {
+                                final DocRef fetchedDocRef = fetchedDocRefs.get(docRef);
+                                if (fetchedDocRef != null) {
+                                    property.getValue().setEntity(fetchedDocRef);
+                                }
+                            }
                         }
-                    }
-                }
 
-                setData(propertyList);
-            });
-
+                        setData(propertyList);
+                    })
+                    .call(EXPLORER_RESOURCE)
+                    .fetchDocRefs(docRefs);
         } else {
             setData(propertyList);
         }

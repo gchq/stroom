@@ -1,6 +1,7 @@
 ---
 appConfig:
   superDevMode: false
+  haltBootOnConfigValidationFailure: true
   activity:
     db:
       connection:
@@ -12,8 +13,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   annotation:
     db:
@@ -26,8 +29,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
     statusValues:
     - "New"
@@ -35,15 +40,19 @@ appConfig:
     - "Closed"
     standardComments: []
     createText: "Create Annotation"
+  apiGateway:
+    hostname: null
+    scheme: "https"
+    port: null
   benchmark:
     streamCount: 1000
     recordCount: 10000
     concurrentWriters: 10
   cluster:
     clusterCallUseLocal: true
-    clusterCallReadTimeout: "30s"
+    clusterCallReadTimeout: "PT30S"
     clusterCallIgnoreSSLHostnameVerifier: true
-    clusterResponseTimeout: "30s"
+    clusterResponseTimeout: "PT30S"
   clusterLock:
     db:
       connection:
@@ -55,13 +64,15 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   clusterTask:
     clusterResultCollectorCache:
       maximumSize: 1000000
-      expireAfterAccess: 60000
+      expireAfterAccess: "PT1M"
       expireAfterWrite: null
   commonDbDetails:
     connection:
@@ -73,11 +84,14 @@ appConfig:
       cachePrepStmts: null
       prepStmtCacheSize: null
       prepStmtCacheSqlLimit: null
+      connectionTimeout: null
       idleTimeout: null
       maxLifetime: null
+      minimumIdle: null
       maxPoolSize: null
   contentPackImport:
     enabled: false
+    importDirectory: null
   core:
     db:
       connection:
@@ -89,32 +103,34 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   dashboard:
     activeQueriesCache:
       maximumSize: 100
-      expireAfterAccess: 60000
+      expireAfterAccess: "PT1M"
       expireAfterWrite: null
   data:
     meta:
       metaValueConfig:
-        deleteAge: "30d"
+        deleteAge: "P30D"
         deleteBatchSize: 1000
         flushBatchSize: 1000
         addAsync: true
       metaFeedCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       metaProcessorCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       metaTypeCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       db:
         connection:
@@ -126,17 +142,19 @@ appConfig:
           cachePrepStmts: null
           prepStmtCacheSize: null
           prepStmtCacheSqlLimit: null
+          connectionTimeout: null
           idleTimeout: null
           maxLifetime: null
+          minimumIdle: null
           maxPoolSize: null
     retention:
       deleteBatchSize: 1000
     store:
-      deletePurgeAge: "7d"
+      deletePurgeAge: "P7D"
       deleteBatchSize: 1000
       fileSystemCleanBatchSize: 20
       fileSystemCleanDeleteOut: false
-      fileSystemCleanOldAge: "1d"
+      fileSystemCleanOldAge: "P1D"
       db:
         connection:
           jdbcDriverClassName: null
@@ -147,19 +165,21 @@ appConfig:
           cachePrepStmts: null
           prepStmtCacheSize: null
           prepStmtCacheSqlLimit: null
+          connectionTimeout: null
           idleTimeout: null
           maxLifetime: null
+          minimumIdle: null
           maxPoolSize: null
     filesystemVolume:
       volumeSelector: "RoundRobin"
       createDefaultOnStart: true
       feedPathCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       typePathCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
   dataSourceUrl:
     index: "http://127.0.0.1:8080/api/stroom-index/v2"
@@ -179,8 +199,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   explorer:
     db:
@@ -193,8 +215,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   export:
     enabled: false
@@ -203,14 +227,14 @@ appConfig:
     feedNamePattern: "^[A-Z0-9_-]{3,}$"
     feedDocCache:
       maximumSize: 1000
-      expireAfterAccess: 10000
+      expireAfterAccess: "PT10S"
       expireAfterWrite: null
   index:
     ramBufferSizeMB: 1024
     indexStructureCache:
       maximumSize: 100
       expireAfterAccess: null
-      expireAfterWrite: 10000
+      expireAfterWrite: "PT10S"
     db:
       connection:
         jdbcDriverClassName: null
@@ -221,8 +245,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
     writer:
       cache:
@@ -244,8 +270,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   lifecycle:
     enabled: true
@@ -260,10 +288,12 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
-    node: "tba"
+    name: "tba"
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"
@@ -272,9 +302,13 @@ appConfig:
   path:
     temp: "/tmp"
   pipeline:
+    httpClientCache:
+      maximumSize: 1000
+      expireAfterAccess: "PT10M"
+      expireAfterWrite: null
     pipelineDataCache:
       maximumSize: 1000
-      expireAfterAccess: 600000
+      expireAfterAccess: "PT10M"
       expireAfterWrite: null
     appender:
       maxActiveDestinations: 100
@@ -282,55 +316,52 @@ appConfig:
       secureProcessing: true
       cache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
     referenceData:
       localDir: "${stroom.temp}/refDataOffHeapStore"
       maxPutsBeforeCommit: 1000
       maxReaders: 100
       maxStoreSize: "50G"
-      purgeAge: "30d"
-      valueBufferCapacity: 1000
+      purgeAge: "P30D"
       effectiveStreamCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       readAheadEnabled: true
     xmlSchema:
       cache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
     xslt:
       maxElements: 1000000
       cache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
   processor:
     assignTasks: true
     createTasks: true
-    deleteAge: "1d"
-    deletePurgeAge: "7d"
-    deleteBatchSize: 1000
+    deleteAge: "P1D"
     fillTaskQueue: true
     queueSize: 1000
     databaseMultiInsertMaxBatchSize: 500
     processorCache:
       maximumSize: 1000
-      expireAfterAccess: 10000
+      expireAfterAccess: "PT10S"
       expireAfterWrite: null
     processorFilterCache:
       maximumSize: 1000
-      expireAfterAccess: 10000
+      expireAfterAccess: "PT10S"
       expireAfterWrite: null
     processorNodeCache:
       maximumSize: 1000
-      expireAfterAccess: 600000
+      expireAfterAccess: "PT10M"
       expireAfterWrite: null
     processorFeedCache:
       maximumSize: 1000
-      expireAfterAccess: 600000
+      expireAfterAccess: "PT10M"
       expireAfterWrite: null
     db:
       connection:
@@ -342,8 +373,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   properties:
     db:
@@ -356,8 +389,10 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   proxyAggregation:
     proxyDir: "${stroom.temp}/proxy"
@@ -386,17 +421,17 @@ appConfig:
       maxThreadsPerTask: 2
       searchResultCache:
         maximumSize: 10000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       indexShardSearcherCache:
         maximumSize: 2
-        expireAfterAccess: 60000
+        expireAfterAccess: "PT1M"
         expireAfterWrite: null
   searchable:
     storeSize: "1000000,100,10,1"
     searchResultCache:
       maximumSize: 10000
-      expireAfterAccess: 600000
+      expireAfterAccess: "PT10M"
       expireAfterWrite: null
   security:
     db:
@@ -409,14 +444,19 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
     authentication:
       authenticationServiceUrl: null
       authenticationRequired: true
       verifySsl: false
       authServicesBaseUrl: "http://auth-service:8099"
+      jwt:
+        jwtIssuer: "stroom"
+        enableTokenRevocationCheck: true
       preventLogin: false
       userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
       clientId: null
@@ -424,30 +464,27 @@ appConfig:
       apiTokenCache:
         maximumSize: 10000
         expireAfterAccess: null
-        expireAfterWrite: 1800000
-      jwt:
-        jwtIssuer: "stroom"
-        enableTokenRevocationCheck: true
+        expireAfterWrite: "PT30M"
     authorisation:
       userGroupsCache:
         maximumSize: 1000
-        expireAfterAccess: 1800000
+        expireAfterAccess: "PT30M"
         expireAfterWrite: null
       userAppPermissionsCache:
         maximumSize: 1000
-        expireAfterAccess: 1800000
+        expireAfterAccess: "PT30M"
         expireAfterWrite: null
       userCache:
         maximumSize: 1000
-        expireAfterAccess: 1800000
+        expireAfterAccess: "PT30M"
         expireAfterWrite: null
       userDocumentPermissionsCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       documentPermissionCache:
         maximumSize: 1000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
     webContent:
       contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
@@ -471,19 +508,19 @@ appConfig:
   solr:
     indexClientCache:
       maximumSize: 100
-      expireAfterAccess: 600000
+      expireAfterAccess: "PT10M"
       expireAfterWrite: null
     indexCache:
       maximumSize: 100
       expireAfterAccess: null
-      expireAfterWrite: 600000
+      expireAfterWrite: "PT10M"
     search:
       maxStoredDataQueueSize: 1000
       maxBooleanClauseCount: 1024
       storeSize: "1000000,100,10,1"
       searchResultCache:
         maximumSize: 10000
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       extraction:
         maxStoredDataQueueSize: 1000
@@ -496,7 +533,7 @@ appConfig:
       maxProcessingAge: null
       dataSourceCache:
         maximumSize: 100
-        expireAfterAccess: 600000
+        expireAfterAccess: "PT10M"
         expireAfterWrite: null
       db:
         connection:
@@ -508,8 +545,10 @@ appConfig:
           cachePrepStmts: null
           prepStmtCacheSize: null
           prepStmtCacheSqlLimit: null
+          connectionTimeout: null
           idleTimeout: null
           maxLifetime: null
+          minimumIdle: null
           maxPoolSize: null
       search:
         storeSize: "1000000,100,10,1"
@@ -518,7 +557,7 @@ appConfig:
         fetchSize: 5000
         searchResultCache:
           maximumSize: 10000
-          expireAfterAccess: 600000
+          expireAfterAccess: "PT10M"
           expireAfterWrite: null
     hbase:
       docRefType: "StroomStatsStore"
@@ -618,212 +657,25 @@ appConfig:
         cachePrepStmts: null
         prepStmtCacheSize: null
         prepStmtCacheSqlLimit: null
+        connectionTimeout: null
         idleTimeout: null
         maxLifetime: null
+        minimumIdle: null
         maxPoolSize: null
   ui:
-    welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
-      \ multiple systems.</p>"
-    aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
-      \ systems.</p>"
     buildInfo:
-      upDate: null
-      buildDate: "TBD"
+      upDate: "TBD"
       buildVersion: "TBD"
-    nodeName: null
-    maintenanceMessage: null
-    defaultMaxResults: "1000000,100,10,1"
-    helpUrl: null
-    namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
-    htmlTitle: "Stroom"
-    oncontextmenu: "return false;"
-    process:
-      defaultTimeLimit: 30
-      defaultRecordLimit: 1000000
-    theme:
-      backgroundAttachment: "scroll"
-      backgroundColor: "#1E88E5"
-      backgroundImage: "none"
-      backgroundPosition: "0 0"
-      backgroundRepeat: "repeat"
-      backgroundOpacity: "0"
-      tubeVisible: "hidden"
-      tubeOpacity: "0.6"
-      labelColours: "TEST1=#FF0000,TEST2=#FF9900"
+      buildDate: "TBD"
+    process: {}
+    theme: {}
     query:
-      infoPopup:
-        enabled: false
-        title: "Please Provide Query Info"
-        validationRegex: "^[\\s\\S]{3,}$"
-    splash:
-      enabled: false
-      title: "Splash Screen"
-      body: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
-        \ systems.</p>"
-      version: "v0.1"
-    activity:
-      enabled: false
-      chooseOnStartup: false
-      managerTitle: "Choose Activity"
-      editorTitle: "Edit Activity"
-      editorBody: "Activity Code:</br><input type=\"text\" name=\"code\"></input></br></br>Activity\
-        \ Description:</br><textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"\
-        description\" validation=\".{80,}\" validationMessage=\"The activity description\
-        \ must be at least 80 characters long.\" ></textarea>Explain what the activity\
-        \ is"
-    url:
-      ui: "http://IP_ADDRESS"
-      authenticationService: "http://auth-service:8099/authentication/v1"
-      users: "http://IP_ADDRESS/users"
-      apiKeys: "http://IP_ADDRESS/tokens"
-      indexVolumes: "http://IP_ADDRESS/s/indexing/volumes"
-      indexVolumeGroups: "http://IP_ADDRESS/s/indexing/groups"
-      userAuthorisation: "http://IP_ADDRESS/s/authorisationManager/false"
-      groupAuthorisation: "http://IP_ADDRESS/s/authorisationManager/true"
-      editDoc: "http://IP_ADDRESS/s/doc/"
-      changepassword: "http://IP_ADDRESS/changepassword"
-      kibana: null
-      trackers: null
-      annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
-      elastic: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
-      documentPermissions: "http://IP_ADDRESS/s/authorisationManager/document/"
+      infoPopup: {}
+    splash: {}
+    activity: {}
+    url: {}
   volumes:
     resilientReplicationCount: 1
     preferLocalVolumes: false
     volumeSelector: "RoundRobin"
     createDefaultOnStart: true
-server: !<default>
-  maxThreads: 1024
-  minThreads: 8
-  maxQueuedRequests: 1024
-  idleThreadTimeout: "1 minute"
-  nofileSoftLimit: null
-  nofileHardLimit: null
-  gid: null
-  uid: null
-  user: null
-  group: null
-  umask: null
-  startsAsRoot: null
-  registerDefaultExceptionMappers: true
-  detailedJsonProcessingExceptionMapper: false
-  shutdownGracePeriod: "30 seconds"
-  allowedMethods:
-  - "GET"
-  - "POST"
-  - "PUT"
-  - "DELETE"
-  - "HEAD"
-  - "OPTIONS"
-  - "PATCH"
-  enableThreadNameFilter: true
-  applicationConnectors:
-  - !<http>
-    port: 8080
-    bindHost: null
-    inheritChannel: false
-    headerCacheSize: "512 bytes"
-    outputBufferSize: "32 kilobytes"
-    maxRequestHeaderSize: "8 kilobytes"
-    maxResponseHeaderSize: "8 kilobytes"
-    inputBufferSize: "8 kilobytes"
-    idleTimeout: "30 seconds"
-    blockingTimeout: null
-    minBufferPoolSize: "64 bytes"
-    bufferPoolIncrement: "1024 bytes"
-    maxBufferPoolSize: "64 kilobytes"
-    minRequestDataRate: 0
-    acceptorThreads:
-      empty: true
-      present: false
-    selectorThreads:
-      empty: true
-      present: false
-    acceptQueueSize: null
-    reuseAddress: true
-    soLingerTime: null
-    useServerHeader: false
-    useDateHeader: true
-    useForwardedHeaders: true
-    httpCompliance: "RFC7230"
-  adminConnectors:
-  - !<http>
-    port: 8081
-    bindHost: null
-    inheritChannel: false
-    headerCacheSize: "512 bytes"
-    outputBufferSize: "32 kilobytes"
-    maxRequestHeaderSize: "8 kilobytes"
-    maxResponseHeaderSize: "8 kilobytes"
-    inputBufferSize: "8 kilobytes"
-    idleTimeout: "30 seconds"
-    blockingTimeout: null
-    minBufferPoolSize: "64 bytes"
-    bufferPoolIncrement: "1024 bytes"
-    maxBufferPoolSize: "64 kilobytes"
-    minRequestDataRate: 0
-    acceptorThreads:
-      empty: true
-      present: false
-    selectorThreads:
-      empty: true
-      present: false
-    acceptQueueSize: null
-    reuseAddress: true
-    soLingerTime: null
-    useServerHeader: false
-    useDateHeader: true
-    useForwardedHeaders: true
-    httpCompliance: "RFC7230"
-  adminMaxThreads: 64
-  adminMinThreads: 1
-  applicationContextPath: "/"
-  adminContextPath: "/"
-  serverPush:
-    enabled: false
-    associatePeriod: "4 seconds"
-    maxAssociations: 16
-    refererHosts: null
-    refererPorts: null
-  rootPath:
-    empty: true
-    present: false
-  requestLog: !<logback-access>
-    appenders:
-    - !<console>
-      threshold: "ALL"
-      logFormat: null
-      layout: null
-      timeZone: "UTC"
-      queueSize: 256
-      discardingThreshold: -1
-      includeCallerData: false
-      filterFactories: []
-      target: "STDOUT"
-  gzip:
-    enabled: true
-    minimumEntitySize: "256 bytes"
-    bufferSize: "8 kilobytes"
-    excludedUserAgentPatterns: []
-    compressedMimeTypes: null
-    includedMethods: null
-    deflateCompressionLevel: -1
-    gzipCompatibleInflation: true
-    syncFlush: false
-logging: !<default>
-  level: "INFO"
-  loggers: {}
-  appenders:
-  - !<console>
-    threshold: "ALL"
-    logFormat: null
-    layout: null
-    timeZone: "UTC"
-    queueSize: 256
-    discardingThreshold: -1
-    includeCallerData: false
-    filterFactories: []
-    target: "STDOUT"
-metrics:
-  frequency: "1 minute"
-  reporters: []

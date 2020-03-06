@@ -20,10 +20,11 @@ package stroom.data.store.impl.fs;
 import org.junit.jupiter.api.Test;
 import stroom.data.shared.StreamTypeNames;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import java.nio.file.Files;
@@ -48,7 +49,7 @@ class TestPhysicalDeleteExecutor extends AbstractCoreIntegrationTest {
 
     @Test
     void test() {
-        dataStoreServiceConfig.setDeletePurgeAge("0s");
+        dataStoreServiceConfig.setDeletePurgeAge(StroomDuration.ZERO);
 
         final String feedName = FileSystemTestUtil.getUniqueTestString();
 

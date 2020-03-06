@@ -16,49 +16,47 @@
 
 package stroom.node.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-public class NodeStatusResult implements SharedObject {
-    private static final long serialVersionUID = -6143973264434353978L;
+import java.util.Objects;
 
-    private Node node;
-    private Long ping;
-    private boolean master;
-    private String error;
+@JsonPropertyOrder({"node", "master"})
+@JsonInclude(Include.NON_DEFAULT)
+public class NodeStatusResult {
+    @JsonProperty
+    private final Node node;
+    @JsonProperty
+    private final boolean master;
 
-    public NodeStatusResult() {
-        // Default constructor necessary for GWT serialisation.
+    @JsonCreator
+    public NodeStatusResult(@JsonProperty("node") final Node node,
+                            @JsonProperty("master") final boolean master) {
+        this.node = node;
+        this.master = master;
     }
 
     public Node getNode() {
         return node;
     }
 
-    public void setNode(final Node node) {
-        this.node = node;
-    }
-
-    public Long getPing() {
-        return ping;
-    }
-
-    public void setPing(final Long ping) {
-        this.ping = ping;
-    }
-
     public boolean isMaster() {
         return master;
     }
 
-    public void setMaster(final boolean master) {
-        this.master = master;
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final NodeStatusResult that = (NodeStatusResult) o;
+        return Objects.equals(node.getId(), that.node.getId());
     }
 
-    public String getError() {
-        return error;
-    }
-
-    public void setError(final String error) {
-        this.error = error;
+    @Override
+    public int hashCode() {
+        return Objects.hash(node.getId());
     }
 }

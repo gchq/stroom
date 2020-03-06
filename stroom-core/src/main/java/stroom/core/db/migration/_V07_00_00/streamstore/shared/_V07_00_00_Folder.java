@@ -17,10 +17,10 @@
 package stroom.core.db.migration._V07_00_00.streamstore.shared;
 
 
-import stroom.entity.shared.DocumentEntity;
+import stroom.core.db.migration._V07_00_00.entity.shared._V07_00_00_DocumentEntity;
 
 @Deprecated
-public class _V07_00_00_Folder extends DocumentEntity {
+public class _V07_00_00_Folder extends _V07_00_00_DocumentEntity {
     public static final String ENTITY_TYPE = "Folder";
     private static final long serialVersionUID = -4208920620555926044L;
 

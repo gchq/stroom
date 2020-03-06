@@ -18,15 +18,13 @@
 package stroom.job.impl;
 
 import stroom.job.api.JobManager;
-import stroom.job.shared.FindJobCriteria;
-import stroom.job.shared.FindJobNodeCriteria;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.security.api.SecurityContext;
 import stroom.util.AuditUtil;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
-import java.util.List;
 
 /**
  * The job manager is used to update the database with the status of all job
@@ -57,9 +55,9 @@ public class JobManagerImpl implements JobManager {
     public Boolean isJobEnabled(final String jobName) {
         final FindJobCriteria criteria = new FindJobCriteria();
         criteria.getName().setString(jobName);
-        final List<Job> jobs = jobDao.find(criteria);
-        if (jobs.size() > 0) {
-            final Job job = jobs.get(0);
+        final ResultPage<Job> jobs = jobDao.find(criteria);
+        final Job job = jobs.getFirst();
+        if (job != null) {
             return job.isEnabled();
         }
         // No such job !
@@ -121,10 +119,10 @@ public class JobManagerImpl implements JobManager {
     private void modifyCluster(final String jobName, final boolean enabled) {
         final FindJobCriteria criteria = new FindJobCriteria();
         criteria.getName().setString(jobName);
-        final List<Job> jobs = jobDao.find(criteria);
+        final ResultPage<Job> jobs = jobDao.find(criteria);
 
-        if (jobs.size() > 0) {
-            final Job job = jobs.get(0);
+        final Job job = jobs.getFirst();
+        if (job != null) {
             job.setEnabled(enabled);
             AuditUtil.stamp(securityContext.getUserId(), job);
             jobDao.update(job);
@@ -142,8 +140,8 @@ public class JobManagerImpl implements JobManager {
         final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
         criteria.getJobName().setString(jobName);
 
-        final List<JobNode> jobNodes = jobNodeDao.find(criteria);
-        for (final JobNode jobNode : jobNodes) {
+        final ResultPage<JobNode> jobNodes = jobNodeDao.find(criteria);
+        for (final JobNode jobNode : jobNodes.getValues()) {
             jobNode.setEnabled(enabled);
             AuditUtil.stamp(securityContext.getUserId(), jobNode);
             jobNodeDao.update(jobNode);
@@ -160,8 +158,8 @@ public class JobManagerImpl implements JobManager {
         final FindJobNodeCriteria criteria = new FindJobNodeCriteria();
         criteria.getNodeName().setString(nodeName);
 
-        final List<JobNode> jobNodes = jobNodeDao.find(criteria);
-        for (final JobNode jobNode : jobNodes) {
+        final ResultPage<JobNode> jobNodes = jobNodeDao.find(criteria);
+        for (final JobNode jobNode : jobNodes.getValues()) {
             jobNode.setEnabled(enabled);
             AuditUtil.stamp(securityContext.getUserId(), jobNode);
             jobNodeDao.update(jobNode);

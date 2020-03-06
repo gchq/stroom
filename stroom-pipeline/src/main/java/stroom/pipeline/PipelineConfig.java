@@ -6,22 +6,26 @@ import stroom.pipeline.filter.XmlSchemaConfig;
 import stroom.pipeline.filter.XsltConfig;
 import stroom.pipeline.refdata.ReferenceDataConfig;
 import stroom.util.cache.CacheConfig;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.time.StroomDuration;
 import stroom.util.xml.ParserConfig;
 
 import javax.inject.Singleton;
-import java.util.concurrent.TimeUnit;
 
 @Singleton
-public class PipelineConfig implements IsConfig {
+public class PipelineConfig extends AbstractConfig {
     private AppenderConfig appenderConfig = new AppenderConfig();
     private ParserConfig parserConfig = new ParserConfig();
     private ReferenceDataConfig referenceDataConfig = new ReferenceDataConfig();
     private XmlSchemaConfig xmlSchemaConfig = new XmlSchemaConfig();
     private XsltConfig xsltConfig = new XsltConfig();
+    private CacheConfig httpClientCache = new CacheConfig.Builder()
+            .maximumSize(1000L)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
+            .build();
     private CacheConfig pipelineDataCache = new CacheConfig.Builder()
             .maximumSize(1000L)
-            .expireAfterAccess(10, TimeUnit.MINUTES)
+            .expireAfterAccess(StroomDuration.ofMinutes(10))
             .build();
 
     @JsonProperty("appender")
@@ -67,6 +71,14 @@ public class PipelineConfig implements IsConfig {
 
     public void setXsltConfig(final XsltConfig xsltConfig) {
         this.xsltConfig = xsltConfig;
+    }
+
+    public CacheConfig getHttpClientCache() {
+        return httpClientCache;
+    }
+
+    public void setHttpClientCache(final CacheConfig httpClientCache) {
+        this.httpClientCache = httpClientCache;
     }
 
     public CacheConfig getPipelineDataCache() {

@@ -22,29 +22,32 @@ import org.slf4j.MarkerFactory;
 import stroom.pipeline.errorhandler.ErrorReceiver;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;
-import stroom.pipeline.errorhandler.ExpectedProcessException;
 import stroom.pipeline.errorhandler.LoggedException;
-import stroom.task.api.ExecutorProvider;
-import stroom.task.api.TaskCallback;
+import stroom.task.api.TaskContext;
 import stroom.util.pipeline.scope.PipelineScoped;
 import stroom.util.shared.Severity;
-import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 
 @PipelineScoped
 class ProcessorFactoryImpl implements ProcessorFactory {
     private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFactoryImpl.class);
-    private final ExecutorProvider executorProvider;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
     private final ErrorReceiverProxy errorReceiverProxy;
 
     @Inject
-    public ProcessorFactoryImpl(final ExecutorProvider executorProvider,
+    public ProcessorFactoryImpl(final Executor executor,
+                                final Provider<TaskContext> taskContextProvider,
                                 final ErrorReceiverProxy errorReceiverProxy) {
-        this.executorProvider = executorProvider;
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
         this.errorReceiverProxy = errorReceiverProxy;
     }
 
@@ -58,19 +61,22 @@ class ProcessorFactoryImpl implements ProcessorFactory {
             return processors.get(0);
         }
 
-        return new MultiWayProcessor(processors, executorProvider, errorReceiverProxy);
+        return new MultiWayProcessor(processors, executor, taskContextProvider, errorReceiverProxy);
     }
 
     static class MultiWayProcessor implements Processor {
         private final List<Processor> processors;
-        private final ExecutorProvider executorProvider;
+        private final Executor executor;
+        private final Provider<TaskContext> taskContextProvider;
         private final ErrorReceiver errorReceiver;
 
         MultiWayProcessor(final List<Processor> processors,
-                          final ExecutorProvider executorProvider,
+                          final Executor executor,
+                          final Provider<TaskContext> taskContextProvider,
                           final ErrorReceiver errorReceiver) {
             this.processors = processors;
-            this.executorProvider = executorProvider;
+            this.executor = executor;
+            this.taskContextProvider = taskContextProvider;
             this.errorReceiver = errorReceiver;
         }
 
@@ -78,33 +84,16 @@ class ProcessorFactoryImpl implements ProcessorFactory {
         public void process() {
             final CountDownLatch countDownLatch = new CountDownLatch(processors.size());
             for (final Processor processor : processors) {
-                final TaskCallback<VoidResult> taskCallback = new TaskCallback<VoidResult>() {
-                    @Override
-                    public void onSuccess(final VoidResult result) {
-                        countDownLatch.countDown();
-                    }
-
-                    @Override
-                    public void onFailure(final Throwable t) {
-                        try {
-                            if (!(t instanceof ExpectedProcessException)) {
-                                if (t instanceof LoggedException) {
-                                    // The exception has already been logged so
-                                    // ignore it.
-                                    if (LOGGER.isTraceEnabled()) {
-                                        LOGGER.trace(t.getMessage(), t);
-                                    }
-                                } else {
-                                    outputError(t);
-                                }
+                final TaskContext taskContext = taskContextProvider.get();
+                final Runnable runnable = taskContext.subTask(processor::process);
+                CompletableFuture
+                        .runAsync(runnable, executor)
+                        .whenComplete((r, t) -> {
+                            if (t != null) {
+                                outputError(t);
                             }
-                        } finally {
                             countDownLatch.countDown();
-                        }
-                    }
-                };
-
-                executorProvider.getExecutor().execute(processor::process);
+                        });
             }
 
             try {

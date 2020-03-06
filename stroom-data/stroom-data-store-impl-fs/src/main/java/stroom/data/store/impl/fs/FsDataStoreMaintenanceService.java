@@ -26,14 +26,14 @@ import stroom.data.store.impl.fs.shared.FsVolume;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.io.FileUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.CriteriaSet;
 import stroom.util.shared.PageRequest;
 
@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -102,11 +104,12 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
     public ScanVolumePathResult scanVolumePath(final FsVolume volume,
                                                final boolean doDelete,
                                                final String repoPath,
-                                               final long oldFileAge) {
+                                               final Duration oldFileAge) {
+        Objects.requireNonNull(oldFileAge);
         return securityContext.secureResult(PermissionNames.DELETE_DATA_PERMISSION, () -> {
             final ScanVolumePathResult result = new ScanVolumePathResult();
 
-            final long oldFileTime = System.currentTimeMillis() - oldFileAge;
+            final long oldFileTime = System.currentTimeMillis() - oldFileAge.toMillis();
 
             final Map<String, List<String>> filesKeyedByBaseName = new HashMap<>();
             final Map<String, DataVolume> streamsKeyedByBaseName = new HashMap<>();
@@ -167,7 +170,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                                              final Map<String, DataVolume> streamsKeyedByBaseName) {
         try {
             // We need to find streams that match the repo path.
-            final BaseResultList<Meta> matchingStreams = findMatchingStreams(repoPath);
+            final List<Meta> matchingStreams = findMatchingStreams(repoPath).getValues();
 
             // If we haven't found any streams then give up.
             if (matchingStreams.size() > 0) {
@@ -184,8 +187,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                 });
                 criteria.obtainVolumeIdSet().add(volume.getId());
 
-                final List<DataVolume> matches = dataVolumeService.find(criteria);
-
+                final List<DataVolume> matches = dataVolumeService.find(criteria).getValues();
                 for (final DataVolume streamVolume : matches) {
                     final Meta meta = streamMap.get(streamVolume.getStreamId());
                     if (meta != null) {
@@ -204,7 +206,7 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
      * @param repoPath The repository path to find relevant streams for.
      * @return A list of streams that are relevant to the supplied repository path.
      */
-    private BaseResultList<Meta> findMatchingStreams(final String repoPath) {
+    private ResultPage<Meta> findMatchingStreams(final String repoPath) {
         try {
             // We need to find streams that match the repo path.
             final Optional<ExpressionOperator> optional = pathToStreamExpression(repoPath);
@@ -212,13 +214,13 @@ class FsDataStoreMaintenanceService implements DataStoreMaintenanceService {
                 final FindMetaCriteria criteria = new FindMetaCriteria(expression);
                 criteria.setPageRequest(new PageRequest(0L, 1000));
                 return metaService.find(criteria);
-            }).orElseGet(() -> BaseResultList.createUnboundedList(Collections.emptyList()));
+            }).orElseGet(() -> ResultPage.createUnboundedList(Collections.emptyList()));
         } catch (final RuntimeException e) {
             LOGGER.debug(e.getMessage(), e);
             LOGGER.warn(e.getMessage());
         }
 
-        return BaseResultList.createUnboundedList(Collections.emptyList());
+        return ResultPage.createUnboundedList(Collections.emptyList());
     }
 
     /**

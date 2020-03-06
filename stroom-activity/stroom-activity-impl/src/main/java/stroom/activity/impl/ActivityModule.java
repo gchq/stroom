@@ -3,15 +3,8 @@ package stroom.activity.impl;
 import com.google.inject.AbstractModule;
 import stroom.activity.api.ActivityService;
 import stroom.activity.api.CurrentActivity;
-import stroom.activity.shared.CreateActivityAction;
-import stroom.activity.shared.DeleteActivityAction;
-import stroom.activity.shared.FetchActivityAction;
-import stroom.activity.shared.FindActivityAction;
-import stroom.activity.shared.GetCurrentActivityAction;
-import stroom.activity.shared.SetCurrentActivityAction;
-import stroom.activity.shared.UpdateActivityAction;
-import stroom.activity.shared.ValidateActivityAction;
-import stroom.task.api.TaskHandlerBinder;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 public class ActivityModule extends AbstractModule {
     @Override
@@ -19,15 +12,8 @@ public class ActivityModule extends AbstractModule {
         bind(ActivityService.class).to(ActivityServiceImpl.class);
         bind(CurrentActivity.class).to(CurrentActivityImpl.class);
 
-        TaskHandlerBinder.create(binder())
-                .bind(CreateActivityAction.class, CreateActivityHandler.class)
-                .bind(UpdateActivityAction.class, UpdateActivityHandler.class)
-                .bind(DeleteActivityAction.class, DeleteActivityHandler.class)
-                .bind(FetchActivityAction.class, FetchActivityHandler.class)
-                .bind(FindActivityAction.class, FindActivityHandler.class)
-                .bind(GetCurrentActivityAction.class, GetCurrentActivityHandler.class)
-                .bind(SetCurrentActivityAction.class, SetCurrentActivityHandler.class)
-                .bind(ValidateActivityAction.class, ValidateActivityHandler.class);
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(ActivityResourceImpl.class);
     }
 
     @Override

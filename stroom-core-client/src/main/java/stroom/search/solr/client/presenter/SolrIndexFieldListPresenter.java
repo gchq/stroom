@@ -18,6 +18,7 @@
 package stroom.search.solr.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
@@ -30,7 +31,8 @@ import stroom.alert.client.event.ConfirmEvent;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
@@ -38,9 +40,9 @@ import stroom.document.client.event.HasDirtyHandlers;
 import stroom.entity.client.presenter.HasDocumentRead;
 import stroom.entity.client.presenter.HasWrite;
 import stroom.entity.client.presenter.ReadOnlyChangeHandler;
-import stroom.search.solr.shared.FetchSolrTypesAction;
 import stroom.search.solr.shared.SolrIndexDoc;
 import stroom.search.solr.shared.SolrIndexField;
+import stroom.search.solr.shared.SolrIndexResource;
 import stroom.search.solr.shared.SolrSynchState;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -57,9 +59,11 @@ import java.util.stream.Collectors;
 
 public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFieldListPresenter.SolrIndexFieldListView>
         implements HasDocumentRead<SolrIndexDoc>, HasWrite<SolrIndexDoc>, HasDirtyHandlers, ReadOnlyChangeHandler {
+    private static final SolrIndexResource SOLR_INDEX_RESOURCE = GWT.create(SolrIndexResource.class);
+
     private final DataGridView<SolrIndexField> dataGridView;
     private final SolrIndexFieldEditPresenter indexFieldEditPresenter;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private final ButtonView newButton;
     private final ButtonView editButton;
     private final ButtonView removeButton;
@@ -73,10 +77,10 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     public SolrIndexFieldListPresenter(final EventBus eventBus,
                                        final SolrIndexFieldListView view,
                                        final SolrIndexFieldEditPresenter indexFieldEditPresenter,
-                                       final ClientDispatchAsync dispatcher) {
+                                       final RestFactory restFactory) {
         super(eventBus, view);
         this.indexFieldEditPresenter = indexFieldEditPresenter;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         dataGridView = new DataGridViewImpl<>(true, true);
         view.setDataGridView(dataGridView);
@@ -272,16 +276,15 @@ public class SolrIndexFieldListPresenter extends MyPresenterWidget<SolrIndexFiel
     }
 
     private void fetchFieldTypes(final Consumer<List<String>> consumer) {
-        dispatcher.exec(new FetchSolrTypesAction(index))
-                .onSuccess(result -> {
-                    final List<String> fieldTypes = new ArrayList<>();
-                    result.forEach(sharedString -> fieldTypes.add(sharedString.toString()));
-                    consumer.accept(fieldTypes);
-                })
+        final Rest<List<String>> rest = restFactory.create();
+        rest
+                .onSuccess(consumer)
                 .onFailure(throwable -> AlertEvent.fireError(SolrIndexFieldListPresenter.this,
                         "Unable to connect to Solr please check connection",
                         throwable.getMessage(),
-                        null));
+                        null))
+                .call(SOLR_INDEX_RESOURCE)
+                .fetchSolrTypes(index);
     }
 
     private void onRemove() {

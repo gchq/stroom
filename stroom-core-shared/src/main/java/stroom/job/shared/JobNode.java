@@ -1,35 +1,89 @@
 package stroom.job.shared;
 
-import stroom.docref.SharedObject;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
 import java.util.Objects;
 
-public class JobNode implements HasAuditInfo, SharedObject {
+@JsonInclude(Include.NON_DEFAULT)
+public class JobNode implements HasAuditInfo {
+    @JsonProperty
     private Integer id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTimeMs;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private Long updateTimeMs;
+    @JsonProperty
     private String updateUser;
+    @JsonProperty
     private Job job;
-    private byte jobType = JobType.UNKNOWN.getPrimitiveValue();
+    @JsonProperty
+    private JobType jobType;
+    @JsonProperty
     private String nodeName;
-    private int taskLimit = 20;
+    @JsonProperty
+    private Integer taskLimit = 20;
+    @JsonProperty
     private String schedule;
+    @JsonProperty
     private boolean enabled;
 
     public JobNode() {
     }
 
-    public JobNode(final Integer id, final String nodeName, final Job job, final int taskLimit, final JobType jobType, final String schedule, final boolean enabled) {
+    public JobNode(final Integer id,
+                   final String nodeName,
+                   final Job job,
+                   final int taskLimit,
+                   final JobType jobType,
+                   final String schedule,
+                   final boolean enabled) {
         this.id = id;
         this.nodeName = nodeName;
         this.job = job;
         this.taskLimit = taskLimit;
-        this.jobType = jobType.primitiveValue;
+        this.jobType = jobType;
+        this.schedule = schedule;
+        this.enabled = enabled;
+    }
+
+    @JsonCreator
+    public JobNode(@JsonProperty("id") final Integer id,
+                   @JsonProperty("version") final Integer version,
+                   @JsonProperty("createTimeMs") final Long createTimeMs,
+                   @JsonProperty("createUser") final String createUser,
+                   @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                   @JsonProperty("updateUser") final String updateUser,
+                   @JsonProperty("job") final Job job,
+                   @JsonProperty("jobType") final JobType jobType,
+                   @JsonProperty("nodeName") final String nodeName,
+                   @JsonProperty("taskLimit") final Integer taskLimit,
+                   @JsonProperty("schedule") final String schedule,
+                   @JsonProperty("enabled") final boolean enabled) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.createUser = createUser;
+        this.updateTimeMs = updateTimeMs;
+        this.updateUser = updateUser;
+        this.job = job;
+        this.jobType = jobType;
+        this.nodeName = nodeName;
+        if (taskLimit != null) {
+            this.taskLimit = taskLimit;
+        } else {
+            this.taskLimit = 20;
+        }
         this.schedule = schedule;
         this.enabled = enabled;
     }
@@ -95,11 +149,11 @@ public class JobNode implements HasAuditInfo, SharedObject {
     }
 
     public JobType getJobType() {
-        return JobType.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(jobType);
+        return jobType;
     }
 
     public void setJobType(final JobType jobType) {
-        this.jobType = jobType.getPrimitiveValue();
+        this.jobType = jobType;
     }
 
     public String getNodeName() {

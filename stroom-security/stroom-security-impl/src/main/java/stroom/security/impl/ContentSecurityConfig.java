@@ -17,13 +17,14 @@
 package stroom.security.impl;
 
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ContentSecurityConfig implements IsConfig {
-    private String contentSecurityPolicy = "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; frame-ancestors 'self';";
+public class ContentSecurityConfig extends AbstractConfig {
+    private String contentSecurityPolicy = "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
+        "img-src 'self' data:; style-src 'self' 'unsafe-inline'; frame-ancestors 'self';";
     private String contentTypeOptions = "nosniff";
     private String frameOptions = "sameorigin";
     private String xssProtection = "1; mode=block";

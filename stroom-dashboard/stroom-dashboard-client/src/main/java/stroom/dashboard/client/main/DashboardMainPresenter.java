@@ -17,6 +17,7 @@
 
 package stroom.dashboard.client.main;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.ui.RootPanel;
@@ -35,11 +36,11 @@ import stroom.core.client.presenter.CorePresenter;
 import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainProxy;
 import stroom.dashboard.client.main.DashboardMainPresenter.DashboardMainView;
 import stroom.dashboard.shared.DashboardDoc;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dashboard.shared.DashboardResource;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.entity.shared.DocumentServiceReadAction;
-import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.client.api.event.CurrentUserChangedEvent;
 import stroom.security.client.api.event.CurrentUserChangedEvent.CurrentUserChangedHandler;
 
@@ -48,11 +49,13 @@ import javax.inject.Inject;
 public class DashboardMainPresenter
         extends MyPresenter<DashboardMainView, DashboardMainProxy>
         implements CurrentUserChangedHandler {
+    private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
+
     @ContentSlot
     public static final GwtEvent.Type<RevealContentHandler<?>> CONTENT = new GwtEvent.Type<>();
 
     private final DashboardPresenter dashboardPresenter;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
 
     private String type;
     private String uuid;
@@ -61,13 +64,12 @@ public class DashboardMainPresenter
     public DashboardMainPresenter(final EventBus eventBus,
                                   final DashboardMainView view,
                                   final DashboardMainProxy proxy,
-                                  final ClientSecurityContext securityContext,
-                                  final ClientDispatchAsync dispatcher,
+                                  final RestFactory restFactory,
                                   final DashboardPresenter dashboardPresenter,
                                   final UrlParameters urlParameters) {
         super(eventBus, view, proxy);
         this.dashboardPresenter = dashboardPresenter;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         type = urlParameters.getType();
         uuid = urlParameters.getUuid();
@@ -101,9 +103,12 @@ public class DashboardMainPresenter
 
         } else {
             final DocRef docRef = new DocRef(type, uuid);
-            dispatcher.exec(new DocumentServiceReadAction<DashboardDoc>(docRef))
+            final Rest<DashboardDoc> rest = restFactory.create();
+            rest
                     .onSuccess(this::onLoadSuccess)
-                    .onFailure(this::onLoadFailure);
+                    .onFailure(this::onLoadFailure)
+                    .call(DASHBOARD_RESOURCE)
+                    .read(docRef);
         }
     }
 

@@ -69,7 +69,7 @@ class TestStatisticsDataSource {
     void testListOrder1() {
         final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
-        assertThat(new ArrayList<>(sds.getConfig().getStatisticFields())).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)));
+        assertThat(new ArrayList<>(sds.getConfig().getFields())).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)));
 
         assertThat(getFieldNames(sds)).isEqualTo(Arrays.asList(FIELD1, FIELD2, FIELD3));
 
@@ -80,7 +80,7 @@ class TestStatisticsDataSource {
     void testListOrder2() {
         final StatisticStoreDoc sds = buildStatisticsDataSource(true);
 
-        assertThat(sds.getConfig().getStatisticFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)));
+        assertThat(sds.getConfig().getFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)));
 
         assertThat(getFieldNames(sds)).isEqualTo(Arrays.asList(FIELD1, FIELD2, FIELD3));
 
@@ -90,7 +90,7 @@ class TestStatisticsDataSource {
 
         sds.getConfig().removeStatisticField(new StatisticField(FIELD2));
 
-        assertThat(sds.getConfig().getStatisticFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD3)));
+        assertThat(sds.getConfig().getFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD3)));
 
         assertThat(getFieldNames(sds)).isEqualTo(Arrays.asList(FIELD1, FIELD3));
 
@@ -100,7 +100,7 @@ class TestStatisticsDataSource {
 
         sds.getConfig().addStatisticField(new StatisticField(FIELD2));
 
-        assertThat(sds.getConfig().getStatisticFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)));
+        assertThat(sds.getConfig().getFields()).isEqualTo(Arrays.asList(new StatisticField(FIELD1), new StatisticField(FIELD2), new StatisticField(FIELD3)));
 
         assertThat(getFieldNames(sds)).isEqualTo(Arrays.asList(FIELD1, FIELD2, FIELD3));
 
@@ -109,7 +109,7 @@ class TestStatisticsDataSource {
 
     private List<String> getFieldNames(final StatisticStoreDoc sds) {
         final List<String> list = new ArrayList<>();
-        for (final StatisticField statisticField : sds.getConfig().getStatisticFields()) {
+        for (final StatisticField statisticField : sds.getConfig().getFields()) {
             list.add(statisticField.getFieldName());
         }
         return list;

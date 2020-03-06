@@ -11,7 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.servicediscovery.api.RegisteredService;
 import stroom.util.HasHealthCheck;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -98,7 +98,7 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
                                                      final ServiceDiscovery<String> serviceDiscovery) {
         try {
             UriSpec uriSpec = new UriSpec("{scheme}://{address}:{port}" +
-                    ResourcePaths.API_PATH +
+                    ResourcePaths.API_ROOT_PATH +
                     registeredService.getVersionedPath());
 
             ServiceInstance<String> serviceInstance = ServiceInstance.<String>builder()

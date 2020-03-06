@@ -19,9 +19,8 @@ package stroom.task.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskIdFactory;
 import stroom.task.api.TaskManager;
-import stroom.task.shared.TerminateTaskProgressAction;
+import stroom.task.shared.FindTaskCriteria;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -56,12 +55,9 @@ class TaskManagerSessionListener implements HttpSessionListener {
                     // Manually set the id as we are invoking a UI Action Task
                     // directly
                     final String sessionId = event.getSession().getId();
-                    final ExtendedFindTaskCriteria criteria = new ExtendedFindTaskCriteria();
+                    final FindTaskCriteria criteria = new FindTaskCriteria();
                     criteria.setSessionId(sessionId);
-                    final TerminateTaskProgressAction action = new TerminateTaskProgressAction(
-                            "Terminate session: " + sessionId, criteria, false);
-                    action.setId(TaskIdFactory.create());
-                    taskManager.exec(action);
+                    taskManager.terminate(criteria, false);
                 });
             }
         } catch (final RuntimeException e) {

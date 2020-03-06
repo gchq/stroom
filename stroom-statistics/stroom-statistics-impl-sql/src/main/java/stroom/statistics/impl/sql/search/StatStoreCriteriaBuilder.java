@@ -10,7 +10,7 @@ import stroom.query.common.v2.DateExpressionParser;
 import stroom.statistics.impl.sql.rollup.RollUpBitMask;
 import stroom.statistics.impl.sql.shared.StatisticRollUpType;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.util.shared.Period;
+import stroom.util.Period;
 import stroom.util.shared.Range;
 
 import java.time.ZonedDateTime;
@@ -58,25 +58,27 @@ public class StatStoreCriteriaBuilder {
         ExpressionTerm dateTerm = null;
         if (childExpressions != null) {
             for (final ExpressionItem expressionItem : childExpressions) {
-                if (expressionItem instanceof ExpressionTerm) {
-                    final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
+                if (expressionItem.isEnabled()) {
+                    if (expressionItem instanceof ExpressionTerm) {
+                        final ExpressionTerm expressionTerm = (ExpressionTerm) expressionItem;
 
-                    if (expressionTerm.getField() == null) {
-                        throw new IllegalArgumentException("Expression term does not have a field specified");
-                    }
-
-                    if (expressionTerm.getField().equals(StatisticStoreDoc.FIELD_NAME_DATE_TIME)) {
-                        dateTermsFound++;
-
-                        if (SUPPORTED_DATE_CONDITIONS.contains(expressionTerm.getCondition())) {
-                            dateTerm = expressionTerm;
-                            validDateTermsFound++;
+                        if (expressionTerm.getField() == null) {
+                            throw new IllegalArgumentException("Expression term does not have a field specified");
                         }
-                    }
-                } else if (expressionItem instanceof ExpressionOperator) {
-                    if (((ExpressionOperator) expressionItem).getOp() == null) {
-                        throw new IllegalArgumentException(
+
+                        if (expressionTerm.getField().equals(StatisticStoreDoc.FIELD_NAME_DATE_TIME)) {
+                            dateTermsFound++;
+
+                            if (SUPPORTED_DATE_CONDITIONS.contains(expressionTerm.getCondition())) {
+                                dateTerm = expressionTerm;
+                                validDateTermsFound++;
+                            }
+                        }
+                    } else if (expressionItem instanceof ExpressionOperator) {
+                        if (((ExpressionOperator) expressionItem).getOp() == null) {
+                            throw new IllegalArgumentException(
                                 "An operator in the query is missing a type, it should be one of " + ExpressionOperator.Op.values());
+                        }
                     }
                 }
             }

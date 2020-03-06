@@ -16,19 +16,23 @@
 
 package stroom.task.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.CompareUtil;
+import stroom.util.shared.PageRequest;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
 
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-public class FindTaskProgressCriteria extends BaseCriteria implements Comparator<TaskProgress> {
-    private static final long serialVersionUID = 2014515855795611224L;
-
+@JsonInclude(Include.NON_DEFAULT)
+public class FindTaskProgressCriteria extends BaseCriteria {
     public static final String FIELD_NODE = "Node";
     public static final String FIELD_NAME = "Name";
     public static final String FIELD_USER = "User";
@@ -36,8 +40,35 @@ public class FindTaskProgressCriteria extends BaseCriteria implements Comparator
     public static final String FIELD_AGE = "Age";
     public static final String FIELD_INFO = "Info";
 
+    @JsonProperty
     private Set<TaskProgress> expandedTasks;
+    @JsonProperty
     private String nameFilter;
+    @JsonProperty
+    private String sessionId;
+
+    public FindTaskProgressCriteria() {
+    }
+
+    @JsonCreator
+    public FindTaskProgressCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                    @JsonProperty("sortList") final List<Sort> sortList,
+                                    @JsonProperty("expandedTasks") final Set<TaskProgress> expandedTasks,
+                                    @JsonProperty("nameFilter") final String nameFilter,
+                                    @JsonProperty("sessionId") final String sessionId) {
+        super(pageRequest, sortList);
+        this.expandedTasks = expandedTasks;
+        this.nameFilter = nameFilter;
+        this.sessionId = sessionId;
+    }
+
+    public Set<TaskProgress> getExpandedTasks() {
+        return expandedTasks;
+    }
+
+    public void setExpandedTasks(final Set<TaskProgress> expandedTasks) {
+        this.expandedTasks = expandedTasks;
+    }
 
     public String getNameFilter() {
         return nameFilter;
@@ -47,45 +78,12 @@ public class FindTaskProgressCriteria extends BaseCriteria implements Comparator
         this.nameFilter = nameFilter;
     }
 
-    @Override
-    public int compare(final TaskProgress o1, final TaskProgress o2) {
-        if (getSortList() != null) {
-            for (final Sort sort : getSortList()) {
-                final String field = sort.getField();
+    public String getSessionId() {
+        return sessionId;
+    }
 
-                int compare = 0;
-                switch (field) {
-                    case FIELD_NAME:
-                        compare = CompareUtil.compareString(o1.getTaskName(), o2.getTaskName());
-                        break;
-                    case FIELD_USER:
-                        compare = CompareUtil.compareString(o1.getUserName(), o2.getUserName());
-                        break;
-                    case FIELD_SUBMIT_TIME:
-                        compare = CompareUtil.compareLong(o1.getSubmitTimeMs(), o2.getSubmitTimeMs());
-                        break;
-                    case FIELD_AGE:
-                        compare = CompareUtil.compareLong(o1.getAgeMs(), o2.getAgeMs());
-                        break;
-                    case FIELD_INFO:
-                        compare = CompareUtil.compareString(o1.getTaskInfo(), o2.getTaskInfo());
-                        break;
-                    case FIELD_NODE:
-                        compare = CompareUtil.compareString(o1.getNodeName(), o2.getNodeName());
-                        break;
-                }
-
-                if (Direction.DESCENDING.equals(sort.getDirection())) {
-                    compare = compare * -1;
-                }
-
-                if (compare != 0) {
-                    return compare;
-                }
-            }
-        }
-
-        return 0;
+    public void setSessionId(final String sessionId) {
+        this.sessionId = sessionId;
     }
 
     public void setExpanded(final TaskProgress taskProgress, final boolean expanded) {

@@ -7,51 +7,80 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.impl.db.jooq.tables.records.ConfigRecord;
 import stroom.db.util.JooqUtil;
+import stroom.util.shared.ModelStringUtil;
+import stroom.util.time.StroomDuration;
 
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 
 import static stroom.config.impl.db.jooq.tables.Config.CONFIG;
 
-@SuppressWarnings("unused")
-        // used by FlyWay
+@SuppressWarnings("unused") // used by FlyWay
 public class V07_00_00_002__property_rename extends BaseJavaMigration {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_002__property_rename.class);
 
     // Pkg private so we can access it for testing
     static final Map<String, String> FROM_TO_MAP = new HashMap<>();
+    static final List<Mapping> MAPPINGS = new ArrayList<>();
+
+    // The mapping funcs are held as variables to save using the fully qualified name
+    private static final Function<String, String> MSU_2_DURATION =
+        V07_00_00_002__property_rename::modelStringDurationToDuration;
+    private static final Function<String, String> MSU_2_STROOM_DURATION =
+        V07_00_00_002__property_rename::modelStringDurationToStroomDuration;
+
+    static void map(final String oldName,
+                    final String newName,
+                    final Function<String, String> serialisationMappingFunc) {
+        MAPPINGS.add(new Mapping(oldName, newName, serialisationMappingFunc));
+    }
+
+    static void map(final String name,
+                    final Function<String, String> serialisationMappingFunc) {
+        MAPPINGS.add(new Mapping(name, name, serialisationMappingFunc));
+    }
+
+    static void map(final String oldName,
+                    final String newName) {
+        MAPPINGS.add(new Mapping(oldName, newName));
+    }
 
     static {
 
         // TODO what do we do about mapping c3po pool props to hikari?
+        //   Can we map some/any of them to equiv hikari props?
 
-        FROM_TO_MAP.put("stroom.aboutHTML", "stroom.ui.aboutHtml");
-        FROM_TO_MAP.put("stroom.activity.chooseOnStartup", "stroom.ui.activity.chooseOnStartup");
-        FROM_TO_MAP.put("stroom.activity.editorBody", "stroom.ui.activity.editorBody");
-        FROM_TO_MAP.put("stroom.activity.editorTitle", "stroom.ui.activity.editorTitle");
-        FROM_TO_MAP.put("stroom.activity.enabled", "stroom.ui.activity.enabled");
-        FROM_TO_MAP.put("stroom.activity.managerTitle", "stroom.ui.activity.managerTitle");
-        FROM_TO_MAP.put("stroom.advertisedUrl", "stroom.ui.url.ui");
-        FROM_TO_MAP.put("stroom.auth.authentication.service.url", "stroom.security.authentication.authenticationServiceUrl");
-        FROM_TO_MAP.put("stroom.auth.jwt.enabletokenrevocationcheck", "stroom.security.authentication.jwt.enableTokenRevocationCheck");
-        FROM_TO_MAP.put("stroom.auth.jwt.issuer", "stroom.security.authentication.jwt.jwtIssuer");
-        FROM_TO_MAP.put("stroom.auth.services.url", "stroom.security.authentication.authServicesBaseUrl");
-        FROM_TO_MAP.put("stroom.authentication.required", "stroom.security.authentication.authenticationRequired");
+        map("stroom.aboutHTML", "stroom.ui.aboutHtml");
+        map("stroom.activity.chooseOnStartup", "stroom.ui.activity.chooseOnStartup");
+        map("stroom.activity.editorBody", "stroom.ui.activity.editorBody");
+        map("stroom.activity.editorTitle", "stroom.ui.activity.editorTitle");
+        map("stroom.activity.enabled", "stroom.ui.activity.enabled");
+        map("stroom.activity.managerTitle", "stroom.ui.activity.managerTitle");
+        map("stroom.advertisedUrl", "stroom.ui.url.ui");
+        map("stroom.auth.authentication.service.url", "stroom.security.authentication.authenticationServiceUrl");
+        map("stroom.auth.jwt.enabletokenrevocationcheck", "stroom.security.authentication.jwt.enableTokenRevocationCheck");
+        map("stroom.auth.jwt.issuer", "stroom.security.authentication.jwt.jwtIssuer");
+        map("stroom.auth.services.url", "stroom.security.authentication.authServicesBaseUrl");
+        map("stroom.authentication.required", "stroom.security.authentication.authenticationRequired");
         // same names in 6 & master
         // stroom.benchmark.concurrentWriters
         // stroom.benchmark.recordCount
         // stroom.benchmark.streamCount
-        FROM_TO_MAP.put("stroom.bufferSize", "stroom.receive.bufferSize");
-        FROM_TO_MAP.put("stroom.clusterCallIgnoreSSLHostnameVerifier", "stroom.cluster.clusterCallIgnoreSSLHostnameVerifier");
-        FROM_TO_MAP.put("stroom.clusterCallReadTimeout", "stroom.cluster.clusterCallReadTimeout");
-        FROM_TO_MAP.put("stroom.clusterCallUseLocal", "stroom.cluster.clusterCallUseLocal");
-        FROM_TO_MAP.put("stroom.clusterResponseTimeout", "stroom.cluster.clusterResponseTimeout");
-        FROM_TO_MAP.put("stroom.contentPackImportEnabled", "stroom.contentPackImport.enabled");
-        FROM_TO_MAP.put("stroom.dashboard.defaultMaxResults", "stroom.ui.defaultMaxResults");
-        FROM_TO_MAP.put("stroom.databaseMultiInsertMaxBatchSize", "stroom.processor.databaseMultiInsertMaxBatchSize");
+        map("stroom.bufferSize", "stroom.receive.bufferSize");
+        map("stroom.clusterCallIgnoreSSLHostnameVerifier", "stroom.cluster.clusterCallIgnoreSSLHostnameVerifier");
+        map("stroom.clusterCallReadTimeout", "stroom.cluster.clusterCallReadTimeout", MSU_2_STROOM_DURATION);
+        map("stroom.clusterCallUseLocal", "stroom.cluster.clusterCallUseLocal");
+        map("stroom.clusterResponseTimeout", "stroom.cluster.clusterResponseTimeout", MSU_2_STROOM_DURATION);
+        map("stroom.contentPackImportEnabled", "stroom.contentPackImport.enabled");
+        map("stroom.dashboard.defaultMaxResults", "stroom.ui.defaultMaxResults");
+        map("stroom.databaseMultiInsertMaxBatchSize", "stroom.processor.databaseMultiInsertMaxBatchSize");
         // TODO how to map connection pool props?
         // stroom.db.connectionPool.acquireIncrement
         // stroom.db.connectionPool.acquireRetryAttempts
@@ -68,11 +97,11 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
         // stroom.db.connectionPool.unreturnedConnectionTimeout
         // stroom.export.enabled
         // stroom.feed.receiptPolicyUuid
-        FROM_TO_MAP.put("stroom.feedNamePattern", "stroom.feed.feedNamePattern");
-        FROM_TO_MAP.put("stroom.fileSystemCleanBatchSize", "stroom.data.store.fileSystemCleanBatchSize");
-        FROM_TO_MAP.put("stroom.fileSystemCleanDeleteOut", "stroom.data.store.fileSystemCleanDeleteOut");
-        FROM_TO_MAP.put("stroom.fileSystemCleanOldAge", "stroom.data.store.fileSystemCleanOldAge");
-        FROM_TO_MAP.put("stroom.helpUrl", "stroom.ui.helpUrl");
+        map("stroom.feedNamePattern", "stroom.feed.feedNamePattern");
+        map("stroom.fileSystemCleanBatchSize", "stroom.data.store.fileSystemCleanBatchSize");
+        map("stroom.fileSystemCleanDeleteOut", "stroom.data.store.fileSystemCleanDeleteOut");
+        map("stroom.fileSystemCleanOldAge", "stroom.data.store.fileSystemCleanOldAge", MSU_2_STROOM_DURATION);
+        map("stroom.helpUrl", "stroom.ui.helpUrl");
 
         // same names in 6 & master
         // stroom.index.ramBufferSizeMB
@@ -82,21 +111,21 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
         // stroom.index.writer.cache.timeToIdle
         // stroom.index.writer.cache.timeToLive
 
-        FROM_TO_MAP.put("stroom.internalstatistics.benchmarkCluster.docRefs", "stroom.statistics.internal.benchmarkCluster");
-        FROM_TO_MAP.put("stroom.internalstatistics.cpu.docRefs", "stroom.statistics.internal.cpu");
-        FROM_TO_MAP.put("stroom.internalstatistics.eventsPerSecond.docRefs", "stroom.statistics.internal.eventsPerSecond");
-        FROM_TO_MAP.put("stroom.internalstatistics.heapHistogramBytes.docRefs", "stroom.statistics.internal.heapHistogramBytes");
-        FROM_TO_MAP.put("stroom.internalstatistics.heapHistogramInstances.docRefs", "stroom.statistics.internal.heapHistogramInstances");
-        FROM_TO_MAP.put("stroom.internalstatistics.memory.docRefs", "stroom.statistics.internal.memory");
-        FROM_TO_MAP.put("stroom.internalstatistics.metaDataStreamSize.docRefs", "stroom.statistics.internal.metaDataStreamSize");
-        FROM_TO_MAP.put("stroom.internalstatistics.metaDataStreamsReceived.docRefs", "stroom.statistics.internal.metaDataStreamsReceived");
-        FROM_TO_MAP.put("stroom.internalstatistics.pipelineStreamProcessor.docRefs", "stroom.statistics.internal.pipelineStreamProcessor");
-        FROM_TO_MAP.put("stroom.internalstatistics.streamTaskQueueSize.docRefs", "stroom.statistics.internal.streamTaskQueueSize");
-        FROM_TO_MAP.put("stroom.internalstatistics.volumes.docRefs", "stroom.statistics.internal.volumes");
-        FROM_TO_MAP.put("stroom.jdbcDriverClassName", "stroom.core.db.connection.jdbcDriverClassName");
-        FROM_TO_MAP.put("stroom.jdbcDriverPassword", "stroom.core.db.connection.jdbcDriverPassword");
-        FROM_TO_MAP.put("stroom.jdbcDriverUrl", "stroom.core.db.connection.jdbcDriverUrl");
-        FROM_TO_MAP.put("stroom.jdbcDriverUsername", "stroom.core.db.connection.jdbcDriverUsername");
+        map("stroom.internalstatistics.benchmarkCluster.docRefs", "stroom.statistics.internal.benchmarkCluster");
+        map("stroom.internalstatistics.cpu.docRefs", "stroom.statistics.internal.cpu");
+        map("stroom.internalstatistics.eventsPerSecond.docRefs", "stroom.statistics.internal.eventsPerSecond");
+        map("stroom.internalstatistics.heapHistogramBytes.docRefs", "stroom.statistics.internal.heapHistogramBytes");
+        map("stroom.internalstatistics.heapHistogramInstances.docRefs", "stroom.statistics.internal.heapHistogramInstances");
+        map("stroom.internalstatistics.memory.docRefs", "stroom.statistics.internal.memory");
+        map("stroom.internalstatistics.metaDataStreamSize.docRefs", "stroom.statistics.internal.metaDataStreamSize");
+        map("stroom.internalstatistics.metaDataStreamsReceived.docRefs", "stroom.statistics.internal.metaDataStreamsReceived");
+        map("stroom.internalstatistics.pipelineStreamProcessor.docRefs", "stroom.statistics.internal.pipelineStreamProcessor");
+        map("stroom.internalstatistics.streamTaskQueueSize.docRefs", "stroom.statistics.internal.streamTaskQueueSize");
+        map("stroom.internalstatistics.volumes.docRefs", "stroom.statistics.internal.volumes");
+        map("stroom.jdbcDriverClassName", "stroom.core.db.connection.jdbcDriverClassName");
+        map("stroom.jdbcDriverPassword", "stroom.core.db.connection.jdbcDriverPassword");
+        map("stroom.jdbcDriverUrl", "stroom.core.db.connection.jdbcDriverUrl");
+        map("stroom.jdbcDriverUsername", "stroom.core.db.connection.jdbcDriverUsername");
 
         // same names in 6 & master
         // stroom.lifecycle.enabled
@@ -108,20 +137,20 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
         // Now handled by auth service
         // stroom.loginHTML
 
-        FROM_TO_MAP.put("stroom.maintenance.message", "stroom.ui.maintenanceMessage");
-        FROM_TO_MAP.put("stroom.maintenance.preventLogin", "stroom.security.authentication.preventLogin");
-        FROM_TO_MAP.put("stroom.maxAggregation", "stroom.proxyAggregation.maxFilesPerAggregate");
-        FROM_TO_MAP.put("stroom.maxAggregationScan", "stroom.proxyAggregation.maxFileScan");
-        FROM_TO_MAP.put("stroom.maxStreamSize", "stroom.proxyAggregation.maxUncompressedFileSize");
-        FROM_TO_MAP.put("stroom.namePattern", "stroom.ui.namePattern");
-        FROM_TO_MAP.put("stroom.node", "stroom.node.node");
+        map("stroom.maintenance.message", "stroom.ui.maintenanceMessage");
+        map("stroom.maintenance.preventLogin", "stroom.security.authentication.preventLogin");
+        map("stroom.maxAggregation", "stroom.proxyAggregation.maxFilesPerAggregate");
+        map("stroom.maxAggregationScan", "stroom.proxyAggregation.maxFileScan");
+        map("stroom.maxStreamSize", "stroom.proxyAggregation.maxUncompressedFileSize");
+        map("stroom.namePattern", "stroom.ui.namePattern");
+        map("stroom.node", "stroom.node.name");
 
         // Same names in 6 & master
         // stroom.node.status.heapHistogram.classNameMatchRegex
         // stroom.node.status.heapHistogram.classNameReplacementRegex
         // stroom.node.status.heapHistogram.jMapExecutable
 
-        FROM_TO_MAP.put("stroom.pageTitle", "stroom.ui.htmlTitle");
+        map("stroom.pageTitle", "stroom.ui.htmlTitle");
 
         // Same names in 6 & master
         // stroom.pipeline.appender.maxActiveDestinations
@@ -132,13 +161,13 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
         // stroom.proxy.store.format ?
         // stroom.proxy.store.rollCron ?
 
-        FROM_TO_MAP.put("stroom.proxyDir", "stroom.proxyAggregation.proxyDir");
-        FROM_TO_MAP.put("stroom.proxyThreads", "stroom.proxyAggregation.proxyThreads");
-        FROM_TO_MAP.put("stroom.query.history.daysRetention", "stroom.queryHistory.daysRetention");
-        FROM_TO_MAP.put("stroom.query.history.itemsRetention", "stroom.queryHistory.itemsRetention");
-        FROM_TO_MAP.put("stroom.query.infoPopup.enabled", "stroom.ui.query.infoPopup.enabled");
-        FROM_TO_MAP.put("stroom.query.infoPopup.title", "stroom.ui.query.infoPopup.title");
-        FROM_TO_MAP.put("stroom.query.infoPopup.validationRegex", "stroom.ui.query.infoPopup.validationRegex");
+        map("stroom.proxyDir", "stroom.proxyAggregation.proxyDir");
+        map("stroom.proxyThreads", "stroom.proxyAggregation.proxyThreads");
+        map("stroom.query.history.daysRetention", "stroom.queryHistory.daysRetention");
+        map("stroom.query.history.itemsRetention", "stroom.queryHistory.itemsRetention");
+        map("stroom.query.infoPopup.enabled", "stroom.ui.query.infoPopup.enabled");
+        map("stroom.query.infoPopup.title", "stroom.ui.query.infoPopup.title");
+        map("stroom.query.infoPopup.validationRegex", "stroom.ui.query.infoPopup.validationRegex");
 
         // Same name in 6 & master
         // stroom.search.impl.extraction.maxThreads
@@ -146,8 +175,8 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
         // stroom.search.maxBooleanClauseCount
         // stroom.search.maxStoredDataQueueSize
 
-        FROM_TO_MAP.put("stroom.search.process.defaultRecordLimit", "stroom.ui.process.defaultRecordLimit");
-        FROM_TO_MAP.put("stroom.search.process.defaultTimeLimit", "stroom.ui.process.defaultTimeLimit");
+        map("stroom.search.process.defaultRecordLimit", "stroom.ui.process.defaultRecordLimit");
+        map("stroom.search.process.defaultTimeLimit", "stroom.ui.process.defaultTimeLimit");
 
         // Same name in 6 & master
         // stroom.search.impl.shard.maxDocIdQueueSize
@@ -155,10 +184,10 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
         // stroom.search.impl.shard.maxThreadsPerTask
         // stroom.search.storeSize
 
-        FROM_TO_MAP.put("stroom.security.userNamePattern", "stroom.security.authentication.userNamePattern");
-        FROM_TO_MAP.put("stroom.serviceDiscovery.curator.baseSleepTimeMs", "stroom.serviceDiscovery.curatorBaseSleepTimeMs");
-        FROM_TO_MAP.put("stroom.serviceDiscovery.curator.maxRetries", "stroom.serviceDiscovery.curatorMaxRetries");
-        FROM_TO_MAP.put("stroom.serviceDiscovery.curator.maxSleepTimeMs", "stroom.serviceDiscovery.curatorMaxSleepTimeMs");
+        map("stroom.security.userNamePattern", "stroom.security.authentication.userNamePattern");
+        map("stroom.serviceDiscovery.curator.baseSleepTimeMs", "stroom.serviceDiscovery.curatorBaseSleepTimeMs");
+        map("stroom.serviceDiscovery.curator.maxRetries", "stroom.serviceDiscovery.curatorMaxRetries");
+        map("stroom.serviceDiscovery.curator.maxSleepTimeMs", "stroom.serviceDiscovery.curatorMaxSleepTimeMs");
 
         // TODO need to figure out what we are doing with service disco
         // stroom.serviceDiscovery.enabled
@@ -183,14 +212,14 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
         // ? stroom.services.stroomStats.name ?
         // ? stroom.services.stroomStats.version ?
 
-        FROM_TO_MAP.put("stroom.services.stroomStats.internalStats.eventsPerMessage", "stroom.statistics.hbase.eventsPerMessage");
-        FROM_TO_MAP.put("stroom.services.stroomStats.kafkaTopics.count", "stroom.statistics.hbase.kafkaTopics.count");
-        FROM_TO_MAP.put("stroom.services.stroomStats.kafkaTopics.value", "stroom.statistics.hbase.kafkaTopics.value");
+        map("stroom.services.stroomStats.internalStats.eventsPerMessage", "stroom.statistics.hbase.eventsPerMessage");
+        map("stroom.services.stroomStats.kafkaTopics.count", "stroom.statistics.hbase.kafkaTopics.count");
+        map("stroom.services.stroomStats.kafkaTopics.value", "stroom.statistics.hbase.kafkaTopics.value");
 
-        FROM_TO_MAP.put("stroom.splash.body", "stroom.ui.splash.body");
-        FROM_TO_MAP.put("stroom.splash.enabled", "stroom.ui.splash.enabled");
-        FROM_TO_MAP.put("stroom.splash.title", "stroom.ui.splash.title");
-        FROM_TO_MAP.put("stroom.splash.version", "stroom.ui.splash.version");
+        map("stroom.splash.body", "stroom.ui.splash.body");
+        map("stroom.splash.enabled", "stroom.ui.splash.enabled");
+        map("stroom.splash.title", "stroom.ui.splash.title");
+        map("stroom.splash.version", "stroom.ui.splash.version");
 
         // No longer used, stat doc entities are totally separate
         // stroom.statistics.impl.common.statisticEngines
@@ -210,13 +239,13 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
         // ? stroom.statistics.sql.db.connectionPool.numHelperThreads
         // ? stroom.statistics.sql.db.connectionPool.unreturnedConnectionTimeout
 
-        FROM_TO_MAP.put("stroom.statistics.sql.jdbcDriverClassName", "stroom.statistics.sql.db.connection.jdbcDriverClassName");
-        FROM_TO_MAP.put("stroom.statistics.sql.jdbcDriverPassword", "stroom.statistics.sql.db.connection.jdbcDriverPassword");
-        FROM_TO_MAP.put("stroom.statistics.sql.jdbcDriverUrl", "stroom.statistics.sql.db.connection.jdbcDriverUrl");
-        FROM_TO_MAP.put("stroom.statistics.sql.jdbcDriverUsername", "stroom.statistics.sql.db.connection.jdbcDriverUsername");
+        map("stroom.statistics.sql.jdbcDriverClassName", "stroom.statistics.sql.db.connection.jdbcDriverClassName");
+        map("stroom.statistics.sql.jdbcDriverPassword", "stroom.statistics.sql.db.connection.jdbcDriverPassword");
+        map("stroom.statistics.sql.jdbcDriverUrl", "stroom.statistics.sql.db.connection.jdbcDriverUrl");
+        map("stroom.statistics.sql.jdbcDriverUsername", "stroom.statistics.sql.db.connection.jdbcDriverUsername");
 
         // Same names in 6 & master
-        // stroom.statistics.sql.maxProcessingAge
+        map("stroom.statistics.sql.maxProcessingAge", MSU_2_STROOM_DURATION);
         // stroom.statistics.impl.sql.search.fetchSize
         // stroom.statistics.impl.sql.search.maxResults
         // stroom.statistics.impl.sql.search.resultHandlerBatchSize
@@ -224,37 +253,37 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
 
         // TODO lots of options for these; stroom.data.store, stroom.policy, stroom.process
         // ? stroom.stream.deleteBatchSize ? stroom.data.store.deleteBatchSize
-        // ? stroom.stream.deletePurgeAge ? stroom.data.store.deletePurgeAge
-        // ? stroom.streamAttribute.deleteAge ? stroom.process.deleteAge
+        // ? stroom.stream.deletePurgeAge ? stroom.data.store.deletePurgeAge //TODO map to StroomDuration
+        // ? stroom.streamAttribute.deleteAge ? stroom.process.deleteAge //TODO map to StroomDuration
         // ? stroom.streamAttribute.deleteBatchSize ?
 
-        FROM_TO_MAP.put("stroom.streamTask.assignTasks", "stroom.processor.assignTasks");
-        FROM_TO_MAP.put("stroom.streamTask.createTasks", "stroom.processor.createTasks");
+        map("stroom.streamTask.assignTasks", "stroom.processor.assignTasks");
+        map("stroom.streamTask.createTasks", "stroom.processor.createTasks");
 
         // TODO lots of options for these; stroom.data.store, stroom.policy, stroom.process
-        // ? stroom.streamTask.deleteAge ? stroom.process.deleteAge
+        // ? stroom.streamTask.deleteAge ? stroom.process.deleteAge //TODO map to StroomDuration
         // ? stroom.streamTask.deleteBatchSize ?
 
-        FROM_TO_MAP.put("stroom.streamTask.fillTaskQueue", "stroom.processor.fillTaskQueue");
-        FROM_TO_MAP.put("stroom.streamTask.queueSize", "stroom.processor.queueSize");
-        FROM_TO_MAP.put("stroom.streamstore.preferLocalVolumes", "stroom.volumes.preferLocalVolumes");
-        FROM_TO_MAP.put("stroom.streamstore.resilientReplicationCount", "stroom.volumes.resilientReplicationCount");
-        FROM_TO_MAP.put("stroom.streamstore.volumeSelector", "stroom.volumes.volumeSelector");
-        FROM_TO_MAP.put("stroom.theme.background-attachment", "stroom.ui.theme.backgroundAttachment");
-        FROM_TO_MAP.put("stroom.theme.background-color", "stroom.ui.theme.backgroundColor");
-        FROM_TO_MAP.put("stroom.theme.background-image", "stroom.ui.theme.backgroundImage");
-        FROM_TO_MAP.put("stroom.theme.background-opacity", "stroom.ui.theme.backgroundOpacity");
-        FROM_TO_MAP.put("stroom.theme.background-position", "stroom.ui.theme.backgroundPosition");
-        FROM_TO_MAP.put("stroom.theme.background-repeat", "stroom.ui.theme.backgroundRepeat");
-        FROM_TO_MAP.put("stroom.theme.labelColours", "stroom.ui.theme.labelColours");
-        FROM_TO_MAP.put("stroom.theme.tube.opacity", "stroom.ui.theme.tubeOpacity");
-        FROM_TO_MAP.put("stroom.theme.tube.visible", "stroom.ui.theme.tubeVisible");
-        FROM_TO_MAP.put("stroom.unknownClassification", "stroom.ui.theme.tubeVisible");
+        map("stroom.streamTask.fillTaskQueue", "stroom.processor.fillTaskQueue");
+        map("stroom.streamTask.queueSize", "stroom.processor.queueSize");
+        map("stroom.streamstore.preferLocalVolumes", "stroom.volumes.preferLocalVolumes");
+        map("stroom.streamstore.resilientReplicationCount", "stroom.volumes.resilientReplicationCount");
+        map("stroom.streamstore.volumeSelector", "stroom.volumes.volumeSelector");
+        map("stroom.theme.background-attachment", "stroom.ui.theme.backgroundAttachment");
+        map("stroom.theme.background-color", "stroom.ui.theme.backgroundColor");
+        map("stroom.theme.background-image", "stroom.ui.theme.backgroundImage");
+        map("stroom.theme.background-opacity", "stroom.ui.theme.backgroundOpacity");
+        map("stroom.theme.background-position", "stroom.ui.theme.backgroundPosition");
+        map("stroom.theme.background-repeat", "stroom.ui.theme.backgroundRepeat");
+        map("stroom.theme.labelColours", "stroom.ui.theme.labelColours");
+        map("stroom.theme.tube.opacity", "stroom.ui.theme.tubeOpacity");
+        map("stroom.theme.tube.visible", "stroom.ui.theme.tubeVisible");
+        map("stroom.unknownClassification", "stroom.ui.theme.tubeVisible");
 
         // Same name in 6 & master
         // stroom.volumes.createDefaultOnStart
 
-        FROM_TO_MAP.put("stroom.welcomeHTML", "stroom.ui.welcomeHtml");
+        map("stroom.welcomeHTML", "stroom.ui.welcomeHtml");
     }
 
     @Override
@@ -266,22 +295,29 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
 //            loadTestDataForManualTesting(create);
 
             // Rename some property names
-            FROM_TO_MAP.entrySet().stream()
-                    .sorted(Comparator.comparing(Map.Entry::getKey))
-                    .forEach(entry -> {
-                        final String from = entry.getKey();
-                        final String to = entry.getValue();
+            MAPPINGS.stream()
+                    .sorted(Comparator.comparing(Mapping::getOldName))
+                    .forEach(mapping -> {
 
                         final Optional<ConfigRecord> optRec = context
                                 .selectFrom(CONFIG)
-                                .where(CONFIG.NAME.eq(from))
+                                .where(CONFIG.NAME.eq(mapping.getOldName()))
                                 .fetchOptional();
 
                         optRec.ifPresent(rec -> {
                             // We can't validate the dest key as we don't know if the java model
                             // is applicable to this mig script.
-                            LOGGER.info("Renaming DB property {} to {}", from, to);
-                            rec.setName(to);
+                            LOGGER.info("Renaming DB property {} to {}", mapping.getOldName(), mapping.getNewName());
+                            rec.setName(mapping.getNewName());
+                            String oldValue = rec.getVal();
+                            if (oldValue != null && !oldValue.isEmpty()) {
+                                String newValue = mapping.serialisationMappingFunc.apply(oldValue);
+                                if (!oldValue.equals(newValue)) {
+                                    LOGGER.info("  Changing value of DB property {} from [{}] to [{}]",
+                                        mapping.getOldName(), oldValue, newValue);
+                                    rec.setVal(newValue);
+                                }
+                            }
                             rec.store();
                         });
                     });
@@ -327,5 +363,68 @@ public class V07_00_00_002__property_rename extends BaseJavaMigration {
                         .columns(CONFIG.NAME, CONFIG.VAL)
                         .values(key, value)
                         .execute());
+    }
+
+    private static class Mapping {
+        private final String oldName;
+        private final String newName;
+        private final Function<String, String> serialisationMappingFunc;
+
+        private Mapping(final String oldName, final String newName, final Function<String, String> serialisationMappingFunc) {
+            this.oldName = oldName;
+            this.newName = newName;
+            this.serialisationMappingFunc = serialisationMappingFunc;
+        }
+
+        private Mapping(final String oldName, final String newName) {
+            this(oldName, newName, Function.identity());
+        }
+
+        String getOldName() {
+            return oldName;
+        }
+
+        String getNewName() {
+            return newName;
+        }
+
+        Function<String, String> getSerialisationMappingFunc() {
+            return serialisationMappingFunc;
+        }
+    }
+
+    /**
+     * ModelString e.g. 30d to an ISO-8601 duration string, e.g. P30D
+     */
+    static String modelStringDurationToDuration(final String oldValue) {
+        if (oldValue == null) {
+           return null;
+        } else if (oldValue.isBlank()) {
+            return "";
+        } else if (oldValue.matches("^[0-9]+[dD]$")) {
+            // special case for days to stop Duration turning them into hours
+            // e.g. 30d becomes PT720H rather than P30D
+            String daysPart = oldValue.replaceAll("[dD]$","");
+            return Duration.parse("P" + daysPart + "D").toString();
+        } else {
+            final Long durationMs = ModelStringUtil.parseDurationString(oldValue);
+            return Duration.ofMillis(durationMs).toString();
+        }
+    }
+
+    /**
+     * ModelString e.g. 30d to an ISO-8601 duration string, e.g. P30D
+     */
+    static String modelStringDurationToStroomDuration(final String oldValue) {
+        if (oldValue == null) {
+            return null;
+        } else if (oldValue.isBlank()) {
+            return "";
+        } else {
+            StroomDuration stroomDuration = StroomDuration.parse(oldValue);
+            // We want the ISO format so create a new one with the underlying duration so we
+            // lose the old string format
+            return StroomDuration.of(stroomDuration.getDuration()).toString();
+        }
     }
 }

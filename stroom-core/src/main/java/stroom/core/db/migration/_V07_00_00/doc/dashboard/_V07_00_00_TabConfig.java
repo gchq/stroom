@@ -45,7 +45,6 @@ public class _V07_00_00_TabConfig implements _V07_00_00_SharedObject {
     private transient _V07_00_00_TabLayoutConfig parent;
 
     public _V07_00_00_TabConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public String getId() {

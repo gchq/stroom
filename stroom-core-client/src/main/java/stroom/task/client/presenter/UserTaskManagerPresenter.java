@@ -16,6 +16,7 @@
 
 package stroom.task.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -26,17 +27,24 @@ import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.node.shared.FetchNodeStatusResponse;
+import stroom.node.shared.NodeResource;
+import stroom.node.shared.NodeStatusResult;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.task.client.event.OpenUserTaskManagerHandler;
 import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerProxy;
 import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerView;
 import stroom.task.shared.FindTaskCriteria;
-import stroom.task.shared.FindUserTaskProgressAction;
+import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
-import stroom.task.shared.TerminateTaskProgressAction;
-import stroom.util.shared.BaseResultList;
+import stroom.task.shared.TaskProgressResponse;
+import stroom.task.shared.TaskResource;
+import stroom.task.shared.TerminateTaskProgressRequest;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.Sort.Direction;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
@@ -45,26 +53,37 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 public class UserTaskManagerPresenter
         extends Presenter<UserTaskManagerView, UserTaskManagerProxy>
         implements OpenUserTaskManagerHandler, UserTaskUiHandlers {
+    private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
+    private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
+
     private final Provider<UserTaskPresenter> taskPresenterProvider;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private final Map<TaskProgress, UserTaskPresenter> taskPresenterMap = new HashMap<>();
     private final Map<TaskId, TaskProgress> idMap = new HashMap<>();
     private final Set<TaskId> requestTaskKillSet = new HashSet<>();
     private final Timer refreshTimer;
     private boolean visible;
-    private boolean refreshing;
+    private final Set<String> refreshing = new HashSet<>();
+
+    private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
+
+    private FetchNodeStatusResponse fetchNodeStatusResponse;
+
+    private final FindTaskProgressCriteria criteria;
+
     @Inject
     public UserTaskManagerPresenter(final EventBus eventBus, final UserTaskManagerView view, final UserTaskManagerProxy proxy,
-                                    final Provider<UserTaskPresenter> taskPresenterProvider, final ClientDispatchAsync dispatcher) {
+                                    final Provider<UserTaskPresenter> taskPresenterProvider, final RestFactory restFactory) {
         super(eventBus, view, proxy);
         this.taskPresenterProvider = taskPresenterProvider;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         refreshTimer = new Timer() {
             @Override
@@ -72,21 +91,24 @@ public class UserTaskManagerPresenter
                 refreshTaskStatus();
             }
         };
+
+        criteria = new FindTaskProgressCriteria();
+        criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
     }
 
     @ProxyEvent
     @Override
     public void onOpen(final OpenTaskManagerEvent event) {
-        refresh(null);
+        setData(null);
         refreshTimer.scheduleRepeating(1000);
-        refreshing = false;
+        refreshing.clear();
         visible = true;
 
         final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
             @Override
             public void onHideRequest(final boolean autoClose, final boolean ok) {
                 refreshTimer.cancel();
-                refreshing = false;
+                refreshing.clear();
                 visible = false;
 
                 HidePopupEvent.fire(UserTaskManagerPresenter.this, UserTaskManagerPresenter.this);
@@ -98,34 +120,61 @@ public class UserTaskManagerPresenter
 
     private void refreshTaskStatus() {
         // Stop this refreshing more than once before the call returns.
-        if (!refreshing) {
-            refreshing = true;
-
-            final FindUserTaskProgressAction action = new FindUserTaskProgressAction();
-            dispatcher.exec(action)
-                    .onSuccess(result -> {
-                        final HashSet<TaskId> idSet = new HashSet<>();
-                        for (final TaskProgress value : result) {
-                            idSet.add(value.getId());
-                        }
-                        requestTaskKillSet.retainAll(idSet);
-
-                        // Refresh the display.
-                        refresh(result);
-
-                        refreshing = false;
-                    })
-                    .onFailure(caught -> refreshing = false);
+        if (fetchNodeStatusResponse == null) {
+            final Rest<FetchNodeStatusResponse> rest = restFactory.create();
+            rest.onSuccess(this::refresh).call(NODE_RESOURCE).list();
+        } else {
+            refresh(fetchNodeStatusResponse);
         }
     }
 
-    private void refresh(final BaseResultList<TaskProgress> result) {
+    private void refresh(final FetchNodeStatusResponse fetchNodeStatusResponse) {
+        // Store node list for suture queries.
+        this.fetchNodeStatusResponse = fetchNodeStatusResponse;
+        for (final NodeStatusResult nodeStatusResult : fetchNodeStatusResponse.getValues()) {
+            final String nodeName = nodeStatusResult.getNode().getName();
+
+            if (!refreshing.contains(nodeName)) {
+                refreshing.add(nodeName);
+                final Rest<TaskProgressResponse> rest = restFactory.create();
+                rest
+                        .onSuccess(response -> {
+                            responseMap.put(nodeName, response.getValues());
+                            update();
+                            refreshing.remove(nodeName);
+                        })
+                        .onFailure(throwable -> {
+                            responseMap.remove(nodeName);
+                            update();
+                            refreshing.remove(nodeName);
+                        })
+                        .call(TASK_RESOURCE)
+                        .userTasks(nodeName);
+            }
+        }
+    }
+
+    private void update() {
+        // Combine data from all nodes.
+        final ResultPage<TaskProgress> list = TaskProgressUtil.combine(criteria, responseMap.values());
+
+        final HashSet<TaskId> idSet = new HashSet<>();
+        for (final TaskProgress value : list.getValues()) {
+            idSet.add(value.getId());
+        }
+        requestTaskKillSet.retainAll(idSet);
+
+        // Refresh the display.
+        setData(list);
+    }
+
+    private void setData(ResultPage<TaskProgress> list) {
         if (visible) {
             final Set<UserTaskPresenter> tasksToRemove = new HashSet<>(taskPresenterMap.values());
 
             idMap.clear();
-            if (result != null) {
-                for (final TaskProgress taskProgress : result) {
+            if (list != null) {
+                for (final TaskProgress taskProgress : list.getValues()) {
                     final TaskId thisId = taskProgress.getId();
                     // Avoid processing any duplicate task
                     if (idMap.containsKey(thisId)) {
@@ -149,7 +198,7 @@ public class UserTaskManagerPresenter
                     }
 
                     // We have updated or added this task so don't remove it
-                    // fromthe display.
+                    // from the display.
                     tasksToRemove.remove(taskPresenter);
                 }
             }
@@ -162,20 +211,21 @@ public class UserTaskManagerPresenter
     }
 
     @Override
-    public void onTerminate(final TaskId terminateId, final String taskName) {
+    public void onTerminate(final TaskProgress taskProgress) {
         String message = "Are you sure you want to terminate this task?";
-        if (requestTaskKillSet.contains(terminateId)) {
+        if (requestTaskKillSet.contains(taskProgress.getId())) {
             message = "Are you sure you want to kill this task?";
         }
         ConfirmEvent.fire(UserTaskManagerPresenter.this, message, result -> {
-            final boolean kill = requestTaskKillSet.contains(terminateId);
+            final boolean kill = requestTaskKillSet.contains(taskProgress.getId());
             final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
-            findTaskCriteria.addId(terminateId);
-            final TerminateTaskProgressAction action = new TerminateTaskProgressAction("Terminate: " + taskName,
-                    findTaskCriteria, kill);
-
-            requestTaskKillSet.add(terminateId);
-            dispatcher.exec(action);
+            findTaskCriteria.addId(taskProgress.getId());
+            requestTaskKillSet.add(taskProgress.getId());
+            final TerminateTaskProgressRequest request = new TerminateTaskProgressRequest(findTaskCriteria, kill);
+            final Rest<Boolean> rest = restFactory.create();
+            rest
+                    .call(TASK_RESOURCE)
+                    .terminate(taskProgress.getNodeName(), request);
         });
     }
 

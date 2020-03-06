@@ -73,7 +73,7 @@ class TestSearchRequestMapper {
         stroom.dashboard.shared.SearchRequest dashboardSearchRequest = SearchRequestTestData.dashboardSearchRequest();
 
         // When
-        stroom.query.api.v2.SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(new DashboardQueryKey(), dashboardSearchRequest);
+        stroom.query.api.v2.SearchRequest mappedApiSearchRequest = searchRequestMapper.mapRequest(new DashboardQueryKey("test", "ttest", "test"), dashboardSearchRequest);
 
         // Then
         verify_Search_to_Query_mapping(

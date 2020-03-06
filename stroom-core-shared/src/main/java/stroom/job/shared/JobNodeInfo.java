@@ -16,20 +16,27 @@
 
 package stroom.job.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class JobNodeInfo implements SharedObject {
-    private static final long serialVersionUID = 5184354985064930910L;
-
+@JsonInclude(Include.NON_DEFAULT)
+public class JobNodeInfo {
+    @JsonProperty
     private Integer currentTaskCount;
+    @JsonProperty
     private Long scheduleReferenceTime;
+    @JsonProperty
     private Long lastExecutedTime;
 
     public JobNodeInfo() {
-        // Default constructor necessary for GWT serialisation.
     }
 
-    public JobNodeInfo(final Integer currentTaskCount, final Long scheduleReferenceTime, final Long lastExecutedTime) {
+    @JsonCreator
+    public JobNodeInfo(@JsonProperty("currentTaskCount") final Integer currentTaskCount,
+                       @JsonProperty("scheduleReferenceTime") final Long scheduleReferenceTime,
+                       @JsonProperty("lastExecutedTime") final Long lastExecutedTime) {
         this.currentTaskCount = currentTaskCount;
         this.scheduleReferenceTime = scheduleReferenceTime;
         this.lastExecutedTime = lastExecutedTime;
@@ -39,11 +46,23 @@ public class JobNodeInfo implements SharedObject {
         return currentTaskCount;
     }
 
+    public void setCurrentTaskCount(final Integer currentTaskCount) {
+        this.currentTaskCount = currentTaskCount;
+    }
+
     public Long getScheduleReferenceTime() {
         return scheduleReferenceTime;
     }
 
+    public void setScheduleReferenceTime(final Long scheduleReferenceTime) {
+        this.scheduleReferenceTime = scheduleReferenceTime;
+    }
+
     public Long getLastExecutedTime() {
         return lastExecutedTime;
+    }
+
+    public void setLastExecutedTime(final Long lastExecutedTime) {
+        this.lastExecutedTime = lastExecutedTime;
     }
 }

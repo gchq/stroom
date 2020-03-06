@@ -159,9 +159,7 @@
         "tabs" : [ {
           "id" : "query-MRGPM"
         } ],
-        "selected" : 0,
-        "visibleTabCount" : 1,
-        "allTabCount" : 1
+        "selected" : 0
       }, {
         "type" : "tabLayout",
         "preferredSize" : {
@@ -170,9 +168,7 @@
         "tabs" : [ {
           "id" : "table-78LF4"
         } ],
-        "selected" : 0,
-        "visibleTabCount" : 1,
-        "allTabCount" : 1
+        "selected" : 0
       } ]
     }, {
       "type" : "splitLayout",
@@ -193,9 +189,7 @@
           "tabs" : [ {
             "id" : "vis-L1AL1"
           } ],
-          "selected" : 0,
-          "visibleTabCount" : 1,
-          "allTabCount" : 1
+          "selected" : 0
         } ]
       }, {
         "type" : "splitLayout",
@@ -217,9 +211,7 @@
             "tabs" : [ {
               "id" : "vis-QYG7H"
             } ],
-            "selected" : 0,
-            "visibleTabCount" : 1,
-            "allTabCount" : 1
+            "selected" : 0
           }, {
             "type" : "tabLayout",
             "preferredSize" : {
@@ -228,9 +220,7 @@
             "tabs" : [ {
               "id" : "table-BKJT6"
             } ],
-            "selected" : 0,
-            "visibleTabCount" : 1,
-            "allTabCount" : 1
+            "selected" : 0
           } ]
         }, {
           "type" : "tabLayout",
@@ -240,9 +230,7 @@
           "tabs" : [ {
             "id" : "vis-SPSCW"
           } ],
-          "selected" : 0,
-          "visibleTabCount" : 1,
-          "allTabCount" : 1
+          "selected" : 0
         } ]
       } ]
     } ]

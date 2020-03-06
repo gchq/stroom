@@ -3,6 +3,7 @@ package stroom.db.util;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import stroom.config.common.HasDbConfig;
+import stroom.util.db.ForceCoreMigration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -32,19 +33,28 @@ public abstract class AbstractDataSourceProviderModule<T_Config extends HasDbCon
     @Override
     protected void configure() {
         super.configure();
+        
+        LOGGER.debug("Configure() called on " + this.getClass().getCanonicalName());
 
         // MultiBind the connection provider so we can see status for all databases.
         GuiceUtil.buildMultiBinder(binder(), DataSource.class).addBinding(getConnectionProviderType());
     }
 
+    /**
+     * We inject {@link ForceCoreMigration} to ensure that the the core DB migration has happened before all
+     * other migrations
+     */
     @Provides
     @Singleton
+
     public T_ConnProvider getConnectionProvider(final Provider<T_Config> configProvider,
-                                                final DataSourceFactory dataSourceFactory) {
+                                                final DataSourceFactory dataSourceFactory,
+                                                @SuppressWarnings("unused") final ForceCoreMigration forceCoreMigration) {
         LOGGER.debug(() -> "Getting connection provider for " + getModuleName());
 
         final DataSource dataSource = dataSourceFactory.create(configProvider.get());
 
+        // Prevent migrations from being re-run for each test
         if (!COMPLETED_MIGRATIONS.contains(getModuleName())) {
             performMigration(dataSource);
             COMPLETED_MIGRATIONS.add(getModuleName());

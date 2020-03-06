@@ -1,7 +1,7 @@
 package stroom.proxy.app.handler;
 
 import stroom.data.zip.StroomZipEntry;
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 import stroom.proxy.repo.StreamHandler;
 
 import java.io.ByteArrayOutputStream;

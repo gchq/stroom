@@ -6,19 +6,14 @@
   "fields" : [ {
     "fieldType" : "NUMERIC_FIELD",
     "fieldName" : "New Field 0",
-    "stored" : true,
-    "indexed" : true,
-    "termPositions" : true,
     "analyzerType" : "STANDARD",
+    "stored" : true,
+    "termPositions" : true,
     "caseSensitive" : true
   }, {
     "fieldType" : "ID",
     "fieldName" : "New Field 1",
-    "stored" : true,
-    "indexed" : true,
-    "termPositions" : false,
-    "analyzerType" : "KEYWORD",
-    "caseSensitive" : false
+    "stored" : true
   } ],
   "volumeGroupName" : "Default Volume Group"
 }

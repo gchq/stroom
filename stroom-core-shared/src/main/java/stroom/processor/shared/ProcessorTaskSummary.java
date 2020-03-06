@@ -16,24 +16,33 @@
 
 package stroom.processor.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
 
 import java.util.Objects;
 
-public class ProcessorTaskSummary implements SharedObject {
-    private static final long serialVersionUID = 5631193345714122209L;
+@JsonInclude(Include.NON_DEFAULT)
+public class ProcessorTaskSummary {
+    @JsonProperty
+    private final DocRef pipeline;
+    @JsonProperty
+    private final String feed;
+    @JsonProperty
+    private final int priority;
+    @JsonProperty
+    private final TaskStatus status;
+    @JsonProperty
+    private final long count;
 
-    private DocRef pipeline;
-    private String feed;
-    private int priority;
-    private TaskStatus status;
-    private long count;
-
-    public ProcessorTaskSummary() {
-    }
-
-    public ProcessorTaskSummary(final DocRef pipeline, final String feed, final int priority, final TaskStatus status, final long count) {
+    @JsonCreator
+    public ProcessorTaskSummary(@JsonProperty("pipeline") final DocRef pipeline,
+                                @JsonProperty("feed") final String feed,
+                                @JsonProperty("priority") final int priority,
+                                @JsonProperty("status") final TaskStatus status,
+                                @JsonProperty("count") final long count) {
         this.pipeline = pipeline;
         this.feed = feed;
         this.priority = priority;

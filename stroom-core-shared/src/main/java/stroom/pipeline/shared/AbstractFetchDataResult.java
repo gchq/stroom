@@ -16,31 +16,52 @@
 
 package stroom.pipeline.shared;
 
-import stroom.docref.SharedObject;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
 
 import java.util.List;
 
-public abstract class AbstractFetchDataResult implements SharedObject {
-    private static final long serialVersionUID = 7559713171858774241L;
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = FetchDataResult.class, name = "data"),
+        @JsonSubTypes.Type(value = FetchMarkerResult.class, name = "marker")
+})
+@JsonInclude(Include.NON_DEFAULT)
+public abstract class AbstractFetchDataResult {
+    @JsonProperty
+    private final String streamTypeName;
+    @JsonProperty
+    private final String classification;
+    @JsonProperty
+    private final OffsetRange<Long> streamRange;
+    @JsonProperty
+    private final RowCount<Long> streamRowCount;
+    @JsonProperty
+    private final OffsetRange<Long> pageRange;
+    @JsonProperty
+    private final RowCount<Long> pageRowCount;
+    @JsonProperty
+    private final List<String> availableChildStreamTypes;
 
-    private String streamType;
-    private String classification;
-    private OffsetRange<Long> streamRange;
-    private RowCount<Long> streamRowCount;
-    private OffsetRange<Long> pageRange;
-    private RowCount<Long> pageRowCount;
-    private List<String> availableChildStreamTypes;
-
-    public AbstractFetchDataResult() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public AbstractFetchDataResult(final String streamType, final String classification,
-                                   final OffsetRange<Long> streamRange, final RowCount<Long> streamRowCount, final OffsetRange<Long> pageRange,
-                                   final RowCount<Long> pageRowCount, final List<String> availableChildStreamTypes) {
-        this.streamType = streamType;
+    @JsonCreator
+    public AbstractFetchDataResult(@JsonProperty("streamTypeName") final String streamTypeName,
+                                   @JsonProperty("classification") final String classification,
+                                   @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
+                                   @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
+                                   @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
+                                   @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
+                                   @JsonProperty("availableChildStreamTypes") final List<String> availableChildStreamTypes) {
+        this.streamTypeName = streamTypeName;
         this.classification = classification;
         this.streamRange = streamRange;
         this.streamRowCount = streamRowCount;
@@ -49,8 +70,8 @@ public abstract class AbstractFetchDataResult implements SharedObject {
         this.availableChildStreamTypes = availableChildStreamTypes;
     }
 
-    public String getStreamType() {
-        return streamType;
+    public String getStreamTypeName() {
+        return streamTypeName;
     }
 
     public String getClassification() {

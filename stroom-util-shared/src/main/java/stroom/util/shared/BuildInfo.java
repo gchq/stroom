@@ -1,17 +1,29 @@
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class BuildInfo implements SharedObject, IsConfig {
-    private String upDate;
-    private String buildDate = "TBD";
-    private String buildVersion = "TBD";
+@JsonInclude(Include.NON_DEFAULT)
+public class BuildInfo extends AbstractConfig {
+    @JsonProperty
+    private final String upDate;
+    @JsonProperty
+    private final String buildDate;
+    @JsonProperty
+    private final String buildVersion;
 
     public BuildInfo() {
-        // Default constructor necessary for GWT serialisation.
+        upDate = null;
+        buildDate = null;
+        buildVersion = null;
     }
 
-    public BuildInfo(final String upDate, final String buildVersion, final String buildDate) {
+    @JsonCreator
+    public BuildInfo(@JsonProperty("upDate") final String upDate,
+                     @JsonProperty("buildVersion") final String buildVersion,
+                     @JsonProperty("buildDate") final String buildDate) {
         this.upDate = upDate;
         this.buildVersion = buildVersion;
         this.buildDate = buildDate;
@@ -21,23 +33,11 @@ public class BuildInfo implements SharedObject, IsConfig {
         return buildVersion;
     }
 
-    public void setBuildVersion(final String buildVersion) {
-        this.buildVersion = buildVersion;
-    }
-
     public String getBuildDate() {
         return buildDate;
     }
 
-    public void setBuildDate(final String buildDate) {
-        this.buildDate = buildDate;
-    }
-
     public String getUpDate() {
         return upDate;
-    }
-
-    public void setUpDate(final String upDate) {
-        this.upDate = upDate;
     }
 }

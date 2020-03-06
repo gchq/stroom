@@ -28,7 +28,7 @@ import com.google.inject.Provider;
 import stroom.data.grid.client.MouseHelper;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityDropDownPresenter;
 import stroom.pipeline.structure.client.view.Box;
@@ -180,8 +180,8 @@ public class ExpressionTreePanel extends TreePanel<Item> {
         }
     }
 
-    public void init(final ClientDispatchAsync dispatcher, final DocRef dataSource, final List<AbstractField> fields) {
-        termEditor.init(dispatcher, dataSource, fields);
+    public void init(final RestFactory restFactory, final DocRef dataSource, final List<AbstractField> fields) {
+        termEditor.init(restFactory, dataSource, fields);
     }
 
     public void endEditing() {

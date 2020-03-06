@@ -28,6 +28,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
 import stroom.config.global.shared.ConfigProperty;
+import stroom.config.global.shared.ConfigPropertyValidationException;
+import stroom.config.global.shared.OverrideValue;
 import stroom.docref.DocRef;
 import stroom.util.config.FieldMapper;
 import stroom.util.config.PropertyUtil;
@@ -35,8 +37,11 @@ import stroom.util.config.PropertyUtil.Prop;
 import stroom.util.config.annotations.Password;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.config.annotations.RequiresRestart;
+import stroom.util.io.ByteSize;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.IsConfig;
+import stroom.util.shared.AbstractConfig;
+import stroom.util.shared.PropertyPath;
+import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -45,6 +50,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -59,6 +66,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -76,23 +86,38 @@ public class ConfigMapper {
             "|", ":", ";", ",", "!", "/", "\\", "#", "@", "~", "-", "_", "=", "+", "?");
     private static final Set<String> VALID_DELIMITERS_SET = new HashSet<>(VALID_DELIMITERS_LIST);
 
-    private static final String ROOT_PROPERTY_PATH = "stroom";
-    private static final String DOCREF_PREFIX = "docRef(";
+    private static final PropertyPath ROOT_PROPERTY_PATH = PropertyPath.fromParts("stroom");
+    private static final String DOCREF_PREFIX = "docRef";
+    private static final Pattern DOCREF_PATTERN = Pattern.compile("^" + DOCREF_PREFIX + "\\([^)]+\\)$");
     public static final String LIST_EXAMPLE = "|item1|item2|item3";
     public static final String MAP_EXAMPLE = "|:key1:value1|:key2:value2|:key3:value3";
-    public static final String DOCREF_EXAMPLE = "|,"
+    public static final String DOCREF_EXAMPLE = ","
         + DOCREF_PREFIX
-        + "StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)";
+        + "(StatisticStore,934a1600-b456-49bf-9aea-f1e84025febd,Heap Histogram Bytes)";
 
     // The guice bound appConfig
     private final AppConfig appConfig;
 
     // A map of config properties keyed on the fully qualified prop path (i.e. stroom.path.temp)
     // This is the source of truth for all properties. It is used to update the guice injected object model
-    private final ConcurrentMap<String, ConfigProperty> globalPropertiesMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<PropertyPath, ConfigProperty> globalPropertiesMap = new ConcurrentHashMap<>();
 
     // A map of property accessor objects keyed on the fully qualified prop path (i.e. stroom.path.temp)
-    private final Map<String, Prop> propertyMap = new HashMap<>();
+    private final Map<PropertyPath, Prop> propertyMap = new HashMap<>();
+
+    // TODO Created this with a view to improving the ser/deser of the values but it needs
+    //   more thought.  Leaving it here for now.
+//    private static final Map<Class<?>, Mapping> MAPPERS = new HashMap<>();
+//
+//    static {
+//        map(boolean.class, StroomDuration::parse);
+//        map(StroomDuration.class, StroomDuration::parse, Object::toString);
+//        map(List.class, (list, genericType) -> {
+//            final Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
+//            return createDelimitedConversionFunc(ConfigMapper::listToString);
+//        }, Object::toString);
+//
+//    }
 
     @Inject
     public ConfigMapper(final AppConfig appConfig) {
@@ -134,7 +159,7 @@ public class ConfigMapper {
      * and update the globalPropertiesMap.
      * It will also apply common database config to all other database config objects.
      */
-    void updateConfigFromYaml(final AppConfig newAppConfig) {
+    private void updateConfigFromYaml(final AppConfig newAppConfig) {
         synchronized (this) {
             if (System.identityHashCode(newAppConfig) != System.identityHashCode(appConfig)) {
                 // We have been passed a different object to our instance appConfig so copy all
@@ -146,11 +171,15 @@ public class ConfigMapper {
             // Now walk the AppConfig object model from the DropWiz YAML updating globalPropertiesMap with the
             // YAML values where present.
             LOGGER.debug("Adding yaml config values into global property map");
-            addConfigObjectMethods(newAppConfig, ROOT_PROPERTY_PATH, propertyMap, this::yamlPropertyConsumer);
+            addConfigObjectMethods(
+                newAppConfig, ROOT_PROPERTY_PATH, propertyMap, this::yamlPropertyConsumer);
         }
     }
 
-    public boolean validatePropertyPath(final String fullPath) {
+    /**
+     * @return True if fullPath is a valid path to a config value
+     */
+    public boolean validatePropertyPath(final PropertyPath fullPath) {
         return propertyMap.get(fullPath) != null;
     }
 
@@ -158,22 +187,66 @@ public class ConfigMapper {
         return globalPropertiesMap.values();
     }
 
-    Optional<ConfigProperty> getGlobalProperty(final String fullPath) {
-        Objects.requireNonNull(fullPath);
-        return Optional.ofNullable(globalPropertiesMap.get(fullPath));
+    Optional<ConfigProperty> getGlobalProperty(final PropertyPath propertyPath) {
+        Objects.requireNonNull(propertyPath);
+        return Optional.ofNullable(globalPropertiesMap.get(propertyPath));
+    }
+
+    public Optional<Prop> getProp(final PropertyPath propertyPath) {
+        return Optional.ofNullable(propertyMap.get(propertyPath));
     }
 
     /**
      * Verifies that the passed value for the property with fullPath can be converted into
      * the appropriate object type
      */
-    void validateStringValue(final String fullPath, final String value) {
+    void validateValueSerialisation(final PropertyPath fullPath, final String valueAsString) {
+        // If the string form can't be converted then an exception will be thrown
+        convertValue(fullPath, valueAsString);
+    }
+
+    Object convertValue(final PropertyPath fullPath, final String valueAsString) {
         final Prop prop = propertyMap.get(fullPath);
         if (prop != null) {
             final Type genericType = prop.getValueType();
-            convertToObject(value, genericType);
+            return convertToObject(valueAsString, genericType);
         } else {
             throw new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath));
+        }
+    }
+
+    void decorateAllDbConfigProperty(final Collection<ConfigProperty> dbConfigProperties) {
+
+        synchronized (this) {
+            // Ensure our in memory global prop
+            dbConfigProperties.forEach(this::decorateDbConfigProperty);
+
+            // Now ensure all propertyMap props not in the list of db props have no db override set.
+            // I.e. another node could have removed the db override.
+
+            Map<PropertyPath, ConfigProperty> dbPropsMap = dbConfigProperties.stream()
+                .collect(Collectors.toMap(ConfigProperty::getName, Function.identity()));
+
+            globalPropertiesMap.entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().hasDatabaseOverride())
+                .filter(entry -> !dbPropsMap.containsKey(entry.getKey()))
+                .forEach(entry -> {
+                    final ConfigProperty globalProp = entry.getValue();
+                    globalProp.setDatabaseOverrideValue(OverrideValue.unSet(String.class));
+
+                    final Prop prop = propertyMap.get(entry.getKey());
+                    if (prop != null) {
+                        // Now set the new effective value on our guice bound appConfig instance
+                        final Type genericType = prop.getValueType();
+                        final Object typedValue = convertToObject(
+                            globalProp.getEffectiveValue().orElse(null), genericType);
+                        prop.setValueOnConfigObject(typedValue);
+                    } else {
+                        throw new RuntimeException(LogUtil.message(
+                            "Not expecting prop to be null for {}", entry.getKey().toString()));
+                    }
+                });
         }
     }
 
@@ -184,11 +257,12 @@ public class ConfigMapper {
     ConfigProperty decorateDbConfigProperty(final ConfigProperty dbConfigProperty) {
         Objects.requireNonNull(dbConfigProperty);
 
-        final String fullPath = dbConfigProperty.getName();
+        final PropertyPath fullPath = dbConfigProperty.getName();
 
         synchronized (this) {
             ConfigProperty globalConfigProperty = getGlobalProperty(fullPath)
-                    .orElseThrow(() -> new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath)));
+                    .orElseThrow(() ->
+                            new UnknownPropertyException(LogUtil.message("No configProperty for {}", fullPath)));
 
             final Prop prop = propertyMap.get(fullPath);
             if (prop != null) {
@@ -201,7 +275,7 @@ public class ConfigMapper {
                 // Update all the DB related values from the passed DB config prop
                 globalConfigProperty.setId(dbConfigProperty.getId());
 
-                globalConfigProperty.setDatabaseOverride(dbConfigProperty.getDatabaseOverrideValue());
+                globalConfigProperty.setDatabaseOverrideValue(dbConfigProperty.getDatabaseOverrideValue());
                 globalConfigProperty.setVersion(dbConfigProperty.getVersion());
                 globalConfigProperty.setCreateTimeMs(dbConfigProperty.getCreateTimeMs());
                 globalConfigProperty.setCreateUser(dbConfigProperty.getCreateUser());
@@ -215,23 +289,32 @@ public class ConfigMapper {
         }
     }
 
-    private void addConfigObjectMethods(final IsConfig object,
-                                        final String path,
-                                        final Map<String, Prop> propertyMap,
-                                        final BiConsumer<String, Prop> propConsumer) {
-        LOGGER.trace("addConfigObjectMethods({}, {}, .....)", object, path);
+    private void addConfigObjectMethods(final AbstractConfig config,
+                                        final PropertyPath path,
+                                        final Map<PropertyPath, Prop> propertyMap,
+                                        final BiConsumer<PropertyPath, Prop> propConsumer) {
+        LOGGER.trace("addConfigObjectMethods({}, {}, .....)", config, path);
 
-        final Map<String, Prop> properties = PropertyUtil.getProperties(object);
+        // Add this ConfigMapper instance to the IsConfig so it can do name resolution
+//        config.setConfigPathResolver(this);
+        config.setBasePath(path);
+
+        // Add our object with its path to the map
+//        configInstanceToPathMap.put(config, path);
+
+        final Map<String, Prop> properties = PropertyUtil.getProperties(config);
         properties.forEach((k, prop) -> {
             LOGGER.trace("prop: {}", prop);
-            Method getter = prop.getGetter();
+            final Method getter = prop.getGetter();
+
+            // The prop may have a JsonPropery annotation that defines its name
             String specifiedName = getNameFromAnnotation(getter);
             String name = prop.getName();
             if (specifiedName != null) {
                 name = specifiedName;
             }
 
-            final String fullPath = path + "." + name;
+            final PropertyPath fullPath = path.merge(name);
 
             final Class<?> valueType = prop.getValueClass();
 
@@ -244,24 +327,25 @@ public class ConfigMapper {
 
                     // Now let the consumer do something to it
                     propConsumer.accept(fullPath, prop);
-                } else if (IsConfig.class.isAssignableFrom(valueType)) {
+            } else if (AbstractConfig.class.isAssignableFrom(valueType)) {
                     // This must be a branch, i.e. config object so recurse into that
                     if (value != null) {
-                        IsConfig childConfigObject = (IsConfig) value;
-                        addConfigObjectMethods(childConfigObject, fullPath, propertyMap, propConsumer);
+                    AbstractConfig childConfigObject = (AbstractConfig) value;
+                    addConfigObjectMethods(
+                        childConfigObject, fullPath, propertyMap, propConsumer);
                     }
                 } else {
                     // This is not expected
                     throw new RuntimeException(LogUtil.message(
                             "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
                             valueType.getName(),
-                            IsConfig.class.getSimpleName()));
+                        AbstractConfig.class.getSimpleName()));
                 }
             }
         });
     }
 
-    private void yamlPropertyConsumer(final String fullPath, final Prop yamlProp) {
+    private void yamlPropertyConsumer(final PropertyPath fullPath, final Prop yamlProp) {
 
         // We have already walked a vanilla AppConfig object tree so all compile time
         // props should be in here with a default value (and a value that matches it)
@@ -286,20 +370,18 @@ public class ConfigMapper {
 //        }
     }
 
-    private void defaultValuePropertyConsumer(final String fullPath, final Prop defaultProp) {
+    private void defaultValuePropertyConsumer(final PropertyPath fullPath, final Prop defaultProp) {
 
         // Create global property.
         final String defaultValueAsStr = getDefaultValue(defaultProp);
 
         // build a new ConfigProperty object from our Prop and our defaults
-        final ConfigProperty configProperty = new ConfigProperty();
-        configProperty.setName(fullPath);
-        configProperty.setDefaultValue(defaultValueAsStr);
+        final ConfigProperty configProperty = new ConfigProperty(fullPath, defaultValueAsStr);
         // Add all the meta data for the prop
         updatePropertyFromConfigAnnotations(configProperty, defaultProp);
 
         if (defaultValueAsStr == null) {
-            LOGGER.debug("Property {} has no default value", fullPath);
+            LOGGER.trace("Property {} has no default value", fullPath);
         }
 
         globalPropertiesMap.put(fullPath, configProperty);
@@ -323,10 +405,14 @@ public class ConfigMapper {
                 type.equals(boolean.class) ||
                 type.equals(Character.class) ||
                 type.equals(char.class) ||
+                type.equals(Duration.class) ||
                 List.class.isAssignableFrom(type) ||
                 Map.class.isAssignableFrom(type) ||
                 DocRef.class.isAssignableFrom(type) ||
-                Enum.class.isAssignableFrom(type);
+                Enum.class.isAssignableFrom(type) ||
+                Path.class.isAssignableFrom(type) ||
+                StroomDuration.class.isAssignableFrom(type) ||
+                ByteSize.class.isAssignableFrom(type);
 
         LOGGER.trace("isSupportedPropertyType({}), returning: {}", type, isSupported);
         return isSupported;
@@ -416,6 +502,13 @@ public class ConfigMapper {
         return convertToString(value, availableDelimiters);
     }
 
+    static Function<Object, String> createDelimitedConversionFunc(
+            final BiFunction<Object, List<String>, String> conversionFunc) {
+
+        List<String> availableDelimiters = new ArrayList<>(VALID_DELIMITERS_LIST);
+        return object -> conversionFunc.apply(object, availableDelimiters);
+    }
+
     static void validateDelimiter(final String serialisedForm,
                                   final int delimiterPosition,
                                   final String positionName,
@@ -478,7 +571,8 @@ public class ConfigMapper {
         return null;
     }
 
-    private static Object convertToObject(final String value, final Type genericType) {
+    // pkg private for testing
+    static Object convertToObject(final String value, final Type genericType) {
         if (value == null) {
             return null;
         }
@@ -501,23 +595,30 @@ public class ConfigMapper {
             } else if (type.equals(Double.class) || type.equals(double.class)) {
                 return Double.valueOf(value);
             } else if (type.equals(Boolean.class) || type.equals(boolean.class)) {
-                return Boolean.valueOf(value);
+                return parseBoolean(value);
             } else if ((type.equals(Character.class) || type.equals(char.class)) && value.length() > 0) {
                 return value.charAt(0);
+            } else if (type.equals(Duration.class)) {
+                return Duration.parse(value);
             } else if (List.class.isAssignableFrom(type)) {
                 // determine the type of the list items
-                Class<?> itemType = getDataType(getGenericTypes(genericType).get(0));
+                final Class<?> itemType = getGenericsParam(genericType, 0);
                 return stringToList(value, itemType);
-                //        } else if (type.isAssignableFrom(Map.class)) {
             } else if (Map.class.isAssignableFrom(type)) {
                 // determine the types of the keys and values
-                Class<?> keyType = getDataType(getGenericTypes(genericType).get(0));
-                Class<?> valueType = getDataType(getGenericTypes(genericType).get(1));
+                final Class<?> keyType = getGenericsParam(genericType, 0);
+                final Class<?> valueType = getGenericsParam(genericType, 1);
                 return stringToMap(value, keyType, valueType);
             } else if (type.equals(DocRef.class)) {
                 return stringToDocRef(value);
             } else if (Enum.class.isAssignableFrom(type)) {
                 return stringToEnum(value, type);
+            } else if (Path.class.isAssignableFrom(type)) {
+                return Path.of(value);
+            } else if (StroomDuration.class.isAssignableFrom(type)) {
+                return StroomDuration.parse(value);
+            } else if (ByteSize.class.isAssignableFrom(type)) {
+                return ByteSize.parse(value);
             }
         } catch (Exception e) {
             // Don't include the original exception else gwt uses the msg of the
@@ -525,14 +626,40 @@ public class ConfigMapper {
             LOGGER.debug(LogUtil.message(
                 "Unable to convert value [{}] to type {} due to: {}",
                     value, genericType, e.getMessage()), e);
-            throw new RuntimeException(LogUtil.message(
+            throw new ConfigPropertyValidationException(LogUtil.message(
                 "Unable to convert value [{}] to type {} due to: {}",
-                    value, getDataTypeName(genericType), e.getMessage()));
+                    value, getDataTypeName(genericType), e.getMessage()), e);
         }
 
         LOGGER.error("Unable to convert value [{}] of type [{}] to an Object", value, type);
-        throw new RuntimeException(LogUtil.message(
+        throw new ConfigPropertyValidationException(LogUtil.message(
             "Type [{}] is not supported for value [{}]", genericType, value));
+    }
+
+    private static Class<?> getGenericsParam(final Type typeWithGenerics, final int index) {
+        List<Type> genericsParamTypes = getGenericTypes(typeWithGenerics);
+        if (genericsParamTypes.isEmpty()) {
+           throw new RuntimeException(LogUtil.message(
+               "Unable to get generics parameter {} for type {} as it has no parameterised types",
+               index, typeWithGenerics));
+        }
+        if (index >= genericsParamTypes.size()) {
+            throw new IllegalArgumentException(LogUtil.message("Index {} is out of bounds for types {}",
+                index, genericsParamTypes));
+        }
+
+        return getDataType(genericsParamTypes.get(index));
+    }
+
+    private static Boolean parseBoolean(final String str) {
+       if (str.equalsIgnoreCase("true")) {
+           return Boolean.TRUE;
+       } else if (str.equalsIgnoreCase("false")) {
+           return Boolean.FALSE;
+       } else {
+           throw new ConfigPropertyValidationException(
+               LogUtil.message("Cannot convert [{}] into a boolean. Valid values are [true|false] ignoring case.", str));
+       }
     }
 
 
@@ -690,9 +817,15 @@ public class ConfigMapper {
             final String delimiter = String.valueOf(serialisedForm.charAt(0));
             validateDelimiter(serialisedForm, 0, "first", DOCREF_EXAMPLE);
 
+            // Remove the delimiter off the front
             String delimitedValue = serialisedForm.substring(1);
 
-            delimitedValue = delimitedValue.replace(DOCREF_PREFIX, "");
+            if (!DOCREF_PATTERN.matcher(delimitedValue).matches()) {
+                throw new RuntimeException(LogUtil.message("Expecting [{}] to match [{}]",
+                    delimitedValue, DOCREF_PATTERN.pattern()));
+            }
+
+            delimitedValue = delimitedValue.replace(DOCREF_PREFIX + "(", "");
             delimitedValue = delimitedValue.replace(")", "");
 
             final List<String> parts = Splitter.on(delimiter).splitToList(delimitedValue);
@@ -779,23 +912,73 @@ public class ConfigMapper {
         UnknownPropertyException(final String message) {
             super(message);
         }
-
-//        /**
-//         * Constructs a new runtime exception with the specified detail message and
-//         * cause.  <p>Note that the detail message associated with
-//         * {@code cause} is <i>not</i> automatically incorporated in
-//         * this runtime exception's detail message.
-//         *
-//         * @param message the detail message (which is saved for later retrieval
-//         *                by the {@link #getMessage()} method).
-//         * @param cause   the cause (which is saved for later retrieval by the
-//         *                {@link #getCause()} method).  (A {@code null} value is
-//         *                permitted, and indicates that the cause is nonexistent or
-//         *                unknown.)
-//         * @since 1.4
-//         */
-//        UnknownPropertyException(final String message, final Throwable cause) {
-//            super(message, cause);
-//        }
     }
+
+    // TODO Created these with a view to improving the ser/deser of the values but it needs
+    //   more thought.  Leaving them here for now.
+//    private Optional<Method> getParseMethod(final Class<?> clazz) {
+//        return Arrays.stream(clazz.getDeclaredMethods())
+//            .filter(method ->
+//                method.getName().equals("parse")
+//                    && method.getParameterCount() == 1
+//                    && method.getParameterTypes()[0].equals(String.class)
+//                    && method.getReturnType().equals(clazz))
+//            .findFirst();
+//    }
+//
+//    private static void map(final Class<?> propertyType,
+//                            final Function<String, Object> deSerialiseFunc,
+//                            final Function<Object, String> serialiseFunc) {
+//        if (MAPPERS.containsKey(propertyType)) {
+//            throw new RuntimeException(LogUtil.message("Class {} is already mapped", propertyType));
+//        }
+//        MAPPERS.put(propertyType, Mapping.of(propertyType, deSerialiseFunc, serialiseFunc));
+//    }
+//
+//    private static void map(final Class<?> propertyType,
+//                            final Function<String, Object> deSerialiseFunc) {
+//        if (MAPPERS.containsKey(propertyType)) {
+//            throw new RuntimeException(LogUtil.message("Class {} is already mapped", propertyType));
+//        }
+//        MAPPERS.put(propertyType, Mapping.of(propertyType, deSerialiseFunc));
+//    }
+//
+//    private static class Mapping {
+//        private final Class<?> propertyType;
+//        private final BiFunction<String, Type, Object> deSerialiseFunc;
+//        private final Function<Object, String> serialiseFunc;
+//
+//        private Mapping(final Class<?> propertyType,
+//                        final BiFunction<String, Type, Object> deSerialiseFunc,
+//                        final Function<Object, String> serialiseFunc) {
+//            this.propertyType = propertyType;
+//            this.deSerialiseFunc = deSerialiseFunc;
+//            this.serialiseFunc = serialiseFunc;
+//        }
+//
+//        static Mapping of(final Class<?> propertyType,
+//                          final BiFunction<String, Type, Object> deSerialiseFunc,
+//                          final Function<Object, String> serialiseFunc) {
+//            return new Mapping(propertyType, deSerialiseFunc, serialiseFunc);
+//        }
+//
+//        static Mapping of(final Class<?> propertyType,
+//                          final BiFunction<String, Type, Object> deSerialiseFunc) {
+//            return new Mapping(propertyType, deSerialiseFunc, obj ->
+//                obj == null ? null : obj.toString()
+//            );
+//        }
+//
+//        Class<?> getPropertyType() {
+//            return propertyType;
+//        }
+//
+//        Function<Object, String> getSerialiseFunc() {
+//            return serialiseFunc;
+//        }
+//
+//        BiFunction<String, Type, Object> getDeSerialiseFunc() {
+//            return deSerialiseFunc;
+//        }
+//    }
 }

@@ -12,7 +12,7 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.entity.shared.PermissionException;
+import stroom.document.shared.PermissionException;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.extraction.ExpressionFilter;
 import stroom.searchable.api.Searchable;

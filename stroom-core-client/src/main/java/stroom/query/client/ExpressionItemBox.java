@@ -103,7 +103,7 @@ public class ExpressionItemBox extends Box<Item> {
 
         Item item = expressionItem;
         while (item != null) {
-            if (!item.enabled()) {
+            if (!item.isEnabled()) {
                 return false;
             }
             item = tree.getParent(item);

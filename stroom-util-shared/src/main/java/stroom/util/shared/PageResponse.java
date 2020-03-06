@@ -16,21 +16,32 @@
 
 package stroom.util.shared;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
+import java.util.Objects;
+
+@JsonInclude(Include.NON_DEFAULT)
 public class PageResponse implements Serializable {
     private static final long serialVersionUID = -8613411971150227752L;
 
+    @JsonProperty
     private Long offset;
+    @JsonProperty
     private Integer length;
+    @JsonProperty
     private Long total;
+    @JsonProperty
     private boolean exact;
 
-    public PageResponse() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public PageResponse(final Long offset, final Integer length, final Long total, final boolean exact) {
+    @JsonCreator
+    public PageResponse(@JsonProperty("offset") final Long offset,
+                        @JsonProperty("length") final Integer length,
+                        @JsonProperty("total") final Long total,
+                        @JsonProperty("exact") final boolean exact) {
         this.offset = offset;
         this.length = length;
         this.total = total;
@@ -41,40 +52,48 @@ public class PageResponse implements Serializable {
         return offset;
     }
 
+    public void setOffset(final Long offset) {
+        this.offset = offset;
+    }
+
     public Integer getLength() {
         return length;
+    }
+
+    public void setLength(final Integer length) {
+        this.length = length;
     }
 
     public Long getTotal() {
         return total;
     }
 
+    public void setTotal(final Long total) {
+        this.total = total;
+    }
+
     public boolean isExact() {
         return exact;
     }
 
+    public void setExact(final boolean exact) {
+        this.exact = exact;
+    }
+
     @Override
-    public boolean equals(Object obj) {
-        if (!(obj instanceof PageResponse)) {
-            return false;
-        }
-        PageResponse other = (PageResponse) obj;
-        EqualsBuilder builder = new EqualsBuilder();
-        builder.append(this.offset, other.offset);
-        builder.append(this.length, other.length);
-        builder.append(this.total, other.total);
-        builder.append(this.exact, other.exact);
-        return builder.isEquals();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final PageResponse that = (PageResponse) o;
+        return exact == that.exact &&
+                Objects.equals(offset, that.offset) &&
+                Objects.equals(length, that.length) &&
+                Objects.equals(total, that.total);
     }
 
     @Override
     public int hashCode() {
-        HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(this.offset);
-        builder.append(this.length);
-        builder.append(this.total);
-        builder.append(this.exact);
-        return builder.toHashCode();
+        return Objects.hash(offset, length, total, exact);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package stroom.security.impl;
 
 import io.swagger.annotations.Api;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.DELETE;
@@ -15,7 +16,7 @@ import javax.ws.rs.core.Response;
 @Api(
         value = "document permissions - /v1",
         description = "Stroom Document Permissions API")
-@Path("/docPermissions/v1")
+@Path("/docPermissions" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public interface DocumentPermissionResource extends RestResource {
 
