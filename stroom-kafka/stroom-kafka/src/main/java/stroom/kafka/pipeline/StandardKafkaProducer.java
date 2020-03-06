@@ -142,9 +142,6 @@ class StandardKafkaProducer extends AbstractXMLFilter {
             //Initialise connection to Kafka broker
             KafkaConfigDoc config = configStore.readDocument(configRef);
 
-//            System.out.println("Using config:");
-//            System.out.println(config.getData());
-
             Optional <KafkaProducer<String,String>> optional = stroomKafkaProducerFactory.createProducer(configRef);
             if (!optional.isPresent())
             {
