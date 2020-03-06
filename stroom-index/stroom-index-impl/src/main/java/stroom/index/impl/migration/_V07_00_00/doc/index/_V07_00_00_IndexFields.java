@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.index.impl.db.migration._V07_00_00.doc.index;
+package stroom.index.impl.migration._V07_00_00.doc.index;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import stroom.index.shared.IndexConstants;

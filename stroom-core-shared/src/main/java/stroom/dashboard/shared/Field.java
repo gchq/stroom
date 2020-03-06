@@ -89,8 +89,8 @@ public class Field implements Serializable, HasDisplayValue {
                  @JsonProperty("filter") final Filter filter,
                  @JsonProperty("format") final Format format,
                  @JsonProperty("group") final Integer group,
-                 @JsonProperty("width") final int width,
-                 @JsonProperty("visible") final boolean visible,
+                 @JsonProperty("width") final Integer width,
+                 @JsonProperty("visible") final Boolean visible,
                  @JsonProperty("special") final boolean special) {
         this.id = id;
         this.name = name;
@@ -99,8 +99,16 @@ public class Field implements Serializable, HasDisplayValue {
         this.filter = filter;
         this.format = format;
         this.group = group;
-        this.width = width;
-        this.visible = visible;
+        if (width != null) {
+            this.width = width;
+        } else {
+            this.width = 200;
+        }
+        if (visible != null) {
+            this.visible = visible;
+        } else {
+            this.visible = true;
+        }
         this.special = special;
     }
 

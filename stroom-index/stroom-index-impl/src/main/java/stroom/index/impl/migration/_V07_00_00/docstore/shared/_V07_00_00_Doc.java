@@ -15,12 +15,12 @@
  *
  */
 
-package stroom.index.impl.db.migration._V07_00_00.docstore.shared;
+package stroom.index.impl.migration._V07_00_00.docstore.shared;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.index.impl.db.migration._V07_00_00.docref._V07_00_00_SharedObject;
+import stroom.index.impl.migration._V07_00_00.docref._V07_00_00_SharedObject;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
 @JsonInclude(Include.NON_EMPTY)

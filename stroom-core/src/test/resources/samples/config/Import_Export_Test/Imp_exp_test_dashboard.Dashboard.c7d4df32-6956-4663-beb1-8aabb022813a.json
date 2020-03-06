@@ -11,14 +11,21 @@
         "expression" : "${New Field 0}",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "New Field 1",
         "expression" : "${New Field 1}",
         "format" : {
           "type" : "NUMBER"
-        }
-      } ]
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ],
+      "maxResults" : [ 1000000 ]
     }
   }, {
     "type" : "query",
@@ -54,7 +61,10 @@
           } ]
         } ]
       },
-      "automate" : { }
+      "automate" : {
+        "open" : false,
+        "refresh" : false
+      }
     }
   }, {
     "type" : "vis",
@@ -80,41 +90,63 @@
         "type" : "Pipeline",
         "uuid" : "99dd2ba1-8a1f-4be1-9368-2ae67bfab970",
         "name" : "Imp_exp_test_pipeline"
-      }
+      },
+      "showAsHtml" : false,
+      "showStepping" : true
     }
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : { },
+    "preferredSize" : {
+      "width" : 0,
+      "height" : 0
+    },
     "dimension" : 1,
     "children" : [ {
       "type" : "tabLayout",
-      "preferredSize" : { },
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 0
+      },
       "tabs" : [ {
-        "id" : "query-JT8D7"
+        "id" : "query-JT8D7",
+        "visible" : true
       } ],
       "selected" : 0
     }, {
       "type" : "tabLayout",
-      "preferredSize" : { },
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 0
+      },
       "tabs" : [ {
-        "id" : "table-IIO1T"
+        "id" : "table-IIO1T",
+        "visible" : true
       } ],
       "selected" : 0
     }, {
       "type" : "tabLayout",
-      "preferredSize" : { },
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 0
+      },
       "tabs" : [ {
-        "id" : "vis-8SIW1"
+        "id" : "vis-8SIW1",
+        "visible" : true
       } ],
       "selected" : 0
     }, {
       "type" : "tabLayout",
-      "preferredSize" : { },
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 0
+      },
       "tabs" : [ {
-        "id" : "text-K9XC0"
+        "id" : "text-K9XC0",
+        "visible" : true
       } ],
       "selected" : 0
     } ]
-  }
+  },
+  "tabVisibility" : "SHOW_ALL"
 }

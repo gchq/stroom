@@ -73,7 +73,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
     @JsonProperty
     private boolean stored;
     @JsonProperty
-    private Boolean indexed;
+    private boolean indexed;
     @JsonProperty
     private boolean uninvertible;
     @JsonProperty
@@ -117,7 +117,7 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
     private SolrIndexField(final SolrIndexFieldType fieldUse,
                            final String fieldName,
                            final boolean stored,
-                           final Boolean indexed,
+                           final boolean indexed,
                            final boolean termPositions,
                            final List<Condition> supportedConditions) {
         this.fieldUse = fieldUse;
@@ -151,12 +151,20 @@ public class SolrIndexField implements HasDisplayValue, Comparable<SolrIndexFiel
                           @JsonProperty("sortMissingFirst") final boolean sortMissingFirst,
                           @JsonProperty("sortMissingLast") final boolean sortMissingLast,
                           @JsonProperty("supportedConditions") final List<Condition> supportedConditions) {
-        this.fieldUse = fieldUse;
+        if (fieldUse != null) {
+            this.fieldUse = fieldUse;
+        } else {
+            this.fieldUse = SolrIndexFieldType.FIELD;
+        }
         this.fieldName = fieldName;
         this.fieldType = fieldType;
         this.defaultValue = defaultValue;
         this.stored = stored;
-        this.indexed = indexed;
+        if (indexed != null) {
+            this.indexed = indexed;
+        } else {
+            this.indexed = true;
+        }
         this.uninvertible = uninvertible;
         this.docValues = docValues;
         this.multiValued = multiValued;

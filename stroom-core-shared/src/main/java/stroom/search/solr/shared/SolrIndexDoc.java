@@ -84,6 +84,16 @@ public class SolrIndexDoc extends Doc {
         this.deletedFields = deletedFields;
         this.solrSynchState = solrSynchState;
         this.retentionExpression = retentionExpression;
+
+        if (this.solrConnectionConfig == null) {
+            this.solrConnectionConfig = new SolrConnectionConfig();
+        }
+        if (this.fields == null) {
+            this.fields = new ArrayList<>();
+            // Always add standard id fields for now.
+            this.fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
+            this.fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
+        }
     }
 
     public String getDescription() {

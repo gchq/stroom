@@ -84,6 +84,16 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         this.precision = precision;
         this.enabled = enabled;
         this.config = config;
+
+        if (this.statisticType == null) {
+            this.statisticType = StatisticType.COUNT;
+        }
+        if (this.rollUpType == null) {
+            this.rollUpType = StatisticRollUpType.NONE;
+        }
+        if (this.precision == null) {
+            this.precision = DEFAULT_PRECISION;
+        }
     }
 
     public String getDescription() {

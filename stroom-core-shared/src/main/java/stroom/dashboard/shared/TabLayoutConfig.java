@@ -76,6 +76,10 @@ public class TabLayoutConfig extends LayoutConfig {
         this.preferredSize = preferredSize;
         this.tabs = tabs;
         this.selected = selected;
+
+        if (this.preferredSize == null) {
+            this.preferredSize = new Size();
+        }
     }
 
     @Override

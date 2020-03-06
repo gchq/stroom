@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.index.impl.db.migration._V07_00_00.docref;
+package stroom.index.impl.migration._V07_00_00.docref;
 
 import java.io.Serializable;
 

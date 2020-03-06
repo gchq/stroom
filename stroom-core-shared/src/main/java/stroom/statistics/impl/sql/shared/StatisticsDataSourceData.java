@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -90,9 +90,11 @@ public class StatisticsDataSourceData {
         if (fields == null) {
             fields = new ArrayList<>();
         }
+
         // prevent duplicates
         if (!fields.contains(statisticField)) {
             fields.add(statisticField);
+            sortFields();
             fieldPositionMap = null;
         }
     }
@@ -219,16 +221,12 @@ public class StatisticsDataSourceData {
         return fieldPositionMap;
     }
 
+    private void sortFields() {
+        fields.sort(Comparator.naturalOrder());
+    }
+
     private Map<String, Integer> createFieldPositionMap() {
         final Map<String, Integer> fieldPositionMap = new HashMap<>();
-        // de-dup the list
-        Set<StatisticField> tempSet = new HashSet<>(fields);
-        fields.clear();
-        fields.addAll(tempSet);
-        tempSet = null;
-
-        Collections.sort(fields);
-
         int i = 0;
         for (final StatisticField field : fields) {
             fieldPositionMap.put(field.getFieldName(), i++);

@@ -88,6 +88,19 @@ public class IndexDoc extends Doc {
         this.retentionDayAge = retentionDayAge;
         this.fields = fields;
         this.volumeGroupName = volumeGroupName;
+
+        if (this.maxDocsPerShard == null) {
+            this.maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
+        }
+        if (this.partitionBy == null) {
+            this.partitionBy = DEFAULT_PARTITION_BY;
+        }
+        if (this.partitionSize == null) {
+            this.partitionSize = DEFAULT_PARTITION_SIZE;
+        }
+        if (this.shardsPerPartition == null) {
+            this.shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
+        }
     }
 
     public String getDescription() {

@@ -49,9 +49,13 @@ public class TabConfig {
 
     @JsonCreator
     public TabConfig(@JsonProperty("id") final String id,
-                     @JsonProperty("visible") final boolean visible) {
+                     @JsonProperty("visible") final Boolean visible) {
         this.id = id;
-        this.visible = visible;
+        if (visible != null) {
+            this.visible = visible;
+        } else {
+            this.visible = true;
+        }
     }
 
     public String getId() {

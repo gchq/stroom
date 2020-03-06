@@ -59,6 +59,10 @@ public class TextConverterDoc extends Doc implements HasData {
         this.description = description;
         this.data = data;
         this.converterType = converterType;
+
+        if (converterType == null) {
+            this.converterType = TextConverterType.NONE;
+        }
     }
 
     public String getDescription() {

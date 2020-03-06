@@ -66,6 +66,10 @@ public class DashboardConfig {
         this.components = components;
         this.layout = layout;
         this.tabVisibility = tabVisibility;
+
+        if (this.tabVisibility == null) {
+            this.tabVisibility = TabVisibility.SHOW_ALL;
+        }
     }
 
     public String getParameters() {

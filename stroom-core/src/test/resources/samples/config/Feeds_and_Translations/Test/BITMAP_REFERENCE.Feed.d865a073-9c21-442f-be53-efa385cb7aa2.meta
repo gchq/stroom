@@ -6,5 +6,6 @@
   "encoding" : "UTF-16LE",
   "contextEncoding" : "UTF-8",
   "reference" : true,
-  "streamType" : "Raw Reference"
+  "streamType" : "Raw Reference",
+  "status" : "RECEIVE"
 }

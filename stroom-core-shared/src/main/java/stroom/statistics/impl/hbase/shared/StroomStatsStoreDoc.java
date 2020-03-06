@@ -52,7 +52,7 @@ public class StroomStatsStoreDoc extends Doc {
     public StroomStatsStoreDoc() {
         statisticType = StatisticType.COUNT;
         rollUpType = StatisticRollUpType.NONE;
-        setPrecision(DEFAULT_PRECISION_INTERVAL);
+        precision = DEFAULT_PRECISION_INTERVAL;
     }
 
     @JsonCreator
@@ -77,6 +77,16 @@ public class StroomStatsStoreDoc extends Doc {
         this.precision = precision;
         this.enabled = enabled;
         this.config = config;
+
+        if (this.statisticType == null) {
+            this.statisticType = StatisticType.COUNT;
+        }
+        if (this.rollUpType == null) {
+            this.rollUpType = StatisticRollUpType.NONE;
+        }
+        if (this.precision == null) {
+            this.precision = DEFAULT_PRECISION_INTERVAL;
+        }
     }
 
     public String getDescription() {
