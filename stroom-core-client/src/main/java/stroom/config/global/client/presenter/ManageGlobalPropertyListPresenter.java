@@ -17,8 +17,11 @@
 package stroom.config.global.client.presenter;
 
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.client.Timer;
@@ -39,6 +42,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.node.shared.FetchNodeStatusResponse;
 import stroom.node.shared.NodeResource;
 import stroom.svg.client.SvgPreset;
+import stroom.util.client.SafeHtmlUtil;
 import stroom.widget.button.client.ButtonView;
 
 import java.util.HashMap;
@@ -57,6 +61,7 @@ public class ManageGlobalPropertyListPresenter
     private static final String NODES_UNAVAILABLE_SHORT_MSG = "[Error]";
     private static final String MULTIPLE_VALUES_MSG = "[Multiple effective values exist in the cluster]";
     private static final String MULTIPLE_SOURCES_MSG = "[Multiple]";
+    private static final String ERROR_CSS_COLOUR = "red";
     private static final int TIMER_DELAY_MS = 50;
 
     private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
@@ -260,13 +265,22 @@ public class ManageGlobalPropertyListPresenter
 
     private void initColumns() {
         // Name.
-        addColumn(buildBasicColumn(ConfigPropertyRow::getNameAsString),
+        addColumn(buildSafeHtmlColumn(configPropertyRow ->
+                SafeHtmlUtils.fromString(configPropertyRow.getNameAsString())),
             "Name",
             450);
-        addColumn(buildBasicColumn(ConfigPropertyRow::getEffectiveValueAsString),
+        addColumn(buildSafeHtmlColumn(configPropertyRow ->
+                SafeHtmlUtil.getColouredText(
+                    configPropertyRow.getEffectiveValueAsString(),
+                    ERROR_CSS_COLOUR,
+                    MULTIPLE_VALUES_MSG.equals(configPropertyRow.getEffectiveValueAsString()))),
             "Effective Value",
             300);
-        addColumn(buildBasicColumn(ConfigPropertyRow::getSourceAsString),
+        addColumn(buildSafeHtmlColumn(configPropertyRow ->
+                SafeHtmlUtil.getColouredText(
+                    configPropertyRow.getSourceAsString(),
+                    ERROR_CSS_COLOUR,
+                    MULTIPLE_SOURCES_MSG.equals(configPropertyRow.getSourceAsString()))),
             "Source",
             75);
 
@@ -292,11 +306,11 @@ public class ManageGlobalPropertyListPresenter
         };
     }
 
-    private Column<ConfigPropertyRow, String> buildBasicColumn(final Function<ConfigPropertyRow, String> valueFunc) {
+    private Column<ConfigPropertyRow, SafeHtml> buildSafeHtmlColumn(final Function<ConfigPropertyRow, SafeHtml> valueFunc) {
         // TODO use OrderByColumn
-        return new Column<ConfigPropertyRow, String>(new TextCell()) {
+        return new Column<ConfigPropertyRow, SafeHtml>(new SafeHtmlCell()) {
             @Override
-            public String getValue(final ConfigPropertyRow row) {
+            public SafeHtml getValue(final ConfigPropertyRow row) {
                 if (row == null) {
                     return null;
                 }
@@ -310,7 +324,7 @@ public class ManageGlobalPropertyListPresenter
         };
     }
 
-    private void addColumn(Column<ConfigPropertyRow, String> column, String name, int width) {
+    private void addColumn(Column<ConfigPropertyRow, ?> column, String name, int width) {
         column.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
         getView().addResizableColumn(column, name, width);
     }
