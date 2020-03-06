@@ -27,7 +27,7 @@ import stroom.util.shared.TreeRow;
 
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class TaskProgress implements TreeRow {
     @JsonProperty
     private TaskId id;

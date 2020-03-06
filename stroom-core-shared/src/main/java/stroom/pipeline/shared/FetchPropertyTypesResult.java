@@ -25,7 +25,7 @@ import stroom.pipeline.shared.data.PipelinePropertyType;
 
 import java.util.Map;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FetchPropertyTypesResult {
     @JsonProperty
     private final PipelineElementType pipelineElementType;

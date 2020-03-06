@@ -25,7 +25,7 @@ import stroom.util.shared.HasIsConstrained;
 import java.util.HashSet;
 import java.util.Set;
 
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FindTaskCriteria implements HasIsConstrained {
     @JsonProperty
     private String sessionId;

@@ -25,7 +25,7 @@ import stroom.util.shared.Highlight;
 
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class SourceLocation implements Comparable<SourceLocation> {
     @JsonProperty
     private final long id;

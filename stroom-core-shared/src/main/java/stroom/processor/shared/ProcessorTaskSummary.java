@@ -24,7 +24,7 @@ import stroom.docref.DocRef;
 
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ProcessorTaskSummary {
     @JsonProperty
     private final DocRef pipeline;

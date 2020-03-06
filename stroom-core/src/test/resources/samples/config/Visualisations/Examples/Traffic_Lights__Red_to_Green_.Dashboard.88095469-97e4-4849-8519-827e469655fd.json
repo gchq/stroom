@@ -13,7 +13,9 @@
           "type" : "GENERAL"
         },
         "group" : 0,
-        "width" : 112
+        "width" : 112,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "AirCargoTons",
         "expression" : "sum(${AirCargoTons})",
@@ -23,21 +25,29 @@
         },
         "format" : {
           "type" : "GENERAL"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "visible" : false
+        "width" : 200,
+        "visible" : false,
+        "special" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
-        "visible" : false
+        "width" : 200,
+        "visible" : false,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "a7fed513-fb9c-4530-802f-54ef65e80589",
         "name" : "LAX_CARGO_VOLUME-EXTRACTION"
-      }
+      },
+      "maxResults" : [ 1000000 ]
     }
   }, {
     "type" : "query",
@@ -60,7 +70,8 @@
         } ]
       },
       "automate" : {
-        "open" : true
+        "open" : true,
+        "refresh" : false
       }
     }
   }, {
@@ -80,13 +91,18 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : { },
+    "preferredSize" : {
+      "width" : 0,
+      "height" : 0
+    },
     "dimension" : 1,
     "children" : [ {
       "type" : "splitLayout",
       "preferredSize" : {
+        "width" : 0,
         "height" : 148
       },
+      "dimension" : 0,
       "children" : [ {
         "type" : "tabLayout",
         "preferredSize" : {
@@ -94,28 +110,34 @@
           "height" : 76
         },
         "tabs" : [ {
-          "id" : "query-JT8D7"
+          "id" : "query-JT8D7",
+          "visible" : true
         } ],
         "selected" : 0
       }, {
         "type" : "tabLayout",
         "preferredSize" : {
-          "width" : 713
+          "width" : 713,
+          "height" : 0
         },
         "tabs" : [ {
-          "id" : "table-IIO1T"
+          "id" : "table-IIO1T",
+          "visible" : true
         } ],
         "selected" : 0
       } ]
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
+        "width" : 0,
         "height" : 869
       },
       "tabs" : [ {
-        "id" : "vis-BX59A"
+        "id" : "vis-BX59A",
+        "visible" : true
       } ],
       "selected" : 0
     } ]
-  }
+  },
+  "tabVisibility" : "SHOW_ALL"
 }

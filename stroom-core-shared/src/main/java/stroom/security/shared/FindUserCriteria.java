@@ -30,7 +30,7 @@ import java.util.List;
 /**
  * Criteria class.
  */
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FindUserCriteria extends FindDocumentEntityCriteria {
     public static final String FIELD_STATUS = "Status";
     public static final String FIELD_LAST_LOGIN = "Last Login";

@@ -36,7 +36,7 @@ import java.util.Objects;
 @XmlType(name = "DataReceiptRule", propOrder = {"ruleNumber", "creationTime", "name", "enabled", "expression", "action"})
 @XmlRootElement(name = "dataReceiptRule")
 @JsonPropertyOrder({"ruleNumber", "creationTime", "name", "enabled", "expression", "action"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ReceiveDataRule {
     @XmlElement(name = "ruleNumber")
     @JsonProperty

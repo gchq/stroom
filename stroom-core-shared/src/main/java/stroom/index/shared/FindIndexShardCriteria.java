@@ -31,7 +31,7 @@ import stroom.util.shared.StringCriteria;
 import java.util.List;
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FindIndexShardCriteria extends BaseCriteria {
     public static final String FIELD_ID = "Id";
     public static final String FIELD_PARTITION = "Partition";
@@ -91,41 +91,13 @@ public class FindIndexShardCriteria extends BaseCriteria {
                                   @JsonProperty("indexShardStatusSet") final CriteriaSet<IndexShardStatus> indexShardStatusSet,
                                   @JsonProperty("partition") final StringCriteria partition) {
         super(pageRequest, sortList);
-        if (documentCountRange != null) {
-            this.documentCountRange = documentCountRange;
-        } else {
-            this.documentCountRange = new Range<>();
-        }
-        if (nodeNameSet != null) {
-            this.nodeNameSet = nodeNameSet;
-        } else {
-            this.nodeNameSet = new CriteriaSet<>();
-        }
-        if (volumeIdSet != null) {
-            this.volumeIdSet = volumeIdSet;
-        } else {
-            this.volumeIdSet = new CriteriaSet<>();
-        }
-        if (indexUuidSet != null) {
-            this.indexUuidSet = indexUuidSet;
-        } else {
-            this.indexUuidSet = new CriteriaSet<>();
-        }
-        if (indexShardIdSet != null) {
-            this.indexShardIdSet = indexShardIdSet;
-        } else {
-            this.indexShardIdSet = new CriteriaSet<>();
-        }
-        if (indexShardStatusSet != null) {
-            this.indexShardStatusSet = indexShardStatusSet;
-        } else {
-            this.indexShardStatusSet = new CriteriaSet<>();
-        }
-        if (partition != null) {
-            this.partition = partition;
-        } else {
-            this.partition = new StringCriteria();
-        }
+        this.documentCountRange = documentCountRange;
+        this.nodeNameSet = nodeNameSet;
+        this.volumeIdSet = volumeIdSet;
+        this.indexUuidSet = indexUuidSet;
+        this.indexShardIdSet = indexShardIdSet;
+        this.indexShardStatusSet = indexShardStatusSet;
+        this.partition = partition;
     }
 
     public CriteriaSet<IndexShardStatus> getIndexShardStatusSet() {

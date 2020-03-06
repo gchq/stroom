@@ -30,7 +30,7 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "collection", "connection", "indexBatchSize", "fields", "state", "retentionExpression"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class SolrIndexDoc extends Doc {
     public static final String DOCUMENT_TYPE = "SolrIndex";
 
@@ -52,7 +52,12 @@ public class SolrIndexDoc extends Doc {
     private ExpressionOperator retentionExpression;
 
     public SolrIndexDoc() {
-        setDefaults();
+        solrConnectionConfig = new SolrConnectionConfig();
+
+        fields = new ArrayList<>();
+        // Always add standard id fields for now.
+        fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
+        fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
     }
 
     @JsonCreator
@@ -80,18 +85,14 @@ public class SolrIndexDoc extends Doc {
         this.solrSynchState = solrSynchState;
         this.retentionExpression = retentionExpression;
 
-        setDefaults();
-    }
-
-    private void setDefaults() {
-        if (solrConnectionConfig == null) {
-            solrConnectionConfig = new SolrConnectionConfig();
+        if (this.solrConnectionConfig == null) {
+            this.solrConnectionConfig = new SolrConnectionConfig();
         }
-        if (fields == null) {
-            fields = new ArrayList<>();
+        if (this.fields == null) {
+            this.fields = new ArrayList<>();
             // Always add standard id fields for now.
-            fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
-            fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
+            this.fields.add(SolrIndexField.createIdField(SolrIndexConstants.STREAM_ID));
+            this.fields.add(SolrIndexField.createIdField(SolrIndexConstants.EVENT_ID));
         }
     }
 

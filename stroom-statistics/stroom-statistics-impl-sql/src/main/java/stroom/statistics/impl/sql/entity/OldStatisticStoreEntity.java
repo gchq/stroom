@@ -68,16 +68,12 @@ public class OldStatisticStoreEntity extends DocumentEntity {
     private byte pStatisticType;
     private byte pRollUpType;
     private Long precision;
-    private boolean enabled = false;
+    private boolean enabled;
 
     private String data;
     private StatisticsDataSourceData statisticsDataSourceDataObject;
 
     public OldStatisticStoreEntity() {
-        setDefaults();
-    }
-
-    private void setDefaults() {
         this.pStatisticType = StatisticType.COUNT.getPrimitiveValue();
         this.pRollUpType = StatisticRollUpType.NONE.getPrimitiveValue();
         this.precision = DEFAULT_PRECISION;

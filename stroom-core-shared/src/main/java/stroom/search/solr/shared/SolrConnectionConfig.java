@@ -17,7 +17,7 @@ import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"useZk", "instanceType", "solrUrls", "zkHosts", "zkPath"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "connection")
 @XmlType(name = "SolrConnectionConfig", propOrder = {"useZk", "instanceType", "solrUrls", "zkHosts", "zkPath"})
 public class SolrConnectionConfig implements Serializable {

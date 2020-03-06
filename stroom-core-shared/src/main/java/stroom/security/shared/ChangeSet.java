@@ -27,7 +27,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @JsonPropertyOrder({"addSet", "removeSet"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ChangeSet<T> {
     @JsonProperty
     private final Set<T> addSet;
@@ -42,16 +42,8 @@ public class ChangeSet<T> {
     @JsonCreator
     public ChangeSet(@JsonProperty("addSet") final Set<T> addSet,
                      @JsonProperty("removeSet") final Set<T> removeSet) {
-        if (addSet != null) {
-            this.addSet = addSet;
-        } else {
-            this.addSet = new HashSet<>();
-        }
-        if (removeSet != null) {
-            this.removeSet = removeSet;
-        } else {
-            this.removeSet = new HashSet<>();
-        }
+        this.addSet = addSet;
+        this.removeSet = removeSet;
     }
 
     public void add(final T item) {

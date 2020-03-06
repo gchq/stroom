@@ -31,7 +31,7 @@ import java.util.Objects;
 /**
  * Some path on the network where we can store stuff.
  */
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FsVolume implements HasAuditInfo {
     private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
     private static final double NINETY_NINE_PERCENT = 0.99D;
@@ -79,11 +79,7 @@ public class FsVolume implements HasAuditInfo {
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
         this.path = path;
-        if (status != null) {
-            this.status = status;
-        } else {
-            this.status = VolumeUseStatus.ACTIVE;
-        }
+        this.status = status;
         this.byteLimit = byteLimit;
         this.volumeState = volumeState;
     }

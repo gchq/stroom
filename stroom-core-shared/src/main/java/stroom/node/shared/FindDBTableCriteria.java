@@ -26,7 +26,7 @@ import stroom.util.shared.Sort;
 
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FindDBTableCriteria extends BaseCriteria {
     public FindDBTableCriteria() {
     }

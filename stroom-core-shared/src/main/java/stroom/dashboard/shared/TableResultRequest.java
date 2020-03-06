@@ -33,7 +33,7 @@ import java.util.Set;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "tableResultRequest", propOrder = {"tableSettings", "requestedRange", "openGroups"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class TableResultRequest extends ComponentResultRequest {
     @XmlElement
     @JsonProperty
@@ -60,11 +60,7 @@ public class TableResultRequest extends ComponentResultRequest {
                               @JsonProperty("requestedRange") final OffsetRange<Integer> requestedRange,
                               @JsonProperty("openGroups") final Set<String> openGroups) {
         this.tableSettings = tableSettings;
-        if (requestedRange != null) {
-            this.requestedRange = requestedRange;
-        } else {
-            this.requestedRange = new OffsetRange<>(0, 100);
-        }
+        this.requestedRange = requestedRange;
         this.openGroups = openGroups;
     }
 

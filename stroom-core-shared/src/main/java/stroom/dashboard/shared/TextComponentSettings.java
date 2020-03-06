@@ -31,7 +31,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"tableId", "streamIdField", "partNoField", "recordNoField", "lineFromField", "colFromField", "lineToField", "colToField", "pipeline", "showAsHtml", "showStepping"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "text")
 @XmlType(name = "text", propOrder = {"tableId", "streamIdField", "partNoField", "recordNoField", "lineFromField", "colFromField", "lineToField", "colToField", "pipeline", "showAsHtml", "showStepping"})
 public class TextComponentSettings extends ComponentSettings {
@@ -64,13 +64,12 @@ public class TextComponentSettings extends ComponentSettings {
     private DocRef pipeline;
     @XmlElement(name = "showAsHtml")
     @JsonProperty("showAsHtml")
-    private Boolean showAsHtml;
+    private boolean showAsHtml;
     @XmlElement(name = "showStepping")
     @JsonProperty
-    private Boolean showStepping;
+    private boolean showStepping;
 
     public TextComponentSettings() {
-        showAsHtml = false;
         showStepping = true;
     }
 
@@ -84,8 +83,8 @@ public class TextComponentSettings extends ComponentSettings {
                                  @JsonProperty("lineToField") final Field lineToField,
                                  @JsonProperty("colToField") final Field colToField,
                                  @JsonProperty("pipeline") final DocRef pipeline,
-                                 @JsonProperty("showAsHtml") final Boolean showAsHtml,
-                                 @JsonProperty("showStepping") final Boolean showStepping) {
+                                 @JsonProperty("showAsHtml") final boolean showAsHtml,
+                                 @JsonProperty("showStepping") final boolean showStepping) {
         this.tableId = tableId;
         this.streamIdField = streamIdField;
         this.partNoField = partNoField;
@@ -95,16 +94,8 @@ public class TextComponentSettings extends ComponentSettings {
         this.lineToField = lineToField;
         this.colToField = colToField;
         this.pipeline = pipeline;
-        if (showAsHtml != null) {
-            this.showAsHtml = showAsHtml;
-        } else {
-            this.showAsHtml = false;
-        }
-        if (showStepping != null) {
-            this.showStepping = showStepping;
-        } else {
-            this.showStepping = true;
-        }
+        this.showAsHtml = showAsHtml;
+        this.showStepping = showStepping;
     }
 
     public String getTableId() {
@@ -179,19 +170,19 @@ public class TextComponentSettings extends ComponentSettings {
         this.pipeline = pipeline;
     }
 
-    public Boolean isShowAsHtml() {
+    public boolean isShowAsHtml() {
         return showAsHtml;
     }
 
-    public void setShowAsHtml(Boolean showAsHtml) {
+    public void setShowAsHtml(boolean showAsHtml) {
         this.showAsHtml = showAsHtml;
     }
 
-    public Boolean isShowStepping() {
+    public boolean isShowStepping() {
         return showStepping;
     }
 
-    public void setShowStepping(final Boolean showStepping) {
+    public void setShowStepping(final boolean showStepping) {
         this.showStepping = showStepping;
     }
 }

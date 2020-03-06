@@ -410,7 +410,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
             // Share the page criteria
             final ResultPage<Meta> list = find(findMetaCriteria);
-
+            List<MetaRow> result = Collections.emptyList();
             if (list.size() > 0) {
 //                // We need to decorate data with retention rules as a processing user.
 //                final List<StreamDataRow> result = securityContext.asProcessingUserResult(() -> {
@@ -428,20 +428,16 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 // Query the database for the attribute values
 //                        if (criteria.isUseCache()) {
                 LOGGER.info("Loading attribute map from DB");
-                final List<MetaRow> result = metaValueDao.decorateDataWithAttributes(list.getValues());
+                result = metaValueDao.decorateDataWithAttributes(list.getValues());
 //                        } else {
 //                            LOGGER.info("Loading attribute map from filesystem");
 //                            loadAttributeMapFromFileSystem(criteria, result, result, ruleDecorator);
 //                        }
 //                    }
 //                });
-
-                return new ResultPage<>(result, list.getPageResponse().getOffset(),
-                        list.getPageResponse().getTotal(), list.getPageResponse().isExact());
             }
 
-            return new ResultPage<>(Collections.emptyList(), list.getPageResponse().getOffset(),
-                    list.getPageResponse().getTotal(), list.getPageResponse().isExact());
+            return new ResultPage<>(result, ResultPage.createPageResponse(result, list.getPageResponse()));
         });
     }
 

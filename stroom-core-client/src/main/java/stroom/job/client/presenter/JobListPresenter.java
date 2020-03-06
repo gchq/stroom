@@ -139,12 +139,8 @@ public class JobListPresenter extends MyPresenterWidget<DataGridView<Job>> {
                     }
                 }
 
-                data.setValues(rtnList);
-                data.getPageResponse().setLength(rtnList.size());
-                data.getPageResponse().setTotal((long) rtnList.size());
-                data.getPageResponse().setExact(true);
-
-                super.changeData(data);
+                final ResultPage<Job> modifiedData = new ResultPage<>(rtnList);
+                super.changeData(modifiedData);
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());

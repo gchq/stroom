@@ -13,7 +13,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder({"enabled", "title", "validationRegex"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class InfoPopupConfig extends AbstractConfig {
     @JsonProperty
     @JsonPropertyDescription("If you would like users to provide some query info when performing a query set this property to true.")

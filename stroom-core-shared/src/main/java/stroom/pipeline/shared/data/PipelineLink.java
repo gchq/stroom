@@ -54,7 +54,7 @@ import java.util.Objects;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Link", propOrder = {"from", "to"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"source", "from", "to"})
 public class PipelineLink implements Comparable<PipelineLink> {
     @XmlTransient

@@ -28,7 +28,7 @@ import stroom.util.shared.Sort;
 
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FindFsVolumeCriteria extends BaseCriteria {
     public static final String FIELD_ID = "Id";
 
@@ -44,11 +44,7 @@ public class FindFsVolumeCriteria extends BaseCriteria {
                                 @JsonProperty("sortList") final List<Sort> sortList,
                                 @JsonProperty("statusSet") final CriteriaSet<VolumeUseStatus> statusSet) {
         super(pageRequest, sortList);
-        if (statusSet != null) {
-            this.statusSet = statusSet;
-        } else {
-            this.statusSet = new CriteriaSet<>();
-        }
+        this.statusSet = statusSet;
     }
 
     public CriteriaSet<VolumeUseStatus> getStatusSet() {

@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import java.util.Objects;
 
 @JsonPropertyOrder({"severity", "location", "elementId", "message"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class StoredError implements Marker, Comparable<StoredError> {
     private static final String SPACE = " ";
     private static final String CLOSE_BRACKET = "] ";

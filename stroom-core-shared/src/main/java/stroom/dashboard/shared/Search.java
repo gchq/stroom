@@ -26,7 +26,7 @@ import java.util.Map;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "incremental", "storeHistory", "queryInfo"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class Search implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
@@ -67,11 +67,7 @@ public class Search implements Serializable {
         this.dataSourceRef = dataSourceRef;
         this.expression = expression;
         this.componentSettingsMap = componentSettingsMap;
-        if (paramMap != null) {
-            this.paramMap = paramMap;
-        } else {
-            this.paramMap = Collections.emptyMap();
-        }
+        this.paramMap = paramMap;
         this.incremental = incremental;
         this.storeHistory = storeHistory;
         this.queryInfo = queryInfo;

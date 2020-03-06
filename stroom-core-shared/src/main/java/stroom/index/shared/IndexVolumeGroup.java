@@ -8,7 +8,7 @@ import stroom.util.shared.HasAuditInfo;
 
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class IndexVolumeGroup implements HasAuditInfo {
     @JsonProperty
     private Integer id;

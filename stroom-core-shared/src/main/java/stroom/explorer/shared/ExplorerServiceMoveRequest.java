@@ -25,7 +25,7 @@ import stroom.docref.DocRef;
 
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ExplorerServiceMoveRequest {
     @JsonProperty
     private final List<DocRef> docRefs;

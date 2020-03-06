@@ -9,7 +9,7 @@ import stroom.util.shared.HasAuditInfo;
 
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public final class Job implements HasAuditInfo {
     @JsonProperty
     private Integer id;

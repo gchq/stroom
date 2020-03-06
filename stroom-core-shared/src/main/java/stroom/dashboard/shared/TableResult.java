@@ -34,7 +34,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "tableResult", propOrder = {"rows", "resultRange", "totalResults", "error"})
 @XmlRootElement(name = "tableResult")
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class TableResult implements ComponentResult {
     private static final long serialVersionUID = -2964122512841756795L;
 

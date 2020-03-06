@@ -9,7 +9,7 @@ import stroom.util.shared.HasAuditInfo;
 
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class User implements HasAuditInfo {
     public static final String ADMIN_USER_NAME = "admin";
 
@@ -36,7 +36,7 @@ public class User implements HasAuditInfo {
     @JsonProperty
     private boolean group;
     @JsonProperty
-    private Boolean enabled;
+    private boolean enabled;
 
     public User() {
         enabled = true;
@@ -52,7 +52,7 @@ public class User implements HasAuditInfo {
                 @JsonProperty("name") final String name,
                 @JsonProperty("uuid") final String uuid,
                 @JsonProperty("group") final boolean group,
-                @JsonProperty("enabled") final Boolean enabled) {
+                @JsonProperty("enabled") final boolean enabled) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -62,11 +62,7 @@ public class User implements HasAuditInfo {
         this.name = name;
         this.uuid = uuid;
         this.group = group;
-        if (enabled != null) {
-            this.enabled = enabled;
-        } else {
-            this.enabled = true;
-        }
+        this.enabled = enabled;
     }
 
     public Integer getId() {

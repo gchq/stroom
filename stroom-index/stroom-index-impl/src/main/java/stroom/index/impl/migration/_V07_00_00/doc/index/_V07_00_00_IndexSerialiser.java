@@ -1,7 +1,7 @@
-package stroom.index.impl.db.migration._V07_00_00.doc.index;
+package stroom.index.impl.migration._V07_00_00.doc.index;
 
 
-import stroom.index.impl.db.migration._V07_00_00.doc._V07_00_00_JsonSerialiser2;
+import stroom.index.impl.migration._V07_00_00.doc._V07_00_00_JsonSerialiser2;
 
 public class _V07_00_00_IndexSerialiser extends _V07_00_00_JsonSerialiser2<_V07_00_00_IndexDoc> {
 //    private static final Logger LOGGER = LoggerFactory.getLogger(FeedSerialiser.class);

@@ -5,7 +5,12 @@ import org.slf4j.LoggerFactory;
 import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
+import stroom.index.impl.migration._V07_00_00.doc.index._V07_00_00_IndexField;
+import stroom.index.impl.migration._V07_00_00.doc.index._V07_00_00_IndexFields;
+import stroom.index.shared.AnalyzerType;
 import stroom.index.shared.IndexDoc;
+import stroom.index.shared.IndexField;
+import stroom.index.shared.IndexFieldType;
 import stroom.index.shared.IndexFields;
 import stroom.util.xml.XMLMarshallerUtil;
 
@@ -13,7 +18,10 @@ import javax.inject.Inject;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class IndexSerialiser implements DocumentSerialiser2<IndexDoc> {
     private static final Logger LOGGER = LoggerFactory.getLogger(IndexSerialiser.class);
@@ -46,8 +54,31 @@ public class IndexSerialiser implements DocumentSerialiser2<IndexDoc> {
     public IndexFields getIndexFieldsFromLegacyXML(final String xml) {
         if (xml != null) {
             try {
-                final JAXBContext jaxbContext = JAXBContext.newInstance(IndexFields.class);
-                return XMLMarshallerUtil.unmarshal(jaxbContext, IndexFields.class, xml);
+                final JAXBContext jaxbContext = JAXBContext.newInstance(_V07_00_00_IndexFields.class);
+                final _V07_00_00_IndexFields oldIndexFields = XMLMarshallerUtil.unmarshal(jaxbContext, _V07_00_00_IndexFields.class, xml);
+                List<_V07_00_00_IndexField> oldIndexFieldList = oldIndexFields.getIndexFields();
+                if (oldIndexFieldList == null) {
+                    oldIndexFieldList = Collections.emptyList();
+                }
+
+                final List<IndexField> indexFieldList = oldIndexFieldList
+                        .stream()
+                        .map(field -> {
+                            final IndexField indexField = new IndexField(
+                                    IndexFieldType.valueOf(field.getFieldType().name()),
+                                    field.getFieldName(),
+                                    AnalyzerType.valueOf(field.getAnalyzerType().name()),
+                                    field.isIndexed(),
+                                    field.isStored(),
+                                    field.isTermPositions(),
+                                    field.isCaseSensitive(),
+                                    field.getSupportedConditions());
+                            return indexField;
+                        })
+                        .collect(Collectors.toList());
+
+                return new IndexFields(indexFieldList);
+
             } catch (final JAXBException | RuntimeException e) {
                 LOGGER.error("Unable to unmarshal index config", e);
             }

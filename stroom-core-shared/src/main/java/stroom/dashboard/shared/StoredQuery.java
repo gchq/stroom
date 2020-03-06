@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.query.api.v2.Query;
 import stroom.util.shared.HasAuditInfo;
 
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class StoredQuery implements HasAuditInfo {
     @JsonProperty
     private Integer id;

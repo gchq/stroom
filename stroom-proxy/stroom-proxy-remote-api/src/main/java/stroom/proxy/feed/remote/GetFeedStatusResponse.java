@@ -7,7 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.proxy.StroomStatusCode;
 import stroom.proxy.remote.RemoteResponse;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class GetFeedStatusResponse extends RemoteResponse {
     private static final long serialVersionUID = 9221787861812287256L;
 
@@ -35,11 +35,7 @@ public class GetFeedStatusResponse extends RemoteResponse {
     public GetFeedStatusResponse(@JsonProperty("status") final FeedStatus status,
                                  @JsonProperty("message") final String message,
                                  @JsonProperty("stroomStatusCode") final StroomStatusCode stroomStatusCode) {
-        if (status != null) {
-            this.status = status;
-        } else {
-            this.status = FeedStatus.Receive;
-        }
+        this.status = status;
         this.message = message;
         this.stroomStatusCode = stroomStatusCode;
     }

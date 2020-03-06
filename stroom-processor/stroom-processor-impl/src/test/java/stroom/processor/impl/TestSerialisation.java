@@ -26,7 +26,7 @@ public class TestSerialisation {
         rows.add(new ProcessorRow(new Expander(), new Processor()));
         rows.add(new ProcessorFilterRow(new ProcessorFilter()));
 
-        final ProcessorListRowResultPage resultPage1 = new ProcessorListRowResultPage(rows, ResultPage.createUnboundedPageResponse(rows));
+        final ProcessorListRowResultPage resultPage1 = new ProcessorListRowResultPage(rows, ResultPage.createPageResponse(rows));
         final String result1 = objectMapper.writeValueAsString(resultPage1);
         System.out.println(result1);
         final ProcessorListRowResultPage resultPage2 = objectMapper.readValue(result1, ProcessorListRowResultPage.class);

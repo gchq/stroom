@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"groupKey", "values", "depth"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlType(name = "Row", propOrder = {"groupKey", "values", "depth"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A row of data in a result set")

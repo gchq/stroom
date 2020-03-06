@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -37,19 +38,16 @@ import java.util.stream.Collector;
 /**
  * List that knows how big the whole set is.
  */
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ResultPage<T> {
     @JsonProperty
-    private List<T> values;
+    private final List<T> values;
     @JsonProperty
-    private PageResponse pageResponse;
-
-    public ResultPage() {
-    }
+    private final PageResponse pageResponse;
 
     public ResultPage(final List<T> values) {
         this.values = values;
-        this.pageResponse = new PageResponse(0L, values.size(), (long) values.size(), true);
+        this.pageResponse = createPageResponse(values);
     }
 
     @JsonCreator
@@ -57,14 +55,6 @@ public class ResultPage<T> {
                       @JsonProperty("pageResponse") final PageResponse pageResponse) {
         this.values = values;
         this.pageResponse = pageResponse;
-    }
-
-    /**
-     * @param exact is the complete size exactly correct
-     */
-    public ResultPage(final List<T> values, final Long offset, final Long completeSize, final boolean exact) {
-        this.values = values;
-        pageResponse = new PageResponse(offset, values.size(), completeSize, exact);
     }
 
     /**
@@ -96,11 +86,13 @@ public class ResultPage<T> {
                     limited.add(fullList.get(i));
                 }
 
-                return new ResultPage<>(limited, (long) offset, (long) fullList.size(), true);
+                final PageResponse pageResponse = new PageResponse((long) offset, limited.size(), (long) fullList.size(), true);
+                return new ResultPage<>(limited, pageResponse);
             }
         }
 
-        return new ResultPage<>(fullList, 0L, (long) fullList.size(), true);
+        final PageResponse pageResponse = new PageResponse(0L, fullList.size(), (long) fullList.size(), true);
+        return new ResultPage<>(fullList, pageResponse);
     }
 
     /**
@@ -108,17 +100,24 @@ public class ResultPage<T> {
      */
     public static <T> ResultPage<T> createUnboundedList(final List<T> realList) {
         if (realList != null) {
-            return new ResultPage<>(realList, createUnboundedPageResponse(realList));
+            return new ResultPage<>(realList, createPageResponse(realList));
         } else {
-            return new ResultPage<>(new ArrayList<>(), 0L, 0L, true);
+            return new ResultPage<>(Collections.emptyList());
         }
     }
 
-    public static PageResponse createUnboundedPageResponse(final List<?> values) {
+    public static PageResponse createPageResponse(final List<?> values) {
         if (values != null) {
             return new PageResponse(0L, values.size(), (long) values.size(), true);
         }
         return new PageResponse(0L, 0, 0L, true);
+    }
+
+    public static PageResponse createPageResponse(final List<?> values, final PageResponse pageResponse) {
+        if (values != null) {
+            return new PageResponse(pageResponse.getOffset(), values.size(), pageResponse.getTotal(), pageResponse.isExact());
+        }
+        return new PageResponse(pageResponse.getOffset(), 0, pageResponse.getTotal(), pageResponse.isExact());
     }
 
     /**
@@ -174,31 +173,25 @@ public class ResultPage<T> {
             }
         }
 
-        final ResultPage<T> results = new ResultPage<>(realList, offset, calulatedTotalSize, !moreToFollow);
+        PageResponse pageResponse = new PageResponse(offset, realList.size(), calulatedTotalSize, !moreToFollow);
+
         if (moreToFollow) {
             // All our queries are + 1 to we need to remove the last element
-            results.values.remove(results.values.size() - 1);
-            results.pageResponse = new PageResponse(results.pageResponse.getOffset(),
-                    results.pageResponse.getLength() - 1, results.pageResponse.getTotal(),
-                    results.pageResponse.isExact());
+            realList.remove(realList.size() - 1);
+            pageResponse = new PageResponse(pageResponse.getOffset(),
+                    pageResponse.getLength() - 1, pageResponse.getTotal(),
+                    pageResponse.isExact());
         }
-        return results;
+
+        return new ResultPage<>(realList, pageResponse);
     }
 
     public PageResponse getPageResponse() {
         return pageResponse;
     }
 
-    public void setPageResponse(final PageResponse pageResponse) {
-        this.pageResponse = pageResponse;
-    }
-
     public List<T> getValues() {
         return values;
-    }
-
-    public void setValues(final List<T> values) {
-        this.values = values;
     }
 
     public int size() {
@@ -219,10 +212,7 @@ public class ResultPage<T> {
 
     @JsonIgnore
     public int getPageStart() {
-        if (pageResponse.getOffset() == null) {
-            return 0;
-        }
-        return pageResponse.getOffset().intValue();
+        return (int) pageResponse.getOffset();
     }
 
     @JsonIgnore
@@ -239,12 +229,11 @@ public class ResultPage<T> {
     }
 
     private static <T, R extends ResultPage<T>> Collector<T, List<T>, R> createCollector(
-        final PageRequest pageRequest,
-        final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
+            final PageRequest pageRequest,
+            final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
 
         // Explicit typing needed for GWT
         return new Collector<T, List<T>, R>() {
-
             long counter = 0L;
 
             @Override
@@ -256,9 +245,9 @@ public class ResultPage<T> {
             public BiConsumer<List<T>, T> accumulator() {
                 return (accumulator, item) -> {
                     if (pageRequest == null
-                        || (
-                        counter++ >= pageRequest.getOffset()
-                            && accumulator.size() < pageRequest.getLength())) {
+                            || (
+                            counter++ >= pageRequest.getOffset()
+                                    && accumulator.size() < pageRequest.getLength())) {
 
                         accumulator.add(item);
                     }
@@ -276,13 +265,13 @@ public class ResultPage<T> {
             @Override
             public Function<List<T>, R> finisher() {
                 return accumulator ->
-                    resultPageFactory.apply(
-                        accumulator,
-                        new PageResponse(
-                            pageRequest != null ? pageRequest.getOffset() : 0,
-                            accumulator.size(),
-                            counter,
-                            true));
+                        resultPageFactory.apply(
+                                accumulator,
+                                new PageResponse(
+                                        pageRequest != null ? pageRequest.getOffset() : 0,
+                                        accumulator.size(),
+                                        counter,
+                                        true));
             }
 
             @Override
@@ -293,8 +282,8 @@ public class ResultPage<T> {
     }
 
     public static <T, R extends ResultPage<T>> Collector<T, List<T>, R> collector(
-        final PageRequest pageRequest,
-        final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
+            final PageRequest pageRequest,
+            final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
 
         return createCollector(pageRequest, resultPageFactory);
     }

@@ -5,5 +5,8 @@
   "version" : "ab0baff5-b510-4d0c-8fca-6d093cf1f3b2",
   "description" : "XML-EVENTS",
   "encoding" : "UTF-8",
-  "contextEncoding" : "UTF-8"
+  "contextEncoding" : "UTF-8",
+  "reference" : false,
+  "streamType" : "Raw Events",
+  "status" : "RECEIVE"
 }

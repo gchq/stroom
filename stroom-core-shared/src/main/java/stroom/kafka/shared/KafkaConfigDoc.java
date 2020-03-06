@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "properties"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class KafkaConfigDoc extends Doc {
     public static final String DOCUMENT_TYPE = "KafkaConfig";
 
@@ -46,43 +46,12 @@ public class KafkaConfigDoc extends Doc {
     @JsonProperty
     private String description;
     @JsonProperty
-    private String kafkaVersion;
+    private final String kafkaVersion;
     @JsonProperty
     private Map<String, Object> properties;
 
     public KafkaConfigDoc() {
         kafkaVersion = "2.2.1";
-        setDefaultProperties();
-    }
-
-    @JsonCreator
-    public KafkaConfigDoc(@JsonProperty("type") final String type,
-                          @JsonProperty("uuid") final String uuid,
-                          @JsonProperty("name") final String name,
-                          @JsonProperty("version") final String version,
-                          @JsonProperty("createTime") final Long createTime,
-                          @JsonProperty("updateTime") final Long updateTime,
-                          @JsonProperty("createUser") final String createUser,
-                          @JsonProperty("updateUser") final String updateUser,
-                          @JsonProperty("description") final String description,
-                          @JsonProperty("kafkaVersion") final String kafkaVersion,
-                          @JsonProperty("properties") final Map<String, Object> properties) {
-        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
-        this.description = description;
-        if (kafkaVersion != null) {
-            this.kafkaVersion = kafkaVersion;
-        } else {
-            this.kafkaVersion = "2.2.1";
-        }
-
-        if (properties != null) {
-            this.properties = properties;
-        } else {
-            setDefaultProperties();
-        }
-    }
-
-    private void setDefaultProperties() {
         properties = new HashMap<>();
 
         // Set some useful defaults.
@@ -99,6 +68,24 @@ public class KafkaConfigDoc extends Doc {
         properties.put(VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
     }
 
+    @JsonCreator
+    public KafkaConfigDoc(@JsonProperty("type") final String type,
+                          @JsonProperty("uuid") final String uuid,
+                          @JsonProperty("name") final String name,
+                          @JsonProperty("version") final String version,
+                          @JsonProperty("createTime") final Long createTime,
+                          @JsonProperty("updateTime") final Long updateTime,
+                          @JsonProperty("createUser") final String createUser,
+                          @JsonProperty("updateUser") final String updateUser,
+                          @JsonProperty("description") final String description,
+                          @JsonProperty("kafkaVersion") final String kafkaVersion,
+                          @JsonProperty("properties") final Map<String, Object> properties) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.kafkaVersion = kafkaVersion;
+        this.properties = properties;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -109,10 +96,6 @@ public class KafkaConfigDoc extends Doc {
 
     public String getKafkaVersion() {
         return kafkaVersion;
-    }
-
-    public void setKafkaVersion(final String kafkaVersion) {
-        this.kafkaVersion = kafkaVersion;
     }
 
     // Kafka expects typed property values so jackson needs to know what

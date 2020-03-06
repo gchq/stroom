@@ -43,27 +43,20 @@ public class OldStroomStatsStoreEntity extends DocumentEntity {
     public static final EventStoreTimeIntervalEnum DEFAULT_PRECISION_INTERVAL = EventStoreTimeIntervalEnum.HOUR;
     public static final String DEFAULT_NAME_PATTERN_VALUE = "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$";
 
-    private static final long serialVersionUID = -1667372785365881297L;
-
     private String description;
     private byte pStatisticType;
     private byte pRollUpType;
     private String precision;
-    private boolean enabled = false;
+    private boolean enabled;
 
     private String data;
     private StroomStatsStoreEntityData stroomStatsStoreDataObject;
 
     public OldStroomStatsStoreEntity() {
-        setDefaults();
+        pStatisticType = StatisticType.COUNT.getPrimitiveValue();
+        pRollUpType = StatisticRollUpType.NONE.getPrimitiveValue();
+        precision = DEFAULT_PRECISION_INTERVAL.toString();
     }
-
-    private void setDefaults() {
-        this.pStatisticType = StatisticType.COUNT.getPrimitiveValue();
-        this.pRollUpType = StatisticRollUpType.NONE.getPrimitiveValue();
-        setPrecision(DEFAULT_PRECISION_INTERVAL);
-    }
-
 
     public String getDescription() {
         return description;

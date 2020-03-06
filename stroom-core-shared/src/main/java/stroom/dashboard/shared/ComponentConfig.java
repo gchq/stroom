@@ -31,7 +31,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "id", "name", "settings"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "component")
 @XmlType(name = "ComponentConfig", propOrder = {"type", "id", "name", "settings"})
 public class ComponentConfig {

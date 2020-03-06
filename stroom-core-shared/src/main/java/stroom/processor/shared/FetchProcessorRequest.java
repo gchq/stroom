@@ -29,7 +29,7 @@ import stroom.util.shared.TreeAction;
 import java.util.HashSet;
 import java.util.Set;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FetchProcessorRequest implements TreeAction<ProcessorListRow>, HasIsConstrained {
     @JsonProperty
     private ExpressionOperator expression;

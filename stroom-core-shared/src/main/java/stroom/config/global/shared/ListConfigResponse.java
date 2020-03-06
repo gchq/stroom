@@ -9,7 +9,7 @@ import stroom.util.shared.ResultPage;
 
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ListConfigResponse extends ResultPage<ConfigProperty> {
 
     @JsonCreator

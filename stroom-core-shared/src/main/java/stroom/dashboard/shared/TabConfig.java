@@ -34,49 +34,32 @@ import javax.xml.bind.annotation.XmlType;
 @XmlRootElement(name = "tab")
 @XmlType(name = "tab", propOrder = {"id", "visible", "settings"})
 @JsonPropertyOrder({"id", "visible", "settings"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class TabConfig {
     @XmlElement(name = "id")
     @JsonProperty("id")
-    private String id;
+    private final String id;
 
     @XmlElement(name = "visible")
     @JsonProperty("visible")
-    private Boolean visible;
-
-    @XmlElements({@XmlElement(name = "query", type = QueryComponentSettings.class),
-            @XmlElement(name = "table", type = TableComponentSettings.class),
-            @XmlElement(name = "vis", type = VisComponentSettings.class),
-            @XmlElement(name = "text", type = TextComponentSettings.class)})
-    @JsonProperty("settings")
-    private ComponentSettings settings;
+    private boolean visible;
 
     @JsonIgnore
     private transient TabLayoutConfig parent;
 
-    public TabConfig() {
-        visible = true;
-    }
-
     @JsonCreator
     public TabConfig(@JsonProperty("id") final String id,
-                     @JsonProperty("visible") final Boolean visible,
-                     @JsonProperty("settings") final ComponentSettings settings) {
+                     @JsonProperty("visible") final Boolean visible) {
         this.id = id;
         if (visible != null) {
             this.visible = visible;
         } else {
             this.visible = true;
         }
-        this.settings = settings;
     }
 
     public String getId() {
         return id;
-    }
-
-    public void setId(final String id) {
-        this.id = id;
     }
 
     public boolean isVisible() {
@@ -85,14 +68,6 @@ public class TabConfig {
 
     public void setVisible(final boolean visible) {
         this.visible = visible;
-    }
-
-    public ComponentSettings getSettings() {
-        return settings;
-    }
-
-    public void setSettings(final ComponentSettings settings) {
-        this.settings = settings;
     }
 
     @JsonIgnore

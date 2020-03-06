@@ -36,7 +36,7 @@ import java.util.List;
         @JsonSubTypes.Type(value = FetchDataResult.class, name = "data"),
         @JsonSubTypes.Type(value = FetchMarkerResult.class, name = "marker")
 })
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public abstract class AbstractFetchDataResult {
     @JsonProperty
     private final String streamTypeName;

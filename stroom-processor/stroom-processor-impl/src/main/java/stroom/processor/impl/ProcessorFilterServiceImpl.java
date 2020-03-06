@@ -308,7 +308,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 }
             }
 
-            return new ProcessorListRowResultPage(values, ResultPage.createUnboundedPageResponse(values));
+            return new ProcessorListRowResultPage(values, ResultPage.createPageResponse(values));
         });
     }
 

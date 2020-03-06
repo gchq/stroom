@@ -1,4 +1,4 @@
-package stroom.index.impl.db.migration._V07_00_00.doc;
+package stroom.index.impl.migration._V07_00_00.doc;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;

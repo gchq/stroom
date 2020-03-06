@@ -26,7 +26,7 @@ import stroom.util.shared.ModelStringUtil;
 /**
  * State of a volume.
  */
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FsVolumeState {
     public static final String ENTITY_TYPE = "VolumeState";
 

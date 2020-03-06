@@ -28,7 +28,7 @@ import stroom.util.shared.HasAuditInfo;
  * Represents a node for storage and processing.
  */
 @JsonPropertyOrder({"id", "version", "createTimeMs", "createUser", "updateTimeMs", "updateUser", "name", "url", "priority", "enabled"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class Node implements HasAuditInfo {
     public static final String ENTITY_TYPE = "Node";
 
@@ -55,9 +55,9 @@ public class Node implements HasAuditInfo {
      * master
      */
     @JsonProperty
-    private Integer priority;
+    private int priority;
     @JsonProperty
-    private Boolean enabled;
+    private boolean enabled;
 
     public Node() {
         priority = 1;
@@ -83,16 +83,8 @@ public class Node implements HasAuditInfo {
         this.updateUser = updateUser;
         this.name = name;
         this.url = url;
-        if (priority != null) {
-            this.priority = priority;
-        } else {
-            this.priority = 1;
-        }
-        if (enabled != null) {
-            this.enabled = enabled;
-        } else {
-            this.enabled = true;
-        }
+        this.priority = priority;
+        this.enabled = enabled;
     }
 
     /**

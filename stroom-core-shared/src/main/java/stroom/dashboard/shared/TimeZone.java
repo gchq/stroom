@@ -31,7 +31,7 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"use", "id", "offsetHours", "offsetMinutes"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "timeZone")
 @XmlType(name = "TimeZone", propOrder = {"use", "id", "offsetHours", "offsetMinutes"})
 public class TimeZone {

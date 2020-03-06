@@ -10,7 +10,7 @@ import stroom.docref.DocRef;
 import java.util.Set;
 
 @JsonPropertyOrder({"script", "loadedScripts"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FetchLinkedScriptRequest {
     @JsonProperty
     private DocRef script;

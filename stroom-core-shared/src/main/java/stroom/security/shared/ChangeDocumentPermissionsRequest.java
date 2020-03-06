@@ -25,7 +25,7 @@ import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 
 @JsonPropertyOrder({"docRef", "changeSet", "cascade"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ChangeDocumentPermissionsRequest {
     @JsonProperty
     private final DocRef docRef;

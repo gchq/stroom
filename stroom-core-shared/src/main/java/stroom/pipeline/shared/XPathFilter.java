@@ -25,7 +25,7 @@ import stroom.docref.HasDisplayValue;
 import java.util.HashMap;
 import java.util.Map;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class XPathFilter {
     @JsonProperty
     private String xPath;
