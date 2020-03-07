@@ -32,13 +32,13 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "tab")
-@XmlType(name = "tab", propOrder = {"id", "visible", "settings"})
+@XmlType(name = "tab", propOrder = {"id", "visible"})
 @JsonPropertyOrder({"id", "visible", "settings"})
 @JsonInclude(Include.NON_NULL)
 public class TabConfig {
     @XmlElement(name = "id")
     @JsonProperty("id")
-    private final String id;
+    private String id;
 
     @XmlElement(name = "visible")
     @JsonProperty("visible")
@@ -46,6 +46,9 @@ public class TabConfig {
 
     @JsonIgnore
     private transient TabLayoutConfig parent;
+
+    public TabConfig() {
+    }
 
     @JsonCreator
     public TabConfig(@JsonProperty("id") final String id,

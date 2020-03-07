@@ -224,8 +224,9 @@ class TaskManagerImpl implements TaskManager {
 
     <R> Supplier<R> createSupplier(final Task<R> task) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
-        final SyncTaskCallback<R> callback = new SyncTaskCallback<>();
+        final UserIdentity userIdentity = getUserIdentity();
 
+        final SyncTaskCallback<R> callback = new SyncTaskCallback<>();
         final Supplier<R> supplier = () -> {
             // Get the task handler that will deal with this task.
             final TaskHandler<Task<R>, R> taskHandler = taskHandlerRegistry.findHandler(task);
@@ -241,11 +242,12 @@ class TaskManagerImpl implements TaskManager {
             return callback.getResult();
         };
 
-        return wrapSupplier(task.getId(), getTaskName(task),  getUserIdentity(), supplier, logExecutionTime);
+        return wrapSupplier(task.getId(), getTaskName(task),  userIdentity, supplier, logExecutionTime);
     }
 
     <R> Runnable createRunnable(final Task<R> task, TaskCallback<R> callback) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
+        final UserIdentity userIdentity = getUserIdentity();
 
         final Supplier<Void> supplier = () -> {
             // Get the task handler that will deal with this task.
@@ -256,7 +258,7 @@ class TaskManagerImpl implements TaskManager {
 
         return () -> {
             try {
-                final Supplier<Void> wrappedSupplier = wrapSupplier(task.getId(), getTaskName(task),  getUserIdentity(), supplier, logExecutionTime);
+                final Supplier<Void> wrappedSupplier = wrapSupplier(task.getId(), getTaskName(task),  userIdentity, supplier, logExecutionTime);
                 wrappedSupplier.get();
             } catch (final Throwable t) {
                 try {

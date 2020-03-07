@@ -48,8 +48,12 @@ public class CustomRollUpMask implements HasDisplayValue {
 
     @JsonCreator
     public CustomRollUpMask(@JsonProperty("rolledUpTagPosition") final List<Integer> rolledUpTagPosition) {
-        this.rolledUpTagPosition = new ArrayList<>(rolledUpTagPosition);
-        Collections.sort(this.rolledUpTagPosition);
+        if (rolledUpTagPosition != null) {
+            this.rolledUpTagPosition = new ArrayList<>(rolledUpTagPosition);
+            Collections.sort(this.rolledUpTagPosition);
+        } else {
+            this.rolledUpTagPosition = new ArrayList<>();
+        }
     }
 
     public List<Integer> getRolledUpTagPosition() {
