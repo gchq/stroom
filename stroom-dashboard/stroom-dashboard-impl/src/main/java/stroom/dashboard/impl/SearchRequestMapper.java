@@ -17,6 +17,8 @@
 
 package stroom.dashboard.impl;
 
+import javassist.expr.Expr;
+import org.apache.commons.text.StringEscapeUtils;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -42,21 +44,16 @@ import stroom.dashboard.shared.TimeZone;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResultRequest;
 import stroom.docref.DocRef;
-import stroom.query.api.v2.DateTimeFormat;
+import stroom.query.api.v2.*;
 import stroom.query.api.v2.Format.Type;
-import stroom.query.api.v2.NumberFormat;
-import stroom.query.api.v2.Param;
-import stroom.query.api.v2.Query;
-import stroom.query.api.v2.QueryKey;
-import stroom.query.api.v2.ResultRequest;
 import stroom.query.api.v2.ResultRequest.ResultStyle;
 import stroom.query.api.v2.Sort.SortDirection;
-import stroom.query.api.v2.TableSettings;
 import stroom.query.api.v2.TimeZone.Use;
 import stroom.util.shared.OffsetRange;
 import stroom.visualisation.shared.VisualisationDoc;
 
 import javax.inject.Inject;
+import java.beans.Expression;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
@@ -93,21 +90,45 @@ public class SearchRequestMapper {
         return copy;
     }
 
+    public final static String EXPRESSION_JSON_PARAM_KEY="expressionJson";
     private Query mapQuery(final stroom.dashboard.shared.SearchRequest searchRequest) {
         if (searchRequest.getSearch() == null) {
             return null;
         }
 
+        Param searchExpressionParam = null;
         List<Param> params = null;
         if (searchRequest.getSearch().getParamMap() != null && searchRequest.getSearch().getParamMap().size() > 0) {
             params = new ArrayList<>(searchRequest.getSearch().getParamMap().size());
             for (final Entry<String, String> entry : searchRequest.getSearch().getParamMap().entrySet()) {
                 final Param param = new Param(entry.getKey(), entry.getValue());
-                params.add(param);
+                if (EXPRESSION_JSON_PARAM_KEY.equals(param.getKey()))
+                    searchExpressionParam = param;
+                else
+                    params.add(param);
             }
         }
 
-        return new Query(searchRequest.getSearch().getDataSourceRef(), searchRequest.getSearch().getExpression(), params);
+        if (searchExpressionParam != null){
+            ObjectMapper mapper = new ObjectMapper();
+            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+            mapper.setSerializationInclusion(Include.NON_NULL);
+            String expressionJson = "null";
+            try {
+                expressionJson = StringEscapeUtils.unescapeXml(searchExpressionParam.getValue());
+                final ExpressionOperator suppliedExpression = mapper.readValue(expressionJson, ExpressionOperator.class);
+                ExpressionOperator expression = new ExpressionOperator(true, ExpressionOperator.Op.AND,
+                        searchRequest.getSearch().getExpression(), suppliedExpression);
+                final Query query = new Query(searchRequest.getSearch().getDataSourceRef(), expression, params);
+                return query;
+
+            }catch (IOException ex){
+                throw new UncheckedIOException("Invalid JSON for expression.  Got: " + expressionJson, ex);
+            }
+
+        }else {
+            return new Query(searchRequest.getSearch().getDataSourceRef(), searchRequest.getSearch().getExpression(), params);
+        }
     }
 
     private List<ResultRequest> mapResultRequests(final stroom.dashboard.shared.SearchRequest searchRequest) {

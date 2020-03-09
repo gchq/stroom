@@ -1,7 +1,6 @@
 package stroom.statistics.impl.hbase.pipeline;
 
 import stroom.docref.DocRef;
-import stroom.kafka.pipeline.AbstractKafkaProducerFilter;
 import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -56,6 +55,11 @@ class StroomStatsFilter extends AbstractKafkaProducerFilter {
         return recordKey;
     }
 
+    /*
+    Warning! This software has not been tested recently and is likely to need some rework as a number of things
+    have changed around it.
+    todo test and fix as appropriate!
+     */
     @Override
     public void startProcessing() {
         if (stroomStatStoreRef == null) {
