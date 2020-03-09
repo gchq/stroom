@@ -4,6 +4,7 @@ import com.google.common.base.Strings;
 import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.JSONFormat;
 import org.jooq.Result;
+import stroom.authentication.dao.UserDao;
 import stroom.authentication.exceptions.ConflictException;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;

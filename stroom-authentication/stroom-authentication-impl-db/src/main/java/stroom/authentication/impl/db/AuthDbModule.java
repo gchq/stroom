@@ -1,9 +1,9 @@
 package stroom.authentication.impl.db;
 
 import stroom.authentication.AuthenticationDbConfig;
-import stroom.authentication.JwkDao;
-import stroom.authentication.resources.token.v1.TokenDao;
-import stroom.authentication.resources.user.v1.UserDao;
+import stroom.authentication.dao.JwkDao;
+import stroom.authentication.dao.TokenDao;
+import stroom.authentication.dao.UserDao;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 

@@ -1,8 +1,9 @@
-package stroom.authentication.resources.user.v1;
+package stroom.authentication.dao;
 
 import org.jooq.Record13;
 import org.jooq.Result;
 import stroom.authentication.LoginResult;
+import stroom.authentication.resources.user.v1.User;
 
 import java.sql.Timestamp;
 import java.time.Clock;

@@ -19,31 +19,24 @@ package stroom.authentication;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import org.jooq.Configuration;
-import stroom.authentication.exceptions.ConflictException;
-import stroom.authentication.exceptions.mappers.*;
+import stroom.authentication.exceptions.mappers.BadRequestExceptionMapper;
+import stroom.authentication.exceptions.mappers.ConflictExceptionMapper;
+import stroom.authentication.exceptions.mappers.NoSuchUserExceptionMapper;
+import stroom.authentication.exceptions.mappers.TokenCreationExceptionMapper;
+import stroom.authentication.exceptions.mappers.UnsupportedFilterExceptionMapper;
 import stroom.authentication.resources.authentication.v1.AuthenticationResource;
 import stroom.authentication.resources.token.v1.TokenResource;
-import stroom.authentication.resources.user.v1.UserDao;
 import stroom.authentication.resources.user.v1.UserResource;
 import stroom.authentication.service.eventlogging.StroomEventLoggingService;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.RestResource;
 
 public final class AuthModule extends AbstractModule {
-    //    private Config config;
     private Configuration jooqConfig;
-//
-//    public Module(Config config, Configuration jooqConfig) {
-//        this.config = config;
-//        this.jooqConfig = jooqConfig;
-//    }
 
     @Override
     protected void configure() {
         bind(UserResource.class);
-//        bind(AuthenticationResource.class);
-//        bind(TokenResource.class);
-//        bind(UserServiceClient.class);
         bind(TokenVerifier.class);
         bind(EmailSender.class);
         bind(CertificateManager.class);
@@ -61,24 +54,8 @@ public final class AuthModule extends AbstractModule {
                 .addBinding(TokenResource.class);
     }
 
-    //
-//    @Provides
-//    public Config getConfig() {
-//        return config;
-//    }
-//
-//    @Provides
-//    public TokenConfig getTokenConfig() {
-//        return config.getTokenConfig();
-//    }
-//
     @Provides
     public Configuration getJooqConfig() {
         return jooqConfig;
     }
-//
-//    @Provides
-//    public PasswordIntegrityCheckTask getPasswordIntegrityCheckTask(Config config, UserDao userDao){
-//        return new PasswordIntegrityCheckTask(config.getPasswordIntegrityChecksConfig(), userDao);
-//    }
 }

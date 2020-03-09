@@ -1,6 +1,9 @@
-package stroom.authentication.resources.token.v1;
+package stroom.authentication.dao;
 
 import stroom.authentication.exceptions.NoSuchUserException;
+import stroom.authentication.resources.token.v1.SearchRequest;
+import stroom.authentication.resources.token.v1.SearchResponse;
+import stroom.authentication.resources.token.v1.Token;
 import stroom.authentication.resources.user.v1.User;
 
 import java.sql.Timestamp;

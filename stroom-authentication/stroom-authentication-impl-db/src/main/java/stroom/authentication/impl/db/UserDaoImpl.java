@@ -32,7 +32,7 @@ import stroom.auth.db.tables.records.UsersRecord;
 import stroom.authentication.exceptions.BadRequestException;
 import stroom.authentication.exceptions.NoSuchUserException;
 import stroom.authentication.resources.user.v1.User;
-import stroom.authentication.resources.user.v1.UserDao;
+import stroom.authentication.dao.UserDao;
 import stroom.db.util.JooqUtil;
 
 import javax.inject.Inject;

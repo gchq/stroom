@@ -41,7 +41,7 @@ import stroom.authentication.exceptions.UnsupportedFilterException;
 import stroom.authentication.resources.token.v1.SearchRequest;
 import stroom.authentication.resources.token.v1.SearchResponse;
 import stroom.authentication.resources.token.v1.Token;
-import stroom.authentication.resources.token.v1.TokenDao;
+import stroom.authentication.dao.TokenDao;
 import stroom.authentication.resources.user.v1.User;
 import stroom.db.util.JooqUtil;
 

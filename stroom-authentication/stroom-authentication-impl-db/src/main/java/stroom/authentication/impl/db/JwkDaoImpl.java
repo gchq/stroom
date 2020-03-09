@@ -7,6 +7,7 @@ import org.jose4j.jwk.RsaJwkGenerator;
 import org.jose4j.lang.JoseException;
 import stroom.auth.db.Tables;
 import stroom.auth.db.tables.records.JsonWebKeyRecord;
+import stroom.authentication.dao.JwkDao;
 import stroom.db.util.JooqUtil;
 
 import javax.inject.Inject;
@@ -14,7 +15,7 @@ import javax.inject.Singleton;
 import java.util.UUID;
 
 @Singleton
-public class JwkDaoImpl implements stroom.authentication.JwkDao {
+public class JwkDaoImpl implements JwkDao {
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(JwkDaoImpl.class);
 
     private AuthDbConnProvider authDbConnProvider;

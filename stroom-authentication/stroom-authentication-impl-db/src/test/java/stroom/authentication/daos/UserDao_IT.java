@@ -10,7 +10,7 @@ import stroom.authentication.Database_IT;
 import stroom.authentication.impl.db.UserDaoImpl;
 import stroom.authentication.impl.db.UserMapper;
 import stroom.authentication.resources.user.v1.User;
-import stroom.authentication.resources.user.v1.UserDao;
+import stroom.authentication.dao.UserDao;
 
 import java.sql.Connection;
 import java.sql.SQLException;
