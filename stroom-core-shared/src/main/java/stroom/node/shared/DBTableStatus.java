@@ -25,7 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * API to table status
  */
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class DBTableStatus {
     public static final String FIELD_DATABASE = "Database";
     public static final String FIELD_TABLE = "Table";

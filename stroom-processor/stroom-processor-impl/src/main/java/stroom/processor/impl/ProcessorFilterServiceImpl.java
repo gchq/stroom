@@ -49,6 +49,8 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.CriteriaSet;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ResultPage;
@@ -68,6 +70,8 @@ import java.util.UUID;
 
 @Singleton
 class ProcessorFilterServiceImpl implements ProcessorFilterService {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ProcessorFilterServiceImpl.class);
+
     private static final String PERMISSION = PermissionNames.MANAGE_PROCESSORS_PERMISSION;
     private static final int MAX_STREAM_TO_REPROCESS = 1000;
 
@@ -304,7 +308,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 }
             }
 
-            return new ProcessorListRowResultPage(values, ResultPage.createUnboundedPageResponse(values));
+            return new ProcessorListRowResultPage(values, ResultPage.createPageResponse(values));
         });
     }
 
@@ -322,51 +326,21 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                     ExpressionTerm term = (ExpressionTerm) child;
                     DocRef docRef = term.getDocRef();
 
-                    if (docRef != null) {
-                        final DocRefInfo docRefInfo = explorerService.info(docRef);
-                        if (docRefInfo != null) {
-                            term = new ExpressionTerm.Builder()
-                                    .enabled(term.isEnabled())
-                                    .field(term.getField())
-                                    .condition(term.getCondition())
-                                    .value(term.getValue())
-                                    .docRef(docRefInfo.getDocRef())
-                                    .build();
+                    try {
+                        if (docRef != null) {
+                            final DocRefInfo docRefInfo = explorerService.info(docRef);
+                            if (docRefInfo != null) {
+                                term = new ExpressionTerm.Builder()
+                                        .enabled(term.isEnabled())
+                                        .field(term.getField())
+                                        .condition(term.getCondition())
+                                        .value(term.getValue())
+                                        .docRef(docRefInfo.getDocRef())
+                                        .build();
+                            }
                         }
-//
-//                        if (DictionaryDoc.ENTITY_TYPE.equals(docRef.getType())) {
-//                            try {
-//                                final DictionaryDoc dictionaryDoc = dictionaryStore.read(docRef.getUuid());
-//                                docRef = stroom.entity.shared.DocRefUtil.create(dictionaryDoc);
-//                            } catch (final RuntimeException e) {
-//                                LOGGER.debug(e.getMessage(), e);
-//                            }
-//
-//                            term = new ExpressionTerm.Builder()
-//                                    .enabled(term.getEnabled())
-//                                    .field(term.getField())
-//                                    .condition(term.getCondition())
-//                                    .value(term.getValue())
-//                                    .docRef(docRef)
-//                                    .build();
-//                        }
-//
-//                        if (PipelineEntity.ENTITY_TYPE.equals(docRef.getType())) {
-//                            try {
-//                                final PipelineEntity pipelineEntity = pipelineService.loadByUuid(docRef.getUuid());
-//                                docRef = stroom.entity.shared.DocRefUtil.create(pipelineEntity);
-//                            } catch (final RuntimeException e) {
-//                                LOGGER.debug(e.getMessage(), e);
-//                            }
-//
-//                            term = new ExpressionTerm.Builder()
-//                                    .enabled(term.getEnabled())
-//                                    .field(term.getField())
-//                                    .condition(term.getCondition())
-//                                    .value(term.getValue())
-//                                    .docRef(docRef)
-//                                    .build();
-//                        }
+                    } catch (final RuntimeException e) {
+                        LOGGER.debug(e::getMessage, e);
                     }
 
                     builder.addTerm(term);

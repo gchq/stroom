@@ -30,7 +30,7 @@ import java.io.Serializable;
 
 @XmlType(name = "query", propOrder = {"dataSource", "expression", "limits"})
 @XmlRootElement(name = "query")
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class QueryData implements Serializable {
     private static final long serialVersionUID = -2530827581046882396L;
 

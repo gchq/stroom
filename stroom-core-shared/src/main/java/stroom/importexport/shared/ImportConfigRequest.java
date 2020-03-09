@@ -24,7 +24,7 @@ import stroom.util.shared.ResourceKey;
 
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ImportConfigRequest {
     @JsonProperty
     private final ResourceKey resourceKey;

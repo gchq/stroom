@@ -25,7 +25,7 @@ import stroom.util.shared.HasIsConstrained;
 import java.util.HashSet;
 import java.util.Set;
 
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FindTaskCriteria implements HasIsConstrained {
     @JsonProperty
     private String sessionId;
@@ -91,16 +91,16 @@ public class FindTaskCriteria implements HasIsConstrained {
         return (ancestorIdSet != null && ancestorIdSet.size() > 0) || (idSet != null && idSet.size() > 0);
     }
 
-    public boolean isMatch(final Task<?> task, final String sessionId) {
+    public boolean isMatch(final TaskId taskId, final String sessionId) {
         if (ancestorIdSet != null && ancestorIdSet.size() > 0) {
             for (final TaskId ancestorId : ancestorIdSet) {
-                if (task.getId().isOrHasAncestor(ancestorId)) {
+                if (taskId.isOrHasAncestor(ancestorId)) {
                     return true;
                 }
             }
         }
         if (idSet != null && idSet.size() > 0) {
-            if (idSet.contains(task.getId())) {
+            if (idSet.contains(taskId)) {
                 return true;
             }
         }

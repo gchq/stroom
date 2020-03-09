@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.AbstractConfig;
 
 @JsonPropertyOrder({"ui", "authenticationService", "users", "apiKeys", "indexVolumes", "indexVolumeGroups", "userAuthorisation", "groupAuthorisation", "editDoc", "changepassword", "kibana", "trackers", "annotations", "elastic", "documentPermissions"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class UrlConfig extends AbstractConfig {
     @JsonProperty
     @JsonPropertyDescription("The URL of Stroom as provided to the browser")

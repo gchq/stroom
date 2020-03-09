@@ -68,7 +68,7 @@ class SearchableStore implements Store {
                     final Searchable searchable,
                     final TaskContext taskContext,
                     final SearchRequest searchRequest,
-                    final ExecutorProvider executorProvider) {
+                    final Executor executor) {
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.storeSize = storeSize;
 
@@ -102,8 +102,7 @@ class SearchableStore implements Store {
             fieldArray[v] = field;
         });
 
-        final Executor executor = executorProvider.getExecutor();
-        executor.execute(() -> {
+        Runnable runnable = () -> {
             synchronized (SearchableStore.class) {
                 thread = Thread.currentThread();
                 if (terminate.get()) {
@@ -170,9 +169,10 @@ class SearchableStore implements Store {
             LOGGER.debug(() -> "completeSearch called");
             completionState.complete();
 
-            LOGGER.debug(() ->
-                    LogUtil.message("Query finished in {}", Duration.between(queryStart, Instant.now())));
-        });
+            LOGGER.debug(() -> "Query finished in " + Duration.between(queryStart, Instant.now()));
+        };
+        runnable = taskContext.subTask(runnable);
+        executor.execute(runnable);
     }
 
     private Map<String, String> getParamMap(final SearchRequest searchRequest) {

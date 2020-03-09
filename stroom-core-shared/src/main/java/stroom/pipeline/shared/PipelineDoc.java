@@ -31,7 +31,7 @@ import java.util.Objects;
  * This entity is used to persist pipeline configuration.
  */
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "parentPipeline", "pipelineData"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class PipelineDoc extends Doc {
     public static final String DOCUMENT_TYPE = "Pipeline";
 

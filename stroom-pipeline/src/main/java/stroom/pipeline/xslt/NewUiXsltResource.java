@@ -42,7 +42,7 @@ public class NewUiXsltResource implements RestResource {
                 .build();
     }
 
-    @JsonInclude(Include.NON_DEFAULT)
+    @JsonInclude(Include.NON_NULL)
     private static class XsltDTO extends DocRef {
         @JsonProperty
         private String description;

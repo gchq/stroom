@@ -28,7 +28,7 @@ import java.util.Map;
  * Class that represents a key to a resource. This key has a name and a string
  * key.
  */
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ResourceKey {
     public static final String NAME = "name";
     public static final String KEY = "key";

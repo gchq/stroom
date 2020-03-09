@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Set;
 import java.util.TreeSet;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class IdSet extends CriteriaSet<Long> {
     public IdSet() {
         super(null, null, new TreeSet<>());

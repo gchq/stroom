@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 
 @JsonPropertyOrder({"tableId", "visualisation", "json", "tableSettings"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class VisComponentSettings extends ComponentSettings {
     @JsonProperty("tableId")
     private String tableId;

@@ -12,7 +12,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder({"enabled", "chooseOnStartup", "managerTitle", "editorTitle", "editorBody"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ActivityConfig extends AbstractConfig {
     @JsonProperty
     @JsonPropertyDescription("If you would like users to be able to record some info about the activity they are performing set this property to true.")

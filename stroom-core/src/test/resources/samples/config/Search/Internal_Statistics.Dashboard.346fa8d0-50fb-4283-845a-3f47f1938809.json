@@ -11,26 +11,39 @@
         "expression" : "${Type}",
         "format" : {
           "type" : "GENERAL"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Node",
         "expression" : "${Node}",
         "format" : {
           "type" : "GENERAL"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Statistic Value",
         "expression" : "${Statistic Value}",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Date Time",
         "expression" : "${Date Time}",
         "format" : {
           "type" : "DATE_TIME"
-        }
-      } ]
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ],
+      "maxResults" : [ 1000000 ]
     }
   }, {
     "type" : "query",
@@ -108,26 +121,39 @@
         "expression" : "${Type}",
         "format" : {
           "type" : "GENERAL"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Node",
         "expression" : "${Node}",
         "format" : {
           "type" : "GENERAL"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Statistic Value",
         "expression" : "${Statistic Value}",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Date Time",
         "expression" : "${Date Time}",
         "format" : {
           "type" : "DATE_TIME"
-        }
-      } ]
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ],
+      "maxResults" : [ 1000000 ]
     }
   }, {
     "type" : "vis",
@@ -180,26 +206,39 @@
         "expression" : "${Type}",
         "format" : {
           "type" : "GENERAL"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Node",
         "expression" : "${Node}",
         "format" : {
           "type" : "GENERAL"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Statistic Value",
         "expression" : "${Statistic Value}",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Date Time",
         "expression" : "${Date Time}",
         "format" : {
           "type" : "DATE_TIME"
-        }
-      } ]
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ],
+      "maxResults" : [ 1000000 ]
     }
   }, {
     "type" : "vis",
@@ -252,26 +291,39 @@
         "expression" : "${Type}",
         "format" : {
           "type" : "GENERAL"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Node",
         "expression" : "${Node}",
         "format" : {
           "type" : "GENERAL"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Statistic Value",
         "expression" : "${Statistic Value}",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Date Time",
         "expression" : "${Date Time}",
         "format" : {
           "type" : "DATE_TIME"
-        }
-      } ]
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
+      } ],
+      "maxResults" : [ 1000000 ]
     }
   }, {
     "type" : "vis",
@@ -290,58 +342,80 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : { },
+    "preferredSize" : {
+      "width" : 0,
+      "height" : 0
+    },
     "dimension" : 1,
     "children" : [ {
       "type" : "tabLayout",
       "preferredSize" : {
+        "width" : 0,
         "height" : 192
       },
       "tabs" : [ {
-        "id" : "vis-WDTWU"
+        "id" : "vis-WDTWU",
+        "visible" : true
       }, {
-        "id" : "table-IIO1T"
+        "id" : "table-IIO1T",
+        "visible" : true
       }, {
-        "id" : "query-JT8D7"
+        "id" : "query-JT8D7",
+        "visible" : true
       } ],
       "selected" : 0
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
+        "width" : 0,
         "height" : 183
       },
       "tabs" : [ {
-        "id" : "vis-QL85W"
+        "id" : "vis-QL85W",
+        "visible" : true
       }, {
-        "id" : "table-27GY6"
+        "id" : "table-27GY6",
+        "visible" : true
       }, {
-        "id" : "query-XOG4Q"
+        "id" : "query-XOG4Q",
+        "visible" : true
       } ],
       "selected" : 0
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
+        "width" : 0,
         "height" : 236
       },
       "tabs" : [ {
-        "id" : "vis-UNBZ5"
+        "id" : "vis-UNBZ5",
+        "visible" : true
       }, {
-        "id" : "table-9JDRM"
+        "id" : "table-9JDRM",
+        "visible" : true
       }, {
-        "id" : "query-HXTW8"
+        "id" : "query-HXTW8",
+        "visible" : true
       } ],
       "selected" : 0
     }, {
       "type" : "tabLayout",
-      "preferredSize" : { },
+      "preferredSize" : {
+        "width" : 0,
+        "height" : 0
+      },
       "tabs" : [ {
-        "id" : "vis-QPS6W"
+        "id" : "vis-QPS6W",
+        "visible" : true
       }, {
-        "id" : "table-MUX7H"
+        "id" : "table-MUX7H",
+        "visible" : true
       }, {
-        "id" : "query-GXYVJ"
+        "id" : "query-GXYVJ",
+        "visible" : true
       } ],
       "selected" : 0
     } ]
-  }
+  },
+  "tabVisibility" : "SHOW_ALL"
 }

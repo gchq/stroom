@@ -27,7 +27,7 @@ import java.util.Map;
 import java.util.Set;
 
 @JsonPropertyOrder({"docRefUuid", "userPermissions"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class DocumentPermissions {
     @JsonProperty
     private final String docRefUuid;

@@ -9,7 +9,7 @@ import stroom.util.shared.ResultPage;
 
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ProcessorListRowResultPage extends ResultPage<ProcessorListRow> {
     @JsonCreator
     public ProcessorListRowResultPage(@JsonProperty("values") final List<ProcessorListRow> values,

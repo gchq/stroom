@@ -35,7 +35,7 @@ import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"order", "direction"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "sort")
 @XmlType(name = "Sort", propOrder = {"order", "direction"})
 public class Sort implements Serializable {
@@ -43,7 +43,7 @@ public class Sort implements Serializable {
 
     @XmlElement(name = "order")
     @JsonProperty("order")
-    private Integer order;
+    private int order;
     @XmlElement(name = "direction")
     @JsonProperty("direction")
     private SortDirection direction;

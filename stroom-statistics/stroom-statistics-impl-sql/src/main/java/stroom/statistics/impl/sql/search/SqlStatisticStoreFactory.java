@@ -10,43 +10,42 @@ import stroom.query.common.v2.Store;
 import stroom.query.common.v2.StoreFactory;
 import stroom.statistics.impl.sql.entity.StatisticStoreCache;
 import stroom.statistics.impl.sql.shared.StatisticStoreDoc;
-import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 import java.util.Arrays;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("unused")
 public class SqlStatisticStoreFactory implements StoreFactory {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticStoreFactory.class);
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(SqlStatisticStoreFactory.class);
 
     private final StatisticStoreCache statisticStoreCache;
     private final StatisticsSearchService statisticsSearchService;
-    private final TaskContext taskContext;
+    private final Provider<TaskContext> taskContextProvider;
     private final SearchConfig searchConfig;
     private final UiConfig clientConfig;
-    private final ExecutorProvider executorProvider;
+    private final Executor executor;
 
     @Inject
     public SqlStatisticStoreFactory(final StatisticStoreCache statisticStoreCache,
                                     final StatisticsSearchService statisticsSearchService,
-                                    final TaskContext taskContext,
-                                    final ExecutorProvider executorProvider,
+                                    final Provider<TaskContext> taskContextProvider,
+                                    final Executor executor,
                                     final SearchConfig searchConfig,
                                     final UiConfig clientConfig) {
         this.statisticStoreCache = statisticStoreCache;
         this.statisticsSearchService = statisticsSearchService;
-        this.taskContext = taskContext;
+        this.taskContextProvider = taskContextProvider;
         this.searchConfig = searchConfig;
         this.clientConfig = clientConfig;
-        this.executorProvider = executorProvider;
+        this.executor = executor;
     }
 
     @Override
@@ -79,9 +78,6 @@ public class SqlStatisticStoreFactory implements StoreFactory {
         final Sizes defaultMaxResultsSizes = getDefaultMaxResultsSizes();
         final int resultHandlerBatchSize = getResultHandlerBatchSize();
 
-        // TODO do we want to limit this with a thread pool?
-        final Executor executor = executorProvider.getExecutor();
-
         //wrap the resultHandler in a new store, initiating the search in the process
         return new SqlStatisticsStore(
                 searchRequest,
@@ -91,7 +87,7 @@ public class SqlStatisticStoreFactory implements StoreFactory {
                 storeSize,
                 resultHandlerBatchSize,
                 executor,
-                taskContext);
+                taskContextProvider.get());
     }
 
     private Sizes getDefaultMaxResultsSizes() {

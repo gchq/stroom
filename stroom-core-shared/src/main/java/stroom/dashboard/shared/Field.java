@@ -35,7 +35,7 @@ import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"id", "name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "field")
 @XmlType(name = "Field", propOrder = {"id", "name", "expression", "sort", "filter", "format", "group", "width", "visible", "special"})
 public class Field implements Serializable, HasDisplayValue {
@@ -64,15 +64,17 @@ public class Field implements Serializable, HasDisplayValue {
     private Integer group;
     @XmlElement(name = "width")
     @JsonProperty("width")
-    private Integer width = 200;
+    private int width;
     @XmlElement(name = "visible")
     @JsonProperty("visible")
-    private Boolean visible = true;
+    private boolean visible;
     @XmlElement(name = "special")
     @JsonProperty(value = "special")
-    private Boolean special = false;
+    private boolean special;
 
     public Field() {
+        width = 200;
+        visible = true;
     }
 
     public Field(final String name) {
@@ -89,7 +91,7 @@ public class Field implements Serializable, HasDisplayValue {
                  @JsonProperty("group") final Integer group,
                  @JsonProperty("width") final Integer width,
                  @JsonProperty("visible") final Boolean visible,
-                 @JsonProperty("special") final Boolean special) {
+                 @JsonProperty("special") final boolean special) {
         this.id = id;
         this.name = name;
         this.expression = expression;
@@ -99,13 +101,15 @@ public class Field implements Serializable, HasDisplayValue {
         this.group = group;
         if (width != null) {
             this.width = width;
+        } else {
+            this.width = 200;
         }
         if (visible != null) {
             this.visible = visible;
+        } else {
+            this.visible = true;
         }
-        if (special != null) {
-            this.special = special;
-        }
+        this.special = special;
     }
 
     public String getId() {
@@ -164,27 +168,27 @@ public class Field implements Serializable, HasDisplayValue {
         this.group = group;
     }
 
-    public Integer getWidth() {
+    public int getWidth() {
         return width;
     }
 
-    public void setWidth(final Integer width) {
+    public void setWidth(final int width) {
         this.width = width;
     }
 
-    public Boolean isVisible() {
+    public boolean isVisible() {
         return visible;
     }
 
-    public void setVisible(final Boolean visible) {
+    public void setVisible(final boolean visible) {
         this.visible = visible;
     }
 
-    public Boolean isSpecial() {
+    public boolean isSpecial() {
         return special;
     }
 
-    public void setSpecial(final Boolean special) {
+    public void setSpecial(final boolean special) {
         this.special = special;
     }
 

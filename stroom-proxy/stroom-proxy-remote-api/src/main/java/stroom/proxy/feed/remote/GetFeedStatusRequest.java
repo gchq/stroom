@@ -8,7 +8,7 @@ import stroom.proxy.remote.RemoteRequest;
 
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class GetFeedStatusRequest extends RemoteRequest {
     private static final long serialVersionUID = -4083508707616388035L;
 

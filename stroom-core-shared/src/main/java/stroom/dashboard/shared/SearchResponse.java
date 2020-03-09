@@ -36,7 +36,7 @@ import java.util.Set;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "searchResponse", propOrder = {"highlights", "errors", "complete", "results"})
 @XmlRootElement(name = "searchResponse")
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class SearchResponse {
     /**
      * The dashboard component that this search response is for.

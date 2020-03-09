@@ -18,6 +18,7 @@ package stroom.config.global.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -46,10 +47,11 @@ import java.util.Optional;
  * child objects. Changes to the YAML or database will result in updates to the Guice bound AppConfig
  * object.
  * <p>
- * TODO At present the UI is unable to show the value from the YAML so may give a misleading picture
  */
-@JsonInclude(Include.NON_DEFAULT)
+@JsonIgnoreProperties(value = {"source"}, allowGetters = true)
+@JsonInclude(Include.NON_NULL)
 public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> {
+
     @JsonProperty
     private Integer id;
     @JsonProperty
@@ -149,16 +151,8 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
         this.updateUser = updateUser;
         this.name = name;
         this.defaultValue = defaultValue;
-        if (databaseOverrideValue != null) {
-            this.databaseOverrideValue = databaseOverrideValue;
-        } else {
-            this.databaseOverrideValue = OverrideValue.unSet(String.class);
-        }
-        if (yamlOverrideValue != null) {
-            this.yamlOverrideValue = yamlOverrideValue;
-        } else {
-            this.yamlOverrideValue = OverrideValue.unSet(String.class);
-        }
+        this.databaseOverrideValue = databaseOverrideValue;
+        this.yamlOverrideValue = yamlOverrideValue;
         this.description = description;
         this.editable = editable;
         this.password = password;
@@ -257,9 +251,9 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
     public static Optional<String> getEffectiveValue(final String defaultValue,
                                                      final OverrideValue<String> databaseOverrideValue,
                                                      final OverrideValue<String> yamlOverrideValue) {
-        if (yamlOverrideValue.isHasOverride()) {
+        if (yamlOverrideValue != null && yamlOverrideValue.isHasOverride()) {
             return yamlOverrideValue.getValueAsOptional();
-        } else if (databaseOverrideValue.isHasOverride()) {
+        } else if (databaseOverrideValue != null && databaseOverrideValue.isHasOverride()) {
             return databaseOverrideValue.getValueAsOptional();
         } else {
             return Optional.ofNullable(defaultValue);
@@ -421,15 +415,23 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
         this.password = password;
     }
 
-    @JsonIgnore
-    public SourceType getSource() {
-        if (yamlOverrideValue.isHasOverride()) {
+    public SourceType getSource(final OverrideValue<String> databaseOverrideValue,
+                                final OverrideValue<String> yamlOverrideValue) {
+        if (yamlOverrideValue != null && yamlOverrideValue.isHasOverride()) {
             return SourceType.YAML;
-        } else if (databaseOverrideValue.isHasOverride()) {
+        } else if (databaseOverrideValue != null && databaseOverrideValue.isHasOverride()) {
             return SourceType.DATABASE;
         } else {
             return SourceType.DEFAULT;
         }
+    }
+
+    //TODO Don't want JsonIgnore here as the class level JsonIgnoreProperties annotation allows
+    //  us to keep the getter but make jackson ignore it.  Having source is useful if the rest
+    //  endpoint is hit manually or by something that doesn't have the java code.
+    @JsonIgnore
+    public SourceType getSource() {
+        return getSource(databaseOverrideValue, yamlOverrideValue);
     }
 
     public String getDataTypeName() {

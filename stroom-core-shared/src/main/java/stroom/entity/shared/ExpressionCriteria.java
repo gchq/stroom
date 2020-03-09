@@ -27,7 +27,7 @@ import stroom.util.shared.Sort;
 import java.util.List;
 import java.util.Objects;
 
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ExpressionCriteria extends BaseCriteria {
     @JsonProperty
     private ExpressionOperator expression;

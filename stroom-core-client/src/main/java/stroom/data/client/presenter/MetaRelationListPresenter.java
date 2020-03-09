@@ -103,10 +103,7 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
             getView().setColumnWidth(expanderColumn, 0, Unit.PX);
         }
 
-        final ResultPage<MetaRow> processed = new ResultPage<MetaRow>();
-        processed.setValues(newData);
-        processed.setPageResponse(data.getPageResponse());
-        return super.onProcessData(processed);
+        return super.onProcessData(new ResultPage<>(newData, data.getPageResponse()));
     }
 
     private void addChildren(final MetaRow parent, final ResultPage<MetaRow> data,

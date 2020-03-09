@@ -276,8 +276,8 @@ public class ManualProxyAggregationTest {
                            final int maxAggregation,
                            final long maxStreamSize) {
         final ProxyAggregationExecutor proxyAggregationExecutor = new ProxyAggregationExecutor(
-                taskContext,
                 executorProvider,
+                taskContext,
                 filePackProcessorProvider,
                 proxyDir,
                 10,

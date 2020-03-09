@@ -12,7 +12,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder({"defaultTimeLimit", "defaultRecordLimit"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ProcessConfig extends AbstractConfig {
     private static final long DEFAULT_TIME_LIMIT = 30L;
     private static final long DEFAULT_RECORD_LIMIT = 1000000L;
@@ -25,21 +25,23 @@ public class ProcessConfig extends AbstractConfig {
     private volatile long defaultRecordLimit;
 
     public ProcessConfig() {
-        defaultTimeLimit = DEFAULT_TIME_LIMIT;
-        defaultRecordLimit = DEFAULT_RECORD_LIMIT;
+        setDefaults();
     }
 
     @JsonCreator
     public ProcessConfig(@JsonProperty("defaultTimeLimit") final long defaultTimeLimit,
                          @JsonProperty("defaultRecordLimit") final long defaultRecordLimit) {
-        if (defaultTimeLimit > 0) {
-            this.defaultTimeLimit = defaultTimeLimit;
-        } else {
+        this.defaultTimeLimit = defaultTimeLimit;
+        this.defaultRecordLimit = defaultRecordLimit;
+
+        setDefaults();
+    }
+
+    private void setDefaults() {
+        if (defaultTimeLimit <= 0) {
             this.defaultTimeLimit = DEFAULT_TIME_LIMIT;
         }
-        if (defaultRecordLimit > 0) {
-            this.defaultRecordLimit = defaultRecordLimit;
-        } else {
+        if (defaultRecordLimit <= 0) {
             this.defaultRecordLimit = DEFAULT_RECORD_LIMIT;
         }
     }

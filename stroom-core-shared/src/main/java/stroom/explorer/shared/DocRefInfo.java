@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 
 @JsonPropertyOrder({"otherInfo", "createTime", "updateTime", "createUser", "updateUser"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class DocRefInfo {
     @JsonProperty
     private final DocRef docRef;

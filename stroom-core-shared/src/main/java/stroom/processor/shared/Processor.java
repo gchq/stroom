@@ -26,7 +26,7 @@ import stroom.util.shared.HasUuid;
 
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class Processor implements HasAuditInfo, HasUuid {
     private static final String PIPELINE_STREAM_PROCESSOR_TASK_TYPE = "pipelineStreamProcessor";
 
@@ -84,11 +84,7 @@ public class Processor implements HasAuditInfo, HasUuid {
         this.updateTimeMs = updateTimeMs;
         this.updateUser = updateUser;
         this.uuid = uuid;
-        if (taskType != null) {
-            this.taskType = taskType;
-        } else {
-            this.taskType = PIPELINE_STREAM_PROCESSOR_TASK_TYPE;
-        }
+        this.taskType = taskType;
         this.pipelineUuid = pipelineUuid;
         this.enabled = enabled;
     }

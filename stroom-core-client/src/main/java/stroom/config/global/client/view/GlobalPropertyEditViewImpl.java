@@ -68,13 +68,18 @@ public final class GlobalPropertyEditViewImpl
     @UiField
     TickBox readOnly;
     @UiField
-    ButtonPanel buttonPanel;
+    ButtonPanel yamlValueButtonPanel;
+    @UiField
+    ButtonPanel effectiveValueButtonPanel;
+    @UiField
+    ButtonPanel dataTypeButtonPanel;
 
     private boolean password;
 //    private static volatile Resources RESOURCES;
 
     @Inject
-    public GlobalPropertyEditViewImpl(final EventBus eventBus, final Binder binder) {
+    public GlobalPropertyEditViewImpl(final EventBus eventBus,
+                                      final Binder binder) {
         widget = binder.createAndBindUi(this);
 //        RESOURCES = GWT.create(Resources.class);
 //        RESOURCES.style().ensureInjected();
@@ -203,8 +208,18 @@ public final class GlobalPropertyEditViewImpl
     }
 
     @Override
-    public ButtonView addButton(final SvgPreset preset) {
-        return buttonPanel.add(preset);
+    public ButtonView addYamlValueWarningIcon(final SvgPreset preset) {
+        return yamlValueButtonPanel.add(preset);
+    }
+
+    @Override
+    public ButtonView addEffectiveValueIcon(final SvgPreset preset) {
+        return effectiveValueButtonPanel.add(preset);
+    }
+
+    @Override
+    public ButtonView addDataTypeHelpIcon(final SvgPreset preset) {
+        return dataTypeButtonPanel.add(preset);
     }
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {

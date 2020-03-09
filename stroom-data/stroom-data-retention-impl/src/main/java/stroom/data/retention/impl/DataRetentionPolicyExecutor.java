@@ -268,7 +268,7 @@ public class DataRetentionPolicyExecutor {
     }
 
     @JsonPropertyOrder({"lastRun", "dataRetentionRules", "rulesVersion", "rulesHash"})
-    @JsonInclude(Include.NON_DEFAULT)
+    @JsonInclude(Include.NON_NULL)
     static class Tracker {
         private static final String FILE_NAME = "dataRetentionTracker.json";
 

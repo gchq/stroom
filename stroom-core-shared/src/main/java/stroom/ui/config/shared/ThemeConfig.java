@@ -12,7 +12,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder({"backgroundAttachment", "backgroundColor", "backgroundImage", "backgroundPosition", "backgroundRepeat", "backgroundOpacity", "tubeVisible", "tubeOpacity", "labelColours"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ThemeConfig extends AbstractConfig {
     @JsonProperty
     @JsonPropertyDescription("GUI")

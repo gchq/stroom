@@ -27,7 +27,7 @@ import stroom.util.shared.HasData;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "namespaceURI", "data", "systemId", "deprecated", "schemaGroup"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class XmlSchemaDoc extends Doc implements HasData {
     public static final String DOCUMENT_TYPE = "XMLSchema";
 

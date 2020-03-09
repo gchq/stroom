@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class OverrideValue<T> {
     private static final OverrideValue<?> UNSET = new OverrideValue<>(false, null);
     private static final OverrideValue<?> NULL_VALUE = new OverrideValue<>(true, null);

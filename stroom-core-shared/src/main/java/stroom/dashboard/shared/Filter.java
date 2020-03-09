@@ -34,7 +34,7 @@ import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"includes", "excludes"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "filter")
 @XmlType(name = "Filter", propOrder = {"includes", "excludes"})
 public class Filter implements Serializable {

@@ -4,8 +4,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
-import stroom.task.shared.ThreadPool;
 import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.date.DateUtil;
 import stroom.util.io.BufferFactory;
@@ -61,12 +61,12 @@ public final class ProxyRepositoryReader {
     private final AtomicBoolean finish = new AtomicBoolean();
 
     @Inject
-    ProxyRepositoryReader(final TaskContext taskContext,
+    ProxyRepositoryReader(final Provider<TaskContext> taskContextProvider,
                           final BufferFactory bufferFactory,
                           final ProxyRepositoryManager proxyRepositoryManager,
                           final ProxyRepositoryReaderConfig proxyRepositoryReaderConfig,
                           final StreamHandlerFactory handlerFactory) {
-        this.taskContext = taskContext;
+        this.taskContext = taskContextProvider.get();
         this.bufferFactory = bufferFactory;
         this.proxyRepositoryReaderConfig = proxyRepositoryReaderConfig;
         this.handlerFactory = handlerFactory;
@@ -77,12 +77,12 @@ public final class ProxyRepositoryReader {
 
         executorProvider = new ExecutorProvider() {
             @Override
-            public Executor getExecutor() {
-                return getExecutor(threadPool);
+            public Executor get() {
+                return get(threadPool);
             }
 
             @Override
-            public Executor getExecutor(final ThreadPool threadPool) {
+            public Executor get(final ThreadPool threadPool) {
                 return executorServiceMap.computeIfAbsent(threadPool, k -> ScalingThreadPoolExecutor.newScalingThreadPool(
                         threadPool.getCorePoolSize(),
                         threadPool.getMaxPoolSize(),
@@ -199,8 +199,8 @@ public final class ProxyRepositoryReader {
             if (handlers.size() > 0) {
                 final Provider<FileSetProcessor> fileSetProcessorProvider = () -> new ProxyForwardingFileSetProcessor(handlerFactory, bufferFactory);
                 final RepositoryProcessor repositoryProcessor = new RepositoryProcessor(
-                        taskContext,
                         executorProvider,
+                        taskContext,
                         fileSetProcessorProvider,
                         FileUtil.getCanonicalPath(readyToProcess.getRootDir()),
                         proxyRepositoryReaderConfig.getForwardThreadCount(),

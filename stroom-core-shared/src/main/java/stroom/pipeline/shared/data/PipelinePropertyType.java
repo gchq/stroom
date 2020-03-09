@@ -26,7 +26,7 @@ import stroom.util.shared.HasType;
 
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"elementType", "name", "type", "description", "defaultValue", "pipelineReference", "docRefTypes", "displayPriority"})
 public class PipelinePropertyType implements Comparable<PipelinePropertyType>, HasType {
     @JsonProperty

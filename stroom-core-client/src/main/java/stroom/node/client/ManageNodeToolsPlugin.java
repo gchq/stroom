@@ -17,10 +17,8 @@
 package stroom.node.client;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.AlertEvent;
-import stroom.config.global.client.presenter.ManageGlobalPropertyPresenter;
 import stroom.core.client.MenuKeys;
 import stroom.hyperlink.client.Hyperlink;
 import stroom.hyperlink.client.HyperlinkEvent;
@@ -33,22 +31,16 @@ import stroom.svg.client.SvgPresets;
 import stroom.ui.config.client.UiConfigCache;
 import stroom.ui.config.shared.UiConfig;
 import stroom.widget.menu.client.presenter.IconMenuItem;
-import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 public class ManageNodeToolsPlugin extends NodeToolsPlugin {
-    private final Provider<ManageGlobalPropertyPresenter> manageGlobalPropertyPresenter;
 
     private final UiConfigCache clientPropertyCache;
 
     @Inject
     public ManageNodeToolsPlugin(final EventBus eventBus,
                                  final ClientSecurityContext securityContext,
-                                 final UiConfigCache clientPropertyCache,
-                                 final Provider<ManageGlobalPropertyPresenter> manageGlobalPropertyPresenter) {
+                                 final UiConfigCache clientPropertyCache) {
         super(eventBus, securityContext);
-        this.manageGlobalPropertyPresenter = manageGlobalPropertyPresenter;
         this.clientPropertyCache = clientPropertyCache;
     }
 
@@ -60,14 +52,6 @@ public class ManageNodeToolsPlugin extends NodeToolsPlugin {
                     addIndexVolumesMenuItem(event, uiConfig);
                 })
                 .onFailure(caught -> AlertEvent.fireError(ManageNodeToolsPlugin.this, caught.getMessage(), null));
-        }
-        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_PROPERTIES_PERMISSION)) {
-            event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU,
-                    new IconMenuItem(90, SvgPresets.PROPERTIES, SvgPresets.PROPERTIES, "Properties", null, true, () -> {
-                        final PopupSize popupSize = new PopupSize(1000, 600, true);
-                        ShowPopupEvent.fire(ManageNodeToolsPlugin.this, manageGlobalPropertyPresenter.get(),
-                                PopupType.CLOSE_DIALOG, null, popupSize, "System Properties", null, null);
-                    }));
         }
     }
 

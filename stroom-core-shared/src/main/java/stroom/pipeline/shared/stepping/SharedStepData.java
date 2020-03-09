@@ -27,7 +27,7 @@ import stroom.pipeline.shared.SourceLocation;
 
 import java.util.Map;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class SharedStepData {
     @JsonProperty
     private final SourceLocation sourceLocation;

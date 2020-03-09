@@ -34,7 +34,7 @@ import java.util.Set;
  * A map of indicators to show in the XML editor.
  */
 @JsonPropertyOrder({"errorCount", "uniqueErrorSet", "errorList"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class Indicators {
     @JsonProperty
     private final Map<Severity, Integer> errorCount;
@@ -53,21 +53,9 @@ public class Indicators {
     public Indicators(@JsonProperty("errorCount") final Map<Severity, Integer> errorCount,
                       @JsonProperty("uniqueErrorSet") final Set<StoredError> uniqueErrorSet,
                       @JsonProperty("errorList") final List<StoredError> errorList) {
-        if (errorCount != null) {
-            this.errorCount = errorCount;
-        } else {
-            this.errorCount = new HashMap<>();
-        }
-        if (uniqueErrorSet != null) {
-            this.uniqueErrorSet = uniqueErrorSet;
-        } else {
-            this.uniqueErrorSet = new HashSet<>();
-        }
-        if (errorList != null) {
-            this.errorList = errorList;
-        } else {
-            this.errorList = new ArrayList<>();
-        }
+        this.errorCount = errorCount;
+        this.uniqueErrorSet = uniqueErrorSet;
+        this.errorList = errorList;
     }
 
     /**

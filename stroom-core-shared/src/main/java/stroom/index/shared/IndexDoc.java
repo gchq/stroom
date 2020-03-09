@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "maxDocsPerShard", "partitionBy", "partitionSize", "shardsPerPartition", "retentionDayAge", "fields", "volumeGroupName"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class IndexDoc extends Doc {
     public static final int DEFAULT_MAX_DOCS_PER_SHARD = 1000000000;
     private static final int DEFAULT_SHARDS_PER_PARTITION = 1;
@@ -81,29 +81,26 @@ public class IndexDoc extends Doc {
                     @JsonProperty("volumeGroupName") final String volumeGroupName) {
         super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
         this.description = description;
-        if (maxDocsPerShard != null) {
-            this.maxDocsPerShard = maxDocsPerShard;
-        } else {
-            this.maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
-        }
-        if (partitionBy != null) {
-            this.partitionBy = partitionBy;
-        } else {
-            this.partitionBy = DEFAULT_PARTITION_BY;
-        }
-        if (partitionSize != null) {
-            this.partitionSize = partitionSize;
-        } else {
-            this.partitionSize = DEFAULT_PARTITION_SIZE;
-        }
-        if (shardsPerPartition != null) {
-            this.shardsPerPartition = shardsPerPartition;
-        } else {
-            this.shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
-        }
+        this.maxDocsPerShard = maxDocsPerShard;
+        this.partitionBy = partitionBy;
+        this.partitionSize = partitionSize;
+        this.shardsPerPartition = shardsPerPartition;
         this.retentionDayAge = retentionDayAge;
         this.fields = fields;
         this.volumeGroupName = volumeGroupName;
+
+        if (this.maxDocsPerShard == null) {
+            this.maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
+        }
+        if (this.partitionBy == null) {
+            this.partitionBy = DEFAULT_PARTITION_BY;
+        }
+        if (this.partitionSize == null) {
+            this.partitionSize = DEFAULT_PARTITION_SIZE;
+        }
+        if (this.shardsPerPartition == null) {
+            this.shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
+        }
     }
 
     public String getDescription() {

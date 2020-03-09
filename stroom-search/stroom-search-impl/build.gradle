@@ -8,6 +8,7 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-search:stroom-search-api')
     compile project(':stroom-search:stroom-search-extraction')
+    compile project(':stroom-task:stroom-task-api')
 
     compile libs.lucene_analyzers_common
     compile libs.lucene_core

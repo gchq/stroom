@@ -1,5 +1,7 @@
 package stroom.util.shared;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public interface ResourcePaths {
@@ -31,38 +33,41 @@ public interface ResourcePaths {
     String V3 = "/v3";
 
 
-    static String buildUnauthenticatedServletPath(final String path) {
-        return buildPath(
-                ROOT_PATH,
-                NO_AUTH_PATH,
-                path);
+    static String buildUnauthenticatedServletPath(final String... parts) {
+        return new Builder()
+            .addPathPart(ROOT_PATH)
+            .addPathPart(NO_AUTH_PATH)
+            .addPathParts(parts)
+            .build();
     }
 
-    static String buildAuthenticatedServletPath(final String path) {
-        return buildPath(
-                ROOT_PATH,
-                path);
+    static String buildAuthenticatedServletPath(final String... parts) {
+        return new Builder()
+            .addPathPart(ROOT_PATH)
+            .addPathParts(parts)
+            .build();
     }
 
     /**
-     * @param path The path to append onto the base path.
+     * @param parts The path or parts of a path to append onto the base path.
      * @return The full path to the authenticated resource, e.g. /api/node
      */
-    static String buildAuthenticatedApiPath(final String path) {
-        return buildPath(
-            API_ROOT_PATH,
-            path);
+    static Builder buildAuthenticatedApiPath(final String... parts) {
+        return new Builder()
+            .addPathPart(API_ROOT_PATH)
+            .addPathParts(parts);
     }
 
     /**
-     * @param path The path to append onto the base path.
+     * @param parts The path or parts of a path to append onto the base path.
      * @return The full path to the unauthenticated resource, e.g. /api/noauth/node
      */
-    static String buildUnauthenticatedApiPath(final String path) {
-        return buildPath(
-            API_ROOT_PATH,
-            NO_AUTH_PATH,
-            path);
+    static String buildUnauthenticatedApiPath(final String... parts) {
+        return new Builder()
+            .addPathPart(API_ROOT_PATH)
+            .addPathPart(NO_AUTH_PATH)
+            .addPathParts(parts)
+            .build();
     }
 
     static String buildPath(final String... parts) {
@@ -70,5 +75,48 @@ public interface ResourcePaths {
         return String
                 .join("/", parts)
                 .replace("//", "/");
+    }
+
+
+
+    class Builder {
+        final List<String> pathParts = new ArrayList<>();
+        final List<String> queryParams = new ArrayList<>();
+
+        public Builder addPathPart(final String part) {
+            if (!part.startsWith("/")) {
+                pathParts.add("/");
+            }
+            pathParts.add(part);
+            return this;
+        }
+
+        public Builder addPathParts(final String... parts) {
+            for (String part : parts) {
+                if (!part.startsWith("/")) {
+                    pathParts.add("/");
+                }
+                pathParts.add(part);
+            }
+            return this;
+        }
+
+        public Builder addQueryParam(final String paramName, final String value) {
+            Objects.requireNonNull(paramName);
+            if (value != null) {
+                queryParams.add(paramName + "=" + value);
+            }
+            return this;
+        }
+
+        public String build() {
+            final String pathStr = String.join("", pathParts).replace("//","/");
+            if (!queryParams.isEmpty()) {
+                final String queryParamsStr = String.join("&", queryParams);
+                return pathStr + "?" + queryParamsStr;
+            } else {
+                return pathStr;
+            }
+        }
     }
 }

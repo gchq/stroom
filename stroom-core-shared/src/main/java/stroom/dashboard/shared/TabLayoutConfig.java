@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 @XmlRootElement(name = "tabLayout")
 @XmlType(name = "TabLayoutConfig", propOrder = {"preferredSize", "tabs", "selected"})
 @JsonPropertyOrder({"preferredSize", "tabs", "selected"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class TabLayoutConfig extends LayoutConfig {
     /**
      * The preferred size of this layout in width, height.
@@ -70,16 +70,16 @@ public class TabLayoutConfig extends LayoutConfig {
     }
 
     @JsonCreator
-    public TabLayoutConfig(@JsonProperty("preferredSize")final Size preferredSize,
-                           @JsonProperty("tabs")final List<TabConfig> tabs,
-                           @JsonProperty("selected")final Integer selected) {
-        if (preferredSize != null) {
-            this.preferredSize = preferredSize;
-        } else {
-            this.preferredSize = new Size();
-        }
+    public TabLayoutConfig(@JsonProperty("preferredSize") final Size preferredSize,
+                           @JsonProperty("tabs") final List<TabConfig> tabs,
+                           @JsonProperty("selected") final Integer selected) {
+        this.preferredSize = preferredSize;
         this.tabs = tabs;
         this.selected = selected;
+
+        if (this.preferredSize == null) {
+            this.preferredSize = new Size();
+        }
     }
 
     @Override
@@ -99,23 +99,9 @@ public class TabLayoutConfig extends LayoutConfig {
         return tabs.stream().filter(TabConfig::isVisible).collect(Collectors.toList());
     }
 
-    private int visibleIndex(final int index) {
-        int realIndex = index;
-        for (int i = 0; i <= index && i < tabs.size(); i++) {
-            if (!tabs.get(i).isVisible()) {
-                realIndex++;
-            }
-        }
-        if (realIndex >= tabs.size()) {
-            realIndex = tabs.size() - 1;
-        }
-        return realIndex;
-    }
-
     public TabConfig get(final int index) {
         if (tabs != null && tabs.size() > 0) {
-            final int realIndex = visibleIndex(index);
-            final TabConfig tab = tabs.get(realIndex);
+            final TabConfig tab = tabs.get(index);
             if (tab != null) {
                 tab.setParent(this);
                 return tab;
@@ -133,14 +119,13 @@ public class TabLayoutConfig extends LayoutConfig {
     }
 
     public void add(final int index, final TabConfig tab) {
-        final int realIndex = visibleIndex(index);
         if (tabs == null) {
             tabs = new ArrayList<>();
         }
-        if (realIndex <= tabs.size()) {
-            tabs.add(realIndex, tab);
-        } else {
+        if (index >= tabs.size()) {
             tabs.add(tab);
+        } else {
+            tabs.add(index, tab);
         }
         tab.setParent(this);
     }
@@ -153,7 +138,7 @@ public class TabLayoutConfig extends LayoutConfig {
     }
 
     public int indexOf(final TabConfig tab) {
-        return getVisibleTabs().indexOf(tab);
+        return tabs.indexOf(tab);
     }
 
     @JsonIgnore

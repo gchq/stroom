@@ -663,6 +663,8 @@ public class DataGridViewImpl<R> extends ViewImpl implements DataGridView<R>, Na
 
         String dataGridCellWrapText();
 
+        String dataGridCellVerticalTop();
+
         String resizeHandle();
 
         String resizeLine();

@@ -24,8 +24,7 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.task.api.GenericServerTask;
-import stroom.task.api.TaskManager;
+import stroom.task.api.TaskContext;
 import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -44,6 +43,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -63,7 +63,8 @@ public class IndexShardManagerImpl implements IndexShardManager {
     private final IndexShardService indexShardService;
     private final Provider<IndexShardWriterCache> indexShardWriterCacheProvider;
     private final NodeInfo nodeInfo;
-    private final TaskManager taskManager;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
     private final SecurityContext securityContext;
 
     private final StripedLock shardUpdateLocks = new StripedLock();
@@ -76,13 +77,15 @@ public class IndexShardManagerImpl implements IndexShardManager {
                           final IndexShardService indexShardService,
                           final Provider<IndexShardWriterCache> indexShardWriterCacheProvider,
                           final NodeInfo nodeInfo,
-                          final TaskManager taskManager,
+                          final Executor executor,
+                          final Provider<TaskContext> taskContextProvider,
                           final SecurityContext securityContext) {
         this.indexStore = indexStore;
         this.indexShardService = indexShardService;
         this.indexShardWriterCacheProvider = indexShardWriterCacheProvider;
         this.nodeInfo = nodeInfo;
-        this.taskManager = taskManager;
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
         this.securityContext = securityContext;
 
         // Ensure all but deleted and corrupt states can be set to closed on clean.
@@ -110,9 +113,12 @@ public class IndexShardManagerImpl implements IndexShardManager {
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
                     final List<IndexShard> shards = indexShardService.find(criteria);
 
-                    final GenericServerTask task = GenericServerTask.create("Delete Logically Deleted Shards", "Deleting Logically Deleted Shards...");
-                    final Runnable runnable = () -> {
+                    final TaskContext taskContext = taskContextProvider.get();
+                    Runnable runnable = () -> {
                         try {
+                            taskContext.setName("Delete Logically Deleted Shards");
+                            taskContext.info(() -> "Deleting Logically Deleted Shards...");
+
                             final LogExecutionTime logExecutionTime = new LogExecutionTime();
                             final Iterator<IndexShard> iter = shards.iterator();
                             while (!Thread.currentThread().isInterrupted() && iter.hasNext()) {
@@ -133,13 +139,13 @@ public class IndexShardManagerImpl implements IndexShardManager {
                             deletingShards.set(false);
                         }
                     };
+                    runnable = taskContext.subTask(runnable);
 
                     // In tests we don't have a task manager.
-                    if (taskManager == null) {
+                    if (executor == null) {
                         runnable.run();
                     } else {
-                        task.setRunnable(runnable);
-                        taskManager.execAsync(task);
+                        executor.execute(runnable);
                     }
 
                 } catch (final RuntimeException e) {

@@ -12,7 +12,7 @@ import javax.inject.Singleton;
 
 @Singleton
 @JsonPropertyOrder({"infoPopup"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class QueryConfig extends AbstractConfig {
     @JsonProperty
     private InfoPopupConfig infoPopup;

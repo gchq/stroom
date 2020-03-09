@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.config.annotations.RequiresRestart;
 import stroom.util.shared.AbstractConfig;
 
+import javax.validation.constraints.Min;
 import java.util.Objects;
 
 public class ConnectionPoolConfig extends AbstractConfig {
@@ -63,6 +64,7 @@ public class ConnectionPoolConfig extends AbstractConfig {
         "Sets the prepStmtCacheSize property on the at the JDBC driver level. " +
         "The number of prepared statements that the driver will cache per connection. Defaults to 25. "
         + COMMON_JDBC_DESC)
+    @Min(0)
     public Integer getPrepStmtCacheSize() {
         return prepStmtCacheSize;
     }
@@ -76,6 +78,7 @@ public class ConnectionPoolConfig extends AbstractConfig {
         "Sets the prepStmtCacheSqlLimit property on the at the JDBC driver level. The " +
         "maximum length for a prepared SQL statement that can be cached. Defaults to 256. " +
         COMMON_JDBC_DESC)
+    @Min(0)
     public Integer getPrepStmtCacheSqlLimit() {
         return prepStmtCacheSqlLimit;
     }
@@ -90,6 +93,7 @@ public class ConnectionPoolConfig extends AbstractConfig {
         "the maximum number of milliseconds that a client will wait for a connection from the pool. " +
         "Defaults to 30000 (30s). " +
         COMMON_CONN_POOL_DESC)
+    @Min(0)
     public Long getConnectionTimeout() {
         return connectionTimeout;
     }
@@ -105,6 +109,7 @@ public class ConnectionPoolConfig extends AbstractConfig {
         "Only applies when minimumIdle is defined to be less than maximumPoolSize. " +
         "Defaults to 600000 (10mins). " +
         COMMON_CONN_POOL_DESC)
+    @Min(0)
     public Long getIdleTimeout() {
         return idleTimeout;
     }
@@ -119,6 +124,7 @@ public class ConnectionPoolConfig extends AbstractConfig {
         "The maximum lifetime (in milliseconds) of a connection in the pool. " +
         "Defaults to 1800000 (30mins). " +
         COMMON_CONN_POOL_DESC)
+    @Min(0)
     public Long getMaxLifetime() {
         return maxLifetime;
     }
@@ -133,6 +139,7 @@ public class ConnectionPoolConfig extends AbstractConfig {
         "The minimum number of idle connections that Hikari tries to maintain in the pool. " +
         "Defaults to 10 (same as maxPoolSize). " +
         COMMON_CONN_POOL_DESC)
+    @Min(0)
     public Integer getMinimumIdle() {
         return minimumIdle;
     }
@@ -147,6 +154,7 @@ public class ConnectionPoolConfig extends AbstractConfig {
         "The maximum size that the pool is allowed to reach, including both idle " +
         "and in-use connections. Defaults to 10. " +
         COMMON_CONN_POOL_DESC)
+    @Min(0)
     public Integer getMaxPoolSize() {
         return maxPoolSize;
     }

@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FetchExplorerNodeResult {
     @JsonProperty
     private List<ExplorerNode> rootNodes;
@@ -36,7 +36,8 @@ public class FetchExplorerNodeResult {
     private Set<String> temporaryOpenedItems;
 
     public FetchExplorerNodeResult() {
-        setDefaults();
+        rootNodes = new ArrayList<>();
+        openedItems = new ArrayList<>();
     }
 
     @JsonCreator
@@ -46,17 +47,6 @@ public class FetchExplorerNodeResult {
         this.rootNodes = rootNodes;
         this.openedItems = openedItems;
         this.temporaryOpenedItems = temporaryOpenedItems;
-
-        setDefaults();
-    }
-
-    private void setDefaults() {
-        if (rootNodes == null) {
-            rootNodes = new ArrayList<>();
-        }
-        if (openedItems == null) {
-            openedItems = new ArrayList<>();
-        }
     }
 
     public List<ExplorerNode> getRootNodes() {
