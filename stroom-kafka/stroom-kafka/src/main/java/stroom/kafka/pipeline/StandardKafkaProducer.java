@@ -48,7 +48,10 @@ import java.util.ArrayList;
 import java.util.Optional;
 import java.util.Random;
 
-
+/**
+ * Pipeline filter element that expects XML documents that conform to kafka-records:1 format and creates corresponding
+ * Kafka messages for these.
+ */
 @ConfigurableElement(
         type = "StandardKafkaProducer",
         category = PipelineElementType.Category.DESTINATION,

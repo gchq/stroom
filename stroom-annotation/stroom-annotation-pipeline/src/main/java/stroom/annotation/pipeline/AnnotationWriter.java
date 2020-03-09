@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 
 /**
- * This class processes XML documents that conform to annotation:1 schema.
+ * This class processes XML documents that conform to annotation:1 schema, and creates corresponding Stroom annotations.
  * Example follows:
 
  <?xml version="1.1" encoding="UTF-8"?>
