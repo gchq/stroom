@@ -3,7 +3,6 @@ ext.moduleName = 'stroom.authentication.impl.db'
 dependencies {
     compile project(':stroom-core-shared')
     compile project(':stroom-db-util')
-    compile project(':stroom-authentication:stroom-authentication-impl')
     compile project(':stroom-authentication:stroom-authentication-impl-db-jooq')
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
