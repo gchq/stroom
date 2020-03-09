@@ -30,6 +30,7 @@ include 'stroom-annotation:stroom-annotation-impl'
 include 'stroom-annotation:stroom-annotation-impl-db'
 include 'stroom-annotation:stroom-annotation-impl-db-jooq'
 include 'stroom-annotation:stroom-config-common'
+include 'stroom-annotation:stroom-annotation-pipeline'
 
 // App.
 include 'stroom-app'
@@ -143,8 +144,7 @@ include 'stroom-job:stroom-job-impl-db'
 include 'stroom-job:stroom-job-impl-db-jooq'
 
 // Kafka
-include 'stroom-kafka:stroom-kafka-impl'
-include 'stroom-kafka:stroom-kafka-pipeline'
+include 'stroom-kafka:stroom-kafka'
 
 // Lifecycle
 include 'stroom-lifecycle:stroom-lifecycle-api'

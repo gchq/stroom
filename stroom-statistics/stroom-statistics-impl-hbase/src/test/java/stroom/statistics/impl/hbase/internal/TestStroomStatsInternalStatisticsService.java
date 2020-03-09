@@ -1,6 +1,7 @@
 package stroom.statistics.impl.hbase.internal;
 
 
+import org.apache.kafka.clients.producer.ProducerRecord;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -11,9 +12,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.kafka.pipeline.KafkaProducer;
 import stroom.kafka.pipeline.KafkaProducerFactory;
-import stroom.kafka.pipeline.KafkaProducerRecord;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 
@@ -36,7 +35,7 @@ class TestStroomStatsInternalStatisticsService {
     @Captor
     private ArgumentCaptor<Consumer<Throwable>> exceptionHandlerCaptor;
     @Mock
-    private KafkaProducer mockStroomKafkaProducer;
+    private org.apache.kafka.clients.producer.KafkaProducer mockKafkaProducer;
     @Mock
     private KafkaProducerFactory mockStroomKafkaProducerFactory;
 
@@ -47,7 +46,7 @@ class TestStroomStatsInternalStatisticsService {
         hBaseStatisticsConfig.getKafkaTopicsConfig().setCount("MyTopic");
 
         Mockito.when(mockStroomKafkaProducerFactory.createProducer(Mockito.any()))
-                .thenReturn(Optional.of(mockStroomKafkaProducer));
+                .thenReturn(Optional.of(mockKafkaProducer));
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService =
                 new StroomStatsInternalStatisticsService(
                         mockStroomKafkaProducerFactory,
@@ -69,8 +68,8 @@ class TestStroomStatsInternalStatisticsService {
         stroomStatsInternalStatisticsService.putEvents(map);
 
         //two different doc refs so two calls to producer
-        Mockito.verify(mockStroomKafkaProducer, Mockito.times(2))
-                .sendAsync(Mockito.any(KafkaProducerRecord.class), Mockito.any());
+        Mockito.verify(mockKafkaProducer, Mockito.times(2))
+                .send(Mockito.any(ProducerRecord.class));
     }
 
     @Test
@@ -81,7 +80,7 @@ class TestStroomStatsInternalStatisticsService {
         hBaseStatisticsConfig.setEventsPerMessage(10);
 
         Mockito.when(mockStroomKafkaProducerFactory.createProducer(Mockito.any()))
-                .thenReturn(Optional.of(mockStroomKafkaProducer));
+                .thenReturn(Optional.of(mockKafkaProducer));
         StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService =
                 new StroomStatsInternalStatisticsService(
                         mockStroomKafkaProducerFactory,
@@ -99,8 +98,8 @@ class TestStroomStatsInternalStatisticsService {
 
         //two different doc refs and batch size of 10,
         //so kafka msg count is 10 for A and 2 for B, thus 12
-        Mockito.verify(mockStroomKafkaProducer, Mockito.times(12))
-                .sendAsync(Mockito.any(KafkaProducerRecord.class), Mockito.any());
+        Mockito.verify(mockKafkaProducer, Mockito.times(12))
+                .send(Mockito.any(ProducerRecord.class));
     }
 
     private List<InternalStatisticEvent> createNEvents(final InternalStatisticKey key, final int count) {
@@ -110,37 +109,5 @@ class TestStroomStatsInternalStatisticsService {
                 .collect(Collectors.toList());
     }
 
-    @Test
-    void putEvents_exception() {
-        final HBaseStatisticsConfig hBaseStatisticsConfig = new HBaseStatisticsConfig();
-        hBaseStatisticsConfig.setDocRefType(DOC_REF_TYPE_1);
-        hBaseStatisticsConfig.getKafkaTopicsConfig().setCount("MyTopic");
 
-        Mockito.when(mockStroomKafkaProducerFactory.createProducer(Mockito.any()))
-                .thenReturn(Optional.of(mockStroomKafkaProducer));
-        StroomStatsInternalStatisticsService stroomStatsInternalStatisticsService =
-                new StroomStatsInternalStatisticsService(
-                        mockStroomKafkaProducerFactory,
-                        hBaseStatisticsConfig
-                );
-
-        //assemble test data
-        InternalStatisticEvent event = InternalStatisticEvent.createPlusOneCountStat(
-                InternalStatisticKey.MEMORY, 0, Collections.emptyMap());
-        DocRef docRef = new DocRef(DOC_REF_TYPE_1, UUID.randomUUID().toString(), "myStat");
-        Map<DocRef, List<InternalStatisticEvent>> map = Map.of(docRef, Collections.singletonList(event));
-
-        //exercise the service
-        stroomStatsInternalStatisticsService.putEvents(map);
-
-        //ensure sendAsync is called
-        Mockito.verify(mockStroomKafkaProducer)
-                .sendAsync(Mockito.any(KafkaProducerRecord.class), exceptionHandlerCaptor.capture());
-
-        //create an exception in the handler
-        exceptionHandlerCaptor.getValue()
-                .accept(new RuntimeException("Test Exception inside mockStroomKafkaProducer"));
-
-        //the exception handler should just  log so nothing needs to be asserted
-    }
 }

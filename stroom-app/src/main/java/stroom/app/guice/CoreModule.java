@@ -13,6 +13,7 @@ public class CoreModule extends AbstractModule {
     protected void configure() {
         install(new stroom.activity.impl.db.ActivityDbModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
+        install(new stroom.annotation.pipeline.AnnotationPipelineModule());
         install(new CacheResourceModule());
         install(new stroom.cache.impl.CacheModule());
         install(new stroom.cluster.lock.impl.db.ClusterLockDbModule());
@@ -56,7 +57,8 @@ public class CoreModule extends AbstractModule {
         install(new stroom.index.impl.IndexModule());
         install(new stroom.job.impl.db.JobDbModule());
         install(new stroom.job.impl.JobSystemModule());
-        install(new stroom.kafka.impl.KafkaModule());
+        install(new stroom.kafka.impl.KafkaConfigHandlerModule());
+        install(new stroom.kafka.impl.KafkaConfigModule());
         install(new stroom.kafka.pipeline.KafkaPipelineModule());
         install(new stroom.meta.impl.db.MetaDbModule());
         install(new stroom.meta.impl.MetaModule());
