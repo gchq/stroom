@@ -67,7 +67,7 @@ public class TokenService {
         final String userId = securityContext.getUserId();
 
         // Parse and validate tokenType
-        Optional<Token.TokenType> tokenTypeToCreate = createTokenRequest.getParsedTokenType();
+        Optional<Token.TokenType> tokenTypeToCreate = getParsedTokenType(createTokenRequest.getTokenType());
         if (!tokenTypeToCreate.isPresent()) {
             throw new BadRequestException("Unknown token type:" + createTokenRequest.getTokenType());
         }
@@ -146,6 +146,19 @@ public class TokenService {
     private void checkPermission() {
         if(!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to manage users");
+        }
+    }
+
+    public static Optional<Token.TokenType> getParsedTokenType(String tokenType) {
+        switch (tokenType.toLowerCase()) {
+            case "api":
+                return Optional.of(Token.TokenType.API);
+            case "user":
+                return Optional.of(Token.TokenType.USER);
+            case "email_reset":
+                return Optional.of(Token.TokenType.EMAIL_RESET);
+            default:
+                return Optional.empty();
         }
     }
 }

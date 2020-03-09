@@ -58,20 +58,40 @@ public class SearchRequest {
         return page;
     }
 
+    public void setPage(int page){
+        this.page = page;
+    }
+
     public int getLimit() {
         return limit;
+    }
+
+    public void setLimit(int limit) {
+        this.limit = limit;
     }
 
     public String getOrderBy() {
         return orderBy;
     }
 
+    public void setOrderBy(String orderBy) {
+        this.orderBy = orderBy;
+    }
+
     public String getOrderDirection() {
         return orderDirection;
     }
 
+    public void setOrderDirection(String orderDirection) {
+        this.orderDirection = orderDirection;
+    }
+
     public Map<String, String> getFilters() {
         return filters;
+    }
+
+    public void setFilters(Map<String, String> filters){
+        this.filters = filters;
     }
 
     public static final class SearchRequestBuilder {

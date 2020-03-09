@@ -72,22 +72,14 @@ public class CreateTokenRequest {
         this.expiryDate = expiryDate;
     }
 
-    public Optional<Token.TokenType> getParsedTokenType() {
-        switch (tokenType.toLowerCase()) {
-            case "api":
-                return Optional.of(Token.TokenType.API);
-            case "user":
-                return Optional.of(Token.TokenType.USER);
-            case "email_reset":
-                return Optional.of(Token.TokenType.EMAIL_RESET);
-            default:
-                return Optional.empty();
-        }
-    }
 
     @Nullable
     public String getUserEmail() {
         return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
     @Nullable
@@ -95,8 +87,16 @@ public class CreateTokenRequest {
         return tokenType;
     }
 
+    public void setTokenType(String tokenType) {
+        this.tokenType = tokenType;
+    }
+
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     @Nullable
@@ -111,5 +111,9 @@ public class CreateTokenRequest {
     @Nullable
     public Date getExpiryDate() {
         return expiryDate;
+    }
+
+    public void setExpiryDate(@Nullable Date expiryDate) {
+        this.expiryDate = expiryDate;
     }
 }

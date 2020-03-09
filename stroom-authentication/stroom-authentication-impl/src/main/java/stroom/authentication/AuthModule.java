@@ -23,6 +23,7 @@ import stroom.authentication.exceptions.ConflictException;
 import stroom.authentication.exceptions.mappers.*;
 import stroom.authentication.resources.authentication.v1.AuthenticationResource;
 import stroom.authentication.resources.token.v1.TokenResource;
+import stroom.authentication.resources.user.v1.UserDao;
 import stroom.authentication.resources.user.v1.UserResource;
 import stroom.authentication.service.eventlogging.StroomEventLoggingService;
 import stroom.util.guice.GuiceUtil;
@@ -48,6 +49,7 @@ public final class AuthModule extends AbstractModule {
         bind(CertificateManager.class);
         bind(TokenBuilderFactory.class);
         bind(StroomEventLoggingService.class);
+        bind(UserDao.class);
 
         bind(ConflictExceptionMapper.class);
         bind(BadRequestExceptionMapper.class);
