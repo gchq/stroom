@@ -49,7 +49,6 @@ public final class AuthModule extends AbstractModule {
         bind(CertificateManager.class);
         bind(TokenBuilderFactory.class);
         bind(StroomEventLoggingService.class);
-        bind(UserDao.class);
 
         bind(ConflictExceptionMapper.class);
         bind(BadRequestExceptionMapper.class);
