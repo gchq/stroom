@@ -123,8 +123,8 @@ public class ManageActivityPresenter extends
 
     void showInitial(final Consumer<Activity> consumer) {
         uiConfigCache.get().onSuccess(uiConfig -> {
-            final boolean show = uiConfig.getActivityConfig().isChooseOnStartup() &&
-                    uiConfig.getActivityConfig().isEnabled();
+            final boolean show = uiConfig.getActivity().isChooseOnStartup() &&
+                    uiConfig.getActivity().isEnabled();
             if (show) {
                 if (urlParameters.isEmbedded()) {
                     // If we are in embedded more then see if we can find a current activity set in the session.
@@ -167,7 +167,7 @@ public class ManageActivityPresenter extends
             }
         };
         uiConfigCache.get().onSuccess(uiConfig -> {
-            final String title = uiConfig.getActivityConfig().getManagerTitle();
+            final String title = uiConfig.getActivity().getManagerTitle();
             final PopupSize popupSize = new PopupSize(1000, 600, true);
             ShowPopupEvent.fire(ManageActivityPresenter.this, ManageActivityPresenter.this,
                     PopupType.CLOSE_DIALOG, null, popupSize, title, popupUiHandlers, null);
@@ -249,7 +249,7 @@ public class ManageActivityPresenter extends
     }
 
     private void onNew() {
-        onEdit(new Activity());
+        onEdit(Activity.create());
     }
 
     private void setSelected(final Activity activity) {

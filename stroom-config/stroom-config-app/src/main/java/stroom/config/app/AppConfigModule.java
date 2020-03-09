@@ -148,12 +148,12 @@ public class AppConfigModule extends AbstractModule {
         });
         bindConfig(AppConfig::getStoredQueryConfig, StoredQueryConfig.class);
         bindConfig(AppConfig::getUiConfig, UiConfig.class, uiConfig -> {
-            bindConfig(uiConfig, UiConfig::getActivityConfig, ActivityConfig.class);
-            bindConfig(uiConfig, UiConfig::getProcessConfig, stroom.ui.config.shared.ProcessConfig.class);
-            bindConfig(uiConfig, UiConfig::getQueryConfig, QueryConfig.class);
-            bindConfig(uiConfig, UiConfig::getSplashConfig, SplashConfig.class);
-            bindConfig(uiConfig, UiConfig::getThemeConfig, ThemeConfig.class);
-            bindConfig(uiConfig, UiConfig::getUrlConfig, UrlConfig.class);
+            bindConfig(uiConfig, UiConfig::getActivity, ActivityConfig.class);
+            bindConfig(uiConfig, UiConfig::getProcess, stroom.ui.config.shared.ProcessConfig.class);
+            bindConfig(uiConfig, UiConfig::getQuery, QueryConfig.class);
+            bindConfig(uiConfig, UiConfig::getSplash, SplashConfig.class);
+            bindConfig(uiConfig, UiConfig::getTheme, ThemeConfig.class);
+            bindConfig(uiConfig, UiConfig::getUrl, UrlConfig.class);
         });
         bindConfig(AppConfig::getVolumeConfig, VolumeConfig.class);
 

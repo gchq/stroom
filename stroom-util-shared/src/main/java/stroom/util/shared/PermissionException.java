@@ -22,7 +22,6 @@ public class PermissionException extends EntityServiceException {
     private String user;
 
     public PermissionException() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public PermissionException(final String user,

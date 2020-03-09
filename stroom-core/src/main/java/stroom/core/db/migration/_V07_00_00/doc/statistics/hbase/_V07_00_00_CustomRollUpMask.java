@@ -45,7 +45,6 @@ public class _V07_00_00_CustomRollUpMask implements _V07_00_00_HasDisplayValue, 
     private List<Integer> rolledUpTagPositions = new ArrayList<>();
 
     public _V07_00_00_CustomRollUpMask() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_CustomRollUpMask(final List<Integer> rolledUpTagPositions) {
@@ -73,10 +72,8 @@ public class _V07_00_00_CustomRollUpMask implements _V07_00_00_HasDisplayValue, 
                 Collections.sort(this.rolledUpTagPositions);
             }
         } else {
-            if (rolledUpTagPositions.contains(position)) {
-                rolledUpTagPositions.remove(position);
-                // no need to re-sort on remove as already in order
-            }
+            // no need to re-sort on remove as already in order
+            rolledUpTagPositions.remove(position);
         }
 
     }
@@ -108,11 +105,8 @@ public class _V07_00_00_CustomRollUpMask implements _V07_00_00_HasDisplayValue, 
             return false;
         final _V07_00_00_CustomRollUpMask other = (_V07_00_00_CustomRollUpMask) obj;
         if (rolledUpTagPositions == null) {
-            if (other.rolledUpTagPositions != null)
-                return false;
-        } else if (!rolledUpTagPositions.equals(other.rolledUpTagPositions))
-            return false;
-        return true;
+            return other.rolledUpTagPositions == null;
+        } else return rolledUpTagPositions.equals(other.rolledUpTagPositions);
     }
 
     @Override

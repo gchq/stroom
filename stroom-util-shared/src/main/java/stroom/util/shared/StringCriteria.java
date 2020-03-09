@@ -16,20 +16,32 @@
 
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+@JsonInclude(Include.NON_NULL)
 public class StringCriteria implements Serializable, HasIsConstrained, Clearable, Copyable<StringCriteria> {
     private static final long serialVersionUID = 4737939969786534908L;
+
+    @JsonProperty
     private String string;
+    @JsonProperty
     private String stringUpper;
-    private MatchStyle matchStyle = null;
+    @JsonProperty
+    private MatchStyle matchStyle;
+    @JsonProperty
     private boolean caseInsensitive;
-    private Boolean matchNull = null;
+    @JsonProperty
+    private Boolean matchNull;
 
     public StringCriteria() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public StringCriteria(final String string) {
@@ -39,6 +51,19 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
     public StringCriteria(final String string, final MatchStyle matchStyle) {
         this.string = string;
         this.matchStyle = matchStyle;
+    }
+
+    @JsonCreator
+    public StringCriteria(@JsonProperty("string") final String string,
+                          @JsonProperty("stringUpper") final String stringUpper,
+                          @JsonProperty("matchStyle") final MatchStyle matchStyle,
+                          @JsonProperty("caseInsensitive") final boolean caseInsensitive,
+                          @JsonProperty("matchNull") final Boolean matchNull) {
+        this.string = string;
+        this.stringUpper = stringUpper;
+        this.matchStyle = matchStyle;
+        this.caseInsensitive = caseInsensitive;
+        this.matchNull = matchNull;
     }
 
     public static List<StringCriteria> convertStringList(List<String> strings) {
@@ -80,6 +105,7 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
     }
 
     @Override
+    @JsonIgnore
     public boolean isConstrained() {
         return (string != null && (matchStyle == null || string.length() != 0)) || Boolean.TRUE.equals(matchNull);
     }
@@ -102,6 +128,7 @@ public class StringCriteria implements Serializable, HasIsConstrained, Clearable
         return test.equals(compareString);
     }
 
+    @JsonIgnore
     public String getMatchString() {
         if (string == null) {
             return null;

@@ -514,9 +514,7 @@ public class DashboardPresenter extends DocumentEditPresenter<DashboardView, Das
                     componentPresenter.link();
                 }
 
-                final TabConfig tabConfig = new TabConfig();
-                tabConfig.setId(id);
-
+                final TabConfig tabConfig = new TabConfig(id, true);
                 final TabLayoutConfig tabLayoutConfig = new TabLayoutConfig(tabConfig);
 
                 // Choose where to put the new component in the layout data.

@@ -16,22 +16,31 @@
 
 package stroom.job.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.job.shared.JobNode.JobType;
 
+@JsonInclude(Include.NON_NULL)
 public class GetScheduledTimesRequest {
+    @JsonProperty
     private JobType jobType;
+    @JsonProperty
     private Long scheduleReferenceTime;
+    @JsonProperty
     private Long lastExecutedTime;
+    @JsonProperty
     private String schedule;
 
     public GetScheduledTimesRequest() {
-        // Default constructor necessary for GWT serialisation.
     }
 
-    public GetScheduledTimesRequest(final JobType jobType,
-                                    final Long scheduleReferenceTime,
-                                    final Long lastExecutedTime,
-                                    final String schedule) {
+    @JsonCreator
+    public GetScheduledTimesRequest(@JsonProperty("jobType") final JobType jobType,
+                                    @JsonProperty("scheduleReferenceTime") final Long scheduleReferenceTime,
+                                    @JsonProperty("lastExecutedTime") final Long lastExecutedTime,
+                                    @JsonProperty("schedule") final String schedule) {
         this.jobType = jobType;
         this.scheduleReferenceTime = scheduleReferenceTime;
         this.lastExecutedTime = lastExecutedTime;

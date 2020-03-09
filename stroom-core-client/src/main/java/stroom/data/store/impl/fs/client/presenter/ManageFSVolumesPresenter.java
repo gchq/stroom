@@ -17,6 +17,7 @@
 
 package stroom.data.store.impl.fs.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
@@ -24,11 +25,10 @@ import com.gwtplatform.mvp.client.MyPresenter;
 import com.gwtplatform.mvp.client.annotations.ProxyCodeSplit;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.ConfirmEvent;
-import stroom.data.store.impl.fs.shared.DeleteFsVolumeAction;
-import stroom.data.store.impl.fs.shared.FetchFsVolumeAction;
-import stroom.data.store.impl.fs.shared.FlushFsVolumeStatusAction;
 import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.data.store.impl.fs.shared.FsVolumeResource;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.node.client.view.WrapperView;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
@@ -41,9 +41,11 @@ import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import java.util.List;
 
 public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSVolumesPresenter.ManageVolumesProxy> {
+    private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
+
     private final FSVolumeStatusListPresenter volumeStatusListPresenter;
     private final Provider<FSVolumeEditPresenter> editProvider;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
 
     private final ButtonView newButton;
     private final ButtonView openButton;
@@ -53,11 +55,11 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
     @Inject
     public ManageFSVolumesPresenter(final EventBus eventBus, final WrapperView view, final ManageVolumesProxy proxy,
                                     final FSVolumeStatusListPresenter volumeStatusListPresenter, final Provider<FSVolumeEditPresenter> editProvider,
-                                    final ClientDispatchAsync dispatcher) {
+                                    final RestFactory restFactory) {
         super(eventBus, view, proxy);
         this.volumeStatusListPresenter = volumeStatusListPresenter;
         this.editProvider = editProvider;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         newButton = volumeStatusListPresenter.getView().addButton(SvgPresets.NEW_ITEM);
         openButton = volumeStatusListPresenter.getView().addButton(SvgPresets.EDIT);
@@ -89,17 +91,20 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
         }));
         registerHandler(openButton.addClickHandler(event -> open(popupUiHandlers)));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
-        registerHandler(rescanButton.addClickHandler(event -> dispatcher.exec(new FlushFsVolumeStatusAction()).onSuccess(result -> refresh())));
+        registerHandler(rescanButton.addClickHandler(event -> {
+            final Rest<Boolean> rest = restFactory.create();
+            rest.onSuccess(response -> refresh()).call(FS_VOLUME_RESOURCE).rescan();
+        }));
     }
 
     private void open(final PopupUiHandlers popupUiHandlers) {
         final FsVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
-            dispatcher.exec(new FetchFsVolumeAction(volume))
-                    .onSuccess(result -> {
-                        final FSVolumeEditPresenter editor = editProvider.get();
-                        editor.editVolume(result, popupUiHandlers);
-                    });
+            final Rest<FsVolume> rest = restFactory.create();
+            rest.onSuccess(result -> {
+                final FSVolumeEditPresenter editor = editProvider.get();
+                editor.editVolume(result, popupUiHandlers);
+            }).call(FS_VOLUME_RESOURCE).read(volume.getId());
         }
     }
 
@@ -115,7 +120,8 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
                         if (result) {
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final FsVolume volume : list) {
-                                dispatcher.exec(new DeleteFsVolumeAction(volume)).onSuccess(r -> refresh());
+                                final Rest<Boolean> rest = restFactory.create();
+                                rest.onSuccess(response -> refresh()).call(FS_VOLUME_RESOURCE).delete(volume.getId());
                             }
                         }
                     });

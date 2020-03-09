@@ -32,7 +32,7 @@ import stroom.pipeline.reader.AbstractReaderElement;
 import stroom.pipeline.reader.InputStreamRecordDetectorElement;
 import stroom.pipeline.reader.ReaderRecordDetectorElement;
 import stroom.pipeline.reader.ReaderRecorder;
-import stroom.pipeline.shared.SteppingFilterSettings;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
 import stroom.pipeline.shared.data.PipelineElementType;

@@ -36,10 +36,12 @@ import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.RefreshExplorerTreeEvent;
 import stroom.importexport.client.event.ImportConfigConfirmEvent;
-import stroom.importexport.shared.ImportConfigAction;
+import stroom.importexport.shared.ContentResource;
+import stroom.importexport.shared.ImportConfigRequest;
 import stroom.importexport.shared.ImportState;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
@@ -62,20 +64,22 @@ import java.util.List;
 public class ImportConfigConfirmPresenter extends
         MyPresenter<ImportConfigConfirmPresenter.ImportConfigConfirmView, ImportConfigConfirmPresenter.ImportConfirmProxy>
         implements ImportConfigConfirmEvent.Handler, PopupUiHandlers {
+    private static final ContentResource CONTENT_RESOURCE = com.google.gwt.core.client.GWT.create(ContentResource.class);
+
     private final TooltipPresenter tooltipPresenter;
     private final DataGridView<ImportState> dataGridView;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private ResourceKey resourceKey;
     private List<ImportState> confirmList;
 
     @Inject
     public ImportConfigConfirmPresenter(final EventBus eventBus, final ImportConfigConfirmView view,
                                         final ImportConfirmProxy proxy, final TooltipPresenter tooltipPresenter,
-                                        final ClientDispatchAsync dispatcher) {
+                                        final RestFactory restFactory) {
         super(eventBus, view, proxy);
 
         this.tooltipPresenter = tooltipPresenter;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         this.dataGridView = new DataGridViewImpl<>(false,
                 DataGridViewImpl.MASSIVE_LIST_PAGE_SIZE);
@@ -340,13 +344,17 @@ public class ImportConfigConfirmPresenter extends
 
     public void abortImport() {
         // Abort ... set the confirm list to blank
-        dispatcher.exec(new ImportConfigAction(resourceKey, new ArrayList<>()))
+        final Rest<ResourceKey> rest = restFactory.create();
+        rest
                 .onSuccess(result2 -> AlertEvent.fireWarn(ImportConfigConfirmPresenter.this, "Import Aborted", () -> HidePopupEvent.fire(ImportConfigConfirmPresenter.this,
-                        ImportConfigConfirmPresenter.this, false, false)));
+                        ImportConfigConfirmPresenter.this, false, false)))
+                .call(CONTENT_RESOURCE)
+                .importContent(new ImportConfigRequest(resourceKey, new ArrayList<>()));
     }
 
     public void importData() {
-        dispatcher.exec(new ImportConfigAction(resourceKey, confirmList))
+        final Rest<ResourceKey> rest = restFactory.create();
+        rest
                 .onSuccess(result2 -> AlertEvent.fireInfo(ImportConfigConfirmPresenter.this, "Import Complete", () -> {
                     HidePopupEvent.fire(ImportConfigConfirmPresenter.this, ImportConfigConfirmPresenter.this, false,
                             true);
@@ -365,7 +373,9 @@ public class ImportConfigConfirmPresenter extends
                     // We might have loaded a new visualisation or updated an
                     // existing one.
                     clearCaches();
-                });
+                })
+                .call(CONTENT_RESOURCE)
+                .importContent(new ImportConfigRequest(resourceKey, confirmList));
     }
 
     private void clearCaches() {

@@ -30,7 +30,7 @@ plugins {
 
     id "com.github.johnrengelman.shadow" version "4.0.3" apply false
 
-    id 'nu.studer.jooq' version '3.0.3' apply false
+    id 'nu.studer.jooq' version '4.1' apply false
 
     id 'org.flywaydb.flyway' version '5.2.4' apply false
 
@@ -87,8 +87,7 @@ ext.versions = [
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v7.0-beta.4', // Needed for the correct version of the client API
         stroomExpression  : 'v3.0.3',
-        stroomProxyApi    : 'v5.1.2',
-        stroomQuery       : 'v4.0-beta.46', // same version for stroom-docref, stroom-query-api and stroom-query-common
+        stroomQuery       : 'v4.0-beta.58', // same version for stroom-docref, stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
@@ -136,7 +135,6 @@ ext.libs = [
         hadoopHdfsShaded               : "stroom:hadoop-hdfs-shaded:$versions.hadoopHdfsShaded",
         stroomDocRef                   : "stroom:stroom-docref:$versions.stroomQuery",
         stroomExpression               : "stroom:stroom-expression:$versions.stroomExpression",
-        stroomProxyRemoteApi           : "stroom:stroom-proxy-remote-api:$versions.stroomProxyApi",
         stroomQueryApi                 : "stroom:stroom-query-api:$versions.stroomQuery",
         stroomQueryAudit               : "stroom:stroom-query-audit:$versions.stroomQuery",
         stroomQueryAuthorisation       : "stroom:stroom-query-authorisation:$versions.stroomQuery",
@@ -157,6 +155,7 @@ ext.libs = [
         commons_lang                   : "org.apache.commons:commons-lang3", // version controlled by DW BOM
         commons_pool2                  : "org.apache.commons:commons-pool2:2.6.0",
         commons_text                   : "org.apache.commons:commons-text:1.4", // 1.4 needed by YamlUtil
+        classgraph                     : "io.github.classgraph:classgraph:4.8.64",
         curator_client                 : "org.apache.curator:curator-client:$versions.curator",
         curator_framework              : "org.apache.curator:curator-framework:$versions.curator",
         curator_x_discovery            : "org.apache.curator:curator-x-discovery:$versions.curator",
@@ -465,6 +464,7 @@ subprojects {
     }
 
     task allDeps(type: DependencyReportTask) {}
+    task allDepInsight(type: DependencyInsightReportTask) {}
 
 //    // These lines pull the integration test task into our build process.
 //    tasks.check.dependsOn integrationTest

@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -33,7 +34,7 @@ import java.io.Serializable;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"includes", "excludes"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "filter")
 @XmlType(name = "Filter", propOrder = {"includes", "excludes"})
 public class Filter implements Serializable {
@@ -47,10 +48,11 @@ public class Filter implements Serializable {
     private String excludes;
 
     public Filter() {
-        // Default constructor necessary for GWT serialisation.
     }
 
-    public Filter(String includes, String excludes) {
+    @JsonCreator
+    public Filter(@JsonProperty("includes") final String includes,
+                  @JsonProperty("excludes") final String excludes) {
         this.includes = includes;
         this.excludes = excludes;
     }

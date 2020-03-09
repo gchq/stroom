@@ -17,7 +17,7 @@
 package stroom.statistics.impl.sql;
 
 import stroom.task.api.ServerTask;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 public class SQLStatisticFlushTask extends ServerTask<VoidResult> {
     private final transient SQLStatisticAggregateMap map;

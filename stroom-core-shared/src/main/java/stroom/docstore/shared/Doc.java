@@ -17,25 +17,33 @@
 
 package stroom.docstore.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.SharedObject;
+
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser"})
-@JsonInclude(Include.NON_DEFAULT)
-public class Doc implements SharedObject {
-    private static final long serialVersionUID = -7268601402378907741L;
-
+@JsonInclude(Include.NON_NULL)
+public abstract class Doc {
+    @JsonProperty
     private String type;
+    @JsonProperty
     private String uuid;
+    @JsonProperty
     private String name;
+    @JsonProperty
     private String version;
+    @JsonProperty
     private Long createTime;
+    @JsonProperty
     private Long updateTime;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private String updateUser;
 
     public Doc() {
@@ -45,6 +53,25 @@ public class Doc implements SharedObject {
         this.type = type;
         this.uuid = uuid;
         this.name = name;
+    }
+
+    @JsonCreator
+    public Doc(@JsonProperty("type") final String type,
+               @JsonProperty("uuid") final String uuid,
+               @JsonProperty("name") final String name,
+               @JsonProperty("version") final String version,
+               @JsonProperty("createTime") final Long createTime,
+               @JsonProperty("updateTime") final Long updateTime,
+               @JsonProperty("createUser") final String createUser,
+               @JsonProperty("updateUser") final String updateUser) {
+        this.type = type;
+        this.uuid = uuid;
+        this.name = name;
+        this.version = version;
+        this.createTime = createTime;
+        this.updateTime = updateTime;
+        this.createUser = createUser;
+        this.updateUser = updateUser;
     }
 
     public String getType() {

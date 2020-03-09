@@ -20,6 +20,7 @@ dependencies {
     compile project(':stroom-pipeline')
     compile project(':stroom-processor:stroom-processor-api')
     compile project(':stroom-proxy:stroom-proxy-repo')
+    compile project(':stroom-proxy:stroom-proxy-remote-api')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-resource:stroom-resource-api')
     compile project(':stroom-security:stroom-security-api')
@@ -57,7 +58,6 @@ dependencies {
     compile libs.saxon_he
     compile libs.slf4j_api
     compile libs.stroomDocRef
-    compile libs.stroomProxyRemoteApi
     compile libs.swagger_annotations
     compile libs.ws_rs_api
     compile libs.xml_apis

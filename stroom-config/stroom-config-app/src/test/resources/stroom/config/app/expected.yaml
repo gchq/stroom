@@ -720,19 +720,14 @@ appConfig:
     aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
       \ systems.</p>"
     buildInfo:
-      upDate: null
-      buildDate: "TBD"
+      upDate: "TBD"
       buildVersion: "TBD"
-    nodeName: null
-    maintenanceMessage: null
+      buildDate: "TBD"
     defaultMaxResults: "1000000,100,10,1"
-    helpUrl: null
-    namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
-    htmlTitle: "Stroom"
-    oncontextmenu: "return false;"
     process:
       defaultTimeLimit: 30
       defaultRecordLimit: 1000000
+    helpUrl: "https://gchq.github.io/stroom-docs"
     theme:
       backgroundAttachment: "scroll"
       backgroundColor: "#1E88E5"
@@ -748,6 +743,9 @@ appConfig:
         enabled: false
         title: "Please Provide Query Info"
         validationRegex: "^[\\s\\S]{3,}$"
+    namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
+    htmlTitle: "Stroom"
+    oncontextmenu: "return false;"
     splash:
       enabled: false
       title: "Splash Screen"
@@ -775,8 +773,6 @@ appConfig:
       groupAuthorisation: "http://IP_ADDRESS/s/authorisationManager/true"
       editDoc: "http://IP_ADDRESS/s/doc/"
       changepassword: "http://IP_ADDRESS/changepassword"
-      kibana: null
-      trackers: null
       annotations: "http://IP_ADDRESS/annotationsService/queryApi/v1"
       elastic: "http://IP_ADDRESS/queryElasticService/queryApi/v1"
       documentPermissions: "http://IP_ADDRESS/s/authorisationManager/document/"

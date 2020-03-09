@@ -24,7 +24,7 @@ import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
 import stroom.task.shared.ThreadPool;
 import stroom.util.entity.FindService;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 
 public interface TaskManager extends FindService<TaskProgress, FindTaskProgressCriteria> {
     void startup();
@@ -75,13 +75,6 @@ public interface TaskManager extends FindService<TaskProgress, FindTaskProgressC
      */
     <R> void execAsync(Task<R> task, TaskCallback<R> callback, ThreadPool threadPool);
 
-    void execAsync(Task<?> parentTask, String taskName, Runnable runnable, ThreadPool threadPool);
-
-    /**
-     * Get a currently executing task by id.
-     */
-    Task<?> getTaskById(TaskId taskId);
-
     /**
      * Find out if the task with the given id is terminated.
      */
@@ -94,7 +87,5 @@ public interface TaskManager extends FindService<TaskProgress, FindTaskProgressC
      */
     void terminate(TaskId taskId);
 
-    BaseResultList<TaskProgress> terminate(FindTaskCriteria criteria, boolean kill);
-
-    int getCurrentTaskCount();
+    ResultPage<TaskProgress> terminate(FindTaskCriteria criteria, boolean kill);
 }

@@ -33,8 +33,8 @@ import stroom.data.zip.StroomZipFileType;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaExpressionUtil;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.Status;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -171,7 +171,7 @@ class TestStreamUploadDownloadTaskHandler extends AbstractCoreIntegrationTest {
         taskManager.exec(new StreamUploadTask("test.zip", file, feedName,
                 StreamTypeNames.RAW_EVENTS, null, extraMeta));
 
-        final List<Meta> streamList = metaService.find(findMetaCriteria);
+        final List<Meta> streamList = metaService.find(findMetaCriteria).getValues();
 
         assertThat(streamList.size()).isEqualTo(2);
 

@@ -17,17 +17,13 @@
 package stroom.statistics.impl.sql.rollup;
 
 import com.google.inject.AbstractModule;
-import stroom.statistics.impl.sql.shared.RollUpBitMaskConversionAction;
-import stroom.statistics.impl.sql.shared.RollUpBitMaskPermGenerationAction;
-import stroom.statistics.impl.sql.shared.StatisticsDataSourceFieldChangeAction;
-import stroom.task.api.TaskHandlerBinder;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 public class SQLStatisticRollupModule extends AbstractModule {
     @Override
     protected void configure() {
-        TaskHandlerBinder.create(binder())
-                .bind(RollUpBitMaskConversionAction.class, RollUpBitMaskConversionHandler.class)
-                .bind(RollUpBitMaskPermGenerationAction.class, RollUpBitMaskPermGenerationHandler.class)
-                .bind(StatisticsDataSourceFieldChangeAction.class, StatisticsDataSourceFieldChangeHandler.class);
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(StatisticRollupResourceImpl.class);
     }
 }

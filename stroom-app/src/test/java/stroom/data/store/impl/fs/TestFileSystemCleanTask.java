@@ -26,9 +26,9 @@ import stroom.data.store.api.Store;
 import stroom.data.store.api.Target;
 import stroom.data.store.api.TargetUtil;
 import stroom.job.impl.MockTask;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaProperties;
-import stroom.task.api.TaskManager;
+import stroom.task.impl.ExecutorProviderImpl;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestScenarioCreator;
 import stroom.test.common.util.test.FileSystemTestUtil;
@@ -59,7 +59,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     @Inject
     private FsCleanExecutor fileSystemCleanTaskExecutor;
     @Inject
-    private TaskManager taskManager;
+    private ExecutorProviderImpl executorProvider;
     @Inject
     private CommonTestScenarioCreator commonTestScenarioCreator;
 
@@ -202,7 +202,7 @@ class TestFileSystemCleanTask extends AbstractCoreIntegrationTest {
     }
 
     private void waitForTaskManagerToComplete() {
-        while (taskManager.getCurrentTaskCount() > 0) {
+        while (executorProvider.getCurrentTaskCount() > 0) {
             Thread.yield();
         }
         LOGGER.info("waitForTaskManagerToComplete() - done");

@@ -16,14 +16,32 @@
 
 package stroom.job.impl;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.FindNamedEntityCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
+import stroom.util.shared.StringCriteria;
+
+import java.util.List;
 
 /**
  * Criteria object used to fetch a job that matches the parameters specified.
  */
+@JsonInclude(Include.NON_NULL)
 public class FindJobCriteria extends FindNamedEntityCriteria {
-    private static final long serialVersionUID = 3995637015554049174L;
-
     public static final String FIELD_ID = "Id";
     public static final String FIELD_ADVANCED = "Advanced";
+
+    public FindJobCriteria() {
+    }
+
+    @JsonCreator
+    public FindJobCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                           @JsonProperty("sortList") final List<Sort> sortList,
+                           @JsonProperty("name") final StringCriteria name) {
+        super(pageRequest, sortList, name);
+    }
 }

@@ -19,8 +19,8 @@ package stroom.pipeline.stepping.client.presenter;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.pipeline.shared.StepLocation;
-import stroom.pipeline.shared.StepType;
+import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 
 public class StepControlEvent extends GwtEvent<StepControlEvent.StepControlHandler> {
     private static final Type<StepControlHandler> TYPE = new Type<>();

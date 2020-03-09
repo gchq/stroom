@@ -17,6 +17,7 @@
 
 package stroom.importexport.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenter;
@@ -26,14 +27,17 @@ import com.gwtplatform.mvp.client.annotations.ProxyEvent;
 import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.AlertEvent;
 import stroom.core.client.LocationManager;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
+import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityCheckTreePresenter;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.importexport.client.event.ExportConfigEvent;
-import stroom.importexport.shared.ExportConfigAction;
+import stroom.importexport.shared.ContentResource;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.util.shared.DocRefs;
+import stroom.util.shared.ResourceGeneration;
 import stroom.widget.popup.client.event.DisablePopupEvent;
 import stroom.widget.popup.client.event.EnablePopupEvent;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -43,22 +47,25 @@ import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class ExportConfigPresenter
         extends MyPresenter<ExportConfigPresenter.ExportConfigView, ExportConfigPresenter.ExportProxy>
         implements ExportConfigEvent.Handler {
+    private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
+
     private final LocationManager locationManager;
     private final EntityCheckTreePresenter treePresenter;
-    private final ClientDispatchAsync clientDispatchAsync;
+    private final RestFactory restFactory;
 
     @Inject
     public ExportConfigPresenter(final EventBus eventBus, final ExportConfigView view, final ExportProxy proxy, final LocationManager locationManager,
-                                 final EntityCheckTreePresenter treePresenter, final ClientDispatchAsync clientDispatchAsync) {
+                                 final EntityCheckTreePresenter treePresenter, final RestFactory restFactory) {
         super(eventBus, view, proxy);
         this.locationManager = locationManager;
         this.treePresenter = treePresenter;
-        this.clientDispatchAsync = clientDispatchAsync;
+        this.restFactory = restFactory;
         view.setTreeView(treePresenter.getView());
     }
 
@@ -100,14 +107,17 @@ public class ExportConfigPresenter
             EnablePopupEvent.fire(this, this);
 
         } else {
-            final DocRefs docRefs = new DocRefs();
+            final Set<DocRef> docRefs = new HashSet<>();
             for (final ExplorerNode explorerNode : dataItems) {
                 docRefs.add(explorerNode.getDocRef());
             }
 
-            clientDispatchAsync.exec(new ExportConfigAction(docRefs))
+            final Rest<ResourceGeneration> rest = restFactory.create();
+            rest
                     .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, this, result))
-                    .onFailure(throwable -> ExportFileCompleteUtil.onFailure(this, throwable));
+                    .onFailure(throwable -> ExportFileCompleteUtil.onFailure(this, throwable))
+                    .call(CONTENT_RESOURCE)
+                    .exportContent(new DocRefs(docRefs));
         }
     }
 

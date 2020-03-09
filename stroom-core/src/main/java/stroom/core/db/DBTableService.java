@@ -23,6 +23,7 @@ import stroom.node.shared.FindDBTableCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.CompareUtil;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 import stroom.util.shared.Sort.Direction;
 
@@ -49,7 +50,15 @@ class DBTableService {
         this.securityContext = securityContext;
     }
 
-    List<DBTableStatus> findSystemTableStatus(final FindDBTableCriteria criteria) {
+    public ResultPage<DBTableStatus> getSystemTableStatus() {
+        return securityContext.secureResult(() -> doFind(new FindDBTableCriteria()));
+    }
+
+    public ResultPage<DBTableStatus> findSystemTableStatus(final FindDBTableCriteria criteria) {
+        return securityContext.secureResult(() -> doFind(criteria));
+    }
+
+    private ResultPage<DBTableStatus> doFind(final FindDBTableCriteria criteria) {
         return securityContext.secureResult(PermissionNames.MANAGE_DB_PERMISSION, () -> {
             final List<DBTableStatus> rtnList = new ArrayList<>();
 
@@ -93,7 +102,7 @@ class DBTableService {
                 return 0;
             });
 
-            return rtnList;
+            return ResultPage.createPageLimitedList(rtnList, criteria.getPageRequest());
         });
     }
 
@@ -107,12 +116,12 @@ class DBTableService {
                     ResultSet.CLOSE_CURSORS_AT_COMMIT)) {
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     while (resultSet.next()) {
-                        final DBTableStatus status = new DBTableStatus();
-                        status.setDb(connection.getCatalog());
-                        status.setTable(resultSet.getString("Name"));
-                        status.setCount(resultSet.getLong("Rows"));
-                        status.setDataSize(resultSet.getLong("Data_length"));
-                        status.setIndexSize(resultSet.getLong("Index_length"));
+                        final DBTableStatus status = new DBTableStatus(
+                                connection.getCatalog(),
+                                resultSet.getString("Name"),
+                                resultSet.getLong("Rows"),
+                                resultSet.getLong("Data_length"),
+                                resultSet.getLong("Index_length"));
 
                         rtnList.add(status);
                     }

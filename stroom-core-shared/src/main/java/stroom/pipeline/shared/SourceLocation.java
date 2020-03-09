@@ -16,26 +16,34 @@
 
 package stroom.pipeline.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.CompareBuilder;
 import stroom.util.shared.Highlight;
 
-import java.io.Serializable;
 import java.util.Objects;
 
-public class SourceLocation implements Serializable, Comparable<SourceLocation> {
-    private static final long serialVersionUID = -2327935798577052482L;
+@JsonInclude(Include.NON_NULL)
+public class SourceLocation implements Comparable<SourceLocation> {
+    @JsonProperty
+    private final long id;
+    @JsonProperty
+    private final String childType;
+    @JsonProperty
+    private final long partNo;
+    @JsonProperty
+    private final long recordNo;
+    @JsonProperty
+    private final Highlight highlight;
 
-    private long id;
-    private String childType;
-    private long partNo;
-    private long recordNo = -1;
-    private Highlight highlight;
-
-    public SourceLocation() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public SourceLocation(final long id, final String childType, final long partNo, final long recordNo, final Highlight highlight) {
+    @JsonCreator
+    public SourceLocation(@JsonProperty("id") final long id,
+                          @JsonProperty("childType") final String childType,
+                          @JsonProperty("partNo") final long partNo,
+                          @JsonProperty("recordNo") final long recordNo,
+                          @JsonProperty("highlight") final Highlight highlight) {
         this.id = id;
         this.childType = childType;
         this.partNo = partNo;

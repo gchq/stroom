@@ -22,6 +22,8 @@ import stroom.docstore.api.DocumentActionHandlerBinder;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
+import stroom.util.guice.GuiceUtil;
+import stroom.util.shared.RestResource;
 
 public class StroomStatsStoreModule extends AbstractModule {
     @Override
@@ -37,7 +39,7 @@ public class StroomStatsStoreModule extends AbstractModule {
         DocumentActionHandlerBinder.create(binder())
                 .bind(StroomStatsStoreDoc.DOCUMENT_TYPE, StroomStatsStoreStoreImpl.class);
 
-//        final Multibinder<FindService> findServiceBinder = Multibinder.newSetBinder(binder(), FindService.class);
-//        findServiceBinder.addBinding().to(StroomStatsStoreStoreImpl.class);
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(StatsStoreResourceImpl.class);
     }
 }

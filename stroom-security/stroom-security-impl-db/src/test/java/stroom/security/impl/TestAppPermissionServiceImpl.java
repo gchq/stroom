@@ -23,7 +23,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.shared.User;
-import stroom.security.shared.UserAppPermissions;
 import stroom.test.common.util.test.FileSystemTestUtil;
 
 import javax.inject.Inject;

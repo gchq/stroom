@@ -28,6 +28,7 @@ import stroom.query.api.v2.QueryKey;
 import stroom.query.api.v2.SearchRequest;
 import stroom.query.api.v2.SearchResponse;
 import stroom.statistics.impl.sql.StatisticsQueryService;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 import stroom.util.json.JsonUtil;
 
@@ -39,7 +40,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 @Api(value = "sqlstatistics query - /v2")
-@Path("/sqlstatistics/v2")
+@Path("/sqlstatistics" + ResourcePaths.V2)
 @Produces(MediaType.APPLICATION_JSON)
 public class SqlStatisticsQueryResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(SqlStatisticsQueryResource.class);

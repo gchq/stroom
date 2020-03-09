@@ -1,15 +1,22 @@
 package stroom.annotation.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
+@JsonInclude(Include.NON_NULL)
 public class CreateEntryRequest {
+    @JsonProperty
     private Annotation annotation;
+    @JsonProperty
     private String type;
+    @JsonProperty
     private String data;
+    @JsonProperty
     private List<EventId> linkedEvents;
-
-    public CreateEntryRequest() {
-    }
 
     public CreateEntryRequest(final Annotation annotation,
                               final String type,
@@ -19,7 +26,11 @@ public class CreateEntryRequest {
         this.data = data;
     }
 
-    public CreateEntryRequest(final Annotation annotation, final String type, final String data, final List<EventId> linkedEvents) {
+    @JsonCreator
+    public CreateEntryRequest(@JsonProperty("annotation") final Annotation annotation,
+                              @JsonProperty("type") final String type,
+                              @JsonProperty("data") final String data,
+                              @JsonProperty("linkedEvents") final List<EventId> linkedEvents) {
         this.annotation = annotation;
         this.type = type;
         this.data = data;

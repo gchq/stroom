@@ -16,17 +16,19 @@
 
 package stroom.node.impl;
 
-import stroom.entity.shared.EntityAction;
-import stroom.entity.shared.EntityEvent;
-import stroom.entity.shared.EntityEventHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import stroom.util.entity.EntityAction;
+import stroom.util.entity.EntityEvent;
+import stroom.util.entity.EntityEventHandler;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.node.shared.FindNodeCriteria;
+import stroom.node.api.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.PermissionException;
 
@@ -38,6 +40,8 @@ import java.util.stream.Collectors;
 @Singleton
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
 public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Handler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NodeServiceImpl.class);
+
     private final SecurityContext securityContext;
     private final NodeDao nodeDao;
     private final NodeInfo nodeInfo;
@@ -50,6 +54,8 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         this.securityContext = securityContext;
         this.nodeDao = nodeDao;
         this.nodeInfo = nodeInfo;
+
+        ensureNodeCreated();
     }
 
     Node update(final Node node) {
@@ -60,7 +66,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         return nodeDao.update(node);
     }
 
-    BaseResultList<Node> find(final FindNodeCriteria criteria) {
+    ResultPage<Node> find(final FindNodeCriteria criteria) {
         if (!securityContext.hasAppPermission(PermissionNames.MANAGE_NODES_PERMISSION)) {
             throw new PermissionException(securityContext.getUserId(), "You are not authorised to find nodes");
         }
@@ -70,7 +76,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
     @Override
     public List<String> findNodeNames(final FindNodeCriteria criteria) {
-        return find(criteria).stream().map(Node::getName).collect(Collectors.toList());
+        return find(criteria).getValues().stream().map(Node::getName).collect(Collectors.toList());
     }
 
     @Override
@@ -124,6 +130,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
                         // This will start a new mini transaction for the update
                         final Node node = new Node();
                         node.setName(nodeInfo.getThisNodeName());
+                        LOGGER.info("Creating node record for {}", node.getName());
                         thisNode = nodeDao.create(node);
                     }
                 }

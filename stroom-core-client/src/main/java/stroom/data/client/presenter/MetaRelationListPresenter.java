@@ -22,7 +22,7 @@ import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.cell.expander.client.ExpanderCell;
 import stroom.data.grid.client.EndColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestFactory;
 import stroom.meta.shared.DataRetentionFields;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
@@ -32,10 +32,9 @@ import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.shared.BaseResultList;
 import stroom.util.shared.Expander;
 import stroom.util.shared.ModelStringUtil;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 
@@ -53,10 +52,10 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
 
     @Inject
     public MetaRelationListPresenter(final EventBus eventBus,
-                                     final ClientDispatchAsync dispatcher,
+                                     final RestFactory restFactory,
                                      final TooltipPresenter tooltipPresenter) {
-        super(eventBus, dispatcher, tooltipPresenter, false);
-        dataProvider.setAllowNoConstraint(false);
+        super(eventBus, restFactory, tooltipPresenter, false);
+        allowNoConstraint = false;
     }
 
     public void setSelectedStream(final MetaRow metaRow, final boolean fireEvents,
@@ -83,15 +82,10 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
     }
 
     @Override
-    protected ResultList<MetaRow> onProcessData(final ResultList<MetaRow> data) {
+    protected ResultPage<MetaRow> onProcessData(final ResultPage<MetaRow> data) {
         // Store streams against id.
         streamMap.clear();
-        for (final MetaRow row : data) {
-            final Meta meta = row.getMeta();
-            streamMap.put(meta.getId(), row);
-        }
-
-        for (final MetaRow row : data) {
+        for (final MetaRow row : data.getValues()) {
             final Meta meta = row.getMeta();
             streamMap.put(meta.getId(), row);
         }
@@ -109,14 +103,12 @@ public class MetaRelationListPresenter extends AbstractMetaListPresenter {
             getView().setColumnWidth(expanderColumn, 0, Unit.PX);
         }
 
-        final ResultList<MetaRow> processed = new BaseResultList<>(newData,
-                (long) data.getStart(), (long) data.getSize(), data.isExact());
-        return super.onProcessData(processed);
+        return super.onProcessData(new ResultPage<>(newData, data.getPageResponse()));
     }
 
-    private void addChildren(final MetaRow parent, final List<MetaRow> data,
+    private void addChildren(final MetaRow parent, final ResultPage<MetaRow> data,
                              final List<MetaRow> newData, final int depth) {
-        for (final MetaRow row : data) {
+        for (final MetaRow row : data.getValues()) {
             final Meta meta = row.getMeta();
 
             if (parent == null) {

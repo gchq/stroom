@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.session.UserIdentitySessionUtil;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.inject.Inject;
@@ -24,7 +25,7 @@ import javax.ws.rs.core.Response;
  * happen.
  */
 @Api(value = "session - /v1")
-@Path("/session/v1")
+@Path("/session" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class SessionResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionResource.class);

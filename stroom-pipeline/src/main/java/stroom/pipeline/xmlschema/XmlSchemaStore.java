@@ -19,14 +19,13 @@ package stroom.pipeline.xmlschema;
 
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentStore;
-import stroom.util.shared.BaseResultList;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+import stroom.util.shared.ResultPage;
 import stroom.xmlschema.shared.XmlSchemaDoc;
 
 import java.util.List;
 
 public interface XmlSchemaStore extends DocumentStore<XmlSchemaDoc> {
-    BaseResultList<XmlSchemaDoc> find(FindXMLSchemaCriteria criteria);
+    ResultPage<XmlSchemaDoc> find(FindXMLSchemaCriteria criteria);
 
     List<DocRef> list();
 }

@@ -28,7 +28,7 @@ public class ElasticIndexConfigCacheImpl implements ElasticIndexConfigCache, Cle
                                 final SecurityContext securityContext,
                                 final UiConfig uiConfig,
                                 final ElasticConfig elasticConfig) {
-        docRefHttpClient = new DocRefResourceHttpClient<>(uiConfig.getUrlConfig().getElastic());
+        docRefHttpClient = new DocRefResourceHttpClient<>(uiConfig.getUrl().getElastic());
         this.securityContext = securityContext;
         cache = cacheManager.create(CACHE_NAME, elasticConfig::getElasticIndexConfigCache, this::create);
     }

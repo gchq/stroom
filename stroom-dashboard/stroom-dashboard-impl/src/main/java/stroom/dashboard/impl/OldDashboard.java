@@ -33,7 +33,6 @@ public class OldDashboard extends DocumentEntity {
     private DashboardConfig dashboardData;
 
     public OldDashboard() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     @ExternalFile

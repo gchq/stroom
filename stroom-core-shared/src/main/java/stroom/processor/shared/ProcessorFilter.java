@@ -16,7 +16,10 @@
 
 package stroom.processor.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasUuid;
 
@@ -24,7 +27,8 @@ import javax.xml.bind.annotation.XmlTransient;
 import java.util.Comparator;
 import java.util.Objects;
 
-public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
+@JsonInclude(Include.NON_NULL)
+public class ProcessorFilter implements HasAuditInfo, HasUuid {
     public static final String ENTITY_TYPE = "ProcessorFilter";
 
     public static final Comparator<ProcessorFilter> HIGHEST_PRIORITY_FIRST_COMPARATOR = (o1, o2) -> {
@@ -47,31 +51,75 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid, SharedObject {
         return Integer.compare(o2.getPriority(), o1.getPriority());
     };
 
-    private static final long serialVersionUID = -2478788451478923825L;
-
     // standard id, OCC and audit fields
+    @JsonProperty
     private Integer id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTimeMs;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private Long updateTimeMs;
+    @JsonProperty
     private String updateUser;
+    @JsonProperty
     private String uuid;
+    @JsonProperty
     private String data;
+    @JsonProperty
     private QueryData queryData;
 
+    @JsonProperty
     private Processor processor;
+    @JsonProperty
     private ProcessorFilterTracker processorFilterTracker;
 
     /**
      * The higher the number the higher the priority. So 1 is LOW, 10 is medium,
      * 20 is high.
      */
-    private int priority = 10;
+    @JsonProperty
+    private int priority;
+    @JsonProperty
     private boolean enabled;
 
     public ProcessorFilter() {
-        // Default constructor necessary for GWT serialisation.
+        priority = 10;
+    }
+
+    @JsonCreator
+    public ProcessorFilter(@JsonProperty("id") final Integer id,
+                           @JsonProperty("version") final Integer version,
+                           @JsonProperty("createTimeMs") final Long createTimeMs,
+                           @JsonProperty("createUser") final String createUser,
+                           @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                           @JsonProperty("updateUser") final String updateUser,
+                           @JsonProperty("uuid") final String uuid,
+                           @JsonProperty("data") final String data,
+                           @JsonProperty("queryData") final QueryData queryData,
+                           @JsonProperty("processor") final Processor processor,
+                           @JsonProperty("processorFilterTracker") final ProcessorFilterTracker processorFilterTracker,
+                           @JsonProperty("priority") final int priority,
+                           @JsonProperty("enabled") final boolean enabled) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.createUser = createUser;
+        this.updateTimeMs = updateTimeMs;
+        this.updateUser = updateUser;
+        this.uuid = uuid;
+        this.data = data;
+        this.queryData = queryData;
+        this.processor = processor;
+        this.processorFilterTracker = processorFilterTracker;
+        if (priority > 0) {
+            this.priority = priority;
+        } else {
+            this.priority = 10;
+        }
+        this.enabled = enabled;
     }
 
     public Integer getId() {

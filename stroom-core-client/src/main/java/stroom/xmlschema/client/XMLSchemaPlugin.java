@@ -17,11 +17,13 @@
 
 package stroom.xmlschema.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
@@ -29,23 +31,50 @@ import stroom.document.client.DocumentPluginEventManager;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.xmlschema.client.presenter.XMLSchemaPresenter;
 import stroom.xmlschema.shared.XmlSchemaDoc;
+import stroom.xmlschema.shared.XmlSchemaResource;
+
+import java.util.function.Consumer;
 
 public class XMLSchemaPlugin extends DocumentPlugin<XmlSchemaDoc> {
+    private static final XmlSchemaResource XML_SCHEMA_RESOURCE = GWT.create(XmlSchemaResource.class);
+
     private final Provider<XMLSchemaPresenter> editorProvider;
+    private final RestFactory restFactory;
 
     @Inject
     public XMLSchemaPlugin(final EventBus eventBus,
                            final Provider<XMLSchemaPresenter> editorProvider,
-                           final ClientDispatchAsync dispatcher,
+                           final RestFactory restFactory,
                            final ContentManager contentManager,
                            final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, dispatcher, contentManager, entityPluginEventManager);
+        super(eventBus, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
+        this.restFactory = restFactory;
     }
 
     @Override
     protected DocumentEditPresenter<?, ?> createEditor() {
         return editorProvider.get();
+    }
+
+    @Override
+    public void load(final DocRef docRef, final Consumer<XmlSchemaDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<XmlSchemaDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(XML_SCHEMA_RESOURCE)
+                .read(docRef);
+    }
+
+    @Override
+    public void save(final DocRef docRef, final XmlSchemaDoc document, final Consumer<XmlSchemaDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<XmlSchemaDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(XML_SCHEMA_RESOURCE)
+                .update(document);
     }
 
     @Override

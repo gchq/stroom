@@ -16,16 +16,31 @@
 
 package stroom.index.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.FindDocumentEntityCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
+import stroom.util.shared.StringCriteria;
 
+import java.util.List;
+
+@JsonInclude(Include.NON_NULL)
 public class FindIndexCriteria extends FindDocumentEntityCriteria {
-    private static final long serialVersionUID = -4421720204507720754L;
-
     public FindIndexCriteria() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public FindIndexCriteria(final String name) {
         super(name);
+    }
+
+    @JsonCreator
+    public FindIndexCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                             @JsonProperty("sortList") final List<Sort> sortList,
+                             @JsonProperty("name") final StringCriteria name,
+                             @JsonProperty("requiredPermission") final String requiredPermission) {
+        super(pageRequest, sortList, name, requiredPermission);
     }
 }

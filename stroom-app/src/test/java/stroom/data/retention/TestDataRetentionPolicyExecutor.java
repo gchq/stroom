@@ -25,11 +25,11 @@ import stroom.data.retention.shared.DataRetentionRules;
 import stroom.data.retention.shared.TimeUnit;
 import stroom.data.shared.StreamTypeNames;
 import stroom.docref.DocRef;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.shared.MetaProperties;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -39,7 +39,6 @@ import stroom.test.common.util.test.FileSystemTestUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.BaseResultList;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -168,7 +167,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     }
 
     private void dumpStreams() {
-        final BaseResultList<Meta> list = metaService.find(new FindMetaCriteria());
+        final List<Meta> list = metaService.find(new FindMetaCriteria()).getValues();
 
         assertThat(list.size()).isEqualTo(3);
 

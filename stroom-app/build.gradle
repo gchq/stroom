@@ -171,6 +171,7 @@ dependencies {
     testCompile project(':stroom-util-shared')
 
     testCompile libs.commons_io
+    testCompile libs.classgraph
     testCompile libs.guice4
     testCompile libs.guice_extension
     testCompile libs.hikari

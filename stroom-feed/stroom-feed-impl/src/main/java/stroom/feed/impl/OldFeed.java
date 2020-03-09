@@ -21,7 +21,9 @@ import stroom.importexport.migration.DocumentEntity;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
 
-/** Used for legacy migration **/
+/**
+ * Used for legacy migration
+ **/
 @Deprecated
 public class OldFeed extends DocumentEntity {
     public static final String ENTITY_TYPE = "Feed";
@@ -38,7 +40,6 @@ public class OldFeed extends DocumentEntity {
     private byte pstatus = FeedStatus.RECEIVE.getPrimitiveValue();
 
     public OldFeed() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public String getDescription() {

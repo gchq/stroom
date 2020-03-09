@@ -9,6 +9,10 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 
@@ -22,32 +26,51 @@ import java.util.Map;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "search", propOrder = {"dataSourceRef", "expression", "componentSettingsMap", "paramMap", "incremental", "storeHistory", "queryInfo"})
+@JsonInclude(Include.NON_NULL)
 public class Search implements Serializable {
     private static final long serialVersionUID = 9055582579670841979L;
 
     @XmlElement
+    @JsonProperty
     private DocRef dataSourceRef;
-
     @XmlElement
+    @JsonProperty
     private ExpressionOperator expression;
-
     @XmlElement
+    @JsonProperty
     private Map<String, ComponentSettings> componentSettingsMap;
-
     @XmlElement
-    private Map<String, String> paramMap = Collections.emptyMap();
-
+    @JsonProperty
+    private Map<String, String> paramMap;
     @XmlElement
+    @JsonProperty
     private boolean incremental;
-
     @XmlElement
+    @JsonProperty
     private boolean storeHistory;
-
     @XmlElement
+    @JsonProperty
     private String queryInfo;
 
     public Search() {
-        // Default constructor necessary for GWT serialisation.
+        paramMap = Collections.emptyMap();
+    }
+
+    @JsonCreator
+    public Search(@JsonProperty("dataSourceRef") final DocRef dataSourceRef,
+                  @JsonProperty("expression") final ExpressionOperator expression,
+                  @JsonProperty("componentSettingsMap") final Map<String, ComponentSettings> componentSettingsMap,
+                  @JsonProperty("paramMap") final Map<String, String> paramMap,
+                  @JsonProperty("incremental") final boolean incremental,
+                  @JsonProperty("storeHistory") final boolean storeHistory,
+                  @JsonProperty("queryInfo") final String queryInfo) {
+        this.dataSourceRef = dataSourceRef;
+        this.expression = expression;
+        this.componentSettingsMap = componentSettingsMap;
+        this.paramMap = paramMap;
+        this.incremental = incremental;
+        this.storeHistory = storeHistory;
+        this.queryInfo = queryInfo;
     }
 
     public DocRef getDataSourceRef() {

@@ -43,32 +43,39 @@ import stroom.dashboard.shared.ComponentConfig;
 import stroom.dashboard.shared.ComponentResult;
 import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
-import stroom.dashboard.shared.FetchVisualisationAction;
 import stroom.dashboard.shared.VisComponentSettings;
 import stroom.dashboard.shared.VisResult;
 import stroom.dashboard.shared.VisResultRequest;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ResultRequest.Fetch;
 import stroom.script.client.ScriptCache;
-import stroom.script.shared.FetchScriptAction;
+import stroom.script.shared.FetchLinkedScriptRequest;
 import stroom.script.shared.ScriptDoc;
+import stroom.script.shared.ScriptResource;
 import stroom.util.client.JSONUtil;
 import stroom.util.shared.EqualsUtil;
-import stroom.util.shared.SharedList;
 import stroom.visualisation.client.presenter.VisFunction;
 import stroom.visualisation.client.presenter.VisFunction.LoadStatus;
 import stroom.visualisation.client.presenter.VisFunction.StatusHandler;
 import stroom.visualisation.client.presenter.VisFunctionCache;
+import stroom.visualisation.shared.VisualisationDoc;
+import stroom.visualisation.shared.VisualisationResource;
+
+import java.util.List;
 
 public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisView>
         implements ResultComponent, StatusHandler {
+    private static final ScriptResource SCRIPT_RESOURCE = GWT.create(ScriptResource.class);
+    private static final VisualisationResource VISUALISATION_RESOURCE = GWT.create(VisualisationResource.class);
+
     public static final ComponentType TYPE = new ComponentType(4, "vis", "Visualisation");
     private static final int MAX_RESULTS = 1000;
     private static final long UPDATE_INTERVAL = 2000;
     private final VisFunctionCache visFunctionCache;
     private final ScriptCache scriptCache;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private final VisResultRequest visResultRequest = new VisResultRequest(0, MAX_RESULTS);
     private final VisPane visPane;
     private final VisFrame visFrame;
@@ -88,11 +95,12 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
 
     @Inject
     public VisPresenter(final EventBus eventBus, final VisView view,
-                        final Provider<VisSettingsPresenter> settingsPresenterProvider, final ClientDispatchAsync dispatcher) {
+                        final Provider<VisSettingsPresenter> settingsPresenterProvider,
+                        final RestFactory restFactory) {
         super(eventBus, view, settingsPresenterProvider);
         this.visFunctionCache = new VisFunctionCache(eventBus);
         this.scriptCache = new ScriptCache(eventBus);
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         visFrame = new VisFrame(eventBus);
         visPane = visFrame;
@@ -329,9 +337,9 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
         // Turn JSON settings into an object.
         JSONObject settingsObject = null;
         final VisComponentSettings visDashboardSettings = getSettings();
-        if (visDashboardSettings != null && visDashboardSettings.getJSON() != null) {
+        if (visDashboardSettings != null && visDashboardSettings.getJson() != null) {
             try {
-                settingsObject = JSONUtil.getObject(JSONUtil.parse(visDashboardSettings.getJSON()));
+                settingsObject = JSONUtil.getObject(JSONUtil.parse(visDashboardSettings.getJson()));
             } catch (final RuntimeException e) {
                 getView().showMessage("Unable to parse settings");
             }
@@ -348,8 +356,8 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
     private void loadVisualisation(final VisFunction function, final DocRef visualisation) {
         function.setStatus(LoadStatus.LOADING_ENTITY);
 
-        final FetchVisualisationAction fetchVisualisationAction = new FetchVisualisationAction(visualisation);
-        dispatcher.exec(fetchVisualisationAction)
+        final Rest<VisualisationDoc> rest = restFactory.create();
+        rest
                 .onSuccess(result -> {
                     if (result != null) {
                         // Get all possible settings for this visualisation.
@@ -384,17 +392,22 @@ public class VisPresenter extends AbstractComponentPresenter<VisPresenter.VisVie
                         failure(function, "No visualisaton found for: " + visSettings.getVisualisation());
                     }
                 })
-                .onFailure(caught -> failure(function, caught.getMessage()));
+                .onFailure(caught -> failure(function, caught.getMessage()))
+                .call(VISUALISATION_RESOURCE)
+                .read(visualisation);
     }
 
     private void loadScripts(final VisFunction function, final DocRef scriptRef) {
         function.setStatus(LoadStatus.LOADING_SCRIPT);
 
-        final FetchScriptAction fetchScriptAction = new FetchScriptAction(scriptRef, scriptCache.getLoadedScripts());
-        dispatcher.exec(fetchScriptAction).onSuccess(result -> startInjectingScripts(result, function));
+        final Rest<List<ScriptDoc>> rest = restFactory.create();
+        rest
+                .onSuccess(result -> startInjectingScripts(result, function))
+                .call(SCRIPT_RESOURCE)
+                .fetchLinkedScripts(new FetchLinkedScriptRequest(scriptRef, scriptCache.getLoadedScripts()));
     }
 
-    private void startInjectingScripts(final SharedList<ScriptDoc> scripts, final VisFunction function) {
+    private void startInjectingScripts(final List<ScriptDoc> scripts, final VisFunction function) {
         function.setStatus(LoadStatus.INJECTING_SCRIPT);
         // Inject returned scripts.
         visPane.injectScripts(scripts, function);

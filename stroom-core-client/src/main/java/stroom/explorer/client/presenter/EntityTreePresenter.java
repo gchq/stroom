@@ -22,7 +22,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
 
 public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.EntityTreeView>
@@ -31,11 +31,11 @@ public class EntityTreePresenter extends MyPresenterWidget<EntityTreePresenter.E
 
     @Inject
     public EntityTreePresenter(final EventBus eventBus, final EntityTreeView view,
-                               final ClientDispatchAsync dispatcher) {
+                               final RestFactory restFactory) {
         super(eventBus, view);
         view.setUiHandlers(this);
 
-        explorerTree = new ExplorerTree(dispatcher, false);
+        explorerTree = new ExplorerTree(restFactory, false);
 
         // Add views.
         view.setCellTree(explorerTree);

@@ -16,26 +16,33 @@
 
 package stroom.explorer.shared;
 
-import stroom.docref.SharedObject;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
 import java.util.Set;
 
-public class ExplorerTreeFilter implements SharedObject {
-    private static final long serialVersionUID = 6474393620178001033L;
+@JsonInclude(Include.NON_NULL)
+public class ExplorerTreeFilter {
+    @JsonProperty
+    private final Set<String> includedTypes;
+    @JsonProperty
+    private final Set<String> tags;
+    @JsonProperty
+    private final Set<String> requiredPermissions;
+    @JsonProperty
+    private final String nameFilter;
+    @JsonProperty
+    private final boolean nameFilterChange;
 
-    private Set<String> includedTypes;
-    private Set<String> tags;
-    private Set<String> requiredPermissions;
-    private String nameFilter;
-    private boolean nameFilterChange;
-
-    public ExplorerTreeFilter() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ExplorerTreeFilter(final Set<String> includedTypes, final Set<String> tags, final Set<String> requiredPermissions, final String nameFilter, final boolean nameFilterChange) {
+    @JsonCreator
+    public ExplorerTreeFilter(@JsonProperty("includedTypes") final Set<String> includedTypes,
+                              @JsonProperty("tags") final Set<String> tags,
+                              @JsonProperty("requiredPermissions") final Set<String> requiredPermissions,
+                              @JsonProperty("nameFilter") final String nameFilter,
+                              @JsonProperty("nameFilterChange") final boolean nameFilterChange) {
         this.includedTypes = includedTypes;
         this.tags = tags;
         this.requiredPermissions = requiredPermissions;
@@ -65,30 +72,18 @@ public class ExplorerTreeFilter implements SharedObject {
 
     @Override
     public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof ExplorerTreeFilter)) {
-            return false;
-        }
-
-        final ExplorerTreeFilter filter = (ExplorerTreeFilter) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(includedTypes, filter.includedTypes);
-        builder.append(tags, filter.tags);
-        builder.append(requiredPermissions, filter.requiredPermissions);
-        builder.append(nameFilter, filter.nameFilter);
-        builder.append(nameFilterChange, filter.nameFilterChange);
-        return builder.isEquals();
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ExplorerTreeFilter that = (ExplorerTreeFilter) o;
+        return nameFilterChange == that.nameFilterChange &&
+                Objects.equals(includedTypes, that.includedTypes) &&
+                Objects.equals(tags, that.tags) &&
+                Objects.equals(requiredPermissions, that.requiredPermissions) &&
+                Objects.equals(nameFilter, that.nameFilter);
     }
 
     @Override
     public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(includedTypes);
-        builder.append(tags);
-        builder.append(requiredPermissions);
-        builder.append(nameFilter);
-        builder.append(nameFilterChange);
-        return builder.toHashCode();
+        return Objects.hash(includedTypes, tags, requiredPermissions, nameFilter, nameFilterChange);
     }
 }

@@ -16,12 +16,13 @@
 
 package stroom.statistics.impl.sql.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
-import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -31,19 +32,17 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "statisticField", propOrder = {"fieldName"})
 @JsonPropertyOrder({"fieldName"})
-@JsonInclude(Include.NON_DEFAULT)
-public class StatisticField implements HasDisplayValue, Comparable<StatisticField>, SharedObject {
-    private static final long serialVersionUID = 8967939276508418808L;
-
+@JsonInclude(Include.NON_NULL)
+public class StatisticField implements HasDisplayValue, Comparable<StatisticField> {
     @XmlElement(name = "fieldName")
     @JsonProperty("fieldName")
     private String fieldName;
 
     public StatisticField() {
-        // Default constructor necessary for GWT serialisation.
     }
 
-    public StatisticField(final String fieldName) {
+    @JsonCreator
+    public StatisticField(@JsonProperty("fieldName") final String fieldName) {
         this.fieldName = fieldName;
     }
 
@@ -61,6 +60,7 @@ public class StatisticField implements HasDisplayValue, Comparable<StatisticFiel
     }
 
     @Override
+    @JsonIgnore
     public String getDisplayValue() {
         return null;
     }

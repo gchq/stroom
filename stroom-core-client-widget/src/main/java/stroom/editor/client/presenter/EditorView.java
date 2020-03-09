@@ -25,6 +25,7 @@ import com.gwtplatform.mvp.client.View;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorMode;
 import edu.ycp.cs.dh.acegwt.client.ace.AceEditorTheme;
 import stroom.editor.client.event.HasFormatHandlers;
+import stroom.editor.client.view.IndicatorLines;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Indicators;
 import stroom.widget.contextmenu.client.event.HasContextMenuHandlers;
@@ -37,7 +38,7 @@ public interface EditorView extends View, HasKeyDownHandlers, HasFormatHandlers,
 
     void setFirstLineNumber(int firstLineNumber);
 
-    void setIndicators(Indicators indicators);
+    void setIndicators(IndicatorLines indicators);
 
     void setHighlights(List<Highlight> highlights);
 

@@ -56,7 +56,6 @@ public class _V07_00_00_TableComponentSettings extends _V07_00_00_ComponentSetti
     private Boolean showDetail;
 
     public _V07_00_00_TableComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_TableComponentSettings(final List<_V07_00_00_Field> fields) {

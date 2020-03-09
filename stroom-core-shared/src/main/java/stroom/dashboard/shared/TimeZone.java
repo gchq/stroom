@@ -16,12 +16,12 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
-import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -31,12 +31,10 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"use", "id", "offsetHours", "offsetMinutes"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "timeZone")
 @XmlType(name = "TimeZone", propOrder = {"use", "id", "offsetHours", "offsetMinutes"})
-public class TimeZone implements SharedObject {
-    private static final long serialVersionUID = 1200175661441813029L;
-
+public class TimeZone {
     @XmlElement(name = "use")
     @JsonProperty("use")
     private Use use;
@@ -51,10 +49,13 @@ public class TimeZone implements SharedObject {
     private Integer offsetMinutes;
 
     public TimeZone() {
-        // Default constructor necessary for GWT serialisation.
     }
 
-    public TimeZone(final Use use, final String id, final Integer offsetHours, final Integer offsetMinutes) {
+    @JsonCreator
+    public TimeZone(@JsonProperty("use") final Use use,
+                    @JsonProperty("id") final String id,
+                    @JsonProperty("offsetHours") final Integer offsetHours,
+                    @JsonProperty("offsetMinutes") final Integer offsetMinutes) {
         this.use = use;
         this.id = id;
         this.offsetHours = offsetHours;

@@ -16,12 +16,10 @@
 
 package stroom.cluster.task.api;
 
-import stroom.docref.SharedObject;
-
 import java.util.Map;
 import java.util.Set;
 
-public interface DefaultClusterResultCollector<R extends SharedObject> extends ClusterResultCollector<R> {
+public interface DefaultClusterResultCollector<R> extends ClusterResultCollector<R> {
     Set<String> getTargetNodes();
 
     ClusterCallEntry<R> getResponse(String nodeName);

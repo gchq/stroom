@@ -29,10 +29,15 @@ public class TextConverterSerialiser implements DocumentSerialiser2<TextConverte
 
     @Override
     public Map<String, byte[]> write(final TextConverterDoc document) throws IOException {
-        final Map<String, byte[]> data = delegate.write(document);
-        if (document.getData() != null) {
-            data.put(XML, EncodingUtil.asBytes(document.getData()));
+        final String xml = document.getData();
+        document.setData(null);
+
+        final Map<String, byte[]> map = delegate.write(document);
+        if (xml != null) {
+            map.put(XML, EncodingUtil.asBytes(xml));
+            document.setData(xml);
         }
-        return data;
+
+        return map;
     }
 }

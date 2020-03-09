@@ -25,17 +25,14 @@ import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.feed.shared.FeedDoc;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.meta.shared.MetaSecurityFilter;
-import stroom.task.api.TaskHandlerBinder;
+import stroom.meta.api.MetaSecurityFilter;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.RestResource;
 
 public class FeedModule extends AbstractModule {
     @Override
     protected void configure() {
-        TaskHandlerBinder.create(binder())
-            .bind(stroom.feed.shared.FetchSupportedEncodingsAction.class, FetchSupportedEncodingsActionHandler.class);
-
         bind(FeedStore.class).to(FeedStoreImpl.class);
         bind(FeedProperties.class).to(FeedPropertiesImpl.class);
         bind(MetaSecurityFilter.class).to(MetaSecurityFilterImpl.class);
@@ -54,5 +51,8 @@ public class FeedModule extends AbstractModule {
         // Provide object info to the logging service.
         ObjectInfoProviderBinder.create(binder())
                 .bind(FeedDoc.class, FeedDocObjectInfoProvider.class);
+
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(FeedResourceImpl.class);
     }
 }

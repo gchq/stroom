@@ -1,5 +1,11 @@
 package stroom.annotation.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(Include.NON_NULL)
 public class Annotation {
     public static final String TITLE = "Title";
     public static final String SUBJECT = "Subject";
@@ -9,20 +15,59 @@ public class Annotation {
     public static final String LINK = "Link";
     public static final String UNLINK = "Unlink";
 
+    @JsonProperty
     private Long id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTime;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private Long updateTime;
+    @JsonProperty
     private String updateUser;
+    @JsonProperty
     private String title;
+    @JsonProperty
     private String subject;
+    @JsonProperty
     private String status;
+    @JsonProperty
     private String assignedTo;
+    @JsonProperty
     private String comment;
+    @JsonProperty
     private String history;
 
     public Annotation() {
+    }
+
+    @JsonCreator
+    public Annotation(@JsonProperty("id") final Long id,
+                      @JsonProperty("version") final Integer version,
+                      @JsonProperty("createTime") final Long createTime,
+                      @JsonProperty("createUser") final String createUser,
+                      @JsonProperty("updateTime") final Long updateTime,
+                      @JsonProperty("updateUser") final String updateUser,
+                      @JsonProperty("title") final String title,
+                      @JsonProperty("subject") final String subject,
+                      @JsonProperty("status") final String status,
+                      @JsonProperty("assignedTo") final String assignedTo,
+                      @JsonProperty("comment") final String comment,
+                      @JsonProperty("history") final String history) {
+        this.id = id;
+        this.version = version;
+        this.createTime = createTime;
+        this.createUser = createUser;
+        this.updateTime = updateTime;
+        this.updateUser = updateUser;
+        this.title = title;
+        this.subject = subject;
+        this.status = status;
+        this.assignedTo = assignedTo;
+        this.comment = comment;
+        this.history = history;
     }
 
     public Long getId() {

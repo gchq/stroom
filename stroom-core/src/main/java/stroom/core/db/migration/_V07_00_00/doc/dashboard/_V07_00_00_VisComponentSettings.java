@@ -43,7 +43,6 @@ public class _V07_00_00_VisComponentSettings extends _V07_00_00_ComponentSetting
     private _V07_00_00_TableComponentSettings tableSettings;
 
     public _V07_00_00_VisComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public String getTableId() {

@@ -16,7 +16,12 @@
 
 package stroom.pipeline.shared.data;
 
-import stroom.docref.SharedObject;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -28,16 +33,30 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Links", propOrder = {"add", "remove"})
-public class PipelineLinks implements SharedObject {
-    private static final long serialVersionUID = 6811753333974015789L;
+@JsonInclude(Include.NON_NULL)
+@JsonPropertyOrder({"add", "remove"})
+public class PipelineLinks {
+    @XmlElementWrapper(name = "add")
+    @XmlElement(name = "link")
+    @JsonProperty
+    private final List<PipelineLink> add;
 
-    @XmlElementWrapper(name = "add", required = false)
-    @XmlElement(name = "link", required = false)
-    private List<PipelineLink> add = new ArrayList<>();
+    @XmlElementWrapper(name = "remove")
+    @XmlElement(name = "link")
+    @JsonProperty
+    private final List<PipelineLink> remove;
 
-    @XmlElementWrapper(name = "remove", required = false)
-    @XmlElement(name = "link", required = false)
-    private List<PipelineLink> remove = new ArrayList<>();
+    public PipelineLinks() {
+        add = new ArrayList<>();
+        remove = new ArrayList<>();
+    }
+
+    @JsonCreator
+    public PipelineLinks(@JsonProperty("add") final List<PipelineLink> add,
+                         @JsonProperty("remove") final List<PipelineLink> remove) {
+        this.add = add;
+        this.remove = remove;
+    }
 
     public List<PipelineLink> getAdd() {
         return add;

@@ -23,18 +23,19 @@ import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.node.shared.FindNodeCriteria;
+import stroom.node.api.FindNodeCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executor;
 
 
 class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterStateTask, VoidResult> {
@@ -43,7 +44,7 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
     private final NodeService nodeService;
     private final NodeInfo nodeInfo;
     private final ClusterCallServiceRemoteImpl clusterCallServiceRemote;
-    private final ExecutorProvider executorProvider;
+    private final Executor executor;
     private final TaskContext taskContext;
     private final SecurityContext securityContext;
 
@@ -51,13 +52,13 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
     UpdateClusterStateTaskHandler(final NodeService nodeService,
                                   final NodeInfo nodeInfo,
                                   final ClusterCallServiceRemoteImpl clusterCallServiceRemote,
-                                  final ExecutorProvider executorProvider,
+                                  final Executor executor,
                                   final TaskContext taskContext,
                                   final SecurityContext securityContext) {
         this.nodeService = nodeService;
         this.nodeInfo = nodeInfo;
         this.clusterCallServiceRemote = clusterCallServiceRemote;
-        this.executorProvider = executorProvider;
+        this.executor = executor;
         this.taskContext = taskContext;
         this.securityContext = securityContext;
     }
@@ -147,7 +148,7 @@ class UpdateClusterStateTaskHandler extends AbstractTaskHandler<UpdateClusterSta
             if (nodeName.equals(thisNodeName)) {
                 addEnabledActiveNode(clusterState, nodeName);
             } else {
-                executorProvider.getExecutor().execute(() -> {
+                executor.execute(() -> {
                     taskContext.setName("Get Active Nodes");
                     taskContext.info(()->"Getting active nodes");
 

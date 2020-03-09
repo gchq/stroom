@@ -16,18 +16,24 @@
 
 package stroom.meta.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.Copyable;
 import stroom.util.shared.IdSet;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
 
+import java.util.List;
 import java.util.Objects;
 
-public class FindMetaCriteria extends ExpressionCriteria implements SharedObject, Copyable<FindMetaCriteria> {
-    private static final long serialVersionUID = -4777723504698304778L;
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class FindMetaCriteria extends ExpressionCriteria implements Copyable<FindMetaCriteria> {
+    @JsonProperty
     private IdSet selectedIdSet;
+    @JsonProperty
     private boolean fetchRelationships;
 
     public FindMetaCriteria() {
@@ -35,6 +41,17 @@ public class FindMetaCriteria extends ExpressionCriteria implements SharedObject
 
     public FindMetaCriteria(final ExpressionOperator expression) {
         super(expression);
+    }
+
+    @JsonCreator
+    public FindMetaCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                            @JsonProperty("sortList") final List<Sort> sortList,
+                            @JsonProperty("expression") final ExpressionOperator expression,
+                            @JsonProperty("selectedIdSet") final IdSet selectedIdSet,
+                            @JsonProperty("fetchRelationships") final boolean fetchRelationships) {
+        super(pageRequest, sortList, expression);
+        this.selectedIdSet = selectedIdSet;
+        this.fetchRelationships = fetchRelationships;
     }
 
     public static FindMetaCriteria createFromId(final long id) {

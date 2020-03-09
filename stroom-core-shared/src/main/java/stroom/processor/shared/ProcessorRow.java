@@ -16,24 +16,26 @@
 
 package stroom.processor.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.Expander;
 
 import java.util.Objects;
 
 @JsonPropertyOrder({"processor", "expander"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ProcessorRow extends ProcessorListRow {
-    private Processor processor;
-    private Expander expander;
+    @JsonProperty
+    private final Processor processor;
+    @JsonProperty
+    private final Expander expander;
 
-    public ProcessorRow() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ProcessorRow(final Expander expander, final Processor processor) {
+    @JsonCreator
+    public ProcessorRow(@JsonProperty("expander") final Expander expander,
+                        @JsonProperty("processor") final Processor processor) {
         this.processor = processor;
         this.expander = expander;
     }
@@ -42,17 +44,9 @@ public class ProcessorRow extends ProcessorListRow {
         return processor;
     }
 
-    public void setProcessor(final Processor processor) {
-        this.processor = processor;
-    }
-
     @Override
     public Expander getExpander() {
         return expander;
-    }
-
-    public void setExpander(final Expander expander) {
-        this.expander = expander;
     }
 
     @Override

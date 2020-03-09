@@ -35,7 +35,7 @@ import stroom.pipeline.xmlschema.XmlSchemaStore;
 import stroom.pipeline.xmlschema.XmlSchemaStoreImpl;
 import stroom.security.api.SecurityContext;
 import stroom.security.mock.MockSecurityContext;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 
 public class SchemaFilterFactory {
     private final SecurityContext securityContext = new MockSecurityContext();

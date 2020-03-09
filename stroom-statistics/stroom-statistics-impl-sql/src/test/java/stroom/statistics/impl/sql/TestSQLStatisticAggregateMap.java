@@ -452,7 +452,7 @@ class TestSQLStatisticAggregateMap extends StroomUnitTest {
         fields.add(new StatisticField(TAG2_NAME));
         fields.add(new StatisticField(TAG3_NAME));
 
-        statisticFields.setStatisticFields(fields);
+        statisticFields.setFields(fields);
 
         statisticsDataSource.setConfig(statisticFields);
         statisticsDataSource.setRollUpType(statisticRollUpType);

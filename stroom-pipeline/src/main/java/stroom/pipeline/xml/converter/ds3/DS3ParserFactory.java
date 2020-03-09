@@ -25,7 +25,7 @@ import stroom.pipeline.filter.SchemaFilter;
 import stroom.pipeline.xml.converter.ParserFactory;
 import stroom.pipeline.xml.converter.ds3.ref.VarMap;
 import stroom.util.xml.SAXParserFactoryFactory;
-import stroom.xmlschema.shared.FindXMLSchemaCriteria;
+import stroom.pipeline.xmlschema.FindXMLSchemaCriteria;
 
 import javax.inject.Inject;
 import javax.xml.parsers.ParserConfigurationException;

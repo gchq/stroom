@@ -27,41 +27,30 @@ import stroom.core.client.ContentManager.CloseCallback;
 import stroom.core.client.ContentManager.CloseHandler;
 import stroom.core.client.HasSave;
 import stroom.core.client.presenter.Plugin;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
+
 import stroom.document.client.event.ShowCreateDocumentDialogEvent;
 import stroom.entity.client.presenter.DocumentEditPresenter;
 import stroom.entity.client.presenter.HasDocumentRead;
-import stroom.entity.shared.DocumentServiceReadAction;
-import stroom.entity.shared.DocumentServiceWriteAction;
 import stroom.explorer.client.event.HighlightExplorerNodeEvent;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
-import stroom.widget.util.client.Future;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public abstract class DocumentPlugin<D extends SharedObject> extends Plugin implements HasSave {
-    private final ClientDispatchAsync dispatcher;
+public abstract class DocumentPlugin<D> extends Plugin implements HasSave {
     private final Map<DocRef, DocumentTabData> documentToTabDataMap = new HashMap<>();
     private final Map<DocumentTabData, DocRef> tabDataToDocumentMap = new HashMap<>();
     private final ContentManager contentManager;
-    private final DocumentPluginEventManager documentPluginEventManager;
 
     public DocumentPlugin(final EventBus eventBus,
-                          final ClientDispatchAsync dispatcher,
                           final ContentManager contentManager,
                           final DocumentPluginEventManager documentPluginEventManager) {
         super(eventBus);
         this.contentManager = contentManager;
-
-        this.dispatcher = dispatcher;
-
-        this.documentPluginEventManager = documentPluginEventManager;
 
         // Register this plugin.
         final String type = getType();
@@ -70,10 +59,11 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin impl
         }
     }
 
-    protected void registerAsPluginForType(final String type) {
-        this.documentPluginEventManager.registerPlugin(type, this);
-    }
-
+//
+//    protected void registerAsPluginForType(final String type) {
+//        this.documentPluginEventManager.registerPlugin(type, this);
+//    }
+//
 //    /**
 //     * 1. This method will create a new document and show it in the content pane.
 //     */
@@ -143,32 +133,33 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin impl
     }
 
     protected void showTab(final DocRef docRef, final MyPresenterWidget<?> documentEditPresenter, final CloseHandler closeHandler, final DocumentTabData tabData) {
-        // Load the document and show the tab.
-        load(docRef)
-                .onSuccess(doc -> {
-                    try {
-                        if (doc == null) {
-                            AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
-                        } else {
-                            // Read the newly loaded document.
-                            if (documentEditPresenter instanceof HasDocumentRead) {
-                                ((HasDocumentRead<D>) documentEditPresenter).read(getDocRef(doc), doc);
-                            }
+        final Consumer<Throwable> errorConsumer = caught -> {
+            AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, caught.getMessage(), null);
+            // Stop spinning.
+            TaskEndEvent.fire(DocumentPlugin.this);
+        };
 
-                            // Open the tab.
-                            contentManager.open(closeHandler, tabData, documentEditPresenter);
-                        }
-                    } finally {
-                        // Stop spinning.
-                        TaskEndEvent.fire(DocumentPlugin.this);
+        final Consumer<D> loadConsumer = doc -> {
+            try {
+                if (doc == null) {
+                    AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, null);
+                } else {
+                    // Read the newly loaded document.
+                    if (documentEditPresenter instanceof HasDocumentRead) {
+                        ((HasDocumentRead<D>) documentEditPresenter).read(getDocRef(doc), doc);
                     }
-                })
-                .onFailure(caught -> {
-                    AlertEvent.fireError(DocumentPlugin.this, "Unable to load document " + docRef, caught.getMessage(), null);
-//                    GWT.log(caught.getMessage());
-                    // Stop spinning.
-                    TaskEndEvent.fire(DocumentPlugin.this);
-                });
+
+                    // Open the tab.
+                    contentManager.open(closeHandler, tabData, documentEditPresenter);
+                }
+            } finally {
+                // Stop spinning.
+                TaskEndEvent.fire(DocumentPlugin.this);
+            }
+        };
+
+        // Load the document and show the tab.
+        load(docRef, loadConsumer, errorConsumer);
     }
 
     /**
@@ -181,7 +172,10 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin impl
             if (presenter.isDirty()) {
                 final D document = presenter.getEntity();
                 presenter.write(document);
-                save(getDocRef(document), document).onSuccess(doc -> presenter.read(getDocRef(doc), doc));
+                save(getDocRef(document), document,
+                        doc -> presenter.read(getDocRef(doc), doc),
+                        throwable -> {
+                        });
             }
         }
     }
@@ -193,19 +187,24 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin impl
             final DocumentEditPresenter<?, D> presenter = (DocumentEditPresenter<?, D>) tabData;
 
             final Consumer<DocRef> newDocumentConsumer = newDocRef -> {
-                // If the user has created a new document then load it.
-                load(newDocRef).onSuccess(document -> {
+                final Consumer<D> saveConsumer = saved -> {
+                    // Read the new document into this presenter.
+                    presenter.read(newDocRef, saved);
+                    // Record that the open document has been switched.
+                    documentToTabDataMap.remove(docRef);
+                    documentToTabDataMap.put(newDocRef, tabData);
+                    tabDataToDocumentMap.put(tabData, newDocRef);
+                };
+
+                final Consumer<D> loadConsumer = document -> {
                     // Write to the newly created document.
                     presenter.write(document);
                     // Save the new document and read it back into the presenter.
-                    save(newDocRef, document).onSuccess(saved -> {
-                        // Read the new document into this presenter.
-                        presenter.read(newDocRef, saved);
-                        // Record that the open document has been switched.
-                        documentToTabDataMap.remove(docRef);
-                        documentToTabDataMap.put(newDocRef, tabData);
-                        tabDataToDocumentMap.put(tabData, newDocRef);
-                    });
+                    save(newDocRef, document, saveConsumer, null);
+                };
+
+                // If the user has created a new document then load it.
+                load(newDocRef, loadConsumer, throwable -> {
                 });
             };
 
@@ -439,13 +438,16 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin impl
             TaskStartEvent.fire(this, "Reloading document");
 
             // Reload the document.
-            load(docRef).onSuccess(doc -> {
-                // Read the reloaded document.
-                presenter.read(getDocRef(doc), doc);
+            load(docRef,
+                    doc -> {
+                        // Read the reloaded document.
+                        presenter.read(getDocRef(doc), doc);
 
-                // Stop spinning.
-                TaskEndEvent.fire(DocumentPlugin.this);
-            });
+                        // Stop spinning.
+                        TaskEndEvent.fire(DocumentPlugin.this);
+                    },
+                    throwable -> {
+                    });
         }
     }
 
@@ -477,13 +479,9 @@ public abstract class DocumentPlugin<D extends SharedObject> extends Plugin impl
 
     protected abstract MyPresenterWidget<?> createEditor();
 
-    public Future<D> load(final DocRef docRef) {
-        return dispatcher.exec(new DocumentServiceReadAction<>(docRef));
-    }
+    public abstract void load(final DocRef docRef, final Consumer<D> resultConsumer, final Consumer<Throwable> errorConsumer);
 
-    public Future<D> save(final DocRef docRef, final D document) {
-        return dispatcher.exec(new DocumentServiceWriteAction<>(docRef, document));
-    }
+    public abstract void save(final DocRef docRef, final D document, final Consumer<D> resultConsumer, final Consumer<Throwable> errorConsumer);
 
     protected abstract DocRef getDocRef(D document);
 

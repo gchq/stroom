@@ -16,7 +16,10 @@
 
 package stroom.index.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.HasDisplayValue;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 
@@ -36,29 +39,32 @@ import java.util.Objects;
  * </p>
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-@XmlType(name = "indexField", propOrder = {"analyzerType", "caseSensitive", "fieldName", "fieldType", "indexed",
-        "stored", "termPositions"})
+@XmlType(name = "indexField", propOrder = {"analyzerType", "caseSensitive", "fieldName", "fieldType", "indexed", "stored", "termPositions"})
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class IndexField implements HasDisplayValue, Comparable<IndexField>, Serializable {
     private static final long serialVersionUID = 3100770758821157580L;
 
     @XmlElement(name = "fieldType")
-    private IndexFieldType fieldType;
+    @JsonProperty
+    private final IndexFieldType fieldType;
     @XmlElement(name = "fieldName")
-    private String fieldName;
-    @XmlElement(name = "stored")
-    private boolean stored = false;
-
-    /**
-     * Determines whether the field can be queried or not
-     */
-    @XmlElement(name = "indexed")
-    private boolean indexed = true;
-    @XmlElement(name = "termPositions")
-    private boolean termPositions = false;
+    @JsonProperty
+    private final String fieldName;
     @XmlElement(name = "analyzerType")
-    private AnalyzerType analyzerType;
+    @JsonProperty
+    private final AnalyzerType analyzerType;
+    @XmlElement(name = "indexed")
+    @JsonProperty
+    private final boolean indexed;
+    @XmlElement(name = "stored")
+    @JsonProperty
+    private final boolean stored;
+    @XmlElement(name = "termPositions")
+    @JsonProperty
+    private final boolean termPositions;
     @XmlElement(name = "caseSensitive")
-    private boolean caseSensitive = false;
+    @JsonProperty
+    private final boolean caseSensitive;
 
     /**
      * Defines a list of the {@link Condition} values supported by this field,
@@ -69,70 +75,83 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     @JsonIgnore
     private List<Condition> supportedConditions;
 
-    public IndexField() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    private IndexField(final IndexFieldType fieldType, final String fieldName, final AnalyzerType analyzerType,
-                       final boolean caseSensitive, final boolean stored, final boolean indexed, final boolean termPositions,
-                       final List<Condition> supportedConditions) {
-        setFieldType(fieldType);
-        setFieldName(fieldName);
-        setAnalyzerType(analyzerType);
-        setCaseSensitive(caseSensitive);
-        setStored(stored);
-        setIndexed(indexed);
-        setTermPositions(termPositions);
-
-        if (supportedConditions != null) {
-            this.supportedConditions = new ArrayList<>(supportedConditions);
-        }
+    @JsonCreator
+    public IndexField(@JsonProperty("fieldType") final IndexFieldType fieldType,
+                      @JsonProperty("fieldName") final String fieldName,
+                      @JsonProperty("analyzerType") final AnalyzerType analyzerType,
+                      @JsonProperty("indexed") final boolean indexed,
+                      @JsonProperty("stored") final boolean stored,
+                      @JsonProperty("termPositions") final boolean termPositions,
+                      @JsonProperty("caseSensitive") final boolean caseSensitive,
+                      @JsonProperty("supportedConditions") final List<Condition> supportedConditions) {
+        this.fieldType = fieldType;
+        this.fieldName = fieldName;
+        this.analyzerType = analyzerType;
+        this.stored = stored;
+        this.indexed = indexed;
+        this.termPositions = termPositions;
+        this.caseSensitive = caseSensitive;
+        this.supportedConditions = supportedConditions;
     }
 
     public static IndexField createField(final String fieldName) {
-        return createField(fieldName, AnalyzerType.ALPHA_NUMERIC, false, false, true, false);
+        return new Builder()
+                .fieldName(fieldName)
+                .analyzerType(AnalyzerType.ALPHA_NUMERIC)
+                .build();
     }
 
     public static IndexField createField(final String fieldName, final AnalyzerType analyzerType) {
-        return createField(fieldName, analyzerType, false, false, true, false);
+        return new Builder()
+                .fieldName(fieldName)
+                .analyzerType(analyzerType)
+                .build();
     }
 
     public static IndexField createField(final String fieldName, final AnalyzerType analyzerType,
                                          final boolean caseSensitive) {
-        return createField(fieldName, analyzerType, caseSensitive, false, true, false);
+        return new Builder()
+                .fieldName(fieldName)
+                .analyzerType(analyzerType)
+                .caseSensitive(caseSensitive)
+                .build();
     }
 
     public static IndexField createField(final String fieldName, final AnalyzerType analyzerType,
                                          final boolean caseSensitive, final boolean stored, final boolean indexed, final boolean termPositions) {
-        return new IndexField(IndexFieldType.FIELD, fieldName, analyzerType, caseSensitive, stored, indexed,
-                termPositions, null);
+        return new Builder()
+                .fieldName(fieldName)
+                .analyzerType(analyzerType)
+                .caseSensitive(caseSensitive)
+                .stored(stored)
+                .indexed(indexed)
+                .termPositions(termPositions)
+                .build();
     }
 
     public static IndexField createNumericField(final String fieldName) {
-        return new IndexField(IndexFieldType.NUMERIC_FIELD, fieldName, AnalyzerType.NUMERIC, false, false, true, false,
-                null);
+        return new Builder()
+                .fieldType(IndexFieldType.NUMERIC_FIELD)
+                .fieldName(fieldName)
+                .analyzerType(AnalyzerType.NUMERIC)
+                .build();
     }
 
     public static IndexField createIdField(final String fieldName) {
-        return new IndexField(IndexFieldType.ID, fieldName, AnalyzerType.KEYWORD, false, true, true, false, null);
+        return new Builder()
+                .fieldType(IndexFieldType.ID)
+                .fieldName(fieldName)
+                .analyzerType(AnalyzerType.KEYWORD)
+                .stored(true)
+                .build();
     }
 
     public static IndexField createDateField(final String fieldName) {
-        return new IndexField(IndexFieldType.DATE_FIELD, fieldName, AnalyzerType.ALPHA_NUMERIC, false, false, true,
-                false, null);
-    }
-
-    public static IndexField create(final IndexFieldType fieldType, final String fieldName,
-                                    final AnalyzerType analyzerType, final boolean caseSensitive, final boolean stored, final boolean indexed,
-                                    final boolean termPositions) {
-        return new IndexField(fieldType, fieldName, analyzerType, caseSensitive, stored, indexed, termPositions, null);
-    }
-
-    public static IndexField create(final IndexFieldType fieldType, final String fieldName,
-                                    final AnalyzerType analyzerType, final boolean caseSensitive, final boolean stored, final boolean indexed,
-                                    final boolean termPositions, final List<Condition> supportedConditions) {
-        return new IndexField(fieldType, fieldName, analyzerType, caseSensitive, stored, indexed, termPositions,
-                supportedConditions);
+        return new Builder()
+                .fieldType(IndexFieldType.DATE_FIELD)
+                .fieldName(fieldName)
+                .analyzerType(AnalyzerType.ALPHA_NUMERIC)
+                .build();
     }
 
     public IndexFieldType getFieldType() {
@@ -143,16 +162,8 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         return fieldType;
     }
 
-    public void setFieldType(final IndexFieldType fieldType) {
-        this.fieldType = fieldType;
-    }
-
     public String getFieldName() {
         return fieldName;
-    }
-
-    public void setFieldName(final String fieldName) {
-        this.fieldName = fieldName;
     }
 
     public AnalyzerType getAnalyzerType() {
@@ -162,40 +173,20 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         return analyzerType;
     }
 
-    public void setAnalyzerType(final AnalyzerType analyzerType) {
-        this.analyzerType = analyzerType;
-    }
-
     public boolean isCaseSensitive() {
         return caseSensitive;
-    }
-
-    public void setCaseSensitive(final boolean caseSensitive) {
-        this.caseSensitive = caseSensitive;
     }
 
     public boolean isStored() {
         return stored;
     }
 
-    public void setStored(final boolean stored) {
-        this.stored = stored;
-    }
-
     public boolean isIndexed() {
         return indexed;
     }
 
-    public void setIndexed(final boolean indexed) {
-        this.indexed = indexed;
-    }
-
     public boolean isTermPositions() {
         return termPositions;
-    }
-
-    public void setTermPositions(final boolean termPositions) {
-        this.termPositions = termPositions;
     }
 
     @JsonIgnore
@@ -296,5 +287,60 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         }
 
         return conditions;
+    }
+
+    public static class Builder {
+        private IndexFieldType fieldType = IndexFieldType.FIELD;
+        private String fieldName;
+        private AnalyzerType analyzerType = AnalyzerType.KEYWORD;
+        private boolean indexed = true;
+        private boolean stored;
+        private boolean termPositions;
+        private boolean caseSensitive;
+        private List<Condition> supportedConditions;
+
+        public Builder fieldType(final IndexFieldType fieldType) {
+            this.fieldType = fieldType;
+            return this;
+        }
+
+        public Builder fieldName(final String fieldName) {
+            this.fieldName = fieldName;
+            return this;
+        }
+
+        public Builder analyzerType(final AnalyzerType analyzerType) {
+            this.analyzerType = analyzerType;
+            return this;
+        }
+
+        public Builder indexed(final boolean indexed) {
+            this.indexed = indexed;
+            return this;
+        }
+
+        public Builder stored(final boolean stored) {
+            this.stored = stored;
+            return this;
+        }
+
+        public Builder termPositions(final boolean termPositions) {
+            this.termPositions = termPositions;
+            return this;
+        }
+
+        public Builder caseSensitive(final boolean caseSensitive) {
+            this.caseSensitive = caseSensitive;
+            return this;
+        }
+
+        public Builder supportedConditions(final List<Condition> supportedConditions) {
+            this.supportedConditions = new ArrayList<>(supportedConditions);
+            return this;
+        }
+
+        public IndexField build() {
+            return new IndexField(fieldType, fieldName, analyzerType, indexed, stored, termPositions, caseSensitive, supportedConditions);
+        }
     }
 }

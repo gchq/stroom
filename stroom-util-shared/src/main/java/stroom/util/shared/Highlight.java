@@ -16,20 +16,25 @@
 
 package stroom.util.shared;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.util.Objects;
 
-public class Highlight implements Serializable, Comparable<Highlight> {
-    private static final long serialVersionUID = -2327935798577052482L;
+@JsonPropertyOrder({"from", "to"})
+@JsonInclude(Include.NON_NULL)
+public class Highlight implements Comparable<Highlight> {
+    @JsonProperty
+    private final Location from;
+    @JsonProperty
+    private final Location to;
 
-    private Location from;
-    private Location to;
-
-    public Highlight() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public Highlight(final Location from, final Location to) {
+    @JsonCreator
+    public Highlight(@JsonProperty("from") final Location from,
+                     @JsonProperty("to") final Location to) {
         this.from = from;
         this.to = to;
     }
@@ -38,16 +43,8 @@ public class Highlight implements Serializable, Comparable<Highlight> {
         return from;
     }
 
-    public void setFrom(final Location from) {
-        this.from = from;
-    }
-
     public Location getTo() {
         return to;
-    }
-
-    public void setTo(final Location to) {
-        this.to = to;
     }
 
     @Override
@@ -74,12 +71,10 @@ public class Highlight implements Serializable, Comparable<Highlight> {
 
     @Override
     public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("[");
-        sb.append(from);
-        sb.append("][");
-        sb.append(to);
-        sb.append("]");
-        return sb.toString();
+        return "[" +
+                from +
+                "][" +
+                to +
+                "]";
     }
 }

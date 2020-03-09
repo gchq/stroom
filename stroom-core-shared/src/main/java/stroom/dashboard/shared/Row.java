@@ -16,8 +16,10 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -31,9 +33,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @JsonPropertyOrder({"groupKey", "values", "depth"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlType(name = "Row", propOrder = {"groupKey", "values", "depth"})
 @XmlAccessorType(XmlAccessType.FIELD)
 @ApiModel(description = "A row of data in a result set")
@@ -44,7 +47,8 @@ public final class Row implements Serializable {
     @ApiModelProperty(
             value = "TODO",
             required = true)
-    private String groupKey;
+    @JsonProperty
+    private final String groupKey;
 
     @XmlElementWrapper(name = "values")
     @XmlElement(name = "value")
@@ -52,24 +56,25 @@ public final class Row implements Serializable {
             value = "The value for this row of data. The values in the list are in the same order as the fields in " +
                     "the ResultRequest",
             required = true)
-    private List<String> values;
+    @JsonProperty
+    private final List<String> values;
 
     @XmlElement
     @ApiModelProperty(
             value = "The grouping depth, where 0 is the top level of grouping, or where there is no grouping",
             example = "0",
             required = true)
-    private Integer depth;
+    @JsonProperty
+    private final Integer depth;
 
-    private Row() {
-    }
-
-    public Row(final String groupKey, final List<String> values, final Integer depth) {
+    @JsonCreator
+    public Row(@JsonProperty("groupKey") final String groupKey,
+               @JsonProperty("values") final List<String> values,
+               @JsonProperty("depth") final Integer depth) {
         this.groupKey = groupKey;
         this.values = values;
         this.depth = depth;
     }
-
 
     public String getGroupKey() {
         return groupKey;
@@ -87,20 +92,15 @@ public final class Row implements Serializable {
     public boolean equals(final Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-
         final Row row = (Row) o;
-
-        if (groupKey != null ? !groupKey.equals(row.groupKey) : row.groupKey != null) return false;
-        if (values != null ? !values.equals(row.values) : row.values != null) return false;
-        return depth != null ? depth.equals(row.depth) : row.depth == null;
+        return Objects.equals(groupKey, row.groupKey) &&
+                Objects.equals(values, row.values) &&
+                Objects.equals(depth, row.depth);
     }
 
     @Override
     public int hashCode() {
-        int result = groupKey != null ? groupKey.hashCode() : 0;
-        result = 31 * result + (values != null ? values.hashCode() : 0);
-        result = 31 * result + (depth != null ? depth.hashCode() : 0);
-        return result;
+        return Objects.hash(groupKey, values, depth);
     }
 
     @Override

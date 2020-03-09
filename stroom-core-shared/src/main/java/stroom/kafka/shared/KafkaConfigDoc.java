@@ -16,8 +16,10 @@
 
 package stroom.kafka.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -28,10 +30,8 @@ import java.util.Map;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "properties"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class KafkaConfigDoc extends Doc {
-    private static final long serialVersionUID = 4519634323788508083L;
-
     public static final String DOCUMENT_TYPE = "KafkaConfig";
 
     private static final String BOOTSTRAP_SERVERS_CONFIG = "bootstrap.servers";
@@ -43,11 +43,15 @@ public class KafkaConfigDoc extends Doc {
     private static final String KEY_SERIALIZER_CLASS_CONFIG = "key.serializer";
     private static final String VALUE_SERIALIZER_CLASS_CONFIG = "value.serializer";
 
+    @JsonProperty
     private String description;
-    private String kafkaVersion = "2.2.1";
+    @JsonProperty
+    private final String kafkaVersion;
+    @JsonProperty
     private Map<String, Object> properties;
 
     public KafkaConfigDoc() {
+        kafkaVersion = "2.2.1";
         properties = new HashMap<>();
 
         // Set some useful defaults.
@@ -64,6 +68,24 @@ public class KafkaConfigDoc extends Doc {
         properties.put(VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.ByteArraySerializer");
     }
 
+    @JsonCreator
+    public KafkaConfigDoc(@JsonProperty("type") final String type,
+                          @JsonProperty("uuid") final String uuid,
+                          @JsonProperty("name") final String name,
+                          @JsonProperty("version") final String version,
+                          @JsonProperty("createTime") final Long createTime,
+                          @JsonProperty("updateTime") final Long updateTime,
+                          @JsonProperty("createUser") final String createUser,
+                          @JsonProperty("updateUser") final String updateUser,
+                          @JsonProperty("description") final String description,
+                          @JsonProperty("kafkaVersion") final String kafkaVersion,
+                          @JsonProperty("properties") final Map<String, Object> properties) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.kafkaVersion = kafkaVersion;
+        this.properties = properties;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -76,13 +98,9 @@ public class KafkaConfigDoc extends Doc {
         return kafkaVersion;
     }
 
-    public void setKafkaVersion(final String kafkaVersion) {
-        this.kafkaVersion = kafkaVersion;
-    }
-
     // Kafka expects typed property values so jackson needs to know what
     // types to de-serialise as using a white list of aliased types
-    @JsonTypeInfo(use=JsonTypeInfo.Id.NAME, include=JsonTypeInfo.As.WRAPPER_ARRAY)
+    @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.WRAPPER_ARRAY)
     @JsonSubTypes({
             @JsonSubTypes.Type(value = Boolean.class, name = "booleanType"),
             @JsonSubTypes.Type(value = Integer.class, name = "integerType"),

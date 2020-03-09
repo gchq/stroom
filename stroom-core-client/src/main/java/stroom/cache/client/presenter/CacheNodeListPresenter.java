@@ -223,8 +223,7 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         responseMap.values().forEach(list::addAll);
         list.sort(Comparator.comparing(CacheInfo::getName));
 
-        final CacheInfoResponse response = new CacheInfoResponse();
-        response.init(list);
+        final CacheInfoResponse response = new CacheInfoResponse(list);
         dataConsumer.accept(response);
     }
 }

@@ -1,6 +1,7 @@
 <!DOCTYPE ui:UiBinder SYSTEM "http://dl.google.com/gwt/DTD/xhtml.ent">
 <ui:UiBinder xmlns:ui="urn:ui:com.google.gwt.uibinder"
              xmlns:g="urn:import:com.google.gwt.user.client.ui"
+             xmlns:b="urn:import:stroom.widget.button.client"
              xmlns:tickbox="urn:import:stroom.widget.tickbox.client.view">
     <ui:style>
         .max {
@@ -37,37 +38,52 @@
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>Use Global Override:</g:cell>
+            <g:cell>Set Database value:</g:cell>
             <g:customCell>
                 <tickbox:TickBox ui:field="useOverride"/>
             </g:customCell>
         </g:row>
         <g:row styleName="{style.textArea}">
-            <g:cell>Global Value:</g:cell>
+            <g:cell>Database Value:</g:cell>
             <g:customCell>
                 <g:TextArea ui:field="databaseValue" width="100%" addStyleNames="globalProperties"/>
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>Global Value:</g:cell>
+            <g:cell>Database Value:</g:cell>
             <g:customCell>
                 <g:PasswordTextBox ui:field="databaseValuePassword" width="100%" addStyleNames="globalProperties"/>
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>YAML Value:</g:cell>
+            <g:customCell>
+                <g:FlowPanel>
+                    <g:Label ui:text="Node YAML Value:"/>
+                    <b:ButtonPanel ui:field="yamlValueButtonPanel"/>
+                </g:FlowPanel>
+            </g:customCell>
             <g:customCell>
                 <g:TextArea ui:field="yamlValue" width="100%" addStyleNames="globalProperties {style.textAreaReducedHeight}"/>
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>Effective Value:</g:cell>
+            <g:customCell>
+                <g:FlowPanel>
+                    <g:Label ui:text="Node Effective Value:"/>
+                    <b:ButtonPanel ui:field="effectiveValueButtonPanel"/>
+                </g:FlowPanel>
+            </g:customCell>
             <g:customCell>
                 <g:TextArea ui:field="effectiveValue" width="100%" addStyleNames="globalProperties {style.textAreaReducedHeight}"/>
             </g:customCell>
         </g:row>
         <g:row>
-            <g:cell>Data Type:</g:cell>
+            <g:customCell>
+                <g:HorizontalPanel>
+                    <g:Label ui:text="Data Type:"/>
+                    <b:ButtonPanel ui:field="dataTypeButtonPanel"/>
+                </g:HorizontalPanel>
+            </g:customCell>
             <g:customCell>
                 <g:Label ui:field="dataType" width="100%" addStyleNames="globalProperties"/>
             </g:customCell>

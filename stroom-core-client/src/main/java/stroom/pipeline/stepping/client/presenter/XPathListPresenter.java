@@ -27,7 +27,6 @@ import stroom.cell.tickbox.shared.TickBoxState;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.table.client.Refreshable;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.pipeline.shared.XPathFilter;
 import stroom.widget.util.client.MultiSelectionModel;
 
@@ -38,7 +37,7 @@ public class XPathListPresenter extends MyPresenterWidget<DataGridView<XPathFilt
     private final ListDataProvider<XPathFilter> dataProvider;
 
     @Inject
-    public XPathListPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+    public XPathListPresenter(final EventBus eventBus) {
         super(eventBus, new DataGridViewImpl<>(true, true));
         initTableColumns();
 

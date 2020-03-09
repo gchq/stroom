@@ -4,6 +4,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.util.Providers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -13,11 +14,11 @@ import stroom.docstore.api.Serialiser2Factory;
 import stroom.docstore.api.Store;
 import stroom.docstore.api.StoreFactory;
 import stroom.docstore.shared.Doc;
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.api.SecurityContext;
 
 @ExtendWith(MockitoExtension.class)
 class TestDocStoreModule {
-
     @Mock
     private Persistence persistenceMock;
     @Mock
@@ -30,13 +31,12 @@ class TestDocStoreModule {
 
     @Test
     void testInjection() {
-
         final Injector injector = Guice.createInjector(new AbstractModule() {
             @Override
             protected void configure() {
-
                 bind(Persistence.class).toInstance(persistenceMock);
                 bind(SecurityContext.class).toInstance(securityContextMock);
+                bind(DocumentEventLog.class).toProvider(Providers.of(null));
                 install(new DocStoreModule());
             }
         });

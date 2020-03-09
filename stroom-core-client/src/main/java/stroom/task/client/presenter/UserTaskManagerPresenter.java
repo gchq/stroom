@@ -43,6 +43,7 @@ import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -155,10 +156,10 @@ public class UserTaskManagerPresenter
 
     private void update() {
         // Combine data from all nodes.
-        final List<TaskProgress> list = TaskProgressUtil.combine(criteria, responseMap.values());
+        final ResultPage<TaskProgress> list = TaskProgressUtil.combine(criteria, responseMap.values());
 
         final HashSet<TaskId> idSet = new HashSet<>();
-        for (final TaskProgress value : list) {
+        for (final TaskProgress value : list.getValues()) {
             idSet.add(value.getId());
         }
         requestTaskKillSet.retainAll(idSet);
@@ -167,13 +168,13 @@ public class UserTaskManagerPresenter
         setData(list);
     }
 
-    private void setData(List<TaskProgress> list) {
+    private void setData(ResultPage<TaskProgress> list) {
         if (visible) {
             final Set<UserTaskPresenter> tasksToRemove = new HashSet<>(taskPresenterMap.values());
 
             idMap.clear();
             if (list != null) {
-                for (final TaskProgress taskProgress : list) {
+                for (final TaskProgress taskProgress : list.getValues()) {
                     final TaskId thisId = taskProgress.getId();
                     // Avoid processing any duplicate task
                     if (idMap.containsKey(thisId)) {

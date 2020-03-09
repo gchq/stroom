@@ -16,13 +16,13 @@
 
 package stroom.statistics.impl.sql.search;
 
-import stroom.docref.SharedObject;
-import stroom.util.shared.Period;
+
+import stroom.util.Period;
 
 import java.util.Collections;
 import java.util.Set;
 
-public class FindEventCriteria implements SharedObject {
+public class FindEventCriteria {
     private static final long serialVersionUID = -3542902750151448776L;
 
     private final Period period;

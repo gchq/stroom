@@ -30,7 +30,7 @@ import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.shared.User;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -348,9 +348,9 @@ class SecurityFilter implements Filter {
 
         URI redirectUri = uriBuilder.build();
 
-        if (uiConfig.getUrlConfig() != null && uiConfig.getUrlConfig().getUi() != null && uiConfig.getUrlConfig().getUi().trim().length() > 0) {
+        if (uiConfig.getUrl() != null && uiConfig.getUrl().getUi() != null && uiConfig.getUrl().getUi().trim().length() > 0) {
             LOGGER.debug("Using the advertised URL as the OpenID redirect URL");
-            final UriBuilder builder = UriBuilder.fromUri(uiConfig.getUrlConfig().getUi());
+            final UriBuilder builder = UriBuilder.fromUri(uiConfig.getUrl().getUi());
             if (redirectUri.getPath() != null) {
                 builder.path(redirectUri.getPath());
             }

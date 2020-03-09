@@ -16,6 +16,7 @@
 
 package stroom.dashboard.client.table;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.ClickEvent;
@@ -25,9 +26,11 @@ import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
+import stroom.dashboard.shared.DashboardResource;
 import stroom.dashboard.shared.Field;
-import stroom.dashboard.shared.ValidateExpressionAction;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dashboard.shared.ValidateExpressionResult;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.util.shared.EqualsUtil;
 import stroom.widget.menu.client.presenter.IconMenuItem;
 import stroom.widget.menu.client.presenter.Item;
@@ -45,18 +48,22 @@ import java.util.List;
 
 public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.ExpressionView>
         implements ExpressionUiHandlers {
+    private static final DashboardResource DASHBOARD_RESOURCE = GWT.create(DashboardResource.class);
+
     private final MenuListPresenter menuListPresenter;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private List<Item> menuItems;
     private TablePresenter tablePresenter;
     private Field field;
 
     @Inject
-    public ExpressionPresenter(final EventBus eventBus, final ExpressionView view,
-                               final MenuListPresenter menuListPresenter, final ClientDispatchAsync dispatcher) {
+    public ExpressionPresenter(final EventBus eventBus,
+                               final ExpressionView view,
+                               final MenuListPresenter menuListPresenter,
+                               final RestFactory restFactory) {
         super(eventBus, view);
         this.menuListPresenter = menuListPresenter;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         view.setUiHandlers(this);
     }
 
@@ -90,16 +97,20 @@ public class ExpressionPresenter extends MyPresenterWidget<ExpressionPresenter.E
                     HidePopupEvent.fire(tablePresenter, this);
                 } else {
                     // Check the validity of the expression.
-                    dispatcher.exec(new ValidateExpressionAction(expression)).onSuccess(result -> {
-                        if (result.isOk()) {
-                            field.setExpression(expression);
-                            tablePresenter.setDirty(true);
-                            tablePresenter.clearAndRefresh();
-                            HidePopupEvent.fire(tablePresenter, ExpressionPresenter.this);
-                        } else {
-                            AlertEvent.fireError(tablePresenter, result.getString(), null);
-                        }
-                    });
+                    final Rest<ValidateExpressionResult> rest = restFactory.create();
+                    rest
+                            .onSuccess(result -> {
+                                if (result.isOk()) {
+                                    field.setExpression(expression);
+                                    tablePresenter.setDirty(true);
+                                    tablePresenter.clearAndRefresh();
+                                    HidePopupEvent.fire(tablePresenter, ExpressionPresenter.this);
+                                } else {
+                                    AlertEvent.fireError(tablePresenter, result.getString(), null);
+                                }
+                            })
+                            .call(DASHBOARD_RESOURCE)
+                            .validateExpression(expression);
                 }
             }
         } else {

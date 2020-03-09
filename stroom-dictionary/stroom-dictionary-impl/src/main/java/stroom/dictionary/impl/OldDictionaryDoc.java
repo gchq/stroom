@@ -35,7 +35,7 @@ import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "includes"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "dictionary")
 @XmlType(name = "DictionaryDoc", propOrder = {"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "imports"})
 /**
@@ -43,8 +43,6 @@ import java.util.Objects;
  **/
 @Deprecated
 public class OldDictionaryDoc extends Doc {
-    private static final long serialVersionUID = -4208920620555926044L;
-
     public static final String DOCUMENT_TYPE = "Dictionary";
 
     @XmlElement(name = "description")
@@ -56,7 +54,6 @@ public class OldDictionaryDoc extends Doc {
     private List<DocRef> imports;
 
     public OldDictionaryDoc() {
-        // Default constructor for GWT serialisation.
     }
 
     public String getDescription() {

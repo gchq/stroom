@@ -1,17 +1,23 @@
 package stroom.search.solr.shared;
 
-import stroom.docref.SharedObject;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public class SolrSynchState implements SharedObject {
-    private Long lastSynchronized;
-    private List<String> messages;
+@JsonInclude(Include.NON_NULL)
+public class SolrSynchState {
+    @JsonProperty
+    private final Long lastSynchronized;
+    @JsonProperty
+    private final List<String> messages;
 
-    public SolrSynchState() {
-    }
-
-    public SolrSynchState(final Long lastSynchronized, final List<String> messages) {
+    @JsonCreator
+    public SolrSynchState(@JsonProperty("lastSynchronized") final Long lastSynchronized,
+                          @JsonProperty("messages") final List<String> messages) {
         this.lastSynchronized = lastSynchronized;
         this.messages = messages;
     }

@@ -29,7 +29,7 @@ import stroom.core.client.presenter.CorePresenter;
 import stroom.dashboard.client.main.DashboardMainPresenter;
 import stroom.dashboard.client.vis.gin.VisGinjector;
 import stroom.dashboard.client.vis.gin.VisModule;
-import stroom.dispatch.client.ClientDispatchModule;
+import stroom.dispatch.client.RestModule;
 import stroom.entity.client.gin.EntityGinjector;
 import stroom.entity.client.gin.EntityModule;
 import stroom.query.client.QueryModule;
@@ -39,7 +39,7 @@ import stroom.widget.popup.client.gin.PopupGinjector;
 import stroom.widget.popup.client.gin.PopupModule;
 
 @GinModules({
-        ClientDispatchModule.class,
+        RestModule.class,
         DashboardAppModule.class,
         PopupModule.class,
         ActivityModule.class,

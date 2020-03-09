@@ -16,7 +16,7 @@
 
 package stroom.meta.impl;
 
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
 import stroom.util.shared.Clearable;

@@ -16,8 +16,6 @@
 
 package stroom.util;
 
-import stroom.util.shared.Period;
-
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;

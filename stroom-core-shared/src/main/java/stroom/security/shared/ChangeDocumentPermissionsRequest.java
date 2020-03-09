@@ -16,21 +16,28 @@
 
 package stroom.security.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
-import stroom.task.shared.Action;
-import stroom.util.shared.VoidResult;
 
+@JsonPropertyOrder({"docRef", "changeSet", "cascade"})
+@JsonInclude(Include.NON_NULL)
 public class ChangeDocumentPermissionsRequest {
-    private DocRef docRef;
-    private ChangeSet<UserPermission> changeSet;
-    private Cascade cascade;
+    @JsonProperty
+    private final DocRef docRef;
+    @JsonProperty
+    private final ChangeSet<UserPermission> changeSet;
+    @JsonProperty
+    private final Cascade cascade;
 
-    public ChangeDocumentPermissionsRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ChangeDocumentPermissionsRequest(final DocRef docRef, final ChangeSet<UserPermission> changeSet, final Cascade cascade) {
+    @JsonCreator
+    public ChangeDocumentPermissionsRequest(@JsonProperty("docRef") final DocRef docRef,
+                                            @JsonProperty("changeSet") final ChangeSet<UserPermission> changeSet,
+                                            @JsonProperty("cascade") final Cascade cascade) {
         this.docRef = docRef;
         this.changeSet = changeSet;
         this.cascade = cascade;
@@ -40,24 +47,12 @@ public class ChangeDocumentPermissionsRequest {
         return docRef;
     }
 
-    public void setDocRef(final DocRef docRef) {
-        this.docRef = docRef;
-    }
-
     public ChangeSet<UserPermission> getChangeSet() {
         return changeSet;
     }
 
-    public void setChangeSet(final ChangeSet<UserPermission> changeSet) {
-        this.changeSet = changeSet;
-    }
-
     public Cascade getCascade() {
         return cascade;
-    }
-
-    public void setCascade(Cascade cascade) {
-        this.cascade = cascade;
     }
 
     public enum Cascade implements HasDisplayValue {

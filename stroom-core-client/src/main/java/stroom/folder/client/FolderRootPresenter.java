@@ -21,7 +21,7 @@ import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.data.client.presenter.ClassificationWrappedMetaPresenter;
 import stroom.data.client.presenter.ProcessorTaskPresenter;
-import stroom.docref.SharedObject;
+
 import stroom.entity.client.presenter.ContentCallback;
 import stroom.entity.client.presenter.LinkTabPanelPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
@@ -43,7 +43,7 @@ public class FolderRootPresenter extends LinkTabPanelPresenter implements TabDat
     private static final TabData PROCESSORS = new TabDataImpl("Processors");
 
     private final ClientSecurityContext securityContext;
-    private final TabContentProvider<SharedObject> tabContentProvider = new TabContentProvider<>();
+    private final TabContentProvider<Object> tabContentProvider = new TabContentProvider<>();
     private ProcessorPresenter processorPresenter;
 
     @Inject

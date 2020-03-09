@@ -20,10 +20,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.db.util.JooqUtil;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.impl.MetaKeyDao;
 import stroom.meta.impl.MetaValueDao;
 import stroom.meta.impl.db.jooq.tables.records.MetaValRecord;
-import stroom.meta.shared.AttributeMap;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaRow;
 import stroom.util.logging.LogExecutionTime;
@@ -297,7 +297,7 @@ class MetaValueDaoImpl implements MetaValueDao {
      */
     @Override
     public List<MetaRow> decorateDataWithAttributes(final List<Meta> list) {
-        final Map<Long, MetaRow> rowMap = new HashMap<>();
+        final Map<Long, Map<String, String>> attributeMap = new HashMap<>();
 
         // Get a list of valid data ids.
         final List<Long> idList = list.parallelStream()
@@ -318,20 +318,15 @@ class MetaValueDaoImpl implements MetaValueDao {
                     metaKeyService.getNameForId(keyId).ifPresent(name -> {
                         final long dataId = r.get(META_VAL.META_ID);
                         final String value = String.valueOf(r.get(META_VAL.VAL));
-                        rowMap.computeIfAbsent(dataId, k -> new MetaRow()).getAttributes().put(name, value);
+                        attributeMap.computeIfAbsent(dataId, k -> new HashMap<>()).put(name, value);
                     });
                 })
         );
 
         final List<MetaRow> dataRows = new ArrayList<>();
         for (final Meta meta : list) {
-            MetaRow dataRow = rowMap.get(meta.getId());
-            if (dataRow != null) {
-                dataRow.setMeta(meta);
-            } else {
-                dataRow = new MetaRow(meta);
-            }
-            dataRows.add(dataRow);
+            final Map<String, String> attributes = attributeMap.getOrDefault(meta.getId(), new HashMap<>());
+            dataRows.add(new MetaRow(meta, attributes));
         }
 
         return dataRows;

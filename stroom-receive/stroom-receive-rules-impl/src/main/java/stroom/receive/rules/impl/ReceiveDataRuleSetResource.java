@@ -22,13 +22,13 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import stroom.docref.DocRef;
-import stroom.importexport.api.DocRefs;
-import stroom.importexport.api.OldDocumentData;
+import stroom.importexport.api.DocumentData;
+import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.util.HasHealthCheck;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
-import stroom.util.string.EncodingUtil;
 
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -39,15 +39,13 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Api(value = "ruleset - /v1")
 @Path(ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck {
-    public static final String BASE_RESOURCE_PATH = "/ruleset/v1";
+    public static final String BASE_RESOURCE_PATH = "/ruleset" + ResourcePaths.V1;
 
     private final ReceiveDataRuleSetService ruleSetService;
 
@@ -63,8 +61,8 @@ public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck 
     @ApiOperation(
             value = "Submit a request for a list of doc refs held by this service",
             response = Set.class)
-    public DocRefs listDocuments() {
-        return new DocRefs(ruleSetService.listDocuments());
+    public Set<DocRef> listDocuments() {
+        return ruleSetService.listDocuments();
     }
 
     @POST
@@ -75,13 +73,13 @@ public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck 
     @ApiOperation(
             value = "Submit an import request",
             response = DocRef.class)
-    public DocRef importDocument(@ApiParam("DocumentData") final OldDocumentData documentData) {
+    public DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData encodedDocumentData) {
+        final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
         final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
         if (documentData.getDataMap() == null) {
             return ruleSetService.importDocument(documentData.getDocRef(), null, importState, ImportMode.IGNORE_CONFIRMATION);
         }
-        final Map<String, byte[]> data = documentData.getDataMap().entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> EncodingUtil.asBytes(e.getValue())));
-        return ruleSetService.importDocument(documentData.getDocRef(), data, importState, ImportMode.IGNORE_CONFIRMATION);
+        return ruleSetService.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportMode.IGNORE_CONFIRMATION);
     }
 
     @POST
@@ -91,14 +89,13 @@ public class ReceiveDataRuleSetResource implements RestResource, HasHealthCheck 
     @Timed
     @ApiOperation(
             value = "Submit an export request",
-            response = OldDocumentData.class)
-    public OldDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
+            response = Base64EncodedDocumentData.class)
+    public Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
         final Map<String, byte[]> map = ruleSetService.exportDocument(docRef, true, new ArrayList<>());
         if (map == null) {
-            return new OldDocumentData(docRef, null);
+            return new Base64EncodedDocumentData(docRef, null);
         }
-        final Map<String, String> data = map.entrySet().stream().collect(Collectors.toMap(Entry::getKey, e -> EncodingUtil.asString(e.getValue())));
-        return new OldDocumentData(docRef, data);
+        return DocumentData.toBase64EncodedDocumentData(new DocumentData(docRef, map));
     }
 
     @Override

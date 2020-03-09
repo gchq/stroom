@@ -19,15 +19,18 @@ package stroom.processor.api;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.shared.FindMetaCriteria;
 import stroom.processor.shared.FetchProcessorRequest;
-import stroom.processor.shared.FetchProcessorResponse;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorListRow;
+import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.QueryData;
-import stroom.util.shared.BaseResultList;
+import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.shared.HasIntCrud;
 import stroom.util.shared.ResultPage;
+
+import java.util.List;
 
 public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
     ProcessorFilter create(final DocRef pipelineRef,
@@ -40,11 +43,13 @@ public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
                            final int priority,
                            final boolean enabled);
 
-    BaseResultList<ProcessorFilter> find(ExpressionCriteria criteria);
+    ResultPage<ProcessorFilter> find(ExpressionCriteria criteria);
 
-    FetchProcessorResponse find(FetchProcessorRequest request);
+    ProcessorListRowResultPage find(FetchProcessorRequest request);
 
     void setPriority(Integer id, Integer priority);
 
     void setEnabled(Integer id, Boolean enabled);
+
+    List<ReprocessDataInfo> reprocess(FindMetaCriteria criteria);
 }

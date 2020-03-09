@@ -16,27 +16,67 @@
 
 package stroom.dashboard.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.query.api.v2.Query;
 import stroom.util.shared.HasAuditInfo;
 
-public class StoredQuery implements HasAuditInfo, SharedObject {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class StoredQuery implements HasAuditInfo {
+    @JsonProperty
     private Integer id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTimeMs;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private Long updateTimeMs;
+    @JsonProperty
     private String updateUser;
+    @JsonProperty
     private String dashboardUuid;
+    @JsonProperty
     private String componentId;
+    @JsonProperty
     private String name;
+    @JsonProperty
     private String data;
+    @JsonProperty
     private boolean favourite;
-
+    @JsonProperty
     private Query query;
 
     public StoredQuery() {
-        // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public StoredQuery(@JsonProperty("id") final Integer id,
+                       @JsonProperty("version") final Integer version,
+                       @JsonProperty("createTimeMs") final Long createTimeMs,
+                       @JsonProperty("createUser") final String createUser,
+                       @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                       @JsonProperty("updateUser") final String updateUser,
+                       @JsonProperty("dashboardUuid") final String dashboardUuid,
+                       @JsonProperty("componentId") final String componentId,
+                       @JsonProperty("name") final String name,
+                       @JsonProperty("data") final String data,
+                       @JsonProperty("favourite") final boolean favourite,
+                       @JsonProperty("query") final Query query) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.createUser = createUser;
+        this.updateTimeMs = updateTimeMs;
+        this.updateUser = updateUser;
+        this.dashboardUuid = dashboardUuid;
+        this.componentId = componentId;
+        this.name = name;
+        this.data = data;
+        this.favourite = favourite;
+        this.query = query;
     }
 
     public Integer getId() {

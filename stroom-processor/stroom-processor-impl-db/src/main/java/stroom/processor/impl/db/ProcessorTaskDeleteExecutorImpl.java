@@ -144,7 +144,7 @@ class ProcessorTaskDeleteExecutorImpl implements ProcessorTaskDeleteExecutor {
                     .build();
             final ExpressionCriteria criteria = new ExpressionCriteria(expression);
 //            criteria.setLastPollPeriod(new Period(null, age));
-            final List<ProcessorFilter> filters = processorFilterDao.find(criteria);
+            final List<ProcessorFilter> filters = processorFilterDao.find(criteria).getValues();
             for (final ProcessorFilter filter : filters) {
                 final ProcessorFilterTracker tracker = filter.getProcessorFilterTracker();
 

@@ -29,7 +29,7 @@ import stroom.search.resultsender.NodeResult;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskManager;
 import stroom.task.api.TaskTerminatedException;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import java.util.ArrayList;
 import java.util.Collections;

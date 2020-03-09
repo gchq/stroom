@@ -16,10 +16,11 @@
 
 package stroom.data.retention.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.SharedObject;
 import stroom.docstore.shared.Doc;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -30,20 +31,34 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "rules"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "DataRetentionPolicy", propOrder = {"rules"})
 @XmlRootElement(name = "dataRetentionPolicy")
-public class DataRetentionRules extends Doc implements SharedObject {
+public class DataRetentionRules extends Doc {
     public static final String DOCUMENT_TYPE = "DataRetentionRules";
 
+    @JsonProperty
     private List<DataRetentionRule> rules;
 
     public DataRetentionRules() {
-        // Default constructor for GWT serialisation.
     }
 
     public DataRetentionRules(final List<DataRetentionRule> rules) {
+        this.rules = rules;
+    }
+
+    @JsonCreator
+    public DataRetentionRules(@JsonProperty("type") final String type,
+                              @JsonProperty("uuid") final String uuid,
+                              @JsonProperty("name") final String name,
+                              @JsonProperty("version") final String version,
+                              @JsonProperty("createTime") final Long createTime,
+                              @JsonProperty("updateTime") final Long updateTime,
+                              @JsonProperty("createUser") final String createUser,
+                              @JsonProperty("updateUser") final String updateUser,
+                              @JsonProperty("rules") final List<DataRetentionRule> rules) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
         this.rules = rules;
     }
 

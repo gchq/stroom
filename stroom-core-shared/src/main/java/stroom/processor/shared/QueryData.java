@@ -16,6 +16,10 @@
 
 package stroom.processor.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 
@@ -26,15 +30,27 @@ import java.io.Serializable;
 
 @XmlType(name = "query", propOrder = {"dataSource", "expression", "limits"})
 @XmlRootElement(name = "query")
+@JsonInclude(Include.NON_NULL)
 public class QueryData implements Serializable {
     private static final long serialVersionUID = -2530827581046882396L;
 
+    @JsonProperty
     private DocRef dataSource;
+    @JsonProperty
     private ExpressionOperator expression;
+    @JsonProperty
     private Limits limits;
 
     public QueryData() {
-        // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public QueryData(@JsonProperty("dataSource") final DocRef dataSource,
+                     @JsonProperty("expression") final ExpressionOperator expression,
+                     @JsonProperty("limits") final Limits limits) {
+        this.dataSource = dataSource;
+        this.expression = expression;
+        this.limits = limits;
     }
 
     @XmlElement

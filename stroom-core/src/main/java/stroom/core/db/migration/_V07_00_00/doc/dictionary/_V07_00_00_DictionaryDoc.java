@@ -36,7 +36,6 @@ public class _V07_00_00_DictionaryDoc extends _V07_00_00_Doc {
     private List<_V07_00_00_DocRef> imports;
 
     public _V07_00_00_DictionaryDoc() {
-        // Default constructor for GWT serialisation.
     }
 
     public String getDescription() {

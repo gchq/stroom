@@ -140,7 +140,7 @@ public class SQLStatisticEventStore implements Statistics {
             final Set<List<Boolean>> perms = new HashSet<>();
             for (final CustomRollUpMask mask : statisticsDataSource.getConfig()
                     .getCustomRollUpMasks()) {
-                final RollUpBitMask rollUpBitMask = RollUpBitMask.fromTagPositions(mask.getRolledUpTagPositions());
+                final RollUpBitMask rollUpBitMask = RollUpBitMask.fromTagPositions(mask.getRolledUpTagPosition());
 
                 perms.add(rollUpBitMask.getBooleanMask(eventTagListSize));
             }

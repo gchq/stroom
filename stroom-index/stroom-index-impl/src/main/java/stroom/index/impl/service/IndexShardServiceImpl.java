@@ -18,7 +18,7 @@
 package stroom.index.impl.service;
 
 import stroom.docref.DocRef;
-import stroom.entity.shared.PermissionException;
+import stroom.document.shared.PermissionException;
 import stroom.index.impl.IndexShardDao;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexStructure;

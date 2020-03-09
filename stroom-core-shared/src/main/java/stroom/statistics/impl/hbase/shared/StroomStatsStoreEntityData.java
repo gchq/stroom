@@ -16,18 +16,13 @@
 
 package stroom.statistics.impl.hbase.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.docref.SharedObject;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -36,69 +31,47 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@XmlAccessorType(XmlAccessType.FIELD)
-@XmlRootElement(name = "data")
-@JsonPropertyOrder({"field", "customRollUpMask"})
-@JsonInclude(Include.NON_DEFAULT)
-public class StroomStatsStoreEntityData implements SharedObject {
-
-    private static final long serialVersionUID = -2754817144611481958L;
+@JsonPropertyOrder({"fields", "customRollUpMasks"})
+@JsonInclude(Include.NON_NULL)
+public class StroomStatsStoreEntityData {
     /**
      * Should be a SortedSet but GWT doesn't support that. Contents should be
      * sorted and not contain duplicates
-     * <p>
-     * XMLTransient to force JAXB to use the setter
      */
-
-    @XmlTransient
-    @JsonIgnore
-    private List<StatisticField> statisticFields;
+    @JsonProperty
+    private List<StatisticField> fields;
 
     /**
      * Held in a set to prevent duplicates.
-     * <p>
-     * XMLTransient to force JAXB to use the setter
      */
-    @XmlTransient
-    @JsonIgnore
+    @JsonProperty
     private Set<CustomRollUpMask> customRollUpMasks;
 
-    // cache the positions of the
-    @XmlTransient
+    /**
+     * Cache the positions of the fields.
+     */
     @JsonIgnore
-    private Map<String, Integer> fieldPositionMap = new HashMap<>();
+    private Map<String, Integer> cachedFieldPositions;
 
     public StroomStatsStoreEntityData() {
         this(new ArrayList<>(), new HashSet<>());
     }
 
-    public StroomStatsStoreEntityData(final List<StatisticField> statisticFields) {
-        this(new ArrayList<>(statisticFields), new HashSet<>());
-    }
-
-    public StroomStatsStoreEntityData(final List<StatisticField> statisticFields,
-                                      final Set<CustomRollUpMask> customRollUpMasks) {
-        this.statisticFields = statisticFields;
+    @JsonCreator
+    public StroomStatsStoreEntityData(@JsonProperty("fields") final List<StatisticField> fields,
+                                      @JsonProperty("customRollUpMasks") final Set<CustomRollUpMask> customRollUpMasks) {
+        this.fields = fields;
         this.customRollUpMasks = customRollUpMasks;
-
-        // sort the list of fields as this will help us later when generating
-        // StatisticEvents
-        sortFieldListAndCachePositions();
     }
 
-    @XmlElement(name = "field")
-    @JsonProperty("fields")
-    public List<StatisticField> getStatisticFields() {
-        return statisticFields;
+    public List<StatisticField> getFields() {
+        return fields;
     }
 
-    public void setStatisticFields(final List<StatisticField> statisticFields) {
-        this.statisticFields = statisticFields;
-        sortFieldListAndCachePositions();
+    public void setFields(final List<StatisticField> fields) {
+        this.fields = fields;
     }
 
-    @XmlElement(name = "customRollUpMask")
-    @JsonProperty("customRollUpMasks")
     public Set<CustomRollUpMask> getCustomRollUpMasks() {
         return customRollUpMasks;
     }
@@ -107,33 +80,34 @@ public class StroomStatsStoreEntityData implements SharedObject {
         this.customRollUpMasks = customRollUpMasks;
     }
 
+
     public void addStatisticField(final StatisticField statisticField) {
-        if (statisticFields == null) {
-            statisticFields = new ArrayList<>();
+        if (fields == null) {
+            fields = new ArrayList<>();
         }
         // prevent duplicates
-        if (!statisticFields.contains(statisticField)) {
-            statisticFields.add(statisticField);
+        if (!fields.contains(statisticField)) {
+            fields.add(statisticField);
             sortFieldListAndCachePositions();
         }
     }
 
     public void removeStatisticField(final StatisticField statisticField) {
-        if (statisticFields != null) {
-            statisticFields.remove(statisticField);
+        if (fields != null) {
+            fields.remove(statisticField);
             sortFieldListAndCachePositions();
         }
     }
 
     public void reOrderStatisticFields() {
-        if (statisticFields != null) {
+        if (fields != null) {
             sortFieldListAndCachePositions();
         }
     }
 
     public boolean containsStatisticField(final StatisticField statisticField) {
-        if (statisticFields != null) {
-            return statisticFields.contains(statisticField);
+        if (fields != null) {
+            return fields.contains(statisticField);
         }
         return false;
     }
@@ -170,16 +144,16 @@ public class StroomStatsStoreEntityData implements SharedObject {
             return true;
         }
 
-        if (rolledUpFieldNames.size() > statisticFields.size()) {
+        if (rolledUpFieldNames.size() > fields.size()) {
             throw new RuntimeException(
                     "isRollUpCombinationSupported called with more rolled up fields (" + rolledUpFieldNames.toString()
-                            + ") than there are statistic fields (" + fieldPositionMap.keySet() + ")");
+                            + ") than there are statistic fields (" + getCachedFieldPositions().keySet() + ")");
         }
 
-        if (!fieldPositionMap.keySet().containsAll(rolledUpFieldNames)) {
+        if (!getCachedFieldPositions().keySet().containsAll(rolledUpFieldNames)) {
             throw new RuntimeException(
                     "isRollUpCombinationSupported called rolled up fields (" + rolledUpFieldNames.toString()
-                            + ") that don't exist in the statistic fields list (" + fieldPositionMap.keySet() + ")");
+                            + ") that don't exist in the statistic fields list (" + getCachedFieldPositions().keySet() + ")");
         }
 
         final List<Integer> rolledUpFieldPositions = new ArrayList<>();
@@ -191,14 +165,22 @@ public class StroomStatsStoreEntityData implements SharedObject {
     }
 
     public Integer getFieldPositionInList(final String fieldName) {
-        return fieldPositionMap.get(fieldName);
+        return getCachedFieldPositions().get(fieldName);
+    }
+
+    private Map<String, Integer> getCachedFieldPositions() {
+        if (cachedFieldPositions == null) {
+            // sort the list of fields as this will help us later when generating StatisticEvents.
+            sortFieldListAndCachePositions();
+        }
+        return cachedFieldPositions;
     }
 
     @Override
     public int hashCode() {
         final int prime = 31;
         int result = 1;
-        result = prime * result + ((statisticFields == null) ? 0 : statisticFields.hashCode());
+        result = prime * result + ((fields == null) ? 0 : fields.hashCode());
         return result;
     }
 
@@ -211,39 +193,35 @@ public class StroomStatsStoreEntityData implements SharedObject {
         if (getClass() != obj.getClass())
             return false;
         final StroomStatsStoreEntityData other = (StroomStatsStoreEntityData) obj;
-        if (statisticFields == null) {
-            if (other.statisticFields != null)
+        if (fields == null) {
+            if (other.fields != null)
                 return false;
-        } else if (!statisticFields.equals(other.statisticFields))
+        } else if (!fields.equals(other.fields))
             return false;
         return true;
     }
 
     @Override
     public String toString() {
-        return "StatisticFields [statisticFields=" + statisticFields + "]";
+        return "StatisticFields [statisticFields=" + fields + "]";
     }
 
-    private void sortFieldListAndCachePositions() {
+    private synchronized void sortFieldListAndCachePositions() {
         // de-dup the list
-        Set<StatisticField> tempSet = new HashSet<>(statisticFields);
-        statisticFields.clear();
-        statisticFields.addAll(tempSet);
-        tempSet = null;
+        fields = new ArrayList<>(new HashSet<>(fields));
+        Collections.sort(fields);
 
-        Collections.sort(statisticFields);
-
-        fieldPositionMap.clear();
+        cachedFieldPositions = new HashMap<>();
         int i = 0;
-        for (final StatisticField field : statisticFields) {
-            fieldPositionMap.put(field.getFieldName(), i++);
+        for (final StatisticField field : fields) {
+            cachedFieldPositions.put(field.getFieldName(), i++);
         }
     }
 
     public StroomStatsStoreEntityData deepCopy() {
         final List<StatisticField> newFieldList = new ArrayList<>();
 
-        for (final StatisticField statisticField : statisticFields) {
+        for (final StatisticField statisticField : fields) {
             newFieldList.add(statisticField.deepCopy());
         }
 
@@ -254,13 +232,5 @@ public class StroomStatsStoreEntityData implements SharedObject {
         }
 
         return new StroomStatsStoreEntityData(newFieldList, newMaskList);
-    }
-
-    /**
-     * Added to ensure map is not made final which would break GWT
-     * serialisation.
-     */
-    public void setFieldPositionMap(final Map<String, Integer> fieldPositionMap) {
-        this.fieldPositionMap = fieldPositionMap;
     }
 }

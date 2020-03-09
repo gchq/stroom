@@ -16,7 +16,7 @@
 
 package stroom.statistics.impl.sql.search;
 
-import stroom.util.shared.Period;
+import stroom.util.Period;
 
 public class FindAnalyticOutputCriteria {
     private final Period period;

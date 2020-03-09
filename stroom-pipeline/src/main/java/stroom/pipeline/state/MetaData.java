@@ -16,7 +16,7 @@
 
 package stroom.pipeline.state;
 
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 import stroom.util.pipeline.scope.PipelineScoped;
 
 @PipelineScoped

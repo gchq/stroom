@@ -16,6 +16,7 @@
 
 package stroom.statistics.impl.sql.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -30,7 +31,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class StatisticStoreDoc extends Doc implements StatisticStore {
     public static final String DOCUMENT_TYPE = "StatisticStore";
 
@@ -41,8 +42,6 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
     public static final String FIELD_NAME_PRECISION_MS = "Precision ms";
 
     private static final Long DEFAULT_PRECISION = EventStoreTimeIntervalEnum.HOUR.columnInterval();
-
-    private static final long serialVersionUID = -649286188919707915L;
 
     @JsonProperty("description")
     private String description;
@@ -58,13 +57,43 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
     private StatisticsDataSourceData config;
 
     public StatisticStoreDoc() {
-        setDefaults();
-    }
-
-    private void setDefaults() {
         this.statisticType = StatisticType.COUNT;
         this.rollUpType = StatisticRollUpType.NONE;
         this.precision = DEFAULT_PRECISION;
+    }
+
+    @JsonCreator
+    public StatisticStoreDoc(@JsonProperty("type") final String type,
+                             @JsonProperty("uuid") final String uuid,
+                             @JsonProperty("name") final String name,
+                             @JsonProperty("version") final String version,
+                             @JsonProperty("createTime") final Long createTime,
+                             @JsonProperty("updateTime") final Long updateTime,
+                             @JsonProperty("createUser") final String createUser,
+                             @JsonProperty("updateUser") final String updateUser,
+                             @JsonProperty("description") final String description,
+                             @JsonProperty("statisticType") final StatisticType statisticType,
+                             @JsonProperty("rollUpType") final StatisticRollUpType rollUpType,
+                             @JsonProperty("precision") final Long precision,
+                             @JsonProperty("enabled") final Boolean enabled,
+                             @JsonProperty("config") final StatisticsDataSourceData config) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.statisticType = statisticType;
+        this.rollUpType = rollUpType;
+        this.precision = precision;
+        this.enabled = enabled;
+        this.config = config;
+
+        if (this.statisticType == null) {
+            this.statisticType = StatisticType.COUNT;
+        }
+        if (this.rollUpType == null) {
+            this.rollUpType = StatisticRollUpType.NONE;
+        }
+        if (this.precision == null) {
+            this.precision = DEFAULT_PRECISION;
+        }
     }
 
     public String getDescription() {
@@ -115,20 +144,18 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         this.config = config;
     }
 
-    @JsonIgnore
     public boolean isValidField(final String fieldName) {
         if (config == null) {
             return false;
-        } else if (config.getStatisticFields() == null) {
+        } else if (config.getFields() == null) {
             return false;
-        } else if (config.getStatisticFields().size() == 0) {
+        } else if (config.getFields().size() == 0) {
             return false;
         } else {
-            return config.getStatisticFields().contains(new StatisticField(fieldName));
+            return config.getFields().contains(new StatisticField(fieldName));
         }
     }
 
-    @JsonIgnore
     public boolean isRollUpCombinationSupported(final Set<String> rolledUpFieldNames) {
         if (rolledUpFieldNames == null || rolledUpFieldNames.isEmpty()) {
             return true;
@@ -152,7 +179,6 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         return config.isRollUpCombinationSupported(rolledUpFieldNames);
     }
 
-    @JsonIgnore
     public Integer getPositionInFieldList(final String fieldName) {
         return config.getFieldPositionInList(fieldName);
     }
@@ -161,7 +187,7 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
     public List<String> getFieldNames() {
         if (config != null) {
             final List<String> fieldNames = new ArrayList<>();
-            for (final StatisticField statisticField : config.getStatisticFields()) {
+            for (final StatisticField statisticField : config.getFields()) {
                 fieldNames.add(statisticField.getFieldName());
             }
             return fieldNames;
@@ -172,13 +198,13 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
 
     @JsonIgnore
     public int getStatisticFieldCount() {
-        return config == null ? 0 : config.getStatisticFields().size();
+        return config == null ? 0 : config.getFields().size();
     }
 
     @JsonIgnore
     public List<StatisticField> getStatisticFields() {
         if (config != null) {
-            return config.getStatisticFields();
+            return config.getFields();
         } else {
             return Collections.emptyList();
         }

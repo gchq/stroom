@@ -19,7 +19,7 @@ package stroom.task.client.presenter;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.Expander;
 import stroom.util.shared.PageRequest;
@@ -42,7 +42,7 @@ class TaskProgressUtil {
     private TaskProgressUtil() {
     }
 
-    static BaseResultList<TaskProgress> combine(final FindTaskProgressCriteria criteria, final Collection<List<TaskProgress>> input) {
+    static ResultPage<TaskProgress> combine(final FindTaskProgressCriteria criteria, final Collection<List<TaskProgress>> input) {
         // Validate criteria.
         criteria.validateSortField();
 
@@ -58,7 +58,7 @@ class TaskProgressUtil {
 
             final List<TaskProgress> resultList = createList(totalMap, criteria);
 
-            return BaseResultList.createCriterialBasedList(resultList, criteria);
+            return ResultPage.createCriterialBasedList(resultList, criteria);
 
         } finally {
             criteria.setPageRequest(originalPageRequest);

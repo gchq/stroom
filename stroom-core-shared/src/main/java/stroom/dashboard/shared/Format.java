@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -36,7 +37,7 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "settings", "wrap"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "format")
 @XmlType(name = "Format", propOrder = {"type", "settings", "wrap"})
 public class Format implements Serializable {
@@ -49,13 +50,13 @@ public class Format implements Serializable {
     private Type type;
     @XmlElements({@XmlElement(name = "numberFormatSettings", type = NumberFormatSettings.class),
             @XmlElement(name = "dateTimeFormatSettings", type = DateTimeFormatSettings.class)})
+    @JsonProperty("settings")
     private FormatSettings settings;
     @XmlElement(name = "wrap")
     @JsonProperty("wrap")
     private Boolean wrap;
 
     public Format() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public Format(final Type type) {
@@ -67,7 +68,10 @@ public class Format implements Serializable {
         this.settings = settings;
     }
 
-    public Format(Type type, FormatSettings settings, Boolean wrap) {
+    @JsonCreator
+    public Format(@JsonProperty("type") final Type type,
+                  @JsonProperty("settings") final FormatSettings settings,
+                  @JsonProperty("wrap") final Boolean wrap) {
         this.type = type;
         this.settings = settings;
         this.wrap = wrap;

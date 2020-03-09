@@ -20,6 +20,7 @@ import com.google.inject.AbstractModule;
 import stroom.data.store.api.Store;
 import stroom.data.store.impl.DataStoreMaintenanceService;
 import stroom.data.store.impl.fs.api.FsVolumeResource;
+import stroom.meta.api.AttributeMapFactory;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.guice.ServletBinder;
 import stroom.util.shared.Clearable;
@@ -30,6 +31,7 @@ public class FsDataStoreModule extends AbstractModule {
     protected void configure() {
         bind(DataStoreMaintenanceService.class).to(FsDataStoreMaintenanceService.class);
         bind(Store.class).to(FsStore.class);
+        bind(AttributeMapFactory.class).to(FsStore.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(FsVolumeService.class);
 

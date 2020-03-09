@@ -16,21 +16,23 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public class ResourceGeneration implements SharedObject {
-    private static final long serialVersionUID = 8354737969578639291L;
+@JsonInclude(Include.NON_NULL)
+public class ResourceGeneration {
+    @JsonProperty
+    private final ResourceKey resourceKey;
+    @JsonProperty
+    private final List<Message> messageList;
 
-    private ResourceKey resourceKey;
-    private List<Message> messageList;
-
-    public ResourceGeneration() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ResourceGeneration(ResourceKey resourceKey, List<Message> messageList) {
+    @JsonCreator
+    public ResourceGeneration(@JsonProperty("resourceKey") final ResourceKey resourceKey,
+                              @JsonProperty("messageList") final List<Message> messageList) {
         this.resourceKey = resourceKey;
         this.messageList = messageList;
     }
@@ -39,16 +41,7 @@ public class ResourceGeneration implements SharedObject {
         return messageList;
     }
 
-    public void setMessageList(List<Message> messageList) {
-        this.messageList = messageList;
-    }
-
     public ResourceKey getResourceKey() {
         return resourceKey;
     }
-
-    public void setResourceKey(ResourceKey resourceKey) {
-        this.resourceKey = resourceKey;
-    }
-
 }

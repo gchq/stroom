@@ -29,10 +29,15 @@ public class DictionarySerialiser implements DocumentSerialiser2<DictionaryDoc> 
 
     @Override
     public Map<String, byte[]> write(final DictionaryDoc document) throws IOException {
+        final String text = document.getData();
+        document.setData(null);
+
         final Map<String, byte[]> data = delegate.write(document);
-        if (document.getData() != null) {
-            data.put(TEXT, EncodingUtil.asBytes(document.getData()));
+        if (text != null) {
+            data.put(TEXT, EncodingUtil.asBytes(text));
+            document.setData(text);
         }
+
         return data;
     }
 }

@@ -16,22 +16,34 @@
 
 package stroom.task.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.HasIsConstrained;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class FindTaskCriteria implements SharedObject, HasIsConstrained {
-    private static final long serialVersionUID = 2759048534848720682L;
-
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class FindTaskCriteria implements HasIsConstrained {
+    @JsonProperty
     private String sessionId;
+    @JsonProperty
     private Set<TaskId> ancestorIdSet;
+    @JsonProperty
     private Set<TaskId> idSet;
 
     public FindTaskCriteria() {
-        // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public FindTaskCriteria(@JsonProperty("sessionId") final String sessionId,
+                            @JsonProperty("ancestorIdSet") final Set<TaskId> ancestorIdSet,
+                            @JsonProperty("idSet") final Set<TaskId> idSet) {
+        this.sessionId = sessionId;
+        this.ancestorIdSet = ancestorIdSet;
+        this.idSet = idSet;
     }
 
     public String getSessionId() {
@@ -50,7 +62,6 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
         this.ancestorIdSet = ancestorIdSet;
     }
 
-    @JsonIgnore
     public void addAncestorId(final TaskId ancestorId) {
         if (ancestorIdSet == null) {
             ancestorIdSet = new HashSet<>();
@@ -66,7 +77,6 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
         this.idSet = idSet;
     }
 
-    @JsonIgnore
     public void addId(final TaskId id) {
         if (idSet == null) {
             idSet = new HashSet<>();
@@ -81,17 +91,16 @@ public class FindTaskCriteria implements SharedObject, HasIsConstrained {
         return (ancestorIdSet != null && ancestorIdSet.size() > 0) || (idSet != null && idSet.size() > 0);
     }
 
-    @JsonIgnore
-    public boolean isMatch(final Task<?> task, final String sessionId) {
+    public boolean isMatch(final TaskId taskId, final String sessionId) {
         if (ancestorIdSet != null && ancestorIdSet.size() > 0) {
             for (final TaskId ancestorId : ancestorIdSet) {
-                if (task.getId().isOrHasAncestor(ancestorId)) {
+                if (taskId.isOrHasAncestor(ancestorId)) {
                     return true;
                 }
             }
         }
         if (idSet != null && idSet.size() > 0) {
-            if (idSet.contains(task.getId())) {
+            if (idSet.contains(taskId)) {
                 return true;
             }
         }

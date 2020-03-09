@@ -38,7 +38,7 @@ import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.validation.ValidationSeverity;
+import stroom.security.impl.ValidationSeverity;
 
 import javax.inject.Singleton;
 import javax.validation.Valid;

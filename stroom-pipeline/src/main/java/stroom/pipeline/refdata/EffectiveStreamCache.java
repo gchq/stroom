@@ -20,13 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
-import stroom.meta.shared.EffectiveMetaDataCriteria;
+import stroom.meta.api.EffectiveMetaDataCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.pipeline.errorhandler.ProcessException;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.Period;
+import stroom.util.Period;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

@@ -16,8 +16,12 @@
 
 package stroom.pipeline.shared.data;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -29,36 +33,66 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Pipeline", propOrder = {"elements", "properties", "pipelineReferences", "links"})
 @XmlRootElement(name = "pipeline")
-public class PipelineData implements SharedObject {
-    private static final long serialVersionUID = -4874097335141550178L;
-
-    @XmlElement(name = "elements", required = false)
+@JsonInclude(Include.NON_NULL)
+@JsonPropertyOrder({"elements", "properties", "pipelineReferences", "links"})
+public class PipelineData {
+    @XmlElement(name = "elements")
+    @JsonProperty
     private PipelineElements elements = new PipelineElements();
-    @XmlElement(name = "properties", required = false)
+    @XmlElement(name = "properties")
+    @JsonProperty
     private PipelineProperties properties = new PipelineProperties();
-    @XmlElement(name = "pipelineReferences", required = false)
+    @XmlElement(name = "pipelineReferences")
+    @JsonProperty
     private PipelineReferences pipelineReferences = new PipelineReferences();
-    @XmlElement(name = "links", required = false)
+    @XmlElement(name = "links")
+    @JsonProperty
     private PipelineLinks links = new PipelineLinks();
+
+    public PipelineData() {
+    }
+
+    @JsonCreator
+    public PipelineData(@JsonProperty("elements") final PipelineElements elements,
+                        @JsonProperty("properties") final PipelineProperties properties,
+                        @JsonProperty("pipelineReferences") final PipelineReferences pipelineReferences,
+                        @JsonProperty("links") final PipelineLinks links) {
+        this.elements = elements;
+        this.properties = properties;
+        this.pipelineReferences = pipelineReferences;
+        this.links = links;
+    }
 
     public PipelineElements getElements() {
         return elements;
+    }
+
+    public void setElements(final PipelineElements elements) {
+        this.elements = elements;
     }
 
     public PipelineProperties getProperties() {
         return properties;
     }
 
+    public void setProperties(final PipelineProperties properties) {
+        this.properties = properties;
+    }
+
     public PipelineReferences getPipelineReferences() {
         return pipelineReferences;
+    }
+
+    public void setPipelineReferences(final PipelineReferences pipelineReferences) {
+        this.pipelineReferences = pipelineReferences;
     }
 
     public PipelineLinks getLinks() {
         return links;
     }
 
-    public PipelineData() {
-
+    public void setLinks(final PipelineLinks links) {
+        this.links = links;
     }
 
     // Used for testing....

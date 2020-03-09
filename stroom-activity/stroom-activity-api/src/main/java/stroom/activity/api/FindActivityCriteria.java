@@ -16,18 +16,37 @@
 
 package stroom.activity.api;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.BaseCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
 import stroom.util.shared.StringCriteria;
 import stroom.util.shared.StringCriteria.MatchStyle;
 
-public class FindActivityCriteria extends BaseCriteria {
-    private static final long serialVersionUID = 1451984883275629717L;
+import java.util.List;
 
+@JsonInclude(Include.NON_NULL)
+public class FindActivityCriteria extends BaseCriteria {
+    @JsonProperty
     private String userId;
+    @JsonProperty
     private StringCriteria name;
 
     public FindActivityCriteria() {
         name = new StringCriteria();
+    }
+
+    @JsonCreator
+    public FindActivityCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                @JsonProperty("sortList") final List<Sort> sortList,
+                                @JsonProperty("userId") final String userId,
+                                @JsonProperty("name") final StringCriteria name) {
+        super(pageRequest, sortList);
+        this.userId = userId;
+        this.name = name;
     }
 
     public static FindActivityCriteria create(final String name) {

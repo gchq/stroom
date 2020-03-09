@@ -16,9 +16,11 @@
 
 package stroom.statistics.impl.hbase.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 
@@ -28,29 +30,63 @@ import java.util.Objects;
 import java.util.Set;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class StroomStatsStoreDoc extends Doc {
-    private static final long serialVersionUID = -1667372785365881297L;
-
     public static final String DOCUMENT_TYPE = "StroomStatsStore";
 
     private static final EventStoreTimeIntervalEnum DEFAULT_PRECISION_INTERVAL = EventStoreTimeIntervalEnum.HOUR;
 
+    @JsonProperty
     private String description;
-    private StatisticType statisticType = StatisticType.COUNT;
-    private StatisticRollUpType statisticRollUpType = StatisticRollUpType.NONE;
+    @JsonProperty
+    private StatisticType statisticType;
+    @JsonProperty
+    private StatisticRollUpType rollUpType;
+    @JsonProperty
     private EventStoreTimeIntervalEnum precision;
-    private Boolean enabled;
+    @JsonProperty
+    private boolean enabled;
+    @JsonProperty
     private StroomStatsStoreEntityData config;
 
     public StroomStatsStoreDoc() {
-        setDefaults();
+        statisticType = StatisticType.COUNT;
+        rollUpType = StatisticRollUpType.NONE;
+        precision = DEFAULT_PRECISION_INTERVAL;
     }
 
-    private void setDefaults() {
-        this.statisticType = StatisticType.COUNT;
-        this.statisticRollUpType = StatisticRollUpType.NONE;
-        setPrecision(DEFAULT_PRECISION_INTERVAL);
+    @JsonCreator
+    public StroomStatsStoreDoc(@JsonProperty("type") final String type,
+                               @JsonProperty("uuid") final String uuid,
+                               @JsonProperty("name") final String name,
+                               @JsonProperty("version") final String version,
+                               @JsonProperty("createTime") final Long createTime,
+                               @JsonProperty("updateTime") final Long updateTime,
+                               @JsonProperty("createUser") final String createUser,
+                               @JsonProperty("updateUser") final String updateUser,
+                               @JsonProperty("description") final String description,
+                               @JsonProperty("statisticType") final StatisticType statisticType,
+                               @JsonProperty("rollUpType") final StatisticRollUpType rollUpType,
+                               @JsonProperty("precision") final EventStoreTimeIntervalEnum precision,
+                               @JsonProperty("enabled") final boolean enabled,
+                               @JsonProperty("config") final StroomStatsStoreEntityData config) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.statisticType = statisticType;
+        this.rollUpType = rollUpType;
+        this.precision = precision;
+        this.enabled = enabled;
+        this.config = config;
+
+        if (this.statisticType == null) {
+            this.statisticType = StatisticType.COUNT;
+        }
+        if (this.rollUpType == null) {
+            this.rollUpType = StatisticRollUpType.NONE;
+        }
+        if (this.precision == null) {
+            this.precision = DEFAULT_PRECISION_INTERVAL;
+        }
     }
 
     public String getDescription() {
@@ -70,11 +106,11 @@ public class StroomStatsStoreDoc extends Doc {
     }
 
     public StatisticRollUpType getRollUpType() {
-        return statisticRollUpType;
+        return rollUpType;
     }
 
     public void setRollUpType(final StatisticRollUpType rollUpType) {
-        this.statisticRollUpType = rollUpType;
+        this.rollUpType = rollUpType;
     }
 
     public EventStoreTimeIntervalEnum getPrecision() {
@@ -85,11 +121,11 @@ public class StroomStatsStoreDoc extends Doc {
         this.precision = precision;
     }
 
-    public Boolean isEnabled() {
+    public boolean isEnabled() {
         return enabled;
     }
 
-    public void setEnabled(final Boolean enabled) {
+    public void setEnabled(final boolean enabled) {
         this.enabled = enabled;
     }
 
@@ -103,13 +139,13 @@ public class StroomStatsStoreDoc extends Doc {
 
     @JsonIgnore
     public int getStatisticFieldCount() {
-        return config == null ? 0 : config.getStatisticFields().size();
+        return config == null ? 0 : config.getFields().size();
     }
 
     @JsonIgnore
     public List<StatisticField> getStatisticFields() {
         if (config != null) {
-            return config.getStatisticFields();
+            return config.getFields();
         } else {
             return Collections.emptyList();
         }
@@ -132,7 +168,7 @@ public class StroomStatsStoreDoc extends Doc {
         final StroomStatsStoreDoc that = (StroomStatsStoreDoc) o;
         return Objects.equals(description, that.description) &&
                 statisticType == that.statisticType &&
-                statisticRollUpType == that.statisticRollUpType &&
+                rollUpType == that.rollUpType &&
                 precision == that.precision &&
                 Objects.equals(enabled, that.enabled) &&
                 Objects.equals(config, that.config);
@@ -140,6 +176,6 @@ public class StroomStatsStoreDoc extends Doc {
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), description, statisticType, statisticRollUpType, precision, enabled, config);
+        return Objects.hash(super.hashCode(), description, statisticType, rollUpType, precision, enabled, config);
     }
 }

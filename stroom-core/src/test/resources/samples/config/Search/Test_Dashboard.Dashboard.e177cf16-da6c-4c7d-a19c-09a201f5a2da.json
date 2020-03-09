@@ -34,27 +34,37 @@
           "type" : "GENERAL"
         },
         "group" : 0,
-        "width" : 106
+        "width" : 106,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Count",
         "expression" : "count()",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "visible" : false
+        "width" : 200,
+        "visible" : false,
+        "special" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
-        "visible" : false
+        "width" : 200,
+        "visible" : false,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
         "name" : "Example extraction"
-      }
+      },
+      "maxResults" : [ 1000000 ]
     }
   }, {
     "type" : "vis",
@@ -97,34 +107,48 @@
         "format" : {
           "type" : "DATE_TIME"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "UserId",
         "expression" : "${UserId}",
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Count",
         "expression" : "count()",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "visible" : false
+        "width" : 200,
+        "visible" : false,
+        "special" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
-        "visible" : false
+        "width" : 200,
+        "visible" : false,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
         "name" : "Example extraction"
-      }
+      },
+      "maxResults" : [ 1000000 ]
     }
   }, {
     "type" : "vis",
@@ -143,13 +167,18 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : { },
+    "preferredSize" : {
+      "width" : 0,
+      "height" : 0
+    },
     "dimension" : 1,
     "children" : [ {
       "type" : "splitLayout",
       "preferredSize" : {
+        "width" : 0,
         "height" : 147
       },
+      "dimension" : 0,
       "children" : [ {
         "type" : "tabLayout",
         "preferredSize" : {
@@ -157,57 +186,62 @@
           "height" : 122
         },
         "tabs" : [ {
-          "id" : "query-MRGPM"
+          "id" : "query-MRGPM",
+          "visible" : true
         } ],
-        "selected" : 0,
-        "visibleTabCount" : 1,
-        "allTabCount" : 1
+        "selected" : 0
       }, {
         "type" : "tabLayout",
         "preferredSize" : {
-          "width" : 564
+          "width" : 564,
+          "height" : 0
         },
         "tabs" : [ {
-          "id" : "table-78LF4"
+          "id" : "table-78LF4",
+          "visible" : true
         } ],
-        "selected" : 0,
-        "visibleTabCount" : 1,
-        "allTabCount" : 1
+        "selected" : 0
       } ]
     }, {
       "type" : "splitLayout",
       "preferredSize" : {
+        "width" : 0,
         "height" : 599
       },
+      "dimension" : 0,
       "children" : [ {
         "type" : "splitLayout",
         "preferredSize" : {
-          "width" : 603
+          "width" : 603,
+          "height" : 0
         },
         "dimension" : 1,
         "children" : [ {
           "type" : "tabLayout",
           "preferredSize" : {
+            "width" : 0,
             "height" : 168
           },
           "tabs" : [ {
-            "id" : "vis-L1AL1"
+            "id" : "vis-L1AL1",
+            "visible" : true
           } ],
-          "selected" : 0,
-          "visibleTabCount" : 1,
-          "allTabCount" : 1
+          "selected" : 0
         } ]
       }, {
         "type" : "splitLayout",
         "preferredSize" : {
-          "width" : 526
+          "width" : 526,
+          "height" : 0
         },
         "dimension" : 1,
         "children" : [ {
           "type" : "splitLayout",
           "preferredSize" : {
+            "width" : 0,
             "height" : 310
           },
+          "dimension" : 0,
           "children" : [ {
             "type" : "tabLayout",
             "preferredSize" : {
@@ -215,36 +249,36 @@
               "height" : 246
             },
             "tabs" : [ {
-              "id" : "vis-QYG7H"
+              "id" : "vis-QYG7H",
+              "visible" : true
             } ],
-            "selected" : 0,
-            "visibleTabCount" : 1,
-            "allTabCount" : 1
+            "selected" : 0
           }, {
             "type" : "tabLayout",
             "preferredSize" : {
-              "width" : 292
+              "width" : 292,
+              "height" : 0
             },
             "tabs" : [ {
-              "id" : "table-BKJT6"
+              "id" : "table-BKJT6",
+              "visible" : true
             } ],
-            "selected" : 0,
-            "visibleTabCount" : 1,
-            "allTabCount" : 1
+            "selected" : 0
           } ]
         }, {
           "type" : "tabLayout",
           "preferredSize" : {
+            "width" : 0,
             "height" : 289
           },
           "tabs" : [ {
-            "id" : "vis-SPSCW"
+            "id" : "vis-SPSCW",
+            "visible" : true
           } ],
-          "selected" : 0,
-          "visibleTabCount" : 1,
-          "allTabCount" : 1
+          "selected" : 0
         } ]
       } ]
     } ]
-  }
+  },
+  "tabVisibility" : "SHOW_ALL"
 }

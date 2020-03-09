@@ -17,27 +17,43 @@
 
 package stroom.receive.rules.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.docref.SharedObject;
 import stroom.docstore.shared.Doc;
 
 import java.util.List;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "fields", "rules"})
-@JsonInclude(Include.NON_DEFAULT)
-public class ReceiveDataRules extends Doc implements SharedObject {
-    private static final long serialVersionUID = -7268301402378907741L;
-
+@JsonInclude(Include.NON_NULL)
+public class ReceiveDataRules extends Doc {
     public static final String DOCUMENT_TYPE = "ReceiveDataRuleSet";
 
+    @JsonProperty
     private List<AbstractField> fields;
+    @JsonProperty
     private List<ReceiveDataRule> rules;
 
     public ReceiveDataRules() {
-        // Default constructor for GWT serialisation.
+    }
+
+    @JsonCreator
+    public ReceiveDataRules(@JsonProperty("type") final String type,
+                            @JsonProperty("uuid") final String uuid,
+                            @JsonProperty("name") final String name,
+                            @JsonProperty("version") final String version,
+                            @JsonProperty("createTime") final Long createTime,
+                            @JsonProperty("updateTime") final Long updateTime,
+                            @JsonProperty("createUser") final String createUser,
+                            @JsonProperty("updateUser") final String updateUser,
+                            @JsonProperty("fields") final List<AbstractField> fields,
+                            @JsonProperty("rules") final List<ReceiveDataRule> rules) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.fields = fields;
+        this.rules = rules;
     }
 
     public List<AbstractField> getFields() {

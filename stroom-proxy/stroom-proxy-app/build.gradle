@@ -19,6 +19,7 @@ dependencies {
     compile project(':stroom-explorer:stroom-collection-mock')
     compile project(':stroom-meta:stroom-meta-api')
     compile project(':stroom-pipeline')
+    compile project(':stroom-proxy:stroom-proxy-remote-api')
     compile project(':stroom-proxy:stroom-proxy-repo')
     compile project(':stroom-receive:stroom-receive-common')
     compile project(':stroom-receive:stroom-receive-rules-impl')
@@ -53,7 +54,6 @@ dependencies {
     compile libs.jetty_server
     compile libs.slf4j_api
     compile libs.stroomDocRef
-    compile libs.stroomProxyRemoteApi
     
     testCompile project(':stroom-test-common')
 

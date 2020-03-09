@@ -19,9 +19,9 @@ package stroom.task.impl;
 import stroom.cluster.task.api.ClusterTask;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.TaskProgress;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 
-public class FindTaskProgressClusterTask extends ClusterTask<ResultList<TaskProgress>> {
+public class FindTaskProgressClusterTask extends ClusterTask<ResultPage<TaskProgress>> {
     private static final long serialVersionUID = -5285569438944240375L;
 
     private FindTaskProgressCriteria criteria;
