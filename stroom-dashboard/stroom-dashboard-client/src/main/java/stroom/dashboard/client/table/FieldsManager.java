@@ -206,22 +206,20 @@ public class FieldsManager implements HeadingListener {
                 change = true;
             }
         } else {
-            if (field.getSort() == null) {
+            final Sort sort = field.getSort();
+            if (sort == null) {
                 final int lowestSortOrder = getLowestSortOrder(fields);
                 field.setSort(new Sort(lowestSortOrder + 1, direction));
                 change = true;
             } else {
                 final int lowestSortOrder = getLowestSortOrder(fields);
-
-                if (field.getSort().getDirection() != direction || field.getSort().getOrder() != lowestSortOrder) {
-                    field.getSort().setDirection(direction);
-
+                if (sort.getDirection() != direction || sort.getOrder() != lowestSortOrder) {
                     // Increase sort order on all fields where the sort order is
                     // lower than this fields sort order as this field will now
                     // have the lowest order.
                     increaseSortOrder(fields, field.getSort().getOrder());
 
-                    field.getSort().setOrder(lowestSortOrder);
+                    field.setSort(new Sort(lowestSortOrder, direction));
 
                     change = true;
                 }
@@ -252,7 +250,8 @@ public class FieldsManager implements HeadingListener {
         for (final Field field : fields) {
             final Sort sort = field.getSort();
             if (sort != null && sort.getOrder() > order) {
-                sort.setOrder(sort.getOrder() - 1);
+                final Sort newSort = new Sort(sort.getOrder() - 1, sort.getDirection());
+                field.setSort(newSort);
             }
         }
     }

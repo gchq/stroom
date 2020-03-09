@@ -23,6 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import stroom.dashboard.impl.download.TypeConverter;
 import stroom.dashboard.shared.ComponentResult;
+import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.Field;
 import stroom.dashboard.shared.Format.Type;
 import stroom.dashboard.shared.Row;
@@ -40,35 +41,35 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 public class SearchResponseMapper {
-    public SearchResponse mapResponse(final stroom.query.api.v2.SearchResponse searchResponse) {
+    public SearchResponse mapResponse(final DashboardQueryKey queryKey, final stroom.query.api.v2.SearchResponse searchResponse) {
         if (searchResponse == null) {
             return null;
         }
 
-        final SearchResponse copy = new SearchResponse();
+        Set<String> highlights = null;
+        if (searchResponse.getHighlights() != null) {
+            highlights = new HashSet<>(searchResponse.getHighlights());
+        }
 
+        String errors = null;
+        if (searchResponse.getErrors() != null) {
+            errors = searchResponse.getErrors().stream()
+                    .collect(Collectors.joining("\n"));
+        }
+
+        Map<String, ComponentResult> results = null;
         if (searchResponse.getResults() != null) {
+            results = new HashMap<>();
             for (final Result result : searchResponse.getResults()) {
-                copy.addResult(result.getComponentId(), mapResult(result));
+                results.put(result.getComponentId(), mapResult(result));
             }
         }
 
-        if (searchResponse.getHighlights() != null) {
-            copy.setHighlights(new HashSet<>(searchResponse.getHighlights()));
-        }
-
-        if (searchResponse.getErrors() != null) {
-            String errorStr = searchResponse.getErrors().stream()
-                    .collect(Collectors.joining("\n"));
-            copy.setErrors(errorStr);
-        }
-
-        copy.setComplete(searchResponse.complete());
-
-        return copy;
+        return new SearchResponse(queryKey, highlights, errors, searchResponse.complete(), results);
     }
 
     private ComponentResult mapResult(final Result result) {
@@ -79,17 +80,14 @@ public class SearchResponseMapper {
         if (result instanceof stroom.query.api.v2.TableResult) {
             final stroom.query.api.v2.TableResult tableResult = (stroom.query.api.v2.TableResult) result;
 
-            final TableResult copy = new TableResult();
-
-            copy.setFields(mapFields(tableResult.getFields()));
-            copy.setRows(mapRows(tableResult.getRows()));
+            final List<Field> fields = mapFields(tableResult.getFields());
+            final List<Row> rows = mapRows(tableResult.getRows());
+            OffsetRange<Integer> resultRange = null;
             if (tableResult.getResultRange() != null) {
-                copy.setResultRange(new OffsetRange<>(tableResult.getResultRange().getOffset().intValue(), tableResult.getResultRange().getLength().intValue()));
+                resultRange = new OffsetRange<>(tableResult.getResultRange().getOffset().intValue(), tableResult.getResultRange().getLength().intValue());
             }
-            copy.setError(tableResult.getError());
-            copy.setTotalResults(tableResult.getTotalResults());
 
-            return copy;
+            return new TableResult(fields, rows, resultRange, tableResult.getTotalResults(), tableResult.getError());
         } else if (result instanceof FlatResult) {
             final FlatResult visResult = (FlatResult) result;
             return mapVisResult(visResult);

@@ -230,7 +230,7 @@ public class TableComponentSettings extends ComponentSettings {
         if (fields != null) {
             fieldsCopy = new ArrayList<>(fields.size());
             for (final Field field : fields) {
-                fieldsCopy.add(field.copy());
+                fieldsCopy.add(new Field.Builder().copy(field).build());
             }
         }
 

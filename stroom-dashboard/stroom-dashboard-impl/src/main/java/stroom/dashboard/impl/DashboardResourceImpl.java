@@ -414,7 +414,7 @@ class DashboardResourceImpl implements DashboardResource, HasHealthCheck {
 
             stroom.query.api.v2.SearchRequest mappedRequest = searchRequestMapper.mapRequest(queryKey, searchRequest);
             stroom.query.api.v2.SearchResponse searchResponse = dataSourceProvider.search(mappedRequest);
-            result = new SearchResponseMapper().mapResponse(searchResponse);
+            result = new SearchResponseMapper().mapResponse(queryKey, searchResponse);
 
             if (newSearch) {
                 // Log this search request for the current user.
@@ -428,13 +428,14 @@ class DashboardResourceImpl implements DashboardResource, HasHealthCheck {
                 searchEventLog.search(search.getDataSourceRef(), search.getExpression(), search.getQueryInfo(), e);
             }
 
-            result = new SearchResponse();
+            String errors = null;
             if (e.getMessage() == null) {
-                result.setErrors(e.getClass().getName());
+                errors = e.getClass().getName();
             } else {
-                result.setErrors(e.getClass().getName() + ": " + e.getMessage());
+                errors = e.getClass().getName() + ": " + e.getMessage();
             }
-            result.setComplete(true);
+
+            result = new SearchResponse(queryKey, null, errors, true, null);
         }
 
         return result;
