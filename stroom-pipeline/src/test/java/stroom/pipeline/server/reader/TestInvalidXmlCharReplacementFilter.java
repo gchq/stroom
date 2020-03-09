@@ -18,6 +18,7 @@ package stroom.pipeline.server.reader;
 
 import org.junit.Before;
 import org.junit.Test;
+import stroom.pipeline.server.reader.InvalidXmlCharReplacementFilter.XmlMode;
 
 import java.io.CharArrayReader;
 import java.io.IOException;
@@ -27,13 +28,13 @@ import java.util.Random;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class TestInvalidXMLCharFilterReader {
+public class TestInvalidXmlCharReplacementFilter {
     public static final char REPLACE_CHAR = 0xfffd;
 
     private final int[] m_test_chunk_sizes = {1, 2, 3, 5, 7, 11, 13, 16};
     private char[] m_bmp_rep_twice, m_brokenutf16str;
 
-    private static boolean isValidXmlCP(final int ch, final InvalidXMLCharFilterReader.XMLmode mode) {
+    private static boolean isValidXmlCP(final int ch, final XmlMode mode) {
         switch (mode) {
             case XML_1_0:
                 return ch == 0x9 || ch == 0xa || ch == 0xd || (ch >= 0x20 && ch <= 0xd7ff) || (ch >= 0xe000 && ch <= 0xfffd)
@@ -63,12 +64,12 @@ public class TestInvalidXMLCharFilterReader {
         }
     }
 
-    private Reader getReader(final char[] data, final InvalidXMLCharFilterReader.XMLmode mode) {
+    private Reader getReader(final char[] data, final XmlMode mode) {
         final Reader r = new CharArrayReader(data);
-        return new InvalidXMLCharFilterReader(r, mode);
+        return new InvalidXmlCharReplacementFilter(r, mode);
     }
 
-    private void readCharBMP(final char[] testData, final InvalidXMLCharFilterReader.XMLmode mode) throws IOException {
+    private void readCharBMP(final char[] testData, final XmlMode mode) throws IOException {
         final Reader r = getReader(testData, mode);
         for (int idx = 0; idx != testData.length; ++idx) {
             final int rch = r.read();
@@ -79,7 +80,7 @@ public class TestInvalidXMLCharFilterReader {
         assertEquals(-1, rch);
     }
 
-    private void readArrayBMP(final char[] testData, final InvalidXMLCharFilterReader.XMLmode mode) throws IOException {
+    private void readArrayBMP(final char[] testData, final XmlMode mode) throws IOException {
         for (final int chunkSize : m_test_chunk_sizes) {
             final Reader r = getReader(testData, mode);
             final char[] buf = new char[chunkSize];
@@ -101,7 +102,7 @@ public class TestInvalidXMLCharFilterReader {
         }
     }
 
-    private void readCharFullUTF16(final char[] testData, final InvalidXMLCharFilterReader.XMLmode mode)
+    private void readCharFullUTF16(final char[] testData, final XmlMode mode)
             throws IOException {
         final Reader r = getReader(testData, mode);
         for (int idx = 0; idx != testData.length; ++idx) {
@@ -123,10 +124,10 @@ public class TestInvalidXMLCharFilterReader {
         assertEquals(-1, rch);
     }
 
-    private void readArrayFullUTF16(final char[] testData, final InvalidXMLCharFilterReader.XMLmode mode)
+    private void readArrayFullUTF16(final char[] testData, final XmlMode mode)
             throws IOException {
         for (final int chunkSize : m_test_chunk_sizes) {
-            final Reader r = getReader(testData, InvalidXMLCharFilterReader.XMLmode.XML_1_0);
+            final Reader r = getReader(testData, XmlMode.XML_1_0);
             final char[] buf = new char[chunkSize];
             int origidx = 0;
             final int trail_size = testData.length % chunkSize;
@@ -164,41 +165,41 @@ public class TestInvalidXMLCharFilterReader {
 
     @Test
     public void testReadCharBMP_XML10() throws IOException {
-        readCharBMP(m_bmp_rep_twice, InvalidXMLCharFilterReader.XMLmode.XML_1_0);
+        readCharBMP(m_bmp_rep_twice, XmlMode.XML_1_0);
     }
 
     @Test
     public void testReadCharBMP_XML11() throws IOException {
-        readCharBMP(m_bmp_rep_twice, InvalidXMLCharFilterReader.XMLmode.XML_1_1);
+        readCharBMP(m_bmp_rep_twice, XmlMode.XML_1_1);
     }
 
     @Test
     public void testReadArrayBMP_XML10() throws IOException {
-        readArrayBMP(m_bmp_rep_twice, InvalidXMLCharFilterReader.XMLmode.XML_1_0);
+        readArrayBMP(m_bmp_rep_twice, XmlMode.XML_1_0);
     }
 
     @Test
     public void testReadArrayBMP_XML11() throws IOException {
-        readArrayBMP(m_bmp_rep_twice, InvalidXMLCharFilterReader.XMLmode.XML_1_1);
+        readArrayBMP(m_bmp_rep_twice, XmlMode.XML_1_1);
     }
 
     @Test
     public void testReadCharFullUTF16_XML10() throws IOException {
-        readCharFullUTF16(m_brokenutf16str, InvalidXMLCharFilterReader.XMLmode.XML_1_0);
+        readCharFullUTF16(m_brokenutf16str, XmlMode.XML_1_0);
     }
 
     @Test
     public void testReadCharFullUTF16_XML11() throws IOException {
-        readCharFullUTF16(m_brokenutf16str, InvalidXMLCharFilterReader.XMLmode.XML_1_1);
+        readCharFullUTF16(m_brokenutf16str, XmlMode.XML_1_1);
     }
 
     @Test
     public void testReadArrayFullUTF16_XML10() throws IOException {
-        readArrayFullUTF16(m_brokenutf16str, InvalidXMLCharFilterReader.XMLmode.XML_1_0);
+        readArrayFullUTF16(m_brokenutf16str, XmlMode.XML_1_0);
     }
 
     @Test
     public void testReadArrayFullUTF16_XML11() throws IOException {
-        readArrayFullUTF16(m_brokenutf16str, InvalidXMLCharFilterReader.XMLmode.XML_1_1);
+        readArrayFullUTF16(m_brokenutf16str, XmlMode.XML_1_1);
     }
 }
