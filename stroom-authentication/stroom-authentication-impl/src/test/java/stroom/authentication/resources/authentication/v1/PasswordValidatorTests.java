@@ -1,15 +1,11 @@
 package stroom.authentication.resources.authentication.v1;
 
 import org.junit.Test;
-import stroom.authentication.impl.db.UserDao;
 
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static stroom.authentication.impl.db.UserDao.LoginResult.BAD_CREDENTIALS;
-import static stroom.authentication.impl.db.UserDao.LoginResult.DISABLED_BAD_CREDENTIALS;
-import static stroom.authentication.impl.db.UserDao.LoginResult.LOCKED_BAD_CREDENTIALS;
-import static stroom.authentication.impl.db.UserDao.LoginResult.USER_DOES_NOT_EXIST;
+import static stroom.authentication.LoginResult.*;
 import static stroom.authentication.resources.authentication.v1.PasswordValidationFailureType.BAD_OLD_PASSWORD;
 import static stroom.authentication.resources.authentication.v1.PasswordValidationFailureType.REUSE;
 import static stroom.authentication.resources.authentication.v1.PasswordValidator.validateAuthenticity;
@@ -73,9 +69,9 @@ public class PasswordValidatorTests {
         assertThat(validateAuthenticity(LOCKED_BAD_CREDENTIALS).get()).isEqualTo(BAD_OLD_PASSWORD);
         assertThat(validateAuthenticity(USER_DOES_NOT_EXIST).get()).isEqualTo(BAD_OLD_PASSWORD);
 
-        assertThat(validateAuthenticity(UserDao.LoginResult.GOOD_CREDENTIALS).isPresent()).isFalse();
-        assertThat(validateAuthenticity(UserDao.LoginResult.DISABLED_GOOD_CREDENTIALS).isPresent()).isFalse();
-        assertThat(validateAuthenticity(UserDao.LoginResult.LOCKED_GOOD_CREDENTIALS).isPresent()).isFalse();
+        assertThat(validateAuthenticity(GOOD_CREDENTIALS).isPresent()).isFalse();
+        assertThat(validateAuthenticity(DISABLED_GOOD_CREDENTIALS).isPresent()).isFalse();
+        assertThat(validateAuthenticity(LOCKED_GOOD_CREDENTIALS).isPresent()).isFalse();
     }
 
     @Test

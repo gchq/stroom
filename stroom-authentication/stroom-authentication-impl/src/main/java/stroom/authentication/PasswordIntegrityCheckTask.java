@@ -1,7 +1,7 @@
 package stroom.authentication;
 
 import stroom.authentication.config.PasswordIntegrityChecksConfig;
-import stroom.authentication.impl.db.UserDao;
+import stroom.authentication.resources.user.v1.UserDao;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

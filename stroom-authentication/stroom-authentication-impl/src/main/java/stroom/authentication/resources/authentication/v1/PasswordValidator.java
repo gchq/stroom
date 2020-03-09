@@ -1,13 +1,11 @@
 package stroom.authentication.resources.authentication.v1;
 
-import stroom.authentication.impl.db.UserDao.LoginResult;
+
+import stroom.authentication.LoginResult;
 
 import java.util.Optional;
 
-import static stroom.authentication.impl.db.UserDao.LoginResult.BAD_CREDENTIALS;
-import static stroom.authentication.impl.db.UserDao.LoginResult.DISABLED_BAD_CREDENTIALS;
-import static stroom.authentication.impl.db.UserDao.LoginResult.LOCKED_BAD_CREDENTIALS;
-import static stroom.authentication.impl.db.UserDao.LoginResult.USER_DOES_NOT_EXIST;
+import static stroom.authentication.LoginResult.*;
 import static stroom.authentication.resources.authentication.v1.PasswordValidationFailureType.BAD_OLD_PASSWORD;
 import static stroom.authentication.resources.authentication.v1.PasswordValidationFailureType.COMPLEXITY;
 import static stroom.authentication.resources.authentication.v1.PasswordValidationFailureType.LENGTH;

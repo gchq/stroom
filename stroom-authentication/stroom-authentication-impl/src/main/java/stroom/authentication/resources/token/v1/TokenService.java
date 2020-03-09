@@ -3,7 +3,6 @@ package stroom.authentication.resources.token.v1;
 import org.jose4j.jwk.JsonWebKey;
 import stroom.authentication.TokenVerifier;
 import stroom.authentication.config.StroomConfig;
-import stroom.authentication.impl.db.TokenDao;
 import stroom.authentication.resources.user.v1.User;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;

@@ -15,9 +15,9 @@ public class AuthDbModule extends AbstractFlyWayDbModule<AuthenticationDbConfig,
     protected void configure() {
         super.configure();
 
-        bind(TokenDao.class);
-        bind(UserDao.class);
-        bind(JwkDao.class);
+        bind(TokenDaoImpl.class);
+        bind(UserDaoImpl.class);
+        bind(JwkDaoImpl.class);
     }
 
     @Override

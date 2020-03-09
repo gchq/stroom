@@ -19,6 +19,7 @@ import java.util.Date;
 /**
  * A factory to assist with creating Stroom logging events.
  */
+//TODO: delete me
 class StroomEventFactory extends DefaultEventLoggingService implements EventLoggingService {
     private static final Logger LOGGER = LoggerFactory.getLogger(StroomEventLoggingService.class);
     private static final String GENERATOR = "EventLoggingService";

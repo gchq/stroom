@@ -6,10 +6,10 @@ import org.slf4j.LoggerFactory;
 import stroom.authentication.*;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.config.PasswordIntegrityChecksConfig;
-import stroom.authentication.impl.db.TokenDao;
-import stroom.authentication.impl.db.UserDao;
 import stroom.authentication.resources.token.v1.Token;
+import stroom.authentication.resources.token.v1.TokenDao;
 import stroom.authentication.resources.user.v1.User;
+import stroom.authentication.resources.user.v1.UserDao;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.ExchangeAccessCodeRequest;
@@ -194,7 +194,7 @@ public class AuthenticationService {
             stroom.authentication.Session session = optionalSession.get();
 
             // Check the credentials
-            UserDao.LoginResult loginResult = userDao.areCredentialsValid(credentials.getEmail(), credentials.getPassword());
+            LoginResult loginResult = userDao.areCredentialsValid(credentials.getEmail(), credentials.getPassword());
             switch (loginResult) {
                 case BAD_CREDENTIALS:
                     LOGGER.debug("Password for {} is incorrect", credentials.getEmail());
@@ -293,7 +293,7 @@ public class AuthenticationService {
 
     public ChangePasswordResponse changePassword(ChangePasswordRequest changePasswordRequest) {
         List<PasswordValidationFailureType> failedOn = new ArrayList<>();
-        final UserDao.LoginResult loginResult = userDao.areCredentialsValid(changePasswordRequest.getEmail(), changePasswordRequest.getOldPassword());
+        final LoginResult loginResult = userDao.areCredentialsValid(changePasswordRequest.getEmail(), changePasswordRequest.getOldPassword());
         validateAuthenticity(loginResult).ifPresent(failedOn::add);
         validateReuse(changePasswordRequest.getOldPassword(), changePasswordRequest.getNewPassword()).ifPresent(failedOn::add);
         validateLength(changePasswordRequest.getNewPassword(), config.getPasswordIntegrityChecksConfig().getMinimumPasswordLength()).ifPresent(failedOn::add);
@@ -345,7 +345,7 @@ public class AuthenticationService {
         List<PasswordValidationFailureType> failedOn = new ArrayList<>();
 
         if (passwordValidationRequest.getOldPassword() != null) {
-            final UserDao.LoginResult loginResult = userDao.areCredentialsValid(passwordValidationRequest.getEmail(), passwordValidationRequest.getOldPassword());
+            final LoginResult loginResult = userDao.areCredentialsValid(passwordValidationRequest.getEmail(), passwordValidationRequest.getOldPassword());
             validateAuthenticity(loginResult).ifPresent(failedOn::add);
             validateReuse(passwordValidationRequest.getOldPassword(), passwordValidationRequest.getNewPassword()).ifPresent(failedOn::add);
         }

@@ -5,7 +5,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.jooq.JSONFormat;
 import org.jooq.Result;
 import stroom.authentication.exceptions.ConflictException;
-import stroom.authentication.impl.db.UserDao;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionException;
