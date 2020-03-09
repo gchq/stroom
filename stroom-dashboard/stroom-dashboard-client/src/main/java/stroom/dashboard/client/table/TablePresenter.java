@@ -37,6 +37,8 @@ import stroom.core.client.LocationManager;
 import stroom.dashboard.client.main.AbstractComponentPresenter;
 import stroom.dashboard.client.main.Component;
 import stroom.dashboard.client.main.ComponentRegistry.ComponentType;
+import stroom.dashboard.client.main.DataSourceFieldsMap;
+import stroom.dashboard.client.main.IndexConstants;
 import stroom.dashboard.client.main.ResultComponent;
 import stroom.dashboard.client.main.SearchModel;
 import stroom.dashboard.client.query.QueryPresenter;
@@ -47,12 +49,11 @@ import stroom.dashboard.shared.ComponentResultRequest;
 import stroom.dashboard.shared.ComponentSettings;
 import stroom.dashboard.shared.DashboardQueryKey;
 import stroom.dashboard.shared.DashboardResource;
-import stroom.dashboard.client.main.DataSourceFieldsMap;
 import stroom.dashboard.shared.DownloadSearchResultsRequest;
 import stroom.dashboard.shared.Field;
+import stroom.dashboard.shared.Field.Builder;
 import stroom.dashboard.shared.Format;
 import stroom.dashboard.shared.Format.Type;
-import stroom.dashboard.client.main.IndexConstants;
 import stroom.dashboard.shared.Row;
 import stroom.dashboard.shared.Search;
 import stroom.dashboard.shared.SearchRequest;
@@ -259,18 +260,19 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
             final List<Field> addFields = new ArrayList<>();
             if (currentSearchModel.getIndexLoader().getIndexFieldNames() != null) {
                 for (final String indexFieldName : currentSearchModel.getIndexLoader().getIndexFieldNames()) {
-                    final Field field = new Field(indexFieldName);
+                    final Builder fieldBuilder = new Builder();
+                    fieldBuilder.name(indexFieldName);
                     final String fieldParam = ParamUtil.makeParam(indexFieldName);
 
                     if (indexFieldName.startsWith("annotation:")) {
                         final AbstractField dataSourceField = currentSearchModel.getIndexLoader().getDataSourceFieldsMap().get(indexFieldName);
                         if (dataSourceField != null && FieldTypes.DATE.equals(dataSourceField.getType())) {
-                            field.setExpression("annotation(formatDate(" + fieldParam + "), ${annotation:Id}, ${StreamId}, ${EventId})");
+                            fieldBuilder.expression("annotation(formatDate(" + fieldParam + "), ${annotation:Id}, ${StreamId}, ${EventId})");
                         } else {
-                            field.setExpression("annotation(" + fieldParam + ", ${annotation:Id}, ${StreamId}, ${EventId})");
+                            fieldBuilder.expression("annotation(" + fieldParam + ", ${annotation:Id}, ${StreamId}, ${EventId})");
                         }
                     } else {
-                        field.setExpression(fieldParam);
+                        fieldBuilder.expression(fieldParam);
                     }
 
                     final DataSourceFieldsMap indexFieldsMap = getIndexFieldsMap();
@@ -279,37 +281,43 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
                         if (indexField != null) {
                             switch (indexField.getType()) {
                                 case FieldTypes.DATE:
-                                    field.setFormat(new Format(Type.DATE_TIME));
+                                    fieldBuilder.format(new Format(Type.DATE_TIME));
                                     break;
                                 case FieldTypes.INTEGER:
                                 case FieldTypes.LONG:
                                 case FieldTypes.FLOAT:
                                 case FieldTypes.DOUBLE:
                                 case FieldTypes.ID:
-                                    field.setFormat(new Format(Type.NUMBER));
+                                    fieldBuilder.format(new Format(Type.NUMBER));
                                     break;
                                 default:
-                                    field.setFormat(new Format(Type.GENERAL));
+                                    fieldBuilder.format(new Format(Type.GENERAL));
                                     break;
                             }
                         }
                     }
 
-                    addFields.add(field);
+                    addFields.add(fieldBuilder.build());
                 }
             }
 
-            final Field count = new Field("Count");
-            count.setFormat(new Format(Type.NUMBER));
-            count.setExpression("count()");
+            final Field count = new Field.Builder()
+                    .name("Count")
+                    .format(new Format(Type.NUMBER))
+                    .expression("count()")
+                    .build();
             addFields.add(count);
 
-            final Field countGroups = new Field("Count Groups");
-            countGroups.setFormat(new Format(Type.NUMBER));
-            countGroups.setExpression("countGroups()");
+            final Field countGroups = new Field.Builder()
+                    .name("Count Groups")
+                    .format(new Format(Type.NUMBER))
+                    .expression("countGroups()")
+                    .build();
             addFields.add(countGroups);
 
-            final Field custom = new Field("Custom");
+            final Field custom = new Field.Builder()
+                    .name("Custom")
+                    .build();
             addFields.add(custom);
 
             fieldAddPresenter.setFields(addFields);
@@ -642,11 +650,13 @@ public class TablePresenter extends AbstractComponentPresenter<TableView>
 
             // Now make sure special fields exist.
             for (String specialFieldName : specialFieldNames) {
-                final Field field = new Field(specialFieldName);
-                field.setId(specialFieldName);
-                field.setExpression(ParamUtil.makeParam(specialFieldName));
-                field.setVisible(false);
-                field.setSpecial(true);
+                final Field field = new Field.Builder()
+                        .name(specialFieldName)
+                        .id(specialFieldName)
+                        .expression(ParamUtil.makeParam(specialFieldName))
+                        .visible(false)
+                        .special(true)
+                        .build();
                 tableSettings.addField(field);
             }
         }

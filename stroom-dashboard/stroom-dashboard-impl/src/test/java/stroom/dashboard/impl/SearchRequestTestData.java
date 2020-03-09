@@ -115,11 +115,6 @@ public class SearchRequestTestData {
 
     private static DateTimeFormatSettings createDateTimeFormat() {
         final TimeZone timeZone = TimeZone.fromOffset(2, 30);
-
-        final DateTimeFormatSettings dateTimeFormat = new DateTimeFormatSettings();
-        dateTimeFormat.setPattern("yyyy-MM-dd'T'HH:mm:ss");
-        dateTimeFormat.setTimeZone(timeZone);
-
-        return dateTimeFormat;
+        return new DateTimeFormatSettings("yyyy-MM-dd'T'HH:mm:ss", timeZone);
     }
 }

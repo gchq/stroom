@@ -20,11 +20,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@JsonPropertyOrder({"jsonData", "dataPoints", "error"})
 @JsonInclude(Include.NON_NULL)
 public class VisResult implements ComponentResult {
-    private static final long serialVersionUID = 3826654996795750099L;
-
     @JsonProperty
     private final String jsonData;
     @JsonProperty
