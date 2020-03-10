@@ -75,7 +75,7 @@ class CacheResourceImpl implements CacheResource, HasHealthCheck {
                 result = new CacheInfoResponse(list);
 
             } else {
-                String url = NodeCallUtil.getUrl(nodeService, nodeName);
+                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
                 url += ResourcePaths.API_ROOT_PATH + CacheResource.INFO_PATH;
                 final Response response = webTargetFactory
                         .create(url)
@@ -116,7 +116,7 @@ class CacheResourceImpl implements CacheResource, HasHealthCheck {
                 result = cacheManagerService.clear(criteria);
 
             } else {
-                String url = NodeCallUtil.getUrl(nodeService, nodeName);
+                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
                 url += ResourcePaths.API_ROOT_PATH + CacheResource.BASE_PATH;
                 final Response response = webTargetFactory
                         .create(url)

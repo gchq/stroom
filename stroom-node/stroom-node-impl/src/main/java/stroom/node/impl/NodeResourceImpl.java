@@ -117,7 +117,7 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
                 clusterNodeInfo = clusterNodeManager.getClusterNodeInfo();
 
             } else {
-                String url = NodeCallUtil.getUrl(nodeService, nodeName);
+                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
                 url += ResourcePaths.API_ROOT_PATH + NodeResource.BASE_PATH;
                 url += nodeName;
                 final Response response = webTargetFactory
@@ -158,10 +158,16 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
             if (NodeCallUtil.executeLocally(nodeService, nodeInfo, nodeName)) {
                 return System.currentTimeMillis() - now;
             } else {
-                String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_ROOT_PATH + NodeResource.BASE_PATH;
-                url += nodeName;
-                url += "/ping";
+                final String baseEndpointUrl = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
+
+                final String path = ResourcePaths.buildAuthenticatedApiPath(
+                    NodeResource.BASE_PATH,
+                    nodeName,
+                    "/ping")
+                    .build();
+
+                final String url = baseEndpointUrl + path;
+
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)

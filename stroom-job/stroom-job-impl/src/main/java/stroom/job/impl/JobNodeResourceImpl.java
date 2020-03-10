@@ -98,7 +98,7 @@ class JobNodeResourceImpl implements JobNodeResource, HasHealthCheck {
                 jobNodeInfo = jobNodeService.getInfo(jobName);
 
             } else {
-                String url = NodeCallUtil.getUrl(nodeService, nodeName);
+                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
                 url += ResourcePaths.API_ROOT_PATH + JobNodeResource.INFO_PATH;
                 final Response response = webTargetFactory
                         .create(url)

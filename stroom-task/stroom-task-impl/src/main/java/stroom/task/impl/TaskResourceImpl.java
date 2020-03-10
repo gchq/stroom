@@ -86,7 +86,7 @@ class TaskResourceImpl implements TaskResource, HasHealthCheck {
                 result = new TaskProgressResponse(resultPage.getValues(), resultPage.getPageResponse());
 
             } else {
-                String url = NodeCallUtil.getUrl(nodeService, nodeName);
+                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
                 url += ResourcePaths.API_ROOT_PATH + TaskResource.BASE_PATH;
                 url += nodeName;
                 final Response response = webTargetFactory
@@ -136,7 +136,7 @@ class TaskResourceImpl implements TaskResource, HasHealthCheck {
                 taskManager.terminate(request.getCriteria(), request.isKill());
 
             } else {
-                String url = NodeCallUtil.getUrl(nodeService, nodeName);
+                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
                 url += ResourcePaths.API_ROOT_PATH + TaskResource.BASE_PATH;
                 url += nodeName;
                 url += "/terminate";

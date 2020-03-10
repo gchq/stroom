@@ -98,7 +98,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
                 listConfigResponse = list(partialName, offset, size);
             } else {
                 // A different node to make a rest call to the required node
-                String url = NodeCallUtil.getUrl(nodeService, nodeName);
+                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
                 url += resourcePath;
                 final Response response = webTargetFactory
                     .create(url)
@@ -187,7 +187,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
                 yamlOverride = getYamlValueByName(propertyName);
             } else {
                 // A different node to make a rest call to the required node
-                String url = NodeCallUtil.getUrl(nodeService, nodeName);
+                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
                 url += resourcePath;
                 final Response response = webTargetFactory
                         .create(url)

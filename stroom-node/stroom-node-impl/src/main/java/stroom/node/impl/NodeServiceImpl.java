@@ -145,7 +145,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     }
 
     private synchronized void refreshNode() {
-        // Ensure
+        // Ensure the DB node record has the right endpoint url
         thisNode = nodeDao.getNode(nodeInfo.getThisNodeName());
 
         final String endpointUrl = nodeConfig.getBaseEndpoint().getBasePath();
@@ -154,7 +154,8 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
             final Node node = new Node();
             node.setName(nodeInfo.getThisNodeName());
             node.setUrl(endpointUrl);
-            LOGGER.info("Creating node record for {}", node.getName());
+            LOGGER.info("Creating node record for {} with endpoint url {}",
+                node.getName(), node.getUrl());
             thisNode = nodeDao.create(node);
         } else {
             if (!endpointUrl.equals(thisNode.getUrl())) {

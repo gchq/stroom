@@ -16,7 +16,7 @@ public final class NodeCallUtil {
         return thisNodeName.equals(nodeName);
     }
 
-    public static String getUrl(final NodeService nodeService,  final String nodeName) {
+    public static String getBaseEndpointUrl(final NodeService nodeService, final String nodeName) {
         String url = nodeService.getBaseEndpointUrl(nodeName);
         if (url == null || url.isBlank()) {
             throw new RuntimeException("Remote node '" + nodeName + "' has no URL set");
