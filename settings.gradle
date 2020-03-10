@@ -36,6 +36,14 @@ include 'stroom-annotation:stroom-annotation-pipeline'
 include 'stroom-app'
 include 'stroom-app-gwt'
 
+// Authentication
+include 'stroom-authentication:stroom-authentication-api'
+include 'stroom-authentication:stroom-authentication-api-swagger'
+include 'stroom-authentication:stroom-authentication-common'
+include 'stroom-authentication:stroom-authentication-impl'
+include 'stroom-authentication:stroom-authentication-impl-db'
+include 'stroom-authentication:stroom-authentication-impl-db-jooq'
+
 // Cache
 include 'stroom-cache:stroom-cache-api'
 include 'stroom-cache:stroom-cache-impl'
