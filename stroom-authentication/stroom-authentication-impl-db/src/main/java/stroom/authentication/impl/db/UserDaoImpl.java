@@ -76,9 +76,12 @@ public class UserDaoImpl implements UserDao {
         newUser.setCreatedByUser(creatingUsername);
         newUser.setLoginCount(0);
         UsersRecord usersRecord = UserMapper.map(newUser);
-        UsersRecord createdUser = JooqUtil.contextResult(authDbConnProvider, context -> context.newRecord(USERS, usersRecord));
-        createdUser.store();
-        return createdUser.getId();
+        int id = JooqUtil.contextResult(authDbConnProvider, context -> {
+            UsersRecord createdUser = context.newRecord(USERS, usersRecord);
+            createdUser.store();
+            return createdUser.getId();
+        });
+        return id;
     }
 
     @Override
