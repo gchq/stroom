@@ -4,7 +4,9 @@ public final class NodeCallUtil {
     private NodeCallUtil() {
     }
 
-    public static boolean executeLocally(final NodeService nodeService, final NodeInfo nodeInfo, final String nodeName) {
+    public static boolean executeLocally(final NodeService nodeService,
+                                         final NodeInfo nodeInfo,
+                                         final String nodeName) {
         final String thisNodeName = nodeInfo.getThisNodeName();
         if (thisNodeName == null) {
             throw new RuntimeException("This node has no name");
@@ -15,21 +17,21 @@ public final class NodeCallUtil {
     }
 
     public static String getUrl(final NodeService nodeService,  final String nodeName) {
-        String url = nodeService.getClusterUrl(nodeName);
-        if (url == null || url.trim().length() == 0) {
+        String url = nodeService.getBaseEndpointUrl(nodeName);
+        if (url == null || url.isBlank()) {
             throw new RuntimeException("Remote node '" + nodeName + "' has no URL set");
         }
 
-        // A normal cluster call url is something like "http://fqdn:8080/stroom/clustercall.rpc"
+        // A normal url is something like "http://fqdn:8080"
 
-        int index = url.lastIndexOf("/stroom/clustercall.rpc");
-        if (index != -1) {
-            url = url.substring(0, index);
-        }
-        index = url.lastIndexOf("/clustercall.rpc");
-        if (index != -1) {
-            url = url.substring(0, index);
-        }
+//        int index = url.lastIndexOf("/stroom/clustercall.rpc");
+//        if (index != -1) {
+//            url = url.substring(0, index);
+//        }
+//        index = url.lastIndexOf("/clustercall.rpc");
+//        if (index != -1) {
+//            url = url.substring(0, index);
+//        }
         return url;
     }
 }

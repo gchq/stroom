@@ -24,7 +24,9 @@ import stroom.dispatch.client.ClientDispatchAsync;
 
 public class NodeEditPresenter extends MyPresenterWidget<NodeEditPresenter.NodeEditView> {
     @Inject
-    public NodeEditPresenter(final EventBus eventBus, final NodeEditView view, final ClientDispatchAsync dispatcher) {
+    public NodeEditPresenter(final EventBus eventBus,
+                             final NodeEditView view,
+                             final ClientDispatchAsync dispatcher) {
         super(eventBus, view);
     }
 

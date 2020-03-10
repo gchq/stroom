@@ -16,6 +16,8 @@
 
 package stroom.node.impl;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.entity.shared.EntityAction;
 import stroom.entity.shared.EntityEvent;
 import stroom.entity.shared.EntityEventHandler;
@@ -38,18 +40,23 @@ import java.util.stream.Collectors;
 @Singleton
 @EntityEventHandler(type = Node.ENTITY_TYPE, action = {EntityAction.UPDATE, EntityAction.DELETE})
 public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Handler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NodeServiceImpl.class);
+
     private final SecurityContext securityContext;
     private final NodeDao nodeDao;
     private final NodeInfo nodeInfo;
+    private NodeConfig nodeConfig;
     private volatile Node thisNode;
 
     @Inject
     NodeServiceImpl(final SecurityContext securityContext,
                     final NodeDao nodeDao,
-                    final NodeInfo nodeInfo) {
+                    final NodeInfo nodeInfo,
+                    final NodeConfig nodeConfig) {
         this.securityContext = securityContext;
         this.nodeDao = nodeDao;
         this.nodeInfo = nodeInfo;
+        this.nodeConfig = nodeConfig;
     }
 
     Node update(final Node node) {
@@ -74,7 +81,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     }
 
     @Override
-    public String getClusterUrl(final String nodeName) {
+    public String getBaseEndpointUrl(final String nodeName) {
         final Node node = getNode(nodeName);
         if (node != null) {
             return node.getUrl();
@@ -118,23 +125,41 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         if (thisNode == null) {
             synchronized (this) {
                 if (thisNode == null) {
-                    thisNode = nodeDao.getNode(nodeInfo.getThisNodeName());
-
-                    if (thisNode == null) {
-                        // This will start a new mini transaction for the update
-                        final Node node = new Node();
-                        node.setName(nodeInfo.getThisNodeName());
-                        thisNode = nodeDao.create(node);
-                    }
+                    refreshNode();
                 }
 
                 if (thisNode == null) {
                     throw new RuntimeException("Default node not set");
                 }
             }
+        } else {
+            if (!nodeConfig.getBaseEndpoint().getBasePath().equals(thisNode.getUrl())) {
+                // Endpoint url has changed in config so update the node record
+                refreshNode();
+            }
         }
 
         return thisNode;
+    }
+
+    private synchronized void refreshNode() {
+        // Ensure
+        thisNode = nodeDao.getNode(nodeInfo.getThisNodeName());
+
+        final String endpointUrl = nodeConfig.getBaseEndpoint().getBasePath();
+        if (thisNode == null) {
+            // This will start a new mini transaction to create the node record
+            final Node node = new Node();
+            node.setName(nodeInfo.getThisNodeName());
+            node.setUrl(endpointUrl);
+            thisNode = nodeDao.create(node);
+        } else {
+            if (!endpointUrl.equals(thisNode.getUrl())) {
+                thisNode.setUrl(endpointUrl);
+                LOGGER.info("Updating node endpoint url to {}", endpointUrl);
+                update(thisNode);
+            }
+        }
     }
 
     @Override

@@ -25,7 +25,7 @@ public class ClusterNodeInfo {
     private String discoverTime;
     private BuildInfo buildInfo;
     private String nodeName;
-    private String clusterURL;
+    private String endpointUrl;
     private List<ClusterNodeInfoItem> itemList = new ArrayList<>();
     private Long ping;
     private String error;
@@ -38,7 +38,7 @@ public class ClusterNodeInfo {
         this.discoverTime = discoverTime;
         this.buildInfo = buildInfo;
         this.nodeName = nodeName;
-        this.clusterURL = clusterURL;
+        this.endpointUrl = clusterURL;
     }
 
     public void addItem(final String nodeName, final boolean active, final boolean master) {
@@ -73,12 +73,12 @@ public class ClusterNodeInfo {
         this.nodeName = nodeName;
     }
 
-    public String getClusterURL() {
-        return clusterURL;
+    public String getEndpointUrl() {
+        return endpointUrl;
     }
 
-    public void setClusterURL(final String clusterURL) {
-        this.clusterURL = clusterURL;
+    public void setEndpointUrl(final String endpointUrl) {
+        this.endpointUrl = endpointUrl;
     }
 
     public List<ClusterNodeInfoItem> getItemList() {

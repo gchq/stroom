@@ -33,6 +33,7 @@ import javax.ws.rs.core.MediaType;
 @Path("/node")
 @Produces(MediaType.APPLICATION_JSON)
 public interface NodeResource extends RestResource, DirectRestService {
+
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
@@ -58,13 +59,6 @@ public interface NodeResource extends RestResource, DirectRestService {
             value = "Gets a ping time for a node",
             response = Long.class)
     Long ping(@PathParam("nodeName") String nodeName);
-
-    @PUT
-    @Path("/{nodeName}/url")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Sets the url for a node")
-    void setUrl(@PathParam("nodeName") String nodeName, String url);
 
     @PUT
     @Path("/{nodeName}/priority")

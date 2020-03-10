@@ -27,7 +27,8 @@ import java.util.List;
  * </p>
  */
 public interface NodeService  {
-    String getClusterUrl(String nodeName);
+
+    String getBaseEndpointUrl(String nodeName);
 
     boolean isEnabled(String nodeName);
 

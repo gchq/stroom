@@ -143,7 +143,7 @@ class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
 
             clusterNodeInfo = new ClusterNodeInfo();
             clusterNodeInfo.setNodeName(nodeName);
-            clusterNodeInfo.setClusterURL(nodeUrl);
+            clusterNodeInfo.setEndpointUrl(nodeUrl);
             clusterNodeInfo.setError(e.getMessage());
         }
 
@@ -182,11 +182,6 @@ class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
     }
 
     @Override
-    public void setUrl(final String nodeName, final String url) {
-        modifyNode(nodeName, node -> node.setUrl(url));
-    }
-
-    @Override
     public void setPriority(final String nodeName, final Integer priority) {
         modifyNode(nodeName, node -> node.setPriority(priority));
     }
@@ -196,7 +191,8 @@ class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
         modifyNode(nodeName, node -> node.setEnabled(enabled));
     }
 
-    private void modifyNode(final String nodeName, final Consumer<Node> mutation) {
+    private void modifyNode(final String nodeName,
+                            final Consumer<Node> mutation) {
         Node node = null;
         Node before = null;
         Node after = null;

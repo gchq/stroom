@@ -45,12 +45,19 @@ public class ClusterCallServiceRPC extends HessianServlet implements ClusterCall
     }
 
     @Override
-    public Object call(final String sourceNode, final String targetNode, final UserIdentity userIdentity, final ServiceName serviceName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
+    public Object call(final String sourceNode,
+                       final String targetNode,
+                       final UserIdentity userIdentity,
+                       final ServiceName serviceName,
+                       final String methodName,
+                       final Class<?>[] parameterTypes,
+                       final Object[] args) {
         // We are receiving a call from another node so login as the supplied user.
         LOGGER.debug(() -> "Hessian call with user " + userIdentity);
 
         return securityContext.asUserResult(userIdentity, () ->
-                clusterCallService.call(sourceNode, targetNode, userIdentity, serviceName, methodName, parameterTypes, args));
+                clusterCallService.call(
+                    sourceNode, targetNode, userIdentity, serviceName, methodName, parameterTypes, args));
     }
 
     @Override

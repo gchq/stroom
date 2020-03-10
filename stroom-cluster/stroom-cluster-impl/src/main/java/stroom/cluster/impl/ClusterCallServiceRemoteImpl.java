@@ -93,7 +93,7 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
     }
 
     private ClusterCallService createHessianProxy(final String nodeName) throws MalformedURLException {
-        final String nodeServiceUrl = nodeService.getClusterUrl(nodeName);
+        final String nodeServiceUrl = nodeService.getBaseEndpointUrl(nodeName);
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("createHessianProxy() - " + nodeName + " - " + nodeServiceUrl);

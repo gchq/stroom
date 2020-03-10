@@ -19,7 +19,6 @@ package stroom.node.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
-import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
@@ -46,12 +45,8 @@ import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.BuildInfo;
 import stroom.util.shared.ModelStringUtil;
-import stroom.widget.button.client.ButtonView;
-import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.PopupPosition;
-import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 import stroom.widget.tooltip.client.presenter.TooltipPresenter;
 import stroom.widget.tooltip.client.presenter.TooltipUtil;
@@ -67,7 +62,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     private final TooltipPresenter tooltipPresenter;
     private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
 
-    private final ButtonView editButton;
+//    private final ButtonView editButton;
     private final Provider<NodeEditPresenter> nodeEditPresenterProvider;
 
     private final Map<String, PingResult> latestPing = new HashMap<>();
@@ -108,23 +103,23 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
 
-        editButton = getView().addButton(SvgPresets.EDIT);
-        editButton.setTitle("Edit Node");
+//        editButton = getView().addButton(SvgPresets.EDIT);
+//        editButton.setTitle("Edit Node");
     }
 
     @Override
     protected void onBind() {
-        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
-            if (event.getSelectionType().isDoubleSelect()) {
-                onEdit(getView().getSelectionModel().getSelected());
-            }
-            enableButtons();
-        }));
-        registerHandler(editButton.addClickHandler(event -> {
-            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-                onEdit(getView().getSelectionModel().getSelected());
-            }
-        }));
+//        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
+//            if (event.getSelectionType().isDoubleSelect()) {
+//                onEdit(getView().getSelectionModel().getSelected());
+//            }
+//            enableButtons();
+//        }));
+//        registerHandler(editButton.addClickHandler(event -> {
+//            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
+//                onEdit(getView().getSelectionModel().getSelected());
+//            }
+//        }));
     }
 
     /**
@@ -256,7 +251,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 TooltipUtil.addRowData(html, "Up Date", buildInfo.getUpDate(), true);
             }
             TooltipUtil.addRowData(html, "Discover Time", result.getDiscoverTime(), true);
-            TooltipUtil.addRowData(html, "Cluster URL", result.getClusterURL(), true);
+            TooltipUtil.addRowData(html, "Node Endpoint URL", result.getEndpointUrl(), true);
             TooltipUtil.addRowData(html, "Ping", ModelStringUtil.formatDurationString(result.getPing()));
             TooltipUtil.addRowData(html, "Error", result.getError());
 
@@ -291,41 +286,41 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 popupPosition, null);
     }
 
-    private void onEdit(final NodeStatusResult nodeStatusResult) {
-        final Node node = nodeStatusResult.getNode();
-        final NodeEditPresenter editor = nodeEditPresenterProvider.get();
-        editor.setName(node.getName());
-        editor.setClusterUrl(node.getUrl());
+//    private void onEdit(final NodeStatusResult nodeStatusResult) {
+//        final Node node = nodeStatusResult.getNode();
+//        final NodeEditPresenter editor = nodeEditPresenterProvider.get();
+//        editor.setName(node.getName());
+//        editor.setClusterUrl(node.getUrl());
+//
+//        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
+//            @Override
+//            public void onHideRequest(final boolean autoClose, final boolean ok) {
+//                if (ok) {
+//                    if (node.getUrl() == null || !node.getUrl().equals(editor.getClusterUrl())) {
+//                        node.setUrl(editor.getClusterUrl());
+//
+//                        final Rest<Node> rest = restFactory.create();
+//                        rest.onSuccess(result -> refresh()).call(NODE_RESOURCE).setUrl(node.getName(), editor.getClusterUrl());
+//                    }
+//                }
+//
+//                HidePopupEvent.fire(NodeMonitoringPresenter.this, editor);
+//            }
+//
+//            @Override
+//            public void onHide(final boolean autoClose, final boolean ok) {
+//                // Do nothing.
+//            }
+//        };
+//
+//        final PopupSize popupSize = new PopupSize(400, 103, 400, 103, 1000, 103, true);
+//        ShowPopupEvent.fire(this, editor, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Node", popupUiHandlers);
+//    }
 
-        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-            @Override
-            public void onHideRequest(final boolean autoClose, final boolean ok) {
-                if (ok) {
-                    if (node.getUrl() == null || !node.getUrl().equals(editor.getClusterUrl())) {
-                        node.setUrl(editor.getClusterUrl());
-
-                        final Rest<Node> rest = restFactory.create();
-                        rest.onSuccess(result -> refresh()).call(NODE_RESOURCE).setUrl(node.getName(), editor.getClusterUrl());
-                    }
-                }
-
-                HidePopupEvent.fire(NodeMonitoringPresenter.this, editor);
-            }
-
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                // Do nothing.
-            }
-        };
-
-        final PopupSize popupSize = new PopupSize(400, 103, 400, 103, 1000, 103, true);
-        ShowPopupEvent.fire(this, editor, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Node", popupUiHandlers);
-    }
-
-    private void enableButtons() {
-        final NodeStatusResult selected = getView().getSelectionModel().getSelected();
-        editButton.setEnabled(selected != null);
-    }
+//    private void enableButtons() {
+//        final NodeStatusResult selected = getView().getSelectionModel().getSelected();
+//        editButton.setEnabled(selected != null);
+//    }
 
     @Override
     public void refresh() {

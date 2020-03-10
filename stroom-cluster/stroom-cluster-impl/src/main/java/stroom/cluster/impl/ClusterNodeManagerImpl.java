@@ -218,7 +218,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         final ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(discoverTime,
                 buildInfo,
                 thisNodeName,
-                nodeService.getClusterUrl(thisNodeName));
+                nodeService.getBaseEndpointUrl(thisNodeName));
 
         if (allNodeList != null && activeNodeList != null && masterNodeName != null) {
             for (final String nodeName : allNodeList) {
