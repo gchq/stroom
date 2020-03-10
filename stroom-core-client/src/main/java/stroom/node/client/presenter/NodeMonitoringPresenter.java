@@ -21,7 +21,6 @@ import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.cell.info.client.InfoColumn;
 import stroom.cell.tickbox.client.TickBoxCell;
@@ -62,20 +61,15 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
     private final TooltipPresenter tooltipPresenter;
     private final RestDataProvider<NodeStatusResult, FetchNodeStatusResponse> dataProvider;
 
-//    private final ButtonView editButton;
-    private final Provider<NodeEditPresenter> nodeEditPresenterProvider;
-
     private final Map<String, PingResult> latestPing = new HashMap<>();
 
     @Inject
     public NodeMonitoringPresenter(final EventBus eventBus,
                                    final RestFactory restFactory,
-                                   final TooltipPresenter tooltipPresenter,
-                                   final Provider<NodeEditPresenter> nodeEditPresenterProvider) {
+                                   final TooltipPresenter tooltipPresenter) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.restFactory = restFactory;
         this.tooltipPresenter = tooltipPresenter;
-        this.nodeEditPresenterProvider = nodeEditPresenterProvider;
         initTableColumns();
         dataProvider = new RestDataProvider<NodeStatusResult, FetchNodeStatusResponse>(eventBus) {
             @Override
@@ -102,24 +96,6 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
-
-//        editButton = getView().addButton(SvgPresets.EDIT);
-//        editButton.setTitle("Edit Node");
-    }
-
-    @Override
-    protected void onBind() {
-//        registerHandler(getView().getSelectionModel().addSelectionHandler(event -> {
-//            if (event.getSelectionType().isDoubleSelect()) {
-//                onEdit(getView().getSelectionModel().getSelected());
-//            }
-//            enableButtons();
-//        }));
-//        registerHandler(editButton.addClickHandler(event -> {
-//            if ((event.getNativeButton() & NativeEvent.BUTTON_LEFT) != 0) {
-//                onEdit(getView().getSelectionModel().getSelected());
-//            }
-//        }));
     }
 
     /**
@@ -287,42 +263,6 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
         ShowPopupEvent.fire(NodeMonitoringPresenter.this, tooltipPresenter, PopupType.POPUP,
                 popupPosition, null);
     }
-
-//    private void onEdit(final NodeStatusResult nodeStatusResult) {
-//        final Node node = nodeStatusResult.getNode();
-//        final NodeEditPresenter editor = nodeEditPresenterProvider.get();
-//        editor.setName(node.getName());
-//        editor.setClusterUrl(node.getUrl());
-//
-//        final PopupUiHandlers popupUiHandlers = new PopupUiHandlers() {
-//            @Override
-//            public void onHideRequest(final boolean autoClose, final boolean ok) {
-//                if (ok) {
-//                    if (node.getUrl() == null || !node.getUrl().equals(editor.getClusterUrl())) {
-//                        node.setUrl(editor.getClusterUrl());
-//
-//                        final Rest<Node> rest = restFactory.create();
-//                        rest.onSuccess(result -> refresh()).call(NODE_RESOURCE).setUrl(node.getName(), editor.getClusterUrl());
-//                    }
-//                }
-//
-//                HidePopupEvent.fire(NodeMonitoringPresenter.this, editor);
-//            }
-//
-//            @Override
-//            public void onHide(final boolean autoClose, final boolean ok) {
-//                // Do nothing.
-//            }
-//        };
-//
-//        final PopupSize popupSize = new PopupSize(400, 103, 400, 103, 1000, 103, true);
-//        ShowPopupEvent.fire(this, editor, PopupType.OK_CANCEL_DIALOG, popupSize, "Edit Node", popupUiHandlers);
-//    }
-
-//    private void enableButtons() {
-//        final NodeStatusResult selected = getView().getSelectionModel().getSelected();
-//        editButton.setEnabled(selected != null);
-//    }
 
     @Override
     public void refresh() {

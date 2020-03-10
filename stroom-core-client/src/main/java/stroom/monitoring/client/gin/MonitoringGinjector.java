@@ -28,7 +28,6 @@ import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
 import stroom.monitoring.client.presenter.DatabaseTablesMonitoringPresenter;
 import stroom.node.client.ManageNodeToolsPlugin;
-import stroom.node.client.presenter.NodeEditPresenter;
 import stroom.node.client.presenter.NodeMonitoringPresenter;
 import stroom.task.client.TaskManagerPlugin;
 import stroom.task.client.presenter.TaskManagerPresenter;
@@ -47,8 +46,6 @@ public interface MonitoringGinjector {
     AsyncProvider<NodeMonitoringPresenter> getNodeMonitoringPresenter();
 
     AsyncProvider<ManageNodeToolsPlugin> getManageNodeToolsPlugin();
-
-    AsyncProvider<NodeEditPresenter> getNodeEditPresenter();
 
     // Global properties.
     AsyncProvider<GlobalPropertyTabPresenter> getManageGlobalPropertyPresenter();
