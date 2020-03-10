@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -39,12 +40,11 @@ import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "table")
 @XmlType(name = "TableComponentSettings", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
 public class TableComponentSettings extends ComponentSettings {
     public static final int[] DEFAULT_MAX_RESULTS = {1000000};
-    private static final long serialVersionUID = -2530827581046882396L;
     @XmlElement(name = "queryId")
     @JsonProperty("queryId")
     private String queryId;
@@ -67,14 +67,19 @@ public class TableComponentSettings extends ComponentSettings {
     private Boolean showDetail;
 
     public TableComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public TableComponentSettings(final List<Field> fields) {
         this.fields = fields;
     }
 
-    public TableComponentSettings(final String queryId, final List<Field> fields, final Boolean extractValues, final DocRef extractionPipeline, final int[] maxResults, final Boolean showDetail) {
+    @JsonCreator
+    public TableComponentSettings(@JsonProperty("queryId") final String queryId,
+                                  @JsonProperty("fields") final List<Field> fields,
+                                  @JsonProperty("extractValues") final Boolean extractValues,
+                                  @JsonProperty("extractionPipeline") final DocRef extractionPipeline,
+                                  @JsonProperty("maxResults") final int[] maxResults,
+                                  @JsonProperty("showDetail") final Boolean showDetail) {
         this.queryId = queryId;
         this.fields = fields;
         this.extractValues = extractValues;
@@ -225,7 +230,7 @@ public class TableComponentSettings extends ComponentSettings {
         if (fields != null) {
             fieldsCopy = new ArrayList<>(fields.size());
             for (final Field field : fields) {
-                fieldsCopy.add(field.copy());
+                fieldsCopy.add(new Field.Builder().copy(field).build());
             }
         }
 

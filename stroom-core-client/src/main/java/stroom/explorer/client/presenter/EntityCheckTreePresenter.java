@@ -25,7 +25,7 @@ import com.gwtplatform.mvp.client.View;
 import stroom.data.client.event.DataSelectionEvent;
 import stroom.data.client.event.DataSelectionEvent.DataSelectionHandler;
 import stroom.data.client.event.HasDataSelectionHandlers;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestFactory;
 import stroom.explorer.shared.ExplorerNode;
 
 import java.util.Set;
@@ -36,7 +36,7 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
     private final ExplorerTickBoxTree explorerTree;
 
     @Inject
-    public EntityCheckTreePresenter(final EntityCheckTreeView view, final ClientDispatchAsync dispatcher) {
+    public EntityCheckTreePresenter(final EntityCheckTreeView view, final RestFactory restFactory) {
         super(new SimpleEventBus(), view);
 
 //        selectionModel = new TickBoxSelectionModel<ExplorerNode>() {
@@ -118,7 +118,7 @@ public class EntityCheckTreePresenter extends MyPresenterWidget<EntityCheckTreeP
 //            }
 //        });
 
-        explorerTree = new ExplorerTickBoxTree(dispatcher);
+        explorerTree = new ExplorerTickBoxTree(restFactory);
 
         view.setCellTree(explorerTree);
     }

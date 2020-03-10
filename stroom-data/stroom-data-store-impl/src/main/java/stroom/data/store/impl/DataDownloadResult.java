@@ -16,9 +16,9 @@
 
 package stroom.data.store.impl;
 
-import stroom.docref.SharedObject;
 
-public class DataDownloadResult implements SharedObject {
+
+public class DataDownloadResult {
     private static final long serialVersionUID = -5012089569913789389L;
 
     private long recordsWritten = 0;

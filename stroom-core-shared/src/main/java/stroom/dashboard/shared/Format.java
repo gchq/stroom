@@ -16,58 +16,45 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElements;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"type", "settings", "wrap"})
-@JsonInclude(Include.NON_DEFAULT)
-@XmlRootElement(name = "format")
-@XmlType(name = "Format", propOrder = {"type", "settings", "wrap"})
-public class Format implements Serializable {
-    private static final long serialVersionUID = -5380825645719299089L;
-
+@JsonInclude(Include.NON_NULL)
+public class Format {
     public static List<Type> TYPES = Arrays.asList(Type.GENERAL, Type.NUMBER, Type.DATE_TIME, Type.TEXT);
 
-    @XmlElement(name = "type")
-    @JsonProperty("type")
-    private Type type;
-    @XmlElements({@XmlElement(name = "numberFormatSettings", type = NumberFormatSettings.class),
-            @XmlElement(name = "dateTimeFormatSettings", type = DateTimeFormatSettings.class)})
-    private FormatSettings settings;
-    @XmlElement(name = "wrap")
-    @JsonProperty("wrap")
-    private Boolean wrap;
-
-    public Format() {
-        // Default constructor necessary for GWT serialisation.
-    }
+    @JsonProperty
+    private final Type type;
+    @JsonProperty
+    private final FormatSettings settings;
+    @JsonProperty
+    private final Boolean wrap;
 
     public Format(final Type type) {
         this.type = type;
+        this.settings = null;
+        this.wrap = null;
     }
 
     public Format(final Type type, final FormatSettings settings) {
         this.type = type;
         this.settings = settings;
+        this.wrap = null;
     }
 
-    public Format(Type type, FormatSettings settings, Boolean wrap) {
+    @JsonCreator
+    public Format(@JsonProperty("type") final Type type,
+                  @JsonProperty("settings") final FormatSettings settings,
+                  @JsonProperty("wrap") final Boolean wrap) {
         this.type = type;
         this.settings = settings;
         this.wrap = wrap;
@@ -77,48 +64,27 @@ public class Format implements Serializable {
         return type;
     }
 
-    public void setType(final Type type) {
-        this.type = type;
-    }
-
     public FormatSettings getSettings() {
         return settings;
-    }
-
-    public void setSettings(final FormatSettings settings) {
-        this.settings = settings;
     }
 
     public Boolean getWrap() {
         return wrap;
     }
 
-    public void setWrap(final Boolean wrap) {
-        this.wrap = wrap;
-    }
-
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) return true;
-
         if (o == null || getClass() != o.getClass()) return false;
-
-        Format format = (Format) o;
-
-        return new EqualsBuilder()
-                .append(type, format.type)
-                .append(settings, format.settings)
-                .append(wrap, format.wrap)
-                .isEquals();
+        final Format format = (Format) o;
+        return type == format.type &&
+                Objects.equals(settings, format.settings) &&
+                Objects.equals(wrap, format.wrap);
     }
 
     @Override
     public int hashCode() {
-        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
-        hashCodeBuilder.append(type);
-        hashCodeBuilder.append(settings);
-        hashCodeBuilder.append(wrap);
-        return hashCodeBuilder.toHashCode();
+        return Objects.hash(type, settings, wrap);
     }
 
     @Override

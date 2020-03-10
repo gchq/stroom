@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class AsyncExecutorHelper<R> {
@@ -29,7 +30,7 @@ public class AsyncExecutorHelper<R> {
     private static final String STATUS = "Executing task {}\n{}";
     private static final String FINISHED = "Finished task {}\n{}";
     private final TaskContext taskContext;
-    private final ExecutorProvider executorProvider;
+    private final Executor executor;
     private final int concurrent;
     private final String taskInfo;
     private final ReentrantLock lock = new ReentrantLock();
@@ -41,11 +42,11 @@ public class AsyncExecutorHelper<R> {
     private volatile long total;
     private volatile boolean busy;
 
-    public AsyncExecutorHelper(final String taskInfo, final TaskContext taskContext, final ExecutorProvider executorProvider,
+    public AsyncExecutorHelper(final String taskInfo, final TaskContext taskContext, final Executor executor,
                                final int concurrent) {
         this.taskInfo = taskInfo;
         this.taskContext = taskContext;
-        this.executorProvider = executorProvider;
+        this.executor = executor;
         this.concurrent = concurrent;
         updateInfo();
     }
@@ -90,7 +91,7 @@ public class AsyncExecutorHelper<R> {
         try {
             if (remaining > 0 && running < concurrent) {
                 final Entry<R> entry = taskList.remove(0);
-                final Runnable task = entry.task;
+                final Runnable task = taskContext.subTask(entry.task);
                 final TaskCallback<R> callback = entry.callback;
 
                 // Execute the task.
@@ -105,7 +106,7 @@ public class AsyncExecutorHelper<R> {
 
                 try {
                     CompletableFuture
-                            .runAsync(task, executorProvider.getExecutor())
+                            .runAsync(task, executor)
                             .whenComplete((r, t) -> {
                         if (t != null) {
                             try {

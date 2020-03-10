@@ -1,28 +1,70 @@
 package stroom.ui.config.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
 
 @Singleton
-public class ActivityConfig extends AbstractConfig implements SharedObject {
+@JsonPropertyOrder({"enabled", "chooseOnStartup", "managerTitle", "editorTitle", "editorBody"})
+@JsonInclude(Include.NON_NULL)
+public class ActivityConfig extends AbstractConfig {
+    @JsonProperty
+    @JsonPropertyDescription("If you would like users to be able to record some info about the activity they are performing set this property to true.")
     private boolean enabled;
+    @JsonProperty
+    @JsonPropertyDescription("Set to true if users should be prompted to choose an activity on login.")
     private boolean chooseOnStartup;
-    private String managerTitle = "Choose Activity";
-    private String editorTitle = "Edit Activity";
-    private String editorBody = "Activity Code:</br>" +
-            "<input type=\"text\" name=\"code\"></input></br></br>" +
-            "Activity Description:</br>" +
-            "<textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"description\" validation=\".{80,}\" validationMessage=\"The activity description must be at least 80 characters long.\" ></textarea>" +
-            "Explain what the activity is";
+    @JsonProperty
+    @JsonPropertyDescription("The title of the activity manager popup.")
+    private String managerTitle;
+    @JsonProperty
+    @JsonPropertyDescription("The title of the activity editor popup.")
+    private String editorTitle;
+    @JsonProperty
+    @JsonPropertyDescription("The HTML to display in the activity editor popup.")
+    private String editorBody;
 
     public ActivityConfig() {
-        // Default constructor necessary for GWT serialisation.
+        setDefaults();
     }
 
-    @JsonPropertyDescription("If you would like users to be able to record some info about the activity they are performing set this property to true.")
+    @JsonCreator
+    public ActivityConfig(@JsonProperty("enabled") final boolean enabled,
+                          @JsonProperty("chooseOnStartup") final boolean chooseOnStartup,
+                          @JsonProperty("managerTitle") final String managerTitle,
+                          @JsonProperty("editorTitle") final String editorTitle,
+                          @JsonProperty("editorBody") final String editorBody) {
+        this.enabled = enabled;
+        this.chooseOnStartup = chooseOnStartup;
+        this.managerTitle = managerTitle;
+        this.editorTitle = editorTitle;
+        this.editorBody = editorBody;
+
+        setDefaults();
+    }
+
+    private void setDefaults() {
+        if (managerTitle == null) {
+            managerTitle = "Choose Activity";
+        }
+        if (editorTitle == null) {
+            editorTitle = "Edit Activity";
+        }
+        if (editorBody == null) {
+            editorBody = "Activity Code:</br>" +
+                    "<input type=\"text\" name=\"code\"></input></br></br>" +
+                    "Activity Description:</br>" +
+                    "<textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"description\" validation=\".{80,}\" validationMessage=\"The activity description must be at least 80 characters long.\" ></textarea>" +
+                    "Explain what the activity is";
+        }
+    }
+
     public boolean isEnabled() {
         return enabled;
     }
@@ -31,7 +73,6 @@ public class ActivityConfig extends AbstractConfig implements SharedObject {
         this.enabled = enabled;
     }
 
-    @JsonPropertyDescription("Set to true if users should be prompted to choose an activity on login.")
     public boolean isChooseOnStartup() {
         return chooseOnStartup;
     }
@@ -40,7 +81,6 @@ public class ActivityConfig extends AbstractConfig implements SharedObject {
         this.chooseOnStartup = chooseOnStartup;
     }
 
-    @JsonPropertyDescription("The title of the activity manager popup.")
     public String getManagerTitle() {
         return managerTitle;
     }
@@ -49,7 +89,6 @@ public class ActivityConfig extends AbstractConfig implements SharedObject {
         this.managerTitle = managerTitle;
     }
 
-    @JsonPropertyDescription("The title of the activity editor popup.")
     public String getEditorTitle() {
         return editorTitle;
     }
@@ -58,7 +97,6 @@ public class ActivityConfig extends AbstractConfig implements SharedObject {
         this.editorTitle = editorTitle;
     }
 
-    @JsonPropertyDescription("The HTML to display in the activity editor popup.")
     public String getEditorBody() {
         return editorBody;
     }

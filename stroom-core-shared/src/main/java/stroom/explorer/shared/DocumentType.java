@@ -17,21 +17,23 @@
 
 package stroom.explorer.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class DocumentType implements SharedObject {
+@JsonInclude(Include.NON_NULL)
+public class DocumentType {
     public static final String DOC_IMAGE_URL = "document/";
 
-    private static final long serialVersionUID = -7826692935161793565L;
-
-    private int priority;
-    private String type;
-    private String displayType;
-    private String iconUrl;
-
-    public DocumentType() {
-        // Default constructor necessary for GWT serialisation.
-    }
+    @JsonProperty
+    private final int priority;
+    @JsonProperty
+    private final String type;
+    @JsonProperty
+    private final String displayType;
+    @JsonProperty
+    private final String iconUrl;
 
     public DocumentType(final int priority, final String type, final String displayType) {
         this.priority = priority;
@@ -40,15 +42,15 @@ public class DocumentType implements SharedObject {
         this.iconUrl = getIconUrl(type);
     }
 
-    public DocumentType(final int priority, final String type, final String displayType, final String iconUrl) {
+    @JsonCreator
+    public DocumentType(@JsonProperty("priority") final int priority,
+                        @JsonProperty("type") final String type,
+                        @JsonProperty("displayType") final String displayType,
+                        @JsonProperty("iconUrl") final String iconUrl) {
         this.priority = priority;
         this.type = type;
         this.displayType = displayType;
         this.iconUrl = iconUrl;
-    }
-
-    private String getIconUrl(final String type) {
-        return DocumentType.DOC_IMAGE_URL + type + ".svg";
     }
 
     public int getPriority() {
@@ -65,6 +67,10 @@ public class DocumentType implements SharedObject {
 
     public String getIconUrl() {
         return iconUrl;
+    }
+
+    private String getIconUrl(final String type) {
+        return DocumentType.DOC_IMAGE_URL + type + ".svg";
     }
 
     @Override

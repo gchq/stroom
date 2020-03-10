@@ -32,7 +32,7 @@ import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskCallbackAdaptor;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.Task;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import javax.inject.Provider;

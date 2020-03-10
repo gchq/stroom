@@ -16,20 +16,26 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+@JsonPropertyOrder({"jsonData", "dataPoints", "error"})
+@JsonInclude(Include.NON_NULL)
 public class VisResult implements ComponentResult {
-    private static final long serialVersionUID = 3826654996795750099L;
+    @JsonProperty
+    private final String jsonData;
+    @JsonProperty
+    private final long dataPoints;
+    @JsonProperty
+    private final String error;
 
-    private String jsonData;
-    private long dataPoints;
-    private String error;
-
-    public VisResult() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public VisResult(final String jsonData, final long dataPoints, final String error) {
+    @JsonCreator
+    public VisResult(@JsonProperty("jsonData") final String jsonData,
+                     @JsonProperty("dataPoints") final long dataPoints,
+                     @JsonProperty("error") final String error) {
         this.jsonData = jsonData;
         this.dataPoints = dataPoints;
         this.error = error;

@@ -17,7 +17,7 @@
 package stroom.core.entity.cluster;
 
 import stroom.cluster.task.api.ClusterTask;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 public class ClearServiceClusterTask extends ClusterTask<VoidResult> {
     private static final long serialVersionUID = 3442806159160286110L;

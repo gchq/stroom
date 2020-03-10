@@ -17,7 +17,7 @@
 package stroom.pipeline.refdata;
 
 import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.util.shared.VoidResult;
+import stroom.task.api.VoidResult;
 
 public interface ReferenceDataLoader {
     VoidResult load(RefStreamDefinition refStreamDefinition);

@@ -16,8 +16,10 @@
 
 package stroom.index.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.Doc;
@@ -27,10 +29,8 @@ import java.util.List;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "maxDocsPerShard", "partitionBy", "partitionSize", "shardsPerPartition", "retentionDayAge", "fields", "volumeGroupName"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class IndexDoc extends Doc {
-    private static final long serialVersionUID = 2648729644398564919L;
-
     public static final int DEFAULT_MAX_DOCS_PER_SHARD = 1000000000;
     private static final int DEFAULT_SHARDS_PER_PARTITION = 1;
     private static final PartitionBy DEFAULT_PARTITION_BY = PartitionBy.MONTH;
@@ -38,14 +38,70 @@ public class IndexDoc extends Doc {
 
     public static final String DOCUMENT_TYPE = "Index";
 
+    @JsonProperty
     private String description;
-    private int maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
-    private PartitionBy partitionBy = DEFAULT_PARTITION_BY;
-    private int partitionSize = DEFAULT_PARTITION_SIZE;
-    private int shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
+    @JsonProperty
+    private Integer maxDocsPerShard;
+    @JsonProperty
+    private PartitionBy partitionBy;
+    @JsonProperty
+    private Integer partitionSize;
+    @JsonProperty
+    private Integer shardsPerPartition;
+    @JsonProperty
     private Integer retentionDayAge;
+    @JsonProperty
     private List<IndexField> fields;
+    @JsonProperty
     private String volumeGroupName;
+
+    public IndexDoc() {
+        maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
+        partitionBy = DEFAULT_PARTITION_BY;
+        partitionSize = DEFAULT_PARTITION_SIZE;
+        shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
+    }
+
+    @JsonCreator
+    public IndexDoc(@JsonProperty("type") final String type,
+                    @JsonProperty("uuid") final String uuid,
+                    @JsonProperty("name") final String name,
+                    @JsonProperty("version") final String version,
+                    @JsonProperty("createTime") final Long createTime,
+                    @JsonProperty("updateTime") final Long updateTime,
+                    @JsonProperty("createUser") final String createUser,
+                    @JsonProperty("updateUser") final String updateUser,
+                    @JsonProperty("description") final String description,
+                    @JsonProperty("maxDocsPerShard") final Integer maxDocsPerShard,
+                    @JsonProperty("partitionBy") final PartitionBy partitionBy,
+                    @JsonProperty("partitionSize") final Integer partitionSize,
+                    @JsonProperty("shardsPerPartition") final Integer shardsPerPartition,
+                    @JsonProperty("retentionDayAge") final Integer retentionDayAge,
+                    @JsonProperty("fields") final List<IndexField> fields,
+                    @JsonProperty("volumeGroupName") final String volumeGroupName) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.maxDocsPerShard = maxDocsPerShard;
+        this.partitionBy = partitionBy;
+        this.partitionSize = partitionSize;
+        this.shardsPerPartition = shardsPerPartition;
+        this.retentionDayAge = retentionDayAge;
+        this.fields = fields;
+        this.volumeGroupName = volumeGroupName;
+
+        if (this.maxDocsPerShard == null) {
+            this.maxDocsPerShard = DEFAULT_MAX_DOCS_PER_SHARD;
+        }
+        if (this.partitionBy == null) {
+            this.partitionBy = DEFAULT_PARTITION_BY;
+        }
+        if (this.partitionSize == null) {
+            this.partitionSize = DEFAULT_PARTITION_SIZE;
+        }
+        if (this.shardsPerPartition == null) {
+            this.shardsPerPartition = DEFAULT_SHARDS_PER_PARTITION;
+        }
+    }
 
     public String getDescription() {
         return description;
@@ -104,16 +160,6 @@ public class IndexDoc extends Doc {
 
     public void setFields(final List<IndexField> fields) {
         this.fields = fields;
-    }
-
-    @Deprecated
-    public void setIndexFields(final List<IndexField> fields) {
-        this.fields = fields;
-    }
-
-    @Deprecated
-    public List<IndexField> getIndexFields() {
-        return null;
     }
 
     public String getVolumeGroupName() {

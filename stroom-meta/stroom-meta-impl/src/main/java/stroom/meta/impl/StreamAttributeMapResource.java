@@ -26,12 +26,13 @@ import stroom.datasource.api.v2.DocRefField;
 import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.MetaRow;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.security.api.SecurityContext;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
-import stroom.util.shared.BaseResultList;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.PageResponse;
@@ -51,10 +52,9 @@ import java.util.List;
 import static stroom.query.api.v2.ExpressionTerm.Condition;
 
 @Api(value = "stream attribute map - /v1")
-@Path("/streamattributemap/v1")
+@Path("/streamattributemap" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
 public class StreamAttributeMapResource implements RestResource {
-
     private MetaService dataMetaService;
     private SecurityContext securityContext;
 
@@ -88,7 +88,7 @@ public class StreamAttributeMapResource implements RestResource {
             ExpressionOperator expressionOperator = new ExpressionOperator(true, ExpressionOperator.Op.AND, expressionTerm);
             criteria.setExpression(expressionOperator);
 
-            BaseResultList<MetaRow> results = dataMetaService.findRows(criteria);
+            ResultPage<MetaRow> results = dataMetaService.findRows(criteria);
             Object response = new Object() {
                 public PageResponse pageResponse = results.getPageResponse();
                 public List<MetaRow> streamAttributeMaps = results.getValues();
@@ -117,7 +117,7 @@ public class StreamAttributeMapResource implements RestResource {
             criteria.setPageRequest(new PageRequest(itemOffset, pageSize));
             criteria.setSort(new Sort("Create Time", Sort.Direction.DESCENDING, false));
 
-            //TODO disbale this and have it as a default field
+            //TODO disable this and have it as a default field
             // Set status to unlocked
 //             ExpressionTerm expressionTerm = new ExpressionTerm("Status", Condition.EQUALS, "Unlocked");
 //             ExpressionOperator expressionOperator = new ExpressionOperator(true, ExpressionOperator.Op.AND, expressionTerm);
@@ -125,7 +125,7 @@ public class StreamAttributeMapResource implements RestResource {
 
             criteria.setExpression(expression);
 
-            BaseResultList<MetaRow> results = dataMetaService.findRows(criteria);
+            ResultPage<MetaRow> results = dataMetaService.findRows(criteria);
             Object response = new Object() {
                 public PageResponse pageResponse = results.getPageResponse();
                 public List<MetaRow> streamAttributeMaps = results.getValues();
@@ -164,7 +164,7 @@ public class StreamAttributeMapResource implements RestResource {
             idSet.add(id);
             criteria.setSelectedIdSet(idSet);
 
-            BaseResultList<MetaRow> results = dataMetaService.findRows(criteria);
+            ResultPage<MetaRow> results = dataMetaService.findRows(criteria);
             if (results.size() == 0) {
                 return Response.status(Response.Status.NOT_FOUND).build();
             }

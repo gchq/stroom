@@ -42,7 +42,7 @@ import stroom.data.store.impl.fs.client.gin.FSVolumeGinjector;
 import stroom.data.store.impl.fs.client.gin.FSVolumeModule;
 import stroom.dictionary.client.gin.DictionaryGinjector;
 import stroom.dictionary.client.gin.DictionaryModule;
-import stroom.dispatch.client.ClientDispatchModule;
+import stroom.dispatch.client.RestModule;
 import stroom.document.client.gin.NewUiGinjector;
 import stroom.document.client.gin.NewUiModule;
 import stroom.entity.client.gin.EntityGinjector;
@@ -57,6 +57,8 @@ import stroom.importexport.client.gin.ImportExportConfigGinjector;
 import stroom.importexport.client.gin.ImportExportConfigModule;
 import stroom.index.client.gin.IndexGinjector;
 import stroom.index.client.gin.IndexModule;
+import stroom.kafkaConfig.client.gin.KafkaConfigGinjector;
+import stroom.kafkaConfig.client.gin.KafkaConfigModule;
 import stroom.main.client.presenter.MainPresenter;
 import stroom.menubar.client.presenter.MenubarPresenter;
 import stroom.monitoring.client.gin.MonitoringGinjector;
@@ -92,7 +94,7 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
         AnnotationModule.class,
         AppModule.class,
         CacheModule.class,
-        ClientDispatchModule.class,
+        RestModule.class,
         DashboardModule.class,
         DictionaryModule.class,
         EntityModule.class,
@@ -101,6 +103,7 @@ import stroom.xmlschema.client.gin.XMLSchemaModule;
         FolderModule.class,
         ImportExportConfigModule.class,
         IndexModule.class,
+        KafkaConfigModule.class,
         MonitoringModule.class,
         NewUiModule.class,
         PipelineModule.class,
@@ -132,6 +135,7 @@ public interface AppGinjector extends
         Ginjector,
         ImportExportConfigGinjector,
         IndexGinjector,
+        KafkaConfigGinjector,
         MonitoringGinjector,
         NewUiGinjector,
         PipelineGinjector,

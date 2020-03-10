@@ -1,13 +1,20 @@
 package stroom.activity.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+@JsonInclude(Include.NON_NULL)
 public class ActivityValidationResult {
-    private boolean valid;
-    private String messages;
+    @JsonProperty
+    private final boolean valid;
+    @JsonProperty
+    private final String messages;
 
-    public ActivityValidationResult() {
-    }
-
-    public ActivityValidationResult(final boolean valid, final String messages) {
+    @JsonCreator
+    public ActivityValidationResult(@JsonProperty("valid") final boolean valid,
+                                    @JsonProperty("messages") final String messages) {
         this.valid = valid;
         this.messages = messages;
     }
@@ -16,15 +23,7 @@ public class ActivityValidationResult {
         return valid;
     }
 
-    public void setValid(final boolean valid) {
-        this.valid = valid;
-    }
-
     public String getMessages() {
         return messages;
-    }
-
-    public void setMessages(final String messages) {
-        this.messages = messages;
     }
 }

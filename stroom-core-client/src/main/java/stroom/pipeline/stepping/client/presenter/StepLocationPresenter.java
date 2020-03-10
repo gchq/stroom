@@ -22,8 +22,8 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.HasUiHandlers;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
-import stroom.pipeline.shared.StepLocation;
-import stroom.pipeline.shared.StepType;
+import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.stepping.client.presenter.StepControlEvent.StepControlHandler;
 
 public class StepLocationPresenter extends MyPresenterWidget<StepLocationPresenter.StepLocationView>

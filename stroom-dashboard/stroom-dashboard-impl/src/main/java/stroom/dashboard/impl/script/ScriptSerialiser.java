@@ -6,7 +6,6 @@ import stroom.docstore.api.DocumentSerialiser2;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.script.shared.ScriptDoc;
-import stroom.util.shared.DocRefs;
 import stroom.util.string.EncodingUtil;
 import stroom.util.xml.XMLMarshallerUtil;
 
@@ -41,20 +40,24 @@ public class ScriptSerialiser implements DocumentSerialiser2<ScriptDoc> {
 
     @Override
     public Map<String, byte[]> write(final ScriptDoc document) throws IOException {
+        final String js = document.getData();
+        document.setData(null);
+
         final Map<String, byte[]> data = delegate.write(document);
 
-        if (document.getData() != null) {
-            data.put(JS, EncodingUtil.asBytes(document.getData()));
+        if (js != null) {
+            data.put(JS, EncodingUtil.asBytes(js));
+            document.setData(js);
         }
 
         return data;
     }
 
-    public DocRefs getDocRefsFromLegacyXML(final String xml) {
+    public OldDocRefs getDocRefsFromLegacyXML(final String xml) {
         if (xml != null) {
             try {
-                final JAXBContext jaxbContext = JAXBContext.newInstance(DocRefs.class);
-                return XMLMarshallerUtil.unmarshal(jaxbContext, DocRefs.class, xml);
+                final JAXBContext jaxbContext = JAXBContext.newInstance(OldDocRefs.class);
+                return XMLMarshallerUtil.unmarshal(jaxbContext, OldDocRefs.class, xml);
             } catch (final JAXBException | RuntimeException e) {
                 LOGGER.error("Unable to unmarshal dashboard config", e);
             }

@@ -24,11 +24,11 @@ public class ProcessorDataSource {
         FIELD_MAP = FIELDS.stream().collect(Collectors.toMap(AbstractField::getName, Function.identity()));
     }
 
-    public static List<AbstractField> getFields() {
-        return new ArrayList<>(FIELDS);
-    }
-
-    public static Map<String, AbstractField> getFieldMap() {
-        return FIELD_MAP;
-    }
+//    public static List<AbstractField> getFields() {
+//        return new ArrayList<>(FIELDS);
+//    }
+//
+//    public static Map<String, AbstractField> getFieldMap() {
+//        return FIELD_MAP;
+//    }
 }

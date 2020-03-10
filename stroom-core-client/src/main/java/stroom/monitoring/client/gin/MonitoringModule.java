@@ -16,30 +16,34 @@
 
 package stroom.monitoring.client.gin;
 
+import stroom.config.global.client.presenter.ConfigPropertyClusterValuesListPresenter;
+import stroom.config.global.client.presenter.ConfigPropertyClusterValuesPresenter;
+import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter;
 import stroom.config.global.client.presenter.ManageGlobalPropertyListPresenter;
-import stroom.config.global.client.presenter.ManageGlobalPropertyPresenter;
+import stroom.config.global.client.view.ConfigPropertyClusterValuesViewImpl;
 import stroom.config.global.client.view.GlobalPropertyEditViewImpl;
-import stroom.config.global.client.view.ManageGlobalPropertyViewImpl;
+import stroom.config.global.client.view.GlobalPropertyTabViewImpl;
 import stroom.core.client.gin.PluginModule;
 import stroom.job.client.presenter.JobPresenter;
 import stroom.job.client.presenter.JobPresenter.JobView;
+import stroom.job.client.presenter.SchedulePresenter;
+import stroom.job.client.presenter.SchedulePresenter.ScheduleView;
 import stroom.job.client.view.JobViewImpl;
+import stroom.job.client.view.ScheduleViewImpl;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
-import stroom.task.client.TaskManagerPlugin;
-import stroom.job.client.presenter.SchedulePresenter;
-import stroom.job.client.presenter.SchedulePresenter.ScheduleView;
-import stroom.task.client.presenter.TaskManagerPresenter;
-import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
-import stroom.job.client.view.ScheduleViewImpl;
-import stroom.task.client.view.TaskManagerViewImpl;
+import stroom.node.client.ManageGlobalPropertiesPlugin;
 import stroom.node.client.ManageNodeToolsPlugin;
 import stroom.node.client.presenter.NodeEditPresenter;
 import stroom.node.client.view.NodeEditViewImpl;
 import stroom.node.client.view.WrapperView;
 import stroom.node.client.view.WrapperViewImpl;
+import stroom.task.client.TaskManagerPlugin;
+import stroom.task.client.presenter.TaskManagerPresenter;
+import stroom.task.client.presenter.TaskManagerPresenter.TaskManagerView;
+import stroom.task.client.view.TaskManagerViewImpl;
 import stroom.ui.config.client.UiConfigCache;
 
 public class MonitoringModule extends PluginModule {
@@ -51,25 +55,53 @@ public class MonitoringModule extends PluginModule {
 
         // Job management.
         bindPlugin(JobListPlugin.class);
-        bindPresenterWidget(SchedulePresenter.class, ScheduleView.class, ScheduleViewImpl.class);
+        bindPresenterWidget(
+            SchedulePresenter.class,
+            ScheduleView.class,
+            ScheduleViewImpl.class);
 
         // Node management.
         bindPlugin(NodeMonitoringPlugin.class);
 
         bindPlugin(ManageNodeToolsPlugin.class);
+        bindPlugin(ManageGlobalPropertiesPlugin.class);
 
         bindSharedView(WrapperView.class, WrapperViewImpl.class);
 
-        bindPresenterWidget(NodeEditPresenter.class, NodeEditPresenter.NodeEditView.class, NodeEditViewImpl.class);
+        bindPresenterWidget(
+            NodeEditPresenter.class,
+            NodeEditPresenter.NodeEditView.class,
+            NodeEditViewImpl.class);
 
-        bindPresenterWidget(JobPresenter.class, JobView.class, JobViewImpl.class);
+        bindPresenterWidget(
+            JobPresenter.class,
+            JobView.class,
+            JobViewImpl.class);
 
         // Global properties.
         bind(ManageGlobalPropertyListPresenter.class);
-        bindPresenterWidget(ManageGlobalPropertyPresenter.class, ManageGlobalPropertyPresenter.ManageGlobalPropertyView.class, ManageGlobalPropertyViewImpl.class);
-        bindPresenterWidget(ManageGlobalPropertyEditPresenter.class, ManageGlobalPropertyEditPresenter.GlobalPropertyEditView.class, GlobalPropertyEditViewImpl.class);
+
+        bind(ConfigPropertyClusterValuesListPresenter.class);
+
+        bindPresenterWidget(
+            GlobalPropertyTabPresenter.class,
+            GlobalPropertyTabPresenter.GlobalPropertyTabView.class,
+            GlobalPropertyTabViewImpl.class);
+
+        bindPresenterWidget(
+            ManageGlobalPropertyEditPresenter.class,
+            ManageGlobalPropertyEditPresenter.GlobalPropertyEditView.class,
+            GlobalPropertyEditViewImpl.class);
+
+        bindPresenterWidget(
+            ConfigPropertyClusterValuesPresenter.class,
+            ConfigPropertyClusterValuesPresenter.ConfigPropertyClusterValuesView.class,
+            ConfigPropertyClusterValuesViewImpl.class);
 
         bindPlugin(TaskManagerPlugin.class);
-        bindPresenterWidget(TaskManagerPresenter.class, TaskManagerView.class, TaskManagerViewImpl.class);
+        bindPresenterWidget(
+            TaskManagerPresenter.class,
+            TaskManagerView.class,
+            TaskManagerViewImpl.class);
     }
 }

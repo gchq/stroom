@@ -105,31 +105,26 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
     }
 
     private Format getFormat() {
-        final Format format = new Format(type);
+        FormatSettings settings = null;
         if (Type.NUMBER.equals(type)) {
-            format.setSettings(getNumberSettings());
+            settings = getNumberSettings();
         } else if (Type.DATE_TIME.equals(type)) {
-            format.setSettings(getDateTimeSettings());
+            settings = getDateTimeSettings();
         }
-
+        Boolean wrap = null;
         if (getView().isWrap()) {
-            format.setWrap(true);
-        } else {
-            format.setWrap(null);
+            wrap = true;
         }
 
-        return format;
+        return new Format(type, settings, wrap);
     }
 
     private FormatSettings getNumberSettings() {
-        final NumberFormatSettings numberFormatSettings = new NumberFormatSettings();
-        numberFormatSettings.setDecimalPlaces(getView().getDecimalPlaces());
-        numberFormatSettings.setUseSeparator(getView().isUseSeparator());
-        return numberFormatSettings;
+        return new NumberFormatSettings(getView().getDecimalPlaces(), getView().isUseSeparator());
     }
 
     private void setNumberSettings(final FormatSettings settings) {
-        if (settings == null || !(settings instanceof NumberFormatSettings)) {
+        if (!(settings instanceof NumberFormatSettings)) {
             getView().setDecimalPlaces(0);
             getView().setUseSeparator(false);
         } else {
@@ -140,11 +135,7 @@ public class FormatPresenter extends MyPresenterWidget<FormatPresenter.FormatVie
     }
 
     private FormatSettings getDateTimeSettings() {
-        final DateTimeFormatSettings dateTimeFormatSettings = new DateTimeFormatSettings();
-        dateTimeFormatSettings.setPattern(getView().getPattern());
-        dateTimeFormatSettings.setTimeZone(getTimeZone());
-
-        return dateTimeFormatSettings;
+        return new DateTimeFormatSettings(getView().getPattern(), getTimeZone());
     }
 
     private void setDateTimeSettings(final FormatSettings settings) {

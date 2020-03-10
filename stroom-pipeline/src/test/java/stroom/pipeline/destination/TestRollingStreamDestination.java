@@ -22,7 +22,7 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Target;
 import stroom.data.store.mock.MockStore;
 import stroom.meta.mock.MockMetaService;
-import stroom.meta.shared.MetaProperties;
+import stroom.meta.api.MetaProperties;
 import stroom.util.date.DateUtil;
 import stroom.util.scheduler.SimpleCron;
 

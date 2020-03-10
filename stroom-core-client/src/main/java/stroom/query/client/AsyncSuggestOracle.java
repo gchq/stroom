@@ -16,24 +16,28 @@
 
 package stroom.query.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.ui.MultiWordSuggestOracle.MultiWordSuggestion;
 import com.google.gwt.user.client.ui.SuggestOracle;
 import stroom.datasource.api.v2.AbstractField;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
-import stroom.query.shared.FetchSuggestionsAction;
-import stroom.util.shared.SharedString;
+import stroom.query.shared.FetchSuggestionsRequest;
+import stroom.query.shared.SuggestionsResource;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AsyncSuggestOracle extends SuggestOracle {
-    private ClientDispatchAsync dispatcher;
+    private static final SuggestionsResource SUGGESTIONS_RESOURCE = GWT.create(SuggestionsResource.class);
+
+    private RestFactory restFactory;
     private DocRef dataSource;
     private AbstractField field;
 
-    public void setDispatcher(final ClientDispatchAsync dispatcher) {
-        this.dispatcher = dispatcher;
+    public void setRestFactory(final RestFactory restFactory) {
+        this.restFactory = restFactory;
     }
 
     public void setDataSource(final DocRef dataSource) {
@@ -51,14 +55,18 @@ public class AsyncSuggestOracle extends SuggestOracle {
 
     @Override
     public void requestSuggestions(final Request request, final Callback callback) {
-        if (dispatcher != null && dataSource != null) {
-            dispatcher.exec(new FetchSuggestionsAction(dataSource, field, request.getQuery())).onSuccess(result -> {
-                final List<Suggestion> suggestions = new ArrayList<>();
-                for (final SharedString string : result) {
-                    suggestions.add(new MultiWordSuggestion(string.toString(), string.toString()));
-                }
-                callback.onSuggestionsReady(request, new Response(suggestions));
-            });
+        if (restFactory != null && dataSource != null) {
+            final Rest<List<String>> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> {
+                        final List<Suggestion> suggestions = new ArrayList<>();
+                        for (final String string : result) {
+                            suggestions.add(new MultiWordSuggestion(string, string));
+                        }
+                        callback.onSuggestionsReady(request, new Response(suggestions));
+                    })
+                    .call(SUGGESTIONS_RESOURCE)
+                    .fetch(new FetchSuggestionsRequest(dataSource, field, request.getQuery()));
         }
     }
 }

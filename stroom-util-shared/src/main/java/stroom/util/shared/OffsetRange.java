@@ -16,21 +16,25 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-public class OffsetRange<T extends Number> implements SharedObject {
-    private static final long serialVersionUID = 5045453517852867315L;
+@JsonPropertyOrder({"offset", "length"})
+@JsonInclude(Include.NON_NULL)
+public class OffsetRange<T extends Number> {
+    @JsonProperty
+    private final T offset;
+    @JsonProperty
+    private final T length;
 
-    private T offset;
-    private T length;
-
-    public OffsetRange() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public OffsetRange(final T offset, final T length) {
+    @JsonCreator
+    public OffsetRange(@JsonProperty("offset") final T offset,
+                       @JsonProperty("length") final T length) {
         this.offset = offset;
         this.length = length;
     }

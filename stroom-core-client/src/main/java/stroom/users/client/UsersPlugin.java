@@ -45,7 +45,7 @@ public class UsersPlugin extends NodeToolsPlugin {
                                 final UiConfig uiConfig) {
         final IconMenuItem usersMenuItem;
         final SvgPreset icon = SvgPresets.USER_GROUP;
-        final String usersUiUrl = uiConfig.getUrlConfig().getUsers();
+        final String usersUiUrl = uiConfig.getUrl().getUsers();
         if (usersUiUrl != null && usersUiUrl.trim().length() > 0) {
             usersMenuItem = new IconMenuItem(5, icon, null, "Users", null, true, () -> {
                 final Hyperlink hyperlink = new Builder()
@@ -65,7 +65,7 @@ public class UsersPlugin extends NodeToolsPlugin {
                                              final UiConfig uiConfig) {
         final IconMenuItem usersMenuItem;
         final SvgPreset icon = SvgPresets.USER_GROUP;
-        final String url = uiConfig.getUrlConfig().getUserAuthorisation();
+        final String url = uiConfig.getUrl().getUserAuthorisation();
         if (url != null && url.trim().length() > 0) {
             usersMenuItem = new IconMenuItem(5, icon, null, "User Authorisation", null, true, () -> {
                 final Hyperlink hyperlink = new Builder()
@@ -85,7 +85,7 @@ public class UsersPlugin extends NodeToolsPlugin {
                                              final UiConfig uiConfig) {
         final IconMenuItem usersMenuItem;
         final SvgPreset icon = SvgPresets.USER_GROUP;
-        final String url = uiConfig.getUrlConfig().getUserAuthorisation();
+        final String url = uiConfig.getUrl().getUserAuthorisation();
         if (url != null && url.trim().length() > 0) {
             usersMenuItem = new IconMenuItem(5, icon, null, "Group Authorisation", null, true, () -> {
                 final Hyperlink hyperlink = new Builder()

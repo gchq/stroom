@@ -48,7 +48,6 @@ public class _V07_00_00_SplitLayoutConfig extends _V07_00_00_LayoutConfig {
     private List<_V07_00_00_LayoutConfig> children;
 
     public _V07_00_00_SplitLayoutConfig() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_SplitLayoutConfig(final int dimension, final _V07_00_00_LayoutConfig... children) {

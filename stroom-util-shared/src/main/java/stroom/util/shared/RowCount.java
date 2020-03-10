@@ -16,21 +16,25 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Objects;
 
-public class RowCount<T extends Number> implements SharedObject {
-    private static final long serialVersionUID = 1435183608704221253L;
+@JsonPropertyOrder({"count", "exact"})
+@JsonInclude(Include.NON_NULL)
+public class RowCount<T extends Number> {
+    @JsonProperty
+    private final T count;
+    @JsonProperty
+    private final boolean exact;
 
-    private T count;
-    private boolean exact;
-
-    public RowCount() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public RowCount(final T count, final boolean exact) {
+    @JsonCreator
+    public RowCount(@JsonProperty("count") final T count,
+                    @JsonProperty("exact") final boolean exact) {
         this.count = count;
         this.exact = exact;
     }

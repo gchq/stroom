@@ -30,7 +30,6 @@ import stroom.dashboard.shared.TableComponentSettings;
 import stroom.dashboard.shared.TableResultRequest;
 import stroom.dashboard.shared.TimeZone;
 import stroom.docref.DocRef;
-import stroom.explorer.shared.SharedDocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm;
 import stroom.query.api.v2.ResultRequest.Fetch;
@@ -39,18 +38,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SearchRequestTestData {
+    static DashboardQueryKey dashboardQueryKey() {
+        return new DashboardQueryKey(
+                "queryKeyUuid",
+                "0",
+                "queryId-1");
+    }
+
     static stroom.query.api.v2.SearchRequest apiSearchRequest() {
         stroom.dashboard.shared.SearchRequest dashboardSearchRequest = dashboardSearchRequest();
 
         SearchRequestMapper searchRequestMapper = new SearchRequestMapper(null);
-        stroom.query.api.v2.SearchRequest apiSearchRequest = searchRequestMapper.mapRequest(
-                DashboardQueryKey.create(
-                        "queryKeyUuid",
-                        "0",
-                        "queryId-1"),
+        return searchRequestMapper.mapRequest(
+                dashboardQueryKey(),
                 dashboardSearchRequest);
-
-        return apiSearchRequest;
     }
 
     static stroom.dashboard.shared.SearchRequest dashboardSearchRequest() {
@@ -69,16 +70,18 @@ public class SearchRequestTestData {
                 new Filter("include1", "exclude1"),
                 new Format(
                         Format.Type.NUMBER,
-                        new NumberFormatSettings(1, false)), 1, 200, true));
-        tableSettings.addField(new Field("2",  "name2", "expression2",
+                        new NumberFormatSettings(1, false))
+                , 1, 200, true, false));
+        tableSettings.addField(new Field("2", "name2", "expression2",
                 new Sort(2, Sort.SortDirection.DESCENDING),
                 new Filter("include2", "exclude2"),
                 new Format(
                         Format.Type.DATE_TIME,
-                        createDateTimeFormat()), 2, 200, true));
+                        createDateTimeFormat())
+                , 2, 200, true, false));
         tableSettings.setExtractValues(false);
         tableSettings.setExtractionPipeline(
-                new SharedDocRef("docRefType2", "docRefUuid2", "docRefName2"));
+                new DocRef("docRefType2", "docRefUuid2", "docRefName2"));
         tableSettings.setMaxResults(new int[]{1, 2});
         tableSettings.setShowDetail(false);
 
@@ -106,19 +109,12 @@ public class SearchRequestTestData {
             componentResultRequestMap.put(entry.getKey(), tableResultRequest);
         }
 
-        stroom.dashboard.shared.SearchRequest searchRequest = new stroom.dashboard.shared.SearchRequest(
-                search, componentResultRequestMap, "en-gb");
-
-        return searchRequest;
+        return new stroom.dashboard.shared.SearchRequest(
+                dashboardQueryKey(), search, componentResultRequestMap, "en-gb");
     }
 
     private static DateTimeFormatSettings createDateTimeFormat() {
         final TimeZone timeZone = TimeZone.fromOffset(2, 30);
-
-        final DateTimeFormatSettings dateTimeFormat = new DateTimeFormatSettings();
-        dateTimeFormat.setPattern("yyyy-MM-dd'T'HH:mm:ss");
-        dateTimeFormat.setTimeZone(timeZone);
-
-        return dateTimeFormat;
+        return new DateTimeFormatSettings("yyyy-MM-dd'T'HH:mm:ss", timeZone);
     }
 }

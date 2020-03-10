@@ -10,13 +10,16 @@
         "name" : "Year",
         "expression" : "formatDate(floorYear(${ReportPeriod}), 'yyyy ', '+0000')",
         "sort" : {
-          "order" : 0
+          "order" : 0,
+          "direction" : "ASCENDING"
         },
         "format" : {
           "type" : "TEXT"
         },
         "group" : 0,
-        "width" : 106
+        "width" : 106,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Month",
         "expression" : "formatDate(floorMonth(${ReportPeriod}),'MM ','+0000')",
@@ -24,27 +27,37 @@
           "type" : "GENERAL"
         },
         "group" : 0,
-        "width" : 99
+        "width" : 99,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "AirCargoTons",
         "expression" : "sum(${AirCargoTons})",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "visible" : false
+        "width" : 200,
+        "visible" : false,
+        "special" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
-        "visible" : false
+        "width" : 200,
+        "visible" : false,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "a7fed513-fb9c-4530-802f-54ef65e80589",
         "name" : "LAX_CARGO_VOLUME-EXTRACTION"
-      }
+      },
+      "maxResults" : [ 1000000 ]
     }
   }, {
     "type" : "query",
@@ -67,7 +80,8 @@
         } ]
       },
       "automate" : {
-        "open" : true
+        "open" : true,
+        "refresh" : false
       }
     }
   }, {
@@ -87,13 +101,18 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : { },
+    "preferredSize" : {
+      "width" : 0,
+      "height" : 0
+    },
     "dimension" : 1,
     "children" : [ {
       "type" : "splitLayout",
       "preferredSize" : {
+        "width" : 0,
         "height" : 146
       },
+      "dimension" : 0,
       "children" : [ {
         "type" : "tabLayout",
         "preferredSize" : {
@@ -101,34 +120,34 @@
           "height" : 99
         },
         "tabs" : [ {
-          "id" : "query-JT8D7"
+          "id" : "query-JT8D7",
+          "visible" : true
         } ],
-        "selected" : 0,
-        "visibleTabCount" : 1,
-        "allTabCount" : 1
+        "selected" : 0
       }, {
         "type" : "tabLayout",
         "preferredSize" : {
-          "width" : 764
+          "width" : 764,
+          "height" : 0
         },
         "tabs" : [ {
-          "id" : "table-IIO1T"
+          "id" : "table-IIO1T",
+          "visible" : true
         } ],
-        "selected" : 0,
-        "visibleTabCount" : 1,
-        "allTabCount" : 1
+        "selected" : 0
       } ]
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
+        "width" : 0,
         "height" : 871
       },
       "tabs" : [ {
-        "id" : "vis-BX59A"
+        "id" : "vis-BX59A",
+        "visible" : true
       } ],
-      "selected" : 0,
-      "visibleTabCount" : 1,
-      "allTabCount" : 1
+      "selected" : 0
     } ]
-  }
+  },
+  "tabVisibility" : "SHOW_ALL"
 }

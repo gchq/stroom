@@ -17,8 +17,6 @@
 
 package stroom.node.api;
 
-import stroom.node.shared.FindNodeCriteria;
-
 import java.util.List;
 
 /**

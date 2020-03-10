@@ -27,6 +27,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import org.eclipse.jetty.server.session.SessionHandler;
 import org.eclipse.jetty.servlets.CrossOriginFilter;
+import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.app.commands.DbMigrationCommand;
@@ -42,7 +43,7 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
-import stroom.util.guice.ResourcePaths;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
@@ -54,6 +55,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.logging.Level;
 
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
@@ -110,6 +112,10 @@ public class App extends Application<Config> {
     public void run(final Config configuration, final Environment environment) {
         LOGGER.info("Using application configuration file {}", configFile.toAbsolutePath().normalize());
 
+        // Turn on Jersey logging.
+        environment.jersey().register(
+                new LoggingFeature(java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME), Level.INFO, LoggingFeature.Verbosity.PAYLOAD_ANY, LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
+
         if (configuration.getAppConfig().isSuperDevMode()) {
             configuration.getAppConfig().getSecurityConfig().getAuthenticationConfig().setAuthenticationRequired(false);
             configuration.getAppConfig().getSecurityConfig().getContentSecurityConfig().setContentSecurityPolicy("");
@@ -127,7 +133,7 @@ public class App extends Application<Config> {
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
 
-        LOGGER.info("Starting Stroom Application");
+        LOGGER.info("Starting Stroom Application ({})", getNodeName(configuration.getAppConfig()));
 
         final AppModule appModule = new AppModule(configuration, environment, configFile);
         final Injector injector = Guice.createInjector(appModule);
@@ -169,6 +175,14 @@ public class App extends Application<Config> {
         sessionCookieConfig.setSecure(configuration.getAppConfig().getSessionCookieConfig().isSecure());
         sessionCookieConfig.setHttpOnly(configuration.getAppConfig().getSessionCookieConfig().isHttpOnly());
         // TODO : Add `SameSite=Strict` when supported by JEE
+    }
+
+    private String getNodeName(final AppConfig appConfig) {
+        return appConfig != null
+                ? (appConfig.getNodeConfig() != null
+                    ? appConfig.getNodeConfig().getNodeName()
+                    : null)
+                : null;
     }
 
     private void validateAppConfig(final Injector injector, final AppConfig appConfig) {

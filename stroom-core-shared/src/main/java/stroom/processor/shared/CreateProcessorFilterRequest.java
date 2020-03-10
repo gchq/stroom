@@ -16,22 +16,28 @@
 
 package stroom.processor.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
-import stroom.task.shared.Action;
 
+@JsonInclude(Include.NON_NULL)
 public class CreateProcessorFilterRequest {
+    @JsonProperty
     private DocRef pipeline;
+    @JsonProperty
     private QueryData queryData;
+    @JsonProperty
     private boolean enabled;
+    @JsonProperty
     private int priority;
 
-    CreateProcessorFilterRequest() {
-    }
-
-    public CreateProcessorFilterRequest(final DocRef pipeline,
-                                        final QueryData queryData,
-                                        boolean enabled,
-                                        int priority) {
+    @JsonCreator
+    public CreateProcessorFilterRequest(@JsonProperty("pipeline") final DocRef pipeline,
+                                        @JsonProperty("queryData") final QueryData queryData,
+                                        @JsonProperty("enabled") final boolean enabled,
+                                        @JsonProperty("priority") final int priority) {
         this.pipeline = pipeline;
         this.queryData = queryData;
         this.enabled = enabled;

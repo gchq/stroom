@@ -31,7 +31,6 @@ public class _V07_00_00_StreamAttributeCondition implements Serializable {
     private String fieldValue;
 
     public _V07_00_00_StreamAttributeCondition() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_StreamAttributeCondition(final _V07_00_00_StreamAttributeKey streamAttributeKey, final Condition condition,

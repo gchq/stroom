@@ -16,19 +16,21 @@
 
 package stroom.dashboard.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ValidateExpressionResult implements SharedObject {
-    private static final long serialVersionUID = 7559713171858774241L;
+@JsonInclude(Include.NON_NULL)
+public class ValidateExpressionResult {
+    @JsonProperty
+    private final boolean ok;
+    @JsonProperty
+    private final String string;
 
-    private boolean ok;
-    private String string;
-
-    public ValidateExpressionResult() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public ValidateExpressionResult(final boolean ok, final String string) {
+    @JsonCreator
+    public ValidateExpressionResult(@JsonProperty("ok") final boolean ok,
+                                    @JsonProperty("string") final String string) {
         this.ok = ok;
         this.string = string;
     }

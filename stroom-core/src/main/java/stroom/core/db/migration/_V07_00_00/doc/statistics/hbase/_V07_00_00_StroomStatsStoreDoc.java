@@ -34,20 +34,16 @@ public class _V07_00_00_StroomStatsStoreDoc extends _V07_00_00_Doc {
     private static final _V07_00_00_EventStoreTimeIntervalEnum DEFAULT_PRECISION_INTERVAL = _V07_00_00_EventStoreTimeIntervalEnum.HOUR;
 
     private String description;
-    private _V07_00_00_StatisticType statisticType = _V07_00_00_StatisticType.COUNT;
-    private _V07_00_00_StatisticRollUpType statisticRollUpType = _V07_00_00_StatisticRollUpType.NONE;
+    private _V07_00_00_StatisticType statisticType;
+    private _V07_00_00_StatisticRollUpType statisticRollUpType;
     private _V07_00_00_EventStoreTimeIntervalEnum precision;
     private Boolean enabled;
     private _V07_00_00_StroomStatsStoreEntityData config;
 
     public _V07_00_00_StroomStatsStoreDoc() {
-        setDefaults();
-    }
-
-    private void setDefaults() {
-        this.statisticType = _V07_00_00_StatisticType.COUNT;
-        this.statisticRollUpType = _V07_00_00_StatisticRollUpType.NONE;
-        setPrecision(DEFAULT_PRECISION_INTERVAL);
+        statisticType = _V07_00_00_StatisticType.COUNT;
+        statisticRollUpType = _V07_00_00_StatisticRollUpType.NONE;
+        precision = DEFAULT_PRECISION_INTERVAL;
     }
 
     public String getDescription() {

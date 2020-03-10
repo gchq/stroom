@@ -2,7 +2,7 @@ package stroom.search.extraction;
 
 import stroom.dashboard.expression.v1.FieldIndexMap;
 import stroom.docref.DocRef;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.query.api.v2.Query;
 import stroom.search.coprocessor.Coprocessors;
 import stroom.search.coprocessor.Error;
@@ -12,6 +12,7 @@ import stroom.search.coprocessor.ReceiverImpl;
 import stroom.search.coprocessor.Values;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
+import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -26,6 +27,7 @@ public class ExtractionDecoratorFactory {
     private final ExtractionConfig extractionConfig;
     private final MetaService metaService;
     private final ExecutorProvider executorProvider;
+    private final Provider<TaskContext> taskContextProvider;
     private final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider;
     private final AnnotationsDecoratorFactory receiverDecoratorFactory;
     private final SecurityContext securityContext;
@@ -35,6 +37,7 @@ public class ExtractionDecoratorFactory {
                                final ExtractionConfig extractionConfig,
                                final MetaService metaService,
                                final ExecutorProvider executorProvider,
+                               final Provider<TaskContext> taskContextProvider,
                                final Provider<ExtractionTaskHandler> extractionTaskHandlerProvider,
                                final AnnotationsDecoratorFactory receiverDecoratorFactory,
                                final SecurityContext securityContext) {
@@ -42,6 +45,7 @@ public class ExtractionDecoratorFactory {
         this.extractionConfig = extractionConfig;
         this.metaService = metaService;
         this.executorProvider = executorProvider;
+        this.taskContextProvider = taskContextProvider;
         this.extractionTaskHandlerProvider = extractionTaskHandlerProvider;
         this.receiverDecoratorFactory = receiverDecoratorFactory;
         this.securityContext = securityContext;
@@ -105,6 +109,7 @@ public class ExtractionDecoratorFactory {
                 extractionConfig.getMaxStoredDataQueueSize(),
                 extractionConfig.getMaxThreadsPerTask(),
                 executorProvider,
+                taskContextProvider.get(),
                 extractionTaskHandlerProvider,
                 securityContext);
 

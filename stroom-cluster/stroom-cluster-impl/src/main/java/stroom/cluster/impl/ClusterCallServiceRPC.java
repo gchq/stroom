@@ -22,10 +22,10 @@ import stroom.cluster.api.ClusterCallServiceLocal;
 import stroom.cluster.api.ServiceName;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
-import stroom.util.guice.ResourcePaths;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.IsServlet;
+import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import java.util.Set;

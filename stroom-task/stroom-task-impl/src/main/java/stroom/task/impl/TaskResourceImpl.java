@@ -24,16 +24,17 @@ import stroom.node.api.NodeService;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskProgressCriteria;
 import stroom.task.shared.FindTaskProgressRequest;
+import stroom.task.shared.TaskProgress;
 import stroom.task.shared.TaskProgressResponse;
 import stroom.task.shared.TaskResource;
 import stroom.task.shared.TerminateTaskProgressRequest;
 import stroom.util.HasHealthCheck;
-import stroom.util.guice.ResourcePaths;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.servlet.SessionIdProvider;
-import stroom.util.shared.RestResource;
+import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
@@ -45,7 +46,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.Response.Status;
 
 // TODO : @66 add event logging
-class TaskResourceImpl implements TaskResource, RestResource, HasHealthCheck {
+class TaskResourceImpl implements TaskResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskResourceImpl.class);
 
     private final TaskManager taskManager;
@@ -57,11 +58,11 @@ class TaskResourceImpl implements TaskResource, RestResource, HasHealthCheck {
 
     @Inject
     TaskResourceImpl(final TaskManager taskManager,
-                             final SessionIdProvider sessionIdProvider,
-                             final NodeService nodeService,
-                             final NodeInfo nodeInfo,
-                             final WebTargetFactory webTargetFactory,
-                             final DocumentEventLog documentEventLog) {
+                     final SessionIdProvider sessionIdProvider,
+                     final NodeService nodeService,
+                     final NodeInfo nodeInfo,
+                     final WebTargetFactory webTargetFactory,
+                     final DocumentEventLog documentEventLog) {
         this.taskManager = taskManager;
         this.sessionIdProvider = sessionIdProvider;
         this.nodeService = nodeService;
@@ -72,7 +73,7 @@ class TaskResourceImpl implements TaskResource, RestResource, HasHealthCheck {
 
     @Override
     public TaskProgressResponse list(final String nodeName) {
-        return find(nodeName, new FindTaskProgressRequest());
+        return find(nodeName, new FindTaskProgressRequest(new FindTaskProgressCriteria()));
     }
 
     @Override
@@ -81,11 +82,13 @@ class TaskResourceImpl implements TaskResource, RestResource, HasHealthCheck {
         try {
             // If this is the node that was contacted then just return our local info.
             if (nodeInfo.getThisNodeName().equals(nodeName)) {
-                result = taskManager.find(request.getCriteria()).toResultPage(new TaskProgressResponse());
+                final ResultPage<TaskProgress> resultPage = taskManager.find(request.getCriteria());
+                result = new TaskProgressResponse(resultPage.getValues(), resultPage.getPageResponse());
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_ROOT_PATH + "/task/" + nodeName;
+                url += ResourcePaths.API_ROOT_PATH + TaskResource.BASE_PATH;
+                url += nodeName;
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
@@ -134,7 +137,9 @@ class TaskResourceImpl implements TaskResource, RestResource, HasHealthCheck {
 
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_ROOT_PATH + "/task/" + nodeName + "/terminate";
+                url += ResourcePaths.API_ROOT_PATH + TaskResource.BASE_PATH;
+                url += nodeName;
+                url += "/terminate";
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)

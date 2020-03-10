@@ -17,41 +17,47 @@
 package stroom.pipeline.stepping.client;
 
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.presenter.Plugin;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.explorer.client.presenter.EntityChooser;
-import stroom.explorer.shared.SharedDocRef;
 import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.FindMetaRowAction;
 import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaResource;
 import stroom.meta.shared.MetaRow;
 import stroom.pipeline.shared.PipelineDoc;
-import stroom.pipeline.shared.StepLocation;
-import stroom.pipeline.shared.stepping.GetPipelineForMetaAction;
+import stroom.pipeline.shared.stepping.GetPipelineForMetaRequest;
+import stroom.pipeline.shared.stepping.StepLocation;
+import stroom.pipeline.shared.stepping.SteppingResource;
 import stroom.pipeline.stepping.client.event.BeginPipelineSteppingEvent;
 import stroom.pipeline.stepping.client.presenter.SteppingContentTabPresenter;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.util.shared.ResultPage;
 
 public class PipelineSteppingPlugin extends Plugin implements BeginPipelineSteppingEvent.Handler {
+    private static final MetaResource META_RESOURCE = GWT.create(MetaResource.class);
+    private static final SteppingResource STEPPING_RESOURCE = GWT.create(SteppingResource.class);
+
     private final Provider<EntityChooser> pipelineSelection;
     private final Provider<SteppingContentTabPresenter> editorProvider;
     private final ContentManager contentManager;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
 
     @Inject
     public PipelineSteppingPlugin(final EventBus eventBus, final Provider<SteppingContentTabPresenter> editorProvider,
                                   final Provider<EntityChooser> pipelineSelection, final ContentManager contentManager,
-                                  final ClientDispatchAsync dispatcher) {
+                                  final RestFactory restFactory) {
         super(eventBus);
         this.pipelineSelection = pipelineSelection;
         this.editorProvider = editorProvider;
         this.contentManager = contentManager;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
 
         registerHandler(eventBus.addHandler(BeginPipelineSteppingEvent.getType(), this));
     }
@@ -65,12 +71,16 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
         } else {
             // If we don't have a pipeline id then try to guess one for the
             // supplied stream.
-            dispatcher.exec(new GetPipelineForMetaAction(event.getStreamId(), event.getChildStreamId())).onSuccess(result ->
-                    choosePipeline(result, event.getStepLocation(), event.getChildStreamType()));
+            final Rest<DocRef> rest = restFactory.create();
+            rest
+                    .onSuccess(result ->
+                            choosePipeline(result, event.getStepLocation(), event.getChildStreamType()))
+                    .call(STEPPING_RESOURCE)
+                    .getPipelineForStepping(new GetPipelineForMetaRequest(event.getStreamId(), event.getChildStreamId()));
         }
     }
 
-    private void choosePipeline(final SharedDocRef initialPipelineRef,
+    private void choosePipeline(final DocRef initialPipelineRef,
                                 final StepLocation stepLocation,
                                 final String childStreamType) {
         final EntityChooser chooser = pipelineSelection.get();
@@ -83,12 +93,15 @@ public class PipelineSteppingPlugin extends Plugin implements BeginPipelineStepp
                 final FindMetaCriteria findMetaCriteria = new FindMetaCriteria();
                 findMetaCriteria.obtainSelectedIdSet().add(stepLocation.getId());
 
-                dispatcher.exec(new FindMetaRowAction(findMetaCriteria)).onSuccess(result -> {
-                    if (result != null && result.size() == 1) {
-                        final MetaRow row = result.get(0);
-                        openEditor(pipeline, stepLocation, row.getMeta(), childStreamType);
-                    }
-                });
+                final Rest<ResultPage<MetaRow>> rest = restFactory.create();
+                rest
+                        .onSuccess(result -> {
+                            if (result != null && result.size() == 1) {
+                                final MetaRow row = result.getFirst();
+                                openEditor(pipeline, stepLocation, row.getMeta(), childStreamType);
+                            }
+                        })
+                        .call(META_RESOURCE).findMetaRow(findMetaCriteria);
             }
         });
 

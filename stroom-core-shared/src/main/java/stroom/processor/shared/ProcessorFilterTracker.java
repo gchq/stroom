@@ -16,23 +16,31 @@
 
 package stroom.processor.shared;
 
-import stroom.docref.SharedObject;
+
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.ModelStringUtil;
 
 import java.util.Objects;
 
-
-public class ProcessorFilterTracker implements SharedObject {
+@JsonInclude(Include.NON_NULL)
+public class ProcessorFilterTracker {
     public static final String ENTITY_TYPE = "ProcessorFilterTracker";
     public static final String COMPLETE = "Complete";
-    private static final long serialVersionUID = -2478788451478923825L;
 
     // standard id and OCC fields
+    @JsonProperty
     private Integer id;
+    @JsonProperty
     private Integer version;
 
     // These numbers are inclusive use getStreamRange to get a nice Stroom style
+    @JsonProperty
     private long minMetaId;
+    @JsonProperty
     private long minEventId;
 
     // For info only to display in the GUI
@@ -46,20 +54,53 @@ public class ProcessorFilterTracker implements SharedObject {
      * once it completes it would read 100%. If then some more data came in it
      * would show the % complete since the last complete time.
      */
+    @JsonProperty
     private Long minMetaCreateMs;
+    @JsonProperty
     private Long maxMetaCreateMs;
+    @JsonProperty
     private Long metaCreateMs;
 
+    @JsonProperty
     private Long lastPollMs;
+    @JsonProperty
     private Integer lastPollTaskCount;
-    private boolean complete;
+    @JsonProperty
     private String status;
 
+    @JsonProperty
     private Long metaCount;
+    @JsonProperty
     private Long eventCount;
 
     public ProcessorFilterTracker() {
-        // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public ProcessorFilterTracker(@JsonProperty("id") final Integer id,
+                                  @JsonProperty("version") final Integer version,
+                                  @JsonProperty("minMetaId") final long minMetaId,
+                                  @JsonProperty("minEventId") final long minEventId,
+                                  @JsonProperty("minMetaCreateMs") final Long minMetaCreateMs,
+                                  @JsonProperty("maxMetaCreateMs") final Long maxMetaCreateMs,
+                                  @JsonProperty("metaCreateMs") final Long metaCreateMs,
+                                  @JsonProperty("lastPollMs") final Long lastPollMs,
+                                  @JsonProperty("lastPollTaskCount") final Integer lastPollTaskCount,
+                                  @JsonProperty("status") final String status,
+                                  @JsonProperty("metaCount") final Long metaCount,
+                                  @JsonProperty("eventCount") final Long eventCount) {
+        this.id = id;
+        this.version = version;
+        this.minMetaId = minMetaId;
+        this.minEventId = minEventId;
+        this.minMetaCreateMs = minMetaCreateMs;
+        this.maxMetaCreateMs = maxMetaCreateMs;
+        this.metaCreateMs = metaCreateMs;
+        this.lastPollMs = lastPollMs;
+        this.lastPollTaskCount = lastPollTaskCount;
+        this.status = status;
+        this.metaCount = metaCount;
+        this.eventCount = eventCount;
     }
 
     public Integer getId() {
@@ -170,15 +211,12 @@ public class ProcessorFilterTracker implements SharedObject {
      * For UI use only to see current progress. Not used to influence task
      * creation.
      */
+    @JsonIgnore
     public Integer getTrackerStreamCreatePercentage() {
         return getTrackerStreamCreatePercentage(System.currentTimeMillis());
     }
 
     public Integer getTrackerStreamCreatePercentage(final long now) {
-        if (complete) {
-            return 100;
-        }
-
         if (minMetaCreateMs != null && metaCreateMs != null) {
             long max = now;
             if (lastPollMs != null) {
@@ -208,6 +246,7 @@ public class ProcessorFilterTracker implements SharedObject {
      * For UI use only to see current progress. Not used to influence task
      * creation.
      */
+    @JsonIgnore
     public String getLastPollAge() {
         if (lastPollMs != null) {
             final long ageMs = System.currentTimeMillis() - lastPollMs;
@@ -232,7 +271,6 @@ public class ProcessorFilterTracker implements SharedObject {
                 ", metaCreateMs=" + metaCreateMs +
                 ", lastPollMs=" + lastPollMs +
                 ", lastPollTaskCount=" + lastPollTaskCount +
-                ", complete=" + complete +
                 ", status='" + status + '\'' +
                 ", metaCount=" + metaCount +
                 ", eventCount=" + eventCount +

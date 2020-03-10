@@ -16,25 +16,52 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.FindDocumentEntityCriteria;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
+import stroom.util.shared.StringCriteria;
 
+import java.util.List;
+
+@JsonInclude(Include.NON_NULL)
 public class FindStoredQueryCriteria extends FindDocumentEntityCriteria {
-    private static final long serialVersionUID = -4421720204507720754L;
-
     public static final String FIELD_ID = "Id";
     public static final String FIELD_TIME = "Time";
 
+    @JsonProperty
     private String userId;
+    @JsonProperty
     private String dashboardUuid;
+    @JsonProperty
     private String componentId;
+    @JsonProperty
     private Boolean favourite;
 
     public FindStoredQueryCriteria() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public FindStoredQueryCriteria(final String name) {
         super(name);
+    }
+
+    @JsonCreator
+    public FindStoredQueryCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                   @JsonProperty("sortList") final List<Sort> sortList,
+                                   @JsonProperty("name") final StringCriteria name,
+                                   @JsonProperty("requiredPermission") final String requiredPermission,
+                                   @JsonProperty("userId") final String userId,
+                                   @JsonProperty("dashboardUuid") final String dashboardUuid,
+                                   @JsonProperty("componentId") final String componentId,
+                                   @JsonProperty("favourite") final Boolean favourite) {
+        super(pageRequest, sortList, name, requiredPermission);
+        this.userId = userId;
+        this.dashboardUuid = dashboardUuid;
+        this.componentId = componentId;
+        this.favourite = favourite;
     }
 
     public String getUserId() {

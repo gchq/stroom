@@ -16,33 +16,37 @@
 
 package stroom.pipeline.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.Marker;
 import stroom.util.shared.OffsetRange;
 import stroom.util.shared.RowCount;
-import stroom.util.shared.SharedList;
 
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FetchMarkerResult extends AbstractFetchDataResult {
     public static final int MAX_MARKERS = 100;
     public static final int MAX_TOTAL_MARKERS = 1000;
-    private static final long serialVersionUID = 7559713171858774241L;
-    private SharedList<Marker> markers;
 
-    public FetchMarkerResult() {
-        // Default constructor necessary for GWT serialisation.
-    }
+    @JsonProperty
+    private final List<Marker> markers;
 
-    public FetchMarkerResult(final String streamType, final String classification,
-                             final OffsetRange<Long> streamRange, final RowCount<Long> streamRowCount, final OffsetRange<Long> pageRange,
-                             final RowCount<Long> pageRowCount, final List<String> availableChildStreamTypes,
-                             final SharedList<Marker> markers) {
-        super(streamType, classification, streamRange, streamRowCount, pageRange, pageRowCount,
-                availableChildStreamTypes);
+    @JsonCreator
+    public FetchMarkerResult(@JsonProperty("streamTypeName") final String streamTypeName,
+                             @JsonProperty("classification") final String classification,
+                             @JsonProperty("streamRange") final OffsetRange<Long> streamRange,
+                             @JsonProperty("streamRowCount") final RowCount<Long> streamRowCount,
+                             @JsonProperty("pageRange") final OffsetRange<Long> pageRange,
+                             @JsonProperty("pageRowCount") final RowCount<Long> pageRowCount,
+                             @JsonProperty("availableChildStreamTypes") final List<String> availableChildStreamTypes,
+                             @JsonProperty("markers") final List<Marker> markers) {
+        super(streamTypeName, classification, streamRange, streamRowCount, pageRange, pageRowCount, availableChildStreamTypes);
         this.markers = markers;
     }
 
-    public SharedList<Marker> getMarkers() {
+    public List<Marker> getMarkers() {
         return markers;
     }
 }

@@ -20,14 +20,13 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.TaskProgress;
-import stroom.util.shared.BaseResultList;
-import stroom.util.shared.ResultList;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 
 
 class FindTaskProgressClusterHandler
-        extends AbstractTaskHandler<FindTaskProgressClusterTask, ResultList<TaskProgress>> {
+        extends AbstractTaskHandler<FindTaskProgressClusterTask, ResultPage<TaskProgress>> {
     private final TaskManager taskManager;
     private final SecurityContext securityContext;
 
@@ -39,7 +38,7 @@ class FindTaskProgressClusterHandler
     }
 
     @Override
-    public BaseResultList<TaskProgress> exec(final FindTaskProgressClusterTask task) {
+    public ResultPage<TaskProgress> exec(final FindTaskProgressClusterTask task) {
         return securityContext.secureResult(() -> taskManager.find(task.getCriteria()));
     }
 }

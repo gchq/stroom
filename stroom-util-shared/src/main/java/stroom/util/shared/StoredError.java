@@ -16,26 +16,36 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-public class StoredError implements Marker, Comparable<StoredError>, SharedObject {
-    private static final long serialVersionUID = -2467020756279078626L;
+import java.util.Objects;
 
+@JsonPropertyOrder({"severity", "location", "elementId", "message"})
+@JsonInclude(Include.NON_NULL)
+public class StoredError implements Marker, Comparable<StoredError> {
     private static final String SPACE = " ";
     private static final String CLOSE_BRACKET = "] ";
     private static final String COLON = ":";
     private static final String OPEN_BRACKET = "[";
 
-    private Severity severity;
-    private Location location;
-    private String elementId;
-    private String message;
+    @JsonProperty
+    private final Severity severity;
+    @JsonProperty
+    private final Location location;
+    @JsonProperty
+    private final String elementId;
+    @JsonProperty
+    private final String message;
 
-    public StoredError() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public StoredError(final Severity severity, final Location location, final String elementId, final String message) {
+    @JsonCreator
+    public StoredError(@JsonProperty("severity") final Severity severity,
+                       @JsonProperty("location") final Location location,
+                       @JsonProperty("elementId") final String elementId,
+                       @JsonProperty("message") final String message) {
         this.severity = severity;
         this.location = location;
         this.elementId = elementId;
@@ -60,26 +70,17 @@ public class StoredError implements Marker, Comparable<StoredError>, SharedObjec
     }
 
     @Override
-    public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(location);
-        builder.append(message);
-        return builder.toHashCode();
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final StoredError that = (StoredError) o;
+        return Objects.equals(location, that.location) &&
+                Objects.equals(message, that.message);
     }
 
     @Override
-    public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof StoredError)) {
-            return false;
-        }
-
-        final StoredError storedError = (StoredError) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(location, storedError.location);
-        builder.append(message, storedError.message);
-        return builder.isEquals();
+    public int hashCode() {
+        return Objects.hash(location, message);
     }
 
     @Override

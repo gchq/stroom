@@ -42,7 +42,6 @@ public class _V07_00_00_Sort implements Serializable {
     private _V07_00_00_SortDirection direction = _V07_00_00_SortDirection.ASCENDING;
 
     public _V07_00_00_Sort() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public _V07_00_00_Sort(final int order, final _V07_00_00_SortDirection direction) {

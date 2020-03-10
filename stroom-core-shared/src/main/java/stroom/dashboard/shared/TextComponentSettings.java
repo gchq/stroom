@@ -16,6 +16,7 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,28 +31,33 @@ import javax.xml.bind.annotation.XmlType;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"tableId", "streamIdField", "partNoField", "recordNoField", "lineFromField", "colFromField", "lineToField", "colToField", "pipeline", "showAsHtml", "showStepping"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "text")
 @XmlType(name = "text", propOrder = {"tableId", "streamIdField", "partNoField", "recordNoField", "lineFromField", "colFromField", "lineToField", "colToField", "pipeline", "showAsHtml", "showStepping"})
 public class TextComponentSettings extends ComponentSettings {
-    private static final long serialVersionUID = -2530827581046882396L;
-
     @XmlElement(name = "tableId")
     @JsonProperty("tableId")
     private String tableId;
     @XmlElement(name = "streamIdField")
+    @JsonProperty
     private Field streamIdField;
     @XmlElement(name = "partNoField")
+    @JsonProperty
     private Field partNoField;
     @XmlElement(name = "recordNoField")
+    @JsonProperty
     private Field recordNoField;
     @XmlElement(name = "lineFromField")
+    @JsonProperty
     private Field lineFromField;
     @XmlElement(name = "colFromField")
+    @JsonProperty
     private Field colFromField;
     @XmlElement(name = "lineToField")
+    @JsonProperty
     private Field lineToField;
     @XmlElement(name = "colToField")
+    @JsonProperty
     private Field colToField;
     @XmlElement(name = "pipeline")
     @JsonProperty("pipeline")
@@ -60,10 +66,36 @@ public class TextComponentSettings extends ComponentSettings {
     @JsonProperty("showAsHtml")
     private boolean showAsHtml;
     @XmlElement(name = "showStepping")
-    private boolean showStepping = true;
+    @JsonProperty
+    private boolean showStepping;
 
     public TextComponentSettings() {
-        // Default constructor necessary for GWT serialisation.
+        showStepping = true;
+    }
+
+    @JsonCreator
+    public TextComponentSettings(@JsonProperty("tableId") final String tableId,
+                                 @JsonProperty("streamIdField") final Field streamIdField,
+                                 @JsonProperty("partNoField") final Field partNoField,
+                                 @JsonProperty("recordNoField") final Field recordNoField,
+                                 @JsonProperty("lineFromField") final Field lineFromField,
+                                 @JsonProperty("colFromField") final Field colFromField,
+                                 @JsonProperty("lineToField") final Field lineToField,
+                                 @JsonProperty("colToField") final Field colToField,
+                                 @JsonProperty("pipeline") final DocRef pipeline,
+                                 @JsonProperty("showAsHtml") final boolean showAsHtml,
+                                 @JsonProperty("showStepping") final boolean showStepping) {
+        this.tableId = tableId;
+        this.streamIdField = streamIdField;
+        this.partNoField = partNoField;
+        this.recordNoField = recordNoField;
+        this.lineFromField = lineFromField;
+        this.colFromField = colFromField;
+        this.lineToField = lineToField;
+        this.colToField = colToField;
+        this.pipeline = pipeline;
+        this.showAsHtml = showAsHtml;
+        this.showStepping = showStepping;
     }
 
     public String getTableId() {

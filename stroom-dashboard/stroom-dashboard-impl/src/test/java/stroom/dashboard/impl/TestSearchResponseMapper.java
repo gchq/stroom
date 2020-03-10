@@ -35,7 +35,7 @@ class TestSearchResponseMapper {
     @Test
     void testResponse() {
         final SearchResponseMapper mapper = new SearchResponseMapper();
-        final stroom.dashboard.shared.SearchResponse result = mapper.mapResponse(getSearchResponse());
+        final stroom.dashboard.shared.SearchResponse result = mapper.mapResponse(null, getSearchResponse());
         System.out.println(result);
     }
 

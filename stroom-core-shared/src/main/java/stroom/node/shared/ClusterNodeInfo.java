@@ -16,37 +16,67 @@
 
 package stroom.node.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.BuildInfo;
 
 import java.util.ArrayList;
 import java.util.List;
 
+@JsonInclude(Include.NON_NULL)
 public class ClusterNodeInfo {
+    @JsonProperty
     private String discoverTime;
+    @JsonProperty
     private BuildInfo buildInfo;
+    @JsonProperty
     private String nodeName;
+    @JsonProperty
     private String endpointUrl;
+    @JsonProperty
     private List<ClusterNodeInfoItem> itemList = new ArrayList<>();
+    @JsonProperty
     private Long ping;
+    @JsonProperty
     private String error;
 
     public ClusterNodeInfo() {
-        // Default constructor necessary for GWT serialisation.
     }
 
-    public ClusterNodeInfo(final String discoverTime, final BuildInfo buildInfo, final String nodeName, final String clusterURL) {
+    public ClusterNodeInfo(final String discoverTime,
+                           final BuildInfo buildInfo,
+                           final String nodeName,
+                           final String endpointUrl) {
         this.discoverTime = discoverTime;
         this.buildInfo = buildInfo;
         this.nodeName = nodeName;
-        this.endpointUrl = clusterURL;
+        this.endpointUrl = endpointUrl;
+    }
+
+    @JsonCreator
+    public ClusterNodeInfo(@JsonProperty("discoverTime") final String discoverTime,
+                           @JsonProperty("buildInfo") final BuildInfo buildInfo,
+                           @JsonProperty("nodeName") final String nodeName,
+                           @JsonProperty("endpointUrl") final String endpointUrl,
+                           @JsonProperty("itemList") final List<ClusterNodeInfoItem> itemList,
+                           @JsonProperty("ping") final Long ping,
+                           @JsonProperty("error") final String error) {
+        this.discoverTime = discoverTime;
+        this.buildInfo = buildInfo;
+        this.nodeName = nodeName;
+        this.endpointUrl = endpointUrl;
+        this.itemList = itemList;
+        this.ping = ping;
+        this.error = error;
     }
 
     public void addItem(final String nodeName, final boolean active, final boolean master) {
-        final ClusterNodeInfoItem clusterNodeInfoItem = new ClusterNodeInfoItem();
-        clusterNodeInfoItem.setNodeName(nodeName);
-        clusterNodeInfoItem.setActive(active);
-        clusterNodeInfoItem.setMaster(master);
-        itemList.add(clusterNodeInfoItem);
+        if (itemList == null) {
+            itemList = new ArrayList<>();
+        }
+        itemList.add(new ClusterNodeInfoItem(nodeName, active, master));
     }
 
     public String getDiscoverTime() {
@@ -105,33 +135,34 @@ public class ClusterNodeInfo {
         this.error = error;
     }
 
+    @JsonInclude(Include.NON_NULL)
     public static class ClusterNodeInfoItem {
-        private String nodeName;
-        private boolean active;
-        private boolean master;
+        @JsonProperty
+        private final String nodeName;
+        @JsonProperty
+        private final boolean active;
+        @JsonProperty
+        private final boolean master;
+
+        @JsonCreator
+        public ClusterNodeInfoItem(@JsonProperty("nodeName") final String nodeName,
+                                   @JsonProperty("active") final boolean active,
+                                   @JsonProperty("master") final boolean master) {
+            this.nodeName = nodeName;
+            this.active = active;
+            this.master = master;
+        }
 
         public String getNodeName() {
             return nodeName;
-        }
-
-        public void setNodeName(final String nodeName) {
-            this.nodeName = nodeName;
         }
 
         public boolean isActive() {
             return active;
         }
 
-        public void setActive(final boolean active) {
-            this.active = active;
-        }
-
         public boolean isMaster() {
             return master;
-        }
-
-        public void setMaster(final boolean master) {
-            this.master = master;
         }
     }
 }

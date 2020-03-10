@@ -1,15 +1,22 @@
 package stroom.annotation.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 
+@JsonInclude(Include.NON_NULL)
 public class EventId {
-    private long streamId;
-    private long eventId;
+    @JsonProperty
+    private final long streamId;
+    @JsonProperty
+    private final long eventId;
 
-    public EventId() {
-    }
-
-    public EventId(final long streamId, final long eventId) {
+    @JsonCreator
+    public EventId(@JsonProperty("streamId") final long streamId,
+                   @JsonProperty("eventId") final long eventId) {
         this.streamId = streamId;
         this.eventId = eventId;
     }
@@ -18,16 +25,8 @@ public class EventId {
         return streamId;
     }
 
-    public void setStreamId(final long streamId) {
-        this.streamId = streamId;
-    }
-
     public long getEventId() {
         return eventId;
-    }
-
-    public void setEventId(final long eventId) {
-        this.eventId = eventId;
     }
 
     public static EventId parse(final String string) {

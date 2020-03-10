@@ -97,7 +97,6 @@ public class OldStreamType extends NamedEntity {
     }
 
     public OldStreamType() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public String getExtension() {

@@ -1,0 +1,5 @@
+dependencies {
+    compile libs.commons_lang
+    compile libs.jackson_annotations
+    compile libs.javax_servlet_api
+}

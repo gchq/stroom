@@ -104,19 +104,8 @@ public class CliModule extends AbstractModule {
     }
 
     @Provides
-    public ExecutorProvider executorProvider() {
-        final ExecutorService executorService = Executors.newCachedThreadPool();
-        return new ExecutorProvider() {
-            @Override
-            public Executor getExecutor() {
-                return executorService;
-            }
-
-            @Override
-            public Executor getExecutor(final ThreadPool threadPool) {
-                return executorService;
-            }
-        };
+    public Executor executorProvider() {
+        return Executors.newCachedThreadPool();
     }
 
     @Provides

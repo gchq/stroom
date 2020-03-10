@@ -19,7 +19,6 @@ package stroom.cache.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.shared.CacheInfo;
-import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.shared.Clearable;

@@ -18,7 +18,7 @@ package stroom.receive.common;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.meta.shared.StandardHeaderArguments;
+import stroom.meta.api.StandardHeaderArguments;
 import stroom.proxy.StroomStatusCode;
 
 import javax.servlet.http.HttpServletResponse;

@@ -1,10 +1,17 @@
 package stroom.util.shared;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TestPropertyPath {
+
 
     @Test
     void getPropertyPath() {
@@ -62,5 +69,32 @@ class TestPropertyPath {
         boolean result = path1.equalsIgnoreCase(path2);
 
         Assertions.assertThat(result).isEqualTo(expectedResult);
+    }
+
+    @Test
+    void testSerde() throws IOException {
+        doSerdeTest(PropertyPath.fromPathString("stroom.node.name"), PropertyPath.class);
+    }
+
+    @Test
+    void testSerde_empty() throws IOException {
+        doSerdeTest(PropertyPath.blank(), PropertyPath.class);
+    }
+
+    private <T> void doSerdeTest(final T entity, final Class<T> clazz) throws IOException {
+
+        final ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        mapper.configure(SerializationFeature.INDENT_OUTPUT, true);
+
+        assertThat(mapper.canSerialize(entity.getClass()))
+                .isTrue();
+
+        String json = mapper.writeValueAsString(entity);
+        System.out.println("\n" + json);
+
+        final T entity2 = (T) mapper.readValue(json, clazz);
+
+        assertThat(entity2).isEqualTo(entity);
     }
 }

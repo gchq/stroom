@@ -48,13 +48,9 @@ public class _V07_00_00_StatisticStoreDoc extends _V07_00_00_Doc implements _V07
     private _V07_00_00_StatisticsDataSourceData config;
 
     public _V07_00_00_StatisticStoreDoc() {
-        setDefaults();
-    }
-
-    private void setDefaults() {
-        this.statisticType = _V07_00_00_StatisticType.COUNT;
-        this.rollUpType = _V07_00_00_StatisticRollUpType.NONE;
-        this.precision = DEFAULT_PRECISION;
+        statisticType = _V07_00_00_StatisticType.COUNT;
+        rollUpType = _V07_00_00_StatisticRollUpType.NONE;
+        precision = DEFAULT_PRECISION;
     }
 
     public String getDescription() {

@@ -16,64 +16,140 @@
 
 package stroom.meta.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Objects;
 
-public class Meta implements SharedObject {
+@JsonInclude(Include.NON_NULL)
+public class Meta {
+    @JsonProperty
     private long id;
+    @JsonProperty
     private String feedName;
+    @JsonProperty
     private String typeName;
+    @JsonProperty
     private String processorUuid;
+    @JsonProperty
     private String pipelineUuid;
-    private Long parentDataId;
+    @JsonProperty
+    private Long parentMetaId;
+    @JsonProperty
     private Status status;
+    @JsonProperty
     private Long statusMs;
+    @JsonProperty
     private long createMs;
+    @JsonProperty
     private Long effectiveMs;
 
     public Meta() {
-        // Default constructor necessary for GWT serialisation.
+    }
+
+    @JsonCreator
+    public Meta(@JsonProperty("id") final long id,
+                @JsonProperty("feedName") final String feedName,
+                @JsonProperty("typeName") final String typeName,
+                @JsonProperty("processorUuid") final String processorUuid,
+                @JsonProperty("pipelineUuid") final String pipelineUuid,
+                @JsonProperty("parentMetaId") final Long parentMetaId,
+                @JsonProperty("status") final Status status,
+                @JsonProperty("statusMs") final Long statusMs,
+                @JsonProperty("createMs") final long createMs,
+                @JsonProperty("effectiveMs") final Long effectiveMs) {
+        this.id = id;
+        this.feedName = feedName;
+        this.typeName = typeName;
+        this.processorUuid = processorUuid;
+        this.pipelineUuid = pipelineUuid;
+        this.parentMetaId = parentMetaId;
+        this.status = status;
+        this.statusMs = statusMs;
+        this.createMs = createMs;
+        this.effectiveMs = effectiveMs;
     }
 
     public long getId() {
         return id;
     }
 
+    public void setId(final long id) {
+        this.id = id;
+    }
+
     public String getFeedName() {
         return feedName;
+    }
+
+    public void setFeedName(final String feedName) {
+        this.feedName = feedName;
     }
 
     public String getTypeName() {
         return typeName;
     }
 
+    public void setTypeName(final String typeName) {
+        this.typeName = typeName;
+    }
+
     public String getProcessorUuid() {
         return processorUuid;
+    }
+
+    public void setProcessorUuid(final String processorUuid) {
+        this.processorUuid = processorUuid;
     }
 
     public String getPipelineUuid() {
         return pipelineUuid;
     }
 
+    public void setPipelineUuid(final String pipelineUuid) {
+        this.pipelineUuid = pipelineUuid;
+    }
+
     public Long getParentMetaId() {
-        return parentDataId;
+        return parentMetaId;
+    }
+
+    public void setParentMetaId(final Long parentMetaId) {
+        this.parentMetaId = parentMetaId;
     }
 
     public Status getStatus() {
         return status;
     }
 
+    public void setStatus(final Status status) {
+        this.status = status;
+    }
+
     public Long getStatusMs() {
         return statusMs;
+    }
+
+    public void setStatusMs(final Long statusMs) {
+        this.statusMs = statusMs;
     }
 
     public long getCreateMs() {
         return createMs;
     }
 
+    public void setCreateMs(final long createMs) {
+        this.createMs = createMs;
+    }
+
     public Long getEffectiveMs() {
         return effectiveMs;
+    }
+
+    public void setEffectiveMs(final Long effectiveMs) {
+        this.effectiveMs = effectiveMs;
     }
 
     @Override
@@ -139,7 +215,7 @@ public class Meta implements SharedObject {
         }
 
         public Builder parentDataId(final Long parentDataId) {
-            meta.parentDataId = parentDataId;
+            meta.parentMetaId = parentDataId;
             return this;
         }
 

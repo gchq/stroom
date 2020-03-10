@@ -16,39 +16,40 @@
 
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.io.Serializable;
 import java.util.Objects;
 
+@JsonPropertyOrder({"offset", "length"})
+@JsonInclude(Include.NON_NULL)
 public class PageRequest implements Serializable, Copyable<PageRequest> {
     public static final int DEFAULT_PAGE_SIZE = 100;
     private static final long serialVersionUID = 6838082084157676358L;
     /**
      * Offset from the start 0 is no offset.
      */
+    @JsonProperty
     private Long offset;
     /**
      * Page size to use, e.g. 10 is 10 records
      */
+    @JsonProperty
     private Integer length;
 
     public PageRequest() {
-        this(0L, null);
+        offset = 0L;
     }
 
-    public PageRequest(final Long offset) {
-        this(offset, DEFAULT_PAGE_SIZE);
-    }
-
-    public PageRequest(final Long offset, final Integer length) {
+    @JsonCreator
+    public PageRequest(@JsonProperty("offset") final Long offset,
+                       @JsonProperty("length") final Integer length) {
         this.offset = offset;
         this.length = length;
-    }
-
-    public static PageRequest createBoundedPageRequest(final long offset, final int length) {
-        final PageRequest request = new PageRequest();
-        request.setOffset(offset);
-        request.setLength(length);
-        return request;
     }
 
     public Long getOffset() {

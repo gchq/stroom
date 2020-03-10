@@ -17,9 +17,9 @@
 package stroom.util.shared;
 
 import stroom.docref.HasDisplayValue;
-import stroom.docref.SharedObject;
 
-public enum Severity implements HasDisplayValue, SharedObject {
+
+public enum Severity implements HasDisplayValue {
     INFO(1, "INFO", "Information"),
     WARNING(2, "WARN", "Warnings"),
     ERROR(3, "ERROR", "Errors"),
@@ -31,7 +31,7 @@ public enum Severity implements HasDisplayValue, SharedObject {
     private String displayValue;
     private String summaryValue;
 
-    private Severity(final int id, final String displayValue, final String summaryValue) {
+    Severity(final int id, final String displayValue, final String summaryValue) {
         this.id = id;
         this.displayValue = displayValue;
         this.summaryValue = summaryValue;

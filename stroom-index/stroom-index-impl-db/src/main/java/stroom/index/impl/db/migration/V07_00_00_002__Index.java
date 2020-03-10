@@ -21,9 +21,9 @@ import org.flywaydb.core.api.migration.Context;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.db.util.DbUtil;
-import stroom.index.impl.db.migration._V07_00_00.doc.index._V07_00_00_IndexDoc;
-import stroom.index.impl.db.migration._V07_00_00.doc.index._V07_00_00_IndexFields;
-import stroom.index.impl.db.migration._V07_00_00.doc.index._V07_00_00_IndexSerialiser;
+import stroom.index.impl.migration._V07_00_00.doc.index._V07_00_00_IndexDoc;
+import stroom.index.impl.migration._V07_00_00.doc.index._V07_00_00_IndexFields;
+import stroom.index.impl.migration._V07_00_00.doc.index._V07_00_00_IndexSerialiser;
 import stroom.index.shared.IndexDoc;
 import stroom.util.xml.XMLMarshallerUtil;
 

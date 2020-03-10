@@ -16,19 +16,37 @@
 
 package stroom.data.store.impl.fs;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.meta.shared.Meta;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.Sort;
 
+import java.util.List;
+
+@JsonInclude(Include.NON_NULL)
 public class FindDataVolumeCriteria extends BaseCriteria {
-    private static final long serialVersionUID = 3528656425356870590L;
+    @JsonProperty
+    private CriteriaSet<Integer> volumeIdSet;
+    @JsonProperty
+    private CriteriaSet<Long> metaIdSet;
 
-//    private StreamRange streamRange;
-//
-//    private CriteriaSet<StreamStatus> streamStatusSet = null;
-//    private CriteriaSet<Long> nodeIdSet = null;
-    private CriteriaSet<Integer> volumeIdSet = null;
-    private CriteriaSet<Long> metaIdSet = null;
+    public FindDataVolumeCriteria() {
+    }
+
+    @JsonCreator
+    public FindDataVolumeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
+                                  @JsonProperty("sortList") final List<Sort> sortList,
+                                  @JsonProperty("volumeIdSet") final CriteriaSet<Integer> volumeIdSet,
+                                  @JsonProperty("metaIdSet") final CriteriaSet<Long> metaIdSet) {
+        super(pageRequest, sortList);
+        this.volumeIdSet = volumeIdSet;
+        this.metaIdSet = metaIdSet;
+    }
 
     public static FindDataVolumeCriteria create(final Meta meta) {
         FindDataVolumeCriteria rtn = new FindDataVolumeCriteria();

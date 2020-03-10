@@ -51,7 +51,6 @@ public class PipelineDataMerger {
     private final Map<String, List<PipelineLink>> linkMap = new HashMap<>();
 
     public PipelineDataMerger() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public static Map<String, PipelineElementType> createElementMap() {

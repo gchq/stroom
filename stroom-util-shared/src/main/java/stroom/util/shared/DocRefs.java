@@ -16,48 +16,25 @@
 
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
 
-import javax.xml.bind.annotation.XmlRootElement;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.Set;
-import java.util.TreeSet;
 
-@XmlRootElement(name = "docs")
-public class DocRefs implements Iterable<DocRef>, SharedObject {
-    private static final long serialVersionUID = 8637215303311013483L;
-    private Set<DocRef> set = new TreeSet<>();
+@JsonInclude(Include.NON_NULL)
+public class DocRefs {
+    @JsonProperty
+    private final Set<DocRef> docRefs;
 
-    public DocRefs() {
-        // Default constructor necessary for GWT serialisation.
+    @JsonCreator
+    public DocRefs(@JsonProperty("docRefs") final Set<DocRef> docRefs) {
+        this.docRefs = docRefs;
     }
 
-    public boolean add(DocRef docRef) {
-        return set.add(docRef);
-    }
-
-    public boolean remove(DocRef docRef) {
-        return set.remove(docRef);
-    }
-
-    @Override
-    public Iterator<DocRef> iterator() {
-        return set.iterator();
-    }
-
-    /**
-     * HERE FOR XML JAXB serialisation ..... DO NOT REMOVE
-     */
-    public Collection<DocRef> getDoc() {
-        return set;
-    }
-
-    /**
-     * HERE FOR XML JAXB serialisation ..... DO NOT REMOVE
-     */
-    public void setDoc(final Collection<DocRef> newSet) {
-        set = new TreeSet<>(newSet);
+    public Set<DocRef> getDocRefs() {
+        return docRefs;
     }
 }

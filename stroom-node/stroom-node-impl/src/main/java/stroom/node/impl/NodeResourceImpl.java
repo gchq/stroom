@@ -26,7 +26,7 @@ import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
-import stroom.node.shared.FindNodeCriteria;
+import stroom.node.api.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
@@ -34,7 +34,7 @@ import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.RestResource;
+import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.ws.rs.ServerErrorException;
@@ -48,7 +48,7 @@ import java.util.Objects;
 import java.util.function.Consumer;
 
 // TODO : @66 add event logging
-class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
+class NodeResourceImpl implements NodeResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(NodeResourceImpl.class);
 
     private final NodeServiceImpl nodeService;
@@ -59,10 +59,10 @@ class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
 
     @Inject
     NodeResourceImpl(final NodeServiceImpl nodeService,
-                             final NodeInfo nodeInfo,
-                             final ClusterNodeManager clusterNodeManager,
-                             final WebTargetFactory webTargetFactory,
-                             final DocumentEventLog documentEventLog) {
+                     final NodeInfo nodeInfo,
+                     final ClusterNodeManager clusterNodeManager,
+                     final WebTargetFactory webTargetFactory,
+                     final DocumentEventLog documentEventLog) {
         this.nodeService = nodeService;
         this.nodeInfo = nodeInfo;
         this.clusterNodeManager = clusterNodeManager;
@@ -81,7 +81,7 @@ class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
         advanced.getAdvancedQueryItems().add(and);
 
         try {
-            final List<Node> nodes = nodeService.find(new FindNodeCriteria());
+            final List<Node> nodes = nodeService.find(new FindNodeCriteria()).getValues();
             Node master = null;
             for (final Node node : nodes) {
                 if (node.isEnabled()) {
@@ -95,8 +95,7 @@ class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
             for (final Node node : nodes) {
                 resultList.add(new NodeStatusResult(node, node.equals(master)));
             }
-            response = new FetchNodeStatusResponse();
-            response.init(resultList);
+            response = new FetchNodeStatusResponse(resultList);
 
             documentEventLog.search("List Nodes", query, Node.class.getSimpleName(), response.getPageResponse(), null);
         } catch (final RuntimeException e) {
@@ -118,9 +117,9 @@ class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
                 clusterNodeInfo = clusterNodeManager.getClusterNodeInfo();
 
             } else {
-                nodeUrl = NodeCallUtil.getUrl(nodeService, nodeName);
-                String url = nodeUrl;
-                url += "/api/node/" + nodeName;
+                String url = NodeCallUtil.getUrl(nodeService, nodeName);
+                url += ResourcePaths.API_ROOT_PATH + NodeResource.BASE_PATH;
+                url += nodeName;
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
@@ -160,7 +159,9 @@ class NodeResourceImpl implements NodeResource, RestResource, HasHealthCheck {
                 return System.currentTimeMillis() - now;
             } else {
                 String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += "/api/node/" + nodeName + "/ping";
+                url += ResourcePaths.API_ROOT_PATH + NodeResource.BASE_PATH;
+                url += nodeName;
+                url += "/ping";
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)

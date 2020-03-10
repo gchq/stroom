@@ -27,7 +27,7 @@ import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.pipeline.destination.RollingDestinations;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggingErrorReceiver;
@@ -220,7 +220,7 @@ abstract class AbstractAppenderTest extends AbstractProcessIntegrationTest {
     void validateOuptut(final String outputReference,
                         final String type) {
         try {
-            final List<Meta> list = dataMetaService.find(new FindMetaCriteria());
+            final List<Meta> list = dataMetaService.find(new FindMetaCriteria()).getValues();
             assertThat(list.size()).isEqualTo(1);
 
             final long id = list.get(0).getId();

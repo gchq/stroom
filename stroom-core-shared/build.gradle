@@ -9,12 +9,12 @@ dependencies {
     compile libs.gwt_servlet
     compile libs.jackson_annotations
     compile libs.jackson_databind
-    compile libs.javax_inject;
+    compile libs.javax_inject
     compile libs.jaxb_api
-    compile libs.restygwt
     compile libs.slf4j_api
     compile libs.swagger_annotations
     compile libs.ws_rs_api
+    compile libs.restygwt
 
     testCompile libs.assertj_core
     testCompile libs.jackson_core

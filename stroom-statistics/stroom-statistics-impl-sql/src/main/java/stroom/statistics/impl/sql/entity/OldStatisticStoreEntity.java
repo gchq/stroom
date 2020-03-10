@@ -68,16 +68,12 @@ public class OldStatisticStoreEntity extends DocumentEntity {
     private byte pStatisticType;
     private byte pRollUpType;
     private Long precision;
-    private boolean enabled = false;
+    private boolean enabled;
 
     private String data;
     private StatisticsDataSourceData statisticsDataSourceDataObject;
 
     public OldStatisticStoreEntity() {
-        setDefaults();
-    }
-
-    private void setDefaults() {
         this.pStatisticType = StatisticType.COUNT.getPrimitiveValue();
         this.pRollUpType = StatisticRollUpType.NONE.getPrimitiveValue();
         this.precision = DEFAULT_PRECISION;
@@ -168,12 +164,12 @@ public class OldStatisticStoreEntity extends DocumentEntity {
     public boolean isValidField(final String fieldName) {
         if (statisticsDataSourceDataObject == null) {
             return false;
-        } else if (statisticsDataSourceDataObject.getStatisticFields() == null) {
+        } else if (statisticsDataSourceDataObject.getFields() == null) {
             return false;
-        } else if (statisticsDataSourceDataObject.getStatisticFields().size() == 0) {
+        } else if (statisticsDataSourceDataObject.getFields().size() == 0) {
             return false;
         } else {
-            return statisticsDataSourceDataObject.getStatisticFields().contains(new StatisticField(fieldName));
+            return statisticsDataSourceDataObject.getFields().contains(new StatisticField(fieldName));
         }
     }
 
@@ -207,7 +203,7 @@ public class OldStatisticStoreEntity extends DocumentEntity {
     public List<String> getFieldNames() {
         if (statisticsDataSourceDataObject != null) {
             final List<String> fieldNames = new ArrayList<>();
-            for (final StatisticField statisticField : statisticsDataSourceDataObject.getStatisticFields()) {
+            for (final StatisticField statisticField : statisticsDataSourceDataObject.getFields()) {
                 fieldNames.add(statisticField.getFieldName());
             }
             return fieldNames;
@@ -223,12 +219,12 @@ public class OldStatisticStoreEntity extends DocumentEntity {
     }
 
     public int getStatisticFieldCount() {
-        return statisticsDataSourceDataObject == null ? 0 : statisticsDataSourceDataObject.getStatisticFields().size();
+        return statisticsDataSourceDataObject == null ? 0 : statisticsDataSourceDataObject.getFields().size();
     }
 
     public List<StatisticField> getStatisticFields() {
         if (statisticsDataSourceDataObject != null) {
-            return statisticsDataSourceDataObject.getStatisticFields();
+            return statisticsDataSourceDataObject.getFields();
         } else {
             return Collections.emptyList();
         }

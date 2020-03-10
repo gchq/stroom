@@ -16,16 +16,26 @@
 
 package stroom.security.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+@JsonPropertyOrder({"documentType", "documentId", "permission"})
+@JsonInclude(Include.NON_NULL)
 public class CheckDocumentPermissionRequest {
-    private String documentType;
-    private String documentId;
-    private String permission;
+    @JsonProperty
+    private final String documentType;
+    @JsonProperty
+    private final String documentId;
+    @JsonProperty
+    private final String permission;
 
-    public CheckDocumentPermissionRequest() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public CheckDocumentPermissionRequest(final String documentType, final String documentId, final String permission) {
+    @JsonCreator
+    public CheckDocumentPermissionRequest(@JsonProperty("documentType") final String documentType,
+                                          @JsonProperty("documentId") final String documentId,
+                                          @JsonProperty("permission") final String permission) {
         this.documentType = documentType;
         this.documentId = documentId;
         this.permission = permission;
@@ -35,23 +45,11 @@ public class CheckDocumentPermissionRequest {
         return documentType;
     }
 
-    public void setDocumentType(final String documentType) {
-        this.documentType = documentType;
-    }
-
     public String getDocumentId() {
         return documentId;
     }
 
-    public void setDocumentId(final String documentId) {
-        this.documentId = documentId;
-    }
-
     public String getPermission() {
         return permission;
-    }
-
-    public void setPermission(final String permission) {
-        this.permission = permission;
     }
 }

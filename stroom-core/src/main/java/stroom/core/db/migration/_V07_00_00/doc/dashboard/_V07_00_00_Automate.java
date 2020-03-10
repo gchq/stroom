@@ -42,7 +42,6 @@ public class _V07_00_00_Automate implements _V07_00_00_SharedObject {
     private String refreshInterval = "10s";
 
     public _V07_00_00_Automate() {
-        // Default constructor necessary for GWT serialisation.
     }
 
     public boolean isOpen() {

@@ -16,45 +16,30 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
-import stroom.docref.SharedObject;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
-
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"use", "id", "offsetHours", "offsetMinutes"})
-@JsonInclude(Include.NON_DEFAULT)
-@XmlRootElement(name = "timeZone")
-@XmlType(name = "TimeZone", propOrder = {"use", "id", "offsetHours", "offsetMinutes"})
-public class TimeZone implements SharedObject {
-    private static final long serialVersionUID = 1200175661441813029L;
+@JsonInclude(Include.NON_NULL)
+public class TimeZone {
+    @JsonProperty
+    private final Use use;
+    @JsonProperty
+    private final String id;
+    @JsonProperty
+    private final Integer offsetHours;
+    @JsonProperty
+    private final Integer offsetMinutes;
 
-    @XmlElement(name = "use")
-    @JsonProperty("use")
-    private Use use;
-    @XmlElement(name = "id")
-    @JsonProperty("id")
-    private String id;
-    @XmlElement(name = "offsetHours")
-    @JsonProperty("offsetHours")
-    private Integer offsetHours;
-    @XmlElement(name = "offsetMinutes")
-    @JsonProperty("offsetMinutes")
-    private Integer offsetMinutes;
-
-    public TimeZone() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public TimeZone(final Use use, final String id, final Integer offsetHours, final Integer offsetMinutes) {
+    @JsonCreator
+    public TimeZone(@JsonProperty("use") final Use use,
+                    @JsonProperty("id") final String id,
+                    @JsonProperty("offsetHours") final Integer offsetHours,
+                    @JsonProperty("offsetMinutes") final Integer offsetMinutes) {
         this.use = use;
         this.id = id;
         this.offsetHours = offsetHours;
@@ -62,30 +47,19 @@ public class TimeZone implements SharedObject {
     }
 
     public static TimeZone local() {
-        final TimeZone timeZone = new TimeZone();
-        timeZone.use = Use.LOCAL;
-        return timeZone;
+        return new TimeZone(Use.LOCAL, null, null, null);
     }
 
     public static TimeZone utc() {
-        final TimeZone timeZone = new TimeZone();
-        timeZone.use = Use.UTC;
-        return timeZone;
+        return new TimeZone(Use.UTC, null, null, null);
     }
 
     public static TimeZone fromId(final String id) {
-        final TimeZone timeZone = new TimeZone();
-        timeZone.use = Use.ID;
-        timeZone.id = id;
-        return timeZone;
+        return new TimeZone(Use.ID, id, null, null);
     }
 
     public static TimeZone fromOffset(final int offsetHours, final int offsetMinutes) {
-        final TimeZone timeZone = new TimeZone();
-        timeZone.use = Use.OFFSET;
-        timeZone.offsetHours = offsetHours;
-        timeZone.offsetMinutes = offsetMinutes;
-        return timeZone;
+        return new TimeZone(Use.OFFSET, null, offsetHours, offsetMinutes);
     }
 
     public Use getUse() {

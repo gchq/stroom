@@ -16,26 +16,44 @@
 
 package stroom.pipeline.shared;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docstore.shared.Doc;
 import stroom.util.shared.HasData;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data"})
+@JsonInclude(Include.NON_NULL)
 public class XsltDoc extends Doc implements HasData {
-    private static final long serialVersionUID = 4519634323788508083L;
-
     public static final String DOCUMENT_TYPE = "XSLT";
 
+    @JsonProperty
     private String description;
-
-    @JsonIgnore
+    @JsonProperty
     private String data;
+
+    public XsltDoc() {
+    }
+
+    @JsonCreator
+    public XsltDoc(@JsonProperty("type") final String type,
+                   @JsonProperty("uuid") final String uuid,
+                   @JsonProperty("name") final String name,
+                   @JsonProperty("version") final String version,
+                   @JsonProperty("createTime") final Long createTime,
+                   @JsonProperty("updateTime") final Long updateTime,
+                   @JsonProperty("createUser") final String createUser,
+                   @JsonProperty("updateUser") final String updateUser,
+                   @JsonProperty("description") final String description,
+                   @JsonProperty("data") final String data) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.data = data;
+    }
 
     public String getDescription() {
         return description;

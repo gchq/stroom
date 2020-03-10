@@ -16,20 +16,28 @@
 
 package stroom.util.shared;
 
-import stroom.docref.SharedObject;
 
-public class Expander implements SharedObject {
-    private static final long serialVersionUID = 8021806527404021016L;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonInclude(Include.NON_NULL)
+public class Expander {
+    @JsonProperty
     private int depth;
+    @JsonProperty
     private boolean expanded;
+    @JsonProperty
     private boolean leaf;
 
     public Expander() {
-        // Default constructor necessary for GWT serialisation.
     }
 
-    public Expander(final int depth, final boolean expanded, final boolean leaf) {
+    @JsonCreator
+    public Expander(@JsonProperty("depth") final int depth,
+                    @JsonProperty("expanded") final boolean expanded,
+                    @JsonProperty("leaf") final boolean leaf) {
         this.depth = depth;
         this.expanded = expanded;
         this.leaf = leaf;

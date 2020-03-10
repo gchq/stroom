@@ -16,6 +16,8 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -34,19 +36,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @XmlAccessorType(XmlAccessType.FIELD)
-@JsonPropertyOrder({"preferredSize", "tabs", "selected"})
-@JsonInclude(Include.NON_DEFAULT)
 @XmlRootElement(name = "tabLayout")
 @XmlType(name = "TabLayoutConfig", propOrder = {"preferredSize", "tabs", "selected"})
+@JsonPropertyOrder({"preferredSize", "tabs", "selected"})
+@JsonInclude(Include.NON_NULL)
 public class TabLayoutConfig extends LayoutConfig {
-    private static final long serialVersionUID = -2105048053435792675L;
-
     /**
      * The preferred size of this layout in width, height.
      */
     @XmlElement(name = "preferredSize")
     @JsonProperty("preferredSize")
-    private Size preferredSize = new Size();
+    private Size preferredSize;
     @XmlElementWrapper(name = "tabs")
     @XmlElements({@XmlElement(name = "tab", type = TabConfig.class)})
     @JsonProperty("tabs")
@@ -56,14 +56,29 @@ public class TabLayoutConfig extends LayoutConfig {
     private Integer selected;
 
     public TabLayoutConfig() {
-        // Default constructor necessary for GWT serialisation.
+        preferredSize = new Size();
     }
 
     public TabLayoutConfig(final TabConfig... tabs) {
+        preferredSize = new Size();
+
         if (tabs != null) {
             for (final TabConfig tab : tabs) {
                 add(tab);
             }
+        }
+    }
+
+    @JsonCreator
+    public TabLayoutConfig(@JsonProperty("preferredSize") final Size preferredSize,
+                           @JsonProperty("tabs") final List<TabConfig> tabs,
+                           @JsonProperty("selected") final Integer selected) {
+        this.preferredSize = preferredSize;
+        this.tabs = tabs;
+        this.selected = selected;
+
+        if (this.preferredSize == null) {
+            this.preferredSize = new Size();
         }
     }
 
@@ -84,23 +99,9 @@ public class TabLayoutConfig extends LayoutConfig {
         return tabs.stream().filter(TabConfig::isVisible).collect(Collectors.toList());
     }
 
-    private int visibleIndex(final int index) {
-        int realIndex = index;
-        for (int i = 0; i <= index && i < tabs.size(); i++) {
-            if (!tabs.get(i).isVisible()) {
-                realIndex++;
-            }
-        }
-        if (realIndex >= tabs.size()) {
-            realIndex = tabs.size() - 1;
-        }
-        return realIndex;
-    }
-
     public TabConfig get(final int index) {
         if (tabs != null && tabs.size() > 0) {
-            final int realIndex = visibleIndex(index);
-            final TabConfig tab = tabs.get(realIndex);
+            final TabConfig tab = tabs.get(index);
             if (tab != null) {
                 tab.setParent(this);
                 return tab;
@@ -118,14 +119,13 @@ public class TabLayoutConfig extends LayoutConfig {
     }
 
     public void add(final int index, final TabConfig tab) {
-        final int realIndex = visibleIndex(index);
         if (tabs == null) {
             tabs = new ArrayList<>();
         }
-        if (realIndex <= tabs.size()) {
-            tabs.add(realIndex, tab);
-        } else {
+        if (index >= tabs.size()) {
             tabs.add(tab);
+        } else {
+            tabs.add(index, tab);
         }
         tab.setParent(this);
     }
@@ -138,13 +138,15 @@ public class TabLayoutConfig extends LayoutConfig {
     }
 
     public int indexOf(final TabConfig tab) {
-        return getVisibleTabs().indexOf(tab);
+        return tabs.indexOf(tab);
     }
 
+    @JsonIgnore
     public int getVisibleTabCount() {
         return getVisibleTabs().size();
     }
 
+    @JsonIgnore
     public int getAllTabCount() {
         if (tabs == null) {
             return 0;
@@ -160,6 +162,10 @@ public class TabLayoutConfig extends LayoutConfig {
             tabConfig.setParent(this);
         }
         return tabs;
+    }
+
+    public void setTabs(final List<TabConfig> tabs) {
+        this.tabs = tabs;
     }
 
     public Integer getSelected() {

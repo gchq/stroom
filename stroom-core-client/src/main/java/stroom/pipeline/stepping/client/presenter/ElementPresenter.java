@@ -25,18 +25,17 @@ import com.google.web.bindery.event.shared.HandlerRegistration;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
 import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
-import stroom.dispatch.client.ClientDispatchAsync;
 import stroom.docref.DocRef;
-import stroom.docref.SharedObject;
+import stroom.document.client.DocumentPlugin;
+import stroom.document.client.DocumentPluginRegistry;
 import stroom.document.client.event.DirtyEvent;
 import stroom.document.client.event.DirtyEvent.DirtyHandler;
 import stroom.document.client.event.HasDirtyHandlers;
 import stroom.editor.client.presenter.EditorPresenter;
-import stroom.entity.shared.DocumentServiceReadAction;
-import stroom.entity.shared.DocumentServiceWriteAction;
-import stroom.pipeline.shared.PipelineStepAction;
-import stroom.pipeline.shared.SteppingFilterSettings;
+import stroom.editor.client.view.IndicatorLines;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.pipeline.shared.stepping.PipelineStepRequest;
+import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.stepping.client.event.ShowSteppingFilterSettingsEvent;
 import stroom.pipeline.stepping.client.presenter.ElementPresenter.ElementView;
 import stroom.util.shared.HasData;
@@ -45,29 +44,30 @@ import stroom.widget.util.client.Future;
 import stroom.widget.util.client.FutureImpl;
 
 public class ElementPresenter extends MyPresenterWidget<ElementView> implements HasDirtyHandlers {
-    private final ClientDispatchAsync dispatcher;
     private final Provider<EditorPresenter> editorProvider;
+    private final DocumentPluginRegistry documentPluginRegistry;
     private String elementId;
     private PipelineElementType elementType;
     private DocRef entityRef;
     private DocRef fuzzyEntityRef;
-    private PipelineStepAction pipelineStepAction;
+    private PipelineStepRequest pipelineStepRequest;
     private boolean refreshRequired = true;
     private boolean loaded;
     private boolean dirtyCode;
     private DocRef loadedDoc;
     private HasData hasData;
-    private Indicators codeIndicators;
+    private IndicatorLines codeIndicators;
     private EditorPresenter codePresenter;
     private EditorPresenter inputPresenter;
     private EditorPresenter outputPresenter;
 
     @Inject
     public ElementPresenter(final EventBus eventBus, final ElementView view,
-                            final Provider<EditorPresenter> editorProvider, final ClientDispatchAsync dispatcher) {
+                            final Provider<EditorPresenter> editorProvider,
+                            final DocumentPluginRegistry documentPluginRegistry) {
         super(eventBus, view);
         this.editorProvider = editorProvider;
-        this.dispatcher = dispatcher;
+        this.documentPluginRegistry = documentPluginRegistry;
     }
 
     public Future<Boolean> load() {
@@ -114,14 +114,9 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
     private void loadFuzzyEntityRef(final FutureImpl<Boolean> future) {
 //        if (TextConverterDoc.DOCUMENT_TYPE.equals(fuzzyEntityRef.getType())) {
-        final DocumentServiceReadAction<SharedObject> documentServiceReadAction = new DocumentServiceReadAction<>(fuzzyEntityRef);
-//
-//            final FindTextConverterCriteria criteria = new FindTextConverterCriteria();
-//            criteria.setName(new StringCriteria(fuzzyEntityRef.getName()));
-//            criteria.setSort(FindXSLTCriteria.FIELD_ID);
-//            final EntityServiceFindAction<FindTextConverterCriteria, TextConverterDoc> findAction = new EntityServiceFindAction<>(criteria);
-        dispatcher.exec(documentServiceReadAction)
-                .onSuccess(result -> {
+        final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(fuzzyEntityRef.getType());
+        documentPlugin.load(fuzzyEntityRef,
+                result -> {
                     if (result != null) {
                         loadedDoc = fuzzyEntityRef;
                         hasData = (HasData) result;
@@ -132,8 +127,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
                         // Try and load by entity ref if there is one.
                         loadEntityRef(future);
                     }
-                })
-                .onFailure(caught -> {
+                },
+                caught -> {
                     dirtyCode = false;
                     setCode(caught.getMessage(), null);
                     future.setResult(false);
@@ -164,16 +159,17 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
 
     private void loadEntityRef(final FutureImpl<Boolean> future) {
         if (entityRef != null) {
-            dispatcher.exec(new DocumentServiceReadAction<>(entityRef))
-                    .onSuccess(result -> {
+            final DocumentPlugin<?> documentPlugin = documentPluginRegistry.get(entityRef.getType());
+            documentPlugin.load(entityRef,
+                    result -> {
                         loadedDoc = entityRef;
                         hasData = (HasData) result;
                         dirtyCode = false;
                         read();
 
                         future.setResult(true);
-                    })
-                    .onFailure(caught -> {
+                    },
+                    caught -> {
                         dirtyCode = false;
                         setCode(caught.getMessage(), null);
                         future.setResult(false);
@@ -186,10 +182,14 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     public void save() {
         if (loaded && hasData != null && dirtyCode) {
             write();
-            dispatcher.exec(new DocumentServiceWriteAction<>(loadedDoc, (SharedObject) hasData)).onSuccess(result -> {
-                hasData = (HasData) result;
-                dirtyCode = false;
-            });
+            final DocumentPlugin documentPlugin = documentPluginRegistry.get(loadedDoc.getType());
+            documentPlugin.save(loadedDoc, hasData,
+                    result -> {
+                        hasData = (HasData) result;
+                        dirtyCode = false;
+                    },
+                    throwable -> {
+                    });
         }
     }
 
@@ -212,7 +212,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         return codePresenter.getText();
     }
 
-    public void setCode(final String code, final Indicators codeIndicators) {
+    public void setCode(final String code, final IndicatorLines codeIndicators) {
         if (codePresenter != null) {
             this.codeIndicators = codeIndicators;
 
@@ -224,7 +224,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         }
     }
 
-    public void setCodeIndicators(final Indicators codeIndicators) {
+    public void setCodeIndicators(final IndicatorLines codeIndicators) {
         if (codePresenter != null) {
             this.codeIndicators = codeIndicators;
             codePresenter.setIndicators(codeIndicators);
@@ -232,7 +232,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     }
 
     public void setInput(final String input, final int inputStartLineNo, final boolean formatInput,
-                         final Indicators inputIndicators) {
+                         final IndicatorLines inputIndicators) {
         if (inputPresenter != null) {
             inputPresenter.getStylesOption().setOn(formatInput);
 
@@ -246,7 +246,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
     }
 
     public void setOutput(final String output, final int outputStartLineNo, final boolean formatOutput,
-                          final Indicators outputIndicators) {
+                          final IndicatorLines outputIndicators) {
         if (outputPresenter != null) {
             outputPresenter.getStylesOption().setOn(formatOutput);
 
@@ -288,8 +288,8 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
         this.fuzzyEntityRef = fuzzyEntityRef;
     }
 
-    public void setPipelineStepAction(final PipelineStepAction pipelineStepAction) {
-        this.pipelineStepAction = pipelineStepAction;
+    public void setPipelineStepRequest(final PipelineStepRequest pipelineStepRequest) {
+        this.pipelineStepRequest = pipelineStepRequest;
     }
 
     public boolean isRefreshRequired() {
@@ -350,7 +350,7 @@ public class ElementPresenter extends MyPresenterWidget<ElementView> implements 
             outputPresenter.setInput(false);
 
             registerHandler(outputPresenter.addChangeFilterHandler(event -> {
-                final SteppingFilterSettings settings = pipelineStepAction.getStepFilter(elementId);
+                final SteppingFilterSettings settings = pipelineStepRequest.getStepFilter(elementId);
                 ShowSteppingFilterSettingsEvent.fire(ElementPresenter.this, outputPresenter, false, elementId,
                         settings);
             }));

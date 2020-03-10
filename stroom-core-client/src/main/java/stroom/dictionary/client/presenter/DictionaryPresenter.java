@@ -16,13 +16,15 @@
 
 package stroom.dictionary.client.presenter;
 
+import com.google.gwt.core.client.GWT;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.LocationManager;
 import stroom.dictionary.shared.DictionaryDoc;
-import stroom.dictionary.shared.DownloadDictionaryAction;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dictionary.shared.DictionaryResource;
 import stroom.dispatch.client.ExportFileCompleteUtil;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.editor.client.presenter.EditorPresenter;
 import stroom.entity.client.presenter.ContentCallback;
@@ -30,6 +32,7 @@ import stroom.entity.client.presenter.DocumentEditTabPresenter;
 import stroom.entity.client.presenter.LinkTabPanelView;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.ResourceGeneration;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.tab.client.presenter.TabData;
 import stroom.widget.tab.client.presenter.TabDataImpl;
@@ -37,15 +40,16 @@ import stroom.widget.tab.client.presenter.TabDataImpl;
 import javax.inject.Provider;
 
 public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelView, DictionaryDoc> {
+    private static final DictionaryResource DICTIONARY_RESOURCE = GWT.create(DictionaryResource.class);
+
     private static final TabData SETTINGS_TAB = new TabDataImpl("Settings");
     private static final TabData WORDS_TAB = new TabDataImpl("Words");
 
     private final ButtonView downloadButton;
-    private final ClientDispatchAsync dispatcher;
+    private final RestFactory restFactory;
     private final LocationManager locationManager;
 
     private DocRef docRef;
-    private DictionaryDoc doc;
 
     private final DictionarySettingsPresenter settingsPresenter;
     private final Provider<EditorPresenter> editorPresenterProvider;
@@ -58,12 +62,12 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
                                final DictionarySettingsPresenter settingsPresenter,
                                final Provider<EditorPresenter> editorPresenterProvider,
                                final ClientSecurityContext securityContext,
-                               final ClientDispatchAsync dispatcher,
+                               final RestFactory restFactory,
                                final LocationManager locationManager) {
         super(eventBus, view, securityContext);
         this.settingsPresenter = settingsPresenter;
         this.editorPresenterProvider = editorPresenterProvider;
-        this.dispatcher = dispatcher;
+        this.restFactory = restFactory;
         this.locationManager = locationManager;
 
         settingsPresenter.addDirtyHandler(event -> {
@@ -82,7 +86,14 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     @Override
     protected void onBind() {
         super.onBind();
-        registerHandler(downloadButton.addClickHandler(clickEvent -> dispatcher.exec(new DownloadDictionaryAction(docRef)).onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))));
+
+        registerHandler(downloadButton.addClickHandler(clickEvent -> {
+            final Rest<ResourceGeneration> rest = restFactory.create();
+            rest
+                    .onSuccess(result -> ExportFileCompleteUtil.onSuccess(locationManager, null, result))
+                    .call(DICTIONARY_RESOURCE)
+                    .download(docRef);
+        }));
     }
 
     @Override
@@ -100,7 +111,6 @@ public class DictionaryPresenter extends DocumentEditTabPresenter<LinkTabPanelVi
     public void onRead(final DocRef docRef, final DictionaryDoc doc) {
         super.onRead(docRef, doc);
         this.docRef = docRef;
-        this.doc = doc;
         downloadButton.setEnabled(true);
         settingsPresenter.read(docRef, doc);
         if (codePresenter != null) {

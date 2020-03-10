@@ -35,10 +35,10 @@ import stroom.search.coprocessor.Values;
 import stroom.search.impl.SearchException;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.api.VoidResult;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.util.shared.VoidResult;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -53,7 +53,7 @@ public class IndexShardSearchTaskHandler {
     private final IndexShardWriterCache indexShardWriterCache;
     private final IndexShardService indexShardService;
     private final IndexShardSearchConfig shardConfig;
-    private final ExecutorProvider executorProvider;
+    private final Executor executor;
     private final TaskContext taskContext;
 
     @Inject
@@ -65,7 +65,7 @@ public class IndexShardSearchTaskHandler {
         this.indexShardWriterCache = indexShardWriterCache;
         this.indexShardService = indexShardService;
         this.shardConfig = shardConfig;
-        this.executorProvider = executorProvider;
+        this.executor = executorProvider.get(IndexShardSearchTaskExecutor.THREAD_POOL);
         this.taskContext = taskContext;
     }
 
@@ -144,8 +144,7 @@ public class IndexShardSearchTaskHandler {
                 final SearcherManager searcherManager = indexShardSearcher.getSearcherManager();
                 final IndexSearcher searcher = searcherManager.acquire();
                 try {
-                    final Executor executor = executorProvider.getExecutor(IndexShardSearchTaskProducer.THREAD_POOL);
-                    CompletableFuture.runAsync(() -> {
+                    final Runnable runnable = taskContext.subTask(() -> {
                         taskContext.setName("Index Searcher");
                         LOGGER.logDurationIfDebugEnabled(
                                 () -> {
@@ -165,7 +164,8 @@ public class IndexShardSearchTaskHandler {
                                     }
                                 },
                                 () -> "searcher.search()");
-                    }, executor);
+                    });
+                    CompletableFuture.runAsync(runnable, executor);
 
                     // Start converting found docIds into stored data values
                     boolean complete = false;

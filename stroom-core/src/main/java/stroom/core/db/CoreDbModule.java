@@ -26,12 +26,11 @@ import org.slf4j.MarkerFactory;
 import stroom.db.util.DataSourceFactory;
 import stroom.db.util.DataSourceProxy;
 import stroom.db.util.DbUtil;
-import stroom.node.shared.FindSystemTableStatusAction;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.db.ForceCoreMigration;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.RestResource;
 import stroom.util.shared.Version;
 
 import javax.inject.Inject;
@@ -50,7 +49,7 @@ import java.util.stream.Stream;
 /**
  * Configures anything related to persistence, e.g. transaction management, the
  * entity manager factory, data sources.
- *
+ * <p>
  * This does not extend {@link stroom.db.util.AbstractDataSourceProviderModule} as the core migrations
  * are special and need to happen first before all the other migrations. {@link ForceCoreMigration} is
  * used to achieve this by making all other datasource providers depend on {@link ForceCoreMigration}.
@@ -80,8 +79,8 @@ public class CoreDbModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), DataSource.class)
                 .addBinding(CoreDbConnProvider.class);
 
-        TaskHandlerBinder.create(binder())
-                .bind(FindSystemTableStatusAction.class, FindSystemTableStatusHandler.class);
+        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(DbStatusResourceImpl.class);
     }
 
     @Provides
@@ -106,9 +105,9 @@ public class CoreDbModule extends AbstractModule {
         try {
             try (final Statement statement = connection.createStatement()) {
                 try (final ResultSet resultSet = statement.executeQuery(
-                    "SELECT version " +
-                        "FROM schema_version " +
-                        "ORDER BY installed_rank DESC")) {
+                        "SELECT version " +
+                                "FROM schema_version " +
+                                "ORDER BY installed_rank DESC")) {
                     if (resultSet.next()) {
                         final String ver = resultSet.getString(1);
                         final String[] parts = ver.split("\\.");
@@ -143,21 +142,21 @@ public class CoreDbModule extends AbstractModule {
         try {
             try (final Statement statement = connection.createStatement()) {
                 try (final ResultSet resultSet = statement.executeQuery(
-                    "SELECT " +
-                        "VER_MAJ, " +
-                        "VER_MIN, " +
-                        "VER_PAT " +
-                        "FROM STROOM_VER " +
-                        "ORDER BY " +
-                        "VER_MAJ DESC, " +
-                        "VER_MIN DESC, " +
-                        "VER_PAT DESC " +
-                        "LIMIT 1")) {
+                        "SELECT " +
+                                "VER_MAJ, " +
+                                "VER_MIN, " +
+                                "VER_PAT " +
+                                "FROM STROOM_VER " +
+                                "ORDER BY " +
+                                "VER_MAJ DESC, " +
+                                "VER_MIN DESC, " +
+                                "VER_PAT DESC " +
+                                "LIMIT 1")) {
                     if (resultSet.next()) {
                         final Version version = new Version(
-                            resultSet.getInt(1),
-                            resultSet.getInt(2),
-                            resultSet.getInt(3));
+                                resultSet.getInt(1),
+                                resultSet.getInt(2),
+                                resultSet.getInt(3));
                         LOGGER.info("Found STROOM_VER.VER_MAJ/VER_MIN/VER_PAT " + version);
                         optVersion = Optional.of(version);
                     }
@@ -175,9 +174,9 @@ public class CoreDbModule extends AbstractModule {
         try {
             try (final Statement statement = connection.createStatement()) {
                 try (final ResultSet resultSet = statement.executeQuery(
-                    "SELECT ID " +
-                        "FROM FD " +
-                        "LIMIT 1")) {
+                        "SELECT ID " +
+                                "FROM FD " +
+                                "LIMIT 1")) {
                     if (resultSet.next()) {
                         final Version version = new Version(2, 0, 0);
                         LOGGER.info("Found FD table so version is: " + version);
@@ -197,9 +196,9 @@ public class CoreDbModule extends AbstractModule {
         try {
             try (final Statement statement = connection.createStatement()) {
                 try (final ResultSet resultSet = statement.executeQuery(
-                    "SELECT ID " +
-                        "FROM FEED " +
-                        "LIMIT 1")) {
+                        "SELECT ID " +
+                                "FROM FEED " +
+                                "LIMIT 1")) {
                     if (resultSet.next()) {
                         final Version version = new Version(2, 0, 0);
                         LOGGER.info("Found FEED table so version is: " + version);
@@ -221,8 +220,8 @@ public class CoreDbModule extends AbstractModule {
         final Optional<Version> optVersion = establishDbSchemaVersion(dataSource, isDbUsingFlyWay);
 
         optVersion.ifPresentOrElse(
-            version -> LOGGER.info("Detected current Stroom version is v" + version.toString()),
-            () -> LOGGER.info("This is a new installation. Legacy migrations won't be applied")
+                version -> LOGGER.info("Detected current Stroom version is v" + version.toString()),
+                () -> LOGGER.info("This is a new installation. Legacy migrations won't be applied")
         );
 
         Optional<String> optBaselineVersionAsString = optVersion.flatMap(version -> {
@@ -232,8 +231,8 @@ public class CoreDbModule extends AbstractModule {
                     return Optional.of("4.0.60");
                 } else {
                     final String message =
-                        "The current Stroom version cannot be upgraded to v5+. " +
-                            "You must be on v4.0.60 or later.";
+                            "The current Stroom version cannot be upgraded to v5+. " +
+                                    "You must be on v4.0.60 or later.";
                     LOGGER.error(MarkerFactory.getMarker("FATAL"), message);
                     throw new RuntimeException(message);
                 }
@@ -243,17 +242,17 @@ public class CoreDbModule extends AbstractModule {
         });
 
         final FluentConfiguration configuration = Flyway.configure()
-            .dataSource(dataSource)
-            .locations(FLYWAY_LOCATIONS)
-            .table(FLYWAY_TABLE)
-            .baselineOnMigrate(true);
+                .dataSource(dataSource)
+                .locations(FLYWAY_LOCATIONS)
+                .table(FLYWAY_TABLE)
+                .baselineOnMigrate(true);
 
         optBaselineVersionAsString.ifPresent(configuration::baselineVersion);
 
         final Flyway flyway = configuration.load();
 
         optBaselineVersionAsString.ifPresent(ver ->
-            flyway.baseline());
+                flyway.baseline());
 
         migrateDatabase(flyway);
     }
@@ -269,16 +268,16 @@ public class CoreDbModule extends AbstractModule {
 
             // Try a number of approaches to determine the version of the existing DB schema
             final Stream<Function<Connection, Optional<Version>>> versionFunctions = Stream.of(
-                this::getVersionFromSchemaVersionTable,
-                this::getVersionFromStroomVerTable,
-                this::getVersionFromPresenceOfFdTable,
-                this::getVersionFromPresenceOfFeedTable);
+                    this::getVersionFromSchemaVersionTable,
+                    this::getVersionFromStroomVerTable,
+                    this::getVersionFromPresenceOfFdTable,
+                    this::getVersionFromPresenceOfFeedTable);
 
-             optVersion = versionFunctions
-                .map(func -> func.apply(connection))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .findFirst();
+            optVersion = versionFunctions
+                    .map(func -> func.apply(connection))
+                    .filter(Optional::isPresent)
+                    .map(Optional::get)
+                    .findFirst();
 
         } catch (final SQLException e) {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);

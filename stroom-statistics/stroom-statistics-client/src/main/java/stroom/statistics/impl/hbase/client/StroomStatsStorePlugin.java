@@ -17,13 +17,15 @@
 
 package stroom.statistics.impl.hbase.client;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.core.client.ContentManager;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.document.client.DocumentPlugin;
@@ -36,22 +38,28 @@ import stroom.statistics.impl.hbase.shared.EventStoreTimeIntervalEnum;
 import stroom.statistics.impl.hbase.shared.StatisticField;
 import stroom.statistics.impl.hbase.shared.StatisticRollUpType;
 import stroom.statistics.impl.hbase.shared.StatisticType;
+import stroom.statistics.impl.hbase.shared.StatsStoreResource;
 import stroom.statistics.impl.hbase.shared.StroomStatsStoreDoc;
 
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> {
+    private static final StatsStoreResource STATS_STORE_RESOURCE = GWT.create(StatsStoreResource.class);
+
     private final Provider<StroomStatsStorePresenter> editorProvider;
+    private final RestFactory restFactory;
 
     @Inject
     public StroomStatsStorePlugin(final EventBus eventBus,
                                   final Provider<StroomStatsStorePresenter> editorProvider,
-                                  final ClientDispatchAsync dispatcher,
+                                  final RestFactory restFactory,
                                   final ContentManager contentManager,
                                   final DocumentPluginEventManager entityPluginEventManager) {
-        super(eventBus, dispatcher, contentManager, entityPluginEventManager);
+        super(eventBus, contentManager, entityPluginEventManager);
         this.editorProvider = editorProvider;
+        this.restFactory = restFactory;
     }
 
     @Override
@@ -79,7 +87,8 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
                 // re-load the entity from the database so we have the
                 // persistent version, and not one that has had
                 // fields added/removed/changed
-                load(DocRefUtil.create(entity)).onSuccess(entityFromDb -> doConfirmSave(presenter, entity, entityFromDb));
+                load(DocRefUtil.create(entity), entityFromDb -> doConfirmSave(presenter, entity, entityFromDb), throwable -> {
+                });
             }
         }
     }
@@ -125,6 +134,27 @@ public class StroomStatsStorePlugin extends DocumentPlugin<StroomStatsStoreDoc> 
 
     private void doSave(final DocumentEditPresenter<?, StroomStatsStoreDoc> presenter,
                         final StroomStatsStoreDoc entity) {
-        save(DocRefUtil.create(entity), entity).onSuccess(doc -> presenter.read(DocRefUtil.create(doc), doc));
+        save(DocRefUtil.create(entity), entity, doc -> presenter.read(DocRefUtil.create(doc), doc), throwable -> {
+        });
+    }
+
+    @Override
+    public void load(final DocRef docRef, final Consumer<StroomStatsStoreDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<StroomStatsStoreDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(STATS_STORE_RESOURCE)
+                .read(docRef);
+    }
+
+    @Override
+    public void save(final DocRef docRef, final StroomStatsStoreDoc document, final Consumer<StroomStatsStoreDoc> resultConsumer, final Consumer<Throwable> errorConsumer) {
+        final Rest<StroomStatsStoreDoc> rest = restFactory.create();
+        rest
+                .onSuccess(resultConsumer)
+                .onFailure(errorConsumer)
+                .call(STATS_STORE_RESOURCE)
+                .update(document);
     }
 }

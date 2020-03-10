@@ -16,12 +16,12 @@
 
 package stroom.dashboard.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
-import stroom.docref.SharedObject;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -34,12 +34,10 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"parameters", "components", "layout", "tabVisibility"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "dashboard")
 @XmlType(name = "DashboardConfig", propOrder = {"parameters", "components", "layout", "tabVisibility"})
-public class DashboardConfig implements SharedObject {
-    private static final long serialVersionUID = -2530827581046882396L;
-
+public class DashboardConfig {
     @XmlElement(name = "parameters")
     @JsonProperty("parameters")
     private String parameters;
@@ -53,7 +51,26 @@ public class DashboardConfig implements SharedObject {
     private LayoutConfig layout;
     @XmlElement(name = "tabVisibility")
     @JsonProperty("tabVisibility")
-    private TabVisibility tabVisibility = TabVisibility.SHOW_ALL;
+    private TabVisibility tabVisibility;
+
+    public DashboardConfig() {
+        tabVisibility = TabVisibility.SHOW_ALL;
+    }
+
+    @JsonCreator
+    public DashboardConfig(@JsonProperty("parameters") final String parameters,
+                           @JsonProperty("components") final List<ComponentConfig> components,
+                           @JsonProperty("layout") final LayoutConfig layout,
+                           @JsonProperty("tabVisibility") final TabVisibility tabVisibility) {
+        this.parameters = parameters;
+        this.components = components;
+        this.layout = layout;
+        this.tabVisibility = tabVisibility;
+
+        if (this.tabVisibility == null) {
+            this.tabVisibility = TabVisibility.SHOW_ALL;
+        }
+    }
 
     public String getParameters() {
         return parameters;

@@ -17,30 +17,37 @@
 package stroom.importexport.client.presenter;
 
 import com.google.gwt.cell.client.TextCell;
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import stroom.content.client.presenter.ContentTabPresenter;
-import stroom.data.client.presenter.ActionDataProvider;
+import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.data.grid.client.OrderByColumn;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.Rest;
+import stroom.dispatch.client.RestFactory;
 import stroom.docref.DocRef;
+import stroom.importexport.shared.ContentResource;
 import stroom.importexport.shared.Dependency;
 import stroom.importexport.shared.DependencyCriteria;
-import stroom.importexport.shared.FetchDependenciesAction;
 import stroom.svg.client.Icon;
 import stroom.svg.client.SvgPresets;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 
+import java.util.function.Consumer;
+
 public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Dependency>> implements ColumnSortEvent.Handler {
+    private static final ContentResource CONTENT_RESOURCE = GWT.create(ContentResource.class);
+
     private final DependencyCriteria criteria;
-    private final ActionDataProvider<Dependency> dataProvider;
+    private final RestDataProvider<Dependency, ResultPage<Dependency>> dataProvider;
 
     @Inject
-    public DependenciesPresenter(final EventBus eventBus, final ClientDispatchAsync dispatcher) {
+    public DependenciesPresenter(final EventBus eventBus, final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<>(false, 100));
 
         getView().addResizableColumn(new OrderByColumn<Dependency, String>(new TextCell(), DependencyCriteria.FIELD_FROM, true) {
@@ -72,11 +79,15 @@ public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Depe
         getView().addColumnSortHandler(this);
 
         criteria = new DependencyCriteria();
-        final FetchDependenciesAction action = new FetchDependenciesAction(criteria);
-        dataProvider = new ActionDataProvider<>(dispatcher, action);
+        dataProvider = new RestDataProvider<Dependency, ResultPage<Dependency>>(eventBus) {
+            @Override
+            protected void exec(final Consumer<ResultPage<Dependency>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<Dependency>> rest = restFactory.create();
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(CONTENT_RESOURCE).fetchDependencies(criteria);
+            }
+        };
         dataProvider.addDataDisplay(getView().getDataDisplay());
-
-        dataProvider.refresh();
+//        dataProvider.refresh();
     }
 
     private String docRefToString(final DocRef docRef) {

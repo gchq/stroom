@@ -123,8 +123,7 @@ class JobNodeTrackerCache {
                 final FindJobNodeCriteria findJobNodeCriteria = new FindJobNodeCriteria();
                 findJobNodeCriteria.getNodeName().setString(nodeName);
 
-                final List<JobNode> list = jobNodeDao.find(findJobNodeCriteria);
-
+                final List<JobNode> list = jobNodeDao.find(findJobNodeCriteria).getValues();
                 for (final JobNode jobNode : list) {
                     // Get the job name.
                     final String jobName = jobNode.getJob().getName();

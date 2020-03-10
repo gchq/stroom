@@ -16,9 +16,14 @@
 
 package stroom.util.shared;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -28,23 +33,51 @@ import java.util.Set;
 /**
  * A map of indicators to show in the XML editor.
  */
-public class Indicators implements Serializable {
-    private static final long serialVersionUID = 1445199511079506470L;
-
-    private Map<Severity, Integer> errorCount = new HashMap<>();
-    private Set<StoredError> uniqueErrorSet = new HashSet<>();
-    private List<StoredError> errorList = new ArrayList<>();
-    private Map<Integer, Indicator> map;
+@JsonPropertyOrder({"errorCount", "uniqueErrorSet", "errorList"})
+@JsonInclude(Include.NON_NULL)
+public class Indicators {
+    @JsonProperty
+    private final Map<Severity, Integer> errorCount;
+    @JsonProperty
+    private final Set<StoredError> uniqueErrorSet;
+    @JsonProperty
+    private final List<StoredError> errorList;
 
     public Indicators() {
-        // Default constructor necessary for GWT serialisation.
+        errorCount = new HashMap<>();
+        uniqueErrorSet = new HashSet<>();
+        errorList = new ArrayList<>();
+    }
+
+    @JsonCreator
+    public Indicators(@JsonProperty("errorCount") final Map<Severity, Integer> errorCount,
+                      @JsonProperty("uniqueErrorSet") final Set<StoredError> uniqueErrorSet,
+                      @JsonProperty("errorList") final List<StoredError> errorList) {
+        this.errorCount = errorCount;
+        this.uniqueErrorSet = uniqueErrorSet;
+        this.errorList = errorList;
     }
 
     /**
      * Copying constructor.
      */
     public Indicators(final Indicators indicators) {
+        errorCount = new HashMap<>();
+        uniqueErrorSet = new HashSet<>();
+        errorList = new ArrayList<>();
         addAll(indicators);
+    }
+
+    public Map<Severity, Integer> getErrorCount() {
+        return errorCount;
+    }
+
+    public Set<StoredError> getUniqueErrorSet() {
+        return uniqueErrorSet;
+    }
+
+    public List<StoredError> getErrorList() {
+        return errorList;
     }
 
     /**
@@ -83,6 +116,7 @@ public class Indicators implements Serializable {
         errorCount.clear();
     }
 
+    @JsonIgnore
     public Severity getMaxSeverity() {
         for (final Severity sev : Severity.SEVERITIES) {
             final Integer c = errorCount.get(sev);
@@ -91,53 +125,6 @@ public class Indicators implements Serializable {
             }
         }
         return null;
-    }
-
-    /**
-     * Gets a summary of the counts of warnings, errors and fatal errors.
-     *
-     * @return A summary of the counts of warnings, errors and fatal errors.
-     */
-    public String getSummaryHTML() {
-        final StringBuilder html = new StringBuilder();
-        for (final Severity severity : Severity.SEVERITIES) {
-            final Integer count = errorCount.get(severity);
-            if (count != null && count > 0) {
-                html.append(severity.getDisplayValue());
-                html.append(": ");
-                html.append(count);
-                html.append("<br/>");
-            }
-        }
-
-        return html.toString();
-    }
-
-    public Collection<Integer> getLineNumbers() {
-        return getMap().keySet();
-    }
-
-    public Indicator getIndicator(final int lineNo) {
-        return getMap().get(lineNo);
-    }
-
-    private Map<Integer, Indicator> getMap() {
-        if (map == null) {
-            map = new HashMap<>();
-            for (final StoredError storedError : errorList) {
-                int lineNo = 1;
-                if (storedError.getLocation() != null) {
-                    lineNo = storedError.getLocation().getLineNo();
-                }
-                if (lineNo <= 0) {
-                    lineNo = 1;
-                }
-
-                map.computeIfAbsent(lineNo, k -> new Indicator()).add(storedError.getSeverity(), storedError);
-            }
-        }
-
-        return map;
     }
 
     public void append(final StringBuilder sb) {

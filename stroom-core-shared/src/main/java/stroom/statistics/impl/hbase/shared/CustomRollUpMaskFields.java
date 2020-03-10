@@ -16,23 +16,25 @@
 
 package stroom.statistics.impl.hbase.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Set;
 
-public class CustomRollUpMaskFields implements SharedObject, Comparable<CustomRollUpMaskFields> {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class CustomRollUpMaskFields implements Comparable<CustomRollUpMaskFields> {
+    @JsonProperty
+    private final int id;
+    @JsonProperty
+    private final short maskValue;
+    @JsonProperty
+    private final Set<Integer> rolledUpFieldPositions;
 
-    private static final long serialVersionUID = 8434581070070953139L;
-
-    private int id;
-    private short maskValue;
-    private Set<Integer> rolledUpFieldPositions;
-
-    public CustomRollUpMaskFields() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public CustomRollUpMaskFields(final int id, final short maskValue, final Set<Integer> rolledUpFieldPositions) {
+    @JsonCreator
+    public CustomRollUpMaskFields(@JsonProperty("id") final int id,
+                                  @JsonProperty("maskValue") final short maskValue,
+                                  @JsonProperty("rolledUpFieldPositions") final Set<Integer> rolledUpFieldPositions) {
         this.id = id;
         this.maskValue = maskValue;
         this.rolledUpFieldPositions = rolledUpFieldPositions;
@@ -42,24 +44,12 @@ public class CustomRollUpMaskFields implements SharedObject, Comparable<CustomRo
         return id;
     }
 
-    public void setId(final int id) {
-        this.id = id;
-    }
-
     public short getMaskValue() {
         return maskValue;
     }
 
-    public void setMaskValue(final short maskValue) {
-        this.maskValue = maskValue;
-    }
-
     public Set<Integer> getRolledUpFieldPositions() {
         return rolledUpFieldPositions;
-    }
-
-    public void setRolledUpFieldPositions(final Set<Integer> rolledUpFieldPositions) {
-        this.rolledUpFieldPositions = rolledUpFieldPositions;
     }
 
     public boolean isFieldRolledUp(final int position) {

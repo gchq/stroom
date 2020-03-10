@@ -32,6 +32,7 @@ import stroom.editor.client.event.HasChangeFilterHandlers;
 import stroom.editor.client.event.HasFormatHandlers;
 import stroom.editor.client.model.XmlFormatter;
 import stroom.editor.client.view.EditorMenuPresenter;
+import stroom.editor.client.view.IndicatorLines;
 import stroom.util.shared.Highlight;
 import stroom.util.shared.Indicators;
 
@@ -110,7 +111,7 @@ public class EditorPresenter extends MyPresenterWidget<EditorView>
         getView().setFirstLineNumber(firstLineNumber);
     }
 
-    public void setIndicators(final Indicators indicators) {
+    public void setIndicators(final IndicatorLines indicators) {
         getView().setIndicators(indicators);
     }
 

@@ -18,7 +18,7 @@
 package stroom.node.mock;
 
 import stroom.node.api.NodeService;
-import stroom.node.shared.FindNodeCriteria;
+import stroom.node.api.FindNodeCriteria;
 
 import javax.inject.Singleton;
 import java.util.Collections;

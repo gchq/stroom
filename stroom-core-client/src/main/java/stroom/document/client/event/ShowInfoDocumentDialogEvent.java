@@ -20,17 +20,17 @@ package stroom.document.client.event;
 import com.google.gwt.event.shared.EventHandler;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
-import stroom.explorer.shared.SharedDocRefInfo;
+import stroom.explorer.shared.DocRefInfo;
 
 public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialogEvent.Handler> {
     private static Type<Handler> TYPE;
-    private final SharedDocRefInfo info;
+    private final DocRefInfo info;
 
-    private ShowInfoDocumentDialogEvent(final SharedDocRefInfo info) {
+    private ShowInfoDocumentDialogEvent(final DocRefInfo info) {
         this.info = info;
     }
 
-    public static void fire(final HasHandlers handlers, final SharedDocRefInfo info) {
+    public static void fire(final HasHandlers handlers, final DocRefInfo info) {
         handlers.fireEvent(
                 new ShowInfoDocumentDialogEvent(info));
     }
@@ -52,7 +52,7 @@ public class ShowInfoDocumentDialogEvent extends GwtEvent<ShowInfoDocumentDialog
         handler.onCreate(this);
     }
 
-    public SharedDocRefInfo getInfo() {
+    public DocRefInfo getInfo() {
         return info;
     }
 

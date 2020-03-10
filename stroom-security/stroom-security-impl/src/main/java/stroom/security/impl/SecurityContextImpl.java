@@ -7,7 +7,6 @@ import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.security.shared.User;
-import stroom.security.shared.UserAppPermissions;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

@@ -28,7 +28,8 @@ public abstract class NodeToolsPlugin extends Plugin {
     private final ClientSecurityContext securityContext;
 
     @Inject
-    public NodeToolsPlugin(final EventBus eventBus, final ClientSecurityContext securityContext) {
+    public NodeToolsPlugin(final EventBus eventBus,
+                           final ClientSecurityContext securityContext) {
         super(eventBus);
         this.securityContext = securityContext;
     }
@@ -37,8 +38,13 @@ public abstract class NodeToolsPlugin extends Plugin {
     public void onReveal(final BeforeRevealMenubarEvent event) {
         super.onReveal(event);
 
-        event.getMenuItems().addMenuItem(MenuKeys.MAIN_MENU,
-                new KeyedParentMenuItem(2, "Tools", event.getMenuItems(), MenuKeys.TOOLS_MENU));
+        event.getMenuItems().addMenuItem(
+            MenuKeys.MAIN_MENU,
+            new KeyedParentMenuItem(
+                2,
+                "Tools",
+                event.getMenuItems(),
+                MenuKeys.TOOLS_MENU));
 
         addChildItems(event);
     }

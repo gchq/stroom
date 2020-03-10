@@ -18,7 +18,7 @@ package stroom.util.collections;
 
 import org.apache.commons.lang3.mutable.MutableLong;
 import org.junit.jupiter.api.Test;
-import stroom.docref.SharedObject;
+
 
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
@@ -103,7 +103,7 @@ class TestRoundRobinSet {
         return sb.toString();
     }
 
-    static class RoundRobinSetTestObject implements SharedObject {
+    static class RoundRobinSetTestObject {
         private static final long serialVersionUID = -7648759863152854689L;
         int i;
 

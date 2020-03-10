@@ -29,6 +29,9 @@ import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.ViewWithUiHandlers;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter.GlobalPropertyEditView;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditUiHandlers;
+import stroom.svg.client.SvgPreset;
+import stroom.widget.button.client.ButtonPanel;
+import stroom.widget.button.client.ButtonView;
 import stroom.widget.tickbox.client.view.TickBox;
 
 public final class GlobalPropertyEditViewImpl
@@ -64,12 +67,19 @@ public final class GlobalPropertyEditViewImpl
     TickBox requireUiRestart;
     @UiField
     TickBox readOnly;
+    @UiField
+    ButtonPanel yamlValueButtonPanel;
+    @UiField
+    ButtonPanel effectiveValueButtonPanel;
+    @UiField
+    ButtonPanel dataTypeButtonPanel;
 
     private boolean password;
 //    private static volatile Resources RESOURCES;
 
     @Inject
-    public GlobalPropertyEditViewImpl(final EventBus eventBus, final Binder binder) {
+    public GlobalPropertyEditViewImpl(final EventBus eventBus,
+                                      final Binder binder) {
         widget = binder.createAndBindUi(this);
 //        RESOURCES = GWT.create(Resources.class);
 //        RESOURCES.style().ensureInjected();
@@ -195,6 +205,21 @@ public final class GlobalPropertyEditViewImpl
     @Override
     public void setUseOverride(final boolean useOverride) {
         this.useOverride.setBooleanValue(useOverride);
+    }
+
+    @Override
+    public ButtonView addYamlValueWarningIcon(final SvgPreset preset) {
+        return yamlValueButtonPanel.add(preset);
+    }
+
+    @Override
+    public ButtonView addEffectiveValueIcon(final SvgPreset preset) {
+        return effectiveValueButtonPanel.add(preset);
+    }
+
+    @Override
+    public ButtonView addDataTypeHelpIcon(final SvgPreset preset) {
+        return dataTypeButtonPanel.add(preset);
     }
 
     public interface Binder extends UiBinder<Widget, GlobalPropertyEditViewImpl> {

@@ -3,6 +3,9 @@ package stroom.dispatch.client;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.event.shared.GwtEvent;
 import com.google.gwt.event.shared.HasHandlers;
+import com.google.gwt.json.client.JSONObject;
+import com.google.gwt.json.client.JSONParser;
+import com.google.gwt.json.client.JSONString;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import org.fusesource.restygwt.client.Defaults;
@@ -42,6 +45,11 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
         eventBus.fireEvent(event);
     }
 
+    @Override
+    public String getImportFileURL() {
+        return GWT.getHostPageBaseURL() + "importfile.rpc";
+    }
+
     private static class RestImpl<R> implements Rest<R> {
         private final HasHandlers hasHandlers;
         private final REST<R> rest;
@@ -53,13 +61,32 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
             final MethodCallback<R> methodCallback = new MethodCallback<R>() {
                 @Override
                 public void onFailure(final Method method, final Throwable exception) {
+                    // The exception is restyGWT's FailedResponseException
+                    // so extract the response payload and treat it as WebApplicationException
+                    // json
+                    String msg;
+                    Exception wrappedExcepton = null;
+                    try {
+                        // Assuming we get a response like { "code": "", "message": "" }
+                        final String responseText = method.getResponse().getText();
+                        final JSONObject responseJson = (JSONObject) JSONParser.parseStrict(responseText);
+                        msg = ((JSONString) responseJson.get("message")).stringValue();
+                        wrappedExcepton = new RuntimeException(msg, exception);
+                    } catch (Exception e) {
+                        // Not the format we were expecting so just use the msg from the exception
+                        msg = exception.getMessage();
+                    }
+
                     try {
                         if (errorConsumer != null) {
-                            errorConsumer.accept(exception);
+                            errorConsumer.accept(wrappedExcepton != null ? wrappedExcepton : exception);
                         } else {
-                            AlertEvent.fireError(hasHandlers, exception.getMessage(), null);
+                            GWT.log(msg, exception);
+                            AlertEvent.fireError(hasHandlers, msg, null);
                         }
                     } catch (final Throwable t) {
+                        GWT.log(method.getRequest().toString());
+                        GWT.log(t.getMessage(), t);
                         AlertEvent.fireErrorFromException(hasHandlers, t, null);
                     } finally {
                         decrementTaskCount();
@@ -73,6 +100,8 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
                             resultConsumer.accept(response);
                         }
                     } catch (final Throwable t) {
+                        GWT.log(method.getRequest().toString());
+                        GWT.log(t.getMessage(), t);
                         AlertEvent.fireErrorFromException(hasHandlers, t, null);
                     } finally {
                         decrementTaskCount();

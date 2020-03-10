@@ -18,7 +18,6 @@
 package stroom.cache.impl;
 
 import stroom.cache.shared.CacheInfo;
-import stroom.cache.shared.FindCacheInfoCriteria;
 import stroom.util.shared.Clearable;
 
 import java.util.List;

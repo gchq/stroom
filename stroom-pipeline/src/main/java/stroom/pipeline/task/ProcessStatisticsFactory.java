@@ -17,7 +17,7 @@
 package stroom.pipeline.task;
 
 import stroom.datasource.api.v2.AbstractField;
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 import stroom.meta.shared.MetaFields;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.ErrorStatistics;

@@ -16,9 +16,10 @@
 
 package stroom.pipeline.shared;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
 import stroom.docstore.shared.Doc;
@@ -26,17 +27,43 @@ import stroom.util.shared.HasData;
 
 import java.util.Objects;
 
-@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "converterType"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "converterType"})
+@JsonInclude(Include.NON_NULL)
 public class TextConverterDoc extends Doc implements HasData {
-    private static final long serialVersionUID = 4519634323788508083L;
-
     public static final String DOCUMENT_TYPE = "TextConverter";
 
+    @JsonProperty
     private String description;
-    @JsonIgnore
+    @JsonProperty
     private String data;
-    private TextConverterType converterType = TextConverterType.NONE;
+    @JsonProperty
+    private TextConverterType converterType;
+
+    public TextConverterDoc() {
+        converterType = TextConverterType.NONE;
+    }
+
+    @JsonCreator
+    public TextConverterDoc(@JsonProperty("type") final String type,
+                            @JsonProperty("uuid") final String uuid,
+                            @JsonProperty("name") final String name,
+                            @JsonProperty("version") final String version,
+                            @JsonProperty("createTime") final Long createTime,
+                            @JsonProperty("updateTime") final Long updateTime,
+                            @JsonProperty("createUser") final String createUser,
+                            @JsonProperty("updateUser") final String updateUser,
+                            @JsonProperty("description") final String description,
+                            @JsonProperty("data") final String data,
+                            @JsonProperty("converterType") final TextConverterType converterType) {
+        super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
+        this.description = description;
+        this.data = data;
+        this.converterType = converterType;
+
+        if (converterType == null) {
+            this.converterType = TextConverterType.NONE;
+        }
+    }
 
     public String getDescription() {
         return description;

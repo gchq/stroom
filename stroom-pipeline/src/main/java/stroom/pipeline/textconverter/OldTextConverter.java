@@ -17,7 +17,6 @@
 package stroom.pipeline.textconverter;
 
 import stroom.docref.HasDisplayValue;
-import stroom.entity.shared.SQLNameConstants;
 import stroom.importexport.migration.DocumentEntity;
 import stroom.importexport.shared.ExternalFile;
 import stroom.util.shared.HasPrimitiveValue;
@@ -28,7 +27,6 @@ import stroom.util.shared.PrimitiveValueConverter;
  **/
 @Deprecated
 public class OldTextConverter extends DocumentEntity {
-    public static final String DATA = SQLNameConstants.DATA;
     public static final String ENTITY_TYPE = "TextConverter";
 
     private String description;

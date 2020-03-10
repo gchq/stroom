@@ -1,6 +1,6 @@
 package stroom.receive.common;
 
-import stroom.meta.shared.AttributeMap;
+import stroom.meta.api.AttributeMap;
 
 import java.io.IOException;
 

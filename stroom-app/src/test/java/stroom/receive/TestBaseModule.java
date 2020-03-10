@@ -1,6 +1,7 @@
 package stroom.receive;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.util.Providers;
 import stroom.cache.impl.CacheModule;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.core.receive.ReceiveDataModule;
@@ -8,10 +9,11 @@ import stroom.data.store.mock.MockStreamStoreModule;
 import stroom.dictionary.impl.DictionaryModule;
 import stroom.docstore.impl.DocStoreModule;
 import stroom.docstore.impl.memory.MemoryPersistenceModule;
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.feed.impl.FeedModule;
 import stroom.meta.mock.MockMetaModule;
 import stroom.meta.statistics.impl.MockMetaStatisticsModule;
-import stroom.receive.rules.impl.ReceiveDataRulesetModule;
+import stroom.receive.rules.impl.ReceiveDataRuleSetModule;
 import stroom.security.mock.MockSecurityContextModule;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskContext;
@@ -31,9 +33,10 @@ public class TestBaseModule extends AbstractModule {
         install(new MockStreamStoreModule());
         install(new PipelineScopeModule());
         install(new ReceiveDataModule());
-        install(new ReceiveDataRulesetModule());
+        install(new ReceiveDataRuleSetModule());
         install(new MockCollectionModule());
 
         bind(TaskContext.class).to(SimpleTaskContext.class);
+        bind(DocumentEventLog.class).toProvider(Providers.of(null));
     }
 }

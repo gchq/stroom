@@ -26,9 +26,5 @@ public class DictionaryModule extends AbstractModule {
     protected void configure() {
         bind(DictionaryStore.class).to(DictionaryStoreImpl.class);
         bind(WordListProvider.class).to(DictionaryStoreImpl.class);
-
-        GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(DictionaryResource.class)
-                .addBinding(DictionaryResource2.class);
     }
 }

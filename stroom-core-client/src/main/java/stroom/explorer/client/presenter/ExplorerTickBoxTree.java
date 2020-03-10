@@ -30,12 +30,12 @@ import com.google.gwt.user.cellview.client.HasKeyboardSelectionPolicy;
 import com.google.gwt.user.client.ui.FlowPanel;
 import com.google.gwt.user.client.ui.ScrollPanel;
 import com.google.gwt.view.client.CellPreviewEvent;
-import stroom.dispatch.client.ClientDispatchAsync;
+import stroom.dispatch.client.RestFactory;
 import stroom.explorer.client.event.ShowExplorerMenuEvent;
 import stroom.explorer.client.view.ExplorerTickBoxCell;
 import stroom.explorer.shared.ExplorerNode;
+import stroom.explorer.shared.ExplorerNode.NodeState;
 import stroom.explorer.shared.FetchExplorerNodeResult;
-import stroom.explorer.shared.HasNodeState;
 import stroom.widget.spinner.client.SpinnerSmall;
 import stroom.widget.util.client.MultiSelectEvent;
 
@@ -49,7 +49,7 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
     private String expanderClassName;
     private String tickBoxClassName;
 
-    public ExplorerTickBoxTree(final ClientDispatchAsync dispatcher) {
+    public ExplorerTickBoxTree(final RestFactory restFactory) {
         final SpinnerSmall spinnerSmall = new SpinnerSmall();
         spinnerSmall.getElement().getStyle().setPosition(Style.Position.ABSOLUTE);
         spinnerSmall.getElement().getStyle().setRight(5, Style.Unit.PX);
@@ -77,11 +77,11 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
 
         cellTable.getRowContainer().getStyle().setCursor(Style.Cursor.POINTER);
 
-        treeModel = new ExplorerTreeModel(this, spinnerSmall, dispatcher) {
+        treeModel = new ExplorerTreeModel(this, spinnerSmall, restFactory) {
             @Override
             protected void onDataChanged(final FetchExplorerNodeResult result) {
                 super.onDataChanged(result);
-                selectionModel.setTreeStructure(result.getTreeStructure());
+                selectionModel.setRoots(result.getRootNodes());
             }
         };
 
@@ -316,7 +316,7 @@ public class ExplorerTickBoxTree extends AbstractExplorerTree {
                             super.onCellPreview(event);
                             refresh();
 
-                        } else if (HasNodeState.NodeState.LEAF.equals(selectedItem.getNodeState())) {
+                        } else if (NodeState.LEAF.equals(selectedItem.getNodeState())) {
                             toggleSelection(selectedItem);
                             super.onCellPreview(event);
 

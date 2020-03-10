@@ -23,7 +23,7 @@ import stroom.data.store.api.Source;
 import stroom.data.store.api.Store;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaService;
+import stroom.meta.api.MetaService;
 import stroom.util.io.ByteCountInputStream;
 import stroom.util.io.StreamUtil;
 
@@ -48,7 +48,7 @@ class TestStreamAppender extends AbstractStreamAppenderTest {
     void testXMLRolling() throws Exception {
         test("TestStreamAppender", "XML_Rolling");
 
-        final List<Meta> list = dataMetaService.find(new FindMetaCriteria());
+        final List<Meta> list = dataMetaService.find(new FindMetaCriteria()).getValues();
         final long id = list.get(0).getId();
         try (final Source streamSource = streamStore.openSource(id)) {
             try (final InputStreamProvider inputStreamProvider = streamSource.get(0)) {

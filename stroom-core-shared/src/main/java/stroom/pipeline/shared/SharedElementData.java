@@ -16,25 +16,34 @@
 
 package stroom.pipeline.shared;
 
-import stroom.docref.SharedObject;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.Indicators;
 
-public class SharedElementData implements SharedObject {
-    private static final long serialVersionUID = -1614851794579868895L;
+@JsonInclude(Include.NON_NULL)
+public class SharedElementData {
+    @JsonProperty
+    private final String input;
+    @JsonProperty
+    private final String output;
+    @JsonProperty
+    private final Indicators codeIndicators;
+    @JsonProperty
+    private final Indicators outputIndicators;
+    @JsonProperty
+    private final boolean formatInput;
+    @JsonProperty
+    private final boolean formatOutput;
 
-    private String input;
-    private String output;
-    private Indicators codeIndicators;
-    private Indicators outputIndicators;
-    private boolean formatInput;
-    private boolean formatOutput;
-
-    public SharedElementData() {
-        // Default constructor necessary for GWT serialisation.
-    }
-
-    public SharedElementData(final String input, final String output, final Indicators codeIndicators,
-                             final Indicators outputIndicators, final boolean formatInput, final boolean formatOutput) {
+    @JsonCreator
+    public SharedElementData(@JsonProperty("input") final String input,
+                             @JsonProperty("output") final String output,
+                             @JsonProperty("codeIndicators") final Indicators codeIndicators,
+                             @JsonProperty("outputIndicators") final Indicators outputIndicators,
+                             @JsonProperty("formatInput") final boolean formatInput,
+                             @JsonProperty("formatOutput") final boolean formatOutput) {
         this.input = input;
         this.output = output;
         this.codeIndicators = codeIndicators;
@@ -67,3 +76,4 @@ public class SharedElementData implements SharedObject {
         return formatOutput;
     }
 }
+
