@@ -16,6 +16,7 @@ public class NodeConfig extends AbstractConfig implements HasDbConfig {
 
     public static final String PROP_NAME_NAME = "name";
     public static final String PROP_NAME_STATUS = "status";
+    public static final String PROP_NAME_BASE_ENDPOINT = "baseEndpoint";
 
     private DbConfig dbConfig = new DbConfig();
     private String nodeName = "tba";
@@ -43,6 +44,10 @@ public class NodeConfig extends AbstractConfig implements HasDbConfig {
         this.nodeName = nodeName;
     }
 
+    @JsonPropertyDescription("This is the base endpoint of the node for all inter-node communications, " +
+        "i.e. all cluster management and node info calls. " +
+        "This endpoint will typically be hidden behind a firewall and not be publicly available.")
+    @JsonProperty(PROP_NAME_BASE_ENDPOINT)
     public NodeEndpointConfig getBaseEndpoint() {
         return baseEndpoint;
     }

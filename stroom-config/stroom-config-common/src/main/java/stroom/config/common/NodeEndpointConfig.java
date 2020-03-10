@@ -2,17 +2,23 @@ package stroom.config.common;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
+import org.hibernate.validator.constraints.NotBlank;
 import stroom.util.config.annotations.ReadOnly;
 import stroom.util.shared.AbstractConfig;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
 import java.util.Objects;
 
 public class NodeEndpointConfig extends AbstractConfig {
 
     private String scheme = "http";
-    private String hostname = null;
+    private String hostname = "localhost";
     private Integer port = 8080;
+    private String pathPrefix = null;
 
     public NodeEndpointConfig() {
     }
@@ -28,7 +34,9 @@ public class NodeEndpointConfig extends AbstractConfig {
         this.hostname = hostname;
     }
 
-    @JsonProperty("scheme")
+    @ReadOnly
+    @JsonProperty()
+    @Pattern(regexp = "https?")
     public String getScheme() {
         return scheme;
     }
@@ -38,8 +46,9 @@ public class NodeEndpointConfig extends AbstractConfig {
     }
 
     @NotNull
+    @NotBlank
     @ReadOnly
-    @JsonProperty("hostname")
+    @JsonProperty()
     public String getHostname() {
         return hostname;
     }
@@ -48,7 +57,12 @@ public class NodeEndpointConfig extends AbstractConfig {
         this.hostname = hostname;
     }
 
-    @JsonProperty("port")
+    @Min(0)
+    @Max(65535)
+    @ReadOnly
+    @JsonProperty()
+    @JsonPropertyDescription("This is the port to use for inter-node communications. " +
+        "This is typically the Drop Wizard application port.")
     public Integer getPort() {
         return port;
     }
@@ -57,21 +71,36 @@ public class NodeEndpointConfig extends AbstractConfig {
         this.port = port;
     }
 
+    @ReadOnly
+    @JsonProperty()
+    @Pattern(regexp = "/[^/]+")
+    @JsonPropertyDescription("An optional prefix to the base path. This may be needed when the inter-node communication" +
+        "goes via some form of gateway where the paths are mapped to something else.")
+    public String getPathPrefix() {
+        return pathPrefix;
+    }
+
+    public void setPathPrefix(final String pathPrefix) {
+        this.pathPrefix = pathPrefix;
+    }
+
     @JsonIgnore
     private StringBuilder buildBasePath() {
         Objects.requireNonNull(hostname,
-                "stroom.apiGateway.hostname must be configured");
+                "hostname must be configured");
 
-        // TODO could consider building this on any call to the setters and
-        //  then holding it to save re-computing all the time
         final StringBuilder stringBuilder = new StringBuilder()
-                .append(scheme)
-                .append("://")
-                .append(hostname);
+            .append(scheme)
+            .append("://")
+            .append(hostname);
 
         if (port != null) {
-            stringBuilder.append(":")
-                    .append(port.toString());
+            stringBuilder
+                .append(":")
+                .append(port.toString());
+        }
+        if (pathPrefix != null && !pathPrefix.isBlank()) {
+            stringBuilder.append(pathPrefix);
         }
         return stringBuilder;
     }
