@@ -19,8 +19,6 @@ package stroom.dashboard.shared;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-import java.io.Serializable;
-
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         property = "type"
@@ -29,5 +27,5 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = TableResult.class, name = "table"),
         @JsonSubTypes.Type(value = VisResult.class, name = "vis")
 })
-public interface ComponentResult extends Serializable {
+public interface ComponentResult {
 }

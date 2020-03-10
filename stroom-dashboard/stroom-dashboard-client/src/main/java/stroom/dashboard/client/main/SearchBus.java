@@ -107,7 +107,9 @@ public class SearchBus {
         for (final Entry<DashboardQueryKey, SearchModel> entry : activeSearchMap.entrySet()) {
             final SearchModel searchModel = entry.getValue();
             final SearchRequest searchRequest = searchModel.getCurrentRequest();
-            searchRequests.add(searchRequest);
+            if (searchRequest != null) {
+                searchRequests.add(searchRequest);
+            }
         }
 
         final Rest<Set<SearchResponse>> rest = restFactory.create();
@@ -115,7 +117,7 @@ public class SearchBus {
                 .onSuccess(result -> {
                     try {
                         for (final SearchResponse searchResponse : result) {
-                            final DashboardQueryKey queryKey = searchResponse.getDashboardQueryKey();
+                            final DashboardQueryKey queryKey = searchResponse.getQueryKey();
                             final SearchModel searchModel = activeSearchMap.get(queryKey);
                             if (searchModel != null) {
                                 searchModel.update(searchResponse);
