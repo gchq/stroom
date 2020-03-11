@@ -12,8 +12,8 @@ public final class NodeCallUtil {
      * @return True if the work should be executed on the local node.
      * I.e. if nodeName equals the name of the local node
      */
-    public static boolean executeLocally(final NodeInfo nodeInfo,
-                                         final String nodeName) {
+    public static boolean shouldExecuteLocally(final NodeInfo nodeInfo,
+                                               final String nodeName) {
         final String thisNodeName = nodeInfo.getThisNodeName();
         if (thisNodeName == null) {
             throw new RuntimeException("This node has no name");

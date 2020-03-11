@@ -94,7 +94,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
 
         try {
             // If this is the node that was contacted then just resolve it locally
-            if (NodeCallUtil.executeLocally(nodeInfo, nodeName)) {
+            if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
                 listConfigResponse = list(partialName, offset, size);
             } else {
                 // A different node to make a rest call to the required node
@@ -184,7 +184,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
 
         try {
             // If this is the node that was contacted then just resolve it locally
-            if (NodeCallUtil.executeLocally(nodeInfo, nodeName)) {
+            if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
                 yamlOverride = getYamlValueByName(propertyName);
             } else {
                 // A different node to make a rest call to the required node

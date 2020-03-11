@@ -111,7 +111,7 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
             final long now = System.currentTimeMillis();
 
             // If this is the node that was contacted then just return our local info.
-            if (NodeCallUtil.executeLocally(nodeInfo, nodeName)) {
+            if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
                 clusterNodeInfo = clusterNodeManager.getClusterNodeInfo();
 
             } else {
@@ -152,7 +152,7 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
         final long now = System.currentTimeMillis();
 
         // If this is the node that was contacted then just return the latency we have incurred within this method.
-        if (NodeCallUtil.executeLocally(nodeInfo, nodeName)) {
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             return System.currentTimeMillis() - now;
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)

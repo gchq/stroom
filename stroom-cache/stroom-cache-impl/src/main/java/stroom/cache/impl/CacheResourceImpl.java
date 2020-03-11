@@ -181,7 +181,7 @@ class CacheResourceImpl implements CacheResource, HasHealthCheck {
         Objects.requireNonNull(nodeName);
 
         final Long result;
-        if (NodeCallUtil.executeLocally(nodeInfo, nodeName)) {
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             // local node
             final FindCacheInfoCriteria criteria = new FindCacheInfoCriteria();
             criteria.setName(new StringCriteria(cacheName, null));
