@@ -92,14 +92,14 @@ class JobNodeResourceImpl implements JobNodeResource, HasHealthCheck {
     @Override
     public JobNodeInfo info(final String jobName, final String nodeName) {
         JobNodeInfo jobNodeInfo = null;
+        final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            + ResourcePaths.buildAuthenticatedApiPath(JobNodeResource.INFO_PATH);
         try {
             // If this is the node that was contacted then just return our local info.
             if (nodeInfo.getThisNodeName().equals(nodeName)) {
                 jobNodeInfo = jobNodeService.getInfo(jobName);
 
             } else {
-                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
-                url += ResourcePaths.API_ROOT_PATH + JobNodeResource.INFO_PATH;
                 final Response response = webTargetFactory
                         .create(url)
                         .queryParam("jobName", jobName)
@@ -115,8 +115,8 @@ class JobNodeResourceImpl implements JobNodeResource, HasHealthCheck {
                 }
             }
 
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
+        } catch (final Throwable e) {
+            throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
 
         return jobNodeInfo;

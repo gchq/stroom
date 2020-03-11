@@ -130,28 +130,32 @@ class TaskResourceImpl implements TaskResource, HasHealthCheck {
 
     @Override
     public Boolean terminate(final String nodeName, final TerminateTaskProgressRequest request) {
-        try {
-            // If this is the node that was contacted then just return our local info.
-            if (nodeInfo.getThisNodeName().equals(nodeName)) {
-                taskManager.terminate(request.getCriteria(), request.isKill());
 
-            } else {
-                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
-                url += ResourcePaths.API_ROOT_PATH + TaskResource.BASE_PATH;
-                url += nodeName;
-                url += "/terminate";
+        // If this is the node that was contacted then just return our local info.
+        if (NodeCallUtil.executeLocally(nodeInfo, nodeName)) {
+            try {
+                taskManager.terminate(request.getCriteria(), request.isKill());
+            } catch (Exception e) {
+                throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+            }
+        } else {
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+                + ResourcePaths.buildAuthenticatedApiPath(
+                TaskResource.BASE_PATH,
+                nodeName,
+                "/terminate");
+
+            try {
                 final Response response = webTargetFactory
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON)
-                        .post(Entity.json(request));
+                    .create(url)
+                    .request(MediaType.APPLICATION_JSON)
+                    .post(Entity.json(request));
                 if (response.getStatus() != 200) {
                     throw new WebApplicationException(response);
                 }
+            } catch (Throwable e) {
+                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
-
-        } catch (final RuntimeException e) {
-            LOGGER.error(e::getMessage, e);
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
         }
 
         return true;

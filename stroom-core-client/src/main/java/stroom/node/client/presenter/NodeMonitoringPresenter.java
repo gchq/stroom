@@ -138,7 +138,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
                 return row.getNode().getUrl();
             }
         };
-        getView().addResizableColumn(hostNameColumn, "Cluster URL", 400);
+        getView().addResizableColumn(hostNameColumn, "Cluster Base Endpoint URL", 400);
 
         // Ping.
         final Column<NodeStatusResult, String> pingColumn = new Column<NodeStatusResult, String>(new TextCell()) {

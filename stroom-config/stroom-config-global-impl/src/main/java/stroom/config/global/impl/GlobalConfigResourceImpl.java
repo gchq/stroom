@@ -64,7 +64,9 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
             try {
                 final ListConfigResponse resultList = globalConfigService.list(
                     buildPredicate(partialName),
-                    new PageRequest(offset, size != null ? size : Integer.MAX_VALUE));
+                    new PageRequest(offset, size != null
+                        ? size
+                        : Integer.MAX_VALUE));
 
                 return resultList;
             } catch (final RuntimeException e) {
@@ -85,8 +87,10 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
 
         ListConfigResponse listConfigResponse;
 
-        final String resourcePath = ResourcePaths.buildAuthenticatedApiPath(
-            GlobalConfigResource.BASE_PATH, GlobalConfigResource.PROPERTIES_SUB_PATH);
+        final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            + ResourcePaths.buildAuthenticatedApiPath(
+            GlobalConfigResource.BASE_PATH,
+            GlobalConfigResource.PROPERTIES_SUB_PATH);
 
         try {
             // If this is the node that was contacted then just resolve it locally
@@ -94,8 +98,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
                 listConfigResponse = list(partialName, offset, size);
             } else {
                 // A different node to make a rest call to the required node
-                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
-                url += resourcePath;
+
                 final Response response = webTargetFactory
                     .create(url)
                     .queryParam("partialName", partialName)
@@ -112,10 +115,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
 
                 Objects.requireNonNull(listConfigResponse, "Null listConfigResponse");
             }
-        } catch (final WebApplicationException e) {
-            throw e;
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        } catch (final Throwable e) {
+            throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
         return listConfigResponse;
     }
@@ -174,19 +175,19 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
 
         OverrideValue<String> yamlOverride;
 
-        final String resourcePath = ResourcePaths.buildAuthenticatedApiPath(
+        final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+            + ResourcePaths.buildAuthenticatedApiPath(
             GlobalConfigResource.BASE_PATH,
             GlobalConfigResource.PROPERTIES_SUB_PATH,
             propertyName,
             GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH);
+
         try {
             // If this is the node that was contacted then just resolve it locally
             if (NodeCallUtil.executeLocally(nodeInfo, nodeName)) {
                 yamlOverride = getYamlValueByName(propertyName);
             } else {
                 // A different node to make a rest call to the required node
-                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
-                url += resourcePath;
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
@@ -201,19 +202,11 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
 
                 Objects.requireNonNull(yamlOverride, "Null yamlOverride");
             }
-        } catch (final WebApplicationException e) {
-            throw e;
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
+        } catch (final Throwable e) {
+            throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
         }
         return yamlOverride;
     }
-
-//    @Timed
-//    @Override
-//    public ResultPage<ConfigProperty> find(final FindGlobalConfigCriteria criteria) {
-//        return ResultPage.createPageLimitedList(globalConfigService.list(criteria), criteria.obtainPageRequest());
-//    }
 
     @Timed
     @Override
@@ -225,8 +218,6 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
             return globalConfigService.update(configProperty);
         } catch (ConfigPropertyValidationException e) {
             throw new BadRequestException(e.getMessage(), e);
-        } catch (RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
         }
     }
 
@@ -245,33 +236,8 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
             return globalConfigService.update(configProperty);
         } catch (ConfigPropertyValidationException e) {
             throw new BadRequestException(e.getMessage(), e);
-        } catch (RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
         }
     }
-
-    //    @Override
-//    public ClusterConfigProperty getClusterPropertyByName(final String propertyName) {
-//        return securityContext.secureResult(() -> {
-//            // For each node, get the property value for that node, asynchronously
-//            final List<CompletableFuture<ClusterConfigProperty>> futures = nodeService
-//                    .findNodeNames(new FindNodeCriteria())
-//                    .stream()
-//                    .map(this::getPropertyFromNode)
-//                    .collect(Collectors.toList());
-//
-//            // TODO Need to deal with failure to connect to a node
-//            // TODO Need to apply a timeout and mark the node as NOT KNOWN in some way
-//            // As the results come in from the nodes, merge them together into one object
-//            final ClusterConfigProperty clusterConfigProperty = futures.stream()
-//                .map(CompletableFuture::join)
-//                .reduce(ClusterConfigProperty::merge)
-//                    .orElse(null);
-//
-//            return clusterConfigProperty;
-//        });
-//    }
-
 
     @Timed
     @Override

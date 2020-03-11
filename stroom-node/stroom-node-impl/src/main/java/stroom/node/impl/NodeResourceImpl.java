@@ -155,14 +155,11 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
         if (NodeCallUtil.executeLocally(nodeInfo, nodeName)) {
             return System.currentTimeMillis() - now;
         } else {
-            final String baseEndpointUrl = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
-
-            final String path = ResourcePaths.buildAuthenticatedApiPath(
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+                + ResourcePaths.buildAuthenticatedApiPath(
                 NodeResource.BASE_PATH,
                 nodeName,
                 "/ping");
-
-            final String url = baseEndpointUrl + path;
 
             try {
                 final Response response = webTargetFactory

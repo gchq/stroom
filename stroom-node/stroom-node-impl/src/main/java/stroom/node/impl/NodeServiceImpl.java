@@ -58,7 +58,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         this.nodeInfo = nodeInfo;
         this.nodeConfig = nodeConfig;
 
-        ensureNodeCreated();
+        securityContext.asProcessingUser(this::ensureNodeCreated);
     }
 
     Node update(final Node node) {
@@ -164,7 +164,7 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         } else {
             if (!endpointUrl.equals(thisNode.getUrl())) {
                 thisNode.setUrl(endpointUrl);
-                LOGGER.info("Updating node endpoint url to {}", endpointUrl);
+                LOGGER.info("Updating node endpoint url to {} for node {}", endpointUrl, thisNode.getName());
                 update(thisNode);
             }
         }
