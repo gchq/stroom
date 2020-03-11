@@ -79,7 +79,11 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
     @Override
     public List<String> findNodeNames(final FindNodeCriteria criteria) {
-        return find(criteria).getValues().stream().map(Node::getName).collect(Collectors.toList());
+        return find(criteria)
+            .getValues()
+            .stream()
+            .map(Node::getName)
+            .collect(Collectors.toList());
     }
 
     @Override

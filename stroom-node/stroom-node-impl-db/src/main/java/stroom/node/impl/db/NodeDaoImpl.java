@@ -35,7 +35,9 @@ import java.util.Optional;
 import static stroom.node.impl.db.jooq.tables.Node.NODE;
 
 public class NodeDaoImpl implements NodeDao {
-    private final Map<String, Field<?>> FIELD_MAP = Map.of(FindNodeCriteria.FIELD_ID, NODE.ID, FindNodeCriteria.FIELD_NAME, NODE.NAME);
+    private final Map<String, Field<?>> FIELD_MAP = Map.of(
+        FindNodeCriteria.FIELD_ID, NODE.ID,
+        FindNodeCriteria.FIELD_NAME, NODE.NAME);
 
     private final NodeDbConnProvider nodeDbConnProvider;
 

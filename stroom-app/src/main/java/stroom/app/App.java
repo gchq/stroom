@@ -31,6 +31,7 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.app.commands.DbMigrationCommand;
+import stroom.app.errors.NodeCallExceptionMapper;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
@@ -114,7 +115,11 @@ public class App extends Application<Config> {
 
         // Turn on Jersey logging.
         environment.jersey().register(
-                new LoggingFeature(java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME), Level.INFO, LoggingFeature.Verbosity.PAYLOAD_ANY, LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
+                new LoggingFeature(
+                    java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
+                    Level.INFO,
+                    LoggingFeature.Verbosity.PAYLOAD_ANY,
+                    LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
 
         if (configuration.getAppConfig().isSuperDevMode()) {
             configuration.getAppConfig().getSecurityConfig().getAuthenticationConfig().setAuthenticationRequired(false);
@@ -123,6 +128,9 @@ public class App extends Application<Config> {
 
         // Add useful logging setup.
         registerLogConfiguration(environment);
+
+        // Add jersey exception mappers
+        registerExceptionMappers(environment);
 
         // We want Stroom to use the root path so we need to move Dropwizard's path.
         environment.jersey().setUrlPattern(ResourcePaths.API_ROOT_PATH + "/*");
@@ -175,6 +183,11 @@ public class App extends Application<Config> {
         sessionCookieConfig.setSecure(configuration.getAppConfig().getSessionCookieConfig().isSecure());
         sessionCookieConfig.setHttpOnly(configuration.getAppConfig().getSessionCookieConfig().isHttpOnly());
         // TODO : Add `SameSite=Strict` when supported by JEE
+    }
+
+    private void registerExceptionMappers(final Environment environment) {
+        // Add an exception mapper for dealing with our own NodeCallExceptions
+        environment.jersey().register(NodeCallExceptionMapper.class);
     }
 
     private String getNodeName(final AppConfig appConfig) {

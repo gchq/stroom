@@ -1,5 +1,9 @@
 package stroom.node.api;
 
+import javax.ws.rs.ProcessingException;
+import javax.ws.rs.WebApplicationException;
+import java.net.ConnectException;
+
 public final class NodeCallUtil {
     private NodeCallUtil() {
     }
@@ -31,5 +35,21 @@ public final class NodeCallUtil {
         // A normal url is something like "http://fqdn:8080"
 
         return url;
+    }
+
+    public static RuntimeException handleExceptionsOnNodeCall(final String nodeName,
+                                                              final String url,
+                                                              final Throwable throwable) {
+        if (throwable instanceof WebApplicationException) {
+            throw (WebApplicationException) throwable;
+        } else if (throwable instanceof ProcessingException) {
+            if (throwable.getCause() != null && throwable.getCause() instanceof ConnectException) {
+                return new NodeCallException(nodeName, url, throwable);
+            } else {
+                return new RuntimeException(throwable);
+            }
+        } else {
+            return new RuntimeException(throwable);
+        }
     }
 }

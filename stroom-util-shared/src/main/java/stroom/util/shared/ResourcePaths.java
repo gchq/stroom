@@ -53,10 +53,11 @@ public interface ResourcePaths {
      * @param parts The path or parts of a path to append onto the base path.
      * @return The full path to the authenticated resource, e.g. /api/node
      */
-    static Builder buildAuthenticatedApiPath(final String... parts) {
+    static String buildAuthenticatedApiPath(final String... parts) {
         return new Builder()
             .addPathPart(API_ROOT_PATH)
-            .addPathParts(parts);
+            .addPathParts(parts)
+            .build();
     }
 
     /**

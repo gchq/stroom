@@ -86,15 +86,11 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
         ListConfigResponse listConfigResponse;
 
         final String resourcePath = ResourcePaths.buildAuthenticatedApiPath(
-            GlobalConfigResource.BASE_PATH, GlobalConfigResource.PROPERTIES_SUB_PATH)
-            .addQueryParam("partialName", partialName)
-            .addQueryParam("offset", String.valueOf(offset))
-            .addQueryParam("size", String.valueOf(size))
-            .build();
+            GlobalConfigResource.BASE_PATH, GlobalConfigResource.PROPERTIES_SUB_PATH);
 
         try {
             // If this is the node that was contacted then just resolve it locally
-            if (NodeCallUtil.executeLocally(nodeService, nodeInfo, nodeName)) {
+            if (NodeCallUtil.executeLocally(nodeInfo, nodeName)) {
                 listConfigResponse = list(partialName, offset, size);
             } else {
                 // A different node to make a rest call to the required node
@@ -102,6 +98,9 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
                 url += resourcePath;
                 final Response response = webTargetFactory
                     .create(url)
+                    .queryParam("partialName", partialName)
+                    .queryParam("offset", String.valueOf(offset))
+                    .queryParam("size", String.valueOf(size))
                     .request(MediaType.APPLICATION_JSON)
                     .get();
 
@@ -179,11 +178,10 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
             GlobalConfigResource.BASE_PATH,
             GlobalConfigResource.PROPERTIES_SUB_PATH,
             propertyName,
-            GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH)
-            .build();
+            GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH);
         try {
             // If this is the node that was contacted then just resolve it locally
-            if (NodeCallUtil.executeLocally(nodeService, nodeInfo, nodeName)) {
+            if (NodeCallUtil.executeLocally(nodeInfo, nodeName)) {
                 yamlOverride = getYamlValueByName(propertyName);
             } else {
                 // A different node to make a rest call to the required node

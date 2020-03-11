@@ -22,11 +22,11 @@ import event.logging.Query;
 import event.logging.Query.Advanced;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
-import stroom.node.api.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
@@ -37,11 +37,9 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
-import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -113,7 +111,7 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
             final long now = System.currentTimeMillis();
 
             // If this is the node that was contacted then just return our local info.
-            if (NodeCallUtil.executeLocally(nodeService, nodeInfo, nodeName)) {
+            if (NodeCallUtil.executeLocally(nodeInfo, nodeName)) {
                 clusterNodeInfo = clusterNodeManager.getClusterNodeInfo();
 
             } else {
@@ -151,40 +149,35 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
 
     @Override
     public Long ping(final String nodeName) {
-        try {
-            final long now = System.currentTimeMillis();
+        final long now = System.currentTimeMillis();
 
-            // If this is the node that was contacted then just return the latency we have incurred within this method.
-            if (NodeCallUtil.executeLocally(nodeService, nodeInfo, nodeName)) {
-                return System.currentTimeMillis() - now;
-            } else {
-                final String baseEndpointUrl = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
+        // If this is the node that was contacted then just return the latency we have incurred within this method.
+        if (NodeCallUtil.executeLocally(nodeInfo, nodeName)) {
+            return System.currentTimeMillis() - now;
+        } else {
+            final String baseEndpointUrl = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
 
-                final String path = ResourcePaths.buildAuthenticatedApiPath(
-                    NodeResource.BASE_PATH,
-                    nodeName,
-                    "/ping")
-                    .build();
+            final String path = ResourcePaths.buildAuthenticatedApiPath(
+                NodeResource.BASE_PATH,
+                nodeName,
+                "/ping");
 
-                final String url = baseEndpointUrl + path;
+            final String url = baseEndpointUrl + path;
 
+            try {
                 final Response response = webTargetFactory
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON)
-                        .get();
+                    .create(url)
+                    .request(MediaType.APPLICATION_JSON)
+                    .get();
                 if (response.getStatus() != 200) {
                     throw new WebApplicationException(response);
                 }
                 final Long ping = response.readEntity(Long.class);
                 Objects.requireNonNull(ping, "Null ping");
                 return System.currentTimeMillis() - now;
+            } catch (Throwable e) {
+                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
-
-        } catch (final WebApplicationException e) {
-            throw e;
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
-//            throw new ServerErrorException(e.getMessage(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
         }
     }
 
