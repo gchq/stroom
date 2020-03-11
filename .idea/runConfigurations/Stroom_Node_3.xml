@@ -1,10 +1,10 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Stroom" type="Application" factoryName="Application" singleton="false">
+  <configuration default="false" name="Stroom Node 3" type="Application" factoryName="Application" singleton="false">
     <option name="ALTERNATIVE_JRE_PATH" value="12" />
     <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="true" />
     <option name="MAIN_CLASS_NAME" value="stroom.app.App" />
     <module name="stroom.stroom-app.main" />
-    <option name="PROGRAM_PARAMETERS" value="server ../local.yml" />
+    <option name="PROGRAM_PARAMETERS" value="server ../local3.yml" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/stroom-app" />
     <method v="2">
       <option name="Make" enabled="true" />
