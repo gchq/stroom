@@ -7,28 +7,48 @@ import java.util.Objects;
 public interface ResourcePaths {
 
     /**
-     * Used as the root for all servlet and UI requests
+     * Used as the root path for all servlet and UI requests
      */
     String ROOT_PATH = "/stroom";
 
     /**
-     * Used as the root for all REST resources
+     * Used as the root path for all REST resources
      */
     String API_ROOT_PATH = "/api";
 
     // TODO consider splitting all api resources into either stateful or stateless paths
     //   to make nginx routing easier
-    String STATEFUL_PATH = "/stateful";
-    String STATELESS_PATH = "/stateless";
-    String NO_AUTH_PATH = "/noauth";
+    String STATEFUL = "/stateful";
+    String STATELESS = "/stateless";
 
+    /**
+     * Path part for unauthenticated servlets
+     */
+    String NO_AUTH = "/noauth";
+
+    /**
+     * Path part for the lucene based query service
+     */
     String STROOM_INDEX = "/stroom-index";
+
+    /**
+     * Path part for the SQL Statistics query service
+     */
     String SQL_STATISTICS = "/sqlstatistics";
 
-    String DISPATCH_RPC_PATH = "/dispatch.rpc";
-    String CLUSTER_CALL_RPC_PATH = "/clustercall.rpc";
+    /**
+     * Path part for the Hessian based GWT client-server RPC comms
+     */
+    String DISPATCH_RPC = "/dispatch.rpc";
+
+    /**
+     * Path part for the Hessian based inter-node RPC comms
+     */
+    String CLUSTER_CALL_RPC = "/clustercall.rpc";
+
     String XSRF_TOKEN_RPC_PATH = "/xsrf";
 
+    // Path parts for versioned API paths
     String V1 = "/v1";
     String V2 = "/v2";
     String V3 = "/v3";
@@ -37,7 +57,7 @@ public interface ResourcePaths {
     static String buildUnauthenticatedServletPath(final String... parts) {
         return new Builder()
             .addPathPart(ROOT_PATH)
-            .addPathPart(NO_AUTH_PATH)
+            .addPathPart(NO_AUTH)
             .addPathParts(parts)
             .build();
     }
@@ -67,7 +87,7 @@ public interface ResourcePaths {
     static String buildUnauthenticatedApiPath(final String... parts) {
         return new Builder()
             .addPathPart(API_ROOT_PATH)
-            .addPathPart(NO_AUTH_PATH)
+            .addPathPart(NO_AUTH)
             .addPathParts(parts)
             .build();
     }

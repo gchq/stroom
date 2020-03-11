@@ -74,8 +74,10 @@ class SecurityFilter implements Filter {
     private static final String NONCE = "nonce";
     private static final String PROMPT = "prompt";
     private static final String ACCESS_CODE = "accessCode";
-    private static final String NO_AUTH_PATH = ResourcePaths.ROOT_PATH + ResourcePaths.NO_AUTH_PATH + "/";
-    public static String PUBLIC_API_PATH_REGEX = "\\/api.*\\/noauth\\/.*"; // E.g. /api/authentication/v1/noauth/exchange
+    private static final String NO_AUTH_PATH = ResourcePaths.buildUnauthenticatedServletPath( "/");
+
+    // E.g. /api/authentication/v1/noauth/exchange
+    public static String PUBLIC_API_PATH_REGEX = ResourcePaths.API_ROOT_PATH + ".*" + ResourcePaths.NO_AUTH + "/.*";
 
     private static final Set<String> RESERVED_PARAMS = Set.of(
             SCOPE, RESPONSE_TYPE, CLIENT_ID, REDIRECT_URL, STATE, NONCE, PROMPT, ACCESS_CODE);
@@ -163,6 +165,8 @@ class SecurityFilter implements Filter {
                 } else if (isApiRequest(servletPath)) {
                     LOGGER.debug("API request");
                     if (!config.isAuthenticationRequired()) {
+                        String propPath = config.getFullPath(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
+                        LOGGER.warn("{} is false, authenticating as admin for {}", propPath, fullPath);
                         authenticateAsAdmin(request, response, chain, false);
                     } else {
                         // Authenticate requests to the API.
@@ -170,7 +174,7 @@ class SecurityFilter implements Filter {
                         continueAsUser(request, response, chain, token);
                     }
                 } else if (shouldBypassAuthentication(servletPath)) {
-                    // Some servet requests need to bypass authentication -- this happens if the servlet class
+                    // Some servlet requests need to bypass authentication -- this happens if the servlet class
                     // is annotated with @Unauthenticated. E.g. the status servlet doesn't require authentication.
                     authenticateAsProcUser(request, response, chain, false);
                 } else {
@@ -178,8 +182,9 @@ class SecurityFilter implements Filter {
                     // like the good relying party we are.
 
                     if (!config.isAuthenticationRequired()) {
+                        String propPath = config.getFullPath(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
+                        LOGGER.warn("{} is false, authenticating as admin for {}", propPath, fullPath);
                         authenticateAsAdmin(request, response, chain, true);
-
                     } else {
                         // If the session doesn't have a user ref then attempt login.
                         final boolean loggedIn = loginUI(request, response);
@@ -210,7 +215,7 @@ class SecurityFilter implements Filter {
     }
 
     private boolean isDispatchRequest(String servletPath) {
-        return servletPath.endsWith(ResourcePaths.DISPATCH_RPC_PATH);
+        return servletPath.endsWith(ResourcePaths.DISPATCH_RPC);
     }
 
     private boolean shouldBypassAuthentication(String servletPath) {

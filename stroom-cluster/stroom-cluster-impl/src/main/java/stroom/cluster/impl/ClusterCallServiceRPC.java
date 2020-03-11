@@ -32,7 +32,7 @@ import java.util.Set;
 
 public class ClusterCallServiceRPC extends HessianServlet implements ClusterCallService, IsServlet {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterCallServiceRPC.class);
-    private static final Set<String> PATH_SPECS = Set.of(ResourcePaths.CLUSTER_CALL_RPC_PATH);
+    private static final Set<String> PATH_SPECS = Set.of(ResourcePaths.CLUSTER_CALL_RPC);
 
     private final ClusterCallService clusterCallService;
     private final SecurityContext securityContext;
