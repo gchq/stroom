@@ -115,9 +115,10 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
                 clusterNodeInfo = clusterNodeManager.getClusterNodeInfo();
 
             } else {
-                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName);
-                url += ResourcePaths.API_ROOT_PATH + NodeResource.BASE_PATH;
-                url += nodeName;
+                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+                    + ResourcePaths.buildAuthenticatedApiPath(
+                    NodeResource.BASE_PATH,
+                    nodeName);
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
