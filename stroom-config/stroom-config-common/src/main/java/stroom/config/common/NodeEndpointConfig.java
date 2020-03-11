@@ -15,6 +15,11 @@ import java.util.Objects;
 
 public class NodeEndpointConfig extends AbstractConfig {
 
+    public static final String PROP_NAME_SCHEME = "scheme";
+    public static final String PROP_NAME_HOSTNAME = "hostname";
+    public static final String PROP_NAME_PORT = "port";
+    public static final String PROP_NAME_PATH_PREFIX = "pathPrefix";
+
     private String scheme = "http";
     private String hostname = "localhost";
     private Integer port = 8080;
@@ -34,9 +39,9 @@ public class NodeEndpointConfig extends AbstractConfig {
         this.hostname = hostname;
     }
 
-    @ReadOnly
-    @JsonProperty()
     @Pattern(regexp = "https?")
+    @JsonProperty(PROP_NAME_SCHEME)
+    @JsonPropertyDescription("The scheme, i.e. http or https")
     public String getScheme() {
         return scheme;
     }
@@ -48,7 +53,9 @@ public class NodeEndpointConfig extends AbstractConfig {
     @NotNull
     @NotBlank
     @ReadOnly
-    @JsonProperty()
+    @JsonProperty(PROP_NAME_HOSTNAME)
+    @JsonPropertyDescription("The hostname, FQDN or IP address of the node. " +
+        "The value must be resolvable by all other nodes in the cluster.")
     public String getHostname() {
         return hostname;
     }
@@ -59,8 +66,7 @@ public class NodeEndpointConfig extends AbstractConfig {
 
     @Min(0)
     @Max(65535)
-    @ReadOnly
-    @JsonProperty()
+    @JsonProperty(PROP_NAME_PORT)
     @JsonPropertyDescription("This is the port to use for inter-node communications. " +
         "This is typically the Drop Wizard application port.")
     public Integer getPort() {
@@ -71,8 +77,7 @@ public class NodeEndpointConfig extends AbstractConfig {
         this.port = port;
     }
 
-    @ReadOnly
-    @JsonProperty()
+    @JsonProperty(PROP_NAME_PATH_PREFIX)
     @Pattern(regexp = "/[^/]+")
     @JsonPropertyDescription("An optional prefix to the base path. This may be needed when the inter-node communication" +
         "goes via some form of gateway where the paths are mapped to something else.")
