@@ -17,9 +17,9 @@
 package stroom.security.impl;
 
 import com.google.common.base.Strings;
-import stroom.auth.service.ApiClient;
-import stroom.auth.service.api.ApiKeyApi;
-import stroom.auth.service.api.AuthenticationApi;
+import stroom.authentication.service.ApiClient;
+import stroom.authentication.service.api.ApiKeyApi;
+import stroom.authentication.service.api.AuthenticationApi;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -34,7 +34,7 @@ import javax.inject.Singleton;
  * If a logged-in user's API token is ever needed elsewhere then this class should be refactored accordingly.
  */
 @Singleton
-class AuthenticationServiceClients {
+public class AuthenticationServiceClients {
     private final ApiClient authServiceClient;
 
     @Inject
@@ -50,7 +50,7 @@ class AuthenticationServiceClients {
         authServiceClient.setVerifyingSsl(securityConfig.isVerifySsl());
     }
 
-    AuthenticationApi newAuthenticationApi() {
+    public AuthenticationApi newAuthenticationApi() {
         return new AuthenticationApi(authServiceClient);
     }
 

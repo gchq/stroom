@@ -1,6 +1,8 @@
 package stroom.app.guice;
 
 import com.google.inject.AbstractModule;
+import stroom.authentication.AuthModule;
+import stroom.authentication.impl.db.AuthDbModule;
 import stroom.cache.impl.CacheResourceModule;
 import stroom.core.db.CoreDbModule;
 import stroom.dashboard.impl.datasource.DataSourceModule;
@@ -12,6 +14,8 @@ public class CoreModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new stroom.activity.impl.db.ActivityDbModule());
+        install(new AuthModule());
+        install(new AuthDbModule());
         install(new stroom.annotation.impl.db.AnnotationDbModule());
         install(new stroom.annotation.pipeline.AnnotationPipelineModule());
         install(new CacheResourceModule());

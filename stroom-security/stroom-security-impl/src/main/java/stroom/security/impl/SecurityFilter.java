@@ -22,8 +22,8 @@ import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.auth.service.ApiException;
-import stroom.auth.service.api.model.IdTokenRequest;
+import stroom.authentication.service.ApiException;
+import stroom.authentication.service.api.model.IdTokenRequest;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
@@ -342,13 +342,18 @@ class SecurityFilter implements Filter {
         final String url = getFullUrl(request);
         final UriBuilder uriBuilder = UriBuilder.fromUri(url);
 
-        // When the auth service has performed authentication it will redirect back to the current URL with some
-        // additional parameters (e.g. `state` and `accessCode`). It is important that these parameters are not
-        // provided by our redirect URL else the redirect URL that the authentication service redirects back to may
-        // end up with multiple copies of these parameters which will confuse Stroom as it will not know which one
-        // of the param values to use (i.e. which were on the original redirect request and which have been added by
-        // the authentication service). For this reason we will cleanse the URL of any reserved parameters here. The
-        // authentication service should do the same to the redirect URL before adding its additional parameters.
+        // When the auth service has performed authentication it will redirect
+        // back to the current URL with some additional parameters (e.g.
+        // `state` and `accessCode`). It is important that these parameters are
+        // not provided by our redirect URL else the redirect URL that the
+        // authentication service redirects back to may end up with multiple
+        // copies of these parameters which will confuse Stroom as it will not
+        // know which one of the param values to use (i.e. which were on the
+        // original redirect request and which have been added by the
+        // authentication service). For this reason we will cleanse the URL of
+        // any reserved parameters here. The authentication service should do
+        // the same to the redirect URL before adding its additional
+        // parameters.
         RESERVED_PARAMS.forEach(param -> uriBuilder.replaceQueryParam(param, new Object[0]));
 
         URI redirectUri = uriBuilder.build();

@@ -17,7 +17,7 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public interface AuthenticationResource extends RestResource, DirectRestService {
     @GET
-    @Path("logout")
+    @Path("gwt_logout")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
