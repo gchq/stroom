@@ -36,8 +36,6 @@ import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
 import stroom.node.client.ManageGlobalPropertiesPlugin;
 import stroom.node.client.ManageNodeToolsPlugin;
-import stroom.node.client.presenter.NodeEditPresenter;
-import stroom.node.client.view.NodeEditViewImpl;
 import stroom.node.client.view.WrapperView;
 import stroom.node.client.view.WrapperViewImpl;
 import stroom.task.client.TaskManagerPlugin;
@@ -67,11 +65,6 @@ public class MonitoringModule extends PluginModule {
         bindPlugin(ManageGlobalPropertiesPlugin.class);
 
         bindSharedView(WrapperView.class, WrapperViewImpl.class);
-
-        bindPresenterWidget(
-            NodeEditPresenter.class,
-            NodeEditPresenter.NodeEditView.class,
-            NodeEditViewImpl.class);
 
         bindPresenterWidget(
             JobPresenter.class,

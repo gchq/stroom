@@ -346,6 +346,11 @@ appConfig:
         minimumIdle: null
         maxPoolSize: null
     name: "tba"
+    baseEndpoint:
+      scheme: "http"
+      hostname: "localhost"
+      port: 8080
+      pathPrefix: null
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"

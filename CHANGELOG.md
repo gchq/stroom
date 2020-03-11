@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Add NodeEndpointConfiguration. Change `node` table to hold the base endpoint.
+
+
 ## [v7.0-beta.22] - 2020-03-10
 
 * Brought stroom-auth-service into stroom

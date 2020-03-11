@@ -1,6 +1,7 @@
 package stroom.dropwizard.common;
 
 import io.dropwizard.setup.Environment;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.slf4j.Logger;
@@ -29,23 +30,34 @@ public class Filters {
     public void register() {
         final ServletContextHandler servletContextHandler = environment.getApplicationContext();
 
+
+        int maxNameLength = filters.values().stream()
+            .mapToInt(filter -> filter.getClass().getName().length())
+            .max()
+            .orElse(0);
+
         LOGGER.info("Adding filters:");
         filters.entrySet().stream()
-                .sorted(Comparator.comparing(entry -> entry.getKey().getName()))
-                .forEach(entry -> {
-            final String name = entry.getKey().getName();
-            final String url = entry.getKey().getUrlPattern();
-            LOGGER.info("\t{} => {}", name, url);
+            .sorted(Comparator.comparing(entry -> entry.getValue().getClass().getName()))
+            .forEach(entry -> {
+                final String className = entry.getValue().getClass().getName();
+                final String name = entry.getKey().getName();
+                final String url = entry.getKey().getUrlPattern();
+                LOGGER.info("\t{} => {}",
+                    StringUtils.rightPad(className, maxNameLength, " "),
+                    url);
 
-            final FilterHolder filterHolder = new FilterHolder(entry.getValue());
-            filterHolder.setName(name);
+                final FilterHolder filterHolder = new FilterHolder(entry.getValue());
+                filterHolder.setName(name);
 
-            servletContextHandler.addFilter(
+                servletContextHandler.addFilter(
                     filterHolder,
                     url,
                     EnumSet.of(DispatcherType.REQUEST));
 
-            entry.getKey().getInitParameters().forEach(filterHolder::setInitParameter);
-        });
+                entry.getKey()
+                    .getInitParameters()
+                    .forEach(filterHolder::setInitParameter);
+            });
     }
 }

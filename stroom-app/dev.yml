@@ -92,6 +92,9 @@ appConfig:
     executionInterval: "10s"
   node:
     name: node1a
+    baseEndpoint:
+      hostname: <<<IP_ADDRESS>>>
+      port: ${STROOM_APP_PORT:-8080}
   path:
     temp: "/tmp/stroom"
   security:

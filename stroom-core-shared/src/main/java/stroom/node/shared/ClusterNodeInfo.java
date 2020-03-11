@@ -34,9 +34,9 @@ public class ClusterNodeInfo {
     @JsonProperty
     private String nodeName;
     @JsonProperty
-    private String clusterURL;
+    private String endpointUrl;
     @JsonProperty
-    private List<ClusterNodeInfoItem> itemList;
+    private List<ClusterNodeInfoItem> itemList = new ArrayList<>();
     @JsonProperty
     private Long ping;
     @JsonProperty
@@ -45,25 +45,28 @@ public class ClusterNodeInfo {
     public ClusterNodeInfo() {
     }
 
-    public ClusterNodeInfo(final String discoverTime, final BuildInfo buildInfo, final String nodeName, final String clusterURL) {
+    public ClusterNodeInfo(final String discoverTime,
+                           final BuildInfo buildInfo,
+                           final String nodeName,
+                           final String endpointUrl) {
         this.discoverTime = discoverTime;
         this.buildInfo = buildInfo;
         this.nodeName = nodeName;
-        this.clusterURL = clusterURL;
+        this.endpointUrl = endpointUrl;
     }
 
     @JsonCreator
     public ClusterNodeInfo(@JsonProperty("discoverTime") final String discoverTime,
                            @JsonProperty("buildInfo") final BuildInfo buildInfo,
                            @JsonProperty("nodeName") final String nodeName,
-                           @JsonProperty("clusterURL") final String clusterURL,
+                           @JsonProperty("endpointUrl") final String endpointUrl,
                            @JsonProperty("itemList") final List<ClusterNodeInfoItem> itemList,
                            @JsonProperty("ping") final Long ping,
                            @JsonProperty("error") final String error) {
         this.discoverTime = discoverTime;
         this.buildInfo = buildInfo;
         this.nodeName = nodeName;
-        this.clusterURL = clusterURL;
+        this.endpointUrl = endpointUrl;
         this.itemList = itemList;
         this.ping = ping;
         this.error = error;
@@ -100,12 +103,12 @@ public class ClusterNodeInfo {
         this.nodeName = nodeName;
     }
 
-    public String getClusterURL() {
-        return clusterURL;
+    public String getEndpointUrl() {
+        return endpointUrl;
     }
 
-    public void setClusterURL(final String clusterURL) {
-        this.clusterURL = clusterURL;
+    public void setEndpointUrl(final String endpointUrl) {
+        this.endpointUrl = endpointUrl;
     }
 
     public List<ClusterNodeInfoItem> getItemList() {

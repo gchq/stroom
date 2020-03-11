@@ -31,13 +31,26 @@ import java.util.List;
 public class FindNodeCriteria extends FindNamedEntityCriteria {
     public static final String FIELD_ID = "Id";
 
+    @JsonProperty("enabled")
+    private Boolean isEnabled = null;
+
     public FindNodeCriteria() {
     }
 
     @JsonCreator
     public FindNodeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                             @JsonProperty("sortList") final List<Sort> sortList,
-                            @JsonProperty("name") final StringCriteria name) {
+                            @JsonProperty("name") final StringCriteria name,
+                            @JsonProperty("isEnabled") final Boolean isEnabled) {
         super(pageRequest, sortList, name);
+        this.isEnabled = isEnabled;
+    }
+
+    public Boolean isEnabled() {
+        return isEnabled;
+    }
+
+    public void setEnabled(final Boolean enabled) {
+        isEnabled = enabled;
     }
 }

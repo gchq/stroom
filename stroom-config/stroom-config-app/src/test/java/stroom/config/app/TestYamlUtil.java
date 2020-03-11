@@ -60,9 +60,9 @@ class TestYamlUtil {
             3);
 
         if (!unifiedDiff.isEmpty()) {
-            LOGGER.error("Differences exist between the expected serialised form of AppConfig and the actual. " +
-                "If the difference is what you would expect based on the changes you have made to the config model " +
-                "then run the main() method in GenerateExpectedYaml to re-generate the expected yaml");
+            LOGGER.error("\n  Differences exist between the expected serialised form of AppConfig and the actual. " +
+                "\n  If the difference is what you would expect based on the changes you have made to the config model " +
+                "\n  then run the main() method in GenerateExpectedYaml to re-generate the expected yaml");
 
             System.out.println("");
             unifiedDiff.forEach(diffLine -> {
