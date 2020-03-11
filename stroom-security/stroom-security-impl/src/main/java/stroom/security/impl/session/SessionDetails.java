@@ -17,8 +17,10 @@
 package stroom.security.impl.session;
 
 
+import java.io.Serializable;
 
-class SessionDetails {
+class SessionDetails implements Serializable {
+
     private static final long serialVersionUID = -7654691243590208784L;
 
     private String userName;
