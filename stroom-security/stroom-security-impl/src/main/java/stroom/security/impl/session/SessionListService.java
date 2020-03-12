@@ -17,8 +17,6 @@
 
 package stroom.security.impl.session;
 
-import java.util.List;
-
 public interface SessionListService {
 
     /**

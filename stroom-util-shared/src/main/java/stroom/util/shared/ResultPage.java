@@ -31,9 +31,11 @@ import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+import java.util.stream.Stream;
 
 /**
  * List that knows how big the whole set is.
@@ -226,6 +228,21 @@ public class ResultPage<T> implements Serializable {
     @JsonIgnore
     public boolean isExact() {
         return pageResponse.isExact();
+    }
+
+    @JsonIgnore
+    public Stream<T> stream() {
+        return values.stream();
+    }
+
+    @JsonIgnore
+    public Stream<T> parallelStream() {
+        return values.parallelStream();
+    }
+
+    @JsonIgnore
+    public void forEach(final Consumer<? super T> action) {
+        values.forEach(action);
     }
 
     private static <T, R extends ResultPage<T>> Collector<T, List<T>, R> createCollector(
