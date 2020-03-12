@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+
+## [v6.1.5] - 2020-03-12
+
 * Issue **#1413* : Attempt to fix search hanging issue.
 
 * Issue **#1393** : The annotations data popup now formats content on load.
@@ -2118,7 +2121,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.4...6.1
+[Unreleased]: https://github.com/gchq/stroom/compare/v6.1.5...6.1
+[v6.1.5]: https://github.com/gchq/stroom/compare/v6.1.4...v6.1.5
 [v6.1.4]: https://github.com/gchq/stroom/compare/v6.1.3...v6.1.4
 [v6.1.3]: https://github.com/gchq/stroom/compare/v6.1.2...v6.1.3
 [v6.1.2]: https://github.com/gchq/stroom/compare/v6.1.1...v6.1.2
