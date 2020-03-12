@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1413* : Attempt to fix search hanging issue.
+
 * Issue **#1399** : Removed error logging for expected exceptions in TaskExecutor.
 
 * Issue **#1385** : File output param `streamId` now aliased to `sourceId` and `streamNo` is now aliased to `partNo` for consistency with new source tracking XSLT functions.
