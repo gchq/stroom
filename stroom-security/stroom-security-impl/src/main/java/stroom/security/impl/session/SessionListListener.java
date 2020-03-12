@@ -18,11 +18,13 @@ package stroom.security.impl.session;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.node.api.NodeInfo;
 import stroom.security.api.UserIdentity;
 import stroom.util.servlet.UserAgentSessionUtil;
 import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.ResultPage;
 
+import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
@@ -35,6 +37,14 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionListListener.class);
 
     private final ConcurrentHashMap<String, HttpSession> sessionMap = new ConcurrentHashMap<>();
+
+    private final NodeInfo nodeInfo;
+
+    @Inject
+    SessionListListener(final NodeInfo nodeInfo) {
+        this.nodeInfo = nodeInfo;
+    }
+
 
     @Override
     public void sessionCreated(final HttpSessionEvent event) {
@@ -54,16 +64,15 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     public ResultPage<SessionDetails> find(final BaseCriteria criteria) {
         final ArrayList<SessionDetails> rtn = new ArrayList<>();
         for (final HttpSession httpSession : sessionMap.values()) {
-            final SessionDetails sessionDetails = new SessionDetails();
 
             final UserIdentity userIdentity = UserIdentitySessionUtil.get(httpSession);
-            if (userIdentity != null) {
-                sessionDetails.setUserName(userIdentity.getId());
-            }
 
-            sessionDetails.setCreateMs(httpSession.getCreationTime());
-            sessionDetails.setLastAccessedMs(httpSession.getLastAccessedTime());
-            sessionDetails.setLastAccessedAgent(UserAgentSessionUtil.get(httpSession));
+            final SessionDetails sessionDetails = new SessionDetails(
+                    userIdentity != null ? userIdentity.getId() : null,
+                    httpSession.getCreationTime(),
+                    httpSession.getLastAccessedTime(),
+                    UserAgentSessionUtil.get(httpSession),
+                    nodeInfo.getThisNodeName());
 
             rtn.add(sessionDetails);
         }

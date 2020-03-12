@@ -54,7 +54,7 @@ class SessionListHandler extends AbstractTaskHandler<SessionListTask, ResultPage
                     .entrySet()) {
                 if (call.getValue().getResult() != null) {
                     for (final SessionDetails sessionDetails : call.getValue().getResult().getValues()) {
-                        sessionDetails.setNodeName(call.getKey());
+//                        sessionDetails.setNodeName(call.getKey());
                         rtnList.add(sessionDetails);
                     }
                 }
