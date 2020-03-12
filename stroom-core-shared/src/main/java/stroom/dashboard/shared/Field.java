@@ -50,6 +50,9 @@ public class Field implements HasDisplayValue {
     @JsonProperty
     private boolean special;
 
+    public Field() {
+    }
+
     @JsonCreator
     public Field(@JsonProperty("id") final String id,
                  @JsonProperty("name") final String name,

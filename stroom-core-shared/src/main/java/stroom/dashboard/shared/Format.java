@@ -33,11 +33,14 @@ public class Format {
     public static List<Type> TYPES = Arrays.asList(Type.GENERAL, Type.NUMBER, Type.DATE_TIME, Type.TEXT);
 
     @JsonProperty
-    private final Type type;
+    private Type type;
     @JsonProperty
-    private final FormatSettings settings;
+    private FormatSettings settings;
     @JsonProperty
-    private final Boolean wrap;
+    private Boolean wrap;
+
+    public Format() {
+    }
 
     public Format(final Type type) {
         this.type = type;
