@@ -24,11 +24,11 @@ import java.io.Reader;
  * hasModifiedContent() method.
  */
 public abstract class TransformReader extends FilterReader {
-    protected boolean m_streamModified;
+    protected boolean modified;
 
     protected TransformReader(final Reader in) {
         super(in);
-        m_streamModified = false;
+        modified = false;
     }
 
     /**
@@ -37,6 +37,6 @@ public abstract class TransformReader extends FilterReader {
      * @return True if, and only if stream contents were transformed.
      */
     public boolean hasModifiedContent() {
-        return m_streamModified;
+        return modified;
     }
 }
