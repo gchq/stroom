@@ -63,13 +63,6 @@ public interface NodeResource extends RestResource, DirectRestService {
     Long ping(@PathParam("nodeName") String nodeName);
 
     @PUT
-    @Path("/{nodeName}/url")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(value = "Sets the url for a node")
-    void setUrl(@PathParam("nodeName") String nodeName, String url);
-
-    @PUT
     @Path("/{nodeName}/priority")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)

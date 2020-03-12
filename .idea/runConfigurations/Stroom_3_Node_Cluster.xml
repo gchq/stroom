@@ -1,0 +1,8 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Stroom 3 Node Cluster" type="CompoundRunConfigurationType">
+    <toRun name="Stroom Node 2" type="Application" />
+    <toRun name="Stroom" type="Application" />
+    <toRun name="Stroom Node 3" type="Application" />
+    <method v="2" />
+  </configuration>
+</component>

@@ -44,6 +44,58 @@ appConfig:
     hostname: null
     scheme: "https"
     port: null
+  authentication:
+    certificateDnPattern: ".*\\((.*)\\)"
+    certificateDnCaptureGroupIndex: 1
+    loginUrl: "https://localhost/s/login"
+    changePasswordUrl: "https://localhost/s/changepassword"
+    stroomUrl: "https://localhost/"
+    advertisedHost: "https://localhost"
+    httpPort: null
+    httpsPort: null
+    failedLoginLockThreshold: 3
+    unauthorisedUrl: "https://localhost/s/unauthorised"
+    email:
+      fromAddress: "noreply@stroom"
+      fromName: "Stroom User Accounts"
+      passwordResetSubject: "Password reset for Stroom"
+      passwordResetText: "A password reset has been requested for this email address.\
+        \ Please visit the following URL to reset your password: %s."
+      passwordResetUrl: "https://localhost/s/resetPassword/?user=%s&token=%s"
+      passwordResetTokenValidityInMinutes: 600.0
+      allowPasswordResets: false
+      smtp:
+        host: "localhost"
+        port: 2525
+        transport: "plain"
+        username: "username"
+        password: "password"
+        transportStrategy: "SMTP_PLAIN"
+    token:
+      minutesUntilExpirationForUserToken: 43200
+      minutesUntilExpirationForEmailResetToken: 5
+      jwsIssuer: "stroom"
+      requireExpirationTime: false
+      algorithm: "RS256"
+    sessionIdCookieMaxAge: 2592000
+    userService:
+      url: "http://localhost:8080/api/appPermissions/v"
+    passwordIntegrityChecks:
+      neverUsedAccountDeactivationThreshold: "P30D"
+      unusedAccountDeactivationThreshold: "P90D"
+      mandatoryPasswordChangeDuration: "P90D"
+      durationBetweenChecks: "PT2M"
+      forcePasswordChangeOnFirstLogin: true
+      passwordComplexityRegex: ".*"
+      minimumPasswordLength: 0
+    ownPath: "api/authentication"
+    authorisationService:
+      url: "http://localhost:8080/api/authorisation/v"
+      canManageUsersPermission: "Manage Users"
+    stroom:
+      clientId: "PZnJr8kHRKqnlJRQThSI"
+      clientSecret: "OtzHiAWLj8QWcwO2IxXmqxpzE2pyg0pMKCghR2aU"
+      clientHost: "localhost"
   benchmark:
     streamCount: 1000
     recordCount: 10000
@@ -294,6 +346,11 @@ appConfig:
         minimumIdle: null
         maxPoolSize: null
     name: "tba"
+    baseEndpoint:
+      scheme: "http"
+      hostname: "localhost"
+      port: 8080
+      pathPrefix: null
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"

@@ -23,8 +23,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -39,7 +39,7 @@ import java.util.stream.Collector;
  * List that knows how big the whole set is.
  */
 @JsonInclude(Include.NON_NULL)
-public class ResultPage<T> {
+public class ResultPage<T> implements Serializable {
     @JsonProperty
     private final List<T> values;
     @JsonProperty

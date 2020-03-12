@@ -97,11 +97,10 @@ public class ServiceDiscoveryRegistrar implements HasHealthCheck {
     private ServiceInstance<String> registerResource(final RegisteredService registeredService,
                                                      final ServiceDiscovery<String> serviceDiscovery) {
         try {
-            UriSpec uriSpec = new UriSpec("{scheme}://{address}:{port}" +
-                    ResourcePaths.API_ROOT_PATH +
-                    registeredService.getVersionedPath());
+            final UriSpec uriSpec = new UriSpec("{scheme}://{address}:{port}" +
+                ResourcePaths.buildAuthenticatedApiPath(registeredService.getVersionedPath()));
 
-            ServiceInstance<String> serviceInstance = ServiceInstance.<String>builder()
+            final ServiceInstance<String> serviceInstance = ServiceInstance.<String>builder()
                     .serviceType(ServiceType.DYNAMIC) //==ephemeral zk nodes so instance will disappear if we lose zk conn
                     .uriSpec(uriSpec)
                     .name(registeredService.getVersionedServiceName())

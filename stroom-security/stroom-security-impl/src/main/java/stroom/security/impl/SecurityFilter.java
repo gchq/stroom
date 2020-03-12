@@ -22,8 +22,8 @@ import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.auth.service.ApiException;
-import stroom.auth.service.api.model.IdTokenRequest;
+import stroom.authentication.service.ApiException;
+import stroom.authentication.service.api.model.IdTokenRequest;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
@@ -74,8 +74,10 @@ class SecurityFilter implements Filter {
     private static final String NONCE = "nonce";
     private static final String PROMPT = "prompt";
     private static final String ACCESS_CODE = "accessCode";
-    private static final String NO_AUTH_PATH = ResourcePaths.ROOT_PATH + ResourcePaths.NO_AUTH_PATH + "/";
-    public static String PUBLIC_API_PATH_REGEX = "\\/api.*\\/noauth\\/.*"; // E.g. /api/authentication/v1/noauth/exchange
+    private static final String NO_AUTH_PATH = ResourcePaths.buildUnauthenticatedServletPath( "/");
+
+    // E.g. /api/authentication/v1/noauth/exchange
+    public static String PUBLIC_API_PATH_REGEX = ResourcePaths.API_ROOT_PATH + ".*" + ResourcePaths.NO_AUTH + "/.*";
 
     private static final Set<String> RESERVED_PARAMS = Set.of(
             SCOPE, RESPONSE_TYPE, CLIENT_ID, REDIRECT_URL, STATE, NONCE, PROMPT, ACCESS_CODE);
@@ -163,6 +165,8 @@ class SecurityFilter implements Filter {
                 } else if (isApiRequest(servletPath)) {
                     LOGGER.debug("API request");
                     if (!config.isAuthenticationRequired()) {
+                        String propPath = config.getFullPath(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
+                        LOGGER.warn("{} is false, authenticating as admin for {}", propPath, fullPath);
                         authenticateAsAdmin(request, response, chain, false);
                     } else {
                         // Authenticate requests to the API.
@@ -170,7 +174,7 @@ class SecurityFilter implements Filter {
                         continueAsUser(request, response, chain, token);
                     }
                 } else if (shouldBypassAuthentication(servletPath)) {
-                    // Some servet requests need to bypass authentication -- this happens if the servlet class
+                    // Some servlet requests need to bypass authentication -- this happens if the servlet class
                     // is annotated with @Unauthenticated. E.g. the status servlet doesn't require authentication.
                     authenticateAsProcUser(request, response, chain, false);
                 } else {
@@ -178,8 +182,9 @@ class SecurityFilter implements Filter {
                     // like the good relying party we are.
 
                     if (!config.isAuthenticationRequired()) {
+                        String propPath = config.getFullPath(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
+                        LOGGER.warn("{} is false, authenticating as admin for {}", propPath, fullPath);
                         authenticateAsAdmin(request, response, chain, true);
-
                     } else {
                         // If the session doesn't have a user ref then attempt login.
                         final boolean loggedIn = loginUI(request, response);
@@ -210,7 +215,7 @@ class SecurityFilter implements Filter {
     }
 
     private boolean isDispatchRequest(String servletPath) {
-        return servletPath.endsWith(ResourcePaths.DISPATCH_RPC_PATH);
+        return servletPath.endsWith(ResourcePaths.DISPATCH_RPC);
     }
 
     private boolean shouldBypassAuthentication(String servletPath) {
@@ -337,13 +342,18 @@ class SecurityFilter implements Filter {
         final String url = getFullUrl(request);
         final UriBuilder uriBuilder = UriBuilder.fromUri(url);
 
-        // When the auth service has performed authentication it will redirect back to the current URL with some
-        // additional parameters (e.g. `state` and `accessCode`). It is important that these parameters are not
-        // provided by our redirect URL else the redirect URL that the authentication service redirects back to may
-        // end up with multiple copies of these parameters which will confuse Stroom as it will not know which one
-        // of the param values to use (i.e. which were on the original redirect request and which have been added by
-        // the authentication service). For this reason we will cleanse the URL of any reserved parameters here. The
-        // authentication service should do the same to the redirect URL before adding its additional parameters.
+        // When the auth service has performed authentication it will redirect
+        // back to the current URL with some additional parameters (e.g.
+        // `state` and `accessCode`). It is important that these parameters are
+        // not provided by our redirect URL else the redirect URL that the
+        // authentication service redirects back to may end up with multiple
+        // copies of these parameters which will confuse Stroom as it will not
+        // know which one of the param values to use (i.e. which were on the
+        // original redirect request and which have been added by the
+        // authentication service). For this reason we will cleanse the URL of
+        // any reserved parameters here. The authentication service should do
+        // the same to the redirect URL before adding its additional
+        // parameters.
         RESERVED_PARAMS.forEach(param -> uriBuilder.replaceQueryParam(param, new Object[0]));
 
         URI redirectUri = uriBuilder.build();

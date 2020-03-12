@@ -26,6 +26,7 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
+import java.net.ConnectException;
 import java.net.MalformedURLException;
 
 
@@ -51,6 +52,8 @@ class ClusterLockHandler extends AbstractTaskHandler<ClusterLockTask, Boolean> {
                 return Boolean.FALSE;
             }
 
+            TargetType targetType = TargetType.MASTER;
+
             final DefaultClusterResultCollector<Boolean> collector = dispatchHelper
                     .execAsync(new ClusterLockClusterTask(task), TargetType.MASTER);
             final ClusterCallEntry<Boolean> response = collector.getSingleResponse();
@@ -65,7 +68,15 @@ class ClusterLockHandler extends AbstractTaskHandler<ClusterLockTask, Boolean> {
                 } catch (final MalformedURLException e) {
                     LOGGER.warn(response.getError().getMessage());
                 } catch (final Throwable e) {
-                    LOGGER.error(response.getError().getMessage(), response.getError());
+                    if (e.getCause() != null && e.getCause() instanceof ConnectException) {
+                        LOGGER.error("Unable to connect to [{}]: {}",
+                            String.join(",", collector.getTargetNodes()),
+                            response.getError().getMessage());
+                    } else {
+                        LOGGER.error("Error connecting to [{}]: {}",
+                            String.join(",", collector.getTargetNodes()),
+                            response.getError().getMessage(), response.getError());
+                    }
                 }
 
                 return Boolean.FALSE;

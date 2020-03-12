@@ -15,12 +15,11 @@
  */
 
 package stroom.security.impl.session;
-
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 class SessionDetails {
+
     private static final long serialVersionUID = -7654691243590208784L;
 
     @JsonProperty

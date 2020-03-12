@@ -1,6 +1,9 @@
 package stroom.dropwizard.common;
 
 import io.dropwizard.setup.Environment;
+import io.vavr.Tuple;
+import io.vavr.Tuple3;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.shared.ResourcePaths;
@@ -28,11 +31,26 @@ public class RestResources {
 
     public void register() {
         LOGGER.info("Adding REST resources:");
+
+        int maxNameLength = restResources.stream()
+            .mapToInt(restResource -> restResource.getClass().getName().length())
+            .max()
+            .orElse(0);
+
         restResources.stream()
-                .sorted(Comparator.comparing(restResource -> restResource.getClass().getName()))
-                .forEach(restResource -> {
-                    final String name = restResource.getClass().getName();
-                    LOGGER.info("\t{} => {}", name, getResourcePath(restResource).orElse(""));
+                .map(restResource ->
+                    Tuple.of(
+                        restResource,
+                        restResource.getClass().getName(),
+                        getResourcePath(restResource).orElse("")))
+                .sorted(Comparator.comparing(Tuple3::_3))
+                .forEach(tuple3 -> {
+                    final RestResource restResource = tuple3._1();
+                    final String name = tuple3._2();
+                    final String resourcePath = tuple3._3();
+                    LOGGER.info("\t{} => {}",
+                        StringUtils.rightPad(name, maxNameLength, " "),
+                        resourcePath);
                     environment.jersey().register(restResource);
                 });
     }
@@ -47,6 +65,6 @@ public class RestResources {
                                 .filter(Objects::nonNull)
                                 .findFirst())
                 .map(path ->
-                        ResourcePaths.API_ROOT_PATH + path.value());
+                        ResourcePaths.buildAuthenticatedApiPath(path.value()));
     }
 }

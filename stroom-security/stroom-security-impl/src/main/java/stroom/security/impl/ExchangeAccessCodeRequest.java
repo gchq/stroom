@@ -16,4 +16,8 @@ public class ExchangeAccessCodeRequest{
     public String getAccessCode() {
         return accessCode;
     }
+
+    public void setAccessCode(String accessCode) {
+        this.accessCode = accessCode;
+    }
 }
