@@ -18,7 +18,6 @@ package stroom.security.impl.session;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cache.shared.CacheResource;
 import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
@@ -29,9 +28,7 @@ import stroom.task.api.TaskContext;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
-import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -41,9 +38,6 @@ import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
