@@ -17,8 +17,17 @@
 
 package stroom.security.impl.session;
 
-import stroom.util.entity.FindService;
-import stroom.util.shared.BaseCriteria;
+import java.util.List;
 
-interface SessionListService extends FindService<SessionDetails, BaseCriteria> {
+public interface SessionListService {
+
+    /**
+     * List all sessions on the specified node
+     */
+    SessionListResponse listSessions(final String nodeName);
+
+    /**
+     * List all sessions on all nodes
+     */
+    SessionListResponse listSessions();
 }

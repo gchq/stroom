@@ -135,7 +135,7 @@ class CacheResourceImpl implements CacheResource, HasHealthCheck {
 
         final FindNodeCriteria criteria = new FindNodeCriteria();
         criteria.setEnabled(true);
-        final List<String> allNodes = nodeService.findNodeNames(new FindNodeCriteria());
+        final List<String> allNodes = nodeService.findNodeNames(FindNodeCriteria.allEnabled());
 
         final Set<String> failedNodes = new ConcurrentSkipListSet<>();
         final AtomicReference<Throwable> exception = new AtomicReference<>();

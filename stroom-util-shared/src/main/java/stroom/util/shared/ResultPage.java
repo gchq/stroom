@@ -281,6 +281,10 @@ public class ResultPage<T> implements Serializable {
         };
     }
 
+    /**
+     * Creates a collector that builds a sub class of a ResultPage, e.g.
+     *   .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
+     */
     public static <T, R extends ResultPage<T>> Collector<T, List<T>, R> collector(
             final PageRequest pageRequest,
             final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
@@ -288,7 +292,27 @@ public class ResultPage<T> implements Serializable {
         return createCollector(pageRequest, resultPageFactory);
     }
 
+    /**
+     * Creates a collector that builds a sub class of a ResultPage, e.g.
+     *   .collect(ListConfigResponse.collector(ListConfigResponse::new));
+     */
+    public static <T, R extends ResultPage<T>> Collector<T, List<T>, R> collector(
+            final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
+
+        return createCollector(null, resultPageFactory);
+    }
+
     public static <T> Collector<T, List<T>, ResultPage<T>> collector(final PageRequest pageRequest) {
         return createCollector(pageRequest, ResultPage::new);
+    }
+
+    public static <T, R extends ResultPage<T>> BinaryOperator<R> reducer(final Function<List<T>, R> resultPageFactory,
+                                                                         final Class<T> itemType) {
+        return (final R resultPage1, final R resultPage2) -> {
+            final List<T> combinedList = new ArrayList<>();
+            combinedList.addAll(resultPage1.getValues());
+            combinedList.addAll(resultPage2.getValues());
+            return resultPageFactory.apply(combinedList);
+        };
     }
 }
