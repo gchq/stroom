@@ -103,20 +103,25 @@ class ExtractionTaskProducer extends TaskProducer {
 
             // Elevate permissions so users with only `Use` feed permission can `Read` streams.
             try (final SecurityHelper securityHelper = SecurityHelper.elevate(securityContext)) {
-                while (!streamMapCreatorCompletionState.isComplete() && !hasTerminate.isTerminated()) {
+                while (!streamMapCreatorCompletionState.isComplete() && !hasTerminate.isTerminated() && !Thread.currentThread().isInterrupted()) {
                     try {
                         // Poll for the next set of values.
                         final Values values = topic.get();
                         if (values != null) {
-                            // If we have some values then map them.
-                            streamMapCreator.addEvent(streamEventMap, values.getValues());
+                            try {
+                                // If we have some values then map them.
+                                streamMapCreator.addEvent(streamEventMap, values.getValues());
+                            } catch (final RuntimeException e) {
+                                LOGGER.debug(e.getMessage(), e);
+                                receivers.values().forEach(receiver -> {
+                                    receiver.getErrorConsumer().accept(new Error(e.getMessage(), e));
+                                    receiver.getCompletionCountConsumer().accept(1L);
+                                });
+                            }
                         }
                     } catch (final RuntimeException e) {
                         LOGGER.debug(e.getMessage(), e);
-                        receivers.values().forEach(receiver -> {
-                            receiver.getErrorConsumer().accept(new Error(e.getMessage(), e));
-                            receiver.getCompletionCountConsumer().accept(1L);
-                        });
+                        throw e;
                     } finally {
                         // Tell the supplied executor that we are ready to deliver tasks.
                         signalAvailable();
@@ -124,7 +129,7 @@ class ExtractionTaskProducer extends TaskProducer {
                 }
 
                 // Clear the event map if we have terminated so that other processing does not occur.
-                if (hasTerminate.isTerminated()) {
+                if (hasTerminate.isTerminated() || Thread.currentThread().isInterrupted()) {
                     streamEventMap.clear();
                 }
 

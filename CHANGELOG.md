@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1413* : Attempt to fix search hanging issue.
+
 * Issue **#1393** : The annotations data popup now formats content on load.
 
 * Issue **#1399** : Removed error logging for expected exceptions in TaskExecutor.

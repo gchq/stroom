@@ -114,7 +114,7 @@ public class ExtractionTaskHandler {
             LAMBDA_LOGGER.logDurationIfDebugEnabled(
                     () -> {
                         taskMonitor.setName("Extraction");
-                        if (!taskMonitor.isTerminated()) {
+                        if (!taskMonitor.isTerminated() && !Thread.currentThread().isInterrupted()) {
                             final String streamId = String.valueOf(task.getStreamId());
                             taskMonitor.info("Extracting " + task.getEventIds().length + " records from stream " + streamId);
 
