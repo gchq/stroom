@@ -14,7 +14,7 @@ class LinkedBlockingQueueTopic<T> implements Topic<T> {
     private final HasTerminate hasTerminate;
 
     LinkedBlockingQueueTopic(final int capacity,
-                                    final HasTerminate hasTerminate) {
+                             final HasTerminate hasTerminate) {
         this.queue = new LinkedBlockingQueue<>(capacity);
         this.hasTerminate = hasTerminate;
     }
@@ -32,8 +32,10 @@ class LinkedBlockingQueueTopic<T> implements Topic<T> {
             Thread.currentThread().interrupt();
 
             LOGGER.debug(e::getMessage, e);
+            throw new RuntimeException(e.getMessage(), e);
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
+            throw e;
         }
     }
 
@@ -50,8 +52,10 @@ class LinkedBlockingQueueTopic<T> implements Topic<T> {
             Thread.currentThread().interrupt();
 
             LOGGER.debug(e::getMessage, e);
+            throw new RuntimeException(e.getMessage(), e);
         } catch (final RuntimeException e) {
             LOGGER.debug(e::getMessage, e);
+            throw e;
         }
         return value;
     }

@@ -50,7 +50,7 @@ public class MonitorImpl implements Monitor {
             return true;
         }
 
-        return terminate;
+        return terminate || Thread.currentThread().isInterrupted();
     }
 
     @Override

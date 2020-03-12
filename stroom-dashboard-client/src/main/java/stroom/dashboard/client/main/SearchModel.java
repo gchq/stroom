@@ -76,6 +76,9 @@ public class SearchModel {
             resultComponent.setWantsData(false);
             resultComponent.endSearch();
         }
+
+        // Force a poll to ensure any running query is destroyed.
+        searchBus.poll();
     }
 
     /**
@@ -362,10 +365,10 @@ public class SearchModel {
      * the corresponding {@link SearchRequest} object
      */
     public SearchRequest createDownloadQueryRequest(final ExpressionOperator expression,
-                                            final String params,
-                                            final boolean incremental,
-                                            final boolean storeHistory,
-                                            final String queryInfo) {
+                                                    final String params,
+                                                    final boolean incremental,
+                                                    final boolean storeHistory,
+                                                    final String queryInfo) {
         Search search = null;
         final Map<String, ComponentSettings> resultComponentMap = createComponentSettingsMap();
         if (resultComponentMap != null) {
