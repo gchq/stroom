@@ -28,9 +28,40 @@ public class TestInvalidCharFilterReader {
         Assert.assertEquals(convertGoodXml, convertBadXml);
     }
 
+    @Test
+    public void test2() throws IOException {
+        char[] good = {'v', 'a', 'l', 'u', 'e'};
+        char[] bad = {5, 'v', 'a', 'l', 'u', 'e'};
+
+        final Params goodParms = new Params(new String(good), new String(good));
+        final Params badParms = new Params(new String(bad), new String(bad));
+
+        final String goodXml = appendRecords(new StringBuilder(), goodParms).toString();
+        final String badXml = appendRecords(new StringBuilder(), badParms).toString();
+
+        Assert.assertNotEquals(goodXml, badXml);
+
+        final String convertGoodXml = XMLUtil.prettyPrintXML(goodXml);
+        final String convertBadXml = convert2(badXml);
+
+        Assert.assertEquals(convertGoodXml, convertBadXml);
+    }
+
     private String convert(final String string) throws IOException {
         final StringWriter writer = new StringWriter();
-        try (final InvalidCharFilterReader reader = new InvalidCharFilterReader(new StringReader(string))) {
+        try (final InvalidXmlCharFilter reader = new InvalidXmlCharFilter(new StringReader(string), new Xml10Chars())) {
+            XMLUtil.prettyPrintXML(reader, writer);
+        }
+        return writer.toString();
+    }
+
+    private String convert2(final String string) throws IOException {
+        final StringWriter writer = new StringWriter();
+        try (final FindReplaceFilter reader = new FindReplaceFilter.Builder()
+                .find("\u0005")
+                .replacement("")
+                .reader(new StringReader(string))
+                .build()) {
             XMLUtil.prettyPrintXML(reader, writer);
         }
         return writer.toString();
@@ -90,13 +121,13 @@ public class TestInvalidCharFilterReader {
         return sb;
     }
 
-private static class Params {
-    private final String attributeValue;
-    private final String content;
+    private static class Params {
+        private final String attributeValue;
+        private final String content;
 
-    public Params(final String attributeValue, final String content) {
-        this.attributeValue = attributeValue;
-        this.content = content;
+        public Params(final String attributeValue, final String content) {
+            this.attributeValue = attributeValue;
+            this.content = content;
+        }
     }
-}
 }

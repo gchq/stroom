@@ -21,6 +21,7 @@ import org.springframework.stereotype.Component;
 import stroom.pipeline.server.errorhandler.ErrorReceiver;
 import stroom.pipeline.server.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.server.factory.ConfigurableElement;
+import stroom.pipeline.server.factory.PipelineProperty;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
 import stroom.pipeline.shared.data.PipelineElementType.Category;
@@ -40,9 +41,14 @@ import java.io.Reader;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STREAM)
 public class InvalidCharFilterReaderElement extends AbstractReaderElement {
+    private static final char REPLACEMENT_CHAR = 0xfffd; // The <?> symbol.
+    private static final Xml10Chars XML_10_CHARS = new Xml10Chars();
+    private static final Xml11Chars XML_11_CHARS = new Xml11Chars();
+
     private final ErrorReceiver errorReceiver;
 
-    private InvalidCharFilterReader invalidCharFilterReader;
+    private InvalidXmlCharFilter invalidXmlCharFilter;
+    private XmlChars validChars = XML_11_CHARS;
 
     @Inject
     public InvalidCharFilterReaderElement(final ErrorReceiverProxy errorReceiver) {
@@ -51,16 +57,23 @@ public class InvalidCharFilterReaderElement extends AbstractReaderElement {
 
     @Override
     protected Reader insertFilter(final Reader reader) {
-        invalidCharFilterReader = new InvalidCharFilterReader(reader);
-        return invalidCharFilterReader;
+        invalidXmlCharFilter = new InvalidXmlCharFilter(reader, validChars);
+        return invalidXmlCharFilter;
     }
 
     @Override
     public void endStream() {
-        if (invalidCharFilterReader.hasModifiedContent()) {
+        if (invalidXmlCharFilter.hasModifiedContent()) {
             errorReceiver.log(Severity.WARNING, null, getElementId(),
                     "Some illegal characters were removed from the input stream", null);
         }
         super.endStream();
+    }
+
+    @PipelineProperty(description = "XML version, e.g. 1.0 or 1.1", defaultValue = "1.1")
+    public void setXmlVersion(final String xmlMode) {
+        if ("1.0".equals(xmlMode)) {
+            validChars = XML_10_CHARS;
+        }
     }
 }

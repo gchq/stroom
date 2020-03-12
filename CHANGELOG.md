@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1404** : Fixed issue with invalid XML character filter.
+
 * Fix missing $ in start.sh
 
 

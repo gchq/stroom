@@ -41,12 +41,13 @@ import java.io.Reader;
                 PipelineElementType.VISABILITY_STEPPING},
         icon = ElementIcons.STREAM)
 public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
+    private static final char REPLACEMENT_CHAR = 0xfffd; // The <?> symbol.
     private static final Xml10Chars XML_10_CHARS = new Xml10Chars();
     private static final Xml11Chars XML_11_CHARS = new Xml11Chars();
 
     private final ErrorReceiver errorReceiver;
 
-    private InvalidXmlCharReplacementFilter invalidXmlCharReplacementFilter;
+    private InvalidXmlCharFilter invalidXmlCharFilter;
     private XmlChars validChars = XML_11_CHARS;
 
     @Inject
@@ -56,13 +57,13 @@ public class InvalidXMLCharFilterReaderElement extends AbstractReaderElement {
 
     @Override
     protected Reader insertFilter(final Reader reader) {
-        invalidXmlCharReplacementFilter = new InvalidXmlCharReplacementFilter(reader, validChars);
-        return invalidXmlCharReplacementFilter;
+        invalidXmlCharFilter = new InvalidXmlCharFilter(reader, validChars, true, REPLACEMENT_CHAR);
+        return invalidXmlCharFilter;
     }
 
     @Override
     public void endStream() {
-        if (invalidXmlCharReplacementFilter.hasModifiedContent()) {
+        if (invalidXmlCharFilter.hasModifiedContent()) {
             errorReceiver.log(Severity.WARNING, null, getElementId(), "The content was modified", null);
         }
         super.endStream();
