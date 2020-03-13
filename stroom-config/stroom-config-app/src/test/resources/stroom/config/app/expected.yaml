@@ -544,12 +544,12 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
     webContent:
-      contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
-        \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
-        \ frame-ancestors 'self';"
       contentTypeOptions: "nosniff"
       frameOptions: "sameorigin"
       xssProtection: "1; mode=block"
+      contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
+        \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
+        \ frame-ancestors 'self';"
   serviceDiscovery:
     enabled: false
     zookeeperUrl: "localhost:2181"
