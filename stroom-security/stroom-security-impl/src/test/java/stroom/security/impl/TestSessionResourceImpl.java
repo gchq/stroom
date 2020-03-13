@@ -45,7 +45,7 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
             .thenReturn(expectedResponse);
 
 
-        final SessionListResponse response = doGet(subPath, SessionListResponse.class, expectedResponse);
+        final SessionListResponse response = doGetTest(subPath, SessionListResponse.class, expectedResponse);
 
         verify(sessionListService).listSessions(Mockito.anyString());
     }
@@ -62,7 +62,7 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
         when(sessionListService.listSessions())
             .thenReturn(expectedResponse);
 
-        final SessionListResponse response = doGet(subPath, SessionListResponse.class, expectedResponse);
+        final SessionListResponse response = doGetTest(subPath, SessionListResponse.class, expectedResponse);
 
         verify(sessionListService).listSessions();
     }
