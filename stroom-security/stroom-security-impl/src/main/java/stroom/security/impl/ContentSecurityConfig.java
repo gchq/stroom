@@ -16,6 +16,7 @@
 
 package stroom.security.impl;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.shared.AbstractConfig;
 
@@ -23,12 +24,15 @@ import javax.inject.Singleton;
 
 @Singleton
 public class ContentSecurityConfig extends AbstractConfig {
+    public static final String PROP_NAME_CONTENT_SECURITY_POLICY = "contentSecurityPolicy";
+
     private String contentSecurityPolicy = "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
         "img-src 'self' data:; style-src 'self' 'unsafe-inline'; frame-ancestors 'self';";
     private String contentTypeOptions = "nosniff";
     private String frameOptions = "sameorigin";
     private String xssProtection = "1; mode=block";
 
+    @JsonProperty(PROP_NAME_CONTENT_SECURITY_POLICY)
     @JsonPropertyDescription("The content security policy")
     public String getContentSecurityPolicy() {
         return contentSecurityPolicy;

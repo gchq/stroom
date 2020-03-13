@@ -2,6 +2,9 @@ package stroom.util;
 
 import java.util.Objects;
 
+/**
+ * Set of ANSI colour codes and utility methods for brightening up the console
+ */
 public enum ConsoleColour {
 
     BLACK("\u001b[30m"),
@@ -100,5 +103,9 @@ public enum ConsoleColour {
             .append(colour.colourCode)
             .append(text)
             .append(ConsoleColour.RESET.colourCode);
+    }
+
+    public static ColouredStringBuilder colouredStringBuilder() {
+        return new ColouredStringBuilder();
     }
 }

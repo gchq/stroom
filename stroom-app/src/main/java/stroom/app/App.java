@@ -44,6 +44,10 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
+import stroom.security.impl.AuthenticationConfig;
+import stroom.security.impl.ContentSecurityConfig;
+import stroom.util.ColouredStringBuilder;
+import stroom.util.ConsoleColour;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.logging.LogUtil;
 
@@ -121,10 +125,8 @@ public class App extends Application<Config> {
                     LoggingFeature.Verbosity.PAYLOAD_ANY,
                     LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
 
-        if (configuration.getAppConfig().isSuperDevMode()) {
-            configuration.getAppConfig().getSecurityConfig().getAuthenticationConfig().setAuthenticationRequired(false);
-            configuration.getAppConfig().getSecurityConfig().getContentSecurityConfig().setContentSecurityPolicy("");
-        }
+        // Check if we are running GWT Super Dev Mode
+        checkForSuperDev(configuration.getAppConfig());
 
         // Add useful logging setup.
         registerLogConfiguration(environment);
@@ -184,6 +186,7 @@ public class App extends Application<Config> {
         sessionCookieConfig.setHttpOnly(configuration.getAppConfig().getSessionCookieConfig().isHttpOnly());
         // TODO : Add `SameSite=Strict` when supported by JEE
     }
+
 
     private void registerExceptionMappers(final Environment environment) {
         // Add an exception mapper for dealing with our own NodeCallExceptions
@@ -265,5 +268,47 @@ public class App extends Application<Config> {
 
         LOGGER.info("Registering Log Configuration Task on {}/tasks/log-level", path);
         environment.admin().addTask(new LogConfigurationTask());
+    }
+
+    private void checkForSuperDev(final AppConfig appConfig) {
+        if (appConfig.isSuperDevMode()) {
+            LOGGER.warn("\n" + ConsoleColour.red(
+
+                "\n                                      _                                  _      " +
+                    "\n                                     | |                                | |     " +
+                    "\n      ___ _   _ _ __   ___ _ __    __| | _____   __  _ __ ___   ___   __| | ___ " +
+                    "\n     / __| | | | '_ \\ / _ \\ '__|  / _` |/ _ \\ \\ / / | '_ ` _ \\ / _ \\ / _` |/ _ \\" +
+                    "\n     \\__ \\ |_| | |_) |  __/ |    | (_| |  __/\\ V /  | | | | | | (_) | (_| |  __/" +
+                    "\n     |___/\\__,_| .__/ \\___|_|     \\__,_|\\___| \\_/   |_| |_| |_|\\___/ \\__,_|\\___|" +
+                    "\n               | |                                                              " +
+                    "\n               |_|                                                              " +
+                    "\n" +
+                    "\n     FOR DEVELOPER USE ONLY!  DO NOT RUN IN PRODUCTION ENVIRONMENTS!\n"));
+
+            final AuthenticationConfig authenticationConfig = appConfig.getSecurityConfig().getAuthenticationConfig();
+            final ContentSecurityConfig contentSecurityConfig = appConfig.getSecurityConfig().getContentSecurityConfig();
+
+            String msg = new ColouredStringBuilder()
+                .appendRed("In Super Dev Mode, setting ")
+                .appendCyan(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED)
+                .appendRed(" to ")
+                .appendCyan("false ")
+                .appendRed("in appConfig")
+                .toString();
+
+            LOGGER.warn(msg);
+            authenticationConfig.setAuthenticationRequired(false);
+
+            msg = new ColouredStringBuilder()
+                .appendRed("In Super Dev Mode, setting ")
+                .appendCyan(ContentSecurityConfig.PROP_NAME_CONTENT_SECURITY_POLICY)
+                .appendRed(" to ")
+                .appendCyan("\"\" ")
+                .appendRed("in appConfig")
+                .toString();
+
+            LOGGER.warn(msg);
+            contentSecurityConfig.setContentSecurityPolicy("");
+        }
     }
 }
