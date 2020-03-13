@@ -34,7 +34,7 @@ public class SessionDetails {
     private String nodeName;
 
     @JsonCreator
-    SessionDetails(@JsonProperty("username") final String userName,
+    public SessionDetails(@JsonProperty("username") final String userName,
                    @JsonProperty("createMs") final long createMs,
                    @JsonProperty("lastAccessedMss") final long lastAccessedMs,
                    @JsonProperty("lastAccessedAgent") final String lastAccessedAgent,

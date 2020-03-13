@@ -25,4 +25,15 @@ public class SessionListResponse extends ResultPage<SessionDetails> {
                 Collections.emptyList(),
                 SessionListResponse.createPageResponse(Collections.emptyList()));
     }
+
+
+    @Override
+    public boolean equals(final Object o) {
+        return super.equals(o);
+    }
+
+    @Override
+    public String toString() {
+        return super.toString();
+    }
 }

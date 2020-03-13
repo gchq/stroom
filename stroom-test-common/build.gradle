@@ -7,18 +7,22 @@ dependencies {
 
     compile libs.assertj_core
     compile libs.commons_lang
+    compile libs.dropwizard_testing
     compile libs.google_findbugs
     compile libs.guava
     compile libs.guice4
     compile libs.junit_jupiter_api
+    compile libs.mockito_core
+    compile libs.mockito_junit_jupiter
     compile libs.slf4j_api
     compile libs.wix_embedded_mysql
 
     // The following logging libs are needed when running junits outside dropwizard
     runtimeOnly libs.jcl_over_slf4j
     runtimeOnly libs.jul_to_slf4j
-    testRuntimeOnly libs.junit_jupiter_engine
     runtimeOnly libs.log4j_over_slf4j
     runtimeOnly libs.logback_classic
     runtimeOnly libs.logback_core
+
+    testRuntimeOnly libs.junit_jupiter_engine
 }

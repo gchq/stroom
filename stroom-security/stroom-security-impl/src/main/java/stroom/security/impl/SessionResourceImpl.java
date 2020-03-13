@@ -46,14 +46,15 @@ public class SessionResourceImpl implements SessionResource {
     }
 
     @Override
-    public SessionListResponse list(final String nodeName) {
-        final SessionListResponse sessionList;
-        if (nodeName != null) {
-            sessionList = sessionListService.listSessions(nodeName);
-        } else {
-            sessionList = sessionListService.listSessions();
-        }
-        return sessionList;
+    public SessionListResponse listAllNodes() {
+        LOGGER.debug("list() called");
+        return sessionListService.listSessions();
+    }
+
+    @Override
+    public SessionListResponse listNode(final String nodeName) {
+        LOGGER.debug("list({}) called", nodeName);
+        return sessionListService.listSessions(nodeName);
     }
 
 }

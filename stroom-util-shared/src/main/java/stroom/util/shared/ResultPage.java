@@ -27,6 +27,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -331,5 +332,27 @@ public class ResultPage<T> implements Serializable {
             combinedList.addAll(resultPage2.getValues());
             return resultPageFactory.apply(combinedList);
         };
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ResultPage<?> that = (ResultPage<?>) o;
+        return Objects.equals(values, that.values) &&
+            Objects.equals(pageResponse, that.pageResponse);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(values, pageResponse);
+    }
+
+    @Override
+    public String toString() {
+        return "ResultPage{" +
+            "values=" + values +
+            ", pageResponse=" + pageResponse +
+            '}';
     }
 }

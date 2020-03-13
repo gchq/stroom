@@ -39,11 +39,20 @@ public interface SessionResource extends RestResource, DirectRestService {
     Response logout(@PathParam("sessionId") final String authSessionId);
 
     @GET
-    @Path(LIST_PATH_PART + "/{nodeName}")
+    @Path(LIST_PATH_PART)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Lists user sessions for a node, or all nodes if nodeName is null",
             response = SessionDetails.class)
-    SessionListResponse list(@PathParam("nodeName") final String nodeName);
+    SessionListResponse listAllNodes();
+
+    @GET
+    @Path(LIST_PATH_PART + "/{nodeName}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+        value = "Lists user sessions for a node, or all nodes if nodeName is null",
+        response = SessionDetails.class)
+    SessionListResponse listNode(@PathParam("nodeName") final String nodeName);
 }
