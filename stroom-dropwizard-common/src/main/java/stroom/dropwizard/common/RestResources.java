@@ -13,6 +13,7 @@ import javax.inject.Inject;
 import javax.ws.rs.Path;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -37,6 +38,8 @@ public class RestResources {
             .max()
             .orElse(0);
 
+        final Set<String> allPaths = new HashSet<>();
+
         restResources.stream()
                 .map(restResource ->
                     Tuple.of(
@@ -48,11 +51,31 @@ public class RestResources {
                     final RestResource restResource = tuple3._1();
                     final String name = tuple3._2();
                     final String resourcePath = tuple3._3();
-                    LOGGER.info("\t{} => {}",
-                        StringUtils.rightPad(name, maxNameLength, " "),
-                        resourcePath);
-                    environment.jersey().register(restResource);
+
+                    addServlet(maxNameLength, allPaths, restResource, name, resourcePath);
                 });
+    }
+
+    private void addServlet(final int maxNameLength,
+                            final Set<String> allPaths,
+                            final RestResource restResource,
+                            final String name,
+                            final String resourcePath) {
+
+        if (allPaths.contains(resourcePath)) {
+            LOGGER.error("\t{} => {}   **Duplicate path**",
+                StringUtils.rightPad(name, maxNameLength, " "),
+                resourcePath);
+            // TODO uncomment this once the duplicates have been fixed
+//            throw new RuntimeException(LogUtil.message("Duplicate REST resource path {}", resourcePath));
+        } else {
+            LOGGER.info("\t{} => {}",
+                StringUtils.rightPad(name, maxNameLength, " "),
+                resourcePath);
+        }
+
+        environment.jersey().register(restResource);
+        allPaths.add(resourcePath);
     }
 
     private Optional<String> getResourcePath(final RestResource restResource) {

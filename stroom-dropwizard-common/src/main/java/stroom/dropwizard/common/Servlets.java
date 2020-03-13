@@ -19,6 +19,7 @@ import stroom.util.shared.Unauthenticated;
 import javax.inject.Inject;
 import javax.servlet.Servlet;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -62,6 +63,8 @@ public class Servlets {
 
         LOGGER.info("Adding servlets:");
 
+        final Set<String> allPaths = new HashSet<>();
+
         int maxNameLength = servlets.stream()
             .mapToInt(servlet -> servlet.getClass().getName().length())
             .max()
@@ -90,21 +93,39 @@ public class Servlets {
                 final String name = tuple3._2();
                 final String fullPathSpec = tuple3._3();
 
-                LOGGER.info("\t{} => {}",
-                    StringUtils.rightPad(name, maxNameLength, " "),
-                    fullPathSpec);
-
-                final ServletHolder servletHolder;
-                try {
-                    servletHolder = new ServletHolder(name, (Servlet) isServlet);
-                } catch (ClassCastException e) {
-                    throw new RuntimeException(LogUtil.message("Injected class {} is not a Servlet",
-                        isServlet.getClass().getName()));
-                }
-                servletContextHandler.addServlet(servletHolder, fullPathSpec);
-
-                registerHealthCheck(isServlet, fullPathSpec);
+                addServlet(servletContextHandler, allPaths, maxNameLength, isServlet, name, fullPathSpec);
             });
+    }
+
+    private void addServlet(final ServletContextHandler servletContextHandler,
+                            final Set<String> allPaths,
+                            final int maxNameLength,
+                            final IsServlet isServlet,
+                            final String name,
+                            final String fullPathSpec) {
+
+        if (allPaths.contains(fullPathSpec)) {
+            LOGGER.error("\t{} => {}   **Duplicate path**",
+                StringUtils.rightPad(name, maxNameLength, " "),
+                fullPathSpec);
+            throw new RuntimeException(LogUtil.message("Duplicate servlet path {}", fullPathSpec));
+        } else {
+            LOGGER.info("\t{} => {}",
+                StringUtils.rightPad(name, maxNameLength, " "),
+                fullPathSpec);
+        }
+
+        final ServletHolder servletHolder;
+        try {
+            servletHolder = new ServletHolder(name, (Servlet) isServlet);
+        } catch (ClassCastException e) {
+            throw new RuntimeException(LogUtil.message("Injected class {} is not a Servlet",
+                isServlet.getClass().getName()));
+        }
+        servletContextHandler.addServlet(servletHolder, fullPathSpec);
+        allPaths.add(fullPathSpec);
+
+        registerHealthCheck(isServlet, fullPathSpec);
     }
 
     private void registerHealthCheck(final IsServlet servlet,
