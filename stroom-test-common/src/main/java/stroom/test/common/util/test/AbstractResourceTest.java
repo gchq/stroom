@@ -45,6 +45,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
         return WEB_TARGET_FACTORY;
     }
 
+
     public  <T> T doGetTest(final String subPath,
                             final Class<T> responseType,
                             final T expectedResponse) {

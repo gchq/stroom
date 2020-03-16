@@ -1,13 +1,11 @@
 package stroom.cache.impl;
 
 
-import org.glassfish.jersey.logging.LoggingFeature;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.test.JerseyTest;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.junit.jupiter.MockitoSettings;
+import org.mockito.quality.Strictness;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.shared.CacheInfo;
@@ -16,41 +14,27 @@ import stroom.cache.shared.CacheResource;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.task.api.TaskContext;
-import stroom.test.common.util.test.AbstractResourceTest;
+import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.RestResource;
 
-import javax.ws.rs.core.Application;
-import javax.ws.rs.core.UriBuilder;
-import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
-import java.util.logging.Level;
 
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-class TestCacheResourceImpl extends AbstractResourceTest<CacheResource> {
+@MockitoSettings(strictness = Strictness.LENIENT)
+class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestCacheResourceImpl.class);
 
     @Mock
-    NodeService nodeService;
-
-    @Mock
-    NodeInfo nodeInfo;
-
-    @Mock
     CacheManagerService cacheManagerService;
 
-    @Mock
-    TaskContext taskContext;
-
-    @BeforeEach
-    private void setup() {
-
-
-    }
+    Map<String, CacheManagerService> cacheManagerServiceMocks = new HashMap<>();
 
     static TaskContext getTaskContext() {
 
@@ -66,7 +50,60 @@ class TestCacheResourceImpl extends AbstractResourceTest<CacheResource> {
     }
 
     @Override
-    public CacheResource getRestResource() {
+    public String getResourceBasePath() {
+        return CacheResource.BASE_PATH;
+    }
+
+    @Override
+    public CacheResource getRestResource(final TestNode node,
+                                         final List<TestNode> allNodes,
+                                         final Map<String, String> baseEndPointUrls) {
+
+        // Set up the NodeService mock
+        final NodeService nodeService = Mockito.mock(NodeService.class,
+            NodeService.class.getName() + "_" + node.getNodeName());
+
+        when(nodeService.isEnabled(Mockito.anyString()))
+            .thenAnswer(invocation ->
+                allNodes.stream()
+                    .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
+                    .anyMatch(TestNode::isEnabled));
+
+        when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
+            .thenAnswer(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
+
+        // Set up the NodeInfo mock
+
+        final NodeInfo nodeInfo = Mockito.mock(NodeInfo.class,
+            NodeInfo.class.getName() + "_" + node.getNodeName());
+
+        when(nodeInfo.getThisNodeName())
+            .thenReturn(node.getNodeName());
+
+        // Set up the CacheManagerService mock
+
+        final CacheManagerService cacheManagerService = Mockito.mock(CacheManagerService.class,
+            CacheManagerService.class.getName() + "_" + node.getNodeName());
+
+        cacheManagerServiceMocks.put(node.getNodeName(), cacheManagerService);
+
+        when(cacheManagerService.getCacheNames())
+            .thenReturn(List.of("cache1", "cache2"));
+
+        when(cacheManagerService.find(Mockito.any(FindCacheInfoCriteria.class)))
+            .thenAnswer(invocation -> {
+                FindCacheInfoCriteria criteria = (invocation.getArgument(0));
+                if (criteria.getName().isConstrained()) {
+                    return List.of(new CacheInfo(criteria.getName().getString(), Collections.emptyMap(), node.getNodeName()));
+                } else {
+                    return List.of(
+                        new CacheInfo("cache1", Collections.emptyMap(), node.getNodeName()),
+                        new CacheInfo("cache2", Collections.emptyMap(), node.getNodeName()));
+                }
+            });
+
+        // Now create the service
+
         return new CacheResourceImpl(
             nodeService,
             nodeInfo,
@@ -75,21 +112,21 @@ class TestCacheResourceImpl extends AbstractResourceTest<CacheResource> {
             TestCacheResourceImpl::getTaskContext);
     }
 
-    @Override
-    public String getResourceBasePath() {
-        return CacheResource.BASE_PATH;
-    }
-
     @Test
     void list() {
         final String subPath = "";
 
         final List<String> expectedResponse = List.of("cache1", "cache2");
 
-        when(cacheManagerService.getCacheNames())
+        initNodes();
+
+        when(cacheManagerServiceMocks.get("node1").getCacheNames())
             .thenReturn(expectedResponse);
 
-        doGetTest(subPath, List.class, expectedResponse);
+        doGetTest(
+            subPath,
+            List.class,
+            expectedResponse);
     }
 
     @Test
@@ -101,10 +138,10 @@ class TestCacheResourceImpl extends AbstractResourceTest<CacheResource> {
 
         final CacheInfoResponse expectedResponse = new CacheInfoResponse(cacheInfoList);
 
-        when(nodeInfo.getThisNodeName())
-            .thenReturn("node1");
+        initNodes();
 
-        when(cacheManagerService.find(Mockito.any())).thenReturn(cacheInfoList);
+        when(cacheManagerService.find(Mockito.any()))
+            .thenReturn(cacheInfoList);
 
         doGetTest(
             subPath,
@@ -112,7 +149,6 @@ class TestCacheResourceImpl extends AbstractResourceTest<CacheResource> {
             expectedResponse,
             webTarget -> webTarget.queryParam("cacheName", "cache1"),
             webTarget -> webTarget.queryParam("nodeName", "node1"));
-
     }
 
     @Test
@@ -124,13 +160,10 @@ class TestCacheResourceImpl extends AbstractResourceTest<CacheResource> {
 
         final CacheInfoResponse expectedResponse = new CacheInfoResponse(cacheInfoList);
 
-        when(nodeInfo.getThisNodeName())
-            .thenReturn("node1");
+        initNodes();
 
-        when(cacheManagerService.find(Mockito.any())).thenReturn(cacheInfoList);
-
-        when(nodeService.getBaseEndpointUrl("node2")).thenReturn("");
-
+        when(cacheManagerService.find(Mockito.any()))
+            .thenReturn(cacheInfoList);
 
         doGetTest(
             subPath,
@@ -138,104 +171,58 @@ class TestCacheResourceImpl extends AbstractResourceTest<CacheResource> {
             expectedResponse,
             webTarget -> webTarget.queryParam("cacheName", "cache1"),
             webTarget -> webTarget.queryParam("nodeName", "node2"));
-
     }
 
     @Test
-    void clear() {
+    void clear_sameNode() {
+        final String subPath = "";
 
+        final Long expectedResponse = 1L;
+
+        initNodes();
+
+        when(cacheManagerServiceMocks.get("node1").clear(Mockito.any(FindCacheInfoCriteria.class)))
+            .thenReturn(1L);
+
+        doDeleteTest(
+            subPath,
+            Long.class,
+            expectedResponse,
+            webTarget -> webTarget.queryParam("cacheName", "cache1"),
+            webTarget -> webTarget.queryParam("nodeName", "node1"));
+
+        verify(cacheManagerServiceMocks.get("node1"))
+            .clear(Mockito.any());
+        verify(cacheManagerServiceMocks.get("node2"), Mockito.never())
+            .clear(Mockito.any());
+        verify(cacheManagerServiceMocks.get("node3"), Mockito.never())
+            .clear(Mockito.any());
     }
 
     @Test
-    void getHealth() throws Exception {
-        
-        LOGGER.info("-------------------");
+    void clear_otherNode() {
+        final String subPath = "";
 
-        final List<String> expectedResponse = List.of("cache1", "cache2");
+        final Long expectedResponse = 1L;
 
-        when(cacheManagerService.getCacheNames())
-            .thenReturn(expectedResponse);
+        initNodes();
 
+        when(cacheManagerServiceMocks.get("node2").clear(Mockito.any(FindCacheInfoCriteria.class)))
+            .thenReturn(1L);
 
-        JerseyTest jerseyTest = new JerseyTestBuilder<>(
-            () -> new CacheResourceImpl(
-                nodeService,
-                nodeInfo,
-                webTargetFactory(),
-                cacheManagerService,
-                TestCacheResourceImpl::getTaskContext), 9090)
-            .build();
+        doDeleteTest(
+            subPath,
+            Long.class,
+            expectedResponse,
+            webTarget -> webTarget.queryParam("cacheName", "cache1"),
+            webTarget -> webTarget.queryParam("nodeName", "node2"));
 
-        jerseyTest.setUp();
-
-        CacheManagerService cacheManagerService2 = Mockito.mock(CacheManagerService.class);
-
-        when(cacheManagerService2.getCacheNames())
-            .thenReturn(List.of("cache1", "cache2", "cache3"));
-
-        JerseyTest jerseyTest2 = new JerseyTestBuilder<>(
-            () -> new CacheResourceImpl(
-                nodeService,
-                nodeInfo,
-                webTargetFactory(),
-                cacheManagerService2,
-                TestCacheResourceImpl::getTaskContext), 9090)
-            .build();
-
-        jerseyTest2.setUp();
-
-        List<String> response = jerseyTest.target(ResourcePaths.buildPath(
-            CacheResource.BASE_PATH))
-            .request()
-            .get(List.class);
-
-        System.out.println(response);
-
-        List<String> response2 = jerseyTest2.target(ResourcePaths.buildPath(
-            CacheResource.BASE_PATH))
-            .request()
-            .get(List.class);
-
-        System.out.println(response2);
-    }
-
-    public static class JerseyTestBuilder<R extends RestResource> {
-
-        private final Supplier<R> resourceSupplier;
-        private final int port;
-
-        public JerseyTestBuilder(final Supplier<R> resourceSupplier,
-                                 final int port) {
-            this.resourceSupplier = resourceSupplier;
-            this.port = port;
-        }
-
-        public JerseyTest build() {
-            return new JerseyTest() {
-
-                @Override
-                protected Application configure() {
-                    return new ResourceConfig()
-                        .register(resourceSupplier.get())
-                        .register(
-                            new LoggingFeature(
-                                java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
-                                Level.INFO,
-                                LoggingFeature.Verbosity.PAYLOAD_ANY,
-                                LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
-                }
-
-                @Override
-                protected URI getBaseUri() {
-                    return UriBuilder
-                        .fromUri("http://localhost/")
-                        .port(port)
-                        .build();
-                }
-            };
-
-
-        }
+        verify(cacheManagerServiceMocks.get("node1"), Mockito.never())
+            .clear(Mockito.any());
+        verify(cacheManagerServiceMocks.get("node2"))
+            .clear(Mockito.any());
+        verify(cacheManagerServiceMocks.get("node3"), Mockito.never())
+            .clear(Mockito.any());
     }
 
 }
