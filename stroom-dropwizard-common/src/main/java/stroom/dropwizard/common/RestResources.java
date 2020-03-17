@@ -6,6 +6,7 @@ import io.vavr.Tuple3;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -67,7 +68,7 @@ public class RestResources {
                 StringUtils.rightPad(name, maxNameLength, " "),
                 resourcePath);
             // TODO uncomment this once the duplicates have been fixed
-//            throw new RuntimeException(LogUtil.message("Duplicate REST resource path {}", resourcePath));
+            throw new RuntimeException(LogUtil.message("Duplicate REST resource path {}", resourcePath));
         } else {
             LOGGER.info("\t{} => {}",
                 StringUtils.rightPad(name, maxNameLength, " "),

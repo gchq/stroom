@@ -54,4 +54,14 @@ public interface XsltResource extends RestResource, DirectRestService {
             value = "Update an xslt doc",
             response = XsltDoc.class)
     XsltDoc update(XsltDoc xslt);
+
+    @GET
+    @Path("/{xsltId}")
+    Response fetch(@PathParam("xsltId") final String xsltId);
+
+    @POST
+    @Path("/{xsltId}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    Response save(@PathParam("xsltId") final String xsltId,
+                         final XsltDTO xsltDto);
 }
