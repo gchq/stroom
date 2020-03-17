@@ -21,7 +21,6 @@ dependencies {
     testCompile project(':stroom-test-common')
     testCompile libs.assertj_core
     testCompile libs.dropwizard_testing
-    testCompile libs.jersey_test_framework_grizzly2
     testCompile libs.junit_jupiter_api
     testCompile libs.mockito_core
     testCompile libs.mockito_junit_jupiter

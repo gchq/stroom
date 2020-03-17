@@ -13,6 +13,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -28,6 +29,7 @@ public interface SessionResource extends RestResource, DirectRestService {
 
     String BASE_PATH = "/session" + ResourcePaths.V1;
     String LIST_PATH_PART = "/list";
+    String NODE_NAME_PARAM = "nodeName";
 
     @GET
     @Path("logout/{sessionId}")
@@ -38,21 +40,21 @@ public interface SessionResource extends RestResource, DirectRestService {
             response = Response.class)
     Response logout(@PathParam("sessionId") final String authSessionId);
 
+//    @GET
+//    @Path(LIST_PATH_PART)
+//    @Consumes(MediaType.APPLICATION_JSON)
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @ApiOperation(
+//            value = "Lists user sessions for a node, or all nodes if nodeName is null",
+//            response = SessionDetails.class)
+//    SessionListResponse listAllNodes();
+
     @GET
     @Path(LIST_PATH_PART)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
-            value = "Lists user sessions for a node, or all nodes if nodeName is null",
-            response = SessionDetails.class)
-    SessionListResponse listAllNodes();
-
-    @GET
-    @Path(LIST_PATH_PART + "/{nodeName}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-        value = "Lists user sessions for a node, or all nodes if nodeName is null",
+        value = "Lists user sessions for a node, or all nodes in the cluster if nodeName is null",
         response = SessionDetails.class)
-    SessionListResponse listNode(@PathParam("nodeName") final String nodeName);
+    SessionListResponse list(@QueryParam(NODE_NAME_PARAM) final String nodeName);
 }

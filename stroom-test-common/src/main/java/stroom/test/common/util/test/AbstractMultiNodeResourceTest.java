@@ -4,6 +4,10 @@ import org.assertj.core.api.Assertions;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.logging.LoggingFeature;
 import org.glassfish.jersey.server.ResourceConfig;
+import org.glassfish.jersey.server.monitoring.ApplicationEvent;
+import org.glassfish.jersey.server.monitoring.ApplicationEventListener;
+import org.glassfish.jersey.server.monitoring.RequestEvent;
+import org.glassfish.jersey.server.monitoring.RequestEventListener;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.TestProperties;
 import org.glassfish.jersey.test.spi.TestContainerException;
@@ -22,6 +26,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +41,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractMultiNodeResourceTest.class);
 
-    private static final List<TestNode> DEFAULT_NODE_PORT_MAP = List.of(
+    private static final List<TestNode> DEFAULT_NODES = List.of(
         new TestNode("node1", 8080, true),
         new TestNode("node2", 8081, true),
         new TestNode("node3", 8082, false));
@@ -45,20 +50,39 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         new ClientConfig().register(LoggingFeature.class))
         .target(url);
 
+    private static final String CONTAINER_FACTORY = "org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory";
+
     private final List<TestNode> testNodes;
     private final Map<String, JerseyTest> nodeToJerseyTestMap = new HashMap<>();
+    private final Map<String, RequestListener> nodeToListenerMap = new HashMap<>();
 
     /**
      * Uses a 3 node cluster with node3 being disabled. Node1 is the default node.
      */
     protected AbstractMultiNodeResourceTest() {
-        this.testNodes = DEFAULT_NODE_PORT_MAP;
+        this.testNodes = DEFAULT_NODES;
     }
 
     /**
      * Uses the supplied nodes for testing.
      */
+    @SuppressWarnings("unused")
     protected AbstractMultiNodeResourceTest(final List<TestNode> testNodes) {
+
+        // Force the container factory to ensure the jersey-test-framework-provider-grizzly2
+        // dependency is in place. Without forcing it, it will just try to use whatever is there
+        // which may be the in memory one which won't work for multi node.
+        // Tried using the jetty container factory but there was as dependency version mismatch
+        // that causes a method not found error.
+        System.setProperty(TestProperties.CONTAINER_FACTORY, CONTAINER_FACTORY);
+
+        try {
+            Class.forName(CONTAINER_FACTORY);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("You are missing a test runtime dependency for " +
+                "jersey-test-framework-provider-grizzly2");
+        }
+
         this.testNodes = testNodes;
     }
 
@@ -96,25 +120,23 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
     @AfterEach
     void afterEach() {
         stopNodes();
+        nodeToJerseyTestMap.clear();
+        nodeToListenerMap.clear();
     }
 
-
     protected void initNodes() {
-
-        // Force the container factory to ensure the jersey-test-framework-provider-grizzly2
-        // dependency is in place. Without forcing it, it will just try to use whatever is there
-        // which may be the in memory one which won't work for multi node.
-        System.setProperty(
-            TestProperties.CONTAINER_FACTORY,
-            "org.glassfish.jersey.test.grizzly.GrizzlyTestContainerFactory");
 
         testNodes.forEach(node -> {
 
             final String baseEndPointUrl = getBaseEndPointUrl(node);
 
+            RequestListener requestListener = new RequestListener(node);
+            nodeToListenerMap.put(node.getNodeName(), requestListener);
+
             final JerseyTest jerseyTest = new JerseyTestBuilder<>(
                 () -> getRestResource(node, testNodes, getBaseEndPointUrls()),
-                node.getPort())
+                node.getPort(),
+                requestListener)
                 .build();
 
             nodeToJerseyTestMap.put(node.getNodeName(), jerseyTest);
@@ -133,7 +155,11 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
      * Override if you want to use more nodes or different ports
      */
     public List<TestNode> getTestNodes() {
-        return DEFAULT_NODE_PORT_MAP;
+        return DEFAULT_NODES;
+    }
+
+    public List<RequestEvent> getRequestEvents(final String nodeName) {
+        return nodeToListenerMap.get(nodeName).getRequestLog();
     }
 
     /**
@@ -227,11 +253,14 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
         private final Supplier<R> resourceSupplier;
         private final int port;
+        private final ApplicationEventListener listener;
 
         public JerseyTestBuilder(final Supplier<R> resourceSupplier,
-                                 final int port) {
+                                 final int port,
+                                 final ApplicationEventListener listener) {
             this.resourceSupplier = resourceSupplier;
             this.port = port;
+            this.listener = listener;
         }
 
         public JerseyTest build() {
@@ -247,6 +276,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                 protected Application configure() {
                     return new ResourceConfig()
                         .register(resourceSupplier.get())
+                        .register(listener)
                         .register(
                             new LoggingFeature(
                                 java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
@@ -312,6 +342,34 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
                 ", port=" + port +
                 ", isEnabled=" + isEnabled +
                 '}';
+        }
+    }
+
+    public static class RequestListener implements ApplicationEventListener {
+
+        private final List<RequestEvent> requestLog = new ArrayList<>();
+        private final TestNode node;
+
+        RequestListener(final TestNode node) {
+            this.node = node;
+        }
+
+        @Override
+        public void onEvent(final ApplicationEvent event) {
+            LOGGER.info("ApplicationEvent on node {}", node.getNodeName());
+        }
+
+        @Override
+        public RequestEventListener onRequest(final RequestEvent requestEvent) {
+            LOGGER.info("{} to {} request received on node {} ",
+                requestEvent.getType(), requestEvent.getUriInfo().getPath(), node.getNodeName());
+
+            requestLog.add(requestEvent);
+            return null;
+        }
+
+        public List<RequestEvent> getRequestLog() {
+            return requestLog;
         }
     }
 }

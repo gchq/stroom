@@ -35,7 +35,7 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
     @Test
     void list_namedNode() {
 
-        final String subPath = ResourcePaths.buildPath(SessionResource.LIST_PATH_PART, "/node1");
+        final String subPath = ResourcePaths.buildPath(SessionResource.LIST_PATH_PART);
 
         final SessionListResponse expectedResponse = new SessionListResponse(List.of(
             new SessionDetails("user1", 123L, 456L, "agent1", "node1"),
@@ -45,7 +45,11 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
             .thenReturn(expectedResponse);
 
 
-        final SessionListResponse response = doGetTest(subPath, SessionListResponse.class, expectedResponse);
+        final SessionListResponse response = doGetTest(
+            subPath,
+            SessionListResponse.class,
+            expectedResponse,
+            webTarget -> webTarget.queryParam("nodeName", "node1"));
 
         verify(sessionListService).listSessions(Mockito.anyString());
     }

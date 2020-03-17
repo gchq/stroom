@@ -32,10 +32,14 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
     private static final Logger LOGGER = LoggerFactory.getLogger(TestCacheResourceImpl.class);
 
     @Mock
-    CacheManagerService cacheManagerService;
+    private CacheManagerService cacheManagerService;
 
-    Map<String, CacheManagerService> cacheManagerServiceMocks = new HashMap<>();
+    private Map<String, CacheManagerService> cacheManagerServiceMocks = new HashMap<>();
 
+    /**
+     * Create a {@link TaskContext} that wraps the runnable/supplier with no
+     * extra functionality
+     */
     static TaskContext getTaskContext() {
 
         final TaskContext taskContext = Mockito.mock(TaskContext.class);

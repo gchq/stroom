@@ -19,7 +19,7 @@ public class SessionResourceImpl implements SessionResource {
     private final SessionListService sessionListService;
 
     @Inject
-    SessionResourceImpl(final AuthenticationEventLog eventLog,
+    public SessionResourceImpl(final AuthenticationEventLog eventLog,
                         final SessionListService sessionListService) {
         this.eventLog = eventLog;
         this.sessionListService = sessionListService;
@@ -45,16 +45,20 @@ public class SessionResourceImpl implements SessionResource {
         return Response.status(Response.Status.OK).entity("Logout successful").build();
     }
 
-    @Override
-    public SessionListResponse listAllNodes() {
-        LOGGER.debug("list() called");
-        return sessionListService.listSessions();
-    }
+//    @Override
+//    public SessionListResponse listAllNodes() {
+//        LOGGER.debug("list() called");
+//        return sessionListService.listSessions();
+//    }
 
     @Override
-    public SessionListResponse listNode(final String nodeName) {
+    public SessionListResponse list(final String nodeName) {
         LOGGER.debug("list({}) called", nodeName);
-        return sessionListService.listSessions(nodeName);
+        if (nodeName != null) {
+            return sessionListService.listSessions(nodeName);
+        } else {
+            return sessionListService.listSessions();
+        }
     }
 
 }

@@ -1,6 +1,7 @@
 package stroom.security.impl.session;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.PageResponse;
 import stroom.util.shared.ResultPage;
@@ -8,6 +9,7 @@ import stroom.util.shared.ResultPage;
 import java.util.Collections;
 import java.util.List;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class SessionListResponse extends ResultPage<SessionDetails> {
 
     @JsonCreator
@@ -25,7 +27,6 @@ public class SessionListResponse extends ResultPage<SessionDetails> {
                 Collections.emptyList(),
                 SessionListResponse.createPageResponse(Collections.emptyList()));
     }
-
 
     @Override
     public boolean equals(final Object o) {

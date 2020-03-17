@@ -24,5 +24,6 @@ dependencies {
     runtimeOnly libs.logback_classic
     runtimeOnly libs.logback_core
 
-    testRuntimeOnly libs.junit_jupiter_engine
+    runtimeOnly libs.junit_jupiter_engine
+    runtimeOnly libs.jersey_test_framework_grizzly2
 }

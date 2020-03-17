@@ -231,17 +231,14 @@ public class ResultPage<T> implements Serializable {
         return pageResponse.isExact();
     }
 
-    @JsonIgnore
     public Stream<T> stream() {
         return values.stream();
     }
 
-    @JsonIgnore
     public Stream<T> parallelStream() {
         return values.parallelStream();
     }
 
-    @JsonIgnore
     public void forEach(final Consumer<? super T> action) {
         values.forEach(action);
     }

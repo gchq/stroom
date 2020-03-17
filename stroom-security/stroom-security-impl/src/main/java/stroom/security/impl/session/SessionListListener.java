@@ -99,6 +99,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
 //    }
 
     public SessionListResponse listSessions(final String nodeName) {
+        LOGGER.debug("listSessions(\"{}\") called", nodeName);
         // TODO add audit logging?
         Objects.requireNonNull(nodeName);
 
@@ -113,15 +114,16 @@ class SessionListListener implements HttpSessionListener, SessionListService {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName) +
                     ResourcePaths.buildAuthenticatedApiPath(
                             SessionResource.BASE_PATH,
-                            SessionResource.LIST_PATH_PART,
-                            nodeName);
+                            SessionResource.LIST_PATH_PART);
 
             try {
+                LOGGER.debug("Sending request to {} for node {}", url, nodeName);
                 final Response response = webTargetFactory.create(url)
-                        .request(MediaType.APPLICATION_JSON)
-                        .get();
+                    .queryParam(SessionResource.NODE_NAME_PARAM, nodeName)
+                    .request(MediaType.APPLICATION_JSON)
+                    .get();
 
-                sessionList = (SessionListResponse) response.getEntity();
+                sessionList = response.readEntity(SessionListResponse.class);
             } catch (Throwable e) {
                 throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
@@ -159,6 +161,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
                         return listSessions(nodeName);
                     });
 
+                    LOGGER.debug("Creating async task for node {}", nodeName);
                     return CompletableFuture
                             .supplyAsync(listSessionsOnNodeTask)
                             .exceptionally(throwable -> {
