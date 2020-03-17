@@ -11,10 +11,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.util.jersey.WebTargetFactory;
+import stroom.util.logging.LogUtil;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.Invocation;
 import javax.ws.rs.client.WebTarget;
+import javax.ws.rs.core.Response;
 import java.util.function.Function;
 
 @ExtendWith(MockitoExtension.class)
@@ -46,27 +50,58 @@ public abstract class AbstractResourceTest<R extends RestResource> {
     }
 
 
-    public  <T> T doGetTest(final String subPath,
-                            final Class<T> responseType,
-                            final T expectedResponse) {
+//    public  <T_RESP> T_RESP doGetTest(final String subPath,
+//                            final Class<T_RESP> responseType,
+//                            final T_RESP expectedResponse) {
+//
+//        LOGGER.info("Calling GET on {}{}, expecting {}", getResourceBasePath(), subPath, expectedResponse);
+//        T_RESP response =  resources
+//            .target(getResourceBasePath())
+//            .path(subPath)
+//            .request()
+//            .get(responseType);
+//
+//        Assertions.assertThat(response).isEqualTo(expectedResponse);
+//
+//        return response;
+//    }
 
-        LOGGER.info("Calling GET on {}{}, expecting {}", getResourceBasePath(), subPath, expectedResponse);
-        T response =  resources
-            .target(getResourceBasePath())
-            .path(subPath)
-            .request()
-            .get(responseType);
+    public  <T_RESP> T_RESP doGetTest(final String subPath,
+                            final Class<T_RESP> responseType,
+                            final T_RESP expectedResponse,
+                            final Function<WebTarget, WebTarget>... builderMethods) {
+        LOGGER.info("Calling GET on {}{}, expecting {}",
+            getResourceBasePath(), subPath, expectedResponse);
 
-        Assertions.assertThat(response).isEqualTo(expectedResponse);
-
-        return response;
+        return doTest(
+            Invocation.Builder::get,
+            subPath,
+            responseType,
+            expectedResponse,
+            builderMethods);
     }
 
-    public  <T> T doGetTest(final String subPath,
-                            final Class<T> responseType,
-                            final T expectedResponse,
-                            final Function<WebTarget, WebTarget>... builderMethods) {
-        LOGGER.info("Calling GET on {}{}, expecting {}", getResourceBasePath(), subPath, expectedResponse);
+    public  <T_REQ, T_RESP> T_RESP doPutTest(final String subPath,
+                                             final T_REQ requestEntity,
+                                             final Class<T_RESP> responseType,
+                                             final T_RESP expectedResponse,
+                                             final Function<WebTarget, WebTarget>... builderMethods) {
+        LOGGER.info("Calling PUT on {}{}, expecting {}",
+            getResourceBasePath(), subPath, expectedResponse);
+
+        return doTest(builder -> builder.put(Entity.json(requestEntity)),
+            subPath,
+            responseType,
+            expectedResponse,
+            builderMethods);
+    }
+
+    public  <T_REQ> void doPutTest(final String subPath,
+                                   final T_REQ requestEntity,
+                                   final Function<WebTarget, WebTarget>... builderMethods) {
+
+        LOGGER.info("Calling PUT on {}{}, passing {}",
+            getResourceBasePath(), subPath, requestEntity);
 
         WebTarget webTarget = resources
             .target(getResourceBasePath())
@@ -76,13 +111,65 @@ public abstract class AbstractResourceTest<R extends RestResource> {
             webTarget = method.apply(webTarget);
         }
 
-        T response =  webTarget
-            .request()
-            .get(responseType);
+        Invocation.Builder builder = webTarget
+            .request();
 
-        Assertions.assertThat(response).isEqualTo(expectedResponse);
+        Response response = builder.put(Entity.json(requestEntity));
 
-        return response;
+        if (! isSuccessful(response.getStatus())) {
+            throw new RuntimeException(LogUtil.message("Error: {} {}",
+                response.getStatus(), response));
+        }
+    }
+
+    public  <T_RESP> T_RESP doDeleteTest(final String subPath,
+                                         final Class<T_RESP> responseType,
+                                         final T_RESP expectedResponse,
+                                         final Function<WebTarget, WebTarget>... builderMethods) {
+        LOGGER.info("Calling DELETE on {}{}, expecting {}",
+            getResourceBasePath(), subPath, expectedResponse);
+
+        return doTest(Invocation.Builder::get,
+            subPath,
+            responseType,
+            expectedResponse,
+            builderMethods);
+    }
+
+    private <T_RESP> T_RESP doTest(final Function<Invocation.Builder, Response> operation,
+                                   final String subPath,
+                                   final Class<T_RESP> responseType,
+                                   final T_RESP expectedResponse,
+                                   final Function<WebTarget, WebTarget>... builderMethods) {
+        LOGGER.info("Calling GET on {}{}, expecting {}",
+            getResourceBasePath(), subPath, expectedResponse);
+
+        WebTarget webTarget = resources
+            .target(getResourceBasePath())
+            .path(subPath);
+
+        for (Function<WebTarget, WebTarget> method : builderMethods) {
+            webTarget = method.apply(webTarget);
+        }
+
+        Invocation.Builder builder = webTarget
+            .request();
+
+        final Response response = operation.apply(builder);
+
+        if (! isSuccessful(response.getStatus())) {
+            throw new RuntimeException(LogUtil.message("Error: {} {}",
+                response.getStatus(), response));
+        }
+
+        T_RESP entity = response.readEntity(responseType);
+
+        if (expectedResponse != null) {
+            Assertions.assertThat(entity)
+                .isEqualTo(expectedResponse);
+        }
+
+        return entity;
     }
 
     public  WebTarget getWebTarget(final String subPath) {
@@ -92,4 +179,7 @@ public abstract class AbstractResourceTest<R extends RestResource> {
             .path(subPath);
     }
 
+    private boolean isSuccessful(final int statusCode) {
+        return statusCode >= 200 && statusCode < 300;
+    }
 }

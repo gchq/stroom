@@ -35,6 +35,9 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public interface NodeResource extends RestResource, DirectRestService {
     String BASE_PATH = "/node" + ResourcePaths.V1;
+    String PING_PATH_PART = "/ping";
+    String PRIORITY_PATH_PART = "/priority";
+    String ENABLED_PATH_PART = "/enabled";
 
     @GET
     @Path("/{nodeName}")
@@ -54,7 +57,7 @@ public interface NodeResource extends RestResource, DirectRestService {
     FetchNodeStatusResponse list();
 
     @GET
-    @Path("/{nodeName}/ping")
+    @Path("/{nodeName}" + PING_PATH_PART)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -63,14 +66,14 @@ public interface NodeResource extends RestResource, DirectRestService {
     Long ping(@PathParam("nodeName") String nodeName);
 
     @PUT
-    @Path("/{nodeName}/priority")
+    @Path("/{nodeName}" + PRIORITY_PATH_PART)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Sets the priority of a node")
     void setPriority(@PathParam("nodeName") String nodeName, Integer priority);
 
     @PUT
-    @Path("/{nodeName}/enabled")
+    @Path("/{nodeName}" + ENABLED_PATH_PART)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Sets whether a node is enabled")
