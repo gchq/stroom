@@ -3,6 +3,7 @@ package stroom.security.impl;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
+import stroom.security.shared.UserResultPage;
 import stroom.util.shared.StringCriteria;
 
 import javax.inject.Inject;
@@ -14,6 +15,11 @@ public class UserResourceImpl implements UserResource {
     @Inject
     public UserResourceImpl(final UserService userService) {
         this.userService = userService;
+    }
+
+    @Override
+    public UserResultPage find(final FindUserCriteria criteria) {
+        return new UserResultPage(userService.find(criteria));
     }
 
     @Override
@@ -62,32 +68,33 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
-    public void deleteUser(final String uuid) {
-        userService.delete(uuid);
+    public Boolean deleteUser(final String uuid) {
+        return userService.delete(uuid);
     }
 
     @Override
-    public void setStatus(String userName, boolean status) {
-        User existingUser = userService.getUserByName(userName);
+    public Boolean setStatus(String userName, boolean status) {
+        final User existingUser = userService.getUserByName(userName);
         if (existingUser != null) {
-            User user = userService.loadByUuid(existingUser.getUuid());
+            final User user = userService.loadByUuid(existingUser.getUuid());
             user.setEnabled(status);
             userService.update(user);
+            return true;
         } else {
             throw new RuntimeException("User not found");
         }
     }
 
     @Override
-    public void addUserToGroup(final String userUuid,
+    public Boolean addUserToGroup(final String userUuid,
                                final String groupUuid) {
-        userService.addUserToGroup(userUuid, groupUuid);
+        return userService.addUserToGroup(userUuid, groupUuid);
     }
 
     @Override
-    public void removeUserFromGroup(final String userUuid,
+    public Boolean removeUserFromGroup(final String userUuid,
                                     final String groupUuid) {
-        userService.removeUserFromGroup(userUuid, groupUuid);
+        return userService.removeUserFromGroup(userUuid, groupUuid);
     }
 
     @Override

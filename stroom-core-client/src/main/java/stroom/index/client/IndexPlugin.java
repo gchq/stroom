@@ -68,21 +68,21 @@ public class IndexPlugin extends DocumentPlugin<IndexDoc> {
 
     @Override
     public IFrameContentPresenter open(final DocRef docRef, final boolean forceOpen) {
-        if(forceOpen) {
-            clientPropertyCache.get()
-                    .onSuccess(result -> {
-                        final String url = result.getUrl().getEditDoc() + docRef.getUuid();
-                        final SvgPreset icon = SvgPresets.DATABASE;
-                        final Hyperlink hyperlink = new Hyperlink.Builder()
-                                .text("Indexes")
-                                .href(url)
-                                .type(HyperlinkType.TAB + "|Indexes")
-                                .icon(icon)
-                                .build();
-                        HyperlinkEvent.fire(this, hyperlink);
-                    })
-                    .onFailure(caught -> AlertEvent.fireError(IndexPlugin.this, caught.getMessage(), null));
-        }
+//        if(forceOpen) {
+//            clientPropertyCache.get()
+//                    .onSuccess(result -> {
+//                        final String url = result.getUrl().getEditDoc() + docRef.getUuid();
+//                        final SvgPreset icon = SvgPresets.DATABASE;
+//                        final Hyperlink hyperlink = new Hyperlink.Builder()
+//                                .text("Indexes")
+//                                .href(url)
+//                                .type(HyperlinkType.TAB + "|Indexes")
+//                                .icon(icon)
+//                                .build();
+//                        HyperlinkEvent.fire(this, hyperlink);
+//                    })
+//                    .onFailure(caught -> AlertEvent.fireError(IndexPlugin.this, caught.getMessage(), null));
+//        }
         return createEditor();
     }
 }

@@ -30,6 +30,10 @@ public interface UserResource extends RestResource, DirectRestService {
                    @QueryParam("isGroup") Boolean isGroup,
                    @QueryParam("uuid") String uuid);
 
+    @POST
+    @Path("/find")
+    UserResultPage find(FindUserCriteria criteria);
+
     @GET
     @Path("/{userUuid}")
     User get(@PathParam("userUuid") String userUuid);
@@ -53,21 +57,21 @@ public interface UserResource extends RestResource, DirectRestService {
 
     @DELETE
     @Path("/{uuid}")
-    void deleteUser(@PathParam("uuid") String uuid);
+    Boolean deleteUser(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{userName}/status")
-    void setStatus(@PathParam("userName") String userName, @QueryParam("enabled") boolean status);
+    Boolean setStatus(@PathParam("userName") String userName, @QueryParam("enabled") boolean status);
 
     @PUT
     @Path("/{userUuid}/{groupUuid}")
-    void addUserToGroup(@PathParam("userUuid") String userUuid,
-                        @PathParam("groupUuid") String groupUuid);
+    Boolean addUserToGroup(@PathParam("userUuid") String userUuid,
+                           @PathParam("groupUuid") String groupUuid);
 
     @DELETE
     @Path("/{userUuid}/{groupUuid}")
-    void removeUserFromGroup(@PathParam("userUuid") String userUuid,
-                             @PathParam("groupUuid") String groupUuid);
+    Boolean removeUserFromGroup(@PathParam("userUuid") String userUuid,
+                                @PathParam("groupUuid") String groupUuid);
 
     @GET
     @Path("associates")

@@ -2,6 +2,7 @@ package stroom.security.impl.db;
 
 import org.jooq.Condition;
 import org.jooq.Record;
+import org.jooq.Record1;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.security.impl.UserDao;
@@ -13,6 +14,7 @@ import javax.inject.Inject;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -149,6 +151,18 @@ public class UserDaoImpl implements UserDao {
                         .stream()
                         .map(RECORD_TO_USER_MAPPER)
                         .collect(Collectors.toList()));
+    }
+
+    @Override
+    public Set<String> findGroupUuidsForUser(final String userUuid) {
+        return JooqUtil.contextResult(securityDbConnProvider, context ->
+                context.select(STROOM_USER_GROUP.GROUP_UUID)
+                        .from(STROOM_USER_GROUP)
+                        .where(STROOM_USER_GROUP.USER_UUID.eq(userUuid))
+                        .fetch()
+                        .stream()
+                        .map(Record1::value1)
+                        .collect(Collectors.toSet()));
     }
 
     @Override

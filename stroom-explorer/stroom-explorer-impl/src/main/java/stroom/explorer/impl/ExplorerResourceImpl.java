@@ -113,7 +113,7 @@ class ExplorerResourceImpl implements ExplorerResource, HasHealthCheck {
                 for (final DocRef docRef : docRefs) {
                     try {
                         // Only return entries the user has permission to see.
-                        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.USE)) {
+                        if (securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.USE)) {
                             explorerNodeService.getNode(docRef)
                                     .map(ExplorerNode::getDocRef)
                                     .ifPresent(result::add);
@@ -149,7 +149,7 @@ class ExplorerResourceImpl implements ExplorerResource, HasHealthCheck {
 
                 if (docRef != null) {
                     for (final String permissionName : DocumentPermissionNames.DOCUMENT_PERMISSIONS) {
-                        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(),
+                        if (securityContext.hasDocumentPermission(docRef.getUuid(),
                                 permissionName)) {
                             documentPermissions.add(permissionName);
                         }
@@ -165,7 +165,7 @@ class ExplorerResourceImpl implements ExplorerResource, HasHealthCheck {
                 if (DocumentTypes.isFolder(docRef.getType())) {
                     for (final DocumentType documentType : explorerService.getNonSystemTypes()) {
                         final String permissionName = DocumentPermissionNames.getDocumentCreatePermission(documentType.getType());
-                        if (securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(),
+                        if (securityContext.hasDocumentPermission(docRef.getUuid(),
                                 permissionName)) {
                             createPermissions.add(documentType.getType());
                         }

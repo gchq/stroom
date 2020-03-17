@@ -3,6 +3,7 @@ package stroom.security.impl;
 import stroom.security.shared.User;
 
 import java.util.List;
+import java.util.Set;
 
 public interface UserDao {
     User create(User user);
@@ -26,6 +27,8 @@ public interface UserDao {
     List<User> findUsersInGroup(String groupUuid);
 
     List<User> findGroupsForUser(String userUuid);
+
+    Set<String> findGroupUuidsForUser(String userUuid);
 
     List<User> findGroupsForUserName(String userName);
 

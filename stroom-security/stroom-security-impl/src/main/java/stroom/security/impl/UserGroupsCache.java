@@ -23,13 +23,13 @@ import stroom.util.entity.EntityAction;
 import stroom.util.entity.EntityEvent;
 import stroom.util.entity.EntityEventBus;
 import stroom.util.entity.EntityEventHandler;
-import stroom.security.shared.User;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.List;
+import java.util.Set;
 
 @Singleton
 @EntityEventHandler(type = UserDocRefUtil.USER, action = {EntityAction.CLEAR_CACHE})
@@ -37,7 +37,7 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
     private static final String CACHE_NAME = "User Groups Cache";
 
     private final Provider<EntityEventBus> eventBusProvider;
-    private final ICache<String, List> cache;
+    private final ICache<String, Set<String>> cache;
 
     @Inject
     UserGroupsCache(final CacheManager cacheManager,
@@ -45,18 +45,17 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
                     final Provider<EntityEventBus> eventBusProvider,
                     final AuthorisationConfig authorisationConfig) {
         this.eventBusProvider = eventBusProvider;
-        cache = cacheManager.create(CACHE_NAME, authorisationConfig::getUserGroupsCache, userService::findGroupsForUser);
+        cache = cacheManager.create(CACHE_NAME, authorisationConfig::getUserGroupsCache, userService::findGroupUuidsForUser);
     }
 
-    @SuppressWarnings("unchecked")
-    List<User> get(final String userUuid) {
+    Set<String> get(final String userUuid) {
         return cache.get(userUuid);
     }
 
-    void remove(final User user) {
-        cache.invalidate(user.getUuid());
+    void remove(final String userUuid) {
+        cache.invalidate(userUuid);
         final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(entityEventBus, UserDocRefUtil.createDocRef(user), EntityAction.CLEAR_CACHE);
+        EntityEvent.fire(entityEventBus, UserDocRefUtil.createDocRef(userUuid), EntityAction.CLEAR_CACHE);
     }
 
     @Override
@@ -67,9 +66,8 @@ class UserGroupsCache implements EntityEvent.Handler, Clearable {
     @Override
     public void onChange(final EntityEvent event) {
         final DocRef docRef = event.getDocRef();
-        final User user = UserDocRefUtil.createUser(docRef);
-        if (user != null) {
-            cache.invalidate(user.getUuid());
+        if (docRef != null && UserDocRefUtil.USER.equals(docRef.getType())) {
+            cache.invalidate(docRef.getUuid());
         }
     }
 }

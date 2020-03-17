@@ -10,8 +10,10 @@ import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.util.List;
 
 @Api(value = "application permissions - /v1")
 @Path("/permission/doc" + ResourcePaths.V1)
@@ -53,4 +55,13 @@ public interface DocPermissionResource extends RestResource, DirectRestService {
             value = "Check document permission",
             response = Boolean.class)
     Boolean checkDocumentPermission(CheckDocumentPermissionRequest request);
+
+    @GET
+    @Path("/getPermissionForDocType/${docType}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Get all permissions for a given document type",
+            response = List.class)
+    List<String> getPermissionForDocType(@PathParam("docType") String docType);
 }

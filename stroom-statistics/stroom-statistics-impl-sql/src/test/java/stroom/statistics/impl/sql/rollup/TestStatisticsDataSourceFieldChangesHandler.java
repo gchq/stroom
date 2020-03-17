@@ -33,7 +33,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TestStatisticsDataSourceFieldChangeHandler extends StroomUnitTest {
+class TestStatisticsDataSourceFieldChangesHandler extends StroomUnitTest {
     /**
      * Go from B, C, D to A,B,D
      */

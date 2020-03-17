@@ -42,7 +42,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
             throw new RuntimeException("Unable to find tree node to copy");
         }
 
-        if (!securityContext.hasDocumentPermission(FOLDER, originalUuid, DocumentPermissionNames.READ)) {
+        if (!securityContext.hasDocumentPermission(originalUuid, DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
         }
         return new DocRef(FOLDER, copyUuid, explorerTreeNode.getName());
@@ -55,7 +55,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
             throw new RuntimeException("Unable to find tree node to move");
         }
 
-        if (!securityContext.hasDocumentPermission(FOLDER, uuid, DocumentPermissionNames.READ)) {
+        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
         }
         return explorerTreeNode.getDocRef();
@@ -67,7 +67,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         if (explorerTreeNode == null) {
             throw new RuntimeException("Unable to find tree node to rename");
         }
-        if (!securityContext.hasDocumentPermission(FOLDER, uuid, DocumentPermissionNames.UPDATE)) {
+        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to update (" + FOLDER + ")");
         }
         NameValidationUtil.validate(NAME_PATTERN_VALUE, name);
@@ -81,7 +81,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
         if (explorerTreeNode == null) {
             throw new RuntimeException("Unable to find tree node to delete");
         }
-        if (!securityContext.hasDocumentPermission(FOLDER, uuid, DocumentPermissionNames.DELETE)) {
+        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.DELETE)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete (" + FOLDER + ")");
         }
     }
@@ -93,7 +93,7 @@ class FolderExplorerActionHandler implements ExplorerActionHandler {
             throw new RuntimeException("Unable to find tree node to get info");
         }
 
-        if (!securityContext.hasDocumentPermission(FOLDER, uuid, DocumentPermissionNames.READ)) {
+        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
             throw new stroom.document.shared.PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
         }
 

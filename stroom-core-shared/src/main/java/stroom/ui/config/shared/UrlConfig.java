@@ -8,7 +8,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.AbstractConfig;
 
-@JsonPropertyOrder({"ui", "authenticationService", "users", "apiKeys", "indexVolumes", "indexVolumeGroups", "userAuthorisation", "groupAuthorisation", "editDoc", "changepassword", "kibana", "trackers", "annotations", "elastic", "documentPermissions"})
+@JsonPropertyOrder({"ui", "authenticationService", "users", "apiKeys", "indexVolumes", "indexVolumeGroups", "changepassword"})
 @JsonInclude(Include.NON_NULL)
 public class UrlConfig extends AbstractConfig {
     @JsonProperty
@@ -26,23 +26,7 @@ public class UrlConfig extends AbstractConfig {
     @JsonProperty
     private String indexVolumeGroups;
     @JsonProperty
-    private String userAuthorisation;
-    @JsonProperty
-    private String groupAuthorisation;
-    @JsonProperty
-    private String editDoc;
-    @JsonProperty
     private String changepassword;
-    @JsonProperty
-    private String kibana;
-    @JsonProperty
-    private String trackers;
-    @JsonProperty
-    private String annotations;
-    @JsonProperty
-    private String elastic;
-    @JsonProperty
-    private String documentPermissions;
 
     public UrlConfig() {
         setDefaults();
@@ -55,30 +39,14 @@ public class UrlConfig extends AbstractConfig {
                      @JsonProperty("apiKeys") final String apiKeys,
                      @JsonProperty("indexVolumes") final String indexVolumes,
                      @JsonProperty("indexVolumeGroups") final String indexVolumeGroups,
-                     @JsonProperty("userAuthorisation") final String userAuthorisation,
-                     @JsonProperty("groupAuthorisation") final String groupAuthorisation,
-                     @JsonProperty("editDoc") final String editDoc,
-                     @JsonProperty("changepassword") final String changepassword,
-                     @JsonProperty("kibana") final String kibana,
-                     @JsonProperty("trackers") final String trackers,
-                     @JsonProperty("annotations") final String annotations,
-                     @JsonProperty("elastic") final String elastic,
-                     @JsonProperty("documentPermissions") final String documentPermissions) {
+                     @JsonProperty("changepassword") final String changepassword) {
         this.ui = ui;
         this.authenticationService = authenticationService;
         this.users = users;
         this.apiKeys = apiKeys;
         this.indexVolumes = indexVolumes;
         this.indexVolumeGroups = indexVolumeGroups;
-        this.userAuthorisation = userAuthorisation;
-        this.groupAuthorisation = groupAuthorisation;
-        this.editDoc = editDoc;
         this.changepassword = changepassword;
-        this.kibana = kibana;
-        this.trackers = trackers;
-        this.annotations = annotations;
-        this.elastic = elastic;
-        this.documentPermissions = documentPermissions;
 
         setDefaults();
     }
@@ -102,26 +70,8 @@ public class UrlConfig extends AbstractConfig {
         if (indexVolumeGroups == null) {
             indexVolumeGroups = "http://IP_ADDRESS/s/indexing/groups";
         }
-        if (userAuthorisation == null) {
-            userAuthorisation = "http://IP_ADDRESS/s/authorisationManager/false";
-        }
-        if (groupAuthorisation == null) {
-            groupAuthorisation = "http://IP_ADDRESS/s/authorisationManager/true";
-        }
-        if (editDoc == null) {
-            editDoc = "http://IP_ADDRESS/s/doc/";
-        }
         if (changepassword == null) {
             changepassword = "http://IP_ADDRESS/changepassword";
-        }
-        if (annotations == null) {
-            annotations = "http://IP_ADDRESS/annotationsService/queryApi/v1";
-        }
-        if (elastic == null) {
-            elastic = "http://IP_ADDRESS/queryElasticService/queryApi/v1";
-        }
-        if (documentPermissions == null) {
-            documentPermissions = "http://IP_ADDRESS/s/authorisationManager/document/";
         }
     }
 
@@ -173,76 +123,12 @@ public class UrlConfig extends AbstractConfig {
         this.changepassword = changepassword;
     }
 
-    public String getKibana() {
-        return kibana;
-    }
-
-    public void setKibana(final String kibana) {
-        this.kibana = kibana;
-    }
-
-    public String getTrackers() {
-        return trackers;
-    }
-
-    public void setTrackers(final String trackers) {
-        this.trackers = trackers;
-    }
-
-    public String getAnnotations() {
-        return annotations;
-    }
-
-    public void setAnnotations(final String annotations) {
-        this.annotations = annotations;
-    }
-
-    public String getElastic() {
-        return elastic;
-    }
-
-    public void setElastic(final String elastic) {
-        this.elastic = elastic;
-    }
-
     public String getIndexVolumeGroups() {
         return indexVolumeGroups;
     }
 
     public void setIndexVolumeGroups(String indexVolumeGroups) {
         this.indexVolumeGroups = indexVolumeGroups;
-    }
-
-    public String getUserAuthorisation() {
-        return userAuthorisation;
-    }
-
-    public void setUserAuthorisation(String userAuthorisation) {
-        this.userAuthorisation = userAuthorisation;
-    }
-
-    public String getGroupAuthorisation() {
-        return groupAuthorisation;
-    }
-
-    public void setGroupAuthorisation(String groupAuthorisation) {
-        this.groupAuthorisation = groupAuthorisation;
-    }
-
-    public String getDocumentPermissions() {
-        return documentPermissions;
-    }
-
-    public void setDocumentPermissions(String documentPermissions) {
-        this.documentPermissions = documentPermissions;
-    }
-
-    public String getEditDoc() {
-        return editDoc;
-    }
-
-    public void setEditDoc(String editDoc) {
-        this.editDoc = editDoc;
     }
 
     @Override
@@ -254,15 +140,7 @@ public class UrlConfig extends AbstractConfig {
                 ", apiKeys='" + apiKeys + '\'' +
                 ", indexVolumes='" + indexVolumes + '\'' +
                 ", indexVolumeGroups='" + indexVolumeGroups + '\'' +
-                ", userAuthorisation='" + userAuthorisation + '\'' +
-                ", groupAuthorisation='" + groupAuthorisation + '\'' +
-                ", editDoc='" + editDoc + '\'' +
                 ", changepassword='" + changepassword + '\'' +
-                ", kibana='" + kibana + '\'' +
-                ", trackers='" + trackers + '\'' +
-                ", annotations='" + annotations + '\'' +
-                ", elastic='" + elastic + '\'' +
-                ", documentPermissions='" + documentPermissions + '\'' +
                 '}';
     }
 

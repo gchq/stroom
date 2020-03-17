@@ -74,8 +74,8 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     public void setUserAndPermissions(final UserAndPermissions userAndPermissions, final boolean fireUserChangedEvent) {
         clear();
         if (userAndPermissions != null) {
-            this.userId = userAndPermissions.getUserId();
-            this.permissions = userAndPermissions.getAppPermissionSet();
+            this.userId = userAndPermissions.getUser().getName();
+            this.permissions = userAndPermissions.getPermissions();
         }
 
         if (fireUserChangedEvent) {
@@ -113,7 +113,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
     }
 
     @Override
-    public Future<Boolean> hasDocumentPermission(final String documentType, final String documentId, final String permission) {
+    public Future<Boolean> hasDocumentPermission(final String documentUuid, final String permission) {
         final FutureImpl<Boolean> future = new FutureImpl<>();
         // Set the default behaviour of the future to show an error.
         future.onFailure(throwable -> AlertEvent.fireErrorFromException(CurrentUser.this, throwable, null));
@@ -123,7 +123,7 @@ public class CurrentUser implements ClientSecurityContext, HasHandlers {
                 .onSuccess(future::setResult)
                 .onFailure(future::setThrowable)
                 .call(DOC_PERMISSION_RESOURCE)
-                .checkDocumentPermission(new CheckDocumentPermissionRequest(documentType, documentId, permission));
+                .checkDocumentPermission(new CheckDocumentPermissionRequest(documentUuid, permission));
 
         return future;
     }

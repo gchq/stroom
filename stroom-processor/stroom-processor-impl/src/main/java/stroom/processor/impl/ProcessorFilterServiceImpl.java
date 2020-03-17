@@ -100,7 +100,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                   final int priority,
                                   final boolean enabled) {
         // Check the user has read permissions on the pipeline.
-        if (!securityContext.hasDocumentPermission(PipelineDoc.DOCUMENT_TYPE, pipelineRef.getUuid(), DocumentPermissionNames.READ)) {
+        if (!securityContext.hasDocumentPermission(pipelineRef.getUuid(), DocumentPermissionNames.READ)) {
             throw new PermissionException("You do not have permission to create this processor filter");
         }
 
@@ -114,7 +114,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                   final int priority,
                                   final boolean enabled) {
         // Check the user has read permissions on the pipeline.
-        if (!securityContext.hasDocumentPermission(PipelineDoc.DOCUMENT_TYPE, processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
+        if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
             throw new PermissionException("You do not have permission to create this processor filter");
         }
 
@@ -149,7 +149,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     @Override
     public ProcessorFilter update(final ProcessorFilter processorFilter) {
         // Check the user has update permissions on the pipeline.
-        if (!securityContext.hasDocumentPermission(PipelineDoc.DOCUMENT_TYPE, processorFilter.getProcessor().getPipelineUuid(), DocumentPermissionNames.UPDATE)) {
+        if (!securityContext.hasDocumentPermission(processorFilter.getProcessor().getPipelineUuid(), DocumentPermissionNames.UPDATE)) {
             throw new PermissionException("You do not have permission to update this processor filter");
         }
 

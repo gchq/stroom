@@ -23,12 +23,12 @@ import stroom.util.entity.EntityAction;
 import stroom.util.entity.EntityEvent;
 import stroom.util.entity.EntityEventBus;
 import stroom.util.entity.EntityEventHandler;
-import stroom.security.shared.User;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
+import java.util.Set;
 
 @Singleton
 @EntityEventHandler(type = UserDocRefUtil.USER, action = {EntityAction.CLEAR_CACHE})
@@ -36,7 +36,7 @@ public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
     private static final String CACHE_NAME = "User App Permissions Cache";
 
     private final Provider<EntityEventBus> eventBusProvider;
-    private final ICache<User, UserAppPermissions> cache;
+    private final ICache<String, Set<String>> cache;
 
     @Inject
     UserAppPermissionsCache(final CacheManager cacheManager,
@@ -44,26 +44,25 @@ public class UserAppPermissionsCache implements Clearable, EntityEvent.Handler {
                             final UserAppPermissionService userAppPermissionService,
                             final Provider<EntityEventBus> eventBusProvider) {
         this.eventBusProvider = eventBusProvider;
-        cache = cacheManager.create(CACHE_NAME, authorisationConfig::getUserAppPermissionsCache, userAppPermissionService::getPermissionsForUser);
+        cache = cacheManager.create(CACHE_NAME, authorisationConfig::getUserAppPermissionsCache, userAppPermissionService::getPermissionNamesForUser);
     }
 
-    UserAppPermissions get(final User user) {
-        return cache.get(user);
+    Set<String> get(final String userUuid) {
+        return cache.get(userUuid);
     }
 
-    void remove(final User user) {
-        cache.invalidate(user);
+    void remove(final String userUuid) {
+        cache.invalidate(userUuid);
 
         final EntityEventBus entityEventBus = eventBusProvider.get();
-        EntityEvent.fire(entityEventBus, UserDocRefUtil.createDocRef(user), EntityAction.CLEAR_CACHE);
+        EntityEvent.fire(entityEventBus, UserDocRefUtil.createDocRef(userUuid), EntityAction.CLEAR_CACHE);
     }
 
     @Override
     public void onChange(final EntityEvent event) {
         final DocRef docRef = event.getDocRef();
-        final User user = UserDocRefUtil.createUser(docRef);
-        if (user != null) {
-            cache.invalidate(user);
+        if (docRef != null && UserDocRefUtil.USER.equals(docRef.getType())) {
+            cache.invalidate(docRef.getUuid());
         }
     }
 

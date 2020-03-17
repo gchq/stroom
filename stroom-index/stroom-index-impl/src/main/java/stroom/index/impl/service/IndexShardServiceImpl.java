@@ -80,7 +80,7 @@ public class IndexShardServiceImpl implements IndexShardService {
     @Override
     public Boolean delete(final IndexShard entity) {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            if (!securityContext.hasDocumentPermission(IndexDoc.DOCUMENT_TYPE, entity.getIndexUuid(), DocumentPermissionNames.DELETE)) {
+            if (!securityContext.hasDocumentPermission(entity.getIndexUuid(), DocumentPermissionNames.DELETE)) {
                 throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete index shard");
             }
 
