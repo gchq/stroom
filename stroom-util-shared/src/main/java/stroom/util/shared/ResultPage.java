@@ -261,11 +261,12 @@ public class ResultPage<T> implements Serializable {
                 return (accumulator, item) -> {
                     if (pageRequest == null
                             || (
-                            counter++ >= pageRequest.getOffset()
+                            counter >= pageRequest.getOffset()
                                     && accumulator.size() < pageRequest.getLength())) {
 
                         accumulator.add(item);
                     }
+                    counter++;
                 };
             }
 

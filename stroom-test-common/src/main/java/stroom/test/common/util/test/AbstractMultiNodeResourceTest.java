@@ -14,6 +14,7 @@ import org.glassfish.jersey.test.spi.TestContainerException;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +97,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         return ResourcePaths.buildAuthenticatedApiPath(getResourceBasePath());
     }
 
-    private String getBaseEndPointUrl(final TestNode node) {
+    public String getBaseEndPointUrl(final TestNode node) {
         return "http://localhost:" + node.getPort();
     }
 
@@ -249,6 +250,10 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
             .path(subPath);
     }
 
+    public static <T> T createNamedMock(final Class<T> clazz, final TestNode node) {
+        return Mockito.mock(clazz, clazz.getName() + "_" + node.getNodeName());
+    }
+
     private static class JerseyTestBuilder<R extends RestResource> {
 
         private final Supplier<R> resourceSupplier;
@@ -356,12 +361,12 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
 
         @Override
         public void onEvent(final ApplicationEvent event) {
-            LOGGER.info("ApplicationEvent on node {}", node.getNodeName());
+            LOGGER.debug("ApplicationEvent on node {}", node.getNodeName());
         }
 
         @Override
         public RequestEventListener onRequest(final RequestEvent requestEvent) {
-            LOGGER.info("{} to {} request received on node {} ",
+            LOGGER.debug("{} to {} request received on node {} ",
                 requestEvent.getType(), requestEvent.getUriInfo().getPath(), node.getNodeName());
 
             requestLog.add(requestEvent);
