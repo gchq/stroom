@@ -248,7 +248,7 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         LOGGER.info("Calling DELETE on {}{}, expecting {}",
             getResourceBasePath(), subPath, expectedResponse);
 
-        return doTest(Invocation.Builder::get,
+        return doTest(Invocation.Builder::delete,
             subPath,
             responseType,
             expectedResponse,
