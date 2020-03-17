@@ -22,6 +22,7 @@ import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.authentication.resources.authentication.v1.ExchangeAccessCodeRequest;
 import stroom.authentication.resources.authentication.v1.AuthenticationService;
 import stroom.authentication.resources.token.v1.TokenService;
 import stroom.security.api.SecurityContext;
@@ -98,7 +99,7 @@ class SecurityFilter implements Filter {
             final UiConfig uiConfig,
             final JWTService jwtService,
             final AuthenticationServiceClients authenticationServiceClients,
-            final stroom.authentication.resources.authentication.v1.AuthenticationService authenticationService,
+            final AuthenticationService authenticationService,
             final UserCache userCache,
             final SecurityContext securityContext) {
         this.config = config;

@@ -18,39 +18,29 @@
 
 package stroom.authentication.resources.token.v1;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.Date;
-import java.util.Optional;
 
-@ApiModel(description = "A request to create a token.")
 public class CreateTokenRequest {
 
     @NotNull
-    @ApiModelProperty(value = "The email of the user whom the token is for.", required = true)
     private String userEmail;
 
     @NotNull
     @Pattern(
             regexp = "^user$|^api$|^email_reset$",
             message = "tokenType must be one of: 'user', 'api', 'email_reset'")
-    @ApiModelProperty(value = "The type of token to create: e.g. user, api, or email_reset.", required = true)
     private String tokenType;
 
     @Nullable
-    @ApiModelProperty(value = "The expiry date for an API key.")
     private Date expiryDate;
 
     @Nullable
-    @ApiModelProperty(value = "Comments about the token.")
     private String comments;
 
     @Nullable
-    @ApiModelProperty(value = "Whether or not the new token should be enabled.")
     private boolean enabled = true;
 
     // Needed for serialisation

@@ -16,8 +16,8 @@
 
 package stroom.authentication;
 
-import stroom.authentication.resources.token.v1.Token;
 import stroom.authentication.resources.user.v1.User;
+import stroom.authentication.resources.token.v1.Token;
 
 public abstract class TokenResource_IT extends Dropwizard_IT {
     protected final String url = tokenManager.getRootUrl();

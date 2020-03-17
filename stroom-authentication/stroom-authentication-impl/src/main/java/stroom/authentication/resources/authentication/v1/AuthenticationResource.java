@@ -32,7 +32,6 @@ import stroom.authentication.resources.token.v1.TokenService;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
-import stroom.security.impl.ExchangeAccessCodeRequest;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.util.shared.RestResource;
 

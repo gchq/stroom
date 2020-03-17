@@ -1,20 +1,14 @@
 package stroom.authentication.resources.authentication.v1;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-@ApiModel(description = "A response to a request to change a user's password.")
 public class ChangePasswordResponse {
     @NotNull
-    @ApiModelProperty(value = "Whether or not the change password request has succeeded.", required = true)
     private boolean changeSucceeded = true;
 
     @NotNull
-    @ApiModelProperty(value = "If the request has failed, how has it failed?", required = true)
     private PasswordValidationFailureType[] failedOn;
 
     public boolean isChangeSucceeded() {
@@ -26,7 +20,7 @@ public class ChangePasswordResponse {
     }
 
     public static final class ChangePasswordResponseBuilder {
-        List<PasswordValidationFailureType> failedOn = new ArrayList<>();
+        public List<PasswordValidationFailureType> failedOn = new ArrayList<>();
         private boolean changeSucceeded;
 
         private ChangePasswordResponseBuilder() {

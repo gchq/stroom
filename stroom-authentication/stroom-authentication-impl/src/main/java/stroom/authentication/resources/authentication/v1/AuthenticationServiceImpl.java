@@ -18,7 +18,6 @@ import stroom.authentication.resources.token.v1.Token;
 import stroom.authentication.resources.user.v1.User;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
-import stroom.security.impl.ExchangeAccessCodeRequest;
 
 import javax.inject.Inject;
 import javax.validation.constraints.NotNull;
@@ -41,8 +40,8 @@ import static stroom.authentication.resources.authentication.v1.PasswordValidato
 import static stroom.authentication.resources.authentication.v1.PasswordValidator.validateLength;
 import static stroom.authentication.resources.authentication.v1.PasswordValidator.validateReuse;
 
-public class AuthenticationService {
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
+public class AuthenticationServiceImpl implements AuthenticationService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
     private static final String INVALID_CREDENTIALS_MESSAGE = "Invalid credentials";
     private static final String ACCOUNT_LOCKED_MESSAGE = "This account is locked. Please contact your administrator";
@@ -62,7 +61,7 @@ public class AuthenticationService {
     private SecurityContext securityContext;
 
     @Inject
-    public AuthenticationService(
+    public AuthenticationServiceImpl(
             final @NotNull AuthenticationConfig config,
             final TokenBuilderFactory tokenBuilderFactory,
             final TokenDao tokenDao,
@@ -81,6 +80,7 @@ public class AuthenticationService {
         this.securityContext = securityContext;
     }
 
+    @Override
     public Response.ResponseBuilder handleAuthenticationRequest(
             final String sessionId,
             final String nonce,
@@ -191,6 +191,7 @@ public class AuthenticationService {
         return responseBuilder;
     }
 
+    @Override
     public LoginResponse handleLogin(Credentials credentials, String sessionId) throws UnsupportedEncodingException {
         LoginResponse loginResponse;
 
@@ -273,6 +274,7 @@ public class AuthenticationService {
         return loginResponse;
     }
 
+    @Override
     public String logout(String sessionId, String redirectUrl) {
         sessionManager.get(sessionId).ifPresent(session -> {
             stroomEventLoggingService.createAction("Logout", "The user has logged out.");
@@ -287,6 +289,7 @@ public class AuthenticationService {
         return postLogoutUrl;
     }
 
+    @Override
     public boolean resetEmail(final String emailAddress) {
         stroomEventLoggingService.createAction("ResetPassword", "User reset their password");
         Optional<User> user = userDao.get(emailAddress);
@@ -299,6 +302,7 @@ public class AuthenticationService {
         }
     }
 
+    @Override
     public ChangePasswordResponse changePassword(ChangePasswordRequest changePasswordRequest) {
         List<PasswordValidationFailureType> failedOn = new ArrayList<>();
         final LoginResult loginResult = userDao.areCredentialsValid(changePasswordRequest.getEmail(), changePasswordRequest.getOldPassword());
@@ -320,6 +324,7 @@ public class AuthenticationService {
     }
 
 
+    @Override
     public ChangePasswordResponse resetPassword(ResetPasswordRequest request) {
         if (securityContext.isLoggedIn()) {
             final String loggedInUser = securityContext.getUserId();
@@ -341,6 +346,7 @@ public class AuthenticationService {
         } else return null;
     }
 
+    @Override
     public boolean needsPasswordChange(String email) {
         boolean userNeedsToChangePassword = userDao.needsPasswordChange(
                 email, config.getPasswordIntegrityChecksConfig().getMandatoryPasswordChangeDuration().getDuration(),
@@ -349,6 +355,7 @@ public class AuthenticationService {
         return userNeedsToChangePassword;
     }
 
+    @Override
     public PasswordValidationResponse isPasswordValid(PasswordValidationRequest passwordValidationRequest) {
         List<PasswordValidationFailureType> failedOn = new ArrayList<>();
 
@@ -370,6 +377,7 @@ public class AuthenticationService {
         return response;
     }
 
+    @Override
     public URI postAuthenticationRedirect(final String sessionId, final String clientId) {
         stroom.authentication.Session session = this.sessionManager.get(sessionId).get();
         RelyingParty relyingParty = session.getRelyingParty(clientId);
@@ -394,6 +402,7 @@ public class AuthenticationService {
         return result;
     }
 
+    @Override
     public Optional<String> exchangeAccessCode(ExchangeAccessCodeRequest exchangeAccessCodeRequest) {
         Optional<RelyingParty> relyingParty = this.sessionManager.getByAccessCode(exchangeAccessCodeRequest.getAccessCode());
         if (!relyingParty.isPresent()) {
