@@ -26,10 +26,13 @@ import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 
 @Api(value = "data - /v1")
 @Path("/data" + ResourcePaths.V1)
@@ -52,4 +55,13 @@ public interface DataResource extends RestResource, DirectRestService {
             value = "Upload data",
             response = ResourceGeneration.class)
     ResourceKey upload(UploadDataRequest request);
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    Response fetchData(
+            final @QueryParam("streamId") Long streamId,
+            final @QueryParam("streamsOffset") Long streamsOffset,
+            final @QueryParam("streamsLength") Long streamsLength,
+            final @QueryParam("pageOffset") Long pageOffset,
+            final @QueryParam("pageSize") Long pageSize);
 }

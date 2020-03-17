@@ -13,7 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.collection.mock.MockCollectionModule;
 import stroom.dictionary.impl.DictionaryModule;
-import stroom.dictionary.impl.NewUiDictionaryResource;
 import stroom.dictionary.impl.NewUiDictionaryResource2;
 import stroom.dictionary.impl.DictionaryStore;
 import stroom.docstore.api.Serialiser2Factory;
@@ -110,7 +109,6 @@ public class ProxyModule extends AbstractModule {
 
         HealthCheckBinder.create(binder())
                 .bind(ContentSyncService.class)
-                .bind(NewUiDictionaryResource.class)
                 .bind(NewUiDictionaryResource2.class)
                 .bind(FeedStatusResource.class)
                 .bind(ForwardStreamHandlerFactory.class)
@@ -130,7 +128,6 @@ public class ProxyModule extends AbstractModule {
                 .bind(ReceiveDataServlet.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(NewUiDictionaryResource.class)
                 .addBinding(NewUiDictionaryResource2.class)
                 .addBinding(ReceiveDataRuleSetResource.class)
                 .addBinding(ReceiveDataRuleSetResourceImpl.class)
