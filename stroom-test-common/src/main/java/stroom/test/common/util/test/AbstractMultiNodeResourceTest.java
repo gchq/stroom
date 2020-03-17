@@ -91,8 +91,16 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         this.testNodes = testNodes;
     }
 
+    /**
+     * @return The base path of the resource, e.g. /node/v1
+     */
     public abstract String getResourceBasePath();
 
+    /**
+     * This will be called during initNodes() and provides a means for the sub-class
+     * to provide a fully mocked out implementation of the rest resource. The arguments
+     * are provided so you can have mocks tailored to the node.
+     */
     public abstract R getRestResource(final TestNode node,
                                       final List<TestNode> allNodes,
                                       final Map<String, String> baseEndPointUrls);

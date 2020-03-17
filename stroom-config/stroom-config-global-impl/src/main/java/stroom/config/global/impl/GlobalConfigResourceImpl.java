@@ -140,7 +140,6 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
     }
 
     @Timed
-    @Override
     public OverrideValue<String> getYamlValueByName(final String propertyPath) {
         RestUtil.requireNonNull(propertyPath, "propertyPath not supplied");
         try {
@@ -168,9 +167,10 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
         final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
             + ResourcePaths.buildAuthenticatedApiPath(
             GlobalConfigResource.BASE_PATH,
-            GlobalConfigResource.PROPERTIES_SUB_PATH,
+            GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
             propertyName,
-            GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH);
+            GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
+            nodeName);
 
         try {
             // If this is the node that was contacted then just resolve it locally
