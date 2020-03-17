@@ -3,13 +3,19 @@ package stroom.authentication.resources.authentication.v1;
 import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.*;
+import stroom.authentication.EmailSender;
+import stroom.authentication.LoginResult;
+import stroom.authentication.RelyingParty;
+import stroom.authentication.Session;
+import stroom.authentication.SessionManager;
+import stroom.authentication.TokenBuilder;
+import stroom.authentication.TokenBuilderFactory;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.config.PasswordIntegrityChecksConfig;
-import stroom.authentication.resources.token.v1.Token;
 import stroom.authentication.dao.TokenDao;
-import stroom.authentication.resources.user.v1.User;
 import stroom.authentication.dao.UserDao;
+import stroom.authentication.resources.token.v1.Token;
+import stroom.authentication.resources.user.v1.User;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.ExchangeAccessCodeRequest;
@@ -30,8 +36,10 @@ import java.util.regex.Pattern;
 
 import static javax.ws.rs.core.Response.seeOther;
 import static javax.ws.rs.core.Response.status;
-import static stroom.authentication.resources.authentication.v1.PasswordValidator.*;
+import static stroom.authentication.resources.authentication.v1.PasswordValidator.validateAuthenticity;
 import static stroom.authentication.resources.authentication.v1.PasswordValidator.validateComplexity;
+import static stroom.authentication.resources.authentication.v1.PasswordValidator.validateLength;
+import static stroom.authentication.resources.authentication.v1.PasswordValidator.validateReuse;
 
 public class AuthenticationService {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationService.class);
@@ -429,7 +437,7 @@ public class AuthenticationService {
     }
 
     private String getPostAuthenticationCheckUrl(String clientId) {
-        String postAuthenticationCheckUrl = String.format("%s/%s/v1/postAuthenticationRedirect?clientId=%s",
+        String postAuthenticationCheckUrl = String.format("%s/%s/v1/noauth/postAuthenticationRedirect?clientId=%s",
                 this.config.getAdvertisedHost(), config.getOwnPath(), clientId);
         return postAuthenticationCheckUrl;
     }
