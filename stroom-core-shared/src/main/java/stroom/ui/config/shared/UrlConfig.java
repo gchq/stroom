@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.AbstractConfig;
 
+import java.util.Objects;
+
 @JsonPropertyOrder({"ui", "authenticationService", "users", "apiKeys", "indexVolumes", "indexVolumeGroups", "userAuthorisation", "groupAuthorisation", "editDoc", "changepassword", "kibana", "trackers", "annotations", "elastic", "documentPermissions"})
 @JsonInclude(Include.NON_NULL)
 public class UrlConfig extends AbstractConfig {
@@ -266,4 +268,30 @@ public class UrlConfig extends AbstractConfig {
                 '}';
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final UrlConfig urlConfig = (UrlConfig) o;
+        return Objects.equals(ui, urlConfig.ui) &&
+            Objects.equals(authenticationService, urlConfig.authenticationService) &&
+            Objects.equals(users, urlConfig.users) &&
+            Objects.equals(apiKeys, urlConfig.apiKeys) &&
+            Objects.equals(indexVolumes, urlConfig.indexVolumes) &&
+            Objects.equals(indexVolumeGroups, urlConfig.indexVolumeGroups) &&
+            Objects.equals(userAuthorisation, urlConfig.userAuthorisation) &&
+            Objects.equals(groupAuthorisation, urlConfig.groupAuthorisation) &&
+            Objects.equals(editDoc, urlConfig.editDoc) &&
+            Objects.equals(changepassword, urlConfig.changepassword) &&
+            Objects.equals(kibana, urlConfig.kibana) &&
+            Objects.equals(trackers, urlConfig.trackers) &&
+            Objects.equals(annotations, urlConfig.annotations) &&
+            Objects.equals(elastic, urlConfig.elastic) &&
+            Objects.equals(documentPermissions, urlConfig.documentPermissions);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(ui, authenticationService, users, apiKeys, indexVolumes, indexVolumeGroups, userAuthorisation, groupAuthorisation, editDoc, changepassword, kibana, trackers, annotations, elastic, documentPermissions);
+    }
 }

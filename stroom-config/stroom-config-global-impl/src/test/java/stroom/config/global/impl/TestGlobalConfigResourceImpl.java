@@ -230,14 +230,61 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
     @Test
     void create() {
+
+        initNodes();
+
+        final String subPath = "";
+
+        ConfigProperty newConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
+
+        ConfigProperty expectedConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
+        expectedConfigProperty.setId(1);
+        expectedConfigProperty.setVersion(1);
+
+        final ConfigProperty createdConfigProperty = doPostTest(
+            subPath,
+            newConfigProperty,
+            ConfigProperty.class,
+            expectedConfigProperty);
     }
 
     @Test
     void update() {
+
+        initNodes();
+
+        ConfigProperty existingConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
+        existingConfigProperty.setId(1);
+        existingConfigProperty.setVersion(1);
+
+        ConfigProperty expectedConfigProperty = new ConfigProperty(PropertyPath.fromPathString("a.new.config.prop"));
+        expectedConfigProperty.setId(1);
+        expectedConfigProperty.setVersion(2);
+
+        final String subPath = ResourcePaths.buildPath(
+            GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
+            existingConfigProperty.getNameAsString(),
+            GlobalConfigResource.DB_OVERRIDE_VALUE_SUB_PATH);
+
+        final ConfigProperty createdConfigProperty = doPutTest(
+            subPath,
+            existingConfigProperty,
+            ConfigProperty.class,
+            expectedConfigProperty);
     }
 
     @Test
     void fetchUiConfig() {
+       initNodes();
+
+       String subPath = GlobalConfigResource.FETCH_UI_CONFIG_SUB_PATH;
+       UiConfig expectedResponse = new UiConfig();
+
+        final UiConfig listConfigResponse = doGetTest(
+            subPath,
+            UiConfig.class,
+            expectedResponse);
+
     }
 
     @Override
@@ -274,6 +321,14 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                     })
                     .filter(configProperty -> configProperty.getName().equals(propertyPath))
                     .findFirst();
+            });
+
+        when(globalConfigService.update(Mockito.any()))
+            .thenAnswer(invocation -> {
+                ConfigProperty configProperty = invocation.getArgument(0);
+                configProperty.setId(1);
+                configProperty.setVersion(configProperty.getVersion() == null ? 1 : configProperty.getVersion() + 1);
+                return configProperty;
             });
 
         globalConfigServiceMap.put(node.getNodeName(), globalConfigService);

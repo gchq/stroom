@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
+import java.util.Objects;
 
 @Singleton
 @JsonPropertyOrder({"enabled", "chooseOnStartup", "managerTitle", "editorTitle", "editorBody"})
@@ -103,5 +104,33 @@ public class ActivityConfig extends AbstractConfig {
 
     public void setEditorBody(final String editorBody) {
         this.editorBody = editorBody;
+    }
+
+    @Override
+    public String toString() {
+        return "ActivityConfig{" +
+            "enabled=" + enabled +
+            ", chooseOnStartup=" + chooseOnStartup +
+            ", managerTitle='" + managerTitle + '\'' +
+            ", editorTitle='" + editorTitle + '\'' +
+            ", editorBody='" + editorBody + '\'' +
+            '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ActivityConfig that = (ActivityConfig) o;
+        return enabled == that.enabled &&
+            chooseOnStartup == that.chooseOnStartup &&
+            Objects.equals(managerTitle, that.managerTitle) &&
+            Objects.equals(editorTitle, that.editorTitle) &&
+            Objects.equals(editorBody, that.editorBody);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(enabled, chooseOnStartup, managerTitle, editorTitle, editorBody);
     }
 }

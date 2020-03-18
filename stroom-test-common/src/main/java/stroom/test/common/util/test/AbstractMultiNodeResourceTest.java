@@ -209,6 +209,46 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
             builderMethods);
     }
 
+    public  <T_REQ, T_RESP> T_RESP doPostTest(final String subPath,
+                                              final T_REQ requestEntity,
+                                              final Class<T_RESP> responseType,
+                                              final T_RESP expectedResponse,
+                                              final Function<WebTarget, WebTarget>... builderMethods) {
+        LOGGER.info("Calling POST on {}{}, expecting {}",
+            getResourceBasePath(), subPath, expectedResponse);
+
+        return doTest(builder -> builder.post(Entity.json(requestEntity)),
+            subPath,
+            responseType,
+            expectedResponse,
+            builderMethods);
+    }
+
+    public  <T_REQ> void doPostTest(final String subPath,
+                                    final T_REQ requestEntity,
+                                    final Function<WebTarget, WebTarget>... builderMethods) {
+
+        LOGGER.info("Calling POST on {}{}, passing {}",
+            getResourceBasePath(), subPath, requestEntity);
+
+        WebTarget webTarget = getJerseyTest()
+            .target(getResourceBasePath())
+            .path(subPath);
+
+        for (Function<WebTarget, WebTarget> method : builderMethods) {
+            webTarget = method.apply(webTarget);
+        }
+
+        Invocation.Builder builder = webTarget
+            .request();
+
+        Response response = builder.post(Entity.json(requestEntity));
+
+        if (! isSuccessful(response.getStatus())) {
+            throw new RuntimeException(LogUtil.message("Error: {} {}", response.getStatus(), response));
+        }
+    }
+
     public  <T_REQ, T_RESP> T_RESP doPutTest(final String subPath,
                                              final T_REQ requestEntity,
                                              final Class<T_RESP> responseType,
