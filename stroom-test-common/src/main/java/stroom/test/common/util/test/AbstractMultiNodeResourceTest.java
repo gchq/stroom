@@ -137,9 +137,28 @@ public abstract class AbstractMultiNodeResourceTest<R extends RestResource> {
         nodeToListenerMap.clear();
     }
 
+    /**
+     * Initialises all nodes the getTestNodes()
+     * Calls getRestResource() for each node initialised.
+     */
     protected void initNodes() {
+        initNodes(Integer.MAX_VALUE);
+    }
 
-        testNodes.forEach(node -> {
+    /**
+     * Initialises the fist node in getTestNodes()
+     * For use when your test does not require the calling out to other nodes.
+     * Calls getRestResource() for the node being initialised.
+     */
+    protected void initSingleNode() {
+        initNodes(1);
+    }
+
+    private void initNodes(final int maxNodeCount) {
+
+        testNodes.stream()
+            .limit(maxNodeCount)
+            .forEach(node -> {
 
             final String baseEndPointUrl = getBaseEndPointUrl(node);
 

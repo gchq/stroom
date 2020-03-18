@@ -22,12 +22,12 @@ import org.slf4j.LoggerFactory;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.job.shared.JobNodeInfo;
+import stroom.job.shared.JobNodeListResponse;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.scheduler.Scheduler;
 import stroom.util.scheduler.SimpleCron;
-import stroom.util.shared.ResultPage;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
@@ -67,8 +67,10 @@ class JobNodeService {
         });
     }
 
-    ResultPage<JobNode> find(final FindJobNodeCriteria findJobNodeCriteria) {
-        return securityContext.secureResult(PermissionNames.MANAGE_JOBS_PERMISSION, () -> jobNodeDao.find(findJobNodeCriteria));
+    JobNodeListResponse find(final FindJobNodeCriteria findJobNodeCriteria) {
+        return securityContext.secureResult(
+            PermissionNames.MANAGE_JOBS_PERMISSION,
+            () -> jobNodeDao.find(findJobNodeCriteria));
     }
 
     JobNodeInfo getInfo(final String jobName) {
