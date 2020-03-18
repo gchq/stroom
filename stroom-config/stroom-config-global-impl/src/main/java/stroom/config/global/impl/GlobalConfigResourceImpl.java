@@ -10,7 +10,6 @@ import stroom.config.global.shared.OverrideValue;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
-import stroom.security.api.SecurityContext;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.HasHealthCheck;
 import stroom.util.jersey.WebTargetFactory;
@@ -34,7 +33,6 @@ import java.util.function.Predicate;
 
 public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealthCheck {
     private final GlobalConfigService globalConfigService;
-    private final SecurityContext securityContext;
     private final NodeService nodeService;
     private final UiConfig uiConfig;
     private final NodeInfo nodeInfo;
@@ -42,13 +40,11 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
 
     @Inject
     GlobalConfigResourceImpl(final GlobalConfigService globalConfigService,
-                             final SecurityContext securityContext,
                              final NodeService nodeService,
                              final UiConfig uiConfig,
                              final NodeInfo nodeInfo,
                              final WebTargetFactory webTargetFactory) {
         this.globalConfigService = Objects.requireNonNull(globalConfigService);
-        this.securityContext = Objects.requireNonNull(securityContext);
         this.nodeService = Objects.requireNonNull(nodeService);
         this.uiConfig = uiConfig;
         this.nodeInfo = Objects.requireNonNull(nodeInfo);
@@ -60,21 +56,19 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
     public ListConfigResponse list(final String partialName,
                                    final long offset,
                                    final Integer size) {
-        return securityContext.secureResult(() -> {
-            try {
-                final ListConfigResponse resultList = globalConfigService.list(
-                    buildPredicate(partialName),
-                    new PageRequest(offset, size != null
-                        ? size
-                        : Integer.MAX_VALUE));
+        try {
+            final ListConfigResponse resultList = globalConfigService.list(
+                buildPredicate(partialName),
+                new PageRequest(offset, size != null
+                    ? size
+                    : Integer.MAX_VALUE));
 
-                return resultList;
-            } catch (final RuntimeException e) {
-                throw new ServerErrorException(e.getMessage() != null
-                        ? e.getMessage()
-                        : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
-            }
-        });
+            return resultList;
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(e.getMessage() != null
+                ? e.getMessage()
+                : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
     @Timed
@@ -134,36 +128,31 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
     @Override
     public ConfigProperty getPropertyByName(final String propertyPath) {
         RestUtil.requireNonNull(propertyPath, "propertyPath not supplied");
-        return securityContext.secureResult(() -> {
-            try {
-                final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(
-                        PropertyPath.fromPathString(propertyPath));
-                return optConfigProperty.orElseThrow(NotFoundException::new);
-            } catch (final RuntimeException e) {
-                throw new ServerErrorException(e.getMessage() != null
-                        ? e.getMessage()
-                        : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
-            }
-        });
+        try {
+            final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(
+                PropertyPath.fromPathString(propertyPath));
+            return optConfigProperty.orElseThrow(NotFoundException::new);
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(e.getMessage() != null
+                ? e.getMessage()
+                : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
     @Timed
-    @Override
     public OverrideValue<String> getYamlValueByName(final String propertyPath) {
         RestUtil.requireNonNull(propertyPath, "propertyPath not supplied");
-        return securityContext.secureResult(() -> {
-            try {
-                final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(
-                        PropertyPath.fromPathString(propertyPath));
-                return optConfigProperty
-                        .map(ConfigProperty::getYamlOverrideValue)
-                        .orElseThrow(() -> new NotFoundException(LogUtil.message("Property {} not found", propertyPath)));
-            } catch (final RuntimeException e) {
-                throw new ServerErrorException(e.getMessage() != null
-                        ? e.getMessage()
-                        : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
-            }
-        });
+        try {
+            final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(
+                PropertyPath.fromPathString(propertyPath));
+            return optConfigProperty
+                .map(ConfigProperty::getYamlOverrideValue)
+                .orElseThrow(() -> new NotFoundException(LogUtil.message("Property {} not found", propertyPath)));
+        } catch (final RuntimeException e) {
+            throw new ServerErrorException(e.getMessage() != null
+                ? e.getMessage()
+                : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
+        }
     }
 
     @Timed
@@ -178,9 +167,10 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
         final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
             + ResourcePaths.buildAuthenticatedApiPath(
             GlobalConfigResource.BASE_PATH,
-            GlobalConfigResource.PROPERTIES_SUB_PATH,
+            GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
             propertyName,
-            GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH);
+            GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
+            nodeName);
 
         try {
             // If this is the node that was contacted then just resolve it locally

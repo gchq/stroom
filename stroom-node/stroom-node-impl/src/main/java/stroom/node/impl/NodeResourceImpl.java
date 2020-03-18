@@ -37,6 +37,7 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
+import javax.ws.rs.BadRequestException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -110,8 +111,10 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
         try {
             final long now = System.currentTimeMillis();
 
-            // If this is the node that was contacted then just return our local info.
-            if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+            if (nodeName == null) {
+                throw new BadRequestException("nodeName not supplied");
+            } else if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+                // If this is the node that was contacted then just return our local info.
                 clusterNodeInfo = clusterNodeManager.getClusterNodeInfo();
 
             } else {
@@ -119,16 +122,20 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
                     + ResourcePaths.buildAuthenticatedApiPath(
                     NodeResource.BASE_PATH,
                     nodeName);
-                final Response response = webTargetFactory
-                        .create(url)
-                        .request(MediaType.APPLICATION_JSON)
-                        .get();
-                if (response.getStatus() != 200) {
-                    throw new WebApplicationException(response);
-                }
-                clusterNodeInfo = response.readEntity(ClusterNodeInfo.class);
-                if (clusterNodeInfo == null) {
-                    throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
+                try {
+                    final Response response = webTargetFactory
+                            .create(url)
+                            .request(MediaType.APPLICATION_JSON)
+                            .get();
+                    if (response.getStatus() != 200) {
+                        throw new WebApplicationException(response);
+                    }
+                    clusterNodeInfo = response.readEntity(ClusterNodeInfo.class);
+                    if (clusterNodeInfo == null) {
+                        throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
+                    }
+                } catch (RuntimeException e) {
+                    throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
                 }
             }
 
@@ -153,7 +160,9 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
         final long now = System.currentTimeMillis();
 
         // If this is the node that was contacted then just return the latency we have incurred within this method.
-        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+        if (nodeName == null) {
+            throw new BadRequestException("nodeName not supplied");
+        } else if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             return System.currentTimeMillis() - now;
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
@@ -181,11 +190,25 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
 
     @Override
     public void setPriority(final String nodeName, final Integer priority) {
+        if (nodeName == null) {
+            throw new BadRequestException("nodeName not supplied");
+        }
+        if (priority == null) {
+            throw new BadRequestException("priority not supplied");
+        }
+
         modifyNode(nodeName, node -> node.setPriority(priority));
     }
 
     @Override
     public void setEnabled(final String nodeName, final Boolean enabled) {
+        if (nodeName == null) {
+            throw new BadRequestException("nodeName not supplied");
+        }
+        if (enabled == null) {
+            throw new BadRequestException("enabled not supplied");
+        }
+
         modifyNode(nodeName, node -> node.setEnabled(enabled));
     }
 

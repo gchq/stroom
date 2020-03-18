@@ -40,14 +40,14 @@ class SessionListServlet extends HttpServlet implements IsServlet {
 
     private static final Set<String> PATH_SPECS = Set.of("/sessionList");
 
-    private final TaskManager taskManager;
     private final SecurityContext securityContext;
+    private final SessionListService sessionListService;
 
     @Inject
-    SessionListServlet(final TaskManager taskManager,
-                       final SecurityContext securityContext) {
-        this.taskManager = taskManager;
+    SessionListServlet(final SecurityContext securityContext,
+                       final SessionListService sessionListService) {
         this.securityContext = securityContext;
+        this.sessionListService = sessionListService;
     }
 
     /**
@@ -58,6 +58,7 @@ class SessionListServlet extends HttpServlet implements IsServlet {
      */
     @Override
     public void service(final ServletRequest req, final ServletResponse res) {
+        // TODO not sure this should be here as sessionList should be an authenticated servlet
         securityContext.insecure(() -> {
             try {
                 super.service(req, res);
@@ -75,9 +76,7 @@ class SessionListServlet extends HttpServlet implements IsServlet {
 
         final List<List<String>> table = new ArrayList<>();
 
-        final SessionListTask sessionListTask = new SessionListTask();
-        final ResultPage<SessionDetails> sessionDetailsList = taskManager.exec(sessionListTask);
-        for (final SessionDetails sessionDetails : sessionDetailsList.getValues()) {
+        sessionListService.listSessions().forEach(sessionDetails -> {
             final ArrayList<String> row = new ArrayList<>();
             row.add(DateUtil.createNormalDateTimeString(sessionDetails.getLastAccessedMs()));
             row.add(DateUtil.createNormalDateTimeString(sessionDetails.getCreateMs()));
@@ -85,7 +84,7 @@ class SessionListServlet extends HttpServlet implements IsServlet {
             row.add(sessionDetails.getNodeName());
             row.add("<span class=\"agent\">" + sessionDetails.getLastAccessedAgent() + "</span>");
             table.add(row);
-        }
+        });
 
         table.sort((l1, l2) -> l2.get(0).compareTo(l1.get(0)));
 

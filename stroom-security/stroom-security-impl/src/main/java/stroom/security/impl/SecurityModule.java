@@ -75,7 +75,8 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(AuthorisationResource.class)
                 .addBinding(DocPermissionResourceImpl.class)
                 .addBinding(DocumentPermissionResourceImpl.class)
-                .addBinding(UserResourceImpl.class)
-                .addBinding(UserAppPermissionResourceImpl.class);
+                .addBinding(SessionResourceImpl.class)
+                .addBinding(UserAppPermissionResourceImpl.class)
+                .addBinding(UserResourceImpl.class);
     }
 }
