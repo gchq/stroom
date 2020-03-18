@@ -36,6 +36,7 @@ import javax.inject.Singleton;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
+import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.util.Objects;
@@ -122,6 +123,10 @@ class SessionListListener implements HttpSessionListener, SessionListService {
                     .queryParam(SessionResource.NODE_NAME_PARAM, nodeName)
                     .request(MediaType.APPLICATION_JSON)
                     .get();
+
+                if (response.getStatus() != 200) {
+                    throw new WebApplicationException(response);
+                }
 
                 sessionList = response.readEntity(SessionListResponse.class);
             } catch (Throwable e) {
