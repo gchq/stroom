@@ -52,7 +52,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         record.set(INDEX_VOLUME.PATH, indexVolume.getPath());
         record.set(INDEX_VOLUME.NODE_NAME, indexVolume.getNodeName());
         record.set(INDEX_VOLUME.INDEX_VOLUME_GROUP_NAME, indexVolume.getIndexVolumeGroupName());
-        if ( indexVolume.getState() != null) {
+        if (indexVolume.getState() != null) {
             record.set(INDEX_VOLUME.STATE, indexVolume.getState().getPrimitiveValue());
         }
         record.set(INDEX_VOLUME.BYTES_LIMIT, indexVolume.getBytesLimit());
@@ -81,7 +81,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
 
     @Override
     public IndexVolume update(IndexVolume indexVolume) {
-       return genericDao.update(indexVolume);
+        return genericDao.update(indexVolume);
     }
 
     @Override
@@ -113,5 +113,17 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                 .and(INDEX_VOLUME.NODE_NAME.eq(nodeName))
                 .fetch()
                 .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply));
+    }
+
+    @Override
+    public void updateVolumeState(final int id, final Long updateTimeMs, final Long bytesUsed, final Long bytesFree, final Long bytesTotal) {
+        JooqUtil.context(indexDbConnProvider, context -> context
+                .update(INDEX_VOLUME)
+                .set(INDEX_VOLUME.UPDATE_TIME_MS, updateTimeMs)
+                .set(INDEX_VOLUME.BYTES_USED, bytesUsed)
+                .set(INDEX_VOLUME.BYTES_FREE, bytesFree)
+                .set(INDEX_VOLUME.BYTES_TOTAL, bytesTotal)
+                .where(INDEX_VOLUME.ID.eq(id))
+                .execute());
     }
 }

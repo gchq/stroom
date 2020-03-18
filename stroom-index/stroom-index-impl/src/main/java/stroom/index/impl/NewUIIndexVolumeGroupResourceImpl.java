@@ -1,18 +1,17 @@
-package stroom.index.impl.api;
+package stroom.index.impl;
 
-import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.shared.IndexVolumeGroup;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-public class IndexVolumeGroupResourceImpl implements IndexVolumeGroupResource {
+public class NewUIIndexVolumeGroupResourceImpl implements NewUIIndexVolumeGroupResource {
 
     private final IndexVolumeGroupService indexVolumeGroupService;
 
     @Inject
-    public IndexVolumeGroupResourceImpl(final IndexVolumeGroupService indexVolumeGroupService) {
+    public NewUIIndexVolumeGroupResourceImpl(final IndexVolumeGroupService indexVolumeGroupService) {
         this.indexVolumeGroupService = indexVolumeGroupService;
     }
 

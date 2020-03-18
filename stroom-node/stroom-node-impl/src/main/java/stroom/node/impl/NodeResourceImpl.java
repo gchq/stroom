@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 // TODO : @66 add event logging
 class NodeResourceImpl implements NodeResource, HasHealthCheck {
@@ -69,7 +70,26 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
     }
 
     @Override
-    public FetchNodeStatusResponse list() {
+    public List<String> listAllNodes() {
+        return find().getValues()
+                .stream()
+                .map(NodeStatusResult::getNode)
+                .map(Node::getName)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> listEnabledNodes() {
+        return find().getValues()
+                .stream()
+                .map(NodeStatusResult::getNode)
+                .filter(Node::isEnabled)
+                .map(Node::getName)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public FetchNodeStatusResponse find() {
         FetchNodeStatusResponse response = null;
 
         final Query query = new Query();
@@ -116,9 +136,9 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
 
             } else {
                 String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
-                    NodeResource.BASE_PATH,
-                    nodeName);
+                        + ResourcePaths.buildAuthenticatedApiPath(
+                        NodeResource.BASE_PATH,
+                        nodeName);
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
@@ -157,16 +177,16 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
             return System.currentTimeMillis() - now;
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
-                + ResourcePaths.buildAuthenticatedApiPath(
-                NodeResource.BASE_PATH,
-                nodeName,
-                "/ping");
+                    + ResourcePaths.buildAuthenticatedApiPath(
+                    NodeResource.BASE_PATH,
+                    nodeName,
+                    "/ping");
 
             try {
                 final Response response = webTargetFactory
-                    .create(url)
-                    .request(MediaType.APPLICATION_JSON)
-                    .get();
+                        .create(url)
+                        .request(MediaType.APPLICATION_JSON)
+                        .get();
                 if (response.getStatus() != 200) {
                     throw new WebApplicationException(response);
                 }

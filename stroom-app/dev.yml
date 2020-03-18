@@ -118,8 +118,6 @@ appConfig:
       authenticationService: ${STROOM_AUTHENTICATION_SERVICE_URL:-https://<<<IP_ADDRESS>>>/api/authentication/v1}
       users: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/users
       apiKeys: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/apiKeys
-      indexVolumes: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/indexing/volumes
-      indexVolumeGroups: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/indexing/groups
       changepassword: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/changepassword
   volumes:
     createDefaultOnStart: false

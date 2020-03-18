@@ -19,9 +19,9 @@ package stroom.index;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.index.impl.CreateVolumeDTO;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
+import stroom.index.shared.CreateVolumeRequest;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.node.impl.NodeConfig;
@@ -87,11 +87,11 @@ class VolumeCreatorForTesting implements VolumeCreator {
 
                 if (!found) {
                     Files.createDirectories(Paths.get(volume.getPath()));
-                    CreateVolumeDTO createVolumeDTO = new CreateVolumeDTO();
-                    createVolumeDTO.setNodeName(volume.getNodeName());
-                    createVolumeDTO.setPath(volume.getPath());
-                    createVolumeDTO.setIndexVolumeGroupName(indexVolumeGroup.getName());
-                    volumeService.create(createVolumeDTO);
+                    CreateVolumeRequest createVolumeRequest = new CreateVolumeRequest(
+                            volume.getNodeName(),
+                            volume.getPath(),
+                            indexVolumeGroup.getName());
+                    volumeService.create(createVolumeRequest);
                 }
             }
 

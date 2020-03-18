@@ -1,4 +1,4 @@
-package stroom.index.impl.api;
+package stroom.index.impl;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -22,7 +22,7 @@ import java.util.Set;
 @Api(value = "index - /v1")
 @Path("/index" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
-public interface IndexResource extends RestResource {
+public interface NewUIIndexResource extends RestResource {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/list")

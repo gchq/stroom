@@ -37,7 +37,7 @@ public interface TaskResource extends RestResource, DirectRestService {
     String BASE_PATH = "/task" + ResourcePaths.V1;
 
     @GET
-    @Path("/{nodeName}")
+    @Path("/list/{nodeName}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -46,7 +46,7 @@ public interface TaskResource extends RestResource, DirectRestService {
     TaskProgressResponse list(@PathParam("nodeName") String nodeName);
 
     @POST
-    @Path("/{nodeName}")
+    @Path("/find/{nodeName}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -55,7 +55,7 @@ public interface TaskResource extends RestResource, DirectRestService {
     TaskProgressResponse find(@PathParam("nodeName") String nodeName, FindTaskProgressRequest request);
 
     @GET
-    @Path("{nodeName}/user")
+    @Path("/user/{nodeName}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -64,7 +64,7 @@ public interface TaskResource extends RestResource, DirectRestService {
     TaskProgressResponse userTasks(@PathParam("nodeName") String nodeName);
 
     @POST
-    @Path("/{nodeName}/terminate")
+    @Path("/terminate/{nodeName}")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(

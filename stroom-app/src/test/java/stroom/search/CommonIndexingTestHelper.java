@@ -20,6 +20,7 @@ package stroom.search;
 import stroom.core.dataprocess.PipelineDataProcessorTaskExecutor;
 import stroom.docref.DocRef;
 import stroom.index.impl.IndexShardManager;
+import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.processor.api.DataProcessorTaskExecutor;
 import stroom.test.CommonTranslationTestHelper;
@@ -107,13 +108,13 @@ public class CommonIndexingTestHelper {
         }
 
         // Flush all newly created index shards.
-        indexShardManager.findFlush(new FindIndexShardCriteria());
+        indexShardManager.performAction(new FindIndexShardCriteria(), IndexShardAction.FLUSH);
     }
 
     public int flushIndex() {
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         criteria.getIndexUuidSet().setMatchAll(true);
-        indexShardManager.findFlush(criteria);
+        indexShardManager.performAction(criteria, IndexShardAction.FLUSH);
 
         return 1;
     }

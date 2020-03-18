@@ -3,6 +3,7 @@ package stroom.index.impl;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexShardResultPage;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,7 +21,7 @@ public interface IndexShardDao {
      * @param criteria The details of the query
      * @return Index Shards matching the criteria
      */
-    List<IndexShard> find(FindIndexShardCriteria criteria);
+    IndexShardResultPage find(FindIndexShardCriteria criteria);
 
     /**
      * Create a new Index Shard

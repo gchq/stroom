@@ -40,6 +40,7 @@ import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexFields;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexShardResultPage;
 import stroom.search.impl.shard.IndexShardSearcher;
 import stroom.search.impl.shard.MaxHitCollector;
 import stroom.test.AbstractCoreIntegrationTest;
@@ -99,12 +100,12 @@ class TestBasicSearch extends AbstractCoreIntegrationTest {
 
         final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
         criteria.getIndexUuidSet().add(indexRef.getUuid());
-        final List<IndexShard> shards = indexShardService.find(criteria);
+        final IndexShardResultPage shards = indexShardService.find(criteria);
 
         // Open readers and add reader searcher to the multi searcher.
         final IndexShardSearcher[] indexShardSearchers = new IndexShardSearcher[shards.size()];
         int i = 0;
-        for (final IndexShard indexShard : shards) {
+        for (final IndexShard indexShard : shards.getValues()) {
             final IndexShardSearcher indexShardSearcher = new IndexShardSearcher(indexShard);
             indexShardSearchers[i++] = indexShardSearcher;
         }

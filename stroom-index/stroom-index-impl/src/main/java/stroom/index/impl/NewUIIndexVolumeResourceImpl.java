@@ -1,19 +1,17 @@
-package stroom.index.impl.api;
+package stroom.index.impl;
 
-import stroom.index.impl.CreateVolumeDTO;
-import stroom.index.impl.IndexVolumeService;
-import stroom.index.impl.UpdateVolumeDTO;
+import stroom.index.shared.CreateVolumeRequest;
 import stroom.index.shared.IndexVolume;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.util.List;
 
-public class IndexVolumeResourceImpl implements IndexVolumeResource {
+public class NewUIIndexVolumeResourceImpl implements NewUIIndexVolumeResource {
     private final IndexVolumeService indexVolumeService;
 
     @Inject
-    public IndexVolumeResourceImpl(final IndexVolumeService indexVolumeService) {
+    public NewUIIndexVolumeResourceImpl(final IndexVolumeService indexVolumeService) {
         this.indexVolumeService = indexVolumeService;
     }
 
@@ -30,13 +28,13 @@ public class IndexVolumeResourceImpl implements IndexVolumeResource {
     }
 
     @Override
-    public Response create(final CreateVolumeDTO createVolumeDTO) {
-        final IndexVolume indexVolume = indexVolumeService.create(createVolumeDTO);
+    public Response create(final CreateVolumeRequest createVolumeRequest) {
+        final IndexVolume indexVolume = indexVolumeService.create(createVolumeRequest);
         return Response.ok(indexVolume).build();
     }
 
     @Override
-    public Response update(final UpdateVolumeDTO updateVolumeDTO) {
+    public Response update(final IndexVolume updateVolumeDTO) {
         final var updatedIndexVolume = indexVolumeService.update(updateVolumeDTO);
         return Response.ok(updatedIndexVolume).build();
     }

@@ -1,9 +1,9 @@
-package stroom.index.impl.api;
+package stroom.index.impl;
 
 
 import io.swagger.annotations.Api;
-import stroom.index.impl.CreateVolumeDTO;
-import stroom.index.impl.UpdateVolumeDTO;
+import stroom.index.shared.CreateVolumeRequest;
+import stroom.index.shared.IndexVolume;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
@@ -20,7 +20,7 @@ import javax.ws.rs.core.Response;
 @Api(value = "stroom-index volumes - /v1")
 @Path("/stroom-index/volume" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
-public interface IndexVolumeResource extends RestResource {
+public interface NewUIIndexVolumeResource extends RestResource {
 
     @GET
     Response getAll();
@@ -30,10 +30,10 @@ public interface IndexVolumeResource extends RestResource {
     Response getById(@PathParam("id") int id);
 
     @POST
-    Response create(CreateVolumeDTO createVolumeDTO);
+    Response create(CreateVolumeRequest createVolumeRequest);
 
     @PUT
-    Response update(UpdateVolumeDTO updateVolumeDTO);
+    Response update(IndexVolume updateVolumeDTO);
 
     @DELETE
     @Path("{id}")

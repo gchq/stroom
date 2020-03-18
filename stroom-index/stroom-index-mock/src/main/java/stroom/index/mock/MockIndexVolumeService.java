@@ -17,22 +17,20 @@
 
 package stroom.index.mock;
 
-import stroom.index.impl.CreateVolumeDTO;
 import stroom.index.impl.IndexVolumeService;
-import stroom.index.impl.UpdateVolumeDTO;
+import stroom.index.shared.CreateVolumeRequest;
 import stroom.index.shared.IndexVolume;
 
 import java.util.List;
 
 public class MockIndexVolumeService implements IndexVolumeService {
-
     @Override
-    public IndexVolume create(CreateVolumeDTO createVolumeDTO) {
+    public IndexVolume create(CreateVolumeRequest createVolumeRequest) {
         return null;
     }
 
     @Override
-    public IndexVolume update(UpdateVolumeDTO updateVolumeDTO) {
+    public IndexVolume update(IndexVolume updateVolumeDTO) {
         return null;
     }
 
@@ -42,8 +40,8 @@ public class MockIndexVolumeService implements IndexVolumeService {
     }
 
     @Override
-    public void delete(int id) {
-
+    public Boolean delete(int id) {
+        return true;
     }
 
     @Override
@@ -51,33 +49,7 @@ public class MockIndexVolumeService implements IndexVolumeService {
         return null;
     }
 
-//    @Override
-//    public void addVolumeToGroup(int volumeId, String name) {
-//
-//    }
-//
-//    @Override
-//    public void removeVolumeFromGroup(int volumeId, String name) {
-//
-//    }
-//
-//    @Override
-//    public List<IndexVolume> getVolumesInGroup(String groupName) {
-//        return Collections.emptyList();
-//    }
-//
-//    @Override
-//    public List<IndexVolumeGroup> getGroupsForVolume(int id) {
-//        return Collections.emptyList();
-//    }
-
     @Override
-    public void clear() {
-
-    }
-
-    @Override
-    public void flush() {
-
+    public void rescan() {
     }
 }

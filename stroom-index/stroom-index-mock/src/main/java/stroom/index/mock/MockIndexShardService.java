@@ -17,13 +17,13 @@
 
 package stroom.index.mock;
 
-
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardUtil;
 import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexShardResultPage;
 import stroom.index.shared.IndexVolume;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Clearable;
@@ -89,7 +89,7 @@ public class MockIndexShardService
     }
 
     @Override
-    public List<IndexShard> find(final FindIndexShardCriteria criteria) {
+    public IndexShardResultPage find(final FindIndexShardCriteria criteria) {
         final List<IndexShard> results = new ArrayList<>();
         for (final IndexShard indexShard : map.values()) {
             boolean include = true;
@@ -111,12 +111,12 @@ public class MockIndexShardService
             }
         }
 
-        return results;
+        return new IndexShardResultPage(results);
     }
 
     @Override
-    public Boolean delete(IndexShard entity) {
-        if (map.remove(entity.getId()) != null) {
+    public Boolean delete(IndexShard indexShard) {
+        if (map.remove(indexShard.getId()) != null) {
             return Boolean.TRUE;
         } else {
             return Boolean.FALSE;

@@ -17,29 +17,20 @@
 package stroom.index.impl;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.multibindings.Multibinder;
 import stroom.docstore.api.DocumentActionHandlerBinder;
-import stroom.util.entity.EntityEvent;
 import stroom.explorer.api.ExplorerActionHandler;
 import stroom.importexport.api.ImportExportActionHandler;
-import stroom.index.impl.api.IndexResourceImpl;
-import stroom.index.impl.api.IndexVolumeGroupResourceImpl;
-import stroom.index.impl.api.IndexVolumeResourceImpl;
-import stroom.index.impl.service.IndexShardServiceImpl;
-import stroom.index.impl.service.IndexVolumeGroupServiceImpl;
-import stroom.index.impl.service.IndexVolumeServiceImpl;
 import stroom.index.shared.IndexDoc;
-import stroom.util.shared.RestResource;
+import stroom.util.entity.EntityEvent;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
-import stroom.util.shared.Flushable;
+import stroom.util.shared.RestResource;
 
 public class IndexModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new IndexElementModule());
 
-        bind(IndexShardManager.class).to(IndexShardManagerImpl.class);
         bind(IndexShardWriterCache.class).to(IndexShardWriterCacheImpl.class);
         bind(IndexStructureCache.class).to(IndexStructureCacheImpl.class);
         bind(IndexStore.class).to(IndexStoreImpl.class);
@@ -51,9 +42,6 @@ public class IndexModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Clearable.class)
                 .addBinding(IndexStructureCacheImpl.class);
 
-        final Multibinder<Flushable> flushableBinder = Multibinder.newSetBinder(binder(), Flushable.class);
-        flushableBinder.addBinding().to(IndexVolumeServiceImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), EntityEvent.Handler.class)
                 .addBinding(IndexConfigCacheEntityEventHandler.class);
 
@@ -64,15 +52,14 @@ public class IndexModule extends AbstractModule {
                 .addBinding(IndexStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
+                .addBinding(NewUIIndexResourceImpl.class)
+                .addBinding(NewUIIndexVolumeGroupResourceImpl.class)
+                .addBinding(NewUIIndexVolumeResourceImpl.class)
                 .addBinding(IndexResourceImpl.class)
                 .addBinding(IndexVolumeGroupResourceImpl.class)
                 .addBinding(IndexVolumeResourceImpl.class);
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(IndexDoc.DOCUMENT_TYPE, IndexStoreImpl.class);
-
-        // TODO Shards are no longer Findable Entities
-//        GuiceUtil.buildMultiBinder(binder(), FindService.class)
-//                .addBinding(IndexShardServiceImpl.class);
     }
 }

@@ -15,19 +15,15 @@
  *
  */
 
-package stroom.index.impl.service;
+package stroom.index.impl;
 
 import stroom.docref.DocRef;
 import stroom.document.shared.PermissionException;
-import stroom.index.impl.IndexShardDao;
-import stroom.index.impl.IndexShardService;
-import stroom.index.impl.IndexStructure;
-import stroom.index.impl.IndexStructureCache;
-import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
+import stroom.index.shared.IndexShardResultPage;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
@@ -37,7 +33,6 @@ import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.List;
 
 @Singleton
 public class IndexShardServiceImpl implements IndexShardService {
@@ -62,7 +57,7 @@ public class IndexShardServiceImpl implements IndexShardService {
     }
 
     @Override
-    public List<IndexShard> find(final FindIndexShardCriteria criteria) {
+    public IndexShardResultPage find(final FindIndexShardCriteria criteria) {
         return securityContext.secureResult(() -> indexShardDao.find(criteria));
     }
 
@@ -78,13 +73,13 @@ public class IndexShardServiceImpl implements IndexShardService {
     }
 
     @Override
-    public Boolean delete(final IndexShard entity) {
+    public Boolean delete(final IndexShard indexShard) {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            if (!securityContext.hasDocumentPermission(entity.getIndexUuid(), DocumentPermissionNames.DELETE)) {
+            if (!securityContext.hasDocumentPermission(indexShard.getIndexUuid(), DocumentPermissionNames.DELETE)) {
                 throw new PermissionException(securityContext.getUserId(), "You do not have permission to delete index shard");
             }
 
-            indexShardDao.delete(entity.getId());
+            indexShardDao.delete(indexShard.getId());
 
             return Boolean.TRUE;
         });

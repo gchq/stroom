@@ -34,9 +34,7 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.shared.FetchNodeStatusResponse;
-import stroom.node.shared.NodeResource;
-import stroom.node.shared.NodeStatusResult;
+import stroom.node.client.NodeCache;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -53,7 +51,6 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<CacheInfo>> {
-    private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
     private static final CacheResource CACHE_RESOURCE = GWT.create(CacheResource.class);
 
     private static final int SMALL_COL = 90;
@@ -61,20 +58,22 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
 
     private final RestFactory restFactory;
     private final TooltipPresenter tooltipPresenter;
+    private final NodeCache nodeCache;
 
     private final Map<String, List<CacheInfo>> responseMap = new HashMap<>();
 
-    private FetchNodeStatusResponse fetchNodeStatusResponse;
     private RestDataProvider<CacheInfo, CacheInfoResponse> dataProvider;
     private String cacheName;
 
     @Inject
     public CacheNodeListPresenter(final EventBus eventBus,
                                   final RestFactory restFactory,
-                                  final TooltipPresenter tooltipPresenter) {
+                                  final TooltipPresenter tooltipPresenter,
+                                  final NodeCache nodeCache) {
         super(eventBus, new DataGridViewImpl<>(false));
         this.restFactory = restFactory;
         this.tooltipPresenter = tooltipPresenter;
+        this.nodeCache = nodeCache;
 
         // Info.
         addInfoColumn();
@@ -173,7 +172,9 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
                 dataProvider = new RestDataProvider<CacheInfo, CacheInfoResponse>(getEventBus()) {
                     @Override
                     protected void exec(final Consumer<CacheInfoResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                        fetchNodes(dataConsumer, throwableConsumer);
+                        nodeCache.listAllNodes(nodeNames -> {
+                            fetchTasksForNodes(dataConsumer, throwableConsumer, nodeNames);
+                        }, throwableConsumer);
                     }
                 };
                 dataProvider.addDataDisplay(getView().getDataDisplay());
@@ -183,25 +184,10 @@ public class CacheNodeListPresenter extends MyPresenterWidget<DataGridView<Cache
         }
     }
 
-    public void fetchNodes(final Consumer<CacheInfoResponse> dataConsumer,
-                           final Consumer<Throwable> throwableConsumer) {
-        if (fetchNodeStatusResponse == null) {
-            final Rest<FetchNodeStatusResponse> rest = restFactory.create();
-            rest.onSuccess(fetchNodeStatusResponse -> {
-                // Store node list for future queries.
-                this.fetchNodeStatusResponse = fetchNodeStatusResponse;
-                fetchTasksForNodes(dataConsumer, throwableConsumer, fetchNodeStatusResponse);
-            }).onFailure(throwableConsumer).call(NODE_RESOURCE).list();
-        } else {
-            fetchTasksForNodes(dataConsumer, throwableConsumer, fetchNodeStatusResponse);
-        }
-    }
-
     private void fetchTasksForNodes(final Consumer<CacheInfoResponse> dataConsumer,
                                     final Consumer<Throwable> throwableConsumer,
-                                    final FetchNodeStatusResponse fetchNodeStatusResponse) {
-        for (final NodeStatusResult nodeStatusResult : fetchNodeStatusResponse.getValues()) {
-            final String nodeName = nodeStatusResult.getNode().getName();
+                                    final List<String> nodeNames) {
+        for (final String nodeName : nodeNames) {
             final Rest<CacheInfoResponse> rest = restFactory.create();
             rest
                     .onSuccess(response -> {

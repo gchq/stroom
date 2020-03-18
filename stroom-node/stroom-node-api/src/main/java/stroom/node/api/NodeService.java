@@ -25,7 +25,6 @@ import java.util.List;
  * </p>
  */
 public interface NodeService  {
-
     String getBaseEndpointUrl(String nodeName);
 
     boolean isEnabled(String nodeName);

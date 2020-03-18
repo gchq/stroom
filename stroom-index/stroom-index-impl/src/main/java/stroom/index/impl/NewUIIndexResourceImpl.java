@@ -1,4 +1,4 @@
-package stroom.index.impl.api;
+package stroom.index.impl;
 
 import com.codahale.metrics.annotation.Timed;
 import stroom.docref.DocRef;
@@ -6,7 +6,6 @@ import stroom.importexport.api.DocumentData;
 import stroom.importexport.shared.Base64EncodedDocumentData;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
-import stroom.index.impl.IndexStore;
 import stroom.index.shared.IndexDoc;
 
 import javax.inject.Inject;
@@ -15,11 +14,11 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 
-public class IndexResourceImpl implements IndexResource {
+public class NewUIIndexResourceImpl implements NewUIIndexResource {
     private final IndexStore indexStore;
 
     @Inject
-    public IndexResourceImpl(final IndexStore indexStore) {
+    public NewUIIndexResourceImpl(final IndexStore indexStore) {
         this.indexStore = indexStore;
     }
 

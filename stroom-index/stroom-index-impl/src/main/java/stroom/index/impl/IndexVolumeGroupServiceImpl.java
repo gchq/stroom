@@ -1,4 +1,4 @@
-package stroom.index.impl.service;
+package stroom.index.impl;
 
 import stroom.index.impl.IndexVolumeDao;
 import stroom.index.impl.IndexVolumeGroupDao;

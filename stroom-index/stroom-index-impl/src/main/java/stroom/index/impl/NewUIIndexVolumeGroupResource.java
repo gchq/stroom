@@ -1,4 +1,4 @@
-package stroom.index.impl.api;
+package stroom.index.impl;
 
 import io.swagger.annotations.Api;
 import stroom.index.shared.IndexVolumeGroup;
@@ -18,7 +18,7 @@ import javax.ws.rs.core.Response;
 @Api(value = "stroom-index volumeGroup - /v1")
 @Path("/stroom-index/volumeGroup" + ResourcePaths.V1)
 @Produces(MediaType.APPLICATION_JSON)
-public interface IndexVolumeGroupResource extends RestResource {
+public interface NewUIIndexVolumeGroupResource extends RestResource {
     @GET
     @Path("/names")
     Response getNames();

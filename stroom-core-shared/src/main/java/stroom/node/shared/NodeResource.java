@@ -29,34 +29,45 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
+import java.util.List;
 
 @Api(value = "node - /v1")
 @Path(NodeResource.BASE_PATH)
+@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface NodeResource extends RestResource, DirectRestService {
     String BASE_PATH = "/node" + ResourcePaths.V1;
 
     @GET
     @Path("/{nodeName}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Gets detailed information about a node",
             response = Long.class)
     ClusterNodeInfo info(@PathParam("nodeName") String nodeName);
 
     @GET
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/listAllNodes")
+    @ApiOperation(
+            value = "Lists all nodes",
+            response = List.class)
+    List<String> listAllNodes();
+
+    @GET
+    @Path("/listEnabledNodes")
+    @ApiOperation(
+            value = "Lists enabled nodes",
+            response = List.class)
+    List<String> listEnabledNodes();
+
+    @GET
+    @Path("/find")
     @ApiOperation(
         value = "Lists nodes",
         response = FetchNodeStatusResponse.class)
-    FetchNodeStatusResponse list();
+    FetchNodeStatusResponse find();
 
     @GET
     @Path("/{nodeName}/ping")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Gets a ping time for a node",
             response = Long.class)
@@ -64,15 +75,11 @@ public interface NodeResource extends RestResource, DirectRestService {
 
     @PUT
     @Path("/{nodeName}/priority")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Sets the priority of a node")
     void setPriority(@PathParam("nodeName") String nodeName, Integer priority);
 
     @PUT
     @Path("/{nodeName}/enabled")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Sets whether a node is enabled")
     void setEnabled(@PathParam("nodeName") String nodeName, Boolean enabled);
 }
