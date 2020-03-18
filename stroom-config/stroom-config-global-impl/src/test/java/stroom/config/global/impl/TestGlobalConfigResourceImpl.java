@@ -84,8 +84,11 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
 
         final String subPath = GlobalConfigResource.PROPERTIES_SUB_PATH;
 
+        final ConfigProperty configProperty = new ConfigProperty(CONFIG_PROPERTY_2.getName());
+        configProperty.setYamlOverrideValue("node1");
+
         final ListConfigResponse expectedResponse = new ListConfigResponse(List.of(
-            new ConfigProperty(PropertyPath.fromPathString("some.other.property"))
+            configProperty
         ));
 
         doGetTest(
@@ -255,7 +258,10 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
                 Predicate<ConfigProperty> predicate = invocation.getArgument(0);
 
                 return new ListConfigResponse(FULL_PROP_LIST.stream()
-                .filter(predicate)
+                    .peek(configProperty -> {
+                        configProperty.setYamlOverrideValue(node.getNodeName());
+                    })
+                    .filter(predicate)
                     .collect(Collectors.toList()));
             });
 
@@ -263,10 +269,8 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
             .thenAnswer(invocation -> {
                 PropertyPath propertyPath = invocation.getArgument(0);
                 return FULL_PROP_LIST.stream()
-                    .map(configProperty -> {
-                        ConfigProperty configProperty2 = configProperty;
-                        configProperty2.setYamlOverrideValue(node.getNodeName());
-                        return configProperty2;
+                    .peek(configProperty -> {
+                        configProperty.setYamlOverrideValue(node.getNodeName());
                     })
                     .filter(configProperty -> configProperty.getName().equals(propertyPath))
                     .findFirst();
