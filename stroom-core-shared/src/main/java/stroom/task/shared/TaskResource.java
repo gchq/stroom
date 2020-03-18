@@ -35,6 +35,8 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public interface TaskResource extends RestResource, DirectRestService {
     String BASE_PATH = "/task" + ResourcePaths.V1;
+    String USER_PATH_PART = "/user";
+    String TERMINATE_PATH_PART = "/terminate";
 
     @GET
     @Path("/{nodeName}")
@@ -55,7 +57,7 @@ public interface TaskResource extends RestResource, DirectRestService {
     TaskProgressResponse find(@PathParam("nodeName") String nodeName, FindTaskProgressRequest request);
 
     @GET
-    @Path("{nodeName}/user")
+    @Path("{nodeName}" + USER_PATH_PART)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -64,7 +66,7 @@ public interface TaskResource extends RestResource, DirectRestService {
     TaskProgressResponse userTasks(@PathParam("nodeName") String nodeName);
 
     @POST
-    @Path("/{nodeName}/terminate")
+    @Path("/{nodeName}" + TERMINATE_PATH_PART)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
