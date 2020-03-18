@@ -31,9 +31,12 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 
 @Api(value = "dbStatus - /v1")
-@Path("/dbStatus" + ResourcePaths.V1)
+@Path(DbStatusResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 public interface DbStatusResource extends RestResource, DirectRestService {
+
+    String BASE_PATH = "/dbStatus" + ResourcePaths.V1;
+
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)

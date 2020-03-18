@@ -22,10 +22,9 @@ import stroom.node.shared.DBTableStatus;
 import stroom.node.shared.FindDBTableCriteria;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
+import stroom.util.shared.BaseCriteria;
 import stroom.util.shared.CompareUtil;
 import stroom.util.shared.ResultPage;
-import stroom.util.shared.Sort;
-import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
 import javax.sql.DataSource;
@@ -33,15 +32,32 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 class DBTableService {
     private static final Logger LOGGER = LoggerFactory.getLogger(DBTableService.class);
 
     private final Set<DataSource> dataSources;
     private final SecurityContext securityContext;
+
+    // This ought to live in DBTableStatus but GWT won't allow it
+    // Maps criteria field names to comparaotr for that field
+    private static final Map<String, Comparator<DBTableStatus>> FIELD_COMPARATORS = Map.of(
+        DBTableStatus.FIELD_DATABASE, Comparator.comparing(
+            DBTableStatus::getDb,
+            String::compareToIgnoreCase),
+        DBTableStatus.FIELD_TABLE, Comparator.comparing(
+            DBTableStatus::getTable,
+            String::compareToIgnoreCase),
+        DBTableStatus.FIELD_ROW_COUNT, Comparator.comparing(DBTableStatus::getCount),
+        DBTableStatus.FIELD_DATA_SIZE, Comparator.comparing(DBTableStatus::getDataSize),
+        DBTableStatus.FIELD_INDEX_SIZE, Comparator.comparing(DBTableStatus::getIndexSize));
 
     @Inject
     DBTableService(final Set<DataSource> dataSources,
@@ -60,57 +76,47 @@ class DBTableService {
 
     private ResultPage<DBTableStatus> doFind(final FindDBTableCriteria criteria) {
         return securityContext.secureResult(PermissionNames.MANAGE_DB_PERMISSION, () -> {
-            final List<DBTableStatus> rtnList = new ArrayList<>();
+            // We need the results distinct by key (db name, table name)
+            final Map<TableKey, DBTableStatus> rtnMap = new HashMap<>();
 
             if (dataSources != null) {
-                dataSources.forEach(dataSource -> addTableStatus(dataSource, rtnList));
+                dataSources.forEach(dataSource -> addTableStatus(dataSource, rtnMap));
             }
 
-            rtnList.sort((o1, o2) -> {
-                if (criteria.getSortList() != null && criteria.getSortList().size() > 0) {
-                    for (final Sort sort : criteria.getSortList()) {
-                        final String field = sort.getField();
+            final List<DBTableStatus> sortedList = rtnMap.values()
+                .stream()
+                .sorted(buildComparator(criteria))
+                .collect(Collectors.toList());
 
-                        int compare = 0;
-                        if (DBTableStatus.FIELD_DATABASE.equals(field)) {
-                            compare = CompareUtil.compareString(o1.getDb(), o2.getDb());
-                        } else if (DBTableStatus.FIELD_TABLE.equals(field)) {
-                            compare = CompareUtil.compareString(o1.getTable(), o2.getTable());
-                        } else if (DBTableStatus.FIELD_ROW_COUNT.equals(field)) {
-                            compare = CompareUtil.compareLong(o1.getCount(), o2.getCount());
-                        } else if (DBTableStatus.FIELD_DATA_SIZE.equals(field)) {
-                            compare = CompareUtil.compareLong(o1.getDataSize(), o2.getDataSize());
-                        } else if (DBTableStatus.FIELD_INDEX_SIZE.equals(field)) {
-                            compare = CompareUtil.compareLong(o1.getIndexSize(), o2.getIndexSize());
-                        }
-                        if (Direction.DESCENDING.equals(sort.getDirection())) {
-                            compare = compare * -1;
-                        }
-
-                        if (compare != 0) {
-                            return compare;
-                        }
-                    }
-                } else {
-                    int compare = o1.getDb().compareToIgnoreCase(o2.getDb());
-                    if (compare == 0) {
-                        compare = o1.getTable().compareToIgnoreCase(o2.getTable());
-                    }
-                    return compare;
-                }
-
-                return 0;
-            });
-
-            return ResultPage.createPageLimitedList(rtnList, criteria.getPageRequest());
+            return ResultPage.createPageLimitedList(sortedList, criteria.getPageRequest());
         });
     }
 
-    private void addTableStatus(final DataSource dataSource, final List<DBTableStatus> rtnList) {
+    private Comparator<DBTableStatus> buildComparator(final BaseCriteria criteria) {
+
+        final Comparator<DBTableStatus> comparator;
+        if (criteria != null
+            && criteria.getSortList() != null
+            && !criteria.getSortList().isEmpty()) {
+
+            comparator = CompareUtil.buildCriteriaComparator(FIELD_COMPARATORS, criteria);
+        } else {
+            // default sort of db then table name
+            comparator = Comparator
+                .comparing(DBTableStatus::getDb, String::compareToIgnoreCase)
+                .thenComparing(DBTableStatus::getTable, String::compareToIgnoreCase);
+        }
+        return comparator;
+    }
+
+
+    private void addTableStatus(final DataSource dataSource,
+                                final Map<TableKey, DBTableStatus> rtnMap) {
         try (final Connection connection = dataSource.getConnection()) {
             connection.setReadOnly(true);
 
-            try (final PreparedStatement preparedStatement = connection.prepareStatement("show table status where comment != 'VIEW'",
+            try (final PreparedStatement preparedStatement = connection.prepareStatement(
+                "show table status where comment != 'VIEW'",
                     ResultSet.TYPE_FORWARD_ONLY,
                     ResultSet.CONCUR_READ_ONLY,
                     ResultSet.CLOSE_CURSORS_AT_COMMIT)) {
@@ -123,13 +129,40 @@ class DBTableService {
                                 resultSet.getLong("Data_length"),
                                 resultSet.getLong("Index_length"));
 
-                        rtnList.add(status);
+                        // We have a lot of db connections and they may be able to see each other's
+                        // tables so use a map to distinct them
+                        final TableKey tableKey = new TableKey(status.getDb(), status.getTable());
+                        rtnMap.putIfAbsent(tableKey, status);
                     }
                 }
             }
 
         } catch (final SQLException e) {
             LOGGER.error("findSystemTableStatus()", e);
+        }
+    }
+
+    private static class TableKey {
+        private final String dbName;
+        private final String tableName;
+
+        TableKey(final String dbName, final String tableName) {
+            this.dbName = Objects.requireNonNull(dbName);
+            this.tableName = Objects.requireNonNull(tableName);
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final TableKey tableKey = (TableKey) o;
+            return dbName.equals(tableKey.dbName) &&
+                tableName.equals(tableKey.tableName);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(dbName, tableName);
         }
     }
 }
