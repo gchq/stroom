@@ -22,14 +22,14 @@ import stroom.cluster.task.api.DefaultClusterResultCollector;
 import stroom.cluster.task.api.TargetType;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
-import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
 
 
-class SessionListHandler extends AbstractTaskHandler<SessionListTask, ResultPage<SessionDetails>> {
+class SessionListHandler extends AbstractTaskHandler<SessionListTask, List<SessionDetails>> {
     private final ClusterDispatchAsyncHelper dispatchHelper;
     private final SecurityContext securityContext;
 
@@ -41,25 +41,25 @@ class SessionListHandler extends AbstractTaskHandler<SessionListTask, ResultPage
     }
 
     @Override
-    public ResultPage<SessionDetails> exec(final SessionListTask action) {
+    public List<SessionDetails> exec(final SessionListTask action) {
         return securityContext.asProcessingUserResult(() -> {
-            final DefaultClusterResultCollector<ResultPage<SessionDetails>> collector = dispatchHelper
+            final DefaultClusterResultCollector<List<SessionDetails>> collector = dispatchHelper
                     .execAsync(
                             new SessionListClusterTask("Get session list"),
                             TargetType.ACTIVE);
 
             final ArrayList<SessionDetails> rtnList = new ArrayList<>();
 
-            for (final Entry<String, ClusterCallEntry<ResultPage<SessionDetails>>> call : collector.getResponseMap()
+            for (final Entry<String, ClusterCallEntry<List<SessionDetails>>> call : collector.getResponseMap()
                     .entrySet()) {
                 if (call.getValue().getResult() != null) {
-                    for (final SessionDetails sessionDetails : call.getValue().getResult().getValues()) {
+                    for (final SessionDetails sessionDetails : call.getValue().getResult()) {
                         sessionDetails.setNodeName(call.getKey());
                         rtnList.add(sessionDetails);
                     }
                 }
             }
-            return ResultPage.createUnboundedList(rtnList);
+            return rtnList;
         });
     }
 }

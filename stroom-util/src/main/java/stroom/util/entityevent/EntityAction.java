@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,17 +12,26 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package stroom.util.entity;
+package stroom.util.entityevent;
 
+import stroom.docref.HasDisplayValue;
 
-import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.ResultPage;
+public enum EntityAction implements HasDisplayValue {
+    CREATE("Create"), UPDATE("Update"), DELETE("Delete"), CLEAR_CACHE("Clear Cache");
 
-public interface FindService<E, C extends BaseCriteria> {
-    ResultPage<E> find(C criteria);
+    private final String displayValue;
 
-    C createCriteria();
+    EntityAction(final String displayValue) {
+        this.displayValue = displayValue;
+    }
+
+    /**
+     * @return string used in drop downs.
+     */
+    @Override
+    public String getDisplayValue() {
+        return displayValue;
+    }
 }

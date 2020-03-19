@@ -2,7 +2,6 @@ package stroom.index.impl;
 
 
 import io.swagger.annotations.Api;
-import stroom.index.shared.CreateVolumeRequest;
 import stroom.index.shared.IndexVolume;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
@@ -30,10 +29,10 @@ public interface NewUIIndexVolumeResource extends RestResource {
     Response getById(@PathParam("id") int id);
 
     @POST
-    Response create(CreateVolumeRequest createVolumeRequest);
+    Response create(IndexVolume indexVolume);
 
     @PUT
-    Response update(IndexVolume updateVolumeDTO);
+    Response update(IndexVolume indexVolume);
 
     @DELETE
     @Path("{id}")

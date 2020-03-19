@@ -1,12 +1,23 @@
 package stroom.index.impl.db;
 
+import org.jooq.Condition;
+import org.jooq.Field;
+import org.jooq.OrderField;
 import org.jooq.Record;
+import stroom.db.util.ExpressionMapper;
+import stroom.db.util.ExpressionMapperFactory;
 import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexVolumeDao;
+import stroom.index.shared.IndexVolumeFields;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeRecord;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.Sort;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -65,13 +76,21 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
 
     private final IndexDbConnProvider indexDbConnProvider;
     private final GenericDao<IndexVolumeRecord, IndexVolume, Integer> genericDao;
+    private final ExpressionMapper expressionMapper;
 
     @Inject
-    IndexVolumeDaoImpl(final IndexDbConnProvider indexDbConnProvider) {
+    IndexVolumeDaoImpl(final IndexDbConnProvider indexDbConnProvider,
+                       final ExpressionMapperFactory expressionMapperFactory) {
         this.indexDbConnProvider = indexDbConnProvider;
         genericDao = new GenericDao<>(INDEX_VOLUME, INDEX_VOLUME.ID, IndexVolume.class, indexDbConnProvider);
         genericDao.setRecordToObjectMapper(RECORD_TO_INDEX_VOLUME_MAPPER);
         genericDao.setObjectToRecordMapper(INDEX_VOLUME_TO_RECORD_MAPPER);
+
+        // Standard fields.
+        expressionMapper = expressionMapperFactory.create();
+        expressionMapper.map(IndexVolumeFields.ID, INDEX_VOLUME.ID, Integer::valueOf);
+        expressionMapper.map(IndexVolumeFields.GROUP_NAME, INDEX_VOLUME.INDEX_VOLUME_GROUP_NAME, value -> value);
+        expressionMapper.map(IndexVolumeFields.NODE_NAME, INDEX_VOLUME.NODE_NAME, value -> value);
     }
 
     @Override
@@ -116,6 +135,17 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
     }
 
     @Override
+    public List<IndexVolume> getVolumesInGroup(final String groupName) {
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
+                .select()
+                .from(INDEX_VOLUME)
+                .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.NAME.eq(INDEX_VOLUME.INDEX_VOLUME_GROUP_NAME))
+                .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
+                .fetch()
+                .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply));
+    }
+
+    @Override
     public void updateVolumeState(final int id, final Long updateTimeMs, final Long bytesUsed, final Long bytesFree, final Long bytesTotal) {
         JooqUtil.context(indexDbConnProvider, context -> context
                 .update(INDEX_VOLUME)
@@ -125,5 +155,68 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
                 .set(INDEX_VOLUME.BYTES_TOTAL, bytesTotal)
                 .where(INDEX_VOLUME.ID.eq(id))
                 .execute());
+    }
+
+    @Override
+    public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
+        final PageRequest pageRequest = criteria.getPageRequest();
+        final Condition condition = createCondition(criteria);
+        final OrderField<?>[] orderFields = createOrderFields(criteria);
+
+        int offset = 0;
+        int numberOfRows = 1000000;
+
+        if (pageRequest != null) {
+            offset = pageRequest.getOffset().intValue();
+            numberOfRows = pageRequest.getLength();
+        }
+
+        final List<IndexVolume> list = find(condition, orderFields, offset, numberOfRows);
+        return ResultPage.createPageResultList(list, criteria.getPageRequest(), null);
+    }
+
+    private List<IndexVolume> find(final Condition condition, final OrderField<?>[] orderFields, final int offset, final int numberOfRows) {
+        return JooqUtil.contextResult(indexDbConnProvider, context -> context
+                .select()
+                .from(INDEX_VOLUME)
+                .where(condition)
+                .orderBy(orderFields)
+                .limit(offset, numberOfRows)
+                .fetch()
+                .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply));
+    }
+
+    private Condition createCondition(final ExpressionCriteria criteria) {
+        return createCondition(criteria.getExpression());
+    }
+
+    private Condition createCondition(final ExpressionOperator expression) {
+        return expressionMapper.apply(expression);
+    }
+
+    private OrderField<?>[] createOrderFields(final ExpressionCriteria criteria) {
+        if (criteria.getSortList() == null || criteria.getSortList().size() == 0) {
+            return new OrderField[]{INDEX_VOLUME.ID};
+        }
+
+        return criteria.getSortList().stream().map(sort -> {
+            Field<?> field;
+            if (IndexVolumeFields.FIELD_ID.equals(sort.getField())) {
+                field = INDEX_VOLUME.ID;
+            } else if (IndexVolumeFields.FIELD_GROUP_NAME.equals(sort.getField())) {
+                field = INDEX_VOLUME.INDEX_VOLUME_GROUP_NAME;
+            } else if (IndexVolumeFields.FIELD_NODE_NAME.equals(sort.getField())) {
+                field = INDEX_VOLUME.NODE_NAME;
+            } else {
+                field = INDEX_VOLUME.ID;
+            }
+
+            OrderField<?> orderField = field;
+            if (Sort.Direction.DESCENDING.equals(sort.getDirection())) {
+                orderField = field.desc();
+            }
+
+            return orderField;
+        }).toArray(OrderField[]::new);
     }
 }

@@ -1,19 +1,17 @@
-package stroom.processor.shared;
+package stroom.task.shared;
 
 import stroom.docref.DocRef;
-import stroom.meta.shared.Meta;
+import stroom.docstore.shared.DocRefUtil;
+import stroom.pipeline.shared.PipelineDoc;
+import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.query.api.v2.ExpressionUtil;
 
-public final class ProcessorTaskExpressionUtil {
-    private ProcessorTaskExpressionUtil() {
+public final class TaskExpressionUtil {
+    private TaskExpressionUtil() {
         // Utility class.
-    }
-
-    public static ExpressionOperator createWithStream(final Meta meta) {
-        return ExpressionUtil.equals(ProcessorTaskDataSource.META_ID, meta.getId());
     }
 
     public static ExpressionOperator createFolderExpression(final DocRef folder) {
@@ -27,7 +25,7 @@ public final class ProcessorTaskExpressionUtil {
             final ExpressionOperator.Builder or = new ExpressionOperator.Builder(Op.OR);
             for (final DocRef folder : folders) {
                 or.addTerm(ProcessorTaskDataSource.PIPELINE_UUID, Condition.IN_FOLDER, folder);
-//                or.addTerm(ProcessTaskDataSource.FEED_UUID, Condition.IN_FOLDER, folder);
+//                or.addDocRefTerm(ProcessTaskDataSource.FEED_UUID, Condition.IN_FOLDER, folder);
             }
             builder.addOperator(or.build());
         }
@@ -35,9 +33,13 @@ public final class ProcessorTaskExpressionUtil {
         return builder.build();
     }
 
-    public static ExpressionOperator createPipelineExpression(final DocRef pipelineRef) {
+    public static ExpressionOperator createFeedExpression(final String feedName) {
+        return ExpressionUtil.equals(ProcessorTaskDataSource.FEED_NAME, feedName);
+    }
+
+    public static ExpressionOperator createPipelineExpression(final PipelineDoc pipelineEntity) {
         return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(ProcessorTaskDataSource.PIPELINE_UUID, Condition.IS_DOC_REF, pipelineRef)
+                .addTerm(ProcessorTaskDataSource.PIPELINE_UUID, Condition.IS_DOC_REF, DocRefUtil.create(pipelineEntity))
                 .build();
     }
 }

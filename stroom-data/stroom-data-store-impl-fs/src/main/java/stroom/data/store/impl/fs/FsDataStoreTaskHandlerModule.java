@@ -18,8 +18,8 @@ package stroom.data.store.impl.fs;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.util.entity.EntityEvent;
-import stroom.util.entity.EntityEvent.Handler;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEvent.Handler;
 import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.RestResource;

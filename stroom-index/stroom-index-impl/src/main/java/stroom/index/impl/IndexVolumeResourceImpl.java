@@ -1,16 +1,15 @@
 package stroom.index.impl;
 
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.index.shared.CreateVolumeRequest;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolumeResource;
-import stroom.index.shared.IndexVolumeResultPage;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
@@ -37,18 +36,18 @@ class IndexVolumeResourceImpl implements IndexVolumeResource {
     }
 
     @Override
-    public IndexVolumeResultPage find(final ExpressionCriteria request) {
-        return new IndexVolumeResultPage(indexVolumeService.getAll());
+    public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
+        return indexVolumeService.find(criteria);
     }
 
     @Override
-    public IndexVolume create(final CreateVolumeRequest request) {
-        return indexVolumeService.create(request);
+    public IndexVolume create(final IndexVolume indexVolume) {
+        return indexVolumeService.create(indexVolume);
     }
 
     @Override
     public IndexVolume read(final Integer id) {
-        return indexVolumeService.getById(id);
+        return indexVolumeService.read(id);
     }
 
     @Override

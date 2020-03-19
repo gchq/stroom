@@ -7,7 +7,6 @@ import stroom.explorer.shared.DocumentType;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
-import stroom.util.entity.NameValidationUtil;
 import stroom.util.shared.PermissionException;
 
 import javax.inject.Inject;

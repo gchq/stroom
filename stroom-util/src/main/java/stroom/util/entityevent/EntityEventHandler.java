@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.util.entity;
+package stroom.util.entityevent;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;

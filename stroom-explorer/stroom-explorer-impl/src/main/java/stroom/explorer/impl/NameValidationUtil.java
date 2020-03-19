@@ -15,7 +15,7 @@
  *
  */
 
-package stroom.util.entity;
+package stroom.explorer.impl;
 
 import stroom.util.shared.EntityServiceException;
 

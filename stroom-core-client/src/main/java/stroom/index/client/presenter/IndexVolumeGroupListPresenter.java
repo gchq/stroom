@@ -58,11 +58,12 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<DataGridVie
 
         initTableColumns();
 
-        dataProvider = new RestDataProvider<IndexVolumeGroup, IndexVolumeGroupResultPage>(eventBus) {
+        final ExpressionCriteria criteria = new ExpressionCriteria();
+        dataProvider = new RestDataProvider<IndexVolumeGroup, IndexVolumeGroupResultPage>(eventBus, criteria.obtainPageRequest()) {
             @Override
             protected void exec(final Consumer<IndexVolumeGroupResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                 final Rest<IndexVolumeGroupResultPage> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_VOLUME_GROUP_RESOURCE).find(new ExpressionCriteria());
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_VOLUME_GROUP_RESOURCE).find(criteria);
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());

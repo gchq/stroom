@@ -1,6 +1,6 @@
 package stroom.index.impl;
 
-import stroom.index.shared.CreateVolumeRequest;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
 
 import javax.inject.Inject;
@@ -17,26 +17,26 @@ public class NewUIIndexVolumeResourceImpl implements NewUIIndexVolumeResource {
 
     @Override
     public Response getAll() {
-        final List<IndexVolume> indexVolumes = indexVolumeService.getAll();
+        final List<IndexVolume> indexVolumes = indexVolumeService.find(new ExpressionCriteria()).getValues();
         return Response.ok(indexVolumes).build();
     }
 
     @Override
     public Response getById(final int id) {
-        final IndexVolume indexVolume = indexVolumeService.getById(id);
+        final IndexVolume indexVolume = indexVolumeService.read(id);
         return Response.ok(indexVolume).build();
     }
 
     @Override
-    public Response create(final CreateVolumeRequest createVolumeRequest) {
-        final IndexVolume indexVolume = indexVolumeService.create(createVolumeRequest);
-        return Response.ok(indexVolume).build();
+    public Response create(final IndexVolume indexVolume) {
+        final IndexVolume result = indexVolumeService.create(indexVolume);
+        return Response.ok(result).build();
     }
 
     @Override
-    public Response update(final IndexVolume updateVolumeDTO) {
-        final var updatedIndexVolume = indexVolumeService.update(updateVolumeDTO);
-        return Response.ok(updatedIndexVolume).build();
+    public Response update(final IndexVolume indexVolume) {
+        final IndexVolume result = indexVolumeService.update(indexVolume);
+        return Response.ok(result).build();
     }
 
     @Override

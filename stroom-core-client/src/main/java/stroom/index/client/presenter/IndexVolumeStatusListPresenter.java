@@ -43,26 +43,20 @@ import java.util.function.Consumer;
 public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<IndexVolume>> {
     private static final IndexVolumeResource INDEX_VOLUME_RESOURCE = GWT.create(IndexVolumeResource.class);
 
-    private final RestDataProvider<IndexVolume, ResultPage<IndexVolume>> dataProvider;
+    private final RestFactory restFactory;
+
+    private ExpressionCriteria criteria;
+    private RestDataProvider<IndexVolume, ResultPage<IndexVolume>> dataProvider;
 
     @Inject
     public IndexVolumeStatusListPresenter(final EventBus eventBus, final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<>(true, true));
+        this.restFactory = restFactory;
 
         // Add a border to the list.
         BorderUtil.addBorder(getWidget().getElement());
 
         initTableColumns();
-
-        dataProvider = new RestDataProvider<IndexVolume, ResultPage<IndexVolume>>(eventBus) {
-            @Override
-            protected void exec(final Consumer<ResultPage<IndexVolume>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<ResultPage<IndexVolume>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_VOLUME_RESOURCE).find(new ExpressionCriteria());
-            }
-        };
-        dataProvider.addDataDisplay(getView().getDataDisplay());
-        dataProvider.refresh();
     }
 
     /**
@@ -177,6 +171,40 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
     }
 
     public void refresh() {
-        dataProvider.refresh();
+        if (dataProvider == null) {
+            dataProvider = new RestDataProvider<IndexVolume, ResultPage<IndexVolume>>(getEventBus(), criteria.obtainPageRequest()) {
+                @Override
+                protected void exec(final Consumer<ResultPage<IndexVolume>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                    final Rest<ResultPage<IndexVolume>> rest = restFactory.create();
+                    rest
+                            .onSuccess(dataConsumer)
+                            .onFailure(throwableConsumer)
+                            .call(INDEX_VOLUME_RESOURCE)
+                            .find(criteria);
+                }
+            };
+            dataProvider.addDataDisplay(getView().getDataDisplay());
+        } else {
+            dataProvider.refresh();
+        }
+    }
+
+    public void init(final ExpressionCriteria criteria, final Consumer<ResultPage<IndexVolume>> consumer) {
+        this.criteria = criteria;
+        final Rest<ResultPage<IndexVolume>> rest = restFactory.create();
+        dataProvider = new RestDataProvider<IndexVolume, ResultPage<IndexVolume>>(getEventBus(), criteria.obtainPageRequest()) {
+            @Override
+            protected void exec(final Consumer<ResultPage<IndexVolume>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                rest
+                        .onSuccess(result -> {
+                            dataConsumer.accept(result);
+                            consumer.accept(result);
+                        })
+                        .onFailure(throwableConsumer)
+                        .call(INDEX_VOLUME_RESOURCE)
+                        .find(criteria);
+            }
+        };
+        dataProvider.addDataDisplay(getView().getDataDisplay());
     }
 }

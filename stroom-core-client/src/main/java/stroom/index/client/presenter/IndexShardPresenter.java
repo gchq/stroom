@@ -390,7 +390,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             queryCriteria.getIndexUuidSet().add(docRef.getUuid());
 
             if (dataProvider == null) {
-                dataProvider = new RestDataProvider<IndexShard, IndexShardResultPage>(getEventBus()) {
+                dataProvider = new RestDataProvider<IndexShard, IndexShardResultPage>(getEventBus(), queryCriteria.obtainPageRequest()) {
                     @Override
                     protected void exec(final Consumer<IndexShardResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                         final Rest<IndexShardResultPage> rest = restFactory.create();

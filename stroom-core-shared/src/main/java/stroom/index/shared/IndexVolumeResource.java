@@ -3,9 +3,11 @@ package stroom.index.shared;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
+import stroom.datasource.api.v2.TextField;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -30,14 +32,14 @@ public interface IndexVolumeResource extends RestResource, DirectRestService {
     @Path("find")
     @ApiOperation(
             value = "Finds index volumes matching request",
-            response = IndexVolumeResultPage.class)
-    IndexVolumeResultPage find(ExpressionCriteria request);
+            response = ResultPage.class)
+    ResultPage<IndexVolume> find(ExpressionCriteria request);
 
     @POST
     @ApiOperation(
             value = "Creates an index volume",
             response = IndexVolume.class)
-    IndexVolume create(CreateVolumeRequest request);
+    IndexVolume create(IndexVolume request);
 
     @GET
     @Path("/{id}")

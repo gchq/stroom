@@ -61,23 +61,23 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
             final MethodCallback<R> methodCallback = new MethodCallback<R>() {
                 @Override
                 public void onFailure(final Method method, final Throwable exception) {
-                    // The exception is restyGWT's FailedResponseException
-                    // so extract the response payload and treat it as WebApplicationException
-                    // json
-                    String msg;
-                    Exception wrappedExcepton = null;
                     try {
-                        // Assuming we get a response like { "code": "", "message": "" }
-                        final String responseText = method.getResponse().getText();
-                        final JSONObject responseJson = (JSONObject) JSONParser.parseStrict(responseText);
-                        msg = ((JSONString) responseJson.get("message")).stringValue();
-                        wrappedExcepton = new RuntimeException(msg, exception);
-                    } catch (Exception e) {
-                        // Not the format we were expecting so just use the msg from the exception
-                        msg = exception.getMessage();
-                    }
+                        // The exception is restyGWT's FailedResponseException
+                        // so extract the response payload and treat it as WebApplicationException
+                        // json
+                        String msg;
+                        Exception wrappedExcepton = null;
+                        try {
+                            // Assuming we get a response like { "code": "", "message": "" }
+                            final String responseText = method.getResponse().getText();
+                            final JSONObject responseJson = (JSONObject) JSONParser.parseStrict(responseText);
+                            msg = ((JSONString) responseJson.get("message")).stringValue();
+                            wrappedExcepton = new RuntimeException(msg, exception);
+                        } catch (Exception e) {
+                            // Not the format we were expecting so just use the msg from the exception
+                            msg = exception.getMessage();
+                        }
 
-                    try {
                         if (errorConsumer != null) {
                             errorConsumer.accept(wrappedExcepton != null ? wrappedExcepton : exception);
                         } else {
@@ -125,13 +125,13 @@ class RestFactoryImpl implements RestFactory, HasHandlers {
 
         @Override
         public <T extends DirectRestService> T call(T service) {
-            incrementTaskCount("Calling service " + service.getClass().getSimpleName());
+            incrementTaskCount();
             return rest.call(service);
         }
 
-        private void incrementTaskCount(final String message) {
+        private void incrementTaskCount() {
             // Add the task to the map.
-            TaskStartEvent.fire(hasHandlers, message);
+            TaskStartEvent.fire(hasHandlers);
         }
 
         private void decrementTaskCount() {

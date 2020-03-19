@@ -30,6 +30,7 @@ import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.node.client.view.WrapperView;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
+import stroom.widget.popup.client.event.HidePopupEvent;
 import stroom.widget.popup.client.event.ShowPopupEvent;
 import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
@@ -44,6 +45,7 @@ public class IndexVolumeGroupPresenter extends MyPresenterWidget<WrapperView> {
     private final IndexVolumeGroupListPresenter volumeStatusListPresenter;
     private final Provider<IndexVolumeGroupEditPresenter> editProvider;
     private final RestFactory restFactory;
+    private final Provider<NewIndexVolumeGroupPresenter> newIndexVolumeGroupPresenterProvider;
 
     private final ButtonView newButton;
     private final ButtonView openButton;
@@ -54,11 +56,13 @@ public class IndexVolumeGroupPresenter extends MyPresenterWidget<WrapperView> {
                                      final WrapperView view,
                                      final IndexVolumeGroupListPresenter volumeStatusListPresenter,
                                      final Provider<IndexVolumeGroupEditPresenter> editProvider,
-                                     final RestFactory restFactory) {
+                                     final RestFactory restFactory,
+                                     final Provider<NewIndexVolumeGroupPresenter> newIndexVolumeGroupPresenterProvider) {
         super(eventBus, view);
         this.volumeStatusListPresenter = volumeStatusListPresenter;
         this.editProvider = editProvider;
         this.restFactory = restFactory;
+        this.newIndexVolumeGroupPresenterProvider = newIndexVolumeGroupPresenterProvider;
 
         newButton = volumeStatusListPresenter.getView().addButton(SvgPresets.NEW_ITEM);
         openButton = volumeStatusListPresenter.getView().addButton(SvgPresets.EDIT);
@@ -69,44 +73,70 @@ public class IndexVolumeGroupPresenter extends MyPresenterWidget<WrapperView> {
 
     @Override
     protected void onBind() {
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                refresh();
-            }
-        };
-
         registerHandler(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
-                edit(popupUiHandlers);
+                edit();
             }
         }));
-        registerHandler(newButton.addClickHandler(event -> add(popupUiHandlers)));
-        registerHandler(openButton.addClickHandler(event -> edit(popupUiHandlers)));
+        registerHandler(newButton.addClickHandler(event -> add()));
+        registerHandler(openButton.addClickHandler(event -> edit()));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
     }
 
     public void show() {
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                hide();
+            }
+        };
         final PopupSize popupSize = new PopupSize(1000, 600, true);
         ShowPopupEvent.fire(this, this,
-                PopupType.CLOSE_DIALOG, null, popupSize, "Index Volumes", null, null);
+                PopupType.CLOSE_DIALOG, null, popupSize, "Index Volumes", popupUiHandlers, null);
     }
 
-    private void add(final PopupUiHandlers popupUiHandlers) {
-        final IndexVolumeGroupEditPresenter editor = editProvider.get();
-        editor.addVolumeGroup(popupUiHandlers);
+    public void hide() {
+        HidePopupEvent.fire(this, this, false, true);
     }
 
-    private void edit(final PopupUiHandlers popupUiHandlers) {
+    private void add() {
+        final NewIndexVolumeGroupPresenter presenter = newIndexVolumeGroupPresenterProvider.get();
+        presenter.show("", name -> {
+            if (name != null) {
+                final Rest<IndexVolumeGroup> rest = restFactory.create();
+                rest
+                        .onSuccess(indexVolumeGroup -> {
+                            edit(indexVolumeGroup);
+                            presenter.hide();
+                        })
+                        .call(INDEX_VOLUME_GROUP_RESOURCE)
+                        .create(name);
+            } else {
+                presenter.hide();
+            }
+        });
+    }
+
+    private void edit() {
         final IndexVolumeGroup volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
             final Rest<IndexVolumeGroup> rest = restFactory.create();
-            rest.onSuccess(result -> {
-                final IndexVolumeGroupEditPresenter editor = editProvider.get();
-                editor.editVolume(result, popupUiHandlers);
-            }).call(INDEX_VOLUME_GROUP_RESOURCE).read(volume.getId());
+            rest
+                    .onSuccess(this::edit)
+                    .call(INDEX_VOLUME_GROUP_RESOURCE)
+                    .read(volume.getId());
         }
+    }
+
+    private void edit(final IndexVolumeGroup indexVolumeGroup) {
+        final IndexVolumeGroupEditPresenter editor = editProvider.get();
+        editor.show(indexVolumeGroup, "Edit Volume Group - " + indexVolumeGroup.getName(), result -> {
+            if (result != null) {
+                refresh();
+            }
+            editor.hide();
+        });
     }
 
     private void delete() {

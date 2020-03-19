@@ -17,9 +17,10 @@
 package stroom.security.impl.session;
 
 import stroom.task.api.ServerTask;
-import stroom.util.shared.ResultPage;
 
-public class SessionListTask extends ServerTask<ResultPage<SessionDetails>> {
+import java.util.List;
+
+public class SessionListTask extends ServerTask<List<SessionDetails>> {
     private static final long serialVersionUID = 7441063582135677305L;
 
     @Override

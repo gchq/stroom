@@ -79,7 +79,7 @@ public class DependenciesPresenter extends ContentTabPresenter<DataGridView<Depe
         getView().addColumnSortHandler(this);
 
         criteria = new DependencyCriteria();
-        dataProvider = new RestDataProvider<Dependency, ResultPage<Dependency>>(eventBus) {
+        dataProvider = new RestDataProvider<Dependency, ResultPage<Dependency>>(eventBus, criteria.obtainPageRequest()) {
             @Override
             protected void exec(final Consumer<ResultPage<Dependency>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<Dependency>> rest = restFactory.create();

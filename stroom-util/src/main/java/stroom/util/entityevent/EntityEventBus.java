@@ -14,24 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.util.entity;
+package stroom.util.entityevent;
 
-import stroom.docref.HasDisplayValue;
+public interface EntityEventBus {
+    void addHandler(EntityEvent.Handler handler, String type, EntityAction... action);
 
-public enum EntityAction implements HasDisplayValue {
-    CREATE("Create"), UPDATE("Update"), DELETE("Delete"), CLEAR_CACHE("Clear Cache");
-
-    private final String displayValue;
-
-    EntityAction(final String displayValue) {
-        this.displayValue = displayValue;
-    }
-
-    /**
-     * @return string used in drop downs.
-     */
-    @Override
-    public String getDisplayValue() {
-        return displayValue;
-    }
+    void fire(EntityEvent event);
 }

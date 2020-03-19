@@ -22,17 +22,20 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import com.gwtplatform.mvp.client.View;
 import stroom.alert.client.event.AlertEvent;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.index.client.presenter.IndexVolumeGroupEditPresenter.IndexVolumeGroupEditView;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeFields;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
 import stroom.index.shared.IndexVolumeResource;
 import stroom.node.client.NodeCache;
+import stroom.node.client.view.WrapperView;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -41,11 +44,11 @@ import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.event.CloseEvent;
 
 import java.util.List;
+import java.util.function.Consumer;
 
-public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<IndexVolumeGroupEditView> {
+public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<WrapperView> {
     private static final IndexVolumeResource INDEX_VOLUME_RESOURCE = GWT.create(IndexVolumeResource.class);
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE = GWT.create(IndexVolumeGroupResource.class);
 
@@ -59,14 +62,12 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<IndexVolume
     private final ButtonView deleteButton;
     private final ButtonView rescanButton;
 
-    private final PopupSize popupSize = new PopupSize(1000, 600, true);
-    //    private final PopupSize popupSize = new PopupSize(400, 197, 400, 197, 1000, 197, true);
     private IndexVolumeGroup volumeGroup;
     private boolean opening;
 
     @Inject
     public IndexVolumeGroupEditPresenter(final EventBus eventBus,
-                                         final IndexVolumeGroupEditView view,
+                                         final WrapperView view,
                                          final IndexVolumeStatusListPresenter volumeStatusListPresenter,
                                          final Provider<IndexVolumeEditPresenter> editProvider,
                                          final RestFactory restFactory,
@@ -83,36 +84,26 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<IndexVolume
         rescanButton = volumeStatusListPresenter.getView().addButton(SvgPresets.REFRESH_GREEN);
         rescanButton.setTitle("Rescan Volumes");
 
-        view.setVolumeList(volumeStatusListPresenter.getView());
+        view.setView(volumeStatusListPresenter.getView());
     }
 
     @Override
     protected void onBind() {
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                refresh();
-            }
-        };
-
         registerHandler(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
-                open(popupUiHandlers);
+                edit();
             }
         }));
-        registerHandler(newButton.addClickHandler(event -> {
-            final IndexVolumeEditPresenter editor = editProvider.get();
-            editor.addVolume(new IndexVolume(), popupUiHandlers);
-        }));
-        registerHandler(openButton.addClickHandler(event -> open(popupUiHandlers)));
+        registerHandler(newButton.addClickHandler(event -> create()));
+        registerHandler(openButton.addClickHandler(event -> edit()));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
         registerHandler(rescanButton.addClickHandler(event -> {
             final Rest<Boolean> rest = restFactory.create();
             nodeCache.listAllNodes(nodeNames ->
                             nodeNames.forEach(nodeName ->
                                     rest
-                                            .onSuccess(response -> refresh())
+                                            .onSuccess(response -> volumeStatusListPresenter.refresh())
                                             .onFailure(throwable -> {
                                             })
                                             .call(INDEX_VOLUME_RESOURCE)
@@ -124,15 +115,30 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<IndexVolume
         }));
     }
 
-    private void open(final PopupUiHandlers popupUiHandlers) {
+    private void create() {
+        final IndexVolume indexVolume = new IndexVolume.Builder().indexVolumeGroupName(volumeGroup.getName()).build();
+        editVolume(indexVolume, "Add Volume");
+    }
+
+    private void edit() {
         final IndexVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
             final Rest<IndexVolume> rest = restFactory.create();
-            rest.onSuccess(result -> {
-                final IndexVolumeEditPresenter editor = editProvider.get();
-                editor.editVolume(result, popupUiHandlers);
-            }).call(INDEX_VOLUME_RESOURCE).read(volume.getId());
+            rest
+                    .onSuccess(result -> editVolume(result, "Edit Volume"))
+                    .call(INDEX_VOLUME_RESOURCE)
+                    .read(volume.getId());
         }
+    }
+
+    private void editVolume(final IndexVolume indexVolume, final String caption) {
+        final IndexVolumeEditPresenter editor = editProvider.get();
+        editor.show(indexVolume, caption, result -> {
+            if (result != null) {
+                volumeStatusListPresenter.refresh();
+            }
+            editor.hide();
+        });
     }
 
     private void delete() {
@@ -148,7 +154,7 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<IndexVolume
                             volumeStatusListPresenter.getSelectionModel().clear();
                             for (final IndexVolume volume : list) {
                                 final Rest<Boolean> rest = restFactory.create();
-                                rest.onSuccess(response -> refresh()).call(INDEX_VOLUME_RESOURCE).delete(volume.getId());
+                                rest.onSuccess(response -> volumeStatusListPresenter.refresh()).call(INDEX_VOLUME_RESOURCE).delete(volume.getId());
                             }
                         }
                     });
@@ -161,100 +167,46 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<IndexVolume
         deleteButton.setEnabled(enabled);
     }
 
-    public void refresh() {
-        volumeStatusListPresenter.refresh();
-    }
-
-
-    public void addVolumeGroup(final PopupUiHandlers popupUiHandlers) {
-        read(null, "Add Volume Group", popupUiHandlers);
-    }
-
-    public void editVolume(final IndexVolumeGroup volumeGroup, final PopupUiHandlers popupUiHandlers) {
-        read(volumeGroup, "Edit Volume Group", popupUiHandlers);
-    }
-
-    private void read(final IndexVolumeGroup volumeGroup, final String title, final PopupUiHandlers popupUiHandlers) {
+    void show(final IndexVolumeGroup volumeGroup, final String title, final Consumer<IndexVolumeGroup> consumer) {
         if (!opening) {
             opening = true;
 
             this.volumeGroup = volumeGroup;
-            if (volumeGroup != null) {
-                getView().setName(volumeGroup.getName());
-            } else {
-                getView().setName("");
-            }
 
-            opening = false;
-            ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title,
-                    new DelegatePopupUiHandlers(popupUiHandlers));
+            final ExpressionOperator expression = new ExpressionOperator.Builder()
+                    .addTerm(IndexVolumeFields.GROUP_NAME, Condition.EQUALS, volumeGroup.getName())
+                    .build();
+            volumeStatusListPresenter.init(new ExpressionCriteria(expression), volumes -> {
+                opening = false;
+
+                final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+                    @Override
+                    public void onHideRequest(final boolean autoClose, final boolean ok) {
+                        if (ok) {
+                            try {
+                                final Rest<IndexVolumeGroup> rest = restFactory.create();
+                                rest
+                                        .onSuccess(consumer)
+                                        .call(INDEX_VOLUME_GROUP_RESOURCE)
+                                        .update(volumeGroup.getId(), volumeGroup);
+
+                            } catch (final RuntimeException e) {
+                                AlertEvent.fireError(IndexVolumeGroupEditPresenter.this, e.getMessage(), null);
+                            }
+                        } else {
+                            consumer.accept(null);
+                        }
+                    }
+                };
+
+                final PopupSize popupSize = new PopupSize(1000, 600, true);
+                ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title,
+                        popupUiHandlers);
+            });
         }
     }
 
-    private void write() {
-        try {
-            final Rest<IndexVolumeGroup> rest = restFactory.create();
-            if (volumeGroup == null) {
-                rest
-                        .onSuccess(this::afterWrite)
-                        .call(INDEX_VOLUME_GROUP_RESOURCE)
-                        .create(getView().getName());
-
-            } else {
-                volumeGroup.setName(getView().getName());
-                rest
-                        .onSuccess(this::afterWrite)
-                        .call(INDEX_VOLUME_GROUP_RESOURCE)
-                        .update(volumeGroup.getId(), volumeGroup);
-            }
-
-        } catch (final RuntimeException e) {
-            AlertEvent.fireError(this, e.getMessage(), null);
-        }
-    }
-
-    private void afterWrite(final IndexVolumeGroup indexVolumeGroup) {
-        volumeGroup = indexVolumeGroup;
-        HidePopupEvent.fire(IndexVolumeGroupEditPresenter.this, IndexVolumeGroupEditPresenter.this, false, true);
-        // Only fire this event here as the parent only
-        // needs to
-        // refresh if there has been a change.
-        CloseEvent.fire(IndexVolumeGroupEditPresenter.this);
-    }
-
-    public interface IndexVolumeGroupEditView extends View {
-        String getName();
-
-        void setName(String name);
-
-        void setVolumeList(View view);
-    }
-
-    private class DelegatePopupUiHandlers extends DefaultPopupUiHandlers {
-        private final PopupUiHandlers popupUiHandlers;
-
-        public DelegatePopupUiHandlers(final PopupUiHandlers popupUiHandlers) {
-            this.popupUiHandlers = popupUiHandlers;
-        }
-
-        @Override
-        public void onHideRequest(final boolean autoClose, final boolean ok) {
-            if (ok) {
-                write();
-            } else {
-                HidePopupEvent.fire(IndexVolumeGroupEditPresenter.this, IndexVolumeGroupEditPresenter.this, autoClose, ok);
-            }
-
-            if (popupUiHandlers != null) {
-                popupUiHandlers.onHideRequest(autoClose, ok);
-            }
-        }
-
-        @Override
-        public void onHide(final boolean autoClose, final boolean ok) {
-            if (popupUiHandlers != null) {
-                popupUiHandlers.onHide(autoClose, ok);
-            }
-        }
+    void hide() {
+        HidePopupEvent.fire(this, this, false, true);
     }
 }

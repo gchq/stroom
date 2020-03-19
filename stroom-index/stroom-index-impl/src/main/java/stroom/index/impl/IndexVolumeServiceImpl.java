@@ -1,9 +1,12 @@
 package stroom.index.impl;
 
 import com.google.common.collect.ImmutableMap;
-import stroom.index.shared.CreateVolumeRequest;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
+import stroom.index.shared.IndexVolumeFields;
 import stroom.node.api.NodeInfo;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
 import stroom.statistics.api.InternalStatisticEvent;
@@ -14,6 +17,7 @@ import stroom.util.NextNameGenerator;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -48,30 +52,29 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
     }
 
     @Override
-    public IndexVolume create(CreateVolumeRequest createVolumeRequest) {
-        final IndexVolume indexVolume = new IndexVolume();
+    public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
+        return securityContext.secureResult(() -> indexVolumeDao.find(criteria));
+    }
+
+    @Override
+    public IndexVolume create(IndexVolume indexVolume) {
         AuditUtil.stamp(securityContext.getUserId(), indexVolume);
 
         var names = indexVolumeDao.getAll().stream().map(i -> isNullOrEmpty(i.getNodeName()) ? "" : i.getNodeName())
                 .collect(Collectors.toList());
-        indexVolume.setNodeName(isNullOrEmpty(createVolumeRequest.getNodeName())
+        indexVolume.setNodeName(isNullOrEmpty(indexVolume.getNodeName())
                 ? NextNameGenerator.getNextName(names, "New index volume")
-                : createVolumeRequest.getNodeName());
-        indexVolume.setPath(isNullOrEmpty(createVolumeRequest.getPath()) ? null : createVolumeRequest.getPath());
-        indexVolume.setIndexVolumeGroupName(createVolumeRequest.getIndexVolumeGroupName());
+                : indexVolume.getNodeName());
+        indexVolume.setPath(isNullOrEmpty(indexVolume.getPath()) ? null : indexVolume.getPath());
+        indexVolume.setIndexVolumeGroupName(indexVolume.getIndexVolumeGroupName());
 
         return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeDao.create(indexVolume));
     }
 
     @Override
-    public IndexVolume getById(final int id) {
+    public IndexVolume read(final int id) {
         return securityContext.secureResult(() -> indexVolumeDao.fetch(id).orElse(null));
-    }
-
-    @Override
-    public List<IndexVolume> getAll() {
-        return securityContext.secureResult(indexVolumeDao::getAll);
     }
 
     @Override
@@ -88,30 +91,6 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
                 () -> indexVolumeDao.update(indexVolume));
     }
 
-//    @Override
-//    public List<IndexVolume> getVolumesInGroup(final String groupName) {
-//        return securityContext.secureResult(() -> indexVolumeDao.getVolumesInGroup(groupName));
-//    }
-
-//    @Override
-//    public List<IndexVolumeGroup> getGroupsForVolume(final int id) {
-//        return securityContext.secureResult(() -> indexVolumeDao.getGroupsForVolume(id));
-//    }
-
-//    @Override
-//    public void addVolumeToGroup(final int volumeId,
-//                                 final String name) {
-//        securityContext.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
-//                () -> indexVolumeDao.addVolumeToGroup(volumeId, name));
-//    }
-//
-//    @Override
-//    public void removeVolumeFromGroup(final int volumeId,
-//                                      final String name) {
-//        securityContext.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
-//                () -> indexVolumeDao.removeVolumeFromGroup(volumeId, name));
-//    }
-
     @Override
     public Boolean delete(final int id) {
         return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
@@ -120,15 +99,14 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
 
     @Override
     public void rescan() {
-        final List<IndexVolume> volumes = getAll();
         final String nodeName = nodeInfo.getThisNodeName();
+        final ExpressionOperator expression = ExpressionUtil.equals(IndexVolumeFields.NODE_NAME, nodeName);
+        final List<IndexVolume> volumes = find(new ExpressionCriteria(expression)).getValues();
         for (final IndexVolume volume : volumes) {
-            if (nodeName.equals(volume.getNodeName())) {
-                updateVolumeState(volume);
+            updateVolumeState(volume);
 
-                // Record some statistics for the use of this volume.
-                recordStats(volume);
-            }
+            // Record some statistics for the use of this volume.
+            recordStats(volume);
         }
     }
 

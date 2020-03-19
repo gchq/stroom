@@ -17,15 +17,24 @@
 
 package stroom.index.mock;
 
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexVolumeService;
-import stroom.index.shared.CreateVolumeRequest;
 import stroom.index.shared.IndexVolume;
-
-import java.util.List;
+import stroom.util.shared.ResultPage;
 
 public class MockIndexVolumeService implements IndexVolumeService {
     @Override
-    public IndexVolume create(CreateVolumeRequest createVolumeRequest) {
+    public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
+        return null;
+    }
+
+    @Override
+    public IndexVolume create(IndexVolume indexVolume) {
+        return null;
+    }
+
+    @Override
+    public IndexVolume read(final int id) {
         return null;
     }
 
@@ -35,18 +44,8 @@ public class MockIndexVolumeService implements IndexVolumeService {
     }
 
     @Override
-    public IndexVolume getById(int id) {
-        return null;
-    }
-
-    @Override
     public Boolean delete(int id) {
         return true;
-    }
-
-    @Override
-    public List<IndexVolume> getAll() {
-        return null;
     }
 
     @Override

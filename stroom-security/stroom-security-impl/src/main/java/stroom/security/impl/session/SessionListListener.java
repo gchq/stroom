@@ -20,14 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.api.UserIdentity;
 import stroom.util.servlet.UserAgentSessionUtil;
-import stroom.util.shared.BaseCriteria;
-import stroom.util.shared.ResultPage;
 
 import javax.inject.Singleton;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpSessionEvent;
 import javax.servlet.http.HttpSessionListener;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
@@ -51,7 +50,7 @@ class SessionListListener implements HttpSessionListener, SessionListService {
     }
 
     @Override
-    public ResultPage<SessionDetails> find(final BaseCriteria criteria) {
+    public List<SessionDetails> list() {
         final ArrayList<SessionDetails> rtn = new ArrayList<>();
         for (final HttpSession httpSession : sessionMap.values()) {
             final SessionDetails sessionDetails = new SessionDetails();
@@ -67,11 +66,6 @@ class SessionListListener implements HttpSessionListener, SessionListService {
 
             rtn.add(sessionDetails);
         }
-        return ResultPage.createUnboundedList(rtn);
-    }
-
-    @Override
-    public BaseCriteria createCriteria() {
-        return null;
+        return rtn;
     }
 }

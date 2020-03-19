@@ -39,18 +39,18 @@ import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.event.CloseEvent;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditView> {
     private static final IndexVolumeResource INDEX_VOLUME_RESOURCE = GWT.create(IndexVolumeResource.class);
 
-    private final PopupSize popupSize = new PopupSize(400, 197, 400, 197, 1000, 197, true);
+
     private final RestFactory restFactory;
     private final NodeCache nodeCache;
+
     private IndexVolume volume;
-    private boolean opening;
 
     @Inject
     public IndexVolumeEditPresenter(final EventBus eventBus,
@@ -62,25 +62,53 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
         this.nodeCache = nodeCache;
     }
 
-    public void addVolume(final IndexVolume volume, final PopupUiHandlers popupUiHandlers) {
-        read(volume, "Add Volume", popupUiHandlers);
+    void show(final IndexVolume volume, final String caption, final Consumer<IndexVolume> consumer) {
+        nodeCache.listEnabledNodes(
+                nodeNames -> {
+                    read(nodeNames, volume);
+
+                    final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+                        @Override
+                        public void onHideRequest(final boolean autoClose, final boolean ok) {
+                            if (ok) {
+                                try {
+                                    write();
+                                    final Rest<IndexVolume> rest = restFactory.create();
+                                    if (volume.getId() != null) {
+                                        rest
+                                                .onSuccess(consumer)
+                                                .call(INDEX_VOLUME_RESOURCE)
+                                                .update(volume.getId(), volume);
+                                    } else {
+                                        rest
+                                                .onSuccess(consumer)
+                                                .call(INDEX_VOLUME_RESOURCE)
+                                                .create(volume);
+                                    }
+
+                                } catch (final RuntimeException e) {
+                                    AlertEvent.fireError(IndexVolumeEditPresenter.this, e.getMessage(), null);
+                                }
+                            } else {
+                                consumer.accept(null);
+                            }
+                        }
+                    };
+
+                    final PopupSize popupSize = new PopupSize(400, 197, 400, 197, 1000, 197, true);
+                    ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, caption, popupUiHandlers);
+                },
+                throwable -> {
+                    AlertEvent.fireError(IndexVolumeEditPresenter.this, throwable.getMessage(), null);
+                    consumer.accept(null);
+                });
     }
 
-    public void editVolume(final IndexVolume volume, final PopupUiHandlers popupUiHandlers) {
-        read(volume, "Edit Volume", popupUiHandlers);
+    void hide() {
+        HidePopupEvent.fire(this, this, false, true);
     }
 
-    private void read(final IndexVolume volume, final String title, final PopupUiHandlers popupUiHandlers) {
-        if (!opening) {
-            opening = true;
-            nodeCache.listEnabledNodes(
-                    nodeNames -> read(nodeNames, volume, title, popupUiHandlers),
-                    throwable -> {
-                    });
-        }
-    }
-
-    private void read(final List<String> nodeNames, final IndexVolume volume, final String title, final PopupUiHandlers popupUiHandlers) {
+    private void read(final List<String> nodeNames, final IndexVolume volume) {
         this.volume = volume;
 
         getView().setNodeNames(nodeNames);
@@ -94,38 +122,19 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
         } else {
             getView().getByteLimit().setText("");
         }
-
-        opening = false;
-        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title,
-                new DelegatePopupUiHandlers(popupUiHandlers));
     }
 
     private void write() {
-        try {
-            volume.setNodeName(getView().getNodeName().getText());
-            volume.setPath(getView().getPath().getText());
-            volume.setState(getView().getState().getSelectedItem());
+        volume.setNodeName(getView().getNodeName().getText());
+        volume.setPath(getView().getPath().getText());
+        volume.setState(getView().getState().getSelectedItem());
 
-            Long bytesLimit = null;
-            final String limit = getView().getByteLimit().getText().trim();
-            if (limit.length() > 0) {
-                bytesLimit = ModelStringUtil.parseIECByteSizeString(limit);
-            }
-            volume.setBytesLimit(bytesLimit);
-
-            final Rest<IndexVolume> rest = restFactory.create();
-            rest.onSuccess(result -> {
-                volume = result;
-                HidePopupEvent.fire(IndexVolumeEditPresenter.this, IndexVolumeEditPresenter.this, false, true);
-                // Only fire this event here as the parent only
-                // needs to
-                // refresh if there has been a change.
-                CloseEvent.fire(IndexVolumeEditPresenter.this);
-            }).call(INDEX_VOLUME_RESOURCE).update(volume.getId(), volume);
-
-        } catch (final RuntimeException e) {
-            AlertEvent.fireError(this, e.getMessage(), null);
+        Long bytesLimit = null;
+        final String limit = getView().getByteLimit().getText().trim();
+        if (limit.length() > 0) {
+            bytesLimit = ModelStringUtil.parseIECByteSizeString(limit);
         }
+        volume.setBytesLimit(bytesLimit);
     }
 
     public interface IndexVolumeEditView extends View {
@@ -138,33 +147,5 @@ public class IndexVolumeEditPresenter extends MyPresenterWidget<IndexVolumeEditV
         ItemListBox<VolumeUseState> getState();
 
         HasText getByteLimit();
-    }
-
-    private class DelegatePopupUiHandlers extends DefaultPopupUiHandlers {
-        private final PopupUiHandlers popupUiHandlers;
-
-        public DelegatePopupUiHandlers(final PopupUiHandlers popupUiHandlers) {
-            this.popupUiHandlers = popupUiHandlers;
-        }
-
-        @Override
-        public void onHideRequest(final boolean autoClose, final boolean ok) {
-            if (ok) {
-                write();
-            } else {
-                HidePopupEvent.fire(IndexVolumeEditPresenter.this, IndexVolumeEditPresenter.this, autoClose, ok);
-            }
-
-            if (popupUiHandlers != null) {
-                popupUiHandlers.onHideRequest(autoClose, ok);
-            }
-        }
-
-        @Override
-        public void onHide(final boolean autoClose, final boolean ok) {
-            if (popupUiHandlers != null) {
-                popupUiHandlers.onHide(autoClose, ok);
-            }
-        }
     }
 }

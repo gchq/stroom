@@ -14,10 +14,14 @@
  * limitations under the License.
  */
 
-package stroom.util.entity;
+package stroom.processor.impl.db;
 
-public interface EntityEventBus {
-    void addHandler(EntityEvent.Handler handler, String type, EntityAction... action);
+interface Marshaller<E, O> {
+    E marshal(E entity);
 
-    void fire(EntityEvent event);
+    E unmarshal(E entity);
+
+    O getObject(E entity);
+
+    void setObject(E entity, O object);
 }

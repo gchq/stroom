@@ -20,7 +20,6 @@ import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskManager;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.IsServlet;
-import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -76,8 +75,8 @@ class SessionListServlet extends HttpServlet implements IsServlet {
         final List<List<String>> table = new ArrayList<>();
 
         final SessionListTask sessionListTask = new SessionListTask();
-        final ResultPage<SessionDetails> sessionDetailsList = taskManager.exec(sessionListTask);
-        for (final SessionDetails sessionDetails : sessionDetailsList.getValues()) {
+        final List<SessionDetails> sessionDetailsList = taskManager.exec(sessionListTask);
+        for (final SessionDetails sessionDetails : sessionDetailsList) {
             final ArrayList<String> row = new ArrayList<>();
             row.add(DateUtil.createNormalDateTimeString(sessionDetails.getLastAccessedMs()));
             row.add(DateUtil.createNormalDateTimeString(sessionDetails.getCreateMs()));

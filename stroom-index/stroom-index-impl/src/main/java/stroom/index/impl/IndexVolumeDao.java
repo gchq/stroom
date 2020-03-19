@@ -1,6 +1,8 @@
 package stroom.index.impl;
 
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
 import java.util.Optional;
@@ -40,6 +42,10 @@ public interface IndexVolumeDao {
      * @return A list of candidate Index Volumes.
      */
     List<IndexVolume> getVolumesInGroupOnNode(String groupName, String nodeName);
+
+    List<IndexVolume> getVolumesInGroup(String groupName);
+
+    ResultPage<IndexVolume> find(ExpressionCriteria criteria);
 //
 //    /**
 //     * Add to membership of a volume group.

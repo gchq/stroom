@@ -19,10 +19,10 @@ package stroom.security.impl;
 import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.docref.DocRef;
-import stroom.util.entity.EntityAction;
-import stroom.util.entity.EntityEvent;
-import stroom.util.entity.EntityEventBus;
-import stroom.util.entity.EntityEventHandler;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventBus;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
