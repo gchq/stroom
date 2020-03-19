@@ -45,7 +45,7 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
 
     private final RestFactory restFactory;
 
-    private ExpressionCriteria criteria;
+    private Consumer<ResultPage<IndexVolume>> consumer;
     private RestDataProvider<IndexVolume, ResultPage<IndexVolume>> dataProvider;
 
     @Inject
@@ -171,26 +171,12 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
     }
 
     public void refresh() {
-        if (dataProvider == null) {
-            dataProvider = new RestDataProvider<IndexVolume, ResultPage<IndexVolume>>(getEventBus(), criteria.obtainPageRequest()) {
-                @Override
-                protected void exec(final Consumer<ResultPage<IndexVolume>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                    final Rest<ResultPage<IndexVolume>> rest = restFactory.create();
-                    rest
-                            .onSuccess(dataConsumer)
-                            .onFailure(throwableConsumer)
-                            .call(INDEX_VOLUME_RESOURCE)
-                            .find(criteria);
-                }
-            };
-            dataProvider.addDataDisplay(getView().getDataDisplay());
-        } else {
-            dataProvider.refresh();
-        }
+        this.consumer = null;
+        dataProvider.refresh();
     }
 
-    public void init(final ExpressionCriteria criteria, final Consumer<ResultPage<IndexVolume>> consumer) {
-        this.criteria = criteria;
+    public void init(final ExpressionCriteria criteria, final Consumer<ResultPage<IndexVolume>> c) {
+        this.consumer = c;
         final Rest<ResultPage<IndexVolume>> rest = restFactory.create();
         dataProvider = new RestDataProvider<IndexVolume, ResultPage<IndexVolume>>(getEventBus(), criteria.obtainPageRequest()) {
             @Override
@@ -198,7 +184,9 @@ public class IndexVolumeStatusListPresenter extends MyPresenterWidget<DataGridVi
                 rest
                         .onSuccess(result -> {
                             dataConsumer.accept(result);
-                            consumer.accept(result);
+                            if (consumer != null) {
+                                consumer.accept(result);
+                            }
                         })
                         .onFailure(throwableConsumer)
                         .call(INDEX_VOLUME_RESOURCE)
