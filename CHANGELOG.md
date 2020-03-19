@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Issue **#1394** : Fix duplicate tables appearing in Monitoring -> Database Tables.
+
 * Add NodeEndpointConfiguration. Change `node` table to hold the base endpoint.
 
 

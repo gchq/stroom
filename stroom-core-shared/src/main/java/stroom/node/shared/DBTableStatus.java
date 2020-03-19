@@ -33,6 +33,7 @@ public class DBTableStatus {
     public static final String FIELD_DATA_SIZE = "Data Size";
     public static final String FIELD_INDEX_SIZE = "Index Size";
 
+
     @JsonProperty
     private String db;
     @JsonProperty
