@@ -53,7 +53,6 @@ import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorListRow;
-import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorResource;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.ProcessorTaskExpressionUtil;
@@ -78,7 +77,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
     private static final ProcessorResource PROCESSOR_RESOURCE = GWT.create(ProcessorResource.class);
     private static final ProcessorFilterResource PROCESSOR_FILTER_RESOURCE = GWT.create(ProcessorFilterResource.class);
 
-    private final RestDataProvider<ProcessorListRow, ProcessorListRowResultPage> dataProvider;
+    private final RestDataProvider<ProcessorListRow, ResultPage<ProcessorListRow>> dataProvider;
     private final TooltipPresenter tooltipPresenter;
     private final FetchProcessorRequest request;
     private boolean doneDataDisplay = false;
@@ -99,15 +98,15 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         this.tooltipPresenter = tooltipPresenter;
 
         request = new FetchProcessorRequest();
-        dataProvider = new RestDataProvider<ProcessorListRow, ProcessorListRowResultPage>(eventBus) {
+        dataProvider = new RestDataProvider<ProcessorListRow, ResultPage<ProcessorListRow>>(eventBus) {
             @Override
-            protected void exec(final Consumer<ProcessorListRowResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<ProcessorListRowResultPage> rest = restFactory.create();
+            protected void exec(final Consumer<ResultPage<ProcessorListRow>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<ProcessorListRow>> rest = restFactory.create();
                 rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(PROCESSOR_FILTER_RESOURCE).find(request);
             }
 
             @Override
-            protected void changeData(final ProcessorListRowResultPage data) {
+            protected void changeData(final ResultPage<ProcessorListRow> data) {
                 super.changeData(data);
                 onChangeData(data);
             }

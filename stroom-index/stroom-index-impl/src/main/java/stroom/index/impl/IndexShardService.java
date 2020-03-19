@@ -20,14 +20,12 @@ package stroom.index.impl;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardResultPage;
-
-import java.util.List;
+import stroom.util.shared.ResultPage;
 
 public interface IndexShardService {
     IndexShard loadById(Long id);
 
-    IndexShardResultPage find(FindIndexShardCriteria criteria);
+    ResultPage<IndexShard> find(FindIndexShardCriteria criteria);
 
     IndexShard createIndexShard(IndexShardKey indexShardKey, String ownerNodeName);
 

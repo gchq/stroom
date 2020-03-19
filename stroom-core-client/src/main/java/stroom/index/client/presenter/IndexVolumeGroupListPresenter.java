@@ -22,24 +22,17 @@ import com.google.gwt.user.cellview.client.Column;
 import com.google.inject.Inject;
 import com.google.web.bindery.event.shared.EventBus;
 import com.gwtplatform.mvp.client.MyPresenterWidget;
-import stroom.data.client.presenter.ColumnSizeConstants;
 import stroom.data.client.presenter.RestDataProvider;
 import stroom.data.grid.client.DataGridView;
 import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
-import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
-import stroom.data.store.impl.fs.shared.FsVolume;
-import stroom.data.store.impl.fs.shared.FsVolumeResource;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
-import stroom.index.shared.IndexVolumeGroupResultPage;
 import stroom.util.client.BorderUtil;
-import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
-import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.util.client.MultiSelectionModel;
 
 import java.util.function.Consumer;
@@ -47,7 +40,7 @@ import java.util.function.Consumer;
 public class IndexVolumeGroupListPresenter extends MyPresenterWidget<DataGridView<IndexVolumeGroup>> {
     private static final IndexVolumeGroupResource INDEX_VOLUME_GROUP_RESOURCE = GWT.create(IndexVolumeGroupResource.class);
 
-    private final RestDataProvider<IndexVolumeGroup, IndexVolumeGroupResultPage> dataProvider;
+    private final RestDataProvider<IndexVolumeGroup, ResultPage<IndexVolumeGroup>> dataProvider;
 
     @Inject
     public IndexVolumeGroupListPresenter(final EventBus eventBus, final RestFactory restFactory) {
@@ -59,10 +52,10 @@ public class IndexVolumeGroupListPresenter extends MyPresenterWidget<DataGridVie
         initTableColumns();
 
         final ExpressionCriteria criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<IndexVolumeGroup, IndexVolumeGroupResultPage>(eventBus, criteria.obtainPageRequest()) {
+        dataProvider = new RestDataProvider<IndexVolumeGroup, ResultPage<IndexVolumeGroup>>(eventBus, criteria.obtainPageRequest()) {
             @Override
-            protected void exec(final Consumer<IndexVolumeGroupResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                final Rest<IndexVolumeGroupResultPage> rest = restFactory.create();
+            protected void exec(final Consumer<ResultPage<IndexVolumeGroup>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                final Rest<ResultPage<IndexVolumeGroup>> rest = restFactory.create();
                 rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_VOLUME_GROUP_RESOURCE).find(criteria);
             }
         };

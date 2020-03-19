@@ -3,7 +3,7 @@ package stroom.index.impl;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.index.shared.IndexVolumeGroupResource;
-import stroom.index.shared.IndexVolumeGroupResultPage;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 
@@ -16,8 +16,8 @@ class IndexVolumeGroupResourceImpl implements IndexVolumeGroupResource {
     }
 
     @Override
-    public IndexVolumeGroupResultPage find(final ExpressionCriteria request) {
-        return new IndexVolumeGroupResultPage(indexVolumeGroupService.getAll());
+    public ResultPage<IndexVolumeGroup> find(final ExpressionCriteria request) {
+        return ResultPage.createUnboundedList(indexVolumeGroupService.getAll());
     }
 
     @Override

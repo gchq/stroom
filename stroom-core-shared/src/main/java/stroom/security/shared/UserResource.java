@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -32,7 +33,7 @@ public interface UserResource extends RestResource, DirectRestService {
 
     @POST
     @Path("/find")
-    UserResultPage find(FindUserCriteria criteria);
+    ResultPage<User> find(FindUserCriteria criteria);
 
     @GET
     @Path("/{userUuid}")

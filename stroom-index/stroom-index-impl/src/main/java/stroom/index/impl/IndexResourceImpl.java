@@ -5,13 +5,14 @@ import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexResource;
-import stroom.index.shared.IndexShardResultPage;
+import stroom.index.shared.IndexShard;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.util.jersey.WebTargetFactory;
 import stroom.util.rest.RestUtil;
 import stroom.util.shared.ResourcePaths;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.ws.rs.NotFoundException;
@@ -54,7 +55,7 @@ class IndexResourceImpl implements IndexResource {
     }
 
     @Override
-    public IndexShardResultPage findIndexShards(final FindIndexShardCriteria criteria) {
+    public ResultPage<IndexShard> findIndexShards(final FindIndexShardCriteria criteria) {
         return indexShardService.find(criteria);
     }
 

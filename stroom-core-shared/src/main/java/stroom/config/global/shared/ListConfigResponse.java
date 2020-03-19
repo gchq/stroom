@@ -11,7 +11,6 @@ import java.util.List;
 
 @JsonInclude(Include.NON_NULL)
 public class ListConfigResponse extends ResultPage<ConfigProperty> {
-
     @JsonCreator
     public ListConfigResponse(@JsonProperty("values") final List<ConfigProperty> values,
                               @JsonProperty("pageResponse") final PageResponse pageResponse) {

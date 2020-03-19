@@ -6,7 +6,6 @@ import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
-import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorRow;
 import stroom.util.json.JsonUtil;
 import stroom.util.shared.Expander;
@@ -26,10 +25,10 @@ public class TestSerialisation {
         rows.add(new ProcessorRow(new Expander(), new Processor()));
         rows.add(new ProcessorFilterRow(new ProcessorFilter()));
 
-        final ProcessorListRowResultPage resultPage1 = new ProcessorListRowResultPage(rows, ResultPage.createPageResponse(rows));
+        final ResultPage<ProcessorListRow> resultPage1 = ResultPage.createUnboundedList(rows);
         final String result1 = objectMapper.writeValueAsString(resultPage1);
         System.out.println(result1);
-        final ProcessorListRowResultPage resultPage2 = objectMapper.readValue(result1, ProcessorListRowResultPage.class);
+        final ResultPage<ProcessorListRow> resultPage2 = objectMapper.readValue(result1, ResultPage.class);
         final String result2 = objectMapper.writeValueAsString(resultPage2);
         System.out.println(result2);
 

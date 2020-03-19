@@ -22,6 +22,7 @@ import org.fusesource.restygwt.client.DirectRestService;
 import stroom.docref.DocRef;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -39,7 +40,7 @@ import javax.ws.rs.core.MediaType;
 public interface IndexResource extends RestResource, DirectRestService {
     String BASE_PATH = "/index" + ResourcePaths.V2;
     String SHARD_DELETE_SUB_PATH = "/shard/delete";
-//    String SHARD_CLOSE_SUB_PATH = "/shard/close";
+    //    String SHARD_CLOSE_SUB_PATH = "/shard/close";
     String SHARD_FLUSH_SUB_PATH = "/shard/flush";
 
     @POST
@@ -60,8 +61,8 @@ public interface IndexResource extends RestResource, DirectRestService {
     @Path("/shard/find")
     @ApiOperation(
             value = "Find matching index shards",
-            response = IndexShardResultPage.class)
-    IndexShardResultPage findIndexShards(FindIndexShardCriteria criteria);
+            response = ResultPage.class)
+    ResultPage<IndexShard> findIndexShards(FindIndexShardCriteria criteria);
 
     @DELETE
     @Path(SHARD_DELETE_SUB_PATH)

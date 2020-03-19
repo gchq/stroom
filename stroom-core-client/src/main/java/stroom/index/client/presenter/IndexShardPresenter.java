@@ -44,13 +44,13 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexResource;
 import stroom.index.shared.IndexShard;
-import stroom.index.shared.IndexShardResultPage;
 import stroom.node.client.NodeCache;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.svg.client.SvgPresets;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResultPage;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.customdatebox.client.ClientDateUtil;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -71,8 +71,8 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
     private final RestFactory restFactory;
     private final NodeCache nodeCache;
     private final ClientSecurityContext securityContext;
-    private RestDataProvider<IndexShard, IndexShardResultPage> dataProvider;
-    private IndexShardResultPage resultList = null;
+    private RestDataProvider<IndexShard, ResultPage<IndexShard>> dataProvider;
+    private ResultPage<IndexShard> resultList = null;
     private final FindIndexShardCriteria selectionCriteria = new FindIndexShardCriteria();
     private final FindIndexShardCriteria queryCriteria = new FindIndexShardCriteria();
 
@@ -390,15 +390,15 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
             queryCriteria.getIndexUuidSet().add(docRef.getUuid());
 
             if (dataProvider == null) {
-                dataProvider = new RestDataProvider<IndexShard, IndexShardResultPage>(getEventBus(), queryCriteria.obtainPageRequest()) {
+                dataProvider = new RestDataProvider<IndexShard, ResultPage<IndexShard>>(getEventBus(), queryCriteria.obtainPageRequest()) {
                     @Override
-                    protected void exec(final Consumer<IndexShardResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                        final Rest<IndexShardResultPage> rest = restFactory.create();
+                    protected void exec(final Consumer<ResultPage<IndexShard>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                        final Rest<ResultPage<IndexShard>> rest = restFactory.create();
                         rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(INDEX_RESOURCE).findIndexShards(queryCriteria);
                     }
 
                     @Override
-                    protected void changeData(final IndexShardResultPage data) {
+                    protected void changeData(final ResultPage<IndexShard> data) {
                         super.changeData(data);
                         onChangeData(data);
                     }
@@ -419,7 +419,7 @@ public class IndexShardPresenter extends MyPresenterWidget<DataGridView<IndexSha
         enableButtons();
     }
 
-    private void onChangeData(final IndexShardResultPage data) {
+    private void onChangeData(final ResultPage<IndexShard> data) {
         resultList = data;
 
         if (!Boolean.TRUE.equals(selectionCriteria.getIndexShardIdSet().getMatchAll())) {

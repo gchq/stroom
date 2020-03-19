@@ -3,7 +3,7 @@ package stroom.security.impl;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
-import stroom.security.shared.UserResultPage;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.StringCriteria;
 
 import javax.inject.Inject;
@@ -18,8 +18,8 @@ public class UserResourceImpl implements UserResource {
     }
 
     @Override
-    public UserResultPage find(final FindUserCriteria criteria) {
-        return new UserResultPage(userService.find(criteria));
+    public ResultPage<User> find(final FindUserCriteria criteria) {
+        return ResultPage.createUnboundedList(userService.find(criteria));
     }
 
     @Override
@@ -87,13 +87,13 @@ public class UserResourceImpl implements UserResource {
 
     @Override
     public Boolean addUserToGroup(final String userUuid,
-                               final String groupUuid) {
+                                  final String groupUuid) {
         return userService.addUserToGroup(userUuid, groupUuid);
     }
 
     @Override
     public Boolean removeUserFromGroup(final String userUuid,
-                                    final String groupUuid) {
+                                       final String groupUuid) {
         return userService.removeUserFromGroup(userUuid, groupUuid);
     }
 

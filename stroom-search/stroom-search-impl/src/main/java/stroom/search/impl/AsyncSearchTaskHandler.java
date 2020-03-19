@@ -33,7 +33,6 @@ import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexField;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.index.shared.IndexShardResultPage;
 import stroom.query.api.v2.Query;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.AbstractTaskHandler;
@@ -42,6 +41,7 @@ import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.task.api.VoidResult;
 import stroom.task.shared.FindTaskCriteria;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
@@ -119,7 +119,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // Order by partition name and key.
                     findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, Direction.DESCENDING, false);
                     findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, Direction.DESCENDING, false);
-                    final IndexShardResultPage indexShards = indexShardService.find(findIndexShardCriteria);
+                    final ResultPage<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
 
                     // Build a map of nodes that will deal with each set of shards.
                     final Map<String, List<Long>> shardMap = new HashMap<>();

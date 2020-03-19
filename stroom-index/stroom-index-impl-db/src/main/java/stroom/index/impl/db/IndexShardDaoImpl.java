@@ -15,7 +15,6 @@ import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardResultPage;
 import stroom.index.shared.IndexVolume;
 import stroom.util.shared.CriteriaSet;
 import stroom.util.shared.ResultPage;
@@ -137,7 +136,7 @@ class IndexShardDaoImpl implements IndexShardDao {
 
 
     @Override
-    public IndexShardResultPage find(final FindIndexShardCriteria criteria) {
+    public ResultPage<IndexShard> find(final FindIndexShardCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getRangeCondition(INDEX_SHARD.DOCUMENT_COUNT, criteria.getDocumentCountRange()),
                 JooqUtil.getSetCondition(INDEX_SHARD.NODE_NAME, criteria.getNodeNameSet()),
@@ -167,8 +166,7 @@ class IndexShardDaoImpl implements IndexShardDao {
                             return indexShard;
                         }));
 
-        final ResultPage<IndexShard> resultPage = ResultPage.createCriterialBasedList(list, criteria);
-        return new IndexShardResultPage(resultPage.getValues(), resultPage.getPageResponse());
+        return ResultPage.createCriterialBasedList(list, criteria);
 
 //            shards.forEach(shard -> {
 //                final IndexVolume indexVolume = context.select()

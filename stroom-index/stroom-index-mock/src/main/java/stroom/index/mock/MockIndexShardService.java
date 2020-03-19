@@ -23,10 +23,10 @@ import stroom.index.impl.LuceneVersionUtil;
 import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardResultPage;
 import stroom.index.shared.IndexVolume;
 import stroom.util.io.FileUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Singleton;
 import java.nio.file.Files;
@@ -51,8 +51,8 @@ public class MockIndexShardService
         this.indexShardId = new AtomicLong(0);
     }
 
-    public MockIndexShardService( final AtomicInteger indexShardsCreated,
-                                  final AtomicLong indexShardId) {
+    public MockIndexShardService(final AtomicInteger indexShardsCreated,
+                                 final AtomicLong indexShardId) {
         this.indexShardsCreated = indexShardsCreated;
         this.indexShardId = indexShardId;
     }
@@ -89,7 +89,7 @@ public class MockIndexShardService
     }
 
     @Override
-    public IndexShardResultPage find(final FindIndexShardCriteria criteria) {
+    public ResultPage<IndexShard> find(final FindIndexShardCriteria criteria) {
         final List<IndexShard> results = new ArrayList<>();
         for (final IndexShard indexShard : map.values()) {
             boolean include = true;
@@ -111,7 +111,7 @@ public class MockIndexShardService
             }
         }
 
-        return new IndexShardResultPage(results);
+        return ResultPage.createUnboundedList(results);
     }
 
     @Override

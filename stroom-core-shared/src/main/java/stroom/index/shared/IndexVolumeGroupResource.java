@@ -6,6 +6,7 @@ import org.fusesource.restygwt.client.DirectRestService;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -26,8 +27,8 @@ public interface IndexVolumeGroupResource extends RestResource, DirectRestServic
     @Path("find")
     @ApiOperation(
             value = "Finds index volume groups matching request",
-            response = IndexVolumeGroupResultPage.class)
-    IndexVolumeGroupResultPage find(ExpressionCriteria request);
+            response = ResultPage.class)
+    ResultPage<IndexVolumeGroup> find(ExpressionCriteria request);
 
     @POST
     @ApiOperation(

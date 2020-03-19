@@ -24,7 +24,6 @@ import stroom.index.shared.IndexException;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardResultPage;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
@@ -34,6 +33,7 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -149,7 +149,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final Lock lock = existingShardQueryLocks.getLockForKey(criteria);
         lock.lock();
         try {
-            final IndexShardResultPage indexShardResultPage = indexShardService.find(criteria);
+            final ResultPage<IndexShard> indexShardResultPage = indexShardService.find(criteria);
             for (final IndexShard indexShard : indexShardResultPage.getValues()) {
                 // Look for non deleted, non full, non corrupt index shards.
                 if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
@@ -455,7 +455,7 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             criteria.getIndexShardStatusSet().add(IndexShardStatus.OPEN);
             criteria.getIndexShardStatusSet().add(IndexShardStatus.OPENING);
             criteria.getIndexShardStatusSet().add(IndexShardStatus.CLOSING);
-            final IndexShardResultPage indexShardResultPage = indexShardService.find(criteria);
+            final ResultPage<IndexShard> indexShardResultPage = indexShardService.find(criteria);
             for (final IndexShard indexShard : indexShardResultPage.getValues()) {
                 clean(indexShard);
             }

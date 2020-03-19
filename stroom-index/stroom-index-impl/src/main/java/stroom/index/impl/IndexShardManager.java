@@ -21,7 +21,6 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
-import stroom.index.shared.IndexShardResultPage;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -30,6 +29,7 @@ import stroom.util.io.FileUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -110,7 +110,7 @@ public class IndexShardManager {
                     final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
                     criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
                     criteria.getIndexShardStatusSet().add(IndexShardStatus.DELETED);
-                    final IndexShardResultPage shards = indexShardService.find(criteria);
+                    final ResultPage<IndexShard> shards = indexShardService.find(criteria);
 
                     final TaskContext taskContext = taskContextProvider.get();
                     Runnable runnable = () -> {
@@ -176,12 +176,12 @@ public class IndexShardManager {
 
     public Long performAction(final FindIndexShardCriteria criteria, final IndexShardAction action) {
         return securityContext.secureResult(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
-            final IndexShardResultPage shards = indexShardService.find(criteria);
+            final ResultPage<IndexShard> shards = indexShardService.find(criteria);
             return performAction(shards, action);
         });
     }
 
-    private long performAction(final IndexShardResultPage shards, final IndexShardAction action) {
+    private long performAction(final ResultPage<IndexShard> shards, final IndexShardAction action) {
         final AtomicLong shardCount = new AtomicLong();
 
         if (shards.size() > 0) {
@@ -231,7 +231,7 @@ public class IndexShardManager {
         securityContext.secure(PermissionNames.MANAGE_INDEX_SHARDS_PERMISSION, () -> {
             final FindIndexShardCriteria criteria = new FindIndexShardCriteria();
             criteria.getNodeNameSet().add(nodeInfo.getThisNodeName());
-            final IndexShardResultPage shards = indexShardService.find(criteria);
+            final ResultPage<IndexShard> shards = indexShardService.find(criteria);
             for (final IndexShard shard : shards.getValues()) {
                 checkRetention(shard);
             }

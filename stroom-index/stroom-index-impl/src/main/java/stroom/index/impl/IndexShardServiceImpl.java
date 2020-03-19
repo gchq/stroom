@@ -23,13 +23,13 @@ import stroom.index.shared.FindIndexShardCriteria;
 import stroom.index.shared.IndexDoc;
 import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShardKey;
-import stroom.index.shared.IndexShardResultPage;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionNames;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -57,7 +57,7 @@ public class IndexShardServiceImpl implements IndexShardService {
     }
 
     @Override
-    public IndexShardResultPage find(final FindIndexShardCriteria criteria) {
+    public ResultPage<IndexShard> find(final FindIndexShardCriteria criteria) {
         return securityContext.secureResult(() -> indexShardDao.find(criteria));
     }
 

@@ -28,7 +28,7 @@ import stroom.dispatch.client.RestFactory;
 import stroom.security.shared.FindUserCriteria;
 import stroom.security.shared.User;
 import stroom.security.shared.UserResource;
-import stroom.security.shared.UserResultPage;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 
 import java.util.function.Consumer;
@@ -39,7 +39,7 @@ public class UserDataProvider implements Refreshable, ColumnSortEvent.Handler {
     private final EventBus eventBus;
     private final RestFactory restFactory;
     private final DataGridView<User> view;
-    private RestDataProvider<User, UserResultPage> dataProvider;
+    private RestDataProvider<User, ResultPage<User>> dataProvider;
     //    private Boolean allowNoConstraint = null;
     private FindUserCriteria criteria = new FindUserCriteria();
 
@@ -60,10 +60,10 @@ public class UserDataProvider implements Refreshable, ColumnSortEvent.Handler {
     public void setCriteria(final FindUserCriteria criteria) {
         this.criteria = criteria;
         if (dataProvider == null) {
-            this.dataProvider = new RestDataProvider<User, UserResultPage>(eventBus) {
+            this.dataProvider = new RestDataProvider<User, ResultPage<User>>(eventBus) {
                 @Override
-                protected void exec(final Consumer<UserResultPage> dataConsumer, final Consumer<Throwable> throwableConsumer) {
-                    final Rest<UserResultPage> rest = restFactory.create();
+                protected void exec(final Consumer<ResultPage<User>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+                    final Rest<ResultPage<User>> rest = restFactory.create();
                     rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(USER_RESOURCE).find(criteria);
                 }
 
@@ -71,8 +71,8 @@ public class UserDataProvider implements Refreshable, ColumnSortEvent.Handler {
                 // examination and modification of data prior to setting it in
                 // the display.
                 @Override
-                protected void changeData(final UserResultPage data) {
-                    final UserResultPage processedData = processData(data);
+                protected void changeData(final ResultPage<User> data) {
+                    final ResultPage<User> processedData = processData(data);
                     super.changeData(processedData);
                 }
             };
@@ -95,7 +95,7 @@ public class UserDataProvider implements Refreshable, ColumnSortEvent.Handler {
      * We override the default set data functionality to allow the examination
      * and modification of data prior to setting it in the display.
      */
-    protected UserResultPage processData(final UserResultPage data) {
+    protected ResultPage<User> processData(final ResultPage<User> data) {
         return data;
     }
 
