@@ -30,7 +30,7 @@ import stroom.activity.impl.db.jooq.tables.Activity;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Stroom extends SchemaImpl {
 
-    private static final long serialVersionUID = -1682862915;
+    private static final long serialVersionUID = 2108923069;
 
     /**
      * The reference instance of <code>stroom</code>
@@ -38,7 +38,7 @@ public class Stroom extends SchemaImpl {
     public static final Stroom STROOM = new Stroom();
 
     /**
-     * The table <code>stroom.ACTIVITY</code>.
+     * The table <code>stroom.activity</code>.
      */
     public final Activity ACTIVITY = stroom.activity.impl.db.jooq.tables.Activity.ACTIVITY;
 

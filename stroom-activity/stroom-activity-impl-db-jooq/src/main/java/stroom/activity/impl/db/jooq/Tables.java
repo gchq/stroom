@@ -23,7 +23,7 @@ import stroom.activity.impl.db.jooq.tables.Activity;
 public class Tables {
 
     /**
-     * The table <code>stroom.ACTIVITY</code>.
+     * The table <code>stroom.activity</code>.
      */
     public static final Activity ACTIVITY = Activity.ACTIVITY;
 }

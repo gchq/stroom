@@ -42,10 +42,10 @@ import stroom.activity.impl.db.jooq.tables.records.ActivityRecord;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Activity extends TableImpl<ActivityRecord> {
 
-    private static final long serialVersionUID = -717559734;
+    private static final long serialVersionUID = -72511552;
 
     /**
-     * The reference instance of <code>stroom.ACTIVITY</code>
+     * The reference instance of <code>stroom.activity</code>
      */
     public static final Activity ACTIVITY = new Activity();
 
@@ -58,61 +58,61 @@ public class Activity extends TableImpl<ActivityRecord> {
     }
 
     /**
-     * The column <code>stroom.ACTIVITY.ID</code>.
+     * The column <code>stroom.activity.id</code>.
      */
-    public final TableField<ActivityRecord, Integer> ID = createField(DSL.name("ID"), org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
+    public final TableField<ActivityRecord, Integer> ID = createField(DSL.name("id"), org.jooq.impl.SQLDataType.INTEGER.nullable(false).identity(true), this, "");
 
     /**
-     * The column <code>stroom.ACTIVITY.VER</code>.
+     * The column <code>stroom.activity.version</code>.
      */
-    public final TableField<ActivityRecord, Byte> VER = createField(DSL.name("VER"), org.jooq.impl.SQLDataType.TINYINT.nullable(false), this, "");
+    public final TableField<ActivityRecord, Integer> VERSION = createField(DSL.name("version"), org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.ACTIVITY.CRT_MS</code>.
+     * The column <code>stroom.activity.create_time_ms</code>.
      */
-    public final TableField<ActivityRecord, Long> CRT_MS = createField(DSL.name("CRT_MS"), org.jooq.impl.SQLDataType.BIGINT, this, "");
+    public final TableField<ActivityRecord, Long> CREATE_TIME_MS = createField(DSL.name("create_time_ms"), org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.ACTIVITY.CRT_USER</code>.
+     * The column <code>stroom.activity.create_user</code>.
      */
-    public final TableField<ActivityRecord, String> CRT_USER = createField(DSL.name("CRT_USER"), org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+    public final TableField<ActivityRecord, String> CREATE_USER = createField(DSL.name("create_user"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.ACTIVITY.UPD_MS</code>.
+     * The column <code>stroom.activity.update_time_ms</code>.
      */
-    public final TableField<ActivityRecord, Long> UPD_MS = createField(DSL.name("UPD_MS"), org.jooq.impl.SQLDataType.BIGINT, this, "");
+    public final TableField<ActivityRecord, Long> UPDATE_TIME_MS = createField(DSL.name("update_time_ms"), org.jooq.impl.SQLDataType.BIGINT.nullable(false), this, "");
 
     /**
-     * The column <code>stroom.ACTIVITY.UPD_USER</code>.
+     * The column <code>stroom.activity.update_user</code>.
      */
-    public final TableField<ActivityRecord, String> UPD_USER = createField(DSL.name("UPD_USER"), org.jooq.impl.SQLDataType.VARCHAR(255), this, "");
+    public final TableField<ActivityRecord, String> UPDATE_USER = createField(DSL.name("update_user"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.ACTIVITY.USER_ID</code>.
+     * The column <code>stroom.activity.user_id</code>.
      */
-    public final TableField<ActivityRecord, String> USER_ID = createField(DSL.name("USER_ID"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
+    public final TableField<ActivityRecord, String> USER_ID = createField(DSL.name("user_id"), org.jooq.impl.SQLDataType.VARCHAR(255).nullable(false), this, "");
 
     /**
-     * The column <code>stroom.ACTIVITY.JSON</code>.
+     * The column <code>stroom.activity.json</code>.
      */
-    public final TableField<ActivityRecord, String> JSON = createField(DSL.name("JSON"), org.jooq.impl.SQLDataType.CLOB, this, "");
+    public final TableField<ActivityRecord, String> JSON = createField(DSL.name("json"), org.jooq.impl.SQLDataType.CLOB, this, "");
 
     /**
-     * Create a <code>stroom.ACTIVITY</code> table reference
+     * Create a <code>stroom.activity</code> table reference
      */
     public Activity() {
-        this(DSL.name("ACTIVITY"), null);
+        this(DSL.name("activity"), null);
     }
 
     /**
-     * Create an aliased <code>stroom.ACTIVITY</code> table reference
+     * Create an aliased <code>stroom.activity</code> table reference
      */
     public Activity(String alias) {
         this(DSL.name(alias), ACTIVITY);
     }
 
     /**
-     * Create an aliased <code>stroom.ACTIVITY</code> table reference
+     * Create an aliased <code>stroom.activity</code> table reference
      */
     public Activity(Name alias) {
         this(alias, ACTIVITY);
@@ -156,6 +156,11 @@ public class Activity extends TableImpl<ActivityRecord> {
     }
 
     @Override
+    public TableField<ActivityRecord, Integer> getRecordVersion() {
+        return VERSION;
+    }
+
+    @Override
     public Activity as(String alias) {
         return new Activity(DSL.name(alias), this);
     }
@@ -186,7 +191,7 @@ public class Activity extends TableImpl<ActivityRecord> {
     // -------------------------------------------------------------------------
 
     @Override
-    public Row8<Integer, Byte, Long, String, Long, String, String, String> fieldsRow() {
+    public Row8<Integer, Integer, Long, String, Long, String, String, String> fieldsRow() {
         return (Row8) super.fieldsRow();
     }
 }
