@@ -138,6 +138,7 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
                 String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
                         + ResourcePaths.buildAuthenticatedApiPath(
                         NodeResource.BASE_PATH,
+                        NodeResource.INFO_PATH_PART,
                         nodeName);
                 final Response response = webTargetFactory
                         .create(url)
@@ -179,8 +180,8 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
                     + ResourcePaths.buildAuthenticatedApiPath(
                     NodeResource.BASE_PATH,
-                    nodeName,
-                    "/ping");
+                    NodeResource.PING_PATH_PART,
+                    nodeName);
 
             try {
                 final Response response = webTargetFactory

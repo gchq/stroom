@@ -17,9 +17,5 @@ public class SessionSecurityModule extends AbstractModule {
 
         ServletBinder.create(binder())
                 .bind(SessionListServlet.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(SessionListTask.class, SessionListHandler.class)
-                .bind(SessionListClusterTask.class, SessionListClusterHandler.class);
     }
 }

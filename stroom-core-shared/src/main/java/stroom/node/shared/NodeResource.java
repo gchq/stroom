@@ -37,49 +37,53 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public interface NodeResource extends RestResource, DirectRestService {
     String BASE_PATH = "/node" + ResourcePaths.V1;
+    String PING_PATH_PART = "/ping";
+    String INFO_PATH_PART = "/info";
+    String PRIORITY_PATH_PART = "/priority";
+    String ENABLED_PATH_PART = "/enabled";
+    String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
     @GET
-    @Path("/{nodeName}")
+    @Path(INFO_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(
             value = "Gets detailed information about a node",
             response = Long.class)
     ClusterNodeInfo info(@PathParam("nodeName") String nodeName);
 
     @GET
-    @Path("/listAllNodes")
+    @Path("/all")
     @ApiOperation(
             value = "Lists all nodes",
             response = List.class)
     List<String> listAllNodes();
 
     @GET
-    @Path("/listEnabledNodes")
+    @Path("/enabled")
     @ApiOperation(
             value = "Lists enabled nodes",
             response = List.class)
     List<String> listEnabledNodes();
 
     @GET
-    @Path("/find")
     @ApiOperation(
-        value = "Lists nodes",
-        response = FetchNodeStatusResponse.class)
+            value = "Lists nodes",
+            response = FetchNodeStatusResponse.class)
     FetchNodeStatusResponse find();
 
     @GET
-    @Path("/{nodeName}/ping")
+    @Path(PING_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(
             value = "Gets a ping time for a node",
             response = Long.class)
     Long ping(@PathParam("nodeName") String nodeName);
 
     @PUT
-    @Path("/{nodeName}/priority")
+    @Path(PRIORITY_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Sets the priority of a node")
     void setPriority(@PathParam("nodeName") String nodeName, Integer priority);
 
     @PUT
-    @Path("/{nodeName}/enabled")
+    @Path(ENABLED_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(value = "Sets whether a node is enabled")
     void setEnabled(@PathParam("nodeName") String nodeName, Boolean enabled);
 }

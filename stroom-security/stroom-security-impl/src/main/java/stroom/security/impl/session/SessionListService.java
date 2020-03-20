@@ -17,8 +17,15 @@
 
 package stroom.security.impl.session;
 
-import java.util.List;
+public interface SessionListService {
 
-interface SessionListService {
-    List<SessionDetails> list();
+    /**
+     * List all sessions on the specified node
+     */
+    SessionListResponse listSessions(final String nodeName);
+
+    /**
+     * List all sessions on all nodes
+     */
+    SessionListResponse listSessions();
 }

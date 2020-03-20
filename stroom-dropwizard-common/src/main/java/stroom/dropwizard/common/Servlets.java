@@ -10,6 +10,7 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.ConsoleColour;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsServlet;
@@ -105,9 +106,10 @@ public class Servlets {
                             final String fullPathSpec) {
 
         if (allPaths.contains(fullPathSpec)) {
-            LOGGER.error("\t{} => {}   **Duplicate path**",
+            LOGGER.error("\t{} => {}   {}",
                 StringUtils.rightPad(name, maxNameLength, " "),
-                fullPathSpec);
+                fullPathSpec,
+                ConsoleColour.red("**Duplicate path**"));
             throw new RuntimeException(LogUtil.message("Duplicate servlet path {}", fullPathSpec));
         } else {
             LOGGER.info("\t{} => {}",

@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.AbstractConfig;
 
+import java.util.Objects;
+
 @JsonPropertyOrder({"ui", "authenticationService", "users", "apiKeys", "changepassword"})
 @JsonInclude(Include.NON_NULL)
 public class UrlConfig extends AbstractConfig {
@@ -110,5 +112,22 @@ public class UrlConfig extends AbstractConfig {
                 ", apiKeys='" + apiKeys + '\'' +
                 ", changepassword='" + changepassword + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final UrlConfig urlConfig = (UrlConfig) o;
+        return Objects.equals(ui, urlConfig.ui) &&
+                Objects.equals(authenticationService, urlConfig.authenticationService) &&
+                Objects.equals(users, urlConfig.users) &&
+                Objects.equals(apiKeys, urlConfig.apiKeys) &&
+                Objects.equals(changepassword, urlConfig.changepassword);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(ui, authenticationService, users, apiKeys, changepassword);
     }
 }

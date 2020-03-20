@@ -225,6 +225,7 @@ ext.libs = [
         jersey_client                  : "org.glassfish.jersey.core:jersey-client", // version controlled by DW BOM
         jersey_common                  : "org.glassfish.jersey.core:jersey-common", // version controlled by DW BOM
         jersey_server                  : "org.glassfish.jersey.core:jersey-server", // version controlled by DW BOM
+        jersey_test_framework_grizzly2 : "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-grizzly2", // version controlled by DW BOM
         jetty_http                     : "org.eclipse.jetty:jetty-http", // version controlled by DW BOM
         jetty_server                   : "org.eclipse.jetty:jetty-server", // version controlled by DW BOM
         jetty_servlet                  : "org.eclipse.jetty:jetty-servlet", // version controlled by DW BOM
