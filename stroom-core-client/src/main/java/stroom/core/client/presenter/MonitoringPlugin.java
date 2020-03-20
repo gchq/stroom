@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package stroom.monitoring.client;
+package stroom.core.client.presenter;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
