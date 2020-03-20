@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("unused")
-public class V07_00_00_003__Dictionary extends BaseJavaMigration {
+public class V07_00_00_004__Dictionary extends BaseJavaMigration {
 
     @Override
     public void migrate(final Context context) throws Exception {

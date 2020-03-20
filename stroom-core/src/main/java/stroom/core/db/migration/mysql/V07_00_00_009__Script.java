@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @SuppressWarnings("unused")
-public class V07_00_00_008__Script extends BaseJavaMigration {
+public class V07_00_00_009__Script extends BaseJavaMigration {
 
     @Override
     public void migrate(final Context context) throws Exception {
