@@ -25,6 +25,7 @@ import stroom.processor.shared.FetchProcessorRequest;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterResource;
 import stroom.processor.shared.ProcessorListRow;
+import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ReprocessDataInfo;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
@@ -105,9 +106,10 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource, HasHealthC
     }
 
     @Override
-    public ResultPage<ProcessorListRow> find(final FetchProcessorRequest request) {
+    public ProcessorListRowResultPage find(final FetchProcessorRequest request) {
         try {
-            return processorFilterService.find(request);
+            final ResultPage<ProcessorListRow> resultPage = processorFilterService.find(request);
+            return new ProcessorListRowResultPage(resultPage.getValues(), resultPage.getPageResponse());
         } catch (final RuntimeException e) {
             throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
         }
