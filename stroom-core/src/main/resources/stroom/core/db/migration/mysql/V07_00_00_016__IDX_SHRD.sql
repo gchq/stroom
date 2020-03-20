@@ -18,22 +18,59 @@
 set @old_sql_notes=@@sql_notes, sql_notes=0;
 
 -- idempotent
+DROP PROCEDURE IF EXISTS rename_idx;
+DELIMITER //
+CREATE PROCEDURE rename_idx ()
+BEGIN
+    -- idempotent
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'IDX') THEN
+
+        RENAME TABLE IDX TO OLD_IDX;
+    END IF;
+END//
+DELIMITER ;
+CALL rename_idx();
+DROP PROCEDURE rename_idx;
+
+-- idempotent
+DROP PROCEDURE IF EXISTS rename_idx_shrd;
+DELIMITER //
+CREATE PROCEDURE rename_idx_shrd ()
+BEGIN
+
+    -- idempotent
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'IDX_SHRD') THEN
+
+        RENAME TABLE IDX_SHRD TO OLD_IDX_SHRD;
+    END IF;
+END//
+DELIMITER ;
+CALL rename_idx_shrd();
+DROP PROCEDURE rename_idx_shrd;
+
+-- idempotent
 CALL core_add_column_v1(
-    'IDX_SHRD',
+    'OLD_IDX_SHRD',
     'IDX_UUID',
     'varchar(255) default NULL');
 
 -- idempotent
-UPDATE IDX_SHRD shard
+UPDATE OLD_IDX_SHRD shard
 SET shard.IDX_UUID = (
     SELECT ind.UUID
-    FROM IDX ind
+    FROM OLD_IDX ind
     WHERE ind.ID = shard.FK_IDX_ID);
 
 -- idempotent
 -- We need to drop the constraint so we can rename the column
 CALL core_drop_constraint_v1(
-    'IDX_SHRD',
+    'OLD_IDX_SHRD',
     'IDX_SHRD_FK_IDX_ID',
     'FOREIGN KEY');
 
@@ -41,16 +78,18 @@ CALL core_drop_constraint_v1(
 -- On some existing databases the constraint is named _SHARD_ not _SHRD_
 -- so we attempt to delete both forms of the name.
 CALL core_drop_constraint_v1(
-    'IDX_SHRD',
+    'OLD_IDX_SHRD',
     'IDX_SHARD_FK_IDX_ID',
     'FOREIGN KEY');
 
 -- idempotent
 CALL core_rename_column_v1(
-    'IDX_SHRD',
+    'OLD_IDX_SHRD',
     'FK_IDX_ID',
     'OLD_IDX_ID',
     'int(11) default NULL');
 
 -- Reset to the original value
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

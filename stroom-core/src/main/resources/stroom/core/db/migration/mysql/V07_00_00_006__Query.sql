@@ -17,20 +17,70 @@
 -- stop note level warnings about objects (not)? existing
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
+--
+-- Rename the old QUERY table, idempotent
+--
+DROP PROCEDURE IF EXISTS rename_query;
+DELIMITER //
+CREATE PROCEDURE rename_query ()
+BEGIN
+    IF NOT EXISTS (
+        SELECT TABLE_NAME
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_NAME = 'OLD_QUERY') THEN
+
+        IF EXISTS (
+            SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'QUERY') THEN
+
+            RENAME TABLE QUERY TO OLD_QUERY;
+        END IF;
+    END IF;
+END//
+DELIMITER ;
+CALL rename_query();
+DROP PROCEDURE rename_query;
+
+--
+-- Rename the old DASH table, idempotent
+--
+DROP PROCEDURE IF EXISTS rename_dash;
+DELIMITER //
+CREATE PROCEDURE rename_dash ()
+BEGIN
+    IF NOT EXISTS (
+        SELECT TABLE_NAME
+        FROM INFORMATION_SCHEMA.TABLES
+        WHERE TABLE_NAME = 'OLD_DASH') THEN
+
+        IF EXISTS (
+            SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'DASH') THEN
+
+            RENAME TABLE DASH TO OLD_DASH;
+        END IF;
+    END IF;
+END//
+DELIMITER ;
+CALL rename_dash();
+DROP PROCEDURE rename_dash;
+
 -- idempotent
 CALL core_add_column_v1(
-    'QUERY',
+    'OLD_QUERY',
     'DASH_UUID',
     'varchar(255) default NULL');
 
 -- idempotent
-UPDATE QUERY
-INNER JOIN DASH ON (QUERY.DASH_ID = DASH.ID)
+UPDATE OLD_QUERY
+INNER JOIN OLD_DASH ON (QUERY.DASH_ID = DASH.ID)
 SET QUERY.DASH_UUID = DASH.UUID;
 
 -- idempotent
 CALL core_drop_column_v1(
-    'QUERY',
+    'OLD_QUERY',
     'DASH_ID');
 
 -- Reset to the original value

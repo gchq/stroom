@@ -17,8 +17,45 @@
 -- stop note level warnings about objects (not)? existing
 set @old_sql_notes=@@sql_notes, sql_notes=0;
 
+-- idempotent
+DROP PROCEDURE IF EXISTS rename_idx;
+DELIMITER //
+CREATE PROCEDURE rename_idx ()
+BEGIN
+    -- idempotent
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'IDX') THEN
+
+        RENAME TABLE IDX TO OLD_IDX;
+    END IF;
+END//
+DELIMITER ;
+CALL rename_idx();
+DROP PROCEDURE rename_idx;
+
+-- idempotent
+DROP PROCEDURE IF EXISTS rename_idx_vol;
+DELIMITER //
+CREATE PROCEDURE rename_idx_vol ()
+BEGIN
+
+    -- idempotent
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'IDX_VOL') THEN
+
+        RENAME TABLE IDX_VOL TO OLD_IDX_VOL;
+    END IF;
+END//
+DELIMITER ;
+CALL rename_idx_vol();
+DROP PROCEDURE rename_idx_vol;
+
 CALL core_add_column_v1(
-    'IDX_VOL',
+    'OLD_IDX_VOL',
     'IDX_UUID',
     'varchar(255) default NULL');
 
@@ -26,21 +63,23 @@ CALL core_add_column_v1(
 UPDATE IDX_VOL iv
 SET iv.IDX_UUID = (
     SELECT i.UUID
-    FROM IDX i
+    FROM OLD_IDX i
     WHERE i.ID = iv.FK_IDX_ID);
 
 -- idempotent
 CALL core_drop_constraint_v1(
-    'IDX_VOL',
+    'OLD_IDX_VOL',
     'VOL_FK_IDX_ID',
     'FOREIGN KEY');
 
 -- idempotent (drops then adds)
-ALTER TABLE IDX_VOL DROP PRIMARY KEY, ADD PRIMARY KEY(FK_VOL_ID, IDX_UUID);
+ALTER TABLE OLD_IDX_VOL
+    DROP PRIMARY KEY,
+    ADD PRIMARY KEY(FK_VOL_ID, IDX_UUID);
 
 -- idempotent
 CALL core_drop_column_v1(
-    'IDX_VOL',
+    'OLD_IDX_VOL',
     'FK_IDX_ID');
 
 -- Reset to the original value

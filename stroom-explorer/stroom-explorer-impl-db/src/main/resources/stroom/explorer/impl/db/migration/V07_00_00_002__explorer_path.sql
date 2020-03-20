@@ -35,7 +35,20 @@ DROP PROCEDURE IF EXISTS copy_explorer;
 DELIMITER //
 CREATE PROCEDURE copy_explorer ()
 BEGIN
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'explorerTreePath' > 0) THEN
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'explorerTreePath') THEN
+
+        RENAME TABLE explorerTreePath TO old_explorertreepath;
+    END IF;
+
+    -- Check again so it is idempotent
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'old_explorerTreePath') THEN
+
         INSERT INTO explorer_path (
             ancestor, 
             descendant, 
@@ -46,12 +59,14 @@ BEGIN
             descendant, 
             depth, 
             orderIndex
-        FROM explorerTreePath;
+        FROM old_explorerTreePath;
     END IF;
+
 END//
 DELIMITER ;
 CALL copy_explorer();
 DROP PROCEDURE copy_explorer;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
 -- vim: set tabstop=4 shiftwidth=4 expandtab:
