@@ -66,7 +66,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
                 ? NextNameGenerator.getNextName(names, "New index volume")
                 : indexVolume.getNodeName());
         indexVolume.setPath(isNullOrEmpty(indexVolume.getPath()) ? null : indexVolume.getPath());
-        indexVolume.setIndexVolumeGroupName(indexVolume.getIndexVolumeGroupName());
+        indexVolume.setIndexVolumeGroupId(indexVolume.getIndexVolumeGroupId());
 
         return securityContext.secureResult(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> indexVolumeDao.create(indexVolume));
@@ -82,7 +82,7 @@ public class IndexVolumeServiceImpl implements IndexVolumeService {
         final var indexVolume = securityContext.secureResult(() -> indexVolumeDao.fetch(updateVolumeDTO.getId()).orElse(null));
 
         // Map from DTO to entity
-        indexVolume.setIndexVolumeGroupName(updateVolumeDTO.getIndexVolumeGroupName());
+        indexVolume.setIndexVolumeGroupId(updateVolumeDTO.getIndexVolumeGroupId());
         indexVolume.setPath((updateVolumeDTO.getPath()));
         indexVolume.setNodeName(updateVolumeDTO.getNodeName());
 

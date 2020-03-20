@@ -90,7 +90,7 @@ class VolumeCreatorForTesting implements VolumeCreator {
                     final IndexVolume indexVolume = new IndexVolume.Builder()
                             .nodeName(volume.getNodeName())
                             .path(volume.getPath())
-                            .indexVolumeGroupName(indexVolumeGroup.getName())
+                            .indexVolumeGroupId(indexVolumeGroup.getId())
                             .build();
                     volumeService.create(indexVolume);
                 }

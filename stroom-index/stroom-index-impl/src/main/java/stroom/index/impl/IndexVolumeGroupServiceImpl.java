@@ -1,8 +1,5 @@
 package stroom.index.impl;
 
-import stroom.index.impl.IndexVolumeDao;
-import stroom.index.impl.IndexVolumeGroupDao;
-import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.shared.IndexVolumeGroup;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -74,28 +71,13 @@ public class IndexVolumeGroupServiceImpl implements IndexVolumeGroupService {
     }
 
     @Override
-    public void delete(final String name) {
-        securityContext.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
-                () -> {
-                    //TODO Transaction?
-                    var indexVolumesInGroup = indexVolumeDao.getAll().stream()
-                            .filter(indexVolume ->
-                                    indexVolume.getIndexVolumeGroupName().equals(name))
-                            .collect(Collectors.toList());
-                    indexVolumesInGroup.forEach(indexVolume -> indexVolumeDao.delete(indexVolume.getId()));
-                    indexVolumeGroupDao.delete(name);
-                });
-    }
-
-    @Override
     public void delete(int id) {
         securityContext.secure(PermissionNames.MANAGE_VOLUMES_PERMISSION,
                 () -> {
                     //TODO Transaction?
-                    var indexVolumeGroup = indexVolumeGroupDao.get(id);
                     var indexVolumesInGroup = indexVolumeDao.getAll().stream()
                             .filter(indexVolume ->
-                                    indexVolume.getIndexVolumeGroupName().equals(indexVolumeGroup.getName()))
+                                    indexVolume.getIndexVolumeGroupId().equals(id))
                             .collect(Collectors.toList());
                     indexVolumesInGroup.forEach(indexVolume -> indexVolumeDao.delete(indexVolume.getId()));
                     indexVolumeGroupDao.delete(id);

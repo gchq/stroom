@@ -44,7 +44,7 @@ public class IndexVolume implements HasAuditInfo {
     private Long bytesFree;
     private Long bytesTotal;
     private Long statusMs;
-    private String indexVolumeGroupName;
+    private Integer indexVolumeGroupId;
 
     public IndexVolume() {
     }
@@ -101,12 +101,12 @@ public class IndexVolume implements HasAuditInfo {
         this.updateUser = updateUser;
     }
 
-    public String getIndexVolumeGroupName() {
-        return indexVolumeGroupName;
+    public Integer getIndexVolumeGroupId() {
+        return indexVolumeGroupId;
     }
 
-    public void setIndexVolumeGroupName(String indexVolumeGroupName) {
-        this.indexVolumeGroupName = indexVolumeGroupName;
+    public void setIndexVolumeGroupId(final Integer indexVolumeGroupId) {
+        this.indexVolumeGroupId = indexVolumeGroupId;
     }
 
     public static class Builder {
@@ -163,8 +163,8 @@ public class IndexVolume implements HasAuditInfo {
             return this;
         }
 
-        public Builder indexVolumeGroupName(final String groupName) {
-            instance.setIndexVolumeGroupName(groupName);
+        public Builder indexVolumeGroupId(final Integer indexVolumeGroupId) {
+            instance.setIndexVolumeGroupId(indexVolumeGroupId);
             return this;
         }
 

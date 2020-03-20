@@ -36,6 +36,7 @@ import stroom.node.client.NodeCache;
 import stroom.node.client.view.WrapperView;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.HidePopupEvent;
@@ -116,7 +117,7 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<WrapperView
     }
 
     private void create() {
-        final IndexVolume indexVolume = new IndexVolume.Builder().indexVolumeGroupName(volumeGroup.getName()).build();
+        final IndexVolume indexVolume = new IndexVolume.Builder().indexVolumeGroupId(volumeGroup.getId()).build();
         editVolume(indexVolume, "Add Volume");
     }
 
@@ -173,9 +174,7 @@ public class IndexVolumeGroupEditPresenter extends MyPresenterWidget<WrapperView
 
             this.volumeGroup = volumeGroup;
 
-            final ExpressionOperator expression = new ExpressionOperator.Builder()
-                    .addTerm(IndexVolumeFields.GROUP_NAME, Condition.EQUALS, volumeGroup.getName())
-                    .build();
+            final ExpressionOperator expression = ExpressionUtil.equals(IndexVolumeFields.GROUP_ID, volumeGroup.getId());
             volumeStatusListPresenter.init(new ExpressionCriteria(expression), volumes -> {
                 opening = false;
 

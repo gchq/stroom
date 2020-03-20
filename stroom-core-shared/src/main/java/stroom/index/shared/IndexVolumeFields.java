@@ -13,13 +13,13 @@ import java.util.stream.Collectors;
 public class IndexVolumeFields {
     public static final String INDEX_VOLUME_TYPE = "IndexVolume";
     public static final String FIELD_ID = "Id";
-    public static final String FIELD_GROUP_NAME = "Group Name";
+    public static final String FIELD_GROUP_ID = "Group Id";
     public static final String FIELD_NODE_NAME = "Node Name";
 
     private static final List<AbstractField> FIELDS = new ArrayList<>();
     private static final Map<String, AbstractField> FIELD_MAP;
 
-    public static final TextField GROUP_NAME = new TextField(FIELD_GROUP_NAME);
+    public static final IdField GROUP_ID = new IdField(FIELD_GROUP_ID);
     public static final TextField NODE_NAME = new TextField(FIELD_NODE_NAME);
 
     // Id's
@@ -27,7 +27,7 @@ public class IndexVolumeFields {
 
     static {
         // Non grouped fields
-        FIELDS.add(GROUP_NAME);
+        FIELDS.add(GROUP_ID);
         FIELDS.add(NODE_NAME);
 
         // Id's

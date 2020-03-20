@@ -10,10 +10,10 @@ import stroom.db.util.GenericDao;
 import stroom.db.util.JooqUtil;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexVolumeDao;
-import stroom.index.shared.IndexVolumeFields;
 import stroom.index.impl.db.jooq.tables.records.IndexVolumeRecord;
 import stroom.index.shared.IndexVolume;
 import stroom.index.shared.IndexVolume.VolumeUseState;
+import stroom.index.shared.IndexVolumeFields;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.util.shared.PageRequest;
 import stroom.util.shared.ResultPage;
@@ -39,7 +39,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         indexVolume.setUpdateUser(record.get(INDEX_VOLUME.UPDATE_USER));
         indexVolume.setPath(record.get(INDEX_VOLUME.PATH));
         indexVolume.setNodeName(record.get(INDEX_VOLUME.NODE_NAME));
-        indexVolume.setIndexVolumeGroupName(record.get(INDEX_VOLUME.INDEX_VOLUME_GROUP_NAME));
+        indexVolume.setIndexVolumeGroupId(record.get(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID));
         final Byte state = record.get(INDEX_VOLUME.STATE);
         if (state != null) {
             indexVolume.setState(VolumeUseState.PRIMITIVE_VALUE_CONVERTER.fromPrimitiveValue(state));
@@ -62,7 +62,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         record.set(INDEX_VOLUME.UPDATE_USER, indexVolume.getUpdateUser());
         record.set(INDEX_VOLUME.PATH, indexVolume.getPath());
         record.set(INDEX_VOLUME.NODE_NAME, indexVolume.getNodeName());
-        record.set(INDEX_VOLUME.INDEX_VOLUME_GROUP_NAME, indexVolume.getIndexVolumeGroupName());
+        record.set(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID, indexVolume.getIndexVolumeGroupId());
         if (indexVolume.getState() != null) {
             record.set(INDEX_VOLUME.STATE, indexVolume.getState().getPrimitiveValue());
         }
@@ -89,7 +89,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         // Standard fields.
         expressionMapper = expressionMapperFactory.create();
         expressionMapper.map(IndexVolumeFields.ID, INDEX_VOLUME.ID, Integer::valueOf);
-        expressionMapper.map(IndexVolumeFields.GROUP_NAME, INDEX_VOLUME.INDEX_VOLUME_GROUP_NAME, value -> value);
+        expressionMapper.map(IndexVolumeFields.GROUP_ID, INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID, Integer::valueOf);
         expressionMapper.map(IndexVolumeFields.NODE_NAME, INDEX_VOLUME.NODE_NAME, value -> value);
     }
 
@@ -127,7 +127,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .select()
                 .from(INDEX_VOLUME)
-                .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.NAME.eq(INDEX_VOLUME.INDEX_VOLUME_GROUP_NAME))
+                .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
                 .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
                 .and(INDEX_VOLUME.NODE_NAME.eq(nodeName))
                 .fetch()
@@ -139,7 +139,7 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
         return JooqUtil.contextResult(indexDbConnProvider, context -> context
                 .select()
                 .from(INDEX_VOLUME)
-                .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.NAME.eq(INDEX_VOLUME.INDEX_VOLUME_GROUP_NAME))
+                .join(INDEX_VOLUME_GROUP).on(INDEX_VOLUME_GROUP.ID.eq(INDEX_VOLUME.FK_INDEX_VOLUME_GROUP_ID))
                 .where(INDEX_VOLUME_GROUP.NAME.eq(groupName))
                 .fetch()
                 .map(RECORD_TO_INDEX_VOLUME_MAPPER::apply));
@@ -203,8 +203,6 @@ class IndexVolumeDaoImpl implements IndexVolumeDao {
             Field<?> field;
             if (IndexVolumeFields.FIELD_ID.equals(sort.getField())) {
                 field = INDEX_VOLUME.ID;
-            } else if (IndexVolumeFields.FIELD_GROUP_NAME.equals(sort.getField())) {
-                field = INDEX_VOLUME.INDEX_VOLUME_GROUP_NAME;
             } else if (IndexVolumeFields.FIELD_NODE_NAME.equals(sort.getField())) {
                 field = INDEX_VOLUME.NODE_NAME;
             } else {
