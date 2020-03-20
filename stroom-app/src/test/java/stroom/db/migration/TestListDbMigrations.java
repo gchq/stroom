@@ -14,9 +14,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
@@ -28,7 +30,7 @@ public class TestListDbMigrations {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestListDbMigrations.class);
 
-    private static Pattern MIGRATION_FILE_REGEX_PATTERN = Pattern.compile("^V0?7_.*\\.(sql|java)$");
+    private static Pattern MIGRATION_FILE_REGEX_PATTERN = Pattern.compile("^(V0?7_|V[0-9]+__).*\\.(sql|java)$");
     private static Pattern MIGRATION_PATH_REGEX_PATTERN = Pattern.compile("^.*/src/main/.*$");
 
     Map<String, List<Tuple2<String, Path>>> migrations = new HashMap<>();
@@ -58,8 +60,23 @@ public class TestListDbMigrations {
                 .max()
                 .orElse(60);
 
+        // Core is always run first so list it first
+        final Comparator<String> moduleComparator = (o1, o2) -> {
+            String stroomCoreModuleName = "stroom-core";
+
+            if (Objects.equals(o1, o2)) {
+                return 0;
+            } else if (stroomCoreModuleName.equals(o1)) {
+                return -1;
+            } else if (stroomCoreModuleName.equals(o2)) {
+                return 1;
+            } else {
+                return Comparator.<String>naturalOrder().compare(o1, o2);
+            }
+        };
+
         migrations.entrySet().stream()
-                .sorted(Map.Entry.comparingByKey())
+                .sorted(Map.Entry.comparingByKey(moduleComparator))
                 .forEach(entry -> {
                     stringBuilder
                         .appendMagenta(entry.getKey())
@@ -90,13 +107,35 @@ public class TestListDbMigrations {
 
     private void inspectModule(final Path moduleDir) {
 
+        // Core is always run first so list it first
+        Comparator<String> fileNameComparator = (name1, name2) -> {
+
+            Pattern authMigrationPattern = Pattern.compile("^V[0-9]+__.*");
+
+            String name1Modified = name1;
+            String name2Modified = name2;
+
+            if (authMigrationPattern.matcher(name1).matches()) {
+                name1Modified = name1Modified.replaceAll("(^V|__.*)", "");
+                name2Modified = name2Modified.replaceAll("(^V|__.*)", "");
+
+                int ver1 = Integer.parseInt(name1Modified);
+                int ver2 = Integer.parseInt(name2Modified);
+
+                return Comparator.<Integer>naturalOrder().compare(ver1, ver2);
+
+            } else {
+                return Comparator.<String>naturalOrder().compare(name1, name2);
+            }
+        };
+
         try (Stream<Path> stream = Files.walk(moduleDir)) {
             stream
                     .filter(path -> Files.isRegularFile(path))
                     .filter(path -> MIGRATION_PATH_REGEX_PATTERN.asMatchPredicate().test(path.toString()))
                     .map(path -> Tuple.of(path.getFileName().toString(), moduleDir.relativize(path)))
                     .filter(tuple -> MIGRATION_FILE_REGEX_PATTERN.asMatchPredicate().test(tuple._1()))
-                    .sorted()
+                    .sorted(Comparator.comparing(Tuple2::_1, fileNameComparator))
                     .forEach(tuple -> {
                         String moduleName = moduleDir.getFileName().toString();
                         migrations.computeIfAbsent(moduleName, k -> new ArrayList<>())
