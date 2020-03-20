@@ -19,7 +19,6 @@ package stroom.security.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.security.shared.PermissionNames;
-import stroom.security.shared.User;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -35,13 +34,6 @@ class UserAppPermissionService {
     @Inject
     UserAppPermissionService(final AppPermissionDao appPermissionDao) {
         this.appPermissionDao = appPermissionDao;
-    }
-
-    UserAppPermissions getPermissionsForUser(final User userRef) {
-        final Set<String> permissionNames = getPermissionNamesForUser(userRef.getUuid());
-        final Set<String> allNames = getAllPermissionNames();
-
-        return new UserAppPermissions(userRef, allNames, permissionNames);
     }
 
     Set<String> getPermissionNamesForUser(final String userUuid) {

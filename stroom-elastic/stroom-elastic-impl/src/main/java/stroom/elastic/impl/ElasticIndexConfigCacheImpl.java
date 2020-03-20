@@ -19,7 +19,7 @@ import javax.ws.rs.core.Response;
 public class ElasticIndexConfigCacheImpl implements ElasticIndexConfigCache, Clearable {
     private static final String CACHE_NAME = "Elastic Index Config Cache";
 
-    private final DocRefResourceHttpClient<ElasticIndexConfigDoc> docRefHttpClient;
+//    private final DocRefResourceHttpClient<ElasticIndexConfigDoc> docRefHttpClient;
     private final SecurityContext securityContext;
     private final ICache<DocRef, ElasticIndexConfigDoc> cache;
 
@@ -28,26 +28,28 @@ public class ElasticIndexConfigCacheImpl implements ElasticIndexConfigCache, Cle
                                 final SecurityContext securityContext,
                                 final UiConfig uiConfig,
                                 final ElasticConfig elasticConfig) {
-        docRefHttpClient = new DocRefResourceHttpClient<>(uiConfig.getUrl().getElastic());
+//        docRefHttpClient = new DocRefResourceHttpClient<>(uiConfig.getUrl().getElastic());
         this.securityContext = securityContext;
         cache = cacheManager.create(CACHE_NAME, elasticConfig::getElasticIndexConfigCache, this::create);
     }
 
     private ElasticIndexConfigDoc create(final DocRef docRef) {
-        try {
-            final Response response = docRefHttpClient.get(serviceUser(), docRef.getUuid());
+//        try {
+//            final Response response = docRefHttpClient.get(serviceUser(), docRef.getUuid());
+//
+//            if (response.getStatus() != HttpStatus.OK_200) {
+//                final String msg = String.format("Invalid status returned by Elastic Explorer Service: %d - %s ",
+//                        response.getStatus(),
+//                        response.readEntity(String.class));
+//                throw new RuntimeException(msg);
+//            }
+//
+//            return response.readEntity(ElasticIndexConfigDoc.class);
+//        } catch (final RuntimeException e) {
+//            throw new LoggedException(String.format("Failed to retrieve elastic index config for %s", docRef.getUuid()), e);
+//        }
 
-            if (response.getStatus() != HttpStatus.OK_200) {
-                final String msg = String.format("Invalid status returned by Elastic Explorer Service: %d - %s ",
-                        response.getStatus(),
-                        response.readEntity(String.class));
-                throw new RuntimeException(msg);
-            }
-
-            return response.readEntity(ElasticIndexConfigDoc.class);
-        } catch (final RuntimeException e) {
-            throw new LoggedException(String.format("Failed to retrieve elastic index config for %s", docRef.getUuid()), e);
-        }
+        return null;
     }
 
     private ServiceUser serviceUser() {

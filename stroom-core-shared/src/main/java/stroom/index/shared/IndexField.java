@@ -26,7 +26,6 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlTransient;
 import javax.xml.bind.annotation.XmlType;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -66,15 +65,6 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
     @JsonProperty
     private final boolean caseSensitive;
 
-    /**
-     * Defines a list of the {@link Condition} values supported by this field,
-     * can be null in which case a default set will be returned. Not persisted
-     * in the XML
-     */
-    @XmlTransient
-    @JsonIgnore
-    private List<Condition> supportedConditions;
-
     @JsonCreator
     public IndexField(@JsonProperty("fieldType") final IndexFieldType fieldType,
                       @JsonProperty("fieldName") final String fieldName,
@@ -82,8 +72,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
                       @JsonProperty("indexed") final boolean indexed,
                       @JsonProperty("stored") final boolean stored,
                       @JsonProperty("termPositions") final boolean termPositions,
-                      @JsonProperty("caseSensitive") final boolean caseSensitive,
-                      @JsonProperty("supportedConditions") final List<Condition> supportedConditions) {
+                      @JsonProperty("caseSensitive") final boolean caseSensitive) {
         this.fieldType = fieldType;
         this.fieldName = fieldName;
         this.analyzerType = analyzerType;
@@ -91,7 +80,6 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         this.indexed = indexed;
         this.termPositions = termPositions;
         this.caseSensitive = caseSensitive;
-        this.supportedConditions = supportedConditions;
     }
 
     public static IndexField createField(final String fieldName) {
@@ -191,20 +179,7 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
 
     @JsonIgnore
     public List<Condition> getSupportedConditions() {
-        if (supportedConditions == null) {
-            return getDefaultConditions();
-        } else {
-            return supportedConditions;
-        }
-    }
-
-    @JsonIgnore
-    public void setSupportedConditions(final List<Condition> supportedConditions) {
-        if (supportedConditions == null) {
-            this.supportedConditions = null;
-        } else {
-            this.supportedConditions = new ArrayList<>(supportedConditions);
-        }
+        return getDefaultConditions();
     }
 
     @Override
@@ -297,7 +272,6 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
         private boolean stored;
         private boolean termPositions;
         private boolean caseSensitive;
-        private List<Condition> supportedConditions;
 
         public Builder fieldType(final IndexFieldType fieldType) {
             this.fieldType = fieldType;
@@ -334,13 +308,8 @@ public class IndexField implements HasDisplayValue, Comparable<IndexField>, Seri
             return this;
         }
 
-        public Builder supportedConditions(final List<Condition> supportedConditions) {
-            this.supportedConditions = new ArrayList<>(supportedConditions);
-            return this;
-        }
-
         public IndexField build() {
-            return new IndexField(fieldType, fieldName, analyzerType, indexed, stored, termPositions, caseSensitive, supportedConditions);
+            return new IndexField(fieldType, fieldName, analyzerType, indexed, stored, termPositions, caseSensitive);
         }
     }
 }

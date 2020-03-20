@@ -42,7 +42,7 @@ public interface SolrIndexResource extends RestResource, DirectRestService {
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Get a solr index doc",
-            response = ReceiveDataRules.class)
+            response = SolrIndexDoc.class)
     SolrIndexDoc read(DocRef docRef);
 
     @PUT

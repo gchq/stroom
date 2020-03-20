@@ -43,9 +43,7 @@ import stroom.data.table.client.Refreshable;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
 import stroom.entity.client.presenter.TreeRowHandler;
-import stroom.node.shared.FetchNodeStatusResponse;
-import stroom.node.shared.NodeResource;
-import stroom.node.shared.NodeStatusResult;
+import stroom.node.client.NodeCache;
 import stroom.svg.client.SvgPresets;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.FindTaskProgressCriteria;
@@ -78,7 +76,6 @@ import java.util.function.Consumer;
 public class TaskManagerListPresenter
         extends MyPresenterWidget<DataGridView<TaskProgress>>
         implements HasDataSelectionHandlers<Set<String>>, Refreshable, ColumnSortEvent.Handler {
-    private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
 
     private final FindTaskProgressCriteria criteria = new FindTaskProgressCriteria();
@@ -87,20 +84,22 @@ public class TaskManagerListPresenter
     private final Set<TaskProgress> requestedTerminateTaskProgress = new HashSet<>();
     private final TooltipPresenter tooltipPresenter;
     private final RestFactory restFactory;
+    private final NodeCache nodeCache;
     private final NameFilterTimer timer = new NameFilterTimer();
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
     private final RestDataProvider<TaskProgress, TaskProgressResponse> dataProvider;
 
-    private FetchNodeStatusResponse fetchNodeStatusResponse;
     private Column<TaskProgress, Expander> expanderColumn;
 
     @Inject
     public TaskManagerListPresenter(final EventBus eventBus,
                                     final TooltipPresenter tooltipPresenter,
-                                    final RestFactory restFactory) {
+                                    final RestFactory restFactory,
+                                    final NodeCache nodeCache) {
         super(eventBus, new DataGridViewImpl<>(false, 1000));
         this.tooltipPresenter = tooltipPresenter;
         this.restFactory = restFactory;
+        this.nodeCache = nodeCache;
         this.criteria.setSort(FindTaskProgressCriteria.FIELD_AGE, Direction.DESCENDING, false);
 
         final ButtonView terminateButton = getView().addButton(SvgPresets.DELETE);
@@ -272,23 +271,15 @@ public class TaskManagerListPresenter
 
     public void fetchNodes(final Consumer<TaskProgressResponse> dataConsumer,
                            final Consumer<Throwable> throwableConsumer) {
-        if (fetchNodeStatusResponse == null) {
-            final Rest<FetchNodeStatusResponse> rest = restFactory.create();
-            rest.onSuccess(fetchNodeStatusResponse -> {
-                // Store node list for future queries.
-                this.fetchNodeStatusResponse = fetchNodeStatusResponse;
-                fetchTasksForNodes(dataConsumer, throwableConsumer, fetchNodeStatusResponse);
-            }).onFailure(throwableConsumer).call(NODE_RESOURCE).list();
-        } else {
-            fetchTasksForNodes(dataConsumer, throwableConsumer, fetchNodeStatusResponse);
-        }
+        nodeCache.listAllNodes(
+                nodeNames -> fetchTasksForNodes(dataConsumer, throwableConsumer, nodeNames),
+                throwableConsumer);
     }
 
     private void fetchTasksForNodes(final Consumer<TaskProgressResponse> dataConsumer,
                                     final Consumer<Throwable> throwableConsumer,
-                                    final FetchNodeStatusResponse fetchNodeStatusResponse) {
-        for (final NodeStatusResult nodeStatusResult : fetchNodeStatusResponse.getValues()) {
-            final String nodeName = nodeStatusResult.getNode().getName();
+                                    final List<String> nodeNames) {
+        for (final String nodeName : nodeNames) {
             final Rest<TaskProgressResponse> rest = restFactory.create();
             rest
                     .onSuccess(response -> {

@@ -54,11 +54,12 @@ public class FSVolumeStatusListPresenter extends MyPresenterWidget<DataGridView<
 
         initTableColumns();
 
-        dataProvider = new RestDataProvider<FsVolume, ResultPage<FsVolume>>(eventBus) {
+        final FindFsVolumeCriteria criteria = new FindFsVolumeCriteria();
+        dataProvider = new RestDataProvider<FsVolume, ResultPage<FsVolume>>(eventBus, criteria.obtainPageRequest()) {
             @Override
             protected void exec(final Consumer<ResultPage<FsVolume>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<FsVolume>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(FS_VOLUME_RESOURCE).find(new FindFsVolumeCriteria());
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(FS_VOLUME_RESOURCE).find(criteria);
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());

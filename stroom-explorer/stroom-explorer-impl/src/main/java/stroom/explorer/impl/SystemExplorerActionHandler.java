@@ -39,7 +39,7 @@ class SystemExplorerActionHandler implements ExplorerActionHandler {
             throw new RuntimeException("Unable to find tree node to copy");
         }
 
-        if (!securityContext.hasDocumentPermission(FOLDER, originalUuid, DocumentPermissionNames.READ)) {
+        if (!securityContext.hasDocumentPermission(originalUuid, DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to read (" + FOLDER + ")");
         }
         return new DocRef(FOLDER, copyUuid, explorerTreeNode.getName());

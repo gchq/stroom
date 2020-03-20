@@ -37,7 +37,6 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
-import javax.ws.rs.BadRequestException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -45,6 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 // TODO : @66 add event logging
 class NodeResourceImpl implements NodeResource, HasHealthCheck {
@@ -70,7 +70,26 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
     }
 
     @Override
-    public FetchNodeStatusResponse list() {
+    public List<String> listAllNodes() {
+        return find().getValues()
+                .stream()
+                .map(NodeStatusResult::getNode)
+                .map(Node::getName)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> listEnabledNodes() {
+        return find().getValues()
+                .stream()
+                .map(NodeStatusResult::getNode)
+                .filter(Node::isEnabled)
+                .map(Node::getName)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public FetchNodeStatusResponse find() {
         FetchNodeStatusResponse response = null;
 
         final Query query = new Query();
@@ -111,31 +130,26 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
         try {
             final long now = System.currentTimeMillis();
 
-            if (nodeName == null) {
-                throw new BadRequestException("nodeName not supplied");
-            } else if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
-                // If this is the node that was contacted then just return our local info.
+            // If this is the node that was contacted then just return our local info.
+            if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
                 clusterNodeInfo = clusterNodeManager.getClusterNodeInfo();
 
             } else {
                 String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
-                    + ResourcePaths.buildAuthenticatedApiPath(
-                    NodeResource.BASE_PATH,
-                    nodeName);
-                try {
-                    final Response response = webTargetFactory
-                            .create(url)
-                            .request(MediaType.APPLICATION_JSON)
-                            .get();
-                    if (response.getStatus() != 200) {
-                        throw new WebApplicationException(response);
-                    }
-                    clusterNodeInfo = response.readEntity(ClusterNodeInfo.class);
-                    if (clusterNodeInfo == null) {
-                        throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
-                    }
-                } catch (RuntimeException e) {
-                    throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
+                        + ResourcePaths.buildAuthenticatedApiPath(
+                        NodeResource.BASE_PATH,
+                        NodeResource.INFO_PATH_PART,
+                        nodeName);
+                final Response response = webTargetFactory
+                        .create(url)
+                        .request(MediaType.APPLICATION_JSON)
+                        .get();
+                if (response.getStatus() != 200) {
+                    throw new WebApplicationException(response);
+                }
+                clusterNodeInfo = response.readEntity(ClusterNodeInfo.class);
+                if (clusterNodeInfo == null) {
+                    throw new RuntimeException("Unable to contact node \"" + nodeName + "\" at URL: " + url);
                 }
             }
 
@@ -160,22 +174,20 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
         final long now = System.currentTimeMillis();
 
         // If this is the node that was contacted then just return the latency we have incurred within this method.
-        if (nodeName == null) {
-            throw new BadRequestException("nodeName not supplied");
-        } else if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
             return System.currentTimeMillis() - now;
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
-                + ResourcePaths.buildAuthenticatedApiPath(
-                NodeResource.BASE_PATH,
-                nodeName,
-                "/ping");
+                    + ResourcePaths.buildAuthenticatedApiPath(
+                    NodeResource.BASE_PATH,
+                    NodeResource.PING_PATH_PART,
+                    nodeName);
 
             try {
                 final Response response = webTargetFactory
-                    .create(url)
-                    .request(MediaType.APPLICATION_JSON)
-                    .get();
+                        .create(url)
+                        .request(MediaType.APPLICATION_JSON)
+                        .get();
                 if (response.getStatus() != 200) {
                     throw new WebApplicationException(response);
                 }
@@ -190,25 +202,11 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
 
     @Override
     public void setPriority(final String nodeName, final Integer priority) {
-        if (nodeName == null) {
-            throw new BadRequestException("nodeName not supplied");
-        }
-        if (priority == null) {
-            throw new BadRequestException("priority not supplied");
-        }
-
         modifyNode(nodeName, node -> node.setPriority(priority));
     }
 
     @Override
     public void setEnabled(final String nodeName, final Boolean enabled) {
-        if (nodeName == null) {
-            throw new BadRequestException("nodeName not supplied");
-        }
-        if (enabled == null) {
-            throw new BadRequestException("enabled not supplied");
-        }
-
         modifyNode(nodeName, node -> node.setEnabled(enabled));
     }
 

@@ -117,20 +117,27 @@ class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Set<String> findGroupUuidsForUser(final String userUuid) {
+        return userDao.findGroupUuidsForUser(userUuid);
+    }
+
+    @Override
     public List<User> findGroupsForUserName(final String userName) {
         return userDao.findGroupsForUserName(userName);
     }
 
     @Override
-    public void addUserToGroup(final String userUuid, final String groupUuid) {
+    public Boolean addUserToGroup(final String userUuid, final String groupUuid) {
         securityContext.secure(PermissionNames.MANAGE_USERS_PERMISSION, () ->
                 userDao.addUserToGroup(userUuid, groupUuid));
+        return true;
     }
 
     @Override
-    public void removeUserFromGroup(final String userUuid, final String groupUuid) {
+    public Boolean removeUserFromGroup(final String userUuid, final String groupUuid) {
         securityContext.secure(PermissionNames.MANAGE_USERS_PERMISSION, () ->
                 userDao.removeUserFromGroup(userUuid, groupUuid));
+        return true;
     }
 
     @Override

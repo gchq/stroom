@@ -519,11 +519,6 @@ class TaskManagerImpl implements TaskManager {
         return sb.toString();
     }
 
-    @Override
-    public FindTaskProgressCriteria createCriteria() {
-        return new FindTaskProgressCriteria();
-    }
-
     private static class AsyncTaskCallback<R> extends TaskCallbackAdaptor<R> {
     }
 

@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS index_volume (
   update_user               varchar(255) NOT NULL,
   node_name                 varchar(255) DEFAULT NULL,
   path                      varchar(255) DEFAULT NULL,
-  index_volume_group_name   varchar(255) NOT NULL,
+  fk_index_volume_group_id  int(11) NOT NULL,
   state                     tinyint(4) DEFAULT NULL,
   bytes_limit               bigint(20) DEFAULT NULL,
   bytes_used                bigint(20) DEFAULT NULL,
@@ -52,16 +52,12 @@ CREATE TABLE IF NOT EXISTS index_volume (
   status_ms                 bigint(20) DEFAULT NULL,
   PRIMARY KEY (id),
   UNIQUE KEY node_name_path (
-      index_volume_group_name,
+      fk_index_volume_group_id,
       node_name,
       path),
-  -- The FK between index volume and index volume group is the name. The name can change, so we need to explicitly allow
-  -- cascading. For an update we'll just cascade the the change down, for a delete we'll delete the index volume.
   CONSTRAINT index_volume_group_link_fk_group_name
-      FOREIGN KEY (index_volume_group_name)
-      REFERENCES index_volume_group (name)
-      ON UPDATE CASCADE
-      ON DELETE CASCADE
+      FOREIGN KEY (fk_index_volume_group_id)
+      REFERENCES index_volume_group (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;

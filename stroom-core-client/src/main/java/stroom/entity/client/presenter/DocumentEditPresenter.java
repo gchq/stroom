@@ -73,7 +73,7 @@ public abstract class DocumentEditPresenter<V extends View, D> extends MyPresent
         // Check document permissions if we haven't already.
         if (!checkedPermissions) {
             checkedPermissions = true;
-            securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.UPDATE)
+            securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.UPDATE)
                     .onSuccess(this::setAllowUpdate);
         }
 

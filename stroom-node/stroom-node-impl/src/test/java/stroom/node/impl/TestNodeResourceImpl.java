@@ -42,18 +42,18 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
         final String subPath = "";
 
         final FetchNodeStatusResponse expectedResponse = getTestNodes().stream()
-            .map(testNode -> {
-                Node node2 = new Node();
-                node2.setEnabled(testNode.isEnabled());
-                node2.setName(testNode.getNodeName());
-                return new NodeStatusResult(node2, testNode.getNodeName().equals("node1"));
-            })
-            .collect(FetchNodeStatusResponse.collector(FetchNodeStatusResponse::new));
+                .map(testNode -> {
+                    Node node2 = new Node();
+                    node2.setEnabled(testNode.isEnabled());
+                    node2.setName(testNode.getNodeName());
+                    return new NodeStatusResult(node2, testNode.getNodeName().equals("node1"));
+                })
+                .collect(FetchNodeStatusResponse.collector(FetchNodeStatusResponse::new));
 
         doGetTest(
-            subPath,
-            FetchNodeStatusResponse.class,
-            expectedResponse);
+                subPath,
+                FetchNodeStatusResponse.class,
+                expectedResponse);
     }
 
     @Test
@@ -61,21 +61,21 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
 
         initNodes();
 
-        final String subPath = "/node1";
+        final String subPath = ResourcePaths.buildPath(NodeResource.INFO_PATH_PART, "node1");
 
         final ClusterNodeInfo expectedResponse = expectedClusterNodeInfoMap.get("node1");
 
         doGetTest(
-            subPath,
-            ClusterNodeInfo.class,
-            expectedResponse);
+                subPath,
+                ClusterNodeInfo.class,
+                expectedResponse);
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(0);
+                .hasSize(0);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -83,30 +83,30 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
 
         initNodes();
 
-        final String subPath = "/node2";
+        final String subPath = ResourcePaths.buildPath(NodeResource.INFO_PATH_PART, "node2");
 
         final ClusterNodeInfo expectedResponse = expectedClusterNodeInfoMap.get("node2");
 
         final ClusterNodeInfo actualResponse = doGetTest(
-            subPath,
-            ClusterNodeInfo.class,
-            null);
+                subPath,
+                ClusterNodeInfo.class,
+                null);
 
         assertThat(actualResponse.getPing())
-            .isNotNull();
+                .isNotNull();
         // The resource sets the ping time which will be different to our expected one so just set them the same
         // so we can still equals the objects.
         actualResponse.setPing(expectedResponse.getPing());
 
         assertThat(actualResponse)
-            .isEqualTo(expectedResponse);
+                .isEqualTo(expectedResponse);
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -114,29 +114,29 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
 
         initNodes();
 
-        final String subPath = "/node3";
+        final String subPath = ResourcePaths.buildPath(NodeResource.INFO_PATH_PART, "node3");
 
         final ClusterNodeInfo expectedResponse = expectedClusterNodeInfoMap.get("node3");
 
         final ClusterNodeInfo actualResponse = doGetTest(
-            subPath,
-            ClusterNodeInfo.class,
-            null);
+                subPath,
+                ClusterNodeInfo.class,
+                null);
 
         assertThat(actualResponse.getPing())
-            .isNull();
+                .isNull();
         assertThat(actualResponse.getError())
-            .isNotNull();
+                .isNotNull();
         // The resource sets the ping time which will be different to our expected one so just set them the same
         // so we can still equals the objects.
         actualResponse.setPing(expectedResponse.getPing());
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(0);
+                .hasSize(0);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0); // node down
+                .hasSize(0); // node down
     }
 
     @Test
@@ -144,25 +144,25 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
 
         initNodes();
 
-        final String subPath = ResourcePaths.buildPath("node1", NodeResource.PING_PATH_PART);
+        final String subPath = ResourcePaths.buildPath(NodeResource.PING_PATH_PART, "node1");
 
         final Long actualResponse = doGetTest(
-            subPath,
-            Long.class,
-            null);
+                subPath,
+                Long.class,
+                null);
 
         assertThat(actualResponse)
-            .isNotNull();
+                .isNotNull();
 
         assertThat(actualResponse)
-            .isGreaterThan(0);
+                .isGreaterThan(0);
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(0);
+                .hasSize(0);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -170,25 +170,25 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
 
         initNodes();
 
-        final String subPath = ResourcePaths.buildPath("node2", NodeResource.PING_PATH_PART);
+        final String subPath = ResourcePaths.buildPath(NodeResource.PING_PATH_PART, "node2");
 
         final Long actualResponse = doGetTest(
-            subPath,
-            Long.class,
-            null);
+                subPath,
+                Long.class,
+                null);
 
         assertThat(actualResponse)
-            .isNotNull();
+                .isNotNull();
 
         assertThat(actualResponse)
-            .isGreaterThan(0);
+                .isGreaterThan(0);
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -196,36 +196,36 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
 
         initNodes();
 
-        final String subPath = ResourcePaths.buildPath("node2", NodeResource.PING_PATH_PART);
+        final String subPath = ResourcePaths.buildPath(NodeResource.PING_PATH_PART, "node2");
 
         final Long actualResponse = doGetTest(
-            subPath,
-            Long.class,
-            null);
+                subPath,
+                Long.class,
+                null);
 
         assertThat(actualResponse)
-            .isNotNull();
+                .isNotNull();
 
         assertThat(actualResponse)
-            .isGreaterThan(0);
+                .isGreaterThan(0);
 
         assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node2"))
-            .hasSize(1);
+                .hasSize(1);
         assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
     void setPriority() {
         initNodes();
 
-        final String subPath = ResourcePaths.buildPath("node2", NodeResource.PRIORITY_PATH_PART);
+        final String subPath = ResourcePaths.buildPath(NodeResource.PRIORITY_PATH_PART, "node2");
 
         doPutTest(
-            subPath,
-            10L);
+                subPath,
+                10L);
 
         Node newNode = new Node();
         newNode.setName("node2");
@@ -233,18 +233,18 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
 
         // We are hitting node1 but setting node2
         verify(nodeServiceMap.get("node1"), Mockito.times(1))
-            .update(Mockito.eq(newNode));
+                .update(Mockito.eq(newNode));
     }
 
     @Test
     void setEnabled() {
         initNodes();
 
-        final String subPath = ResourcePaths.buildPath("node2", NodeResource.ENABLED_PATH_PART);
+        final String subPath = ResourcePaths.buildPath(NodeResource.ENABLED_PATH_PART, "node2");
 
         doPutTest(
-            subPath,
-            Boolean.FALSE);
+                subPath,
+                Boolean.FALSE);
 
         Node newNode = new Node();
         newNode.setName("node2");
@@ -252,7 +252,7 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
 
         // We are hitting node1 but setting node2
         verify(nodeServiceMap.get("node1"), Mockito.times(1))
-            .update(Mockito.eq(newNode));
+                .update(Mockito.eq(newNode));
     }
 
     @Override
@@ -268,32 +268,32 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
         final NodeServiceImpl nodeService = createNamedMock(NodeServiceImpl.class, node);
 
         when(nodeService.isEnabled(Mockito.anyString()))
-            .thenAnswer(invocation ->
-                allNodes.stream()
-                    .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
-                    .anyMatch(TestNode::isEnabled));
+                .thenAnswer(invocation ->
+                        allNodes.stream()
+                                .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
+                                .anyMatch(TestNode::isEnabled));
 
         when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
-            .thenAnswer(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
+                .thenAnswer(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
 
         when(nodeService.find(Mockito.any(FindNodeCriteria.class)))
-            .thenReturn(allNodes.stream()
-                .map(testNode -> {
-                    Node node2 = new Node();
-                    node2.setEnabled(testNode.isEnabled());
-                    node2.setName(testNode.getNodeName());
-                    return node2;
+                .thenReturn(allNodes.stream()
+                        .map(testNode -> {
+                            Node node2 = new Node();
+                            node2.setEnabled(testNode.isEnabled());
+                            node2.setName(testNode.getNodeName());
+                            return node2;
 //                    return new NodeStatusResult(node2, node.getNodeName().equals("node1"));
-                })
-                .collect(ResultPage.collector(ResultPage::new)));
+                        })
+                        .collect(ResultPage.collector(ResultPage::new)));
 
         when(nodeService.getNode(Mockito.anyString()))
-            .thenAnswer(invocation -> {
-                String nodeName = invocation.getArgument(0);
-                Node node2 = new Node();
-                node2.setName(nodeName);
-                return node2;
-            });
+                .thenAnswer(invocation -> {
+                    String nodeName = invocation.getArgument(0);
+                    Node node2 = new Node();
+                    node2.setName(nodeName);
+                    return node2;
+                });
 
         nodeServiceMap.put(node.getNodeName(), nodeService);
 
@@ -302,33 +302,33 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
         final NodeInfo nodeInfo = createNamedMock(NodeInfo.class, node);
 
         when(nodeInfo.getThisNodeName())
-            .thenReturn(node.getNodeName());
+                .thenReturn(node.getNodeName());
 
         // Set up the ClusterNodeManager mock
 
         final ClusterNodeManager clusterNodeManager = createNamedMock(ClusterNodeManager.class, node);
 
         ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(
-            DateUtil.createNormalDateTimeString(Instant.now().toEpochMilli()),
-            new BuildInfo(
                 DateUtil.createNormalDateTimeString(Instant.now().toEpochMilli()),
-                "v1.1",
-                DateUtil.createNormalDateTimeString(Instant.now().toEpochMilli())),
-            node.getNodeName(),
-            getBaseEndPointUrl(node));
+                new BuildInfo(
+                        DateUtil.createNormalDateTimeString(Instant.now().toEpochMilli()),
+                        "v1.1",
+                        DateUtil.createNormalDateTimeString(Instant.now().toEpochMilli())),
+                node.getNodeName(),
+                getBaseEndPointUrl(node));
 
         expectedClusterNodeInfoMap.put(node.getNodeName(), clusterNodeInfo);
 
         when(clusterNodeManager.getClusterNodeInfo())
-            .thenReturn(clusterNodeInfo);
+                .thenReturn(clusterNodeInfo);
 
         final DocumentEventLog documentEventLog = createNamedMock(DocumentEventLog.class, node);
 
         return new NodeResourceImpl(
-            nodeService,
-            nodeInfo,
-            clusterNodeManager,
-            webTargetFactory(),
-            documentEventLog);
+                nodeService,
+                nodeInfo,
+                clusterNodeManager,
+                webTargetFactory(),
+                documentEventLog);
     }
 }

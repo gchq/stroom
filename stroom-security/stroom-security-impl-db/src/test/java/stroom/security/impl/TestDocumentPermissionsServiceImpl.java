@@ -152,13 +152,13 @@ class TestDocumentPermissionsServiceImpl {
         userGroupsCache.clear();
         userDocumentPermissionsCache.clear();
 
-        final Set<User> allUsers = new HashSet<>();
-        allUsers.add(user);
+        final Set<String> allUsers = new HashSet<>();
+        allUsers.add(user.getUuid());
         allUsers.addAll(userGroupsCache.get(user.getUuid()));
 
         Set<String> missingPermissions = new HashSet<>(Arrays.asList(permissions));
-        for (final User userRef : allUsers) {
-            final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userRef.getUuid());
+        for (final String userUuid : allUsers) {
+            final UserDocumentPermissions userDocumentPermissions = userDocumentPermissionsCache.get(userUuid);
             for (final String permission : permissions) {
                 if (userDocumentPermissions.hasDocumentPermission(docRef.getUuid(), permission)) {
                     missingPermissions.remove(permission);

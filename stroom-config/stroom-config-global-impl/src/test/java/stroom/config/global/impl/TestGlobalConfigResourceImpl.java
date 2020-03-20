@@ -53,9 +53,9 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
     }
 
     private static final ListConfigResponse FULL_PROP_LIST = new ListConfigResponse(List.of(
-        CONFIG_PROPERTY_1,
-        CONFIG_PROPERTY_2,
-        CONFIG_PROPERTY_3
+            CONFIG_PROPERTY_1,
+            CONFIG_PROPERTY_2,
+            CONFIG_PROPERTY_3
     ));
 
     @Test
@@ -67,15 +67,15 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         final ListConfigResponse expectedResponse = FULL_PROP_LIST;
 
         doGetTest(
-            subPath,
-            ListConfigResponse.class,
-            expectedResponse,
-            webTarget -> webTarget.queryParam("partialName", (String) null),
-            webTarget -> webTarget.queryParam("offset", 0),
-            webTarget -> webTarget.queryParam("size", 100));
+                subPath,
+                ListConfigResponse.class,
+                expectedResponse,
+                webTarget -> webTarget.queryParam("partialName", (String) null),
+                webTarget -> webTarget.queryParam("offset", 0),
+                webTarget -> webTarget.queryParam("size", 100));
 
         verify(globalConfigServiceMap.get("node1"), times(1))
-            .list(Mockito.any(), eq(new PageRequest(0L, 100)));
+                .list(Mockito.any(), eq(new PageRequest(0L, 100)));
     }
 
     @Test
@@ -88,19 +88,19 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         configProperty.setYamlOverrideValue("node1");
 
         final ListConfigResponse expectedResponse = new ListConfigResponse(List.of(
-            configProperty
+                configProperty
         ));
 
         doGetTest(
-            subPath,
-            ListConfigResponse.class,
-            expectedResponse,
-            webTarget -> webTarget.queryParam("partialName", "some"),
-            webTarget -> webTarget.queryParam("offset", 0),
-            webTarget -> webTarget.queryParam("size", 100));
+                subPath,
+                ListConfigResponse.class,
+                expectedResponse,
+                webTarget -> webTarget.queryParam("partialName", "some"),
+                webTarget -> webTarget.queryParam("offset", 0),
+                webTarget -> webTarget.queryParam("size", 100));
 
         verify(globalConfigServiceMap.get("node1"), times(1))
-            .list(Mockito.any(), eq(new PageRequest(0L, 100)));
+                .list(Mockito.any(), eq(new PageRequest(0L, 100)));
     }
 
     @Test
@@ -108,28 +108,28 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         initNodes();
 
         final String subPath = ResourcePaths.buildPath(
-            "node1",
-            GlobalConfigResource.PROPERTIES_SUB_PATH);
+                GlobalConfigResource.NODE_PROPERTIES_SUB_PATH,
+                "node1");
 
         final ListConfigResponse expectedResponse = FULL_PROP_LIST;
 
         doGetTest(
-            subPath,
-            ListConfigResponse.class,
-            expectedResponse,
-            webTarget -> webTarget.queryParam("partialName", (String) null),
-            webTarget -> webTarget.queryParam("offset", 0),
-            webTarget -> webTarget.queryParam("size", 100));
+                subPath,
+                ListConfigResponse.class,
+                expectedResponse,
+                webTarget -> webTarget.queryParam("partialName", (String) null),
+                webTarget -> webTarget.queryParam("offset", 0),
+                webTarget -> webTarget.queryParam("size", 100));
 
         verify(globalConfigServiceMap.get("node1"), times(1))
-            .list(Mockito.any(), eq(new PageRequest(0L, 100)));
+                .list(Mockito.any(), eq(new PageRequest(0L, 100)));
 
         Assertions.assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         Assertions.assertThat(getRequestEvents("node2"))
-            .hasSize(0);
+                .hasSize(0);
         Assertions.assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -137,28 +137,28 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         initNodes();
 
         final String subPath = ResourcePaths.buildPath(
-            "node2",
-            GlobalConfigResource.PROPERTIES_SUB_PATH);
+                GlobalConfigResource.NODE_PROPERTIES_SUB_PATH,
+                "node2");
 
         final ListConfigResponse expectedResponse = FULL_PROP_LIST;
 
         doGetTest(
-            subPath,
-            ListConfigResponse.class,
-            expectedResponse,
-            webTarget -> webTarget.queryParam("partialName", (String) null),
-            webTarget -> webTarget.queryParam("offset", 0),
-            webTarget -> webTarget.queryParam("size", 100));
+                subPath,
+                ListConfigResponse.class,
+                expectedResponse,
+                webTarget -> webTarget.queryParam("partialName", (String) null),
+                webTarget -> webTarget.queryParam("offset", 0),
+                webTarget -> webTarget.queryParam("size", 100));
 
         verify(globalConfigServiceMap.get("node2"), times(1))
-            .list(Mockito.any(), eq(new PageRequest(0L, 100)));
+                .list(Mockito.any(), eq(new PageRequest(0L, 100)));
 
         Assertions.assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         Assertions.assertThat(getRequestEvents("node2"))
-            .hasSize(1);
+                .hasSize(1);
         Assertions.assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -166,15 +166,15 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         initNodes();
 
         final String subPath = ResourcePaths.buildPath(
-            GlobalConfigResource.PROPERTIES_SUB_PATH,
-            "some.other.property");
+                GlobalConfigResource.PROPERTIES_SUB_PATH,
+                "some.other.property");
 
         final ConfigProperty expectedResponse = CONFIG_PROPERTY_2;
 
         final ConfigProperty listConfigResponse = doGetTest(
-            subPath,
-            ConfigProperty.class,
-            expectedResponse);
+                subPath,
+                ConfigProperty.class,
+                expectedResponse);
     }
 
 
@@ -183,24 +183,24 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         initNodes();
 
         final String subPath = ResourcePaths.buildPath(
-            GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
-            "some.other.property",
-            GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
-            "node1");
+                GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
+                "some.other.property",
+                GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
+                "node1");
 
         final OverrideValue<String> expectedResponse = OverrideValue.with("node1");
 
         final OverrideValue<String> listConfigResponse = doGetTest(
-            subPath,
-            OverrideValue.class,
-            expectedResponse);
+                subPath,
+                OverrideValue.class,
+                expectedResponse);
 
         Assertions.assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         Assertions.assertThat(getRequestEvents("node2"))
-            .hasSize(0);
+                .hasSize(0);
         Assertions.assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -208,24 +208,24 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         initNodes();
 
         final String subPath = ResourcePaths.buildPath(
-            GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
-            "some.other.property",
-            GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
-            "node2");
+                GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
+                "some.other.property",
+                GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
+                "node2");
 
         final OverrideValue<String> expectedResponse = OverrideValue.with("node2");
 
         final OverrideValue<String> listConfigResponse = doGetTest(
-            subPath,
-            OverrideValue.class,
-            expectedResponse);
+                subPath,
+                OverrideValue.class,
+                expectedResponse);
 
         Assertions.assertThat(getRequestEvents("node1"))
-            .hasSize(1);
+                .hasSize(1);
         Assertions.assertThat(getRequestEvents("node2"))
-            .hasSize(1);
+                .hasSize(1);
         Assertions.assertThat(getRequestEvents("node3"))
-            .hasSize(0);
+                .hasSize(0);
     }
 
     @Test
@@ -242,10 +242,10 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         expectedConfigProperty.setVersion(1);
 
         final ConfigProperty createdConfigProperty = doPostTest(
-            subPath,
-            newConfigProperty,
-            ConfigProperty.class,
-            expectedConfigProperty);
+                subPath,
+                newConfigProperty,
+                ConfigProperty.class,
+                expectedConfigProperty);
     }
 
     @Test
@@ -262,28 +262,28 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         expectedConfigProperty.setVersion(2);
 
         final String subPath = ResourcePaths.buildPath(
-            GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
-            existingConfigProperty.getNameAsString(),
-            GlobalConfigResource.DB_OVERRIDE_VALUE_SUB_PATH);
+                GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
+                existingConfigProperty.getNameAsString(),
+                GlobalConfigResource.DB_OVERRIDE_VALUE_SUB_PATH);
 
         final ConfigProperty createdConfigProperty = doPutTest(
-            subPath,
-            existingConfigProperty,
-            ConfigProperty.class,
-            expectedConfigProperty);
+                subPath,
+                existingConfigProperty,
+                ConfigProperty.class,
+                expectedConfigProperty);
     }
 
     @Test
     void fetchUiConfig() {
-       initNodes();
+        initNodes();
 
-       String subPath = GlobalConfigResource.FETCH_UI_CONFIG_SUB_PATH;
-       UiConfig expectedResponse = new UiConfig();
+        String subPath = GlobalConfigResource.FETCH_UI_CONFIG_SUB_PATH;
+        UiConfig expectedResponse = new UiConfig();
 
         final UiConfig listConfigResponse = doGetTest(
-            subPath,
-            UiConfig.class,
-            expectedResponse);
+                subPath,
+                UiConfig.class,
+                expectedResponse);
 
     }
 
@@ -301,35 +301,35 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         final GlobalConfigService globalConfigService = createNamedMock(GlobalConfigService.class, node);
 
         when(globalConfigService.list(Mockito.any(), Mockito.any()))
-            .thenAnswer(invocation -> {
-                Predicate<ConfigProperty> predicate = invocation.getArgument(0);
+                .thenAnswer(invocation -> {
+                    Predicate<ConfigProperty> predicate = invocation.getArgument(0);
 
-                return new ListConfigResponse(FULL_PROP_LIST.stream()
-                    .peek(configProperty -> {
-                        configProperty.setYamlOverrideValue(node.getNodeName());
-                    })
-                    .filter(predicate)
-                    .collect(Collectors.toList()));
-            });
+                    return new ListConfigResponse(FULL_PROP_LIST.stream()
+                            .peek(configProperty -> {
+                                configProperty.setYamlOverrideValue(node.getNodeName());
+                            })
+                            .filter(predicate)
+                            .collect(Collectors.toList()));
+                });
 
         when(globalConfigService.fetch(Mockito.any()))
-            .thenAnswer(invocation -> {
-                PropertyPath propertyPath = invocation.getArgument(0);
-                return FULL_PROP_LIST.stream()
-                    .peek(configProperty -> {
-                        configProperty.setYamlOverrideValue(node.getNodeName());
-                    })
-                    .filter(configProperty -> configProperty.getName().equals(propertyPath))
-                    .findFirst();
-            });
+                .thenAnswer(invocation -> {
+                    PropertyPath propertyPath = invocation.getArgument(0);
+                    return FULL_PROP_LIST.stream()
+                            .peek(configProperty -> {
+                                configProperty.setYamlOverrideValue(node.getNodeName());
+                            })
+                            .filter(configProperty -> configProperty.getName().equals(propertyPath))
+                            .findFirst();
+                });
 
         when(globalConfigService.update(Mockito.any()))
-            .thenAnswer(invocation -> {
-                ConfigProperty configProperty = invocation.getArgument(0);
-                configProperty.setId(1);
-                configProperty.setVersion(configProperty.getVersion() == null ? 1 : configProperty.getVersion() + 1);
-                return configProperty;
-            });
+                .thenAnswer(invocation -> {
+                    ConfigProperty configProperty = invocation.getArgument(0);
+                    configProperty.setId(1);
+                    configProperty.setVersion(configProperty.getVersion() == null ? 1 : configProperty.getVersion() + 1);
+                    return configProperty;
+                });
 
         globalConfigServiceMap.put(node.getNodeName(), globalConfigService);
 
@@ -337,26 +337,26 @@ class TestGlobalConfigResourceImpl extends AbstractMultiNodeResourceTest<GlobalC
         final NodeService nodeService = createNamedMock(NodeService.class, node);
 
         when(nodeService.isEnabled(Mockito.anyString()))
-            .thenAnswer(invocation ->
-                allNodes.stream()
-                    .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
-                    .anyMatch(TestNode::isEnabled));
+                .thenAnswer(invocation ->
+                        allNodes.stream()
+                                .filter(testNode -> testNode.getNodeName().equals(invocation.getArgument(0)))
+                                .anyMatch(TestNode::isEnabled));
 
         when(nodeService.getBaseEndpointUrl(Mockito.anyString()))
-            .thenAnswer(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
+                .thenAnswer(invocation -> baseEndPointUrls.get((String) invocation.getArgument(0)));
 
         // Set up the NodeInfo mock
 
         final NodeInfo nodeInfo = createNamedMock(NodeInfo.class, node);
 
         when(nodeInfo.getThisNodeName())
-            .thenReturn(node.getNodeName());
+                .thenReturn(node.getNodeName());
 
         return new GlobalConfigResourceImpl(
-            globalConfigService,
-            nodeService,
-            new UiConfig(),
-            nodeInfo,
-            webTargetFactory());
+                globalConfigService,
+                nodeService,
+                new UiConfig(),
+                nodeInfo,
+                webTargetFactory());
     }
 }

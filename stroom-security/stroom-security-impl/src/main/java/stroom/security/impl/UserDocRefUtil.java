@@ -26,12 +26,12 @@ final class UserDocRefUtil {
         // Utility class.
     }
 
-    static DocRef createDocRef(final User user) {
-        if (user == null) {
+    static DocRef createDocRef(final String userUuid) {
+        if (userUuid == null) {
             return null;
         }
 
-        return new DocRef(USER, user.getUuid(), user.getName());
+        return new DocRef(USER, userUuid, null);
     }
 
     static User createUser(final DocRef docRef) {

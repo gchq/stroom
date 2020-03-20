@@ -23,21 +23,22 @@ import stroom.db.util.ValueMapper;
 import stroom.db.util.ValueMapper.Mapper;
 import stroom.dictionary.api.WordListProvider;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.impl.MetaDao;
 import stroom.meta.impl.db.jooq.tables.MetaFeed;
 import stroom.meta.impl.db.jooq.tables.MetaProcessor;
 import stroom.meta.impl.db.jooq.tables.MetaType;
 import stroom.meta.impl.db.jooq.tables.MetaVal;
-import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.date.DateUtil;
 import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
+import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort;
 
 import javax.inject.Inject;
@@ -247,10 +248,10 @@ class MetaDaoImpl implements MetaDao {
     }
 
     @Override
-    public List<Meta> find(final FindMetaCriteria criteria) {
+    public ResultPage<Meta> find(final FindMetaCriteria criteria) {
         final PageRequest pageRequest = criteria.getPageRequest();
         final Condition condition = createCondition(criteria);
-        final OrderField[] orderFields = createOrderFields(criteria);
+        final OrderField<?>[] orderFields = createOrderFields(criteria);
 
         int offset = 0;
         int numberOfRows = 1000000;
@@ -260,10 +261,11 @@ class MetaDaoImpl implements MetaDao {
             numberOfRows = pageRequest.getLength();
         }
 
-        return find(condition, orderFields, offset, numberOfRows);
+        final List<Meta> list = find(condition, orderFields, offset, numberOfRows);
+        return ResultPage.createPageResultList(list, criteria.getPageRequest(), null);
     }
 
-    private List<Meta> find(final Condition condition, final OrderField[] orderFields, final int offset, final int numberOfRows) {
+    private List<Meta> find(final Condition condition, final OrderField<?>[] orderFields, final int offset, final int numberOfRows) {
         return JooqUtil.contextResult(metaDbConnProvider, context -> context
                 .select(
                         meta.ID,
@@ -495,13 +497,13 @@ class MetaDaoImpl implements MetaDao {
         return c1.and(c2);
     }
 
-    private OrderField[] createOrderFields(final ExpressionCriteria criteria) {
+    private OrderField<?>[] createOrderFields(final ExpressionCriteria criteria) {
         if (criteria.getSortList() == null || criteria.getSortList().size() == 0) {
             return new OrderField[]{meta.ID};
         }
 
         return criteria.getSortList().stream().map(sort -> {
-            Field field;
+            Field<?> field;
             if (MetaFields.FIELD_ID.equals(sort.getField())) {
                 field = meta.ID;
             } else if (MetaFields.FIELD_FEED.equals(sort.getField())) {
@@ -512,7 +514,7 @@ class MetaDaoImpl implements MetaDao {
                 field = meta.ID;
             }
 
-            OrderField orderField = field;
+            OrderField<?> orderField = field;
             if (Sort.Direction.DESCENDING.equals(sort.getDirection())) {
                 orderField = field.desc();
             }

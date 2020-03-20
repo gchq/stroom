@@ -23,7 +23,7 @@ import com.google.web.bindery.event.shared.EventBus;
 import stroom.core.client.ContentManager;
 import stroom.core.client.MenuKeys;
 import stroom.menubar.client.event.BeforeRevealMenubarEvent;
-import stroom.monitoring.client.MonitoringPlugin;
+import stroom.core.client.presenter.MonitoringPlugin;
 import stroom.receive.rules.client.presenter.DataRetentionPolicyPresenter;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.security.shared.PermissionNames;

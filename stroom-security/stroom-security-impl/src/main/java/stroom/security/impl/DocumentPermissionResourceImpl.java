@@ -4,6 +4,7 @@ import stroom.security.shared.DocumentPermissions;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
+import java.util.List;
 import java.util.Set;
 
 public class DocumentPermissionResourceImpl implements DocumentPermissionResource {
@@ -19,7 +20,7 @@ public class DocumentPermissionResourceImpl implements DocumentPermissionResourc
 
     @Override
     public Response getPermissionForDocType(final String docType) {
-        final String[] permissions = documentTypePermissions.getPermissions(docType);
+        final List<String> permissions = documentTypePermissions.getPermissions(docType);
         return Response.ok(permissions).build();
     }
 

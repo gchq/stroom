@@ -83,7 +83,7 @@ public abstract class AbstractMetaListPresenter extends MyPresenterWidget<DataGr
 
         addColumns(allowSelectAll);
 
-        this.dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus) {
+        this.dataProvider = new RestDataProvider<MetaRow, ResultPage<MetaRow>>(eventBus, criteria.obtainPageRequest()) {
             @Override
             protected void exec(final Consumer<ResultPage<MetaRow>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<MetaRow>> rest = restFactory.create();

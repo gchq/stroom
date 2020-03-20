@@ -17,5 +17,5 @@
 package stroom.security.api;
 
 public interface DocumentPermissionCache {
-    boolean hasDocumentPermission(String documentType, String documentUuid, String permission);
+    boolean hasDocumentPermission(String documentUuid, String permission);
 }

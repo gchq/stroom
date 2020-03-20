@@ -2,13 +2,13 @@ package stroom.processor.impl;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.meta.shared.ExpressionUtil;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorDataSource;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionTerm.Condition;
-import stroom.util.shared.ResultPage;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Singleton;
 import java.util.List;

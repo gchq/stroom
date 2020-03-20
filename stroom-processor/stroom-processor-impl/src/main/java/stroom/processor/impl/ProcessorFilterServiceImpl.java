@@ -34,7 +34,6 @@ import stroom.processor.shared.ProcessorDataSource;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.ProcessorFilterRow;
 import stroom.processor.shared.ProcessorListRow;
-import stroom.processor.shared.ProcessorListRowResultPage;
 import stroom.processor.shared.ProcessorRow;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.ReprocessDataInfo;
@@ -100,7 +99,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                   final int priority,
                                   final boolean enabled) {
         // Check the user has read permissions on the pipeline.
-        if (!securityContext.hasDocumentPermission(PipelineDoc.DOCUMENT_TYPE, pipelineRef.getUuid(), DocumentPermissionNames.READ)) {
+        if (!securityContext.hasDocumentPermission(pipelineRef.getUuid(), DocumentPermissionNames.READ)) {
             throw new PermissionException("You do not have permission to create this processor filter");
         }
 
@@ -114,7 +113,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                                   final int priority,
                                   final boolean enabled) {
         // Check the user has read permissions on the pipeline.
-        if (!securityContext.hasDocumentPermission(PipelineDoc.DOCUMENT_TYPE, processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
+        if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
             throw new PermissionException("You do not have permission to create this processor filter");
         }
 
@@ -149,7 +148,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     @Override
     public ProcessorFilter update(final ProcessorFilter processorFilter) {
         // Check the user has update permissions on the pipeline.
-        if (!securityContext.hasDocumentPermission(PipelineDoc.DOCUMENT_TYPE, processorFilter.getProcessor().getPipelineUuid(), DocumentPermissionNames.UPDATE)) {
+        if (!securityContext.hasDocumentPermission(processorFilter.getProcessor().getPipelineUuid(), DocumentPermissionNames.UPDATE)) {
             throw new PermissionException("You do not have permission to update this processor filter");
         }
 
@@ -242,7 +241,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     // TODO : The following method combines results from the processor and processor filter services so should possibly
     //  be in another class that controls the collaboration.
     @Override
-    public ProcessorListRowResultPage find(final FetchProcessorRequest request) {
+    public ResultPage<ProcessorListRow> find(final FetchProcessorRequest request) {
         return securityContext.secureResult(PERMISSION, () -> {
             final List<ProcessorListRow> values = new ArrayList<>();
 
@@ -308,7 +307,7 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
                 }
             }
 
-            return new ProcessorListRowResultPage(values, ResultPage.createPageResponse(values));
+            return ResultPage.createUnboundedList(values);
         });
     }
 

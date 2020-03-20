@@ -19,15 +19,17 @@ package stroom.security.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.docref.DocRef;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.api.UserIdentity;
 import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.DocumentPermissions;
 import stroom.security.shared.User;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,34 +39,40 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
     private final DocumentPermissionDao documentPermissionDao;
     private final UserDao userDao;
-    private final DocumentTypePermissions documentTypePermissions;
     private final SecurityContextImpl securityContext;
 
     @Inject
     DocumentPermissionServiceImpl(final DocumentPermissionDao documentPermissionDao,
                                   final UserDao userDao,
-                                  final DocumentTypePermissions documentTypePermissions,
                                   final SecurityContextImpl securityContext) {
         this.documentPermissionDao = documentPermissionDao;
         this.userDao = userDao;
-        this.documentTypePermissions = documentTypePermissions;
         this.securityContext = securityContext;
     }
 
-    public Set<String> getPermissionsForDocumentForUser(final String docRefUuid,
+    public Set<String> getPermissionsForDocumentForUser(final String docUuid,
                                                         final String userUuid) {
-        return documentPermissionDao.getPermissionsForDocumentForUser(docRefUuid, userUuid);
+        return documentPermissionDao.getPermissionsForDocumentForUser(docUuid, userUuid);
     }
 
-    public stroom.security.shared.DocumentPermissions getPermissionsForDocument(final String docRefUuid) {
+    public DocumentPermissions getPermissionsForDocument(final String docUuid) {
+        final List<User> users = new ArrayList<>();
+        final List<User> groups = new ArrayList<>();
         final Map<String, Set<String>> userPermissions = new HashMap<>();
 
         try {
-            final DocumentPermissions documentPermission = documentPermissionDao.getPermissionsForDocument(docRefUuid);
+            final Map<String, Set<String>> documentPermission = documentPermissionDao.getPermissionsForDocument(docUuid);
 
-            documentPermission.getPermissions().forEach((userUuid, permissions) -> {
+            documentPermission.forEach((userUuid, permissions) -> {
                 final User user = userDao.getByUuid(userUuid);
-                userPermissions.put(user.getUuid(), permissions);
+                if (user != null) {
+                    if (user.isGroup()) {
+                        groups.add(user);
+                    } else {
+                        users.add(user);
+                    }
+                    userPermissions.put(user.getUuid(), permissions);
+                }
             });
 
 
@@ -73,63 +81,58 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
             throw e;
         }
 
-        return new stroom.security.shared.DocumentPermissions(docRefUuid, userPermissions);
+//        final String[] permissions = documentTypePermissions.getPermissions(document.getType());
+        return new DocumentPermissions(docUuid, users, groups, userPermissions);
     }
 
-    public UserDocumentPermissions getPermissionsForUser(final String userUuid) {
-        return documentPermissionDao.getPermissionsForUser(userUuid);
-    }
+//    public UserDocumentPermissions getPermissionsForUser(final String userUuid) {
+//        return documentPermissionDao.getPermissionsForUser(userUuid);
+//    }
 
-    public void addPermission(final String docRefUuid,
+    public void addPermission(final String docUuid,
                               final String userUuid,
                               final String permission) {
-        documentPermissionDao.addPermission(docRefUuid, userUuid, permission);
+        documentPermissionDao.addPermission(docUuid, userUuid, permission);
     }
 
-    public void removePermission(final String docRefUuid,
+    public void removePermission(final String docUuid,
                                  final String userUuid,
                                  final String permission) {
-        documentPermissionDao.removePermission(docRefUuid, userUuid, permission);
+        documentPermissionDao.removePermission(docUuid, userUuid, permission);
     }
 
-    void clearDocumentPermissionsForUser(final String docRefUuid,
+    void clearDocumentPermissionsForUser(final String docUuid,
                                          final String userUuid) {
-        documentPermissionDao.clearDocumentPermissionsForUser(docRefUuid, userUuid);
+        documentPermissionDao.clearDocumentPermissionsForUser(docUuid, userUuid);
 
-    }
-
-    void clearDocumentPermissions(final String docRefUuid) {
-        documentPermissionDao.clearDocumentPermissions(docRefUuid);
     }
 
     @Override
-    public void clearDocumentPermissions(final String documentType, final String documentUuid) {
+    public void clearDocumentPermissions(final String docUuid) {
         // Get the current user.
         final UserIdentity userIdentity = securityContext.getUserIdentity();
 
         // If no user is present then don't clear permissions.
         if (userIdentity != null) {
-            if (securityContext.hasDocumentPermission(documentType, documentUuid, DocumentPermissionNames.OWNER)) {
-                clearDocumentPermissions(documentUuid);
+            if (securityContext.hasDocumentPermission(docUuid, DocumentPermissionNames.OWNER)) {
+                documentPermissionDao.clearDocumentPermissions(docUuid);
             }
         }
     }
 
     @Override
-    public void addDocumentPermissions(final String sourceType, final String sourceUuid, final String documentType, final String documentUuid, final boolean owner) {
+    public void addDocumentPermissions(final String sourceUuid, final String documentUuid, final boolean owner) {
         // Get the current user.
         final UserIdentity userIdentity = securityContext.getUserIdentity();
 
         // If no user is present then don't create permissions.
         if (userIdentity != null) {
             final User user = securityContext.getUser(userIdentity);
-            if (owner || securityContext.hasDocumentPermission(documentType, documentUuid, DocumentPermissionNames.OWNER)) {
-                final DocRef docRef = new DocRef(documentType, documentUuid);
-
+            if (owner || securityContext.hasDocumentPermission(documentUuid, DocumentPermissionNames.OWNER)) {
                 if (owner) {
                     // Make the current user the owner of the new document.
                     try {
-                        addPermission(docRef.getUuid(),
+                        addPermission(documentUuid,
                                 user.getUuid(),
                                 DocumentPermissionNames.OWNER);
                     } catch (final RuntimeException e) {
@@ -139,35 +142,28 @@ public class DocumentPermissionServiceImpl implements DocumentPermissionService 
 
                 // Inherit permissions from the parent folder if there is one.
                 // TODO : This should be part of the explorer service.
-                copyPermissions(sourceType, sourceUuid, documentType, documentUuid);
+                copyPermissions(sourceUuid, documentUuid);
             }
         }
     }
 
-    private void copyPermissions(final String sourceType, final String sourceUuid, final String destType, final String destUuid) {
-        if (sourceType != null && sourceUuid != null) {
-            final DocRef sourceDocRef = new DocRef(sourceType, sourceUuid);
-
-            final stroom.security.shared.DocumentPermissions documentPermissions = getPermissionsForDocument(sourceDocRef.getUuid());
+    private void copyPermissions(final String sourceUuid, final String destUuid) {
+        if (sourceUuid != null) {
+            final stroom.security.shared.DocumentPermissions documentPermissions = getPermissionsForDocument(sourceUuid);
             if (documentPermissions != null) {
-                final Map<String, Set<String>> userPermissions = documentPermissions.getUserPermissions();
+                final Map<String, Set<String>> userPermissions = documentPermissions.getPermissions();
                 if (userPermissions != null && userPermissions.size() > 0) {
-                    final DocRef destDocRef = new DocRef(destType, destUuid);
-                    final String[] allowedPermissions = documentTypePermissions.getPermissions(destDocRef.getType());
-
                     for (final Map.Entry<String, Set<String>> entry : userPermissions.entrySet()) {
                         final String userUuid = entry.getKey();
                         final Set<String> permissions = entry.getValue();
 
-                        for (final String allowedPermission : allowedPermissions) {
-                            if (permissions.contains(allowedPermission)) {
-                                try {
-                                    addPermission(destDocRef.getUuid(),
-                                            userUuid,
-                                            allowedPermission);
-                                } catch (final RuntimeException e) {
-                                    LOGGER.error(e.getMessage(), e);
-                                }
+                        for (final String permission : permissions) {
+                            try {
+                                addPermission(destUuid,
+                                        userUuid,
+                                        permission);
+                            } catch (final RuntimeException e) {
+                                LOGGER.error(e.getMessage(), e);
                             }
                         }
                     }
