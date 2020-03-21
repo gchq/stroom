@@ -40,14 +40,14 @@ BEGIN
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_NAME = 'explorerTreePath') THEN
 
-        RENAME TABLE explorerTreePath TO old_explorertreepath;
+        RENAME TABLE explorerTreePath TO OLD_explorertreepath;
     END IF;
 
     -- Check again so it is idempotent
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'old_explorerTreePath') THEN
+            WHERE TABLE_NAME = 'OLD_explorerTreePath') THEN
 
         INSERT INTO explorer_path (
             ancestor, 
@@ -59,7 +59,7 @@ BEGIN
             descendant, 
             depth, 
             orderIndex
-        FROM old_explorerTreePath;
+        FROM OLD_explorerTreePath;
     END IF;
 
 END//

@@ -42,7 +42,17 @@ public class V07_00_00_009__Script extends BaseJavaMigration {
         final _V07_00_00_ScriptSerialiser serialiser = new _V07_00_00_ScriptSerialiser();
 
         try (final PreparedStatement preparedStatement = connection.prepareStatement(
-                "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, DEP, DAT FROM SCRIPT")) {
+                "SELECT " +
+                    "  CRT_MS, " +
+                    "  CRT_USER, " +
+                    "  UPD_MS, " +
+                    "  UPD_USER, " +
+                    "  NAME, " +
+                    "  UUID, " +
+                    "  DESCRIP, " +
+                    "  DEP, " +
+                    "  DAT " +
+                    "FROM OLD_SCRIPT")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);
@@ -79,7 +89,13 @@ public class V07_00_00_009__Script extends BaseJavaMigration {
                     // Add the records.
                     dataMap.forEach((k, v) -> {
                         try (final PreparedStatement ps = connection.prepareStatement(
-                                "INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
+                                "INSERT INTO doc (" +
+                                    "  type, " +
+                                    "  uuid, " +
+                                    "  name, " +
+                                    "  ext, " +
+                                    "  data) " +
+                                    "VALUES (?, ?, ?, ?, ?)")) {
                             ps.setString(1, _V07_00_00_ScriptDoc.DOCUMENT_TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);

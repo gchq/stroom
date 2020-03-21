@@ -35,7 +35,16 @@ public class V07_00_00_011__Xslt extends BaseJavaMigration {
         final _V07_00_00_XsltSerialiser serialiser = new _V07_00_00_XsltSerialiser();
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, DAT FROM XSLT")) {
+                "SELECT " +
+                    "  CRT_MS, " +
+                    "  CRT_USER, " +
+                    "  UPD_MS, " +
+                    "  UPD_USER, " +
+                    "  NAME, " +
+                    "  UUID, " +
+                    "  DESCRIP, " +
+                    "  DAT " +
+                    "FROM OLD_XSLT")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);
@@ -64,7 +73,13 @@ public class V07_00_00_011__Xslt extends BaseJavaMigration {
                     // Add the records.
                     dataMap.forEach((k, v) -> {
                         try (final PreparedStatement ps = context.getConnection().prepareStatement(
-                                "INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
+                                "INSERT INTO doc (" +
+                                    "  type, " +
+                                    "  uuid, " +
+                                    "  name, " +
+                                    "  ext, " +
+                                    "  data) " +
+                                    "VALUES (?, ?, ?, ?, ?)")) {
                             ps.setString(1, _V07_00_00_XsltDoc.DOCUMENT_TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);

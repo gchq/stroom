@@ -38,7 +38,15 @@ public class V07_00_00_004__Dictionary extends BaseJavaMigration {
         final _V07_00_00_DictionarySerialiser newSerialiser = new _V07_00_00_DictionarySerialiser();
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "SELECT id, type, uuid, name, ext, data FROM doc WHERE type = 'Dictionary'")) {
+                "SELECT " +
+                    "  id, " +
+                    "  type, " +
+                    "  uuid, " +
+                    "  name, " +
+                    "  ext, " +
+                    "  data " +
+                    "FROM doc " +
+                    "WHERE type = 'Dictionary'")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final long id = resultSet.getLong(1);
@@ -94,7 +102,13 @@ public class V07_00_00_004__Dictionary extends BaseJavaMigration {
                     // Add the text record.
                     newDataMap.forEach((k, v) -> {
                         try (final PreparedStatement ps = context.getConnection().prepareStatement(
-                                "INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
+                                "INSERT INTO doc (" +
+                                    "  type, " +
+                                    "  uuid, " +
+                                    "  name, " +
+                                    "  ext, " +
+                                    "  data) " +
+                                    "VALUES (?, ?, ?, ?, ?)")) {
                             ps.setString(1, type);
                             ps.setString(2, uuid);
                             ps.setString(3, name);

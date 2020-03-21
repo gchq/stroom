@@ -49,8 +49,8 @@ public class V07_00_00_016__Feed extends BaseJavaMigration {
                     "  f.STAT, " +
                     "  f.RETEN_DAY_AGE, " +
                     "  f.REF " +
-                    "FROM FD f " +
-                    "LEFT OUTER JOIN STRM_TP st ON (st.ID = f.FK_STRM_TP_ID)")) {
+                    "FROM OLD_FD f " +
+                    "LEFT OUTER JOIN OLD_STRM_TP st ON (st.ID = f.FK_STRM_TP_ID)")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);
@@ -91,7 +91,13 @@ public class V07_00_00_016__Feed extends BaseJavaMigration {
                     // Add the records.
                     dataMap.forEach((k, v) -> {
                         try (final PreparedStatement ps = context.getConnection().prepareStatement(
-                                "INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
+                                "INSERT INTO doc (" +
+                                    "  type, " +
+                                    "  uuid, " +
+                                    "  name, " +
+                                    "  ext, " +
+                                    "  data) " +
+                                    "VALUES (?, ?, ?, ?, ?)")) {
                             ps.setString(1, _V07_00_00_FeedDoc.DOCUMENT_TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);

@@ -43,14 +43,14 @@ BEGIN
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_NAME = 'explorerTreeNode') THEN
 
-        RENAME TABLE explorerTreeNode TO old_explorerTreeNode;
+        RENAME TABLE explorerTreeNode TO OLD_explorerTreeNode;
     END IF;
 
     -- Check again so it is idempotent
     IF EXISTS (
             SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
-            WHERE TABLE_NAME = 'old_explorerTreeNode') THEN
+            WHERE TABLE_NAME = 'OLD_explorerTreeNode') THEN
 
         INSERT INTO explorer_node (
             id, 
@@ -64,7 +64,7 @@ BEGIN
             uuid, 
             name, 
             tags
-        FROM old_explorerTreeNode;
+        FROM OLD_explorerTreeNode;
     END IF;
 
 END//

@@ -74,9 +74,9 @@ CALL core_add_column_v1(
     'varchar(255) default NULL');
 
 -- idempotent
-UPDATE OLD_QUERY
-INNER JOIN OLD_DASH ON (QUERY.DASH_ID = DASH.ID)
-SET QUERY.DASH_UUID = DASH.UUID;
+UPDATE OLD_QUERY Q
+INNER JOIN OLD_DASH D ON (Q.DASH_ID = D.ID)
+SET Q.DASH_UUID = D.UUID;
 
 -- idempotent
 CALL core_drop_column_v1(

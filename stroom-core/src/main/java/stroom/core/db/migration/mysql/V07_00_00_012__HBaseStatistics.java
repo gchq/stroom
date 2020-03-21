@@ -39,7 +39,20 @@ public class V07_00_00_012__HBaseStatistics extends BaseJavaMigration {
         final _V07_00_00_StroomStatsStoreSerialiser serialiser = new _V07_00_00_StroomStatsStoreSerialiser();
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, STAT_TP, ROLLUP_TP, PRES, ENBL, DAT FROM STROOM_STATS_STORE")) {
+                "SELECT " +
+                    "  CRT_MS, " +
+                    "  CRT_USER, " +
+                    "  UPD_MS, " +
+                    "  UPD_USER, " +
+                    "  NAME, " +
+                    "  UUID, " +
+                    "  DESCRIP, " +
+                    "  STAT_TP, " +
+                    "  ROLLUP_TP, " +
+                    "  PRES, " +
+                    "  ENBL, " +
+                    "  DAT " +
+                    "FROM OLD_STROOM_STATS_STORE")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);
@@ -80,7 +93,13 @@ public class V07_00_00_012__HBaseStatistics extends BaseJavaMigration {
                     // Add the records.
                     dataMap.forEach((k, v) -> {
                         try (final PreparedStatement ps = context.getConnection().prepareStatement(
-                                "INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
+                                "INSERT INTO doc (" +
+                                    "  type, " +
+                                    "  uuid, " +
+                                    "  name, " +
+                                    "  ext, " +
+                                    "  data) " +
+                                    "VALUES (?, ?, ?, ?, ?)")) {
                             ps.setString(1, _V07_00_00_StroomStatsStoreDoc.DOCUMENT_TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);

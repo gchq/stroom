@@ -60,7 +60,7 @@ CALL core_add_column_v1(
     'varchar(255) default NULL');
 
 -- idempotent
-UPDATE IDX_VOL iv
+UPDATE OLD_IDX_VOL iv
 SET iv.IDX_UUID = (
     SELECT i.UUID
     FROM OLD_IDX i

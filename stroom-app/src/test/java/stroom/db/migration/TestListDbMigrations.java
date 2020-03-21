@@ -3,6 +3,7 @@ package stroom.db.migration;
 import com.google.common.base.Strings;
 import io.vavr.Tuple;
 import io.vavr.Tuple2;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +31,9 @@ public class TestListDbMigrations {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(TestListDbMigrations.class);
 
-    private static Pattern MIGRATION_FILE_REGEX_PATTERN = Pattern.compile("^(V0?7_|V[0-9]+__).*\\.(sql|java)$");
+    // Have to cope with stroom mig files, e.g. 07_00_00_017__IDX_SHRD.sql
+    // and auth mig files, e.g. V2_1__Create_tables.sql
+    private static Pattern MIGRATION_FILE_REGEX_PATTERN = Pattern.compile("^(?>V0?7_|V[0-9]+(?>_[0-9]+)?__).*\\.(sql|java)$");
     private static Pattern MIGRATION_PATH_REGEX_PATTERN = Pattern.compile("^.*/src/main/.*$");
 
     Map<String, List<Tuple2<String, Path>>> migrations = new HashMap<>();
@@ -108,36 +111,21 @@ public class TestListDbMigrations {
     private void inspectModule(final Path moduleDir) {
 
         // Core is always run first so list it first
-        Comparator<String> fileNameComparator = (name1, name2) -> {
-
-            Pattern authMigrationPattern = Pattern.compile("^V[0-9]+__.*");
-
-            String name1Modified = name1;
-            String name2Modified = name2;
-
-            if (authMigrationPattern.matcher(name1).matches()) {
-                name1Modified = name1Modified.replaceAll("(^V|__.*)", "");
-                name2Modified = name2Modified.replaceAll("(^V|__.*)", "");
-
-                int ver1 = Integer.parseInt(name1Modified);
-                int ver2 = Integer.parseInt(name2Modified);
-
-                return Comparator.<Integer>naturalOrder().compare(ver1, ver2);
-
-            } else {
-                return Comparator.<String>naturalOrder().compare(name1, name2);
-            }
-        };
+        final Comparator<String> fileNameComparator = buildFileNameComparator();
 
         try (Stream<Path> stream = Files.walk(moduleDir)) {
             stream
-                    .filter(path -> Files.isRegularFile(path))
-                    .filter(path -> MIGRATION_PATH_REGEX_PATTERN.asMatchPredicate().test(path.toString()))
-                    .map(path -> Tuple.of(path.getFileName().toString(), moduleDir.relativize(path)))
-                    .filter(tuple -> MIGRATION_FILE_REGEX_PATTERN.asMatchPredicate().test(tuple._1()))
+                    .filter(path ->
+                        Files.isRegularFile(path))
+                    .filter(path ->
+                        MIGRATION_PATH_REGEX_PATTERN.asMatchPredicate().test(path.toString()))
+                    .map(path ->
+                        Tuple.of(path.getFileName().toString(), moduleDir.relativize(path)))
+                    .filter(tuple ->
+                        MIGRATION_FILE_REGEX_PATTERN.asMatchPredicate().test(tuple._1()))
                     .sorted(Comparator.comparing(Tuple2::_1, fileNameComparator))
                     .forEach(tuple -> {
-                        String moduleName = moduleDir.getFileName().toString();
+                        final String moduleName = moduleDir.getFileName().toString();
                         migrations.computeIfAbsent(moduleName, k -> new ArrayList<>())
                                 .add(tuple);
                     });
@@ -146,4 +134,37 @@ public class TestListDbMigrations {
         }
     }
 
+    @NotNull
+    private Comparator<String> buildFileNameComparator() {
+        return (name1, name2) -> {
+
+                final Pattern authMigrationPattern = Pattern.compile("^V[0-9]+(_[0-9]+)?__.*");
+
+                String name1Modified = name1;
+                String name2Modified = name2;
+
+                LOGGER.trace("[{}] [{}]", name1Modified, name2Modified);
+
+                // Special case for auth as the filenames have a different format
+                // so we need to strip the non numeric parts off then sort numerically
+                if (authMigrationPattern.matcher(name1).matches()) {
+                    final String authRegex = "(^V|__.*)";
+                    name1Modified = name1Modified
+                        .replaceAll(authRegex, "")
+                        .replace("_", ".");
+                    name2Modified = name2Modified
+                        .replaceAll(authRegex, "")
+                        .replace("_", ".");
+
+                    LOGGER.trace("[{}] [{}]", name1Modified, name2Modified);
+
+                    double ver1 = Double.parseDouble(name1Modified);
+                    double ver2 = Double.parseDouble(name2Modified);
+
+                    return Comparator.<Double>naturalOrder().compare(ver1, ver2);
+                } else {
+                    return Comparator.<String>naturalOrder().compare(name1, name2);
+                }
+            };
+    }
 }

@@ -44,7 +44,7 @@ public class V07_00_00_014__Pipeline extends BaseJavaMigration {
                     "  DESCRIP, " +
                     "  PARNT_PIPE, " +
                     "  DAT " +
-                    "FROM PIPE")) {
+                    "FROM OLD_PIPE")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);
@@ -75,7 +75,13 @@ public class V07_00_00_014__Pipeline extends BaseJavaMigration {
                     // Add the records.
                     dataMap.forEach((k, v) -> {
                         try (final PreparedStatement ps = context.getConnection().prepareStatement(
-                                "INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
+                                "INSERT INTO doc (" +
+                                    "  type, " +
+                                    "  uuid, " +
+                                    "  name, " +
+                                    "  ext, " +
+                                    "  data) " +
+                                    "VALUES (?, ?, ?, ?, ?)")) {
                             ps.setString(1, _V07_00_00_PipelineDoc.DOCUMENT_TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);

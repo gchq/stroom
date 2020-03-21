@@ -35,7 +35,20 @@ public class V07_00_00_006__XmlSchema extends BaseJavaMigration {
         final _V07_00_00_XmlSchemaSerialiser serialiser = new _V07_00_00_XmlSchemaSerialiser();
 
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "SELECT CRT_MS, CRT_USER, UPD_MS, UPD_USER, NAME, UUID, DESCRIP, DAT, DEPRC, SCHEMA_GRP, NS, SYSTEM_ID FROM XML_SCHEMA")) {
+                "SELECT " +
+                    "  CRT_MS, " +
+                    "  CRT_USER, " +
+                    "  UPD_MS, " +
+                    "  UPD_USER, " +
+                    "  NAME, " +
+                    "  UUID, " +
+                    "  DESCRIP, " +
+                    "  DAT, " +
+                    "  DEPRC, " +
+                    "  SCHEMA_GRP, " +
+                    "  NS, " +
+                    "  SYSTEM_ID " +
+                    "FROM OLD_XML_SCHEMA")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final Long crtMs = resultSet.getLong(1);
@@ -72,7 +85,13 @@ public class V07_00_00_006__XmlSchema extends BaseJavaMigration {
                     // Add the records.
                     dataMap.forEach((k, v) -> {
                         try (final PreparedStatement ps = context.getConnection().prepareStatement(
-                                "INSERT INTO doc (type, uuid, name, ext, data) VALUES (?, ?, ?, ?, ?)")) {
+                                "INSERT INTO doc (" +
+                                    "  type, " +
+                                    "  uuid, " +
+                                    "  name, " +
+                                    "  ext, " +
+                                    "  data) " +
+                                    "VALUES (?, ?, ?, ?, ?)")) {
                             ps.setString(1, _V07_00_00_XmlSchemaDoc.DOCUMENT_TYPE);
                             ps.setString(2, uuid);
                             ps.setString(3, name);
