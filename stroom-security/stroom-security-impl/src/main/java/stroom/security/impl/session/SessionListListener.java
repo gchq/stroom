@@ -120,9 +120,9 @@ class SessionListListener implements HttpSessionListener, SessionListService {
             try {
                 LOGGER.debug("Sending request to {} for node {}", url, nodeName);
                 final Response response = webTargetFactory.create(url)
-                    .queryParam(SessionResource.NODE_NAME_PARAM, nodeName)
-                    .request(MediaType.APPLICATION_JSON)
-                    .get();
+                        .queryParam(SessionResource.NODE_NAME_PARAM, nodeName)
+                        .request(MediaType.APPLICATION_JSON)
+                        .get();
 
                 if (response.getStatus() != 200) {
                     throw new WebApplicationException(response);

@@ -33,9 +33,9 @@ import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.search.impl.IndexDataSourceFieldUtil;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -142,8 +142,8 @@ class TestBasicSearch_EndToEnd extends AbstractCoreIntegrationTest {
     }
 
     private void test(final ExpressionOperator.Builder expression, final long expectedStreams, final long expectedEvents) {
-        final List<IndexShard> list = indexShardService.find(new FindIndexShardCriteria());
-        for (final IndexShard indexShard : list) {
+        final ResultPage<IndexShard> resultPage = indexShardService.find(new FindIndexShardCriteria());
+        for (final IndexShard indexShard : resultPage.getValues()) {
             System.out.println("Using index " + IndexShardUtil.getIndexPath(indexShard));
         }
     }

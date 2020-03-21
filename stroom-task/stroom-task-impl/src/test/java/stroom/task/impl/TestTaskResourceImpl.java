@@ -47,7 +47,7 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
 
         initNodes();
 
-        String subPath = ResourcePaths.buildPath("node1");
+        String subPath = ResourcePaths.buildPath(TaskResource.LIST_PATH_PART, "node1");
 
         TaskProgressResponse expectedResponse = buildTaskProgressResponse("node1");
 
@@ -69,7 +69,7 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
 
         initNodes();
 
-        String subPath = ResourcePaths.buildPath("node2");
+        String subPath = ResourcePaths.buildPath(TaskResource.LIST_PATH_PART, "node2");
 
         TaskProgressResponse expectedResponse = buildTaskProgressResponse("node2");
 
@@ -91,7 +91,7 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
 
         initNodes();
 
-        String subPath = ResourcePaths.buildPath("node1");
+        String subPath = ResourcePaths.buildPath(TaskResource.FIND_PATH_PART, "node1");
 
         TaskProgressResponse expectedResponse = buildTaskProgressResponse("node1");
 
@@ -116,7 +116,7 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
 
         initNodes();
 
-        String subPath = ResourcePaths.buildPath("node2");
+        String subPath = ResourcePaths.buildPath(TaskResource.FIND_PATH_PART, "node2");
 
         TaskProgressResponse expectedResponse = buildTaskProgressResponse("node2");
 
@@ -141,7 +141,7 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
 
         initNodes();
 
-        String subPath = ResourcePaths.buildPath("node1", TaskResource.USER_PATH_PART);
+        String subPath = ResourcePaths.buildPath(TaskResource.USER_PATH_PART, "node1");
 
         TaskProgressResponse expectedResponse = buildTaskProgressResponse("node1");
 
@@ -163,7 +163,7 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
 
         initNodes();
 
-        String subPath = ResourcePaths.buildPath("node2", TaskResource.USER_PATH_PART);
+        String subPath = ResourcePaths.buildPath(TaskResource.USER_PATH_PART, "node2");
 
         TaskProgressResponse expectedResponse = buildTaskProgressResponse("node2");
 
@@ -185,7 +185,7 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
 
         initNodes();
 
-        String subPath = ResourcePaths.buildPath("node1", TaskResource.TERMINATE_PATH_PART);
+        String subPath = ResourcePaths.buildPath(TaskResource.TERMINATE_PATH_PART, "node1");
 
         TerminateTaskProgressRequest terminateTaskProgressRequest = new TerminateTaskProgressRequest(
             new FindTaskCriteria(),
@@ -210,7 +210,7 @@ class TestTaskResourceImpl extends AbstractMultiNodeResourceTest<TaskResource> {
 
         initNodes();
 
-        String subPath = ResourcePaths.buildPath("node2", TaskResource.TERMINATE_PATH_PART);
+        String subPath = ResourcePaths.buildPath(TaskResource.TERMINATE_PATH_PART, "node2");
 
         TerminateTaskProgressRequest terminateTaskProgressRequest = new TerminateTaskProgressRequest(
             new FindTaskCriteria(),

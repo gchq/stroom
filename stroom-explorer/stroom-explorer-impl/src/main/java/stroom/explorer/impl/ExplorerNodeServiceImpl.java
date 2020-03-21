@@ -314,7 +314,6 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                                         final boolean cascade) {
         String sourceType = null;
         String sourceUuid = null;
-        String destType = null;
         String destUuid = null;
 
         if (source != null) {
@@ -323,7 +322,6 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
         }
 
         if (dest != null) {
-            destType = dest.getType();
             destUuid = dest.getUuid();
         }
 
@@ -331,23 +329,21 @@ class ExplorerNodeServiceImpl implements ExplorerNodeService {
                 && sourceType != null
                 && sourceUuid != null
                 && DocumentTypes.isFolder(sourceType)) {
-            final String cascadeSourceType = sourceType;
             final String cascadeSourceUuid = sourceUuid;
             final List<ExplorerNode> descendants = getDescendants(dest);
             descendants.forEach(descendant ->
-                    documentPermissionService.addDocumentPermissions(cascadeSourceType,
+                    documentPermissionService.addDocumentPermissions(
                             cascadeSourceUuid,
-                            descendant.getType(),
                             descendant.getUuid(),
                             owner)
             );
         }
 
-        documentPermissionService.addDocumentPermissions(sourceType, sourceUuid, destType, destUuid, owner);
+        documentPermissionService.addDocumentPermissions(sourceUuid, destUuid, owner);
     }
 
     private void clearDocumentPermissions(final DocRef docRef) {
-        documentPermissionService.clearDocumentPermissions(docRef.getType(), docRef.getUuid());
+        documentPermissionService.clearDocumentPermissions(docRef.getUuid());
     }
 
     private ExplorerNode createExplorerNode(final ExplorerTreeNode explorerTreeNode) {

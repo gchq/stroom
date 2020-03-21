@@ -32,43 +32,39 @@ import javax.ws.rs.core.MediaType;
 
 @Api(value = "task - /v1")
 @Path(TaskResource.BASE_PATH)
+@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface TaskResource extends RestResource, DirectRestService {
     String BASE_PATH = "/task" + ResourcePaths.V1;
+    String LIST_PATH_PART = "/list";
+    String FIND_PATH_PART = "/find";
     String USER_PATH_PART = "/user";
     String TERMINATE_PATH_PART = "/terminate";
+    String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
     @GET
-    @Path("/{nodeName}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Path(LIST_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(
             value = "Lists tasks for a node",
             response = TaskProgressResponse.class)
     TaskProgressResponse list(@PathParam("nodeName") String nodeName);
 
     @POST
-    @Path("/{nodeName}")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Path(FIND_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(
             value = "Finds tasks for a node",
             response = TaskProgressResponse.class)
     TaskProgressResponse find(@PathParam("nodeName") String nodeName, FindTaskProgressRequest request);
 
     @GET
-    @Path("{nodeName}" + USER_PATH_PART)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Path(USER_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(
             value = "Lists tasks for a node",
             response = TaskProgressResponse.class)
     TaskProgressResponse userTasks(@PathParam("nodeName") String nodeName);
 
     @POST
-    @Path("/{nodeName}" + TERMINATE_PATH_PART)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Path(TERMINATE_PATH_PART + NODE_NAME_PATH_PARAM)
     @ApiOperation(
             value = "Terminates tasks for a node")
     Boolean terminate(@PathParam("nodeName") String nodeName, TerminateTaskProgressRequest request);

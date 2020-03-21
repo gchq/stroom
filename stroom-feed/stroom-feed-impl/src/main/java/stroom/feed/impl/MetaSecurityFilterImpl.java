@@ -35,7 +35,7 @@ class MetaSecurityFilterImpl implements MetaSecurityFilter {
 
         final List<DocRef> feeds = feedStore.list();
         final List<ExpressionTerm> terms = feeds.stream()
-                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), permission))
+                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getUuid(), permission))
                 .map(docRef -> new ExpressionTerm.Builder().field("Feed").condition(Condition.EQUALS).value(docRef.getName()).build())
                 .collect(Collectors.toList());
 

@@ -1,19 +1,3 @@
-/*
- * Copyright 2017 Crown Copyright
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package stroom.security.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -23,37 +7,110 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
-@JsonPropertyOrder({"docRefUuid", "userPermissions"})
+@JsonPropertyOrder({"docUuid", "users", "groups", "permissions"})
 @JsonInclude(Include.NON_NULL)
 public class DocumentPermissions {
     @JsonProperty
-    private final String docRefUuid;
+    private final String docUuid;
     @JsonProperty
-    private final Map<String, Set<String>> userPermissions;
+    private final List<User> users;
+    @JsonProperty
+    private final List<User> groups;
+    @JsonProperty
+    private final Map<String, Set<String>> permissions;
 
     @JsonCreator
-    public DocumentPermissions(@JsonProperty("docRefUuid") final String docRefUuid,
-                               @JsonProperty("userPermissions") final Map<String, Set<String>> userPermissions) {
-        this.docRefUuid = docRefUuid;
-        this.userPermissions = userPermissions;
+    public DocumentPermissions(@JsonProperty("docUuid") final String docUuid,
+                               @JsonProperty("users") final List<User> users,
+                               @JsonProperty("groups") final List<User> groups,
+                               @JsonProperty("permissions") final Map<String, Set<String>> permissions) {
+        this.docUuid = docUuid;
+        this.users = users;
+        this.groups = groups;
+        this.permissions = permissions;
     }
 
-    public String getDocRefUuid() {
-        return docRefUuid;
+    public String getDocUuid() {
+        return docUuid;
     }
 
-    public Map<String, Set<String>> getUserPermissions() {
-        return userPermissions;
+    public List<User> getUsers() {
+        return users;
+    }
+
+    public List<User> getGroups() {
+        return groups;
+    }
+
+    public Map<String, Set<String>> getPermissions() {
+        return permissions;
     }
 
     public Set<String> getPermissionsForUser(final String userUuid) {
-        final Set<String> permissions = userPermissions.get(userUuid);
-        if (permissions != null) {
-            return permissions;
+        return permissions.getOrDefault(userUuid, Collections.emptySet());
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final DocumentPermissions that = (DocumentPermissions) o;
+        return Objects.equals(docUuid, that.docUuid) &&
+                Objects.equals(users, that.users) &&
+                Objects.equals(groups, that.groups) &&
+                Objects.equals(permissions, that.permissions);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(docUuid, users, groups, permissions);
+    }
+
+    @Override
+    public String toString() {
+        return "DocumentPermissions{" +
+                "docUuid='" + docUuid + '\'' +
+                ", users=" + users +
+                ", groups=" + groups +
+                ", permissions=" + permissions +
+                '}';
+    }
+
+    public static class Builder {
+        private String docUuid;
+        private List<User> users;
+        private List<User> groups;
+        private Map<String, Set<String>> permissions = new HashMap<>();
+
+        public Builder docUuid(final String value) {
+            docUuid = value;
+            return this;
         }
-        return Collections.emptySet();
+
+        public Builder users(final List<User> value) {
+            users = value;
+            return this;
+        }
+
+        public Builder groups(final List<User> value) {
+            groups = value;
+            return this;
+        }
+
+        public Builder permission(final String userUuid, final String permission) {
+            permissions.computeIfAbsent(userUuid, k -> new HashSet<>()).add(permission);
+            return this;
+        }
+
+        public DocumentPermissions build() {
+            return new DocumentPermissions(docUuid, users, groups, permissions);
+        }
     }
 }

@@ -5,9 +5,11 @@ import stroom.db.util.JooqUtil;
 import stroom.security.impl.DocumentPermissionDao;
 import stroom.security.impl.UserDocumentPermissions;
 import stroom.security.impl.db.jooq.tables.records.DocPermissionRecord;
-import stroom.security.impl.DocumentPermissions;
 
 import javax.inject.Inject;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static stroom.security.impl.db.jooq.tables.DocPermission.DOC_PERMISSION;
@@ -22,32 +24,32 @@ public class DocumentPermissionDaoImpl implements DocumentPermissionDao {
     }
 
     @Override
-    public Set<String> getPermissionsForDocumentForUser(final String docRefUuid,
+    public Set<String> getPermissionsForDocumentForUser(final String docUuid,
                                                         final String userUuid) {
         return JooqUtil.contextResult(securityDbConnProvider, context ->
                 context.select()
                         .from(DOC_PERMISSION)
                         .where(DOC_PERMISSION.USER_UUID.eq(userUuid))
-                        .and(DOC_PERMISSION.DOC_UUID.eq(docRefUuid))
+                        .and(DOC_PERMISSION.DOC_UUID.eq(docUuid))
                         .fetchSet(DOC_PERMISSION.PERMISSION)
         );
     }
 
     @Override
-    public DocumentPermissions getPermissionsForDocument(final String docRefUuid) {
-        final DocumentPermissions.Builder permissions = new DocumentPermissions.Builder()
-                //.docType(document.getType())
-                .docUuid(docRefUuid);
+    public Map<String, Set<String>> getPermissionsForDocument(final String docUuid) {
+        final Map<String, Set<String>> permissions = new HashMap<>();
 
         JooqUtil.context(securityDbConnProvider, context ->
                 context.select()
                         .from(DOC_PERMISSION)
-                        .where(DOC_PERMISSION.DOC_UUID.eq(docRefUuid))
+                        .where(DOC_PERMISSION.DOC_UUID.eq(docUuid))
                         .fetch()
-                        .forEach(r -> permissions.permission(r.get(DOC_PERMISSION.USER_UUID), r.get(DOC_PERMISSION.PERMISSION)))
+                        .forEach(r -> {
+                            permissions.computeIfAbsent(r.get(DOC_PERMISSION.USER_UUID), k -> new HashSet<>()).add(r.get(DOC_PERMISSION.PERMISSION));
+                        })
         );
 
-        return permissions.build();
+        return permissions;
     }
 
     @Override

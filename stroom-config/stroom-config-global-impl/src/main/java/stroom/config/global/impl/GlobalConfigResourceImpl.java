@@ -58,16 +58,16 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
                                    final Integer size) {
         try {
             final ListConfigResponse resultList = globalConfigService.list(
-                buildPredicate(partialName),
-                new PageRequest(offset, size != null
-                    ? size
-                    : Integer.MAX_VALUE));
+                    buildPredicate(partialName),
+                    new PageRequest(offset, size != null
+                            ? size
+                            : Integer.MAX_VALUE));
 
             return resultList;
         } catch (final RuntimeException e) {
             throw new ServerErrorException(e.getMessage() != null
-                ? e.getMessage()
-                : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
+                    ? e.getMessage()
+                    : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
         }
     }
 
@@ -82,9 +82,10 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
         ListConfigResponse listConfigResponse;
 
         final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
-            + ResourcePaths.buildAuthenticatedApiPath(
-            GlobalConfigResource.BASE_PATH,
-            GlobalConfigResource.PROPERTIES_SUB_PATH);
+                + ResourcePaths.buildAuthenticatedApiPath(
+                GlobalConfigResource.BASE_PATH,
+                GlobalConfigResource.NODE_PROPERTIES_SUB_PATH,
+                nodeName);
 
         try {
             // If this is the node that was contacted then just resolve it locally
@@ -94,12 +95,12 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
                 // A different node to make a rest call to the required node
 
                 final Response response = webTargetFactory
-                    .create(url)
-                    .queryParam("partialName", partialName)
-                    .queryParam("offset", String.valueOf(offset))
-                    .queryParam("size", String.valueOf(size))
-                    .request(MediaType.APPLICATION_JSON)
-                    .get();
+                        .create(url)
+                        .queryParam("partialName", partialName)
+                        .queryParam("offset", String.valueOf(offset))
+                        .queryParam("size", String.valueOf(size))
+                        .request(MediaType.APPLICATION_JSON)
+                        .get();
 
                 if (response.getStatus() != Status.OK.getStatusCode()) {
                     throw new WebApplicationException(response);
@@ -118,7 +119,7 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
     private Predicate<ConfigProperty> buildPredicate(final String partialName) {
         if (partialName != null && !partialName.isEmpty()) {
             return configProperty ->
-                configProperty.getNameAsString().toLowerCase().contains(partialName.toLowerCase());
+                    configProperty.getNameAsString().toLowerCase().contains(partialName.toLowerCase());
         } else {
             return configProperty -> true;
         }
@@ -130,12 +131,12 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
         RestUtil.requireNonNull(propertyPath, "propertyPath not supplied");
         try {
             final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(
-                PropertyPath.fromPathString(propertyPath));
+                    PropertyPath.fromPathString(propertyPath));
             return optConfigProperty.orElseThrow(NotFoundException::new);
         } catch (final RuntimeException e) {
             throw new ServerErrorException(e.getMessage() != null
-                ? e.getMessage()
-                : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
+                    ? e.getMessage()
+                    : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
         }
     }
 
@@ -144,14 +145,14 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
         RestUtil.requireNonNull(propertyPath, "propertyPath not supplied");
         try {
             final Optional<ConfigProperty> optConfigProperty = globalConfigService.fetch(
-                PropertyPath.fromPathString(propertyPath));
+                    PropertyPath.fromPathString(propertyPath));
             return optConfigProperty
-                .map(ConfigProperty::getYamlOverrideValue)
-                .orElseThrow(() -> new NotFoundException(LogUtil.message("Property {} not found", propertyPath)));
+                    .map(ConfigProperty::getYamlOverrideValue)
+                    .orElseThrow(() -> new NotFoundException(LogUtil.message("Property {} not found", propertyPath)));
         } catch (final RuntimeException e) {
             throw new ServerErrorException(e.getMessage() != null
-                ? e.getMessage()
-                : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
+                    ? e.getMessage()
+                    : e.toString(), Status.INTERNAL_SERVER_ERROR, e);
         }
     }
 
@@ -165,12 +166,12 @@ public class GlobalConfigResourceImpl implements GlobalConfigResource, HasHealth
         OverrideValue<String> yamlOverride;
 
         final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
-            + ResourcePaths.buildAuthenticatedApiPath(
-            GlobalConfigResource.BASE_PATH,
-            GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
-            propertyName,
-            GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
-            nodeName);
+                + ResourcePaths.buildAuthenticatedApiPath(
+                GlobalConfigResource.BASE_PATH,
+                GlobalConfigResource.CLUSTER_PROPERTIES_SUB_PATH,
+                propertyName,
+                GlobalConfigResource.YAML_OVERRIDE_VALUE_SUB_PATH,
+                nodeName);
 
         try {
             // If this is the node that was contacted then just resolve it locally

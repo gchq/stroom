@@ -23,13 +23,14 @@ import stroom.task.shared.Task;
 import stroom.task.shared.TaskId;
 import stroom.task.shared.TaskProgress;
 import stroom.task.shared.ThreadPool;
-import stroom.util.entity.FindService;
 import stroom.util.shared.ResultPage;
 
-public interface TaskManager extends FindService<TaskProgress, FindTaskProgressCriteria> {
+public interface TaskManager {
     void startup();
 
     void shutdown();
+
+    ResultPage<TaskProgress> find(FindTaskProgressCriteria criteria);
 
     /**
      * Execute a task synchronously.

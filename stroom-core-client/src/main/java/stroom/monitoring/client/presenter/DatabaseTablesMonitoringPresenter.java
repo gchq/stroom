@@ -98,7 +98,7 @@ public class DatabaseTablesMonitoringPresenter
         getView().addColumnSortHandler(this);
 
         criteria = new FindDBTableCriteria();
-        dataProvider = new RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>>(eventBus) {
+        dataProvider = new RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>>(eventBus, criteria.obtainPageRequest()) {
             @Override
             protected void exec(final Consumer<ResultPage<DBTableStatus>> dataConsumer,
                                 final Consumer<Throwable> throwableConsumer) {

@@ -43,14 +43,12 @@ public interface ClientSecurityContext {
 
     /**
      * Check if the user associated with this security context has the requested
-     * permission on the document specified by the document type and document
-     * id.
+     * permission on the document specified by the document uuid.
      *
-     * @param documentType The type of document.
-     * @param documentId   The id of the document.
+     * @param documentUuid   The uuid of the document.
      * @param permission   The permission we are checking for.
      * @return True if the user associated with the security context has the
      * requested permission.
      */
-    Future<Boolean> hasDocumentPermission(String documentType, String documentId, String permission);
+    Future<Boolean> hasDocumentPermission(String documentUuid, String permission);
 }
