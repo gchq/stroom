@@ -59,6 +59,7 @@ dependencies {
 
     testCompile libs.assertj_core
     testCompile libs.mockito_junit_jupiter
+    testCompile libs.classgraph
 
     testCompile libs.junit_jupiter_api
 
