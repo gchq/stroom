@@ -18,11 +18,13 @@ package stroom.job.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.task.api.ClusterResult;
+import stroom.cluster.task.api.ClusterTaskHandler;
+import stroom.cluster.task.api.ClusterTaskRef;
+import stroom.cluster.task.api.ClusterWorker;
 import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.shared.JobNode;
-import stroom.task.api.TaskCallback;
-import stroom.task.api.TaskHandler;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -32,21 +34,24 @@ import java.util.Map.Entry;
 
 
 class DistributedTaskRequestClusterHandler
-        implements TaskHandler<DistributedTaskRequestClusterTask, DistributedTaskRequestResult> {
+        implements ClusterTaskHandler<DistributedTaskRequestClusterTask, DistributedTaskRequestResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskRequestClusterHandler.class);
 
+    private final ClusterWorker clusterWorker;
     private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
 
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
 
     @Inject
-    DistributedTaskRequestClusterHandler(final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
+    DistributedTaskRequestClusterHandler(final ClusterWorker clusterWorker,
+                                         final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
+        this.clusterWorker = clusterWorker;
         this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
     }
 
     @Override
     public void exec(final DistributedTaskRequestClusterTask request,
-                     final TaskCallback<DistributedTaskRequestResult> callback) {
+                     final ClusterTaskRef<DistributedTaskRequestResult> clusterTaskRef) {
         final String nodeName = request.getNodeName();
 
         if (LOGGER.isDebugEnabled()) {
@@ -102,7 +107,7 @@ class DistributedTaskRequestClusterHandler
             }
 
             try {
-                callback.onSuccess(response);
+                clusterWorker.sendResult(ClusterResult.success(clusterTaskRef, response));
             } catch (final RuntimeException e) {
                 // If we couldn't return the tasks for any reason then abandon them.
                 abandonTasks(nodeName, tasksToReturn);
@@ -110,7 +115,7 @@ class DistributedTaskRequestClusterHandler
         } catch (final Throwable e) {
             LOGGER.error(e.getMessage(), e);
             try {
-                callback.onFailure(e);
+                clusterWorker.sendResult(ClusterResult.failure(clusterTaskRef, e));
             } catch (final Throwable e2) {
                 abandonTasks(nodeName, tasksToReturn);
             }

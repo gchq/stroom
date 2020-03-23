@@ -17,14 +17,17 @@
 package stroom.security.impl.event;
 
 import com.google.inject.AbstractModule;
+import stroom.cluster.task.api.ClusterTaskHandlerBinder;
 import stroom.task.api.TaskHandlerBinder;
 
 public class PermissionChangeClusterTaskModule extends AbstractModule {
     @Override
     protected void configure() {
         TaskHandlerBinder.create(binder())
-                .bind(ClusterPermissionChangeEventTask.class, ClusterPermissionChangeEventTaskHandler.class)
                 .bind(DispatchPermissionChangeEventTask.class, DispatchPermissionChangeEventTaskHandler.class);
+
+        ClusterTaskHandlerBinder.create(binder())
+                .bind(ClusterPermissionChangeEventTask.class, ClusterPermissionChangeEventTaskHandler.class);
     }
 
     @Override
