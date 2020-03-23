@@ -63,12 +63,12 @@ public class ForwardDestinationConfig {
     }
 
     @JsonProperty
-    SSLConfig getSslConfig() {
+    public SSLConfig getSslConfig() {
         return sslConfig;
     }
 
     @JsonProperty
-    void setSslConfig(final SSLConfig sslConfig) {
+    public void setSslConfig(final SSLConfig sslConfig) {
         this.sslConfig = sslConfig;
     }
 }

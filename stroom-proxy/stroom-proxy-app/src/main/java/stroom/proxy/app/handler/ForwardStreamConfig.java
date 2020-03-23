@@ -14,12 +14,12 @@ public class ForwardStreamConfig {
      * True if received streams should be forwarded to another stroom(-proxy) instance.
      */
     @JsonProperty
-    boolean isForwardingEnabled() {
+    public boolean isForwardingEnabled() {
         return isForwardingEnabled;
     }
 
     @JsonProperty
-    void setForwardingEnabled(final boolean forwardingEnabled) {
+    public void setForwardingEnabled(final boolean forwardingEnabled) {
         isForwardingEnabled = forwardingEnabled;
     }
 
@@ -27,12 +27,12 @@ public class ForwardStreamConfig {
      * The string to use for the User-Agent request property when forwarding data.
      */
     @JsonProperty
-    String getUserAgent() {
+    public String getUserAgent() {
         return userAgent;
     }
 
     @JsonProperty
-    void setUserAgent(final String userAgent) {
+    public void setUserAgent(final String userAgent) {
         this.userAgent = userAgent;
     }
 
@@ -40,12 +40,12 @@ public class ForwardStreamConfig {
      * A list of destinations to forward each batch of data to
      */
     @JsonProperty
-    List<ForwardDestinationConfig> getForwardDestinations() {
+    public List<ForwardDestinationConfig> getForwardDestinations() {
         return forwardDestinations;
     }
 
     @JsonProperty
-    void setForwardDestinations(final List<ForwardDestinationConfig> forwardDestinations) {
+    public void setForwardDestinations(final List<ForwardDestinationConfig> forwardDestinations) {
         this.forwardDestinations = forwardDestinations;
     }
 }
