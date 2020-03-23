@@ -254,6 +254,7 @@ else
     # our docker services as well.
     ./gradlew \
       -PdumpFailedTestXml=true \
+      -i \
       :stroom-app:test --tests "TestInteractive*" -x gwtCompile \
       "${extraBuildArgs[@]}"
 
