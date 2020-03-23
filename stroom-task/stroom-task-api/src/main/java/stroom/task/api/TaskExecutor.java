@@ -23,6 +23,7 @@ import stroom.util.thread.CustomThreadFactory;
 import stroom.util.thread.StroomThreadGroup;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
@@ -176,6 +177,9 @@ public abstract class TaskExecutor {
                                     totalThreads.decrementAndGet();
                                     signalAll();
                                     if (t != null) {
+                                        while (t instanceof CompletionException) {
+                                            t = t.getCause();
+                                        }
                                         LOGGER.debug(t.getMessage(), t);
                                     }
                                 });

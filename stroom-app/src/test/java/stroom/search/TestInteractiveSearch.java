@@ -37,7 +37,6 @@ import stroom.query.shared.v2.ParamUtil;
 import stroom.search.api.EventRef;
 import stroom.search.api.EventRefs;
 import stroom.search.impl.EventSearchTask;
-import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskManager;
 import stroom.task.impl.ExecutorProviderImpl;
@@ -47,12 +46,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -436,15 +432,6 @@ class TestInteractiveSearch extends AbstractSearchTest {
             ThreadUtil.sleepAtLeastIgnoreInterrupts(1000);
         }
         assertThat(executorProvider.getCurrentTaskCount()).isEqualTo(0);
-
-
-//        Thread.getAllStackTraces().forEach((k, v) -> {
-//            System.out.println(k.getName());
-//            System.out.println("\t" + Stream.of(v).map(e -> e.toString()).collect(Collectors.joining(",\n\t")));
-//
-//
-//        });
-
     }
 
     private void testEvents(final ExpressionOperator.Builder expressionIn, final int expectResultCount) {

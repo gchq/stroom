@@ -16,8 +16,6 @@
 
 package stroom.cluster.task.impl;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceRemote;
@@ -31,11 +29,15 @@ import stroom.cluster.task.api.CollectorId;
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskTerminatedException;
 import stroom.task.shared.TaskId;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 
 public class ClusterWorkerImpl implements ClusterWorker {
@@ -43,7 +45,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
     static final String EXEC_ASYNC_METHOD = "execAsync";
     static final Class<?>[] EXEC_ASYNC_METHOD_ARGS = {ClusterTask.class, String.class, TaskId.class, CollectorId.class};
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClusterWorkerImpl.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterWorkerImpl.class);
     private static final String EXEC_ASYNC = "execAsync";
     private static final String SEND_RESULT = "sendResult";
 
@@ -109,9 +111,21 @@ public class ClusterWorkerImpl implements ClusterWorker {
             // connection.
             CompletableFuture
                     .runAsync(runnable, executor)
-                    .whenComplete((r, t) -> {
-                        if (t != null) {
-                            LOGGER.error(t.getMessage(), t);
+                    .whenComplete((result, throwable) -> {
+                        if (throwable != null) {
+                            while (throwable instanceof CompletionException) {
+                                throwable = throwable.getCause();
+                            }
+                            final Throwable t = throwable;
+
+                            final String taskName = task.getTaskName();
+
+                            if (t instanceof ThreadDeath || t instanceof TaskTerminatedException) {
+                                LOGGER.warn(() -> "exec() - Task killed! (" + taskName + ")");
+                                LOGGER.debug(() -> "exec() (" + taskName + ")", t);
+                            } else {
+                                LOGGER.error(() -> t.getMessage() + " (" + taskName + ")", t);
+                            }
                         }
                     });
 
