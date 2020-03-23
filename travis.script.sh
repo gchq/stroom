@@ -254,8 +254,13 @@ else
     # our docker services as well.
     ./gradlew \
       -PdumpFailedTestXml=true \
-      -i \
-      :stroom-app:test --tests "TestInteractive*" -x gwtCompile \
+      -Pversion="${TRAVIS_TAG}" \
+      -PgwtCompilerWorkers=2 \
+      -PgwtCompilerMinHeap=50M \
+      -PgwtCompilerMaxHeap=1G \
+      clean \
+      build \
+      buildDistribution \
       "${extraBuildArgs[@]}"
 
     generate_file_hashes
