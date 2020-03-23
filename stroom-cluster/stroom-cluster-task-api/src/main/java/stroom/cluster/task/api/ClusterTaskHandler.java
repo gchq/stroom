@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 Crown Copyright
+ * Copyright 2016 Crown Copyright
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 
-package stroom.core.entity.cluster;
+package stroom.cluster.task.api;
 
-import com.google.inject.AbstractModule;
-import stroom.cluster.task.api.ClusterTaskHandlerBinder;
-
-public class EntityClusterModule extends AbstractModule {
-    @Override
-    protected void configure() {
-        ClusterTaskHandlerBinder.create(binder())
-                .bind(ClearServiceClusterTask.class, ClearServiceClusterHandler.class);
-    }
+public interface ClusterTaskHandler<T extends ClusterTask<R>, R> {
+    void exec(T task, ClusterTaskRef<R> clusterTaskRef);
 }

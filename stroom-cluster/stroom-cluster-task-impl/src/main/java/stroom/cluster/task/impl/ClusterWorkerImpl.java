@@ -22,16 +22,21 @@ import org.slf4j.MarkerFactory;
 import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ServiceName;
+import stroom.cluster.task.api.ClusterResult;
 import stroom.cluster.task.api.ClusterTask;
+import stroom.cluster.task.api.ClusterTaskHandler;
+import stroom.cluster.task.api.ClusterTaskRef;
+import stroom.cluster.task.api.ClusterWorker;
 import stroom.cluster.task.api.CollectorId;
-
 import stroom.node.api.NodeInfo;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskCallbackAdaptor;
-import stroom.task.api.TaskManager;
+import stroom.task.api.TaskContext;
 import stroom.task.shared.TaskId;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 public class ClusterWorkerImpl implements ClusterWorker {
     static final ServiceName SERVICE_NAME = new ServiceName("clusterWorker");
@@ -42,17 +47,23 @@ public class ClusterWorkerImpl implements ClusterWorker {
     private static final String EXEC_ASYNC = "execAsync";
     private static final String SEND_RESULT = "sendResult";
 
-    private final TaskManager taskManager;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
+    private final ClusterTaskHandlerRegistry taskHandlerRegistry;
     private final NodeInfo nodeInfo;
     private final ClusterCallService clusterCallService;
     private final SecurityContext securityContext;
 
     @Inject
-    public ClusterWorkerImpl(final TaskManager taskManager,
+    public ClusterWorkerImpl(final Executor executor,
+                             final Provider<TaskContext> taskContextProvider,
+                             final ClusterTaskHandlerRegistry taskHandlerRegistry,
                              final NodeInfo nodeInfo,
                              final ClusterCallServiceRemote clusterCallService,
                              final SecurityContext securityContext) {
-        this.taskManager = taskManager;
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
+        this.taskHandlerRegistry = taskHandlerRegistry;
         this.nodeInfo = nodeInfo;
         this.clusterCallService = clusterCallService;
         this.securityContext = securityContext;
@@ -74,9 +85,9 @@ public class ClusterWorkerImpl implements ClusterWorker {
      * @param sourceTaskId The id of the parent task that owns this worker cluster task.
      * @param collectorId  The id of the collector to send results back to.
      */
-    @Override
+    @SuppressWarnings("unused") // Called by hessian from a remote node
     public <R> void execAsync(final ClusterTask<R> task, final String sourceNode,
-                                                   final TaskId sourceTaskId, final CollectorId collectorId) {
+                              final TaskId sourceTaskId, final CollectorId collectorId) {
         DebugTrace.debugTraceIn(task, EXEC_ASYNC, true);
         try {
             // Trace the source of this task if trace is enabled.
@@ -87,21 +98,23 @@ public class ClusterWorkerImpl implements ClusterWorker {
             // Assign the id for this worker node prior to execution.
             task.assignId(sourceTaskId);
 
+            final ClusterTaskRef<R> clusterTaskRef = new ClusterTaskRef<>(task, sourceNode, targetNode, sourceTaskId, collectorId);
+            Runnable runnable = () -> {
+                final ClusterTaskHandler<ClusterTask<R>, R> handler = taskHandlerRegistry.findHandler(task);
+                handler.exec(task, clusterTaskRef);
+            };
+            runnable = taskContextProvider.get().subTask(runnable);
+
             // Execute this task asynchronously so we don't hold on to the HTTP
             // connection.
-            taskManager.execAsync(task, new TaskCallbackAdaptor<>() {
-                @Override
-                public void onSuccess(final R result) {
-                    // Send the successful result back to the source node.
-                    sendResult(task, sourceNode, targetNode, sourceTaskId, collectorId, result, null, true);
-                }
+            CompletableFuture
+                    .runAsync(runnable, executor)
+                    .whenComplete((r, t) -> {
+                        if (t != null) {
+                            LOGGER.error(t.getMessage(), t);
+                        }
+                    });
 
-                @Override
-                public void onFailure(final Throwable t) {
-                    // Send the failure back to the source node.
-                    sendResult(task, sourceNode, targetNode, sourceTaskId, collectorId, null, t, false);
-                }
-            });
         } catch (final RuntimeException e) {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
 
@@ -114,36 +127,28 @@ public class ClusterWorkerImpl implements ClusterWorker {
      * Once the target worker node has finished executing the task, this method
      * sends the result back to the source node.
      *
-     * @param task         The task that was executed on the target worker node.
-     * @param sourceNode   The source node to send the result back to.
-     * @param targetNode   The target worker node that executed the task.
-     * @param sourceTaskId The id of the parent task that owns this worker cluster task.
-     * @param collectorId  The id of the collector to send results back to.
-     * @param result       The result of the task execution.
-     * @param t            An exception that may have been thrown during task execution
-     *                     in the result of task failure.
-     * @param success      Whether or not the task executed successfully.
+     * @param clusterResult Result details.
      */
-    private <R> void sendResult(final ClusterTask<R> task, final String sourceNode,
-                                                     final String targetNode, final TaskId sourceTaskId, final CollectorId collectorId, final R result,
-                                                     final Throwable t, final boolean success) {
+    @Override
+    public <R> void sendResult(final ClusterResult<R> clusterResult) {
+        final ClusterTaskRef<R> ref = clusterResult.getClusterTaskRef();
+
         int tryCount = 1;
         boolean done = false;
         Exception lastException = null;
         Object ok = null;
 
-        DebugTrace.debugTraceIn(task, SEND_RESULT, true);
+        DebugTrace.debugTraceIn(ref.getTask(), SEND_RESULT, true);
         try {
-            LOGGER.debug("{}() - {}", SEND_RESULT, task);
+            LOGGER.debug("{}() - {}", SEND_RESULT, ref.getTask());
             while (!done && tryCount <= 10) {
                 try {
                     // Trace attempt to send result.
-                    LOGGER.trace("Sending result for task '{}' to node '{}' (attempt={})", task.getTaskName(), sourceNode, tryCount);
+                    LOGGER.trace("Sending result for task '{}' to node '{}' (attempt={})", ref.getTask().getTaskName(), ref.getSourceNode(), tryCount);
                     // Send result.
-                    ok = clusterCallService.call(targetNode, sourceNode, securityContext.getUserIdentity(), ClusterDispatchAsyncImpl.SERVICE_NAME,
+                    ok = clusterCallService.call(ref.getTargetNode(), ref.getSourceNode(), securityContext.getUserIdentity(), ClusterDispatchAsyncImpl.SERVICE_NAME,
                             ClusterDispatchAsyncImpl.RECEIVE_RESULT_METHOD,
-                            ClusterDispatchAsyncImpl.RECEIVE_RESULT_METHOD_ARGS, new Object[]{task, targetNode,
-                                    sourceTaskId, collectorId, result, t, success});
+                            ClusterDispatchAsyncImpl.RECEIVE_RESULT_METHOD_ARGS, new Object[]{clusterResult});
                     done = true;
                 } catch (final RuntimeException e) {
                     lastException = e;
@@ -163,7 +168,7 @@ public class ClusterWorkerImpl implements ClusterWorker {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
 
         } finally {
-            DebugTrace.debugTraceOut(task, SEND_RESULT, true);
+            DebugTrace.debugTraceOut(ref.getTask(), SEND_RESULT, true);
         }
 
         LOGGER.trace("success={}, done={}", ok, done);
@@ -171,9 +176,9 @@ public class ClusterWorkerImpl implements ClusterWorker {
         // If the source node could not be contacted then throw an exception.
         if (!done) {
             final String message = "Unable to send result for task '" +
-                    task.getTaskName() +
+                    ref.getTask().getTaskName() +
                     "' back to source node '" +
-                    sourceNode +
+                    ref.getSourceNode() +
                     "' after " +
                     tryCount +
                     " attempts";
@@ -184,9 +189,9 @@ public class ClusterWorkerImpl implements ClusterWorker {
         // normally happens because the task has terminated on the source node.
         if (!Boolean.TRUE.equals(ok)) {
             final String message = "Unable to send result for task '" +
-                    task.getTaskName() +
+                    ref.getTask().getTaskName() +
                     "' back to source node '" +
-                    sourceNode +
+                    ref.getSourceNode() +
                     "' because source node rejected result";
             LOGGER.info(message);
 

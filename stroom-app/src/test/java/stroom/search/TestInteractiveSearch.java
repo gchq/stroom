@@ -438,12 +438,12 @@ class TestInteractiveSearch extends AbstractSearchTest {
         assertThat(executorProvider.getCurrentTaskCount()).isEqualTo(0);
 
 
-        Thread.getAllStackTraces().forEach((k, v) -> {
-            System.out.println(k.getName());
-            System.out.println("\t" + Stream.of(v).map(e -> e.toString()).collect(Collectors.joining(",\n\t")));
-
-
-        });
+//        Thread.getAllStackTraces().forEach((k, v) -> {
+//            System.out.println(k.getName());
+//            System.out.println("\t" + Stream.of(v).map(e -> e.toString()).collect(Collectors.joining(",\n\t")));
+//
+//
+//        });
 
     }
 
