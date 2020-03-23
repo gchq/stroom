@@ -28,6 +28,16 @@ public abstract class AbstractApplicationTest {
 
     static {
         config = loadYamlFile("proxy.yml");
+
+        // The key/trust store paths will not be available in travis so null them out
+        config.getProxyConfig()
+            .getForwardStreamConfig()
+            .getForwardDestinations()
+            .forEach(forwardDestinationConfig -> forwardDestinationConfig.setSslConfig(null));
+
+        config.getProxyConfig()
+            .getJerseyClientConfiguration()
+            .setTlsConfiguration(null);
     }
 
 
