@@ -23,10 +23,7 @@ import stroom.meta.shared.FindMetaCriteria;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.task.api.TaskManager;
 import stroom.util.HasHealthCheck;
-import stroom.util.logging.LambdaLogger;
-import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
@@ -35,21 +32,22 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 
 class DataResourceImpl implements DataResource, HasHealthCheck {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DataResourceImpl.class);
-
     private final ResourceStore resourceStore;
-    private final TaskManager taskManager;
+    private final DataUploadTaskHandler dataUploadTaskHandler;
+    private final DataDownloadTaskHandler dataDownloadTaskHandler;
     private final StreamEventLog streamEventLog;
     private final SecurityContext securityContext;
 
     @Inject
     DataResourceImpl(
             final ResourceStore resourceStore,
-            final TaskManager taskManager,
+            final DataUploadTaskHandler dataUploadTaskHandler,
+            final DataDownloadTaskHandler dataDownloadTaskHandler,
             final StreamEventLog streamEventLog,
             final SecurityContext securityContext) {
         this.resourceStore = resourceStore;
-        this.taskManager = taskManager;
+        this.dataUploadTaskHandler = dataUploadTaskHandler;
+        this.dataDownloadTaskHandler = dataDownloadTaskHandler;
         this.streamEventLog = streamEventLog;
         this.securityContext = securityContext;
     }
@@ -69,7 +67,7 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                 }
 
                 final DataDownloadSettings settings = new DataDownloadSettings();
-                taskManager.exec(new DataDownloadTask(criteria, file.getParent(), fileName, settings));
+                dataDownloadTaskHandler.downloadData(criteria, file.getParent(), fileName, settings);
 
                 streamEventLog.exportStream(criteria, null);
 
@@ -88,8 +86,13 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                 // Import file.
                 final Path file = resourceStore.getTempFile(request.getKey());
 
-                taskManager.exec(new StreamUploadTask(request.getFileName(), file, request.getFeedName(),
-                        request.getStreamTypeName(), request.getEffectiveMs(), request.getMetaData()));
+                dataUploadTaskHandler.uploadData(
+                        request.getFileName(),
+                        file,
+                        request.getFeedName(),
+                        request.getStreamTypeName(),
+                        request.getEffectiveMs(),
+                        request.getMetaData());
 
             } catch (final RuntimeException e) {
                 throw e;//EntityServiceExceptionUtil.create(e);

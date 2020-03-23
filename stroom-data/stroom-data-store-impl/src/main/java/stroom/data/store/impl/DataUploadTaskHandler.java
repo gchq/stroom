@@ -26,33 +26,31 @@ import stroom.data.store.api.Target;
 import stroom.data.zip.StroomZipFile;
 import stroom.data.zip.StroomZipFileType;
 import stroom.feed.api.FeedProperties;
-import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.AttributeMap;
+import stroom.meta.api.AttributeMapUtil;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.StandardHeaderArguments;
 import stroom.meta.statistics.api.MetaStatistics;
 import stroom.receive.common.StreamTargetStroomStreamHandler;
 import stroom.receive.common.StroomStreamProcessor;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 import stroom.util.io.BufferFactory;
 import stroom.util.io.CloseableUtil;
 import stroom.util.io.StreamUtil;
 import stroom.util.shared.EntityServiceException;
-import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
-
-class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, VoidResult> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(StreamUploadTaskHandler.class);
+public class DataUploadTaskHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DataUploadTaskHandler.class);
 
     private static final String AGGREGATION_DELIMITER = "_";
     private static final String FILE_SEPERATOR = ".";
@@ -66,12 +64,12 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
     private final BufferFactory bufferFactory;
 
     @Inject
-    StreamUploadTaskHandler(final TaskContext taskContext,
-                            final Store streamStore,
-                            final FeedProperties feedProperties,
-                            final MetaStatistics metaStatistics,
-                            final SecurityContext securityContext,
-                            final BufferFactory bufferFactory) {
+    DataUploadTaskHandler(final TaskContext taskContext,
+                          final Store streamStore,
+                          final FeedProperties feedProperties,
+                          final MetaStatistics metaStatistics,
+                          final SecurityContext securityContext,
+                          final BufferFactory bufferFactory) {
         this.taskContext = taskContext;
         this.streamStore = streamStore;
         this.feedProperties = feedProperties;
@@ -80,67 +78,69 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
         this.bufferFactory = bufferFactory;
     }
 
-    @Override
-    public VoidResult exec(final StreamUploadTask task) {
-        return securityContext.secureResult(() -> {
-            taskContext.info(() -> task.getFile().toString());
-            uploadData(task);
-            return VoidResult.INSTANCE;
+    public void uploadData(final String fileName,
+                           final Path file,
+                           final String feedName,
+                           final String streamTypeName,
+                           final Long effectiveMs,
+                           final String metaData) {
+        securityContext.secure(() -> {
+            taskContext.info(file::toString);
+            if (feedName == null) {
+                throw new EntityServiceException("Feed not set!");
+            }
+            if (streamTypeName == null) {
+                throw new EntityServiceException("Stream Type not set!");
+            }
+            if (fileName == null) {
+                throw new EntityServiceException("File not set!");
+            }
+
+            final String name = fileName.toUpperCase();
+
+            final AttributeMap attributeMap = new AttributeMap();
+            if (metaData != null && metaData.trim().length() > 0) {
+                try {
+                    AttributeMapUtil.read(metaData.getBytes(StreamUtil.DEFAULT_CHARSET), attributeMap);
+                } catch (final IOException e) {
+                    LOGGER.error("uploadData()", e);
+                }
+            }
+
+            if (effectiveMs != null) {
+                attributeMap.put(StandardHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(effectiveMs));
+            }
+            attributeMap.put(StandardHeaderArguments.REMOTE_FILE, fileName);
+            attributeMap.put(StandardHeaderArguments.FEED, feedName);
+            attributeMap.put(StandardHeaderArguments.RECEIVED_TIME, DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
+            attributeMap.put(StandardHeaderArguments.USER_AGENT, "STROOM-UI");
+
+            if (name.endsWith(FILE_SEPERATOR + StandardHeaderArguments.COMPRESSION_ZIP)) {
+                attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
+                uploadZipFile(taskContext, file, feedName, streamTypeName, effectiveMs, attributeMap);
+            } else {
+                if (name.endsWith(FILE_SEPERATOR + StandardHeaderArguments.COMPRESSION_GZIP)) {
+                    attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_GZIP);
+                }
+                if (name.endsWith(FILE_SEPERATOR + GZ)) {
+                    attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_GZIP);
+                }
+                uploadStreamFile(feedName, streamTypeName, file, attributeMap);
+            }
         });
     }
 
-    private void uploadData(final StreamUploadTask task) {
-        if (task.getFeedName() == null) {
-            throw new EntityServiceException("Feed not set!");
-        }
-        if (task.getStreamTypeName() == null) {
-            throw new EntityServiceException("Stream Type not set!");
-        }
-        if (task.getFileName() == null) {
-            throw new EntityServiceException("File not set!");
-        }
-
-        final String name = task.getFileName().toUpperCase();
-
-        final AttributeMap attributeMap = new AttributeMap();
-        if (task.getMetaData() != null && task.getMetaData().trim().length() > 0) {
-            try {
-                AttributeMapUtil.read(task.getMetaData().getBytes(StreamUtil.DEFAULT_CHARSET), attributeMap);
-            } catch (final IOException e) {
-                LOGGER.error("uploadData()", e);
-            }
-        }
-
-        if (task.getEffectiveMs() != null) {
-            attributeMap.put(StandardHeaderArguments.EFFECTIVE_TIME, DateUtil.createNormalDateTimeString(task.getEffectiveMs()));
-        }
-        attributeMap.put(StandardHeaderArguments.REMOTE_FILE, task.getFileName());
-        attributeMap.put(StandardHeaderArguments.FEED, task.getFeedName());
-        attributeMap.put(StandardHeaderArguments.RECEIVED_TIME, DateUtil.createNormalDateTimeString(System.currentTimeMillis()));
-        attributeMap.put(StandardHeaderArguments.USER_AGENT, "STROOM-UI");
-
-        if (name.endsWith(FILE_SEPERATOR + StandardHeaderArguments.COMPRESSION_ZIP)) {
-            attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_ZIP);
-            uploadZipFile(taskContext, task, attributeMap);
-        } else {
-            if (name.endsWith(FILE_SEPERATOR + StandardHeaderArguments.COMPRESSION_GZIP)) {
-                attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_GZIP);
-            }
-            if (name.endsWith(FILE_SEPERATOR + GZ)) {
-                attributeMap.put(StandardHeaderArguments.COMPRESSION, StandardHeaderArguments.COMPRESSION_GZIP);
-            }
-            uploadStreamFile(task, task, attributeMap);
-        }
-    }
-
     private void uploadZipFile(final TaskContext taskContext,
-                               final StreamUploadTask streamUploadTask,
+                               final Path file,
+                               final String feedName,
+                               final String streamTypeName,
+                               final Long effectiveMs,
                                final AttributeMap attributeMap) {
         StroomZipFile stroomZipFile = null;
         try {
             taskContext.info(() -> "Zip");
 
-            stroomZipFile = new StroomZipFile(streamUploadTask.getFile());
+            stroomZipFile = new StroomZipFile(file);
 
             final List<List<String>> groupedFileLists = stroomZipFile.getStroomZipNameSet()
                     .getBaseNameGroupedList(AGGREGATION_DELIMITER);
@@ -149,7 +149,7 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
                 final int pos = i;
                 taskContext.info(() -> "Zip " + pos + "/" + groupedFileLists.size());
 
-                uploadData(stroomZipFile, streamUploadTask, attributeMap, groupedFileLists.get(i));
+                uploadData(stroomZipFile, feedName, streamTypeName, effectiveMs, attributeMap, groupedFileLists.get(i));
 
             }
         } catch (final RuntimeException | IOException e) {
@@ -160,15 +160,17 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
         }
     }
 
-    private void uploadStreamFile(final StreamUploadTask task,
-                                  final StreamUploadTask streamUploadTask, final AttributeMap attributeMap) {
+    private void uploadStreamFile(final String feedName,
+                                  final String streamTypeName,
+                                  final Path file,
+                                  final AttributeMap attributeMap) {
         try {
             final List<StreamTargetStroomStreamHandler> handlerList = StreamTargetStroomStreamHandler
-                    .buildSingleHandlerList(streamStore, feedProperties, metaStatistics, task.getFeedName(), task.getStreamTypeName());
+                    .buildSingleHandlerList(streamStore, feedProperties, metaStatistics, feedName, streamTypeName);
             final byte[] buffer = bufferFactory.create();
             final StroomStreamProcessor stroomStreamProcessor = new StroomStreamProcessor(attributeMap, handlerList,
                     buffer, "Upload");
-            try (final InputStream inputStream = Files.newInputStream(streamUploadTask.getFile())) {
+            try (final InputStream inputStream = Files.newInputStream(file)) {
                 stroomStreamProcessor.process(inputStream, "Upload");
                 stroomStreamProcessor.closeHandlers();
             }
@@ -178,16 +180,17 @@ class StreamUploadTaskHandler extends AbstractTaskHandler<StreamUploadTask, Void
     }
 
     private void uploadData(final StroomZipFile stroomZipFile,
-                            final StreamUploadTask task,
+                            final String feedName,
+                            final String streamTypeName,
+                            final Long effectiveMs,
                             final AttributeMap attributeMap,
                             final List<String> fileList) {
-        final Long effectiveMs = task.getEffectiveMs();
         final StreamProgressMonitor streamProgressMonitor = new StreamProgressMonitor(taskContext,
                 "Read");
 
         final MetaProperties metaProperties = new MetaProperties.Builder()
-                .feedName(task.getFeedName())
-                .typeName(task.getStreamTypeName())
+                .feedName(feedName)
+                .typeName(streamTypeName)
                 .effectiveMs(effectiveMs)
                 .build();
 
