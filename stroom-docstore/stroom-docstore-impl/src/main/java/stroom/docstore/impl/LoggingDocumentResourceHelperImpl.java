@@ -20,20 +20,25 @@ import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentActionHandler;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.docstore.shared.Doc;
+import stroom.docstore.shared.DocRefUtil;
 import stroom.document.shared.PermissionException;
+import stroom.event.logging.api.DocumentEventLog;
 import stroom.security.api.SecurityContext;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
 import javax.inject.Inject;
 
-public class DocumentResourceHelperImpl implements DocumentResourceHelper {
-    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(DocumentResourceHelperImpl.class);
+public class LoggingDocumentResourceHelperImpl implements DocumentResourceHelper {
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(LoggingDocumentResourceHelperImpl.class);
 
+    private final DocumentEventLog documentEventLog;
     private final SecurityContext securityContext;
 
     @Inject
-    public DocumentResourceHelperImpl(final SecurityContext securityContext) {
+    public LoggingDocumentResourceHelperImpl(final DocumentEventLog documentEventLog,
+                                             final SecurityContext securityContext) {
+        this.documentEventLog = documentEventLog;
         this.securityContext = securityContext;
     }
 
@@ -43,12 +48,20 @@ public class DocumentResourceHelperImpl implements DocumentResourceHelper {
         return securityContext.secureResult(() ->
                 securityContext.useAsReadResult(() -> {
                     try {
-                        return documentActionHandler.readDocument(docRef);
+                        final D doc = documentActionHandler.readDocument(docRef);
+                        if (doc == null) {
+                            documentEventLog.view(docRef, new RuntimeException("Unable to find document"));
+                        } else {
+                            documentEventLog.view(doc, null);
+                        }
+                        return doc;
                     } catch (final PermissionException e) {
+                        documentEventLog.view(docRef, e);
                         throw new PermissionException(
                             e.getUser(),
                             e.getMessage().replaceAll("permission to read", "permission to use"));
                     } catch (final RuntimeException e) {
+                        documentEventLog.view(docRef, e);
                         throw e;
                     }
                 }));
@@ -57,9 +70,14 @@ public class DocumentResourceHelperImpl implements DocumentResourceHelper {
     @Override
     public <D extends Doc> D update(final DocumentActionHandler<D> documentActionHandler, final D doc) {
         return securityContext.secureResult(() -> {
+            final DocRef docRef = DocRefUtil.create(doc);
             try {
-                return documentActionHandler.writeDocument(doc);
+                final D before = documentActionHandler.readDocument(docRef);
+                final D after = documentActionHandler.writeDocument(doc);
+                documentEventLog.update(before, after, null);
+                return after;
             } catch (final RuntimeException e) {
+                documentEventLog.update(null, docRef, e);
                 throw e;
             }
         });
