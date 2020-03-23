@@ -63,7 +63,7 @@ public class V07_00_00_002__Index extends BaseJavaMigration {
      * relationship required is one-to-many, not many-to-many, so we don't have a choice about this.
      */
     private void migrate(final Connection connection) throws Exception {
-        if (DbUtil.doesTableExist(connection, "IDX_VOL")) {
+        if (DbUtil.doesTableExist(connection, "OLD_IDX_VOL")) {
             final var indexUuidToVolumeIdListMap = getVolumesToMigrate(connection);
             if (!indexUuidToVolumeIdListMap.isEmpty()) {
                 final var indexUuidToGroupNameMap = generateVolumeGroupNames(indexUuidToVolumeIdListMap.keySet());
@@ -79,10 +79,10 @@ public class V07_00_00_002__Index extends BaseJavaMigration {
 
                 migrateIndexDocs(connection, indexUuidToGroupNameMap);
             } else {
-                LOGGER.info("IDX_VOL table is empty so nothing to migrate");
+                LOGGER.info("OLD_IDX_VOL table is empty so nothing to migrate");
             }
         } else {
-            LOGGER.info("IDX_VOL table doesn't exist so nothing to migrate");
+            LOGGER.info("OLD_IDX_VOL table doesn't exist so nothing to migrate");
         }
     }
 
@@ -96,7 +96,7 @@ public class V07_00_00_002__Index extends BaseJavaMigration {
                     "  FK_VOL_ID, " +
                     "  IDX_UUID " +
                     "FROM " +
-                    "  IDX_VOL")) {
+                    "  OLD_IDX_VOL")) {
             try (final var resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final var volId = resultSet.getInt(1);
@@ -148,9 +148,9 @@ public class V07_00_00_002__Index extends BaseJavaMigration {
                 "  vs.BYTES_FREE," +
                 "  vs.BYTES_TOTL," +
                 "  vs.STAT_MS " +
-                " FROM VOL v" +
-                " JOIN ND n ON (n.ID = v.FK_ND_ID)" +
-                " JOIN VOL_STATE vs ON (vs.ID = v.FK_VOL_STATE_ID)" +
+                " FROM OLD_VOL v" +
+                " JOIN OLD_ND n ON (n.ID = v.FK_ND_ID)" +
+                " JOIN OLD_VOL_STATE vs ON (vs.ID = v.FK_VOL_STATE_ID)" +
                 " WHERE" +
                 idSet;
 
@@ -255,20 +255,20 @@ public class V07_00_00_002__Index extends BaseJavaMigration {
 
         final String selectSql = "" +
                 "SELECT" +
-                " CRT_MS," +
-                " CRT_USER," +
-                " UPD_MS," +
-                " UPD_USER," +
-                " NAME," +
-                " UUID," +
-                " DESCRIP," +
-                " MAX_DOC," +
-                " MAX_SHRD," +
-                " PART_BY," +
-                " PART_SZ," +
-                " RETEN_DAY_AGE," +
-                " FLDS" +
-                " FROM IDX";
+                "  CRT_MS," +
+                "  CRT_USER," +
+                "  UPD_MS," +
+                "  UPD_USER," +
+                "  NAME," +
+                "  UUID," +
+                "  DESCRIP," +
+                "  MAX_DOC," +
+                "  MAX_SHRD," +
+                "  PART_BY," +
+                "  PART_SZ," +
+                "  RETEN_DAY_AGE," +
+                "  FLDS " +
+                "FROM OLD_IDX";
 
         final String insertSql = "" +
                 " INSERT INTO doc (" +
