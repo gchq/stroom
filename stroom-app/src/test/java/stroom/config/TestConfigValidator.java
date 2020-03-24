@@ -50,4 +50,5 @@ public class TestConfigValidator extends AbstractCoreIntegrationTest {
 
         Assertions.assertThat(result.getErrorCount()).isEqualTo(0);
     }
+
 }

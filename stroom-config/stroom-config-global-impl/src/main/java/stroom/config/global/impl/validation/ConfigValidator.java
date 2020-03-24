@@ -178,5 +178,13 @@ public class ConfigValidator {
         public boolean hasErrorsOrWarnings() {
             return errorCount > 0 || warningCount > 0;
         }
+
+        @Override
+        public String toString() {
+            return "Result{" +
+                "errorCount=" + errorCount +
+                ", warningCount=" + warningCount +
+                '}';
+        }
     }
 }
