@@ -26,9 +26,9 @@ import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.feed.api.FeedProperties;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
-import stroom.meta.api.MetaService;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.StreamLocationFactory;
@@ -40,10 +40,11 @@ import stroom.pipeline.factory.Pipeline;
 import stroom.pipeline.factory.PipelineDataCache;
 import stroom.pipeline.factory.PipelineFactory;
 import stroom.pipeline.shared.PipelineDoc;
+import stroom.pipeline.shared.data.PipelineData;
+import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.StepLocation;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResult;
-import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.state.CurrentUserHolder;
 import stroom.pipeline.state.FeedHolder;
 import stroom.pipeline.state.MetaDataHolder;
@@ -53,7 +54,6 @@ import stroom.pipeline.state.PipelineHolder;
 import stroom.pipeline.task.StreamMetaDataProvider;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.date.DateUtil;
 
@@ -65,8 +65,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResult> {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SteppingTaskHandler.class);
+class SteppingRequestHandler {
+    private static final Logger LOGGER = LoggerFactory.getLogger(SteppingRequestHandler.class);
 
     private final Store streamStore;
     private final MetaService metaService;
@@ -99,24 +99,24 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private Set<String> generalErrors;
 
     @Inject
-    SteppingTaskHandler(final Store streamStore,
-                        final MetaService metaService,
-                        final FeedProperties feedProperties,
-                        final TaskContext taskContext,
-                        final FeedHolder feedHolder,
-                        final MetaDataHolder metaDataHolder,
-                        final PipelineHolder pipelineHolder,
-                        final MetaHolder metaHolder,
-                        final LocationFactoryProxy locationFactory,
-                        final CurrentUserHolder currentUserHolder,
-                        final SteppingController controller,
-                        final PipelineStore pipelineStore,
-                        final PipelineFactory pipelineFactory,
-                        final ErrorReceiverProxy errorReceiverProxy,
-                        final SteppingResponseCache steppingResponseCache,
-                        final PipelineDataCache pipelineDataCache,
-                        final PipelineContext pipelineContext,
-                        final SecurityContext securityContext) {
+    SteppingRequestHandler(final Store streamStore,
+                           final MetaService metaService,
+                           final FeedProperties feedProperties,
+                           final TaskContext taskContext,
+                           final FeedHolder feedHolder,
+                           final MetaDataHolder metaDataHolder,
+                           final PipelineHolder pipelineHolder,
+                           final MetaHolder metaHolder,
+                           final LocationFactoryProxy locationFactory,
+                           final CurrentUserHolder currentUserHolder,
+                           final SteppingController controller,
+                           final PipelineStore pipelineStore,
+                           final PipelineFactory pipelineFactory,
+                           final ErrorReceiverProxy errorReceiverProxy,
+                           final SteppingResponseCache steppingResponseCache,
+                           final PipelineDataCache pipelineDataCache,
+                           final PipelineContext pipelineContext,
+                           final SecurityContext securityContext) {
         this.streamStore = streamStore;
         this.metaService = metaService;
         this.feedProperties = feedProperties;
@@ -137,8 +137,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         this.securityContext = securityContext;
     }
 
-    @Override
-    public SteppingResult exec(final SteppingTask request) {
+    public SteppingResult exec(final PipelineStepRequest request) {
         return securityContext.secureResult(PermissionNames.STEPPING_PERMISSION, () -> {
             // Elevate user permissions so that inherited pipelines that the user only has 'Use' permission on can be read.
             return securityContext.useAsReadResult(() -> {
@@ -205,7 +204,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         });
     }
 
-    private void initialise(final SteppingTask request) {
+    private void initialise(final PipelineStepRequest request) {
         if (!Thread.currentThread().isInterrupted()) {
             final StepType stepType = request.getStepType();
             currentLocation = request.getStepLocation();
@@ -267,7 +266,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         }
     }
 
-    private void process(final SteppingTask request, final Long streamId) {
+    private void process(final PipelineStepRequest request, final Long streamId) {
         if (!Thread.currentThread().isInterrupted()) {
             final StepType stepType = request.getStepType();
 
@@ -347,7 +346,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
         }
     }
 
-    private Long getStreamId(final SteppingTask request) {
+    private Long getStreamId(final PipelineStepRequest request) {
         if (!Thread.currentThread().isInterrupted()) {
             final StepType stepType = request.getStepType();
             // If we are just refreshing then just return the same task we used
@@ -473,7 +472,7 @@ class SteppingTaskHandler extends AbstractTaskHandler<SteppingTask, SteppingResu
     private void process(final SteppingController controller, final String feedName, final String childDataType,
                          final Source source) {
         final Meta meta = source.getMeta();
-        final SteppingTask request = controller.getRequest();
+        final PipelineStepRequest request = controller.getRequest();
         final StepType stepType = request.getStepType();
         controller.setStreamInfo(createStreamInfo(feedName, meta));
 

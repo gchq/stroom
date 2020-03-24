@@ -33,19 +33,20 @@ import stroom.feed.shared.FeedDoc;
 import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.meta.api.AttributeMap;
-import stroom.meta.shared.FindMetaCriteria;
-import stroom.meta.shared.Meta;
-import stroom.meta.shared.MetaFields;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.api.MetaService;
 import stroom.meta.api.StandardHeaderArguments;
+import stroom.meta.shared.FindMetaCriteria;
+import stroom.meta.shared.Meta;
+import stroom.meta.shared.MetaFields;
 import stroom.node.api.NodeInfo;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.SharedElementData;
+import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SharedStepData;
 import stroom.pipeline.shared.stepping.StepType;
 import stroom.pipeline.shared.stepping.SteppingResult;
-import stroom.pipeline.stepping.SteppingTask;
+import stroom.pipeline.stepping.SteppingService;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.impl.DataProcessorTask;
@@ -98,6 +99,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private ProcessorTaskManager processorTaskManager;
     @Inject
     private TaskManager taskManager;
+    @Inject
+    private SteppingService steppingService;
     @Inject
     private FeedStore feedStore;
     @Inject
@@ -236,14 +239,14 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
                             String errorStreamStr = SourceUtil.readString(errorStreamSource);
 
 //                            try (final InputStreamProvider inputStreamProvider = errorStreamSource.get(0)) {
-                                //got an error stream so dump it to console
+                            //got an error stream so dump it to console
 
-                                Meta parentMeta = metaService.getMeta(meta.getParentMetaId());
+                            Meta parentMeta = metaService.getMeta(meta.getParentMetaId());
 
 //                                String errorStreamStr = StreamUtil.streamToString(inputStreamProvider.get());
 //                                java.util.stream.Stream<String> errorStreamLines = StreamUtil.streamToLines(inputStreamProvider.get());
-                                LOGGER.warn("Meta {} with parent {} of type {} has errors:\n{}",
-                                        meta, parentMeta.getId(), parentMeta.getTypeName(), errorStreamStr);
+                            LOGGER.warn("Meta {} with parent {} of type {} has errors:\n{}",
+                                    meta, parentMeta.getId(), parentMeta.getTypeName(), errorStreamStr);
 
 //                            // only dump warning if debug enabled
 //                            if (LOGGER.isDebugEnabled()) {
@@ -396,7 +399,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         findMetaCriteria.setExpression(expression);
         findMetaCriteria.obtainSelectedIdSet().setMatchAll(Boolean.TRUE);
 
-        final SteppingTask action = new SteppingTask();
+        final PipelineStepRequest action = new PipelineStepRequest();
         action.setPipeline(pipelineRef);
         action.setCriteria(findMetaCriteria);
 
@@ -453,13 +456,13 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         }
     }
 
-    private SteppingResult step(final StepType direction, final int steps, final SteppingTask request,
+    private SteppingResult step(final StepType direction, final int steps, final PipelineStepRequest request,
                                 final SteppingResult existingResponse) {
         SteppingResult newResponse = existingResponse;
 
         for (int i = 0; i < steps; i++) {
             request.setStepType(direction);
-            final SteppingResult stepResponse = taskManager.exec(request);
+            final SteppingResult stepResponse = steppingService.step(request);
 
             if (stepResponse.getGeneralErrors() != null && stepResponse.getGeneralErrors().size() > 0) {
                 throw new RuntimeException(stepResponse.getGeneralErrors().iterator().next());
@@ -537,7 +540,7 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
         return newResponse;
     }
 
-    private void write(final Path file, final String data) throws IOException {
+    private void write(final Path file, final String data) {
         // We need to remove event id's because they change every time.
         final String tmp = data.replaceAll("<Event Id=\"[^\"]+\"", "<Event");
         StreamUtil.stringToFile(tmp, file);

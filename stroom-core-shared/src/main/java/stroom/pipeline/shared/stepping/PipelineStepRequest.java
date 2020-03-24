@@ -45,6 +45,8 @@ public class PipelineStepRequest {
     private DocRef pipeline;
     @JsonProperty
     private Map<String, String> code;
+    @JsonProperty
+    private int stepSize = 1;
 
     public PipelineStepRequest() {
     }
@@ -56,7 +58,8 @@ public class PipelineStepRequest {
                                @JsonProperty("stepType") final StepType stepType,
                                @JsonProperty("stepFilterMap") final Map<String, SteppingFilterSettings> stepFilterMap,
                                @JsonProperty("pipeline") final DocRef pipeline,
-                               @JsonProperty("code") final Map<String, String> code) {
+                               @JsonProperty("code") final Map<String, String> code,
+                               @JsonProperty("stepSize") int stepSize) {
         this.criteria = criteria;
         this.childStreamType = childStreamType;
         this.stepLocation = stepLocation;
@@ -64,6 +67,7 @@ public class PipelineStepRequest {
         this.stepFilterMap = stepFilterMap;
         this.pipeline = pipeline;
         this.code = code;
+        this.stepSize = stepSize;
     }
 
     public FindMetaCriteria getCriteria() {
@@ -127,6 +131,21 @@ public class PipelineStepRequest {
 
     public void setStepFilterMap(final Map<String, SteppingFilterSettings> stepFilterMap) {
         this.stepFilterMap = stepFilterMap;
+    }
+
+    public SteppingFilterSettings getStepFilterSettings(final String elementId) {
+        if (stepFilterMap == null) {
+            return null;
+        }
+        return stepFilterMap.get(elementId);
+    }
+
+    public int getStepSize() {
+        return stepSize;
+    }
+
+    public void setStepSize(final int stepSize) {
+        this.stepSize = stepSize;
     }
 
     public void reset() {

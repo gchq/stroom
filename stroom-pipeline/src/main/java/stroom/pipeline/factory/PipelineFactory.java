@@ -32,6 +32,7 @@ import stroom.pipeline.reader.AbstractReaderElement;
 import stroom.pipeline.reader.InputStreamRecordDetectorElement;
 import stroom.pipeline.reader.ReaderRecordDetectorElement;
 import stroom.pipeline.reader.ReaderRecorder;
+import stroom.pipeline.shared.stepping.PipelineStepRequest;
 import stroom.pipeline.shared.stepping.SteppingFilterSettings;
 import stroom.pipeline.shared.data.PipelineData;
 import stroom.pipeline.shared.data.PipelineElement;
@@ -45,7 +46,6 @@ import stroom.pipeline.stepping.ElementMonitor;
 import stroom.pipeline.stepping.Recorder;
 import stroom.pipeline.stepping.SteppingController;
 import stroom.pipeline.stepping.SteppingFilter;
-import stroom.pipeline.stepping.SteppingTask;
 import stroom.pipeline.writer.OutputRecorder;
 import stroom.util.pipeline.scope.PipelineScoped;
 
@@ -233,7 +233,7 @@ public class PipelineFactory {
                             // Modify properties of element instance if we are
                             // stepping and have code to insert.
                             if (controller != null) {
-                                final SteppingTask request = controller.getRequest();
+                                final PipelineStepRequest request = controller.getRequest();
                                 if (request.getCode() != null && request.getCode().size() > 0) {
                                     final String code = request.getCode().get(id);
                                     if (code != null) {
