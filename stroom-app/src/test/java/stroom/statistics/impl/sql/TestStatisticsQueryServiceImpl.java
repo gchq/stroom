@@ -456,10 +456,7 @@ class TestStatisticsQueryServiceImpl extends AbstractCoreIntegrationTest {
 
         final SQLStatisticFlushTaskHandler taskHandler = new SQLStatisticFlushTaskHandler(
                 sqlStatisticValueBatchSaveService, taskContext, securityContext);
-
-        final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(sqlStatisticAggregateMap);
-
-        taskHandler.exec(flushTask);
+        taskHandler.exec(sqlStatisticAggregateMap);
 
         sqlStatisticAggregationManager.aggregate();
 

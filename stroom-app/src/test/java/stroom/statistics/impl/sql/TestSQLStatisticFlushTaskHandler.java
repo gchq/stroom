@@ -71,9 +71,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
             aggregateMap.addRolledUpEvent(buildGoodEvent(7), 1000);
             aggregateMap.addRolledUpEvent(buildGoodEvent(8), 1000);
 
-            final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(aggregateMap);
-
-            taskHandler.exec(flushTask);
+            taskHandler.exec(aggregateMap);
         }).isInstanceOf(StatisticsEventValidationException.class);
     }
 
@@ -92,9 +90,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
         aggregateMap.addRolledUpEvent(buildGoodEvent(2), 1000);
         aggregateMap.addRolledUpEvent(buildGoodEvent(3), 1000);
 
-        final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(aggregateMap);
-
-        taskHandler.exec(flushTask);
+        taskHandler.exec(aggregateMap);
 
         assertThat(getRowCount()).isEqualTo(3);
     }
@@ -114,9 +110,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
             aggregateMap.addRolledUpEvent(buildBadEvent(1), 1000);
             aggregateMap.addRolledUpEvent(buildBadEvent(2), 1000);
 
-            final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(aggregateMap);
-
-            taskHandler.exec(flushTask);
+            taskHandler.exec(aggregateMap);
         }).isInstanceOf(StatisticsEventValidationException.class);
     }
 
@@ -133,9 +127,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
         aggregateMap.addRolledUpEvent(buildCustomCountEvent(1, 66666666666L), 1000);
 
-        final SQLStatisticFlushTask flushTask = new SQLStatisticFlushTask(aggregateMap);
-
-        taskHandler.exec(flushTask);
+        taskHandler.exec(aggregateMap);
 
         assertThat(getRowCount()).isEqualTo(1);
 
@@ -143,9 +135,7 @@ class TestSQLStatisticFlushTaskHandler extends AbstractCoreIntegrationTest {
 
         aggregateMap.addRolledUpEvent(buildCustomCountEvent(1, 66666666666L), 1000);
 
-        final SQLStatisticFlushTask flushTask2 = new SQLStatisticFlushTask(aggregateMap);
-
-        taskHandler.exec(flushTask2);
+        taskHandler.exec(aggregateMap);
 
         assertThat(getRowCount()).isEqualTo(1);
 

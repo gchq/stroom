@@ -19,14 +19,12 @@ package stroom.statistics.impl.sql;
 import org.apache.commons.lang3.mutable.MutableLong;
 import stroom.security.api.SecurityContext;
 import stroom.statistics.impl.sql.shared.StatisticType;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.shared.ModelStringUtil;
-import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import java.sql.BatchUpdateException;
@@ -37,7 +35,7 @@ import java.util.Map.Entry;
 import java.util.function.Supplier;
 
 
-public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatisticFlushTask, VoidResult> {
+public class SQLStatisticFlushTaskHandler {
     /**
      * The number of records to flush to the DB in one go.
      */
@@ -61,12 +59,8 @@ public class SQLStatisticFlushTaskHandler extends AbstractTaskHandler<SQLStatist
         this.securityContext = securityContext;
     }
 
-    @Override
-    public VoidResult exec(final SQLStatisticFlushTask task) {
-        return securityContext.secureResult(() -> {
-            flush(task.getMap());
-            return new VoidResult();
-        });
+    public void exec(final SQLStatisticAggregateMap map) {
+        securityContext.secure(() -> flush(map));
     }
 
     private void flush(final SQLStatisticAggregateMap map) {

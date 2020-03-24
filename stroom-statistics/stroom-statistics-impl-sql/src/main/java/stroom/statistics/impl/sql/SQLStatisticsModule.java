@@ -18,7 +18,6 @@ package stroom.statistics.impl.sql;
 
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
-import stroom.task.api.TaskHandlerBinder;
 
 import javax.sql.DataSource;
 
@@ -32,9 +31,6 @@ public class SQLStatisticsModule extends AbstractFlyWayDbModule<SQLStatisticsCon
         super.configure();
         bind(SQLStatisticCache.class).to(SQLStatisticCacheImpl.class);
         bind(Statistics.class).to(SQLStatisticEventStore.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(SQLStatisticFlushTask.class, SQLStatisticFlushTaskHandler.class);
     }
 
     @Override
