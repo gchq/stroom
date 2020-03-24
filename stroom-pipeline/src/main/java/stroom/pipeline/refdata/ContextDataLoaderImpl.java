@@ -28,13 +28,13 @@ import java.io.InputStream;
 
 public class ContextDataLoaderImpl implements ContextDataLoader {
     private final Provider<TaskContext> taskContextProvider;
-    private final ContextDataLoadTaskHandler contextDataLoadTaskHandler;
+    private final Provider<ContextDataLoadTaskHandler> taskHandlerProvider;
 
     @Inject
     ContextDataLoaderImpl(final Provider<TaskContext> taskContextProvider,
-                          final ContextDataLoadTaskHandler contextDataLoadTaskHandler) {
+                          final Provider<ContextDataLoadTaskHandler> taskHandlerProvider) {
         this.taskContextProvider = taskContextProvider;
-        this.contextDataLoadTaskHandler = contextDataLoadTaskHandler;
+        this.taskHandlerProvider = taskHandlerProvider;
     }
 
     @Override
@@ -45,7 +45,9 @@ public class ContextDataLoaderImpl implements ContextDataLoader {
                      final RefStreamDefinition refStreamDefinition,
                      final RefDataStore refDataStore) {
         final TaskContext taskContext = taskContextProvider.get();
-        Runnable runnable = () -> contextDataLoadTaskHandler.exec(inputStream, meta, feedName, contextPipeline, refStreamDefinition, refDataStore);
+        Runnable runnable = () -> taskHandlerProvider
+                .get()
+                .exec(inputStream, meta, feedName, contextPipeline, refStreamDefinition, refDataStore);
         runnable = taskContext.subTask(runnable);
         runnable.run();
     }

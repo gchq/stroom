@@ -22,6 +22,7 @@ import stroom.cluster.task.api.ClusterDispatchAsync;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.ClusterResultCollectorCache;
 import stroom.cluster.task.api.ClusterTaskHandlerBinder;
+import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.cluster.task.api.ClusterWorker;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.cluster.task.api.TerminateTaskClusterTask;
@@ -34,6 +35,7 @@ public class ClusterTaskModule extends AbstractModule {
         bind(ClusterDispatchAsync.class).to(ClusterDispatchAsyncImpl.class);
         bind(ClusterDispatchAsyncHelper.class).to(ClusterDispatchAsyncHelperImpl.class);
         bind(ClusterResultCollectorCache.class).to(ClusterResultCollectorCacheImpl.class);
+        bind(ClusterTaskTerminator.class).to(ClusterTaskTerminatorImpl.class);
         bind(ClusterWorker.class).to(ClusterWorkerImpl.class);
         bind(TargetNodeSetFactory.class).to(TargetNodeSetFactoryImpl.class);
 

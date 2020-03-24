@@ -26,6 +26,7 @@ import stroom.cluster.task.api.DefaultClusterResultCollector;
 import stroom.cluster.task.api.NodeNotFoundException;
 import stroom.cluster.task.api.NullClusterStateException;
 import stroom.cluster.task.api.TargetType;
+import stroom.task.api.TaskContext;
 
 
 import javax.inject.Inject;
@@ -33,6 +34,7 @@ import javax.inject.Provider;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 public class ClusterDispatchAsyncHelperImpl implements ClusterDispatchAsyncHelper {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDispatchAsyncHelperImpl.class);
@@ -43,6 +45,7 @@ public class ClusterDispatchAsyncHelperImpl implements ClusterDispatchAsyncHelpe
     private final ClusterResultCollectorCacheImpl collectorCache;
     private final Provider<ClusterDispatchAsync> dispatchAsyncProvider;
     private final TargetNodeSetFactoryImpl targetNodeSetFactory;
+    private final Provider<TaskContext> taskContextProvider;
 
     private volatile long lastClusterStateWarn;
 
@@ -50,15 +53,46 @@ public class ClusterDispatchAsyncHelperImpl implements ClusterDispatchAsyncHelpe
     public ClusterDispatchAsyncHelperImpl(final ClusterConfig clusterConfig,
                                           final ClusterResultCollectorCacheImpl collectorCache,
                                           final Provider<ClusterDispatchAsync> dispatchAsyncProvider,
-                                          final TargetNodeSetFactoryImpl targetNodeSetFactory) {
+                                          final TargetNodeSetFactoryImpl targetNodeSetFactory,
+                                          final Provider<TaskContext> taskContextProvider) {
         this.clusterConfig = clusterConfig;
         this.collectorCache = collectorCache;
         this.dispatchAsyncProvider = dispatchAsyncProvider;
         this.targetNodeSetFactory = targetNodeSetFactory;
+        this.taskContextProvider = taskContextProvider;
     }
 
+
+    @Override
+    public <R> DefaultClusterResultCollector<R> execAsyncWithContext(final ClusterTask<R> task, final String targetNodeName) {
+        final TaskContext taskContext = taskContextProvider.get();
+        Supplier<DefaultClusterResultCollector<R>> supplier = () -> execAsync(task, targetNodeName);
+        supplier = taskContext.subTask(supplier);
+        return supplier.get();
+    }
+
+    @Override
+    public <R> DefaultClusterResultCollector<R> execAsyncWithContext(final ClusterTask<R> task, final TargetType targetType) {
+        final TaskContext taskContext = taskContextProvider.get();
+        Supplier<DefaultClusterResultCollector<R>> supplier = () -> execAsync(task, targetType);
+        supplier = taskContext.subTask(supplier);
+        return supplier.get();
+    }
+
+    @Override
+    public <R> DefaultClusterResultCollector<R> execAsyncWithContext(final ClusterTask<R> task, final long waitTime, final TimeUnit timeUnit, final TargetType targetType) {
+        final TaskContext taskContext = taskContextProvider.get();
+        Supplier<DefaultClusterResultCollector<R>> supplier = () -> execAsync(task, waitTime, timeUnit, targetType);
+        supplier = taskContext.subTask(supplier);
+        return supplier.get();
+    }
+
+
+
+
+
     public <R> DefaultClusterResultCollector<R> execAsync(final ClusterTask<R> task,
-                                                                               final String targetNode) {
+                                                          final String targetNode) {
         final long waitTimeMs = clusterConfig.getClusterResponseTimeout().toMillis();
         final String sourceNode = targetNodeSetFactory.getSourceNode();
         final Set<String> targetNodes = Collections.singleton(targetNode);

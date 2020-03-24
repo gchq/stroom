@@ -53,7 +53,7 @@ class ClusterLockHandler {
             TargetType targetType = TargetType.MASTER;
 
             final DefaultClusterResultCollector<Boolean> collector = dispatchHelper
-                    .execAsync(new ClusterLockClusterTask(key, lockStyle), TargetType.MASTER);
+                    .execAsyncWithContext(new ClusterLockClusterTask(key, lockStyle), TargetType.MASTER);
             final ClusterCallEntry<Boolean> response = collector.getSingleResponse();
 
             if (response == null) {

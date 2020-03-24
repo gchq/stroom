@@ -24,19 +24,21 @@ import javax.inject.Provider;
 
 public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
     private final Provider<TaskContext> taskContextProvider;
-    private final ReferenceDataLoadTaskHandler referenceDataLoadTaskHandler;
+    private final Provider<ReferenceDataLoadTaskHandler> taskHandlerProvider;
 
     @Inject
     ReferenceDataLoaderImpl(final Provider<TaskContext> taskContextProvider,
-                            final ReferenceDataLoadTaskHandler referenceDataLoadTaskHandler) {
+                            final Provider<ReferenceDataLoadTaskHandler> taskHandlerProvider) {
         this.taskContextProvider = taskContextProvider;
-        this.referenceDataLoadTaskHandler = referenceDataLoadTaskHandler;
+        this.taskHandlerProvider = taskHandlerProvider;
     }
 
     @Override
     public void load(final RefStreamDefinition refStreamDefinition) {
         final TaskContext taskContext = taskContextProvider.get();
-        Runnable runnable = () -> referenceDataLoadTaskHandler.exec(refStreamDefinition);
+        Runnable runnable = () -> taskHandlerProvider
+                .get()
+                .exec(refStreamDefinition);
         runnable = taskContext.subTask(runnable);
         runnable.run();
     }
