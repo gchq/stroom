@@ -64,17 +64,26 @@ public class V07_00_00_002__Index extends BaseJavaMigration {
      */
     private void migrate(final Connection connection) throws Exception {
         if (DbUtil.doesTableExist(connection, "OLD_IDX_VOL")) {
+
             final var indexUuidToVolumeIdListMap = getVolumesToMigrate(connection);
+
             if (!indexUuidToVolumeIdListMap.isEmpty()) {
                 final var indexUuidToGroupNameMap = generateVolumeGroupNames(indexUuidToVolumeIdListMap.keySet());
+
                 final Set<String> groupNames = new HashSet<>(indexUuidToGroupNameMap.values());
 
-                createGroups(connection, groupNames);
+                final var groupNameToIdMap = createGroups(connection, groupNames);
+
+                final var indexUuidToGroupIdMap = indexUuidToGroupNameMap.entrySet()
+                    .stream()
+                    .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> groupNameToIdMap.get(entry.getValue())));
 
                 for(var indexUuid : indexUuidToGroupNameMap.keySet()){
-                    final var volumesToCreateForIndex = indexUuidToVolumeIdListMap.get(indexUuid);
-                    final var groupForIndexes = indexUuidToGroupNameMap.get(indexUuid);
-                    createIndexVolumes(connection, volumesToCreateForIndex, groupForIndexes);
+                    final var volumeIdsToCreateForIndex = indexUuidToVolumeIdListMap.get(indexUuid);
+                    final int groupIdForIndexes = indexUuidToGroupIdMap.get(indexUuid);
+                    createIndexVolumes(connection, volumeIdsToCreateForIndex, groupIdForIndexes);
                 }
 
                 migrateIndexDocs(connection, indexUuidToGroupNameMap);
@@ -97,6 +106,7 @@ public class V07_00_00_002__Index extends BaseJavaMigration {
                     "  IDX_UUID " +
                     "FROM " +
                     "  OLD_IDX_VOL")) {
+
             try (final var resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     final var volId = resultSet.getInt(1);
@@ -125,10 +135,11 @@ public class V07_00_00_002__Index extends BaseJavaMigration {
 
     private void createIndexVolumes(final Connection connection,
                                     final List<Integer> volumeIdSSet,
-                                    final String groupName) throws SQLException {
+                                    final int groupId) throws SQLException {
         String idSet = volumeIdSSet.stream()
             .map(String::valueOf)
             .collect(Collectors.joining(","));
+
         if (idSet.length() > 0) {
             idSet = " v.ID IN (" + idSet + ")";
         }
@@ -163,7 +174,7 @@ public class V07_00_00_002__Index extends BaseJavaMigration {
                 " update_user," +
                 " node_name," +
                 " path," +
-                " index_volume_group_name," +
+                " fk_index_volume_group_id," +
                 " state," +
                 " bytes_limit," +
                 " bytes_used," +
@@ -196,7 +207,7 @@ public class V07_00_00_002__Index extends BaseJavaMigration {
                         insert.setString(5, updUser);
                         insert.setString(6, node);
                         insert.setString(7, path);
-                        insert.setString(8, groupName);
+                        insert.setInt(8, groupId);
                         insert.setByte(9, state);
                         insert.setLong(10, bytesLimit);
                         insert.setLong(11, bytesUsed);
