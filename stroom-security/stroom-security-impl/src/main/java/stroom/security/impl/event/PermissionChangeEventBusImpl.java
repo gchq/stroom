@@ -18,14 +18,21 @@ package stroom.security.impl.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.NodeNotFoundException;
+import stroom.cluster.task.api.NullClusterStateException;
+import stroom.cluster.task.api.TargetNodeSetFactory;
+import stroom.security.api.SecurityContext;
 import stroom.security.impl.event.PermissionChangeEvent.Handler;
-import stroom.task.api.TaskManager;
+import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @Singleton
 class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
@@ -34,14 +41,27 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
     private volatile boolean initialised;
 
     private final Provider<Set<PermissionChangeEvent.Handler>> handlerProvider;
-    private final TaskManager taskManager;
+    private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final TargetNodeSetFactory targetNodeSetFactory;
+    private final SecurityContext securityContext;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
 
     private volatile boolean started = false;
 
     @Inject
-    PermissionChangeEventBusImpl(final Provider<Set<Handler>> handlerProvider, final TaskManager taskManager) {
+    PermissionChangeEventBusImpl(final Provider<Set<Handler>> handlerProvider,
+                                 final ClusterDispatchAsyncHelper dispatchHelper,
+                                 final TargetNodeSetFactory targetNodeSetFactory,
+                                 final SecurityContext securityContext,
+                                 final Executor executor,
+                                 final Provider<TaskContext> taskContextProvider) {
         this.handlerProvider = handlerProvider;
-        this.taskManager = taskManager;
+        this.dispatchHelper = dispatchHelper;
+        this.targetNodeSetFactory = targetNodeSetFactory;
+        this.securityContext = securityContext;
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
     }
 
     void init() {
@@ -63,8 +83,33 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
             fireLocally(event);
 
             if (started) {
-                // Dispatch the entity event to all nodes in the cluster.
-                taskManager.execAsync(new DispatchPermissionChangeEventTask(event));
+                final TaskContext taskContext = taskContextProvider.get();
+                Runnable runnable = () -> {
+                    // Dispatch the entity event to all nodes in the cluster.
+                    securityContext.secure(() -> {
+                        try {
+                            // Get this node.
+                            final String sourceNode = targetNodeSetFactory.getSourceNode();
+
+                            // Get the nodes that we are going to send the entity event to.
+                            final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+
+                            // Only send the event to remote nodes and not this one.
+                            targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {
+                                // Send the entity event.
+                                final ClusterPermissionChangeEventTask clusterEntityEventTask = new ClusterPermissionChangeEventTask(event);
+                                dispatchHelper.execAsync(clusterEntityEventTask, targetNode);
+                            });
+                        } catch (final NullClusterStateException | NodeNotFoundException e) {
+                            LOGGER.warn(e.getMessage());
+                            LOGGER.debug(e.getMessage(), e);
+                        } catch (final RuntimeException e) {
+                            LOGGER.error(e.getMessage(), e);
+                        }
+                    });
+                };
+                runnable = taskContext.subTask(runnable);
+                CompletableFuture.runAsync(runnable, executor);
             }
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
