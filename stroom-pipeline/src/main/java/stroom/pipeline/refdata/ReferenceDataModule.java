@@ -33,8 +33,7 @@ public class ReferenceDataModule extends PipelineElementModule {
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(EffectiveStreamCache.class);
 
         TaskHandlerBinder.create(binder())
-                .bind(ContextDataLoadTask.class, ContextDataLoadTaskHandler.class)
-                .bind(ReferenceDataLoadTask.class, ReferenceDataLoadTaskHandler.class);
+                .bind(ContextDataLoadTask.class, ContextDataLoadTaskHandler.class);
 
         install(new RefDataStoreModule());
     }

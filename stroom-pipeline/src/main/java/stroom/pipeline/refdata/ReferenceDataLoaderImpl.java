@@ -17,22 +17,27 @@
 package stroom.pipeline.refdata;
 
 import stroom.pipeline.refdata.store.RefStreamDefinition;
-import stroom.task.api.TaskManager;
-import stroom.task.api.VoidResult;
+import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
 
 public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
-
-    private final TaskManager taskManager;
+    private final Provider<TaskContext> taskContextProvider;
+    private final ReferenceDataLoadTaskHandler referenceDataLoadTaskHandler;
 
     @Inject
-    ReferenceDataLoaderImpl(final TaskManager taskManager) {
-        this.taskManager = taskManager;
+    ReferenceDataLoaderImpl(final Provider<TaskContext> taskContextProvider,
+                            final ReferenceDataLoadTaskHandler referenceDataLoadTaskHandler) {
+        this.taskContextProvider = taskContextProvider;
+        this.referenceDataLoadTaskHandler = referenceDataLoadTaskHandler;
     }
 
     @Override
-    public VoidResult load(final RefStreamDefinition refStreamDefinition) {
-        return taskManager.exec(new ReferenceDataLoadTask(refStreamDefinition));
+    public void load(final RefStreamDefinition refStreamDefinition) {
+        final TaskContext taskContext = taskContextProvider.get();
+        Runnable runnable = () -> referenceDataLoadTaskHandler.exec(refStreamDefinition);
+        runnable = taskContext.subTask(runnable);
+        runnable.run();
     }
 }
