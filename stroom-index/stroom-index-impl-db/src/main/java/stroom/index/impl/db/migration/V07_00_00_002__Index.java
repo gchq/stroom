@@ -136,12 +136,15 @@ public class V07_00_00_002__Index extends BaseJavaMigration {
     private void createIndexVolumes(final Connection connection,
                                     final List<Integer> volumeIdSSet,
                                     final int groupId) throws SQLException {
-        String idSet = volumeIdSSet.stream()
+        final String idSet = volumeIdSSet.stream()
             .map(String::valueOf)
             .collect(Collectors.joining(","));
 
+        final String idSetPredicateStr;
         if (idSet.length() > 0) {
-            idSet = " v.ID IN (" + idSet + ")";
+            idSetPredicateStr = " AND v.ID IN (" + idSet + ")";
+        } else {
+            idSetPredicateStr = "";
         }
 
         final String selectVolumesToMigrate = "" +
@@ -162,8 +165,8 @@ public class V07_00_00_002__Index extends BaseJavaMigration {
                 " FROM OLD_VOL v" +
                 " JOIN OLD_ND n ON (n.ID = v.FK_ND_ID)" +
                 " JOIN OLD_VOL_STATE vs ON (vs.ID = v.FK_VOL_STATE_ID)" +
-                " WHERE" +
-                idSet;
+                " WHERE v.VOL_TP = 1 " + // Only want 'private' volumes as 'public' ones are for streams
+                idSetPredicateStr;
 
         final String insertMigratedIndexVolume = "" +
                 "INSERT INTO index_volume (" +
