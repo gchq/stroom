@@ -264,11 +264,9 @@ public class Cli extends AbstractCommandLineTool {
                 final InputStream metaStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Meta);
                 final InputStream contextStream = stroomZipFile.getInputStream(baseName, StroomZipFileType.Context);
 
-                final CliTranslationTask task = new CliTranslationTask(
-                        IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
-                        IgnoreCloseInputStream.wrap(contextStream), errorWriter);
                 final CliTranslationTaskHandler handler = translationTaskHandlerProvider.get();
-                handler.exec(task);
+                handler.exec(IgnoreCloseInputStream.wrap(dataStream), IgnoreCloseInputStream.wrap(metaStream),
+                        IgnoreCloseInputStream.wrap(contextStream), errorWriter);
             }
 
             // Close the zip file.
