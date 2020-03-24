@@ -37,7 +37,21 @@ DROP PROCEDURE IF EXISTS copy_explorer;
 DELIMITER //
 CREATE PROCEDURE copy_explorer ()
 BEGIN
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'explorerTreeNode' > 0) THEN
+
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'explorerTreeNode') THEN
+
+        RENAME TABLE explorerTreeNode TO OLD_explorerTreeNode;
+    END IF;
+
+    -- Check again so it is idempotent
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'OLD_explorerTreeNode') THEN
+
         INSERT INTO explorer_node (
             id, 
             type, 
@@ -50,12 +64,14 @@ BEGIN
             uuid, 
             name, 
             tags
-        FROM explorerTreeNode;
+        FROM OLD_explorerTreeNode;
     END IF;
+
 END//
 DELIMITER ;
 CALL copy_explorer();
 DROP PROCEDURE copy_explorer;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
 -- vim: set tabstop=4 shiftwidth=4 expandtab:

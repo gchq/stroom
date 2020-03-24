@@ -18,26 +18,26 @@
 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 CREATE TABLE IF NOT EXISTS index_shard (
-  id                    bigint(20) NOT NULL AUTO_INCREMENT,
-  node_name             varchar(255) NOT NULL,
-  fk_volume_id          int(11) NOT NULL,
-  index_uuid            varchar(255) NOT NULL,
-  commit_document_count int(11) DEFAULT NULL,
-  commit_duration_ms    bigint(20) DEFAULT NULL,
-  commit_ms             bigint(20) DEFAULT NULL,
-  document_count        int(11) DEFAULT 0,
-  file_size             bigint(20) DEFAULT 0,
-  status                tinyint(4) NOT NULL,
-  index_version         varchar(255) DEFAULT NULL,
-  partition_name        varchar(255) NOT NULL,
-  partition_from_ms     bigint(20) DEFAULT NULL,
-  partition_to_ms       bigint(20) DEFAULT NULL,
-  PRIMARY KEY (id),
-  KEY index_shard_fk_volume_id (fk_volume_id),
-  KEY index_shard_index_uuid (index_uuid),
-  CONSTRAINT index_shard_fk_volume_id
-      FOREIGN KEY (fk_volume_id)
-      REFERENCES index_volume (id)
+    id                    bigint(20) NOT NULL AUTO_INCREMENT,
+    node_name             varchar(255) NOT NULL,
+    fk_volume_id          int(11) NOT NULL,
+    index_uuid            varchar(255) NOT NULL,
+    commit_document_count int(11) DEFAULT NULL,
+    commit_duration_ms    bigint(20) DEFAULT NULL,
+    commit_ms             bigint(20) DEFAULT NULL,
+    document_count        int(11) DEFAULT 0,
+    file_size             bigint(20) DEFAULT 0,
+    status                tinyint(4) NOT NULL,
+    index_version         varchar(255) DEFAULT NULL,
+    partition_name        varchar(255) NOT NULL,
+    partition_from_ms     bigint(20) DEFAULT NULL,
+    partition_to_ms       bigint(20) DEFAULT NULL,
+    PRIMARY KEY (id),
+    KEY index_shard_fk_volume_id (fk_volume_id),
+    KEY index_shard_index_uuid (index_uuid),
+    CONSTRAINT index_shard_fk_volume_id
+        FOREIGN KEY (fk_volume_id)
+        REFERENCES index_volume (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
@@ -47,9 +47,29 @@ DROP PROCEDURE IF EXISTS copy_index_shard;
 DELIMITER //
 CREATE PROCEDURE copy_index_shard ()
 BEGIN
-    -- If table exists (it may not if this migration runs before core stroom's) then migrate its data,
-    -- if it doesn't exist then it won't ever have data to migrate
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'IDX_SHRD' > 0) THEN
+    -- Doesn't matter if two scripts do this
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'IDX_SHRD') THEN
+
+        RENAME TABLE IDX_SHRD TO OLD_IDX_SHRD;
+    END IF;
+
+    -- Doesn't matter if two scripts do this
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'ND') THEN
+
+        RENAME TABLE ND TO OLD_ND;
+    END IF;
+
+    -- Check again so it is idempotent
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES 
+            WHERE TABLE_NAME = 'OLD_IDX_SHRD') THEN
         --
         -- Copy data into the table, use ID predicate to make it re-runnable
         --
@@ -84,8 +104,8 @@ BEGIN
             s.PART,
             s.PART_FROM_MS,
             s.PART_TO_MS
-        FROM IDX_SHRD s
-        INNER JOIN ND n ON (n.ID = s.FK_ND_ID)
+        FROM OLD_IDX_SHRD s
+        INNER JOIN OLD_ND n ON (n.ID = s.FK_ND_ID)
         WHERE s.ID > (SELECT COALESCE(MAX(id), 0) FROM index_shard)
         ORDER BY s.ID;
 
@@ -97,9 +117,12 @@ BEGIN
         PREPARE alter_table_stmt FROM @alter_table_sql;
         EXECUTE alter_table_stmt;
     END IF;
+
 END//
 DELIMITER ;
 CALL copy_index_shard();
 DROP PROCEDURE copy_index_shard;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

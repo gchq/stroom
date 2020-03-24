@@ -27,8 +27,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 @SuppressWarnings("unused")
-public class V07_00_00_001__StreamType extends BaseJavaMigration {
-    private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_001__StreamType.class);
+public class V07_00_00_002__StreamType extends BaseJavaMigration {
+    private static final Logger LOGGER = LoggerFactory.getLogger(V07_00_00_002__StreamType.class);
 
     @Override
     public void migrate(final Context context) throws Exception {
@@ -39,7 +39,7 @@ public class V07_00_00_001__StreamType extends BaseJavaMigration {
 
             boolean exists;
             try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                    "SELECT ID FROM " + _V07_00_00_StreamType.TABLE_NAME + " WHERE ID = ?")) {
+                    "SELECT ID FROM OLD_" + _V07_00_00_StreamType.TABLE_NAME + " WHERE ID = ?")) {
                 preparedStatement.setLong(1, id);
                 try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                     exists = resultSet.next();
@@ -50,7 +50,7 @@ public class V07_00_00_001__StreamType extends BaseJavaMigration {
                 try {
                     // We use SQL to insert because we need a predefined key.
                     final StringBuilder sql = new StringBuilder();
-                    sql.append("INSERT INTO ");
+                    sql.append("INSERT INTO OLD_");
                     sql.append(_V07_00_00_StreamType.TABLE_NAME);
                     sql.append(" (");
                     sql.append(_V07_00_00_StreamType.ID);

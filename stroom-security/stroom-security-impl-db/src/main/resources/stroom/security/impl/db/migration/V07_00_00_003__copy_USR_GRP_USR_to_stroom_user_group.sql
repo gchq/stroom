@@ -24,19 +24,28 @@ DROP PROCEDURE IF EXISTS copy_security;
 DELIMITER //
 CREATE PROCEDURE copy_security ()
 BEGIN
+    -- Can be run by multiple scripts
     IF EXISTS (
-            SELECT TABLE_NAME
+            SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_NAME = 'USR_GRP_USR') THEN
 
-        -- There is no FK on the USR_GRP_USR table so ignore orphaned records
+        RENAME TABLE USR_GRP_USR TO OLD_USR_GRP_USR;
+    END IF;
+
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'OLD_USR_GRP_USR') THEN
+
+        -- There is no FK on the OLD_USR_GRP_USR table so ignore orphaned records
         INSERT INTO stroom_user_group (
             user_uuid,
             group_uuid)
         SELECT
             USR_UUID,
             GRP_UUID
-        FROM USR_GRP_USR
+        FROM OLD_USR_GRP_USR
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM stroom_user_group)
         AND EXISTS (
             SELECT NULL
@@ -62,3 +71,5 @@ CALL copy_security();
 DROP PROCEDURE copy_security;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

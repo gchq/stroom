@@ -227,6 +227,68 @@ BEGIN
     END IF;
 END $$
 
+-- --------------------------------------------------
+
+DROP PROCEDURE IF EXISTS core_rename_table_if_exists_v1$$
+
+-- DO NOT change this without reading the header!
+CREATE PROCEDURE core_rename_table_if_exists_v1 (
+    p_old_table_name varchar(64),
+    p_new_table_name varchar(64)
+)
+BEGIN
+    DECLARE old_object_count integer;
+    DECLARE new_object_count integer;
+
+    SELECT COUNT(1)
+    INTO old_object_count
+    FROM information_schema.tables
+    WHERE table_schema = database()
+    AND UPPER(table_name) = UPPER(p_old_table_name);
+
+    SELECT COUNT(1)
+    INTO new_object_count
+    FROM information_schema.tables
+    WHERE table_schema = database()
+    AND UPPER(table_name) = UPPER(p_new_table_name);
+
+    IF (old_object_count = 1 AND new_object_count = 0) THEN
+        CALL core_run_sql_v1(CONCAT(
+            'rename table ', database(), '.', p_old_table_name,
+            ' to ', p_new_table_name));
+    ELSE
+        IF (old_object_count = 0) THEN
+            SELECT CONCAT(
+                'Source table ',
+                database(),
+                '.',
+                p_old_table_name,
+                ' does not exist');
+        END IF;
+
+        IF (new_object_count = 1) THEN
+            SELECT CONCAT(
+                'Destination table ',
+                database(),
+                '.',
+                p_new_table_name,
+                ' already exists');
+        END IF;
+    END IF;
+END $$
+
+-- --------------------------------------------------
+
+DROP PROCEDURE IF EXISTS core_rename_legacy_table_if_exists_v1$$
+
+-- DO NOT change this without reading the header!
+CREATE PROCEDURE core_rename_legacy_table_if_exists_v1 (
+    p_old_table_name varchar(64)
+)
+BEGIN
+    CALL core_rename_table_if_exists_v1(p_old_table_name, CONCAT('OLD_', p_old_table_name));
+END $$
+
 DELIMITER ;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;

@@ -69,9 +69,19 @@ DROP PROCEDURE IF EXISTS copy_processor_filter;
 DELIMITER //
 CREATE PROCEDURE copy_processor_filter ()
 BEGIN
-    -- If table exists (it may not if this migration runs before core stroom's) then migrate its data,
-    -- if it doesn't exist then it won't ever have data to migrate
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_PROC_FILT' > 0) THEN
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'STRM_PROC_FILT') THEN
+
+        RENAME TABLE STRM_PROC_FILT TO OLD_STRM_PROC_FILT;
+    END IF;
+
+    -- Check again so it is idempotent
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'OLD_STRM_PROC_FILT') THEN
         --
         -- Copy data into the table, use ID predicate to make it re-runnable
         --
@@ -101,7 +111,7 @@ BEGIN
             DAT,
             PRIOR,
             ENBL
-        FROM STRM_PROC_FILT
+        FROM OLD_STRM_PROC_FILT
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor_filter)
         ORDER BY ID;
 
@@ -113,6 +123,7 @@ BEGIN
         PREPARE alter_table_stmt FROM @alter_table_sql;
         EXECUTE alter_table_stmt;
     END IF;
+
 END//
 DELIMITER ;
 CALL copy_processor_filter();
