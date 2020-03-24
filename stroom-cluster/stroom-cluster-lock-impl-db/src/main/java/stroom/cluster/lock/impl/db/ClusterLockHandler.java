@@ -23,14 +23,13 @@ import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.DefaultClusterResultCollector;
 import stroom.cluster.task.api.TargetType;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
 
 import javax.inject.Inject;
 import java.net.ConnectException;
 import java.net.MalformedURLException;
 
 
-class ClusterLockHandler extends AbstractTaskHandler<ClusterLockTask, Boolean> {
+class ClusterLockHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockHandler.class);
 
     private final ClusterDispatchAsyncHelper dispatchHelper;
@@ -43,8 +42,7 @@ class ClusterLockHandler extends AbstractTaskHandler<ClusterLockTask, Boolean> {
         this.securityContext = securityContext;
     }
 
-    @Override
-    public Boolean exec(final ClusterLockTask task) {
+    public Boolean exec(final ClusterLockKey key, final ClusterLockStyle lockStyle) {
         return securityContext.secureResult(() -> {
             // If the cluster state is not yet initialised then don't try and call
             // master.
@@ -55,7 +53,7 @@ class ClusterLockHandler extends AbstractTaskHandler<ClusterLockTask, Boolean> {
             TargetType targetType = TargetType.MASTER;
 
             final DefaultClusterResultCollector<Boolean> collector = dispatchHelper
-                    .execAsync(new ClusterLockClusterTask(task), TargetType.MASTER);
+                    .execAsync(new ClusterLockClusterTask(key, lockStyle), TargetType.MASTER);
             final ClusterCallEntry<Boolean> response = collector.getSingleResponse();
 
             if (response == null) {
@@ -70,12 +68,12 @@ class ClusterLockHandler extends AbstractTaskHandler<ClusterLockTask, Boolean> {
                 } catch (final Throwable e) {
                     if (e.getCause() != null && e.getCause() instanceof ConnectException) {
                         LOGGER.error("Unable to connect to [{}]: {}",
-                            String.join(",", collector.getTargetNodes()),
-                            response.getError().getMessage());
+                                String.join(",", collector.getTargetNodes()),
+                                response.getError().getMessage());
                     } else {
                         LOGGER.error("Error connecting to [{}]: {}",
-                            String.join(",", collector.getTargetNodes()),
-                            response.getError().getMessage(), response.getError());
+                                String.join(",", collector.getTargetNodes()),
+                                response.getError().getMessage(), response.getError());
                     }
                 }
 

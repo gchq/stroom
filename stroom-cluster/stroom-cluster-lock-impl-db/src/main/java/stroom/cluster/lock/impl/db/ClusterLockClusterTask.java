@@ -22,20 +22,13 @@ import stroom.task.shared.Task;
 public class ClusterLockClusterTask extends ClusterTask<Boolean> {
     private static final long serialVersionUID = -2025366263627949409L;
 
-    private final Task<?> parentTask;
     private final ClusterLockKey key;
     private final ClusterLockStyle lockStyle;
 
-    public ClusterLockClusterTask(final ClusterLockTask parent) {
+    public ClusterLockClusterTask(final ClusterLockKey key, final ClusterLockStyle lockStyle) {
         super("ClusterLockClusterTask");
-        this.parentTask = parent;
-        this.key = parent.getKey();
-        this.lockStyle = parent.getLockStyle();
-    }
-
-    @Override
-    public Task<?> getParentTask() {
-        return parentTask;
+        this.key = key;
+        this.lockStyle = lockStyle;
     }
 
     public ClusterLockKey getKey() {

@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.node.api.NodeInfo;
-import stroom.task.api.TaskManager;
 import stroom.util.logging.LogExecutionTime;
 
 import javax.inject.Inject;
@@ -33,15 +32,15 @@ class ClusterLockServiceImpl implements ClusterLockService {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockServiceImpl.class);
     private final ConcurrentHashMap<String, ClusterLockKey> lockMap = new ConcurrentHashMap<>();
 
-    private final TaskManager taskManager;
+    private final ClusterLockHandler clusterLockHandler;
     private final NodeInfo nodeInfo;
     private final DbClusterLock dbClusterLock;
 
     @Inject
-    ClusterLockServiceImpl(final TaskManager taskManager,
+    ClusterLockServiceImpl(final ClusterLockHandler clusterLockHandler,
                            final NodeInfo nodeInfo,
                            final DbClusterLock dbClusterLock) {
-        this.taskManager = taskManager;
+        this.clusterLockHandler = clusterLockHandler;
         this.nodeInfo = nodeInfo;
         this.dbClusterLock = dbClusterLock;
     }
@@ -62,7 +61,7 @@ class ClusterLockServiceImpl implements ClusterLockService {
         if (clusterLockKey == null) {
             clusterLockKey = new ClusterLockKey(lockName, nodeInfo.getThisNodeName(),
                     System.currentTimeMillis());
-            final Boolean didLock = taskManager.exec(new ClusterLockTask(clusterLockKey, ClusterLockStyle.Try));
+            final Boolean didLock = clusterLockHandler.exec(clusterLockKey, ClusterLockStyle.Try);
             if (didLock != null) {
                 success = Boolean.TRUE.equals(didLock);
             }
@@ -96,8 +95,7 @@ class ClusterLockServiceImpl implements ClusterLockService {
         if (clusterLockKey == null) {
             LOGGER.error("releaseLock({}) - Lock not found", lockName);
         } else {
-            final Boolean result = taskManager
-                    .exec(new ClusterLockTask(clusterLockKey, ClusterLockStyle.Release));
+            final Boolean result = clusterLockHandler.exec(clusterLockKey, ClusterLockStyle.Release);
             if (result != null) {
                 success = result;
             }
@@ -114,8 +112,7 @@ class ClusterLockServiceImpl implements ClusterLockService {
             final ClusterLockKey clusterLockKey = entry.getValue();
 
             LOGGER.debug("keepAlive({}) - >>>", lockName);
-            final Boolean success = taskManager
-                    .exec(new ClusterLockTask(clusterLockKey, ClusterLockStyle.KeepAlive));
+            final Boolean success = clusterLockHandler.exec(clusterLockKey, ClusterLockStyle.KeepAlive);
             LOGGER.debug("keepAlive({}) - <<< {}", lockName, success);
 
             // We should only receive FALSE if the master node knows nothing
