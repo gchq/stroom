@@ -18,13 +18,11 @@ package stroom.search.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.ClusterResultCollector;
 import stroom.cluster.task.api.ClusterResultCollectorCache;
+import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.cluster.task.api.CollectorId;
 import stroom.cluster.task.api.CollectorIdFactory;
-import stroom.cluster.task.api.TargetType;
-import stroom.cluster.task.api.TerminateTaskClusterTask;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
 import stroom.query.common.v2.Data;
@@ -33,16 +31,12 @@ import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Sizes;
 import stroom.query.common.v2.Store;
 import stroom.search.resultsender.NodeResult;
-import stroom.security.api.SecurityContext;
-import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskCallback;
-import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.task.api.TaskTerminatedException;
-import stroom.task.shared.FindTaskCriteria;
+import stroom.task.api.VoidResult;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
-import stroom.task.api.VoidResult;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -65,33 +59,28 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
     private final Map<String, AtomicLong> remainingNodes = new ConcurrentHashMap<>();
     private final AtomicInteger remainingNodeCount = new AtomicInteger();
     private final TaskManager taskManager;
-    private final TaskContext taskContext;
+    private final ClusterTaskTerminator clusterTaskTerminator;
     private final AsyncSearchTask task;
-    private final ClusterDispatchAsyncHelper dispatchHelper;
     private final String nodeName;
     private final Set<String> highlights;
     private final ResultHandler resultHandler;
     private final Sizes defaultMaxResultsSizes;
     private final Sizes storeSize;
     private final CompletionState completionState;
-    private final SecurityContext securityContext;
 
     ClusterSearchResultCollector(final TaskManager taskManager,
-                                 final TaskContext taskContext,
+                                 final ClusterTaskTerminator clusterTaskTerminator,
                                  final AsyncSearchTask task,
-                                 final ClusterDispatchAsyncHelper dispatchHelper,
                                  final String nodeName,
                                  final Set<String> highlights,
                                  final ClusterResultCollectorCache clusterResultCollectorCache,
                                  final ResultHandler resultHandler,
                                  final Sizes defaultMaxResultsSizes,
                                  final Sizes storeSize,
-                                 final CompletionState completionState,
-                                 final SecurityContext securityContext) {
+                                 final CompletionState completionState) {
         this.taskManager = taskManager;
-        this.taskContext = taskContext;
+        this.clusterTaskTerminator = clusterTaskTerminator;
         this.task = task;
-        this.dispatchHelper = dispatchHelper;
         this.nodeName = nodeName;
         this.highlights = highlights;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
@@ -99,7 +88,6 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         this.defaultMaxResultsSizes = defaultMaxResultsSizes;
         this.storeSize = storeSize;
         this.completionState = completionState;
-        this.securityContext = securityContext;
 
         id = CollectorIdFactory.create();
 
@@ -142,19 +130,7 @@ public class ClusterSearchResultCollector implements Store, ClusterResultCollect
         // We have to wrap the cluster termination task in another task or
         // ClusterDispatchAsyncImpl
         // will not execute it if the parent task is terminated.
-        securityContext.asProcessingUser(() -> {
-            final GenericServerTask outerTask = GenericServerTask.create(null, "Terminate: " + task.getTaskName(), "Terminating cluster tasks");
-            outerTask.setRunnable(() -> {
-                taskContext.info(() -> task.getSearchName() + " - terminating child tasks");
-                final FindTaskCriteria findTaskCriteria = new FindTaskCriteria();
-                findTaskCriteria.addAncestorId(task.getId());
-                final TerminateTaskClusterTask terminateTask = new TerminateTaskClusterTask("Terminate: " + task.getTaskName(), findTaskCriteria, false);
-
-                // Terminate matching tasks.
-                dispatchHelper.execAsync(terminateTask, TargetType.ACTIVE);
-            });
-            taskManager.execAsync(outerTask);
-        });
+        clusterTaskTerminator.terminate(task.getSearchName(), task.getId(), task.getTaskName());
     }
 
     @Override

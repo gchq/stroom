@@ -20,9 +20,7 @@ import com.google.inject.AbstractModule;
 import stroom.cluster.task.api.ClusterTaskHandlerBinder;
 import stroom.searchable.api.Searchable;
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.task.api.TaskManager;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.RestResource;
@@ -40,9 +38,6 @@ public class TaskModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(TaskResourceImpl.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(GenericServerTask.class, GenericServerTaskHandler.class);
 
         ClusterTaskHandlerBinder.create(binder())
                 .bind(FindTaskProgressClusterTask.class, FindTaskProgressClusterHandler.class);

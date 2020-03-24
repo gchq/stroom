@@ -28,11 +28,10 @@ import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskCallbackAdaptor;
+import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.Task;
-import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -44,7 +43,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -68,6 +69,8 @@ class DistributedTaskFetcher {
 
     private final Provider<ClusterDispatchAsyncHelper> clusterDispatchAsyncHelperProvider;
     private final TaskManager taskManager;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
     private final JobNodeTrackerCache jobNodeTrackerCache;
     private final SecurityContext securityContext;
 
@@ -76,10 +79,14 @@ class DistributedTaskFetcher {
     @Inject
     DistributedTaskFetcher(final Provider<ClusterDispatchAsyncHelper> clusterDispatchAsyncHelperProvider,
                            final TaskManager taskManager,
+                           final Executor executor,
+                           final Provider<TaskContext> taskContextProvider,
                            final JobNodeTrackerCache jobNodeTrackerCache,
                            final SecurityContext securityContext) {
         this.clusterDispatchAsyncHelperProvider = clusterDispatchAsyncHelperProvider;
         this.taskManager = taskManager;
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
         this.securityContext = securityContext;
     }
@@ -123,15 +130,17 @@ class DistributedTaskFetcher {
      * after the previous fetch.
      */
     private void fetch() {
-        securityContext.asProcessingUser(()-> {
+        securityContext.asProcessingUser(() -> {
             try {
                 if (!stopped.get()) {
                     // Only allow one set of tasks to be fetched at any one time.
                     if (fetchingTasks.compareAndSet(false, true)) {
                         if (!stopping.get()) {
-                            final GenericServerTask genericServerTask = GenericServerTask.create("Fetch Tasks", "fetching tasks");
-                            genericServerTask.setRunnable(() -> {
+                            final TaskContext taskContext = taskContextProvider.get();
+                            Runnable runnable = () -> {
                                 try {
+                                    taskContext.setName("Fetch Tasks");
+                                    taskContext.info(() -> "fetching tasks");
                                     LOGGER.trace("Trying to fetch tasks");
 
                                     // We will force a fetch if it has been more than one minute since
@@ -161,7 +170,7 @@ class DistributedTaskFetcher {
 
                                     // If there are some tasks we need to get then get them.
                                     if (count > 0 || forceFetch) {
-                                        final DistributedTaskRequestClusterTask request = new DistributedTaskRequestClusterTask(genericServerTask, "DistributedTaskRequestClusterTask", nodeName,
+                                        final DistributedTaskRequestClusterTask request = new DistributedTaskRequestClusterTask(null, "DistributedTaskRequestClusterTask", nodeName,
                                                 requiredTasks);
 
                                         if (LOGGER.isDebugEnabled()) {
@@ -209,19 +218,12 @@ class DistributedTaskFetcher {
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e.getMessage(), e);
                                 }
-                            });
+                            };
+                            runnable = taskContext.subTask(runnable);
+                            CompletableFuture
+                                    .runAsync(runnable, executor)
+                                    .whenComplete((r, t) -> afterFetch());
 
-                            taskManager.execAsync(genericServerTask, new TaskCallbackAdaptor<>() {
-                                @Override
-                                public void onSuccess(final VoidResult result) {
-                                    afterFetch();
-                                }
-
-                                @Override
-                                public void onFailure(final Throwable t) {
-                                    afterFetch();
-                                }
-                            });
                         } else {
                             stopped.set(true);
                         }
