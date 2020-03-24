@@ -83,12 +83,19 @@ class ResultSenderImpl implements ResultSender {
         });
 
         // Run the sending code asynchronously.
-        CompletableFuture.supplyAsync(supplier, executor)
-                .thenAccept(complete -> {
-                    if (complete) {
-                        // We have sent the last data we were expected to so tell the parent cluster search that we have finished sending data.
+        CompletableFuture
+                .supplyAsync(supplier, executor)
+                .whenComplete((complete, throwable) -> {
+                    if (throwable != null) {
+                        // If we failed to send the result or the source node rejected the result because the source
+                        // task has been terminated then terminate the task.
+                        LOGGER.info(() -> "Terminating search because we were unable to send result");
                         sendingData.complete();
-                        LOGGER.debug(() -> "sendingData is false");
+
+                    } else if (complete) {
+                        // We have sent the last data we were expected to so tell the parent cluster search that we have finished sending data.
+                        LOGGER.debug(() -> "complete");
+                        sendingData.complete();
 
                     } else {
                         // If we aren't complete then send more using the supplied sending frequency.
@@ -125,13 +132,6 @@ class ResultSenderImpl implements ResultSender {
                             sendingData.complete();
                         }
                     }
-                })
-                .exceptionally(t -> {
-                    // If we failed to send the result or the source node rejected the result because the source
-                    // task has been terminated then terminate the task.
-                    LOGGER.info(() -> "Terminating search because we were unable to send result");
-                    sendingData.complete();
-                    return null;
                 });
     }
 

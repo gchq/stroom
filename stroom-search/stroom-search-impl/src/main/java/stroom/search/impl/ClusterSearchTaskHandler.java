@@ -18,6 +18,10 @@
 package stroom.search.impl;
 
 import stroom.annotation.api.AnnotationDataSource;
+import stroom.cluster.task.api.ClusterResult;
+import stroom.cluster.task.api.ClusterTaskHandler;
+import stroom.cluster.task.api.ClusterTaskRef;
+import stroom.cluster.task.api.ClusterWorker;
 import stroom.pipeline.errorhandler.MessageUtil;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.search.coprocessor.CompletionState;
@@ -34,9 +38,7 @@ import stroom.search.resultsender.NodeResult;
 import stroom.search.resultsender.ResultSender;
 import stroom.search.resultsender.ResultSenderFactory;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskHandler;
 import stroom.task.api.TaskTerminatedException;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -48,9 +50,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeResult>, Consumer<Error> {
+class ClusterSearchTaskHandler implements ClusterTaskHandler<ClusterSearchTask, NodeResult>, Consumer<Error> {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterSearchTaskHandler.class);
 
+    private final ClusterWorker clusterWorker;
     private final TaskContext taskContext;
     private final CoprocessorsFactory coprocessorsFactory;
     private final IndexShardSearchFactory indexShardSearchFactory;
@@ -63,12 +66,14 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     private ClusterSearchTask task;
 
     @Inject
-    ClusterSearchTaskHandler(final TaskContext taskContext,
+    ClusterSearchTaskHandler(final ClusterWorker clusterWorker,
+                             final TaskContext taskContext,
                              final CoprocessorsFactory coprocessorsFactory,
                              final IndexShardSearchFactory indexShardSearchFactory,
                              final ExtractionDecoratorFactory extractionDecoratorFactory,
                              final ResultSenderFactory resultSenderFactory,
                              final SecurityContext securityContext) {
+        this.clusterWorker = clusterWorker;
         this.taskContext = taskContext;
         this.coprocessorsFactory = coprocessorsFactory;
         this.indexShardSearchFactory = indexShardSearchFactory;
@@ -78,9 +83,11 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
     }
 
     @Override
-    public void exec(final ClusterSearchTask task, final TaskCallback<NodeResult> callback) {
+    public void exec(final ClusterSearchTask task, final ClusterTaskRef<NodeResult> clusterTaskRef) {
         securityContext.useAsRead(() -> {
-            final Consumer<NodeResult> resultConsumer = callback::onSuccess;
+            final Consumer<NodeResult> resultConsumer = result ->
+                    clusterWorker.sendResult(ClusterResult.success(clusterTaskRef, result));
+
             CompletionState sendingDataCompletionState = new CompletionState();
             sendingDataCompletionState.complete();
 
@@ -117,7 +124,9 @@ class ClusterSearchTaskHandler implements TaskHandler<ClusterSearchTask, NodeRes
                     }
                 } catch (final RuntimeException e) {
                     try {
-                        callback.onFailure(e);
+                        // Send failure.
+                        clusterWorker.sendResult(ClusterResult.failure(clusterTaskRef, e));
+
                     } catch (final RuntimeException e2) {
                         // If we failed to send the result or the source node rejected the result because the source task has been terminated then terminate the task.
                         LOGGER.info(() -> "Terminating search because we were unable to send result");

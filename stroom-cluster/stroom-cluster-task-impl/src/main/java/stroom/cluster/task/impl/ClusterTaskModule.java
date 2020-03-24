@@ -21,9 +21,10 @@ import stroom.cluster.api.ClusterServiceBinder;
 import stroom.cluster.task.api.ClusterDispatchAsync;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.ClusterResultCollectorCache;
+import stroom.cluster.task.api.ClusterTaskHandlerBinder;
+import stroom.cluster.task.api.ClusterWorker;
 import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.cluster.task.api.TerminateTaskClusterTask;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 
@@ -33,13 +34,14 @@ public class ClusterTaskModule extends AbstractModule {
         bind(ClusterDispatchAsync.class).to(ClusterDispatchAsyncImpl.class);
         bind(ClusterDispatchAsyncHelper.class).to(ClusterDispatchAsyncHelperImpl.class);
         bind(ClusterResultCollectorCache.class).to(ClusterResultCollectorCacheImpl.class);
+        bind(ClusterWorker.class).to(ClusterWorkerImpl.class);
         bind(TargetNodeSetFactory.class).to(TargetNodeSetFactoryImpl.class);
 
         ClusterServiceBinder.create(binder())
                 .bind(ClusterDispatchAsyncImpl.SERVICE_NAME, ClusterDispatchAsyncImpl.class)
                 .bind(ClusterWorkerImpl.SERVICE_NAME, ClusterWorkerImpl.class);
 
-        TaskHandlerBinder.create(binder())
+        ClusterTaskHandlerBinder.create(binder())
                 .bind(TerminateTaskClusterTask.class, TerminateTaskClusterHandler.class);
 
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(ClusterResultCollectorCacheImpl.class);

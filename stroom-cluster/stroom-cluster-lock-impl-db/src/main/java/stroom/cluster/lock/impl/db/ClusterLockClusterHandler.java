@@ -18,8 +18,11 @@ package stroom.cluster.lock.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.task.api.ClusterResult;
+import stroom.cluster.task.api.ClusterTaskHandler;
+import stroom.cluster.task.api.ClusterTaskRef;
+import stroom.cluster.task.api.ClusterWorker;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.util.shared.ModelStringUtil;
 
 import javax.inject.Inject;
@@ -27,38 +30,50 @@ import javax.inject.Singleton;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-public class ClusterLockClusterHandler extends AbstractTaskHandler<ClusterLockClusterTask, Boolean> {
+public class ClusterLockClusterHandler implements ClusterTaskHandler<ClusterLockClusterTask, Boolean> {
     // 10 minutes
     private static final long TEN_MINUTES = 10 * 60 * 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockClusterHandler.class);
     private final ConcurrentHashMap<String, Lock> lockMap = new ConcurrentHashMap<>();
+
+    private final ClusterWorker clusterWorker;
     private final SecurityContext securityContext;
 
     @Inject
-    ClusterLockClusterHandler(final SecurityContext securityContext) {
+    ClusterLockClusterHandler(final ClusterWorker clusterWorker,
+                              final SecurityContext securityContext) {
+        this.clusterWorker = clusterWorker;
         this.securityContext = securityContext;
     }
 
     @Override
-    public Boolean exec(final ClusterLockClusterTask task) {
-        return securityContext.secureResult(() -> {
-            boolean success = false;
+    public void exec(final ClusterLockClusterTask task, final ClusterTaskRef<Boolean> clusterTaskRef) {
+        try {
+            final boolean result = securityContext.secureResult(() -> {
+                boolean success = false;
 
-            final ClusterLockKey clusterLockKey = task.getKey();
-            switch (task.getLockStyle()) {
-                case Try:
-                    success = tryLock(clusterLockKey);
-                    break;
-                case Release:
-                    success = release(clusterLockKey);
-                    break;
-                case KeepAlive:
-                    success = keepAlive(clusterLockKey);
-                    break;
-            }
+                final ClusterLockKey clusterLockKey = task.getKey();
+                switch (task.getLockStyle()) {
+                    case Try:
+                        success = tryLock(clusterLockKey);
+                        break;
+                    case Release:
+                        success = release(clusterLockKey);
+                        break;
+                    case KeepAlive:
+                        success = keepAlive(clusterLockKey);
+                        break;
+                }
 
-            return success;
-        });
+                return success;
+            });
+
+            clusterWorker.sendResult(ClusterResult.success(clusterTaskRef, result));
+
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
+            clusterWorker.sendResult(ClusterResult.failure(clusterTaskRef, e));
+        }
     }
 
     /**

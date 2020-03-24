@@ -23,8 +23,10 @@ import stroom.cluster.api.ClusterCallService;
 import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ServiceName;
 import stroom.cluster.task.api.ClusterDispatchAsync;
+import stroom.cluster.task.api.ClusterResult;
 import stroom.cluster.task.api.ClusterResultCollector;
 import stroom.cluster.task.api.ClusterTask;
+import stroom.cluster.task.api.ClusterTaskRef;
 import stroom.cluster.task.api.CollectorId;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.ExecutorProvider;
@@ -50,8 +52,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
     static final ServiceName SERVICE_NAME = new ServiceName("clusterDispatchAsync");
     static final String RECEIVE_RESULT_METHOD = "receiveResult";
     private static final ThreadPool THREAD_POOL = new SimpleThreadPool(5);
-    static final Class<?>[] RECEIVE_RESULT_METHOD_ARGS = {ClusterTask.class, String.class, TaskId.class,
-            CollectorId.class, Object.class, Throwable.class, Boolean.class};
+    static final Class<?>[] RECEIVE_RESULT_METHOD_ARGS = {ClusterResult.class};
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterDispatchAsyncImpl.class);
     private static final String RECEIVE_RESULT = "receiveResult";
 
@@ -166,37 +167,24 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
      * processed by the named collector in a new task thread so that result
      * consumption does not hold on to the HTTP connection.
      *
-     * @param task         The task that was executed on the target worker node.
-     * @param targetNode   The worker node that is returning the result.
-     * @param sourceTaskId The id of the parent task that owns this worker cluster task.
-     * @param collectorId  The id of the collector to send results back to.
-     * @param result       The result of the remote task execution.
-     * @param throwable    An exception that may have been thrown during remote task
-     *                     execution in the result of task failure.
-     * @param success      Whether or not the remote task executed successfully.
+     * @param clusterResult Result details.
      */
-    //This method is * executed by Guice using a named bean/method, hence 'unused' suppression
-    @SuppressWarnings({"unchecked", "unused"})
-    public <R> Boolean receiveResult(final ClusterTask<R> task,
-                                     final String targetNode,
-                                     final TaskId sourceTaskId,
-                                     final CollectorId collectorId,
-                                     final R result,
-                                     final Throwable throwable,
-                                     final Boolean success) {
+    @SuppressWarnings({"unchecked", "unused"}) // Called by hessian from a remote node
+    public <R> Boolean receiveResult(final ClusterResult<R> clusterResult) {
+        final ClusterTaskRef<R> ref = clusterResult.getClusterTaskRef();
         final AtomicBoolean successfullyReceived = new AtomicBoolean();
 
-        DebugTrace.debugTraceIn(task, RECEIVE_RESULT, success);
+        DebugTrace.debugTraceIn(ref.getTask(), RECEIVE_RESULT, clusterResult.isSuccess());
         try {
-            LOGGER.debug("{}() - {} {}", RECEIVE_RESULT, task, targetNode);
+            LOGGER.debug("{}() - {} {}", RECEIVE_RESULT, ref.getTask(), ref.getTargetNode());
 
             // Get the source id and check it is valid.
-            if (sourceTaskId == null) {
+            if (ref.getSourceTaskId() == null) {
                 throw new NullPointerException("No source id");
             }
 
             // Try and get an active task for this source task id.
-            if (taskManager.isTerminated(sourceTaskId)) {
+            if (taskManager.isTerminated(ref.getSourceTaskId())) {
                 // If we can't get an active source task then ignore the result
                 // as we don't want to keep using the collector as it might not
                 // have gone from the cache for some reason and we will just end
@@ -205,10 +193,10 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
 
             } else {
                 // See if we can get a collector for this result.
-                final ClusterResultCollector<R> collector = (ClusterResultCollector<R>) collectorCache.get(collectorId);
+                final ClusterResultCollector<R> collector = (ClusterResultCollector<R>) collectorCache.get(ref.getCollectorId());
                 if (collector == null) {
                     // There is no collector to receive this result.
-                    LOGGER.error("{}() - collector gone away - {} {}", RECEIVE_RESULT, task.getTaskName(), sourceTaskId);
+                    LOGGER.error("{}() - collector gone away - {} {}", RECEIVE_RESULT, ref.getTask().getTaskName(), ref.getSourceTaskId());
 
                 } else {
                     // Make sure the collector is happy to receive this result.
@@ -217,15 +205,15 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                     if (collector.onReceive()) {
                         // Build a task description.
                         final StringBuilder sb = new StringBuilder();
-                        if (success) {
+                        if (clusterResult.isSuccess()) {
                             sb.append("Receiving success from ");
                         } else {
                             sb.append("Receiving failure from ");
                         }
                         sb.append(" '");
-                        sb.append(targetNode);
+                        sb.append(ref.getTargetNode());
                         sb.append("' for task '");
-                        sb.append(task.getTaskName());
+                        sb.append(ref.getTask().getTaskName());
                         sb.append("'");
                         final String message = sb.toString();
 
@@ -236,17 +224,17 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
                                 taskContext.setName("Cluster result");
                                 taskContext.info(() -> message);
 
-                                if (success) {
-                                    collector.onSuccess(targetNode, result);
+                                if (clusterResult.isSuccess()) {
+                                    collector.onSuccess(ref.getTargetNode(), clusterResult.getResult());
                                 } else {
-                                    collector.onFailure(targetNode, throwable);
+                                    collector.onFailure(ref.getTargetNode(), clusterResult.getThrowable());
                                 }
                             } finally {
                                 if (LOGGER.isDebugEnabled()) {
-                                    LOGGER.debug("{}() - collector {} {} took {}", RECEIVE_RESULT, task.getTaskName(), sourceTaskId, logExecutionTime);
+                                    LOGGER.debug("{}() - collector {} {} took {}", RECEIVE_RESULT, ref.getTask().getTaskName(), ref.getSourceTaskId(), logExecutionTime);
                                 }
                                 if (logExecutionTime.getDuration() > 1000) {
-                                    LOGGER.warn("{}() - collector {} {} took {}", RECEIVE_RESULT, task.getTaskName(), sourceTaskId, logExecutionTime);
+                                    LOGGER.warn("{}() - collector {} {} took {}", RECEIVE_RESULT, ref.getTask().getTaskName(), ref.getSourceTaskId(), logExecutionTime);
                                 }
                             }
                         };
@@ -266,7 +254,7 @@ public class ClusterDispatchAsyncImpl implements ClusterDispatchAsync {
             LOGGER.error(MarkerFactory.getMarker("FATAL"), e.getMessage(), e);
 
         } finally {
-            DebugTrace.debugTraceOut(task, RECEIVE_RESULT, success);
+            DebugTrace.debugTraceOut(ref.getTask(), RECEIVE_RESULT, clusterResult.isSuccess());
         }
 
         return successfullyReceived.get();
