@@ -63,4 +63,11 @@ WHERE NAME IS NULL
 OR DASH_UUID IS NULL
 OR QUERY_ID IS NULL;
 
+\! echo 'Find IDX_SHRD records incorrectly linked to PUBLIC volumes. Should be zero.';
+
+SELECT COUNT(*)
+FROM OLD_IDX_SHRD s
+JOIN OLD_VOL v ON s.FK_VOL_ID = v.ID
+WHERE v.VOL_TP = 0;
+
 \! echo 'Finished';
