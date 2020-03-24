@@ -47,10 +47,10 @@ import stroom.security.api.SecurityContext;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
-import stroom.task.api.TaskCallbackAdaptor;
+import stroom.task.api.ExecutorProvider;
+import stroom.task.api.SimpleThreadPool;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskManager;
-import stroom.task.api.VoidResult;
+import stroom.task.shared.ThreadPool;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
@@ -70,7 +70,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -88,11 +90,14 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
     private static final int POLL_INTERVAL_MS = 10000;
     private static final int DELETE_INTERVAL_MS = POLL_INTERVAL_MS * 10;
+    private static final ThreadPool THREAD_POOL = new SimpleThreadPool(3);
 
     private final ProcessorFilterService processorFilterService;
     private final ProcessorFilterTrackerDao processorFilterTrackerDao;
     private final ProcessorTaskDao processorTaskDao;
-    private final TaskManager taskManager;
+    private final ExecutorProvider executorProvider;
+    private final Provider<TaskContext> taskContextProvider;
+    private final ProcessorTaskManager processorTaskManager;
     private final NodeInfo nodeInfo;
     private final ProcessorConfig processorConfig;
     private final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider;
@@ -141,7 +146,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
     ProcessorTaskManagerImpl(final ProcessorFilterService processorFilterService,
                              final ProcessorFilterTrackerDao processorFilterTrackerDao,
                              final ProcessorTaskDao processorTaskDao,
-                             final TaskManager taskManager,
+                             final ExecutorProvider executorProvider,
+                             final Provider<TaskContext> taskContextProvider,
+                             final ProcessorTaskManager processorTaskManager,
                              final NodeInfo nodeInfo,
                              final ProcessorConfig processorConfig,
                              final Provider<InternalStatisticsReceiver> internalStatisticsReceiverProvider,
@@ -151,7 +158,9 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
 
         this.processorFilterService = processorFilterService;
         this.processorFilterTrackerDao = processorFilterTrackerDao;
-        this.taskManager = taskManager;
+        this.executorProvider = executorProvider;
+        this.taskContextProvider = taskContextProvider;
+        this.processorTaskManager = processorTaskManager;
         this.nodeInfo = nodeInfo;
         this.processorTaskDao = processorTaskDao;
         this.processorConfig = processorConfig;
@@ -319,18 +328,22 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                     // See if it has been long enough since we last filled.
                     if (isScheduled()) {
                         LOGGER.debug("fillTaskStore() - Executing CreateStreamTasksTask");
-                        taskManager.execAsync(new CreateStreamTasksTask(), new TaskCallbackAdaptor<>() {
-                            @Override
-                            public void onSuccess(final VoidResult result) {
-                                scheduleNextPollMs();
-                                filling.set(false);
-                            }
 
-                            @Override
-                            public void onFailure(final Throwable t) {
-                                filling.set(false);
-                            }
-                        });
+                        final TaskContext taskContext = taskContextProvider.get();
+
+                        Runnable runnable = () ->
+                                securityContext.secure(() ->
+                                        processorTaskManager.createTasks(taskContext));
+                        runnable = taskContext.subTask(runnable);
+                        final Executor executor = executorProvider.get(THREAD_POOL);
+                        CompletableFuture
+                                .runAsync(runnable, executor)
+                                .whenComplete((r, t) -> {
+                                    if (t == null) {
+                                        scheduleNextPollMs();
+                                    }
+                                    filling.set(false);
+                                });
                     } else {
                         filling.set(false);
                     }
