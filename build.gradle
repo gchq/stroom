@@ -188,6 +188,7 @@ ext.libs = [
         guice_assistedinject           : "com.google.inject.extensions:guice-assistedinject:$versions.guice4",
         guice_extension                : "name.falgout.jeffrey.testing.junit5:guice-extension:1.1.1",
         guice_multibindings            : "com.google.inject.extensions:guice-multibindings:$versions.guice4",
+        guice_grapher                  : "com.google.inject.extensions:guice-grapher:$versions.guice4",
         gwt_dev                        : "com.google.gwt:gwt-dev:$versions.gwt",
         gwt_servlet                    : "com.google.gwt:gwt-servlet:$versions.gwt",
         gwt_user                       : "com.google.gwt:gwt-user:$versions.gwt",
