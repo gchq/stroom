@@ -18,14 +18,10 @@ package stroom.core.entity.event;
 
 import com.google.inject.AbstractModule;
 import stroom.cluster.task.api.ClusterTaskHandlerBinder;
-import stroom.task.api.TaskHandlerBinder;
 
 public class EntityClusterTaskModule extends AbstractModule {
     @Override
     protected void configure() {
-        TaskHandlerBinder.create(binder())
-                .bind(DispatchEntityEventTask.class, DispatchEntityEventTaskHandler.class);
-
         ClusterTaskHandlerBinder.create(binder())
                 .bind(ClusterEntityEventTask.class, ClusterEntityEventTaskHandler.class);
     }

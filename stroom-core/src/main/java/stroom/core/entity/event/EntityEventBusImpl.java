@@ -18,12 +18,18 @@ package stroom.core.entity.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
+import stroom.cluster.task.api.NodeNotFoundException;
+import stroom.cluster.task.api.NullClusterStateException;
+import stroom.cluster.task.api.TargetNodeSetFactory;
+import stroom.security.api.SecurityContext;
+import stroom.task.api.TaskContext;
+import stroom.task.api.VoidResult;
 import stroom.util.entityevent.EntityAction;
 import stroom.util.entityevent.EntityEvent;
 import stroom.util.entityevent.EntityEvent.Handler;
 import stroom.util.entityevent.EntityEventBus;
 import stroom.util.entityevent.EntityEventHandler;
-import stroom.task.api.TaskManager;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -33,6 +39,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 @Singleton
 class EntityEventBusImpl implements EntityEventBus {
@@ -41,14 +49,27 @@ class EntityEventBusImpl implements EntityEventBus {
     private volatile boolean initialised;
 
     private final Provider<Set<Handler>> entityEventHandlerProvider;
-    private final TaskManager taskManager;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
+    private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final TargetNodeSetFactory targetNodeSetFactory;
+    private final SecurityContext securityContext;
 
     private volatile boolean started = false;
 
     @Inject
-    EntityEventBusImpl(final Provider<Set<Handler>> entityEventHandlerProvider, final TaskManager taskManager) {
+    EntityEventBusImpl(final Provider<Set<Handler>> entityEventHandlerProvider,
+                       final Executor executor,
+                       final Provider<TaskContext> taskContextProvider,
+                       final ClusterDispatchAsyncHelper dispatchHelper,
+                       final TargetNodeSetFactory targetNodeSetFactory,
+                       final SecurityContext securityContext) {
         this.entityEventHandlerProvider = entityEventHandlerProvider;
-        this.taskManager = taskManager;
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
+        this.dispatchHelper = dispatchHelper;
+        this.targetNodeSetFactory = targetNodeSetFactory;
+        this.securityContext = securityContext;
     }
 
     void init() {
@@ -82,7 +103,10 @@ class EntityEventBusImpl implements EntityEventBus {
 
                 if (started) {
                     // Dispatch the entity event to all nodes in the cluster.
-                    taskManager.execAsync(new DispatchEntityEventTask(event));
+                    final TaskContext taskContext = taskContextProvider.get();
+                    Runnable runnable = () -> exec(event);
+                    runnable = taskContext.subTask(runnable);
+                    CompletableFuture.runAsync(runnable, executor);
                 }
             }
         } catch (final RuntimeException e) {
@@ -189,5 +213,30 @@ class EntityEventBusImpl implements EntityEventBus {
 
             initialised = true;
         }
+    }
+
+    public VoidResult exec(final EntityEvent entityEvent) {
+        return securityContext.secureResult(() -> {
+            try {
+                // Get this node.
+                final String sourceNode = targetNodeSetFactory.getSourceNode();
+
+                // Get the nodes that we are going to send the entity event to.
+                final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+
+                // Only send the event to remote nodes and not this one.
+                targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {
+                    // Send the entity event.
+                    final ClusterEntityEventTask clusterEntityEventTask = new ClusterEntityEventTask(entityEvent);
+                    dispatchHelper.execAsync(clusterEntityEventTask, targetNode);
+                });
+            } catch (final NullClusterStateException | NodeNotFoundException e) {
+                LOGGER.warn(e.getMessage());
+                LOGGER.debug(e.getMessage(), e);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+            return VoidResult.INSTANCE;
+        });
     }
 }
