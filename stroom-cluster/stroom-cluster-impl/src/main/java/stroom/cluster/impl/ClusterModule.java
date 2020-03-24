@@ -23,7 +23,6 @@ import stroom.cluster.api.ClusterCallServiceRemote;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterServiceBinder;
 import stroom.util.entityevent.EntityEvent;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.ServletBinder;
 
 public class ClusterModule extends AbstractModule {
@@ -38,9 +37,6 @@ public class ClusterModule extends AbstractModule {
 
         ClusterServiceBinder.create(binder())
                 .bind(ClusterNodeManager.SERVICE_NAME, ClusterNodeManagerImpl.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(UpdateClusterStateTask.class, UpdateClusterStateTaskHandler.class);
 
         final Multibinder<EntityEvent.Handler> entityEventHandlerBinder = Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);
         entityEventHandlerBinder.addBinding().to(ClusterNodeManagerImpl.class);
