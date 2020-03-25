@@ -46,11 +46,7 @@ import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
-import javax.ws.rs.GET;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
@@ -147,7 +143,7 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
     }
 
     @Override
-    public Response fetchData(
+    public AbstractFetchDataResult fetchData(
             final @QueryParam("streamId") Long streamId,
             final @QueryParam("streamsOffset") Long streamsOffset,
             final @QueryParam("streamsLength") Long streamsLength,
@@ -175,8 +171,7 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                     null,
                     showAsHtml,
                     expandedSeverities);
-            return Response.ok(data).build();
-
+            return data;
         });
     }
 

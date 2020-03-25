@@ -31,7 +31,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 @Api(value = "xslt - /v1")
 @Path("/xslt" + ResourcePaths.V1)
@@ -57,11 +56,11 @@ public interface XsltResource extends RestResource, DirectRestService {
 
     @GET
     @Path("/{xsltId}")
-    Response fetch(@PathParam("xsltId") final String xsltId);
+    XsltDoc fetch(@PathParam("xsltId") final String xsltId);
 
     @POST
     @Path("/{xsltId}")
     @Consumes(MediaType.APPLICATION_JSON)
-    Response save(@PathParam("xsltId") final String xsltId,
+    void save(@PathParam("xsltId") final String xsltId,
                          final XsltDTO xsltDto);
 }

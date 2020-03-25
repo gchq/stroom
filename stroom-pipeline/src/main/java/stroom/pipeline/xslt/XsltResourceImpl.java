@@ -17,9 +17,6 @@
 package stroom.pipeline.xslt;
 
 import com.codahale.metrics.health.HealthCheck.Result;
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.pipeline.shared.XsltDTO;
@@ -35,7 +32,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 class XsltResourceImpl implements XsltResource, HasHealthCheck {
     private final XsltStore xsltStore;
@@ -65,13 +61,13 @@ class XsltResourceImpl implements XsltResource, HasHealthCheck {
 
     @GET
     @Path("/{xsltId}")
-    public Response fetch(@PathParam("xsltId") final String xsltId) {
+    public XsltDoc fetch(@PathParam("xsltId") final String xsltId) {
         return securityContext.secureResult(() -> {
             final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
             if (null != xsltDoc) {
-                return Response.ok(new XsltDTO(xsltDoc)).build();
+                return xsltDoc;
             } else {
-                return Response.status(Response.Status.NOT_FOUND).build();
+                return null;
             }
         });
     }
@@ -79,8 +75,8 @@ class XsltResourceImpl implements XsltResource, HasHealthCheck {
     @POST
     @Path("/{xsltId}")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Response save(@PathParam("xsltId") final String xsltId,
-                         final XsltDTO xsltDto) {
+    public void save(@PathParam("xsltId") final String xsltId,
+                     final XsltDTO xsltDto) {
         // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
         securityContext.useAsRead(() -> {
             final XsltDoc xsltDoc = xsltStore.readDocument(getDocRef(xsltId));
@@ -91,9 +87,8 @@ class XsltResourceImpl implements XsltResource, HasHealthCheck {
                 xsltStore.writeDocument(xsltDoc);
             }
         });
-
-        return Response.noContent().build();
     }
+    
     @Override
     public Result getHealth() {
         return Result.healthy();

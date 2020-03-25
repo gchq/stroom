@@ -34,7 +34,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import java.util.Set;
 
 @Api(value = "dictionary - /v1")
@@ -107,12 +106,12 @@ public interface DictionaryResource extends RestResource, DirectRestService {
     @GET
     @javax.ws.rs.Path("/{dictionaryUuid}")
     @Produces(MediaType.APPLICATION_JSON)
-    Response fetch(@PathParam("dictionaryUuid") final String dictionaryUuid);
+    DictionaryDTO fetch(@PathParam("dictionaryUuid") final String dictionaryUuid);
 
     @POST
     @javax.ws.rs.Path("/{dictionaryUuid}")
     @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
-    Response save(@PathParam("dictionaryUuid") final String dictionaryUuid,
+    void save(@PathParam("dictionaryUuid") final String dictionaryUuid,
                          final DictionaryDTO updates);
 }

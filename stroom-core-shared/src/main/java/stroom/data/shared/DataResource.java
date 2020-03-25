@@ -20,6 +20,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.meta.shared.FindMetaCriteria;
+import stroom.pipeline.shared.AbstractFetchDataResult;
 import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 import stroom.util.shared.ResourcePaths;
@@ -32,7 +33,6 @@ import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 
 @Api(value = "data - /v1")
 @Path("/data" + ResourcePaths.V1)
@@ -58,7 +58,7 @@ public interface DataResource extends RestResource, DirectRestService {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    Response fetchData(
+    AbstractFetchDataResult fetchData(
             final @QueryParam("streamId") Long streamId,
             final @QueryParam("streamsOffset") Long streamsOffset,
             final @QueryParam("streamsLength") Long streamsLength,

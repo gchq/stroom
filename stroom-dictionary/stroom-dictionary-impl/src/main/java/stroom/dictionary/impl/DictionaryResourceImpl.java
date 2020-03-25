@@ -37,7 +37,6 @@ import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.core.Response;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -123,14 +122,13 @@ class DictionaryResourceImpl implements DictionaryResource, HasHealthCheck {
         return DocumentData.toBase64EncodedDocumentData(new DocumentData(docRef, map));
     }
 
-    private Response fetchInScope(final String dictionaryUuid) {
+    private DictionaryDTO fetchInScope(final String dictionaryUuid) {
         final DictionaryDoc doc = dictionaryStore.readDocument(getDocRef(dictionaryUuid));
         final DictionaryDTO dto = new DictionaryDTO(doc);
-
-        return Response.ok(dto).build();
+        return dto;
     }
 
-    public Response fetch(@PathParam("dictionaryUuid") final String dictionaryUuid) {
+    public DictionaryDTO fetch(@PathParam("dictionaryUuid") final String dictionaryUuid) {
         // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
         return securityContext.useAsReadResult(() -> fetchInScope(dictionaryUuid));
     }
@@ -142,8 +140,8 @@ class DictionaryResourceImpl implements DictionaryResource, HasHealthCheck {
                 .build();
     }
 
-    public Response save(@PathParam("dictionaryUuid") final String dictionaryUuid,
-                         final DictionaryDTO updates) {
+    public void save(@PathParam("dictionaryUuid") final String dictionaryUuid,
+                     final DictionaryDTO updates) {
         System.out.println("DEBUG in save");
         // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
         securityContext.useAsRead(() -> {
@@ -156,8 +154,6 @@ class DictionaryResourceImpl implements DictionaryResource, HasHealthCheck {
                 dictionaryStore.writeDocument(doc);
             }
         });
-
-        return Response.noContent().build();
     }
 
 
