@@ -19,8 +19,6 @@ package stroom.core.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
-import stroom.cluster.task.api.TargetType;
 import stroom.core.entity.cluster.ClearableService;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
@@ -54,7 +52,6 @@ import stroom.statistics.api.InternalStatisticsReceiver;
 import stroom.task.api.AsyncExecutorHelper;
 import stroom.task.api.TaskContext;
 import stroom.task.api.VoidResult;
-import stroom.task.shared.Task;
 import stroom.util.Period;
 import stroom.util.date.DateUtil;
 import stroom.util.logging.LogExecutionTime;
@@ -121,7 +118,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         this.benchmarkClusterConfig = benchmarkClusterConfig;
     }
 
-    public void exec(final Task<?> task) {
+    public void exec() {
         info(() -> "Starting benchmark");
 
         // Find out what translation jobs are enabled and how many tasks are

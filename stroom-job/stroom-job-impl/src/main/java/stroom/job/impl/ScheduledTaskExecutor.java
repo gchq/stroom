@@ -20,11 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
 import stroom.job.api.ScheduledJob;
-import stroom.job.api.TaskConsumer;
 import stroom.job.shared.JobNode;
 import stroom.security.api.SecurityContext;
 import stroom.task.api.TaskContext;
-import stroom.task.shared.Task;
 import stroom.util.logging.LogExecutionTime;
 import stroom.util.scheduler.FrequencyScheduler;
 import stroom.util.scheduler.Scheduler;
@@ -55,7 +53,7 @@ class ScheduledTaskExecutor {
     private final ConcurrentHashMap<ScheduledJob, AtomicBoolean> runningMapOfScheduledJobs = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<ScheduledJob, Scheduler> schedulerMapOfScheduledJobs = new ConcurrentHashMap<>();
 
-    private final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap;
+    private final Map<ScheduledJob, Provider<Runnable>> scheduledJobsMap;
     private final JobNodeTrackerCache jobNodeTrackerCache;
     private final Executor executor;
     private final Provider<TaskContext> taskContextProvider;
@@ -66,7 +64,7 @@ class ScheduledTaskExecutor {
     private final long executionInterval;
 
     @Inject
-    ScheduledTaskExecutor(final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
+    ScheduledTaskExecutor(final Map<ScheduledJob, Provider<Runnable>> scheduledJobsMap,
                           final JobNodeTrackerCache jobNodeTrackerCache,
                           final Executor executor,
                           final Provider<TaskContext> taskContextProvider,
@@ -147,14 +145,16 @@ class ScheduledTaskExecutor {
                             taskContext.setName(taskName);
                             final LogExecutionTime logExecutionTime = new LogExecutionTime();
                             LOGGER.debug("exec() - >>> {}", taskName);
-                            function.exec(null);
+                            function.run();
                             LOGGER.debug("exec() - <<< {} took {}", taskName, logExecutionTime);
                         } catch (final RuntimeException e) {
-                            LOGGER.error(e.getMessage(), e);
+                            LOGGER.error("Error calling {}", taskName, e);
                         }
                     };
                     runnable = taskContext.subTask(runnable);
-                    CompletableFuture.runAsync(runnable, executor);
+                    CompletableFuture
+                            .runAsync(runnable, executor)
+                            .whenComplete((r, t) -> function.getRunning().set(false));
                 }
             } catch (final RuntimeException e) {
                 LOGGER.error(e.getMessage(), e);
@@ -198,11 +198,11 @@ class ScheduledTaskExecutor {
                     //TODO log trace
 //                    LOGGER.trace("Returning runnable for method: {} - {} - {}", methodReference, enabled, scheduler);
                     if (jobNodeTracker != null) {
-                        final Provider<TaskConsumer> consumerProvider = scheduledJobsMap.get(scheduledJob);
+                        final Provider<Runnable> consumerProvider = scheduledJobsMap.get(scheduledJob);
                         function = new JobNodeTrackedFunction(scheduledJob, consumerProvider.get(), running,
                                 jobNodeTracker);
                     } else {
-                        final Provider<TaskConsumer> consumerProvider = scheduledJobsMap.get(scheduledJob);
+                        final Provider<Runnable> consumerProvider = scheduledJobsMap.get(scheduledJob);
                         function = new ScheduledJobFunction(scheduledJob, consumerProvider.get(), running);
                     }
                 } else {
@@ -250,7 +250,7 @@ class ScheduledTaskExecutor {
         private final JobNodeTracker jobNodeTracker;
 
         JobNodeTrackedFunction(final ScheduledJob scheduledJob,
-                               final TaskConsumer consumer,
+                               final Runnable consumer,
                                final AtomicBoolean running,
                                final JobNodeTracker jobNodeTracker) {
             super(scheduledJob, consumer, running);
@@ -258,13 +258,13 @@ class ScheduledTaskExecutor {
         }
 
         @Override
-        public void exec(final Task<?> task) {
+        public void run() {
             try {
                 jobNodeTracker.incrementTaskCount();
                 try {
                     jobNodeTracker.setLastExecutedTime(System.currentTimeMillis());
                     try {
-                        super.exec(task);
+                        super.run();
                     } finally {
                         jobNodeTracker.setLastExecutedTime(System.currentTimeMillis());
                     }

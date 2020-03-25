@@ -71,7 +71,7 @@ class TestFileSystemStreamMaintenanceService extends AbstractCoreIntegrationTest
         Files.createFile(test1);
 
         assertThat(Files.exists(test1)).isTrue();
-        fileSystemCleanTaskExecutor.get().exec(new MockTask("Test"));
+        fileSystemCleanTaskExecutor.get().clean();
         assertThat(Files.exists(test1)).isFalse();
     }
 }

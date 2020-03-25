@@ -1,7 +1,7 @@
 package stroom.pipeline;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.TaskRunnable;
 import stroom.pipeline.destination.RollingDestinations;
 
 import javax.inject.Inject;
@@ -19,10 +19,10 @@ public class PipelineJobsModule extends ScheduledJobsModule {
                 .to(PipelineDestinationRoll.class);
     }
 
-    private static class PipelineDestinationRoll extends TaskConsumer {
+    private static class PipelineDestinationRoll extends TaskRunnable {
         @Inject
         PipelineDestinationRoll(final RollingDestinations rollingDestinations) {
-            super(task -> rollingDestinations.roll());
+            super(rollingDestinations::roll);
         }
     }
 }

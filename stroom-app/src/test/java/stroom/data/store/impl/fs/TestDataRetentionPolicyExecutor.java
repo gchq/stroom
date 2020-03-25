@@ -100,7 +100,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     void testCheckArchive() throws IOException {
         dataStoreServiceConfig.setFileSystemCleanOldAge(StroomDuration.ZERO);
         dataStoreServiceConfig.setDeletePurgeAge(StroomDuration.ZERO);
-        fileSystemCleanTaskExecutor.clean(new MockTask("Test"));
+        fileSystemCleanTaskExecutor.clean();
 
         final ZonedDateTime oldDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(SIXTY);
         final ZonedDateTime newDate = ZonedDateTime.now(ZoneOffset.UTC).minusDays(FIFTY);

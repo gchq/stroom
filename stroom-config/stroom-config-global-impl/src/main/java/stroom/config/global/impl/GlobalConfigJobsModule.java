@@ -1,7 +1,7 @@
 package stroom.config.global.impl;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.TaskRunnable;
 
 import javax.inject.Inject;
 
@@ -18,10 +18,10 @@ public class GlobalConfigJobsModule extends ScheduledJobsModule {
                 .to(PropertyCacheReload.class);
     }
 
-    private static class PropertyCacheReload extends TaskConsumer {
+    private static class PropertyCacheReload extends TaskRunnable {
         @Inject
         PropertyCacheReload(final GlobalConfigService globalConfigService) {
-            super(task -> globalConfigService.updateConfigObjects());
+            super(globalConfigService::updateConfigObjects);
         }
     }
 }

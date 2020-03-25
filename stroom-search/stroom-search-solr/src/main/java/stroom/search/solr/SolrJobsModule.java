@@ -1,7 +1,7 @@
 package stroom.search.solr;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.TaskRunnable;
 import stroom.search.solr.search.SolrSearchResponseCreatorManager;
 
 import javax.inject.Inject;
@@ -32,24 +32,24 @@ public class SolrJobsModule extends ScheduledJobsModule {
                 .to(SolrIndexOptimiseExecutorJob.class);
     }
 
-    private static class DataRetention extends TaskConsumer {
+    private static class DataRetention extends TaskRunnable {
         @Inject
         DataRetention(final SolrIndexRetentionExecutor dataRetentionExecutor) {
-            super(task -> dataRetentionExecutor.exec());
+            super(dataRetentionExecutor::exec);
         }
     }
 
-    private static class EvictExpiredElements extends TaskConsumer {
+    private static class EvictExpiredElements extends TaskRunnable {
         @Inject
         EvictExpiredElements(final SolrSearchResponseCreatorManager manager) {
-            super(task -> manager.evictExpiredElements());
+            super(manager::evictExpiredElements);
         }
     }
 
-    private static class SolrIndexOptimiseExecutorJob extends TaskConsumer {
+    private static class SolrIndexOptimiseExecutorJob extends TaskRunnable {
         @Inject
         SolrIndexOptimiseExecutorJob(final SolrIndexOptimiseExecutor executor) {
-            super(task -> executor.exec());
+            super(executor::exec);
         }
     }
 }

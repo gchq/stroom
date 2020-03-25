@@ -1,7 +1,7 @@
 package stroom.search.impl;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.TaskRunnable;
 
 import javax.inject.Inject;
 
@@ -18,10 +18,10 @@ public class SearchJobsModule extends ScheduledJobsModule {
                 .to(EvictExpiredElements.class);
     }
 
-    private static class EvictExpiredElements extends TaskConsumer {
+    private static class EvictExpiredElements extends TaskRunnable {
         @Inject
         EvictExpiredElements(final LuceneSearchResponseCreatorManager luceneSearchResponseCreatorManager) {
-            super(task -> luceneSearchResponseCreatorManager.evictExpiredElements());
+            super(luceneSearchResponseCreatorManager::evictExpiredElements);
         }
     }
 }

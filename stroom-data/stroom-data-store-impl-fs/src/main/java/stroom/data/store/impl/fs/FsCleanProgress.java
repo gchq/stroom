@@ -30,7 +30,6 @@ class FsCleanProgress {
     private final AtomicLong scanTooNewToDeleteCount = new AtomicLong();
     private final AtomicLong scanPending = new AtomicLong(0);
     private final AtomicLong scanComplete = new AtomicLong(0);
-    private final Queue<String> lineQueue = new ConcurrentLinkedQueue<>();
 
     FsCleanProgress() {
     }
@@ -40,7 +39,6 @@ class FsCleanProgress {
         scanFileCount.addAndGet(result.getFileCount());
         scanDeleteCount.addAndGet(result.getDeleteList().size());
         scanTooNewToDeleteCount.addAndGet(result.getTooNewToDeleteCount());
-        lineQueue.addAll(result.getDeleteList());
     }
 
     String traceInfo() {
@@ -69,17 +67,5 @@ class FsCleanProgress {
     void addScanComplete() {
         scanComplete.incrementAndGet();
         scanPending.decrementAndGet();
-    }
-
-//    long getScanPending() {
-//        return scanPending.get();
-//    }
-//
-//    long getScanComplete() {
-//        return scanComplete.get();
-//    }
-
-    Queue<String> getLineQueue() {
-        return lineQueue;
     }
 }

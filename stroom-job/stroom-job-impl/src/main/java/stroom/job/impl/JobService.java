@@ -20,7 +20,7 @@ package stroom.job.impl;
 
 import stroom.job.api.DistributedTaskFactoryDescription;
 import stroom.job.api.ScheduledJob;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.TaskRunnable;
 import stroom.job.shared.Job;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.PermissionNames;
@@ -49,7 +49,7 @@ class JobService {
     @Inject
     JobService(final JobDao jobDao,
                final SecurityContext securityContext,
-               final Map<ScheduledJob, Provider<TaskConsumer>> scheduledJobsMap,
+               final Map<ScheduledJob, Provider<TaskRunnable>> scheduledJobsMap,
                final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
         this.jobDao = jobDao;
         this.securityContext = securityContext;

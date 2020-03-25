@@ -1,7 +1,7 @@
 package stroom.core.benchmark;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskConsumer;
+import stroom.job.api.TaskRunnable;
 
 import javax.inject.Inject;
 
@@ -19,7 +19,7 @@ public class BenchmarkJobsModule extends ScheduledJobsModule {
                 .to(BenchmarkSystem.class);
     }
 
-    private static class BenchmarkSystem extends TaskConsumer {
+    private static class BenchmarkSystem extends TaskRunnable {
         @Inject
         BenchmarkSystem(final BenchmarkClusterExecutor benchmarkClusterExecutor) {
             super(benchmarkClusterExecutor::exec);

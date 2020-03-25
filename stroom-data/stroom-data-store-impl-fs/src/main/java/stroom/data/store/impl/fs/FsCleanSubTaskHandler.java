@@ -21,99 +21,128 @@ import org.slf4j.LoggerFactory;
 import stroom.data.store.impl.DataStoreMaintenanceService;
 import stroom.data.store.impl.ScanVolumePathResult;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
-import stroom.task.api.TaskCallbackAdaptor;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
+import stroom.task.api.ThreadPoolImpl;
+import stroom.task.shared.ThreadPool;
 import stroom.util.shared.ModelStringUtil;
-import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
+import javax.inject.Provider;
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executor;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 /**
  * Task to clean the stream store.
  */
 
-class FsCleanSubTaskHandler extends AbstractTaskHandler<FsCleanSubTask, VoidResult> {
+class FsCleanSubTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(FsCleanSubTaskHandler.class);
 
     private final DataStoreMaintenanceService streamMaintenanceService;
-    private final TaskContext taskContext;
+    private final ExecutorProvider executorProvider;
+    private final Provider<TaskContext> taskContextProvider;
     private final SecurityContext securityContext;
+    private final DataStoreServiceConfig config;
 
     @Inject
     FsCleanSubTaskHandler(final DataStoreMaintenanceService streamMaintenanceService,
-                          final TaskContext taskContext,
-                          final SecurityContext securityContext) {
+                          final ExecutorProvider executorProvider,
+                          final Provider<TaskContext> taskContextProvider,
+                          final SecurityContext securityContext,
+                          final DataStoreServiceConfig config) {
         this.streamMaintenanceService = streamMaintenanceService;
-        this.taskContext = taskContext;
+        this.executorProvider = executorProvider;
+        this.taskContextProvider = taskContextProvider;
         this.securityContext = securityContext;
+        this.config = config;
     }
 
-    @Override
-    public VoidResult exec(final FsCleanSubTask task) {
-        return securityContext.secureResult(() -> {
+    public void exec(final FsCleanSubTask task, final Consumer<List<String>> deleteListConsumer) {
+        securityContext.secure(() -> {
+            final TaskContext taskContext = taskContextProvider.get();
+            final ThreadPool threadPool = new ThreadPoolImpl("File System Clean#", 1, 1, config.getFileSystemCleanBatchSize(), Integer.MAX_VALUE);
+            final Executor executor = executorProvider.get(threadPool);
+
+            taskContext.setName("File system clean");
             taskContext.info(() -> "Cleaning: " + task.getVolume().getPath() + " - " + task.getPath());
 
             if (Thread.currentThread().isInterrupted()) {
                 LOGGER.info("exec() - Been asked to Quit");
-                return VoidResult.INSTANCE;
-            }
 
-            final ScanVolumePathResult result = streamMaintenanceService.scanVolumePath(
-                task.getVolume(),
-                task.getParentHandler().isDelete(),
-                task.getPath(),
-                task.getParentHandler().getOldAge());
+            } else {
+                final ScanVolumePathResult result = streamMaintenanceService.scanVolumePath(
+                        task.getVolume(),
+                        task.isDelete(),
+                        task.getPath(),
+                        task.getOldAge());
 
-            task.getTaskProgress().addResult(result);
+                task.getTaskProgress().addResult(result);
 
-            // Add a log line to indicate progress 1/3,44/100
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("createRunableForPath() -" + task.getLogPrefix() + "  - " + task.getPath() + ".  Scanned "
-                        + ModelStringUtil.formatCsv(result.getFileCount()) + " files, deleted "
-                        + ModelStringUtil.formatCsv(result.getDeleteList().size()) + ", too new to delete "
-                        + ModelStringUtil.formatCsv(result.getTooNewToDeleteCount()) + ".  Totals "
-                        + task.getTaskProgress().traceInfo());
-            }
+                // Write a list of all deleted items.
+                if (deleteListConsumer != null && result.getDeleteList() != null) {
+                    deleteListConsumer.accept(result.getDeleteList());
+                }
 
-            if (Thread.currentThread().isInterrupted()) {
-                LOGGER.info("exec() - Been asked to Quit");
-                return VoidResult.INSTANCE;
-            }
+                // Add a log line to indicate progress 1/3,44/100
+                if (LOGGER.isDebugEnabled()) {
+                    LOGGER.debug("createRunnableForPath() -" + task.getLogPrefix() + "  - " + task.getPath() + ".  Scanned "
+                            + ModelStringUtil.formatCsv(result.getFileCount()) + " files, deleted "
+                            + ModelStringUtil.formatCsv(result.getDeleteList().size()) + ", too new to delete "
+                            + ModelStringUtil.formatCsv(result.getTooNewToDeleteCount()) + ".  Totals "
+                            + task.getTaskProgress().traceInfo());
+                }
 
-            if (result.getChildDirectoryList() != null && result.getChildDirectoryList().size() > 0) {
-                // Add to the task steps remaining.
-                task.getTaskProgress().addScanPending(result.getChildDirectoryList().size());
+                if (Thread.currentThread().isInterrupted()) {
+                    LOGGER.info("exec() - Been asked to Quit");
 
-                for (final String subPath : result.getChildDirectoryList()) {
-                    final FsCleanSubTask subTask = new FsCleanSubTask(task.getParentHandler(),
-                            task.getParentTask(), task.getTaskProgress(), task.getVolume(), subPath, task.getLogPrefix());
-                    if (!Thread.currentThread().isInterrupted()) {
-                        task.getParentHandler().getAsyncTaskHelper().fork(subTask,
-                                new FileSystemCleanProgressCallback(task.getTaskProgress()));
+                } else {
+                    if (result.getChildDirectoryList() != null && result.getChildDirectoryList().size() > 0) {
+                        // Add to the task steps remaining.
+                        task.getTaskProgress().addScanPending(result.getChildDirectoryList().size());
+
+                        final CountDownLatch countDownLatch = new CountDownLatch(result.getChildDirectoryList().size());
+                        for (final String subPath : result.getChildDirectoryList()) {
+                            final FsCleanSubTask subTask = new FsCleanSubTask(task.getTaskProgress(), task.getVolume(), subPath, task.getLogPrefix(), task.getOldAge(), task.isDelete());
+                            Runnable runnable = () -> exec(subTask, deleteListConsumer);
+                            runnable = taskContext.subTask(runnable);
+                            CompletableFuture
+                                    .runAsync(runnable, executor)
+                                    .whenComplete((r, t) -> {
+                                        countDownLatch.countDown();
+                                        task.getTaskProgress().addScanComplete();
+                                    });
+                        }
+
+                        try {
+                            if (task.getPath().length() == 0) {
+                                while (!countDownLatch.await(1, TimeUnit.SECONDS)) {
+                                    final FsCleanProgress taskProgress = task.getTaskProgress();
+
+                                    taskContext.info(() -> task.getVolume().getPath() +
+                                            " (Scan Dir/File " +
+                                            taskProgress.getScanDirCount() +
+                                            "/" +
+                                            taskProgress.getScanFileCount() +
+                                            ", Del " +
+                                            taskProgress.getScanDeleteCount() +
+                                            ") ");
+                                }
+                            } else {
+                                countDownLatch.await();
+                            }
+                        } catch (final InterruptedException e) {
+                            // Continue to interrupt.
+                            Thread.currentThread().interrupt();
+                            LOGGER.debug(e.getMessage(), e);
+                        }
                     }
                 }
             }
-
-            return VoidResult.INSTANCE;
         });
-    }
-
-    private static class FileSystemCleanProgressCallback extends TaskCallbackAdaptor<VoidResult> {
-        private final FsCleanProgress taskProgress;
-
-        FileSystemCleanProgressCallback(final FsCleanProgress taskProgress) {
-            this.taskProgress = taskProgress;
-        }
-
-        @Override
-        public void onSuccess(final VoidResult result) {
-            taskProgress.addScanComplete();
-        }
-
-        @Override
-        public void onFailure(final Throwable t) {
-            taskProgress.addScanComplete();
-        }
     }
 }
