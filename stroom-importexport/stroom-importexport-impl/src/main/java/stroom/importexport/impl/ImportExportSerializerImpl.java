@@ -25,7 +25,9 @@ import stroom.explorer.api.ExplorerService;
 import stroom.explorer.shared.ExplorerConstants;
 import stroom.explorer.shared.ExplorerNode;
 import stroom.explorer.shared.PermissionInheritance;
+import stroom.importexport.api.NonExplorerDocRefProvider;
 import stroom.importexport.api.ImportExportActionHandler;
+import stroom.importexport.api.ImportExportDocumentEventLog;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
@@ -346,19 +348,34 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
     private void performExport(final Path dir, final DocRef docRef, final boolean omitAuditFields, final List<Message> messageList) throws IOException {
         final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(docRef.getType());
         if (importExportActionHandler != null) {
+
             LOGGER.debug("Exporting: " + docRef);
             final Map<String, byte[]> dataMap = importExportActionHandler.exportDocument(docRef, omitAuditFields, messageList);
+            final DocRef explorerDocRef;
+            final ExplorerNode explorerNode;
+            if (importExportActionHandler instanceof NonExplorerDocRefProvider){
+                //Find the closest docref to this one to give a location to export it.
+                NonExplorerDocRefProvider docRefProvider = (NonExplorerDocRefProvider) importExportActionHandler;
+                explorerDocRef = docRefProvider.findNearestExplorerDocRef(docRef);
 
-            // Get an explorer node for this doc ref.
-            final ExplorerNode explorerNode = explorerNodeService.getNode(docRef)
-                    .orElseThrow(() -> new RuntimeException("Unable to locate a '" + docRef + "' in explorer tree"));
+                if (explorerDocRef == null)
+                    throw new RuntimeException("Unable to locate suitable location for export, whilst exporting " + docRef);
+                else
+                    explorerNode = new ExplorerNode (docRef.getType(), docRef.getUuid(), docRefProvider.findNameOfDocRef(docRef), null);
+
+            } else {
+                explorerDocRef = docRef;
+                explorerNode = explorerNodeService.getNode(explorerDocRef).get();
+            }
 
             // Get the explorer path to this doc ref.
-            List<ExplorerNode> path = explorerNodeService.getPath(docRef);
-            // Turn the path into a list of strings but ignore any nodes that aren't folders, e.g. the root.
-            final List<String> pathElements = path.stream()
+            List<ExplorerNode> path = explorerNodeService.getPath(explorerDocRef);
+            List<String> pathElements = path.stream()
                     .filter(p -> ExplorerConstants.FOLDER.equals(p.getType()))
                     .map(ExplorerNode::getName).collect(Collectors.toList());
+
+            // Turn the path into a list of strings but ignore any nodes that aren't folders, e.g. the root.
+
             // Create directories for the path if not already created by another entity.
             final Path parentDir = createDirs(dir, pathElements);
 
@@ -370,6 +387,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             } else {
                 // Write a file for this explorer entry.
                 final String filePrefix = ImportExportFileNameUtil.createFilePrefix(docRef);
+
                 writeNodeProperties(explorerNode, pathElements, parentDir, filePrefix, messageList);
 
                 // Write out all associated data.
@@ -389,6 +407,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
             }
         }
     }
+
 
     private void writeNodeProperties(final ExplorerNode explorerNode, final List<String> pathElements, final Path parentDir, final String filePrefix, final List<Message> messageList) {
         final String fileName = filePrefix + ".node";

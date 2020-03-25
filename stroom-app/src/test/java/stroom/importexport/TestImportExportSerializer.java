@@ -32,6 +32,11 @@ import stroom.importexport.shared.ImportState.State;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.xmlschema.XmlSchemaStore;
+import stroom.processor.api.ProcessorFilterService;
+import stroom.processor.api.ProcessorService;
+import stroom.processor.shared.Processor;
+import stroom.processor.shared.ProcessorFilter;
+import stroom.processor.shared.QueryData;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
@@ -70,6 +75,10 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     private PipelineStore pipelineStore;
     @Inject
     private ExplorerService explorerService;
+    @Inject
+    private ProcessorService processorService;
+    @Inject
+    private ProcessorFilterService processorFilterService;
 
     private Set<DocRef> buildFindFolderCriteria() {
         final Set<DocRef> criteria = new HashSet<>();
@@ -150,6 +159,38 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
     }
 
     @Test
+    void testPipelineWithProcessorFilter() throws IOException {
+        final DocRef folder = explorerService.create(ExplorerConstants.FOLDER, FileSystemTestUtil.getUniqueTestString(), null, null);
+        final DocRef pipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "TestPipeline", folder, null);
+
+        final PipelineDoc pipeline = pipelineStore.readDocument(pipelineRef);
+
+
+        QueryData filterConstraints = new QueryData();
+
+        Processor processor = processorService.create(pipelineRef, true);
+
+//        ProcessorFilter filter = processorFilterService.create(processor,filterConstraints, 10, true);
+
+        HashSet<DocRef> forExport = new HashSet<DocRef>();
+
+        forExport.add (new DocRef(Processor.ENTITY_TYPE,processor.getUuid()));
+//        forExport.add (new DocRef(ProcessorFilter.ENTITY_TYPE,filter.getUuid()));
+
+
+        final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
+
+
+        System.err.println ("Exporting to " + testDataDir);
+        importExportSerializer.write(testDataDir, forExport, true, new ArrayList<>());
+
+
+        importExportSerializer.read(testDataDir, null, ImportMode.IGNORE_CONFIRMATION);
+
+        System.out.println ("Exported to " + testDataDir);
+    }
+
+    @Test
     void testPipeline() throws IOException {
         final DocRef folder = explorerService.create(ExplorerConstants.FOLDER, FileSystemTestUtil.getUniqueTestString(), null, null);
         final DocRef parentPipelineRef = explorerService.create(PipelineDoc.DOCUMENT_TYPE, "Parent", folder, null);
@@ -183,6 +224,8 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
 
         assertThat(pipelineStore.list().size()).isEqualTo(2);
     }
+
+
 
     @Test
     void test() throws IOException {

@@ -17,6 +17,7 @@
 package stroom.processor.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.importexport.api.ImportExportActionHandler;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
@@ -56,5 +57,10 @@ public class ProcessorModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(ProcessorTaskServiceImpl.class);
+
+        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
+                .addBinding(ProcessorImportExportHandlerImpl.class);
+
+
     }
 }

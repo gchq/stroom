@@ -1,0 +1,11 @@
+{
+  "version" : 0,
+  "createTimeMs" : 1585130605584,
+  "createUser" : "admin",
+  "updateTimeMs" : 1585130605584,
+  "updateUser" : "admin",
+  "uuid" : "b2d0d2ec-c426-4bf9-a9bc-8a7553d072c4",
+  "taskType" : "pipelineStreamProcessor",
+  "pipelineUuid" : "99dd2ba1-8a1f-4be1-9368-2ae67bfab970",
+  "enabled" : true
+}

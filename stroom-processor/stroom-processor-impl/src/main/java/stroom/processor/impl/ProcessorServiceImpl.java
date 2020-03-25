@@ -73,6 +73,7 @@ public class ProcessorServiceImpl implements ProcessorService {
         }
 
         AuditUtil.stamp(securityContext.getUserId(), processor);
+
         return securityContext.secureResult(PERMISSION, () ->
                 processorDao.create(processor));
     }

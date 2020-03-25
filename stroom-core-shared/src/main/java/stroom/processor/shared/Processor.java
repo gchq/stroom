@@ -17,6 +17,7 @@
 package stroom.processor.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -24,10 +25,13 @@ import stroom.docref.DocRef;
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasUuid;
 
+import javax.xml.bind.annotation.XmlRootElement;
 import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
+@XmlRootElement(name = "parameters")
 public class Processor implements HasAuditInfo, HasUuid {
+    public static final String ENTITY_TYPE = "Processor";
     private static final String PIPELINE_STREAM_PROCESSOR_TASK_TYPE = "pipelineStreamProcessor";
 
     // standard id, OCC and audit fields
@@ -202,7 +206,7 @@ public class Processor implements HasAuditInfo, HasUuid {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final Processor processor = (Processor) o;
-        return Objects.equals(id, processor.id);
+        return Objects.equals(id, processor.id)  || Objects.equals(uuid, processor.uuid) ;
     }
 
     @Override
