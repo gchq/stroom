@@ -343,10 +343,9 @@ public class NewUIExplorerResource implements RestResource {
             return false;
         }
 
-        final String type = explorerNode.getType();
         final String uuid = explorerNode.getDocRef().getUuid();
         for (final String permission : requiredPermissions) {
-            if (!securityContext.hasDocumentPermission(type, uuid, permission)) {
+            if (!securityContext.hasDocumentPermission(uuid, permission)) {
                 return false;
             }
         }

@@ -16,6 +16,13 @@
 
 package stroom.util.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
 import java.io.Serializable;
 
 /**
@@ -23,12 +30,30 @@ import java.io.Serializable;
  * means an open ended range. The upper bound is not included i.e. [0..10) means
  * 0,1,2,3,4,5,6,7,8,9 or this can be represented by the toString [0..9]
  */
+@JsonPropertyOrder({
+        "from",
+        "to",
+        "matchNull"
+})
+@JsonInclude(Include.NON_NULL)
 public class Range<T extends Number> implements Serializable, HasIsConstrained {
     private static final long serialVersionUID = -7405632565984023195L;
 
+    @JsonProperty
     T from;
+    @JsonProperty
     T to;
+    @JsonProperty
     boolean matchNull = false;
+
+    @JsonCreator
+    public Range(@JsonProperty("from") final T from,
+                 @JsonProperty("to") final T to,
+                 @JsonProperty("matchNull") final boolean matchNull) {
+        this.from = from;
+        this.to = to;
+        this.matchNull = matchNull;
+    }
 
     /**
      * Create a range with no upper or lower bound.
@@ -39,7 +64,7 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
 
     /**
      * @param from The start of the range (inclusive), or null for unbounded.
-     * @param to The end of the range (exclusive), or null for unbounded.
+     * @param to   The end of the range (exclusive), or null for unbounded.
      */
     public Range(final T from, final T to) {
         init(from, to);
@@ -47,7 +72,7 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
 
     /**
      * @param from The start of the range (inclusive), or null for unbounded.
-     * @param to The end of the range (exclusive), or null for unbounded.
+     * @param to   The end of the range (exclusive), or null for unbounded.
      */
     public static <T extends Number> Range<T> of(final T from, final T to) {
         return new Range<>(from, to);
@@ -55,6 +80,7 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
 
     /**
      * Create a {@link Range} with no upper bound.
+     *
      * @param from The start of the range (inclusive), or null for unbounded.
      */
     public static <T extends Number> Range<T> from(final T from) {
@@ -63,6 +89,7 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
 
     /**
      * Create a {@link Range} with no lower bound.
+     *
      * @param to The end of the range (exclusive), or null for unbounded.
      */
     public static <T extends Number> Range<T> to(final T to) {
@@ -71,7 +98,7 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
 
     /**
      * @param from The start of the range (inclusive), or null for unbounded.
-     * @param to The end of the range (exclusive), or null for unbounded.
+     * @param to   The end of the range (exclusive), or null for unbounded.
      */
     protected void init(final T from, final T to) {
         this.from = from;
@@ -152,6 +179,7 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
     /**
      * @return have we an upper and lower bound?
      */
+    @JsonIgnore
     public boolean isBounded() {
         return from != null && to != null;
     }
@@ -159,6 +187,7 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
     /**
      * Are we empty ? i.e. the lower bound is the same as the upper one.
      */
+    @JsonIgnore
     public boolean isEmpty() {
         return isBounded() && from.longValue() >= to.longValue();
     }
@@ -180,6 +209,7 @@ public class Range<T extends Number> implements Serializable, HasIsConstrained {
     /**
      * @return have we an upper or lower bound or we are to just match null?
      */
+    @JsonIgnore
     @Override
     public boolean isConstrained() {
         return from != null || to != null || matchNull;

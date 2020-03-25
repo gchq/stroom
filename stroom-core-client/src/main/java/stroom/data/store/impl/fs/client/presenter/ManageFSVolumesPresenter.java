@@ -33,9 +33,7 @@ import stroom.node.client.view.WrapperView;
 import stroom.svg.client.SvgPresets;
 import stroom.widget.button.client.ButtonView;
 import stroom.widget.popup.client.event.ShowPopupEvent;
-import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
-import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
 
 import java.util.List;
@@ -72,24 +70,14 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
 
     @Override
     protected void onBind() {
-        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
-            @Override
-            public void onHide(final boolean autoClose, final boolean ok) {
-                refresh();
-            }
-        };
-
         registerHandler(volumeStatusListPresenter.getSelectionModel().addSelectionHandler(event -> {
             enableButtons();
             if (event.getSelectionType().isDoubleSelect()) {
-                open(popupUiHandlers);
+                edit();
             }
         }));
-        registerHandler(newButton.addClickHandler(event -> {
-            final FSVolumeEditPresenter editor = editProvider.get();
-            editor.addVolume(new FsVolume(), popupUiHandlers);
-        }));
-        registerHandler(openButton.addClickHandler(event -> open(popupUiHandlers)));
+        registerHandler(newButton.addClickHandler(event -> add()));
+        registerHandler(openButton.addClickHandler(event -> edit()));
         registerHandler(deleteButton.addClickHandler(event -> delete()));
         registerHandler(rescanButton.addClickHandler(event -> {
             final Rest<Boolean> rest = restFactory.create();
@@ -97,15 +85,35 @@ public class ManageFSVolumesPresenter extends MyPresenter<WrapperView, ManageFSV
         }));
     }
 
-    private void open(final PopupUiHandlers popupUiHandlers) {
+    private void add() {
+        final FSVolumeEditPresenter editor = editProvider.get();
+        editor.show(new FsVolume(), "Add Volume", added -> {
+            if (added != null) {
+                refresh();
+            }
+            editor.hide();
+        });
+    }
+
+    private void edit() {
         final FsVolume volume = volumeStatusListPresenter.getSelectionModel().getSelected();
         if (volume != null) {
             final Rest<FsVolume> rest = restFactory.create();
-            rest.onSuccess(result -> {
-                final FSVolumeEditPresenter editor = editProvider.get();
-                editor.editVolume(result, popupUiHandlers);
-            }).call(FS_VOLUME_RESOURCE).read(volume.getId());
+            rest
+                    .onSuccess(this::edit)
+                    .call(FS_VOLUME_RESOURCE)
+                    .read(volume.getId());
         }
+    }
+
+    private void edit(final FsVolume volume) {
+        final FSVolumeEditPresenter editor = editProvider.get();
+        editor.show(volume, "Edit Volume", result -> {
+            if (result != null) {
+                refresh();
+            }
+            editor.hide();
+        });
     }
 
     private void delete() {

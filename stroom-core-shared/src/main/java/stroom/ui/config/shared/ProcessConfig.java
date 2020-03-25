@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
+import java.util.Objects;
 
 @Singleton
 @JsonPropertyOrder({"defaultTimeLimit", "defaultRecordLimit"})
@@ -68,5 +69,19 @@ public class ProcessConfig extends AbstractConfig {
                 "defaultTimeLimit=" + defaultTimeLimit +
                 ", defaultRecordLimit=" + defaultRecordLimit +
                 '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ProcessConfig that = (ProcessConfig) o;
+        return defaultTimeLimit == that.defaultTimeLimit &&
+            defaultRecordLimit == that.defaultRecordLimit;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(defaultTimeLimit, defaultRecordLimit);
     }
 }

@@ -17,12 +17,12 @@
 package stroom.core.entity.cluster;
 
 import com.google.inject.AbstractModule;
-import stroom.task.api.TaskHandlerBinder;
+import stroom.cluster.task.api.ClusterTaskHandlerBinder;
 
 public class EntityClusterModule extends AbstractModule {
     @Override
     protected void configure() {
-        TaskHandlerBinder.create(binder())
+        ClusterTaskHandlerBinder.create(binder())
                 .bind(ClearServiceClusterTask.class, ClearServiceClusterHandler.class);
     }
 }

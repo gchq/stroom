@@ -75,7 +75,7 @@ public class NodeMonitoringPresenter extends ContentTabPresenter<DataGridView<No
             @Override
             protected void exec(final Consumer<FetchNodeStatusResponse> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                 final Rest<FetchNodeStatusResponse> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(NODE_RESOURCE).list();
+                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(NODE_RESOURCE).find();
             }
 
             @Override

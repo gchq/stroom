@@ -37,7 +37,6 @@ import stroom.query.shared.v2.ParamUtil;
 import stroom.search.api.EventRef;
 import stroom.search.api.EventRefs;
 import stroom.search.impl.EventSearchTask;
-import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskCallback;
 import stroom.task.api.TaskManager;
 import stroom.task.impl.ExecutorProviderImpl;

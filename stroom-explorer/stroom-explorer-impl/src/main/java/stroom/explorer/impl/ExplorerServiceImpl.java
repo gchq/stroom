@@ -169,7 +169,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
         if (childNodes != null) {
             childNodes.forEach(node -> {
                 if (node.getType().equals(type)) {
-                    if (securityContext.hasDocumentPermission(node.getType(), node.getUuid(), DocumentPermissionNames.USE)) {
+                    if (securityContext.hasDocumentPermission(node.getUuid(), DocumentPermissionNames.USE)) {
                         refs.add(node.getDocRef());
                     }
                 }
@@ -266,10 +266,9 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
             return false;
         }
 
-        final String type = explorerNode.getType();
         final String uuid = explorerNode.getDocRef().getUuid();
         for (final String permission : requiredPermissions) {
-            if (!securityContext.hasDocumentPermission(type, uuid, permission)) {
+            if (!securityContext.hasDocumentPermission(uuid, permission)) {
                 return false;
             }
         }
@@ -758,7 +757,7 @@ class ExplorerServiceImpl implements ExplorerService, CollectionService {
                 throw new PermissionException(securityContext.getUserId(), "Only administrators can create root level entries");
             }
         } else {
-            if (!securityContext.hasDocumentPermission(ExplorerConstants.FOLDER, folderUUID, DocumentPermissionNames.getDocumentCreatePermission(type))) {
+            if (!securityContext.hasDocumentPermission(folderUUID, DocumentPermissionNames.getDocumentCreatePermission(type))) {
                 throw new PermissionException(securityContext.getUserId(), "You do not have permission to create (" + type + ") in folder " + folderUUID);
             }
         }

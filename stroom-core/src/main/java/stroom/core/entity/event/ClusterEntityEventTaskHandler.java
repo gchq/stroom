@@ -18,14 +18,14 @@ package stroom.core.entity.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.task.api.TaskCallback;
-import stroom.task.api.TaskHandler;
+import stroom.cluster.task.api.ClusterTaskHandler;
+import stroom.cluster.task.api.ClusterTaskRef;
 import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 
 
-class ClusterEntityEventTaskHandler implements TaskHandler<ClusterEntityEventTask, VoidResult> {
+class ClusterEntityEventTaskHandler implements ClusterTaskHandler<ClusterEntityEventTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterEntityEventTaskHandler.class);
 
     private final EntityEventBusImpl entityEventBusImpl;
@@ -36,18 +36,11 @@ class ClusterEntityEventTaskHandler implements TaskHandler<ClusterEntityEventTas
     }
 
     @Override
-    public void exec(final ClusterEntityEventTask task, final TaskCallback<VoidResult> callback) {
+    public void exec(final ClusterEntityEventTask task, final ClusterTaskRef<VoidResult> clusterTaskRef) {
         try {
             entityEventBusImpl.fireLocally(task.getEntityEvent());
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
-        }
-
-        try {
-            callback.onSuccess(VoidResult.INSTANCE);
-        } catch (final RuntimeException e) {
-            // Ignore errors thrown returning result.
-            LOGGER.trace(e.getMessage(), e);
         }
     }
 }

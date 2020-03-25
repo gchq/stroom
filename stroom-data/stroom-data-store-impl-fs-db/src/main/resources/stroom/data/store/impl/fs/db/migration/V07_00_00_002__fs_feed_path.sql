@@ -36,9 +36,18 @@ DELIMITER //
 CREATE PROCEDURE copy_fs_feed_path ()
 BEGIN
     IF EXISTS (
-            SELECT TABLE_NAME
+            SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_NAME = 'FD') THEN
+
+        RENAME TABLE FD TO OLD_FD;
+    END IF;
+
+    -- Check again so it is idempotent
+    IF EXISTS (
+            SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'OLD_FD') THEN
 
         INSERT INTO fs_feed_path (
             id,
@@ -48,7 +57,7 @@ BEGIN
             ID,
             NAME,
             ID
-        FROM FD
+        FROM OLD_FD
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM fs_feed_path)
         ORDER BY ID;
 
@@ -60,9 +69,12 @@ BEGIN
         PREPARE alter_table_stmt FROM @alter_table_sql;
         EXECUTE alter_table_stmt;
     END IF;
+
 END//
 DELIMITER ;
 CALL copy_fs_feed_path();
 DROP PROCEDURE copy_fs_feed_path;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

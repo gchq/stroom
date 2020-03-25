@@ -37,8 +37,11 @@ import javax.ws.rs.core.MediaType;
 @Produces(MediaType.APPLICATION_JSON)
 public interface JobNodeResource extends RestResource, DirectRestService {
     String BASE_PATH = "/jobNode" + ResourcePaths.V1;
-    String INFO = "/info";
-    String INFO_PATH = BASE_PATH + INFO;
+    String INFO_PATH_PART = "/info";
+    String SCHEDULE_PATH_PART = "/schedule";
+    String ENABLED_PATH_PART = "/enabled";
+    String TASK_LIMIT_PATH_PART = "/taskLimit";
+    String INFO_PATH = BASE_PATH + INFO_PATH_PART;
 
     @GET
     @Consumes(MediaType.APPLICATION_JSON)
@@ -46,33 +49,35 @@ public interface JobNodeResource extends RestResource, DirectRestService {
     @ApiOperation(
             value = "Lists job nodes",
             response = ResultPage.class)
-    ResultPage<JobNode> list(@QueryParam("jobName") String jobName, @QueryParam("nodeName") String nodeName);
+    ResultPage<JobNode> list(@QueryParam("jobName") String jobName,
+                             @QueryParam("nodeName") String nodeName);
 
     @GET
-    @Path(INFO)
+    @Path(INFO_PATH_PART)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Gets current info for a job node",
             response = JobNodeInfo.class)
-    JobNodeInfo info(@QueryParam("jobName") String jobName, @QueryParam("nodeName") String nodeName);
+    JobNodeInfo info(@QueryParam("jobName") String jobName,
+                     @QueryParam("nodeName") String nodeName);
 
     @PUT
-    @Path("/{id}/taskLimit")
+    @Path("/{id}" + TASK_LIMIT_PATH_PART)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Sets the task limit for the job node")
     void setTaskLimit(@PathParam("id") Integer id, Integer taskLimit);
 
     @PUT
-    @Path("/{id}/schedule")
+    @Path("/{id}" + SCHEDULE_PATH_PART)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Sets the schedule job node")
     void setSchedule(@PathParam("id") Integer id, String schedule);
 
     @PUT
-    @Path("/{id}/enabled")
+    @Path("/{id}" + ENABLED_PATH_PART)
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(value = "Sets the enabled status of the job node")

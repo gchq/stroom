@@ -39,9 +39,18 @@ DELIMITER //
 CREATE PROCEDURE copy_fs_volume_state ()
 BEGIN
     IF EXISTS (
-            SELECT TABLE_NAME
+            SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_NAME = 'VOL_STATE') THEN
+
+        RENAME TABLE VOL_STATE TO OLD_VOL_STATE;
+    END IF;
+
+    -- Check again so it is idempotent
+    IF EXISTS (
+            SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'OLD_VOL_STATE') THEN
 
         INSERT INTO fs_volume_state (
             id,
@@ -57,7 +66,7 @@ BEGIN
             BYTES_FREE,
             BYTES_TOTL,
             STAT_MS
-        FROM VOL_STATE
+        FROM OLD_VOL_STATE
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM fs_volume_state)
         ORDER BY ID;
 
@@ -69,9 +78,12 @@ BEGIN
         PREPARE alter_table_stmt FROM @alter_table_sql;
         EXECUTE alter_table_stmt;
     END IF;
+
 END//
 DELIMITER ;
 CALL copy_fs_volume_state();
 DROP PROCEDURE copy_fs_volume_state;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

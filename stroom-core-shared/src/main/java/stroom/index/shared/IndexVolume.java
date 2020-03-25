@@ -16,8 +16,13 @@
 
 package stroom.index.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
-
 import stroom.util.shared.HasAuditInfo;
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.PrimitiveValueConverter;
@@ -25,28 +30,94 @@ import stroom.util.shared.PrimitiveValueConverter;
 /**
  * Some path on the network where we can store stuff.
  */
+@JsonPropertyOrder({
+        "id",
+        "version",
+        "createTimeMs",
+        "createUser",
+        "updateTimeMs",
+        "updateUser",
+        "path",
+        "nodeName",
+        "state",
+        "bytesLimit",
+        "bytesUsed",
+        "bytesFree",
+        "bytesTotal",
+        "statusMs",
+        "indexVolumeGroupId"
+})
+@JsonInclude(Include.NON_NULL)
 public class IndexVolume implements HasAuditInfo {
     private static final long TEN_GB = 10L * 1024L * 1024L * 1024L;
     private static final double NINETY_NINE_PERCENT = 0.99D;
     private static final double ONE_HUNDRED = 100D;
 
+    @JsonProperty
     private Integer id;
+    @JsonProperty
     private Integer version;
+    @JsonProperty
     private Long createTimeMs;
+    @JsonProperty
     private String createUser;
+    @JsonProperty
     private Long updateTimeMs;
+    @JsonProperty
     private String updateUser;
+    @JsonProperty
     private String path;
+    @JsonProperty
     private String nodeName;
+    @JsonProperty
     private VolumeUseState state = VolumeUseState.ACTIVE;
+    @JsonProperty
     private Long bytesLimit;
+    @JsonProperty
     private Long bytesUsed;
+    @JsonProperty
     private Long bytesFree;
+    @JsonProperty
     private Long bytesTotal;
+    @JsonProperty
     private Long statusMs;
-    private String indexVolumeGroupName;
+    @JsonProperty
+    private Integer indexVolumeGroupId;
 
     public IndexVolume() {
+    }
+
+    @JsonCreator
+    public IndexVolume(@JsonProperty("id") final Integer id,
+                       @JsonProperty("version") final Integer version,
+                       @JsonProperty("createTimeMs") final Long createTimeMs,
+                       @JsonProperty("createUser") final String createUser,
+                       @JsonProperty("updateTimeMs") final Long updateTimeMs,
+                       @JsonProperty("updateUser") final String updateUser,
+                       @JsonProperty("path") final String path,
+                       @JsonProperty("nodeName") final String nodeName,
+                       @JsonProperty("state") final VolumeUseState state,
+                       @JsonProperty("bytesLimit") final Long bytesLimit,
+                       @JsonProperty("bytesUsed") final Long bytesUsed,
+                       @JsonProperty("bytesFree") final Long bytesFree,
+                       @JsonProperty("bytesTotal") final Long bytesTotal,
+                       @JsonProperty("statusMs") final Long statusMs,
+                       @JsonProperty("indexVolumeGroupId") final Integer indexVolumeGroupId) {
+        this.id = id;
+        this.version = version;
+        this.createTimeMs = createTimeMs;
+        this.createUser = createUser;
+        this.updateTimeMs = updateTimeMs;
+        this.updateUser = updateUser;
+        this.path = path;
+        this.nodeName = nodeName;
+        this.state = state;
+        this.bytesLimit = bytesLimit;
+        this.bytesUsed = bytesUsed;
+        this.bytesFree = bytesFree;
+        this.bytesTotal = bytesTotal;
+        this.statusMs = statusMs;
+        this.indexVolumeGroupId = indexVolumeGroupId;
     }
 
     public Integer getId() {
@@ -101,12 +172,12 @@ public class IndexVolume implements HasAuditInfo {
         this.updateUser = updateUser;
     }
 
-    public String getIndexVolumeGroupName() {
-        return indexVolumeGroupName;
+    public Integer getIndexVolumeGroupId() {
+        return indexVolumeGroupId;
     }
 
-    public void setIndexVolumeGroupName(String indexVolumeGroupName) {
-        this.indexVolumeGroupName = indexVolumeGroupName;
+    public void setIndexVolumeGroupId(final Integer indexVolumeGroupId) {
+        this.indexVolumeGroupId = indexVolumeGroupId;
     }
 
     public static class Builder {
@@ -163,8 +234,8 @@ public class IndexVolume implements HasAuditInfo {
             return this;
         }
 
-        public Builder indexVolumeGroupName(final String groupName) {
-            instance.setIndexVolumeGroupName(groupName);
+        public Builder indexVolumeGroupId(final Integer indexVolumeGroupId) {
+            instance.setIndexVolumeGroupId(indexVolumeGroupId);
             return this;
         }
 
@@ -205,6 +276,7 @@ public class IndexVolume implements HasAuditInfo {
         this.bytesLimit = bytesLimit;
     }
 
+    @JsonIgnore
     public boolean isFull() {
         // If we haven't established how many bytes are used on a volume then
         // assume it is not full (could be dangerous but worst case we will get
@@ -263,6 +335,7 @@ public class IndexVolume implements HasAuditInfo {
         this.statusMs = statusMs;
     }
 
+    @JsonIgnore
     public Long getPercentUsed() {
         Long percent = null;
         if (bytesUsed != null && bytesTotal != null) {

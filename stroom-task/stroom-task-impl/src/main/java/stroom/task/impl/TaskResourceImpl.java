@@ -86,15 +86,16 @@ class TaskResourceImpl implements TaskResource, HasHealthCheck {
 
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
-                + ResourcePaths.buildAuthenticatedApiPath(
-                TaskResource.BASE_PATH,
-                nodeName);
+                    + ResourcePaths.buildAuthenticatedApiPath(
+                    TaskResource.BASE_PATH,
+                    TaskResource.FIND_PATH_PART,
+                    nodeName);
 
             try {
                 final Response response = webTargetFactory
-                    .create(url)
-                    .request(MediaType.APPLICATION_JSON)
-                    .post(Entity.json(request));
+                        .create(url)
+                        .request(MediaType.APPLICATION_JSON)
+                        .post(Entity.json(request));
 
                 if (response.getStatus() != 200) {
                     throw new WebApplicationException(response);
@@ -142,16 +143,16 @@ class TaskResourceImpl implements TaskResource, HasHealthCheck {
             }
         } else {
             final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
-                + ResourcePaths.buildAuthenticatedApiPath(
-                TaskResource.BASE_PATH,
-                nodeName,
-                "/terminate");
+                    + ResourcePaths.buildAuthenticatedApiPath(
+                    TaskResource.BASE_PATH,
+                    TaskResource.TERMINATE_PATH_PART,
+                    nodeName);
 
             try {
                 final Response response = webTargetFactory
-                    .create(url)
-                    .request(MediaType.APPLICATION_JSON)
-                    .post(Entity.json(request));
+                        .create(url)
+                        .request(MediaType.APPLICATION_JSON)
+                        .post(Entity.json(request));
                 if (response.getStatus() != 200) {
                     throw new WebApplicationException(response);
                 }

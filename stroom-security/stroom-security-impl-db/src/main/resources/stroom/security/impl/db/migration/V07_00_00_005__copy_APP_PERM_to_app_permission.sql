@@ -24,10 +24,28 @@ DROP PROCEDURE IF EXISTS copy_security;
 DELIMITER //
 CREATE PROCEDURE copy_security ()
 BEGIN
+    -- Can be run by multiple scripts
     IF EXISTS (
-            SELECT TABLE_NAME
+            SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_NAME = 'APP_PERM') THEN
+
+        RENAME TABLE APP_PERM TO OLD_APP_PERM;
+    END IF;
+
+    -- Can be run by multiple scripts
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'PERM') THEN
+
+        RENAME TABLE PERM TO OLD_PERM;
+    END IF;
+
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'OLD_APP_PERM') THEN
 
         INSERT INTO app_permission (
             user_uuid,
@@ -35,8 +53,8 @@ BEGIN
         SELECT
             ap.USR_UUID,
             p.NAME
-        FROM APP_PERM ap
-        JOIN PERM p ON (p.ID = ap.FK_PERM_ID)
+        FROM OLD_APP_PERM ap
+        JOIN OLD_PERM p ON (p.ID = ap.FK_PERM_ID)
         WHERE ap.ID > (SELECT COALESCE(MAX(id), 0) FROM app_permission)
         AND EXISTS (
             SELECT NULL
@@ -58,3 +76,5 @@ CALL copy_security();
 DROP PROCEDURE copy_security;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

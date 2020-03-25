@@ -22,6 +22,7 @@ import stroom.security.shared.User;
 import stroom.util.shared.ProvidesNamePattern;
 
 import java.util.List;
+import java.util.Set;
 
 public interface UserService extends ProvidesNamePattern {
     User createUser(String name);
@@ -42,11 +43,13 @@ public interface UserService extends ProvidesNamePattern {
 
     List<User> findGroupsForUser(String userUuid);
 
+    Set<String> findGroupUuidsForUser(String userUuid);
+
     List<User> findGroupsForUserName(String userName);
 
-    void addUserToGroup(String userUuid, String groupUuid);
+    Boolean addUserToGroup(String userUuid, String groupUuid);
 
-    void removeUserFromGroup(String userUuid, String groupUuid);
+    Boolean removeUserFromGroup(String userUuid, String groupUuid);
 
     List<String> getAssociates(String filter);
 }

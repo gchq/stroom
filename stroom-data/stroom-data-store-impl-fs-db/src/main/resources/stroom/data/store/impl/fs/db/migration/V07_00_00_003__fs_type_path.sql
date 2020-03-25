@@ -36,13 +36,22 @@ DELIMITER //
 CREATE PROCEDURE copy_fs_type_path ()
 BEGIN
     IF EXISTS (
-            SELECT TABLE_NAME
+            SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_NAME = 'STRM_TP') THEN
 
+        RENAME TABLE STRM_TP TO OLD_STRM_TP;
+    END IF;
+
+    -- Check again so it is idempotent
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'OLD_STRM_TP') THEN
+
         INSERT INTO fs_type_path (id, name, path)
         SELECT ID, NAME, PATH
-        FROM STRM_TP
+        FROM OLD_STRM_TP
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM fs_type_path)
         ORDER BY ID;
 
@@ -54,9 +63,12 @@ BEGIN
         PREPARE alter_table_stmt FROM @alter_table_sql;
         EXECUTE alter_table_stmt;
     END IF;
+
 END//
 DELIMITER ;
 CALL copy_fs_type_path();
 DROP PROCEDURE copy_fs_type_path;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

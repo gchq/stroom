@@ -11,7 +11,7 @@ import stroom.data.store.impl.DataRetentionJobModule;
 import stroom.data.store.impl.fs.FsDataStoreJobsModule;
 import stroom.data.store.impl.fs.FsVolumeJobsModule;
 import stroom.index.impl.IndexJobsModule;
-import stroom.index.impl.selection.VolumeJobsModule;
+import stroom.index.impl.IndexVolumeJobsModule;
 import stroom.meta.impl.MetaDbJobsModule;
 import stroom.pipeline.PipelineJobsModule;
 import stroom.pipeline.refdata.store.RefDataStoreJobsModule;
@@ -48,6 +48,6 @@ public class JobsModule extends AbstractModule {
         install(new stroom.node.impl.NodeJobsModule());
         install(new ProcessorTaskJobsModule());
         install(new ProxyAggregationJobsModule());
-        install(new VolumeJobsModule());
+        install(new IndexVolumeJobsModule());
     }
 }

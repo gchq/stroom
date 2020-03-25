@@ -34,9 +34,18 @@ DELIMITER //
 CREATE PROCEDURE copy_fs_meta_volume ()
 BEGIN
     IF EXISTS (
-            SELECT TABLE_NAME
+            SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_NAME = 'STRM_VOL') THEN
+
+        RENAME TABLE STRM_VOL TO OLD_STRM_VOL;
+    END IF;
+
+    -- Check again so it is idempotent
+    IF EXISTS (
+            SELECT TABLE_NAME
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'OLD_STRM_VOL') THEN
 
         INSERT INTO fs_meta_volume (
             meta_id,
@@ -44,13 +53,16 @@ BEGIN
         SELECT
             FK_STRM_ID,
             FK_VOL_ID
-        FROM STRM_VOL
+        FROM OLD_STRM_VOL
         WHERE FK_STRM_ID > (SELECT COALESCE(MAX(meta_id), 0) FROM fs_meta_volume)
         ORDER BY FK_STRM_ID;
     END IF;
+
 END//
 DELIMITER ;
 CALL copy_fs_meta_volume();
 DROP PROCEDURE copy_fs_meta_volume;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

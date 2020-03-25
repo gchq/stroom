@@ -5,6 +5,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
+
 @JsonInclude(Include.NON_NULL)
 public class BuildInfo extends AbstractConfig {
     @JsonProperty
@@ -39,5 +41,29 @@ public class BuildInfo extends AbstractConfig {
 
     public String getUpDate() {
         return upDate;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final BuildInfo buildInfo = (BuildInfo) o;
+        return Objects.equals(upDate, buildInfo.upDate) &&
+            Objects.equals(buildDate, buildInfo.buildDate) &&
+            Objects.equals(buildVersion, buildInfo.buildVersion);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(upDate, buildDate, buildVersion);
+    }
+
+    @Override
+    public String toString() {
+        return "BuildInfo{" +
+            "upDate='" + upDate + '\'' +
+            ", buildDate='" + buildDate + '\'' +
+            ", buildVersion='" + buildVersion + '\'' +
+            '}';
     }
 }

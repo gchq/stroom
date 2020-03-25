@@ -20,6 +20,7 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.security.api.DocumentPermissionCache;
 import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
 import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
@@ -41,14 +42,14 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
         cache = cacheManager.create(CACHE_NAME, authorisationConfig::getDocumentPermissionCache, this::create);
     }
 
-    private boolean create(final DocumentPermission k) {
-        return securityContext.insecureResult(() ->
-                securityContext.hasDocumentPermission(k.documentType, k.documentUuid, k.permission));
+    private boolean create(final DocumentPermission documentPermission) {
+        return securityContext.asUserResult(documentPermission.userIdentity, () ->
+                securityContext.hasDocumentPermission(documentPermission.documentUuid, documentPermission.permission));
     }
 
     @Override
-    public boolean hasDocumentPermission(final String documentType, final String documentUuid, final String permission) {
-        final DocumentPermission documentPermission = new DocumentPermission(securityContext.getUserId(), documentType, documentUuid, permission);
+    public boolean hasDocumentPermission(final String documentUuid, final String permission) {
+        final DocumentPermission documentPermission = new DocumentPermission(securityContext.getUserIdentity(), documentUuid, permission);
         return cache.get(documentPermission);
     }
 
@@ -58,14 +59,12 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
     }
 
     private static class DocumentPermission {
-        private final String userId;
-        private final String documentType;
+        private final UserIdentity userIdentity;
         private final String documentUuid;
         private final String permission;
 
-        DocumentPermission(final String userId, final String documentType, final String documentUuid, final String permission) {
-            this.userId = userId;
-            this.documentType = documentType;
+        DocumentPermission(final UserIdentity userIdentity, final String documentUuid, final String permission) {
+            this.userIdentity = userIdentity;
             this.documentUuid = documentUuid;
             this.permission = permission;
         }
@@ -75,15 +74,14 @@ class DocumentPermissionCacheImpl implements DocumentPermissionCache, Clearable 
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             final DocumentPermission that = (DocumentPermission) o;
-            return Objects.equals(userId, that.userId) &&
-                    Objects.equals(documentType, that.documentType) &&
+            return Objects.equals(userIdentity, that.userIdentity) &&
                     Objects.equals(documentUuid, that.documentUuid) &&
                     Objects.equals(permission, that.permission);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(userId, documentType, documentUuid, permission);
+            return Objects.hash(userIdentity, documentUuid, permission);
         }
     }
 }

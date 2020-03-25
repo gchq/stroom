@@ -22,31 +22,23 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
-@JsonPropertyOrder({"documentType", "documentId", "permission"})
+@JsonPropertyOrder({"documentUuid", "permission"})
 @JsonInclude(Include.NON_NULL)
 public class CheckDocumentPermissionRequest {
     @JsonProperty
-    private final String documentType;
-    @JsonProperty
-    private final String documentId;
+    private final String documentUuid;
     @JsonProperty
     private final String permission;
 
     @JsonCreator
-    public CheckDocumentPermissionRequest(@JsonProperty("documentType") final String documentType,
-                                          @JsonProperty("documentId") final String documentId,
+    public CheckDocumentPermissionRequest(@JsonProperty("documentUuid") final String documentUuid,
                                           @JsonProperty("permission") final String permission) {
-        this.documentType = documentType;
-        this.documentId = documentId;
+        this.documentUuid = documentUuid;
         this.permission = permission;
     }
 
-    public String getDocumentType() {
-        return documentType;
-    }
-
-    public String getDocumentId() {
-        return documentId;
+    public String getDocumentUuid() {
+        return documentUuid;
     }
 
     public String getPermission() {

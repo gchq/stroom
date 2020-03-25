@@ -42,7 +42,7 @@ public abstract class AbstractDocPool<K extends Doc, V> extends AbstractPoolCach
 
     @Override
     public PoolItem<V> borrowObject(final K key, final boolean usePool) {
-        if (!documentPermissionCache.hasDocumentPermission(key.getType(), key.getUuid(), DocumentPermissionNames.USE)) {
+        if (!documentPermissionCache.hasDocumentPermission(key.getUuid(), DocumentPermissionNames.USE)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to use " + key);
         }
 

@@ -17,67 +17,38 @@
 
 package stroom.index.mock;
 
-import stroom.index.impl.CreateVolumeDTO;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexVolumeService;
-import stroom.index.impl.UpdateVolumeDTO;
 import stroom.index.shared.IndexVolume;
-
-import java.util.List;
+import stroom.util.shared.ResultPage;
 
 public class MockIndexVolumeService implements IndexVolumeService {
-
     @Override
-    public IndexVolume create(CreateVolumeDTO createVolumeDTO) {
+    public ResultPage<IndexVolume> find(final ExpressionCriteria criteria) {
         return null;
     }
 
     @Override
-    public IndexVolume update(UpdateVolumeDTO updateVolumeDTO) {
+    public IndexVolume create(IndexVolume indexVolume) {
         return null;
     }
 
     @Override
-    public IndexVolume getById(int id) {
+    public IndexVolume read(final int id) {
         return null;
     }
 
     @Override
-    public void delete(int id) {
-
-    }
-
-    @Override
-    public List<IndexVolume> getAll() {
+    public IndexVolume update(IndexVolume updateVolumeDTO) {
         return null;
     }
 
-//    @Override
-//    public void addVolumeToGroup(int volumeId, String name) {
-//
-//    }
-//
-//    @Override
-//    public void removeVolumeFromGroup(int volumeId, String name) {
-//
-//    }
-//
-//    @Override
-//    public List<IndexVolume> getVolumesInGroup(String groupName) {
-//        return Collections.emptyList();
-//    }
-//
-//    @Override
-//    public List<IndexVolumeGroup> getGroupsForVolume(int id) {
-//        return Collections.emptyList();
-//    }
-
     @Override
-    public void clear() {
-
+    public Boolean delete(int id) {
+        return true;
     }
 
     @Override
-    public void flush() {
-
+    public void rescan() {
     }
 }

@@ -35,15 +35,25 @@ CREATE TABLE IF NOT EXISTS job (
 
 --
 -- Copy data into the job table
+-- MUST BE DONE HERE DUE TO NAME CLASH
 --
 DROP PROCEDURE IF EXISTS copy_job;
 DELIMITER //
 CREATE PROCEDURE copy_job ()
 BEGIN
     IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'JB') THEN
+
+        RENAME TABLE JB TO OLD_JB;
+    END IF;
+
+    -- Check again so it is idempotent
+    IF EXISTS (
         SELECT TABLE_NAME
         FROM INFORMATION_SCHEMA.TABLES
-        WHERE TABLE_NAME = 'JB') THEN
+        WHERE TABLE_NAME = 'OLD_JB') THEN
 
         INSERT INTO job (
             id,
@@ -63,7 +73,7 @@ BEGIN
             IFNULL(UPD_USER,  'UNKNOWN'),
             NAME,
             ENBL
-        FROM JB
+        FROM OLD_JB
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM job)
         ORDER BY ID;
 
@@ -81,4 +91,5 @@ CALL copy_job();
 DROP PROCEDURE copy_job;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
 -- vim: set tabstop=4 shiftwidth=4 expandtab:

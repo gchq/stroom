@@ -5,6 +5,7 @@ import stroom.docref.DocRef;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionUtil;
 
 public final class MetaExpressionUtil {
     private MetaExpressionUtil() {
@@ -12,7 +13,7 @@ public final class MetaExpressionUtil {
     }
 
     public static ExpressionOperator createSimpleExpression() {
-        return createSimpleExpression(MetaFields.STATUS, Condition.EQUALS, Status.UNLOCKED.getDisplayValue());
+        return ExpressionUtil.equals(MetaFields.STATUS, Status.UNLOCKED.getDisplayValue());
     }
 
     public static ExpressionOperator createSimpleExpression(final AbstractField field, final Condition condition, final String value) {
@@ -21,22 +22,8 @@ public final class MetaExpressionUtil {
                 .build();
     }
 
-//    public static ExpressionOperator createSimpleExpression(final TextField field, final Condition condition, final String value) {
-//        return new ExpressionOperator.Builder(Op.AND)
-//                .addTerm(field, condition, value)
-//                .build();
-//    }
-//
-//    public static ExpressionOperator createSimpleExpression(final DateField field, final Condition condition, final String value) {
-//        return new ExpressionOperator.Builder(Op.AND)
-//                .addTerm(field, condition, value)
-//                .build();
-//    }
-
     public static ExpressionOperator createStatusExpression(final Status status) {
-        return new ExpressionOperator.Builder(Op.AND)
-                .addTerm(MetaFields.STATUS, Condition.EQUALS, status.getDisplayValue())
-                .build();
+        return ExpressionUtil.equals(MetaFields.STATUS, status.getDisplayValue());
     }
 
     public static ExpressionOperator createDataIdExpression(final long id) {
