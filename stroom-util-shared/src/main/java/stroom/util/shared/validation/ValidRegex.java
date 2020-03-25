@@ -17,7 +17,8 @@ import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
 /**
  * Validation to ensure that the annotated value is a valid regex pattern
- * conforming to {@link java.util.regex.Pattern}.
+ * conforming to {@link java.util.regex.Pattern}. Null values will not
+ * fail validation.
  */
 @Target({ FIELD, METHOD, PARAMETER, ANNOTATION_TYPE, TYPE_USE })
 @Retention(RUNTIME)
