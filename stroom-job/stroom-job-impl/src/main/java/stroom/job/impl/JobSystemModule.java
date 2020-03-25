@@ -23,7 +23,6 @@ import stroom.job.api.JobManager;
 import stroom.job.api.ScheduledJobsModule;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.RestResource;
 
@@ -34,9 +33,6 @@ public class JobSystemModule extends AbstractModule {
         install(new ScheduledJobsModule());
 
         bind(JobManager.class).to(JobManagerImpl.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(ScheduledTask.class, ScheduledTaskHandler.class);
 
         ClusterTaskHandlerBinder.create(binder())
                 .bind(DistributedTaskRequestClusterTask.class, DistributedTaskRequestClusterHandler.class);

@@ -27,6 +27,7 @@ public class EntityEventModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(EntityEventBus.class).to(EntityEventBusImpl.class);
+        bind(EntityEventResource.class).to(EntityEventResourceImpl.class);
 
         // Ensure the multibinder is created.
         Multibinder.newSetBinder(binder(), EntityEvent.Handler.class);

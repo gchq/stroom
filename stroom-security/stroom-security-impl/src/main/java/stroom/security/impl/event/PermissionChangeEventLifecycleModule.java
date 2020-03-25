@@ -30,8 +30,8 @@ public class PermissionChangeEventLifecycleModule extends AbstractLifecycleModul
 
     private static class PermissionChangeEventBusInit extends RunnableWrapper {
         @Inject
-        PermissionChangeEventBusInit(final PermissionChangeEventBusImpl entityEventBus) {
-            super(entityEventBus::init);
+        PermissionChangeEventBusInit(final PermissionChangeEventBusImpl eventBus) {
+            super(eventBus::init);
         }
     }
 }

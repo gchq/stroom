@@ -21,6 +21,7 @@ import stroom.searchable.api.Searchable;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
+import stroom.task.shared.TaskResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.RestResource;
 
@@ -34,6 +35,7 @@ public class TaskModule extends AbstractModule {
         bind(Executor.class).toProvider(ExecutorProviderImpl.class);
         bind(TaskManager.class).to(TaskManagerImpl.class);
         bind(TaskContext.class).toProvider(TaskContextProvider.class);
+        bind(TaskResource.class).to(TaskResourceImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(TaskResourceImpl.class);

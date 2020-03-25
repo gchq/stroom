@@ -25,6 +25,7 @@ import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.event.PermissionChangeEvent.Handler;
 import stroom.task.api.TaskContext;
+import stroom.util.entityevent.EntityEvent;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -37,31 +38,29 @@ import java.util.concurrent.Executor;
 @Singleton
 class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
     private static final Logger LOGGER = LoggerFactory.getLogger(PermissionChangeEventBusImpl.class);
-    private final Set<Handler> handlers = new HashSet<>();
-    private volatile boolean initialised;
 
-    private final Provider<Set<PermissionChangeEvent.Handler>> handlerProvider;
-    private final ClusterDispatchAsyncHelper dispatchHelper;
-    private final TargetNodeSetFactory targetNodeSetFactory;
-    private final SecurityContext securityContext;
     private final Executor executor;
     private final Provider<TaskContext> taskContextProvider;
+    private final TargetNodeSetFactory targetNodeSetFactory;
+    private final SecurityContext securityContext;
+    private final PermissionChangeEventHandlers permissionChangeEventHandlers;
+    private final PermissionChangeResource permissionChangeResource;
 
     private volatile boolean started = false;
 
     @Inject
-    PermissionChangeEventBusImpl(final Provider<Set<Handler>> handlerProvider,
-                                 final ClusterDispatchAsyncHelper dispatchHelper,
+    PermissionChangeEventBusImpl(final Executor executor,
+                                 final Provider<TaskContext> taskContextProvider,
                                  final TargetNodeSetFactory targetNodeSetFactory,
                                  final SecurityContext securityContext,
-                                 final Executor executor,
-                                 final Provider<TaskContext> taskContextProvider) {
-        this.handlerProvider = handlerProvider;
-        this.dispatchHelper = dispatchHelper;
-        this.targetNodeSetFactory = targetNodeSetFactory;
-        this.securityContext = securityContext;
+                                 final PermissionChangeEventHandlers permissionChangeEventHandlers,
+                                 final PermissionChangeResource permissionChangeResource) {
         this.executor = executor;
         this.taskContextProvider = taskContextProvider;
+        this.targetNodeSetFactory = targetNodeSetFactory;
+        this.securityContext = securityContext;
+        this.permissionChangeEventHandlers = permissionChangeEventHandlers;
+        this.permissionChangeResource = permissionChangeResource;
     }
 
     void init() {
@@ -70,44 +69,21 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
 
     @Override
     public void fire(final PermissionChangeEvent event) {
-        fireGlobally(event);
+        if (started) {
+            fireGlobally(event);
+        }
     }
 
-    /**
-     * Fires the entity change to all nodes in the cluster.
-     */
-    public void fireGlobally(final PermissionChangeEvent event) {
+    private void fireGlobally(final PermissionChangeEvent event) {
         try {
             // Force a local update so that changes are immediately reflected
             // for the current user.
-            fireLocally(event);
+            permissionChangeEventHandlers.fireLocally(event);
 
             if (started) {
+                // Dispatch the entity event to all nodes in the cluster.
                 final TaskContext taskContext = taskContextProvider.get();
-                Runnable runnable = () -> {
-                    // Dispatch the entity event to all nodes in the cluster.
-                    securityContext.secure(() -> {
-                        try {
-                            // Get this node.
-                            final String sourceNode = targetNodeSetFactory.getSourceNode();
-
-                            // Get the nodes that we are going to send the entity event to.
-                            final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
-
-                            // Only send the event to remote nodes and not this one.
-                            targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {
-                                // Send the entity event.
-                                final ClusterPermissionChangeEventTask clusterEntityEventTask = new ClusterPermissionChangeEventTask(event);
-                                dispatchHelper.execAsync(clusterEntityEventTask, targetNode);
-                            });
-                        } catch (final NullClusterStateException | NodeNotFoundException e) {
-                            LOGGER.warn(e.getMessage());
-                            LOGGER.debug(e.getMessage(), e);
-                        } catch (final RuntimeException e) {
-                            LOGGER.error(e.getMessage(), e);
-                        }
-                    });
-                };
+                Runnable runnable = () -> fireRemote(event);
                 runnable = taskContext.subTask(runnable);
                 CompletableFuture.runAsync(runnable, executor);
             }
@@ -116,45 +92,26 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
         }
     }
 
-    public void fireLocally(final PermissionChangeEvent event) {
-        try {
-            final Set<PermissionChangeEvent.Handler> set = getHandlers();
-            for (final PermissionChangeEvent.Handler handler : set) {
-                try {
-                    handler.onChange(event);
-                } catch (final Exception e) {
-                    LOGGER.error("Unable to handle onChange event!", e);
-                }
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public void addHandler(final PermissionChangeEvent.Handler handler) {
-        handlers.add(handler);
-    }
-
-    private Set<PermissionChangeEvent.Handler> getHandlers() {
-        if (!initialised) {
-            initialise();
-        }
-
-        return handlers;
-    }
-
-    private synchronized void initialise() {
-        if (!initialised) {
+    private void fireRemote(final PermissionChangeEvent event) {
+        securityContext.secure(() -> {
             try {
-                for (final Handler handler : handlerProvider.get()) {
-                    addHandler(handler);
-                }
-            } catch (final RuntimeException e) {
-                LOGGER.error("Unable to initialise EntityEventBusImpl!", e);
-            }
+                // Get this node.
+                final String sourceNode = targetNodeSetFactory.getSourceNode();
 
-            initialised = true;
-        }
+                // Get the nodes that we are going to send the entity event to.
+                final Set<String> targetNodes = targetNodeSetFactory.getEnabledActiveTargetNodeSet();
+
+                // Only send the event to remote nodes and not this one.
+                targetNodes.stream().filter(targetNode -> !targetNode.equals(sourceNode)).forEach(targetNode -> {
+                    // Send the entity event.
+                    permissionChangeResource.fireChange(targetNode, new PermissionChangeRequest(event));
+                });
+            } catch (final NullClusterStateException | NodeNotFoundException e) {
+                LOGGER.warn(e.getMessage());
+                LOGGER.debug(e.getMessage(), e);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
+            }
+        });
     }
 }

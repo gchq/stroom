@@ -16,17 +16,17 @@
 
 package stroom.security.impl.event;
 
-import java.io.Serializable;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-public class ClearDocumentPermissionsEvent implements PermissionChangeEvent, Serializable {
-    private static final long serialVersionUID = -6646086368064417052L;
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ClearDocumentPermissionsEvent implements PermissionChangeEvent {
+    @JsonProperty
+    private final String documentUuid;
 
-    private String documentUuid;
-
-    public ClearDocumentPermissionsEvent() {
-    }
-
-    public ClearDocumentPermissionsEvent(final String documentUuid) {
+    @JsonCreator
+    public ClearDocumentPermissionsEvent(@JsonProperty("documentUuid") final String documentUuid) {
         this.documentUuid = documentUuid;
     }
 
