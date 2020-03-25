@@ -30,10 +30,9 @@ import stroom.data.store.api.TargetUtil;
 import stroom.data.store.impl.fs.DataVolumeDao.DataVolume;
 import stroom.docref.DocRef;
 import stroom.index.impl.selection.VolumeConfig;
-import stroom.job.impl.MockTask;
+import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaProperties;
 import stroom.node.api.NodeInfo;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -68,7 +67,7 @@ class TestDataRetentionPolicyExecutor extends AbstractCoreIntegrationTest {
     private Store streamStore;
     @Inject
     private DataVolumeService dataVolumeService;
-//    @Inject
+    //    @Inject
 //    private FeedStore feedStore;
     @Inject
     private FsCleanExecutor fileSystemCleanTaskExecutor;
