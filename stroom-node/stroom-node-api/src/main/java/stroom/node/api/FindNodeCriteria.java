@@ -37,6 +37,12 @@ public class FindNodeCriteria extends FindNamedEntityCriteria {
     public FindNodeCriteria() {
     }
 
+    public static FindNodeCriteria allEnabled() {
+        FindNodeCriteria criteria = new FindNodeCriteria();
+        criteria.setEnabled(true);
+        return criteria;
+    }
+
     @JsonCreator
     public FindNodeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                             @JsonProperty("sortList") final List<Sort> sortList,

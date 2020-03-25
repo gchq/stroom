@@ -18,19 +18,19 @@ import java.util.stream.Stream;
 @Singleton
 class DocumentTypePermissions {
     private static final Logger LOGGER = LoggerFactory.getLogger(DocumentTypePermissions.class);
-    private static final String[] STANDARD_PERMISSIONS = DocumentPermissionNames.DOCUMENT_PERMISSIONS;
-    private static final String[] DASHBOARD_PERMISSIONS = Stream.concat(Stream.of(STANDARD_PERMISSIONS), Stream.of("Download")).toArray(String[]::new);
+    private static final List<String> STANDARD_PERMISSIONS = List.of(DocumentPermissionNames.DOCUMENT_PERMISSIONS);
+    private static final List<String> DASHBOARD_PERMISSIONS = Stream.concat(STANDARD_PERMISSIONS.stream(), Stream.of("Download")).collect(Collectors.toList());
 
     private final ExplorerService explorerService;
 
-    private String[] folderPermissions;
+    private List<String> folderPermissions;
 
     @Inject
     DocumentTypePermissions(final ExplorerService explorerService) {
         this.explorerService = explorerService;
     }
 
-    String[] getPermissions(final String type) {
+    List<String> getPermissions(final String type) {
         if (DocumentTypes.isFolder(type)) {
             return getFolderPermissions();
         }
@@ -42,7 +42,7 @@ class DocumentTypePermissions {
         return STANDARD_PERMISSIONS;
     }
 
-    private String[] getFolderPermissions() {
+    private List<String> getFolderPermissions() {
         if (folderPermissions == null) {
             final List<String> permissionList = new ArrayList<>();
             try {
@@ -55,8 +55,8 @@ class DocumentTypePermissions {
                 LOGGER.error(e.getMessage(), e);
             }
 
-            permissionList.addAll(Arrays.asList(STANDARD_PERMISSIONS));
-            folderPermissions = permissionList.toArray(new String[0]);
+            permissionList.addAll(STANDARD_PERMISSIONS);
+            folderPermissions = permissionList;
         }
 
         return folderPermissions;

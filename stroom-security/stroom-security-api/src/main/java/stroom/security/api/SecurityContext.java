@@ -65,13 +65,12 @@ public interface SecurityContext {
      * permission on the document specified by the document type and document
      * id.
      *
-     * @param documentType The type of document.
-     * @param documentUuid The id of the document.
+     * @param documentUuid The uuid of the document.
      * @param permission   The permission we are checking for.
      * @return True if the user associated with the security context has the
      * requested permission.
      */
-    boolean hasDocumentPermission(String documentType, String documentUuid, String permission);
+    boolean hasDocumentPermission(String documentUuid, String permission);
 
     /**
      * Run the supplied code as the specified user.

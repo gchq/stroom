@@ -23,6 +23,7 @@ import event.logging.Query.Advanced;
 import stroom.event.logging.api.DocumentEventLog;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNodeInfo;
+import stroom.job.shared.JobNodeListResponse;
 import stroom.job.shared.JobNodeResource;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
@@ -32,7 +33,6 @@ import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
-import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.ws.rs.WebApplicationException;
@@ -63,8 +63,8 @@ class JobNodeResourceImpl implements JobNodeResource, HasHealthCheck {
     }
 
     @Override
-    public ResultPage<JobNode> list(final String jobName, final String nodeName) {
-        ResultPage<JobNode> response = null;
+    public JobNodeListResponse list(final String jobName, final String nodeName) {
+        JobNodeListResponse response = null;
 
         final Query query = new Query();
         final Advanced advanced = new Advanced();

@@ -16,6 +16,10 @@
 
 package stroom.util.shared;
 
+import java.util.Comparator;
+import java.util.Map;
+import java.util.Objects;
+
 public final class CompareUtil {
     private CompareUtil() {
     }
@@ -70,5 +74,50 @@ public final class CompareUtil {
             return +1;
         }
         return l1.compareToIgnoreCase(l2);
+    }
+
+    /**
+     * Convert a BaseCriteria into a Comparator
+     *
+     * e.g. of fieldComparatorsMap
+     *
+     * <pre>
+     * private static final Map<String, Comparator<DBTableStatus>> FIELD_COMPARATORS = Map.of(
+     *   DBTableStatus.FIELD_DATABASE, Comparator.comparing(
+     *     DBTableStatus::getDb,
+     *     String::compareToIgnoreCase),
+     *   DBTableStatus.FIELD_TABLE, Comparator.comparing(
+     *     DBTableStatus::getTable,
+     *     String::compareToIgnoreCase),
+     *   DBTableStatus.FIELD_ROW_COUNT, Comparator.comparing(DBTableStatus::getCount),
+     *   DBTableStatus.FIELD_DATA_SIZE, Comparator.comparing(DBTableStatus::getDataSize),
+     *   DBTableStatus.FIELD_INDEX_SIZE, Comparator.comparing(DBTableStatus::getIndexSize));
+     * </pre>
+     */
+    public static <T> Comparator<T> buildCriteriaComparator(
+        final Map<String, Comparator<T>> fieldComparatorsMap,
+        final BaseCriteria criteria) {
+
+        Objects.requireNonNull(fieldComparatorsMap);
+        Objects.requireNonNull(criteria);
+        Objects.requireNonNull(criteria.getSortList());
+
+        Comparator<T> comparator = Comparator.comparingInt(dbTableStatus -> 1);
+
+        for (final Sort sort : criteria.getSortList()) {
+            final String field = sort.getField();
+
+            Comparator<T> fieldComparator = fieldComparatorsMap.get(field);
+
+            Objects.requireNonNull(fieldComparator,() ->
+                "Missing comparator for field " + field);
+
+            if (sort.getDirection().equals(Sort.Direction.DESCENDING)) {
+                fieldComparator = fieldComparator.reversed();
+            }
+
+            comparator = comparator.thenComparing(fieldComparator);
+        }
+        return comparator;
     }
 }

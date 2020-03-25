@@ -19,7 +19,5 @@ public interface IndexVolumeGroupService {
 
     IndexVolumeGroup get(int id);
 
-    void delete(String name);
-
     void delete(int id);
 }

@@ -53,14 +53,33 @@ DROP PROCEDURE IF EXISTS copy_processor;
 DELIMITER //
 CREATE PROCEDURE copy_processor ()
 BEGIN
-    -- If table exists (it may not if this migration runs before core stroom's) then migrate its data,
-    -- if it doesn't exist then it won't ever have data to migrate
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_PROC' > 0) THEN
+    -- idempotent, doesn't matter if two scripts try to do this
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'STRM_PROC') THEN
+
+        RENAME TABLE STRM_PROC TO OLD_STRM_PROC;
+    END IF;
+
+    -- idempotent, doesn't matter if two scripts try to do this
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'PIPE') THEN
+
+        RENAME TABLE PIPE TO OLD_PIPE;
+    END IF;
+
+    -- Check again so it is idempotent
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'OLD_STRM_PROC') THEN
         --
         -- Copy data into the table, use ID predicate to make it re-runnable
         --
-        INSERT
-        INTO processor (
+        INSERT INTO processor (
             id,
             version,
             create_time_ms,
@@ -82,8 +101,8 @@ BEGIN
             SP.TASK_TP,
             P.UUID,
             SP.ENBL
-        FROM STRM_PROC SP
-        INNER JOIN PIPE P ON (P.ID = SP.FK_PIPE_ID)
+        FROM OLD_STRM_PROC SP
+        INNER JOIN OLD_PIPE P ON (P.ID = SP.FK_PIPE_ID)
         WHERE SP.ID > (SELECT COALESCE(MAX(id), 0) FROM processor)
         ORDER BY SP.ID;
 
@@ -95,6 +114,7 @@ BEGIN
         PREPARE alter_table_stmt FROM @alter_table_sql;
         EXECUTE alter_table_stmt;
     END IF;
+
 END//
 DELIMITER ;
 CALL copy_processor();

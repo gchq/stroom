@@ -8,6 +8,7 @@ import stroom.meta.shared.Meta;
 import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.Status;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
 import java.util.Optional;
@@ -18,15 +19,13 @@ public interface MetaDao extends Clearable {
 
     Meta create(MetaProperties metaProperties);
 
-    List<Meta> find(FindMetaCriteria criteria);
+    ResultPage<Meta> find(FindMetaCriteria criteria);
 
     void search(ExpressionCriteria criteria, AbstractField[] fields, Consumer<Val[]> consumer);
 
     Optional<Long> getMaxId(FindMetaCriteria criteria);
 
     int updateStatus(FindMetaCriteria criteria, Status newStatus, Status currentStatus, long statusTime);
-
-//    int delete(FindMetaCriteria criteria);
 
     int delete(List<Long> metaIdList);
 

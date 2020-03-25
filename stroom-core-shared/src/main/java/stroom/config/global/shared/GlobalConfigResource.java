@@ -20,28 +20,29 @@ import javax.ws.rs.core.MediaType;
 
 @Api(value = "config - /v1")
 @Path(GlobalConfigResource.BASE_PATH)
+@Consumes(MediaType.APPLICATION_JSON)
 @Produces(MediaType.APPLICATION_JSON)
 public interface GlobalConfigResource extends RestResource, DirectRestService {
     String BASE_PATH = "/config" + ResourcePaths.V1;
     String PROPERTIES_SUB_PATH = "/properties";
+    String NODE_PROPERTIES_SUB_PATH = "/nodeProperties";
     String YAML_OVERRIDE_VALUE_SUB_PATH = "/yamlOverrideValue";
     String DB_OVERRIDE_VALUE_SUB_PATH = "/dbOverrideValue";
     String CLUSTER_PROPERTIES_SUB_PATH = "/clusterProperties";
+    String FETCH_UI_CONFIG_SUB_PATH = "/fetchUiConfig";
 
     String PROP_NAME_PATH_PARAM = "/{propertyName}";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
     @GET
     @Path(PROPERTIES_SUB_PATH)
-    @Produces(MediaType.APPLICATION_JSON)
     ListConfigResponse list(
         final @QueryParam("partialName") String partialName,
         final @DefaultValue ("0") @QueryParam("offset") long offset,
         final @QueryParam("size") Integer size);
 
     @GET
-    @Path(NODE_NAME_PATH_PARAM + PROPERTIES_SUB_PATH)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Path(NODE_PROPERTIES_SUB_PATH + NODE_NAME_PATH_PARAM)
     ListConfigResponse listByNode(
         final @PathParam("nodeName") String nodeName,
         final @QueryParam("partialName") String partialName,
@@ -50,17 +51,15 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
 
     @GET
     @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM)
-    @Produces(MediaType.APPLICATION_JSON)
     ConfigProperty getPropertyByName(final @PathParam("propertyName") String propertyName);
 
-    @GET
-    @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH)
-    @Produces(MediaType.APPLICATION_JSON)
-    OverrideValue<String> getYamlValueByName(final @PathParam("propertyName") String propertyName);
+//    @GET
+//    @Path(PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH)
+//    @Produces(MediaType.APPLICATION_JSON)
+//    OverrideValue<String> getYamlValueByName(final @PathParam("propertyName") String propertyName);
 
     @GET
     @Path(CLUSTER_PROPERTIES_SUB_PATH + PROP_NAME_PATH_PARAM + YAML_OVERRIDE_VALUE_SUB_PATH + NODE_NAME_PATH_PARAM)
-    @Produces(MediaType.APPLICATION_JSON)
     OverrideValue<String> getYamlValueByNodeAndName(final @PathParam("propertyName") String propertyName,
                                                     final @PathParam("nodeName") String nodeName);
 
@@ -74,8 +73,6 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
 //    ResultPage<ConfigProperty> find(FindGlobalConfigCriteria criteria);
 
     @POST
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update a ConfigProperty",
             response = ConfigProperty.class)
@@ -83,8 +80,6 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
 
     @PUT
     @Path(CLUSTER_PROPERTIES_SUB_PATH + "/{propertyName}" + DB_OVERRIDE_VALUE_SUB_PATH)
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
             value = "Update a ConfigProperty",
             response = ConfigProperty.class)
@@ -92,9 +87,7 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
                           final ConfigProperty configProperty);
 
     @GET
-    @Path("/fetchUiConfig")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
+    @Path(FETCH_UI_CONFIG_SUB_PATH)
     @ApiOperation(
             value = "Get config property",
             response = UiConfig.class)

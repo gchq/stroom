@@ -12,8 +12,8 @@ import stroom.job.impl.db.jooq.tables.records.JobNodeRecord;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
+import stroom.job.shared.JobNodeListResponse;
 import stroom.util.shared.HasIntCrud;
-import stroom.util.shared.ResultPage;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
@@ -133,7 +133,7 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                 }));
     }
 
-    public ResultPage<JobNode> find(FindJobNodeCriteria criteria) {
+    public JobNodeListResponse find(FindJobNodeCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getStringCondition(JOB.NAME, criteria.getJobName()),
                 JooqUtil.getStringCondition(JOB_NODE.NODE_NAME, criteria.getNodeName()));
@@ -155,6 +155,6 @@ public class JobNodeDaoImpl implements JobNodeDao, HasIntCrud<JobNode> {
                     return jobNode;
                 }));
 
-        return ResultPage.createUnboundedList(list);
+        return JobNodeListResponse.createUnboundedJobeNodeResponse(list);
     }
 }

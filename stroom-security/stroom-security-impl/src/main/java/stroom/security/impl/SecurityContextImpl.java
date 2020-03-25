@@ -10,9 +10,9 @@ import stroom.security.shared.User;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
-import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Supplier;
 
 @Singleton
@@ -110,27 +110,27 @@ class SecurityContextImpl implements SecurityContext {
 
         // See if the user has permission.
         final User user = getUser(userIdentity);
-        boolean result = hasAppPermission(user, permission);
+        boolean result = hasAppPermission(user.getUuid(), permission);
 
         // If the user doesn't have the requested permission see if they are an admin.
         if (!result && !PermissionNames.ADMINISTRATOR.equals(permission)) {
-            result = hasAppPermission(user, PermissionNames.ADMINISTRATOR);
+            result = hasAppPermission(user.getUuid(), PermissionNames.ADMINISTRATOR);
         }
 
         return result;
     }
 
-    private boolean hasAppPermission(final User user, final String permission) {
+    private boolean hasAppPermission(final String userUuid, final String permission) {
         // See if the user has an explicit permission.
-        if (hasUserAppPermission(user, permission)) {
+        if (hasUserAppPermission(userUuid, permission)) {
             return true;
         }
 
         // See if the user belongs to a group that has permission.
-        final List<User> userGroups = userGroupsCache.get(user.getUuid());
-        if (userGroups != null) {
-            for (final User userGroup : userGroups) {
-                if (hasUserAppPermission(userGroup, permission)) {
+        final Set<String> userGroupUuids = userGroupsCache.get(userUuid);
+        if (userGroupUuids != null) {
+            for (final String userGroupUuid : userGroupUuids) {
+                if (hasUserAppPermission(userGroupUuid, permission)) {
                     return true;
                 }
             }
@@ -138,16 +138,16 @@ class SecurityContextImpl implements SecurityContext {
         return false;
     }
 
-    private boolean hasUserAppPermission(final User userRef, final String permission) {
-        final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
+    private boolean hasUserAppPermission(final String userUuid, final String permission) {
+        final Set<String> userAppPermissions = userAppPermissionsCache.get(userUuid);
         if (userAppPermissions != null) {
-            return userAppPermissions.getUserPermissons().contains(permission);
+            return userAppPermissions.contains(permission);
         }
         return false;
     }
 
     @Override
-    public boolean hasDocumentPermission(final String documentType, final String documentUuid, final String permission) {
+    public boolean hasDocumentPermission(final String documentUuid, final String permission) {
         // Let administrators do anything.
         if (isAdmin()) {
             return true;
@@ -168,20 +168,20 @@ class SecurityContextImpl implements SecurityContext {
         }
 
         final User user = getUser(userIdentity);
-        return hasDocumentPermission(user, documentUuid, perm);
+        return hasDocumentPermission(user.getUuid(), documentUuid, perm);
     }
 
-    private boolean hasDocumentPermission(final User user, final String documentUuid, final String permission) {
+    private boolean hasDocumentPermission(final String userUuid, final String documentUuid, final String permission) {
         // See if the user has an explicit permission.
-        if (hasUserDocumentPermission(user.getUuid(), documentUuid, permission)) {
+        if (hasUserDocumentPermission(userUuid, documentUuid, permission)) {
             return true;
         }
 
         // See if the user belongs to a group that has permission.
-        final List<User> userGroups = userGroupsCache.get(user.getUuid());
-        if (userGroups != null) {
-            for (final User userGroup : userGroups) {
-                if (hasUserDocumentPermission(userGroup.getUuid(), documentUuid, permission)) {
+        final Set<String> userGroupUuids = userGroupsCache.get(userUuid);
+        if (userGroupUuids != null) {
+            for (final String userGroupUuid : userGroupUuids) {
+                if (hasUserDocumentPermission(userGroupUuid, documentUuid, permission)) {
                     return true;
                 }
             }

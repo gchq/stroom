@@ -19,18 +19,25 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 --
 -- Rename the old ACTIVITY table
+-- MUST BE DONE HERE DUE TO NAME CLASH
 --
 DROP PROCEDURE IF EXISTS rename_activity;
 DELIMITER //
 CREATE PROCEDURE rename_activity ()
 BEGIN
-  IF EXISTS (
-          SELECT TABLE_NAME
-          FROM INFORMATION_SCHEMA.TABLES
-          WHERE TABLE_NAME = 'ACTIVITY') THEN
+    IF NOT EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'OLD_ACTIVITY') THEN
 
-      RENAME TABLE ACTIVITY TO OLD_ACTIVITY;
-  END IF;
+        IF EXISTS (
+                SELECT NULL
+                FROM INFORMATION_SCHEMA.TABLES
+                WHERE TABLE_NAME = 'ACTIVITY') THEN
+
+            RENAME TABLE ACTIVITY TO OLD_ACTIVITY;
+        END IF;
+    END IF;
 END//
 DELIMITER ;
 CALL rename_activity();
@@ -38,6 +45,7 @@ DROP PROCEDURE rename_activity;
 
 --
 -- Create the activity table
+-- MUST BE DONE HERE DUE TO NAME CLASH
 --
 CREATE TABLE IF NOT EXISTS activity (
   id                    int(11) NOT NULL AUTO_INCREMENT,
@@ -53,13 +61,14 @@ CREATE TABLE IF NOT EXISTS activity (
 
 --
 -- Copy data into the activity table
+-- MUST BE DONE HERE DUE TO NAME CLASH
 --
 DROP PROCEDURE IF EXISTS copy_activity;
 DELIMITER //
 CREATE PROCEDURE copy_activity ()
 BEGIN
     IF EXISTS (
-            SELECT TABLE_NAME
+            SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_NAME = 'OLD_ACTIVITY') THEN
 
@@ -99,3 +108,5 @@ CALL copy_activity();
 DROP PROCEDURE copy_activity;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

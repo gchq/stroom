@@ -40,7 +40,10 @@ import stroom.util.shared.Sort.Direction;
 
 import java.util.function.Consumer;
 
-public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataGridView<DBTableStatus>> implements ColumnSortEvent.Handler {
+public class DatabaseTablesMonitoringPresenter
+    extends ContentTabPresenter<DataGridView<DBTableStatus>>
+    implements ColumnSortEvent.Handler {
+
     private static final DbStatusResource DB_STATUS_RESOURCE = GWT.create(DbStatusResource.class);
 
     private final FindDBTableCriteria criteria;
@@ -50,35 +53,40 @@ public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataG
     public DatabaseTablesMonitoringPresenter(final EventBus eventBus, final RestFactory restFactory) {
         super(eventBus, new DataGridViewImpl<>(false, 1000));
 
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.FIELD_DATABASE, true) {
+        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
+            new TextCell(), DBTableStatus.FIELD_DATABASE, true) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return row.getDb();
             }
         }, DBTableStatus.FIELD_DATABASE, 200);
 
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.FIELD_TABLE, true) {
+        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
+            new TextCell(), DBTableStatus.FIELD_TABLE, true) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return row.getTable();
             }
         }, DBTableStatus.FIELD_TABLE, 200);
 
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.FIELD_ROW_COUNT, false) {
+        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
+            new TextCell(), DBTableStatus.FIELD_ROW_COUNT, false) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return ModelStringUtil.formatCsv(row.getCount());
             }
         }, DBTableStatus.FIELD_ROW_COUNT, 100);
 
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.FIELD_DATA_SIZE, false) {
+        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
+            new TextCell(), DBTableStatus.FIELD_DATA_SIZE, false) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return ModelStringUtil.formatIECByteSizeString(row.getDataSize());
             }
         }, DBTableStatus.FIELD_DATA_SIZE, 100);
 
-        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(new TextCell(), DBTableStatus.FIELD_INDEX_SIZE, false) {
+        getView().addResizableColumn(new OrderByColumn<DBTableStatus, String>(
+            new TextCell(), DBTableStatus.FIELD_INDEX_SIZE, false) {
             @Override
             public String getValue(final DBTableStatus row) {
                 return ModelStringUtil.formatIECByteSizeString(row.getIndexSize());
@@ -90,11 +98,16 @@ public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataG
         getView().addColumnSortHandler(this);
 
         criteria = new FindDBTableCriteria();
-        dataProvider = new RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>>(eventBus) {
+        dataProvider = new RestDataProvider<DBTableStatus, ResultPage<DBTableStatus>>(eventBus, criteria.obtainPageRequest()) {
             @Override
-            protected void exec(final Consumer<ResultPage<DBTableStatus>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
+            protected void exec(final Consumer<ResultPage<DBTableStatus>> dataConsumer,
+                                final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<DBTableStatus>> rest = restFactory.create();
-                rest.onSuccess(dataConsumer).onFailure(throwableConsumer).call(DB_STATUS_RESOURCE).findSystemTableStatus(criteria);
+                rest
+                    .onSuccess(dataConsumer)
+                    .onFailure(throwableConsumer)
+                    .call(DB_STATUS_RESOURCE)
+                    .findSystemTableStatus(criteria);
             }
         };
         dataProvider.addDataDisplay(getView().getDataDisplay());
@@ -107,9 +120,15 @@ public class DatabaseTablesMonitoringPresenter extends ContentTabPresenter<DataG
             final OrderByColumn<?, ?> orderByColumn = (OrderByColumn<?, ?>) event.getColumn();
             if (criteria != null) {
                 if (event.isSortAscending()) {
-                    criteria.setSort(orderByColumn.getField(), Direction.ASCENDING, orderByColumn.isIgnoreCase());
+                    criteria.setSort(
+                        orderByColumn.getField(),
+                        Direction.ASCENDING,
+                        orderByColumn.isIgnoreCase());
                 } else {
-                    criteria.setSort(orderByColumn.getField(), Direction.DESCENDING, orderByColumn.isIgnoreCase());
+                    criteria.setSort(
+                        orderByColumn.getField(),
+                        Direction.DESCENDING,
+                        orderByColumn.isIgnoreCase());
                 }
                 dataProvider.refresh();
             }

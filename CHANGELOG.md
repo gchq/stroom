@@ -6,9 +6,14 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
-## [v7.0-beta.23] - 2020-03-17
-
 * Update auth flow for auth-into-stroom integration
+
+## [v7.0-beta.23] - 2020-03-24
+
+
+* Rename all legacy DB tables to `OLD_`.
+
+* Issue **#1394** : Fix duplicate tables appearing in Monitoring -> Database Tables.
 
 * Add NodeEndpointConfiguration. Change `node` table to hold the base endpoint.
 

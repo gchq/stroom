@@ -9,6 +9,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
+import java.util.Objects;
 
 @Singleton
 @JsonPropertyOrder({"enabled", "title", "body", "version"})
@@ -86,5 +87,31 @@ public class SplashConfig extends AbstractConfig {
 
     public void setVersion(final String version) {
         this.version = version;
+    }
+
+    @Override
+    public String toString() {
+        return "SplashConfig{" +
+            "enabled=" + enabled +
+            ", title='" + title + '\'' +
+            ", body='" + body + '\'' +
+            ", version='" + version + '\'' +
+            '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final SplashConfig that = (SplashConfig) o;
+        return enabled == that.enabled &&
+            Objects.equals(title, that.title) &&
+            Objects.equals(body, that.body) &&
+            Objects.equals(version, that.version);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(enabled, title, body, version);
     }
 }

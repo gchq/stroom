@@ -34,7 +34,8 @@ public class GuiceUtil {
         }
 
         public MultiBinderBuilder<T_INTERFACE> addBindings(final Class<? extends T_INTERFACE>... implementationTypes) {
-            Arrays.stream(implementationTypes).forEach(implementationType -> multibinder.addBinding().to(implementationType));
+            Arrays.stream(implementationTypes)
+                .forEach(implementationType -> multibinder.addBinding().to(implementationType));
             return this;
         }
 

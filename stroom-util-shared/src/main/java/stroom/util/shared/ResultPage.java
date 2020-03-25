@@ -27,13 +27,16 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collector;
+import java.util.stream.Stream;
 
 /**
  * List that knows how big the whole set is.
@@ -228,6 +231,18 @@ public class ResultPage<T> implements Serializable {
         return pageResponse.isExact();
     }
 
+    public Stream<T> stream() {
+        return values.stream();
+    }
+
+    public Stream<T> parallelStream() {
+        return values.parallelStream();
+    }
+
+    public void forEach(final Consumer<? super T> action) {
+        values.forEach(action);
+    }
+
     private static <T, R extends ResultPage<T>> Collector<T, List<T>, R> createCollector(
             final PageRequest pageRequest,
             final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
@@ -246,11 +261,12 @@ public class ResultPage<T> implements Serializable {
                 return (accumulator, item) -> {
                     if (pageRequest == null
                             || (
-                            counter++ >= pageRequest.getOffset()
+                            counter >= pageRequest.getOffset()
                                     && accumulator.size() < pageRequest.getLength())) {
 
                         accumulator.add(item);
                     }
+                    counter++;
                 };
             }
 
@@ -281,6 +297,10 @@ public class ResultPage<T> implements Serializable {
         };
     }
 
+    /**
+     * Creates a collector that builds a sub class of a ResultPage, e.g.
+     *   .collect(ListConfigResponse.collector(pageRequest, ListConfigResponse::new));
+     */
     public static <T, R extends ResultPage<T>> Collector<T, List<T>, R> collector(
             final PageRequest pageRequest,
             final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
@@ -288,7 +308,49 @@ public class ResultPage<T> implements Serializable {
         return createCollector(pageRequest, resultPageFactory);
     }
 
+    /**
+     * Creates a collector that builds a sub class of a ResultPage, e.g.
+     *   .collect(ListConfigResponse.collector(ListConfigResponse::new));
+     */
+    public static <T, R extends ResultPage<T>> Collector<T, List<T>, R> collector(
+            final BiFunction<List<T>, PageResponse, R> resultPageFactory) {
+
+        return createCollector(null, resultPageFactory);
+    }
+
     public static <T> Collector<T, List<T>, ResultPage<T>> collector(final PageRequest pageRequest) {
         return createCollector(pageRequest, ResultPage::new);
+    }
+
+    public static <T, R extends ResultPage<T>> BinaryOperator<R> reducer(final Function<List<T>, R> resultPageFactory,
+                                                                         final Class<T> itemType) {
+        return (final R resultPage1, final R resultPage2) -> {
+            final List<T> combinedList = new ArrayList<>();
+            combinedList.addAll(resultPage1.getValues());
+            combinedList.addAll(resultPage2.getValues());
+            return resultPageFactory.apply(combinedList);
+        };
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ResultPage<?> that = (ResultPage<?>) o;
+        return Objects.equals(values, that.values) &&
+            Objects.equals(pageResponse, that.pageResponse);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(values, pageResponse);
+    }
+
+    @Override
+    public String toString() {
+        return "ResultPage{" +
+            "values=" + values +
+            ", pageResponse=" + pageResponse +
+            '}';
     }
 }

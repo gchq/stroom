@@ -7,9 +7,10 @@ dependencies {
     compile project(':stroom-cluster:stroom-cluster-task-api')
     compile project(':stroom-config:stroom-config-common')
     compile project(':stroom-core-shared')
-    compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-event-logging:stroom-event-logging-api')
+    compile project(':stroom-explorer:stroom-explorer-api')
     compile project(':stroom-lifecycle:stroom-lifecycle-api')
+    compile project(':stroom-node:stroom-node-api')
     compile project(':stroom-security:stroom-security-api')
     compile project(':stroom-task:stroom-task-api')
     compile project(':stroom-util')
@@ -31,9 +32,14 @@ dependencies {
     compile libs.swagger_annotations
     compile libs.ws_rs_api
 
+    testCompile project(':stroom-test-common')
     testCompile libs.assertj_core
+    testCompile libs.dropwizard_testing
     testCompile libs.hessian
     testCompile libs.junit_jupiter_api
+    testCompile libs.mockito_core
+    testCompile libs.mockito_junit_jupiter
+
 
     // The following logging libs are needed when running junits outside dropwizard
     testRuntimeOnly libs.javax_activation

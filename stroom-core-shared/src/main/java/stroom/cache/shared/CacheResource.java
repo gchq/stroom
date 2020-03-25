@@ -36,6 +36,7 @@ import java.util.List;
 @Produces(MediaType.APPLICATION_JSON)
 public interface CacheResource extends RestResource, DirectRestService {
     String BASE_PATH = "/cache" + ResourcePaths.V1;
+
     String INFO = "/info";
     String INFO_PATH = BASE_PATH + INFO;
 

@@ -17,6 +17,7 @@
 package stroom.job.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.cluster.task.api.ClusterTaskHandlerBinder;
 import stroom.event.logging.api.ObjectInfoProviderBinder;
 import stroom.job.api.JobManager;
 import stroom.job.api.ScheduledJobsModule;
@@ -35,8 +36,10 @@ public class JobSystemModule extends AbstractModule {
         bind(JobManager.class).to(JobManagerImpl.class);
 
         TaskHandlerBinder.create(binder())
-                .bind(DistributedTaskRequestClusterTask.class, DistributedTaskRequestClusterHandler.class)
                 .bind(ScheduledTask.class, ScheduledTaskHandler.class);
+
+        ClusterTaskHandlerBinder.create(binder())
+                .bind(DistributedTaskRequestClusterTask.class, DistributedTaskRequestClusterHandler.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(JobResourceImpl.class)

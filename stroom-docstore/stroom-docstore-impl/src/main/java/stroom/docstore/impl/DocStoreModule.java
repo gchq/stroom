@@ -14,7 +14,7 @@ public class DocStoreModule extends AbstractModule {
         requireBinding(Persistence.class);
         requireBinding(DocumentEventLog.class);
 
-        bind(DocumentResourceHelper.class).to(DocumentResourceHelperImpl.class);
+        bind(DocumentResourceHelper.class).to(LoggingDocumentResourceHelperImpl.class);
         bind(StoreFactory.class).to(StoreFactoryImpl.class);
         bind(Serialiser2Factory.class).to(Serialiser2FactoryImpl.class);
     }

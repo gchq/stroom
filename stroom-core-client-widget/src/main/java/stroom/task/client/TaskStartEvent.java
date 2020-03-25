@@ -24,6 +24,7 @@ public class TaskStartEvent extends GwtEvent<TaskStartEvent.TaskStartHandler> {
     private static Type<TaskStartHandler> TYPE;
     private final int taskCount;
     private final String message;
+
     private TaskStartEvent(final int taskCount, final String message) {
         this.taskCount = taskCount;
         this.message = message;

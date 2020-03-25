@@ -22,7 +22,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.dictionary.api.WordListProvider;
 import stroom.docref.DocRef;
-import stroom.meta.shared.ExpressionUtil;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.search.solr.search.SearchExpressionQueryBuilder;
 import stroom.search.solr.search.SearchExpressionQueryBuilder.SearchExpressionQuery;
 import stroom.search.solr.search.SolrSearchConfig;

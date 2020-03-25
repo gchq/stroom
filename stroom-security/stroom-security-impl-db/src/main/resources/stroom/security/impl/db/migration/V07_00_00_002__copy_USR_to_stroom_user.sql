@@ -25,9 +25,17 @@ DELIMITER //
 CREATE PROCEDURE copy_security ()
 BEGIN
     IF EXISTS (
-            SELECT TABLE_NAME
+            SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_NAME = 'USR') THEN
+
+        RENAME TABLE USR TO OLD_USR;
+    END IF;
+
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'OLD_USR') THEN
 
         INSERT INTO stroom_user (
             id,
@@ -51,7 +59,7 @@ BEGIN
             U.UUID,
             U.GRP,
             (CASE U.STAT WHEN 0 THEN true ELSE false END)
-        FROM USR U
+        FROM OLD_USR U
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM stroom_user)
         ORDER BY ID;
 
@@ -69,3 +77,5 @@ CALL copy_security();
 DROP PROCEDURE copy_security;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

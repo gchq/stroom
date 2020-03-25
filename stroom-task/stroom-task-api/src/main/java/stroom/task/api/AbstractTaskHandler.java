@@ -25,23 +25,28 @@ public abstract class AbstractTaskHandler<T extends Task<R>, R> implements TaskH
 
     @Override
     public void exec(final T task, final TaskCallback<R> callback) {
+        R result = null;
+        boolean success = false;
         try {
-            final R result = exec(task);
-            if (callback != null) {
-                try {
-                    callback.onSuccess(result);
-                } catch (final RuntimeException e) {
-                    // Ignore any errors that come from handling success.
-                    LOGGER.trace(e.getMessage(), e);
-                }
-            }
+            result = exec(task);
+            success = true;
         } catch (final RuntimeException e) {
             if (callback != null) {
-                LOGGER.debug(e.getMessage(), e);
+                LOGGER.trace(e.getMessage(), e);
                 callback.onFailure(e);
             } else {
                 LOGGER.error(e.getMessage(), e);
                 LOGGER.error("exec() - No Call back for error", e);
+            }
+        }
+
+        if (success && callback != null) {
+            try {
+                callback.onSuccess(result);
+            } catch (final RuntimeException e) {
+                // Ignore any errors that come from handling success.
+                LOGGER.trace(e.getMessage(), e);
+                throw e;
             }
         }
     }

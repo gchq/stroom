@@ -36,7 +36,7 @@ import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.processor.shared.ProcessorTaskResource;
 import stroom.processor.shared.ProcessorTaskSummary;
-import stroom.task.shared.ExpressionUtil;
+import stroom.task.shared.TaskExpressionUtil;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.ResultPage;
 import stroom.widget.popup.client.event.ShowPopupEvent;
@@ -125,7 +125,7 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
         getView().addEndColumn(new EndColumn<>());
 
         criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>>(eventBus) {
+        dataProvider = new RestDataProvider<ProcessorTaskSummary, ResultPage<ProcessorTaskSummary>>(eventBus, criteria.obtainPageRequest()) {
             @Override
             protected void exec(final Consumer<ResultPage<ProcessorTaskSummary>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<ProcessorTaskSummary>> rest = restFactory.create();
@@ -153,17 +153,17 @@ public class ProcessorTaskSummaryPresenter extends MyPresenterWidget<DataGridVie
     }
 
     private void setPipeline(final PipelineDoc pipelineEntity) {
-        criteria.setExpression(ExpressionUtil.createPipelineExpression(pipelineEntity));
+        criteria.setExpression(TaskExpressionUtil.createPipelineExpression(pipelineEntity));
         dataProvider.refresh();
     }
 
     private void setFeed(final String feed) {
-        criteria.setExpression(ExpressionUtil.createFeedExpression(feed));
+        criteria.setExpression(TaskExpressionUtil.createFeedExpression(feed));
         dataProvider.refresh();
     }
 
     private void setFolder(final DocRef folder) {
-        criteria.setExpression(ExpressionUtil.createFolderExpression(folder));
+        criteria.setExpression(TaskExpressionUtil.createFolderExpression(folder));
         dataProvider.refresh();
     }
 

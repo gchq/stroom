@@ -42,7 +42,20 @@ DROP PROCEDURE IF EXISTS copy_node;
 DELIMITER //
 CREATE PROCEDURE copy_node ()
 BEGIN
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'ND' > 0) THEN
+    -- Can be run by multiple scripts
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'ND') THEN
+
+        RENAME TABLE ND TO OLD_ND;
+    END IF;
+
+    IF EXISTS (
+            SELECT NULL 
+            FROM INFORMATION_SCHEMA.TABLES 
+            where TABLE_NAME = 'OLD_ND') THEN
+
         INSERT INTO node (
             id,
             version,
@@ -65,7 +78,7 @@ BEGIN
             NAME,
             PRIOR,
             ENBL
-        FROM ND
+        FROM OLD_ND
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM node)
         ORDER BY ID;
 
@@ -83,3 +96,5 @@ CALL copy_node();
 DROP PROCEDURE copy_node;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set tabstop=4 shiftwidth=4 expandtab:
