@@ -9,8 +9,8 @@ import stroom.security.impl.ValidationSeverity;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.AbstractConfig;
-import stroom.util.shared.validation.ValidCron;
 import stroom.util.shared.validation.ValidRegex;
+import stroom.util.shared.validation.ValidSimpleCron;
 
 import javax.inject.Inject;
 import javax.validation.constraints.AssertTrue;
@@ -31,7 +31,7 @@ public class TestConfigValidator {
 
         var myPojo = new MyPojoErrors();
 
-        ConfigValidator.Result result = configValidator.validate(myPojo);
+        ConfigValidator.Result result = configValidator.validateRecursively(myPojo);
         
         LOGGER.info(result.toString());
         result.handleViolations((constraintViolation, validationSeverity) -> {
@@ -39,10 +39,39 @@ public class TestConfigValidator {
         });
 
         Assertions.assertThat(result.getErrorCount()).isEqualTo(0);
+        Assertions.assertThat(result.getWarningCount()).isEqualTo(0);
     }
 
     @Test
-    void testMyPojo_errors() {
+    void testMyPojo_errors_recursive() {
+
+        final Injector injector = Guice.createInjector(new ValidationModule());
+        injector.injectMembers(this);
+
+        var myPojo = new MyPojoErrors();
+        myPojo.setBooleanValue(false);
+        myPojo.setRegexValue("(((");
+        myPojo.setCronValue("xxxxxxxxxxxxx");
+        myPojo.setIntValue(0);
+
+        myPojo.getChild().setBooleanValue(false);
+        myPojo.getChild().setRegexValue("(((");
+        myPojo.getChild().setCronValue("xxxxxxxxxxxxx");
+        myPojo.getChild().setIntValue(0);
+
+        ConfigValidator.Result result = configValidator.validateRecursively(myPojo);
+
+        LOGGER.info(result.toString());
+        result.handleViolations((constraintViolation, validationSeverity) -> {
+            LOGGER.info("{}, {}", validationSeverity, constraintViolation);
+        });
+
+        Assertions.assertThat(result.getErrorCount()).isEqualTo(4);
+        Assertions.assertThat(result.getWarningCount()).isEqualTo(4);
+    }
+
+    @Test
+    void testMyPojo_errors_nonRecursive() {
 
         final Injector injector = Guice.createInjector(new ValidationModule());
         injector.injectMembers(this);
@@ -66,7 +95,7 @@ public class TestConfigValidator {
         });
 
         Assertions.assertThat(result.getErrorCount()).isEqualTo(4);
-        Assertions.assertThat(result.getWarningCount()).isEqualTo(4);
+        Assertions.assertThat(result.getWarningCount()).isEqualTo(0);
     }
 
     @Test
@@ -100,6 +129,7 @@ public class TestConfigValidator {
         private int intValue = 100;
 
         private MyPojoWarnings child = new MyPojoWarnings();
+        private NoddyPojo childWithNoValidation = new NoddyPojo();
 
         @JsonProperty
         public MyPojoWarnings getChild() {
@@ -108,6 +138,15 @@ public class TestConfigValidator {
 
         public void setChild(final MyPojoWarnings child) {
             this.child = child;
+        }
+
+        @JsonProperty
+        public NoddyPojo getChildWithNoValidation() {
+            return childWithNoValidation;
+        }
+
+        public void setChildWithNoValidation(final NoddyPojo childWithNoValidation) {
+            this.childWithNoValidation = childWithNoValidation;
         }
 
         @AssertTrue(
@@ -131,7 +170,7 @@ public class TestConfigValidator {
             this.regexValue = regexValue;
         }
 
-        @ValidCron
+        @ValidSimpleCron
         @JsonProperty
         public String getCronValue() {
             return cronValue;
@@ -162,7 +201,7 @@ public class TestConfigValidator {
     }
 
     public static class MyPojoWarnings extends AbstractConfig {
-        private boolean booleanValue = false;
+        private boolean booleanValue = true;
         private String regexValue = "^.*$";
         private String cronValue = "* * *";
         private int intValue = 100;
@@ -191,7 +230,7 @@ public class TestConfigValidator {
             this.regexValue = regexValue;
         }
 
-        @ValidCron(
+        @ValidSimpleCron(
             message = "Valid cron required",
             payload = ValidationSeverity.Warning.class)
         @JsonProperty
@@ -223,6 +262,20 @@ public class TestConfigValidator {
                 ", regexValue='" + regexValue + '\'' +
                 ", intValue=" + intValue +
                 '}';
+        }
+    }
+
+
+    public static class NoddyPojo {
+        private String value;
+
+        @JsonProperty
+        String getValue() {
+            return value;
+        }
+
+        void setValue(final String value) {
+            this.value = value;
         }
     }
 

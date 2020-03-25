@@ -48,8 +48,8 @@ import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
-import stroom.util.shared.ResourcePaths;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
@@ -211,7 +211,8 @@ public class App extends Application<Config> {
         LOGGER.info("Validating application configuration file {}",
             configFile.toAbsolutePath().normalize().toString());
 
-        ConfigValidator.Result result = configValidator.validate(appConfig);
+        final ConfigValidator.Result result = configValidator.validateRecursively(appConfig);
+
         result.handleViolations(ConfigValidator::logConstraintViolation);
 
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",

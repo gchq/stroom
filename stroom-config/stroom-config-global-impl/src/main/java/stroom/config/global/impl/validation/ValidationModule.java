@@ -5,7 +5,7 @@ import com.google.inject.Provides;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
-import stroom.util.shared.validation.ValidCronValidator;
+import stroom.util.shared.validation.ValidSimpleCronValidator;
 import stroom.util.shared.validation.ValidRegexValidator;
 
 import javax.validation.Validation;
@@ -24,7 +24,7 @@ public class ValidationModule extends AbstractModule {
         // This decouples the validator impls from the pojos to
         // avoid dragging more libs into gwt land
         bind(ValidRegexValidator.class).to(ValidRegexValidatorImpl.class);
-        bind(ValidCronValidator.class).to(ValidCronValidatorImpl.class);
+        bind(ValidSimpleCronValidator.class).to(ValidSimpleSimpleCronValidatorImpl.class);
     }
 
     @SuppressWarnings("unused")
