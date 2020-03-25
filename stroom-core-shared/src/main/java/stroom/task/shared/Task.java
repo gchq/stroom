@@ -25,6 +25,4 @@ public interface Task<R> {
     String getTaskName();
 
     ThreadPool getThreadPool();
-
-    Task<?> getParentTask();
 }

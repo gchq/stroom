@@ -27,12 +27,10 @@ public abstract class ServerTask<R> implements Task<R>, Serializable {
     public static final ThreadPool THREAD_POOL = new SimpleThreadPool(2);
 
     private final TaskId id;
-    private final Task<?> parentTask;
     private volatile String taskName;
 
     public ServerTask() {
         this.id = TaskIdFactory.create();
-        this.parentTask = null;
     }
 
     public ServerTask(final Task<?> parentTask) {
@@ -41,12 +39,6 @@ public abstract class ServerTask<R> implements Task<R>, Serializable {
         } else {
             this.id = TaskIdFactory.create(parentTask.getId());
         }
-        this.parentTask = parentTask;
-    }
-
-    @Override
-    public Task<?> getParentTask() {
-        return parentTask;
     }
 
     @Override
@@ -60,10 +52,6 @@ public abstract class ServerTask<R> implements Task<R>, Serializable {
             this.taskName = generateTaskName();
         }
         return taskName;
-    }
-
-    protected void setTaskName(final String newTaskName) {
-        this.taskName = newTaskName;
     }
 
     private String generateTaskName() {

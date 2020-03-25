@@ -46,7 +46,7 @@ public class RemovePermissionEvent implements PermissionChangeEvent {
         return userUuid;
     }
 
-    public String getDocUuid() {
+    public String getDocumentUuid() {
         return documentUuid;
     }
 

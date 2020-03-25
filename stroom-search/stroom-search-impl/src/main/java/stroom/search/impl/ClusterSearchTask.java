@@ -29,7 +29,6 @@ import java.util.Map;
 public class ClusterSearchTask extends ClusterTask<NodeResult> {
     private static final long serialVersionUID = -1305243739417365803L;
 
-    private final Task<?> parentTask;
     private final Query query;
     private final List<Long> shards;
     private final String targetNode;
@@ -50,7 +49,6 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
                              final String dateTimeLocale,
                              final long now) {
         super(taskName);
-        this.parentTask = parentTask;
         this.query = query;
         this.shards = shards;
         this.targetNode = targetNode;
@@ -59,11 +57,6 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
         this.coprocessorMap = coprocessorMap;
         this.dateTimeLocale = dateTimeLocale;
         this.now = now;
-    }
-
-    @Override
-    public Task<?> getParentTask() {
-        return parentTask;
     }
 
     public String getTargetNode() {

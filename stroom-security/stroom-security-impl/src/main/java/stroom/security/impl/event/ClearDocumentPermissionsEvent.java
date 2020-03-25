@@ -34,7 +34,7 @@ public class ClearDocumentPermissionsEvent implements PermissionChangeEvent {
         eventBus.fire(new ClearDocumentPermissionsEvent(documentUuid));
     }
 
-    public String getDocUuid() {
+    public String getDocumentUuid() {
         return documentUuid;
     }
 }
