@@ -33,15 +33,14 @@ import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.searchable.impl.SearchableConfig;
 import stroom.security.impl.SecurityConfig;
+import stroom.security.impl.ValidationSeverity;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.security.impl.ValidationSeverity;
 
 import javax.inject.Singleton;
-import javax.validation.Valid;
 import javax.validation.constraints.AssertFalse;
 
 @JsonRootName(AppConfig.NAME)
@@ -348,7 +347,6 @@ public class AppConfig extends AbstractConfig {
         this.lifecycleConfig = lifecycleConfig;
     }
 
-    @Valid
     @JsonProperty(PROP_NAME_NODE)
     public NodeConfig getNodeConfig() {
         return nodeConfig;
@@ -486,7 +484,6 @@ public class AppConfig extends AbstractConfig {
         this.statisticsConfig = statisticsConfig;
     }
 
-    @Valid
     @JsonProperty(PROP_NAME_UI)
     public UiConfig getUiConfig() {
         return uiConfig;
