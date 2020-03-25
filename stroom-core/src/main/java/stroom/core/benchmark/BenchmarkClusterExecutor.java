@@ -21,7 +21,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
 import stroom.cluster.task.api.TargetType;
-import stroom.core.entity.cluster.ClearServiceClusterTask;
+import stroom.core.entity.cluster.ClearableService;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
@@ -82,7 +82,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
     private final ProcessorService streamProcessorService;
     private final ProcessorFilterService processorFilterService;
     private final ProcessorTaskService processorTaskService;
-    private final ClusterDispatchAsyncHelper dispatchHelper;
+    private final ClearableService clearableService;
     private final MetaService metaService;
     private final JobManager jobManager;
     private final TaskContext taskContext;
@@ -102,7 +102,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
                              final ProcessorService streamProcessorService,
                              final ProcessorFilterService processorFilterService,
                              final ProcessorTaskService processorTaskService,
-                             final ClusterDispatchAsyncHelper dispatchHelper,
+                             final ClearableService clearableService,
                              final JobManager jobManager,
                              final Executor executor,
                              final InternalStatisticsReceiver statistics,
@@ -112,7 +112,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
         this.streamProcessorService = streamProcessorService;
         this.processorFilterService = processorFilterService;
         this.processorTaskService = processorTaskService;
-        this.dispatchHelper = dispatchHelper;
+        this.clearableService = clearableService;
         this.metaService = metaService;
         this.jobManager = jobManager;
         this.taskContext = taskContext;
@@ -177,7 +177,7 @@ public class BenchmarkClusterExecutor extends AbstractBenchmark {
             if (!isTerminated()) {
                 LOGGER.info("Starting cluster benchmark");
 
-                dispatchHelper.execAsync(new ClearServiceClusterTask(null), TargetType.ACTIVE);
+                clearableService.clearAll();
 
                 final List<DocRef> referencePipelines = pipelineStore.findByName(BENCHMARK_REFERENCE);
                 final List<DocRef> eventsPipelines = pipelineStore.findByName(BENCHMARK_EVENTS);

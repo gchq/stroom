@@ -26,7 +26,6 @@ public class CoreModule extends AbstractModule {
         install(new stroom.core.dataprocess.PipelineStreamTaskModule());
         install(new CoreDbModule());
         install(new stroom.core.entity.cluster.EntityClusterModule());
-        install(new stroom.core.entity.event.EntityClusterTaskModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new stroom.core.entity.event.EntityEventModule());
         install(new RemoteFeedModule());
