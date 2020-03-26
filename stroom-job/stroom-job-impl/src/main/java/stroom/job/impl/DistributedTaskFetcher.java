@@ -269,15 +269,15 @@ class DistributedTaskFetcher {
 
             // Execute all of the returned tasks.
             final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
-            for (final Entry<JobNode, List<DistributedTask<?>>> entry : response.getTaskMap().entrySet()) {
+            for (final Entry<String, List<DistributedTask<?>>> entry : response.getTaskMap().entrySet()) {
                 // Get the latest local tracker.
-                final JobNode jobNode = entry.getKey();
-                final JobNodeTracker tracker = trackers.getTrackerForJobNode(jobNode);
+                final String jobName = entry.getKey();
+                final JobNodeTracker tracker = trackers.getTrackerForJobName(jobName);
 
                 // Get the returned tasks.
                 final List<DistributedTask<?>> tasks = entry.getValue();
 
-                taskStatusTraceLog.receiveOnWorkerNode(DistributedTaskFetcher.class, tasks, jobNode.getJob().getName());
+                taskStatusTraceLog.receiveOnWorkerNode(DistributedTaskFetcher.class, tasks, jobName);
 
                 // Try and get more tasks.
                 tasks.stream().filter(task -> !stopping.get()).forEach(task -> {

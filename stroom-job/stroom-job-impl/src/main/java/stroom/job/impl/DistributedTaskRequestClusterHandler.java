@@ -63,7 +63,7 @@ class DistributedTaskRequestClusterHandler
         }
 
         // Return the requested number of tasks from the cache.
-        final Map<JobNode, List<DistributedTask<?>>> tasksToReturn = new HashMap<>();
+        final Map<String, List<DistributedTask<?>>> tasksToReturn = new HashMap<>();
         int totalTasks = 0;
 
         try {
@@ -87,7 +87,7 @@ class DistributedTaskRequestClusterHandler
                         final DistributedTaskFactory<DistributedTask<?>, ?> factory = getDistributedTaskFactory(
                                 jobName);
                         final List<DistributedTask<?>> fetched = factory.fetch(nodeName, requiredTaskCount);
-                        tasksToReturn.put(jobNode, fetched);
+                        tasksToReturn.put(jobName, fetched);
                         totalTasks += fetched.size();
 
                         taskStatusTraceLog.sendToWorkerNode(DistributedTaskRequestClusterHandler.class, fetched, nodeName,
@@ -122,15 +122,14 @@ class DistributedTaskRequestClusterHandler
         }
     }
 
-    private void abandonTasks(final String nodeName, final Map<JobNode, List<DistributedTask<?>>> tasksToReturn) {
+    private void abandonTasks(final String nodeName, final Map<String, List<DistributedTask<?>>> tasksToReturn) {
         try {
             LOGGER.error("Abandoning tasks that we failed to call back with");
             // Failed to call back
-            for (final Entry<JobNode, List<DistributedTask<?>>> entry : tasksToReturn.entrySet()) {
+            for (final Entry<String, List<DistributedTask<?>>> entry : tasksToReturn.entrySet()) {
                 try {
-                    final JobNode jobNode = entry.getKey();
+                    final String jobName = entry.getKey();
                     final List<DistributedTask<?>> tasks = entry.getValue();
-                    final String jobName = jobNode.getJob().getName();
 
                     taskStatusTraceLog.errorSendingToWorkerNode(DistributedTaskRequestClusterHandler.class, tasks, nodeName,
                             jobName);

@@ -16,9 +16,7 @@
 
 package stroom.job.impl;
 
-
 import stroom.job.api.DistributedTask;
-import stroom.job.shared.JobNode;
 
 import java.io.Serializable;
 import java.util.List;
@@ -29,9 +27,9 @@ public class DistributedTaskRequestResult implements Serializable {
     private static final long serialVersionUID = -6827229808827594370L;
 
     private final int totalTasks;
-    private final Map<JobNode, List<DistributedTask<?>>> taskMap;
+    private final Map<String, List<DistributedTask<?>>> taskMap;
 
-    DistributedTaskRequestResult(final int totalTasks, final Map<JobNode, List<DistributedTask<?>>> taskMap) {
+    DistributedTaskRequestResult(final int totalTasks, final Map<String, List<DistributedTask<?>>> taskMap) {
         this.totalTasks = totalTasks;
         this.taskMap = taskMap;
     }
@@ -40,7 +38,7 @@ public class DistributedTaskRequestResult implements Serializable {
         return totalTasks;
     }
 
-    Map<JobNode, List<DistributedTask<?>>> getTaskMap() {
+    Map<String, List<DistributedTask<?>>> getTaskMap() {
         return taskMap;
     }
 
@@ -48,9 +46,9 @@ public class DistributedTaskRequestResult implements Serializable {
     public String toString() {
         final StringBuilder sb = new StringBuilder();
         if (taskMap != null) {
-            for (final Entry<JobNode, List<DistributedTask<?>>> entry : taskMap.entrySet()) {
+            for (final Entry<String, List<DistributedTask<?>>> entry : taskMap.entrySet()) {
                 sb.append('\t');
-                sb.append(entry.getKey().toString());
+                sb.append(entry.getKey());
                 sb.append("newTasks=\"");
                 if (entry.getValue() != null) {
                     sb.append(entry.getValue().size());
