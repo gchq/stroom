@@ -5,17 +5,23 @@ buildscript {
     }
     dependencies {
         classpath libs.mysql_connector_java
+        classpath 'org.reflections:reflections:0.9.12'
     }
 }
 
 plugins {
-    id "com.benjaminsproule.swagger" version "1.0.6"
+    id "com.benjaminsproule.swagger" version "1.0.8"
+    //id "io.swagger.core.v3.swagger-gradle-plugin" version "2.1.1"
 }
+import org.reflections.*
+import org.reflections.util.*
+import org.reflections.scanners.*
 
 ext.moduleName = 'stroom.app'
 
 def uiDir = project.file('src/main/resources/ui')
 def swaggerDir = "${uiDir}/swagger"
+def restResourceClassNames = []
 def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
 def sendToStroomScriptVersion = 'send-to-stroom-v2.0'
@@ -297,21 +303,12 @@ task copyFilesForStroomDockerBuild() {
     }
 }
 
+
 swagger {
     apiSource {
+        springmvc = false
         outputFormats = ['json', 'yaml']
-        // TODO need to decide if we want all of our resource classes added to swagger and if so,
-        // they need annotating with @Api/@ApiOperation/etc.
-        locations = [
-                'stroom.statistics.impl.sql.search.SqlStatisticsQueryResource',
-                'stroom.index.StroomIndexQueryResource',
-                //'stroom.dictionary.DictionaryResource',
-                //'stroom.dictionary.DictionaryResource2',
-                //'stroom.ruleset.RuleSetResource',
-                //'stroom.ruleset.RuleSetResource2',
-                'stroom.security.AuthorisationResource',
-                'stroom.util.RestResource'
-        ]
+        locations = restResourceClassNames
         schemes = ['http', 'https']
         host = 'localhost:8080'
         basePath = '/api'
@@ -328,11 +325,74 @@ swagger {
                 name = 'Apache 2.0'
             }
         }
-        outputPath = "${swaggerDir}/document.html"
         swaggerDirectory = "${swaggerDir}"
     }
 }
 
+
+task prepareSwaggerClasses {
+    doLast {
+        // Get all jars from the compile classpath
+        def urls = project.configurations.compileClasspath.resolve()
+            .collect { 
+                it.toURI().toURL() 
+            }
+
+        // Add each one to the gradle build script classpath
+        // so the swagger plugin can see them all.
+        // https://github.com/gigaSproule/swagger-gradle-plugin/issues/158#issuecomment-585823379
+        urls.each { 
+            buildscript.classLoader.addURL it 
+        }
+
+        // Now filter down to just our stroom jars
+        def stroomUrls = urls
+            .findAll {
+                it.toString() =~ /.*stroom[a-z-]+.jar$/
+            }
+            .sort {
+                it.toString()
+            }
+            .unique();
+
+        // Scan all the stroom pks in the stroom jars
+        // Filter should be redundant if we only look in stroom jars
+        ConfigurationBuilder configBuilder = new ConfigurationBuilder()
+             .filterInputsBy(new FilterBuilder().includePackage("stroom"))
+             .setUrls(stroomUrls)
+             .setScanners(
+                new TypeAnnotationsScanner(), 
+                new SubTypesScanner()
+             );
+
+        // Find all the @Api classes
+        Reflections reflections = new Reflections(configBuilder);
+        Set<Class<?>> restClasses = reflections
+            .getTypesAnnotatedWith(io.swagger.annotations.Api.class)
+
+        logger.info("Adding API classes to Swagger spec")
+
+        // Add them to a list for swagger to scan over
+        restClasses
+            .sort { it.name }
+            .each {
+                restResourceClassNames.add(it.name)
+                logger.info it.name
+            }
+    }
+}
+generateSwaggerDocumentation.dependsOn prepareSwaggerClasses
+
+// Produce the swagger spec files from our resources
+//resolve {
+    //outputFileName = 'TestSwagger'
+    //outputFormat = 'YAML'
+    //prettyPrint = 'TRUE'
+    //classpath = sourceSets.main.runtimeClasspath
+    ////resourcePackages = ['stroom.dashboard.shared']
+    //resourceClasses = ['stroom.config.global.shared.GlobalConfigResource']
+    //outputDir = file('testswagger')
+//}
 
 
 task copyJar(type: Copy) {
@@ -472,3 +532,4 @@ task setupSampleDataApplication(type: JavaExec) {
 ////decide what we are doing with plugable client libs and pipeline elements.
 //tasks.test.dependsOn ':stroom-kafka:stroom-kafka-client-impl_0_10_0_1:copyPluginJar'
 
+// vim: set tabstop=4 shiftwidth=4 expandtab:
