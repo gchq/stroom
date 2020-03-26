@@ -16,23 +16,21 @@
 
 package stroom.job.impl;
 
-import stroom.job.shared.JobNode;
-
 import java.io.Serializable;
 
 public class DistributedRequiredTask implements Serializable {
     private static final long serialVersionUID = 2651416970893054545L;
 
-    private JobNode jobNode;
+    private String jobName;
     private int requiredTaskCount;
 
-    public DistributedRequiredTask(final JobNode jobNode, final int requiredTaskCount) {
-        this.jobNode = jobNode;
+    public DistributedRequiredTask(final String jobName, final int requiredTaskCount) {
+        this.jobName = jobName;
         this.requiredTaskCount = requiredTaskCount;
     }
 
-    public JobNode getJobNode() {
-        return jobNode;
+    public String getJobName() {
+        return jobName;
     }
 
     public int getRequiredTaskCount() {
@@ -41,6 +39,6 @@ public class DistributedRequiredTask implements Serializable {
 
     @Override
     public String toString() {
-        return requiredTaskCount + " : " + jobNode.toString();
+        return requiredTaskCount + " : " + jobName;
     }
 }

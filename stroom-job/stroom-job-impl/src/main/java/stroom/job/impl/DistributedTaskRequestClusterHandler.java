@@ -24,7 +24,6 @@ import stroom.cluster.task.api.ClusterTaskRef;
 import stroom.cluster.task.api.ClusterWorker;
 import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFactory;
-import stroom.job.shared.JobNode;
 
 import javax.inject.Inject;
 import java.util.HashMap;
@@ -74,7 +73,7 @@ class DistributedTaskRequestClusterHandler
                 // tasks for them or have reached the maximum number of tasks to
                 // return.
                 for (final DistributedRequiredTask requiredTask : requiredTasks) {
-                    final JobNode jobNode = requiredTask.getJobNode();
+                    final String jobName = requiredTask.getJobName();
 
                     // Make sure we are still supposed to be getting tasks for
                     // this job.
@@ -82,7 +81,6 @@ class DistributedTaskRequestClusterHandler
 
                     // Try and get the next task for this job.
                     if (requiredTaskCount > 0) {
-                        final String jobName = jobNode.getJob().getName();
                         LOGGER.trace("Getting tasks for {}", jobName);
                         final DistributedTaskFactory<DistributedTask<?>, ?> factory = getDistributedTaskFactory(
                                 jobName);

@@ -47,7 +47,7 @@ class DistributedTaskRequestClusterTask extends ClusterTask<DistributedTaskReque
                 sb.append('\t');
                 sb.append(requiredTask.getRequiredTaskCount());
                 sb.append(" : ");
-                sb.append(requiredTask.getJobNode().toString());
+                sb.append(requiredTask.getJobName());
                 sb.append('\n');
             }
         }

@@ -340,7 +340,7 @@ class DistributedTaskFetcher {
                 // this time.
                 if (job.isEnabled() && jobNode.isEnabled()) {
                     // Store the task request.
-                    requiredTasks[length++] = new DistributedRequiredTask(jobNode, requiredTaskCount);
+                    requiredTasks[length++] = new DistributedRequiredTask(jobNode.getJob().getName(), requiredTaskCount);
                 }
             }
         }
