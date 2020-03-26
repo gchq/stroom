@@ -43,7 +43,7 @@ public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
         return nodeInfo.getThisNodeName();
     }
 
-//    @Override
+    @Override
     public Set<String> getMasterTargetNodeSet() throws NullClusterStateException, NodeNotFoundException {
         final ClusterState clusterState = getClusterState();
         if (clusterState.getMasterNodeName() != null) {
@@ -86,7 +86,6 @@ public class TargetNodeSetFactoryImpl implements TargetNodeSetFactory {
         }
     }
 
-//    @Override
     public Set<String> getTargetNodesByType(final TargetType targetType)
             throws NullClusterStateException, NodeNotFoundException {
         switch (targetType) {

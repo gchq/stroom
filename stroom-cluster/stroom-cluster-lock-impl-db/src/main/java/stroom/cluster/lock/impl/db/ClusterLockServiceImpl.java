@@ -61,7 +61,7 @@ class ClusterLockServiceImpl implements ClusterLockService {
         if (clusterLockKey == null) {
             clusterLockKey = new ClusterLockKey(lockName, nodeInfo.getThisNodeName(),
                     System.currentTimeMillis());
-            final Boolean didLock = clusterLockHandler.exec(clusterLockKey, ClusterLockStyle.Try);
+            final Boolean didLock = clusterLockHandler.tryLock(clusterLockKey);
             if (didLock != null) {
                 success = Boolean.TRUE.equals(didLock);
             }
@@ -95,7 +95,7 @@ class ClusterLockServiceImpl implements ClusterLockService {
         if (clusterLockKey == null) {
             LOGGER.error("releaseLock({}) - Lock not found", lockName);
         } else {
-            final Boolean result = clusterLockHandler.exec(clusterLockKey, ClusterLockStyle.Release);
+            final Boolean result = clusterLockHandler.releaseLock(clusterLockKey);
             if (result != null) {
                 success = result;
             }
@@ -112,7 +112,7 @@ class ClusterLockServiceImpl implements ClusterLockService {
             final ClusterLockKey clusterLockKey = entry.getValue();
 
             LOGGER.debug("keepAlive({}) - >>>", lockName);
-            final Boolean success = clusterLockHandler.exec(clusterLockKey, ClusterLockStyle.KeepAlive);
+            final Boolean success = clusterLockHandler.keepLockAlive(clusterLockKey);
             LOGGER.debug("keepAlive({}) - <<< {}", lockName, success);
 
             // We should only receive FALSE if the master node knows nothing

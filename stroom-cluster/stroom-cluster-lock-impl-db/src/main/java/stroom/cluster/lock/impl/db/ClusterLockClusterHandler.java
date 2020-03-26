@@ -18,10 +18,6 @@ package stroom.cluster.lock.impl.db;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.task.api.ClusterResult;
-import stroom.cluster.task.api.ClusterTaskHandler;
-import stroom.cluster.task.api.ClusterTaskRef;
-import stroom.cluster.task.api.ClusterWorker;
 import stroom.security.api.SecurityContext;
 import stroom.util.shared.ModelStringUtil;
 
@@ -30,50 +26,17 @@ import javax.inject.Singleton;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Singleton
-public class ClusterLockClusterHandler implements ClusterTaskHandler<ClusterLockClusterTask, Boolean> {
+public class ClusterLockClusterHandler {
     // 10 minutes
     private static final long TEN_MINUTES = 10 * 60 * 1000;
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterLockClusterHandler.class);
     private final ConcurrentHashMap<String, Lock> lockMap = new ConcurrentHashMap<>();
 
-    private final ClusterWorker clusterWorker;
     private final SecurityContext securityContext;
 
     @Inject
-    ClusterLockClusterHandler(final ClusterWorker clusterWorker,
-                              final SecurityContext securityContext) {
-        this.clusterWorker = clusterWorker;
+    ClusterLockClusterHandler(final SecurityContext securityContext) {
         this.securityContext = securityContext;
-    }
-
-    @Override
-    public void exec(final ClusterLockClusterTask task, final ClusterTaskRef<Boolean> clusterTaskRef) {
-        try {
-            final boolean result = securityContext.secureResult(() -> {
-                boolean success = false;
-
-                final ClusterLockKey clusterLockKey = task.getKey();
-                switch (task.getLockStyle()) {
-                    case Try:
-                        success = tryLock(clusterLockKey);
-                        break;
-                    case Release:
-                        success = release(clusterLockKey);
-                        break;
-                    case KeepAlive:
-                        success = keepAlive(clusterLockKey);
-                        break;
-                }
-
-                return success;
-            });
-
-            clusterWorker.sendResult(ClusterResult.success(clusterTaskRef, result));
-
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-            clusterWorker.sendResult(ClusterResult.failure(clusterTaskRef, e));
-        }
     }
 
     /**
@@ -84,33 +47,35 @@ public class ClusterLockClusterHandler implements ClusterTaskHandler<ClusterLock
      * return false if this lock is already owned by another
      * node/process.
      */
-    private boolean tryLock(final ClusterLockKey clusterLockKey) {
-        boolean success = false;
+    boolean tryLock(final ClusterLockKey clusterLockKey) {
+        return securityContext.secureResult(() -> {
+            boolean success = false;
 
-        try {
-            final String lockName = clusterLockKey.getName();
-            final Lock currentLock = lockMap.get(lockName);
-            if (currentLock == null) {
-                final Lock newLock = new Lock(clusterLockKey);
-                // Another node might have concurrently put a lock so only put
-                // this new lock if no lock is present. This method will return
-                // the lock we are trying to put if one does not already exist
-                // and we successfully add this one.
-                lockMap.putIfAbsent(lockName, newLock);
-                final Lock lock = lockMap.get(lockName);
-                // Check that the current lock is EXACTLY (hence ==) the one we
-                // have just tried to put.
-                if (lock == newLock) {
-                    success = true;
+            try {
+                final String lockName = clusterLockKey.getName();
+                final Lock currentLock = lockMap.get(lockName);
+                if (currentLock == null) {
+                    final Lock newLock = new Lock(clusterLockKey);
+                    // Another node might have concurrently put a lock so only put
+                    // this new lock if no lock is present. This method will return
+                    // the lock we are trying to put if one does not already exist
+                    // and we successfully add this one.
+                    lockMap.putIfAbsent(lockName, newLock);
+                    final Lock lock = lockMap.get(lockName);
+                    // Check that the current lock is EXACTLY (hence ==) the one we
+                    // have just tried to put.
+                    if (lock == newLock) {
+                        success = true;
+                    }
                 }
+
+                debug("lock()", clusterLockKey, currentLock, success);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
             }
 
-            debug("lock()", clusterLockKey, currentLock, success);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
-        return success;
+            return success;
+        });
     }
 
     /**
@@ -121,38 +86,40 @@ public class ClusterLockClusterHandler implements ClusterTaskHandler<ClusterLock
      * key, return false if no lock could be found for this key or if
      * the lock is owned by another node/process.
      */
-    private boolean release(final ClusterLockKey clusterLockKey) {
-        boolean success = false;
+    boolean release(final ClusterLockKey clusterLockKey) {
+        return securityContext.secureResult(() -> {
+            boolean success = false;
 
-        try {
-            final String lockName = clusterLockKey.getName();
-            final Lock currentLock = lockMap.get(lockName);
-            // We should know about a lock that a node is trying to release. If
-            // we don't then we must have removed it in unlockOld() which should
-            // not happen if the node that holds the lock has been able to keep
-            // the lock alive.
-            if (currentLock != null) {
-                // Make sure the node trying to release the lock is the node
-                // that we think actually holds it. If unlockOld() has
-                // previously removed the lock and so allowed another node to
-                // obtain the lock then we should not allow the previous owner
-                // to release it.
-                if (currentLock.clusterLockKey.equals(clusterLockKey)) {
-                    success = lockMap.remove(lockName, currentLock);
+            try {
+                final String lockName = clusterLockKey.getName();
+                final Lock currentLock = lockMap.get(lockName);
+                // We should know about a lock that a node is trying to release. If
+                // we don't then we must have removed it in unlockOld() which should
+                // not happen if the node that holds the lock has been able to keep
+                // the lock alive.
+                if (currentLock != null) {
+                    // Make sure the node trying to release the lock is the node
+                    // that we think actually holds it. If unlockOld() has
+                    // previously removed the lock and so allowed another node to
+                    // obtain the lock then we should not allow the previous owner
+                    // to release it.
+                    if (currentLock.clusterLockKey.equals(clusterLockKey)) {
+                        success = lockMap.remove(lockName, currentLock);
+                    } else {
+                        error("unlock() - Attempt to unlock with a different key to the owner", clusterLockKey,
+                                currentLock);
+                    }
                 } else {
-                    error("unlock() - Attempt to unlock with a different key to the owner", clusterLockKey,
-                            currentLock);
+                    error("unlock() - Attempt to unlock when was not locked", clusterLockKey, currentLock);
                 }
-            } else {
-                error("unlock() - Attempt to unlock when was not locked", clusterLockKey, currentLock);
+
+                debug("unlock()", clusterLockKey, currentLock, success);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
             }
 
-            debug("unlock()", clusterLockKey, currentLock, success);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
-        return success;
+            return success;
+        });
     }
 
     /**
@@ -163,45 +130,47 @@ public class ClusterLockClusterHandler implements ClusterTaskHandler<ClusterLock
      * key, return false if no lock could be found for this key or if
      * the lock is owned by another node/process.
      */
-    private boolean keepAlive(final ClusterLockKey clusterLockKey) {
-        boolean success = false;
+    boolean keepAlive(final ClusterLockKey clusterLockKey) {
+        return securityContext.secureResult(() -> {
+            boolean success = false;
 
-        try {
-            final String lockName = clusterLockKey.getName();
-            final Lock currentLock = lockMap.get(lockName);
-            // We should know about a lock that a node is trying to keep alive,
-            // but it is possible due to the asynchronous nature of server calls
-            // that the owner has already released the lock.
-            if (currentLock != null) {
-                // Only refresh the lock if it is the owner that is trying to
-                // keep it alive. See previous comment as to why this might not
-                // be the case.
-                if (currentLock.clusterLockKey.equals(clusterLockKey)) {
-                    currentLock.refresh();
-                    success = true;
+            try {
+                final String lockName = clusterLockKey.getName();
+                final Lock currentLock = lockMap.get(lockName);
+                // We should know about a lock that a node is trying to keep alive,
+                // but it is possible due to the asynchronous nature of server calls
+                // that the owner has already released the lock.
+                if (currentLock != null) {
+                    // Only refresh the lock if it is the owner that is trying to
+                    // keep it alive. See previous comment as to why this might not
+                    // be the case.
+                    if (currentLock.clusterLockKey.equals(clusterLockKey)) {
+                        currentLock.refresh();
+                        success = true;
+                    } else {
+                        // The owning node might have unlocked this key at the same
+                        // time as trying to keep the lock alive - another node
+                        // might have then grabbed the lock. As the calls are
+                        // asynchronous this situation is quite possible/probable
+                        // and should not be considered an error - hence debug.
+                        debug("keepAlive() - Attempt to keep alive with a different key to the owner", clusterLockKey,
+                                currentLock, null);
+                    }
                 } else {
-                    // The owning node might have unlocked this key at the same
-                    // time as trying to keep the lock alive - another node
-                    // might have then grabbed the lock. As the calls are
-                    // asynchronous this situation is quite possible/probable
-                    // and should not be considered an error - hence debug.
-                    debug("keepAlive() - Attempt to keep alive with a different key to the owner", clusterLockKey,
-                            currentLock, null);
+                    // The owning node might have unlocked this key at the same time
+                    // as trying to keep the lock alive. As the calls are
+                    // asynchronous this situation is quite possible/probable and
+                    // should not be considered an error - hence debug.
+                    debug("keepAlive() - Attempt to keep alive when was not locked", clusterLockKey, currentLock, null);
                 }
-            } else {
-                // The owning node might have unlocked this key at the same time
-                // as trying to keep the lock alive. As the calls are
-                // asynchronous this situation is quite possible/probable and
-                // should not be considered an error - hence debug.
-                debug("keepAlive() - Attempt to keep alive when was not locked", clusterLockKey, currentLock, null);
+
+                debug("keepAlive()", clusterLockKey, currentLock, success);
+            } catch (final RuntimeException e) {
+                LOGGER.error(e.getMessage(), e);
             }
 
-            debug("keepAlive()", clusterLockKey, currentLock, success);
-        } catch (final RuntimeException e) {
-            LOGGER.error(e.getMessage(), e);
-        }
-
-        return success;
+            return success;
+        });
     }
 
     /**

@@ -21,7 +21,7 @@ import java.util.Set;
 public interface TargetNodeSetFactory {
     String getSourceNode();
 
-//    Set<String> getMasterTargetNodeSet() throws NullClusterStateException, NodeNotFoundException;
+    Set<String> getMasterTargetNodeSet() throws NullClusterStateException, NodeNotFoundException;
 
     Set<String> getEnabledActiveTargetNodeSet() throws NullClusterStateException, NodeNotFoundException;
 

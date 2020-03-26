@@ -170,7 +170,7 @@ class DistributedTaskFetcher {
 
                                     // If there are some tasks we need to get then get them.
                                     if (count > 0 || forceFetch) {
-                                        final DistributedTaskRequestClusterTask request = new DistributedTaskRequestClusterTask(null, "DistributedTaskRequestClusterTask", nodeName,
+                                        final DistributedTaskRequestClusterTask request = new DistributedTaskRequestClusterTask("DistributedTaskRequestClusterTask", nodeName,
                                                 requiredTasks);
 
                                         if (LOGGER.isDebugEnabled()) {
