@@ -2,7 +2,10 @@ package stroom.config.global.impl.validation;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
-import stroom.util.shared.validation.ValidCronValidator;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
+import stroom.util.shared.validation.ValidSimpleCronValidator;
 import stroom.util.shared.validation.ValidRegexValidator;
 
 import javax.validation.Validation;
@@ -10,6 +13,8 @@ import javax.validation.Validator;
 import javax.validation.ValidatorFactory;
 
 public class ValidationModule extends AbstractModule {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ValidationModule.class);
 
     @Override
     protected void configure() {
@@ -19,7 +24,7 @@ public class ValidationModule extends AbstractModule {
         // This decouples the validator impls from the pojos to
         // avoid dragging more libs into gwt land
         bind(ValidRegexValidator.class).to(ValidRegexValidatorImpl.class);
-        bind(ValidCronValidator.class).to(ValidCronValidatorImpl.class);
+        bind(ValidSimpleCronValidator.class).to(ValidSimpleSimpleCronValidatorImpl.class);
     }
 
     @SuppressWarnings("unused")
@@ -33,6 +38,8 @@ public class ValidationModule extends AbstractModule {
 //            .propertyNodeNameProvider(new JacksonPropertyNodeNameProvider())
             .constraintValidatorFactory(customConstraintValidatorFactory)
             .buildValidatorFactory();
+
+        LOGGER.debug(() -> LogUtil.message("Using ValidatorFactory {}", factory.getClass().getName()));
 
         return factory.getValidator();
     }

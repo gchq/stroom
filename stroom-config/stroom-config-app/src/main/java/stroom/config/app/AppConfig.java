@@ -41,7 +41,6 @@ import stroom.util.io.PathConfig;
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
-import javax.validation.Valid;
 import javax.validation.constraints.AssertTrue;
 
 @JsonRootName(AppConfig.NAME)
@@ -338,7 +337,6 @@ public class AppConfig extends AbstractConfig {
         this.lifecycleConfig = lifecycleConfig;
     }
 
-    @Valid
     @JsonProperty(PROP_NAME_NODE)
     public NodeConfig getNodeConfig() {
         return nodeConfig;
@@ -476,7 +474,6 @@ public class AppConfig extends AbstractConfig {
         this.statisticsConfig = statisticsConfig;
     }
 
-    @Valid
     @JsonProperty(PROP_NAME_UI)
     public UiConfig getUiConfig() {
         return uiConfig;

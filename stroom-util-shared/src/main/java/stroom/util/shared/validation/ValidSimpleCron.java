@@ -15,11 +15,15 @@ import static java.lang.annotation.ElementType.PARAMETER;
 import static java.lang.annotation.ElementType.TYPE_USE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * If the value is non-null it will be validated to ensure
+ * it can be parsed as a 'SimpleCron' string.
+ */
 @Target({ FIELD, METHOD, PARAMETER, ANNOTATION_TYPE, TYPE_USE })
 @Retention(RUNTIME)
-@Constraint(validatedBy = {ValidCronValidator.class})
+@Constraint(validatedBy = {ValidSimpleCronValidator.class})
 @Documented
-public @interface ValidCron {
+public @interface ValidSimpleCron {
 
     String message() default "cron string is invalid";
 
