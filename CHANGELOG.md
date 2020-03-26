@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Increase wait timeout to 240s in `start.sh`.
+
 
 ## [v6.0.35] - 2020-03-12
 
