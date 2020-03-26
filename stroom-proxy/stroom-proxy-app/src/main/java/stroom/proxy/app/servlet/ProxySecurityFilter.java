@@ -18,7 +18,6 @@ package stroom.proxy.app.servlet;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.dictionary.impl.NewUiDictionaryResource;
 import stroom.proxy.app.ContentSyncConfig;
 import stroom.proxy.app.handler.FeedStatusConfig;
 import stroom.receive.common.FeedStatusResource;
@@ -141,8 +140,6 @@ public class ProxySecurityFilter implements Filter {
         final String apiKey;
         if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + FeedStatusResource.BASE_RESOURCE_PATH)) {
             apiKey = feedStatusConfig.getApiKey();
-        } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + NewUiDictionaryResource.BASE_RESOURCE_PATH)) {
-            apiKey = contentSyncConfig.getApiKey();
         } else if (requestUri.startsWith(ResourcePaths.API_ROOT_PATH + ReceiveDataRuleSetResource.BASE_RESOURCE_PATH)) {
             apiKey = contentSyncConfig.getApiKey();
         } else {

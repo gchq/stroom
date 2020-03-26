@@ -38,7 +38,6 @@ public class DictionaryHandlerModule extends AbstractModule {
                 .bind(DictionaryDoc.ENTITY_TYPE, DictionaryStoreImpl.class);
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(NewUiDictionaryResource.class)
                 .addBinding(NewUiDictionaryResource2.class)
                 .addBinding(DictionaryResourceImpl.class);
     }

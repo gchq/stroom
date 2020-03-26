@@ -18,40 +18,29 @@
 
 package stroom.authentication.resources.token.v1;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.util.Map;
 
-@ApiModel(description = "A request for a search over tokens.")
 public class SearchRequest {
     @NotNull
-    @ApiModelProperty(value = "The page of search results to retrieve.", required = true)
     private int page;
 
     @NotNull
-    @ApiModelProperty(value = "The number of tokens in a page of search results.", required = true)
     private int limit;
 
     @Nullable
     @Pattern(
             regexp = "^enabled$|^userEmail$|^issueByUser$|^token$|^tokenType$|^updatedByUser$|^expiresOn$|^issuedOn$|^updatedOn$",
             message = "orderBy must be one of: 'enabled', 'userEmail', 'issuedByUser', 'token', 'tokenType', 'updatedByUser', 'expiresOn', 'issuedOn', 'updatedOn'")
-    @ApiModelProperty(value = "The property by which to order the results.", required = false)
     private String orderBy;
 
     @Nullable
     @Pattern(regexp = "^asc$|^desc$", message = "orderDirection must be 'asc' or 'desc'")
-    @ApiModelProperty(value = "The direction in which to order the results.", required = false)
     private String orderDirection;
 
     @Nullable
-    @ApiModelProperty(
-            value = "How to filter the results. This is done by property, e.g. user_email, 'someone@someplace.com'.",
-            required = false)
     private Map<String, String> filters;
 
     public int getPage() {

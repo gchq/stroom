@@ -1,6 +1,6 @@
 package stroom.authentication.resources.authentication.v1;
 
-enum PasswordValidationFailureType {
+public enum PasswordValidationFailureType {
     REUSE,
     LENGTH,
     COMPLEXITY,

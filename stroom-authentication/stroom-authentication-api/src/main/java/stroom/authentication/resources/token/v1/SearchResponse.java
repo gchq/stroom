@@ -18,18 +18,12 @@
 
 package stroom.authentication.resources.token.v1;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
-
 import java.util.List;
 
-@ApiModel(description = "A response for a search of tokens.")
 public class SearchResponse {
 
-    @ApiModelProperty(value = "A page of results.", required = true)
     private List<Token> tokens;
 
-    @ApiModelProperty(value = "The total number of pages.", required = true)
     private int totalPages;
 
     public int getTotalPages() {

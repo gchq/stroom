@@ -291,17 +291,6 @@ public class App extends Application<Config> {
 
             String msg = new ColouredStringBuilder()
                 .appendRed("In Super Dev Mode, setting ")
-                .appendCyan(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED)
-                .appendRed(" to ")
-                .appendCyan("false ")
-                .appendRed("in appConfig")
-                .toString();
-
-            LOGGER.warn(msg);
-            authenticationConfig.setAuthenticationRequired(false);
-
-            msg = new ColouredStringBuilder()
-                .appendRed("In Super Dev Mode, setting ")
                 .appendCyan(ContentSecurityConfig.PROP_NAME_CONTENT_SECURITY_POLICY)
                 .appendRed(" to ")
                 .appendCyan("\"\" ")

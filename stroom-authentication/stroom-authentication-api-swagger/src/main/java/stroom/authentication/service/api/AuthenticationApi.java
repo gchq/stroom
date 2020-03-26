@@ -13,6 +13,7 @@
 
 package stroom.authentication.service.api;
 
+import com.google.gson.reflect.TypeToken;
 import stroom.authentication.service.ApiCallback;
 import stroom.authentication.service.ApiClient;
 import stroom.authentication.service.ApiException;
@@ -21,18 +22,13 @@ import stroom.authentication.service.Configuration;
 import stroom.authentication.service.Pair;
 import stroom.authentication.service.ProgressRequestBody;
 import stroom.authentication.service.ProgressResponseBody;
-
-import com.google.gson.reflect.TypeToken;
-
-import java.io.IOException;
-
-
 import stroom.authentication.service.api.model.ChangePasswordRequest;
 import stroom.authentication.service.api.model.Credentials;
 import stroom.authentication.service.api.model.IdTokenRequest;
 import stroom.authentication.service.api.model.PasswordValidationRequest;
 import stroom.authentication.service.api.model.ResetPasswordRequest;
 
+import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -185,7 +181,7 @@ public class AuthenticationApi {
         Object localVarPostBody = body;
         
         // create path and map variables
-        String localVarPath = "/authentication/v1/idToken".replaceAll("\\{format\\}","json");
+        String localVarPath = "/api/authentication/v1/noauth/exchange".replaceAll("\\{format\\}","json");
 
         List<Pair> localVarQueryParams = new ArrayList<Pair>();
 

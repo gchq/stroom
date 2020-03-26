@@ -28,18 +28,27 @@ import org.slf4j.LoggerFactory;
 import stroom.authentication.CertificateManager;
 import stroom.authentication.TokenVerifier;
 import stroom.authentication.exceptions.NoSuchUserException;
-import stroom.authentication.resources.token.v1.Token;
 import stroom.authentication.resources.token.v1.TokenService;
-import stroom.security.impl.ExchangeAccessCodeRequest;
+import stroom.event.logging.api.StroomEventLoggingService;
+import stroom.security.api.SecurityContext;
+import stroom.security.api.UserIdentity;
+import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.util.shared.RestResource;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import javax.validation.constraints.NotNull;
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -59,6 +68,9 @@ import static javax.ws.rs.core.Response.status;
 public final class AuthenticationResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationResource.class);
     private AuthenticationService service;
+    private SecurityContext securityContext;
+    private StroomEventLoggingService stroomEventLoggingService;
+    private Provider<HttpServletRequest> httpServletRequestProvider;
     private TokenService tokenService;
     private TokenVerifier tokenVerifier;
     private CertificateManager certificateManager;
@@ -66,17 +78,23 @@ public final class AuthenticationResource implements RestResource {
     @Inject
     public AuthenticationResource(
             final AuthenticationService service,
+            final SecurityContext securityContext,
+            final StroomEventLoggingService stroomEventLoggingService,
+            final Provider<HttpServletRequest> httpServletRequestProvider,
             final TokenService tokenService,
             final TokenVerifier tokenVerifier,
             final CertificateManager certificateManager) {
         this.service = service;
+        this.securityContext = securityContext;
+        this.stroomEventLoggingService = stroomEventLoggingService;
+        this.httpServletRequestProvider = httpServletRequestProvider;
         this.tokenService = tokenService;
         this.tokenVerifier = tokenVerifier;
         this.certificateManager = certificateManager;
     }
 
     @GET
-    @Path("/authenticate")
+    @Path("noauth/authenticate")
     @Timed
     @ApiOperation(value = "Submit an OpenId AuthenticationRequest.", response = String.class, tags = {"Authentication"})
     public final Response handleAuthenticationRequest(
@@ -102,7 +120,7 @@ public final class AuthenticationResource implements RestResource {
      * an AuthenticationRequest to /authenticate.
      */
     @POST
-    @Path("/authenticate")
+    @Path("/noauth/authenticate")
     @Consumes({"application/json"})
     @Produces({"application/json"})
     @Timed
@@ -138,7 +156,7 @@ public final class AuthenticationResource implements RestResource {
     }
 
     @GET
-    @Path("reset/{email}")
+    @Path("/noauth/reset/{email}")
     @Timed
     @NotNull
     @ApiOperation(value = "Reset a user account using an email address.",
@@ -153,7 +171,7 @@ public final class AuthenticationResource implements RestResource {
     }
 
     @GET
-    @Path("/verify/{token}")
+    @Path("/noauth/verify/{token}")
     @Timed
     @NotNull
     @ApiOperation(value = "Verify the authenticity and current-ness of a JWS token.",
@@ -167,7 +185,7 @@ public final class AuthenticationResource implements RestResource {
 
 
     @POST
-    @Path("changePassword")
+    @Path("noauth/changePassword")
     @Timed
     @NotNull
     @ApiOperation(value = "Change a user's password.",
@@ -208,7 +226,7 @@ public final class AuthenticationResource implements RestResource {
     }
 
     @POST
-    @Path("isPasswordValid")
+    @Path("noauth/isPasswordValid")
     @Timed
     @NotNull
     @ApiOperation(value = "Returns the length and complexity rules.",
@@ -225,7 +243,7 @@ public final class AuthenticationResource implements RestResource {
      * If they don't it will create the redirection URL with access code as normal.
      */
     @GET
-    @Path("postAuthenticationRedirect")
+    @Path("/noauth/postAuthenticationRedirect")
     @Produces({"application/json"})
     @Timed
     @NotNull
@@ -259,4 +277,27 @@ public final class AuthenticationResource implements RestResource {
                 .orElse(Response.status(Status.UNAUTHORIZED).entity("Invalid client or access code").build());
     }
 
+    @GET
+    @Path("gwt_logout")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+            value = "Logout the current session",
+            response = Boolean.class)
+    public Boolean logout() {
+        return securityContext.insecureResult(() -> {
+            final HttpSession session = httpServletRequestProvider.get().getSession(false);
+            final UserIdentity userIdentity = UserIdentitySessionUtil.get(session);
+            if (session != null) {
+                // Invalidate the current user session
+                session.invalidate();
+            }
+            if (userIdentity != null) {
+                // Create an event for logout
+                stroomEventLoggingService.createAction("Logoff", "Logging off " + userIdentity.getId());
+            }
+
+            return true;
+        });
+    }
 }

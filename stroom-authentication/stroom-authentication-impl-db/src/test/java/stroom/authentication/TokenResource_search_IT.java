@@ -20,8 +20,6 @@ import org.assertj.core.api.Condition;
 import org.joda.time.DateTime;
 import org.junit.Ignore;
 import org.junit.Test;
-import stroom.authentication.AuthenticationFlowHelper;
-import stroom.authentication.resources.token.v1.Token;
 import stroom.authentication.service.ApiException;
 import stroom.authentication.service.ApiResponse;
 import stroom.authentication.service.api.ApiKeyApi;
@@ -30,6 +28,8 @@ import stroom.authentication.service.api.model.CreateTokenRequest;
 import stroom.authentication.service.api.model.SearchRequest;
 import stroom.authentication.service.api.model.SearchResponse;
 import stroom.authentication.service.api.model.User;
+import stroom.authentication.resources.token.v1.Token;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
