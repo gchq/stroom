@@ -180,8 +180,8 @@ public class IndexStoreImpl implements IndexStore {
                     document.setUuid(uuid);
                     document.setName(docRef.getName());
                     document.setVersion(UUID.randomUUID().toString());
-                    document.setCreateTime(now);
-                    document.setUpdateTime(now);
+                    document.setCreateTimeMs(now);
+                    document.setUpdateTimeMs(now);
                     document.setCreateUser(userId);
                     document.setUpdateUser(userId);
                     document.setDescription(oldIndex.getDescription());

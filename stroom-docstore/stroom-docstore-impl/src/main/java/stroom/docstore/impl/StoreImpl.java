@@ -92,8 +92,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
         final D document = create(type, UUID.randomUUID().toString(), name);
         document.setVersion(UUID.randomUUID().toString());
-        document.setCreateTime(now);
-        document.setUpdateTime(now);
+        document.setCreateTimeMs(now);
+        document.setUpdateTimeMs(now);
         document.setCreateUser(userId);
         document.setUpdateUser(userId);
 
@@ -115,8 +115,8 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         document.setUuid(copyUuid);
         document.setName(document.getName());
         document.setVersion(UUID.randomUUID().toString());
-        document.setCreateTime(now);
-        document.setUpdateTime(now);
+        document.setCreateTimeMs(now);
+        document.setUpdateTimeMs(now);
         document.setCreateUser(userId);
         document.setUpdateUser(userId);
 
@@ -179,9 +179,9 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                         .uuid(document.getUuid())
                         .name(document.getName())
                         .build())
-                .createTime(document.getCreateTime())
+                .createTime(document.getCreateTimeMs())
                 .createUser(document.getCreateUser())
-                .updateTime(document.getUpdateTime())
+                .updateTime(document.getUpdateTimeMs())
                 .updateUser(document.getUpdateUser())
                 .build();
     }
@@ -454,7 +454,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
             final String userId = securityContext.getUserId();
 
             document.setVersion(UUID.randomUUID().toString());
-            document.setUpdateTime(now);
+            document.setUpdateTimeMs(now);
             document.setUpdateUser(userId);
 
             final Map<String, byte[]> newData = serialiser.write(document);

@@ -3,6 +3,7 @@ package stroom.processor.impl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
+import stroom.docstore.api.AuditFieldFilter;
 import stroom.docstore.api.Serialiser2;
 import stroom.docstore.api.Serialiser2Factory;
 import stroom.entity.shared.ExpressionCriteria;
@@ -104,9 +105,10 @@ public class ProcessorImportExportHandlerImpl implements ImportExportActionHandl
         if (docRef == null)
             return null;
 
-        Processor processor = findProcessor(docRef);
-        //Don't export ID
+        //Don't export certain fields
+        Processor processor = new AuditFieldFilter<Processor>().apply(findProcessor(docRef));
         processor.setId(null);
+        processor.setVersion(null);
 
         Map<String, byte[]> data = null;
         try {

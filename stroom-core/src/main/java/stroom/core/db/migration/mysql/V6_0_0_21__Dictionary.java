@@ -52,9 +52,9 @@ public class V6_0_0_21__Dictionary extends BaseJavaMigration {
                     final String data = resultSet.getString(7);
 
                     DictionaryDoc dictionaryDoc = new DictionaryDoc();
-                    dictionaryDoc.setCreateTime(crtMs);
+                    dictionaryDoc.setCreateTimeMs(crtMs);
                     dictionaryDoc.setCreateUser(crtUser);
-                    dictionaryDoc.setUpdateTime(updtMs);
+                    dictionaryDoc.setUpdateTimeMs(updtMs);
                     dictionaryDoc.setUpdateUser(updUser);
                     dictionaryDoc.setType(DictionaryDoc.ENTITY_TYPE);
                     dictionaryDoc.setUuid(uuid);
