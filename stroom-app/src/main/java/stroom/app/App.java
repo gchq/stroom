@@ -297,7 +297,7 @@ public class App extends Application<Config> {
                 .toString();
 
             LOGGER.warn(msg);
-            authenticationConfig.setAuthenticationRequired(false);
+            authenticationConfig.setAuthenticationRequired(true);
 
             msg = new ColouredStringBuilder()
                 .appendRed("In Super Dev Mode, setting ")
