@@ -1,15 +1,20 @@
 package stroom.config.global.impl.validation;
 
+import stroom.security.impl.ValidationSeverity;
+import stroom.util.config.PropertyUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.AbstractConfig;
-import stroom.security.impl.ValidationSeverity;
 
 import javax.inject.Inject;
 import javax.validation.ConstraintViolation;
 import javax.validation.Validator;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -18,6 +23,7 @@ import java.util.function.Consumer;
 public class ConfigValidator {
 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ConfigValidator.class);
+
 
     private final Validator validator;
 
@@ -36,7 +42,7 @@ public class ConfigValidator {
         final Set<? extends ConstraintViolation<? extends AbstractConfig>> constraintViolations =
                 validator.validateValue(configClass, propertyName, value);
 
-        return new Result(constraintViolations);
+        return Result.of(constraintViolations);
     }
 
     /**
@@ -44,11 +50,44 @@ public class ConfigValidator {
      */
     public Result validate(final AbstractConfig config) {
         final Set<ConstraintViolation<AbstractConfig>> constraintViolations = validator.validate(config);
-        return new Result(constraintViolations);
+        return Result.of(constraintViolations);
     }
 
-    public static void logConstraintViolation(final ConstraintViolation<? extends AbstractConfig> constraintViolation,
-                                        final ValidationSeverity severity) {
+    /**
+     * Walks the config object tree validating each branch
+     */
+    public Result validateRecursively(final AbstractConfig config) {
+        final List<Result> resultList = new ArrayList<>();
+
+        // Validate the top level AppConfig object
+        final ConfigValidator.Result rootResult = validate(config);
+        if (rootResult.hasErrorsOrWarnings()) {
+            resultList.add(rootResult);
+        }
+
+        // Now validate each of the branches recursively
+        // We could do this by setting @Valid on each config getter but that is liable to
+        // be forgotten on new config objects
+        PropertyUtil.walkObjectTree(
+            config,
+            prop ->
+                // Only want to validate config objects
+                AbstractConfig.class.isAssignableFrom(prop.getValueClass())
+                    && prop.getValueFromConfigObject() != null,
+            prop -> {
+                final AbstractConfig configObject = (AbstractConfig) prop.getValueFromConfigObject();
+                final ConfigValidator.Result result = validate(configObject);
+                if (result.hasErrorsOrWarnings()) {
+                    resultList.add(result);
+                }
+            });
+
+        return ConfigValidator.Result.of(resultList);
+    }
+
+    public static void logConstraintViolation(
+        final ConstraintViolation<? extends AbstractConfig> constraintViolation,
+        final ValidationSeverity severity) {
 
         final Consumer<String> logFunc;
         final String severityStr;
@@ -76,12 +115,14 @@ public class ConfigValidator {
     }
 
     public static class Result {
+        private static final Result EMPTY = new Result(Collections.emptySet());
+
         private final int errorCount;
         private final int warningCount;
         private final Set<? extends ConstraintViolation<? extends AbstractConfig>> constraintViolations;
 
-        public Result(final Set<? extends ConstraintViolation<? extends AbstractConfig>> constraintViolations) {
-            if (constraintViolations == null) {
+        private Result(final Set<? extends ConstraintViolation<? extends AbstractConfig>> constraintViolations) {
+            if (constraintViolations == null || constraintViolations.isEmpty()) {
                 this.errorCount = 0;
                 this.warningCount = 0;
                 this.constraintViolations = Collections.emptySet();
@@ -110,6 +151,38 @@ public class ConfigValidator {
                 this.warningCount = warningCount;
                 this.constraintViolations = constraintViolations;
             }
+        }
+
+        public static Result of(final Set<? extends ConstraintViolation<? extends AbstractConfig>> constraintViolations) {
+            if (constraintViolations == null || constraintViolations.isEmpty()) {
+                return empty();
+            } else {
+                return new Result(constraintViolations);
+            }
+        }
+
+        public static Result of(final Collection<Result> results) {
+            final Set<ConstraintViolation<? extends AbstractConfig>> constraintViolations = new HashSet<>();
+
+            results.forEach(result -> {
+                if (result.hasErrorsOrWarnings()) {
+                    constraintViolations.addAll(result.constraintViolations);
+                }
+            });
+
+            return Result.of(constraintViolations);
+        }
+
+        public static Result merge(final Result result1, final Result result2) {
+            final Set<ConstraintViolation<? extends AbstractConfig>> constraintViolations = new HashSet<>();
+            constraintViolations.addAll(result1.constraintViolations);
+            constraintViolations.addAll(result2.constraintViolations);
+            return Result.of(constraintViolations);
+        }
+
+
+        public static Result empty() {
+            return EMPTY;
         }
 
         /**
@@ -177,6 +250,14 @@ public class ConfigValidator {
 
         public boolean hasErrorsOrWarnings() {
             return errorCount > 0 || warningCount > 0;
+        }
+
+        @Override
+        public String toString() {
+            return "Result{" +
+                "errorCount=" + errorCount +
+                ", warningCount=" + warningCount +
+                '}';
         }
     }
 }

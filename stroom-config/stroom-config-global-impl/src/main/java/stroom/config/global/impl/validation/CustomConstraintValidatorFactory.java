@@ -3,6 +3,9 @@ package stroom.config.global.impl.validation;
 import com.google.inject.ConfigurationException;
 import com.google.inject.Injector;
 import com.google.inject.Key;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import javax.validation.ConstraintValidator;
@@ -10,6 +13,8 @@ import javax.validation.ConstraintValidatorFactory;
 import javax.validation.Validation;
 
 public class CustomConstraintValidatorFactory implements ConstraintValidatorFactory {
+
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(CustomConstraintValidatorFactory.class);
 
     private final ConstraintValidatorFactory delegate;
     private final Injector injector;
@@ -20,6 +25,8 @@ public class CustomConstraintValidatorFactory implements ConstraintValidatorFact
         this.delegate = Validation.byDefaultProvider()
             .configure()
             .getDefaultConstraintValidatorFactory();
+
+        LOGGER.debug(() -> LogUtil.message("Using validation provider {}", delegate.getClass().getName()));
 
         this.injector = injector;
     }
@@ -35,9 +42,12 @@ public class CustomConstraintValidatorFactory implements ConstraintValidatorFact
         // See if guice has the validator class we are after, i.e. one of our custom validators
         try {
             validator = injector.getInstance(key);
+            LOGGER.debug(() -> LogUtil.message("Obtained class {} from Guice injector", key.getName()));
         } catch (ConfigurationException e) {
             // Not one of ours so delegate
             validator = delegate.getInstance(key);
+            LOGGER.debug(() ->
+                LogUtil.message("Obtained class {} from {}", key.getName(), delegate.getClass().getName()));
         }
         return validator;
     }
@@ -57,6 +67,6 @@ public class CustomConstraintValidatorFactory implements ConstraintValidatorFact
             delegate.releaseInstance(instance);
         }
 
-        // A guice bound validate should go for garbage collection once all references are gone.
+        // A guice bound validator should go for garbage collection once all references are gone.
     }
 }
