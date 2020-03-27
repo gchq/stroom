@@ -50,7 +50,7 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final Executor executor = executorProvider.get(threadPool);
         final TaskContext taskContext = taskContextProvider.get();
 
-        CompletableFuture.runAsync(taskContext.subTask(() ->
+        CompletableFuture.runAsync(taskContext.sub(() ->
                 LOGGER.info("Warming up thread pool"))).get();
 
         AtomicInteger counter = new AtomicInteger();
@@ -59,7 +59,7 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final int taskCount = 10;
         CompletableFuture[] futures = IntStream.rangeClosed(1, taskCount)
                 .mapToObj(i ->
-                        CompletableFuture.runAsync(taskContext.subTask(() -> {
+                        CompletableFuture.runAsync(taskContext.sub(() -> {
                                     try {
                                         Thread.sleep(50);
                                         LOGGER.info("Running task {}", i);
@@ -109,7 +109,7 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final int taskCount = 10;
         CompletableFuture[] futures = IntStream.rangeClosed(1, taskCount)
                 .mapToObj(i ->
-                        CompletableFuture.runAsync(taskContext.subTask(() -> {
+                        CompletableFuture.runAsync(taskContext.sub(() -> {
                                     try {
                                         Thread.sleep(50);
                                         LOGGER.info("Running task {}", i);
@@ -159,7 +159,7 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
                 throw new RuntimeException("Expected");
             };
 
-            CompletableFuture.runAsync(taskContextProvider.get().subTask(runnable), executor)
+            CompletableFuture.runAsync(taskContextProvider.get().sub(runnable), executor)
                     .thenRun(() -> completedNormally.set(true))
                     .exceptionally(t -> {
                         completedExceptionally.set(true);
@@ -197,7 +197,7 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final Runnable runnable = () -> {
         };
 
-        CompletableFuture.runAsync(taskContextProvider.get().subTask(runnable), executor)
+        CompletableFuture.runAsync(taskContextProvider.get().sub(runnable), executor)
                 .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
@@ -221,7 +221,7 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
             testCompletedExceptionally(executorProvider, true);
         };
 
-        CompletableFuture.runAsync(taskContextProvider.get().subTask(runnable), executor)
+        CompletableFuture.runAsync(taskContextProvider.get().sub(runnable), executor)
                 .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
@@ -243,7 +243,7 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
             testCompletedExceptionally(executorProviderInner, true);
         };
 
-        CompletableFuture.runAsync(taskContextProvider.get().subTask(runnable), executor)
+        CompletableFuture.runAsync(taskContextProvider.get().sub(runnable), executor)
                 .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);
@@ -263,7 +263,7 @@ class TestTaskManagerImpl extends AbstractCoreIntegrationTest {
         final Executor executor = executorProvider.get();
         final Runnable runnable = this::testCompletedNormally;
 
-        CompletableFuture.runAsync(taskContextProvider.get().subTask(runnable), executor)
+        CompletableFuture.runAsync(taskContextProvider.get().sub(runnable), executor)
                 .thenRun(() -> completedNormally.set(true))
                 .exceptionally(t -> {
                     completedExceptionally.set(true);

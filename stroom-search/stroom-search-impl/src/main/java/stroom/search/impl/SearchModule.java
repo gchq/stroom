@@ -38,7 +38,6 @@ public class SearchModule extends AbstractModule {
                 .addBinding(StroomIndexQueryResourceImpl.class);
 
         TaskHandlerBinder.create(binder())
-                .bind(AsyncSearchTask.class, AsyncSearchTaskHandler.class)
                 .bind(EventSearchTask.class, EventSearchTaskHandler.class);
 
         ClusterTaskHandlerBinder.create(binder())

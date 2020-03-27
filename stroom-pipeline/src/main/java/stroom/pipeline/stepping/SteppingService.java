@@ -32,7 +32,7 @@ public class SteppingService {
             final SteppingRequestHandler steppingRequestHandler = steppingRequestHandlerProvider.get();
             return steppingRequestHandler.exec(request);
         };
-        supplier = taskContext.subTask(supplier);
+        supplier = taskContext.sub(supplier);
         return supplier.get();
     }
 }

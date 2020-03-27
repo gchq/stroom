@@ -95,7 +95,7 @@ class FsCleanExecutor {
             int i = 0;
             for (final FsVolume volume : volumeList) {
                 Runnable runnable = () -> cleanVolume(volume);
-                runnable = taskContext.subTask(runnable);
+                runnable = taskContext.sub(runnable);
                 final CompletableFuture<Void> completableFuture = CompletableFuture.runAsync(runnable, executor);
                 completableFutures[i++] = completableFuture;
             }

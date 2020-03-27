@@ -86,7 +86,6 @@ class TestHessian {
                 "test",
                 query,
                 Arrays.asList(1L, 2L, 3L),
-                nodeName,
                 fields,
                 1000,
                 coprocessorMap,

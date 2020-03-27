@@ -31,7 +31,6 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
 
     private final Query query;
     private final List<Long> shards;
-    private final String targetNode;
     private final String[] storedFields;
     private final int resultSendFrequency;
     private final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap;
@@ -41,7 +40,6 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
     public ClusterSearchTask(final String taskName,
                              final Query query,
                              final List<Long> shards,
-                             final String targetNode,
                              final String[] storedFields,
                              final int resultSendFrequency,
                              final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
@@ -50,16 +48,11 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
         super(taskName);
         this.query = query;
         this.shards = shards;
-        this.targetNode = targetNode;
         this.storedFields = storedFields;
         this.resultSendFrequency = resultSendFrequency;
         this.coprocessorMap = coprocessorMap;
         this.dateTimeLocale = dateTimeLocale;
         this.now = now;
-    }
-
-    public String getTargetNode() {
-        return targetNode;
     }
 
     public Query getQuery() {

@@ -171,7 +171,7 @@ class SearchableStore implements Store {
 
             LOGGER.debug(() -> "Query finished in " + Duration.between(queryStart, Instant.now()));
         };
-        runnable = taskContext.subTask(runnable);
+        runnable = taskContext.sub(runnable);
         executor.execute(runnable);
     }
 

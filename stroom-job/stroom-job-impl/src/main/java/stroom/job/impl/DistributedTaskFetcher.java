@@ -216,7 +216,7 @@ class DistributedTaskFetcher {
                                     LOGGER.error(e.getMessage(), e);
                                 }
                             };
-                            runnable = taskContext.subTask(runnable);
+                            runnable = taskContext.sub(runnable);
                             CompletableFuture
                                     .runAsync(runnable, executorProvider.get())
                                     .whenComplete((r, t) -> afterFetch());
@@ -281,7 +281,7 @@ class DistributedTaskFetcher {
                     final Executor executor = executorProvider.get(task.getThreadPool());
                     final TaskContext taskContext = taskContextProvider.get();
                     Runnable runnable = task.getRunnable();
-                    runnable = taskContext.subTask(runnable);
+                    runnable = taskContext.sub(runnable);
                     CompletableFuture
                             .runAsync(runnable, executor)
                             .whenComplete((r, t) -> {

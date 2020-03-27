@@ -26,9 +26,7 @@ import stroom.task.api.VoidResult;
 import java.io.Serializable;
 import java.util.Map;
 
-public class AsyncSearchTask extends ServerTask<VoidResult> implements Serializable {
-    private static final long serialVersionUID = -1305243739417365803L;
-
+public class AsyncSearchTask {
     private final String searchName;
     private final Query query;
     private final String targetNode;
@@ -39,15 +37,13 @@ public class AsyncSearchTask extends ServerTask<VoidResult> implements Serializa
 
     private volatile transient ClusterSearchResultCollector resultCollector;
 
-    public AsyncSearchTask(final Task<?> parentTask,
-                           final String searchName,
+    public AsyncSearchTask(final String searchName,
                            final Query query,
                            final String targetNode,
                            final int resultSendFrequency,
                            final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
                            final String dateTimeLocale,
                            final long now) {
-        super(parentTask);
         this.searchName = searchName;
         this.query = query;
         this.targetNode = targetNode;

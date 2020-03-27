@@ -1,5 +1,7 @@
 package stroom.task.api;
 
+import stroom.task.shared.TaskId;
+
 import java.util.function.Supplier;
 
 public class SimpleTaskContext implements TaskContext {
@@ -12,16 +14,21 @@ public class SimpleTaskContext implements TaskContext {
     }
 
     @Override
+    public TaskId getTaskId() {
+        return null;
+    }
+
+    @Override
     public void terminate() {
     }
 
     @Override
-    public <U> Supplier<U> subTask(final Supplier<U> supplier) {
-        return supplier;
+    public <U> WrappedSupplier<U> sub(final Supplier<U> supplier) {
+        return new WrappedSupplier<>(this, supplier);
     }
 
     @Override
-    public Runnable subTask(final Runnable runnable) {
-        return runnable;
+    public WrappedRunnable sub(final Runnable runnable) {
+        return new WrappedRunnable(this, runnable);
     }
 }

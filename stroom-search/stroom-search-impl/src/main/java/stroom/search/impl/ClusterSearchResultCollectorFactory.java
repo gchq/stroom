@@ -21,22 +21,29 @@ import stroom.cluster.task.api.ClusterTaskTerminator;
 import stroom.query.common.v2.CompletionState;
 import stroom.query.common.v2.ResultHandler;
 import stroom.query.common.v2.Sizes;
-import stroom.task.api.TaskManager;
+import stroom.task.api.TaskContext;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.Set;
+import java.util.concurrent.Executor;
 
 public class ClusterSearchResultCollectorFactory {
-    private final TaskManager taskManager;
+    private final Executor executor;
+    private final Provider<TaskContext> taskContextProvider;
+    private final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider;
     private final Provider<ClusterTaskTerminator> clusterTaskTerminatorProvider;
     private final ClusterResultCollectorCache clusterResultCollectorCache;
 
     @Inject
-    private ClusterSearchResultCollectorFactory(final TaskManager taskManager,
+    private ClusterSearchResultCollectorFactory(final Executor executor,
+                                                final Provider<TaskContext> taskContextProvider,
+                                                final Provider<AsyncSearchTaskHandler> asyncSearchTaskHandlerProvider,
                                                 final Provider<ClusterTaskTerminator> clusterTaskTerminatorProvider,
                                                 final ClusterResultCollectorCache clusterResultCollectorCache) {
-        this.taskManager = taskManager;
+        this.executor = executor;
+        this.taskContextProvider = taskContextProvider;
+        this.asyncSearchTaskHandlerProvider = asyncSearchTaskHandlerProvider;
         this.clusterTaskTerminatorProvider = clusterTaskTerminatorProvider;
         this.clusterResultCollectorCache = clusterResultCollectorCache;
     }
@@ -48,7 +55,9 @@ public class ClusterSearchResultCollectorFactory {
                                                final Sizes defaultMaxResultsSizes,
                                                final Sizes storeSize,
                                                final CompletionState completionState) {
-        return new ClusterSearchResultCollector(taskManager,
+        return new ClusterSearchResultCollector(executor,
+                taskContextProvider,
+                asyncSearchTaskHandlerProvider,
                 clusterTaskTerminatorProvider.get(),
                 task,
                 nodeName,

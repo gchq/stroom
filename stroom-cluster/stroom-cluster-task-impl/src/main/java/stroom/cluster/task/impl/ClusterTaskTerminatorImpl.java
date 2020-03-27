@@ -80,7 +80,7 @@ public class ClusterTaskTerminatorImpl implements ClusterTaskTerminator {
                         LOGGER.debug(e.getMessage(), e);
                     }
                 };
-                runnable = taskContext.subTask(runnable);
+                runnable = taskContext.sub(runnable);
                 CompletableFuture.runAsync(runnable, executor);
             });
 

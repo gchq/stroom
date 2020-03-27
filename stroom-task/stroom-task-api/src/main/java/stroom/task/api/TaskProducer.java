@@ -82,7 +82,7 @@ public abstract class TaskProducer implements Comparable<TaskProducer> {
 
         // Wrap the runnable so that we get task info and execute with the right permissions etc.
         if (runnable != null) {
-            runnable = taskContext.subTask(runnable);
+            runnable = taskContext.sub(runnable);
         }
 
         return runnable;

@@ -137,7 +137,7 @@ class SearchableTaskProgress implements Searchable {
                     final TaskProgressResponse response = taskResource.list(nodeName);
                     nodeResponses.putIfAbsent(nodeName, response);
                 };
-                runnable = taskContext.subTask(runnable);
+                runnable = taskContext.sub(runnable);
                 CompletableFuture
                         .runAsync(runnable, executor)
                         .whenComplete((r, t) -> {

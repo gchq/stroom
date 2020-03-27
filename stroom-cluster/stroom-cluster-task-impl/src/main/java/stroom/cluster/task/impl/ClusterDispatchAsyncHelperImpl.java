@@ -67,7 +67,7 @@ public class ClusterDispatchAsyncHelperImpl implements ClusterDispatchAsyncHelpe
     public <R> DefaultClusterResultCollector<R> execAsyncWithContext(final ClusterTask<R> task, final String targetNodeName) {
         final TaskContext taskContext = taskContextProvider.get();
         Supplier<DefaultClusterResultCollector<R>> supplier = () -> execAsync(task, targetNodeName);
-        supplier = taskContext.subTask(supplier);
+        supplier = taskContext.sub(supplier);
         return supplier.get();
     }
 
@@ -75,7 +75,7 @@ public class ClusterDispatchAsyncHelperImpl implements ClusterDispatchAsyncHelpe
     public <R> DefaultClusterResultCollector<R> execAsyncWithContext(final ClusterTask<R> task, final TargetType targetType) {
         final TaskContext taskContext = taskContextProvider.get();
         Supplier<DefaultClusterResultCollector<R>> supplier = () -> execAsync(task, targetType);
-        supplier = taskContext.subTask(supplier);
+        supplier = taskContext.sub(supplier);
         return supplier.get();
     }
 
@@ -83,7 +83,7 @@ public class ClusterDispatchAsyncHelperImpl implements ClusterDispatchAsyncHelpe
     public <R> DefaultClusterResultCollector<R> execAsyncWithContext(final ClusterTask<R> task, final long waitTime, final TimeUnit timeUnit, final TargetType targetType) {
         final TaskContext taskContext = taskContextProvider.get();
         Supplier<DefaultClusterResultCollector<R>> supplier = () -> execAsync(task, waitTime, timeUnit, targetType);
-        supplier = taskContext.subTask(supplier);
+        supplier = taskContext.sub(supplier);
         return supplier.get();
     }
 

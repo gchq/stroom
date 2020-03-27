@@ -119,7 +119,7 @@ public class CommonTranslationTestHelper {
             final DataProcessorTaskHandler dataProcessorTaskHandler = dataProcessorTaskHandlerProvider.get();
             return dataProcessorTaskHandler.exec(processorTask);
         };
-        supplier = taskContext.subTask(supplier);
+        supplier = taskContext.sub(supplier);
         return supplier.get();
     }
 

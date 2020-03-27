@@ -48,7 +48,7 @@ public class ClearableService {
             // Dispatch the entity event to all nodes in the cluster.
             final TaskContext taskContext = taskContextProvider.get();
             Runnable runnable = this::fireRemote;
-            runnable = taskContext.subTask(runnable);
+            runnable = taskContext.sub(runnable);
             CompletableFuture.runAsync(runnable, executor);
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);

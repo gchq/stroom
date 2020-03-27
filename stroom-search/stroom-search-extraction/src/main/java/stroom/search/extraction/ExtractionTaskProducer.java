@@ -93,7 +93,7 @@ class ExtractionTaskProducer extends TaskProducer {
 
         // Start mapping streams.
         final Executor executor = executorProvider.get(ExtractionTaskExecutor.THREAD_POOL);
-        final Runnable runnable = taskContext.subTask(() -> {
+        final Runnable runnable = taskContext.sub(() -> {
 
             // Elevate permissions so users with only `Use` feed permission can `Read` streams.
             securityContext.asProcessingUser(() -> {

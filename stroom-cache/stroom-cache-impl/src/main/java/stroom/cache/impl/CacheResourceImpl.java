@@ -145,7 +145,7 @@ class CacheResourceImpl implements CacheResource, HasHealthCheck {
 
         final Long count = allNodes.stream()
             .map(nodeName -> {
-                final Supplier<Long> task = taskContext.subTask(() -> {
+                final Supplier<Long> task = taskContext.sub(() -> {
                     taskContext.setName(LogUtil.message("Clearing cache [{}] on node [{}]",
                         cacheName, nodeName));
                     return clearCache(cacheName, nodeName);

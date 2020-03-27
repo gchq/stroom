@@ -346,7 +346,7 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
                         Runnable runnable = () ->
                                 securityContext.secure(() ->
                                         processorTaskManager.createTasks(taskContext));
-                        runnable = taskContext.subTask(runnable);
+                        runnable = taskContext.sub(runnable);
                         final Executor executor = executorProvider.get(THREAD_POOL);
                         CompletableFuture
                                 .runAsync(runnable, executor)

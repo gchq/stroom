@@ -109,7 +109,7 @@ class FsCleanSubTaskHandler {
                         for (final String subPath : result.getChildDirectoryList()) {
                             final FsCleanSubTask subTask = new FsCleanSubTask(task.getTaskProgress(), task.getVolume(), subPath, task.getLogPrefix(), task.getOldAge(), task.isDelete());
                             Runnable runnable = () -> exec(subTask, deleteListConsumer);
-                            runnable = taskContext.subTask(runnable);
+                            runnable = taskContext.sub(runnable);
                             CompletableFuture
                                     .runAsync(runnable, executor)
                                     .whenComplete((r, t) -> {

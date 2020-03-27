@@ -33,10 +33,9 @@ import stroom.index.shared.IndexShard;
 import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.query.api.v2.Query;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
-import stroom.task.api.VoidResult;
+import stroom.task.shared.TaskId;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Sort.Direction;
 
@@ -51,7 +50,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidResult> {
+class AsyncSearchTaskHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncSearchTaskHandler.class);
 
     private final TaskContext taskContext;
@@ -82,9 +81,8 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
         this.securityContext = securityContext;
     }
 
-    @Override
-    public VoidResult exec(final AsyncSearchTask task) {
-        return securityContext.secureResult(() -> securityContext.useAsReadResult(() -> {
+    public void exec(final AsyncSearchTask task, final TaskId taskId) {
+        securityContext.secure(() -> securityContext.useAsRead(() -> {
             final ClusterSearchResultCollector resultCollector = task.getResultCollector();
 
             if (!Thread.currentThread().isInterrupted()) {
@@ -152,7 +150,6 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                                 "Cluster Search",
                                 query,
                                 shards,
-                                sourceNode,
                                 storedFields,
                                 task.getResultSendFrequency(),
                                 task.getCoprocessorMap(),
@@ -179,7 +176,7 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
 
                     // Make sure we try and terminate any child tasks on worker
                     // nodes if we need to.
-                    terminateTasks(task);
+                    terminateTasks(task, taskId);
 
                     // Let the result handler know search has finished.
                     resultCollector.complete();
@@ -189,19 +186,17 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     taskContext.info(() -> task.getSearchName() + " - staying alive for UI requests");
                 }
             }
-
-            return VoidResult.INSTANCE;
         }));
     }
 
-    private void terminateTasks(final AsyncSearchTask task) {
+    private void terminateTasks(final AsyncSearchTask task, final TaskId taskId) {
         // Terminate this task.
-        taskManager.terminate(task.getId());
+        taskManager.terminate(taskId);
 
         // We have to wrap the cluster termination task in another task or
         // ClusterDispatchAsyncImpl
         // will not execute it if the parent task is terminated.
-        clusterTaskTerminator.terminate(task.getSearchName(), task.getId(), task.getTaskName());
+        clusterTaskTerminator.terminate(task.getSearchName(), taskId, "AsyncSearchTask");
     }
 
     private String[] getStoredFields(final IndexDoc index) {

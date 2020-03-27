@@ -85,7 +85,7 @@ class ExplorerTreeModel {
                 if (performingRebuild.compareAndSet(0, 1)) {
                     try {
                         Runnable runnable = this::updateModel;
-                        runnable = taskContextProvider.get().subTask(runnable);
+                        runnable = taskContextProvider.get().sub(runnable);
                         CompletableFuture
                                 .runAsync(runnable, executor)
                                 .thenRun(performingRebuild::decrementAndGet)

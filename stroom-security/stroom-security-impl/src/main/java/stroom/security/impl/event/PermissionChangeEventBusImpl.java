@@ -80,7 +80,7 @@ class PermissionChangeEventBusImpl implements PermissionChangeEventBus {
                 // Dispatch the entity event to all nodes in the cluster.
                 final TaskContext taskContext = taskContextProvider.get();
                 Runnable runnable = () -> fireRemote(event);
-                runnable = taskContext.subTask(runnable);
+                runnable = taskContext.sub(runnable);
                 CompletableFuture.runAsync(runnable, executor);
             }
         } catch (final RuntimeException e) {

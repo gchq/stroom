@@ -39,7 +39,7 @@ public class ReferenceDataLoaderImpl implements ReferenceDataLoader {
         Runnable runnable = () -> taskHandlerProvider
                 .get()
                 .exec(refStreamDefinition);
-        runnable = taskContext.subTask(runnable);
+        runnable = taskContext.sub(runnable);
         runnable.run();
     }
 }

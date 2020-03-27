@@ -126,7 +126,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
                     try {
                         final TaskContext taskContext = taskContextProvider.get();
                         Runnable runnable = () -> sqlStatisticFlushTaskHandler.exec(flushMap);
-                        runnable = taskContext.subTask(runnable);
+                        runnable = taskContext.sub(runnable);
                         runnable.run();
 
                     } finally {
@@ -137,7 +137,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
                     // Flush the original map.
                     final TaskContext taskContext = taskContextProvider.get();
                     Runnable runnable = () -> sqlStatisticFlushTaskHandler.exec(flushMap);
-                    runnable = taskContext.subTask(runnable);
+                    runnable = taskContext.sub(runnable);
                     CompletableFuture
                             .runAsync(runnable, executor)
                             .whenComplete((r, t) -> {

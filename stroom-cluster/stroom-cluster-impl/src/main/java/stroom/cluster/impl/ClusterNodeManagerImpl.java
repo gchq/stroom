@@ -133,7 +133,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
             pendingUpdate.set(false);
             final TaskContext taskContext = taskContextProvider.get();
             Runnable runnable = () -> exec(clusterState, taskDelay, true);
-            runnable = taskContext.subTask(runnable);
+            runnable = taskContext.sub(runnable);
             CompletableFuture
                     .runAsync(runnable, executor)
                     .whenComplete((r, t) -> {
@@ -207,7 +207,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
                 // remote nodes to determine active status.
                 final TaskContext taskContext = taskContextProvider.get();
                 Runnable runnable = () -> exec(clusterState, 0, false);
-                runnable = taskContext.subTask(runnable);
+                runnable = taskContext.sub(runnable);
                 runnable.run();
             });
         }

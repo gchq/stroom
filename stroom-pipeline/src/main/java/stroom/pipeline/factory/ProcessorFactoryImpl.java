@@ -86,7 +86,7 @@ class ProcessorFactoryImpl implements ProcessorFactory {
             final CountDownLatch countDownLatch = new CountDownLatch(processors.size());
             for (final Processor processor : processors) {
                 final TaskContext taskContext = taskContextProvider.get();
-                final Runnable runnable = taskContext.subTask(processor::process);
+                final Runnable runnable = taskContext.sub(processor::process);
                 CompletableFuture
                         .runAsync(runnable, executor)
                         .whenComplete((r, t) -> {

@@ -98,7 +98,6 @@ public class LuceneSearchStoreFactory implements StoreFactory {
         // Create an asynchronous search task.
         final String searchName = "Search '" + searchRequest.getKey().toString() + "'";
         final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
-                null,
                 searchName,
                 query,
                 nodeName,

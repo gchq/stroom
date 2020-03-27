@@ -92,10 +92,10 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
         final TaskContext taskContext = Mockito.mock(TaskContext.class);
 
         // Set up TaskContext to just return the passed runnable/supplier
-        when(taskContext.subTask(Mockito.any(Runnable.class)))
-            .thenAnswer(i -> i.getArgument(0));
-        when(taskContext.subTask(Mockito.any(Supplier.class)))
-            .thenAnswer(i -> i.getArgument(0));
+        when(taskContext.sub(Mockito.any(Runnable.class)))
+                .thenAnswer(i -> i.getArgument(0));
+        when(taskContext.sub(Mockito.any(Supplier.class)))
+                .thenAnswer(i -> i.getArgument(0));
 
         return taskContext;
     }

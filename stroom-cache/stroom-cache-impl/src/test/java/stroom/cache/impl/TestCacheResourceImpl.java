@@ -6,6 +6,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
+import org.mockito.stubbing.Answer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cache.shared.CacheInfo;
@@ -45,9 +46,9 @@ class TestCacheResourceImpl extends AbstractMultiNodeResourceTest<CacheResource>
         final TaskContext taskContext = Mockito.mock(TaskContext.class);
 
         // Set up TaskContext to just return the passed runnable/supplier
-        when(taskContext.subTask(Mockito.any(Runnable.class)))
+        when(taskContext.sub(Mockito.any(Runnable.class)))
             .thenAnswer(i -> i.getArgument(0));
-        when(taskContext.subTask(Mockito.any(Supplier.class)))
+        when(taskContext.sub(Mockito.any(Supplier.class)))
             .thenAnswer(i -> i.getArgument(0));
 
         return taskContext;

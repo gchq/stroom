@@ -48,7 +48,7 @@ public class ContextDataLoaderImpl implements ContextDataLoader {
         Runnable runnable = () -> taskHandlerProvider
                 .get()
                 .exec(inputStream, meta, feedName, contextPipeline, refStreamDefinition, refDataStore);
-        runnable = taskContext.subTask(runnable);
+        runnable = taskContext.sub(runnable);
         runnable.run();
     }
 }

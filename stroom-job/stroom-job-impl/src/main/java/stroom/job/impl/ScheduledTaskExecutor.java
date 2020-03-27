@@ -151,7 +151,7 @@ class ScheduledTaskExecutor {
                             LOGGER.error("Error calling {}", taskName, e);
                         }
                     };
-                    runnable = taskContext.subTask(runnable);
+                    runnable = taskContext.sub(runnable);
                     CompletableFuture
                             .runAsync(runnable, executor)
                             .whenComplete((r, t) -> function.getRunning().set(false));
