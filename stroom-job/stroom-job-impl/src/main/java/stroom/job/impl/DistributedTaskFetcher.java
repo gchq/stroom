@@ -16,28 +16,21 @@
 
 package stroom.job.impl;
 
-import com.caucho.hessian.client.HessianRuntimeException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.task.api.ClusterCallEntry;
-import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
-import stroom.cluster.task.api.DefaultClusterResultCollector;
-import stroom.cluster.task.api.TargetType;
+import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.job.api.DistributedTask;
+import stroom.job.api.DistributedTaskFactory;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.TaskCallbackAdaptor;
+import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskManager;
-import stroom.task.shared.Task;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
-import java.net.ConnectException;
-import java.net.MalformedURLException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -46,7 +39,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -58,37 +50,36 @@ import java.util.concurrent.atomic.AtomicBoolean;
 class DistributedTaskFetcher {
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFetcher.class);
     private static final long ONE_MINUTE = 60 * 1000;
-    // Wait time for master to return tasks (5 minutes)
-    private static final long WAIT_TIME = 5;
+
     private final TaskStatusTraceLog taskStatusTraceLog = new TaskStatusTraceLog();
     private final AtomicBoolean stopping = new AtomicBoolean();
     private final AtomicBoolean stopped = new AtomicBoolean();
     private final AtomicBoolean fetchingTasks = new AtomicBoolean();
     private final AtomicBoolean waitingToFetchTasks = new AtomicBoolean();
-    private final Set<Task<?>> runningTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    private final Set<DistributedTask> runningTasks = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    private final Provider<ClusterDispatchAsyncHelper> clusterDispatchAsyncHelperProvider;
-    private final TaskManager taskManager;
-    private final Executor executor;
+    private final ExecutorProvider executorProvider;
     private final Provider<TaskContext> taskContextProvider;
     private final JobNodeTrackerCache jobNodeTrackerCache;
     private final SecurityContext securityContext;
+    private final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry;
+    private final TargetNodeSetFactory targetNodeSetFactory;
 
     private long lastFetch;
 
     @Inject
-    DistributedTaskFetcher(final Provider<ClusterDispatchAsyncHelper> clusterDispatchAsyncHelperProvider,
-                           final TaskManager taskManager,
-                           final Executor executor,
+    DistributedTaskFetcher(final ExecutorProvider executorProvider,
                            final Provider<TaskContext> taskContextProvider,
                            final JobNodeTrackerCache jobNodeTrackerCache,
-                           final SecurityContext securityContext) {
-        this.clusterDispatchAsyncHelperProvider = clusterDispatchAsyncHelperProvider;
-        this.taskManager = taskManager;
-        this.executor = executor;
+                           final SecurityContext securityContext,
+                           final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry,
+                           final TargetNodeSetFactory targetNodeSetFactory) {
+        this.executorProvider = executorProvider;
         this.taskContextProvider = taskContextProvider;
         this.jobNodeTrackerCache = jobNodeTrackerCache;
         this.securityContext = securityContext;
+        this.distributedTaskFactoryRegistry = distributedTaskFactoryRegistry;
+        this.targetNodeSetFactory = targetNodeSetFactory;
     }
 
     /**
@@ -101,14 +92,14 @@ class DistributedTaskFetcher {
 
             Thread.sleep(1000);
 
-            // Wait until we have stopped.
-            while (runningTasks.size() > 0) {
-                for (final Task<?> task : runningTasks) {
-                    taskManager.terminate(task.getId());
-                }
-
-                Thread.sleep(1000);
-            }
+//            // Wait until we have stopped.
+//            while (runningTasks.size() > 0) {
+//                for (final DistributedTask task : runningTasks) {
+//                    taskManager.terminate(task.getId());
+//                }
+//
+//                Thread.sleep(1000);
+//            }
         } catch (final InterruptedException e) {
             LOGGER.debug(e.getMessage(), e);
 
@@ -170,50 +161,56 @@ class DistributedTaskFetcher {
 
                                     // If there are some tasks we need to get then get them.
                                     if (count > 0 || forceFetch) {
-                                        final DistributedTaskRequestClusterTask request = new DistributedTaskRequestClusterTask("DistributedTaskRequestClusterTask", nodeName,
-                                                requiredTasks);
+                                        if (targetNodeSetFactory.isClusterStateInitialised()) {
+                                            for (final Entry<String, DistributedTaskFactory> entry : distributedTaskFactoryRegistry.getFactoryMap().entrySet()) {
+                                                final String jobName = entry.getKey();
+                                                final DistributedTaskFactory distributedTaskFactory = entry.getValue();
 
-                                        if (LOGGER.isDebugEnabled()) {
-                                            LOGGER.debug("Task request: node=\"" + request.getNodeName() + "\"");
-                                            if (LOGGER.isTraceEnabled()) {
-                                                final String trace = "\nTask request: node=\"" + request.getNodeName() + "\"\n"
-                                                        + request.toString();
-                                                LOGGER.trace(trace);
+                                                if (LOGGER.isDebugEnabled()) {
+                                                    LOGGER.debug("Task request: node=\"" + nodeName + "\"");
+                                                    if (LOGGER.isTraceEnabled()) {
+                                                        final String trace = "\nTask request: node=\"" + nodeName + "\"\n"
+                                                                + distributedTaskFactory;
+                                                        LOGGER.trace(trace);
+                                                    }
+                                                }
+
+                                                final List<DistributedTask> tasks = distributedTaskFactory.fetch(nodeName, count);
+                                                handleResult(nodeName, jobName, tasks);
                                             }
+
+                                            // Remember the last fetch time.
+                                            lastFetch = now;
                                         }
 
-                                        // Remember the last fetch time.
-                                        lastFetch = now;
-
-                                        // Perform a fetch from the master node.
-                                        final ClusterDispatchAsyncHelper dispatchHelper = clusterDispatchAsyncHelperProvider.get();
-                                        if (dispatchHelper.isClusterStateInitialised()) {
-                                            final DefaultClusterResultCollector<DistributedTaskRequestResult> collector = dispatchHelper
-                                                    .execAsync(request, WAIT_TIME, TimeUnit.MINUTES, TargetType.MASTER);
-
-                                            final ClusterCallEntry<DistributedTaskRequestResult> response = collector.getSingleResponse();
-
-                                            if (response == null) {
-                                                LOGGER.error("No response from master while trying to fetch tasks");
-                                            } else if (response.getError() != null) {
-                                                try {
-                                                    throw response.getError();
-                                                } catch (final MalformedURLException e) {
-                                                    LOGGER.warn(response.getError().getMessage());
-                                                } catch (final ConnectException | HessianRuntimeException e) {
-                                                    LOGGER.error(response.getError().getMessage());
-                                                } catch (final Throwable e) {
-                                                    LOGGER.error(response.getError().getMessage(), response.getError());
-                                                }
-                                            } else {
-                                                final DistributedTaskRequestResult taskRequestResult = response.getResult();
-                                                if (taskRequestResult == null) {
-                                                    LOGGER.error("No response object received from master while trying to fetch tasks");
-                                                } else {
-                                                    handleResult(request, taskRequestResult);
-                                                }
-                                            }
-                                        }
+//                                        // Perform a fetch from the master node.
+//                                        final ClusterDispatchAsyncHelper dispatchHelper = clusterDispatchAsyncHelperProvider.get();
+//                                            final DefaultClusterResultCollector<DistributedTaskRequestResult> collector = dispatchHelper
+//                                                    .execAsync(request, WAIT_TIME, TimeUnit.MINUTES, TargetType.MASTER);
+//
+//                                            final ClusterCallEntry<DistributedTaskRequestResult> response = collector.getSingleResponse();
+//
+//                                            if (response == null) {
+//                                                LOGGER.error("No response from master while trying to fetch tasks");
+//                                            } else if (response.getError() != null) {
+//                                                try {
+//                                                    throw response.getError();
+//                                                } catch (final MalformedURLException e) {
+//                                                    LOGGER.warn(response.getError().getMessage());
+//                                                } catch (final ConnectException | HessianRuntimeException e) {
+//                                                    LOGGER.error(response.getError().getMessage());
+//                                                } catch (final Throwable e) {
+//                                                    LOGGER.error(response.getError().getMessage(), response.getError());
+//                                                }
+//                                            } else {
+//                                                final DistributedTaskRequestResult taskRequestResult = response.getResult();
+//                                                if (taskRequestResult == null) {
+//                                                    LOGGER.error("No response object received from master while trying to fetch tasks");
+//                                                } else {
+//                                                    handleResult(request, taskRequestResult);
+//                                                }
+//                                            }
+//                                        }
                                     }
                                 } catch (final RuntimeException e) {
                                     LOGGER.error(e.getMessage(), e);
@@ -221,7 +218,7 @@ class DistributedTaskFetcher {
                             };
                             runnable = taskContext.subTask(runnable);
                             CompletableFuture
-                                    .runAsync(runnable, executor)
+                                    .runAsync(runnable, executorProvider.get())
                                     .whenComplete((r, t) -> afterFetch());
 
                         } else {
@@ -251,15 +248,16 @@ class DistributedTaskFetcher {
         }
     }
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private void handleResult(final DistributedTaskRequestClusterTask request,
-                              final DistributedTaskRequestResult response) {
+    private void handleResult(
+            final String nodeName,
+            final String jobName,
+            final List<DistributedTask> tasks) {
         try {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Task response: node=\"" + request.getNodeName() + "\"");
+                LOGGER.debug("Task response: node=\"" + nodeName + "\"");
                 if (LOGGER.isTraceEnabled()) {
-                    final String trace = "\nTask response: node=\"" + request.getNodeName() + "\"\n"
-                            + response.toString();
+                    final String trace = "\nTask response: node=\"" + nodeName + "\"\n"
+                            + tasks;
                     LOGGER.trace(trace);
                 }
             }
@@ -269,45 +267,37 @@ class DistributedTaskFetcher {
 
             // Execute all of the returned tasks.
             final JobNodeTrackerCache.Trackers trackers = jobNodeTrackerCache.getTrackers();
-            for (final Entry<String, List<DistributedTask<?>>> entry : response.getTaskMap().entrySet()) {
-                // Get the latest local tracker.
-                final String jobName = entry.getKey();
-                final JobNodeTracker tracker = trackers.getTrackerForJobName(jobName);
+            // Get the latest local tracker.
+            final JobNodeTracker tracker = trackers.getTrackerForJobName(jobName);
+            taskStatusTraceLog.receiveOnWorkerNode(DistributedTaskFetcher.class, tasks, jobName);
 
-                // Get the returned tasks.
-                final List<DistributedTask<?>> tasks = entry.getValue();
+            // Try and get more tasks.
+            tasks.stream().filter(task -> !stopping.get()).forEach(task -> {
+                runningTasks.add(task);
+                tracker.incrementTaskCount();
+                tracker.setLastExecutedTime(now);
 
-                taskStatusTraceLog.receiveOnWorkerNode(DistributedTaskFetcher.class, tasks, jobName);
-
-                // Try and get more tasks.
-                tasks.stream().filter(task -> !stopping.get()).forEach(task -> {
-                    runningTasks.add(task);
-                    tracker.incrementTaskCount();
-                    tracker.setLastExecutedTime(now);
-
-                    if (!stopping.get()) {
-                        taskManager.execAsync(task, new TaskCallbackAdaptor() {
-                            @Override
-                            public void onSuccess(final Object result) {
+                if (!stopping.get()) {
+                    final Executor executor = executorProvider.get(task.getThreadPool());
+                    final TaskContext taskContext = taskContextProvider.get();
+                    Runnable runnable = task.getRunnable();
+                    runnable = taskContext.subTask(runnable);
+                    CompletableFuture
+                            .runAsync(runnable, executor)
+                            .whenComplete((r, t) -> {
                                 runningTasks.remove(task);
                                 tracker.decrementTaskCount();
 
-                                // Try and get more tasks.
-                                fetch();
-                            }
-
-                            @Override
-                            public void onFailure(final Throwable t) {
-                                runningTasks.remove(task);
-                                tracker.decrementTaskCount();
-                            }
-                        });
-                    } else {
-                        runningTasks.remove(task);
-                        tracker.decrementTaskCount();
-                    }
-                });
-            }
+                                if (t == null) {
+                                    // Try and get more tasks.
+                                    fetch();
+                                }
+                            });
+                } else {
+                    runningTasks.remove(task);
+                    tracker.decrementTaskCount();
+                }
+            });
         } catch (final RuntimeException e) {
             LOGGER.error(e.getMessage(), e);
         }

@@ -17,7 +17,6 @@
 
 package stroom.job.impl;
 
-
 import stroom.job.api.DistributedTaskFactoryDescription;
 import stroom.job.api.ScheduledJob;
 import stroom.job.api.TaskRunnable;
@@ -50,7 +49,7 @@ class JobService {
     JobService(final JobDao jobDao,
                final SecurityContext securityContext,
                final Map<ScheduledJob, Provider<TaskRunnable>> scheduledJobsMap,
-               final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
+               final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry) {
         this.jobDao = jobDao;
         this.securityContext = securityContext;
 
@@ -62,7 +61,7 @@ class JobService {
         });
 
         // Distributed Jobs done a different way
-        distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {
+        distributedTaskFactoryRegistry.getFactoryMap().forEach((jobName, factory) -> {
             final DistributedTaskFactoryDescription distributedTaskFactoryBean = factory.getClass().getAnnotation(DistributedTaskFactoryDescription.class);
             jobDescriptionMap.put(distributedTaskFactoryBean.jobName(), distributedTaskFactoryBean.description());
         });

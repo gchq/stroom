@@ -18,7 +18,6 @@ package stroom.job.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.job.api.DistributedTask;
 import stroom.job.api.DistributedTaskFactory;
 import stroom.job.api.DistributedTaskFactoryDescription;
 
@@ -29,12 +28,12 @@ import java.util.Map;
 import java.util.Set;
 
 @Singleton
-class DistributedTaskFactoryBeanRegistry {
-    private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFactoryBeanRegistry.class);
+class DistributedTaskFactoryRegistry {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DistributedTaskFactoryRegistry.class);
     private final Map<String, DistributedTaskFactory> factoryMap = new HashMap<>();
 
     @Inject
-    DistributedTaskFactoryBeanRegistry(final Set<DistributedTaskFactory> distributedTaskFactories) {
+    DistributedTaskFactoryRegistry(final Set<DistributedTaskFactory> distributedTaskFactories) {
         for (final DistributedTaskFactory distributedTaskFactory : distributedTaskFactories) {
             DistributedTaskFactoryDescription annotation = distributedTaskFactory.getClass().getAnnotation(DistributedTaskFactoryDescription.class);
             final String jobName = annotation.jobName();
@@ -52,17 +51,6 @@ class DistributedTaskFactoryBeanRegistry {
                         + jobName);
             }
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    DistributedTaskFactory<DistributedTask<?>, ?> findFactory(final String jobName) {
-        final DistributedTaskFactory distributedTaskFactory = factoryMap.get(jobName);
-
-        if (distributedTaskFactory == null) {
-            throw new RuntimeException("No factory for " + jobName);
-        }
-
-        return distributedTaskFactory;
     }
 
     Map<String, DistributedTaskFactory> getFactoryMap() {

@@ -16,16 +16,15 @@
 
 package stroom.processor.impl;
 
-import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskList;
 import stroom.task.api.TaskContext;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
 public interface ProcessorTaskManager {
-    List<ProcessorTask> assignTasks(String nodeName, int count);
+    ProcessorTaskList assignTasks(String nodeName, int count);
 
-    void abandonTasks(String nodeName, List<ProcessorTask> tasks);
+    Boolean abandonTasks(ProcessorTaskList processorTaskList);
 
     void createTasks(final TaskContext taskContext);
 

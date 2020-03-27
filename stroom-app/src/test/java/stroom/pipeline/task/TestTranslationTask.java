@@ -18,12 +18,11 @@ package stroom.pipeline.task;
 
 
 import org.junit.jupiter.api.Test;
-import stroom.core.dataprocess.PipelineDataProcessorTaskExecutor;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.mock.MockStore;
 import stroom.meta.mock.MockMetaService;
 import stroom.meta.shared.Meta;
-import stroom.processor.api.DataProcessorTaskExecutor;
+import stroom.processor.api.ProcessorResult;
 import stroom.test.AbstractProcessIntegrationTest;
 import stroom.test.CommonTranslationTestHelper;
 import stroom.test.common.ComparisonHelper;
@@ -61,13 +60,12 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
     void testBothValid() throws IOException {
         commonTranslationTestHelper.setup();
 
-        final List<DataProcessorTaskExecutor> results = commonTranslationTestHelper.processAll();
+        final List<ProcessorResult> results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(N4);
-        for (final DataProcessorTaskExecutor result : results) {
-            final PipelineDataProcessorTaskExecutor processor = (PipelineDataProcessorTaskExecutor) result;
-            assertThat(processor.getWritten() > 0).as(result.toString()).isTrue();
-            assertThat(processor.getRead() <= processor.getWritten()).as(result.toString()).isTrue();
-            assertThat(processor.getMarkerCount(Severity.SEVERITIES)).as(result.toString()).isEqualTo(0);
+        for (final ProcessorResult result : results) {
+            assertThat(result.getWritten() > 0).as(result.toString()).isTrue();
+            assertThat(result.getRead() <= result.getWritten()).as(result.toString()).isTrue();
+            assertThat(result.getMarkerCount(Severity.SEVERITIES)).as(result.toString()).isEqualTo(0);
         }
 
         final Path inputDir = StroomPipelineTestFileUtil.getTestResourcesDir().resolve(DIR);
@@ -91,7 +89,7 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
         }
 
         // Make sure 26 records were written.
-        assertThat(((PipelineDataProcessorTaskExecutor) results.get(N3)).getWritten()).isEqualTo(26);
+        assertThat(results.get(N3).getWritten()).isEqualTo(26);
     }
 
     /**
@@ -103,10 +101,10 @@ class TestTranslationTask extends AbstractProcessIntegrationTest {
     void testInvalidResource() {
         commonTranslationTestHelper.setup(CommonTranslationTestHelper.FEED_NAME, CommonTranslationTestHelper.INVALID_RESOURCE_NAME);
 
-        final List<DataProcessorTaskExecutor> results = commonTranslationTestHelper.processAll();
+        final List<ProcessorResult> results = commonTranslationTestHelper.processAll();
         assertThat(results.size()).isEqualTo(N4);
 
         // Make sure no records were written.
-        assertThat(((PipelineDataProcessorTaskExecutor) results.get(N3)).getWritten()).isEqualTo(0);
+        assertThat((results.get(N3)).getWritten()).isEqualTo(0);
     }
 }

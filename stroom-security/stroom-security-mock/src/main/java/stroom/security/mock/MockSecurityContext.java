@@ -50,6 +50,11 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
+    public boolean isProcessingUser() {
+        return true;
+    }
+
+    @Override
     public boolean hasAppPermission(final String permission) {
         return true;
     }

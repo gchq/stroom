@@ -171,21 +171,4 @@ public class ClusterDispatchAsyncHelperImpl implements ClusterDispatchAsyncHelpe
 
         return collector;
     }
-
-    public boolean isClusterStateInitialised() {
-        boolean initialised = true;
-        try {
-            targetNodeSetFactory.getClusterState();
-        } catch (final NullClusterStateException e) {
-            initialised = false;
-            final long now = System.currentTimeMillis();
-            if (lastClusterStateWarn < now - ONE_MINUTE) {
-                lastClusterStateWarn = now;
-                LOGGER.warn(e.getMessage());
-            }
-        } catch (final RuntimeException e) {
-            LOGGER.debug(e.getMessage(), e);
-        }
-        return initialised;
-    }
 }

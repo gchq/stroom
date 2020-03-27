@@ -49,9 +49,9 @@ import stroom.pipeline.shared.stepping.SteppingResult;
 import stroom.pipeline.stepping.SteppingService;
 import stroom.processor.api.ProcessorFilterService;
 import stroom.processor.api.ProcessorService;
-import stroom.processor.impl.DataProcessorTask;
 import stroom.processor.impl.ProcessorTaskManager;
 import stroom.processor.shared.ProcessorTask;
+import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Op;
@@ -62,6 +62,7 @@ import stroom.receive.common.StroomStreamProcessor;
 import stroom.task.api.SimpleTaskContext;
 import stroom.task.api.TaskManager;
 import stroom.test.AbstractCoreIntegrationTest;
+import stroom.test.CommonTranslationTestHelper;
 import stroom.test.ContentImportService;
 import stroom.test.common.ComparisonHelper;
 import stroom.test.common.StroomCoreServerTestFileUtil;
@@ -119,6 +120,8 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
     private ImportExportSerializer importExportSerializer;
     @Inject
     private ContentImportService contentImportService;
+    @Inject
+    private CommonTranslationTestHelper commonTranslationTestHelper;
 
     /**
      * NOTE some of the input data for this test is buried in the following zip file so you will need
@@ -218,12 +221,12 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
 
         processorTaskManager.createTasks(new SimpleTaskContext());
 
-        List<DataProcessorTask> tasks = getTasks();
+        List<ProcessorTask> tasks = getTasks();
         assertThat(tasks.size()).as("There should be one task here").isEqualTo(1);
 
-        for (final DataProcessorTask task : tasks) {
+        for (final ProcessorTask task : tasks) {
             final long startStreamId = getLatestStreamId();
-            taskManager.exec(task);
+            commonTranslationTestHelper.process(task);
             final long endStreamId = getLatestStreamId();
 
             if (compareOutput) {
@@ -359,22 +362,20 @@ public abstract class TranslationTest extends AbstractCoreIntegrationTest {
      *
      * @return The next task or null if there are currently no more tasks.
      */
-    private List<DataProcessorTask> getTasks() {
-        List<DataProcessorTask> dataProcessorTasks = Collections.emptyList();
-
-        List<ProcessorTask> processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
-        while (processorTasks.size() > 0) {
-            dataProcessorTasks = new ArrayList<>(processorTasks.size());
-            for (final ProcessorTask processorTask : processorTasks) {
-                dataProcessorTasks.add(new DataProcessorTask(processorTask));
-            }
+    private List<ProcessorTask> getTasks() {
+        ProcessorTaskList processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
+        List<ProcessorTask> list = processorTasks.getList();
+        final List<ProcessorTask> dataProcessorTasks = new ArrayList<>(list.size());
+        while (list.size() > 0) {
+            dataProcessorTasks.addAll(list);
             processorTasks = processorTaskManager.assignTasks(nodeInfo.getThisNodeName(), 100);
+            list = processorTasks.getList();
         }
 
         return dataProcessorTasks;
     }
 
-    protected void testSteppingTask(final String feedName, final Path dir) throws IOException {
+    protected void testSteppingTask(final String feedName, final Path dir) {
         final List<Exception> exceptions = new ArrayList<>();
 
         // feedCriteria.setFeedType(FeedType.REFERENCE);

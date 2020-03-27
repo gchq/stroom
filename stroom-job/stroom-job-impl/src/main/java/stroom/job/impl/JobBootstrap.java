@@ -51,7 +51,7 @@ class JobBootstrap {
     private final SecurityContext securityContext;
     private final NodeInfo nodeInfo;
     private final Map<ScheduledJob, Provider<TaskRunnable>> scheduledJobsMap;
-    private final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry;
+    private final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry;
 
     @Inject
     JobBootstrap(final JobDao jobDao,
@@ -60,14 +60,14 @@ class JobBootstrap {
                  final SecurityContext securityContext,
                  final NodeInfo nodeInfo,
                  final Map<ScheduledJob, Provider<TaskRunnable>> scheduledJobsMap,
-                 final DistributedTaskFactoryBeanRegistry distributedTaskFactoryBeanRegistry) {
+                 final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry) {
         this.jobDao = jobDao;
         this.jobNodeDao = jobNodeDao;
         this.clusterLockService = clusterLockService;
         this.securityContext = securityContext;
         this.nodeInfo = nodeInfo;
         this.scheduledJobsMap = scheduledJobsMap;
-        this.distributedTaskFactoryBeanRegistry = distributedTaskFactoryBeanRegistry;
+        this.distributedTaskFactoryRegistry = distributedTaskFactoryRegistry;
     }
 
     void startup() {
@@ -131,7 +131,7 @@ class JobBootstrap {
             }
 
             // Distributed Jobs done a different way
-            distributedTaskFactoryBeanRegistry.getFactoryMap().forEach((jobName, factory) -> {
+            distributedTaskFactoryRegistry.getFactoryMap().forEach((jobName, factory) -> {
                 validJobNames.add(jobName);
 
                 // Add the job node to the DB if it isn't there already.

@@ -25,7 +25,6 @@ import stroom.security.api.SecurityContext;
 
 import javax.inject.Inject;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Function;
 
 
@@ -74,10 +73,8 @@ class ClusterLockHandler {
 
     private Optional<String> getMasterNodeName() {
         try {
-            final Set<String> nodes = targetNodeSetFactory.getMasterTargetNodeSet();
-            if (nodes.size() > 0) {
-                return Optional.of(nodes.iterator().next());
-            }
+            final String node = targetNodeSetFactory.getMasterNode();
+            return Optional.of(node);
         } catch (final NullClusterStateException | NodeNotFoundException e) {
             LOGGER.error(e.getMessage(), e);
         }

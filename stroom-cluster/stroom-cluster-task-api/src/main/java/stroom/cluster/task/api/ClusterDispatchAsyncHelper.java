@@ -32,8 +32,4 @@ public interface ClusterDispatchAsyncHelper {
     <R> DefaultClusterResultCollector<R> execAsyncWithContext(ClusterTask<R> task, TargetType targetType);
 
     <R> DefaultClusterResultCollector<R> execAsyncWithContext(ClusterTask<R> task, long waitTime, TimeUnit timeUnit, TargetType targetType);
-
-
-
-    boolean isClusterStateInitialised();
 }

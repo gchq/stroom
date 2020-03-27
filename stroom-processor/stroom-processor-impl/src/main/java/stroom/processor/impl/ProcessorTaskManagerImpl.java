@@ -32,6 +32,7 @@ import stroom.processor.shared.ProcessorFilterDataSource;
 import stroom.processor.shared.ProcessorFilterTracker;
 import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskDataSource;
+import stroom.processor.shared.ProcessorTaskList;
 import stroom.processor.shared.QueryData;
 import stroom.processor.shared.TaskStatus;
 import stroom.query.api.v2.ExpressionOperator;
@@ -56,6 +57,7 @@ import stroom.util.logging.LambdaLogUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.PermissionException;
 import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
@@ -205,7 +207,11 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
      * the task to the node asking for the job
      */
     @Override
-    public List<ProcessorTask> assignTasks(final String nodeName, final int count) {
+    public ProcessorTaskList assignTasks(final String nodeName, final int count) {
+        if (!securityContext.isProcessingUser()) {
+            throw new PermissionException(securityContext.getUserId(), "Only the processing user is allowed to assign tasks");
+        }
+
         List<ProcessorTask> assignedStreamTasks = Collections.emptyList();
 
         try {
@@ -253,17 +259,23 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // Output some trace logging so we can see where tasks go.
         taskStatusTraceLog.assignTasks(ProcessorTaskManagerImpl.class, assignedStreamTasks, nodeName);
 
-        return assignedStreamTasks;
+        return new ProcessorTaskList(nodeName, assignedStreamTasks);
     }
 
     @Override
-    public void abandonTasks(final String nodeName, final List<ProcessorTask> tasks) {
-        // Output some trace logging so we can see where tasks go.
-        taskStatusTraceLog.abandonTasks(ProcessorTaskManagerImpl.class, tasks, nodeName);
+    public Boolean abandonTasks(final ProcessorTaskList processorTaskList) {
+        if (!securityContext.isProcessingUser()) {
+            throw new PermissionException(securityContext.getUserId(), "Only the processing user is allowed to abandon tasks");
+        }
 
-        for (final ProcessorTask streamTask : tasks) {
+        // Output some trace logging so we can see where tasks go.
+        taskStatusTraceLog.abandonTasks(ProcessorTaskManagerImpl.class, processorTaskList.getList(), processorTaskList.getNodeName());
+
+        for (final ProcessorTask streamTask : processorTaskList.getList()) {
             abandon(streamTask);
         }
+
+        return true;
     }
 
     private void abandon(final ProcessorTask streamTask) {
