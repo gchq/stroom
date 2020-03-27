@@ -25,39 +25,6 @@ import java.util.stream.Collectors;
 @Singleton
 public class MockProcessorTaskDao implements ProcessorTaskDao, Clearable {
     private final MockIntCrud<ProcessorTask> dao = new MockIntCrud<>();
-//
-//    @Override
-//    public ProcessorTask create(final ProcessorTask processorTask) {
-//        return dao.create(processorTask);
-//    }
-//
-//    @Override
-//    public Optional<ProcessorTask> fetch(final int id) {
-//        return dao.fetch(id);
-//    }
-//
-//    @Override
-//    public ProcessorTask update(final ProcessorTask processorTask) {
-//        return dao.update(processorTask);
-//    }
-//
-//    @Override
-//    public boolean delete(final int id) {
-//        return dao.delete(id);
-//    }
-//
-//    @Override
-//    public BaseResultList<ProcessorTask> find(final FindProcessorTaskCriteria criteria) {
-//        final List<ProcessorTask> list = dao
-//                .getMap()
-//                .values()
-//                .stream()
-////                .filter(pf -> criteria.getPipelineUuidCriteria().getString().equals(pf.getPipelineUuid()))
-//                .collect(Collectors.toList());
-//
-//        return BaseResultList.createCriterialBasedList(list, criteria);
-//    }
-
 
     @Override
     public void releaseOwnedTasks() {
