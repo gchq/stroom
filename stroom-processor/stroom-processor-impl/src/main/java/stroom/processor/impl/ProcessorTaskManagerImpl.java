@@ -271,19 +271,19 @@ class ProcessorTaskManagerImpl implements ProcessorTaskManager {
         // Output some trace logging so we can see where tasks go.
         taskStatusTraceLog.abandonTasks(ProcessorTaskManagerImpl.class, processorTaskList.getList(), processorTaskList.getNodeName());
 
-        for (final ProcessorTask streamTask : processorTaskList.getList()) {
-            abandon(streamTask);
+        for (final ProcessorTask processorTask : processorTaskList.getList()) {
+            abandon(processorTask);
         }
 
         return true;
     }
 
-    private void abandon(final ProcessorTask streamTask) {
+    private void abandon(final ProcessorTask processorTask) {
         try {
-            LOGGER.warn("abandon() - {}", streamTask);
-            processorTaskDao.changeTaskStatus(streamTask, null, TaskStatus.UNPROCESSED, null, null);
+            LOGGER.warn("abandon() - {}", processorTask);
+            processorTaskDao.changeTaskStatus(processorTask, null, TaskStatus.UNPROCESSED, null, null);
         } catch (final RuntimeException e) {
-            LOGGER.error("abandon() - {}", streamTask, e);
+            LOGGER.error("abandon() - {}", processorTask, e);
         }
     }
 
