@@ -20,7 +20,6 @@ import com.google.inject.AbstractModule;
 import stroom.cluster.task.api.ClusterTaskHandlerBinder;
 import stroom.search.api.EventSearch;
 import stroom.search.extraction.ExtractionModule;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
 import stroom.util.shared.RestResource;
@@ -36,9 +35,6 @@ public class SearchModule extends AbstractModule {
 
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(StroomIndexQueryResourceImpl.class);
-
-        TaskHandlerBinder.create(binder())
-                .bind(EventSearchTask.class, EventSearchTaskHandler.class);
 
         ClusterTaskHandlerBinder.create(binder())
                 .bind(ClusterSearchTask.class, ClusterSearchTaskHandler.class);

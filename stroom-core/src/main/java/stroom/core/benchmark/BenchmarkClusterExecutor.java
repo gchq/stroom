@@ -49,7 +49,6 @@ import stroom.query.api.v2.ExpressionTerm.Condition;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 import stroom.statistics.api.InternalStatisticsReceiver;
-import stroom.task.api.AsyncExecutorHelper;
 import stroom.task.api.TaskContext;
 import stroom.task.api.VoidResult;
 import stroom.util.Period;

@@ -19,16 +19,10 @@ package stroom.search.solr.search;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.task.api.ServerTask;
-import stroom.task.shared.Task;
-import stroom.task.api.VoidResult;
 
-import java.io.Serializable;
 import java.util.Map;
 
-public class SolrAsyncSearchTask extends ServerTask<VoidResult> implements Serializable {
-    private static final long serialVersionUID = -1305243739417365803L;
-
+public class SolrAsyncSearchTask {
     private final String searchName;
     private final Query query;
     private final int resultSendFrequency;
@@ -38,14 +32,12 @@ public class SolrAsyncSearchTask extends ServerTask<VoidResult> implements Seria
 
     private volatile transient SolrSearchResultCollector resultCollector;
 
-    public SolrAsyncSearchTask(final Task<?> parentTask,
-                               final String searchName,
+    public SolrAsyncSearchTask(final String searchName,
                                final Query query,
                                final int resultSendFrequency,
                                final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
                                final String dateTimeLocale,
                                final long now) {
-        super(parentTask);
         this.searchName = searchName;
         this.query = query;
         this.resultSendFrequency = resultSendFrequency;

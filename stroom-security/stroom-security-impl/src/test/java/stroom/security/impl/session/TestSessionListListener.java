@@ -16,6 +16,8 @@ import stroom.security.impl.AuthenticationEventLog;
 import stroom.security.impl.SessionResource;
 import stroom.security.impl.SessionResourceImpl;
 import stroom.task.api.TaskContext;
+import stroom.task.api.TaskContext.WrappedRunnable;
+import stroom.task.api.TaskContext.WrappedSupplier;
 import stroom.test.common.util.test.AbstractMultiNodeResourceTest;
 
 import java.util.HashMap;
@@ -93,9 +95,9 @@ class TestSessionListListener extends AbstractMultiNodeResourceTest<SessionResou
 
         // Set up TaskContext to just return the passed runnable/supplier
         when(taskContext.sub(Mockito.any(Runnable.class)))
-                .thenAnswer(i -> i.getArgument(0));
+                .thenAnswer(i -> new WrappedRunnable(taskContext, i.getArgument(0)));
         when(taskContext.sub(Mockito.any(Supplier.class)))
-                .thenAnswer(i -> i.getArgument(0));
+                .thenAnswer(i -> new WrappedSupplier<>(taskContext, i.getArgument(0)));
 
         return taskContext;
     }

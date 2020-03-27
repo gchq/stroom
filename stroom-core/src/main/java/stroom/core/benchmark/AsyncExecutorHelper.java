@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package stroom.task.api;
+package stroom.core.benchmark;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.task.api.TaskContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class AsyncExecutorHelper<R> {
+class AsyncExecutorHelper<R> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncExecutorHelper.class);
     private static final String STATUS = "Executing task {}\n{}";
     private static final String FINISHED = "Finished task {}\n{}";
@@ -42,7 +43,7 @@ public class AsyncExecutorHelper<R> {
     private volatile long total;
     private volatile boolean busy;
 
-    public AsyncExecutorHelper(final String taskInfo, final TaskContext taskContext, final Executor executor,
+    AsyncExecutorHelper(final String taskInfo, final TaskContext taskContext, final Executor executor,
                                final int concurrent) {
         this.taskInfo = taskInfo;
         this.taskContext = taskContext;

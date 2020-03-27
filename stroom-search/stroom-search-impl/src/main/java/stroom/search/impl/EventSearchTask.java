@@ -18,10 +18,8 @@ package stroom.search.impl;
 
 import stroom.query.api.v2.Query;
 import stroom.search.api.EventRef;
-import stroom.search.api.EventRefs;
-import stroom.task.api.ServerTask;
 
-public class EventSearchTask extends ServerTask<EventRefs> {
+public class EventSearchTask {
     private final Query query;
     private final EventRef minEvent;
     private final EventRef maxEvent;

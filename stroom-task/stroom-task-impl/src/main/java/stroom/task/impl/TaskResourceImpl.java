@@ -49,7 +49,7 @@ import javax.ws.rs.core.Response.Status;
 class TaskResourceImpl implements TaskResource, HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(TaskResourceImpl.class);
 
-    private final TaskManager taskManager;
+    private final TaskManagerImpl taskManager;
     private final SessionIdProvider sessionIdProvider;
     private final NodeService nodeService;
     private final NodeInfo nodeInfo;
@@ -57,7 +57,7 @@ class TaskResourceImpl implements TaskResource, HasHealthCheck {
     private final DocumentEventLog documentEventLog;
 
     @Inject
-    TaskResourceImpl(final TaskManager taskManager,
+    TaskResourceImpl(final TaskManagerImpl taskManager,
                      final SessionIdProvider sessionIdProvider,
                      final NodeService nodeService,
                      final NodeInfo nodeInfo,

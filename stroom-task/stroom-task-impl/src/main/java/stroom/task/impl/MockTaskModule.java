@@ -19,7 +19,6 @@ package stroom.task.impl;
 import com.google.inject.AbstractModule;
 import stroom.task.api.ExecutorProvider;
 import stroom.task.api.TaskContext;
-import stroom.task.api.TaskHandlerBinder;
 import stroom.task.api.TaskManager;
 
 import java.util.concurrent.Executor;
@@ -31,7 +30,5 @@ public class MockTaskModule extends AbstractModule {
         bind(Executor.class).toProvider(ExecutorProviderImpl.class);
         bind(TaskManager.class).to(TaskManagerImpl.class);
         bind(TaskContext.class).toProvider(TaskContextProvider.class);
-
-        TaskHandlerBinder.create(binder());
     }
 }

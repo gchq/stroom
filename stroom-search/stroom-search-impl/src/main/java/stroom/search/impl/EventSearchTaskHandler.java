@@ -25,7 +25,6 @@ import stroom.query.common.v2.Sizes;
 import stroom.search.api.EventRefs;
 import stroom.search.coprocessor.EventCoprocessorSettings;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
@@ -38,7 +37,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 
-class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventRefs> {
+public class EventSearchTaskHandler {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(EventSearchTaskHandler.class);
 
     private final NodeInfo nodeInfo;
@@ -60,7 +59,6 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
         this.securityContext = securityContext;
     }
 
-    @Override
     public EventRefs exec(final EventSearchTask task) {
         return securityContext.secureResult(() -> {
             EventRefs eventRefs;
@@ -70,9 +68,6 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
 
             // Get the search.
             final Query query = task.getQuery();
-
-            // Get the current node.
-            final String nodeName = nodeInfo.getThisNodeName();
 
             final EventCoprocessorSettings settings = new EventCoprocessorSettings(task.getMinEvent(), task.getMaxEvent(),
                     task.getMaxStreams(), task.getMaxEvents(), task.getMaxEventsPerStream());
@@ -84,7 +79,6 @@ class EventSearchTaskHandler extends AbstractTaskHandler<EventSearchTask, EventR
             final AsyncSearchTask asyncSearchTask = new AsyncSearchTask(
                     searchName,
                     query,
-                    nodeName,
                     task.getResultSendFrequency(),
                     coprocessorMap,
                     null,

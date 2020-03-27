@@ -17,7 +17,7 @@
 package stroom.task.impl;
 
 import stroom.task.api.ExecutorProvider;
-import stroom.task.api.ServerTask;
+import stroom.task.api.SimpleThreadPool;
 import stroom.task.shared.ThreadPool;
 import stroom.util.concurrent.ScalingThreadPoolExecutor;
 import stroom.util.thread.CustomThreadFactory;
@@ -37,6 +37,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Singleton
 public class ExecutorProviderImpl implements ExecutorProvider {
+    public static final ThreadPool DEFAULT_THREAD_POOL = new SimpleThreadPool(2);
     private final AtomicInteger currentAsyncTaskCount = new AtomicInteger();
 
     // The thread pools that will be used to execute tasks.
@@ -46,7 +47,7 @@ public class ExecutorProviderImpl implements ExecutorProvider {
 
     @Override
     public Executor get() {
-        return get(ServerTask.THREAD_POOL);
+        return get(DEFAULT_THREAD_POOL);
     }
 
     @Override

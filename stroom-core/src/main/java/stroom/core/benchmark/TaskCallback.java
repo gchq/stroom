@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package stroom.task.api;
+package stroom.core.benchmark;
 
-import stroom.task.shared.Task;
+interface TaskCallback<R> {
+    void onSuccess(R result);
 
-public interface TaskHandler<T extends Task<R>, R> {
-    void exec(T task, TaskCallback<R> callback);
+    void onFailure(Throwable t);
 }

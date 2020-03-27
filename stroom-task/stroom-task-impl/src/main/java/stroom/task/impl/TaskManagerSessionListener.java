@@ -32,11 +32,11 @@ import javax.servlet.http.HttpSessionListener;
 class TaskManagerSessionListener implements HttpSessionListener {
     private static final Logger LOGGER = LoggerFactory.getLogger(TaskManagerSessionListener.class);
 
-    private final Provider<TaskManager> taskManagerProvider;
+    private final Provider<TaskManagerImpl> taskManagerProvider;
     private final SecurityContext securityContext;
 
     @Inject
-    TaskManagerSessionListener(final Provider<TaskManager> taskManagerProvider,
+    TaskManagerSessionListener(final Provider<TaskManagerImpl> taskManagerProvider,
                                final SecurityContext securityContext) {
         this.taskManagerProvider = taskManagerProvider;
         this.securityContext = securityContext;
@@ -49,7 +49,7 @@ class TaskManagerSessionListener implements HttpSessionListener {
     @Override
     public void sessionDestroyed(final HttpSessionEvent event) {
         try {
-            final TaskManager taskManager = getTaskManager();
+            final TaskManagerImpl taskManager = getTaskManager();
             if (taskManager != null) {
                 securityContext.asProcessingUser(() -> {
                     // Manually set the id as we are invoking a UI Action Task
@@ -65,7 +65,7 @@ class TaskManagerSessionListener implements HttpSessionListener {
         }
     }
 
-    private TaskManager getTaskManager() {
+    private TaskManagerImpl getTaskManager() {
         if (taskManagerProvider != null) {
             return taskManagerProvider.get();
         }

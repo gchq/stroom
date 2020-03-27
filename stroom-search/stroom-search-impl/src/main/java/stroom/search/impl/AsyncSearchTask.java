@@ -19,17 +19,12 @@ package stroom.search.impl;
 import stroom.query.api.v2.Query;
 import stroom.query.common.v2.CoprocessorSettings;
 import stroom.query.common.v2.CoprocessorSettingsMap.CoprocessorKey;
-import stroom.task.api.ServerTask;
-import stroom.task.shared.Task;
-import stroom.task.api.VoidResult;
 
-import java.io.Serializable;
 import java.util.Map;
 
 public class AsyncSearchTask {
     private final String searchName;
     private final Query query;
-    private final String targetNode;
     private final int resultSendFrequency;
     private final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap;
     private final String dateTimeLocale;
@@ -39,14 +34,12 @@ public class AsyncSearchTask {
 
     public AsyncSearchTask(final String searchName,
                            final Query query,
-                           final String targetNode,
                            final int resultSendFrequency,
                            final Map<CoprocessorKey, CoprocessorSettings> coprocessorMap,
                            final String dateTimeLocale,
                            final long now) {
         this.searchName = searchName;
         this.query = query;
-        this.targetNode = targetNode;
         this.resultSendFrequency = resultSendFrequency;
         this.coprocessorMap = coprocessorMap;
         this.dateTimeLocale = dateTimeLocale;
@@ -59,10 +52,6 @@ public class AsyncSearchTask {
 
     public Query getQuery() {
         return query;
-    }
-
-    public String getTargetNode() {
-        return targetNode;
     }
 
     public int getResultSendFrequency() {
