@@ -20,7 +20,7 @@ import org.reflections.scanners.*
 ext.moduleName = 'stroom.app'
 
 def uiDir = project.file('src/main/resources/ui')
-def swaggerDir = "${uiDir}/swagger"
+def swaggerDir = "${uiDir}/noauth/swagger"
 def restResourceClassNames = []
 def jarName = 'stroom-app.jar'
 def fatJarName = 'stroom-app-all.jar'
@@ -310,20 +310,29 @@ swagger {
         outputFormats = ['json', 'yaml']
         locations = restResourceClassNames
         schemes = ['http', 'https']
-        host = 'localhost:8080'
+        //host = 'localhost:8080'
         basePath = '/api'
         info {
-            title = 'stroom API'
-            version = 'v1'
-            description = 'Various APIs for interacting with stroom and its data'
+            title = 'Stroom API'
+            version = 'v1/v2'
+            description = 'Various APIs for interacting with Stroom and its data'
             contact {
-                name = 'GCHQ'
+                name = 'Stroom'
                 url = 'https://github.com/gchq/stroom'
             }
             license {
                 url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
                 name = 'Apache 2.0'
             }
+        }
+        securityDefinition {
+            // `name` can be used refer to this security schemes from elsewhere
+            name = 'ApiKeyAuth'
+            type = 'apiKey'
+            // The location of the API key. Valid values are "query" or "header".
+            keyLocation = 'header'
+            // The name of the header
+            keyName = 'Authorization'
         }
         swaggerDirectory = "${swaggerDir}"
     }
@@ -379,6 +388,7 @@ task prepareSwaggerClasses {
                 restResourceClassNames.add(it.name)
                 logger.info it.name
             }
+        print "Using swagger directory ${swaggerDir}"
     }
 }
 generateSwaggerDocumentation.dependsOn prepareSwaggerClasses

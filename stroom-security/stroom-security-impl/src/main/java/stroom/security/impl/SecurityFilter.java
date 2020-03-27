@@ -139,7 +139,9 @@ class SecurityFilter implements Filter {
         filter(httpServletRequest, httpServletResponse, chain);
     }
 
-    private void filter(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain)
+    private void filter(final HttpServletRequest request,
+                        final HttpServletResponse response,
+                        final FilterChain chain)
             throws IOException, ServletException {
 
         LAMBDA_LOGGER.debug(() ->
@@ -178,7 +180,7 @@ class SecurityFilter implements Filter {
                         final UserIdentity token = loginAPI(request, response);
                         continueAsUser(request, response, chain, token);
                     }
-                } else if (shouldBypassAuthentication(servletPath)) {
+                } else if (shouldBypassAuthentication(servletPath, fullPath)) {
                     // Some servlet requests need to bypass authentication -- this happens if the servlet class
                     // is annotated with @Unauthenticated. E.g. the status servlet doesn't require authentication.
                     authenticateAsProcUser(request, response, chain, false);
@@ -223,8 +225,9 @@ class SecurityFilter implements Filter {
         return servletPath.endsWith(ResourcePaths.DISPATCH_RPC);
     }
 
-    private boolean shouldBypassAuthentication(String servletPath) {
-        return servletPath.startsWith(NO_AUTH_PATH);
+    private boolean shouldBypassAuthentication(final String servletPath, final String fullPath) {
+        return servletPath.startsWith(NO_AUTH_PATH) || fullPath.startsWith(NO_AUTH_PATH);
+//        return servletPath.startsWith(NO_AUTH_PATH);
     }
 
     private void authenticateAsAdmin(final HttpServletRequest request,

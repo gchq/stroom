@@ -57,7 +57,8 @@ public class ServletModule extends AbstractModule {
                 // unauthenticated servlets (i.e. run as proc user)
                 .bind(ReceiveDataServlet.class)
                 .bind(DebugServlet.class)
-                .bind(StatusServlet.class);
+                .bind(StatusServlet.class)
+                .bind(SwaggerUiServlet.class);
     }
 
 }
