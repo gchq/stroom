@@ -18,21 +18,15 @@ package stroom.security.impl.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.cluster.task.api.ClusterDispatchAsyncHelper;
-import stroom.cluster.task.api.NodeNotFoundException;
-import stroom.cluster.task.api.NullClusterStateException;
-import stroom.cluster.task.api.TargetNodeSetFactory;
 import stroom.security.api.SecurityContext;
 import stroom.security.impl.event.PermissionChangeEvent.Handler;
-import stroom.task.api.TaskContext;
+import stroom.util.shared.PermissionException;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
 
 @Singleton
 class PermissionChangeEventHandlers {
@@ -41,13 +35,20 @@ class PermissionChangeEventHandlers {
     private volatile boolean initialised;
 
     private final Provider<Set<Handler>> handlerProvider;
+    private final SecurityContext securityContext;
 
     @Inject
-    PermissionChangeEventHandlers(final Provider<Set<Handler>> handlerProvider) {
+    PermissionChangeEventHandlers(final Provider<Set<Handler>> handlerProvider,
+                                  final SecurityContext securityContext) {
         this.handlerProvider = handlerProvider;
+        this.securityContext = securityContext;
     }
 
     public void fireLocally(final PermissionChangeEvent event) {
+        if (!securityContext.isProcessingUser()) {
+            throw new PermissionException(securityContext.getUserId(), "Only the processing user can fire permission change events");
+        }
+
         try {
             final Set<Handler> set = getHandlers();
             for (final Handler handler : set) {
