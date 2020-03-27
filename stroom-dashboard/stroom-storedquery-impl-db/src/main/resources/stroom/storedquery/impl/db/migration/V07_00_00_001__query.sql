@@ -19,6 +19,7 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 --
 -- Rename the old QUERY table, idempotent
+-- MUST BE DONE HERE DUE TO NAME CLASH
 --
 DROP PROCEDURE IF EXISTS rename_query;
 DELIMITER //
@@ -44,6 +45,7 @@ DROP PROCEDURE rename_query;
 
 --
 -- Create the query table
+-- MUST BE DONE HERE DUE TO NAME CLASH
 --
 CREATE TABLE IF NOT EXISTS query (
     id                    int(11) NOT NULL AUTO_INCREMENT,
@@ -62,6 +64,7 @@ CREATE TABLE IF NOT EXISTS query (
 
 --
 -- Copy data into the query table
+-- MUST BE DONE HERE DUE TO NAME CLASH
 --
 DROP PROCEDURE IF EXISTS copy_query;
 DELIMITER //

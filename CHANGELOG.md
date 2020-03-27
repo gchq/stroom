@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Update auth flow for auth-into-stroom integration
+
+## [v7.0-beta.23] - 2020-03-24
+
+
+* Rename all legacy DB tables to `OLD_`.
+
 * Issue **#1394** : Fix duplicate tables appearing in Monitoring -> Database Tables.
 
 * Add NodeEndpointConfiguration. Change `node` table to hold the base endpoint.
@@ -2004,7 +2011,8 @@ Issue **gchq/stroom-expression#22** : Add `typeOf(...)` function to dashboard.
 
 * Issue **#202** : Initial release of the new data retention policy functionality.
 
-[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.22...HEAD
+[Unreleased]: https://github.com/gchq/stroom/compare/v7.0-beta.23...HEAD
+[v7.0-beta.23]: https://github.com/gchq/stroom/compare/v7.0-beta.22...v7.0-beta.23
 [v7.0-beta.22]: https://github.com/gchq/stroom/compare/v7.0-beta.21...v7.0-beta.22
 [v7.0-beta.21]: https://github.com/gchq/stroom/compare/v7.0-beta.20...v7.0-beta.21
 [v7.0-beta.20]: https://github.com/gchq/stroom/compare/v7.0-beta.19...v7.0-beta.20

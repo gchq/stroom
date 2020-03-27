@@ -29,7 +29,6 @@ public class DataStoreHandlerModule extends AbstractModule {
 
         // TODO probably not the right place for this binding
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
-                .addBinding(NewUiDataResource.class)
                 .addBinding(DataResourceImpl.class)
                 .addBinding(ViewDataResourceImpl.class);
     }

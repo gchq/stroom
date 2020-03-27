@@ -115,8 +115,13 @@ class DBTableService {
         try (final Connection connection = dataSource.getConnection()) {
             connection.setReadOnly(true);
 
+            // Filter out any legacy tables
+            final String sql = "" +
+                "show table status " +
+                "where comment != 'VIEW' " +
+                "and Name not like 'OLD_%' ";
             try (final PreparedStatement preparedStatement = connection.prepareStatement(
-                "show table status where comment != 'VIEW'",
+                    sql,
                     ResultSet.TYPE_FORWARD_ONLY,
                     ResultSet.CONCUR_READ_ONLY,
                     ResultSet.CLOSE_CURSORS_AT_COMMIT)) {
@@ -136,7 +141,6 @@ class DBTableService {
                     }
                 }
             }
-
         } catch (final SQLException e) {
             LOGGER.error("findSystemTableStatus()", e);
         }

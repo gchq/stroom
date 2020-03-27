@@ -154,8 +154,7 @@ class TestNodeResourceImpl extends AbstractMultiNodeResourceTest<NodeResource> {
         assertThat(actualResponse)
                 .isNotNull();
 
-        assertThat(actualResponse)
-                .isGreaterThan(0);
+        // On the same node so can't assume the ping time will be >0.
 
         assertThat(getRequestEvents("node1"))
                 .hasSize(1);

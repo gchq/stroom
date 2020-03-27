@@ -1,6 +1,5 @@
 ---
 appConfig:
-  superDevMode: false
   haltBootOnConfigValidationFailure: true
   activity:
     db:

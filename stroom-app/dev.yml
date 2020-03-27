@@ -66,7 +66,6 @@ appConfig:
     advertisedHost: ${ADVERTISED_HTTP_HOST:- https://<<<IP_ADDRESS>>>}
     stroom:
       clientHost: ${STROOM_CLIENT_URI:-<IP_ADDRESS>}
-  superDevMode: true
   apiGateway:
     hostname: ${API_GATEWAY_HOST:-<<<IP_ADDRESS>>>}
   commonDbDetails:

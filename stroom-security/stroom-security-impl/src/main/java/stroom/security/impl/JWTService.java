@@ -12,6 +12,7 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.lang.JoseException;
+import stroom.authentication.resources.token.v1.TokenService;
 import stroom.authentication.service.ApiException;
 import stroom.authentication.service.api.ApiKeyApi;
 import stroom.security.impl.AuthenticationConfig.JwtConfig;
@@ -36,6 +37,7 @@ class JWTService implements HasHealthCheck {
     private PublicJsonWebKey jwk;
     private final String authenticationServiceUrl;
     private final String authJwtIssuer;
+    private TokenService tokenService;
     private AuthenticationServiceClients authenticationServiceClients;
     private final boolean checkTokenRevocation;
     private String clientId;
@@ -43,10 +45,12 @@ class JWTService implements HasHealthCheck {
     @Inject
     JWTService(final AuthenticationConfig securityConfig,
                final JwtConfig jwtConfig,
+               final TokenService tokenService,
                final AuthenticationServiceClients authenticationServiceClients) {
         this.clientId = securityConfig.getClientId();
         this.authenticationServiceUrl = securityConfig.getAuthenticationServiceUrl();
         this.authJwtIssuer = jwtConfig.getJwtIssuer();
+        this.tokenService = tokenService;
         this.authenticationServiceClients = authenticationServiceClients;
         this.checkTokenRevocation = jwtConfig.isEnableTokenRevocationCheck();
 
@@ -61,9 +65,9 @@ class JWTService implements HasHealthCheck {
 
     private void updatePublicJsonWebKey() {
         try {
-            String jwkAsJson = fetchNewPublicKey();
+            String jwkAsJson = tokenService.getPublicKey();
             jwk = RsaJsonWebKey.Factory.newPublicJwk(jwkAsJson);
-        } catch (JoseException | ApiException e) {
+        } catch (JoseException e) {
             LOGGER.error(() -> "Unable to fetch the remote authentication service's public key!", e);
         }
     }
