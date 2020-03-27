@@ -149,7 +149,6 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // Now send out distributed search tasks to each worker node.
                     filteredShardNodes.forEach((node, shards) -> {
                         final ClusterSearchTask clusterSearchTask = new ClusterSearchTask(
-                                task,
                                 "Cluster Search",
                                 query,
                                 shards,

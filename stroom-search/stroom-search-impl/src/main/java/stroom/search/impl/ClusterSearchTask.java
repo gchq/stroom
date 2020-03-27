@@ -38,8 +38,7 @@ public class ClusterSearchTask extends ClusterTask<NodeResult> {
     private final String dateTimeLocale;
     private final long now;
 
-    public ClusterSearchTask(final Task<?> parentTask,
-                             final String taskName,
+    public ClusterSearchTask(final String taskName,
                              final Query query,
                              final List<Long> shards,
                              final String targetNode,
