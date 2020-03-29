@@ -303,14 +303,14 @@ task copyFilesForStroomDockerBuild() {
     }
 }
 
-
+// Generate the swagger spec files from the resource classes
 swagger {
     apiSource {
         springmvc = false
         outputFormats = ['json', 'yaml']
+        // See prepareSwaggerClasses task
         locations = restResourceClassNames
         schemes = ['http', 'https']
-        //host = 'localhost:8080'
         basePath = '/api'
         info {
             title = 'Stroom API'
@@ -339,6 +339,9 @@ swagger {
 }
 
 
+// A task to fix the classpath for running the swagger plugin and
+// to scan the classpath to find all the REST resource classes to pass to
+// the plugin to generate documentation for.
 task prepareSwaggerClasses {
     doLast {
         // Get all jars from the compile classpath
@@ -392,17 +395,6 @@ task prepareSwaggerClasses {
     }
 }
 generateSwaggerDocumentation.dependsOn prepareSwaggerClasses
-
-// Produce the swagger spec files from our resources
-//resolve {
-    //outputFileName = 'TestSwagger'
-    //outputFormat = 'YAML'
-    //prettyPrint = 'TRUE'
-    //classpath = sourceSets.main.runtimeClasspath
-    ////resourcePackages = ['stroom.dashboard.shared']
-    //resourceClasses = ['stroom.config.global.shared.GlobalConfigResource']
-    //outputDir = file('testswagger')
-//}
 
 
 task copyJar(type: Copy) {
