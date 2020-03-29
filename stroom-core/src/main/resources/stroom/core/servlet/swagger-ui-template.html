@@ -1,0 +1,67 @@
+<!-- STROOM: Changed the .css/.png/.js links to be templated -->
+<!-- STROOM: Changed the html title to be templated -->
+<!-- HTML for static distribution bundle build -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>@TITLE@</title>
+    <link rel="stylesheet" type="text/css" href="@SWAGGER_UI_REL_DIR@/swagger-ui.css" >
+    <!-- STROOM: Change the favicon -->
+<!--    <link rel="icon" type="image/png" href="@SWAGGER_UI_REL_DIR@/favicon-32x32.png" sizes="32x32" />-->
+<!--    <link rel="icon" type="image/png" href="@SWAGGER_UI_REL_DIR@/favicon-16x16.png" sizes="16x16" />-->
+    <link rel="icon" type="image/png" href="@SWAGGER_UI_REL_DIR@/favicon.ico" sizes="16x16" />
+    <style>
+      html
+      {
+        box-sizing: border-box;
+        overflow: -moz-scrollbars-vertical;
+        overflow-y: scroll;
+      }
+
+      *,
+      *:before,
+      *:after
+      {
+        box-sizing: inherit;
+      }
+
+      body
+      {
+        margin:0;
+        background: #fafafa;
+      }
+    </style>
+</head>
+
+<body>
+<div id="swagger-ui"></div>
+
+<!-- STROOM: added charset and type to stop charset errors -->
+<!-- STROOM: Set validatorUrl to false to stop it hitting the internet to validate -->
+<script src="@SWAGGER_UI_REL_DIR@/swagger-ui-bundle.js" charset="utf-8" type="text/javascript"> </script>
+<script src="@SWAGGER_UI_REL_DIR@/swagger-ui-standalone-preset.js" charset="utf-8" type="text/javascript"> </script>
+<script>
+    window.onload = function() {
+      // Begin Swagger UI call region
+      const ui = SwaggerUIBundle({
+        url: "@SWAGGER_SPEC_URL@",
+        validatorUrl : false,
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
+        ],
+        layout: "StandaloneLayout"
+      })
+      // End Swagger UI call region
+
+      window.ui = ui
+    }
+  </script>
+</body>
+</html>
