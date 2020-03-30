@@ -34,6 +34,10 @@ public interface GlobalConfigResource extends RestResource, DirectRestService {
     String PROP_NAME_PATH_PARAM = "/{propertyName}";
     String NODE_NAME_PATH_PARAM = "/{nodeName}";
 
+    // TODO do we need this if the method returns a type?
+    @ApiOperation(
+        value = "TODO",
+        response = ListConfigResponse.class)
     @GET
     @Path(PROPERTIES_SUB_PATH)
     ListConfigResponse list(
