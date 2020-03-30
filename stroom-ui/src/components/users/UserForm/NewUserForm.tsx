@@ -78,11 +78,6 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
   });
   const [showBackConfirmation, setShowBackConfirmation] = React.useState(false);
 
-  const hasErrors = React.useMemo(
-    () => errors.email !== undefined || errors.password !== undefined,
-    [errors],
-  );
-
   const password = watch("password");
   const verifyPassword = watch("verifyPassword");
   const email = watch("email");
@@ -102,14 +97,14 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
       { name: "password", type: "custom" },
       {
         required: true,
-        validate: async value => onValidate(value, verifyPassword, email),
+        validate: async value => await onValidate(value, verifyPassword, email),
       },
     );
     register(
       { name: "verifyPassword", type: "custom" },
       {
         required: true,
-        validate: async value => onValidate(password, value, email),
+        validate: async value => await onValidate(password, value, email),
       },
     );
   }, [register, verifyPassword, password, email, onValidate]);
@@ -322,7 +317,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
           appearance="contained"
           action="primary"
           type="submit"
-          disabled={!formState.dirty || hasErrors}
+          disabled={!formState.dirty || !formState.isValid}
           icon="save"
           text="Save"
           // isLoading={isSaving}
@@ -338,7 +333,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
       <BackConfirmation
         isOpen={showBackConfirmation}
         onGoBack={() => onBack()}
-        hasErrors={hasErrors}
+        hasErrors={!formState.isValid}
         onSaveAndGoBack={onSubmit}
         onContinueEditing={() => setShowBackConfirmation(false)}
       />

@@ -15,14 +15,14 @@
  */
 
 import * as React from "react";
-import { useApi } from "components/authentication/useApi";
+import { useResetPassword } from "../ResetPassword";
 import useConfig from "startup/config/useConfig";
 import ResetPasswordRequest from "./ResetPasswordRequest";
 
 const ResetPasswordRequestContainer = () => {
   const { stroomUiUrl } = useConfig();
   if (!stroomUiUrl) throw Error("Config not ready or misconfigured!");
-  const { submitPasswordChangeRequest } = useApi();
+  const { submitPasswordChangeRequest } = useResetPassword();
   const onBack = () => (window.location.href = stroomUiUrl);
   return (
     <ResetPasswordRequest

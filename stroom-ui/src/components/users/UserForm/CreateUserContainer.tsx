@@ -48,7 +48,7 @@ const CreateUserContainer = () => {
       onBack={() => goToUsers()}
       onCancel={() => goToUsers()}
       onValidate={async (password, verifyPassword, email) => {
-        return validateAsync(
+        return await validateAsync(
           email,
           password,
           verifyPassword,

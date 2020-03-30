@@ -34,6 +34,7 @@ import {
   ChangePassword,
   ResetPassword,
   ResetPasswordRequest,
+  ConfirmPasswordResetEmail,
 } from "components/password";
 import PathNotFound from "components/PathNotFound";
 import { Processing } from "components/Processing";
@@ -90,6 +91,12 @@ const Routes: React.FunctionComponent = () => {
         path={`${singlePagePrefix}/resetPasswordRequest`}
         component={ResetPasswordRequest}
       />
+      <Route
+        exact
+        path={`${singlePagePrefix}/confirmPasswordResetEmail`}
+        component={ConfirmPasswordResetEmail}
+      />
+
       <Route exact path={`${singlePagePrefix}/login`} component={Login} />
       <Route
         exact

@@ -33,7 +33,7 @@ interface Api {
 }
 
 export const useApi = (): Api => {
-  const { httpGetJson, httpPostJsonResponse } = useHttpClient();
+  const { httpGetEmptyResponse, httpPostJsonResponse } = useHttpClient();
   let { clientId } = useConfig();
   const { authenticationServiceUrl } = useServiceUrl();
 
@@ -50,7 +50,7 @@ export const useApi = (): Api => {
   const apiLogin = useCallback(
     (credentials: Credentials) => {
       const { email, password } = credentials;
-      const loginServiceUrl = `${authenticationServiceUrl}/authenticate`;
+      const loginServiceUrl = `${authenticationServiceUrl}/noauth/authenticate`;
 
       return httpPostJsonResponse(
         loginServiceUrl,
@@ -64,6 +64,7 @@ export const useApi = (): Api => {
             requestingClientId: clientId,
           }),
         },
+        true,
         false,
       );
     },
@@ -73,8 +74,9 @@ export const useApi = (): Api => {
   const changePassword = useCallback(
     ({ password, oldPassword, email }: ChangePasswordRequest) =>
       httpPostJsonResponse(
-        `${authenticationServiceUrl}/changePassword/`,
+        `${authenticationServiceUrl}/noauth/changePassword/`,
         { body: JSON.stringify({ newPassword: password, oldPassword, email }) },
+        true,
         false,
       ),
     [authenticationServiceUrl, httpPostJsonResponse],
@@ -90,19 +92,23 @@ export const useApi = (): Api => {
 
   const submitPasswordChangeRequest = useCallback(
     (formData: any) =>
-      httpGetJson(
+      httpGetEmptyResponse(
         `${authenticationServiceUrl}/reset/${formData.email}`,
         {},
+        true,
         false,
       ),
-    [authenticationServiceUrl, httpGetJson],
+    [authenticationServiceUrl, httpGetEmptyResponse],
   );
 
   const isPasswordValid = useCallback(
     (passwordValidationRequest: PasswordValidationRequest) =>
-      httpPostJsonResponse(`${authenticationServiceUrl}/isPasswordValid`, {
-        body: JSON.stringify(passwordValidationRequest),
-      }),
+      httpPostJsonResponse(
+        `${authenticationServiceUrl}/noauth/isPasswordValid`,
+        {
+          body: JSON.stringify(passwordValidationRequest),
+        },
+      ),
     [authenticationServiceUrl, httpPostJsonResponse],
   );
 

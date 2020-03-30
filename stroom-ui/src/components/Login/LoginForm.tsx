@@ -125,7 +125,7 @@ const LoginForm: React.FunctionComponent<{
               {allowPasswordResets ? (
                 <NavLink
                   className="Login__reset-password"
-                  to={"/resetPasswordRequest"}
+                  to={"/s/resetPasswordRequest"}
                 >
                   Reset password?
                 </NavLink>

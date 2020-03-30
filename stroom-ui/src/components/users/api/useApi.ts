@@ -23,7 +23,6 @@ interface Api {
   add: (user: User) => Promise<void>;
   change: (user: User) => Promise<void>;
   fetch: (userId: string) => Promise<User>;
-  fetchCurrentUser: () => Promise<User>;
   remove: (userId: string) => Promise<void>;
   search: (email?: string) => Promise<User[]>;
 }
@@ -89,23 +88,14 @@ export const useApi = (): Api => {
     [userServiceUrl, httpGetJson],
   );
 
-  const fetchCurrentUser = useCallback(
-    () => httpGetJson(`${userServiceUrl}/me`),
-    [userServiceUrl, httpGetJson],
-  );
-
   const search = useCallback(
-    (email: string) =>
-      httpGetJson(
-        `${userServiceUrl}/?fromEmail=${email}&usersPerPage=100&orderBy=id`,
-      ),
+    (email: string) => httpGetJson(`${userServiceUrl}`),
     [userServiceUrl, httpGetJson],
   );
 
   return {
     add,
     fetch,
-    fetchCurrentUser,
     remove,
     change,
     search,

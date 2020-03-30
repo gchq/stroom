@@ -33,6 +33,7 @@ type HttpCall = (
   options?: {
     [s: string]: any;
   },
+  forceGet?: boolean,
   addAuthentication?: boolean,
 ) => Promise<any>;
 
@@ -43,6 +44,7 @@ interface HttpClient {
       [s: string]: any;
     },
     forceGet?: boolean,
+    addAuthentication?: boolean,
   ) => Promise<any>;
   httpGetEmptyResponse: HttpCall;
   httpPostJsonResponse: HttpCall;
@@ -71,9 +73,7 @@ export const useHttpClient = (): HttpClient => {
 
   const catchImpl = React.useCallback(
     (error: any) => {
-      const msg: string = `Error, Status ${error.status}, Msg: ${
-        error.message
-      }`;
+      const msg = `Error, Status ${error.status}, Msg: ${error.message}`;
       cogoToast.error(msg, {
         hideAfter: 5,
         onClick: () => {
@@ -139,11 +139,11 @@ export const useHttpClient = (): HttpClient => {
         options?: {
           [s: string]: any;
         },
-        // forceGet: boolean = true, // default to true, take care with settings this to false, old promises can override the updated picture with old information if this is mis-used
+        forceGet: boolean = true, // default to true, take care with settings this to false, old promises can override the updated picture with old information if this is mis-used
         addAuthentication: boolean = true, // most of the time we want authenticated requests, so we'll make that the default.
       ): Promise<T | void> => {
         if (!idToken && addAuthentication) {
-          let p = Promise.reject();
+          const p = Promise.reject();
           p.catch(() => console.log("Missing ID Token, not making request"));
           return p;
         }
@@ -178,10 +178,10 @@ export const useHttpClient = (): HttpClient => {
         options?: {
           [s: string]: any;
         },
-        addAuthentication: boolean = true, // most of the time we want authenticated requests, so we'll make that the default.
+        addAuthentication = true, // most of the time we want authenticated requests, so we'll make that the default.
       ): Promise<Response | void> => {
         if (!idToken && addAuthentication) {
-          let p = Promise.reject();
+          const p = Promise.reject();
           p.catch(() => console.log("Missing ID Token, not making request"));
           return p;
         }

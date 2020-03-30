@@ -23,7 +23,7 @@ const useResetPassword = (): {
   const submitPasswordChangeRequest = useCallback(
     (formData: any, formikBag: FormikBag<any, any>) => {
       submitPasswordChangeRequestUsingApi(formData, formikBag).then(() =>
-        history.push("/confirmPasswordResetEmail"),
+        history.push("/s/confirmPasswordResetEmail"),
       );
     },
     [history, submitPasswordChangeRequestUsingApi],
@@ -41,7 +41,7 @@ const useResetPassword = (): {
               console.error("No stroom UI url available for redirect!");
             }
           } else {
-            let errorMessage = [];
+            const errorMessage = [];
             if (response.failedOn.includes("COMPLEXITY")) {
               errorMessage.push(
                 "Your new password does not meet the complexity requirements",

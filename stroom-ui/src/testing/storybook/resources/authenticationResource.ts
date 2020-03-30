@@ -20,7 +20,7 @@ const resourceBuilder: ResourceBuilder = (
 
   // Login
   server
-    .post(`${authenticationServiceUrl}/authenticate`)
+    .post(`${authenticationServiceUrl}/noauth/authenticate`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const { email, password, sessionId, requestingClientId } = JSON.parse(
         req.body,
@@ -37,7 +37,7 @@ const resourceBuilder: ResourceBuilder = (
 
   // Change Password
   server
-    .post(`${authenticationServiceUrl}/changePassword/`)
+    .post(`${authenticationServiceUrl}/noauth/changePassword/`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const { newPassword, oldPassword } = JSON.parse(req.body);
 
@@ -66,7 +66,7 @@ const resourceBuilder: ResourceBuilder = (
 
   // Is Password Valid
   server
-    .post(`${authenticationServiceUrl}/isPasswordValid`)
+    .post(`${authenticationServiceUrl}/noauth/isPasswordValid`)
     .intercept((req: HttpRequest, res: HttpResponse) => {
       const validationReq: PasswordValidationRequest = JSON.parse(req.body);
       console.log("Validation Request", validationReq);
