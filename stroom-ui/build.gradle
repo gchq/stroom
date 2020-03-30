@@ -38,7 +38,14 @@ node {
     nodeModulesDir = file("${project.projectDir}")
 }
 
-task copyYarnBuild(dependsOn: yarn, type: Copy) {
+task removeYarnBuild(dependsOn: yarn) {
+    doLast {
+        println 'Deleting compiled output: ' + outputDir.toString()
+        delete outputDir
+    }
+}
+
+task copyYarnBuild(dependsOn: removeYarnBuild, type: Copy) {
     from "${project.buildDir}"
     into "${outputDir}"
 }
