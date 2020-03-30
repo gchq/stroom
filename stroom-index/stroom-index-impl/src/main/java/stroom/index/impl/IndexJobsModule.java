@@ -1,7 +1,7 @@
 package stroom.index.impl;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskRunnable;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -35,28 +35,28 @@ public class IndexJobsModule extends ScheduledJobsModule {
     }
 
 
-    private static class IndexShardDelete extends TaskRunnable {
+    private static class IndexShardDelete extends RunnableWrapper {
         @Inject
         IndexShardDelete(final IndexShardManager indexShardManager) {
             super(indexShardManager::deleteFromDisk);
         }
     }
 
-    private static class IndexShardRetention extends TaskRunnable {
+    private static class IndexShardRetention extends RunnableWrapper {
         @Inject
         IndexShardRetention(final IndexShardManager indexShardManager) {
             super(indexShardManager::checkRetention);
         }
     }
 
-    private static class IndexWriterCacheSweep extends TaskRunnable {
+    private static class IndexWriterCacheSweep extends RunnableWrapper {
         @Inject
         IndexWriterCacheSweep(final IndexShardWriterCache indexShardWriterCache) {
             super(indexShardWriterCache::sweep);
         }
     }
 
-    private static class IndexWriterFlush extends TaskRunnable {
+    private static class IndexWriterFlush extends RunnableWrapper {
         @Inject
         IndexWriterFlush(final IndexShardWriterCache indexShardWriterCache) {
             super(indexShardWriterCache::flushAll);

@@ -19,7 +19,6 @@ package stroom.job.impl;
 
 import stroom.cluster.lock.api.ClusterLockService;
 import stroom.job.api.ScheduledJob;
-import stroom.job.api.TaskRunnable;
 import stroom.job.shared.Job;
 import stroom.job.shared.JobNode;
 import stroom.job.shared.JobNode.JobType;
@@ -50,7 +49,7 @@ class JobBootstrap {
     private final ClusterLockService clusterLockService;
     private final SecurityContext securityContext;
     private final NodeInfo nodeInfo;
-    private final Map<ScheduledJob, Provider<TaskRunnable>> scheduledJobsMap;
+    private final Map<ScheduledJob, Provider<Runnable>> scheduledJobsMap;
     private final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry;
 
     @Inject
@@ -59,7 +58,7 @@ class JobBootstrap {
                  final ClusterLockService clusterLockService,
                  final SecurityContext securityContext,
                  final NodeInfo nodeInfo,
-                 final Map<ScheduledJob, Provider<TaskRunnable>> scheduledJobsMap,
+                 final Map<ScheduledJob, Provider<Runnable>> scheduledJobsMap,
                  final DistributedTaskFactoryRegistry distributedTaskFactoryRegistry) {
         this.jobDao = jobDao;
         this.jobNodeDao = jobNodeDao;

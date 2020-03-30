@@ -23,6 +23,8 @@ import stroom.util.shared.RestResource;
 public class EntityClusterModule extends AbstractModule {
     @Override
     protected void configure() {
+        bind(ClearableResource.class).to(ClearableResourceImpl.class);
+
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(ClearableResourceImpl.class);
     }

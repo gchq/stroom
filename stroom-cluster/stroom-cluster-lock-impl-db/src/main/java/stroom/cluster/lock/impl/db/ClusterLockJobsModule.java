@@ -1,7 +1,7 @@
 package stroom.cluster.lock.impl.db;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskRunnable;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -26,14 +26,14 @@ public class ClusterLockJobsModule extends ScheduledJobsModule {
                 .to(KeepAlive.class);
     }
 
-    private static class UnlockOldLocks extends TaskRunnable {
+    private static class UnlockOldLocks extends RunnableWrapper {
         @Inject
         UnlockOldLocks(final ClusterLockClusterHandler clusterLockClusterHandler) {
             super(clusterLockClusterHandler::unlockOldLocks);
         }
     }
 
-    private static class KeepAlive extends TaskRunnable {
+    private static class KeepAlive extends RunnableWrapper {
         @Inject
         KeepAlive(final ClusterLockServiceImpl clusterLockService) {
             super(clusterLockService::keepAlive);

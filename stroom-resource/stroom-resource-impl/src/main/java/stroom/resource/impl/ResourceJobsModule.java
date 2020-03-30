@@ -1,7 +1,7 @@
 package stroom.resource.impl;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskRunnable;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -19,7 +19,7 @@ public class ResourceJobsModule extends ScheduledJobsModule {
                 .to(DeleteTempFile.class);
     }
 
-    private static class DeleteTempFile extends TaskRunnable {
+    private static class DeleteTempFile extends RunnableWrapper {
         @Inject
         DeleteTempFile(final ResourceStoreImpl resourceStore) {
             super(resourceStore::execute);

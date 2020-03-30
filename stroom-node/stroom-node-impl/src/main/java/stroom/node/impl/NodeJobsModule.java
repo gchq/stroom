@@ -2,7 +2,7 @@ package stroom.node.impl;
 
 import stroom.job.api.Schedule.ScheduleType;
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskRunnable;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -26,14 +26,14 @@ public class NodeJobsModule extends ScheduledJobsModule {
                 .to(NodeStatus.class);
     }
 
-    private static class JavaHeapHistogramStatistics extends TaskRunnable {
+    private static class JavaHeapHistogramStatistics extends RunnableWrapper {
         @Inject
         JavaHeapHistogramStatistics(final HeapHistogramStatisticsExecutor heapHistogramStatisticsExecutor) {
             super(heapHistogramStatisticsExecutor::exec);
         }
     }
 
-    private static class NodeStatus extends TaskRunnable {
+    private static class NodeStatus extends RunnableWrapper {
         @Inject
         NodeStatus(final NodeStatusExecutor nodeStatusExecutor) {
             super(nodeStatusExecutor::exec);

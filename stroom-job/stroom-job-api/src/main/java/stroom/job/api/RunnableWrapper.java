@@ -1,9 +1,10 @@
 package stroom.job.api;
 
-public abstract class TaskRunnable implements Runnable {
+public abstract class RunnableWrapper
+        implements Runnable {
     private final Runnable runnable;
 
-    public TaskRunnable(final Runnable runnable) {
+    public RunnableWrapper(final Runnable runnable) {
         this.runnable = runnable;
     }
 

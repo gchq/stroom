@@ -1,7 +1,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskRunnable;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -18,7 +18,7 @@ public class FsVolumeJobsModule extends ScheduledJobsModule {
                 .to(FileVolumeStatus.class);
     }
 
-    private static class FileVolumeStatus extends TaskRunnable {
+    private static class FileVolumeStatus extends RunnableWrapper {
         @Inject
         FileVolumeStatus(final FsVolumeService volumeService) {
             super(volumeService::updateStatus);

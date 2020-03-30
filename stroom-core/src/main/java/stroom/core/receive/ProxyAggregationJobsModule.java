@@ -1,7 +1,7 @@
 package stroom.core.receive;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskRunnable;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -18,7 +18,7 @@ public class ProxyAggregationJobsModule extends ScheduledJobsModule {
                 .to(ProxyAggregation.class);
     }
 
-    private static class ProxyAggregation extends TaskRunnable {
+    private static class ProxyAggregation extends RunnableWrapper {
         @Inject
         ProxyAggregation(final ProxyAggregationExecutor proxyAggregationExecutor) {
             super(proxyAggregationExecutor::exec);

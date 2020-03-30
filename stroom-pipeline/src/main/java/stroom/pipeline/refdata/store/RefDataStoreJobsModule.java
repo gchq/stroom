@@ -1,7 +1,7 @@
 package stroom.pipeline.refdata.store;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskRunnable;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -18,7 +18,7 @@ public class RefDataStoreJobsModule extends ScheduledJobsModule {
                 .to(RefDataPurge.class);
     }
 
-    private static class RefDataPurge extends TaskRunnable {
+    private static class RefDataPurge extends RunnableWrapper {
         @Inject
         RefDataPurge(final RefDataStoreFactory refDataStoreFactory) {
             super(refDataStoreFactory::purgeOldData);

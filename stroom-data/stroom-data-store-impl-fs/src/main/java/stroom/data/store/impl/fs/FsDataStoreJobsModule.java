@@ -1,7 +1,7 @@
 package stroom.data.store.impl.fs;
 
 import stroom.job.api.ScheduledJobsModule;
-import stroom.job.api.TaskRunnable;
+import stroom.job.api.RunnableWrapper;
 
 import javax.inject.Inject;
 
@@ -27,14 +27,14 @@ public class FsDataStoreJobsModule extends ScheduledJobsModule {
                 .to(MetaDelete.class);
     }
 
-    private static class FileSystemClean extends TaskRunnable {
+    private static class FileSystemClean extends RunnableWrapper {
         @Inject
         FileSystemClean(final FsCleanExecutor fileSystemCleanExecutor) {
             super(fileSystemCleanExecutor::clean);
         }
     }
 
-    private static class MetaDelete extends TaskRunnable {
+    private static class MetaDelete extends RunnableWrapper {
         @Inject
         MetaDelete(final PhysicalDeleteExecutor physicalDeleteExecutor) {
             super(physicalDeleteExecutor::exec);
