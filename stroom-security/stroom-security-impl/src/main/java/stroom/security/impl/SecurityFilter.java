@@ -22,15 +22,13 @@ import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.resources.authentication.v1.ExchangeAccessCodeRequest;
-import stroom.authentication.resources.authentication.v1.AuthenticationService;
-import stroom.authentication.resources.token.v1.TokenService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.shared.User;
 import stroom.ui.config.shared.UiConfig;
+import stroom.util.jersey.WebTargetFactory;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
@@ -49,10 +47,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.ws.rs.HttpMethod;
+import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -70,45 +72,55 @@ class SecurityFilter implements Filter {
     private static final String SCOPE = "scope";
     private static final String RESPONSE_TYPE = "response_type";
     private static final String CLIENT_ID = "client_id";
-    private static final String REDIRECT_URL = "redirect_url";
+    private static final String CLIENT_SECRET = "client_secret";
     private static final String STATE = "state";
     private static final String NONCE = "nonce";
     private static final String PROMPT = "prompt";
-    private static final String ACCESS_CODE = "accessCode";
-    private static final String NO_AUTH_PATH = ResourcePaths.buildUnauthenticatedServletPath( "/");
+    private static final String REDIRECT_URI = "redirect_uri";
+    private static final String GRANT_TYPE = "grant_type";
+    private static final String CODE = "code";
+    private static final String NO_AUTH_PATH = ResourcePaths.buildUnauthenticatedServletPath("/");
 
     // E.g. /api/authentication/v1/noauth/exchange
     public static String PUBLIC_API_PATH_REGEX = ResourcePaths.API_ROOT_PATH + ".*" + ResourcePaths.NO_AUTH + "/.*";
 
     private static final Set<String> RESERVED_PARAMS = Set.of(
-            SCOPE, RESPONSE_TYPE, CLIENT_ID, REDIRECT_URL, STATE, NONCE, PROMPT, ACCESS_CODE);
+            SCOPE,
+            RESPONSE_TYPE,
+            CLIENT_ID,
+            CLIENT_SECRET,
+            STATE,
+            NONCE,
+            PROMPT,
+            REDIRECT_URI,
+            GRANT_TYPE,
+            CODE);
 
-    private final AuthenticationConfig config;
+    private final AuthenticationConfig authenticationConfig;
+    private final OpenIdConfig openIdConfig;
     private final UiConfig uiConfig;
     private final JWTService jwtService;
-    private final AuthenticationServiceClients authenticationServiceClients;
-    private AuthenticationService authenticationService;
-    private TokenService tokenService;
     private final UserCache userCache;
     private final SecurityContext securityContext;
     private final Pattern publicApiPathPattern;
+    private final WebTargetFactory webTargetFactory;
 
     @Inject
     SecurityFilter(
-            final AuthenticationConfig config,
+            final AuthenticationConfig authenticationConfig,
+            final OpenIdConfig openIdConfig,
             final UiConfig uiConfig,
             final JWTService jwtService,
-            final AuthenticationServiceClients authenticationServiceClients,
-            final AuthenticationService authenticationService,
             final UserCache userCache,
-            final SecurityContext securityContext) {
-        this.config = config;
+            final SecurityContext securityContext,
+            final WebTargetFactory webTargetFactory) {
+        this.authenticationConfig = authenticationConfig;
+        this.openIdConfig = openIdConfig;
         this.uiConfig = uiConfig;
         this.jwtService = jwtService;
-        this.authenticationServiceClients = authenticationServiceClients;
-        this.authenticationService = authenticationService;
         this.userCache = userCache;
         this.securityContext = securityContext;
+        this.webTargetFactory = webTargetFactory;
 
         publicApiPathPattern = Pattern.compile(PUBLIC_API_PATH_REGEX);
     }
@@ -171,8 +183,8 @@ class SecurityFilter implements Filter {
                     authenticateAsProcUser(request, response, chain, false);
                 } else if (isApiRequest(servletPath)) {
                     LOGGER.debug("API request");
-                    if (!config.isAuthenticationRequired()) {
-                        String propPath = config.getFullPath(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
+                    if (!authenticationConfig.isAuthenticationRequired()) {
+                        String propPath = authenticationConfig.getFullPath(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
                         LOGGER.warn("{} is false, authenticating as admin for {}", propPath, fullPath);
                         authenticateAsAdmin(request, response, chain, false);
                     } else {
@@ -188,8 +200,8 @@ class SecurityFilter implements Filter {
                     // We assume all other requests are from the UI, and instigate an OpenID authentication flow
                     // like the good relying party we are.
 
-                    if (!config.isAuthenticationRequired()) {
-                        String propPath = config.getFullPath(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
+                    if (!authenticationConfig.isAuthenticationRequired()) {
+                        String propPath = authenticationConfig.getFullPath(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
                         LOGGER.warn("{} is false, authenticating as admin for {}", propPath, fullPath);
                         authenticateAsAdmin(request, response, chain, true);
                     } else {
@@ -279,27 +291,27 @@ class SecurityFilter implements Filter {
     private boolean loginUI(final HttpServletRequest request, final HttpServletResponse response) throws IOException {
         boolean loggedIn = false;
 
-        // If we have a state id then this should be a return from the auth service.
-        final String stateId = getLastParam(request, STATE);
-        if (stateId != null) {
-            LOGGER.debug("We have the following state: {{}}", stateId);
+        try {
+            // If we have a state id then this should be a return from the auth service.
+            final String stateId = getLastParam(request, STATE);
+            if (stateId != null) {
+                LOGGER.debug("We have the following state: {{}}", stateId);
 
-            // Check the state is one we requested.
-            final AuthenticationState state = AuthenticationStateSessionUtil.pop(request, stateId);
-            if (state == null) {
-                LOGGER.warn("Unexpected state: " + stateId);
+                // Check the state is one we requested.
+                final AuthenticationState state = AuthenticationStateSessionUtil.pop(request, stateId);
+                if (state == null) {
+                    LOGGER.warn("Unexpected state: " + stateId);
 
-            } else {
+                } else {
+                    // Use OIDC API
+                    final String code = getLastParam(request, CODE);
+                    if (code != null) {
+                        // Invalidate the current session.
+                        HttpSession session = request.getSession(false);
 
-                // If we have an access code we can try and log in.
-                final String accessCode = getLastParam(request, ACCESS_CODE);
-                if (accessCode != null) {
-                    // Invalidate the current session.
-                    HttpSession session = request.getSession(false);
-
-                    // TODO: This invalidation was preventing the new UI logging in. There're no comments to
-                    // indicate why we were invalidating the session. I've not seen anything fall over yet,
-                    // but I'm leaving the code and this note here so we can check up on this later.
+                        // TODO: This invalidation was preventing the new UI logging in. There're no comments to
+                        // indicate why we were invalidating the session. I've not seen anything fall over yet,
+                        // but I'm leaving the code and this note here so we can check up on this later.
 //                    if (session != null) {
 //                        LOGGER.info("DEBUG: got session to invalidate");
 //                        session.invalidate();
@@ -308,23 +320,53 @@ class SecurityFilter implements Filter {
 //                    LOGGER.info("We have the following access code: {{}}", accessCode);
 //                    session = request.getSession(true);
 
-                    UserAgentSessionUtil.set(request);
+                        UserAgentSessionUtil.set(request);
 
-                    final UserIdentityImpl token = createUIToken(session, state, accessCode);
-                    if (token != null) {
-                        // Set the token in the session.
-                        UserIdentitySessionUtil.set(session, token);
-                        loggedIn = true;
-                    }
+                        // Verify code.
+                        final Map<String, String> params = new HashMap<>();
+                        params.put(GRANT_TYPE, "authorization_code");
+                        params.put(CLIENT_ID, openIdConfig.getClientId());
+                        params.put(CLIENT_SECRET, openIdConfig.getClientSecret());
+                        params.put(REDIRECT_URI, openIdConfig.getRedirectUri());
+                        params.put(CODE, code);
 
-                    // If we manage to login then redirect to the original URL held in the state.
-                    if (loggedIn) {
-                        LOGGER.info("Redirecting to initiating URL: {}", state.getUrl());
-                        response.sendRedirect(state.getUrl());
+                        final String tokenEndpoint = openIdConfig.getTokenEndpoint();
+                        final Response res = webTargetFactory
+                                .create(tokenEndpoint)
+                                .request(MediaType.APPLICATION_JSON)
+                                .post(Entity.entity(params, MediaType.APPLICATION_JSON));
+
+                        Map responseMap;
+                        if (HttpServletResponse.SC_OK == res.getStatus()) {
+                            responseMap = res.readEntity(Map.class);
+                        } else {
+                            throw new AuthenticationException("Received status " + res.getStatus() + " from " + tokenEndpoint);
+                        }
+
+                        final String idToken = (String) responseMap.get("id_token");
+                        if (idToken == null) {
+                            throw new AuthenticationException("'id_token' not provided in response");
+                        }
+
+                        final UserIdentityImpl token = createUIToken(session, state, idToken);
+                        if (token != null) {
+                            // Set the token in the session.
+                            UserIdentitySessionUtil.set(session, token);
+                            loggedIn = true;
+                        }
+
+                        // If we manage to login then redirect to the original URL held in the state.
+                        if (loggedIn) {
+                            LOGGER.info("Redirecting to initiating URL: {}", state.getUrl());
+                            response.sendRedirect(state.getUrl());
+                        }
                     }
                 }
             }
+        } catch (final RuntimeException e) {
+            LOGGER.error(e.getMessage(), e);
         }
+
         return loggedIn;
     }
 
@@ -390,12 +432,12 @@ class SecurityFilter implements Filter {
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request, redirectUrl);
 
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
-        final UriBuilder authenticationRequest = UriBuilder.fromUri(config.getAuthenticationServiceUrl())
-                .path("/noauth/authenticate")
-                .queryParam(SCOPE, "openid")
-                .queryParam(RESPONSE_TYPE, "code")
-                .queryParam(CLIENT_ID, config.getClientId())
-                .queryParam(REDIRECT_URL, redirectUrl)
+        // Use OIDC API.
+        UriBuilder authenticationRequest = UriBuilder.fromUri(openIdConfig.getAuthEndpoint())
+                .queryParam(RESPONSE_TYPE, CODE)
+                .queryParam(CLIENT_ID, openIdConfig.getClientId())
+                .queryParam(REDIRECT_URI, openIdConfig.getRedirectUri())
+                .queryParam(SCOPE, "openid email")
                 .queryParam(STATE, state.getId())
                 .queryParam(NONCE, state.getNonce());
 
@@ -425,14 +467,12 @@ class SecurityFilter implements Filter {
      * This method must create the token.
      * It does this by enacting the OpenId exchange of accessCode for idToken.
      */
-    private UserIdentityImpl createUIToken(final HttpSession session, final AuthenticationState state, final String accessCode) {
+    private UserIdentityImpl createUIToken(final HttpSession session, final AuthenticationState state, final String idToken) {
         UserIdentityImpl token = null;
 
         try {
             String sessionId = session.getId();
-            Optional<String> optionalJws = authenticationService.exchangeAccessCode(new ExchangeAccessCodeRequest(accessCode));
-            var jws = optionalJws.get();
-            final JwtClaims jwtClaims = jwtService.verifyToken(jws);
+            final JwtClaims jwtClaims = jwtService.verifyToken(idToken);
             final String nonce = (String) jwtClaims.getClaimsMap().get("nonce");
             final boolean match = nonce.equals(state.getNonce());
             if (match) {
@@ -440,7 +480,7 @@ class SecurityFilter implements Filter {
                 final String userId = jwtClaims.getSubject();
                 final Optional<User> optionalUser = userCache.get(userId);
                 final User user = optionalUser.orElseThrow(() -> new AuthenticationException("Unable to find user: " + userId));
-                token = new UserIdentityImpl(user, userId, jws, sessionId);
+                token = new UserIdentityImpl(user, userId, idToken, sessionId);
 
             } else {
                 // If the nonces don't match we need to redirect to log in again.

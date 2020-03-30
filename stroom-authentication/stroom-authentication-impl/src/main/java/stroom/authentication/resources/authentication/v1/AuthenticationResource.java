@@ -255,28 +255,6 @@ public final class AuthenticationResource implements RestResource {
         return seeOther(redirectUrl).build();
     }
 
-    //TODO: auth-into-stroom: obviously this needs to go
-
-    /**
-     * Performs the back-channel exchange of accessCode for idToken.
-     * <p>
-     * This must be kept as a back-channel request, and the clientSecret kept away from the browser.
-     */
-    @POST
-    @Path("noauth/exchange")
-    @Consumes(MediaType.APPLICATION_JSON)
-    @Produces(MediaType.APPLICATION_JSON)
-    @ApiOperation(
-            value = "Exchanges an accessCode for an idToken",
-            response = Response.class)
-    public Response exchangeAccessCode(
-            @ApiParam("ExchangeAccessCodeRequest") final ExchangeAccessCodeRequest exchangeAccessCodeRequest) {
-        var optionalToken = service.exchangeAccessCode(exchangeAccessCodeRequest);
-        return optionalToken.map(
-                idToken -> Response.status(Status.OK).entity(idToken).build())
-                .orElse(Response.status(Status.UNAUTHORIZED).entity("Invalid client or access code").build());
-    }
-
     @GET
     @Path("gwt_logout")
     @Consumes(MediaType.APPLICATION_JSON)

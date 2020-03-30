@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.google.common.base.CaseFormat;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Splitter;
+import io.dropwizard.client.JerseyClientConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.config.app.AppConfig;
@@ -317,28 +318,30 @@ public class ConfigMapper {
 
             final Class<?> valueType = prop.getValueClass();
 
-            final Object value = prop.getValueFromConfigObject();
-            if (isSupportedPropertyType(valueType)) {
-                // This is a leaf, i.e. a property so add it to our map
-                propertyMap.put(fullPath, prop);
+            if (valueType != JerseyClientConfiguration.class) {
 
-                // Now let the consumer do something to it
-                propConsumer.accept(fullPath, prop);
+                final Object value = prop.getValueFromConfigObject();
+                if (isSupportedPropertyType(valueType)) {
+                    // This is a leaf, i.e. a property so add it to our map
+                    propertyMap.put(fullPath, prop);
+
+                    // Now let the consumer do something to it
+                    propConsumer.accept(fullPath, prop);
             } else if (AbstractConfig.class.isAssignableFrom(valueType)) {
-                // This must be a branch, i.e. config object so recurse into that
-                if (value != null) {
+                    // This must be a branch, i.e. config object so recurse into that
+                    if (value != null) {
                     AbstractConfig childConfigObject = (AbstractConfig) value;
                     addConfigObjectMethods(
                         childConfigObject, fullPath, propertyMap, propConsumer);
-                }
-            } else {
-                // This is not expected
-                throw new RuntimeException(LogUtil.message(
-                        "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
-                        valueType.getName(),
+                    }
+                } else {
+                    // This is not expected
+                    throw new RuntimeException(LogUtil.message(
+                            "Unexpected bean property of type [{}], expecting an instance of {}, or a supported type.",
+                            valueType.getName(),
                         AbstractConfig.class.getSimpleName()));
+                }
             }
-
         });
     }
 

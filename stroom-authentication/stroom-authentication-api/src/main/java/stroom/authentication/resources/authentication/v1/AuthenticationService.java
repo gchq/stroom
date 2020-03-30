@@ -30,6 +30,4 @@ public interface AuthenticationService {
     PasswordValidationResponse isPasswordValid(PasswordValidationRequest passwordValidationRequest);
 
     URI postAuthenticationRedirect(String sessionId, String clientId);
-
-    Optional<String> exchangeAccessCode(ExchangeAccessCodeRequest exchangeAccessCodeRequest);
 }

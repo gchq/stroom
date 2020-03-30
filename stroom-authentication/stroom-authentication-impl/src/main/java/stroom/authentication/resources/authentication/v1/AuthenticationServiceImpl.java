@@ -402,25 +402,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         return result;
     }
 
-    @Override
-    public Optional<String> exchangeAccessCode(ExchangeAccessCodeRequest exchangeAccessCodeRequest) {
-        Optional<RelyingParty> relyingParty = this.sessionManager.getByAccessCode(exchangeAccessCodeRequest.getAccessCode());
-        if (!relyingParty.isPresent()) {
-            return Optional.empty();
-        }
-
-        // See the comments in StroomConfig.
-        if (config.getStroomConfig().getClientId().equals(config.getStroomConfig().getClientId())
-                && config.getStroomConfig().getClientSecret().equals(config.getStroomConfig().getClientSecret())) {
-            String idToken = relyingParty.get().getIdToken();
-            relyingParty.get().forgetIdToken();
-            relyingParty.get().forgetAccessCode();
-            return Optional.of(idToken);
-        } else {
-            return Optional.empty();
-        }
-    }
-
     private String processSuccessfulLogin(final stroom.authentication.Session session,
                                           final Credentials credentials,
                                           final String sessionId) throws UnsupportedEncodingException {

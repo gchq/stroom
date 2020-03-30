@@ -41,6 +41,7 @@ import stroom.search.solr.search.SolrSearchConfig;
 import stroom.searchable.impl.SearchableConfig;
 import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.ContentSecurityConfig;
+import stroom.security.impl.OpenIdConfig;
 import stroom.security.impl.SecurityConfig;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.statistics.impl.InternalStatisticsConfig;
@@ -133,7 +134,8 @@ public class AppConfigModule extends AbstractModule {
         });
         bindConfig(AppConfig::getSearchableConfig, SearchableConfig.class);
         bindConfig(AppConfig::getSecurityConfig, SecurityConfig.class, securityConfig -> {
-            bindConfig(securityConfig, SecurityConfig::getAuthenticationConfig, AuthenticationConfig.class);
+            bindConfig(securityConfig, SecurityConfig::getAuthenticationConfig, AuthenticationConfig.class, c2 ->
+                    bindConfig(c2, AuthenticationConfig::getOpenIdConfig, OpenIdConfig.class));
             bindConfig(securityConfig, SecurityConfig::getContentSecurityConfig, ContentSecurityConfig.class);
         });
         bindConfig(AppConfig::getServiceDiscoveryConfig, ServiceDiscoveryConfig.class);
