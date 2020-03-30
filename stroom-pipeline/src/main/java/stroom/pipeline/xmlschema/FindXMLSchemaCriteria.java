@@ -29,7 +29,7 @@ import stroom.xmlschema.shared.XmlSchemaDoc;
 import java.util.List;
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FindXMLSchemaCriteria extends FindDocumentEntityCriteria {
     @JsonProperty
     private String namespaceURI;

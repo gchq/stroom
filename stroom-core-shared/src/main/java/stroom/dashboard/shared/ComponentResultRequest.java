@@ -32,7 +32,7 @@ import stroom.query.api.v2.ResultRequest.Fetch;
         @JsonSubTypes.Type(value = TableResultRequest.class, name = "table"),
         @JsonSubTypes.Type(value = VisResultRequest.class, name = "vis")
 })
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public abstract class ComponentResultRequest {
     @JsonProperty
     private Fetch fetch;

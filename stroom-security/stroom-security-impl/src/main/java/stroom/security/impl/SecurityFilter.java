@@ -78,8 +78,10 @@ class SecurityFilter implements Filter {
     private static final String REDIRECT_URI = "redirect_uri";
     private static final String GRANT_TYPE = "grant_type";
     private static final String CODE = "code";
-    private static final String NO_AUTH_PATH = ResourcePaths.ROOT_PATH + ResourcePaths.NO_AUTH_PATH + "/";
-    private static final String PUBLIC_API_PATH_REGEX = "\\/api.*\\/noauth\\/.*"; // E.g. /api/authentication/v1/noauth/exchange
+    private static final String NO_AUTH_PATH = ResourcePaths.buildUnauthenticatedServletPath( "/");
+
+    // E.g. /api/authentication/v1/noauth/exchange
+    public static String PUBLIC_API_PATH_REGEX = ResourcePaths.API_ROOT_PATH + ".*" + ResourcePaths.NO_AUTH + "/.*";
 
     private static final Set<String> RESERVED_PARAMS = Set.of(
             SCOPE,
@@ -148,7 +150,9 @@ class SecurityFilter implements Filter {
         filter(httpServletRequest, httpServletResponse, chain);
     }
 
-    private void filter(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain)
+    private void filter(final HttpServletRequest request,
+                        final HttpServletResponse response,
+                        final FilterChain chain)
             throws IOException, ServletException {
 
         LAMBDA_LOGGER.debug(() ->
@@ -178,24 +182,27 @@ class SecurityFilter implements Filter {
                     authenticateAsProcUser(request, response, chain, false);
                 } else if (isApiRequest(servletPath)) {
                     LOGGER.debug("API request");
-                if (!authenticationConfig.isAuthenticationRequired()) {
+                    if (!authenticationConfig.isAuthenticationRequired()) {
+                        String propPath = authenticationConfig.getFullPath(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
+                        LOGGER.warn("{} is false, authenticating as admin for {}", propPath, fullPath);
                         authenticateAsAdmin(request, response, chain, false);
                     } else {
                         // Authenticate requests to the API.
                         final UserIdentity token = loginAPI(request, response);
                         continueAsUser(request, response, chain, token);
                     }
-                } else if (shouldBypassAuthentication(servletPath)) {
-                    // Some servet requests need to bypass authentication -- this happens if the servlet class
+                } else if (shouldBypassAuthentication(servletPath, fullPath)) {
+                    // Some servlet requests need to bypass authentication -- this happens if the servlet class
                     // is annotated with @Unauthenticated. E.g. the status servlet doesn't require authentication.
                     authenticateAsProcUser(request, response, chain, false);
                 } else {
                     // We assume all other requests are from the UI, and instigate an OpenID authentication flow
                     // like the good relying party we are.
 
-                    if (!config.isAuthenticationRequired()) {
+                    if (!authenticationConfig.isAuthenticationRequired()) {
+                        String propPath = authenticationConfig.getFullPath(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED);
+                        LOGGER.warn("{} is false, authenticating as admin for {}", propPath, fullPath);
                         authenticateAsAdmin(request, response, chain, true);
-
                     } else {
                         // If the session doesn't have a user ref then attempt login.
                         final boolean loggedIn = loginUI(request, response);
@@ -226,11 +233,12 @@ class SecurityFilter implements Filter {
     }
 
     private boolean isDispatchRequest(String servletPath) {
-        return servletPath.endsWith(ResourcePaths.DISPATCH_RPC_PATH);
+        return servletPath.endsWith(ResourcePaths.DISPATCH_RPC);
     }
 
-    private boolean shouldBypassAuthentication(String servletPath) {
-        return servletPath.startsWith(NO_AUTH_PATH);
+    private boolean shouldBypassAuthentication(final String servletPath, final String fullPath) {
+        return servletPath.startsWith(NO_AUTH_PATH) || fullPath.startsWith(NO_AUTH_PATH);
+//        return servletPath.startsWith(NO_AUTH_PATH);
     }
 
     private void authenticateAsAdmin(final HttpServletRequest request,
@@ -299,12 +307,17 @@ class SecurityFilter implements Filter {
                     if (code != null) {
                         // Invalidate the current session.
                         HttpSession session = request.getSession(false);
-                        if (session != null) {
-                            session.invalidate();
-                        }
 
-                        LOGGER.debug("We have the following access code: {{}}", code);
-                        session = request.getSession(true);
+                        // TODO: This invalidation was preventing the new UI logging in. There're no comments to
+                        // indicate why we were invalidating the session. I've not seen anything fall over yet,
+                        // but I'm leaving the code and this note here so we can check up on this later.
+//                    if (session != null) {
+//                        LOGGER.info("DEBUG: got session to invalidate");
+//                        session.invalidate();
+//                    }
+//
+//                    LOGGER.info("We have the following access code: {{}}", accessCode);
+//                    session = request.getSession(true);
 
                         UserAgentSessionUtil.set(request);
 
@@ -350,7 +363,6 @@ class SecurityFilter implements Filter {
             LOGGER.error(e.getMessage(), e);
         }
 
-
         return loggedIn;
     }
 
@@ -381,13 +393,18 @@ class SecurityFilter implements Filter {
         final String url = getFullUrl(request);
         final UriBuilder uriBuilder = UriBuilder.fromUri(url);
 
-        // When the auth service has performed authentication it will redirect back to the current URL with some
-        // additional parameters (e.g. `state` and `accessCode`). It is important that these parameters are not
-        // provided by our redirect URL else the redirect URL that the authentication service redirects back to may
-        // end up with multiple copies of these parameters which will confuse Stroom as it will not know which one
-        // of the param values to use (i.e. which were on the original redirect request and which have been added by
-        // the authentication service). For this reason we will cleanse the URL of any reserved parameters here. The
-        // authentication service should do the same to the redirect URL before adding its additional parameters.
+        // When the auth service has performed authentication it will redirect
+        // back to the current URL with some additional parameters (e.g.
+        // `state` and `accessCode`). It is important that these parameters are
+        // not provided by our redirect URL else the redirect URL that the
+        // authentication service redirects back to may end up with multiple
+        // copies of these parameters which will confuse Stroom as it will not
+        // know which one of the param values to use (i.e. which were on the
+        // original redirect request and which have been added by the
+        // authentication service). For this reason we will cleanse the URL of
+        // any reserved parameters here. The authentication service should do
+        // the same to the redirect URL before adding its additional
+        // parameters.
         RESERVED_PARAMS.forEach(param -> uriBuilder.replaceQueryParam(param, new Object[0]));
 
         URI redirectUri = uriBuilder.build();

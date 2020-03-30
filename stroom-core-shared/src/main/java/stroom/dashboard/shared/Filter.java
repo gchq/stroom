@@ -21,34 +21,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.ToStringBuilder;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
+import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"includes", "excludes"})
-@JsonInclude(Include.NON_DEFAULT)
-@XmlRootElement(name = "filter")
-@XmlType(name = "Filter", propOrder = {"includes", "excludes"})
-public class Filter implements Serializable {
-    private static final long serialVersionUID = 7327802315955158337L;
-
-    @XmlElement(name = "includes")
-    @JsonProperty("includes")
-    private String includes;
-    @XmlElement(name = "excludes")
-    @JsonProperty("excludes")
-    private String excludes;
-
-    public Filter() {
-    }
+@JsonInclude(Include.NON_NULL)
+public class Filter {
+    @JsonProperty
+    private final String includes;
+    @JsonProperty
+    private final String excludes;
 
     @JsonCreator
     public Filter(@JsonProperty("includes") final String includes,
@@ -61,39 +44,22 @@ public class Filter implements Serializable {
         return includes;
     }
 
-    public void setIncludes(final String includes) {
-        this.includes = includes;
-    }
-
     public String getExcludes() {
         return excludes;
     }
 
-    public void setExcludes(final String excludes) {
-        this.excludes = excludes;
-    }
-
     @Override
     public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof Filter)) {
-            return false;
-        }
-
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         final Filter filter = (Filter) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(includes, filter.includes);
-        builder.append(excludes, filter.excludes);
-        return builder.isEquals();
+        return Objects.equals(includes, filter.includes) &&
+                Objects.equals(excludes, filter.excludes);
     }
 
     @Override
     public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(includes);
-        builder.append(excludes);
-        return builder.toHashCode();
+        return Objects.hash(includes, excludes);
     }
 
     @Override

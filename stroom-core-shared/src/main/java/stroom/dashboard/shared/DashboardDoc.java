@@ -26,7 +26,7 @@ import stroom.docstore.shared.Doc;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "dashboardConfig"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class DashboardDoc extends Doc {
     public static final String DOCUMENT_TYPE = "Dashboard";
 

@@ -166,7 +166,7 @@ public class ProcessorTaskListPresenter extends MyPresenterWidget<DataGridView<P
         getView().addEndColumn(new EndColumn<>());
 
         criteria = new ExpressionCriteria();
-        dataProvider = new RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>>(eventBus) {
+        dataProvider = new RestDataProvider<ProcessorTask, ResultPage<ProcessorTask>>(eventBus, criteria.obtainPageRequest()) {
             @Override
             protected void exec(final Consumer<ResultPage<ProcessorTask>> dataConsumer, final Consumer<Throwable> throwableConsumer) {
                 final Rest<ResultPage<ProcessorTask>> rest = restFactory.create();

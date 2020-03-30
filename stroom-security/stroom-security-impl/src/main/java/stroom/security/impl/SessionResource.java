@@ -2,20 +2,18 @@ package stroom.security.impl;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import stroom.security.api.UserIdentity;
-import stroom.security.impl.session.UserIdentitySessionUtil;
+import org.fusesource.restygwt.client.DirectRestService;
+import stroom.security.impl.session.SessionDetails;
+import stroom.security.impl.session.SessionListResponse;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
-import javax.inject.Inject;
-import javax.servlet.http.HttpSession;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
@@ -25,17 +23,13 @@ import javax.ws.rs.core.Response;
  * happen.
  */
 @Api(value = "session - /v1")
-@Path("/session" + ResourcePaths.V1)
+@Path(SessionResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
-public class SessionResource implements RestResource {
-    private static final Logger LOGGER = LoggerFactory.getLogger(SessionResource.class);
+public interface SessionResource extends RestResource, DirectRestService {
 
-    private final AuthenticationEventLog eventLog;
-
-    @Inject
-    SessionResource(final AuthenticationEventLog eventLog) {
-        this.eventLog = eventLog;
-    }
+    String BASE_PATH = "/session" + ResourcePaths.V1;
+    String LIST_PATH_PART = "/list";
+    String NODE_NAME_PARAM = "nodeName";
 
     @GET
     @Path("logout/{sessionId}")
@@ -44,22 +38,23 @@ public class SessionResource implements RestResource {
     @ApiOperation(
             value = "Logs the specified session out of Stroom",
             response = Response.class)
-    public Response logout(@PathParam("sessionId") String authSessionId) {
-        LOGGER.info("Logging out session {}", authSessionId);
+    Response logout(@PathParam("sessionId") final String authSessionId);
 
-        // TODO : We need to lookup the auth session in our user sessions
+//    @GET
+//    @Path(LIST_PATH_PART)
+//    @Consumes(MediaType.APPLICATION_JSON)
+//    @Produces(MediaType.APPLICATION_JSON)
+//    @ApiOperation(
+//            value = "Lists user sessions for a node, or all nodes if nodeName is null",
+//            response = SessionDetails.class)
+//    SessionListResponse listAllNodes();
 
-        final HttpSession session = SessionMap.getSession(authSessionId);
-        final UserIdentity userIdentity = UserIdentitySessionUtil.get(session);
-        if (session != null) {
-            // Invalidate the current user session
-            session.invalidate();
-        }
-        if (userIdentity != null) {
-            // Create an event for logout
-            eventLog.logoff(userIdentity.getId());
-        }
-
-        return Response.status(Response.Status.OK).entity("Logout successful").build();
-    }
+    @GET
+    @Path(LIST_PATH_PART)
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @ApiOperation(
+        value = "Lists user sessions for a node, or all nodes in the cluster if nodeName is null",
+        response = SessionDetails.class)
+    SessionListResponse list(@QueryParam(NODE_NAME_PARAM) final String nodeName);
 }

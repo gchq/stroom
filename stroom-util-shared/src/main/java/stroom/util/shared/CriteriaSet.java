@@ -65,11 +65,7 @@ public class CriteriaSet<T>
                        @JsonProperty("set") final Set<T> set) {
         this.matchAll = matchAll;
         this.matchNull = matchNull;
-        if (set != null) {
-            this.set = set;
-        } else {
-            this.set = new HashSet<>();
-        }
+        this.set = set;
     }
 
     public Boolean getMatchAll() {

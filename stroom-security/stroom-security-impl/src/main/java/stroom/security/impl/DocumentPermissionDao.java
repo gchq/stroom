@@ -1,11 +1,12 @@
 package stroom.security.impl;
 
+import java.util.Map;
 import java.util.Set;
 
 public interface DocumentPermissionDao {
-    Set<String> getPermissionsForDocumentForUser(String docRefUuid, String userUuid);
+    Set<String> getPermissionsForDocumentForUser(String docUuid, String userUuid);
 
-    DocumentPermissions getPermissionsForDocument(String docRefUuid);
+    Map<String, Set<String>> getPermissionsForDocument(String docUuid);
 
     UserDocumentPermissions getPermissionsForUser(String userUuid);
 

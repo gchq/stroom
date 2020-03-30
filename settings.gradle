@@ -30,10 +30,19 @@ include 'stroom-annotation:stroom-annotation-impl'
 include 'stroom-annotation:stroom-annotation-impl-db'
 include 'stroom-annotation:stroom-annotation-impl-db-jooq'
 include 'stroom-annotation:stroom-config-common'
+include 'stroom-annotation:stroom-annotation-pipeline'
 
 // App.
 include 'stroom-app'
 include 'stroom-app-gwt'
+
+// Authentication
+include 'stroom-authentication:stroom-authentication-api'
+include 'stroom-authentication:stroom-authentication-api-swagger'
+include 'stroom-authentication:stroom-authentication-common'
+include 'stroom-authentication:stroom-authentication-impl'
+include 'stroom-authentication:stroom-authentication-impl-db'
+include 'stroom-authentication:stroom-authentication-impl-db-jooq'
 
 // Cache
 include 'stroom-cache:stroom-cache-api'
@@ -143,8 +152,7 @@ include 'stroom-job:stroom-job-impl-db'
 include 'stroom-job:stroom-job-impl-db-jooq'
 
 // Kafka
-include 'stroom-kafka:stroom-kafka-impl'
-include 'stroom-kafka:stroom-kafka-pipeline'
+include 'stroom-kafka:stroom-kafka'
 
 // Lifecycle
 include 'stroom-lifecycle:stroom-lifecycle-api'

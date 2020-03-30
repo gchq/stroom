@@ -32,7 +32,7 @@ import java.util.List;
 /**
  * This has been put here as import export API is not Serializable.
  */
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ImportState {
     @JsonProperty
     private final DocRef docRef;

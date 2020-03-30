@@ -27,10 +27,11 @@ import stroom.util.shared.BuildInfo;
 import stroom.util.shared.validation.ValidRegex;
 
 import javax.inject.Singleton;
+import java.util.Objects;
 
 @Singleton
 @JsonPropertyOrder({"welcomeHtml", "aboutHtml", "buildInfo", "nodeName", "maintenanceMessage", "defaultMaxResults", "process", "helpUrl", "theme", "query", "namePattern", "htmlTitle", "oncontextmenu", "splash", "activity", "url"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class UiConfig extends AbstractConfig {
     @JsonProperty
     @JsonPropertyDescription("HTML")
@@ -299,5 +300,33 @@ public class UiConfig extends AbstractConfig {
                 ", htmlTitle='" + htmlTitle + '\'' +
                 ", oncontextmenu='" + oncontextmenu + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final UiConfig uiConfig = (UiConfig) o;
+        return Objects.equals(welcomeHtml, uiConfig.welcomeHtml) &&
+            Objects.equals(aboutHtml, uiConfig.aboutHtml) &&
+            Objects.equals(buildInfo, uiConfig.buildInfo) &&
+            Objects.equals(nodeName, uiConfig.nodeName) &&
+            Objects.equals(maintenanceMessage, uiConfig.maintenanceMessage) &&
+            Objects.equals(defaultMaxResults, uiConfig.defaultMaxResults) &&
+            Objects.equals(process, uiConfig.process) &&
+            Objects.equals(helpUrl, uiConfig.helpUrl) &&
+            Objects.equals(theme, uiConfig.theme) &&
+            Objects.equals(query, uiConfig.query) &&
+            Objects.equals(namePattern, uiConfig.namePattern) &&
+            Objects.equals(htmlTitle, uiConfig.htmlTitle) &&
+            Objects.equals(oncontextmenu, uiConfig.oncontextmenu) &&
+            Objects.equals(splash, uiConfig.splash) &&
+            Objects.equals(activity, uiConfig.activity) &&
+            Objects.equals(url, uiConfig.url);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(welcomeHtml, aboutHtml, buildInfo, nodeName, maintenanceMessage, defaultMaxResults, process, helpUrl, theme, query, namePattern, htmlTitle, oncontextmenu, splash, activity, url);
     }
 }

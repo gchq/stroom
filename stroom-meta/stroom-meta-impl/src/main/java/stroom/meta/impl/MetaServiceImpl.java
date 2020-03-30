@@ -7,14 +7,14 @@ import stroom.datasource.api.v2.AbstractField;
 import stroom.datasource.api.v2.DataSource;
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.meta.api.MetaSecurityFilter;
-import stroom.meta.api.MetaService;
 import stroom.meta.api.AttributeMap;
 import stroom.meta.api.EffectiveMetaDataCriteria;
+import stroom.meta.api.MetaProperties;
+import stroom.meta.api.MetaSecurityFilter;
+import stroom.meta.api.MetaService;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
-import stroom.meta.api.MetaProperties;
 import stroom.meta.shared.MetaRow;
 import stroom.meta.shared.Status;
 import stroom.query.api.v2.ExpressionOperator;
@@ -215,7 +215,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
             return ResultPage.createPageResultList(Collections.emptyList(), criteria.getPageRequest(), null);
         }
 
-        List<Meta> results = secureFind(criteria);
+        ResultPage<Meta> resultPage = secureFind(criteria);
 
 //        final Condition condition = createCondition(criteria, DocumentPermissionNames.READ);
 //
@@ -231,8 +231,9 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
         // Only return back children or parents?
         if (fetchRelationships) {
-            final List<Meta> workingList = results;
-            results = new ArrayList<>();
+            final List<Meta> workingList = resultPage.getValues();
+
+            List<Meta> results = new ArrayList<>();
 
             for (final Meta stream : workingList) {
                 Meta parent = stream;
@@ -247,10 +248,10 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 results.add(lastParent);
 
                 // Add the children
-                List<Meta> children = findChildren(criteria, Collections.singletonList(lastParent));
+                ResultPage<Meta> children = findChildren(criteria, Collections.singletonList(lastParent));
                 while (children.size() > 0) {
-                    results.addAll(children);
-                    children = findChildren(criteria, children);
+                    results.addAll(children.getValues());
+                    children = findChildren(criteria, children.getValues());
                 }
             }
 
@@ -269,17 +270,17 @@ public class MetaServiceImpl implements MetaService, Searchable {
             criteria.setPageRequest(pageRequest);
             return ResultPage.createCriterialBasedList(results, criteria, maxSize);
         } else {
-            return ResultPage.createCriterialBasedList(results, criteria);
+            return resultPage;
         }
     }
 
-    private List<Meta> secureFind(final FindMetaCriteria criteria) {
+    private ResultPage<Meta> secureFind(final FindMetaCriteria criteria) {
         final ExpressionOperator expression = addPermissionConstraints(criteria.getExpression(), DocumentPermissionNames.READ);
         criteria.setExpression(expression);
         return metaDao.find(criteria);
     }
 
-    private List<Meta> findChildren(final FindMetaCriteria parentCriteria, final List<Meta> streamList) {
+    private ResultPage<Meta> findChildren(final FindMetaCriteria parentCriteria, final List<Meta> streamList) {
         final Set<String> excludedFields = Set.of(MetaFields.ID.getName(), MetaFields.PARENT_ID.getName());
         final Builder builder = copyExpression(parentCriteria.getExpression(), excludedFields);
 
@@ -295,16 +296,16 @@ public class MetaServiceImpl implements MetaService, Searchable {
         final ExpressionOperator expression = new ExpressionOperator.Builder()
                 .addTerm(MetaFields.ID, ExpressionTerm.Condition.EQUALS, meta.getParentMetaId())
                 .build();
-        final List<Meta> parentList = simpleFind(expression);
+        final ResultPage<Meta> parentList = simpleFind(expression);
         if (parentList != null && parentList.size() > 0) {
-            return parentList.get(0);
+            return parentList.getFirst();
         }
         return new Meta.Builder()
                 .id(meta.getParentMetaId())
                 .build();
     }
 
-    private List<Meta> simpleFind(final ExpressionOperator expression) {
+    private ResultPage<Meta> simpleFind(final ExpressionOperator expression) {
         final FindMetaCriteria criteria = new FindMetaCriteria(expression);
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
         criteria.setExpression(secureExpression);
@@ -349,7 +350,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
             // There is no need to apply security here are is has been applied when finding the data id above.
             final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(expression);
             findMetaCriteria.setPageRequest(new PageRequest(0L, 1000));
-            set.addAll(secureFind(findMetaCriteria));
+            set.addAll(secureFind(findMetaCriteria).getValues());
         }
 
         // Now add all data that occurs within the requested period.
@@ -364,7 +365,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
         final ExpressionOperator secureExpression = addPermissionConstraints(expression, DocumentPermissionNames.READ);
         final FindMetaCriteria findMetaCriteria = new FindMetaCriteria(secureExpression);
         findMetaCriteria.setPageRequest(new PageRequest(0L, 1000));
-        set.addAll(secureFind(findMetaCriteria));
+        set.addAll(secureFind(findMetaCriteria).getValues());
 
         return set;
     }
@@ -410,7 +411,7 @@ public class MetaServiceImpl implements MetaService, Searchable {
 
             // Share the page criteria
             final ResultPage<Meta> list = find(findMetaCriteria);
-
+            List<MetaRow> result = Collections.emptyList();
             if (list.size() > 0) {
 //                // We need to decorate data with retention rules as a processing user.
 //                final List<StreamDataRow> result = securityContext.asProcessingUserResult(() -> {
@@ -428,20 +429,16 @@ public class MetaServiceImpl implements MetaService, Searchable {
                 // Query the database for the attribute values
 //                        if (criteria.isUseCache()) {
                 LOGGER.info("Loading attribute map from DB");
-                final List<MetaRow> result = metaValueDao.decorateDataWithAttributes(list.getValues());
+                result = metaValueDao.decorateDataWithAttributes(list.getValues());
 //                        } else {
 //                            LOGGER.info("Loading attribute map from filesystem");
 //                            loadAttributeMapFromFileSystem(criteria, result, result, ruleDecorator);
 //                        }
 //                    }
 //                });
-
-                return new ResultPage<>(result, list.getPageResponse().getOffset(),
-                        list.getPageResponse().getTotal(), list.getPageResponse().isExact());
             }
 
-            return new ResultPage<>(Collections.emptyList(), list.getPageResponse().getOffset(),
-                    list.getPageResponse().getTotal(), list.getPageResponse().isExact());
+            return new ResultPage<>(result, ResultPage.createPageResponse(result, list.getPageResponse()));
         });
     }
 

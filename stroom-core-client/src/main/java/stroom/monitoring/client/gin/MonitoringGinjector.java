@@ -22,13 +22,12 @@ import stroom.config.global.client.presenter.ConfigPropertyClusterValuesPresente
 import stroom.config.global.client.presenter.GlobalPropertyTabPresenter;
 import stroom.config.global.client.presenter.ManageGlobalPropertyEditPresenter;
 import stroom.config.global.client.presenter.ManageGlobalPropertyListPresenter;
+import stroom.index.client.ManageIndexVolumesPlugin;
 import stroom.job.client.presenter.JobListPresenter;
 import stroom.monitoring.client.DatabaseTablesMonitoringPlugin;
 import stroom.monitoring.client.JobListPlugin;
 import stroom.monitoring.client.NodeMonitoringPlugin;
 import stroom.monitoring.client.presenter.DatabaseTablesMonitoringPresenter;
-import stroom.node.client.ManageNodeToolsPlugin;
-import stroom.node.client.presenter.NodeEditPresenter;
 import stroom.node.client.presenter.NodeMonitoringPresenter;
 import stroom.task.client.TaskManagerPlugin;
 import stroom.task.client.presenter.TaskManagerPresenter;
@@ -46,9 +45,7 @@ public interface MonitoringGinjector {
 
     AsyncProvider<NodeMonitoringPresenter> getNodeMonitoringPresenter();
 
-    AsyncProvider<ManageNodeToolsPlugin> getManageNodeToolsPlugin();
-
-    AsyncProvider<NodeEditPresenter> getNodeEditPresenter();
+    AsyncProvider<ManageIndexVolumesPlugin> getManageIndexVolumesPlugin();
 
     // Global properties.
     AsyncProvider<GlobalPropertyTabPresenter> getManageGlobalPropertyPresenter();

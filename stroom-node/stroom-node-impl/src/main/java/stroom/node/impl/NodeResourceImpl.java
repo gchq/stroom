@@ -22,11 +22,11 @@ import event.logging.Query;
 import event.logging.Query.Advanced;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.node.api.FindNodeCriteria;
 import stroom.node.api.NodeCallUtil;
 import stroom.node.api.NodeInfo;
 import stroom.node.shared.ClusterNodeInfo;
 import stroom.node.shared.FetchNodeStatusResponse;
-import stroom.node.api.FindNodeCriteria;
 import stroom.node.shared.Node;
 import stroom.node.shared.NodeResource;
 import stroom.node.shared.NodeStatusResult;
@@ -37,15 +37,14 @@ import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
-import javax.ws.rs.ServerErrorException;
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.Response.Status;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 // TODO : @66 add event logging
 class NodeResourceImpl implements NodeResource, HasHealthCheck {
@@ -71,7 +70,26 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
     }
 
     @Override
-    public FetchNodeStatusResponse list() {
+    public List<String> listAllNodes() {
+        return find().getValues()
+                .stream()
+                .map(NodeStatusResult::getNode)
+                .map(Node::getName)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<String> listEnabledNodes() {
+        return find().getValues()
+                .stream()
+                .map(NodeStatusResult::getNode)
+                .filter(Node::isEnabled)
+                .map(Node::getName)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public FetchNodeStatusResponse find() {
         FetchNodeStatusResponse response = null;
 
         final Query query = new Query();
@@ -113,13 +131,15 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
             final long now = System.currentTimeMillis();
 
             // If this is the node that was contacted then just return our local info.
-            if (NodeCallUtil.executeLocally(nodeService, nodeInfo, nodeName)) {
+            if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
                 clusterNodeInfo = clusterNodeManager.getClusterNodeInfo();
 
             } else {
-                String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_ROOT_PATH + NodeResource.BASE_PATH;
-                url += nodeName;
+                String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+                        + ResourcePaths.buildAuthenticatedApiPath(
+                        NodeResource.BASE_PATH,
+                        NodeResource.INFO_PATH_PART,
+                        nodeName);
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
@@ -142,7 +162,7 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
 
             clusterNodeInfo = new ClusterNodeInfo();
             clusterNodeInfo.setNodeName(nodeName);
-            clusterNodeInfo.setClusterURL(nodeUrl);
+            clusterNodeInfo.setEndpointUrl(nodeUrl);
             clusterNodeInfo.setError(e.getMessage());
         }
 
@@ -151,17 +171,19 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
 
     @Override
     public Long ping(final String nodeName) {
-        try {
-            final long now = System.currentTimeMillis();
+        final long now = System.currentTimeMillis();
 
-            // If this is the node that was contacted then just return the latency we have incurred within this method.
-            if (NodeCallUtil.executeLocally(nodeService, nodeInfo, nodeName)) {
-                return System.currentTimeMillis() - now;
-            } else {
-                String url = NodeCallUtil.getUrl(nodeService, nodeName);
-                url += ResourcePaths.API_ROOT_PATH + NodeResource.BASE_PATH;
-                url += nodeName;
-                url += "/ping";
+        // If this is the node that was contacted then just return the latency we have incurred within this method.
+        if (NodeCallUtil.shouldExecuteLocally(nodeInfo, nodeName)) {
+            return System.currentTimeMillis() - now;
+        } else {
+            final String url = NodeCallUtil.getBaseEndpointUrl(nodeService, nodeName)
+                    + ResourcePaths.buildAuthenticatedApiPath(
+                    NodeResource.BASE_PATH,
+                    NodeResource.PING_PATH_PART,
+                    nodeName);
+
+            try {
                 final Response response = webTargetFactory
                         .create(url)
                         .request(MediaType.APPLICATION_JSON)
@@ -172,19 +194,10 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
                 final Long ping = response.readEntity(Long.class);
                 Objects.requireNonNull(ping, "Null ping");
                 return System.currentTimeMillis() - now;
+            } catch (Throwable e) {
+                throw NodeCallUtil.handleExceptionsOnNodeCall(nodeName, url, e);
             }
-
-        } catch (final WebApplicationException e) {
-            throw e;
-        } catch (final RuntimeException e) {
-            throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
-//            throw new ServerErrorException(e.getMessage(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
         }
-    }
-
-    @Override
-    public void setUrl(final String nodeName, final String url) {
-        modifyNode(nodeName, node -> node.setUrl(url));
     }
 
     @Override
@@ -197,7 +210,8 @@ class NodeResourceImpl implements NodeResource, HasHealthCheck {
         modifyNode(nodeName, node -> node.setEnabled(enabled));
     }
 
-    private void modifyNode(final String nodeName, final Consumer<Node> mutation) {
+    private void modifyNode(final String nodeName,
+                            final Consumer<Node> mutation) {
         Node node = null;
         Node before = null;
         Node after = null;

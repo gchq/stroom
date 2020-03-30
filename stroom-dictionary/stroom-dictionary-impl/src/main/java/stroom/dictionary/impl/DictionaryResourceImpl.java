@@ -17,11 +17,16 @@
 package stroom.dictionary.impl;
 
 import com.codahale.metrics.health.HealthCheck.Result;
+import io.swagger.annotations.ApiParam;
+import stroom.dictionary.shared.DictionaryDTO;
 import stroom.dictionary.shared.DictionaryDoc;
 import stroom.dictionary.shared.DictionaryResource;
 import stroom.docref.DocRef;
 import stroom.docstore.api.DocumentResourceHelper;
 import stroom.event.logging.api.DocumentEventLog;
+import stroom.importexport.api.DocumentData;
+import stroom.importexport.shared.Base64EncodedDocumentData;
+import stroom.importexport.shared.ImportState;
 import stroom.resource.api.ResourceStore;
 import stroom.security.api.SecurityContext;
 import stroom.util.HasHealthCheck;
@@ -31,11 +36,14 @@ import stroom.util.shared.ResourceGeneration;
 import stroom.util.shared.ResourceKey;
 
 import javax.inject.Inject;
+import javax.ws.rs.PathParam;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.Set;
 
 class DictionaryResourceImpl implements DictionaryResource, HasHealthCheck {
     private final DictionaryStore dictionaryStore;
@@ -56,6 +64,10 @@ class DictionaryResourceImpl implements DictionaryResource, HasHealthCheck {
         this.documentEventLog = documentEventLog;
         this.securityContext = securityContext;
     }
+
+    ///////////////////////
+    // GWT UI end points //
+    ///////////////////////
 
     @Override
     public DictionaryDoc read(final DocRef docRef) {
@@ -89,6 +101,61 @@ class DictionaryResourceImpl implements DictionaryResource, HasHealthCheck {
             }
         });
     }
+
+
+    ////////////////////////
+    // React UI endpoints //
+    ////////////////////////
+
+    public Set<DocRef> listDocuments() {
+        return dictionaryStore.listDocuments();
+    }
+
+    public DocRef importDocument(@ApiParam("DocumentData") final Base64EncodedDocumentData encodedDocumentData) {
+        final DocumentData documentData = DocumentData.fromBase64EncodedDocumentData(encodedDocumentData);
+        final ImportState importState = new ImportState(documentData.getDocRef(), documentData.getDocRef().getName());
+        return dictionaryStore.importDocument(documentData.getDocRef(), documentData.getDataMap(), importState, ImportState.ImportMode.IGNORE_CONFIRMATION);
+    }
+
+    public Base64EncodedDocumentData exportDocument(@ApiParam("DocRef") final DocRef docRef) {
+        final Map<String, byte[]> map = dictionaryStore.exportDocument(docRef, true, new ArrayList<>());
+        return DocumentData.toBase64EncodedDocumentData(new DocumentData(docRef, map));
+    }
+
+    private DictionaryDTO fetchInScope(final String dictionaryUuid) {
+        final DictionaryDoc doc = dictionaryStore.readDocument(getDocRef(dictionaryUuid));
+        final DictionaryDTO dto = new DictionaryDTO(doc);
+        return dto;
+    }
+
+    public DictionaryDTO fetch(@PathParam("dictionaryUuid") final String dictionaryUuid) {
+        // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+        return securityContext.useAsReadResult(() -> fetchInScope(dictionaryUuid));
+    }
+
+    private DocRef getDocRef(final String pipelineId) {
+        return new DocRef.Builder()
+                .uuid(pipelineId)
+                .type(DictionaryDoc.ENTITY_TYPE)
+                .build();
+    }
+
+    public void save(@PathParam("dictionaryUuid") final String dictionaryUuid,
+                     final DictionaryDTO updates) {
+        System.out.println("DEBUG in save");
+        // A user should be allowed to read pipelines that they are inheriting from as long as they have 'use' permission on them.
+        securityContext.useAsRead(() -> {
+            final DictionaryDoc doc = dictionaryStore.readDocument(getDocRef(dictionaryUuid));
+
+            if (doc != null) {
+                doc.setDescription(updates.getDescription());
+                doc.setData(updates.getData());
+                doc.setImports(updates.getImports());
+                dictionaryStore.writeDocument(doc);
+            }
+        });
+    }
+
 
     @Override
     public Result getHealth() {

@@ -21,7 +21,9 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonInclude(Include.NON_DEFAULT)
+import java.util.Objects;
+
+@JsonInclude(Include.NON_NULL)
 public class JobNodeInfo {
     @JsonProperty
     private Integer currentTaskCount;
@@ -64,5 +66,29 @@ public class JobNodeInfo {
 
     public void setLastExecutedTime(final Long lastExecutedTime) {
         this.lastExecutedTime = lastExecutedTime;
+    }
+
+    @Override
+    public String toString() {
+        return "JobNodeInfo{" +
+            "currentTaskCount=" + currentTaskCount +
+            ", scheduleReferenceTime=" + scheduleReferenceTime +
+            ", lastExecutedTime=" + lastExecutedTime +
+            '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final JobNodeInfo that = (JobNodeInfo) o;
+        return Objects.equals(currentTaskCount, that.currentTaskCount) &&
+            Objects.equals(scheduleReferenceTime, that.scheduleReferenceTime) &&
+            Objects.equals(lastExecutedTime, that.lastExecutedTime);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(currentTaskCount, scheduleReferenceTime, lastExecutedTime);
     }
 }

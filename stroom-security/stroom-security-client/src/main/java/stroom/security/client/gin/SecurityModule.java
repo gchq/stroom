@@ -24,6 +24,18 @@ import stroom.security.client.LoginManager;
 import stroom.security.client.LogoutPlugin;
 import stroom.security.client.ManageUserPlugin;
 import stroom.security.client.api.ClientSecurityContext;
+import stroom.security.client.presenter.DocumentPermissionsPresenter;
+import stroom.security.client.presenter.DocumentPermissionsTabPresenter;
+import stroom.security.client.presenter.FolderPermissionsTabPresenter;
+import stroom.security.client.presenter.GroupEditPresenter;
+import stroom.security.client.presenter.UserEditPresenter;
+import stroom.security.client.presenter.UserListView;
+import stroom.security.client.view.DocumentPermissionsTabViewImpl;
+import stroom.security.client.view.DocumentPermissionsViewImpl;
+import stroom.security.client.view.FolderPermissionsTabViewImpl;
+import stroom.security.client.view.UserEditViewImpl;
+import stroom.security.client.view.UserGroupEditViewImpl;
+import stroom.security.client.view.UserListViewImpl;
 
 public class SecurityModule extends PluginModule {
     @Override
@@ -35,9 +47,14 @@ public class SecurityModule extends PluginModule {
         bindPlugin(LogoutPlugin.class);
         bindPlugin(ChangePasswordPlugin.class);
 
-//        bindSharedView(ManageEntityView.class, ManageGlobalPropertyViewImpl.class);
-
         // Users
         bindPlugin(ManageUserPlugin.class);
+        bindSharedView(UserListView.class, UserListViewImpl.class);
+        bindSharedView(UserEditPresenter.UserEditView.class, UserEditViewImpl.class);
+        bindSharedView(GroupEditPresenter.UserGroupEditView.class, UserGroupEditViewImpl.class);
+
+        bindPresenterWidget(DocumentPermissionsPresenter.class, DocumentPermissionsPresenter.DocumentPermissionsView.class, DocumentPermissionsViewImpl.class);
+        bindPresenterWidget(DocumentPermissionsTabPresenter.class, DocumentPermissionsTabPresenter.DocumentPermissionsTabView.class, DocumentPermissionsTabViewImpl.class);
+        bindPresenterWidget(FolderPermissionsTabPresenter.class, FolderPermissionsTabPresenter.FolderPermissionsTabView.class, FolderPermissionsTabViewImpl.class);
     }
 }

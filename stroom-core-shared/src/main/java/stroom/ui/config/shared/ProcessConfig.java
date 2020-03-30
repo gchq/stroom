@@ -9,10 +9,11 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
+import java.util.Objects;
 
 @Singleton
 @JsonPropertyOrder({"defaultTimeLimit", "defaultRecordLimit"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ProcessConfig extends AbstractConfig {
     private static final long DEFAULT_TIME_LIMIT = 30L;
     private static final long DEFAULT_RECORD_LIMIT = 1000000L;
@@ -25,21 +26,23 @@ public class ProcessConfig extends AbstractConfig {
     private volatile long defaultRecordLimit;
 
     public ProcessConfig() {
-        defaultTimeLimit = DEFAULT_TIME_LIMIT;
-        defaultRecordLimit = DEFAULT_RECORD_LIMIT;
+        setDefaults();
     }
 
     @JsonCreator
     public ProcessConfig(@JsonProperty("defaultTimeLimit") final long defaultTimeLimit,
                          @JsonProperty("defaultRecordLimit") final long defaultRecordLimit) {
-        if (defaultTimeLimit > 0) {
-            this.defaultTimeLimit = defaultTimeLimit;
-        } else {
+        this.defaultTimeLimit = defaultTimeLimit;
+        this.defaultRecordLimit = defaultRecordLimit;
+
+        setDefaults();
+    }
+
+    private void setDefaults() {
+        if (defaultTimeLimit <= 0) {
             this.defaultTimeLimit = DEFAULT_TIME_LIMIT;
         }
-        if (defaultRecordLimit > 0) {
-            this.defaultRecordLimit = defaultRecordLimit;
-        } else {
+        if (defaultRecordLimit <= 0) {
             this.defaultRecordLimit = DEFAULT_RECORD_LIMIT;
         }
     }
@@ -66,5 +69,19 @@ public class ProcessConfig extends AbstractConfig {
                 "defaultTimeLimit=" + defaultTimeLimit +
                 ", defaultRecordLimit=" + defaultRecordLimit +
                 '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ProcessConfig that = (ProcessConfig) o;
+        return defaultTimeLimit == that.defaultTimeLimit &&
+            defaultRecordLimit == that.defaultRecordLimit;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(defaultTimeLimit, defaultRecordLimit);
     }
 }

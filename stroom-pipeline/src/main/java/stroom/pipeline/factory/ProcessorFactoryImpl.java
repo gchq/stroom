@@ -31,6 +31,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
@@ -90,6 +91,9 @@ class ProcessorFactoryImpl implements ProcessorFactory {
                         .runAsync(runnable, executor)
                         .whenComplete((r, t) -> {
                             if (t != null) {
+                                while (t instanceof CompletionException) {
+                                    t = t.getCause();
+                                }
                                 outputError(t);
                             }
                             countDownLatch.countDown();

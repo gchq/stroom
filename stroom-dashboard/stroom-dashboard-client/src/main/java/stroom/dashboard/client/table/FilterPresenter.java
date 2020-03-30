@@ -81,21 +81,19 @@ public class FilterPresenter extends MyPresenterWidget<FilterPresenter.FilterVie
     }
 
     private Filter getFilter() {
-        Filter filter = null;
-
+        String includes = null;
+        String excludes = null;
         if (getView().getIncludes() != null && getView().getIncludes().trim().length() > 0) {
-            if (filter == null) {
-                filter = new Filter();
-            }
-            filter.setIncludes(getView().getIncludes().trim());
+            includes = getView().getIncludes().trim();
         }
         if (getView().getExcludes() != null && getView().getExcludes().trim().length() > 0) {
-            if (filter == null) {
-                filter = new Filter();
-            }
-            filter.setExcludes(getView().getExcludes().trim());
+            excludes = getView().getExcludes().trim();
         }
 
+        Filter filter = null;
+        if (includes != null || excludes != null) {
+            filter = new Filter(includes, excludes);
+        }
         return filter;
     }
 

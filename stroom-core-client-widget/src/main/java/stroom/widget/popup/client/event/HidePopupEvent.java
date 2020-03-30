@@ -26,6 +26,7 @@ public class HidePopupEvent extends GwtEvent<HidePopupEvent.Handler> {
     private final PresenterWidget<?> presenterWidget;
     private final boolean autoClose;
     private final boolean ok;
+
     private HidePopupEvent(final PresenterWidget<?> presenterWidget, final boolean autoClose, final boolean ok) {
         this.presenterWidget = presenterWidget;
         this.autoClose = autoClose;

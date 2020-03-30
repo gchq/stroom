@@ -15,55 +15,84 @@
  */
 
 package stroom.security.impl.session;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Objects;
 
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class SessionDetails {
 
-class SessionDetails {
-    private static final long serialVersionUID = -7654691243590208784L;
-
+    @JsonProperty
     private String userName;
-    private Long createMs;
-    private Long lastAccessedMs;
+    @JsonProperty
+    private long createMs;
+    @JsonProperty
+    private long lastAccessedMs;
+    @JsonProperty
     private String lastAccessedAgent;
+    @JsonProperty
     private String nodeName;
+
+    @JsonCreator
+    public SessionDetails(@JsonProperty("username") final String userName,
+                   @JsonProperty("createMs") final long createMs,
+                   @JsonProperty("lastAccessedMss") final long lastAccessedMs,
+                   @JsonProperty("lastAccessedAgent") final String lastAccessedAgent,
+                   @JsonProperty("nodeName") final String nodeName) {
+        this.userName = userName;
+        this.createMs = createMs;
+        this.lastAccessedMs = lastAccessedMs;
+        this.lastAccessedAgent = lastAccessedAgent;
+        this.nodeName = nodeName;
+    }
 
     public String getUserName() {
         return userName;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
-    }
-
-    public Long getCreateMs() {
+    public long getCreateMs() {
         return createMs;
     }
 
-    public void setCreateMs(Long createMs) {
-        this.createMs = createMs;
-    }
-
-    public Long getLastAccessedMs() {
+    public long getLastAccessedMs() {
         return lastAccessedMs;
-    }
-
-    public void setLastAccessedMs(Long lastAccessedMs) {
-        this.lastAccessedMs = lastAccessedMs;
     }
 
     public String getNodeName() {
         return nodeName;
     }
 
-    public void setNodeName(String nodeName) {
-        this.nodeName = nodeName;
-    }
-
     public String getLastAccessedAgent() {
         return lastAccessedAgent;
     }
 
-    public void setLastAccessedAgent(String lastAccessedAgent) {
-        this.lastAccessedAgent = lastAccessedAgent;
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final SessionDetails that = (SessionDetails) o;
+        return createMs == that.createMs &&
+                lastAccessedMs == that.lastAccessedMs &&
+                Objects.equals(userName, that.userName) &&
+                Objects.equals(lastAccessedAgent, that.lastAccessedAgent) &&
+                Objects.equals(nodeName, that.nodeName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(userName, createMs, lastAccessedMs, lastAccessedAgent, nodeName);
+    }
+
+    @Override
+    public String toString() {
+        return "SessionDetails{" +
+                "userName='" + userName + '\'' +
+                ", createMs=" + createMs +
+                ", lastAccessedMs=" + lastAccessedMs +
+                ", lastAccessedAgent='" + lastAccessedAgent + '\'' +
+                ", nodeName='" + nodeName + '\'' +
+                '}';
     }
 }

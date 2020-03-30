@@ -31,6 +31,7 @@ import org.glassfish.jersey.logging.LoggingFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.app.commands.DbMigrationCommand;
+import stroom.app.errors.NodeCallExceptionMapper;
 import stroom.app.guice.AppModule;
 import stroom.config.app.AppConfig;
 import stroom.config.app.Config;
@@ -43,8 +44,12 @@ import stroom.dropwizard.common.PermissionExceptionMapper;
 import stroom.dropwizard.common.RestResources;
 import stroom.dropwizard.common.Servlets;
 import stroom.dropwizard.common.SessionListeners;
-import stroom.util.shared.ResourcePaths;
+import stroom.security.impl.AuthenticationConfig;
+import stroom.security.impl.ContentSecurityConfig;
+import stroom.util.ColouredStringBuilder;
+import stroom.util.ConsoleColour;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
@@ -59,6 +64,8 @@ import java.util.logging.Level;
 
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+
+    private static final String GWT_SUPER_DEV_SYSTEM_PROP_NAME = "gwtSuperDevMode";
 
     @Inject
     private HealthChecks healthChecks;
@@ -114,15 +121,20 @@ public class App extends Application<Config> {
 
         // Turn on Jersey logging.
         environment.jersey().register(
-                new LoggingFeature(java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME), Level.INFO, LoggingFeature.Verbosity.PAYLOAD_ANY, LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
+                new LoggingFeature(
+                    java.util.logging.Logger.getLogger(LoggingFeature.DEFAULT_LOGGER_NAME),
+                    Level.INFO,
+                    LoggingFeature.Verbosity.PAYLOAD_ANY,
+                    LoggingFeature.DEFAULT_MAX_ENTITY_SIZE));
 
-        if (configuration.getAppConfig().isSuperDevMode()) {
-            configuration.getAppConfig().getSecurityConfig().getAuthenticationConfig().setAuthenticationRequired(false);
-            configuration.getAppConfig().getSecurityConfig().getContentSecurityConfig().setContentSecurityPolicy("");
-        }
+        // Check if we are running GWT Super Dev Mode
+        checkForSuperDev(configuration.getAppConfig());
 
         // Add useful logging setup.
         registerLogConfiguration(environment);
+
+        // Add jersey exception mappers
+        registerExceptionMappers(environment);
 
         // We want Stroom to use the root path so we need to move Dropwizard's path.
         environment.jersey().setUrlPattern(ResourcePaths.API_ROOT_PATH + "/*");
@@ -177,6 +189,12 @@ public class App extends Application<Config> {
         // TODO : Add `SameSite=Strict` when supported by JEE
     }
 
+
+    private void registerExceptionMappers(final Environment environment) {
+        // Add an exception mapper for dealing with our own NodeCallExceptions
+        environment.jersey().register(NodeCallExceptionMapper.class);
+    }
+
     private String getNodeName(final AppConfig appConfig) {
         return appConfig != null
                 ? (appConfig.getNodeConfig() != null
@@ -195,7 +213,8 @@ public class App extends Application<Config> {
         LOGGER.info("Validating application configuration file {}",
             configFile.toAbsolutePath().normalize().toString());
 
-        ConfigValidator.Result result = configValidator.validate(appConfig);
+        final ConfigValidator.Result result = configValidator.validateRecursively(appConfig);
+
         result.handleViolations(ConfigValidator::logConstraintViolation);
 
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
@@ -252,5 +271,53 @@ public class App extends Application<Config> {
 
         LOGGER.info("Registering Log Configuration Task on {}/tasks/log-level", path);
         environment.admin().addTask(new LogConfigurationTask());
+    }
+
+    private void checkForSuperDev(final AppConfig appConfig) {
+        // If sys prop gwtSuperDevMode=true then override other config props
+        if (Boolean.getBoolean(GWT_SUPER_DEV_SYSTEM_PROP_NAME)) {
+            LOGGER.warn("\n" + ConsoleColour.red(
+
+                "\n                                      _                                  _      " +
+                    "\n                                     | |                                | |     " +
+                    "\n      ___ _   _ _ __   ___ _ __    __| | _____   __  _ __ ___   ___   __| | ___ " +
+                    "\n     / __| | | | '_ \\ / _ \\ '__|  / _` |/ _ \\ \\ / / | '_ ` _ \\ / _ \\ / _` |/ _ \\" +
+                    "\n     \\__ \\ |_| | |_) |  __/ |    | (_| |  __/\\ V /  | | | | | | (_) | (_| |  __/" +
+                    "\n     |___/\\__,_| .__/ \\___|_|     \\__,_|\\___| \\_/   |_| |_| |_|\\___/ \\__,_|\\___|" +
+                    "\n               | |                                                              " +
+                    "\n               |_|                                                              " +
+                    "\n" +
+                    "\n           ***************************************************************" +
+                    "\n           FOR DEVELOPER USE ONLY!  DO NOT RUN IN PRODUCTION ENVIRONMENTS!\n" +
+                    "\n                          ALL AUTHENTICATION IS DISABLED!" +
+                    "\n           ***************************************************************"));
+
+            final AuthenticationConfig authenticationConfig = appConfig.getSecurityConfig().getAuthenticationConfig();
+            final ContentSecurityConfig contentSecurityConfig = appConfig.getSecurityConfig().getContentSecurityConfig();
+
+            // YAuth needs HTTPS and GWT super dev mode cannot work in HTTPS
+            String msg = new ColouredStringBuilder()
+                .appendRed("In GWT Super Dev Mode, overriding ")
+                .appendCyan(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED)
+                .appendRed(" to ")
+                .appendCyan("false ")
+                .appendRed("in appConfig")
+                .toString();
+
+            LOGGER.warn(msg);
+            authenticationConfig.setAuthenticationRequired(true);
+
+            // The standard content security policy is incompatible with GWT super dev mode
+            msg = new ColouredStringBuilder()
+                .appendRed("In GWT Super Dev Mode, overriding ")
+                .appendCyan(ContentSecurityConfig.PROP_NAME_CONTENT_SECURITY_POLICY)
+                .appendRed(" to ")
+                .appendCyan("\"\" ")
+                .appendRed("in appConfig")
+                .toString();
+
+            LOGGER.warn(msg);
+            contentSecurityConfig.setContentSecurityPolicy("");
+        }
     }
 }

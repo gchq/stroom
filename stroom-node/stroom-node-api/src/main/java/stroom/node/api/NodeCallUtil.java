@@ -1,10 +1,19 @@
 package stroom.node.api;
 
+import javax.ws.rs.ProcessingException;
+import javax.ws.rs.WebApplicationException;
+import java.net.ConnectException;
+
 public final class NodeCallUtil {
     private NodeCallUtil() {
     }
 
-    public static boolean executeLocally(final NodeService nodeService, final NodeInfo nodeInfo, final String nodeName) {
+    /**
+     * @return True if the work should be executed on the local node.
+     * I.e. if nodeName equals the name of the local node
+     */
+    public static boolean shouldExecuteLocally(final NodeInfo nodeInfo,
+                                               final String nodeName) {
         final String thisNodeName = nodeInfo.getThisNodeName();
         if (thisNodeName == null) {
             throw new RuntimeException("This node has no name");
@@ -14,22 +23,33 @@ public final class NodeCallUtil {
         return thisNodeName.equals(nodeName);
     }
 
-    public static String getUrl(final NodeService nodeService,  final String nodeName) {
-        String url = nodeService.getClusterUrl(nodeName);
-        if (url == null || url.trim().length() == 0) {
+    /**
+     * @param nodeName The name of the node to get the base endpoint for
+     * @return The base endpoint url for inter-node communications, e.g. http://some-fqdn:8080
+     */
+    public static String getBaseEndpointUrl(final NodeService nodeService, final String nodeName) {
+        String url = nodeService.getBaseEndpointUrl(nodeName);
+        if (url == null || url.isBlank()) {
             throw new RuntimeException("Remote node '" + nodeName + "' has no URL set");
         }
+        // A normal url is something like "http://fqdn:8080"
 
-        // A normal cluster call url is something like "http://fqdn:8080/stroom/clustercall.rpc"
-
-        int index = url.lastIndexOf("/stroom/clustercall.rpc");
-        if (index != -1) {
-            url = url.substring(0, index);
-        }
-        index = url.lastIndexOf("/clustercall.rpc");
-        if (index != -1) {
-            url = url.substring(0, index);
-        }
         return url;
+    }
+
+    public static RuntimeException handleExceptionsOnNodeCall(final String nodeName,
+                                                              final String url,
+                                                              final Throwable throwable) {
+        if (throwable instanceof WebApplicationException) {
+            throw (WebApplicationException) throwable;
+        } else if (throwable instanceof ProcessingException) {
+            if (throwable.getCause() != null && throwable.getCause() instanceof ConnectException) {
+                return new NodeCallException(nodeName, url, throwable);
+            } else {
+                return new RuntimeException(throwable);
+            }
+        } else {
+            return new RuntimeException(throwable);
+        }
     }
 }

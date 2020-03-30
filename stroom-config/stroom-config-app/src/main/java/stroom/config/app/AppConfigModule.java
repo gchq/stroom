@@ -90,6 +90,7 @@ public class AppConfigModule extends AbstractModule {
         bindConfig(AppConfig::getActivityConfig, stroom.activity.impl.db.ActivityConfig.class);
         bindConfig(AppConfig::getAnnotationConfig, stroom.annotation.impl.AnnotationConfig.class);
         bindConfig(AppConfig::getApiGatewayConfig, stroom.config.common.ApiGatewayConfig.class);
+        bindConfig(AppConfig::getAuthenticationConfig, stroom.authentication.config.AuthenticationConfig.class);
         bindConfig(AppConfig::getBenchmarkClusterConfig, BenchmarkClusterConfig.class);
         bindConfig(AppConfig::getClusterConfig, ClusterConfig.class);
         bindConfig(AppConfig::getClusterLockConfig, ClusterLockConfig.class);
@@ -133,9 +134,8 @@ public class AppConfigModule extends AbstractModule {
         });
         bindConfig(AppConfig::getSearchableConfig, SearchableConfig.class);
         bindConfig(AppConfig::getSecurityConfig, SecurityConfig.class, securityConfig -> {
-            bind(c, SecurityConfig::getAuthenticationConfig, AuthenticationConfig.class, c2 -> {
-                bind(c2, AuthenticationConfig::getOpenIdConfig, OpenIdConfig.class);
-            });
+            bindConfig(securityConfig, SecurityConfig::getAuthenticationConfig, AuthenticationConfig.class, c2 ->
+                    bindConfig(c2, AuthenticationConfig::getOpenIdConfig, OpenIdConfig.class));
             bindConfig(securityConfig, SecurityConfig::getContentSecurityConfig, ContentSecurityConfig.class);
         });
         bindConfig(AppConfig::getServiceDiscoveryConfig, ServiceDiscoveryConfig.class);

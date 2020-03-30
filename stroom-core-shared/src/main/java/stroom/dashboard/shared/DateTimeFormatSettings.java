@@ -22,33 +22,18 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlTransient;
-import javax.xml.bind.annotation.XmlType;
+import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"pattern", "timeZone"})
-@JsonInclude(Include.NON_DEFAULT)
-@XmlRootElement(name = "dateTimeFormatSettings")
-@XmlType(name = "DateTimeFormatSettings", propOrder = {"pattern", "timeZone"})
+@JsonInclude(Include.NON_NULL)
 public class DateTimeFormatSettings implements FormatSettings {
     private static final String DEFAULT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss.SSSXX";
 
-    @XmlElement(name = "pattern")
-    @JsonProperty("pattern")
-    private String pattern;
-    @XmlElement(name = "timeZone")
-    @JsonProperty("timeZone")
-    private TimeZone timeZone;
-
-    public DateTimeFormatSettings() {
-    }
+    @JsonProperty
+    private final String pattern;
+    @JsonProperty
+    private final TimeZone timeZone;
 
     @JsonCreator
     public DateTimeFormatSettings(@JsonProperty("pattern") final String pattern,
@@ -61,45 +46,28 @@ public class DateTimeFormatSettings implements FormatSettings {
         return pattern;
     }
 
-    public void setPattern(final String pattern) {
-        this.pattern = pattern;
-    }
-
     public TimeZone getTimeZone() {
         return timeZone;
     }
 
-    public void setTimeZone(final TimeZone timeZone) {
-        this.timeZone = timeZone;
-    }
-
     @Override
-    @XmlTransient
     @JsonIgnore
     public boolean isDefault() {
         return pattern == null || pattern.equals(DEFAULT_PATTERN);
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(final Object o) {
         if (this == o) return true;
-
         if (o == null || getClass() != o.getClass()) return false;
-
-        DateTimeFormatSettings that = (DateTimeFormatSettings) o;
-
-        return new EqualsBuilder()
-                .append(pattern, that.pattern)
-                .append(timeZone, that.timeZone)
-                .isEquals();
+        final DateTimeFormatSettings that = (DateTimeFormatSettings) o;
+        return Objects.equals(pattern, that.pattern) &&
+                Objects.equals(timeZone, that.timeZone);
     }
 
     @Override
     public int hashCode() {
-        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
-        hashCodeBuilder.append(pattern);
-        hashCodeBuilder.append(timeZone);
-        return hashCodeBuilder.toHashCode();
+        return Objects.hash(pattern, timeZone);
     }
 
     @Override

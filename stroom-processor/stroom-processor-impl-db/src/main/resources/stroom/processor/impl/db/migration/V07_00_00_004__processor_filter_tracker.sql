@@ -35,28 +35,39 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 
 -- Create the table
 CREATE TABLE IF NOT EXISTS processor_filter_tracker (
-  id                    int(11) NOT NULL AUTO_INCREMENT,
-  version               int(11) NOT NULL,
-  min_meta_id           bigint(20) NOT NULL,
-  min_event_id          bigint(20) NOT NULL,
-  min_meta_create_ms    bigint(20) DEFAULT NULL,
-  max_meta_create_ms    bigint(20) DEFAULT NULL,
-  meta_create_ms        bigint(20) DEFAULT NULL,
-  last_poll_ms          bigint(20) DEFAULT NULL,
-  last_poll_task_count  int(11) DEFAULT NULL,
-  status                varchar(255) DEFAULT NULL,
-  meta_count            bigint(20) DEFAULT NULL,
-  event_count           bigint(20) DEFAULT NULL,
-  PRIMARY KEY (id)
+    id                    int(11) NOT NULL AUTO_INCREMENT,
+    version               int(11) NOT NULL,
+    min_meta_id           bigint(20) NOT NULL,
+    min_event_id          bigint(20) NOT NULL,
+    min_meta_create_ms    bigint(20) DEFAULT NULL,
+    max_meta_create_ms    bigint(20) DEFAULT NULL,
+    meta_create_ms        bigint(20) DEFAULT NULL,
+    last_poll_ms          bigint(20) DEFAULT NULL,
+    last_poll_task_count  int(11) DEFAULT NULL,
+    status                varchar(255) DEFAULT NULL,
+    meta_count            bigint(20) DEFAULT NULL,
+    event_count           bigint(20) DEFAULT NULL,
+    PRIMARY KEY (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 DROP PROCEDURE IF EXISTS copy_processor_filter_tracker;
 DELIMITER //
 CREATE PROCEDURE copy_processor_filter_tracker ()
 BEGIN
-    -- If table exists (it may not if this migration runs before core stroom's) then migrate its data,
-    -- if it doesn't exist then it won't ever have data to migrate
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_TASK' > 0) THEN
+
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'STRM_PROC_FILT_TRAC') THEN
+
+        RENAME TABLE STRM_PROC_FILT_TRAC TO OLD_STRM_PROC_FILT_TRAC;
+    END IF;
+
+    -- Check again so it is idempotent
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'OLD_STRM_PROC_FILT_TRAC') THEN
         -- Copy data into the table, use ID predicate to make it re-runnable
         INSERT
         INTO processor_filter_tracker (
@@ -85,7 +96,7 @@ BEGIN
             STAT,
             STRM_CT,
             EVT_CT
-        FROM STRM_PROC_FILT_TRAC
+        FROM OLD_STRM_PROC_FILT_TRAC
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM processor_filter_tracker)
         ORDER BY ID;
 
@@ -97,10 +108,12 @@ BEGIN
         PREPARE alter_table_stmt FROM @alter_table_sql;
         EXECUTE alter_table_stmt;
     END IF;
+
 END//
 DELIMITER ;
 CALL copy_processor_filter_tracker();
 DROP PROCEDURE copy_processor_filter_tracker;
 
-
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

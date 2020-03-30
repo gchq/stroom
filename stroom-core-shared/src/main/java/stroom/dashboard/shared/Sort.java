@@ -22,36 +22,17 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
-import stroom.util.shared.EqualsBuilder;
-import stroom.util.shared.HashCodeBuilder;
 import stroom.util.shared.ToStringBuilder;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlRootElement;
-import javax.xml.bind.annotation.XmlType;
-import java.io.Serializable;
+import java.util.Objects;
 
-@XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"order", "direction"})
-@JsonInclude(Include.NON_DEFAULT)
-@XmlRootElement(name = "sort")
-@XmlType(name = "Sort", propOrder = {"order", "direction"})
-public class Sort implements Serializable {
-    private static final long serialVersionUID = 4530846367973824427L;
-
-    @XmlElement(name = "order")
-    @JsonProperty("order")
-    private Integer order;
-    @XmlElement(name = "direction")
-    @JsonProperty("direction")
-    private SortDirection direction;
-
-    public Sort() {
-        order = 1;
-        direction = SortDirection.ASCENDING;
-    }
+@JsonInclude(Include.NON_NULL)
+public class Sort {
+    @JsonProperty
+    private final int order;
+    @JsonProperty
+    private final SortDirection direction;
 
     @JsonCreator
     public Sort(@JsonProperty("order") final Integer order,
@@ -72,39 +53,22 @@ public class Sort implements Serializable {
         return order;
     }
 
-    public void setOrder(final int order) {
-        this.order = order;
-    }
-
     public SortDirection getDirection() {
         return direction;
     }
 
-    public void setDirection(final SortDirection direction) {
-        this.direction = direction;
-    }
-
     @Override
     public boolean equals(final Object o) {
-        if (o == this) {
-            return true;
-        } else if (!(o instanceof Sort)) {
-            return false;
-        }
-
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
         final Sort sort = (Sort) o;
-        final EqualsBuilder builder = new EqualsBuilder();
-        builder.append(order, sort.order);
-        builder.append(direction, sort.direction);
-        return builder.isEquals();
+        return order == sort.order &&
+                direction == sort.direction;
     }
 
     @Override
     public int hashCode() {
-        final HashCodeBuilder builder = new HashCodeBuilder();
-        builder.append(order);
-        builder.append(direction);
-        return builder.toHashCode();
+        return Objects.hash(order, direction);
     }
 
     @Override

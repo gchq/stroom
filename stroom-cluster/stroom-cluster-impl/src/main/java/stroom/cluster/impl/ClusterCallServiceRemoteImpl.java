@@ -28,6 +28,7 @@ import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.security.api.UserIdentity;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.time.StroomDuration;
 
 import javax.inject.Inject;
@@ -93,7 +94,8 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
     }
 
     private ClusterCallService createHessianProxy(final String nodeName) throws MalformedURLException {
-        final String nodeServiceUrl = nodeService.getClusterUrl(nodeName);
+        final String nodeServiceUrl = nodeService.getBaseEndpointUrl(nodeName) +
+            ResourcePaths.buildAuthenticatedServletPath(ResourcePaths.CLUSTER_CALL_RPC);
 
         if (LOGGER.isDebugEnabled()) {
             LOGGER.debug("createHessianProxy() - " + nodeName + " - " + nodeServiceUrl);
@@ -107,8 +109,13 @@ class ClusterCallServiceRemoteImpl implements ClusterCallServiceRemote {
     }
 
     @Override
-    public Object call(final String sourceNode, final String targetNode, final UserIdentity userIdentity, final ServiceName serviceName, final String methodName,
-                       final java.lang.Class<?>[] parameterTypes, final Object[] args) {
+    public Object call(final String sourceNode,
+                       final String targetNode,
+                       final UserIdentity userIdentity,
+                       final ServiceName serviceName,
+                       final String methodName,
+                       final java.lang.Class<?>[] parameterTypes,
+                       final Object[] args) {
         final LogExecutionTime logExecutionTime = new LogExecutionTime();
         Object result;
 

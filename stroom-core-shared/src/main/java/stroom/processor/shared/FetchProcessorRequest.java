@@ -21,15 +21,15 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import stroom.meta.shared.ExpressionUtil;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.shared.HasIsConstrained;
 import stroom.util.shared.TreeAction;
 
 import java.util.HashSet;
 import java.util.Set;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FetchProcessorRequest implements TreeAction<ProcessorListRow>, HasIsConstrained {
     @JsonProperty
     private ExpressionOperator expression;

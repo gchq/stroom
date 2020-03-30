@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"type", "category", "roles", "icon"})
 public class PipelineElementType implements Comparable<PipelineElementType>, HasType {
     public static final String ROLE_SOURCE = "source";

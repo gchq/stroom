@@ -20,9 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.cluster.api.ClusterNodeManager;
 import stroom.cluster.api.ClusterState;
-import stroom.util.entity.EntityAction;
-import stroom.util.entity.EntityEvent;
-import stroom.util.entity.EntityEventHandler;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.shared.ClusterNodeInfo;
@@ -218,7 +218,7 @@ public class ClusterNodeManagerImpl implements ClusterNodeManager, EntityEvent.H
         final ClusterNodeInfo clusterNodeInfo = new ClusterNodeInfo(discoverTime,
                 buildInfo,
                 thisNodeName,
-                nodeService.getClusterUrl(thisNodeName));
+                nodeService.getBaseEndpointUrl(thisNodeName));
 
         if (allNodeList != null && activeNodeList != null && masterNodeName != null) {
             for (final String nodeName : allNodeList) {

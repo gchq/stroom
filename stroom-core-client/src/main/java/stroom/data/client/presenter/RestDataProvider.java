@@ -31,11 +31,11 @@ import java.util.function.Consumer;
 
 public abstract class RestDataProvider<R, T extends ResultPage<R>> extends AsyncDataProvider<R> implements HasHandlers {
     private final EventBus eventBus;
+
     private Range requestedRange;
     private boolean fetching;
     private int fetchCount;
     private boolean refetch;
-//    private boolean allowNoConstraint = true;
     private TreeRowHandler<R> treeRowHandler;
 
     private PageRequest pageRequest;
@@ -44,12 +44,8 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
         this.eventBus = eventBus;
     }
 
-//    public void setAllowNoConstraint(boolean allowNoConstraint) {
-//        this.allowNoConstraint = allowNoConstraint;
-//    }
-
-
-    public void setPageRequest(final PageRequest pageRequest) {
+    public RestDataProvider(final EventBus eventBus, final PageRequest pageRequest) {
+        this.eventBus = eventBus;
         this.pageRequest = pageRequest;
     }
 
@@ -71,55 +67,7 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
         }
     }
 
-//    private boolean checkNoConstraint() {
-//        if (allowNoConstraint) {
-//            return true;
-//        }
-//
-//        boolean noConstraint = false;
-//
-//        if (request instanceof HasCriteria) {
-//            final BaseCriteria criteria = ((HasCriteria<?>) request).getCriteria();
-//
-//            if (criteria == null) {
-//                noConstraint = true;
-//            } else {
-//                if (criteria instanceof HasIsConstrained) {
-//                    if (!((HasIsConstrained) criteria).isConstrained()) {
-//                        noConstraint = true;
-//                    }
-//                }
-//            }
-//        }
-//        if (request instanceof HasIsConstrained) {
-//            if (!((HasIsConstrained) request).isConstrained()) {
-//                noConstraint = true;
-//            }
-//        }
-//
-//        if (noConstraint) {
-//            updateRowData(0, new ArrayList<>());
-//            updateRowCount(0, true);
-//            fetching = false;
-//            return false;
-//        }
-//        return true;
-//    }
-
     private void doFetch(final Range range) {
-//        // No Criteria ... just produce no results.
-//        if (!checkNoConstraint()) {
-//            return;
-//        }
-//
-//        if (request instanceof HasCriteria) {
-//            final HasCriteria<?> hasCriteria = (HasCriteria<?>) request;
-//            final BaseCriteria criteria = hasCriteria.getCriteria();
-//
-//            criteria.obtainPageRequest().setOffset((long) range.getStart());
-//            criteria.obtainPageRequest().setLength(range.getLength());
-//        }
-
         if (pageRequest != null) {
             pageRequest.setOffset((long) range.getStart());
             pageRequest.setLength(range.getLength());
@@ -142,23 +90,6 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
 
             AlertEvent.fireErrorFromException(this, caught, null);
         });
-
-//        dispatcher.exec(action).onSuccess(resultList -> {
-//            if (requestedRange.equals(range) && !refetch) {
-//                if (resultList != null) {
-//                    changeData(resultList);
-//                }
-//                fetching = false;
-//            } else {
-//                refetch = false;
-//                doFetch(requestedRange);
-//            }
-//        }).onFailure(caught -> {
-//            fetching = false;
-//            refetch = false;
-//
-//            AlertEvent.fireErrorFromException(this, caught, null);
-//        });
     }
 
     protected abstract void exec(final Consumer<T> dataConsumer, final Consumer<Throwable> throwableConsumer);
@@ -190,10 +121,7 @@ public abstract class RestDataProvider<R, T extends ResultPage<R>> extends Async
     }
 
     private int getStart(final T data) {
-        if (data.getPageResponse().getOffset() == null) {
-            return 0;
-        }
-        return data.getPageResponse().getOffset().intValue();
+        return (int) data.getPageResponse().getOffset();
     }
 
     public int getSize(final T data) {

@@ -1,8 +1,12 @@
 package stroom.security.impl;
 
-import stroom.util.shared.IsConfig;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import stroom.util.shared.AbstractConfig;
 
-public class OpenIdConfig implements IsConfig {
+public class OpenIdConfig extends AbstractConfig {
+    public static final String PROP_NAME_CLIENT_ID = "clientId";
+    public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";
+
     private static final String ISSUER = "accounts.google.com";
     private static final String AUTH_ENDPOINT = "https://accounts.google.com/o/oauth2/v2/auth";
     private static final String TOKEN_ENDPOINT = "https://accounts.google.com/o/oauth2/token";
@@ -13,8 +17,8 @@ public class OpenIdConfig implements IsConfig {
     private String tokenEndpoint = TOKEN_ENDPOINT;
     private String jwksUri = JWKS_URI;
 
-    private String clientId = "255179628077-rfa18bkalfl26rirpktghcgmt602mtuh.apps.googleusercontent.com";
-    private String clientSecret = "9B6fidUVXdoSMm-bEVrvKud3";
+    private String clientId;
+    private String clientSecret;
     private String redirectUri = "http://localhost:8080/stroom/ui";
 
     public String getIssuer() {
@@ -49,6 +53,7 @@ public class OpenIdConfig implements IsConfig {
         this.jwksUri = jwksUri;
     }
 
+    @JsonProperty(PROP_NAME_CLIENT_ID)
     public String getClientId() {
         return clientId;
     }
@@ -57,6 +62,7 @@ public class OpenIdConfig implements IsConfig {
         this.clientId = clientId;
     }
 
+    @JsonProperty(PROP_NAME_CLIENT_SECRET)
     public String getClientSecret() {
         return clientSecret;
     }

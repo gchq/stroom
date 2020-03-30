@@ -17,7 +17,6 @@
 package stroom.activity.shared;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -27,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class Activity implements HasAuditInfo {
     public static final String ENTITY_TYPE = "Activity";
 
@@ -176,18 +175,14 @@ public class Activity implements HasAuditInfo {
         return details.toString();
     }
 
-    @JsonInclude(Include.NON_DEFAULT)
+    @JsonInclude(Include.NON_NULL)
     public static class ActivityDetails {
         @JsonProperty
         private final List<Prop> properties;
 
         @JsonCreator
         public ActivityDetails(@JsonProperty("properties") final List<Prop> properties) {
-            if (properties != null) {
-                this.properties = properties;
-            } else {
-                this.properties = new ArrayList<>();
-            }
+            this.properties = properties;
         }
 
         public List<Prop> getProperties() {
@@ -214,7 +209,7 @@ public class Activity implements HasAuditInfo {
         }
     }
 
-    @JsonInclude(Include.NON_DEFAULT)
+    @JsonInclude(Include.NON_NULL)
     public static class Prop {
         @JsonProperty
         private String id;

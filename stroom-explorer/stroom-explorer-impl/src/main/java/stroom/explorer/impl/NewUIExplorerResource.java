@@ -135,7 +135,7 @@ public class NewUIExplorerResource implements RestResource {
         return Response.ok(docRefTypes).build();
     }
 
-    @JsonInclude(Include.NON_DEFAULT)
+    @JsonInclude(Include.NON_NULL)
     static class CreateOp {
         @JsonProperty
         private String docRefType;
@@ -182,7 +182,7 @@ public class NewUIExplorerResource implements RestResource {
         return getExplorerTree();
     }
 
-    @JsonInclude(Include.NON_DEFAULT)
+    @JsonInclude(Include.NON_NULL)
     static class CopyOp {
         @JsonProperty
         private List<DocRef> docRefs;
@@ -224,7 +224,7 @@ public class NewUIExplorerResource implements RestResource {
         }
     }
 
-    @JsonInclude(Include.NON_DEFAULT)
+    @JsonInclude(Include.NON_NULL)
     static class MoveOp {
         @JsonProperty
         private List<DocRef> docRefs;
@@ -266,7 +266,7 @@ public class NewUIExplorerResource implements RestResource {
         }
     }
 
-    @JsonInclude(Include.NON_DEFAULT)
+    @JsonInclude(Include.NON_NULL)
     static class RenameOp {
         @JsonProperty
         private DocRef docRef;
@@ -343,10 +343,9 @@ public class NewUIExplorerResource implements RestResource {
             return false;
         }
 
-        final String type = explorerNode.getType();
         final String uuid = explorerNode.getDocRef().getUuid();
         for (final String permission : requiredPermissions) {
-            if (!securityContext.hasDocumentPermission(type, uuid, permission)) {
+            if (!securityContext.hasDocumentPermission(uuid, permission)) {
                 return false;
             }
         }

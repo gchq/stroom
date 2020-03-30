@@ -23,6 +23,7 @@ import stroom.dashboard.impl.DashboardStore;
 import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.Store;
 import stroom.docref.DocRef;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.feed.api.FeedProperties;
 import stroom.feed.api.FeedStore;
 import stroom.importexport.impl.ImportExportSerializer;
@@ -162,7 +163,7 @@ public final class SetupSampleDataBean {
 
 
         // Add volumes to all indexes.
-        final List<IndexVolume> volumeList = indexVolumeService.getAll();
+        final List<IndexVolume> volumeList = indexVolumeService.find(new ExpressionCriteria()).getValues();
         final List<DocRef> indexList = indexStore.list();
         logDocRefs(indexList, "indexes");
 

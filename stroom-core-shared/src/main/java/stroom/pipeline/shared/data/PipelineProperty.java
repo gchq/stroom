@@ -56,7 +56,7 @@ import java.util.Objects;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Property", propOrder = {"element", "name", "value"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"propertyType", "source", "element", "name", "value"})
 public class PipelineProperty implements Comparable<PipelineProperty>, Copyable<PipelineProperty> {
     @XmlTransient

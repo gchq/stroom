@@ -31,7 +31,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "statisticType", "rollUpType", "precision", "enabled", "config"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class StatisticStoreDoc extends Doc implements StatisticStore {
     public static final String DOCUMENT_TYPE = "StatisticStore";
 
@@ -57,7 +57,9 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
     private StatisticsDataSourceData config;
 
     public StatisticStoreDoc() {
-        setDefaults();
+        this.statisticType = StatisticType.COUNT;
+        this.rollUpType = StatisticRollUpType.NONE;
+        this.precision = DEFAULT_PRECISION;
     }
 
     @JsonCreator
@@ -83,17 +85,13 @@ public class StatisticStoreDoc extends Doc implements StatisticStore {
         this.enabled = enabled;
         this.config = config;
 
-        setDefaults();
-    }
-
-    private void setDefaults() {
-        if (statisticType == null) {
+        if (this.statisticType == null) {
             this.statisticType = StatisticType.COUNT;
         }
-        if (rollUpType == null) {
+        if (this.rollUpType == null) {
             this.rollUpType = StatisticRollUpType.NONE;
         }
-        if (precision == null) {
+        if (this.precision == null) {
             this.precision = DEFAULT_PRECISION;
         }
     }

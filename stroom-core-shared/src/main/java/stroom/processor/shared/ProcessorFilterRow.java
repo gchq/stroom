@@ -27,7 +27,7 @@ import stroom.util.shared.Expander;
 import java.util.Objects;
 
 @JsonPropertyOrder({"processorFilter"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ProcessorFilterRow extends ProcessorListRow {
     private static final Expander EXPANDER = new Expander(1, false, true);
 

@@ -31,11 +31,16 @@ CREATE TABLE IF NOT EXISTS meta (
     type_id           int(11) NOT NULL,
     processor_id      int(11) DEFAULT NULL,
     PRIMARY KEY       (id),
-    CONSTRAINT meta_feed_id FOREIGN KEY (feed_id) REFERENCES meta_feed (id),
-    CONSTRAINT meta_type_id FOREIGN KEY (type_id) REFERENCES meta_type (id),
-    CONSTRAINT meta_processor_id FOREIGN KEY (processor_id) REFERENCES meta_processor (id)
+    CONSTRAINT meta_feed_id 
+        FOREIGN KEY (feed_id) 
+        REFERENCES meta_feed (id),
+    CONSTRAINT meta_type_id 
+        FOREIGN KEY (type_id) 
+        REFERENCES meta_type (id),
+    CONSTRAINT meta_processor_id 
+        FOREIGN KEY (processor_id) 
+        REFERENCES meta_processor (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
 
 --
 -- Copy meta into the meta table
@@ -44,7 +49,20 @@ DROP PROCEDURE IF EXISTS copy_meta;
 DELIMITER //
 CREATE PROCEDURE copy_meta ()
 BEGIN
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM' > 0) THEN
+    -- Can be run by multiple scripts
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'STRM') THEN
+
+        RENAME TABLE STRM TO OLD_STRM;
+    END IF;
+
+    IF EXISTS (
+            SELECT NULL 
+            FROM INFORMATION_SCHEMA.TABLES 
+            where TABLE_NAME = 'OLD_STRM') THEN
+
         INSERT INTO meta (
             id,
             create_time,
@@ -65,7 +83,7 @@ BEGIN
             FK_FD_ID,
             FK_STRM_TP_ID,
             FK_STRM_PROC_ID
-        FROM STRM
+        FROM OLD_STRM
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta)
         ORDER BY ID;
 
@@ -83,3 +101,5 @@ CALL copy_meta();
 DROP PROCEDURE copy_meta;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set tabstop=4 shiftwidth=4 expandtab:

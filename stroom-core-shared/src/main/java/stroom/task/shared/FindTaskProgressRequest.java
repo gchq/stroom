@@ -24,7 +24,7 @@ import stroom.util.shared.TreeAction;
 
 import java.util.Set;
 
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FindTaskProgressRequest implements TreeAction<TaskProgress> {
     @JsonProperty
     private final FindTaskProgressCriteria criteria;

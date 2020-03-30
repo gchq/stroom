@@ -73,7 +73,12 @@ public final class ProxyRepositoryReader {
         this.proxyRepositoryManager = proxyRepositoryManager;
         this.scheduler = createScheduler(proxyRepositoryReaderConfig.getReadCron());
 
-        threadPool = new ThreadPoolImpl("Proxy Repository Reader", 5, 0, proxyRepositoryReaderConfig.getForwardThreadCount(), proxyRepositoryReaderConfig.getForwardThreadCount());
+        threadPool = new ThreadPoolImpl(
+            "Proxy Repository Reader",
+            5,
+            0,
+            proxyRepositoryReaderConfig.getForwardThreadCount(),
+            proxyRepositoryReaderConfig.getForwardThreadCount());
 
         executorProvider = new ExecutorProvider() {
             @Override
@@ -83,7 +88,9 @@ public final class ProxyRepositoryReader {
 
             @Override
             public Executor get(final ThreadPool threadPool) {
-                return executorServiceMap.computeIfAbsent(threadPool, k -> ScalingThreadPoolExecutor.newScalingThreadPool(
+                return executorServiceMap.computeIfAbsent(
+                    threadPool,
+                    k -> ScalingThreadPoolExecutor.newScalingThreadPool(
                         threadPool.getCorePoolSize(),
                         threadPool.getMaxPoolSize(),
                         threadPool.getMaxQueueSize(),
@@ -129,10 +136,10 @@ public final class ProxyRepositoryReader {
                 } catch (final TimeoutException e) {
                     // Ignore.
                 } catch (final InterruptedException e) {
-                    LOGGER.error(e.getMessage(), e);
+                    LOGGER.warn("Thread interrupted");
                     waiting = false;
 
-                    // Continue to interrupt this thread.
+                    // Reset the interrupt flag
                     Thread.currentThread().interrupt();
                 } catch (final ExecutionException | RuntimeException e) {
                     LOGGER.error(e.getMessage(), e);

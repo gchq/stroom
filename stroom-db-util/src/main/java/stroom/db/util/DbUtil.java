@@ -9,6 +9,7 @@ import stroom.util.logging.LogUtil;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -130,6 +131,33 @@ public class DbUtil {
         } catch (SQLException e) {
             throw new RuntimeException(
                 LogUtil.message("Error establishing if table {} exists in the database.", tableName), e);
+        }
+    }
+    public static void renameTable(final Connection connection,
+                                   final String oldTableName,
+                                   final String newTableName) {
+        renameTable(connection, oldTableName, newTableName);
+    }
+
+    public static void renameTable(final Connection connection,
+                                   final String oldTableName,
+                                   final String newTableName,
+                                   final boolean isIdempotent) {
+
+        if (doesTableExist(connection, oldTableName)) {
+            String sql = "RENAME TABLE " + oldTableName + " TO " + newTableName;
+            try {
+                try (final PreparedStatement stmt = connection.prepareStatement(sql)) {
+                    stmt.execute();
+                }
+            } catch (SQLException e) {
+                throw new RuntimeException(
+                    LogUtil.message("Error renaming table {} to {}.", oldTableName, newTableName), e);
+            }
+        } else {
+            if (!isIdempotent) {
+                throw new RuntimeException(LogUtil.message("Expecting table {} to exist", oldTableName));
+            }
         }
     }
 

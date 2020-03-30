@@ -27,7 +27,7 @@ import stroom.util.shared.StringCriteria;
 
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FindCacheInfoCriteria extends FindNamedEntityCriteria {
     public FindCacheInfoCriteria() {
     }

@@ -31,7 +31,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "limits", propOrder = {"streamCount", "eventCount", "durationMs"})
 @XmlRootElement(name = "limits")
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class Limits {
     @XmlElement(name = "streamCount")
     @JsonProperty

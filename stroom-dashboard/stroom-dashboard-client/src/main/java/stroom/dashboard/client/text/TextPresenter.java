@@ -431,10 +431,10 @@ public class TextPresenter extends AbstractComponentPresenter<TextPresenter.Text
         textSettings = getSettings();
 
         if (textSettings.getStreamIdField() == null) {
-            textSettings.setStreamIdField(new Field(IndexConstants.STREAM_ID));
+            textSettings.setStreamIdField(new Field.Builder().name(IndexConstants.STREAM_ID).build());
         }
         if (textSettings.getRecordNoField() == null) {
-            textSettings.setRecordNoField(new Field(IndexConstants.EVENT_ID));
+            textSettings.setRecordNoField(new Field.Builder().name(IndexConstants.EVENT_ID).build());
         }
     }
 

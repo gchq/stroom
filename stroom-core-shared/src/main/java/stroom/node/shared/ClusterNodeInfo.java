@@ -24,8 +24,9 @@ import stroom.util.shared.BuildInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ClusterNodeInfo {
     @JsonProperty
     private String discoverTime;
@@ -34,9 +35,9 @@ public class ClusterNodeInfo {
     @JsonProperty
     private String nodeName;
     @JsonProperty
-    private String clusterURL;
+    private String endpointUrl;
     @JsonProperty
-    private List<ClusterNodeInfoItem> itemList;
+    private List<ClusterNodeInfoItem> itemList = new ArrayList<>();
     @JsonProperty
     private Long ping;
     @JsonProperty
@@ -45,25 +46,28 @@ public class ClusterNodeInfo {
     public ClusterNodeInfo() {
     }
 
-    public ClusterNodeInfo(final String discoverTime, final BuildInfo buildInfo, final String nodeName, final String clusterURL) {
+    public ClusterNodeInfo(final String discoverTime,
+                           final BuildInfo buildInfo,
+                           final String nodeName,
+                           final String endpointUrl) {
         this.discoverTime = discoverTime;
         this.buildInfo = buildInfo;
         this.nodeName = nodeName;
-        this.clusterURL = clusterURL;
+        this.endpointUrl = endpointUrl;
     }
 
     @JsonCreator
     public ClusterNodeInfo(@JsonProperty("discoverTime") final String discoverTime,
                            @JsonProperty("buildInfo") final BuildInfo buildInfo,
                            @JsonProperty("nodeName") final String nodeName,
-                           @JsonProperty("clusterURL") final String clusterURL,
+                           @JsonProperty("endpointUrl") final String endpointUrl,
                            @JsonProperty("itemList") final List<ClusterNodeInfoItem> itemList,
                            @JsonProperty("ping") final Long ping,
                            @JsonProperty("error") final String error) {
         this.discoverTime = discoverTime;
         this.buildInfo = buildInfo;
         this.nodeName = nodeName;
-        this.clusterURL = clusterURL;
+        this.endpointUrl = endpointUrl;
         this.itemList = itemList;
         this.ping = ping;
         this.error = error;
@@ -100,12 +104,12 @@ public class ClusterNodeInfo {
         this.nodeName = nodeName;
     }
 
-    public String getClusterURL() {
-        return clusterURL;
+    public String getEndpointUrl() {
+        return endpointUrl;
     }
 
-    public void setClusterURL(final String clusterURL) {
-        this.clusterURL = clusterURL;
+    public void setEndpointUrl(final String endpointUrl) {
+        this.endpointUrl = endpointUrl;
     }
 
     public List<ClusterNodeInfoItem> getItemList() {
@@ -132,7 +136,39 @@ public class ClusterNodeInfo {
         this.error = error;
     }
 
-    @JsonInclude(Include.NON_DEFAULT)
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ClusterNodeInfo that = (ClusterNodeInfo) o;
+        return Objects.equals(discoverTime, that.discoverTime) &&
+            Objects.equals(buildInfo, that.buildInfo) &&
+            Objects.equals(nodeName, that.nodeName) &&
+            Objects.equals(endpointUrl, that.endpointUrl) &&
+            Objects.equals(itemList, that.itemList) &&
+            Objects.equals(ping, that.ping) &&
+            Objects.equals(error, that.error);
+    }
+
+    @Override
+    public String toString() {
+        return "ClusterNodeInfo{" +
+            "discoverTime='" + discoverTime + '\'' +
+            ", buildInfo=" + buildInfo +
+            ", nodeName='" + nodeName + '\'' +
+            ", endpointUrl='" + endpointUrl + '\'' +
+            ", itemList=" + itemList +
+            ", ping=" + ping +
+            ", error='" + error + '\'' +
+            '}';
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(discoverTime, buildInfo, nodeName, endpointUrl, itemList, ping, error);
+    }
+
+    @JsonInclude(Include.NON_NULL)
     public static class ClusterNodeInfoItem {
         @JsonProperty
         private final String nodeName;
@@ -160,6 +196,30 @@ public class ClusterNodeInfo {
 
         public boolean isMaster() {
             return master;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final ClusterNodeInfoItem that = (ClusterNodeInfoItem) o;
+            return active == that.active &&
+                master == that.master &&
+                Objects.equals(nodeName, that.nodeName);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(nodeName, active, master);
+        }
+
+        @Override
+        public String toString() {
+            return "ClusterNodeInfoItem{" +
+                "nodeName='" + nodeName + '\'' +
+                ", active=" + active +
+                ", master=" + master +
+                '}';
         }
     }
 }

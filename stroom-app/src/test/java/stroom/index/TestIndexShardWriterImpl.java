@@ -25,6 +25,7 @@ import stroom.docref.DocRef;
 import stroom.index.impl.FieldTypeFactory;
 import stroom.index.impl.IndexShardKeyUtil;
 import stroom.index.impl.IndexShardManager;
+import stroom.index.impl.IndexShardManager.IndexShardAction;
 import stroom.index.impl.IndexShardService;
 import stroom.index.impl.IndexShardWriter;
 import stroom.index.impl.IndexShardWriterCache;
@@ -96,7 +97,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         writer1.addDocument(document);
         checkDocCount(1, writer1);
         checkDocCount(0, writer1.getIndexShardId());
-        indexShardManager.findFlush(criteria);
+        indexShardManager.performAction(criteria, IndexShardAction.FLUSH);
         checkDocCount(1, writer1);
         checkDocCount(1, writer1.getIndexShardId());
 
@@ -151,14 +152,14 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         writer1.addDocument(document);
         checkDocCount(1, writer1);
         checkDocCount(0, writer1.getIndexShardId());
-        indexShardManager.findFlush(criteria);
+        indexShardManager.performAction(criteria, IndexShardAction.FLUSH);
         checkDocCount(1, writer1);
         checkDocCount(1, writer1.getIndexShardId());
 
         writer1.addDocument(document);
         checkDocCount(2, writer1);
         checkDocCount(1, writer1.getIndexShardId());
-        indexShardManager.findFlush(criteria);
+        indexShardManager.performAction(criteria, IndexShardAction.FLUSH);
         checkDocCount(2, writer1);
         checkDocCount(2, writer1.getIndexShardId());
 
@@ -167,7 +168,7 @@ class TestIndexShardWriterImpl extends AbstractCoreIntegrationTest {
         writer2.addDocument(document);
         checkDocCount(1, writer2);
         checkDocCount(0, writer2.getIndexShardId());
-        indexShardManager.findFlush(criteria);
+        indexShardManager.performAction(criteria, IndexShardAction.FLUSH);
         checkDocCount(1, writer2);
         checkDocCount(1, writer2.getIndexShardId());
 

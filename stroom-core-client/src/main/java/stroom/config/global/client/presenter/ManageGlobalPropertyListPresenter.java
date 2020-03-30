@@ -17,8 +17,11 @@
 package stroom.config.global.client.presenter;
 
 import com.google.gwt.cell.client.Cell;
+import com.google.gwt.cell.client.SafeHtmlCell;
 import com.google.gwt.cell.client.TextCell;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.safehtml.shared.SafeHtml;
+import com.google.gwt.safehtml.shared.SafeHtmlUtils;
 import com.google.gwt.user.cellview.client.Column;
 import com.google.gwt.user.cellview.client.ColumnSortEvent;
 import com.google.gwt.user.client.Timer;
@@ -36,9 +39,9 @@ import stroom.data.grid.client.DataGridViewImpl;
 import stroom.data.grid.client.EndColumn;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.shared.FetchNodeStatusResponse;
-import stroom.node.shared.NodeResource;
+import stroom.node.client.NodeCache;
 import stroom.svg.client.SvgPreset;
+import stroom.util.client.SafeHtmlUtil;
 import stroom.widget.button.client.ButtonView;
 
 import java.util.HashMap;
@@ -50,29 +53,32 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public class ManageGlobalPropertyListPresenter
-    extends MyPresenterWidget<DataGridView<ManageGlobalPropertyListPresenter.ConfigPropertyRow>>
-    implements ColumnSortEvent.Handler{
+        extends MyPresenterWidget<DataGridView<ManageGlobalPropertyListPresenter.ConfigPropertyRow>>
+        implements ColumnSortEvent.Handler {
 
-    private static final String MULTIPLE_VALUES_MSG = "[Multiple values exist in the cluster]";
+    private static final String NODES_UNAVAILABLE_MSG = "[Error getting values from some nodes]";
+    private static final String NODES_UNAVAILABLE_SHORT_MSG = "[Error]";
+    private static final String MULTIPLE_VALUES_MSG = "[Multiple effective values exist in the cluster]";
     private static final String MULTIPLE_SOURCES_MSG = "[Multiple]";
-    private static final int TIMER_DELAY_MS = 100;
+    private static final String ERROR_CSS_COLOUR = "red";
+    private static final int TIMER_DELAY_MS = 50;
 
-    private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
     private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
+    private static final String ERROR_VALUE = "[[ERROR]]";
 
     private final ListDataProvider<ConfigPropertyRow> dataProvider;
-//    private final RestDataProvider<ConfigProperty, ListConfigResponse> dataProvider;
     private final RestFactory restFactory;
+    private final NodeCache nodeCache;
     private String partialName;
 
     // propName => (node => effectiveValue)
-    private final Map<String, Map<String, String>> propertyClusterEffectiveValuesMap = new HashMap<>();
+    private final Map<String, Map<String, String>> nodeToClusterEffectiveValuesMap = new HashMap<>();
     // propName => (effectiveValues)
-    private Map<String, Set<String>> propertyClusterEffectiveValues = new HashMap<>();
+    private Map<String, Set<String>> propertyToUniqueEffectiveValuesMap = new HashMap<>();
     // propName => (node => source)
-    private final Map<String, Map<String, String>> propertyClusterSourceMap = new HashMap<>();
+    private final Map<String, Map<String, String>> nodeToClusterSourcesMap = new HashMap<>();
     // propName => (sources)
-    private Map<String, Set<String>> propertyClusterSources = new HashMap<>();
+    private Map<String, Set<String>> propertyToUniqueSourcesMap = new HashMap<>();
 
     private final Timer refreshAllNodesTimer = new Timer() {
         @Override
@@ -83,189 +89,186 @@ public class ManageGlobalPropertyListPresenter
     private final Timer updateChildMapsTimer = new Timer() {
         @Override
         public void run() {
-            updateChildMaps();
+            updatePropertyKeyedMaps();
         }
     };
 
     @Inject
     public ManageGlobalPropertyListPresenter(final EventBus eventBus,
-                                             final RestFactory restFactory) {
+                                             final RestFactory restFactory,
+                                             final NodeCache nodeCache) {
         super(eventBus, new DataGridViewImpl<>(true));
         this.restFactory = restFactory;
+        this.nodeCache = nodeCache;
 
         initColumns();
 
         dataProvider = new ListDataProvider<>();
         dataProvider.addDataDisplay(getView().getDataDisplay());
         dataProvider.setListUpdater(this::refreshTable);
-//        refreshTable();
-    }
-    private void refreshTable() {
-        refreshTable(getView().getDataDisplay().getVisibleRange());
     }
 
     private void refreshTable(final Range range) {
 
         final Rest<ListConfigResponse> rest = restFactory.create();
         rest
-            .onSuccess(listConfigResponse -> {
+                .onSuccess(listConfigResponse -> {
 
-                // Build the table based on what we know from one node
-                final List<ConfigPropertyRow> rows = listConfigResponse.getValues().stream()
-                    .map(ConfigPropertyRow::new)
-                    .collect(Collectors.toList());
+                    // Build the table based on what we know from one node
+                    final List<ConfigPropertyRow> rows = listConfigResponse.getValues().stream()
+                            .map(ConfigPropertyRow::new)
+                            .collect(Collectors.toList());
 
-                GWT.log("Offset: " + listConfigResponse.getPageResponse().getOffset()
-                    + " total: " + listConfigResponse.getPageResponse().getTotal());
+//                GWT.log("Offset: " + listConfigResponse.getPageResponse().getOffset()
+//                    + " total: " + listConfigResponse.getPageResponse().getTotal());
 
-                dataProvider.setPartialList(rows, listConfigResponse.getPageResponse().getTotal().intValue());
-//                getView().getDataDisplay().setVisibleRange(
-//                    listConfigResponse.getPageResponse().getOffset().intValue(),
-//                    listConfigResponse.getPageResponse().getTotal().intValue());
-//                dataProvider.refresh();
+                    dataProvider.setPartialList(rows, listConfigResponse.getPageResponse().getTotal().intValue());
 
-                // now we have the props from one node, go off and get all the values/sources
-                // from all the nodes. Use a timer to delay it a bit
-                if (!refreshAllNodesTimer.isRunning()) {
-                    refreshAllNodesTimer.schedule(TIMER_DELAY_MS);
-                }
-            })
-            .onFailure(throwable -> {
-                // TODO
-            })
-            .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-            .list(partialName, range.getStart(), range.getLength());
+                    // now we have the props from one node, go off and get all the values/sources
+                    // from all the nodes. Use a timer to delay it a bit
+                    if (!refreshAllNodesTimer.isRunning()) {
+                        refreshAllNodesTimer.schedule(TIMER_DELAY_MS);
+                    }
+                })
+                .onFailure(throwable -> {
+                    // TODO
+                })
+                .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                .list(partialName, range.getStart(), range.getLength());
     }
 
     private void refreshPropertiesForAllNodes() {
-        final Rest<FetchNodeStatusResponse> fetchAllNodes = restFactory.create();
-
-        // For each node fire off a request to get the yaml override for that node
-        fetchAllNodes
-            .onSuccess(response -> {
-                response.getValues().forEach(nodeStatus -> {
-                    refreshPropertiesForNode(nodeStatus.getNode().getName());
-                });
-            })
-            .onFailure(throwable -> {
-                showError(throwable, "Error getting list of all nodes");
-            })
-            .call(NODE_RESOURCE)
-            .list();
+        // Only care about enable nodes
+        nodeCache.listEnabledNodes(
+                nodeNames -> nodeNames.forEach(this::refreshPropertiesForNode),
+                throwable -> showError(throwable, "Error getting list of all nodes. Only properties for one node will be shown"));
     }
 
     private void refreshPropertiesForNode(final String nodeName) {
         final Rest<ListConfigResponse> listPropertiesRest = restFactory.create();
 
         listPropertiesRest
-            .onSuccess(listConfigResponse -> {
+                .onSuccess(listConfigResponse -> {
 
-                // Add the node's result to our maps
-                listConfigResponse.getValues().forEach(configProperty -> {
-                    final String effectiveValue = configProperty.getEffectiveValue().orElse(null);
-                    final String source = configProperty.getSource().getName();
+                    // Add the node's result to our maps
+                    listConfigResponse.getValues().forEach(configProperty -> {
+                        final String effectiveValue = configProperty.getEffectiveValue().orElse(null);
+                        final String source = configProperty.getSource().getName();
 
-                    updateMaps(nodeName, configProperty.getNameAsString(), effectiveValue, source);
-                });
-            })
-            .onFailure(throwable -> {
-                propertyClusterEffectiveValuesMap.keySet().forEach(propName -> {
-                    updateMaps(nodeName, propName, "[ERROR]", "[ERROR]");
-                });
-            })
-            .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-            .listByNode(
-                nodeName,
-                partialName,
-                getView().getDataDisplay().getVisibleRange().getStart(),
-                getView().getDataDisplay().getVisibleRange().getLength());
+                        updateNodeKeyedMaps(nodeName, configProperty.getNameAsString(), effectiveValue, source);
+
+                        // kick off the delayed action to update the maps keyed on prop name,
+                        // unless another node has already kicked it off
+                        if (!updateChildMapsTimer.isRunning()) {
+                            updateChildMapsTimer.schedule(TIMER_DELAY_MS);
+                        }
+                    });
+                })
+                .onFailure(
+                        throwable -> nodeToClusterEffectiveValuesMap.keySet().forEach(
+                                propName -> updateNodeKeyedMaps(nodeName, propName, ERROR_VALUE, ERROR_VALUE)))
+                .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                .listByNode(
+                        nodeName,
+                        partialName,
+                        getView().getDataDisplay().getVisibleRange().getStart(),
+                        getView().getDataDisplay().getVisibleRange().getLength());
     }
 
-    private void updateMaps(final String nodeName,
-                            final String propName,
-                            final String effectiveValue,
-                            final String source) {
+    private void updateNodeKeyedMaps(final String nodeName,
+                                     final String propName,
+                                     final String effectiveValue,
+                                     final String source) {
 
-        propertyClusterEffectiveValuesMap.computeIfAbsent(
-            propName,
-            k -> new HashMap<>())
-            .put(nodeName, effectiveValue);
+        nodeToClusterEffectiveValuesMap.computeIfAbsent(
+                propName,
+                k -> new HashMap<>())
+                .put(nodeName, effectiveValue);
 
-        propertyClusterSourceMap.computeIfAbsent(
-            propName,
-            k -> new HashMap<>())
-            .put(nodeName, source);
-
-        if (!updateChildMapsTimer.isRunning()) {
-            updateChildMapsTimer.schedule(TIMER_DELAY_MS);
-        }
+        nodeToClusterSourcesMap.computeIfAbsent(
+                propName,
+                k -> new HashMap<>())
+                .put(nodeName, source);
     }
 
     private void populateDataProviderFromMaps() {
         final List<ConfigPropertyRow> newRows = dataProvider.getList()
-            .stream()
-            .map(row -> {
-                final String effectiveValueStr;
-                final Set<String> effectiveValues = propertyClusterEffectiveValues.get(row.getNameAsString());
-                if (effectiveValues == null || effectiveValues.size() <= 1) {
-                    effectiveValueStr = row.getEffectiveValueAsString();
-                } else {
-                    effectiveValues.forEach(val -> {
-                        GWT.log(row.getNameAsString() + " - effectiveValue: " + val);
-                    });
-                    effectiveValueStr = MULTIPLE_VALUES_MSG;
-                }
+                .stream()
+                .map(row -> {
+                    final String effectiveValueStr;
+                    final Set<String> effectiveValues = propertyToUniqueEffectiveValuesMap.get(row.getNameAsString());
 
-                final String sourceStr;
-                final Set<String> sources = propertyClusterSources.get(row.getNameAsString());
-                if (sources == null || sources.size() <= 1) {
-                    sourceStr = row.getSourceAsString();
-                } else {
-                    sourceStr = MULTIPLE_SOURCES_MSG;
-                    sources.forEach(val -> {
-                        GWT.log(row.getNameAsString() + " - source: " + val);
-                    });
-                }
+                    if (effectiveValues == null || effectiveValues.contains(ERROR_VALUE)) {
+                        effectiveValueStr = NODES_UNAVAILABLE_MSG;
+                    } else {
+                        if (effectiveValues.size() <= 1) {
+                            effectiveValueStr = row.getEffectiveValueAsString();
+                        } else {
+                            effectiveValueStr = MULTIPLE_VALUES_MSG;
+                        }
+                    }
 
-                return new ConfigPropertyRow(row.getConfigProperty(), effectiveValueStr, sourceStr);
-            })
-            .collect(Collectors.toList());
+                    final String sourceStr;
+                    final Set<String> sources = propertyToUniqueSourcesMap.get(row.getNameAsString());
+                    if (sources == null || sources.contains(ERROR_VALUE)) {
+                        sourceStr = NODES_UNAVAILABLE_SHORT_MSG;
+                    } else {
+                        if (sources.size() <= 1) {
+                            sourceStr = row.getSourceAsString();
+                        } else {
+                            sourceStr = MULTIPLE_SOURCES_MSG;
+                        }
+                    }
+
+                    return new ConfigPropertyRow(row.getConfigProperty(), effectiveValueStr, sourceStr);
+                })
+                .collect(Collectors.toList());
         // We are not changing the total so re-use the existing one
         dataProvider.setPartialList(newRows, getView().getDataDisplay().getRowCount());
-//        dataProvider.refresh();
     }
 
-    private void updateChildMaps() {
-        propertyClusterEffectiveValues = propertyClusterEffectiveValuesMap.entrySet()
-            .stream()
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry ->
-                    new HashSet<>(entry.getValue().values())
-            ));
+    private void updatePropertyKeyedMaps() {
+        // Walk the node keyed maps to rebuild the property keyed maps
+        // to build a picture of all values over the cluster for each prop
+        propertyToUniqueEffectiveValuesMap = nodeToClusterEffectiveValuesMap.entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry ->
+                                new HashSet<>(entry.getValue().values())
+                ));
 
-        propertyClusterSources = propertyClusterSourceMap.entrySet()
-            .stream()
-            .collect(Collectors.toMap(
-                Map.Entry::getKey,
-                entry ->
-                    new HashSet<>(entry.getValue().values())
-            ));
+        propertyToUniqueSourcesMap = nodeToClusterSourcesMap.entrySet()
+                .stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry ->
+                                new HashSet<>(entry.getValue().values())
+                ));
 
         populateDataProviderFromMaps();
     }
 
     private void initColumns() {
         // Name.
-        addColumn(buildBasicColumn(ConfigPropertyRow::getNameAsString),
-            "Name",
-            450);
-        addColumn(buildBasicColumn(ConfigPropertyRow::getEffectiveValueAsString),
-            "Effective Value",
-            300);
-        addColumn(buildBasicColumn(ConfigPropertyRow::getSourceAsString),
-            "Source",
-            75);
+        addColumn(buildSafeHtmlColumn(configPropertyRow ->
+                        SafeHtmlUtils.fromString(configPropertyRow.getNameAsString())),
+                "Name",
+                450);
+        addColumn(buildSafeHtmlColumn(configPropertyRow ->
+                        SafeHtmlUtil.getColouredText(
+                                configPropertyRow.getEffectiveValueAsString(),
+                                ERROR_CSS_COLOUR,
+                                MULTIPLE_VALUES_MSG.equals(configPropertyRow.getEffectiveValueAsString()))),
+                "Effective Value",
+                300);
+        addColumn(buildSafeHtmlColumn(configPropertyRow ->
+                        SafeHtmlUtil.getColouredText(
+                                configPropertyRow.getSourceAsString(),
+                                ERROR_CSS_COLOUR,
+                                MULTIPLE_SOURCES_MSG.equals(configPropertyRow.getSourceAsString()))),
+                "Source",
+                75);
 
         addColumn(buildDescriptionColumn(), "Description", 750);
         getView().addEndColumn(new EndColumn<>());
@@ -280,34 +283,36 @@ public class ManageGlobalPropertyListPresenter
                 }
                 return row.getDescription();
             }
+
             @Override
             public String getCellStyleNames(Cell.Context context, ConfigPropertyRow object) {
                 return super.getCellStyleNames(context, object) + " "
-                    + getView().getResources().dataGridStyle().dataGridCellWrapText() + " "
-                    + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
+                        + getView().getResources().dataGridStyle().dataGridCellWrapText() + " "
+                        + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
             }
         };
     }
 
-    private Column<ConfigPropertyRow, String> buildBasicColumn(final Function<ConfigPropertyRow, String> valueFunc) {
+    private Column<ConfigPropertyRow, SafeHtml> buildSafeHtmlColumn(final Function<ConfigPropertyRow, SafeHtml> valueFunc) {
         // TODO use OrderByColumn
-        return new Column<ConfigPropertyRow, String>(new TextCell()) {
+        return new Column<ConfigPropertyRow, SafeHtml>(new SafeHtmlCell()) {
             @Override
-            public String getValue(final ConfigPropertyRow row) {
+            public SafeHtml getValue(final ConfigPropertyRow row) {
                 if (row == null) {
                     return null;
                 }
                 return valueFunc.apply(row);
             }
+
             @Override
             public String getCellStyleNames(Cell.Context context, ConfigPropertyRow object) {
                 return super.getCellStyleNames(context, object) + " "
-                    + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
+                        + getView().getResources().dataGridStyle().dataGridCellVerticalTop();
             }
         };
     }
 
-    private void addColumn(Column<ConfigPropertyRow, String> column, String name, int width) {
+    private void addColumn(Column<ConfigPropertyRow, ?> column, String name, int width) {
         column.setVerticalAlignment(HasVerticalAlignment.ALIGN_TOP);
         getView().addResizableColumn(column, name, width);
     }
@@ -323,17 +328,12 @@ public class ManageGlobalPropertyListPresenter
     }
 
     public void refresh() {
-//        refreshTable();
         dataProvider.refresh(false);
     }
 
     public ConfigProperty getSelectedItem() {
         return getView().getSelectionModel().getSelected().getConfigProperty();
     }
-
-//    public void setSelectedItem(final ConfigProperty row) {
-//        getView().getSelectionModel().setSelected(row);
-//    }
 
     void setPartialName(final String partialName) {
         this.partialName = partialName;
@@ -342,6 +342,7 @@ public class ManageGlobalPropertyListPresenter
         getView().getDataDisplay().setVisibleRange(0, range.getLength());
         refresh();
     }
+
     void clearPartialName() {
         this.partialName = null;
         refresh();
@@ -349,10 +350,10 @@ public class ManageGlobalPropertyListPresenter
 
     private void showError(final Throwable throwable, final String message) {
         AlertEvent.fireError(
-            ManageGlobalPropertyListPresenter.this,
-            message + " - " + throwable.getMessage(),
-            null,
-            null);
+                ManageGlobalPropertyListPresenter.this,
+                message + " - " + throwable.getMessage(),
+                null,
+                null);
     }
 
     @Override
@@ -385,14 +386,14 @@ public class ManageGlobalPropertyListPresenter
 
         public String getEffectiveValueAsString() {
             return effectiveValue != null
-                ? effectiveValue
-                : configProperty.getEffectiveValueMasked().orElse(null);
+                    ? effectiveValue
+                    : configProperty.getEffectiveValueMasked().orElse(null);
         }
 
         public String getSourceAsString() {
             return source != null
-                ? source
-                : configProperty.getSource().getName();
+                    ? source
+                    : configProperty.getSource().getName();
         }
 
         public String getNameAsString() {

@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 @JsonPropertyOrder({"rolledUpTagPosition"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class CustomRollUpMask implements HasDisplayValue {
     /**
      * Holds a list of the positions of tags that are rolled up, zero based. The

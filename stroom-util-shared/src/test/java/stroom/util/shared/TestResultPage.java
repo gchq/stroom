@@ -25,9 +25,22 @@ class TestResultPage {
     void testCollector2() {
 
         ResultPage<WrappedInt> resultPage = IntStream.rangeClosed(0, 99)
+                .boxed()
+                .map(WrappedInt::new)
+                .collect(ResultPage.collector(ResultPage::new));
+
+        assertThat(resultPage.size())
+                .isEqualTo(100);
+        assertThat(resultPage.getFirst().getValue()).isEqualTo(0);
+    }
+
+    @Test
+    void testCollector3() {
+
+        ResultPage<WrappedInt> resultPage = IntStream.rangeClosed(0, 99)
             .boxed()
             .map(WrappedInt::new)
-            .collect(ResultPage.collector(null));
+            .collect(ResultPage.collector((PageRequest) null));
 
         assertThat(resultPage.size())
             .isEqualTo(100);

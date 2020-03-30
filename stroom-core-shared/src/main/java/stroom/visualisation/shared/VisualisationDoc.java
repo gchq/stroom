@@ -27,7 +27,7 @@ import stroom.docstore.shared.Doc;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "functionName", "scriptRef", "settings"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class VisualisationDoc extends Doc {
     public static final String DOCUMENT_TYPE = "Visualisation";
 

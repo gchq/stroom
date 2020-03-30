@@ -27,17 +27,36 @@ import stroom.util.shared.StringCriteria;
 
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FindNodeCriteria extends FindNamedEntityCriteria {
     public static final String FIELD_ID = "Id";
 
+    @JsonProperty("enabled")
+    private Boolean isEnabled = null;
+
     public FindNodeCriteria() {
+    }
+
+    public static FindNodeCriteria allEnabled() {
+        FindNodeCriteria criteria = new FindNodeCriteria();
+        criteria.setEnabled(true);
+        return criteria;
     }
 
     @JsonCreator
     public FindNodeCriteria(@JsonProperty("pageRequest") final PageRequest pageRequest,
                             @JsonProperty("sortList") final List<Sort> sortList,
-                            @JsonProperty("name") final StringCriteria name) {
+                            @JsonProperty("name") final StringCriteria name,
+                            @JsonProperty("isEnabled") final Boolean isEnabled) {
         super(pageRequest, sortList, name);
+        this.isEnabled = isEnabled;
+    }
+
+    public Boolean isEnabled() {
+        return isEnabled;
+    }
+
+    public void setEnabled(final Boolean enabled) {
+        isEnabled = enabled;
     }
 }

@@ -32,9 +32,9 @@ public class NewUiDocRefPresenter extends DocumentEditPresenter<IFramePresenter.
     @Override
     protected void onRead(final DocRef docRef,
                           final Doc entity) {
-        clientPropertyCache.get().onSuccess(uiConfig -> {
-            getView().setUrl(uiConfig.getUrl().getEditDoc() + docRef.getUuid());
-        });
+//        clientPropertyCache.get().onSuccess(uiConfig -> {
+//            getView().setUrl(uiConfig.getUrl().getEditDoc() + docRef.getUuid());
+//        });
     }
 
 

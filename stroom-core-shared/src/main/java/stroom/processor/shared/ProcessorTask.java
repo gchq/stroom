@@ -27,7 +27,7 @@ import java.util.Objects;
 /**
  * Class used to represent processing a stream.
  */
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ProcessorTask {
     // standard id and OCC fields
     @JsonProperty
@@ -84,11 +84,7 @@ public class ProcessorTask {
         this.statusTimeMs = statusTimeMs;
         this.startTimeMs = startTimeMs;
         this.endTimeMs = endTimeMs;
-        if (status != null){
-            this.status = status;
-        } else {
-            this.status = TaskStatus.UNPROCESSED;
-        }
+        this.status = status;
         this.processorFilter = processorFilter;
     }
 

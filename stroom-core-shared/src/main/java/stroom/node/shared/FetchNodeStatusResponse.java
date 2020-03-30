@@ -9,8 +9,9 @@ import stroom.util.shared.ResultPage;
 
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FetchNodeStatusResponse extends ResultPage<NodeStatusResult> {
+
     public FetchNodeStatusResponse(final List<NodeStatusResult> values) {
         super(values);
     }
@@ -19,5 +20,15 @@ public class FetchNodeStatusResponse extends ResultPage<NodeStatusResult> {
     public FetchNodeStatusResponse(@JsonProperty("values") final List<NodeStatusResult> values,
                                    @JsonProperty("pageResponse") final PageResponse pageResponse) {
         super(values, pageResponse);
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        return super.equals(o);
+    }
+
+    @Override
+    public String toString() {
+        return super.toString();
     }
 }

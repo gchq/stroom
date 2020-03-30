@@ -99,9 +99,8 @@ class TestAppPermissionServiceImpl {
     }
 
     private void checkPermissions(final User user, final String... permissions) {
-        final UserAppPermissions userAppPermissions = userAppPermissionService
-                .getPermissionsForUser(user);
-        final Set<String> permissionSet = userAppPermissions.getUserPermissons();
+        final Set<String> permissionSet = userAppPermissionService
+                .getPermissionNamesForUser(user.getUuid());
         assertThat(permissionSet.size()).isEqualTo(permissions.length);
         for (final String permission : permissions) {
             assertThat(permissionSet.contains(permission)).isTrue();
@@ -117,9 +116,9 @@ class TestAppPermissionServiceImpl {
 
         final Set<String> combinedPermissions = new HashSet<>();
         for (final User userRef : allUsers) {
-            final UserAppPermissions userAppPermissions = userAppPermissionService.getPermissionsForUser(userRef);
-            final Set<String> userPermissions = userAppPermissions.getUserPermissons();
-            combinedPermissions.addAll(userPermissions);
+            final Set<String> permissionSet = userAppPermissionService
+                    .getPermissionNamesForUser(userRef.getUuid());
+            combinedPermissions.addAll(permissionSet);
         }
 
         assertThat(combinedPermissions.size()).isEqualTo(permissions.length);
@@ -134,15 +133,14 @@ class TestAppPermissionServiceImpl {
         userGroupsCache.clear();
         userAppPermissionsCache.clear();
 
-        final Set<User> allUsers = new HashSet<>();
-        allUsers.add(user);
+        final Set<String> allUsers = new HashSet<>();
+        allUsers.add(user.getUuid());
         allUsers.addAll(userGroupsCache.get(user.getUuid()));
 
         final Set<String> combinedPermissions = new HashSet<>();
-        for (final User userRef : allUsers) {
-            final UserAppPermissions userAppPermissions = userAppPermissionsCache.get(userRef);
-            final Set<String> userPermissions = userAppPermissions.getUserPermissons();
-            combinedPermissions.addAll(userPermissions);
+        for (final String userUuid : allUsers) {
+            final Set<String> permissionSet = userAppPermissionsCache.get(userUuid);
+            combinedPermissions.addAll(permissionSet);
         }
 
         assertThat(combinedPermissions.size()).isEqualTo(permissions.length);

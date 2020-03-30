@@ -29,9 +29,7 @@ import com.gwtplatform.mvp.client.proxy.Proxy;
 import stroom.alert.client.event.ConfirmEvent;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
-import stroom.node.shared.FetchNodeStatusResponse;
-import stroom.node.shared.NodeResource;
-import stroom.node.shared.NodeStatusResult;
+import stroom.node.client.NodeCache;
 import stroom.task.client.event.OpenTaskManagerEvent;
 import stroom.task.client.event.OpenUserTaskManagerHandler;
 import stroom.task.client.presenter.UserTaskManagerPresenter.UserTaskManagerProxy;
@@ -60,11 +58,11 @@ import java.util.Set;
 public class UserTaskManagerPresenter
         extends Presenter<UserTaskManagerView, UserTaskManagerProxy>
         implements OpenUserTaskManagerHandler, UserTaskUiHandlers {
-    private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
     private static final TaskResource TASK_RESOURCE = GWT.create(TaskResource.class);
 
     private final Provider<UserTaskPresenter> taskPresenterProvider;
     private final RestFactory restFactory;
+    private final NodeCache nodeCache;
     private final Map<TaskProgress, UserTaskPresenter> taskPresenterMap = new HashMap<>();
     private final Map<TaskId, TaskProgress> idMap = new HashMap<>();
     private final Set<TaskId> requestTaskKillSet = new HashSet<>();
@@ -74,16 +72,19 @@ public class UserTaskManagerPresenter
 
     private final Map<String, List<TaskProgress>> responseMap = new HashMap<>();
 
-    private FetchNodeStatusResponse fetchNodeStatusResponse;
-
     private final FindTaskProgressCriteria criteria;
 
     @Inject
-    public UserTaskManagerPresenter(final EventBus eventBus, final UserTaskManagerView view, final UserTaskManagerProxy proxy,
-                                    final Provider<UserTaskPresenter> taskPresenterProvider, final RestFactory restFactory) {
+    public UserTaskManagerPresenter(final EventBus eventBus,
+                                    final UserTaskManagerView view,
+                                    final UserTaskManagerProxy proxy,
+                                    final Provider<UserTaskPresenter> taskPresenterProvider,
+                                    final RestFactory restFactory,
+                                    final NodeCache nodeCache) {
         super(eventBus, view, proxy);
         this.taskPresenterProvider = taskPresenterProvider;
         this.restFactory = restFactory;
+        this.nodeCache = nodeCache;
 
         refreshTimer = new Timer() {
             @Override
@@ -120,20 +121,15 @@ public class UserTaskManagerPresenter
 
     private void refreshTaskStatus() {
         // Stop this refreshing more than once before the call returns.
-        if (fetchNodeStatusResponse == null) {
-            final Rest<FetchNodeStatusResponse> rest = restFactory.create();
-            rest.onSuccess(this::refresh).call(NODE_RESOURCE).list();
-        } else {
-            refresh(fetchNodeStatusResponse);
-        }
+        nodeCache.listAllNodes(
+                this::refresh,
+                throwable -> {
+                });
     }
 
-    private void refresh(final FetchNodeStatusResponse fetchNodeStatusResponse) {
+    private void refresh(final List<String> nodeNames) {
         // Store node list for suture queries.
-        this.fetchNodeStatusResponse = fetchNodeStatusResponse;
-        for (final NodeStatusResult nodeStatusResult : fetchNodeStatusResponse.getValues()) {
-            final String nodeName = nodeStatusResult.getNode().getName();
-
+        for (final String nodeName : nodeNames) {
             if (!refreshing.contains(nodeName)) {
                 refreshing.add(nodeName);
                 final Rest<TaskProgressResponse> rest = restFactory.create();

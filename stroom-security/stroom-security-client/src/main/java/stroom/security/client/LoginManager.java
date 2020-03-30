@@ -30,6 +30,8 @@ import stroom.security.client.api.event.LogoutEvent;
 import stroom.security.shared.AppPermissionResource;
 import stroom.security.shared.AuthenticationResource;
 import stroom.security.shared.UserAndPermissions;
+import stroom.task.client.TaskEndEvent;
+import stroom.task.client.TaskStartEvent;
 import stroom.ui.config.client.UiConfigCache;
 
 public class LoginManager implements HasHandlers {
@@ -58,6 +60,7 @@ public class LoginManager implements HasHandlers {
 
     public void fetchUserAndPermissions() {
         // When we start the application we will try and auto login using a client certificates.
+        TaskStartEvent.fire(this, "Fetching permissions...");
         final Rest<UserAndPermissions> rest = restFactory.create();
         rest
                 .onSuccess(userAndPermissions -> {
@@ -66,8 +69,12 @@ public class LoginManager implements HasHandlers {
                     } else {
                         logout();
                     }
+                    TaskEndEvent.fire(LoginManager.this);
                 })
-                .onFailure(throwable -> AlertEvent.fireInfo(LoginManager.this, throwable.getMessage(), this::logout))
+                .onFailure(throwable -> {
+                    AlertEvent.fireInfo(LoginManager.this, throwable.getMessage(), this::logout);
+                    TaskEndEvent.fire(LoginManager.this);
+                })
                 .call(APP_PERMISSION_RESOURCE).getUserAndPermissions();
     }
 

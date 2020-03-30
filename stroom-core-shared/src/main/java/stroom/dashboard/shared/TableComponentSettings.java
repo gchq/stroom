@@ -40,7 +40,7 @@ import java.util.Objects;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "table")
 @XmlType(name = "TableComponentSettings", propOrder = {"queryId", "fields", "extractValues", "extractionPipeline", "maxResults", "showDetail"})
 public class TableComponentSettings extends ComponentSettings {
@@ -230,7 +230,7 @@ public class TableComponentSettings extends ComponentSettings {
         if (fields != null) {
             fieldsCopy = new ArrayList<>(fields.size());
             for (final Field field : fields) {
-                fieldsCopy.add(field.copy());
+                fieldsCopy.add(new Field.Builder().copy(field).build());
             }
         }
 

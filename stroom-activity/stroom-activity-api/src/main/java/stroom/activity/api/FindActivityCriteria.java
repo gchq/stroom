@@ -28,7 +28,7 @@ import stroom.util.shared.StringCriteria.MatchStyle;
 
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FindActivityCriteria extends BaseCriteria {
     @JsonProperty
     private String userId;
@@ -46,11 +46,7 @@ public class FindActivityCriteria extends BaseCriteria {
                                 @JsonProperty("name") final StringCriteria name) {
         super(pageRequest, sortList);
         this.userId = userId;
-        if (name != null) {
-            this.name = name;
-        } else {
-            this.name = new StringCriteria();
-        }
+        this.name = name;
     }
 
     public static FindActivityCriteria create(final String name) {

@@ -32,7 +32,7 @@ import java.util.Set;
 /**
  * Base criteria object used to aid getting pages of data.
  */
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public abstract class BaseCriteria {
     @JsonProperty
     private PageRequest pageRequest;

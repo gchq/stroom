@@ -18,13 +18,13 @@ package stroom.security.impl.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.task.api.TaskCallback;
-import stroom.task.api.TaskHandler;
+import stroom.cluster.task.api.ClusterTaskHandler;
+import stroom.cluster.task.api.ClusterTaskRef;
 import stroom.task.api.VoidResult;
 
 import javax.inject.Inject;
 
-class ClusterPermissionChangeEventTaskHandler implements TaskHandler<ClusterPermissionChangeEventTask, VoidResult> {
+class ClusterPermissionChangeEventTaskHandler implements ClusterTaskHandler<ClusterPermissionChangeEventTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClusterPermissionChangeEventTaskHandler.class);
 
     private final PermissionChangeEventBusImpl eventBus;
@@ -35,18 +35,11 @@ class ClusterPermissionChangeEventTaskHandler implements TaskHandler<ClusterPerm
     }
 
     @Override
-    public void exec(final ClusterPermissionChangeEventTask task, final TaskCallback<VoidResult> callback) {
+    public void exec(final ClusterPermissionChangeEventTask task, final ClusterTaskRef<VoidResult> clusterTaskRef) {
         try {
             eventBus.fireLocally(task.getEvent());
         } catch (final Exception e) {
             LOGGER.error(e.getMessage(), e);
-        }
-
-        try {
-            callback.onSuccess(VoidResult.INSTANCE);
-        } catch (final Throwable t) {
-            // Ignore errors thrown returning result.
-            LOGGER.trace(t.getMessage(), t);
         }
     }
 }

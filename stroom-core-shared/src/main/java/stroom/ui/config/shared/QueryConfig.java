@@ -9,10 +9,11 @@ import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Objects;
 
 @Singleton
 @JsonPropertyOrder({"infoPopup"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class QueryConfig extends AbstractConfig {
     @JsonProperty
     private InfoPopupConfig infoPopup;
@@ -37,5 +38,18 @@ public class QueryConfig extends AbstractConfig {
 
     public void setInfoPopup(final InfoPopupConfig infoPopup) {
         this.infoPopup = infoPopup;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final QueryConfig that = (QueryConfig) o;
+        return Objects.equals(infoPopup, that.infoPopup);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(infoPopup);
     }
 }

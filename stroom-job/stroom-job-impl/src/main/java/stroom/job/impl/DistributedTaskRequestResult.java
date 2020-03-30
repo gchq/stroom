@@ -20,11 +20,12 @@ package stroom.job.impl;
 import stroom.job.api.DistributedTask;
 import stroom.job.shared.JobNode;
 
+import java.io.Serializable;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-public class DistributedTaskRequestResult {
+public class DistributedTaskRequestResult implements Serializable {
     private static final long serialVersionUID = -6827229808827594370L;
 
     private final int totalTasks;

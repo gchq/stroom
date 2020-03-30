@@ -32,7 +32,7 @@ public class MockNodeService implements NodeService {
     private MockNodeInfo nodeInfo = new MockNodeInfo();
 
     @Override
-    public String getClusterUrl(final String nodeName) {
+    public String getBaseEndpointUrl(final String nodeName) {
         return null;
     }
 

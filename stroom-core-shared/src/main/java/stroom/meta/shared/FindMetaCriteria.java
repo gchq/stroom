@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.shared.Copyable;
 import stroom.util.shared.IdSet;
 import stroom.util.shared.PageRequest;
@@ -29,7 +30,7 @@ import stroom.util.shared.Sort;
 import java.util.List;
 import java.util.Objects;
 
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FindMetaCriteria extends ExpressionCriteria implements Copyable<FindMetaCriteria> {
     @JsonProperty
     private IdSet selectedIdSet;

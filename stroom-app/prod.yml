@@ -109,11 +109,14 @@ appConfig:
     executionInterval: "10s"
   node:
     name: ${STROOM_NODE:-node1a}
+    baseEndpoint:
+      hostname: ${STROOM_HOST:-<<<IP_ADDRESS>>>}
+      port: ${STROOM_APP_PORT:-8080}
   path:
     temp: "/tmp/stroom"
   security:
     authentication:
-      authenticationServiceUrl: ${STROOM_AUTHENTICATION_SERVICE_URL:-https://<<<IP_ADDRESS>>>/api/auth/authentication/v1}
+      authenticationServiceUrl: ${STROOM_AUTHENTICATION_SERVICE_URL:-https://<<<IP_ADDRESS>>>/api/authentication/v1}
       authServicesBaseUrl: ${STROOM_AUTH_SERVICES_URL:-http://<<<IP_ADDRESS>>>/api/auth}
       preventLogin: false #TODO
       clientId: ${STROOM_AUTH_CLIENT_ID:-PZnJr8kHRKqnlJRQThSI}
@@ -127,19 +130,9 @@ appConfig:
     nodeName: null
     url:
       ui: ${STROOM_ADVERTISED_URL:-https://<<<IP_ADDRESS>>>}
-      authenticationService: ${STROOM_AUTHENTICATION_SERVICE_URL:-https://<<<IP_ADDRESS>>>/api/auth/authentication/v1}
+      authenticationService: ${STROOM_AUTHENTICATION_SERVICE_URL:-https://<<<IP_ADDRESS>>>/api/authentication/v1}
       users: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/users
       apiKeys: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/apiKeys
-      indexVolumes: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/indexing/volumes
-      indexVolumeGroups: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/indexing/groups
-      userAuthorisation: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/authorisationManager/false
-      groupAuthorisation: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/authorisationManager/true
-      editDoc: https://${STROOM_HOST:-<<<IP_ADDRESS>>>/s/doc/}
       changepassword: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/changepassword
-      kibana: null
-      trackers: null
-      annotations: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/annotationsService/queryApi/v1
-      elastic: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/queryElasticService/queryApi/v1
-      documentPermissions: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/authorisationManager/document/
   volumes:
     createDefaultOnStart: false

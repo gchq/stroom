@@ -25,13 +25,14 @@ import stroom.security.api.UserIdentity;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.IsServlet;
+import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import java.util.Set;
 
 public class ClusterCallServiceRPC extends HessianServlet implements ClusterCallService, IsServlet {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(ClusterCallServiceRPC.class);
-    private static final Set<String> PATH_SPECS = Set.of("/clustercall.rpc");
+    private static final Set<String> PATH_SPECS = Set.of(ResourcePaths.CLUSTER_CALL_RPC);
 
     private final ClusterCallService clusterCallService;
     private final SecurityContext securityContext;
@@ -44,12 +45,19 @@ public class ClusterCallServiceRPC extends HessianServlet implements ClusterCall
     }
 
     @Override
-    public Object call(final String sourceNode, final String targetNode, final UserIdentity userIdentity, final ServiceName serviceName, final String methodName, final Class<?>[] parameterTypes, final Object[] args) {
+    public Object call(final String sourceNode,
+                       final String targetNode,
+                       final UserIdentity userIdentity,
+                       final ServiceName serviceName,
+                       final String methodName,
+                       final Class<?>[] parameterTypes,
+                       final Object[] args) {
         // We are receiving a call from another node so login as the supplied user.
         LOGGER.debug(() -> "Hessian call with user " + userIdentity);
 
         return securityContext.asUserResult(userIdentity, () ->
-                clusterCallService.call(sourceNode, targetNode, userIdentity, serviceName, methodName, parameterTypes, args));
+                clusterCallService.call(
+                    sourceNode, targetNode, userIdentity, serviceName, methodName, parameterTypes, args));
     }
 
     @Override

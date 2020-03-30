@@ -143,7 +143,7 @@ public class ProcessorListPresenter extends MyPresenterWidget<DataGridView<Proce
         }
     }
 
-    private void onChangeData(final ResultPage<ProcessorListRow> data) {
+    private void onChangeData(final ProcessorListRowResultPage data) {
         ProcessorListRow selected = getView().getSelectionModel().getSelected();
 
         if (nextSelection != null) {

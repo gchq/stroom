@@ -3,52 +3,137 @@
   "uuid" : "57a35b9a-083c-4a93-a813-fc3ddfe1ff44",
   "name" : "Example index",
   "version" : "c24135b6-74c7-443d-a2b3-77e1c8b92891",
+  "maxDocsPerShard" : 1000000000,
+  "partitionBy" : "MONTH",
+  "partitionSize" : 1,
+  "shardsPerPartition" : 1,
   "fields" : [ {
     "fieldType" : "ID",
     "fieldName" : "StreamId",
-    "stored" : true
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : true,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
     "fieldType" : "ID",
     "fieldName" : "EventId",
-    "stored" : true
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : true,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
+    "fieldType" : "FIELD",
     "fieldName" : "Feed",
-    "analyzerType" : "ALPHA_NUMERIC"
+    "analyzerType" : "ALPHA_NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
-    "fieldName" : "Feed (Keyword)"
+    "fieldType" : "FIELD",
+    "fieldName" : "Feed (Keyword)",
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
+    "fieldType" : "FIELD",
     "fieldName" : "Action",
-    "analyzerType" : "ALPHA_NUMERIC"
+    "analyzerType" : "ALPHA_NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
     "fieldType" : "DATE_FIELD",
-    "fieldName" : "EventTime"
+    "fieldName" : "EventTime",
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
-    "fieldName" : "UserId"
+    "fieldType" : "FIELD",
+    "fieldName" : "UserId",
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
+    "fieldType" : "FIELD",
     "fieldName" : "System",
-    "analyzerType" : "ALPHA_NUMERIC"
+    "analyzerType" : "ALPHA_NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
+    "fieldType" : "FIELD",
     "fieldName" : "Environment",
-    "analyzerType" : "ALPHA_NUMERIC"
+    "analyzerType" : "ALPHA_NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
-    "fieldName" : "IPAddress"
+    "fieldType" : "FIELD",
+    "fieldName" : "IPAddress",
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
-    "fieldName" : "HostName"
+    "fieldType" : "FIELD",
+    "fieldName" : "HostName",
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
+    "fieldType" : "FIELD",
     "fieldName" : "Generator",
-    "analyzerType" : "ALPHA_NUMERIC"
+    "analyzerType" : "ALPHA_NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
+    "fieldType" : "FIELD",
     "fieldName" : "Command",
-    "analyzerType" : "ALPHA_NUMERIC"
+    "analyzerType" : "ALPHA_NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
+    "fieldType" : "FIELD",
     "fieldName" : "Command (Keyword)",
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
     "caseSensitive" : true
   }, {
+    "fieldType" : "FIELD",
     "fieldName" : "Description",
-    "analyzerType" : "ALPHA_NUMERIC"
+    "analyzerType" : "ALPHA_NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
+    "fieldType" : "FIELD",
     "fieldName" : "Description (Case Sensitive)",
     "analyzerType" : "ALPHA_NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
     "caseSensitive" : true
   } ],
   "volumeGroupName" : "Default Volume Group"

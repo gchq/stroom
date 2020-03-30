@@ -28,7 +28,7 @@ import stroom.docstore.shared.Doc;
 import java.util.List;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "fields", "rules"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ReceiveDataRules extends Doc {
     public static final String DOCUMENT_TYPE = "ReceiveDataRuleSet";
 

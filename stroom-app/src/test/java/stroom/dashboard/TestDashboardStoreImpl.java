@@ -82,9 +82,7 @@ class TestDashboardStoreImpl extends AbstractCoreIntegrationTest {
                         componentData.setSettings(visSettings);
                         components.add(componentData);
 
-                        final TabConfig tabConfig = new TabConfig();
-                        tabConfig.setId(id);
-
+                        final TabConfig tabConfig = new TabConfig(id, true);
                         tablayout.add(tabConfig);
                     }
                 }

@@ -34,7 +34,7 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @JsonPropertyOrder({"parameters", "components", "layout", "tabVisibility"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @XmlRootElement(name = "dashboard")
 @XmlType(name = "DashboardConfig", propOrder = {"parameters", "components", "layout", "tabVisibility"})
 public class DashboardConfig {
@@ -65,9 +65,9 @@ public class DashboardConfig {
         this.parameters = parameters;
         this.components = components;
         this.layout = layout;
-        if (tabVisibility != null) {
-            this.tabVisibility = tabVisibility;
-        } else {
+        this.tabVisibility = tabVisibility;
+
+        if (this.tabVisibility == null) {
             this.tabVisibility = TabVisibility.SHOW_ALL;
         }
     }

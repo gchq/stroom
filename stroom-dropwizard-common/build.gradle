@@ -8,4 +8,5 @@ dependencies {
     }
     compile libs.jetty_servlet
     compile libs.slf4j_api
+    compile libs.vavr
 }

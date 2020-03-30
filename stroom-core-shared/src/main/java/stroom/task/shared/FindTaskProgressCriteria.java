@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class FindTaskProgressCriteria extends BaseCriteria {
     public static final String FIELD_NODE = "Node";
     public static final String FIELD_NAME = "Name";

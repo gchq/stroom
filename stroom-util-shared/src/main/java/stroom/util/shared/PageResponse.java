@@ -24,22 +24,22 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.io.Serializable;
 import java.util.Objects;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class PageResponse implements Serializable {
     private static final long serialVersionUID = -8613411971150227752L;
 
     @JsonProperty
-    private Long offset;
+    private final long offset;
     @JsonProperty
-    private Integer length;
+    private final int length;
     @JsonProperty
-    private Long total;
+    private final Long total;
     @JsonProperty
-    private boolean exact;
+    private final boolean exact;
 
     @JsonCreator
-    public PageResponse(@JsonProperty("offset") final Long offset,
-                        @JsonProperty("length") final Integer length,
+    public PageResponse(@JsonProperty("offset") final long offset,
+                        @JsonProperty("length") final int length,
                         @JsonProperty("total") final Long total,
                         @JsonProperty("exact") final boolean exact) {
         this.offset = offset;
@@ -48,36 +48,20 @@ public class PageResponse implements Serializable {
         this.exact = exact;
     }
 
-    public Long getOffset() {
+    public long getOffset() {
         return offset;
     }
 
-    public void setOffset(final Long offset) {
-        this.offset = offset;
-    }
-
-    public Integer getLength() {
+    public int getLength() {
         return length;
-    }
-
-    public void setLength(final Integer length) {
-        this.length = length;
     }
 
     public Long getTotal() {
         return total;
     }
 
-    public void setTotal(final Long total) {
-        this.total = total;
-    }
-
     public boolean isExact() {
         return exact;
-    }
-
-    public void setExact(final boolean exact) {
-        this.exact = exact;
     }
 
     @Override
@@ -85,9 +69,9 @@ public class PageResponse implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         final PageResponse that = (PageResponse) o;
-        return exact == that.exact &&
-                Objects.equals(offset, that.offset) &&
-                Objects.equals(length, that.length) &&
+        return offset == that.offset &&
+                length == that.length &&
+                exact == that.exact &&
                 Objects.equals(total, that.total);
     }
 

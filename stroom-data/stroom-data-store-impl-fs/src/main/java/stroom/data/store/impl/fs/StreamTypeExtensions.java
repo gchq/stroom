@@ -23,6 +23,7 @@ class StreamTypeExtensions {
         EXTENSION_MAP.put("Meta Data", "meta");
         EXTENSION_MAP.put("Error", "err");
         EXTENSION_MAP.put("Context", "ctx");
+        EXTENSION_MAP.put("Detections", "dtxn");
     }
 
     static String getExtension(final String streamType) {

@@ -3,38 +3,90 @@
   "uuid" : "c9dd857d-324c-49b2-ab16-020d7e921dd8",
   "name" : "LAX_CARGO_VOLUME-INDEX",
   "version" : "1a7f4a70-efbf-4ba3-ae65-5faee49361b2",
+  "maxDocsPerShard" : 1000000000,
+  "partitionBy" : "MONTH",
+  "partitionSize" : 1,
+  "shardsPerPartition" : 1,
   "fields" : [ {
     "fieldType" : "ID",
     "fieldName" : "StreamId",
-    "stored" : true
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : true,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
     "fieldType" : "ID",
     "fieldName" : "EventId",
-    "stored" : true
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : true,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
+    "fieldType" : "FIELD",
     "fieldName" : "Feed",
-    "analyzerType" : "ALPHA_NUMERIC"
+    "analyzerType" : "ALPHA_NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
-    "fieldName" : "Feed (Keyword)"
+    "fieldType" : "FIELD",
+    "fieldName" : "Feed (Keyword)",
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
     "fieldType" : "DATE_FIELD",
-    "fieldName" : "DataExtractDate"
+    "fieldName" : "DataExtractDate",
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
     "fieldType" : "DATE_FIELD",
-    "fieldName" : "ReportPeriod"
+    "fieldName" : "ReportPeriod",
+    "analyzerType" : "KEYWORD",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
+    "fieldType" : "FIELD",
     "fieldName" : "Arrival_Departure",
-    "analyzerType" : "ALPHA"
+    "analyzerType" : "ALPHA",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
+    "fieldType" : "FIELD",
     "fieldName" : "Domestic_International",
-    "analyzerType" : "ALPHA"
+    "analyzerType" : "ALPHA",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
+    "fieldType" : "FIELD",
     "fieldName" : "CargoType",
-    "analyzerType" : "ALPHA_NUMERIC"
+    "analyzerType" : "ALPHA_NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   }, {
     "fieldType" : "NUMERIC_FIELD",
     "fieldName" : "AirCargoTons",
-    "analyzerType" : "NUMERIC"
+    "analyzerType" : "NUMERIC",
+    "indexed" : true,
+    "stored" : false,
+    "termPositions" : false,
+    "caseSensitive" : false
   } ],
   "volumeGroupName" : "Default Volume Group"
 }

@@ -28,7 +28,7 @@ import stroom.util.shared.HasData;
 import java.util.Objects;
 
 @JsonPropertyOrder({"type", "uuid", "name", "version", "createTime", "updateTime", "createUser", "updateUser", "description", "data", "converterType"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class TextConverterDoc extends Doc implements HasData {
     public static final String DOCUMENT_TYPE = "TextConverter";
 
@@ -58,10 +58,9 @@ public class TextConverterDoc extends Doc implements HasData {
         super(type, uuid, name, version, createTime, updateTime, createUser, updateUser);
         this.description = description;
         this.data = data;
+        this.converterType = converterType;
 
-        if (converterType != null) {
-            this.converterType = converterType;
-        } else {
+        if (converterType == null) {
             this.converterType = TextConverterType.NONE;
         }
     }

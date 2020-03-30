@@ -194,19 +194,19 @@ public class DocumentPluginEventManager extends Plugin {
                     }
                 }));
 
-        clientPropertyCache.get()
-                .onSuccess(uiConfig -> {
-                    registerHandler(
-                            getEventBus().addHandler(ShowPermissionsDialogEvent.getType(), event -> {
-                                final Hyperlink hyperlink = new Hyperlink.Builder()
-                                        .text("Permissions")
-                                        .href(uiConfig.getUrl().getDocumentPermissions() + event.getExplorerNode().getUuid())
-                                        .type(HyperlinkType.TAB + "|Document Permissions")
-                                        .icon(SvgPresets.PERMISSIONS)
-                                        .build();
-                                HyperlinkEvent.fire(this, hyperlink);
-                            }));
-                });
+//        clientPropertyCache.get()
+//                .onSuccess(uiConfig -> {
+//                    registerHandler(
+//                            getEventBus().addHandler(ShowPermissionsDialogEvent.getType(), event -> {
+//                                final Hyperlink hyperlink = new Hyperlink.Builder()
+//                                        .text("Permissions")
+//                                        .href(uiConfig.getUrl().getDocumentPermissions() + event.getExplorerNode().getUuid())
+//                                        .type(HyperlinkType.TAB + "|Document Permissions")
+//                                        .icon(SvgPresets.PERMISSIONS)
+//                                        .build();
+//                                HyperlinkEvent.fire(this, hyperlink);
+//                            }));
+//                });
 
 
         // 11. Handle entity reload events.

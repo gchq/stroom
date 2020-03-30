@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.docref.DocRef;
 
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FetchSuggestionsRequest {
     @JsonProperty
     private final DocRef dataSource;

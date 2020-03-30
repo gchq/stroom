@@ -9,14 +9,15 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.AbstractConfig;
 
 import javax.inject.Singleton;
+import java.util.Objects;
 
 @Singleton
 @JsonPropertyOrder({"enabled", "title", "body", "version"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class SplashConfig extends AbstractConfig {
     @JsonProperty
     @JsonPropertyDescription("If you would like users to see a splash screen on login.")
-    private Boolean enabled;
+    private boolean enabled;
     @JsonProperty
     @JsonPropertyDescription("The title of the splash screen popup.")
     private String title;
@@ -32,7 +33,7 @@ public class SplashConfig extends AbstractConfig {
     }
 
     @JsonCreator
-    public SplashConfig(@JsonProperty("enabled") final Boolean enabled,
+    public SplashConfig(@JsonProperty("enabled") final boolean enabled,
                         @JsonProperty("title") final String title,
                         @JsonProperty("body") final String body,
                         @JsonProperty("version") final String version) {
@@ -45,9 +46,6 @@ public class SplashConfig extends AbstractConfig {
     }
 
     private void setDefaults() {
-        if (enabled == null) {
-            enabled = false;
-        }
         if (title == null) {
             title = "Splash Screen";
         }
@@ -89,5 +87,31 @@ public class SplashConfig extends AbstractConfig {
 
     public void setVersion(final String version) {
         this.version = version;
+    }
+
+    @Override
+    public String toString() {
+        return "SplashConfig{" +
+            "enabled=" + enabled +
+            ", title='" + title + '\'' +
+            ", body='" + body + '\'' +
+            ", version='" + version + '\'' +
+            '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final SplashConfig that = (SplashConfig) o;
+        return enabled == that.enabled &&
+            Objects.equals(title, that.title) &&
+            Objects.equals(body, that.body) &&
+            Objects.equals(version, that.version);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(enabled, title, body, version);
     }
 }

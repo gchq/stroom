@@ -1,7 +1,6 @@
 package stroom.test;
 
 import com.google.inject.AbstractModule;
-import io.dropwizard.client.JerseyClientConfiguration;
 import stroom.app.guice.CoreModule;
 import stroom.app.guice.JerseyModule;
 import stroom.index.VolumeTestConfigModule;

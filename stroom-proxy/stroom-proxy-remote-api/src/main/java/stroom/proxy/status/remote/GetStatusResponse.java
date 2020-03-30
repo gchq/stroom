@@ -6,23 +6,18 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class GetStatusResponse implements Serializable {
     private static final long serialVersionUID = 8200506344347303608L;
 
     @JsonProperty
-    public List<StatusEntry> statusEntryList;
+    public final List<StatusEntry> statusEntryList;
 
     @JsonCreator
     public GetStatusResponse(@JsonProperty("statusEntryList") final List<StatusEntry> statusEntryList) {
-        if (statusEntryList != null) {
-            this.statusEntryList = statusEntryList;
-        } else {
-            this.statusEntryList = new ArrayList<StatusEntry>();
-        }
+        this.statusEntryList = statusEntryList;
     }
 
     public List<StatusEntry> getStatusEntryList() {

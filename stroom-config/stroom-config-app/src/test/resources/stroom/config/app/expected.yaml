@@ -1,6 +1,5 @@
 ---
 appConfig:
-  superDevMode: false
   haltBootOnConfigValidationFailure: true
   activity:
     db:
@@ -44,6 +43,58 @@ appConfig:
     hostname: null
     scheme: "https"
     port: null
+  authentication:
+    certificateDnPattern: ".*\\((.*)\\)"
+    certificateDnCaptureGroupIndex: 1
+    loginUrl: "https://localhost/s/login"
+    changePasswordUrl: "https://localhost/s/changepassword"
+    stroomUrl: "https://localhost/"
+    advertisedHost: "https://localhost"
+    httpPort: null
+    httpsPort: null
+    failedLoginLockThreshold: 3
+    unauthorisedUrl: "https://localhost/s/unauthorised"
+    email:
+      fromAddress: "noreply@stroom"
+      fromName: "Stroom User Accounts"
+      passwordResetSubject: "Password reset for Stroom"
+      passwordResetText: "A password reset has been requested for this email address.\
+        \ Please visit the following URL to reset your password: %s."
+      passwordResetUrl: "https://localhost/s/resetPassword/?user=%s&token=%s"
+      passwordResetTokenValidityInMinutes: 600.0
+      allowPasswordResets: false
+      smtp:
+        host: "localhost"
+        port: 2525
+        transport: "plain"
+        username: "username"
+        password: "password"
+        transportStrategy: "SMTP_PLAIN"
+    token:
+      minutesUntilExpirationForUserToken: 43200
+      minutesUntilExpirationForEmailResetToken: 5
+      jwsIssuer: "stroom"
+      requireExpirationTime: false
+      algorithm: "RS256"
+    sessionIdCookieMaxAge: 2592000
+    userService:
+      url: "http://localhost:8080/api/appPermissions/v"
+    passwordIntegrityChecks:
+      neverUsedAccountDeactivationThreshold: "P30D"
+      unusedAccountDeactivationThreshold: "P90D"
+      mandatoryPasswordChangeDuration: "P90D"
+      durationBetweenChecks: "PT2M"
+      forcePasswordChangeOnFirstLogin: true
+      passwordComplexityRegex: ".*"
+      minimumPasswordLength: 0
+    ownPath: "api/authentication"
+    authorisationService:
+      url: "http://localhost:8080/api/authorisation/v"
+      canManageUsersPermission: "Manage Users"
+    stroom:
+      clientId: "PZnJr8kHRKqnlJRQThSI"
+      clientSecret: "OtzHiAWLj8QWcwO2IxXmqxpzE2pyg0pMKCghR2aU"
+      clientHost: "localhost"
   benchmark:
     streamCount: 1000
     recordCount: 10000
@@ -294,6 +345,11 @@ appConfig:
         minimumIdle: null
         maxPoolSize: null
     name: "tba"
+    baseEndpoint:
+      scheme: "http"
+      hostname: "localhost"
+      port: 8080
+      pathPrefix: null
     status:
       heapHistogram:
         classNameMatchRegex: "^stroom\\..*$"
@@ -487,12 +543,12 @@ appConfig:
         expireAfterAccess: "PT10M"
         expireAfterWrite: null
     webContent:
-      contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
-        \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
-        \ frame-ancestors 'self';"
       contentTypeOptions: "nosniff"
       frameOptions: "sameorigin"
       xssProtection: "1; mode=block"
+      contentSecurityPolicy: "default-src 'self'; script-src 'self' 'unsafe-eval'\
+        \ 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline';\
+        \ frame-ancestors 'self';"
   serviceDiscovery:
     enabled: false
     zookeeperUrl: "localhost:2181"
@@ -663,17 +719,59 @@ appConfig:
         minimumIdle: null
         maxPoolSize: null
   ui:
+    welcomeHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from\
+      \ multiple systems.</p>"
+    aboutHtml: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
+      \ systems.</p>"
     buildInfo:
       upDate: "TBD"
       buildVersion: "TBD"
       buildDate: "TBD"
-    process: {}
-    theme: {}
+    defaultMaxResults: "1000000,100,10,1"
+    process:
+      defaultTimeLimit: 30
+      defaultRecordLimit: 1000000
+    helpUrl: "https://gchq.github.io/stroom-docs"
+    theme:
+      backgroundAttachment: "scroll"
+      backgroundColor: "#1E88E5"
+      backgroundImage: "none"
+      backgroundPosition: "0 0"
+      backgroundRepeat: "repeat"
+      backgroundOpacity: "0"
+      tubeVisible: "hidden"
+      tubeOpacity: "0.6"
+      labelColours: "TEST1=#FF0000,TEST2=#FF9900"
     query:
-      infoPopup: {}
-    splash: {}
-    activity: {}
-    url: {}
+      infoPopup:
+        enabled: false
+        title: "Please Provide Query Info"
+        validationRegex: "^[\\s\\S]{3,}$"
+    namePattern: "^[a-zA-Z0-9_\\- \\.\\(\\)]{1,}$"
+    htmlTitle: "Stroom"
+    oncontextmenu: "return false;"
+    splash:
+      enabled: false
+      title: "Splash Screen"
+      body: "<h1>About Stroom</h1><p>Stroom is designed to receive data from multiple\
+        \ systems.</p>"
+      version: "v0.1"
+    activity:
+      enabled: false
+      chooseOnStartup: false
+      managerTitle: "Choose Activity"
+      editorTitle: "Edit Activity"
+      editorBody: "Activity Code:</br><input type=\"text\" name=\"code\"></input></br></br>Activity\
+        \ Description:</br><textarea rows=\"4\" style=\"width:100%;height:80px\" name=\"\
+        description\" validation=\".{80,}\" validationMessage=\"The activity description\
+        \ must be at least 80 characters long.\" ></textarea>Explain what the activity\
+        \ is"
+    url:
+      ui: "http://IP_ADDRESS"
+      authenticationService: "http://auth-service:8099/authentication/v1"
+      users: "http://IP_ADDRESS/users"
+      apiKeys: "http://IP_ADDRESS/tokens"
+      changepassword: "http://IP_ADDRESS/changepassword"
   volumes:
     resilientReplicationCount: 1
     preferLocalVolumes: false

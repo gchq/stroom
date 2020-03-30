@@ -9,7 +9,7 @@ import stroom.util.shared.ResultPage;
 
 import java.util.List;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class CacheInfoResponse extends ResultPage<CacheInfo> {
     public CacheInfoResponse(final List<CacheInfo> values) {
         super(values);

@@ -48,29 +48,29 @@ public class TrackersPlugin extends NodeToolsPlugin {
 
     @Override
     protected void addChildItems(BeforeRevealMenubarEvent event) {
-        //TODO what are the correct permissions?
-        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_JOBS_PERMISSION)) {
-            clientPropertyCache.get()
-                    .onSuccess(result -> {
-                        final IconMenuItem streamTaskMenuItem;
-                        final SvgPreset icon = SvgPresets.MONITORING;
-                        final String stroomUi = result.getUrl().getTrackers();
-                        if (stroomUi != null && stroomUi.trim().length() > 0) {
-                            streamTaskMenuItem = new IconMenuItem(5, icon, null, "Stream Tasks", null, true, () -> {
-                                final Hyperlink hyperlink = new Builder()
-                                        .text("Stream Tasks")
-                                        .href(stroomUi)
-                                        .type(HyperlinkType.TAB.name().toLowerCase())
-                                        .icon(icon)
-                                        .build();
-                                HyperlinkEvent.fire(this, hyperlink);
-                            });
-                        } else {
-                            streamTaskMenuItem = new IconMenuItem(5, icon, icon, "Stream Tasks is not configured!", null, false, null);
-                        }
-                        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, streamTaskMenuItem);
-                    })
-                    .onFailure(caught -> AlertEvent.fireError(TrackersPlugin.this, caught.getMessage(), null));
-        }
+//        //TODO what are the correct permissions?
+//        if (getSecurityContext().hasAppPermission(PermissionNames.MANAGE_JOBS_PERMISSION)) {
+//            clientPropertyCache.get()
+//                    .onSuccess(result -> {
+//                        final IconMenuItem streamTaskMenuItem;
+//                        final SvgPreset icon = SvgPresets.MONITORING;
+//                        final String stroomUi = result.getUrl().getTrackers();
+//                        if (stroomUi != null && stroomUi.trim().length() > 0) {
+//                            streamTaskMenuItem = new IconMenuItem(5, icon, null, "Stream Tasks", null, true, () -> {
+//                                final Hyperlink hyperlink = new Builder()
+//                                        .text("Stream Tasks")
+//                                        .href(stroomUi)
+//                                        .type(HyperlinkType.TAB.name().toLowerCase())
+//                                        .icon(icon)
+//                                        .build();
+//                                HyperlinkEvent.fire(this, hyperlink);
+//                            });
+//                        } else {
+//                            streamTaskMenuItem = new IconMenuItem(5, icon, icon, "Stream Tasks is not configured!", null, false, null);
+//                        }
+//                        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, streamTaskMenuItem);
+//                    })
+//                    .onFailure(caught -> AlertEvent.fireError(TrackersPlugin.this, caught.getMessage(), null));
+//        }
     }
 }

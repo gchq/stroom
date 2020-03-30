@@ -126,26 +126,6 @@ public class AuthenticationConfig extends AbstractConfig {
         this.userNamePattern = userNamePattern;
     }
 
-    @JsonProperty(PROP_NAME_CLIENT_ID)
-    public String getClientId() {
-        return clientId;
-    }
-
-    @SuppressWarnings("unused")
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
-    }
-
-    @JsonProperty(PROP_NAME_CLIENT_SECRET)
-    public String getClientSecret() {
-        return clientSecret;
-    }
-
-    @SuppressWarnings("unused")
-    public void setClientSecret(String clientSecret) {
-        this.clientSecret = clientSecret;
-    }
-
     @JsonProperty(PROP_NAME_API_TOKEN_CACHE)
     public CacheConfig getApiTokenCache() {
         return apiTokenCache;

@@ -48,8 +48,8 @@ import java.util.Optional;
  * object.
  * <p>
  */
-@JsonIgnoreProperties(value={ "source" }, allowGetters=true)
-@JsonInclude(Include.NON_DEFAULT)
+@JsonIgnoreProperties(value = {"source"}, allowGetters = true)
+@JsonInclude(Include.NON_NULL)
 public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> {
 
     @JsonProperty
@@ -151,16 +151,8 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
         this.updateUser = updateUser;
         this.name = name;
         this.defaultValue = defaultValue;
-        if (databaseOverrideValue != null) {
-            this.databaseOverrideValue = databaseOverrideValue;
-        } else {
-            this.databaseOverrideValue = OverrideValue.unSet(String.class);
-        }
-        if (yamlOverrideValue != null) {
-            this.yamlOverrideValue = yamlOverrideValue;
-        } else {
-            this.yamlOverrideValue = OverrideValue.unSet(String.class);
-        }
+        this.databaseOverrideValue = databaseOverrideValue;
+        this.yamlOverrideValue = yamlOverrideValue;
         this.description = description;
         this.editable = editable;
         this.password = password;
@@ -257,8 +249,8 @@ public class ConfigProperty implements HasAuditInfo, Comparable<ConfigProperty> 
     }
 
     public static Optional<String> getEffectiveValue(final String defaultValue,
-                                       final OverrideValue<String> databaseOverrideValue,
-                                       final OverrideValue<String> yamlOverrideValue) {
+                                                     final OverrideValue<String> databaseOverrideValue,
+                                                     final OverrideValue<String> yamlOverrideValue) {
         if (yamlOverrideValue != null && yamlOverrideValue.isHasOverride()) {
             return yamlOverrideValue.getValueAsOptional();
         } else if (databaseOverrideValue != null && databaseOverrideValue.isHasOverride()) {

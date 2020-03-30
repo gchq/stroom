@@ -18,9 +18,9 @@ package stroom.node.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.entity.EntityAction;
-import stroom.util.entity.EntityEvent;
-import stroom.util.entity.EntityEventHandler;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.node.api.NodeInfo;
 import stroom.node.api.NodeService;
 import stroom.node.api.FindNodeCriteria;
@@ -45,17 +45,20 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
     private final SecurityContext securityContext;
     private final NodeDao nodeDao;
     private final NodeInfo nodeInfo;
+    private NodeConfig nodeConfig;
     private volatile Node thisNode;
 
     @Inject
     NodeServiceImpl(final SecurityContext securityContext,
                     final NodeDao nodeDao,
-                    final NodeInfo nodeInfo) {
+                    final NodeInfo nodeInfo,
+                    final NodeConfig nodeConfig) {
         this.securityContext = securityContext;
         this.nodeDao = nodeDao;
         this.nodeInfo = nodeInfo;
+        this.nodeConfig = nodeConfig;
 
-        ensureNodeCreated();
+        securityContext.asProcessingUser(this::ensureNodeCreated);
     }
 
     Node update(final Node node) {
@@ -76,11 +79,15 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
 
     @Override
     public List<String> findNodeNames(final FindNodeCriteria criteria) {
-        return find(criteria).getValues().stream().map(Node::getName).collect(Collectors.toList());
+        return find(criteria)
+            .getValues()
+            .stream()
+            .map(Node::getName)
+            .collect(Collectors.toList());
     }
 
     @Override
-    public String getClusterUrl(final String nodeName) {
+    public String getBaseEndpointUrl(final String nodeName) {
         final Node node = getNode(nodeName);
         if (node != null) {
             return node.getUrl();
@@ -124,24 +131,43 @@ public class NodeServiceImpl implements NodeService, Clearable, EntityEvent.Hand
         if (thisNode == null) {
             synchronized (this) {
                 if (thisNode == null) {
-                    thisNode = nodeDao.getNode(nodeInfo.getThisNodeName());
-
-                    if (thisNode == null) {
-                        // This will start a new mini transaction for the update
-                        final Node node = new Node();
-                        node.setName(nodeInfo.getThisNodeName());
-                        LOGGER.info("Creating node record for {}", node.getName());
-                        thisNode = nodeDao.create(node);
-                    }
+                    refreshNode();
                 }
 
                 if (thisNode == null) {
                     throw new RuntimeException("Default node not set");
                 }
             }
+        } else {
+            if (!nodeConfig.getBaseEndpoint().getBasePath().equals(thisNode.getUrl())) {
+                // Endpoint url has changed in config so update the node record
+                refreshNode();
+            }
         }
 
         return thisNode;
+    }
+
+    private synchronized void refreshNode() {
+        // Ensure the DB node record has the right endpoint url
+        thisNode = nodeDao.getNode(nodeInfo.getThisNodeName());
+
+        final String endpointUrl = nodeConfig.getBaseEndpoint().getBasePath();
+        if (thisNode == null) {
+            // This will start a new mini transaction to create the node record
+            final Node node = new Node();
+            node.setName(nodeInfo.getThisNodeName());
+            node.setUrl(endpointUrl);
+            LOGGER.info("Creating node record for {} with endpoint url {}",
+                node.getName(), node.getUrl());
+            thisNode = nodeDao.create(node);
+        } else {
+            if (!endpointUrl.equals(thisNode.getUrl())) {
+                thisNode.setUrl(endpointUrl);
+                LOGGER.info("Updating node endpoint url to {} for node {}", endpointUrl, thisNode.getName());
+                update(thisNode);
+            }
+        }
     }
 
     @Override

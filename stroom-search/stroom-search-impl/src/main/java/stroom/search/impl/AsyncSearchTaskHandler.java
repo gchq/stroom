@@ -39,9 +39,10 @@ import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.GenericServerTask;
 import stroom.task.api.TaskContext;
 import stroom.task.api.TaskManager;
-import stroom.task.shared.FindTaskCriteria;
-import stroom.util.shared.Sort.Direction;
 import stroom.task.api.VoidResult;
+import stroom.task.shared.FindTaskCriteria;
+import stroom.util.shared.ResultPage;
+import stroom.util.shared.Sort.Direction;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -53,7 +54,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 
 class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(AsyncSearchTaskHandler.class);
@@ -119,11 +119,11 @@ class AsyncSearchTaskHandler extends AbstractTaskHandler<AsyncSearchTask, VoidRe
                     // Order by partition name and key.
                     findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_PARTITION, Direction.DESCENDING, false);
                     findIndexShardCriteria.addSort(FindIndexShardCriteria.FIELD_ID, Direction.DESCENDING, false);
-                    final List<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
+                    final ResultPage<IndexShard> indexShards = indexShardService.find(findIndexShardCriteria);
 
                     // Build a map of nodes that will deal with each set of shards.
                     final Map<String, List<Long>> shardMap = new HashMap<>();
-                    for (final IndexShard indexShard : indexShards) {
+                    for (final IndexShard indexShard : indexShards.getValues()) {
                         if (IndexShardStatus.CORRUPT.equals(indexShard.getStatus())) {
                             resultCollector.getErrorSet(indexShard.getNodeName()).add(
                                     "Attempt to search an index shard marked as corrupt: id=" + indexShard.getId() + ".");

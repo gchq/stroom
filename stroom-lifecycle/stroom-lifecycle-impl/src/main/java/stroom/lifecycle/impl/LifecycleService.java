@@ -31,6 +31,7 @@ import java.util.Deque;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -134,6 +135,9 @@ class LifecycleService implements Managed {
                         .runAsync(runnable)
                         .whenComplete((r, t) -> {
                             if (t != null) {
+                                while (t instanceof CompletionException) {
+                                    t = t.getCause();
+                                }
                                 LOGGER.error(t.getMessage(), t);
                             }
                             startNext();
@@ -179,6 +183,9 @@ class LifecycleService implements Managed {
                     .runAsync(runnable)
                     .whenComplete((r, t) -> {
                         if (t != null) {
+                            while (t instanceof CompletionException) {
+                                t = t.getCause();
+                            }
                             LOGGER.error(t.getMessage(), t);
                         }
                         stopNext();

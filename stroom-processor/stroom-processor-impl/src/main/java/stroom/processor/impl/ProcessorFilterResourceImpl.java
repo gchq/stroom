@@ -108,7 +108,8 @@ class ProcessorFilterResourceImpl implements ProcessorFilterResource, HasHealthC
     @Override
     public ProcessorListRowResultPage find(final FetchProcessorRequest request) {
         try {
-            return processorFilterService.find(request);
+            final ResultPage<ProcessorListRow> resultPage = processorFilterService.find(request);
+            return new ProcessorListRowResultPage(resultPage.getValues(), resultPage.getPageResponse());
         } catch (final RuntimeException e) {
             throw new ServerErrorException(Status.INTERNAL_SERVER_ERROR, e);
         }

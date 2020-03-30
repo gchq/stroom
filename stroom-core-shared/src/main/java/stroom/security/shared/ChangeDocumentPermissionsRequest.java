@@ -24,22 +24,25 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.DocRef;
 import stroom.docref.HasDisplayValue;
 
+import java.util.Map;
+import java.util.Set;
+
 @JsonPropertyOrder({"docRef", "changeSet", "cascade"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ChangeDocumentPermissionsRequest {
     @JsonProperty
     private final DocRef docRef;
     @JsonProperty
-    private final ChangeSet<UserPermission> changeSet;
+    private Changes changes;
     @JsonProperty
     private final Cascade cascade;
 
     @JsonCreator
     public ChangeDocumentPermissionsRequest(@JsonProperty("docRef") final DocRef docRef,
-                                            @JsonProperty("changeSet") final ChangeSet<UserPermission> changeSet,
+                                            @JsonProperty("changes") Changes changes,
                                             @JsonProperty("cascade") final Cascade cascade) {
         this.docRef = docRef;
-        this.changeSet = changeSet;
+        this.changes = changes;
         this.cascade = cascade;
     }
 
@@ -47,8 +50,8 @@ public class ChangeDocumentPermissionsRequest {
         return docRef;
     }
 
-    public ChangeSet<UserPermission> getChangeSet() {
-        return changeSet;
+    public Changes getChanges() {
+        return changes;
     }
 
     public Cascade getCascade() {

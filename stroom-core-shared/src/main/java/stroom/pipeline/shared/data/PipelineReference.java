@@ -59,7 +59,7 @@ import java.util.Objects;
  */
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "PipelineReference", propOrder = {"element", "name", "pipeline", "feed", "streamType"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"element", "name", "pipeline", "feed", "streamType"})
 public final class PipelineReference implements Comparable<PipelineReference>, Copyable<PipelineReference> {
     @XmlElement(name = "element", required = true)

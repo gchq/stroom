@@ -405,7 +405,6 @@ public class ConfigMapper {
                 type.equals(boolean.class) ||
                 type.equals(Character.class) ||
                 type.equals(char.class) ||
-                type.equals(Duration.class) ||
                 List.class.isAssignableFrom(type) ||
                 Map.class.isAssignableFrom(type) ||
                 DocRef.class.isAssignableFrom(type) ||
@@ -598,8 +597,6 @@ public class ConfigMapper {
                 return parseBoolean(value);
             } else if ((type.equals(Character.class) || type.equals(char.class)) && value.length() > 0) {
                 return value.charAt(0);
-            } else if (type.equals(Duration.class)) {
-                return Duration.parse(value);
             } else if (List.class.isAssignableFrom(type)) {
                 // determine the type of the list items
                 final Class<?> itemType = getGenericsParam(genericType, 0);

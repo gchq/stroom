@@ -18,11 +18,11 @@ package stroom.core.entity.event;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.util.entity.EntityAction;
-import stroom.util.entity.EntityEvent;
-import stroom.util.entity.EntityEvent.Handler;
-import stroom.util.entity.EntityEventBus;
-import stroom.util.entity.EntityEventHandler;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEvent.Handler;
+import stroom.util.entityevent.EntityEventBus;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.task.api.TaskManager;
 
 import javax.inject.Inject;

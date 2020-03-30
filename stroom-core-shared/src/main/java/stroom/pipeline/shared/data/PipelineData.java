@@ -33,7 +33,7 @@ import java.util.List;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(name = "Pipeline", propOrder = {"elements", "properties", "pipelineReferences", "links"})
 @XmlRootElement(name = "pipeline")
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 @JsonPropertyOrder({"elements", "properties", "pipelineReferences", "links"})
 public class PipelineData {
     @XmlElement(name = "elements")

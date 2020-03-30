@@ -18,6 +18,7 @@ dependencies {
     compile project(':stroom-util')
     compile project(':stroom-util-shared')
 
+    compile libs.commons_text
     compile libs.eventLogging
     compile libs.guava
     compile libs.guice4

@@ -25,13 +25,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 /**
  * API to table status
  */
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class DBTableStatus {
     public static final String FIELD_DATABASE = "Database";
     public static final String FIELD_TABLE = "Table";
     public static final String FIELD_ROW_COUNT = "Count";
     public static final String FIELD_DATA_SIZE = "Data Size";
     public static final String FIELD_INDEX_SIZE = "Index Size";
+
 
     @JsonProperty
     private String db;

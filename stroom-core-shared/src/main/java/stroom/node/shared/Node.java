@@ -24,11 +24,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.util.shared.HasAuditInfo;
 
+import java.util.Objects;
+
 /**
  * Represents a node for storage and processing.
  */
 @JsonPropertyOrder({"id", "version", "createTimeMs", "createUser", "updateTimeMs", "updateUser", "name", "url", "priority", "enabled"})
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class Node implements HasAuditInfo {
     public static final String ENTITY_TYPE = "Node";
 
@@ -55,9 +57,9 @@ public class Node implements HasAuditInfo {
      * master
      */
     @JsonProperty
-    private Integer priority;
+    private int priority;
     @JsonProperty
-    private Boolean enabled;
+    private boolean enabled;
 
     public Node() {
         priority = 1;
@@ -83,16 +85,8 @@ public class Node implements HasAuditInfo {
         this.updateUser = updateUser;
         this.name = name;
         this.url = url;
-        if (priority != null) {
-            this.priority = priority;
-        } else {
-            this.priority = 1;
-        }
-        if (enabled != null) {
-            this.enabled = enabled;
-        } else {
-            this.enabled = true;
-        }
+        this.priority = priority;
+        this.enabled = enabled;
     }
 
     /**
@@ -212,4 +206,44 @@ public class Node implements HasAuditInfo {
 //        node.enabled = enabled;
 //        return node;
 //    }
+
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final Node node = (Node) o;
+        return priority == node.priority &&
+            enabled == node.enabled &&
+            Objects.equals(id, node.id) &&
+            Objects.equals(version, node.version) &&
+            Objects.equals(createTimeMs, node.createTimeMs) &&
+            Objects.equals(createUser, node.createUser) &&
+            Objects.equals(updateTimeMs, node.updateTimeMs) &&
+            Objects.equals(updateUser, node.updateUser) &&
+            Objects.equals(name, node.name) &&
+            Objects.equals(url, node.url);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, version, createTimeMs, createUser, updateTimeMs, updateUser, name, url, priority, enabled);
+    }
+
+    @Override
+    public String
+    toString() {
+        return "Node{" +
+            "id=" + id +
+            ", version=" + version +
+            ", createTimeMs=" + createTimeMs +
+            ", createUser='" + createUser + '\'' +
+            ", updateTimeMs=" + updateTimeMs +
+            ", updateUser='" + updateUser + '\'' +
+            ", name='" + name + '\'' +
+            ", url='" + url + '\'' +
+            ", priority=" + priority +
+            ", enabled=" + enabled +
+            '}';
+    }
 }

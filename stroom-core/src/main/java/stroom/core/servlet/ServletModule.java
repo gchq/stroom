@@ -41,10 +41,10 @@ public class ServletModule extends AbstractModule {
         FilterBinder.create(binder())
                 .bind(new FilterInfo(HttpServletRequestFilter.class.getSimpleName(), MATCH_ALL_PATHS),
                         HttpServletRequestFilter.class)
-                .bind(new FilterInfo("rejectPostFilter", MATCH_ALL_PATHS)
+                .bind(new FilterInfo(RejectPostFilter.class.getSimpleName(), MATCH_ALL_PATHS)
                                 .addparameter("rejectUri", "/"),
                         RejectPostFilter.class)
-                .bind(new FilterInfo("cacheControlFilter", MATCH_ALL_PATHS)
+                .bind(new FilterInfo(CacheControlFilter.class.getSimpleName(), MATCH_ALL_PATHS)
                                 .addparameter(CacheControlFilter.INIT_PARAM_KEY_SECONDS, "600")
                                 .addparameter(CacheControlFilter.INIT_PARAM_KEY_CACHEABLE_PATH_REGEX, cacheablePathsRegex),
                         CacheControlFilter.class);
@@ -57,7 +57,8 @@ public class ServletModule extends AbstractModule {
                 // unauthenticated servlets (i.e. run as proc user)
                 .bind(ReceiveDataServlet.class)
                 .bind(DebugServlet.class)
-                .bind(StatusServlet.class);
+                .bind(StatusServlet.class)
+                .bind(SwaggerUiServlet.class);
     }
 
 }

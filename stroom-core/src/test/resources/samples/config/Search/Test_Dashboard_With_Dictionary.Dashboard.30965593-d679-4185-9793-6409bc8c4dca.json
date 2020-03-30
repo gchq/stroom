@@ -42,34 +42,48 @@
         "format" : {
           "type" : "DATE_TIME"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "UserId",
         "expression" : "${UserId}",
         "format" : {
           "type" : "GENERAL"
         },
-        "group" : 0
+        "group" : 0,
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "Count",
         "expression" : "count()",
         "format" : {
           "type" : "NUMBER"
-        }
+        },
+        "width" : 200,
+        "visible" : true,
+        "special" : false
       }, {
         "name" : "StreamId",
         "expression" : "${StreamId}",
-        "visible" : false
+        "width" : 200,
+        "visible" : false,
+        "special" : false
       }, {
         "name" : "EventId",
         "expression" : "${EventId}",
-        "visible" : false
+        "width" : 200,
+        "visible" : false,
+        "special" : false
       } ],
       "extractionPipeline" : {
         "type" : "Pipeline",
         "uuid" : "e5ecdf93-d433-45ac-b14a-1f77f16ae4f7",
         "name" : "Example extraction"
-      }
+      },
+      "maxResults" : [ 1000000 ]
     }
   }, {
     "type" : "vis",
@@ -88,35 +102,45 @@
   } ],
   "layout" : {
     "type" : "splitLayout",
-    "preferredSize" : { },
+    "preferredSize" : {
+      "width" : 0,
+      "height" : 0
+    },
     "dimension" : 1,
     "children" : [ {
       "type" : "tabLayout",
       "preferredSize" : {
+        "width" : 0,
         "height" : 122
       },
       "tabs" : [ {
-        "id" : "query-MRGPM"
+        "id" : "query-MRGPM",
+        "visible" : true
       } ],
       "selected" : 0
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
+        "width" : 0,
         "height" : 258
       },
       "tabs" : [ {
-        "id" : "table-78LF4"
+        "id" : "table-78LF4",
+        "visible" : true
       } ],
       "selected" : 0
     }, {
       "type" : "tabLayout",
       "preferredSize" : {
+        "width" : 0,
         "height" : 604
       },
       "tabs" : [ {
-        "id" : "vis-SPSCW"
+        "id" : "vis-SPSCW",
+        "visible" : true
       } ],
       "selected" : 0
     } ]
-  }
+  },
+  "tabVisibility" : "SHOW_ALL"
 }

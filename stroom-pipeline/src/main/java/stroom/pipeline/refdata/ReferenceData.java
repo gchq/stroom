@@ -22,7 +22,6 @@ import stroom.data.shared.StreamTypeNames;
 import stroom.data.store.api.InputStreamProvider;
 import stroom.data.store.api.SizeAwareInputStream;
 import stroom.docref.DocRef;
-import stroom.feed.shared.FeedDoc;
 import stroom.meta.shared.Meta;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.refdata.store.MapDefinition;
@@ -344,7 +343,6 @@ public class ReferenceData {
         final boolean hasPermission = localDocumentPermissionCache.computeIfAbsent(pipelineReference, k ->
                 documentPermissionCache == null ||
                         documentPermissionCache.hasDocumentPermission(
-                                FeedDoc.DOCUMENT_TYPE,
                                 pipelineReference.getFeed().getUuid(),
                                 DocumentPermissionNames.USE));
 

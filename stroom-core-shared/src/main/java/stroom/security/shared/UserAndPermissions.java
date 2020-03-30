@@ -23,25 +23,25 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Set;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class UserAndPermissions {
     @JsonProperty
-    private final String userId;
+    private final User user;
     @JsonProperty
-    private final Set<String> appPermissionSet;
+    private final Set<String> permissions;
 
     @JsonCreator
-    public UserAndPermissions(@JsonProperty("userId") final String userId,
-                              @JsonProperty("appPermissionSet") final Set<String> appPermissionSet) {
-        this.userId = userId;
-        this.appPermissionSet = appPermissionSet;
+    public UserAndPermissions(@JsonProperty("user") final User user,
+                              @JsonProperty("permissions") final Set<String> permissions) {
+        this.user = user;
+        this.permissions = permissions;
     }
 
-    public String getUserId() {
-        return userId;
+    public User getUser() {
+        return user;
     }
 
-    public Set<String> getAppPermissionSet() {
-        return appPermissionSet;
+    public Set<String> getPermissions() {
+        return permissions;
     }
 }

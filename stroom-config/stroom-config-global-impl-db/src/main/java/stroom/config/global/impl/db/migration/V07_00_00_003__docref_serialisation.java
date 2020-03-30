@@ -20,7 +20,7 @@ public class V07_00_00_003__docref_serialisation extends BaseJavaMigration {
      * Executes this migration. The execution will automatically take place within a transaction, when the underlying
      * database supports it.
      *
-     * @param connection The connection to use to execute statements.
+     * @param flywayContext The flyway context to use to execute statements.
      * @throws Exception when the migration failed.
      */
     @Override

@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.data.store.impl.fs.FsVolumeService;
 import stroom.data.store.impl.fs.shared.FindFsVolumeCriteria;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.VolumeCreator;
 import stroom.index.impl.IndexShardManager;
 import stroom.index.impl.IndexShardWriterCache;
@@ -97,7 +98,7 @@ public class DatabaseCommonTestControl implements CommonTestControl {
         indexShardManager.deleteFromDisk();
 
         // Delete the contents of all index volumes.
-        volumeService.getAll()
+        volumeService.find(new ExpressionCriteria()).getValues()
                 .forEach(volume -> {
                     // The parent will also pick up the index shard (as well as the
                     // store)

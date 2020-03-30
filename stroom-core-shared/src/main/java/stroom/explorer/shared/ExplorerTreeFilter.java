@@ -24,7 +24,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Objects;
 import java.util.Set;
 
-@JsonInclude(Include.NON_DEFAULT)
+@JsonInclude(Include.NON_NULL)
 public class ExplorerTreeFilter {
     @JsonProperty
     private final Set<String> includedTypes;

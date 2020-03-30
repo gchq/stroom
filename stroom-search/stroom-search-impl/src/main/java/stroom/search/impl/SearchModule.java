@@ -17,12 +17,13 @@
 package stroom.search.impl;
 
 import com.google.inject.AbstractModule;
+import stroom.cluster.task.api.ClusterTaskHandlerBinder;
 import stroom.search.api.EventSearch;
 import stroom.search.extraction.ExtractionModule;
 import stroom.task.api.TaskHandlerBinder;
-import stroom.util.shared.RestResource;
 import stroom.util.guice.GuiceUtil;
 import stroom.util.shared.Clearable;
+import stroom.util.shared.RestResource;
 
 public class SearchModule extends AbstractModule {
     @Override
@@ -38,7 +39,9 @@ public class SearchModule extends AbstractModule {
 
         TaskHandlerBinder.create(binder())
                 .bind(AsyncSearchTask.class, AsyncSearchTaskHandler.class)
-                .bind(ClusterSearchTask.class, ClusterSearchTaskHandler.class)
                 .bind(EventSearchTask.class, EventSearchTaskHandler.class);
+
+        ClusterTaskHandlerBinder.create(binder())
+                .bind(ClusterSearchTask.class, ClusterSearchTaskHandler.class);
     }
 }

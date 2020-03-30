@@ -3,19 +3,24 @@ package stroom.dropwizard.common;
 import com.codahale.metrics.health.HealthCheck;
 import com.codahale.metrics.health.HealthCheckRegistry;
 import io.dropwizard.setup.Environment;
+import io.vavr.Tuple;
+import io.vavr.Tuple3;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.ConsoleColour;
 import stroom.util.HasHealthCheck;
-import stroom.util.shared.ResourcePaths;
 import stroom.util.logging.LogUtil;
 import stroom.util.shared.IsServlet;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.Unauthenticated;
 
 import javax.inject.Inject;
 import javax.servlet.Servlet;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -58,35 +63,71 @@ public class Servlets {
         }
 
         LOGGER.info("Adding servlets:");
-        servlets.stream()
-                .sorted(Comparator.comparing(isServlet ->
-                        isServlet.getClass().getSimpleName()))
-                .forEach(servlet -> {
-                    // A servlet may have multiple path specs
-                    for (String partialPathSpec : servlet.getPathSpecs()) {
-                        final String name = servlet.getClass().getSimpleName();
-                        final String servletPath = Objects.requireNonNull(partialPathSpec);
-                        final String fullPathSpec;
-                        // Determine the full servlet path based on whether the servlet requires
-                        // authentication or not
-                        if (servlet.getClass().isAnnotationPresent(Unauthenticated.class)) {
-                            fullPathSpec = ResourcePaths.buildUnauthenticatedServletPath(servletPath);
-                        } else {
-                            fullPathSpec = ResourcePaths.buildAuthenticatedServletPath(servletPath);
-                        }
-                        LOGGER.info("\t{} => {}", name, fullPathSpec);
-                        final ServletHolder servletHolder;
-                        try {
-                            servletHolder = new ServletHolder(name, (Servlet) servlet);
-                        } catch (ClassCastException e) {
-                            throw new RuntimeException(LogUtil.message("Injected class {} is not a Servlet",
-                                    servlet.getClass().getName()));
-                        }
-                        servletContextHandler.addServlet(servletHolder, fullPathSpec);
 
-                        registerHealthCheck(servlet, fullPathSpec);
+        final Set<String> allPaths = new HashSet<>();
+
+        int maxNameLength = servlets.stream()
+            .mapToInt(servlet -> servlet.getClass().getName().length())
+            .max()
+            .orElse(0);
+
+        // Register all the path specs for each servlet class in pathspec order
+        servlets.stream()
+            .flatMap(servlet ->
+                servlet.getPathSpecs().stream()
+                .map(partialPathSpec -> {
+                    final String name = servlet.getClass().getName();
+                    final String servletPath = Objects.requireNonNull(partialPathSpec);
+                    final String fullPathSpec;
+                    // Determine the full servlet path based on whether the servlet requires
+                    // authentication or not
+                    if (servlet.getClass().isAnnotationPresent(Unauthenticated.class)) {
+                        fullPathSpec = ResourcePaths.buildUnauthenticatedServletPath(servletPath);
+                    } else {
+                        fullPathSpec = ResourcePaths.buildAuthenticatedServletPath(servletPath);
                     }
-                });
+                    return Tuple.of(servlet, name, fullPathSpec);
+                }))
+            .sorted(Comparator.comparing(Tuple3::_3))
+            .forEach(tuple3 -> {
+                final IsServlet isServlet = tuple3._1();
+                final String name = tuple3._2();
+                final String fullPathSpec = tuple3._3();
+
+                addServlet(servletContextHandler, allPaths, maxNameLength, isServlet, name, fullPathSpec);
+            });
+    }
+
+    private void addServlet(final ServletContextHandler servletContextHandler,
+                            final Set<String> allPaths,
+                            final int maxNameLength,
+                            final IsServlet isServlet,
+                            final String name,
+                            final String fullPathSpec) {
+
+        if (allPaths.contains(fullPathSpec)) {
+            LOGGER.error("\t{} => {}   {}",
+                StringUtils.rightPad(name, maxNameLength, " "),
+                fullPathSpec,
+                ConsoleColour.red("**Duplicate path**"));
+            throw new RuntimeException(LogUtil.message("Duplicate servlet path {}", fullPathSpec));
+        } else {
+            LOGGER.info("\t{} => {}",
+                StringUtils.rightPad(name, maxNameLength, " "),
+                fullPathSpec);
+        }
+
+        final ServletHolder servletHolder;
+        try {
+            servletHolder = new ServletHolder(name, (Servlet) isServlet);
+        } catch (ClassCastException e) {
+            throw new RuntimeException(LogUtil.message("Injected class {} is not a Servlet",
+                isServlet.getClass().getName()));
+        }
+        servletContextHandler.addServlet(servletHolder, fullPathSpec);
+        allPaths.add(fullPathSpec);
+
+        registerHealthCheck(isServlet, fullPathSpec);
     }
 
     private void registerHealthCheck(final IsServlet servlet,

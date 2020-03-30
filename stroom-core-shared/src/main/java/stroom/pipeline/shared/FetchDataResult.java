@@ -24,7 +24,7 @@ import stroom.util.shared.RowCount;
 
 import java.util.List;
 
-@JsonInclude(JsonInclude.Include.NON_DEFAULT)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FetchDataResult extends AbstractFetchDataResult {
     @JsonProperty
     private final String data;
