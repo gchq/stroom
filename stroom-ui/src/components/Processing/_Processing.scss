@@ -1,0 +1,186 @@
+/*
+ * Copyright 2018 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "./ProcessingList/ProcessingList";
+@import "./ProcessingDetails/ProcessingDetails";
+@import "./ProcessingSearchHelp/ProcessingSearchHelp";
+
+// .processing {
+//   display: flex;
+//   flex-direction: column;
+// }
+
+// .processing__header {
+//   width: 100%;
+//   display: inline-flex;
+//   flex-direction: row;
+//   flex-shrink: 0;
+// }
+
+.processing__search {
+  // padding: 0.4rem;
+  display: inline-flex;
+  flex-direction: row;
+  flex-shrink: 0;
+  width: 100%;
+}
+
+.processing__search input {
+  margin: 0;
+}
+
+// .processing__main {
+//   position: relative;
+//   flex-grow: 1;
+//   overflow: hidden;
+// }
+
+.processing__table .horizontal-panel {
+  border-top: thin solid rgba(0,0,0,0.1);
+}
+
+
+
+// .processing__header-container .header {
+//   // We don't want this header to be obnoxious about it's surrounding space
+//   // -- this is a header bar not a flowing page of text.
+//   margin-bottom: 0;
+//   // We want to space the header from the left hand-edge.
+//   padding-left: 6px;
+// }
+
+// .processing__header-container .content.header {
+//   // These paddings are all about alignment of the header text with the icon
+//   padding-top: 10px;
+//   padding-left: 3px;
+//   padding-bottom: 8px;
+// }
+
+// .processing__header-container .input {
+//   margin-left: 20px;
+//   margin-top: 5px;
+//   height: 40px;
+//   min-width: 200px;
+//   flex-grow: 1;
+// }
+
+// .tracker-container {
+//   position: relative;
+//   height: calc(100% - 87px);
+// }
+
+// .tracker-container .SplitPane {
+//   position: relative;
+// }
+
+// .tracker-container .SplitPane .Pane1 {
+//   overflow-y: auto;
+// }
+
+// .tracker {
+//   position: absolute;
+//   height: 100%;
+//   width: 100%;
+// }
+
+.tracker-table {
+  border: none;
+  border-top: thin solid;
+  border-bottom: 2px solid;
+  box-shadow: 0 0 4px 0 rgba(0, 0, 0, 0.15) !important;
+}
+
+// TODO doesn't seem to be used, but didn't want to throw away
+// .headerDivider {
+//   border-left: thin solid #38546d;
+//   height: 80px;
+//   top: 10px;
+// }
+// .trackers-container {
+//   margin: 0 auto;
+//   width: 900px;
+// }
+// .tracker-details-table .progress {
+//   margin: 0;
+//   padding: 0;
+// }
+
+// .tracker-details-table {
+//   border: 5px 0 0 0;
+//   padding: 10px;
+// }
+
+// .search-container {
+//   width: 100%;
+//   top: 0;
+//   left: 0;
+//   height: 45px;
+//   right: 0;
+//   overflow: hidden;
+// }
+
+// .search-container .input {
+//   width: 100%;
+// }
+// .tracker-dashboard {
+//   height: 100%;
+//   min-height: 150px;
+// }
+// .tracker-dashboard .table-container {
+//   top: 45px;
+//   bottom: 0;
+//   left: 0;
+//   right: 0;
+//   overflow: auto;
+// }
+
+// .tracker-dashboard .table-container table {
+//   margin-bottom: 0;
+// }
+
+// .tracker-dashboard .table-container.showing-details {
+//   bottom: 295px;
+// }
+
+// .tracker-dashboard .details-container {
+//   border-top: solid 3px lightgray;
+//   overflow: hidden;
+//   width: 100%;
+//   bottom: 0;
+//   height: 295px;
+//   left: 0;
+//   right: 0;
+// }
+
+// .tracker-dashboard .details-container .details-grid {
+//   border-bottom: thin solid rgba(34, 36, 38, 0.15);
+// }
+
+// .tracker-dashboard .details-container .card {
+//   padding: 0;
+// }
+
+// .tracker-dashboard .pagination-container {
+//   width: 100%;
+//   text-align: center;
+//   border: thin solid lightgray;
+// }
+
+// .tracker-dashboard .pagination-container .ui.menu {
+//   border: none;
+//   -webkit-box-shadow: none;
+//   box-shadow: none;
+// }

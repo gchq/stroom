@@ -1,0 +1,28 @@
+select {
+  width: unset;
+  padding: unset !important;
+  margin: unset !important;
+}
+
+.inline-select__not-editing {
+  //Themify this
+  //item__text-color--focus--highlighted
+  color: rgba(0, 0, 0, 0.9);
+}
+
+.inline-select__not-editing:hover {
+  //THEMIFY THIS
+  //item__background-color--focus--highlighted
+  background-color: rgba(144, 202, 249, 0.4);
+  border-radius: 0.3em;
+  cursor: text;
+}
+
+.inline-select__editing {
+  color: rgb(0, 83, 151);
+  // Setting the height is necessary to stop the content below moving down
+  height: 18px;
+  // Setting the font-size is necessary to stop the line itself moving down
+  font-size: 12px;
+  border: 0;
+}

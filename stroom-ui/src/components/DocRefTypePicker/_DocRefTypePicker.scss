@@ -1,0 +1,15 @@
+.DocRefTypePicker {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.DocRefTypePicker__image {
+  margin-right: 1rem;
+  flex-grow: 0;
+}
+
+.DocRefTypePicker__text {
+  margin-right: 1rem;
+  flex-grow: 1;
+}

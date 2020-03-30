@@ -1,0 +1,52 @@
+// .welcome {
+//   display: flex;
+//   flex-direction: column;
+// }
+
+// .welcome__header {
+//   display: inline-flex;
+//   flex-direction: row;
+//   flex-shrink: 0;
+// }
+
+// .ActivitySummary {
+//   position: absolute;
+//   right: 0;
+//   bottom: 0;
+//   padding: 0.36rem;
+// }
+
+.ActivitySummary {
+  // background-color: white;
+  // border: lightblue solid thin;
+  border-radius: .5rem;
+  padding: .5rem;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  font-weight: 400;
+  font-size: .7rem;
+}
+
+.ActivitySummary__header {
+  font-size: .9rem;
+  font-weight: 600;
+  // font-family: Roboto, arial, tahoma, verdana;
+}
+
+.ActivitySummary b {
+  font-weight: 600;
+  // font-family: Roboto, arial, tahoma, verdana;
+
+}
+
+// .welcome__image {
+//   width: 200px;
+//   display: flex;
+//   flex-direction: row;
+//   align-items: center;
+// }
+
+// .welcome__shortcuts__table {
+//   width: 400px;
+// }

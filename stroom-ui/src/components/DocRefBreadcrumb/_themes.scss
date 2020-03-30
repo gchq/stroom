@@ -1,0 +1,12 @@
+$themes: (
+  light: (
+    breadcrumb__text__color: rgba(0,0,0,0.5),
+    breadcrumb__text__color--hover: rgba(0,0,0,0.7),
+    breadcrumb__divider__color: rgba(0,0,0,0.3),
+  ),
+  dark: (
+    breadcrumb__text__color: rgba(255,255,255,0.5),
+    breadcrumb__text__color--hover: rgba(255,255,255,0.7),
+    breadcrumb__divider__color: rgba(255,255,255,0.3),
+  )
+);

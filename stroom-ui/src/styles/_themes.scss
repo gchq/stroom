@@ -1,0 +1,127 @@
+$themes: (
+  light: (
+    // Page
+    page__background-color: #fff,
+    page__text-color: rgba(0, 0, 0, 0.8),
+
+    // Controls
+    control__background-color: #fff,
+    control__text-color: rgba(0, 0, 0, 0.8),
+    control__border-color: rgba(0,0,0,0.1),
+
+    // Items, e.g. rows for tables, drop downs lists etc.
+    item__background-color--focus--highlighted: rgba(144,202,249,0.4),
+    item__text-color--focus--highlighted: rgba(0, 0, 0, 0.9),
+    item__background-color--focus--highlighted--hover: rgba(144,202,249,0.4),//rgba(24,94,144,0.4),
+    item__text-color--focus--highlighted--hover: rgba(0, 0, 0, 0.9),
+    item__background-color--focus--selected: rgba(144,202,249,0.9),
+    item__text-color--focus--selected: #000,
+    item__background-color--focus--highlighted--selected: rgba(144,202,249,1),//#cae1f1,
+    item__text-color--focus--highlighted--selected: #000,
+    item__background-color--hover: rgba(0,0,0,0.1),//rgba(24,94,144,0.3),
+    item__text-color--hover: rgba(0, 0, 0, 0.8),
+    item__background-color--selected: rgba(0,0,0,0.2),//rgba(24,94,144,0.6),
+    item__text-color--selected: #000,//rgba(0, 0, 0, 0.8),//#fff,
+    item__background-color--selected--hover: rgba(0,0,0,0.2),//rgba(24,94,144,0.7),
+    item__text-color--selected--hover: #000,//rgba(0, 0, 0, 0.8),//#fff,
+
+    // Pipeline editor
+    raised-low__background-color: #e4e4e4,
+    raised-low__text-color: rgba(0, 0, 0, 0.8),
+    raised-high__background-color: #2185d0,
+    raised-high__text-color: rgba(0, 0, 0, 0.8),
+    raised-high__selected-background-color: red,
+    raised-high__selected-focus-background-color: #1c70b1,
+    raised-element__border: thin solid #fff,
+
+    // Sidebar
+    sidebar__header-color: #fff,
+    sidebar__background-color: #01579B, // material light blue 900
+    menu-item__text-color: rgba(255,255,255,0.8),
+    menu-item__background-color--focus--highlighted: rgba(2,136,209,0.3),
+    menu-item__text-color--focus--highlighted: #fff,
+    menu-item__background-color--focus--highlighted--hover: rgba(2,136,209,0.3),//rgba(24,94,144,0.4),
+    menu-item__text-color--focus--highlighted--hover: #fff,
+    menu-item__background-color--focus--selected: rgba(2,136,209,0.9),
+    menu-item__text-color--focus--selected: #fff,
+    menu-item__background-color--focus--highlighted--selected: rgba(2,136,209,1), // material light blue 700
+    menu-item__text-color--focus--highlighted--selected: #fff,
+    menu-item__background-color--hover: rgba(2,136,209,.2),//rgba(24,94,144,0.3),
+    menu-item__text-color--hover: #fff,
+    menu-item__background-color--selected: rgba(2,136,209,.5),//rgba(24,94,144,0.6),
+    menu-item__text-color--selected: #fff,//#cacbcb,//#fff,
+    menu-item__background-color--selected--hover: rgba(2,136,209,.6),//rgba(24,94,144,0.7),
+    menu-item__text-color--selected--hover: #fff,//#cacbcb,//#fff,
+
+    border-color: rgba(0,0,0,0.1),
+
+    // Specific
+    header__icon-color: #2185d0,
+
+
+
+    // React table
+    odd-row__background-color: rgba(0,0,0,0.03),
+  ),
+  dark: (
+    // Page
+    page__background-color: #212121,
+    page__text-color: #cacbcb,
+
+    // Controls
+    control__background-color: #1e1e1e,
+    control__text-color: #cacbcb,
+    control__border-color: #4d5250,
+
+    // Items, e.g. rows for tables, drop downs lists etc.
+    item__background-color--focus--highlighted: rgba(24,94,144,0.3),
+    item__text-color--focus--highlighted: #cacbcb,
+    item__background-color--focus--highlighted--hover: rgba(24,94,144,0.3),//rgba(24,94,144,0.4),
+    item__text-color--focus--highlighted--hover: #cacbcb,
+    item__background-color--focus--selected: rgba(24,94,144,0.9),
+    item__text-color--focus--selected: #fff,
+    item__background-color--focus--highlighted--selected: rgba(24,94,144,1),
+    item__text-color--focus--highlighted--selected: #fff,
+    item__background-color--hover: rgba(255,255,255,0.1),//rgba(24,94,144,0.3),
+    item__text-color--hover: #cacbcb,
+    item__background-color--selected: rgba(255,255,255,0.2),//rgba(24,94,144,0.6),
+    item__text-color--selected: #fff,//#cacbcb,//#fff,
+    item__background-color--selected--hover: rgba(255,255,255,0.2),//rgba(24,94,144,0.7),
+    item__text-color--selected--hover: #fff,//#cacbcb,//#fff,
+
+    // Pipeline editor
+    raised-low__background-color: #adadad,
+    raised-low__text-color: #cacbcb,
+    raised-high__background-color: #4d5250,
+    raised-high__text-color: #cacbcb,
+    raised-high__selected-background-color: #747c79,
+    raised-high__selected-focus-background-color: #747c79,
+    raised-element__border: thin solid #aaa,
+    border-color: #4d5250,
+
+    // Sidebar
+    sidebar__header-color: #fff,
+    sidebar__background-color: #252526,
+    menu-item__text-color: rgba(255,255,255,0.8),
+    menu-item__background-color--focus--highlighted: rgba(24,94,144,0.3),
+    menu-item__text-color--focus--highlighted: #cacbcb,
+    menu-item__background-color--focus--highlighted--hover: rgba(24,94,144,0.3),//rgba(24,94,144,0.4),
+    menu-item__text-color--focus--highlighted--hover: #cacbcb,
+    menu-item__background-color--focus--selected: rgba(24,94,144,0.9),
+    menu-item__text-color--focus--selected: #fff,
+    menu-item__background-color--focus--highlighted--selected: rgba(24,94,144,1),
+    menu-item__text-color--focus--highlighted--selected: #fff,
+    menu-item__background-color--hover: rgba(255,255,255,0.1),//rgba(24,94,144,0.3),
+    menu-item__text-color--hover: #cacbcb,
+    menu-item__background-color--selected: rgba(255,255,255,0.2),//rgba(24,94,144,0.6),
+    menu-item__text-color--selected: #fff,//#cacbcb,//#fff,
+    menu-item__background-color--selected--hover: rgba(255,255,255,0.2),//rgba(24,94,144,0.7),
+    menu-item__text-color--selected--hover: #fff,//#cacbcb,//#fff,
+
+    // Specific
+    header__icon-color: #2185d0,
+
+    // React table
+    odd-row__background-color: rgba(0,0,0,0.2),
+  )
+);

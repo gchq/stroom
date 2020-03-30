@@ -1,0 +1,56 @@
+@import "themes.scss";
+@import "../../styles/themify.scss";
+
+.DocRefBreadcrumb__link {
+  display: inline-block;
+  cursor: pointer;
+  color: rgba(0,0,0,0.5);
+  text-decoration: none;
+  font-size: .7rem;
+}
+
+.DocRefBreadcrumb__link:hover {
+  text-decoration: underline;
+  color: rgba(0,0,0,0.7);
+}
+
+.DocRefBreadcrumb__divider {
+  display: inline-block;
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
+  color: rgba(0,0,0,0.3);
+  font-size: .7rem;
+}
+
+.DocRefBreadcrumb__name {
+  display: inline-block;
+  color: rgba(0,0,0,0.5);
+  font-size: .7rem;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Breadcrumbs
+////////////////////////////////////////////////////////////////////////////////
+.DocRefBreadcrumb__link {
+  @include themify($themes) {
+    color: themed("breadcrumb__text__color");
+  }
+}
+
+.DocRefBreadcrumb__link:hover {
+  @include themify($themes) {
+    color: themed("breadcrumb__text__color--hover");
+  }
+}
+
+.DocRefBreadcrumb__divider {
+  @include themify($themes) {
+    color: themed("breadcrumb__divider__color");
+  }
+}
+
+.DocRefBreadcrumb__name {
+  @include themify($themes) {
+    color: themed("breadcrumb__text__color");
+  }
+}
