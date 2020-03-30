@@ -237,6 +237,9 @@ include 'stroom-task:stroom-task-impl'
 // Test project
 include 'stroom-test-common'
 
+// New Stroom UI
+include 'stroom-ui'
+
 // Util
 include 'stroom-util'
 include 'stroom-util-shared'
