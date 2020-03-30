@@ -39,7 +39,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
      */
     private static final int DEFAULT_MAX_SIZE = 1000000;
 
-    private final SQLStatisticFlushTaskHandler sqlStatisticFlushTaskHandler;
+    private final Provider<SQLStatisticFlushTaskHandler> sqlStatisticFlushTaskHandlerProvider;
     private final Executor executor;
     private final Provider<TaskContext> taskContextProvider;
 
@@ -51,11 +51,11 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
     private final int maxSize;
 
     @Inject
-    public SQLStatisticCacheImpl(final SQLStatisticFlushTaskHandler sqlStatisticFlushTaskHandler,
+    public SQLStatisticCacheImpl(final Provider<SQLStatisticFlushTaskHandler> sqlStatisticFlushTaskHandlerProvider,
                                  final Executor executor,
                                  final Provider<TaskContext> taskContextProvider) {
         this.maxSize = DEFAULT_MAX_SIZE;
-        this.sqlStatisticFlushTaskHandler = sqlStatisticFlushTaskHandler;
+        this.sqlStatisticFlushTaskHandlerProvider = sqlStatisticFlushTaskHandlerProvider;
         this.executor = executor;
         this.taskContextProvider = taskContextProvider;
     }
@@ -66,7 +66,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
 
     public SQLStatisticCacheImpl(final int maxSize) {
         this.maxSize = maxSize;
-        this.sqlStatisticFlushTaskHandler = null;
+        this.sqlStatisticFlushTaskHandlerProvider = null;
         this.executor = null;
         this.taskContextProvider = null;
     }
@@ -117,7 +117,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
     }
 
     private void doFlush(final boolean block, final SQLStatisticAggregateMap flushMap) {
-        if (sqlStatisticFlushTaskHandler != null && taskContextProvider != null && executor != null) {
+        if (sqlStatisticFlushTaskHandlerProvider != null && taskContextProvider != null && executor != null) {
             try {
                 LOGGER.debug("doFlush() - Locking {}", flushMap);
 
@@ -125,7 +125,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
                 if (block) {
                     try {
                         final TaskContext taskContext = taskContextProvider.get();
-                        Runnable runnable = () -> sqlStatisticFlushTaskHandler.exec(flushMap);
+                        Runnable runnable = () -> sqlStatisticFlushTaskHandlerProvider.get().exec(flushMap);
                         runnable = taskContext.sub(runnable);
                         runnable.run();
 
@@ -136,7 +136,7 @@ public class SQLStatisticCacheImpl implements SQLStatisticCache {
                 } else {
                     // Flush the original map.
                     final TaskContext taskContext = taskContextProvider.get();
-                    Runnable runnable = () -> sqlStatisticFlushTaskHandler.exec(flushMap);
+                    Runnable runnable = () -> sqlStatisticFlushTaskHandlerProvider.get().exec(flushMap);
                     runnable = taskContext.sub(runnable);
                     CompletableFuture
                             .runAsync(runnable, executor)

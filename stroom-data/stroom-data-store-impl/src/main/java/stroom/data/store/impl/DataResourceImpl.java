@@ -50,8 +50,8 @@ import java.util.ArrayList;
 class DataResourceImpl implements DataResource, HasHealthCheck {
     private final DataFetcher dataFetcher;
     private final ResourceStore resourceStore;
-    private final DataUploadTaskHandler dataUploadTaskHandler;
-    private final DataDownloadTaskHandler dataDownloadTaskHandler;
+    private final Provider<DataUploadTaskHandler> dataUploadTaskHandlerProvider;
+    private final Provider<DataDownloadTaskHandler> dataDownloadTaskHandlerProvider;
     private final StreamEventLog streamEventLog;
     private final SecurityContext securityContext;
 
@@ -68,8 +68,8 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                      final PipelineDataCache pipelineDataCache,
                      final PipelineScopeRunnable pipelineScopeRunnable,
                      final ResourceStore resourceStore,
-                     final DataUploadTaskHandler dataUploadTaskHandler,
-                     final DataDownloadTaskHandler dataDownloadTaskHandler,
+                     final Provider<DataUploadTaskHandler> dataUploadTaskHandlerProvider,
+                     final Provider<DataDownloadTaskHandler> dataDownloadTaskHandlerProvider,
                      final StreamEventLog streamEventLog,
                      final SecurityContext securityContext) {
         dataFetcher = new DataFetcher(streamStore,
@@ -86,8 +86,8 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                 securityContext,
                 pipelineScopeRunnable);
         this.resourceStore = resourceStore;
-        this.dataUploadTaskHandler = dataUploadTaskHandler;
-        this.dataDownloadTaskHandler = dataDownloadTaskHandler;
+        this.dataUploadTaskHandlerProvider = dataUploadTaskHandlerProvider;
+        this.dataDownloadTaskHandlerProvider = dataDownloadTaskHandlerProvider;
         this.streamEventLog = streamEventLog;
         this.securityContext = securityContext;
     }
@@ -107,7 +107,7 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                 }
 
                 final DataDownloadSettings settings = new DataDownloadSettings();
-                dataDownloadTaskHandler.downloadData(criteria, file.getParent(), fileName, settings);
+                dataDownloadTaskHandlerProvider.get().downloadData(criteria, file.getParent(), fileName, settings);
 
                 streamEventLog.exportStream(criteria, null);
 
@@ -126,7 +126,7 @@ class DataResourceImpl implements DataResource, HasHealthCheck {
                 // Import file.
                 final Path file = resourceStore.getTempFile(request.getKey());
 
-                dataUploadTaskHandler.uploadData(
+                dataUploadTaskHandlerProvider.get().uploadData(
                         request.getFileName(),
                         file,
                         request.getFeedName(),
