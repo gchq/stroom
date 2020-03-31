@@ -61,6 +61,7 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
         expressionMapper.map(ProcessorFilterDataSource.PROCESSOR_ENABLED, PROCESSOR.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorFilterDataSource.PROCESSOR_FILTER_ENABLED, PROCESSOR_FILTER.ENABLED, Boolean::valueOf);
         expressionMapper.map(ProcessorFilterDataSource.CREATE_USER, PROCESSOR_FILTER.CREATE_USER, value -> value);
+        expressionMapper.map(ProcessorFilterDataSource.UUID, PROCESSOR_FILTER.UUID, value -> value);
     }
 
     @Override

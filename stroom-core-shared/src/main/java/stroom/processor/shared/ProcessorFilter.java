@@ -70,6 +70,10 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
     private String data;
     @JsonProperty
     private QueryData queryData;
+    @JsonProperty
+    private String processorUuid;
+    @JsonProperty
+    private String pipelineUuid;
 
     @JsonProperty
     private Processor processor;
@@ -102,7 +106,9 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
                            @JsonProperty("processor") final Processor processor,
                            @JsonProperty("processorFilterTracker") final ProcessorFilterTracker processorFilterTracker,
                            @JsonProperty("priority") final int priority,
-                           @JsonProperty("enabled") final boolean enabled) {
+                           @JsonProperty("enabled") final boolean enabled,
+                           @JsonProperty("processorUuid") final String processorUuid,
+                           @JsonProperty("pipelineUuid") final String pipelineUuid) {
         this.id = id;
         this.version = version;
         this.createTimeMs = createTimeMs;
@@ -114,12 +120,14 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
         this.queryData = queryData;
         this.processor = processor;
         this.processorFilterTracker = processorFilterTracker;
+        this.pipelineUuid = pipelineUuid;
         if (priority > 0) {
             this.priority = priority;
         } else {
             this.priority = 10;
         }
         this.enabled = enabled;
+        this.processorUuid = processorUuid;
     }
 
     public Integer getId() {
@@ -207,8 +215,28 @@ public class ProcessorFilter implements HasAuditInfo, HasUuid {
         return processor;
     }
 
+    public String getProcessorUuid() {
+        if (processorUuid == null && processor != null)
+            processorUuid = getProcessor().getUuid();
+        return processorUuid;
+    }
+
+    public String getPipelineUuid(){
+        if (pipelineUuid == null){
+            Processor processor = getProcessor();
+            if (processor != null)
+                pipelineUuid = processor.getPipelineUuid();
+        }
+        return pipelineUuid;
+    }
+
     public void setProcessor(final Processor processor) {
         this.processor = processor;
+
+        if (processor != null) {
+            processorUuid = processor.getUuid();
+            pipelineUuid = processor.getPipelineUuid();
+        }
     }
 
     public ProcessorFilterTracker getProcessorFilterTracker() {

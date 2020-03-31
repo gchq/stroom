@@ -130,6 +130,26 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
     }
 
     @Override
+    public ProcessorFilter create(Processor processor, DocRef processorFilterDocRef, QueryData queryData, int priority, boolean enabled) {
+        // Check the user has read permissions on the pipeline.
+        if (!securityContext.hasDocumentPermission(PipelineDoc.DOCUMENT_TYPE, processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
+            throw new PermissionException("You do not have permission to create this processor filter");
+        }
+
+        // now create the filter and tracker
+        final ProcessorFilter processorFilter = new ProcessorFilter();
+        AuditUtil.stamp(securityContext.getUserId(), processorFilter);
+        // Blank tracker
+        processorFilter.setEnabled(enabled);
+        processorFilter.setPriority(priority);
+        processorFilter.setProcessor(processor);
+        processorFilter.setQueryData(queryData);
+        if (processorFilterDocRef != null)
+            processorFilter.setUuid(processorFilterDocRef.getUuid());
+        return create(processorFilter);
+    }
+
+    @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
         if (processorFilter.getUuid() == null) {
             processorFilter.setUuid(UUID.randomUUID().toString());

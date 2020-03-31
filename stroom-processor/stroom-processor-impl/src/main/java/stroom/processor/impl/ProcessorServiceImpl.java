@@ -19,9 +19,12 @@ package stroom.processor.impl;
 
 import stroom.docref.DocRef;
 import stroom.entity.shared.ExpressionCriteria;
+import stroom.pipeline.shared.PipelineDoc;
 import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.security.api.SecurityContext;
+import stroom.security.shared.DocumentPermissionNames;
+import stroom.security.shared.PermissionException;
 import stroom.security.shared.PermissionNames;
 import stroom.util.AuditUtil;
 import stroom.util.shared.ResultPage;
@@ -45,9 +48,16 @@ public class ProcessorServiceImpl implements ProcessorService {
 
     @Override
     public Processor create(final DocRef pipelineRef, final boolean enabled) {
+
         final Processor processor = new Processor();
         processor.setEnabled(enabled);
         processor.setPipelineUuid(pipelineRef.getUuid());
+
+        // Check the user has read permissions on the pipeline.
+        if (!securityContext.hasDocumentPermission(PipelineDoc.DOCUMENT_TYPE, processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
+            throw new PermissionException("You do not have permission to create this processor filter");
+        }
+
         return create(processor);
 
 //        Processor processor = null;
@@ -65,6 +75,21 @@ public class ProcessorServiceImpl implements ProcessorService {
 //        }
 //        return processor;
     }
+
+    @Override
+    public Processor create(DocRef processorDocRef, DocRef pipelineDocRef, boolean enabled) {
+        final Processor processor = new Processor();
+        processor.setEnabled(enabled);
+        processor.setPipelineUuid(pipelineDocRef.getUuid());
+        processor.setUuid(processorDocRef.getUuid());
+
+        // Check the user has read permissions on the pipeline.
+        if (!securityContext.hasDocumentPermission(PipelineDoc.DOCUMENT_TYPE, processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
+            throw new PermissionException("You do not have permission to create this processor filter");
+        }
+        return create(processor);
+    }
+
 
     @Override
     public Processor create(Processor processor) {

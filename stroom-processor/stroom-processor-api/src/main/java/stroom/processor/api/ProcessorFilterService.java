@@ -43,6 +43,13 @@ public interface ProcessorFilterService extends HasIntCrud<ProcessorFilter> {
                            final int priority,
                            final boolean enabled);
 
+    ProcessorFilter create(final Processor processor,
+                           final DocRef processorFilterDocRef,
+                           final QueryData queryData,
+                           final int priority,
+                           final boolean enabled);
+
+
     ResultPage<ProcessorFilter> find(ExpressionCriteria criteria);
 
     ProcessorListRowResultPage find(FetchProcessorRequest request);

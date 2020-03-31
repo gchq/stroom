@@ -27,6 +27,8 @@ import stroom.util.shared.HasIntCrud;
 public interface ProcessorService extends HasIntCrud<Processor> {
     Processor create(DocRef pipelineRef, boolean enabled);
 
+    Processor create(DocRef processorDocRef, DocRef pipelineDocRef, boolean enabled);
+
 //    Optional<Processor> fetchByUuid(final String uuid);
 //
 //    default Processor fetchByUuidOrThrow(final String uuid) {

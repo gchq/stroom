@@ -29,6 +29,7 @@ import stroom.importexport.impl.ImportExportSerializer;
 import stroom.importexport.shared.ImportState;
 import stroom.importexport.shared.ImportState.ImportMode;
 import stroom.importexport.shared.ImportState.State;
+import stroom.meta.shared.MetaFields;
 import stroom.pipeline.PipelineStore;
 import stroom.pipeline.shared.PipelineDoc;
 import stroom.pipeline.xmlschema.XmlSchemaStore;
@@ -37,6 +38,8 @@ import stroom.processor.api.ProcessorService;
 import stroom.processor.shared.Processor;
 import stroom.processor.shared.ProcessorFilter;
 import stroom.processor.shared.QueryData;
+import stroom.query.api.v2.ExpressionOperator;
+import stroom.query.api.v2.ExpressionTerm;
 import stroom.test.AbstractCoreIntegrationTest;
 import stroom.test.CommonTestControl;
 import stroom.test.CommonTestScenarioCreator;
@@ -166,17 +169,22 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         final PipelineDoc pipeline = pipelineStore.readDocument(pipelineRef);
 
 
+
+        final ExpressionOperator expression = new ExpressionOperator.Builder()
+                .addTerm(MetaFields.FEED_NAME,ExpressionTerm.Condition.EQUALS, "TEST-FEED-EVENTS")
+                .addTerm(MetaFields.FIELD_TYPE,ExpressionTerm.Condition.EQUALS, "Raw Events")
+                .build();
         QueryData filterConstraints = new QueryData();
+        filterConstraints.setExpression(expression);
 
         Processor processor = processorService.create(pipelineRef, true);
 
-//        ProcessorFilter filter = processorFilterService.create(processor,filterConstraints, 10, true);
+        ProcessorFilter filter = processorFilterService.create(processor,filterConstraints, 10, true);
 
         HashSet<DocRef> forExport = new HashSet<DocRef>();
 
-        forExport.add (new DocRef(Processor.ENTITY_TYPE,processor.getUuid()));
-//        forExport.add (new DocRef(ProcessorFilter.ENTITY_TYPE,filter.getUuid()));
-
+//        forExport.add (new DocRef(Processor.ENTITY_TYPE,processor.getUuid()));
+        forExport.add (new DocRef(ProcessorFilter.ENTITY_TYPE,filter.getUuid()));
 
         final Path testDataDir = getCurrentTestDir().resolve("ExportTest");
 

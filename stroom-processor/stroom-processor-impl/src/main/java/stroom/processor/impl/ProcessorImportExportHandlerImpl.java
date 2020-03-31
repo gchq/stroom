@@ -1,3 +1,19 @@
+/*
+ * Copyright 2020 Crown Copyright
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
 package stroom.processor.impl;
 
 import org.slf4j.Logger;
@@ -90,7 +106,6 @@ public class ProcessorImportExportHandlerImpl implements ImportExportActionHandl
         if (page.size() > 1)
             ex = new IllegalStateException("Multiple processors with DocRef " + docRef + " found.");
 
-        importExportDocumentEventLog.exportDocument(docRef, ex);
         if (ex != null) {
             LOGGER.error("Unable to export processor", ex);
             throw ex;
@@ -114,14 +129,11 @@ public class ProcessorImportExportHandlerImpl implements ImportExportActionHandl
         try {
             data = delegate.write(processor);
         }catch (IOException ioex){
+            importExportDocumentEventLog.exportDocument(docRef, ioex);
             LOGGER.error ("Unable to create meta file for processor", ioex);
             throw new RuntimeException("Unable to create meta file for processor", ioex);
         }
-
-//        if (data != null){
-//            data.put(XML, EncodingUtil.asBytes(getXmlFromProcessor(processor)));
-//        }
-
+        ;
         return data;
     }
 
