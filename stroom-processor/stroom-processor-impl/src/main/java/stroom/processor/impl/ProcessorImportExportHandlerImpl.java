@@ -185,4 +185,9 @@ public class ProcessorImportExportHandlerImpl implements ImportExportActionHandl
             return "Processor Null";
         return "Processor " + docRef.getUuid().substring(0,7);
     }
+
+    @Override
+    public boolean docExists(DocRef docRef) {
+        return false;
+    }
 }

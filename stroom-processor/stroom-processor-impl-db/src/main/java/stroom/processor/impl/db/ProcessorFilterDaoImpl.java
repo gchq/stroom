@@ -97,8 +97,8 @@ class ProcessorFilterDaoImpl implements ProcessorFilterDao {
             final ProcessorFilterRecord processorFilterRecord =
                     context.newRecord(PROCESSOR_FILTER, marshalled);
 
-            processorFilterRecord.setFkProcessorFilterTrackerId(marshalled.getProcessorFilterTracker().getId());
-            processorFilterRecord.setFkProcessorId(marshalled.getProcessor().getId());
+//            processorFilterRecord.setFkProcessorFilterTrackerId(marshalled.getProcessorFilterTracker().getId());
+//            processorFilterRecord.setFkProcessorId(marshalled.getProcessor().getId());
             processorFilterRecord.update();
 
             final ProcessorFilter result = processorFilterRecord.into(ProcessorFilter.class);

@@ -182,7 +182,13 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 final Optional<ExplorerNode> existingNode = explorerNodeService.getNode(docRef);
                 ExplorerNode parentNode = null;
 
-                if (!existingNode.isPresent()) {
+                //Find the appropriate handler
+                final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(type);
+                boolean docExists = existingNode.isPresent();
+                if (importExportActionHandler instanceof NonExplorerDocRefProvider){
+                    docExists = ((NonExplorerDocRefProvider) importExportActionHandler).docExists(docRef);
+                }
+                if (!docExists) {
                     importState.setState(State.NEW);
                     importState.setDestPath(importState.getSourcePath());
 
@@ -193,14 +199,21 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     parentNode = getOrCreateParentFolder(parent, path, importState.ok(importMode));
 
                 } else {
-                    final List<ExplorerNode> parents = explorerNodeService.getPath(docRef);
+                    DocRef explorerDocRef = docRef;
+                    if (importExportActionHandler instanceof NonExplorerDocRefProvider){
+                        explorerDocRef = ((NonExplorerDocRefProvider) importExportActionHandler).findNearestExplorerDocRef(docRef);
+                    }
+
+                    final List<ExplorerNode> parents = explorerNodeService.getPath(explorerDocRef);
+
                     final String parentPath = parents.stream().map(ExplorerNode::getName).collect(Collectors.joining("/"));
 
                     importState.setState(State.UPDATE);
-                    importState.setDestPath(createPath(parentPath, existingNode.get().getName()));
+                    if (existingNode.isPresent())
+                        importState.setDestPath(createPath(parentPath, existingNode.get().getName()));
 
                     // This is a pre existing item so make sure we are allowed to update it.
-                    if (!securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.UPDATE)) {
+                    if (!securityContext.hasDocumentPermission(explorerDocRef.getType(), explorerDocRef.getUuid(), DocumentPermissionNames.UPDATE)) {
                         throw new PermissionException(securityContext.getUserId(), "You do not have permission to update '" + docRef + "'");
                     }
 
@@ -221,13 +234,12 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
                 try {
                     // Import the item via the appropriate handler.
-                    final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(type);
-                    if (importExportActionHandler != null) {
+                    if (importExportActionHandler != null && (ImportMode.CREATE_CONFIRMATION.equals(importMode) || importState.isAction())) {
                         final DocRef imported = importExportActionHandler.importDocument(docRef, dataMap, importState, importMode);
 
                         // Add explorer node afterwards on successful import as they won't be controlled by doc service.
                         if (importState.ok(importMode)) {
-                            if (existingNode.isEmpty()) {
+                            if (existingNode.isEmpty() && !(importExportActionHandler instanceof NonExplorerDocRefProvider)) {
                                 explorerNodeService.createNode(imported, folderRef, PermissionInheritance.DESTINATION);
                             }
 
