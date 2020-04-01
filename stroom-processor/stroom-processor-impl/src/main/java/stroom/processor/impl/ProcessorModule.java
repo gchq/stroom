@@ -58,10 +58,6 @@ public class ProcessorModule extends AbstractModule {
         GuiceUtil.buildMultiBinder(binder(), Searchable.class)
                 .addBinding(ProcessorTaskServiceImpl.class);
 
-        //Processors are not currently exported directly, but created as needed when ProcessorFilters are imported
-//        GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
-//                .addBinding(ProcessorImportExportHandlerImpl.class);
-
         GuiceUtil.buildMultiBinder(binder(), ImportExportActionHandler.class)
                 .addBinding(ProcessorFilterImportExportHandlerImpl.class);
     }

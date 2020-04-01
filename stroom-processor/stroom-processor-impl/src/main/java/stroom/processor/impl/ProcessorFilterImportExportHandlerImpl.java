@@ -50,7 +50,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class ProcessorFilterImportExportHandlerImpl implements ImportExportActionHandler, NonExplorerDocRefProvider {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorImportExportHandlerImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ProcessorFilterImportExportHandlerImpl.class);
     private final ImportExportDocumentEventLog importExportDocumentEventLog;
     private final ProcessorFilterService processorFilterService;
     private final ProcessorService processorService;
