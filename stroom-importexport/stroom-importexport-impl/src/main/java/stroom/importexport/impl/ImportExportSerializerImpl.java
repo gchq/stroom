@@ -234,7 +234,10 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
                 try {
                     // Import the item via the appropriate handler.
-                    if (importExportActionHandler != null && (ImportMode.CREATE_CONFIRMATION.equals(importMode) || importState.isAction())) {
+                    if (importExportActionHandler != null && (
+                            ImportMode.CREATE_CONFIRMATION.equals(importMode) ||
+                            ImportMode.IGNORE_CONFIRMATION.equals(importMode) ||
+                            importState.isAction())) {
                         final DocRef imported = importExportActionHandler.importDocument(docRef, dataMap, importState, importMode);
 
                         // Add explorer node afterwards on successful import as they won't be controlled by doc service.
