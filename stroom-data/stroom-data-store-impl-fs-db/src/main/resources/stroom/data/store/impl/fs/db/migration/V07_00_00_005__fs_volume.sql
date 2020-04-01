@@ -21,22 +21,22 @@ SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0;
 -- Create the fs_volume table
 --
 CREATE TABLE IF NOT EXISTS fs_volume (
-  id                        int(11) NOT NULL AUTO_INCREMENT,
-  version                   int(11) NOT NULL,
-  create_time_ms            bigint(20) NOT NULL,
-  create_user               varchar(255) NOT NULL,
-  update_time_ms            bigint(20) NOT NULL,
-  update_user               varchar(255) NOT NULL,
-  path 		                varchar(255) NOT NULL,
-  status	                tinyint(4) NOT NULL,
-  byte_limit                bigint(20) DEFAULT NULL,
-  fk_fs_volume_state_id   int(11) NOT NULL,
-  PRIMARY KEY       (id),
-  UNIQUE KEY		path (path),
-  KEY fs_volume_fk_fs_volume_state_id (fk_fs_volume_state_id),
-  CONSTRAINT fs_volume_fk_fs_volume_state_id
+    id                        int(11) NOT NULL AUTO_INCREMENT,
+    version                   int(11) NOT NULL,
+    create_time_ms            bigint(20) NOT NULL,
+    create_user               varchar(255) NOT NULL,
+    update_time_ms            bigint(20) NOT NULL,
+    update_user               varchar(255) NOT NULL,
+    path                      varchar(255) NOT NULL,
+    status                    tinyint(4) NOT NULL,
+    byte_limit                bigint(20) DEFAULT NULL,
+    fk_fs_volume_state_id     int(11) NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY  path (path),
+    KEY fs_volume_fk_fs_volume_state_id (fk_fs_volume_state_id),
+    CONSTRAINT fs_volume_fk_fs_volume_state_id
     FOREIGN KEY (fk_fs_volume_state_id)
-    REFERENCES fs_volume_state (id)
+        REFERENCES fs_volume_state (id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
@@ -47,9 +47,18 @@ DELIMITER //
 CREATE PROCEDURE copy_fs_volume ()
 BEGIN
     IF EXISTS (
-            SELECT TABLE_NAME
+            SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_NAME = 'VOL') THEN
+
+        RENAME TABLE VOL TO OLD_VOL;
+    END IF;
+
+    -- Check again so it is idempotent
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'OLD_VOL') THEN
 
         INSERT INTO fs_volume (
             id,
@@ -73,7 +82,7 @@ BEGIN
             STRM_STAT,
             BYTES_LMT,
             FK_VOL_STATE_ID
-        FROM VOL
+        FROM OLD_VOL
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM fs_volume)
         ORDER BY ID;
 
@@ -85,9 +94,12 @@ BEGIN
         PREPARE alter_table_stmt FROM @alter_table_sql;
         EXECUTE alter_table_stmt;
     END IF;
+
 END//
 DELIMITER ;
 CALL copy_fs_volume();
 DROP PROCEDURE copy_fs_volume;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

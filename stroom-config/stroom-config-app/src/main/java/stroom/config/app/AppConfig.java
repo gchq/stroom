@@ -33,16 +33,15 @@ import stroom.search.impl.SearchConfig;
 import stroom.search.solr.SolrConfig;
 import stroom.searchable.impl.SearchableConfig;
 import stroom.security.impl.SecurityConfig;
+import stroom.security.impl.ValidationSeverity;
 import stroom.servicediscovery.impl.ServiceDiscoveryConfig;
 import stroom.storedquery.impl.StoredQueryConfig;
 import stroom.ui.config.shared.UiConfig;
 import stroom.util.io.PathConfig;
 import stroom.util.shared.AbstractConfig;
-import stroom.security.impl.ValidationSeverity;
 
 import javax.inject.Singleton;
-import javax.validation.Valid;
-import javax.validation.constraints.AssertFalse;
+import javax.validation.constraints.AssertTrue;
 
 @JsonRootName(AppConfig.NAME)
 @Singleton
@@ -50,7 +49,6 @@ public class AppConfig extends AbstractConfig {
 
     public static final String NAME = "stroom";
 
-    public static final String PROP_NAME_SUPER_DEV_MODE = "superDevMode";
     public static final String PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE = "haltBootOnConfigValidationFailure";
     public static final String PROP_NAME_ACTIVITY = "activity";
     public static final String PROP_NAME_ANNOTATION = "annotation";
@@ -91,7 +89,6 @@ public class AppConfig extends AbstractConfig {
     public static final String PROP_NAME_UI = "ui";
     public static final String PROP_NAME_VOLUMES = "volumes";
 
-    private boolean superDevMode;
     private boolean haltBootOnConfigValidationFailure = true;
 
     private ActivityConfig activityConfig = new ActivityConfig();
@@ -133,18 +130,10 @@ public class AppConfig extends AbstractConfig {
     private UiConfig uiConfig = new UiConfig();
     private VolumeConfig volumeConfig = new VolumeConfig();
 
-    @AssertFalse(
-        message = "Super Dev Mode is enabled. This should only be used in development",
+    @AssertTrue(
+        message = "stroom." + PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE + " is set to false. If there is " +
+            "invalid configuration the system may behave in unexpected ways. This setting is not advised.",
         payload = ValidationSeverity.Warning.class)
-    @JsonProperty(PROP_NAME_SUPER_DEV_MODE)
-    public boolean isSuperDevMode() {
-        return superDevMode;
-    }
-
-    public void setSuperDevMode(final boolean superDevMode) {
-        this.superDevMode = superDevMode;
-    }
-
     @JsonProperty(PROP_NAME_HALT_BOOT_ON_CONFIG_VALIDATION_FAILURE)
     public boolean isHaltBootOnConfigValidationFailure() {
         return haltBootOnConfigValidationFailure;
@@ -348,7 +337,6 @@ public class AppConfig extends AbstractConfig {
         this.lifecycleConfig = lifecycleConfig;
     }
 
-    @Valid
     @JsonProperty(PROP_NAME_NODE)
     public NodeConfig getNodeConfig() {
         return nodeConfig;
@@ -486,7 +474,6 @@ public class AppConfig extends AbstractConfig {
         this.statisticsConfig = statisticsConfig;
     }
 
-    @Valid
     @JsonProperty(PROP_NAME_UI)
     public UiConfig getUiConfig() {
         return uiConfig;

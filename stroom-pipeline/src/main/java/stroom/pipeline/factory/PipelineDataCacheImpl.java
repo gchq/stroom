@@ -57,7 +57,7 @@ public class PipelineDataCacheImpl implements PipelineDataCache, Clearable {
 
     @Override
     public PipelineData get(final PipelineDoc pipelineDoc) {
-        if (!documentPermissionCache.hasDocumentPermission(pipelineDoc.getType(), pipelineDoc.getUuid(), DocumentPermissionNames.USE)) {
+        if (!documentPermissionCache.hasDocumentPermission(pipelineDoc.getUuid(), DocumentPermissionNames.USE)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to use " + pipelineDoc);
         }
 

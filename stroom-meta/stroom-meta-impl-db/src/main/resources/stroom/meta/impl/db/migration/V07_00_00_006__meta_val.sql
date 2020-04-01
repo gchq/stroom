@@ -38,7 +38,20 @@ DROP PROCEDURE IF EXISTS copy_meta_val;
 DELIMITER //
 CREATE PROCEDURE copy_meta_val ()
 BEGIN
-    IF (SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES where TABLE_NAME = 'STRM_ATR_VAL' > 0) THEN
+    -- Can be run by multiple scripts
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'STRM_ATR_VAL') THEN
+
+        RENAME TABLE STRM_ATR_VAL TO OLD_STRM_ATR_VAL;
+    END IF;
+
+    IF EXISTS (
+            SELECT NULL 
+            FROM INFORMATION_SCHEMA.TABLES 
+            WHERE TABLE_NAME = 'OLD_STRM_ATR_VAL') THEN
+
         INSERT INTO meta_val (
             id,
             create_time,
@@ -51,7 +64,7 @@ BEGIN
             STRM_ID,
             STRM_ATR_KEY_ID,
             VAL_NUM
-        FROM STRM_ATR_VAL
+        FROM OLD_STRM_ATR_VAL
         WHERE ID > (SELECT COALESCE(MAX(id), 0) FROM meta_key)
         AND VAL_NUM IS NOT NULL
         ORDER BY ID;
@@ -70,3 +83,5 @@ CALL copy_meta_val();
 DROP PROCEDURE copy_meta_val;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set tabstop=4 shiftwidth=4 expandtab:

@@ -38,7 +38,10 @@ public class V07_00_00_002__query extends BaseJavaMigration {
     @Override
     public void migrate(final Context context) throws Exception {
         try (final PreparedStatement preparedStatement = context.getConnection().prepareStatement(
-                "SELECT id, data FROM query")) {
+                "SELECT " +
+                    "  id, " +
+                    "  data " +
+                    "FROM query")) {
             try (final ResultSet resultSet = preparedStatement.executeQuery()) {
                 while (resultSet.next()) {
                     try {
@@ -54,7 +57,9 @@ public class V07_00_00_002__query extends BaseJavaMigration {
 
                             // Update the record.
                             try (final PreparedStatement ps = context.getConnection().prepareStatement(
-                                    "UPDATE query SET data = ? WHERE id = ?")) {
+                                    "UPDATE query SET " +
+                                        "  data = ? " +
+                                        "WHERE id = ?")) {
                                 ps.setString(1, newData);
                                 ps.setInt(2, id);
                                 ps.executeUpdate();

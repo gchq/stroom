@@ -52,7 +52,6 @@ public class ApiGatewayConfig extends AbstractConfig {
         "be inferred from the scheme.")
     @Min(1)
     @Max(65535)
-    @NotNull
     public Integer getPort() {
         return port;
     }

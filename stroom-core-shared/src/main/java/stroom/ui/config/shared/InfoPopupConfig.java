@@ -10,6 +10,7 @@ import stroom.util.shared.AbstractConfig;
 import stroom.util.shared.validation.ValidRegex;
 
 import javax.inject.Singleton;
+import java.util.Objects;
 
 @Singleton
 @JsonPropertyOrder({"enabled", "title", "validationRegex"})
@@ -81,5 +82,20 @@ public class InfoPopupConfig extends AbstractConfig {
                 ", title='" + title + '\'' +
                 ", validationRegex='" + validationRegex + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final InfoPopupConfig that = (InfoPopupConfig) o;
+        return enabled == that.enabled &&
+            Objects.equals(title, that.title) &&
+            Objects.equals(validationRegex, that.validationRegex);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(enabled, title, validationRegex);
     }
 }

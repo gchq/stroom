@@ -19,7 +19,6 @@ package stroom.processor.impl;
 
 import stroom.entity.shared.ExpressionCriteria;
 import stroom.meta.api.MetaService;
-import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.FindMetaCriteria;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.MetaFields;
@@ -39,6 +38,7 @@ import stroom.query.api.v2.ExpressionOperator;
 import stroom.query.api.v2.ExpressionOperator.Builder;
 import stroom.query.api.v2.ExpressionOperator.Op;
 import stroom.query.api.v2.ExpressionTerm.Condition;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.query.api.v2.Query;
 import stroom.search.api.EventRef;
 import stroom.search.api.EventRefs;

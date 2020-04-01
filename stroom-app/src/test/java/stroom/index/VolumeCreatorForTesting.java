@@ -19,7 +19,7 @@ package stroom.index;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.index.impl.CreateVolumeDTO;
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.impl.IndexVolumeGroupService;
 import stroom.index.impl.IndexVolumeService;
 import stroom.index.shared.IndexVolume;
@@ -75,7 +75,7 @@ class VolumeCreatorForTesting implements VolumeCreator {
         try {
             final IndexVolumeGroup indexVolumeGroup = indexVolumeGroupService.getOrCreate(DEFAULT_VOLUME_GROUP);
             final List<IndexVolume> initialVolumeList = getInitialVolumeList();
-            final List<IndexVolume> existingVolumes = volumeService.getAll();
+            final List<IndexVolume> existingVolumes = volumeService.find(new ExpressionCriteria()).getValues();
             for (final IndexVolume volume : initialVolumeList) {
                 boolean found = false;
                 for (final IndexVolume existingVolume : existingVolumes) {
@@ -87,11 +87,12 @@ class VolumeCreatorForTesting implements VolumeCreator {
 
                 if (!found) {
                     Files.createDirectories(Paths.get(volume.getPath()));
-                    CreateVolumeDTO createVolumeDTO = new CreateVolumeDTO();
-                    createVolumeDTO.setNodeName(volume.getNodeName());
-                    createVolumeDTO.setPath(volume.getPath());
-                    createVolumeDTO.setIndexVolumeGroupName(indexVolumeGroup.getName());
-                    volumeService.create(createVolumeDTO);
+                    final IndexVolume indexVolume = new IndexVolume.Builder()
+                            .nodeName(volume.getNodeName())
+                            .path(volume.getPath())
+                            .indexVolumeGroupId(indexVolumeGroup.getId())
+                            .build();
+                    volumeService.create(indexVolume);
                 }
             }
 

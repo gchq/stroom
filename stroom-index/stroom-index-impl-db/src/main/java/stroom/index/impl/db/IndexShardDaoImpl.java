@@ -17,6 +17,7 @@ import stroom.index.shared.IndexShard.IndexShardStatus;
 import stroom.index.shared.IndexShardKey;
 import stroom.index.shared.IndexVolume;
 import stroom.util.shared.CriteriaSet;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import java.util.Collection;
@@ -135,7 +136,7 @@ class IndexShardDaoImpl implements IndexShardDao {
 
 
     @Override
-    public List<IndexShard> find(final FindIndexShardCriteria criteria) {
+    public ResultPage<IndexShard> find(final FindIndexShardCriteria criteria) {
         final Collection<Condition> conditions = JooqUtil.conditions(
                 JooqUtil.getRangeCondition(INDEX_SHARD.DOCUMENT_COUNT, criteria.getDocumentCountRange()),
                 JooqUtil.getSetCondition(INDEX_SHARD.NODE_NAME, criteria.getNodeNameSet()),
@@ -148,13 +149,15 @@ class IndexShardDaoImpl implements IndexShardDao {
 
         final OrderField<?>[] orderFields = JooqUtil.getOrderFields(FIELD_MAP, criteria);
 
-        return JooqUtil.contextResult(indexDbConnProvider, context ->
+        final List<IndexShard> list = JooqUtil.contextResult(indexDbConnProvider, context ->
                 context
                         .select()
                         .from(INDEX_SHARD)
                         .join(INDEX_VOLUME).on(INDEX_VOLUME.ID.eq(INDEX_SHARD.FK_VOLUME_ID))
                         .where(conditions)
                         .orderBy(orderFields)
+                        .limit(JooqUtil.getLimit(criteria.getPageRequest()))
+                        .offset(JooqUtil.getOffset(criteria.getPageRequest()))
                         .fetch()
                         .map(r -> {
                             final IndexVolume indexVolume = IndexVolumeDaoImpl.RECORD_TO_INDEX_VOLUME_MAPPER.apply(r);
@@ -162,6 +165,8 @@ class IndexShardDaoImpl implements IndexShardDao {
                             indexShard.setVolume(indexVolume);
                             return indexShard;
                         }));
+
+        return ResultPage.createCriterialBasedList(list, criteria);
 
 //            shards.forEach(shard -> {
 //                final IndexVolume indexVolume = context.select()

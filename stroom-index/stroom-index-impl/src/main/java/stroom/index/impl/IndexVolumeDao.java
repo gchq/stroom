@@ -1,6 +1,8 @@
 package stroom.index.impl;
 
+import stroom.entity.shared.ExpressionCriteria;
 import stroom.index.shared.IndexVolume;
+import stroom.util.shared.ResultPage;
 
 import java.util.List;
 import java.util.Optional;
@@ -30,14 +32,20 @@ public interface IndexVolumeDao {
 //     */
 //    List<IndexVolumeGroup> getGroupsForVolume(int id);
 //
+
     /**
      * Retrieve all the volumes in a specific group, on a specific node.
      * Used to retrieve a volume on which to put a new shard.
+     *
      * @param groupName The name of the group to filter on.
-     * @param nodeName The node on which the volume must belong.
+     * @param nodeName  The node on which the volume must belong.
      * @return A list of candidate Index Volumes.
      */
     List<IndexVolume> getVolumesInGroupOnNode(String groupName, String nodeName);
+
+    List<IndexVolume> getVolumesInGroup(String groupName);
+
+    ResultPage<IndexVolume> find(ExpressionCriteria criteria);
 //
 //    /**
 //     * Add to membership of a volume group.
@@ -59,4 +67,7 @@ public interface IndexVolumeDao {
 //     * @param volumeId The ID of the volume to remove from all groups.
 //     */
 //    void clearVolumeGroupMemberships(int volumeId);
+
+
+    void updateVolumeState(int id, Long updateTimeMs, Long bytesUsed, Long bytesFree, Long bytesTotal);
 }

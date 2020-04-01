@@ -18,17 +18,18 @@ package stroom.core.entity.cluster;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.task.api.ClusterTaskHandler;
+import stroom.cluster.task.api.ClusterTaskRef;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
-import stroom.util.shared.Clearable;
 import stroom.task.api.VoidResult;
+import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import java.util.Optional;
 import java.util.Set;
 
 
-class ClearServiceClusterHandler extends AbstractTaskHandler<ClearServiceClusterTask, VoidResult> {
+class ClearServiceClusterHandler implements ClusterTaskHandler<ClearServiceClusterTask, VoidResult> {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClearServiceClusterHandler.class);
 
     private final Set<Clearable> clearables;
@@ -42,8 +43,8 @@ class ClearServiceClusterHandler extends AbstractTaskHandler<ClearServiceCluster
     }
 
     @Override
-    public VoidResult exec(final ClearServiceClusterTask task) {
-        return securityContext.secureResult(() -> {
+    public void exec(final ClearServiceClusterTask task, final ClusterTaskRef<VoidResult> clusterTaskRef) {
+        securityContext.secure(() -> {
             if (task == null) {
                 throw new RuntimeException("No task supplied");
             }
@@ -58,13 +59,12 @@ class ClearServiceClusterHandler extends AbstractTaskHandler<ClearServiceCluster
                         .filter(clearable -> task.getBeanClass().isAssignableFrom(clearable.getClass()))
                         .findAny();
 
-                if (!optional.isPresent()) {
+                if (optional.isEmpty()) {
                     throw new RuntimeException("Cannot find bean of class type: " + task.getBeanClass());
                 }
 
                 optional.ifPresent(Clearable::clear);
             }
-            return new VoidResult();
         });
     }
 }

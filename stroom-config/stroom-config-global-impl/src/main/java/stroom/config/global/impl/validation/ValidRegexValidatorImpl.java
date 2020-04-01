@@ -40,21 +40,23 @@ public class ValidRegexValidatorImpl implements ValidRegexValidator {
     public boolean isValid(final String value, final ConstraintValidatorContext context) {
         boolean result = true;
 
-        try {
-            Pattern.compile(value);
-        } catch (PatternSyntaxException e) {
-            final String msgTemplate =
-                context.getDefaultConstraintMessageTemplate() +
-                    ". caused by: " +
-                    e.getMessage().replaceAll("\\n"," ");
+        if (value != null) {
+            try {
+                Pattern.compile(value);
+            } catch (PatternSyntaxException e) {
+                final String msgTemplate =
+                    context.getDefaultConstraintMessageTemplate() +
+                        ". caused by: " +
+                        e.getMessage().replaceAll("\\n"," ");
 
-            // We want the exception details in the message so bin the default constraint
-            // violation and make a new one.
-            context.disableDefaultConstraintViolation();
-            context
-                .buildConstraintViolationWithTemplate(msgTemplate)
-                .addConstraintViolation();
-            result = false;
+                // We want the exception details in the message so bin the default constraint
+                // violation and make a new one.
+                context.disableDefaultConstraintViolation();
+                context
+                    .buildConstraintViolationWithTemplate(msgTemplate)
+                    .addConstraintViolation();
+                result = false;
+            }
         }
         return result;
     }

@@ -164,7 +164,7 @@ class DictionaryStoreImpl implements DictionaryStore, WordListProvider {
     public Map<DocRef, Set<DocRef>> getDependencies() {
         final List<DocRef> list = list();
         return list.stream()
-                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ))
+                .filter(docRef -> securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ))
                 .map(d -> {
                     // We need to read the document to get the name and imports.
                     DictionaryDoc doc = null;

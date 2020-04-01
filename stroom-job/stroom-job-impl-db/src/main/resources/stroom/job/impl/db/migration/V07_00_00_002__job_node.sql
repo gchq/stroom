@@ -45,9 +45,25 @@ DELIMITER //
 CREATE PROCEDURE copy_job_node ()
 BEGIN
     IF EXISTS (
-            SELECT TABLE_NAME
+            SELECT NULL
             FROM INFORMATION_SCHEMA.TABLES
             WHERE TABLE_NAME = 'JB_ND') THEN
+
+        RENAME TABLE JB_ND TO OLD_JB_ND;
+    END IF;
+
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'ND') THEN
+
+        RENAME TABLE ND TO OLD_ND;
+    END IF;
+
+    IF EXISTS (
+            SELECT NULL
+            FROM INFORMATION_SCHEMA.TABLES
+            WHERE TABLE_NAME = 'OLD_JB_ND') THEN
 
         INSERT INTO job_node (
             id,
@@ -75,8 +91,8 @@ BEGIN
             j.TASK_LMT,
             j.SCHEDULE,
             j.ENBL
-        FROM JB_ND j
-        JOIN ND n ON (j.FK_ND_ID = n.ID)
+        FROM OLD_JB_ND j
+        JOIN OLD_ND n ON (j.FK_ND_ID = n.ID)
         WHERE j.ID > (SELECT COALESCE(MAX(id), 0) FROM job_node)
         ORDER BY j.ID;
 

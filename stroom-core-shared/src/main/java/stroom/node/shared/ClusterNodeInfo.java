@@ -24,6 +24,7 @@ import stroom.util.shared.BuildInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @JsonInclude(Include.NON_NULL)
 public class ClusterNodeInfo {
@@ -135,6 +136,38 @@ public class ClusterNodeInfo {
         this.error = error;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        final ClusterNodeInfo that = (ClusterNodeInfo) o;
+        return Objects.equals(discoverTime, that.discoverTime) &&
+            Objects.equals(buildInfo, that.buildInfo) &&
+            Objects.equals(nodeName, that.nodeName) &&
+            Objects.equals(endpointUrl, that.endpointUrl) &&
+            Objects.equals(itemList, that.itemList) &&
+            Objects.equals(ping, that.ping) &&
+            Objects.equals(error, that.error);
+    }
+
+    @Override
+    public String toString() {
+        return "ClusterNodeInfo{" +
+            "discoverTime='" + discoverTime + '\'' +
+            ", buildInfo=" + buildInfo +
+            ", nodeName='" + nodeName + '\'' +
+            ", endpointUrl='" + endpointUrl + '\'' +
+            ", itemList=" + itemList +
+            ", ping=" + ping +
+            ", error='" + error + '\'' +
+            '}';
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(discoverTime, buildInfo, nodeName, endpointUrl, itemList, ping, error);
+    }
+
     @JsonInclude(Include.NON_NULL)
     public static class ClusterNodeInfoItem {
         @JsonProperty
@@ -163,6 +196,30 @@ public class ClusterNodeInfo {
 
         public boolean isMaster() {
             return master;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            final ClusterNodeInfoItem that = (ClusterNodeInfoItem) o;
+            return active == that.active &&
+                master == that.master &&
+                Objects.equals(nodeName, that.nodeName);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(nodeName, active, master);
+        }
+
+        @Override
+        public String toString() {
+            return "ClusterNodeInfoItem{" +
+                "nodeName='" + nodeName + '\'' +
+                ", active=" + active +
+                ", master=" + master +
+                '}';
         }
     }
 }

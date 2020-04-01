@@ -69,10 +69,10 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     @Inject
     StoreImpl(final Persistence persistence,
-                     final SecurityContext securityContext,
-                     final DocumentSerialiser2<D> serialiser,
-                     final String type,
-                     final Class<D> clazz) {
+              final SecurityContext securityContext,
+              final DocumentSerialiser2<D> serialiser,
+              final String type,
+              final Class<D> clazz) {
         this.persistence = persistence;
         this.securityContext = securityContext;
         this.serialiser = serialiser;
@@ -159,7 +159,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
     public final void deleteDocument(final String uuid) {
         Objects.requireNonNull(uuid);
         // Check that the user has permission to delete this item.
-        if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.DELETE)) {
+        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.DELETE)) {
             throw new PermissionException(securityContext.getUserId(), "You are not authorised to delete this item");
         }
 
@@ -252,7 +252,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     private boolean canRead(final DocRef docRef) {
         Objects.requireNonNull(docRef);
-        return securityContext.hasDocumentPermission(docRef.getType(), docRef.getUuid(), DocumentPermissionNames.READ);
+        return securityContext.hasDocumentPermission(docRef.getUuid(), DocumentPermissionNames.READ);
     }
 
     @Override
@@ -274,12 +274,12 @@ public class StoreImpl<D extends Doc> implements Store<D> {
                     }
                 }
 
-                if (exists && !securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.UPDATE)) {
+                if (exists && !securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
                     throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
                 }
 
             } else if (importState.ok(importMode)) {
-                if (exists && !securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.UPDATE)) {
+                if (exists && !securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.UPDATE)) {
                     throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document " + docRef);
                 }
 
@@ -310,7 +310,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
         try {
             // Check that the user has permission to read this item.
-            if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.READ)) {
+            if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
                 throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document " + docRef);
             } else {
                 D document = read(uuid);
@@ -413,7 +413,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
 
     private D read(final String uuid) {
         // Check that the user has permission to read this item.
-        if (!securityContext.hasDocumentPermission(type, uuid, DocumentPermissionNames.READ)) {
+        if (!securityContext.hasDocumentPermission(uuid, DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(), "You are not authorised to read this document");
         }
 
@@ -442,7 +442,7 @@ public class StoreImpl<D extends Doc> implements Store<D> {
         final DocRef docRef = createDocRef(document);
 
         // Check that the user has permission to update this item.
-        if (!securityContext.hasDocumentPermission(type, document.getUuid(), DocumentPermissionNames.UPDATE)) {
+        if (!securityContext.hasDocumentPermission(document.getUuid(), DocumentPermissionNames.UPDATE)) {
             throw new PermissionException(securityContext.getUserId(), "You are not authorised to update this document");
         }
 

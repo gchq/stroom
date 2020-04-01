@@ -18,9 +18,10 @@ package stroom.cluster.task.impl;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.cluster.task.api.ClusterTaskHandler;
+import stroom.cluster.task.api.ClusterTaskRef;
 import stroom.cluster.task.api.TerminateTaskClusterTask;
 import stroom.security.api.SecurityContext;
-import stroom.task.api.AbstractTaskHandler;
 import stroom.task.api.TaskManager;
 import stroom.task.shared.FindTaskCriteria;
 import stroom.task.shared.TaskProgress;
@@ -28,8 +29,7 @@ import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 
-
-class TerminateTaskClusterHandler extends AbstractTaskHandler<TerminateTaskClusterTask, ResultPage<TaskProgress>> {
+class TerminateTaskClusterHandler implements ClusterTaskHandler<TerminateTaskClusterTask, ResultPage<TaskProgress>> {
     private static final Logger LOGGER = LoggerFactory.getLogger(TerminateTaskClusterHandler.class);
 
     private final TaskManager taskManager;
@@ -43,19 +43,15 @@ class TerminateTaskClusterHandler extends AbstractTaskHandler<TerminateTaskClust
     }
 
     @Override
-    public ResultPage<TaskProgress> exec(final TerminateTaskClusterTask task) {
-        return securityContext.secureResult(() -> {
-            ResultPage<TaskProgress> taskedKilled = null;
-
+    public void exec(final TerminateTaskClusterTask task, final ClusterTaskRef<ResultPage<TaskProgress>> clusterTaskRef) {
+        securityContext.secure(() -> {
             final FindTaskCriteria criteria = task.getCriteria();
             if (criteria != null) {
                 LOGGER.debug("exec() - {}", criteria.toString());
 
                 // Terminate tasks on this node
-                taskedKilled = taskManager.terminate(criteria, task.isKill());
+                taskManager.terminate(criteria, task.isKill());
             }
-
-            return taskedKilled;
         });
     }
 }

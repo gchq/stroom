@@ -22,19 +22,20 @@ import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.service.ApiException;
-import stroom.authentication.service.api.model.IdTokenRequest;
+import stroom.authentication.resources.authentication.v1.ExchangeAccessCodeRequest;
+import stroom.authentication.resources.authentication.v1.AuthenticationService;
+import stroom.authentication.resources.token.v1.TokenService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.security.impl.session.UserIdentitySessionUtil;
 import stroom.security.shared.User;
 import stroom.ui.config.shared.UiConfig;
-import stroom.util.shared.ResourcePaths;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogUtil;
 import stroom.util.servlet.UserAgentSessionUtil;
+import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -86,6 +87,8 @@ class SecurityFilter implements Filter {
     private final UiConfig uiConfig;
     private final JWTService jwtService;
     private final AuthenticationServiceClients authenticationServiceClients;
+    private AuthenticationService authenticationService;
+    private TokenService tokenService;
     private final UserCache userCache;
     private final SecurityContext securityContext;
     private final Pattern publicApiPathPattern;
@@ -96,12 +99,14 @@ class SecurityFilter implements Filter {
             final UiConfig uiConfig,
             final JWTService jwtService,
             final AuthenticationServiceClients authenticationServiceClients,
+            final AuthenticationService authenticationService,
             final UserCache userCache,
             final SecurityContext securityContext) {
         this.config = config;
         this.uiConfig = uiConfig;
         this.jwtService = jwtService;
         this.authenticationServiceClients = authenticationServiceClients;
+        this.authenticationService = authenticationService;
         this.userCache = userCache;
         this.securityContext = securityContext;
 
@@ -134,7 +139,9 @@ class SecurityFilter implements Filter {
         filter(httpServletRequest, httpServletResponse, chain);
     }
 
-    private void filter(final HttpServletRequest request, final HttpServletResponse response, final FilterChain chain)
+    private void filter(final HttpServletRequest request,
+                        final HttpServletResponse response,
+                        final FilterChain chain)
             throws IOException, ServletException {
 
         LAMBDA_LOGGER.debug(() ->
@@ -173,7 +180,7 @@ class SecurityFilter implements Filter {
                         final UserIdentity token = loginAPI(request, response);
                         continueAsUser(request, response, chain, token);
                     }
-                } else if (shouldBypassAuthentication(servletPath)) {
+                } else if (shouldBypassAuthentication(servletPath, fullPath)) {
                     // Some servlet requests need to bypass authentication -- this happens if the servlet class
                     // is annotated with @Unauthenticated. E.g. the status servlet doesn't require authentication.
                     authenticateAsProcUser(request, response, chain, false);
@@ -218,8 +225,9 @@ class SecurityFilter implements Filter {
         return servletPath.endsWith(ResourcePaths.DISPATCH_RPC);
     }
 
-    private boolean shouldBypassAuthentication(String servletPath) {
-        return servletPath.startsWith(NO_AUTH_PATH);
+    private boolean shouldBypassAuthentication(final String servletPath, final String fullPath) {
+        return servletPath.startsWith(NO_AUTH_PATH) || fullPath.startsWith(NO_AUTH_PATH);
+//        return servletPath.startsWith(NO_AUTH_PATH);
     }
 
     private void authenticateAsAdmin(final HttpServletRequest request,
@@ -288,12 +296,17 @@ class SecurityFilter implements Filter {
                 if (accessCode != null) {
                     // Invalidate the current session.
                     HttpSession session = request.getSession(false);
-                    if (session != null) {
-                        session.invalidate();
-                    }
 
-                    LOGGER.debug("We have the following access code: {{}}", accessCode);
-                    session = request.getSession(true);
+                    // TODO: This invalidation was preventing the new UI logging in. There're no comments to
+                    // indicate why we were invalidating the session. I've not seen anything fall over yet,
+                    // but I'm leaving the code and this note here so we can check up on this later.
+//                    if (session != null) {
+//                        LOGGER.info("DEBUG: got session to invalidate");
+//                        session.invalidate();
+//                    }
+//
+//                    LOGGER.info("We have the following access code: {{}}", accessCode);
+//                    session = request.getSession(true);
 
                     UserAgentSessionUtil.set(request);
 
@@ -378,7 +391,7 @@ class SecurityFilter implements Filter {
 
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
         final UriBuilder authenticationRequest = UriBuilder.fromUri(config.getAuthenticationServiceUrl())
-                .path("/authenticate")
+                .path("/noauth/authenticate")
                 .queryParam(SCOPE, "openid")
                 .queryParam(RESPONSE_TYPE, "code")
                 .queryParam(CLIENT_ID, config.getClientId())
@@ -417,11 +430,8 @@ class SecurityFilter implements Filter {
 
         try {
             String sessionId = session.getId();
-            IdTokenRequest idTokenRequest = new IdTokenRequest()
-                    .clientId(config.getClientId())
-                    .clientSecret(config.getClientSecret())
-                    .accessCode(accessCode);
-            final String jws = authenticationServiceClients.newAuthenticationApi().getIdToken(idTokenRequest);
+            Optional<String> optionalJws = authenticationService.exchangeAccessCode(new ExchangeAccessCodeRequest(accessCode));
+            var jws = optionalJws.get();
             final JwtClaims jwtClaims = jwtService.verifyToken(jws);
             final String nonce = (String) jwtClaims.getClaimsMap().get("nonce");
             final boolean match = nonce.equals(state.getNonce());
@@ -436,14 +446,6 @@ class SecurityFilter implements Filter {
                 // If the nonces don't match we need to redirect to log in again.
                 // Maybe the request uses an out-of-date stroomSessionId?
                 LOGGER.info("Received a bad nonce!");
-            }
-        } catch (ApiException e) {
-            if (e.getCode() == Response.Status.UNAUTHORIZED.getStatusCode()) {
-                // If we can't exchange the accessCode for an idToken then this probably means the
-                // accessCode doesn't exist any more, or has already been used. so we can't proceed.
-                LOGGER.error("The accessCode used to obtain an idToken was rejected. Has it already been used?");
-            } else {
-                LOGGER.error("Unable to retrieve idToken!", e);
             }
         } catch (final MalformedClaimException | InvalidJwtException e) {
             LOGGER.warn(e.getMessage());

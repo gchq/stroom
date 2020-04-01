@@ -22,9 +22,9 @@ import stroom.cache.api.CacheManager;
 import stroom.cache.api.ICache;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
-import stroom.util.entity.EntityAction;
-import stroom.util.entity.EntityEvent;
-import stroom.util.entity.EntityEventHandler;
+import stroom.util.entityevent.EntityAction;
+import stroom.util.entityevent.EntityEvent;
+import stroom.util.entityevent.EntityEventHandler;
 import stroom.security.api.SecurityContext;
 import stroom.security.shared.DocumentPermissionNames;
 import stroom.security.shared.PermissionException;
@@ -119,7 +119,7 @@ class StatisticsDataSourceCacheImpl implements StatisticStoreCache, EntityEvent.
     }
 
     private boolean permissionFilter(final StatisticStoreDoc entity) {
-        if (!securityContext.hasDocumentPermission(StatisticStoreDoc.DOCUMENT_TYPE, entity.getUuid(), DocumentPermissionNames.READ)) {
+        if (!securityContext.hasDocumentPermission(entity.getUuid(), DocumentPermissionNames.READ)) {
             throw new PermissionException(securityContext.getUserId(), "Not permitted to read " + entity.getName());
         }
         return true;

@@ -19,7 +19,6 @@ package stroom.processor.impl.db;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MarkerFactory;
-import stroom.util.entity.Marshaller;
 import stroom.util.xml.XMLMarshallerUtil;
 
 import javax.xml.bind.JAXBContext;

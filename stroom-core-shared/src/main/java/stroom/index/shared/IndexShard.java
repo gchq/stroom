@@ -16,8 +16,13 @@
 
 package stroom.index.shared;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import stroom.docref.HasDisplayValue;
-
 import stroom.util.shared.HasPrimitiveValue;
 import stroom.util.shared.ModelStringUtil;
 import stroom.util.shared.PrimitiveValueConverter;
@@ -30,55 +35,116 @@ import java.util.Set;
 /**
  * A place where a indexUuid has been created.
  */
+@JsonPropertyOrder({
+        "id",
+        "partition",
+        "partitionFromTime",
+        "partitionToTime",
+        "documentCount",
+        "commitMs",
+        "commitDurationMs",
+        "commitDocumentCount",
+        "status",
+        "fileSize",
+        "indexVersion",
+        "volume",
+        "nodeName",
+        "indexUuid"
+})
+@JsonInclude(Include.NON_NULL)
 public class IndexShard {
     public static final Set<IndexShardStatus> NON_DELETED_INDEX_SHARD_STATUS = Collections.unmodifiableSet(
             new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED, IndexShardStatus.CORRUPT)));
     public static final Set<IndexShardStatus> READABLE_INDEX_SHARD_STATUS = Collections
             .unmodifiableSet(new HashSet<>(Arrays.asList(IndexShardStatus.OPEN, IndexShardStatus.CLOSED)));
+
+    @JsonProperty
     private Long id;
 
     /**
      * The time that the partition that this shard belongs to starts
      */
+    @JsonProperty
     private String partition;
     /**
      * The time that the partition that this shard belongs to starts
      */
+    @JsonProperty
     private Long partitionFromTime;
     /**
      * The time that the partition that this shard belongs to ends
      */
+    @JsonProperty
     private Long partitionToTime;
     /**
      * Number of documents indexed
      */
+    @JsonProperty
     private int documentCount;
     /**
      * When the item was last commited / updated
      */
+    @JsonProperty
     private Long commitMs;
     /**
      * How long did the commit take
      */
+    @JsonProperty
     private Long commitDurationMs;
     /**
      * The number of extra documents commited
      */
+    @JsonProperty
     private Integer commitDocumentCount;
     /**
      * Status
      */
+    @JsonProperty
     private volatile IndexShardStatus status = IndexShardStatus.NEW;
+
+    @JsonProperty
     private Long fileSize;
+    @JsonProperty
     private String indexVersion;
-
+    @JsonProperty
     private IndexVolume volume;
-
+    @JsonProperty
     private String nodeName;
-
+    @JsonProperty
     private String indexUuid;
 
     public IndexShard() {
+    }
+
+    @JsonCreator
+    public IndexShard(@JsonProperty("id") final Long id,
+                      @JsonProperty("partition") final String partition,
+                      @JsonProperty("partitionFromTime") final Long partitionFromTime,
+                      @JsonProperty("partitionToTime") final Long partitionToTime,
+                      @JsonProperty("documentCount") final int documentCount,
+                      @JsonProperty("commitMs") final Long commitMs,
+                      @JsonProperty("commitDurationMs") final Long commitDurationMs,
+                      @JsonProperty("commitDocumentCount") final Integer commitDocumentCount,
+                      @JsonProperty("status") final IndexShardStatus status,
+                      @JsonProperty("fileSize") final Long fileSize,
+                      @JsonProperty("indexVersion") final String indexVersion,
+                      @JsonProperty("volume") final IndexVolume volume,
+                      @JsonProperty("nodeName") final String nodeName,
+                      @JsonProperty("indexUuid") final String indexUuid) {
+        this.id = id;
+        this.partition = partition;
+        this.partitionFromTime = partitionFromTime;
+        this.partitionToTime = partitionToTime;
+        this.documentCount = documentCount;
+        this.commitMs = commitMs;
+        this.commitDurationMs = commitDurationMs;
+        this.commitDocumentCount = commitDocumentCount;
+        this.status = status;
+        this.fileSize = fileSize;
+        this.indexVersion = indexVersion;
+        this.volume = volume;
+        this.nodeName = nodeName;
+        this.indexUuid = indexUuid;
     }
 
     public Long getId() {
@@ -193,6 +259,7 @@ public class IndexShard {
         this.indexVersion = indexVersion;
     }
 
+    @JsonIgnore
     public Long getCommitDocumentCountPs() {
         if (commitDocumentCount != null && commitDurationMs != null && commitDurationMs > 0) {
             final double seconds = commitDurationMs.doubleValue() / 1000;
@@ -203,10 +270,12 @@ public class IndexShard {
         return null;
     }
 
+    @JsonIgnore
     public String getFileSizeString() {
         return ModelStringUtil.formatIECByteSizeString(getFileSize());
     }
 
+    @JsonIgnore
     public Integer getBytesPerDocument() {
         final Long fileSize = getFileSize();
         if (fileSize != null && documentCount > 0) {

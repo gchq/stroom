@@ -55,7 +55,7 @@ public class MockSecurityContext implements SecurityContext {
     }
 
     @Override
-    public boolean hasDocumentPermission(final String documentType, final String documentId, final String permission) {
+    public boolean hasDocumentPermission(final String documentUuid, final String permission) {
         return true;
     }
 

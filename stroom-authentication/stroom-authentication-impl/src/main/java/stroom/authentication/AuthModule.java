@@ -25,7 +25,11 @@ import stroom.authentication.exceptions.mappers.NoSuchUserExceptionMapper;
 import stroom.authentication.exceptions.mappers.TokenCreationExceptionMapper;
 import stroom.authentication.exceptions.mappers.UnsupportedFilterExceptionMapper;
 import stroom.authentication.resources.authentication.v1.AuthenticationResource;
+import stroom.authentication.resources.authentication.v1.AuthenticationService;
+import stroom.authentication.resources.authentication.v1.AuthenticationServiceImpl;
 import stroom.authentication.resources.token.v1.TokenResource;
+import stroom.authentication.resources.token.v1.TokenService;
+import stroom.authentication.resources.token.v1.TokenServiceImpl;
 import stroom.authentication.resources.user.v1.UserResource;
 import stroom.authentication.service.eventlogging.StroomEventLoggingService;
 import stroom.util.guice.GuiceUtil;
@@ -48,6 +52,8 @@ public final class AuthModule extends AbstractModule {
         bind(TokenCreationExceptionMapper.class);
         bind(UnsupportedFilterExceptionMapper.class);
         bind(NoSuchUserExceptionMapper.class);
+        bind(AuthenticationService.class).to(AuthenticationServiceImpl.class);
+        bind(TokenService.class).to(TokenServiceImpl.class);
         GuiceUtil.buildMultiBinder(binder(), RestResource.class)
                 .addBinding(UserResource.class)
                 .addBinding(AuthenticationResource.class)

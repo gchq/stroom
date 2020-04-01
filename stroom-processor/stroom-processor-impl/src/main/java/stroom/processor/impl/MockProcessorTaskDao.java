@@ -3,7 +3,6 @@ package stroom.processor.impl;
 import stroom.dashboard.expression.v1.Val;
 import stroom.datasource.api.v2.AbstractField;
 import stroom.entity.shared.ExpressionCriteria;
-import stroom.meta.shared.ExpressionUtil;
 import stroom.meta.shared.Meta;
 import stroom.meta.shared.Status;
 import stroom.processor.api.InclusiveRanges;
@@ -13,6 +12,7 @@ import stroom.processor.shared.ProcessorTask;
 import stroom.processor.shared.ProcessorTaskDataSource;
 import stroom.processor.shared.ProcessorTaskSummary;
 import stroom.processor.shared.TaskStatus;
+import stroom.query.api.v2.ExpressionUtil;
 import stroom.util.shared.ResultPage;
 import stroom.util.shared.Clearable;
 

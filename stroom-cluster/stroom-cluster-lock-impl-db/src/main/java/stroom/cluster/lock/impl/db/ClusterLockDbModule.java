@@ -1,6 +1,7 @@
 package stroom.cluster.lock.impl.db;
 
 import stroom.cluster.lock.api.ClusterLockService;
+import stroom.cluster.task.api.ClusterTaskHandlerBinder;
 import stroom.db.util.AbstractFlyWayDbModule;
 import stroom.db.util.DataSourceProxy;
 import stroom.task.api.TaskHandlerBinder;
@@ -22,8 +23,10 @@ public class ClusterLockDbModule extends AbstractFlyWayDbModule<ClusterLockConfi
         GuiceUtil.buildMultiBinder(binder(), Clearable.class).addBinding(DbClusterLock.class);
 
         TaskHandlerBinder.create(binder())
-                .bind(ClusterLockClusterTask.class, ClusterLockClusterHandler.class)
                 .bind(ClusterLockTask.class, ClusterLockHandler.class);
+
+        ClusterTaskHandlerBinder.create(binder())
+                .bind(ClusterLockClusterTask.class, ClusterLockClusterHandler.class);
     }
 
     @Override

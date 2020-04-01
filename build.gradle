@@ -40,7 +40,7 @@ plugins {
 }
 
 wrapper {
-    gradleVersion = '5.5.1'
+    gradleVersion = '5.6.4'
 }
 
 apply plugin: 'ca.cutterslade.analyze'
@@ -87,7 +87,7 @@ ext.versions = [
         hadoopHdfsShaded  : 'v2.6.4-4',
         stroomAuth        : 'v7.0-beta.4', // Needed for the correct version of the client API
         stroomExpression  : 'v3.0.3',
-        stroomQuery       : 'v4.0-beta.58', // same version for stroom-docref, stroom-query-api and stroom-query-common
+        stroomQuery       : 'v4.0-beta.62', // same version for stroom-docref, stroom-query-api and stroom-query-common
         stroomStats       : 'v0.6.0-alpha.2',
 
         // NOTE: Curator relies on zookeeper and we are pegged to zookeeper 3.4.5 server by the cloudera stack.
@@ -188,6 +188,7 @@ ext.libs = [
         guice_assistedinject           : "com.google.inject.extensions:guice-assistedinject:$versions.guice4",
         guice_extension                : "name.falgout.jeffrey.testing.junit5:guice-extension:1.1.1",
         guice_multibindings            : "com.google.inject.extensions:guice-multibindings:$versions.guice4",
+        guice_grapher                  : "com.google.inject.extensions:guice-grapher:$versions.guice4",
         gwt_dev                        : "com.google.gwt:gwt-dev:$versions.gwt",
         gwt_servlet                    : "com.google.gwt:gwt-servlet:$versions.gwt",
         gwt_user                       : "com.google.gwt:gwt-user:$versions.gwt",
@@ -225,6 +226,7 @@ ext.libs = [
         jersey_client                  : "org.glassfish.jersey.core:jersey-client", // version controlled by DW BOM
         jersey_common                  : "org.glassfish.jersey.core:jersey-common", // version controlled by DW BOM
         jersey_server                  : "org.glassfish.jersey.core:jersey-server", // version controlled by DW BOM
+        jersey_test_framework_grizzly2 : "org.glassfish.jersey.test-framework.providers:jersey-test-framework-provider-grizzly2", // version controlled by DW BOM
         jetty_http                     : "org.eclipse.jetty:jetty-http", // version controlled by DW BOM
         jetty_server                   : "org.eclipse.jetty:jetty-server", // version controlled by DW BOM
         jetty_servlet                  : "org.eclipse.jetty:jetty-servlet", // version controlled by DW BOM

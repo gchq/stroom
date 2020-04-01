@@ -5,6 +5,7 @@ import io.swagger.annotations.ApiOperation;
 import org.fusesource.restygwt.client.DirectRestService;
 import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
+import stroom.util.shared.ResultPage;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -30,6 +31,10 @@ public interface UserResource extends RestResource, DirectRestService {
                    @QueryParam("isGroup") Boolean isGroup,
                    @QueryParam("uuid") String uuid);
 
+    @POST
+    @Path("/find")
+    ResultPage<User> find(FindUserCriteria criteria);
+
     @GET
     @Path("/{userUuid}")
     User get(@PathParam("userUuid") String userUuid);
@@ -53,21 +58,21 @@ public interface UserResource extends RestResource, DirectRestService {
 
     @DELETE
     @Path("/{uuid}")
-    void deleteUser(@PathParam("uuid") String uuid);
+    Boolean deleteUser(@PathParam("uuid") String uuid);
 
     @PUT
     @Path("/{userName}/status")
-    void setStatus(@PathParam("userName") String userName, @QueryParam("enabled") boolean status);
+    Boolean setStatus(@PathParam("userName") String userName, @QueryParam("enabled") boolean status);
 
     @PUT
     @Path("/{userUuid}/{groupUuid}")
-    void addUserToGroup(@PathParam("userUuid") String userUuid,
-                        @PathParam("groupUuid") String groupUuid);
+    Boolean addUserToGroup(@PathParam("userUuid") String userUuid,
+                           @PathParam("groupUuid") String groupUuid);
 
     @DELETE
     @Path("/{userUuid}/{groupUuid}")
-    void removeUserFromGroup(@PathParam("userUuid") String userUuid,
-                             @PathParam("groupUuid") String groupUuid);
+    Boolean removeUserFromGroup(@PathParam("userUuid") String userUuid,
+                                @PathParam("groupUuid") String groupUuid);
 
     @GET
     @Path("associates")

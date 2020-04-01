@@ -34,8 +34,8 @@ import stroom.config.global.shared.GlobalConfigResource;
 import stroom.config.global.shared.OverrideValue;
 import stroom.dispatch.client.Rest;
 import stroom.dispatch.client.RestFactory;
+import stroom.node.client.NodeCache;
 import stroom.node.shared.FetchNodeStatusResponse;
-import stroom.node.shared.NodeResource;
 import stroom.security.client.api.ClientSecurityContext;
 import stroom.svg.client.SvgPreset;
 import stroom.svg.client.SvgPresets;
@@ -60,7 +60,6 @@ public final class ManageGlobalPropertyEditPresenter
         extends MyPresenterWidget<ManageGlobalPropertyEditPresenter.GlobalPropertyEditView>
         implements ManageGlobalPropertyEditUiHandlers {
 
-    private static final NodeResource NODE_RESOURCE = GWT.create(NodeResource.class);
     private static final GlobalConfigResource GLOBAL_CONFIG_RESOURCE_RESOURCE = GWT.create(GlobalConfigResource.class);
 
     private static final OverrideValue<String> ERROR_VALUE = OverrideValue.with("[[ERROR]]");
@@ -71,6 +70,7 @@ public final class ManageGlobalPropertyEditPresenter
     private static final String MULTIPLE_SOURCES_MSG = "[Configured from multiple sources]";
 
     private final RestFactory restFactory;
+    private final NodeCache nodeCache;
     private final ClientSecurityContext securityContext;
     private final UiConfigCache clientPropertyCache;
     private ConfigProperty configProperty;
@@ -91,11 +91,13 @@ public final class ManageGlobalPropertyEditPresenter
     public ManageGlobalPropertyEditPresenter(final EventBus eventBus,
                                              final GlobalPropertyEditView view,
                                              final RestFactory restFactory,
+                                             final NodeCache nodeCache,
                                              final ClientSecurityContext securityContext,
                                              final UiConfigCache clientPropertyCache,
                                              final Provider<ConfigPropertyClusterValuesPresenter> clusterValuesPresenterProvider) {
         super(eventBus, view);
         this.restFactory = restFactory;
+        this.nodeCache = nodeCache;
         this.securityContext = securityContext;
         this.clientPropertyCache = clientPropertyCache;
         this.clusterValuesPresenterProvider = clusterValuesPresenterProvider;
@@ -147,10 +149,10 @@ public final class ManageGlobalPropertyEditPresenter
                     getView().asWidget().getElement().getAbsoluteTop() + 10);
 
             clusterValuesPresenter.show(
-                getEntity(),
-                effectiveValueToNodeSourcesMap,
-                offsetPopupPosition,
-                popupUiHandlers);
+                    getEntity(),
+                    effectiveValueToNodeSourcesMap,
+                    offsetPopupPosition,
+                    popupUiHandlers);
         }
     }
 
@@ -188,10 +190,10 @@ public final class ManageGlobalPropertyEditPresenter
 
                 if (didAnyNodesError()) {
                     msg = "Error fetching values from all nodes in the cluster";
-                } else if (uniqueEffectiveValuesCount > 1 ) {
-                    msg = "Multiple unique values exist in the cluster (" + uniqueEffectiveValuesCount +")";
+                } else if (uniqueEffectiveValuesCount > 1) {
+                    msg = "Multiple unique values exist in the cluster (" + uniqueEffectiveValuesCount + ")";
                 } else {
-                    msg = "Multiple value sources exist in the cluster (" + uniqueSourcesCount +")";
+                    msg = "Multiple value sources exist in the cluster (" + uniqueSourcesCount + ")";
                 }
 
                 // show warning
@@ -210,15 +212,15 @@ public final class ManageGlobalPropertyEditPresenter
         final Rest<ConfigProperty> fetchPropertyRest = restFactory.create();
 
         fetchPropertyRest
-            .onSuccess(configProperty -> {
-                setEntity(configProperty);
-                showPopup(popupUiHandlers);
-            })
-            .onFailure(throwable -> {
-                showError(throwable, "Error fetching property " + propertyName);
-            })
-            .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-            .getPropertyByName(propertyName);
+                .onSuccess(configProperty -> {
+                    setEntity(configProperty);
+                    showPopup(popupUiHandlers);
+                })
+                .onFailure(throwable -> {
+                    showError(throwable, "Error fetching property " + propertyName);
+                })
+                .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                .getPropertyByName(propertyName);
     }
 
     private long getUniqueEffectiveValuesCount() {
@@ -227,18 +229,18 @@ public final class ManageGlobalPropertyEditPresenter
 
     private long getUniqueYamlValuesCount() {
         return nodeToYamlOverrideMap.values()
-            .stream()
-            .distinct()
-            .count();
+                .stream()
+                .distinct()
+                .count();
     }
 
     private long getUniqueSourcesCount() {
         return effectiveValueToNodeSourcesMap.values()
-            .stream()
-            .flatMap(Set::stream)
-            .map(NodeSource::getSource)
-            .distinct()
-            .count();
+                .stream()
+                .flatMap(Set::stream)
+                .map(NodeSource::getSource)
+                .distinct()
+                .count();
     }
 
     private boolean didAnyNodesError() {
@@ -253,19 +255,9 @@ public final class ManageGlobalPropertyEditPresenter
         final Rest<FetchNodeStatusResponse> fetchAllNodes = restFactory.create();
 
         // For each node fire off a request to get the yaml override for that node
-        fetchAllNodes
-                .onSuccess(response -> {
-                    response.getValues().forEach(nodeStatus -> {
-                        if (nodeStatus.getNode().isEnabled()) {
-                            refreshYamlOverrideForNode(nodeStatus.getNode().getName());
-                        }
-                    });
-                })
-                .onFailure(throwable -> {
-                    showError(throwable, "Error getting list of all nodes");
-                })
-                .call(NODE_RESOURCE)
-                .list();
+        nodeCache.listEnabledNodes(
+                nodeNames -> nodeNames.forEach(this::refreshYamlOverrideForNode),
+                throwable -> showError(throwable, "Error getting list of all nodes"));
     }
 
     private void updateEffectiveValueForNode(final String nodeName,
@@ -280,27 +272,27 @@ public final class ManageGlobalPropertyEditPresenter
             effectiveValueFromNode = "Error fetching YAML value for node " + nodeName;
         } else {
             effectiveValueFromNode = configProperty.getEffectiveValue(yamlOverride)
-                .orElse(MAGIC_NULL);
+                    .orElse(MAGIC_NULL);
         }
 
         final NodeSource newNodeSource = new NodeSource(
-            nodeName,
-            configProperty.getSource(
-                configProperty.getDatabaseOverrideValue(),
-                yamlOverride).getName());
+                nodeName,
+                configProperty.getSource(
+                        configProperty.getDatabaseOverrideValue(),
+                        yamlOverride).getName());
 
         // Add our value into the map
         this.effectiveValueToNodeSourcesMap.computeIfAbsent(
-            effectiveValueFromNode,
-            k -> new HashSet<>())
-            .add(newNodeSource);
+                effectiveValueFromNode,
+                k -> new HashSet<>())
+                .add(newNodeSource);
 
         final List<String> keysToRemove = new ArrayList<>();
         effectiveValueToNodeSourcesMap.forEach((effectiveValue, nodeSources) -> {
 
             if (!effectiveValue.equals(effectiveValueFromNode)) {
                 nodeSources.removeIf(existingNodeSource ->
-                    existingNodeSource.getNodeName().equals(nodeName));
+                        existingNodeSource.getNodeName().equals(nodeName));
 
                 if (nodeSources.isEmpty()) {
                     keysToRemove.add(effectiveValue);
@@ -309,7 +301,7 @@ public final class ManageGlobalPropertyEditPresenter
         });
         // Remove entries with no nodes
         keysToRemove.forEach(key ->
-            effectiveValueToNodeSourcesMap.remove(key));
+                effectiveValueToNodeSourcesMap.remove(key));
     }
 
     private void updateAllNodeEffectiveValues() {
@@ -324,10 +316,8 @@ public final class ManageGlobalPropertyEditPresenter
                     // Add the node's result to our maps
                     refreshYamlOverrideForNode(nodeName, yamlOverride);
                 })
-                .onFailure(throwable -> {
-                    refreshYamlOverrideForNode(
-                        nodeName, ERROR_VALUE);
-                })
+                .onFailure(throwable -> refreshYamlOverrideForNode(
+                        nodeName, ERROR_VALUE))
                 .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
                 .getYamlValueByNodeAndName(configProperty.getName().toString(), nodeName);
     }
@@ -399,8 +389,8 @@ public final class ManageGlobalPropertyEditPresenter
         } else {
             if (getEntity().hasYamlOverride()) {
                 text = getEntity()
-                    .getYamlOverrideValue()
-                    .getValueOrElse("");
+                        .getYamlOverrideValue()
+                        .getValueOrElse("");
             }
         }
         getView().getYamlValue().setText(text);
@@ -462,37 +452,37 @@ public final class ManageGlobalPropertyEditPresenter
 
         Rest<ConfigProperty> restCall = restFactory.create();
         restCall
-            .onSuccess(savedConfigProperty -> {
-                setEntity(savedConfigProperty);
-                if (hideOnSave) {
-                    hide();
-                    // Refresh client properties in case they were affected by this change.
-                    clientPropertyCache.refresh();
-                }
-            });
+                .onSuccess(savedConfigProperty -> {
+                    setEntity(savedConfigProperty);
+                    if (hideOnSave) {
+                        hide();
+                        // Refresh client properties in case they were affected by this change.
+                        clientPropertyCache.refresh();
+                    }
+                });
 
         if (configPropertyToSave.getId() == null) {
             // No ID so this doesn't exist in the DB
             restCall
-                .onFailure(throwable ->
-                   showError(throwable, "Error creating property"))
-                .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-                .create(configPropertyToSave);
+                    .onFailure(throwable ->
+                            showError(throwable, "Error creating property"))
+                    .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                    .create(configPropertyToSave);
         } else {
             restCall
-                .onFailure(throwable ->
-                    showError(throwable, "Error updating property"))
-                .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
-                .update(configPropertyToSave.getName().toString(), configPropertyToSave);
+                    .onFailure(throwable ->
+                            showError(throwable, "Error updating property"))
+                    .call(GLOBAL_CONFIG_RESOURCE_RESOURCE)
+                    .update(configPropertyToSave.getName().toString(), configPropertyToSave);
         }
     }
 
     private void showError(final Throwable throwable, final String message) {
         AlertEvent.fireError(
-            ManageGlobalPropertyEditPresenter.this,
-            message + " - " + throwable.getMessage(),
-            null,
-            null);
+                ManageGlobalPropertyEditPresenter.this,
+                message + " - " + throwable.getMessage(),
+                null,
+                null);
     }
 
     private void refreshValuesOnChange() {
@@ -540,22 +530,22 @@ public final class ManageGlobalPropertyEditPresenter
 
     private void showHelp(final String anchor) {
         clientPropertyCache.get()
-            .onSuccess(result -> {
-                final String helpUrl = result.getHelpUrl();
-                if (helpUrl != null && helpUrl.trim().length() > 0) {
-                    String url = helpUrl + "/user-guide/properties.html" + formatAnchor(anchor);
-                    Window.open(url, "_blank", "");
-                } else {
-                    AlertEvent.fireError(
+                .onSuccess(result -> {
+                    final String helpUrl = result.getHelpUrl();
+                    if (helpUrl != null && helpUrl.trim().length() > 0) {
+                        String url = helpUrl + "/user-guide/properties.html" + formatAnchor(anchor);
+                        Window.open(url, "_blank", "");
+                    } else {
+                        AlertEvent.fireError(
+                                ManageGlobalPropertyEditPresenter.this,
+                                "Help is not configured!",
+                                null);
+                    }
+                })
+                .onFailure(caught -> AlertEvent.fireError(
                         ManageGlobalPropertyEditPresenter.this,
-                        "Help is not configured!",
-                        null);
-                }
-            })
-            .onFailure(caught -> AlertEvent.fireError(
-                ManageGlobalPropertyEditPresenter.this,
-                caught.getMessage(),
-                null));
+                        caught.getMessage(),
+                        null));
     }
 
     protected String formatAnchor(String name) {

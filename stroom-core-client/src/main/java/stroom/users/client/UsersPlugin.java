@@ -35,8 +35,8 @@ public class UsersPlugin extends NodeToolsPlugin {
             clientPropertyCache.get()
                     .onSuccess(uiConfig -> {
                         addManageUsers(event, uiConfig);
-                        addManageUserAuthorisations(event, uiConfig);
-                        addManageGroupAuthorisations(event, uiConfig);
+//                        addManageUserAuthorisations(event, uiConfig);
+//                        addManageGroupAuthorisations(event, uiConfig);
                     })
                     .onFailure(caught -> AlertEvent.fireError(UsersPlugin.this, caught.getMessage(), null));
         }
@@ -61,44 +61,44 @@ public class UsersPlugin extends NodeToolsPlugin {
         }
         event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, usersMenuItem);
     }
-    private void addManageUserAuthorisations(final BeforeRevealMenubarEvent event,
-                                             final UiConfig uiConfig) {
-        final IconMenuItem usersMenuItem;
-        final SvgPreset icon = SvgPresets.USER_GROUP;
-        final String url = uiConfig.getUrl().getUserAuthorisation();
-        if (url != null && url.trim().length() > 0) {
-            usersMenuItem = new IconMenuItem(5, icon, null, "User Authorisation", null, true, () -> {
-                final Hyperlink hyperlink = new Builder()
-                        .text("User Authorisation")
-                        .href(url)
-                        .type(HyperlinkType.TAB + "|Users Authorisation")
-                        .icon(icon)
-                        .build();
-                HyperlinkEvent.fire(this, hyperlink);
-            });
-        } else {
-            usersMenuItem = new IconMenuItem(5, icon, icon, "Users is not configured!", null, false, null);
-        }
-        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, usersMenuItem);
-    }
-    private void addManageGroupAuthorisations(final BeforeRevealMenubarEvent event,
-                                             final UiConfig uiConfig) {
-        final IconMenuItem usersMenuItem;
-        final SvgPreset icon = SvgPresets.USER_GROUP;
-        final String url = uiConfig.getUrl().getUserAuthorisation();
-        if (url != null && url.trim().length() > 0) {
-            usersMenuItem = new IconMenuItem(5, icon, null, "Group Authorisation", null, true, () -> {
-                final Hyperlink hyperlink = new Builder()
-                        .text("Group Authorisation")
-                        .href(url)
-                        .type(HyperlinkType.TAB + "|Group Authorisation")
-                        .icon(icon)
-                        .build();
-                HyperlinkEvent.fire(this, hyperlink);
-            });
-        } else {
-            usersMenuItem = new IconMenuItem(5, icon, icon, "Users is not configured!", null, false, null);
-        }
-        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, usersMenuItem);
-    }
+//    private void addManageUserAuthorisations(final BeforeRevealMenubarEvent event,
+//                                             final UiConfig uiConfig) {
+//        final IconMenuItem usersMenuItem;
+//        final SvgPreset icon = SvgPresets.USER_GROUP;
+//        final String url = uiConfig.getUrl().getUserAuthorisation();
+//        if (url != null && url.trim().length() > 0) {
+//            usersMenuItem = new IconMenuItem(5, icon, null, "User Authorisation", null, true, () -> {
+//                final Hyperlink hyperlink = new Builder()
+//                        .text("User Authorisation")
+//                        .href(url)
+//                        .type(HyperlinkType.TAB + "|Users Authorisation")
+//                        .icon(icon)
+//                        .build();
+//                HyperlinkEvent.fire(this, hyperlink);
+//            });
+//        } else {
+//            usersMenuItem = new IconMenuItem(5, icon, icon, "Users is not configured!", null, false, null);
+//        }
+//        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, usersMenuItem);
+//    }
+//    private void addManageGroupAuthorisations(final BeforeRevealMenubarEvent event,
+//                                             final UiConfig uiConfig) {
+//        final IconMenuItem usersMenuItem;
+//        final SvgPreset icon = SvgPresets.USER_GROUP;
+//        final String url = uiConfig.getUrl().getUserAuthorisation();
+//        if (url != null && url.trim().length() > 0) {
+//            usersMenuItem = new IconMenuItem(5, icon, null, "Group Authorisation", null, true, () -> {
+//                final Hyperlink hyperlink = new Builder()
+//                        .text("Group Authorisation")
+//                        .href(url)
+//                        .type(HyperlinkType.TAB + "|Group Authorisation")
+//                        .icon(icon)
+//                        .build();
+//                HyperlinkEvent.fire(this, hyperlink);
+//            });
+//        } else {
+//            usersMenuItem = new IconMenuItem(5, icon, icon, "Users is not configured!", null, false, null);
+//        }
+//        event.getMenuItems().addMenuItem(MenuKeys.TOOLS_MENU, usersMenuItem);
+//    }
 }

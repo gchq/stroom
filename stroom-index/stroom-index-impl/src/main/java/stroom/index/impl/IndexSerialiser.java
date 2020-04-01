@@ -63,18 +63,14 @@ public class IndexSerialiser implements DocumentSerialiser2<IndexDoc> {
 
                 final List<IndexField> indexFieldList = oldIndexFieldList
                         .stream()
-                        .map(field -> {
-                            final IndexField indexField = new IndexField(
-                                    IndexFieldType.valueOf(field.getFieldType().name()),
-                                    field.getFieldName(),
-                                    AnalyzerType.valueOf(field.getAnalyzerType().name()),
-                                    field.isIndexed(),
-                                    field.isStored(),
-                                    field.isTermPositions(),
-                                    field.isCaseSensitive(),
-                                    field.getSupportedConditions());
-                            return indexField;
-                        })
+                        .map(field -> new IndexField(
+                                IndexFieldType.valueOf(field.getFieldType().name()),
+                                field.getFieldName(),
+                                AnalyzerType.valueOf(field.getAnalyzerType().name()),
+                                field.isIndexed(),
+                                field.isStored(),
+                                field.isTermPositions(),
+                                field.isCaseSensitive()))
                         .collect(Collectors.toList());
 
                 return new IndexFields(indexFieldList);

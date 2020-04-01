@@ -32,8 +32,16 @@ public class ProxyLifecycle implements Managed {
     public void stop() {
         LOGGER.info("Stopping Stroom Proxy");
 
-        proxyRepositoryReader.stop();
-        proxyRepositoryManager.stop();
+        try {
+            proxyRepositoryReader.stop();
+            proxyRepositoryManager.stop();
+        } catch (Exception e) {
+            LOGGER.error("error",e);
+        }
+
+        // This method is part of DW  Managed which is managed by Jersey so we need to ensure any interrupts
+        // are cleared before it goes back to Jersey
+        Thread.interrupted();
 
         LOGGER.info("Stopped Stroom Proxy");
     }

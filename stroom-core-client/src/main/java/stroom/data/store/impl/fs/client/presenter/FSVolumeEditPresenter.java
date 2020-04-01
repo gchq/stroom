@@ -37,15 +37,14 @@ import stroom.widget.popup.client.presenter.DefaultPopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupSize;
 import stroom.widget.popup.client.presenter.PopupUiHandlers;
 import stroom.widget.popup.client.presenter.PopupView.PopupType;
-import stroom.widget.tab.client.event.CloseEvent;
+
+import java.util.function.Consumer;
 
 public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresenter.VolumeEditView> {
     private static final FsVolumeResource FS_VOLUME_RESOURCE = GWT.create(FsVolumeResource.class);
 
-    private final PopupSize popupSize = new PopupSize(400, 197, 400, 197, 1000, 197, true);
     private final RestFactory restFactory;
     private FsVolume volume;
-    private boolean opening;
 
     @Inject
     public FSVolumeEditPresenter(final EventBus eventBus, final VolumeEditView view,
@@ -54,61 +53,72 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
         this.restFactory = restFactory;
     }
 
-    public void addVolume(final FsVolume volume, final PopupUiHandlers popupUiHandlers) {
-        read(volume, "Add Volume", popupUiHandlers);
-    }
+//    public void addVolume(final FsVolume volume, final Consumer<FsVolume> consumer) {
+//        read(volume, "Add Volume", consumer);
+//    }
+//
+//    public void editVolume(final FsVolume volume, final Consumer<FsVolume> consumer) {
+//        read(volume, "Edit Volume", consumer);
+//    }
+//
+//
 
-    public void editVolume(final FsVolume volume, final PopupUiHandlers popupUiHandlers) {
-        read(volume, "Edit Volume", popupUiHandlers);
-    }
+    void show(final FsVolume volume, final String title, final Consumer<FsVolume> consumer) {
+        read(volume);
 
-    private void read(final FsVolume volume, final String title, final PopupUiHandlers popupUiHandlers) {
-        if (!opening) {
-            opening = true;
+        final PopupUiHandlers popupUiHandlers = new DefaultPopupUiHandlers() {
+            @Override
+            public void onHideRequest(final boolean autoClose, final boolean ok) {
+                if (ok) {
+                    write();
+                    try {
+                        final Rest<FsVolume> rest = restFactory.create();
+                        rest
+                                .onSuccess(consumer)
+                                .call(FS_VOLUME_RESOURCE)
+                                .update(volume.getId(), volume);
 
-            this.volume = volume;
-
-            getView().getPath().setText(volume.getPath());
-            getView().getStatus().addItems(VolumeUseStatus.values());
-            getView().getStatus().setSelectedItem(volume.getStatus());
-
-            if (volume.getByteLimit() != null) {
-                getView().getByteLimit().setText(ModelStringUtil.formatIECByteSizeString(volume.getByteLimit()));
-            } else {
-                getView().getByteLimit().setText("");
+                    } catch (final RuntimeException e) {
+                        AlertEvent.fireError(FSVolumeEditPresenter.this, e.getMessage(), null);
+                    }
+                } else {
+                    consumer.accept(null);
+                }
             }
+        };
 
-            opening = false;
-            ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title,
-                    new DelegatePopupUiHandlers(popupUiHandlers));
+        final PopupSize popupSize = new PopupSize(400, 197, 400, 197, 1000, 197, true);
+        ShowPopupEvent.fire(this, this, PopupType.OK_CANCEL_DIALOG, popupSize, title, popupUiHandlers);
+    }
+
+    void hide() {
+        HidePopupEvent.fire(this, this, false, true);
+    }
+
+    private void read(final FsVolume volume) {
+        this.volume = volume;
+
+        getView().getPath().setText(volume.getPath());
+        getView().getStatus().addItems(VolumeUseStatus.values());
+        getView().getStatus().setSelectedItem(volume.getStatus());
+
+        if (volume.getByteLimit() != null) {
+            getView().getByteLimit().setText(ModelStringUtil.formatIECByteSizeString(volume.getByteLimit()));
+        } else {
+            getView().getByteLimit().setText("");
         }
     }
 
     private void write() {
-        try {
-            volume.setPath(getView().getPath().getText());
-            volume.setStatus(getView().getStatus().getSelectedItem());
+        volume.setPath(getView().getPath().getText());
+        volume.setStatus(getView().getStatus().getSelectedItem());
 
-            Long bytesLimit = null;
-            final String limit = getView().getByteLimit().getText().trim();
-            if (limit.length() > 0) {
-                bytesLimit = ModelStringUtil.parseIECByteSizeString(limit);
-            }
-            volume.setByteLimit(bytesLimit);
-
-            final Rest<FsVolume> rest = restFactory.create();
-            rest.onSuccess(result -> {
-                volume = result;
-                HidePopupEvent.fire(FSVolumeEditPresenter.this, FSVolumeEditPresenter.this, false, true);
-                // Only fire this event here as the parent only
-                // needs to
-                // refresh if there has been a change.
-                CloseEvent.fire(FSVolumeEditPresenter.this);
-            }).call(FS_VOLUME_RESOURCE).update(volume.getId(), volume);
-
-        } catch (final RuntimeException e) {
-            AlertEvent.fireError(this, e.getMessage(), null);
+        Long bytesLimit = null;
+        final String limit = getView().getByteLimit().getText().trim();
+        if (limit.length() > 0) {
+            bytesLimit = ModelStringUtil.parseIECByteSizeString(limit);
         }
+        volume.setByteLimit(bytesLimit);
     }
 
     public interface VolumeEditView extends View {
@@ -117,33 +127,5 @@ public class FSVolumeEditPresenter extends MyPresenterWidget<FSVolumeEditPresent
         ItemListBox<VolumeUseStatus> getStatus();
 
         HasText getByteLimit();
-    }
-
-    private class DelegatePopupUiHandlers extends DefaultPopupUiHandlers {
-        private final PopupUiHandlers popupUiHandlers;
-
-        public DelegatePopupUiHandlers(final PopupUiHandlers popupUiHandlers) {
-            this.popupUiHandlers = popupUiHandlers;
-        }
-
-        @Override
-        public void onHideRequest(final boolean autoClose, final boolean ok) {
-            if (ok) {
-                write();
-            } else {
-                HidePopupEvent.fire(FSVolumeEditPresenter.this, FSVolumeEditPresenter.this, autoClose, ok);
-            }
-
-            if (popupUiHandlers != null) {
-                popupUiHandlers.onHideRequest(autoClose, ok);
-            }
-        }
-
-        @Override
-        public void onHide(final boolean autoClose, final boolean ok) {
-            if (popupUiHandlers != null) {
-                popupUiHandlers.onHide(autoClose, ok);
-            }
-        }
     }
 }

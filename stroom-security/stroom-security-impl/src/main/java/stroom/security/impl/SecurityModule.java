@@ -18,7 +18,7 @@ package stroom.security.impl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.Multibinder;
-import stroom.util.entity.EntityEvent;
+import stroom.util.entityevent.EntityEvent;
 import stroom.security.api.DocumentPermissionService;
 import stroom.security.impl.event.PermissionChangeEvent;
 import stroom.security.impl.event.PermissionChangeEventLifecycleModule;
@@ -75,7 +75,8 @@ public class SecurityModule extends AbstractModule {
                 .addBinding(AuthorisationResource.class)
                 .addBinding(DocPermissionResourceImpl.class)
                 .addBinding(DocumentPermissionResourceImpl.class)
-                .addBinding(UserResourceImpl.class)
-                .addBinding(UserAppPermissionResourceImpl.class);
+                .addBinding(SessionResourceImpl.class)
+                .addBinding(UserAppPermissionResourceImpl.class)
+                .addBinding(UserResourceImpl.class);
     }
 }

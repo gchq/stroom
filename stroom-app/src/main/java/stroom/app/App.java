@@ -48,8 +48,8 @@ import stroom.security.impl.AuthenticationConfig;
 import stroom.security.impl.ContentSecurityConfig;
 import stroom.util.ColouredStringBuilder;
 import stroom.util.ConsoleColour;
-import stroom.util.shared.ResourcePaths;
 import stroom.util.logging.LogUtil;
+import stroom.util.shared.ResourcePaths;
 
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
@@ -64,6 +64,8 @@ import java.util.logging.Level;
 
 public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
+
+    private static final String GWT_SUPER_DEV_SYSTEM_PROP_NAME = "gwtSuperDevMode";
 
     @Inject
     private HealthChecks healthChecks;
@@ -211,7 +213,8 @@ public class App extends Application<Config> {
         LOGGER.info("Validating application configuration file {}",
             configFile.toAbsolutePath().normalize().toString());
 
-        ConfigValidator.Result result = configValidator.validate(appConfig);
+        final ConfigValidator.Result result = configValidator.validateRecursively(appConfig);
+
         result.handleViolations(ConfigValidator::logConstraintViolation);
 
         LOGGER.info("Completed validation of application configuration, errors: {}, warnings: {}",
@@ -271,7 +274,8 @@ public class App extends Application<Config> {
     }
 
     private void checkForSuperDev(final AppConfig appConfig) {
-        if (appConfig.isSuperDevMode()) {
+        // If sys prop gwtSuperDevMode=true then override other config props
+        if (Boolean.getBoolean(GWT_SUPER_DEV_SYSTEM_PROP_NAME)) {
             LOGGER.warn("\n" + ConsoleColour.red(
 
                 "\n                                      _                                  _      " +
@@ -283,13 +287,17 @@ public class App extends Application<Config> {
                     "\n               | |                                                              " +
                     "\n               |_|                                                              " +
                     "\n" +
-                    "\n     FOR DEVELOPER USE ONLY!  DO NOT RUN IN PRODUCTION ENVIRONMENTS!\n"));
+                    "\n           ***************************************************************" +
+                    "\n           FOR DEVELOPER USE ONLY!  DO NOT RUN IN PRODUCTION ENVIRONMENTS!\n" +
+                    "\n                          ALL AUTHENTICATION IS DISABLED!" +
+                    "\n           ***************************************************************"));
 
             final AuthenticationConfig authenticationConfig = appConfig.getSecurityConfig().getAuthenticationConfig();
             final ContentSecurityConfig contentSecurityConfig = appConfig.getSecurityConfig().getContentSecurityConfig();
 
+            // YAuth needs HTTPS and GWT super dev mode cannot work in HTTPS
             String msg = new ColouredStringBuilder()
-                .appendRed("In Super Dev Mode, setting ")
+                .appendRed("In GWT Super Dev Mode, overriding ")
                 .appendCyan(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED)
                 .appendRed(" to ")
                 .appendCyan("false ")
@@ -297,10 +305,11 @@ public class App extends Application<Config> {
                 .toString();
 
             LOGGER.warn(msg);
-            authenticationConfig.setAuthenticationRequired(false);
+            authenticationConfig.setAuthenticationRequired(true);
 
+            // The standard content security policy is incompatible with GWT super dev mode
             msg = new ColouredStringBuilder()
-                .appendRed("In Super Dev Mode, setting ")
+                .appendRed("In GWT Super Dev Mode, overriding ")
                 .appendCyan(ContentSecurityConfig.PROP_NAME_CONTENT_SECURITY_POLICY)
                 .appendRed(" to ")
                 .appendCyan("\"\" ")

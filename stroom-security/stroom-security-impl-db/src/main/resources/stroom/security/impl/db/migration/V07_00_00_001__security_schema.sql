@@ -33,7 +33,8 @@ CREATE TABLE IF NOT EXISTS stroom_user (
     enabled               bit(1) NOT NULL,
     PRIMARY KEY           (id),
     UNIQUE                (name, is_group),
-    CONSTRAINT            stroom_user_uk_uuid UNIQUE INDEX stroom_user_uuid_index (uuid)
+    CONSTRAINT            stroom_user_uk_uuid 
+        UNIQUE INDEX stroom_user_uuid_index (uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS stroom_user_group (
@@ -41,8 +42,12 @@ CREATE TABLE IF NOT EXISTS stroom_user_group (
     user_uuid             varchar(255) NOT NULL,
     group_uuid            varchar(255) NOT NULL,
     PRIMARY KEY           (id),
-    FOREIGN KEY (user_uuid) REFERENCES stroom_user (uuid),
-    FOREIGN KEY (group_uuid) REFERENCES stroom_user (uuid)
+    CONSTRAINT stroom_user_group_fk_user_uuid 
+        FOREIGN KEY (user_uuid) 
+        REFERENCES stroom_user (uuid),
+    CONSTRAINT stroom_user_group_fk_group_uuid
+        FOREIGN KEY (group_uuid) 
+        REFERENCES stroom_user (uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS app_permission (
@@ -50,7 +55,9 @@ CREATE TABLE IF NOT EXISTS app_permission (
     user_uuid             varchar(255) NOT NULL,
     permission            varchar(255) NOT NULL,
     PRIMARY KEY           (id),
-    FOREIGN KEY (user_uuid) REFERENCES stroom_user (uuid)
+    CONSTRAINT app_permission_fk_user_uuid
+        FOREIGN KEY (user_uuid) 
+        REFERENCES stroom_user (uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 CREATE TABLE IF NOT EXISTS doc_permission (
@@ -59,7 +66,11 @@ CREATE TABLE IF NOT EXISTS doc_permission (
     doc_uuid              varchar(255) NOT NULL,
     permission            varchar(255) NOT NULL,
     PRIMARY KEY           (id),
-    FOREIGN KEY (user_uuid) REFERENCES stroom_user (uuid)
+    CONSTRAINT doc_permission_fk_user_uuid
+        FOREIGN KEY (user_uuid) 
+        REFERENCES stroom_user (uuid)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 SET SQL_NOTES=@OLD_SQL_NOTES;
+
+-- vim: set shiftwidth=4 tabstop=4 expandtab:

@@ -33,6 +33,7 @@ import stroom.task.shared.ThreadPool;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.logging.LogExecutionTime;
+import stroom.util.shared.ResultPage;
 
 import javax.inject.Inject;
 import javax.inject.Provider;
@@ -148,8 +149,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
         final Lock lock = existingShardQueryLocks.getLockForKey(criteria);
         lock.lock();
         try {
-            final List<IndexShard> list = indexShardService.find(criteria);
-            for (final IndexShard indexShard : list) {
+            final ResultPage<IndexShard> indexShardResultPage = indexShardService.find(criteria);
+            for (final IndexShard indexShard : indexShardResultPage.getValues()) {
                 // Look for non deleted, non full, non corrupt index shards.
                 if (IndexShardStatus.CLOSED.equals(indexShard.getStatus())) {
                     // Get the index fields.
@@ -454,8 +455,8 @@ public class IndexShardWriterCacheImpl implements IndexShardWriterCache {
             criteria.getIndexShardStatusSet().add(IndexShardStatus.OPEN);
             criteria.getIndexShardStatusSet().add(IndexShardStatus.OPENING);
             criteria.getIndexShardStatusSet().add(IndexShardStatus.CLOSING);
-            final List<IndexShard> list = indexShardService.find(criteria);
-            for (final IndexShard indexShard : list) {
+            final ResultPage<IndexShard> indexShardResultPage = indexShardService.find(criteria);
+            for (final IndexShard indexShard : indexShardResultPage.getValues()) {
                 clean(indexShard);
             }
 
