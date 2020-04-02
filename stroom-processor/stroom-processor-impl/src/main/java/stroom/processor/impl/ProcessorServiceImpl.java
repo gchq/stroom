@@ -55,7 +55,7 @@ public class ProcessorServiceImpl implements ProcessorService {
 
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException("You do not have permission to create this processor filter");
+            throw new PermissionException("You do not have permission to create this processor");
         }
 
         return create(processor);
@@ -85,7 +85,7 @@ public class ProcessorServiceImpl implements ProcessorService {
 
         // Check the user has read permissions on the pipeline.
         if (!securityContext.hasDocumentPermission(processor.getPipelineUuid(), DocumentPermissionNames.READ)) {
-            throw new PermissionException("You do not have permission to create this processor filter");
+            throw new PermissionException("You do not have permission to create this processor");
         }
         return create(processor);
     }
