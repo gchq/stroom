@@ -87,10 +87,11 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
 
     /**
      * IMPORT
+     * @return
      */
     @Override
-    public void read(final Path dir, List<ImportState> importStateList,
-                     final ImportMode importMode) {
+    public Set<DocRef> read(final Path dir, List<ImportState> importStateList,
+                            final ImportMode importMode) {
         if (ImportMode.IGNORE_CONFIRMATION.equals(importMode)) {
             importStateList = new ArrayList<>();
         }
@@ -102,7 +103,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         final Map<DocRef, ImportState> confirmMap = importStateList.stream().collect(Collectors.toMap(ImportState::getDocRef, Function.identity()));
 
         // Find all of the paths to import.
-        processDir(dir, confirmMap, importMode);
+        Set<DocRef> result = processDir(dir, confirmMap, importMode);
 
         // Rebuild the list
         importStateList.clear();
@@ -112,9 +113,23 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         if (!ImportMode.CREATE_CONFIRMATION.equals(importMode)) {
             explorerService.rebuildTree();
         }
+
+        //Add the root of the explorer tree
+        result.add(ExplorerConstants.ROOT_DOC_REF);
+
+        return result;
     }
 
-    private void processDir(final Path dir, final Map<DocRef, ImportState> confirmMap, final ImportMode importMode) {
+    /**
+     *
+     * @param dir
+     * @param confirmMap
+     * @param importMode
+     * @return set of all non-explorer docrefs
+     */
+    private Set<DocRef> processDir(final Path dir, final Map<DocRef, ImportState> confirmMap, final ImportMode importMode) {
+        HashSet<DocRef> result = new HashSet<>();
+
         try {
             Files.walkFileTree(dir, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE, new AbstractFileVisitor() {
                 @Override
@@ -122,7 +137,9 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                     try {
                         final String fileName = file.getFileName().toString();
                         if (fileName.endsWith(".node") && !fileName.startsWith(".")) {
-                            performImport(file, confirmMap, importMode);
+                            DocRef nonExplorerDocRef = performImport(file, confirmMap, importMode);
+                            if (nonExplorerDocRef != null)
+                                result.add(nonExplorerDocRef);
                         }
                     } catch (final RuntimeException e) {
                         LOGGER.error(e.getMessage(), e);
@@ -133,10 +150,13 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         } catch (final IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
+
+        return result;
     }
 
-    private void performImport(final Path nodeFile, final Map<DocRef, ImportState> confirmMap,
+    private DocRef performImport(final Path nodeFile, final Map<DocRef, ImportState> confirmMap,
                                final ImportMode importMode) {
+        DocRef nonExplorerDocRef = null;
         try {
             // Read the node file.
             final InputStream inputStream = Files.newInputStream(nodeFile);
@@ -186,6 +206,7 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
                 final ImportExportActionHandler importExportActionHandler = importExportActionHandlers.getHandler(type);
                 boolean docExists = existingNode.isPresent();
                 if (importExportActionHandler instanceof NonExplorerDocRefProvider){
+                    nonExplorerDocRef = docRef;
                     docExists = ((NonExplorerDocRefProvider) importExportActionHandler).docExists(docRef);
                 }
                 if (!docExists) {
@@ -265,6 +286,8 @@ class ImportExportSerializerImpl implements ImportExportSerializer {
         } catch (final IOException e) {
             LOGGER.error("Error importing file {}", nodeFile.toAbsolutePath().toString(), e);
         }
+
+        return nonExplorerDocRef;
     }
 
     /**

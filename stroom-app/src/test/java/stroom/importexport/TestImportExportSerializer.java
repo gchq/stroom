@@ -244,10 +244,10 @@ class TestImportExportSerializer extends AbstractCoreIntegrationTest {
         Files.createDirectories(outDir);
 
         // Read input.
-        importExportSerializer.read(inDir, null, ImportMode.IGNORE_CONFIRMATION);
+        Set<DocRef> exported = importExportSerializer.read(inDir, null, ImportMode.IGNORE_CONFIRMATION);
 
         // Write to output.
-        importExportSerializer.write(outDir, buildFindFolderCriteria(), true, new ArrayList<>());
+        importExportSerializer.write(outDir, exported, true, new ArrayList<>());
 
         // Compare input and output directory.
         ComparisonHelper.compareDirs(inDir, outDir);

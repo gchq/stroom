@@ -129,7 +129,7 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
             return null;
 
         //Don't export certain fields
-        ProcessorFilter processorFilter = new AuditFieldFilter<ProcessorFilter>().apply(findProcessorFilter(docRef));
+        ProcessorFilter processorFilter = findProcessorFilter(docRef);
         //Try to ensure that the processor uuid field is set
 //        processorFilter.setProcessorUuid(processorFilter.getProcessor());
         processorFilter.setId(null);
@@ -137,6 +137,9 @@ public class ProcessorFilterImportExportHandlerImpl implements ImportExportActio
         processorFilter.setProcessorFilterTracker(null);
         processorFilter.setProcessor(null);
         processorFilter.setData(null);
+
+        if (omitAuditFields)
+            processorFilter = new AuditFieldFilter<ProcessorFilter>().apply(processorFilter);
 
         Map<String, byte[]> data;
         try {
