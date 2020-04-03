@@ -150,9 +150,18 @@ class ProcessorFilterServiceImpl implements ProcessorFilterService {
 
     @Override
     public ProcessorFilter create(final ProcessorFilter processorFilter) {
+        if (processorFilter == null)
+            return null;
+
         if (processorFilter.getUuid() == null) {
             processorFilter.setUuid(UUID.randomUUID().toString());
         }
+
+        if (processorFilter.getQueryData() == null)
+            throw new IllegalArgumentException("QueryData cannot be null creating ProcessorFilter" + processorFilter);
+
+        if (processorFilter.getQueryData().getDataSource() == null)
+            processorFilter.getQueryData().setDataSource(MetaFields.STREAM_STORE_DOC_REF);
 
         AuditUtil.stamp(securityContext.getUserId(), processorFilter);
         return securityContext.secureResult(PERMISSION, () ->

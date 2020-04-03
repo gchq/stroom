@@ -1,6 +1,11 @@
 {
   "uuid" : "69448907-8ba9-41b1-be8a-5c571dba7f7b",
   "queryData" : {
+    "dataSource" : {
+      "type" : "StreamStore",
+      "uuid" : "0",
+      "name" : "StreamStore"
+    },
     "expression" : {
       "type" : "operator",
       "children" : [ {
