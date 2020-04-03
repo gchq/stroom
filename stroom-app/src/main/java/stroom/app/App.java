@@ -106,7 +106,11 @@ public class App extends Application<Config> {
                 bootstrap.getConfigurationSourceProvider(),
                 new EnvironmentVariableSubstitutor(false)));
 
+        // Add the GWT UI assets.
         bootstrap.addBundle(new AssetsBundle("/ui", ResourcePaths.ROOT_PATH, "index.html", "ui"));
+
+        // Add the new React UI assets. Note that the React UI uses sub paths for navigation using the React BrowserRouter.
+        // This always needs the root page to be served regardless of the path requested so we need to use a special asset bundle to achieve this.
         bootstrap.addBundle(new BrowserRouterAssetsBundle("/new-ui", "/", "index.html", "new-ui", ResourcePaths.SINGLE_PAGE_PREFIX));
 
         // Add a DW Command so we can run the full migration without running the
