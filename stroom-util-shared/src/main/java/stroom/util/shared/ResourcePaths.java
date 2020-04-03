@@ -16,10 +16,10 @@ public interface ResourcePaths {
      */
     String API_ROOT_PATH = "/api";
 
-    // TODO consider splitting all api resources into either stateful or stateless paths
-    //   to make nginx routing easier
-    String STATEFUL = "/stateful";
-    String STATELESS = "/stateless";
+    /**
+     * All static React paths containing "/s/" will be served as root and be handled by the React BrowserRouter
+     */
+    String SINGLE_PAGE_PREFIX = "/s/";
 
     /**
      * Path part for unauthenticated servlets

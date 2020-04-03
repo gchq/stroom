@@ -41,7 +41,7 @@ const useUrlGenerator = (
       goToStreamBrowser: () => `/${urlPrefix}/data`,
       goToUser: (userId: string) => `/${urlPrefix}/user/${userId}`,
       goToUserSettings: () => `/${urlPrefix}/me`,
-      goToUsers: () => `users`,
+      goToUsers: () => `/${urlPrefix}/users`,
       goToWelcome: () => `/${urlPrefix}/welcome`,
     }),
     [urlPrefix],

@@ -107,6 +107,7 @@ public class App extends Application<Config> {
                 new EnvironmentVariableSubstitutor(false)));
 
         bootstrap.addBundle(new AssetsBundle("/ui", ResourcePaths.ROOT_PATH, "index.html", "ui"));
+        bootstrap.addBundle(new BrowserRouterAssetsBundle("/new-ui", "/", "index.html", "new-ui", ResourcePaths.SINGLE_PAGE_PREFIX));
 
         // Add a DW Command so we can run the full migration without running the
         // http server

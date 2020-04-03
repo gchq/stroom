@@ -120,7 +120,7 @@ class SecurityFilter implements Filter {
 
         final String url = request.getRequestURL().toString();
         if (request.getMethod().toUpperCase().equals(HttpMethod.OPTIONS) ||
-                url.toLowerCase().endsWith(".json")) { // Ignore static UI content.
+                url.toLowerCase().endsWith("manifest.json")) { // New UI - For some reason this is requested without a session cookie
             // We need to allow CORS preflight requests
             LOGGER.debug("Passing on to next filter");
             chain.doFilter(request, response);
