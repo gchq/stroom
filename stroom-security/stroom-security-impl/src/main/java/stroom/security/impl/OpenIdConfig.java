@@ -3,6 +3,9 @@ package stroom.security.impl;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import stroom.util.shared.AbstractConfig;
 
+import javax.inject.Singleton;
+
+@Singleton
 public class OpenIdConfig extends AbstractConfig {
     public static final String PROP_NAME_CLIENT_ID = "clientId";
     public static final String PROP_NAME_CLIENT_SECRET = "clientSecret";

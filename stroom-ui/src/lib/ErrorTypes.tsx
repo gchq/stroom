@@ -25,6 +25,3 @@ export class HttpError {
     this.stack = new Error().stack || "";
   }
 }
-
-HttpError.prototype = Object.create(Error.prototype);
-HttpError.prototype.constructor = HttpError;

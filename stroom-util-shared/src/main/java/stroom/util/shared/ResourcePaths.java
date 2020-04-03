@@ -37,11 +37,6 @@ public interface ResourcePaths {
     String SQL_STATISTICS = "/sqlstatistics";
 
     /**
-     * Path part for the Hessian based GWT client-server RPC comms
-     */
-    String DISPATCH_RPC = "/dispatch.rpc";
-
-    /**
      * Path part for the Hessian based inter-node RPC comms
      */
     String CLUSTER_CALL_RPC = "/clustercall.rpc";

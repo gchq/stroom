@@ -36,21 +36,6 @@ public final class AuthenticationConfig extends AbstractConfig {
     public static final String PROP_NAME_AUTHORISATION_SERVICE = "authorisationService";
     public static final String PROP_NAME_STROOM = "stroom";
 
-
-//    @Valid
-//    @NotNull
-//    @JsonProperty("database")
-//    private DataSourceFactory dataSourceFactory = new DataSourceFactory();
-
-//    @Valid
-//    @NotNull
-//    @JsonProperty("flyway")
-//    private FlywayFactory flywayFactory = new FlywayFactory();
-
-//    @Valid
-//    @NotNull
-//    @JsonProperty("jooq")
-//    private JooqFactory jooqFactory = new JooqFactory();
     @Nullable
     @JsonProperty(PROP_NAME_EMAIL)
     public EmailConfig emailConfig = new EmailConfig();
@@ -71,10 +56,6 @@ public final class AuthenticationConfig extends AbstractConfig {
     @NotNull
     @JsonProperty
     private String changePasswordUrl = "https://localhost/s/changepassword";
-    @Valid
-    @NotNull
-    @JsonProperty
-    private String stroomUrl = "https://localhost/";
     @Valid
     @NotNull
     @JsonProperty
@@ -131,6 +112,7 @@ public final class AuthenticationConfig extends AbstractConfig {
 //        return this.jooqFactory;
 //    }
 
+
     public final String getCertificateDnPattern() {
         return this.certificateDnPattern;
     }
@@ -141,10 +123,6 @@ public final class AuthenticationConfig extends AbstractConfig {
 
     public String getChangePasswordUrl() {
         return changePasswordUrl;
-    }
-
-    public final String getStroomUrl() {
-        return this.stroomUrl;
     }
 
     public final String getAdvertisedHost() {

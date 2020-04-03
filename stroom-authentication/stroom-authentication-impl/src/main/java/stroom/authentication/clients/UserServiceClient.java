@@ -38,11 +38,11 @@ public class UserServiceClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserServiceClient.class);
     private static final String NOT_FOUND_404_MESSAGE = "Received a 404 when trying to access the authorisation service! I am unable to check authorisation so all requests will be rejected until this is fixed. Is the service location correctly configured? Is the service running? The URL I tried was: {}";
 
-    private UserServiceConfig config;
+    private final UserServiceConfig config;
     private Client authorisationService = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
 
     @Inject
-    public UserServiceClient(AuthenticationConfig config) {
+    UserServiceClient(final AuthenticationConfig config) {
         this.config = config.getUserServiceConfig();
     }
 

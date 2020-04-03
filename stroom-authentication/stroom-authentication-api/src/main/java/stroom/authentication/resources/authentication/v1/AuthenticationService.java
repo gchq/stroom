@@ -10,14 +10,14 @@ public interface AuthenticationService {
             String sessionId,
             String nonce,
             String state,
-            String redirectUrl,
+            String redirectUri,
             String clientId,
             String prompt,
             Optional<String> optionalCn);
 
     LoginResponse handleLogin(Credentials credentials, String sessionId) throws UnsupportedEncodingException;
 
-    String logout(String sessionId, String redirectUrl);
+    String logout(String sessionId, String redirectUri);
 
     boolean resetEmail(String emailAddress);
 

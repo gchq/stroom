@@ -32,11 +32,14 @@ import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.lang.JoseException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.authentication.resources.authentication.v1.LoginResponse;
 import stroom.authentication.service.ApiClient;
 import stroom.authentication.service.ApiException;
 import stroom.authentication.service.api.ApiKeyApi;
 import stroom.authentication.service.api.AuthenticationApi;
+import stroom.authentication.service.api.OIDC;
 import stroom.authentication.service.api.model.Credentials;
 import stroom.authentication.service.api.model.IdTokenRequest;
 
@@ -54,7 +57,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
 public class AuthenticationFlowHelper {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(AuthenticationFlowHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationFlowHelper.class);
 
     private static final String CLIENT_ID = "PZnJr8kHRKqnlJRQThSI";
     private static final String CLIENT_SECRET = "OtzHiAWLj8QWcwO2IxXmqxpzE2pyg0pMKCghR2aU";
@@ -109,13 +112,12 @@ public class AuthenticationFlowHelper {
         // 1. Don't use Swagger client - Swagger client will always accept and act on redirects
         // 2. Tweak Unirest configuration to disable its redirect handling.
         StringBuilder authenticationRequestParams = new StringBuilder();
-        authenticationRequestParams.append("?scope=openid");
-        authenticationRequestParams.append("&response_type=code");
-        authenticationRequestParams.append("&client_id=");
-        authenticationRequestParams.append(CLIENT_ID);
-        authenticationRequestParams.append("&redirect_url=http://fakedomain.com");
-        authenticationRequestParams.append("&state=");
-        authenticationRequestParams.append("&nonce=");
+        authenticationRequestParams.append("?" + OIDC.SCOPE + "=openid");
+        authenticationRequestParams.append("&" + OIDC.RESPONSE_TYPE + "=" + OIDC.CODE);
+        authenticationRequestParams.append("&" + OIDC.CLIENT_ID + "=" + CLIENT_ID);
+        authenticationRequestParams.append("&" + OIDC.REDIRECT_URI + "=http://fakedomain.com");
+        authenticationRequestParams.append("&" + OIDC.STATE + "=");
+        authenticationRequestParams.append("&" + OIDC.NONCE + "=");
         authenticationRequestParams.append(nonce);
         String authenticationRequestUrl =
                 "http://localhost:8099/authentication/v1/authenticate" + authenticationRequestParams;
@@ -268,7 +270,7 @@ public class AuthenticationFlowHelper {
         } catch (InvalidJwtException e) {
             fail("Bad JWT returned from auth service", e);
         }
-        String nonceHash = (String) claims.getClaimsMap().get("nonce");
+        String nonceHash = (String) claims.getClaimsMap().get(OIDC.NONCE);
         assertThat(nonceHash).isEqualTo(nonce);
     }
 }

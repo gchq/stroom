@@ -1,7 +1,7 @@
 import * as React from "react";
 import useForm from "react-hook-form";
 import Button from "components/Button";
-import { Select, Switch, Input, Icon } from "antd";
+import { Icon, Input, Select, Switch } from "antd";
 import BackConfirmation from "../BackConfirmation";
 import EditUserFormProps from "./EditUserFormProps";
 import styled from "styled-components";
@@ -60,11 +60,11 @@ const ValidationMessage = styled.span`
 `;
 
 const UserForm: React.FunctionComponent<EditUserFormProps> = ({
-  onSubmit,
-  onBack,
-  onCancel,
-  onValidate,
-}) => {
+                                                                onSubmit,
+                                                                onBack,
+                                                                onCancel,
+                                                                onValidate,
+                                                              }) => {
   const {
     register,
     handleSubmit,
@@ -123,7 +123,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
       </div>
       <div>
         <div className="container">
-          <input name="id" type="hidden" />
+          <input name="id" type="hidden"/>
           <Row>
             <Label>First name:</Label>
             <InputAndValidation>
@@ -150,7 +150,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
           </Row>
           <Row>
             <Label>
-              <MandatoryIndicator />
+              <MandatoryIndicator/>
               Email:
             </Label>
             <InputAndValidation>
@@ -184,14 +184,14 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
             <LabelForSwitch>Never expires?</LabelForSwitch>
             <InputAndValidation>
               <div>
-                <Switch ref={register} />
+                <Switch ref={register}/>
               </div>
             </InputAndValidation>
           </Row>
 
           <Row>
             <Label>
-              <MandatoryIndicator />
+              <MandatoryIndicator/>
               Password:
             </Label>
             <InputAndValidation>
@@ -199,7 +199,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
                 name="password"
                 type="password"
                 prefix={
-                  <Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }} />
+                  <Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }}/>
                 }
                 onChange={async e =>
                   handleInputChange("password", e.target.value)
@@ -216,7 +216,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
           </Row>
           <Row>
             <Label>
-              <MandatoryIndicator />
+              <MandatoryIndicator/>
               Verify password:
             </Label>
             <InputAndValidation>
@@ -224,7 +224,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
                 name="verifyPassword"
                 type="password"
                 prefix={
-                  <Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }} />
+                  <Icon type="lock" style={{ color: "rgba(0,0,0,.25)" }}/>
                 }
                 onChange={async e =>
                   handleInputChange("verifyPassword", e.target.value)
@@ -246,7 +246,7 @@ const UserForm: React.FunctionComponent<EditUserFormProps> = ({
             </LabelForSwitch>
             <InputAndValidation>
               <div>
-                <Switch ref={register} />
+                <Switch ref={register}/>
               </div>
             </InputAndValidation>
           </Row>

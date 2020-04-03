@@ -16,6 +16,7 @@ import stroom.authentication.dao.TokenDao;
 import stroom.authentication.dao.UserDao;
 import stroom.authentication.resources.token.v1.Token;
 import stroom.authentication.resources.user.v1.User;
+import stroom.authentication.service.api.OIDC;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 
@@ -85,7 +86,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             final String sessionId,
             final String nonce,
             final String state,
-            final String redirectUrl,
+            final String redirectUri,
             final String clientId,
             final String prompt,
             final Optional<String> optionalCn) {
@@ -110,7 +111,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         RelyingParty relyingParty = optionalSession.get().getOrCreateRelyingParty(clientId);
         relyingParty.setNonce(nonce);
         relyingParty.setState(state);
-        relyingParty.setRedirectUrl(redirectUrl);
+        relyingParty.setRedirectUrl(redirectUri);
 
 
         // Now we can check if we're logged in somehow (session or certs) and build the response accordingly
@@ -133,7 +134,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             String subject = optionalSession.get().getUserEmail();
             String idToken = createIdToken(subject, nonce, state, sessionId);
             relyingParty.setIdToken(idToken);
-            responseBuilder = seeOther(buildRedirectionUrl(redirectUrl, accessCode, state));
+            responseBuilder = seeOther(buildRedirectionUrl(redirectUri, accessCode, state));
         }
         // Check for a certificate
         else if (loginUsingCertificate) {
@@ -161,7 +162,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         relyingParty.setAccessCode(accessCode);
                         String idToken = createIdToken(subject, nonce, state, sessionId);
                         relyingParty.setIdToken(idToken);
-                        responseBuilder = seeOther(buildRedirectionUrl(redirectUrl, accessCode, state));
+                        responseBuilder = seeOther(buildRedirectionUrl(redirectUri, accessCode, state));
                         stroomEventLoggingService.createAction("Logon", "User logged in successfully");
                         // Reset last access, login failures, etc...
                         userDao.recordSuccessfulLogin(subject);
@@ -182,9 +183,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             LOGGER.debug("User has no session and no certificate - sending them to login.");
             final UriBuilder uriBuilder = UriBuilder.fromUri(this.config.getLoginUrl())
                     .queryParam("error", "login_required")
-                    .queryParam("state", state)
-                    .queryParam("clientId", clientId)
-                    .queryParam("redirectUrl", redirectUrl);
+                    .queryParam(OIDC.STATE, state)
+                    .queryParam(OIDC.CLIENT_ID, clientId)
+                    .queryParam(OIDC.REDIRECT_URI, redirectUri);
             responseBuilder = seeOther(uriBuilder.build());
         }
 
@@ -275,7 +276,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public String logout(String sessionId, String redirectUrl) {
+    public String logout(String sessionId, String redirectUri) {
         sessionManager.get(sessionId).ifPresent(session -> {
             stroomEventLoggingService.createAction("Logout", "The user has logged out.");
         });
@@ -284,7 +285,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // If we have a redirect URL then we'll use that, otherwise we'll go to the advertised host.
         final String postLogoutUrl =
-                redirectUrl == null || redirectUrl == "" ? this.config.getAdvertisedHost() : redirectUrl;
+                redirectUri == null || redirectUri == "" ? this.config.getAdvertisedHost() : redirectUri;
 
         return postLogoutUrl;
     }
@@ -390,9 +391,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         URI result;
         if (userNeedsToChangePassword) {
-            final String redirectUrl = getPostAuthenticationCheckUrl(clientId);
+            final String redirectUri = getPostAuthenticationCheckUrl(clientId);
             result = UriBuilder.fromUri(this.config.getChangePasswordUrl())
-                    .queryParam("redirect_url", redirectUrl)
+                    .queryParam(OIDC.REDIRECT_URI, redirectUri)
                     .build();
         } else {
             //TODO this method needs to take just a relying party
@@ -451,11 +452,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
-    private URI buildRedirectionUrl(String redirectUrl, String accessCode, String state) {
+    private URI buildRedirectionUrl(String redirectUri, String code, String state) {
         return UriBuilder
-                .fromUri(redirectUrl)
-                .replaceQueryParam("accessCode", accessCode)
-                .replaceQueryParam("state", state)
+                .fromUri(redirectUri)
+                .replaceQueryParam(OIDC.CODE, code)
+                .replaceQueryParam(OIDC.STATE, state)
                 .build();
     }
 

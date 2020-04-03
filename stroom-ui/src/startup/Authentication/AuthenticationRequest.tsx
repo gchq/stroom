@@ -15,30 +15,41 @@
  */
 
 import * as React from "react";
-
-import {sendAuthenticationRequest} from "./authentication";
+import useSessionApi from "./useSessionApi";
+import useAuthenticationContext from "./useAuthenticationContext";
 
 interface Props {
-    referrer: string;
-    uiUrl: string;
-    loginUrl: string;
+  referrer: string;
+  uiUrl: string;
+  loginUrl: string;
 }
 
 const AuthenticationRequest: React.FunctionComponent<Props> =
-    ({
-         referrer,
-         uiUrl,
-         loginUrl
-     }) => {
-        React.useEffect(() => {
-            sendAuthenticationRequest(
-                referrer,
-                uiUrl,
-                loginUrl,
-            );
-        }, [referrer, uiUrl,loginUrl]);
+  ({
+     referrer,
+     uiUrl,
+     loginUrl,
+   }) => {
+    const { login } = useSessionApi();
+    const { setIdToken } = useAuthenticationContext();
 
-        return null;
-    };
+    React.useEffect(() => {
+      login(referrer).then(response => {
+        if (response.authenticated) {
+          setIdToken("Session authenticated");
+        } else {
+          window.location.href = response.redirectUri;
+        }
+      });
+
+      // sendAuthenticationRequest(
+      //     referrer,
+      //     uiUrl,
+      //     loginUrl,
+      // );
+    }, [login, setIdToken, referrer, uiUrl, loginUrl]);
+
+    return null;
+  };
 
 export default AuthenticationRequest;

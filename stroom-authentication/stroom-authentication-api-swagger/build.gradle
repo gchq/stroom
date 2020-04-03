@@ -1,23 +1,23 @@
-ext.moduleName = 'stroom.auth.api.swagger'
+ext.moduleName = 'stroom.authentication.api.swagger'
 
-apply plugin: 'com.github.johnrengelman.shadow'
-
-shadowJar {
-    // Allows us to build fat jars with lots of files
-    zip64 true
-}
-
-// TODO commented out for migration
-//install {
-//    repositories.mavenInstaller {
-//        pom.artifactId = 'stroom-auth-swagger-java-client'
-//    }
+//apply plugin: 'com.github.johnrengelman.shadow'
+//
+//shadowJar {
+//    // Allows us to build fat jars with lots of files
+//    zip64 true
 //}
-
-task execute(type:JavaExec) {
-   main = System.getProperty('mainClass')
-   classpath = sourceSets.main.runtimeClasspath
-}
+//
+//// TODO commented out for migration
+////install {
+////    repositories.mavenInstaller {
+////        pom.artifactId = 'stroom-auth-swagger-java-client'
+////    }
+////}
+//
+//task execute(type:JavaExec) {
+//   main = System.getProperty('mainClass')
+//   classpath = sourceSets.main.runtimeClasspath
+//}
 
 dependencies {
     compile libs.javax_annotation
@@ -26,6 +26,7 @@ dependencies {
     compile libs.okhttp_logging_interceptor
     compile libs.gson
     compile libs.joda_time
+    compile libs.ws_rs_api
 
     testCompile libs.junit_jupiter_api
 }

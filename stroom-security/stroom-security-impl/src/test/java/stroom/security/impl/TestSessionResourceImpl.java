@@ -15,7 +15,6 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
-
     @Mock
     private AuthenticationEventLog authenticationEventLog;
 
@@ -24,7 +23,7 @@ class TestSessionResourceImpl extends AbstractResourceTest<SessionResource> {
 
     @Override
     public SessionResource getRestResource() {
-        return new SessionResourceImpl(authenticationEventLog, sessionListService);
+        return new SessionResourceImpl(authenticationEventLog, sessionListService, null, null);
     }
 
     @Override

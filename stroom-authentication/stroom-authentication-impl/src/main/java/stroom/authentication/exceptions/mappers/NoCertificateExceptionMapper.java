@@ -19,6 +19,8 @@
 package stroom.authentication.exceptions.mappers;
 
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.exceptions.NoCertificateException;
 
@@ -28,12 +30,13 @@ import javax.ws.rs.ext.ExceptionMapper;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class NoCertificateExceptionMapper implements ExceptionMapper<NoCertificateException> {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(NoCertificateExceptionMapper.class);
+class NoCertificateExceptionMapper implements ExceptionMapper<NoCertificateException> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(NoCertificateExceptionMapper.class);
+
     private AuthenticationConfig config;
 
     @Inject
-    public NoCertificateExceptionMapper(AuthenticationConfig config) {
+    NoCertificateExceptionMapper(AuthenticationConfig config) {
         this.config = config;
     }
 

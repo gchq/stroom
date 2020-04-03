@@ -48,7 +48,6 @@ appConfig:
     certificateDnCaptureGroupIndex: 1
     loginUrl: "https://localhost/s/login"
     changePasswordUrl: "https://localhost/s/changepassword"
-    stroomUrl: "https://localhost/"
     advertisedHost: "https://localhost"
     httpPort: null
     httpsPort: null
@@ -510,13 +509,16 @@ appConfig:
       authenticationRequired: true
       verifySsl: false
       authServicesBaseUrl: "http://auth-service:8099"
-      jwt:
-        jwtIssuer: "stroom"
-        enableTokenRevocationCheck: true
+      openId:
+        issuer: "accounts.google.com"
+        authEndpoint: "https://accounts.google.com/o/oauth2/v2/auth"
+        tokenEndpoint: "https://accounts.google.com/o/oauth2/token"
+        jwksUri: "https://www.googleapis.com/oauth2/v3/certs"
+        redirectUri: "http://localhost:8080/stroom/ui"
+        clientId: null
+        clientSecret: null
       preventLogin: false
       userNamePattern: "^[a-zA-Z0-9_-]{3,}$"
-      clientId: null
-      clientSecret: null
       apiTokenCache:
         maximumSize: 10000
         expireAfterAccess: null
@@ -768,7 +770,6 @@ appConfig:
         \ is"
     url:
       ui: "http://IP_ADDRESS"
-      authenticationService: "http://auth-service:8099/authentication/v1"
       users: "http://IP_ADDRESS/users"
       apiKeys: "http://IP_ADDRESS/tokens"
       changepassword: "http://IP_ADDRESS/changepassword"

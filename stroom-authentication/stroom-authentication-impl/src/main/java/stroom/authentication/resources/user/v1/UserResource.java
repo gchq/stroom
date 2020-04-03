@@ -49,7 +49,6 @@ public final class UserResource implements RestResource {
 
     @Inject
     public UserResource(final UserService service) {
-        super();
         this.service = service;
     }
 

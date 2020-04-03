@@ -1,12 +1,11 @@
 {
   "advertisedUrl": "https://localhost",
   "allowPasswordResets": true,
-  "authBaseServiceUrl": "https://localhost/api/auth",
-  "clientId": "255179628077-rfa18bkalfl26rirpktghcgmt602mtuh.apps.googleusercontent.com",
+  "clientId": "",
   "dateFormat": "YYYY-MM-DDTHH:mm:ss.SSSZ",
   "defaultApiKeyExpiryInMinutes": "525600",
   "openIdConfigUrl": "https://accounts.google.com/.well-known/openid-configuration",
 
-  "stroomBaseServiceUrl": "https://localhost/api",
+  "stroomBaseServiceUrl": "http://localhost:8080/api",
   "stroomUiUrl": "https://localhost/stroom"
 }

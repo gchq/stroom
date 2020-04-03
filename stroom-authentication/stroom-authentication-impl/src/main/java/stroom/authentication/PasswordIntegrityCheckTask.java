@@ -1,5 +1,7 @@
 package stroom.authentication;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.authentication.config.PasswordIntegrityChecksConfig;
 import stroom.authentication.dao.UserDao;
 
@@ -8,13 +10,13 @@ import javax.inject.Singleton;
 import java.util.TimerTask;
 
 @Singleton
-public class PasswordIntegrityCheckTask extends TimerTask {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(PasswordIntegrityCheckTask.class);
+class PasswordIntegrityCheckTask extends TimerTask {
+    private static final Logger LOGGER = LoggerFactory.getLogger(PasswordIntegrityCheckTask.class);
     private PasswordIntegrityChecksConfig passwordIntegrityChecksConfig;
     private UserDao userDao;
 
     @Inject
-    public PasswordIntegrityCheckTask(PasswordIntegrityChecksConfig passwordIntegrityChecksConfig, UserDao userDao) {
+    PasswordIntegrityCheckTask(PasswordIntegrityChecksConfig passwordIntegrityChecksConfig, UserDao userDao) {
         this.passwordIntegrityChecksConfig = passwordIntegrityChecksConfig;
         this.userDao = userDao;
     }

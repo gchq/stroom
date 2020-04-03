@@ -32,7 +32,6 @@ import stroom.security.shared.AuthenticationResource;
 import stroom.security.shared.UserAndPermissions;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
-import stroom.ui.config.client.UiConfigCache;
 
 public class LoginManager implements HasHandlers {
     private static final AuthenticationResource AUTHENTICATION_RESOURCE = GWT.create(AuthenticationResource.class);
@@ -41,18 +40,15 @@ public class LoginManager implements HasHandlers {
     private final EventBus eventBus;
     private final CurrentUser currentUser;
     private final RestFactory restFactory;
-    private final UiConfigCache clientPropertyCache;
 
     @Inject
     public LoginManager(
             final EventBus eventBus,
             final CurrentUser currentUser,
-            final RestFactory restFactory,
-            final UiConfigCache clientPropertyCache) {
+            final RestFactory restFactory) {
         this.eventBus = eventBus;
         this.currentUser = currentUser;
         this.restFactory = restFactory;
-        this.clientPropertyCache = clientPropertyCache;
 
         // Listen for logout events.
         eventBus.addHandler(LogoutEvent.getType(), event -> logout());
@@ -83,18 +79,13 @@ public class LoginManager implements HasHandlers {
         final Rest<Boolean> rest = restFactory.create();
         rest
                 .onSuccess(response -> {
-                    // Redirect the page to logout.
-                    clientPropertyCache
-                            .get()
-                            .onSuccess(result -> {
-                                final String authServiceUrl = result.getUrl().getAuthenticationService();
-                                // Send the user's browser to the remote Authentication Service's logout endpoint.
-                                // By adding 'prompt=login' we ask the Identity Provider to prompt the user for a login,
-                                // bypassing certificate checks. We need this to enable username/password
-                                // logins in an environment where the user's browser always presents a certificate.
-                                String redirectUrl = URL.encode(result.getUrl().getUi() + "?prompt=login");
-                                Window.Location.replace(authServiceUrl + "/logout?redirect_url=" + redirectUrl);
-                            });
+                    // Refresh the page to restart the auth flow.
+                    String url = Window.Location.createUrlBuilder()
+                            .setParameter("prompt", "login")
+                            .buildString();
+
+                    String redirectUrl = URL.encode(url);
+                    Window.Location.replace(redirectUrl);
                 })
                 .onFailure(throwable -> AlertEvent.fireErrorFromException(LoginManager.this, throwable, null))
                 .call(AUTHENTICATION_RESOURCE)

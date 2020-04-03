@@ -18,6 +18,8 @@
 
 package stroom.authentication;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.authentication.exceptions.NoCertificateException;
 
 import javax.naming.InvalidNameException;
@@ -26,7 +28,7 @@ import javax.servlet.http.HttpServletRequest;
 import java.util.Optional;
 
 public class CertificateManager {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(CertificateManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(CertificateManager.class);
 
     public Optional<String> getCertificate(HttpServletRequest httpServletRequest) {
         String dn = httpServletRequest.getHeader("X-SSL-CLIENT-S-DN");

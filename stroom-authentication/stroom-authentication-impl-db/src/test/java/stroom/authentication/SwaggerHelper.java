@@ -18,13 +18,15 @@
 
 package stroom.authentication;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.authentication.service.ApiClient;
 import stroom.authentication.service.api.ApiKeyApi;
 import stroom.authentication.service.api.AuthenticationApi;
 import stroom.authentication.service.api.UserApi;
 
 public class SwaggerHelper {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(SwaggerHelper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SwaggerHelper.class);
 
     public static AuthenticationApi newAuthApiClient(String idToken) {
         return new AuthenticationApi(newApiClient(idToken));

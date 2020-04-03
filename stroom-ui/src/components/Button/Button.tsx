@@ -33,7 +33,7 @@ export const Button = ({
   ...rest
 }: ButtonProps) => {
   const className = React.useMemo(() => {
-    let classNames = ["Button"];
+    const classNames = ["Button"];
 
     if (rawClassName) classNames.push(rawClassName);
 
@@ -99,7 +99,7 @@ export const Button = ({
     return classNames.join(" ");
   }, [rawClassName, appearance, action, text, selected, disabled, size]);
 
-  let fontAwesomeSize: SizeProp = React.useMemo(() => {
+  const fontAwesomeSize: SizeProp = React.useMemo(() => {
     switch (size) {
       case "small":
         return "sm";
@@ -109,13 +109,13 @@ export const Button = ({
         return "lg";
       case "xlarge":
         return "2x";
-      default:
-        fontAwesomeSize = "1x";
+      // default:
+      //   return "1x";
     }
     return "lg";
   }, [size]);
 
-  let showText = text && appearance !== "icon";
+  const showText = text && appearance !== "icon";
 
   const { onClickWithRipple, ripples } = useRipple(onClick);
 

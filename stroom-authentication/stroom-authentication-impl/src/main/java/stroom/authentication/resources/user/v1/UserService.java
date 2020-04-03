@@ -13,7 +13,6 @@ import stroom.security.shared.PermissionNames;
 
 import javax.inject.Inject;
 import javax.ws.rs.BadRequestException;
-
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -27,7 +26,7 @@ public class UserService {
     UserService(final UserDao userDao,
                 final SecurityContext securityContext,
                 final stroom.security.impl.UserService securityUserService,
-                final StroomEventLoggingService stroomEventLoggingService){
+                final StroomEventLoggingService stroomEventLoggingService) {
         this.userDao = userDao;
         this.securityContext = securityContext;
         this.securityUserService = securityUserService;
@@ -64,7 +63,7 @@ public class UserService {
         return userDao.get(email);
     }
 
-    public void update(User user, int userId){
+    public void update(User user, int userId) {
         checkPermission();
 
         // Update Stroom user
@@ -94,7 +93,7 @@ public class UserService {
     }
 
 
-    public int create(User user){
+    public int create(User user) {
         checkPermission();
 
         // Validate
@@ -118,18 +117,18 @@ public class UserService {
         return newUserId;
     }
 
-    public String search(String email){
+    public String search(String email) {
         checkPermission();
         Result foundUsers = userDao.searchUsersForDisplay(email);
         String users = foundUsers.formatJSON((new JSONFormat())
-            .header(false)
-            .recordFormat(JSONFormat.RecordFormat.OBJECT));
+                .header(false)
+                .recordFormat(JSONFormat.RecordFormat.OBJECT));
         stroomEventLoggingService.createAction("SearchUsers", "Search for users by email");
         return users;
     }
 
     private void checkPermission() {
-        if(!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
+        if (!securityContext.hasAppPermission(PermissionNames.MANAGE_USERS_PERMISSION)) {
             throw new PermissionException(securityContext.getUserId(), "You do not have permission to manage users");
         }
     }

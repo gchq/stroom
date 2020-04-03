@@ -23,6 +23,7 @@ import org.jose4j.jwt.JwtClaims;
 import org.jose4j.jwt.NumericDate;
 import org.jose4j.lang.JoseException;
 import stroom.authentication.resources.token.v1.Token.TokenType;
+import stroom.authentication.service.api.OIDC;
 
 import java.security.PrivateKey;
 import java.time.Instant;
@@ -128,8 +129,8 @@ public class TokenBuilder {
         if (authSessionId != null) {
             claims.setStringClaim("sid", authSessionId);
         }
-        nonce.ifPresent(nonce -> claims.setClaim("nonce", nonce));
-        state.ifPresent(state -> claims.setClaim("state", state));
+        nonce.ifPresent(nonce -> claims.setClaim(OIDC.NONCE, nonce));
+        state.ifPresent(state -> claims.setClaim(OIDC.STATE, state));
 
         JsonWebSignature jws = new JsonWebSignature();
         jws.setPayload(claims.toJson());

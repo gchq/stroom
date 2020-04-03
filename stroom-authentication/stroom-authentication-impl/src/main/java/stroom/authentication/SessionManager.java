@@ -20,6 +20,8 @@ package stroom.authentication;
 
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.ClientResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Singleton;
 import javax.ws.rs.client.Client;
@@ -33,7 +35,7 @@ import java.util.Optional;
 
 @Singleton
 public class SessionManager {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(SessionManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(SessionManager.class);
 
     Map<String, Session> sessions = new HashMap<>();
 

@@ -34,5 +34,4 @@ public class StroomConfig extends AbstractConfig {
     public String getClientHost() {
         return clientHost;
     }
-
 }

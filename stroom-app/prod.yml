@@ -118,9 +118,7 @@ appConfig:
     authentication:
       authenticationServiceUrl: ${STROOM_AUTHENTICATION_SERVICE_URL:-https://<<<IP_ADDRESS>>>/api/authentication/v1}
       authServicesBaseUrl: ${STROOM_AUTH_SERVICES_URL:-http://<<<IP_ADDRESS>>>/api/auth}
-      preventLogin: false #TODO
-      clientId: ${STROOM_AUTH_CLIENT_ID:-PZnJr8kHRKqnlJRQThSI}
-      clientSecret: ${STROOM_AUTH_CLIENT_SECRET:-OtzHiAWLj8QWcwO2IxXmqxpzE2pyg0pMKCghR2aU}
+      preventLogin: false
   serviceDiscovery:
     enabled: ${STROOM_SERVICE_DISCOVERY_ENABLED:-false}
     zookeeperUrl: ${STROOM_SERVICE_DISCOVERY_ZOOKEEPER_URL:-localhost:2181}
@@ -130,9 +128,8 @@ appConfig:
     nodeName: null
     url:
       ui: ${STROOM_ADVERTISED_URL:-https://<<<IP_ADDRESS>>>}
-      authenticationService: ${STROOM_AUTHENTICATION_SERVICE_URL:-https://<<<IP_ADDRESS>>>/api/authentication/v1}
-      users: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/users
-      apiKeys: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/apiKeys
-      changepassword: ${STROOM_UI_URL:-https://<<<IP_ADDRESS>>>}/s/changepassword
+      users: ${STROOM_UI_URL:-../../../s/users
+      apiKeys: ${STROOM_UI_URL:-../../../s/apiKeys
+      changepassword: ${STROOM_UI_URL:-../../../s/changepassword
   volumes:
     createDefaultOnStart: false

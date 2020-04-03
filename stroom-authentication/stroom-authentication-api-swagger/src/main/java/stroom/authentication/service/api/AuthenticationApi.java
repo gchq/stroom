@@ -290,7 +290,7 @@ public class AuthenticationApi {
         return call;
     }
     /* Build call for handleAuthenticationRequest */
-    private com.squareup.okhttp.Call handleAuthenticationRequestCall(String scope, String responseType, String clientId, String redirectUrl, String nonce, String state, String prompt, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    private com.squareup.okhttp.Call handleAuthenticationRequestCall(String scope, String responseType, String clientId, String redirectUri, String nonce, String state, String prompt, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
         Object localVarPostBody = null;
         
         // create path and map variables
@@ -298,19 +298,19 @@ public class AuthenticationApi {
 
         List<Pair> localVarQueryParams = new ArrayList<Pair>();
         if (scope != null)
-        localVarQueryParams.addAll(apiClient.parameterToPairs("", "scope", scope));
+            localVarQueryParams.addAll(apiClient.parameterToPairs("", OIDC.SCOPE, scope));
         if (responseType != null)
-        localVarQueryParams.addAll(apiClient.parameterToPairs("", "response_type", responseType));
+            localVarQueryParams.addAll(apiClient.parameterToPairs("", OIDC.RESPONSE_TYPE, responseType));
         if (clientId != null)
-        localVarQueryParams.addAll(apiClient.parameterToPairs("", "client_id", clientId));
-        if (redirectUrl != null)
-        localVarQueryParams.addAll(apiClient.parameterToPairs("", "redirect_url", redirectUrl));
+            localVarQueryParams.addAll(apiClient.parameterToPairs("", OIDC.CLIENT_ID, clientId));
+        if (redirectUri != null)
+            localVarQueryParams.addAll(apiClient.parameterToPairs("", OIDC.REDIRECT_URI, redirectUri));
         if (nonce != null)
-        localVarQueryParams.addAll(apiClient.parameterToPairs("", "nonce", nonce));
+            localVarQueryParams.addAll(apiClient.parameterToPairs("", OIDC.NONCE, nonce));
         if (state != null)
-        localVarQueryParams.addAll(apiClient.parameterToPairs("", "state", state));
+            localVarQueryParams.addAll(apiClient.parameterToPairs("", OIDC.STATE, state));
         if (prompt != null)
-        localVarQueryParams.addAll(apiClient.parameterToPairs("", "prompt", prompt));
+            localVarQueryParams.addAll(apiClient.parameterToPairs("", OIDC.PROMPT, prompt));
 
         Map<String, String> localVarHeaderParams = new HashMap<String, String>();
 
@@ -345,7 +345,7 @@ public class AuthenticationApi {
     }
     
     @SuppressWarnings("rawtypes")
-    private com.squareup.okhttp.Call handleAuthenticationRequestValidateBeforeCall(String scope, String responseType, String clientId, String redirectUrl, String nonce, String state, String prompt, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    private com.squareup.okhttp.Call handleAuthenticationRequestValidateBeforeCall(String scope, String responseType, String clientId, String redirectUri, String nonce, String state, String prompt, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
         
         // verify the required parameter 'scope' is set
         if (scope == null) {
@@ -362,13 +362,13 @@ public class AuthenticationApi {
             throw new ApiException("Missing the required parameter 'clientId' when calling handleAuthenticationRequest(Async)");
         }
         
-        // verify the required parameter 'redirectUrl' is set
-        if (redirectUrl == null) {
-            throw new ApiException("Missing the required parameter 'redirectUrl' when calling handleAuthenticationRequest(Async)");
+        // verify the required parameter 'redirectUri' is set
+        if (redirectUri == null) {
+            throw new ApiException("Missing the required parameter 'redirectUri' when calling handleAuthenticationRequest(Async)");
         }
         
         
-        com.squareup.okhttp.Call call = handleAuthenticationRequestCall(scope, responseType, clientId, redirectUrl, nonce, state, prompt, progressListener, progressRequestListener);
+        com.squareup.okhttp.Call call = handleAuthenticationRequestCall(scope, responseType, clientId, redirectUri, nonce, state, prompt, progressListener, progressRequestListener);
         return call;
 
         
@@ -383,15 +383,15 @@ public class AuthenticationApi {
      * @param scope  (required)
      * @param responseType  (required)
      * @param clientId  (required)
-     * @param redirectUrl  (required)
+     * @param redirectUri  (required)
      * @param nonce  (optional)
      * @param state  (optional)
      * @param prompt  (optional)
      * @return String
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      */
-    public String handleAuthenticationRequest(String scope, String responseType, String clientId, String redirectUrl, String nonce, String state, String prompt) throws ApiException {
-        ApiResponse<String> resp = handleAuthenticationRequestWithHttpInfo(scope, responseType, clientId, redirectUrl, nonce, state, prompt);
+    public String handleAuthenticationRequest(String scope, String responseType, String clientId, String redirectUri, String nonce, String state, String prompt) throws ApiException {
+        ApiResponse<String> resp = handleAuthenticationRequestWithHttpInfo(scope, responseType, clientId, redirectUri, nonce, state, prompt);
         return resp.getData();
     }
 
@@ -401,15 +401,15 @@ public class AuthenticationApi {
      * @param scope  (required)
      * @param responseType  (required)
      * @param clientId  (required)
-     * @param redirectUrl  (required)
+     * @param redirectUri  (required)
      * @param nonce  (optional)
      * @param state  (optional)
      * @param prompt  (optional)
      * @return ApiResponse&lt;String&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      */
-    public ApiResponse<String> handleAuthenticationRequestWithHttpInfo(String scope, String responseType, String clientId, String redirectUrl, String nonce, String state, String prompt) throws ApiException {
-        com.squareup.okhttp.Call call = handleAuthenticationRequestValidateBeforeCall(scope, responseType, clientId, redirectUrl, nonce, state, prompt, null, null);
+    public ApiResponse<String> handleAuthenticationRequestWithHttpInfo(String scope, String responseType, String clientId, String redirectUri, String nonce, String state, String prompt) throws ApiException {
+        com.squareup.okhttp.Call call = handleAuthenticationRequestValidateBeforeCall(scope, responseType, clientId, redirectUri, nonce, state, prompt, null, null);
         Type localVarReturnType = new TypeToken<String>(){}.getType();
         return apiClient.execute(call, localVarReturnType);
     }
@@ -420,7 +420,7 @@ public class AuthenticationApi {
      * @param scope  (required)
      * @param responseType  (required)
      * @param clientId  (required)
-     * @param redirectUrl  (required)
+     * @param redirectUri  (required)
      * @param nonce  (optional)
      * @param state  (optional)
      * @param prompt  (optional)
@@ -428,7 +428,7 @@ public class AuthenticationApi {
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
      */
-    public com.squareup.okhttp.Call handleAuthenticationRequestAsync(String scope, String responseType, String clientId, String redirectUrl, String nonce, String state, String prompt, final ApiCallback<String> callback) throws ApiException {
+    public com.squareup.okhttp.Call handleAuthenticationRequestAsync(String scope, String responseType, String clientId, String redirectUri, String nonce, String state, String prompt, final ApiCallback<String> callback) throws ApiException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -449,7 +449,7 @@ public class AuthenticationApi {
             };
         }
 
-        com.squareup.okhttp.Call call = handleAuthenticationRequestValidateBeforeCall(scope, responseType, clientId, redirectUrl, nonce, state, prompt, progressListener, progressRequestListener);
+        com.squareup.okhttp.Call call = handleAuthenticationRequestValidateBeforeCall(scope, responseType, clientId, redirectUri, nonce, state, prompt, progressListener, progressRequestListener);
         Type localVarReturnType = new TypeToken<String>(){}.getType();
         apiClient.executeAsync(call, localVarReturnType, callback);
         return call;
@@ -681,15 +681,15 @@ public class AuthenticationApi {
         return call;
     }
     /* Build call for logout */
-    private com.squareup.okhttp.Call logoutCall(String redirectUrl, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    private com.squareup.okhttp.Call logoutCall(String redirectUri, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
         Object localVarPostBody = null;
         
         // create path and map variables
         String localVarPath = "/authentication/v1/logout".replaceAll("\\{format\\}","json");
 
         List<Pair> localVarQueryParams = new ArrayList<Pair>();
-        if (redirectUrl != null)
-        localVarQueryParams.addAll(apiClient.parameterToPairs("", "redirect_url", redirectUrl));
+        if (redirectUri != null)
+        localVarQueryParams.addAll(apiClient.parameterToPairs("", OIDC.REDIRECT_URI, redirectUri));
 
         Map<String, String> localVarHeaderParams = new HashMap<String, String>();
 
@@ -724,10 +724,10 @@ public class AuthenticationApi {
     }
     
     @SuppressWarnings("rawtypes")
-    private com.squareup.okhttp.Call logoutValidateBeforeCall(String redirectUrl, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
+    private com.squareup.okhttp.Call logoutValidateBeforeCall(String redirectUri, final ProgressResponseBody.ProgressListener progressListener, final ProgressRequestBody.ProgressRequestListener progressRequestListener) throws ApiException {
         
         
-        com.squareup.okhttp.Call call = logoutCall(redirectUrl, progressListener, progressRequestListener);
+        com.squareup.okhttp.Call call = logoutCall(redirectUri, progressListener, progressRequestListener);
         return call;
 
         
@@ -739,34 +739,34 @@ public class AuthenticationApi {
     /**
      * Log a user out of their session
      * 
-     * @param redirectUrl  (optional)
+     * @param redirectUri  (optional)
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      */
-    public void logout(String redirectUrl) throws ApiException {
-        logoutWithHttpInfo(redirectUrl);
+    public void logout(String redirectUri) throws ApiException {
+        logoutWithHttpInfo(redirectUri);
     }
 
     /**
      * Log a user out of their session
      * 
-     * @param redirectUrl  (optional)
+     * @param redirectUri  (optional)
      * @return ApiResponse&lt;Void&gt;
      * @throws ApiException If fail to call the API, e.g. server error or cannot deserialize the response body
      */
-    public ApiResponse<Void> logoutWithHttpInfo(String redirectUrl) throws ApiException {
-        com.squareup.okhttp.Call call = logoutValidateBeforeCall(redirectUrl, null, null);
+    public ApiResponse<Void> logoutWithHttpInfo(String redirectUri) throws ApiException {
+        com.squareup.okhttp.Call call = logoutValidateBeforeCall(redirectUri, null, null);
         return apiClient.execute(call);
     }
 
     /**
      * Log a user out of their session (asynchronously)
      * 
-     * @param redirectUrl  (optional)
+     * @param redirectUri  (optional)
      * @param callback The callback to be executed when the API call finishes
      * @return The request call
      * @throws ApiException If fail to process the API call, e.g. serializing the request body object
      */
-    public com.squareup.okhttp.Call logoutAsync(String redirectUrl, final ApiCallback<Void> callback) throws ApiException {
+    public com.squareup.okhttp.Call logoutAsync(String redirectUri, final ApiCallback<Void> callback) throws ApiException {
 
         ProgressResponseBody.ProgressListener progressListener = null;
         ProgressRequestBody.ProgressRequestListener progressRequestListener = null;
@@ -787,7 +787,7 @@ public class AuthenticationApi {
             };
         }
 
-        com.squareup.okhttp.Call call = logoutValidateBeforeCall(redirectUrl, progressListener, progressRequestListener);
+        com.squareup.okhttp.Call call = logoutValidateBeforeCall(redirectUri, progressListener, progressRequestListener);
         apiClient.executeAsync(call, callback);
         return call;
     }

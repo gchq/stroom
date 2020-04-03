@@ -96,7 +96,7 @@ export const useHttpClient = (): HttpClient => {
         [s: string]: any;
       } = {},
       forceGet: boolean = true, // default to true, take care with settings this to false, old promises can override the updated picture with old information if this is mis-used
-      addAuthentication: boolean = true, // most of the time we want authenticated requests, so we'll make that the default.
+      addAuthentication: boolean = false, // most of the time we want authenticated requests, so we'll make that the default.
     ): Promise<T | void> => {
       if (!idToken && addAuthentication) {
         let p = Promise.reject();
@@ -119,11 +119,19 @@ export const useHttpClient = (): HttpClient => {
         cache[url] = fetch(url, {
           method: "get",
           mode: "cors",
+          credentials: "include",
           ...options,
           headers,
         })
           .then(handle200)
-          .then(r => r.json())
+          .then(r => {
+            try {
+              return r.json();
+            } catch (e) {
+              console.error(e);
+              throw e;
+            }
+          })
           .catch(catchImpl);
       }
 
@@ -160,6 +168,7 @@ export const useHttpClient = (): HttpClient => {
 
         return fetch(url, {
           mode: "cors",
+          credentials: "include",
           ...options,
           method,
           headers,
@@ -197,6 +206,7 @@ export const useHttpClient = (): HttpClient => {
 
         return fetch(url, {
           mode: "cors",
+          credentials: "include",
           ...options,
           method,
           headers,

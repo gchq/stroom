@@ -21,8 +21,6 @@ package stroom.authentication.exceptions;
 import javax.ws.rs.WebApplicationException;
 
 public class NoSuchUserException extends WebApplicationException {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(NoSuchUserException.class);
-
     public NoSuchUserException(String message) {
         super(message);
     }

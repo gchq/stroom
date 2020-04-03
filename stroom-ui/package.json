@@ -1,6 +1,7 @@
 {
   "name": "stroom-ui",
   "version": "0.1.0",
+  "license": "Apache-2.0",
   "private": true,
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "1.2.26",
@@ -85,6 +86,8 @@
     "watch-css": "node-sass-chokidar src/ -o src/ --watch --recursive",
     "start-js": "./config.template.sh && BROWSER=NONE PORT=9443 HTTPS=true react-scripts start",
     "start": "npm-run-all -p watch-css start-js",
+    "debug-js": "./config.template.sh && BROWSER=NONE PORT=9080 HTTPS=false react-scripts start",
+    "debug": "npm-run-all -p watch-css debug-js",
     "build-js": "react-scripts build",
     "build": "npm-run-all build-css build-js",
     "test": "react-scripts test --env=jsdom",

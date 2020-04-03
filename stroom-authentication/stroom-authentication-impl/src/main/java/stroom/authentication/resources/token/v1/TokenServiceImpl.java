@@ -1,6 +1,7 @@
 package stroom.authentication.resources.token.v1;
 
 import org.jose4j.jwk.JsonWebKey;
+import stroom.authentication.JwkCache;
 import stroom.authentication.TokenVerifier;
 import stroom.authentication.config.StroomConfig;
 import stroom.authentication.dao.TokenDao;
@@ -17,6 +18,7 @@ import java.time.Instant;
 import java.util.Optional;
 
 public class TokenServiceImpl implements TokenService {
+    private final JwkCache jwkCache;
     private final TokenDao dao;
     private final SecurityContext securityContext;
     private StroomConfig stroomConfig;
@@ -26,14 +28,15 @@ public class TokenServiceImpl implements TokenService {
     private final StroomEventLoggingService stroomEventLoggingService;
 
     @Inject
-    public TokenServiceImpl(final TokenDao dao,
+    TokenServiceImpl(final JwkCache jwkCache,
+                     final TokenDao dao,
                             final SecurityContext securityContext,
                             final StroomConfig stroomConfig,
                             final TokenVerifier tokenVerifier,
                             final stroom.authentication.resources.user.v1.UserService userService,
                             final stroom.security.impl.UserService securityUserService,
                             final StroomEventLoggingService stroomEventLoggingService){
-
+        this.jwkCache = jwkCache;
         this.dao = dao;
         this.securityContext = securityContext;
         this.stroomConfig = stroomConfig;
@@ -139,17 +142,16 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public Optional<String> verifyToken(String token){
-        Optional<Token> tokenRecord = dao.readByToken(token);
-        if (!tokenRecord.isPresent()) {
-            return Optional.empty();
-        }
-        Optional<String> usersEmail = tokenVerifier.verifyToken(token, tokenRecord);
-        return usersEmail;
+//        Optional<Token> tokenRecord = dao.readByToken(token);
+//        if (!tokenRecord.isPresent()) {
+//            return Optional.empty();
+//        }
+        return tokenVerifier.verifyToken(token);
     }
 
     @Override
     public String getPublicKey() {
-        String jwkAsJson = tokenVerifier.getJwk().toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
+        String jwkAsJson = jwkCache.get().get(0).toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
         stroomEventLoggingService.createAction("GetPublicApiKey", "Read a token by the token ID.");
         return jwkAsJson;
     }

@@ -18,12 +18,15 @@
 
 package stroom.authentication;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class Session {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(Session.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Session.class);
 
     private String sessionId;
     private boolean isAuthenticated;

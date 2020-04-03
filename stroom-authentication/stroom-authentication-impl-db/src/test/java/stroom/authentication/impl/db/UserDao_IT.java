@@ -1,14 +1,11 @@
-package stroom.authentication.daos;
+package stroom.authentication.impl.db;
 
 import junit.framework.TestCase;
-import org.jooq.DSLContext;
-import org.jooq.SQLDialect;
-import org.jooq.impl.DSL;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.authentication.Database_IT;
-import stroom.authentication.impl.db.UserDaoImpl;
-import stroom.authentication.impl.db.UserMapper;
 import stroom.authentication.resources.user.v1.User;
 import stroom.authentication.dao.UserDao;
 
@@ -32,7 +29,7 @@ import static stroom.authentication.resources.user.v1.User.UserState.INACTIVE;
 @Ignore("Temporarily ignore for auth migration")
 public class UserDao_IT extends Database_IT {
 
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(UserDao_IT.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserDao_IT.class);
 
     @Test
     public void testNewButInactiveUserIsDisabled(){
@@ -350,13 +347,10 @@ public class UserDao_IT extends Database_IT {
     }
 
     private UserDao getUserDao(Connection conn){
-        DSLContext database = DSL.using(conn, SQLDialect.MYSQL);
-
         // We don't care about most config for this test, so we'll pass in null
         UserDao userDao = new UserDaoImpl(null, this.authDbConnProvider);
         // We're doing tests against elapsed time so we need to be able to move the clock.
-        Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
-        userDao.setClock(clock);
+        final Clock clock = Clock.fixed(Instant.now(), ZoneId.systemDefault());
 
         return userDao;
     }

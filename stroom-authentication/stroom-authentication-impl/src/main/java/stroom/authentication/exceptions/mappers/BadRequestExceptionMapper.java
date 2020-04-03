@@ -18,6 +18,8 @@
 
 package stroom.authentication.exceptions.mappers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.authentication.exceptions.BadRequestException;
 
 import javax.ws.rs.core.Response;
@@ -26,7 +28,7 @@ import javax.ws.rs.ext.Provider;
 
 @Provider
 public class BadRequestExceptionMapper implements ExceptionMapper<BadRequestException> {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(BadRequestExceptionMapper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(BadRequestExceptionMapper.class);
 
     @Override
     public Response toResponse(BadRequestException exception) {

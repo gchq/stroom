@@ -17,18 +17,17 @@
 package stroom.authentication;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import java.util.HashSet;
-import java.util.Set;
 import org.joda.time.DateTime;
 import org.junit.Ignore;
 import org.junit.Test;
-
-import stroom.authentication.AuthenticationFlowHelper;
 import stroom.authentication.service.ApiException;
 import stroom.authentication.service.ApiResponse;
 import stroom.authentication.service.api.ApiKeyApi;
 import stroom.authentication.service.api.model.CreateTokenRequest;
 import stroom.authentication.service.api.model.Token;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.fail;
@@ -48,9 +47,9 @@ public class TokenResource_create_IT extends TokenResource_IT {
         Set<String> foos = new HashSet<>();
         foos.add("Manage Users");
         foos.add("Administrator");
-       ObjectMapper mapper = new ObjectMapper();
-       String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(foos);
-       System.out.println(json);
+        ObjectMapper mapper = new ObjectMapper();
+        String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(foos);
+        System.out.println(json);
 
         CreateTokenRequest createTokenRequest = new CreateTokenRequest();
         createTokenRequest.setUserEmail("admin");

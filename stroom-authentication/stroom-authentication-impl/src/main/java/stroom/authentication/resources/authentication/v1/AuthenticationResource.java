@@ -29,6 +29,7 @@ import stroom.authentication.CertificateManager;
 import stroom.authentication.TokenVerifier;
 import stroom.authentication.exceptions.NoSuchUserException;
 import stroom.authentication.resources.token.v1.TokenService;
+import stroom.authentication.service.api.OIDC;
 import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -72,7 +73,6 @@ public final class AuthenticationResource implements RestResource {
     private StroomEventLoggingService stroomEventLoggingService;
     private Provider<HttpServletRequest> httpServletRequestProvider;
     private TokenService tokenService;
-    private TokenVerifier tokenVerifier;
     private CertificateManager certificateManager;
 
     @Inject
@@ -82,14 +82,12 @@ public final class AuthenticationResource implements RestResource {
             final StroomEventLoggingService stroomEventLoggingService,
             final Provider<HttpServletRequest> httpServletRequestProvider,
             final TokenService tokenService,
-            final TokenVerifier tokenVerifier,
             final CertificateManager certificateManager) {
         this.service = service;
         this.securityContext = securityContext;
         this.stroomEventLoggingService = stroomEventLoggingService;
         this.httpServletRequestProvider = httpServletRequestProvider;
         this.tokenService = tokenService;
-        this.tokenVerifier = tokenVerifier;
         this.certificateManager = certificateManager;
     }
 
@@ -100,17 +98,16 @@ public final class AuthenticationResource implements RestResource {
     public final Response handleAuthenticationRequest(
             @Session HttpSession httpSession,
             @Context @NotNull HttpServletRequest httpServletRequest,
-            @QueryParam("scope") @NotNull String scope,
-            @QueryParam("response_type") @NotNull String responseType,
-            @QueryParam("client_id") @NotNull String clientId,
-            @QueryParam("redirect_url") @NotNull String redirectUrl,
-            @QueryParam("nonce") @Nullable String nonce,
-            @QueryParam("state") @Nullable String state,
-            @QueryParam("prompt") @Nullable String prompt) throws URISyntaxException {
-
+            @QueryParam(OIDC.SCOPE) @NotNull String scope,
+            @QueryParam(OIDC.RESPONSE_TYPE) @NotNull String responseType,
+            @QueryParam(OIDC.CLIENT_ID) @NotNull String clientId,
+            @QueryParam(OIDC.REDIRECT_URI) @NotNull String redirectUri,
+            @QueryParam(OIDC.NONCE) @Nullable String nonce,
+            @QueryParam(OIDC.STATE) @Nullable String state,
+            @QueryParam(OIDC.PROMPT) @Nullable String prompt) {
         Optional<String> optionalCn = certificateManager.getCertificate(httpServletRequest);
         return service.handleAuthenticationRequest(
-                httpSession.getId(), nonce, state, redirectUrl, clientId, prompt, optionalCn
+                httpSession.getId(), nonce, state, redirectUri, clientId, prompt, optionalCn
         ).build();
     }
 
@@ -149,9 +146,9 @@ public final class AuthenticationResource implements RestResource {
     public final Response logout(
             @Session HttpSession httpSession,
             @Context @NotNull HttpServletRequest httpServletRequest,
-            @QueryParam("redirect_url") @Nullable String redirectUrl) throws URISyntaxException {
+            @QueryParam(OIDC.REDIRECT_URI) @Nullable String redirectUri) throws URISyntaxException {
         String sessionId = httpSession.getId();
-        final String postLogoutUrl = service.logout(sessionId, redirectUrl);
+        final String postLogoutUrl = service.logout(sessionId, redirectUri);
         return seeOther(new URI(postLogoutUrl)).build();
     }
 
@@ -251,8 +248,8 @@ public final class AuthenticationResource implements RestResource {
             @Session HttpSession httpSession,
             @QueryParam("clientId") @NotNull String clientId) throws UnsupportedEncodingException {
         String httpSessionId = httpSession.getId();
-        var redirectUrl = service.postAuthenticationRedirect(httpSessionId, clientId);
-        return seeOther(redirectUrl).build();
+        var redirectUri = service.postAuthenticationRedirect(httpSessionId, clientId);
+        return seeOther(redirectUri).build();
     }
 
     @GET

@@ -1,4 +1,4 @@
-ext.moduleName = 'stroom.authentication.common'
+ext.moduleName = 'stroom.authentication.api'
 
 dependencies {
     compile project(':stroom-util')

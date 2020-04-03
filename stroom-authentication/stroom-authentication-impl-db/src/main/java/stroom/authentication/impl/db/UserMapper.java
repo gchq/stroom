@@ -20,7 +20,7 @@ package stroom.authentication.impl.db;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import stroom.auth.db.tables.records.UsersRecord;
+import stroom.authentication.impl.db.jooq.tables.records.AccountRecord;
 import stroom.authentication.resources.user.v1.User;
 
 import javax.annotation.Nullable;
@@ -34,12 +34,12 @@ import java.util.HashMap;
 
 public final class UserMapper {
 
-    public static UsersRecord updateUserRecordWithUser(@NotNull User user, @NotNull UsersRecord usersRecord) {
+    public static AccountRecord updateUserRecordWithUser(@NotNull User user, @NotNull AccountRecord usersRecord) {
         return updateUserRecordWithUser(user, usersRecord, Clock.systemDefaultZone());
     }
 
     @NotNull
-    public static UsersRecord updateUserRecordWithUser(@NotNull User user, @NotNull UsersRecord usersRecord, Clock clock) {
+    public static AccountRecord updateUserRecordWithUser(@NotNull User user, @NotNull AccountRecord usersRecord, Clock clock) {
         Preconditions.checkNotNull(user);
         Preconditions.checkNotNull(usersRecord);
 
@@ -82,8 +82,8 @@ public final class UserMapper {
         return usersRecord;
     }
 
-    public static UsersRecord map(User user) {
-        UsersRecord usersRecord = new UsersRecord();
+    public static AccountRecord map(User user) {
+        AccountRecord usersRecord = new AccountRecord();
         usersRecord.setForcePasswordChange(user.isForcePasswordChange());
         usersRecord.setComments(user.getComments());
         usersRecord.setCreatedByUser(user.getCreatedByUser());
@@ -105,7 +105,7 @@ public final class UserMapper {
         return usersRecord;
     }
 
-    public static User map(UsersRecord usersRecord) {
+    public static User map(AccountRecord usersRecord) {
         User user = new User();
         user.setEmail(usersRecord.getEmail());
         user.setState(usersRecord.getState());

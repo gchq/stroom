@@ -18,13 +18,15 @@
 
 package stroom.authentication.exceptions.mappers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.authentication.exceptions.UnsupportedFilterException;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
 
 public class UnsupportedFilterExceptionMapper implements ExceptionMapper<UnsupportedFilterException> {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(UnsupportedFilterExceptionMapper.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(UnsupportedFilterExceptionMapper.class);
 
     @Override
     public Response toResponse(UnsupportedFilterException exception) {

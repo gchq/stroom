@@ -27,10 +27,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.authentication.LoginResult;
 import stroom.authentication.config.AuthenticationConfig;
-import stroom.auth.db.Tables;
-import stroom.auth.db.tables.records.UsersRecord;
 import stroom.authentication.exceptions.BadRequestException;
 import stroom.authentication.exceptions.NoSuchUserException;
+import stroom.authentication.impl.db.jooq.tables.records.AccountRecord;
 import stroom.authentication.resources.user.v1.User;
 import stroom.authentication.dao.UserDao;
 import stroom.db.util.JooqUtil;
@@ -48,10 +47,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static stroom.auth.db.Tables.USERS;
+import static stroom.authentication.impl.db.jooq.tables.Account.ACCOUNT;
 
 @Singleton
-public class UserDaoImpl implements UserDao {
+class UserDaoImpl implements UserDao {
     private static final Logger LOGGER = LoggerFactory.getLogger(UserDaoImpl.class);
 
     private AuthDbConnProvider authDbConnProvider;
@@ -75,9 +74,9 @@ public class UserDaoImpl implements UserDao {
         newUser.setCreatedOn(UserMapper.toIso(Timestamp.from(Instant.now(clock))));
         newUser.setCreatedByUser(creatingUsername);
         newUser.setLoginCount(0);
-        UsersRecord usersRecord = UserMapper.map(newUser);
+        AccountRecord usersRecord = UserMapper.map(newUser);
         int id = JooqUtil.contextResult(authDbConnProvider, context -> {
-            UsersRecord createdUser = context.newRecord(USERS, usersRecord);
+            AccountRecord createdUser = context.newRecord(ACCOUNT, usersRecord);
             createdUser.store();
             return createdUser.getId();
         });
@@ -86,9 +85,9 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public void recordSuccessfulLogin(String email) {
-        UsersRecord user = (UsersRecord) JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom((Table) USERS)
-                .where(new Condition[]{USERS.EMAIL.eq(email)})
+        AccountRecord user = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(ACCOUNT)
+                .where(new Condition[]{ACCOUNT.EMAIL.eq(email)})
                 .fetchOne());
 
         // We reset the failed login count if we have a successful login
@@ -97,9 +96,9 @@ public class UserDaoImpl implements UserDao {
         user.setLoginCount(user.getLoginCount() + 1);
         user.setLastLogin(UserMapper.convertISO8601ToTimestamp(LocalDateTime.now(clock).toString()));
         JooqUtil.context(authDbConnProvider, context -> context
-                .update((Table) USERS)
+                .update(ACCOUNT)
                 .set(user)
-                .where(new Condition[]{USERS.EMAIL.eq(user.getEmail())}).execute());
+                .where(new Condition[]{ACCOUNT.EMAIL.eq(user.getEmail())}).execute());
     }
 
 //    @Override
@@ -109,9 +108,9 @@ public class UserDaoImpl implements UserDao {
             throw new BadRequestException("Please provide both email and password");
         }
 
-        UsersRecord user = (UsersRecord) JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom((Table) USERS)
-                .where(new Condition[]{USERS.EMAIL.eq(email)})
+        final AccountRecord user = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(ACCOUNT)
+                .where(new Condition[]{ACCOUNT.EMAIL.eq(email)})
                 .fetchOne());
 
         if (user == null) {
@@ -140,9 +139,9 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public boolean incrementLoginFailures(String email) {
-        UsersRecord user = (UsersRecord) JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom((Table) USERS)
-                .where(new Condition[]{USERS.EMAIL.eq(email)})
+        AccountRecord user = (AccountRecord) JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom((Table) ACCOUNT)
+                .where(new Condition[]{ACCOUNT.EMAIL.eq(email)})
                 .fetchOne());
 
         // If the password is wrong we need to increment the failed login count,
@@ -160,9 +159,9 @@ public class UserDaoImpl implements UserDao {
         }
 
         JooqUtil.context(authDbConnProvider, context -> context
-                .update((Table) USERS)
+                .update((Table) ACCOUNT)
                 .set(user)
-                .where(new Condition[]{USERS.EMAIL.eq(email)}).execute());
+                .where(new Condition[]{ACCOUNT.EMAIL.eq(email)}).execute());
 
         if (shouldLock) {
             LOGGER.debug("Account {} has had too many failed access attempts and is locked", email);
@@ -173,48 +172,48 @@ public class UserDaoImpl implements UserDao {
 
     @Override
     public Optional<User> get(String email) {
-        Optional<UsersRecord> userQuery = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom(USERS)
-                .where(USERS.EMAIL.eq(email)).fetchOptional());
+        Optional<AccountRecord> userQuery = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(ACCOUNT)
+                .where(ACCOUNT.EMAIL.eq(email)).fetchOptional());
 
-        return userQuery.map(usersRecord -> UserMapper.map(usersRecord));
+        return userQuery.map(UserMapper::map);
     }
 
     @Override
     public void update(User user) {
-        UsersRecord usersRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom(USERS)
-                .where(USERS.EMAIL.eq(user.getEmail())).fetchSingle());
+        AccountRecord usersRecord = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(ACCOUNT)
+                .where(ACCOUNT.EMAIL.eq(user.getEmail())).fetchSingle());
 
-        UsersRecord updatedUsersRecord = UserMapper.updateUserRecordWithUser(user, usersRecord);
+        AccountRecord updatedAccountRecord = UserMapper.updateUserRecordWithUser(user, usersRecord);
 
         JooqUtil.contextResult(authDbConnProvider, context -> context
-            .update((Table) USERS)
-               .set(updatedUsersRecord)
-                .where(new Condition[]{USERS.ID.eq(user.getId())}).execute());
+            .update((Table) ACCOUNT)
+               .set(updatedAccountRecord)
+                .where(new Condition[]{ACCOUNT.ID.eq(user.getId())}).execute());
     }
 
     @Override
     public void delete(int id) {
         JooqUtil.context(authDbConnProvider, context -> context
-                .deleteFrom((Table) USERS)
-                .where(new Condition[]{USERS.ID.eq(id)}).execute());
+                .deleteFrom((Table) ACCOUNT)
+                .where(new Condition[]{ACCOUNT.ID.eq(id)}).execute());
     }
 
     @Override
     public Optional<User> get(int id) {
-        Optional<UsersRecord> userQuery = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom(USERS)
-                .where(USERS.ID.eq(id)).fetchOptional());
+        Optional<AccountRecord> userQuery = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(ACCOUNT)
+                .where(ACCOUNT.ID.eq(id)).fetchOptional());
 
         return userQuery.map(usersRecord -> UserMapper.map(usersRecord));
     }
 
         @Override
         public String getAll() {
-        TableField orderByEmailField = USERS.EMAIL;
+        TableField orderByEmailField = ACCOUNT.EMAIL;
         String usersAsJson = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom(USERS)
+                .selectFrom(ACCOUNT)
                 .orderBy(orderByEmailField)
                 .fetch()
                 .formatJSON((new JSONFormat())
@@ -223,30 +222,30 @@ public class UserDaoImpl implements UserDao {
 
         ObjectOutcome objectOutcome = new ObjectOutcome();
         event.logging.Object object = new event.logging.Object();
-        object.setName("GetAllUsers");
+        object.setName("GetAllAccounts");
         objectOutcome.getObjects().add(object);
         return usersAsJson;
     }
 
     @Override
     public void changePassword(String email, String newPassword) {
-        UsersRecord user = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom(USERS)
-                .where(new Condition[]{USERS.EMAIL.eq(email)})
+        AccountRecord account = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(ACCOUNT)
+                .where(new Condition[]{ACCOUNT.EMAIL.eq(email)})
                 .fetchOne());
 
-        if (user == null) {
+        if (account == null) {
             throw new NoSuchUserException("Cannot change this password because this user does not exist!");
         }
 
         String newPasswordHash = BCrypt.hashpw(newPassword, BCrypt.gensalt());
-        user.setPasswordHash(newPasswordHash);
-        user.setPasswordLastChanged(Timestamp.from(clock.instant()));
-        user.setForcePasswordChange(false);
+        account.setPasswordHash(newPasswordHash);
+        account.setPasswordLastChanged(Timestamp.from(clock.instant()));
+        account.setForcePasswordChange(false);
 
-        JooqUtil.context(authDbConnProvider, context -> context.update((Table) USERS)
-                .set(user)
-                .where(new Condition[]{USERS.EMAIL.eq(email)})
+        JooqUtil.context(authDbConnProvider, context -> context.update((Table) ACCOUNT)
+                .set(account)
+                .where(new Condition[]{ACCOUNT.EMAIL.eq(email)})
                 .execute());
     }
 
@@ -254,9 +253,9 @@ public class UserDaoImpl implements UserDao {
     public Boolean needsPasswordChange(String email, Duration mandatoryPasswordChangeDuration, boolean forcePasswordChangeOnFirstLogin) {
         Validate.notNull(email, "email must not be null");
 
-        UsersRecord user = (UsersRecord) JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom((Table) USERS)
-                .where(new Condition[]{USERS.EMAIL.eq(email)})
+        AccountRecord user = (AccountRecord) JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom((Table) ACCOUNT)
+                .where(new Condition[]{ACCOUNT.EMAIL.eq(email)})
                 .fetchOne());
 
         if (user == null) {
@@ -282,15 +281,15 @@ public class UserDaoImpl implements UserDao {
     public int deactivateNewInactiveUsers(Duration neverUsedAccountDeactivationThreshold) {
         Timestamp activityThreshold = convertThresholdToTimestamp(neverUsedAccountDeactivationThreshold);
 
-        Result<UsersRecord> candidatesForDeactivating = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom(USERS)
-                .where(USERS.CREATED_ON.lessOrEqual(activityThreshold))
+        Result<AccountRecord> candidatesForDeactivating = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(ACCOUNT)
+                .where(ACCOUNT.CREATED_ON.lessOrEqual(activityThreshold))
                 // We are only going to deactivate enabled accounts
-                .and(USERS.STATE.eq(User.UserState.ENABLED.getStateText()))
+                .and(ACCOUNT.STATE.eq(User.UserState.ENABLED.getStateText()))
                 // A 'new' user is one who has never logged in.
-                .and(USERS.LAST_LOGIN.isNull())
+                .and(ACCOUNT.LAST_LOGIN.isNull())
                 // We don't want to disable all accounts
-                .and(USERS.NEVER_EXPIRES.ne(true)).fetch());
+                .and(ACCOUNT.NEVER_EXPIRES.ne(true)).fetch());
 
         List<Integer> usersToDeactivate = candidatesForDeactivating.stream()
                 .filter(usersRecord ->
@@ -300,8 +299,8 @@ public class UserDaoImpl implements UserDao {
                 .collect(Collectors.toList());
 
         JooqUtil.contextResult(authDbConnProvider, context -> context.
-                update(USERS).set(USERS.STATE, User.UserState.INACTIVE.getStateText())
-                .where(USERS.ID.in(usersToDeactivate))
+                update(ACCOUNT).set(ACCOUNT.STATE, User.UserState.INACTIVE.getStateText())
+                .where(ACCOUNT.ID.in(usersToDeactivate))
                 .execute());
 
         return usersToDeactivate.size();
@@ -311,14 +310,14 @@ public class UserDaoImpl implements UserDao {
     public int deactivateInactiveUsers(Duration unusedAccountDeactivationThreshold) {
         Timestamp activityThreshold = convertThresholdToTimestamp(unusedAccountDeactivationThreshold);
 
-        Result<UsersRecord> candidatesForDeactivating = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom(USERS)
-                .where(USERS.LAST_LOGIN.lessOrEqual(activityThreshold))
+        Result<AccountRecord> candidatesForDeactivating = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(ACCOUNT)
+                .where(ACCOUNT.LAST_LOGIN.lessOrEqual(activityThreshold))
                 // If we have a reactivated date we'll use that instead of the created_on date.
                 // We are only going to deactivate enabled accounts
-                .and(USERS.STATE.eq(User.UserState.ENABLED.getStateText()))
+                .and(ACCOUNT.STATE.eq(User.UserState.ENABLED.getStateText()))
                 // We don't want to disable admin because that could lock the users out of the system
-                .and(USERS.NEVER_EXPIRES.ne(true)).fetch());
+                .and(ACCOUNT.NEVER_EXPIRES.ne(true)).fetch());
 
         List<Integer> usersToDeactivate = candidatesForDeactivating.stream()
                 .filter(usersRecord ->
@@ -328,8 +327,8 @@ public class UserDaoImpl implements UserDao {
                 .collect(Collectors.toList());
 
         JooqUtil.context(authDbConnProvider, context -> context.
-                update(USERS).set(USERS.STATE, User.UserState.INACTIVE.getStateText())
-                .where(USERS.ID.in(usersToDeactivate))
+                update(ACCOUNT).set(ACCOUNT.STATE, User.UserState.INACTIVE.getStateText())
+                .where(ACCOUNT.ID.in(usersToDeactivate))
                 .execute());
 
         return usersToDeactivate.size();
@@ -338,29 +337,29 @@ public class UserDaoImpl implements UserDao {
     @Override
     public Result<Record13<Integer, String, String, String, String, String, Integer, Integer, Timestamp, Timestamp, String, Timestamp, String>> searchUsersForDisplay(String email){
         return JooqUtil.contextResult(authDbConnProvider, context -> context
-                .select(USERS.ID,
-                        USERS.EMAIL,
-                        USERS.FIRST_NAME,
-                        USERS.LAST_NAME,
-                        USERS.COMMENTS,
-                        USERS.STATE,
-                        USERS.LOGIN_FAILURES,
-                        USERS.LOGIN_COUNT,
-                        USERS.LAST_LOGIN,
-                        USERS.UPDATED_ON,
-                        USERS.UPDATED_BY_USER,
-                        USERS.CREATED_ON,
-                        USERS.CREATED_BY_USER)
-                .from(USERS)
-                .where(new Condition[]{USERS.EMAIL.contains(email)})
+                .select(ACCOUNT.ID,
+                        ACCOUNT.EMAIL,
+                        ACCOUNT.FIRST_NAME,
+                        ACCOUNT.LAST_NAME,
+                        ACCOUNT.COMMENTS,
+                        ACCOUNT.STATE,
+                        ACCOUNT.LOGIN_FAILURES,
+                        ACCOUNT.LOGIN_COUNT,
+                        ACCOUNT.LAST_LOGIN,
+                        ACCOUNT.UPDATED_ON,
+                        ACCOUNT.UPDATED_BY_USER,
+                        ACCOUNT.CREATED_ON,
+                        ACCOUNT.CREATED_BY_USER)
+                .from(ACCOUNT)
+                .where(new Condition[]{ACCOUNT.EMAIL.contains(email)})
                 .fetch());
     }
 
     @Override
     public boolean exists(String id) {
-        UsersRecord result = JooqUtil.contextResult(authDbConnProvider, context -> context
-                .selectFrom(Tables.USERS)
-                .where(Tables.USERS.EMAIL.eq(id))
+        AccountRecord result = JooqUtil.contextResult(authDbConnProvider, context -> context
+                .selectFrom(ACCOUNT)
+                .where(ACCOUNT.EMAIL.eq(id))
                 .fetchOne());
         return result != null;
     }
@@ -370,6 +369,4 @@ public class UserDaoImpl implements UserDao {
         Instant thresholdInstant = now.minus(duration);
         return Timestamp.from(thresholdInstant);
     }
-
-
 }

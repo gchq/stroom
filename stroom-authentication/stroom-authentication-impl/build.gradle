@@ -14,55 +14,7 @@
  * limitations under the License.
  */
 
-ext.moduleName = 'stroom.auth.impl'
-
-apply plugin: 'application'
-apply plugin: 'com.github.johnrengelman.shadow' 
-apply plugin: 'com.benjaminsproule.swagger'
-apply plugin: 'org.flywaydb.flyway'
-
-//TODO comment out for migration
-mainClassName = 'stroom.auth.service.App'
-
-//TODO commented out for migration
-//jar {
-//    manifest {
-//        attributes (
-//            "Implementation-Title": "Stroom Auth Service",
-//            "Implementation-Version": versions.stroomAuth,
-//            "Main-Class": "stroom.auth.service.App"
-//        )
-//    }
-//
-//    archiveName 'stroom-auth-service.jar'
-//}
-
-//TODO commented out for migration
-//shadowJar {
-//    // Allows us to build fat jars with lots of files
-//    zip64 true
-//    mergeServiceFiles()
-//    archiveName 'stroom-auth-service-all.jar'
-//}
-
-//TODO commented out for migration
-//sourceSets {
-//    // This lets us use different directories for our integration tests.
-//    integrationTest {
-//        java {
-//            compileClasspath += main.output + test.output
-//            runtimeClasspath += main.output + test.output
-//            srcDir file('src/integration-test/java')
-//        }
-//        resources.srcDir file('src/integration-test/resources')
-//    }
-//}
-
-//TODO commented out for migration
-// Configure the run task to start the Dropwizard service
-//run {
-//    args 'server', './config.generated.yml'
-//}
+ext.moduleName = 'stroom.authentication.impl'
 
 dependencies {
     compile project(':stroom-authentication:stroom-authentication-common')
@@ -77,7 +29,6 @@ dependencies {
     compile libs.dropwizard_core
     compile libs.dropwizard_flyway
     compile libs.dropwizard_jersey
-    compile libs.dropwizard_jooq
     compile libs.eventLogging
     compile libs.flyway_core
     compile libs.guice4
@@ -101,75 +52,49 @@ dependencies {
     testCompile libs.moshi
     testCompile libs.dropwizard_testing
     testCompile libs.unirest
-
-    // TODO: commented out for mgiration
-//    integrationTestCompile testDeps.dropwizard_testing
-//    integrationTestCompile testDeps.moshi
-//    integrationTestCompile testDeps.unirest
 }
-
-def apiProjectRoot = "${projectDir}/../stroom-authentication-api-swagger"
-
-swagger {
-    apiSource {
-        springmvc = false //makes it search for jersey annotations
-        outputFormats = 'json,yaml'
-        locations = [
-                'stroom.authentication.resources.token.v1.TokenResource',
-                'stroom.authentication.resources.token.v1.SearchRequest',
-                'stroom.authentication.resources.token.v1.SearchResponse',
-                'stroom.authentication.resources.token.v1.Token',
-                'stroom.authentication.resources.token.v1.CreateTokenRequest',
-
-                'stroom.authentication.resources.authentication.v1.AuthenticationResource',
-                'stroom.authentication.resources.authentication.v1.Credentials',
-                'stroom.authentication.resources.authentication.v1.IdTokenRequest',
-
-                'stroom.authentication.resources.session.v1.SessionResource',
-
-                'stroom.authentication.resources.v1.UserResource',
-                'stroom.authentication.resources.v1.User',
-                'javax.ws.rs.core.Response']
-        schemes = [
-                'http',
-                'https' ]
-        host = 'localhost:8080'
-        basePath = '/'
-        info {
-            title = 'Stroom Auth API'
-            version = 'v1'
-            description = 'Various APIs for interacting with authentication, users, and tokens.'
-            contact {
-                name = 'GCHQ'
-                url = 'https://github.com/gchq/stroom-auth'
-            }
-            license {
-                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
-                name = 'Apache 2.0'
-            }
-        }
-        outputPath = "$apiProjectRoot/generated/document.html"
-        swaggerDirectory = "./swagger"
-    }
-}
-
-//TODO this depends on the YAML being generated - make it a gradle dep
-
-import io.swagger.codegen.config.CodegenConfigurator
-import io.swagger.codegen.DefaultGenerator
-def sourceFolder = "$apiProjectRoot/src/main/java"
-task generateSwaggerApi {
-    doLast {
-        def config = new CodegenConfigurator()
-        config.setInputSpec("./swagger/swagger.yaml")
-        config.setOutputDir("$apiProjectRoot")
-        config.setLang('java')
-        config.setAdditionalProperties([
-                'interfaceOnly' : 'true',
-                'apiPackage'    : 'stroom.auth.service.api',
-                'modelPackage'  : 'stroom.auth.service.api.model',
-                'sourceFolder'  : 'src/main/java'
-        ])
-        new org.jooq.codegen.DefaultGenerator().opts(config.toClientOptInput()).generate()
-    }
-}
+//
+//def apiProjectRoot = "${projectDir}/../stroom-authentication-api-swagger"
+//
+//swagger {
+//    apiSource {
+//        springmvc = false //makes it search for jersey annotations
+//        outputFormats = 'json,yaml'
+//        locations = [
+//                'stroom.authentication.resources.token.v1.TokenResource',
+//                'stroom.authentication.resources.token.v1.SearchRequest',
+//                'stroom.authentication.resources.token.v1.SearchResponse',
+//                'stroom.authentication.resources.token.v1.Token',
+//                'stroom.authentication.resources.token.v1.CreateTokenRequest',
+//
+//                'stroom.authentication.resources.authentication.v1.AuthenticationResource',
+//                'stroom.authentication.resources.authentication.v1.Credentials',
+//                'stroom.authentication.resources.authentication.v1.IdTokenRequest',
+//
+//                'stroom.authentication.resources.session.v1.SessionResource',
+//
+//                'stroom.authentication.resources.v1.UserResource',
+//                'stroom.authentication.resources.v1.User',
+//                'javax.ws.rs.core.Response']
+//        schemes = [
+//                'http',
+//                'https' ]
+//        host = 'localhost:8080'
+//        basePath = '/'
+//        info {
+//            title = 'Stroom Auth API'
+//            version = 'v1'
+//            description = 'Various APIs for interacting with authentication, users, and tokens.'
+//            contact {
+//                name = 'GCHQ'
+//                url = 'https://github.com/gchq/stroom-auth'
+//            }
+//            license {
+//                url = 'http://www.apache.org/licenses/LICENSE-2.0.html'
+//                name = 'Apache 2.0'
+//            }
+//        }
+//        outputPath = "$apiProjectRoot/generated/document.html"
+//        swaggerDirectory = "./swagger"
+//    }
+//}

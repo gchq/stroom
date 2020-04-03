@@ -47,7 +47,7 @@ const PrivateRoute = ({render, ...rest}: RouteProps) => {
                     render && render({...props})
                 ) : (
                     <AuthenticationRequest
-                        referrer={props.location.pathname}
+                        referrer={window.location.href}
                         uiUrl={advertisedUrl}
                         loginUrl={loginServiceUrl}
                     />

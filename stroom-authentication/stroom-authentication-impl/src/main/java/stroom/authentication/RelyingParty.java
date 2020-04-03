@@ -18,9 +18,12 @@
 
 package stroom.authentication;
 
-public class RelyingParty {
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(RelyingParty.class);
+public class RelyingParty {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RelyingParty.class);
+
     private String clientId;
     private String clientSecret;
     private String clientUri;
@@ -30,6 +33,7 @@ public class RelyingParty {
     private String nonce;
     private String state;
     private String redirectUrl;
+
     public RelyingParty(String clientId) {
         this.clientId = clientId;
     }

@@ -6,6 +6,8 @@ import useAuthenticationContext from "./useAuthenticationContext";
 
 import PrivateRoute from "./PrivateRoute";
 
+export * from "./types";
+
 export {
   AuthenticationRequest,
   HandleAuthenticationResponse,

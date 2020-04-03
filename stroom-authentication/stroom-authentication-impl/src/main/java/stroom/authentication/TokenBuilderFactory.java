@@ -18,6 +18,8 @@
 
 package stroom.authentication;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.exceptions.TokenCreationException;
 import stroom.authentication.resources.token.v1.Token.TokenType;
@@ -28,17 +30,19 @@ import java.time.Instant;
 
 @Singleton
 public class TokenBuilderFactory {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(TokenBuilderFactory.class);
-    private AuthenticationConfig config;
-    private TokenVerifier tokenVerifier;
+    private static final Logger LOGGER = LoggerFactory.getLogger(TokenBuilderFactory.class);
+
+    private final AuthenticationConfig config;
+    private final JwkCache jwkCache;
+
     private Instant expiryDateForApiKeys;
 
     @Inject
-    public TokenBuilderFactory(AuthenticationConfig config, TokenVerifier tokenVerifier) {
+    TokenBuilderFactory(final AuthenticationConfig config,
+                        final JwkCache jwkCache) {
         this.config = config;
-        this.tokenVerifier = tokenVerifier;
+        this.jwkCache = jwkCache;
     }
-
 
     public TokenBuilderFactory expiryDateForApiKeys(Instant expiryDate) {
         this.expiryDateForApiKeys = expiryDate;
@@ -70,7 +74,7 @@ public class TokenBuilderFactory {
 
         tokenBuilder
                 .issuer(config.getTokenConfig().getJwsIssuer())
-                .privateVerificationKey(tokenVerifier.getJwk().getPrivateKey())
+                .privateVerificationKey(jwkCache.get().get(0).getPrivateKey())
                 .algorithm(config.getTokenConfig().getAlgorithm())
                 .tokenType(tokenType);
 

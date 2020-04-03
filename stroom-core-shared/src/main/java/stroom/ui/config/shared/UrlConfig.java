@@ -17,9 +17,6 @@ public class UrlConfig extends AbstractConfig {
     @JsonPropertyDescription("The URL of Stroom as provided to the browser")
     private String ui;
     @JsonProperty
-    @JsonPropertyDescription("The URL of the authentication service")
-    private String authenticationService;
-    @JsonProperty
     private String users;
     @JsonProperty
     private String apiKeys;
@@ -27,41 +24,39 @@ public class UrlConfig extends AbstractConfig {
     private String changepassword;
 
     public UrlConfig() {
-        setDefaults();
+//        setDefaults();
     }
 
     @JsonCreator
     public UrlConfig(@JsonProperty("ui") final String ui,
-                     @JsonProperty("authenticationService") final String authenticationService,
                      @JsonProperty("users") final String users,
                      @JsonProperty("apiKeys") final String apiKeys,
                      @JsonProperty("changepassword") final String changepassword) {
         this.ui = ui;
-        this.authenticationService = authenticationService;
         this.users = users;
         this.apiKeys = apiKeys;
         this.changepassword = changepassword;
 
-        setDefaults();
+//        setDefaults();
     }
 
-    private void setDefaults() {
-        if (ui == null) {
-            ui = "http://IP_ADDRESS";
-        }
-        if (authenticationService == null) {
-            authenticationService = "http://auth-service:8099/authentication/v1";
-        }
-        if (users == null) {
-            users = "http://IP_ADDRESS/users";
-        }
-        if (apiKeys == null) {
-            apiKeys = "http://IP_ADDRESS/tokens";
-        }
-        if (changepassword == null) {
-            changepassword = "http://IP_ADDRESS/changepassword";
-        }
-    }
+//    private void setDefaults() {
+//        if (ui == null) {
+//            ui = "http://IP_ADDRESS";
+//        }
+//        if (authenticationService == null) {
+//            authenticationService = "http://auth-service:8099/authentication/v1";
+//        }
+//        if (users == null) {
+//            users = "http://IP_ADDRESS/users";
+//        }
+//        if (apiKeys == null) {
+//            apiKeys = "http://IP_ADDRESS/tokens";
+//        }
+//        if (changepassword == null) {
+//            changepassword = "http://IP_ADDRESS/changepassword";
+//        }
+//    }
 
     public String getUi() {
         return ui;
@@ -69,14 +64,6 @@ public class UrlConfig extends AbstractConfig {
 
     public void setUi(final String ui) {
         this.ui = ui;
-    }
-
-    public String getAuthenticationService() {
-        return authenticationService;
-    }
-
-    public void setAuthenticationService(final String authenticationService) {
-        this.authenticationService = authenticationService;
     }
 
     public String getUsers() {
@@ -107,7 +94,6 @@ public class UrlConfig extends AbstractConfig {
     public String toString() {
         return "UrlConfig{" +
                 "ui='" + ui + '\'' +
-                ", authenticationService='" + authenticationService + '\'' +
                 ", users='" + users + '\'' +
                 ", apiKeys='" + apiKeys + '\'' +
                 ", changepassword='" + changepassword + '\'' +
@@ -120,7 +106,6 @@ public class UrlConfig extends AbstractConfig {
         if (o == null || getClass() != o.getClass()) return false;
         final UrlConfig urlConfig = (UrlConfig) o;
         return Objects.equals(ui, urlConfig.ui) &&
-                Objects.equals(authenticationService, urlConfig.authenticationService) &&
                 Objects.equals(users, urlConfig.users) &&
                 Objects.equals(apiKeys, urlConfig.apiKeys) &&
                 Objects.equals(changepassword, urlConfig.changepassword);
@@ -128,6 +113,6 @@ public class UrlConfig extends AbstractConfig {
 
     @Override
     public int hashCode() {
-        return Objects.hash(ui, authenticationService, users, apiKeys, changepassword);
+        return Objects.hash(ui, users, apiKeys, changepassword);
     }
 }

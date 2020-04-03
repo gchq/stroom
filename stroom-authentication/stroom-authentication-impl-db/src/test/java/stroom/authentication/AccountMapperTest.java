@@ -20,42 +20,46 @@ import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Test;
 import stroom.authentication.impl.db.UserMapper;
-import stroom.auth.db.tables.records.UsersRecord;
+import stroom.authentication.impl.db.jooq.tables.records.AccountRecord;
 import stroom.authentication.resources.user.v1.User;
 
 import java.sql.Timestamp;
-import java.time.*;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static stroom.authentication.resources.user.v1.User.UserState.DISABLED;
 import static stroom.authentication.resources.user.v1.User.UserState.ENABLED;
 import static stroom.authentication.resources.user.v1.User.UserState.INACTIVE;
 
-public final class UserMapperTest {
+public final class AccountMapperTest {
     @Test
     public final void testMappings() {
-        UsersRecord usersRecord = new UsersRecord();
-        usersRecord.setId(1);
-        usersRecord.setEmail("email");
-        usersRecord.setPasswordHash("hash");
-        usersRecord.setState(ENABLED.getStateText());
-        usersRecord.setFirstName("first name");
-        usersRecord.setLastName("last name");
-        usersRecord.setComments("comments");
-        usersRecord.setLoginFailures(2);
-        usersRecord.setLoginCount(4);
-        usersRecord.setLastLogin(new Timestamp(System.currentTimeMillis()));
-        usersRecord.setUpdatedOn(new Timestamp(System.currentTimeMillis()));
-        usersRecord.setUpdatedByUser("updating user");
-        usersRecord.setCreatedOn(new Timestamp(System.currentTimeMillis()));
-        usersRecord.setCreatedByUser("creating user");
-        usersRecord.setNeverExpires(true);
-        usersRecord.setReactivatedDate(new Timestamp(System.currentTimeMillis()));
-        usersRecord.setForcePasswordChange(true);
+        AccountRecord record = new AccountRecord();
+        record.setId(1);
+        record.setEmail("email");
+        record.setPasswordHash("hash");
+        record.setState(ENABLED.getStateText());
+        record.setFirstName("first name");
+        record.setLastName("last name");
+        record.setComments("comments");
+        record.setLoginFailures(2);
+        record.setLoginCount(4);
+        record.setLastLogin(new Timestamp(System.currentTimeMillis()));
+        record.setUpdatedOn(new Timestamp(System.currentTimeMillis()));
+        record.setUpdatedByUser("updating user");
+        record.setCreatedOn(new Timestamp(System.currentTimeMillis()));
+        record.setCreatedByUser("creating user");
+        record.setNeverExpires(true);
+        record.setReactivatedDate(new Timestamp(System.currentTimeMillis()));
+        record.setForcePasswordChange(true);
 
         User user = getUsers().getRight();
 
-        UsersRecord updatedRecord = UserMapper.updateUserRecordWithUser(user, usersRecord);
+        AccountRecord updatedRecord = UserMapper.updateUserRecordWithUser(user, record);
         assertThat(updatedRecord.getId()).isEqualTo(2);
         assertThat(updatedRecord.getEmail()).isEqualTo("new email");
         assertThat(updatedRecord.getPasswordHash()).isEqualTo("new hash");
@@ -78,9 +82,9 @@ public final class UserMapperTest {
 
     @Test
     public final void userToRecord() {
-        Pair<UsersRecord, User> users = getUsers();
-        UsersRecord mapped = UserMapper.map(users.getRight());
-        UsersRecord orig = users.getLeft();
+        Pair<AccountRecord, User> users = getUsers();
+        AccountRecord mapped = UserMapper.map(users.getRight());
+        AccountRecord orig = users.getLeft();
         assertThat(mapped.getId()).isEqualTo(orig.getId());
         assertThat(mapped.getReactivatedDate()).isEqualTo(orig.getReactivatedDate());
         assertThat(mapped.getState()).isEqualTo(orig.getState());
@@ -104,7 +108,7 @@ public final class UserMapperTest {
 
     @Test
     public final void recordToUser() {
-        Pair<UsersRecord, User> users = getUsers();
+        Pair<AccountRecord, User> users = getUsers();
         User mapped = UserMapper.map(users.getLeft());
         User orig = users.getRight();
         assertThat(mapped.getId()).isEqualTo(orig.getId());
@@ -131,13 +135,13 @@ public final class UserMapperTest {
 
     @Test
     public final void testBecomingEnabledFromDisabled() {
-        Pair<UsersRecord, User> users = getUsers();
+        Pair<AccountRecord, User> users = getUsers();
 
         users.getLeft().setState(DISABLED.getStateText());
         users.getRight().setState(ENABLED.getStateText());
 
         Instant now = Instant.now();
-        UsersRecord mapped = UserMapper.updateUserRecordWithUser(users.getRight(), users.getLeft(), Clock.fixed(now, ZoneId.systemDefault()) );
+        AccountRecord mapped = UserMapper.updateUserRecordWithUser(users.getRight(), users.getLeft(), Clock.fixed(now, ZoneId.systemDefault()));
         assertThat(mapped.getState()).isEqualTo(ENABLED.getStateText());
         assertThat(mapped.getLastLogin().toInstant().getEpochSecond()).isEqualTo(now.getEpochSecond());
         assertThat(mapped.getLoginFailures()).isEqualTo(0);
@@ -145,13 +149,13 @@ public final class UserMapperTest {
 
     @Test
     public final void testBecomingEnabledFromInactive() {
-        Pair<UsersRecord, User> users = getUsers();
+        Pair<AccountRecord, User> users = getUsers();
 
         users.getLeft().setState(INACTIVE.getStateText());
         users.getRight().setState(ENABLED.getStateText());
 
         Instant now = Instant.now();
-        UsersRecord mapped = UserMapper.updateUserRecordWithUser(users.getRight(), users.getLeft(), Clock.fixed(now, ZoneId.systemDefault()) );
+        AccountRecord mapped = UserMapper.updateUserRecordWithUser(users.getRight(), users.getLeft(), Clock.fixed(now, ZoneId.systemDefault()));
         assertThat(mapped.getState()).isEqualTo(ENABLED.getStateText());
         assertThat(mapped.getLastLogin().toInstant().getEpochSecond()).isEqualTo(now.getEpochSecond());
         assertThat(mapped.getLoginFailures()).isEqualTo(0);
@@ -167,62 +171,62 @@ public final class UserMapperTest {
         assertThat(User.class.getDeclaredFields().length).isEqualTo(currentNumberOfPropertiesOnUser);
     }
 
-    public static final Pair<UsersRecord, User> getUsers() {
+    public static final Pair<AccountRecord, User> getUsers() {
         User user = new User();
-        UsersRecord usersRecord = new UsersRecord();
+        AccountRecord record = new AccountRecord();
 
         user.setId(2);
-        usersRecord.setId(2);
+        record.setId(2);
 
         user.setEmail("new email");
-        usersRecord.setEmail("new email");
+        record.setEmail("new email");
 
         user.setPasswordHash("new hash");
-        usersRecord.setPasswordHash(user.generatePasswordHash());
+        record.setPasswordHash(user.generatePasswordHash());
 
         user.setState(DISABLED.getStateText());
-        usersRecord.setState(DISABLED.getStateText());
+        record.setState(DISABLED.getStateText());
 
         user.setFirstName("new first name");
-        usersRecord.setFirstName("new first name");
+        record.setFirstName("new first name");
 
         user.setLastName("new last name");
-        usersRecord.setLastName("new last name");
+        record.setLastName("new last name");
 
         user.setComments("new comments");
-        usersRecord.setComments("new comments");
+        record.setComments("new comments");
 
         user.setLoginFailures(3);
-        usersRecord.setLoginFailures(3);
+        record.setLoginFailures(3);
 
         user.setLoginCount(5);
-        usersRecord.setLoginCount(5);
+        record.setLoginCount(5);
 
         user.setLastLogin("2017-01-01T00:00:00");
-        usersRecord.setLastLogin(isoToTimestamp("2017-01-01T00:00:00.000"));
+        record.setLastLogin(isoToTimestamp("2017-01-01T00:00:00.000"));
 
         user.setUpdatedOn("2017-01-02T00:00:00");
-        usersRecord.setUpdatedOn(isoToTimestamp("2017-01-02T00:00:00"));
+        record.setUpdatedOn(isoToTimestamp("2017-01-02T00:00:00"));
 
         user.setUpdatedByUser("New updating user");
-        usersRecord.setUpdatedByUser("New updating user");
+        record.setUpdatedByUser("New updating user");
 
         user.setCreatedOn("2017-01-03T00:00:00");
-        usersRecord.setCreatedOn(isoToTimestamp("2017-01-03T00:00:00"));
+        record.setCreatedOn(isoToTimestamp("2017-01-03T00:00:00"));
 
         user.setCreatedByUser("New creating user");
-        usersRecord.setCreatedByUser("New creating user");
+        record.setCreatedByUser("New creating user");
 
         user.setNeverExpires(false);
-        usersRecord.setNeverExpires(false);
+        record.setNeverExpires(false);
 
         user.setReactivatedDate("2019-01-01T10:10:10");
-        usersRecord.setReactivatedDate(isoToTimestamp("2019-01-01T10:10:10"));
+        record.setReactivatedDate(isoToTimestamp("2019-01-01T10:10:10"));
 
         user.setForcePasswordChange(true);
-        usersRecord.setForcePasswordChange(true);
+        record.setForcePasswordChange(true);
 
-        return new ImmutablePair(usersRecord, user);
+        return new ImmutablePair(record, user);
     }
 
     private static Timestamp isoToTimestamp(String iso8601) {

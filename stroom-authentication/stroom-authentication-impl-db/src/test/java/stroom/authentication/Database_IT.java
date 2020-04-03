@@ -1,6 +1,8 @@
 package stroom.authentication;
 
 import org.junit.Before;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.authentication.impl.db.AuthDbConnProvider;
 import stroom.config.common.ConnectionConfig;
 import stroom.db.util.DbUtil;
@@ -17,7 +19,7 @@ import java.util.Map;
  * and after a test guarantees we won't run into issues with existing data.
  */
 public abstract class Database_IT {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(Database_IT.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(Database_IT.class);
 
     public static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
     public static final String DATABASE_NAME = "auth";

@@ -1,12 +1,11 @@
 {
   "advertisedUrl": "https://IP_ADDRESS",
   "allowPasswordResets": true,
-  "authBaseServiceUrl": "https://IP_ADDRESS/api/auth",
   "clientId": "",
   "dateFormat": "YYYY-MM-DDTHH:mm:ss.SSSZ",
   "defaultApiKeyExpiryInMinutes": "525600",
   "openIdConfigUrl": "https://accounts.google.com/.well-known/openid-configuration",
 
-  "stroomBaseServiceUrl": "https://IP_ADDRESS/api",
+  "stroomBaseServiceUrl": "http://IP_ADDRESS:8080/api",
   "stroomUiUrl": "https://IP_ADDRESS/stroom"
 }

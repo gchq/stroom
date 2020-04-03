@@ -18,6 +18,8 @@
 
 package stroom.authentication.exceptions.mappers;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.authentication.config.AuthenticationConfig;
 import stroom.authentication.exceptions.TokenCreationException;
 
@@ -27,12 +29,12 @@ import javax.ws.rs.ext.ExceptionMapper;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class TokenCreationExceptionMapper implements ExceptionMapper<TokenCreationException> {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(TokenCreationExceptionMapper.class);
+class TokenCreationExceptionMapper implements ExceptionMapper<TokenCreationException> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(TokenCreationExceptionMapper.class);
     private AuthenticationConfig config;
 
     @Inject
-    public TokenCreationExceptionMapper(AuthenticationConfig config) {
+    TokenCreationExceptionMapper(AuthenticationConfig config) {
         this.config = config;
     }
 

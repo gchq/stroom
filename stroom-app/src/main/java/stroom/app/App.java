@@ -22,6 +22,7 @@ import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
+import io.dropwizard.jersey.sessions.SessionFactoryProvider;
 import io.dropwizard.servlets.tasks.LogConfigurationTask;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
@@ -66,6 +67,7 @@ public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     private static final String GWT_SUPER_DEV_SYSTEM_PROP_NAME = "gwtSuperDevMode";
+    public static final String SESSION_COOKIE_NAME = "STROOM_SESSION_ID";
 
     @Inject
     private HealthChecks healthChecks;
@@ -140,7 +142,10 @@ public class App extends Application<Config> {
         environment.jersey().setUrlPattern(ResourcePaths.API_ROOT_PATH + "/*");
 
         // Set up a session handler for Jetty
-        environment.servlets().setSessionHandler(new SessionHandler());
+        configureSessionHandling(environment);
+
+        // Ensure the session cookie that provides JSESSIONID is secure.
+        configureSessionCookie(environment, configuration.getAppConfig().getSessionCookieConfig());
 
         // Configure Cross-Origin Resource Sharing.
         configureCors(environment);
@@ -178,15 +183,6 @@ public class App extends Application<Config> {
 
         // Listen to the lifecycle of the Dropwizard app.
         managedServices.register();
-
-        // Ensure the session cookie that provides JSESSIONID is secure.
-        final SessionCookieConfig sessionCookieConfig = environment
-                .getApplicationContext()
-                .getServletContext()
-                .getSessionCookieConfig();
-        sessionCookieConfig.setSecure(configuration.getAppConfig().getSessionCookieConfig().isSecure());
-        sessionCookieConfig.setHttpOnly(configuration.getAppConfig().getSessionCookieConfig().isHttpOnly());
-        // TODO : Add `SameSite=Strict` when supported by JEE
     }
 
 
@@ -250,6 +246,26 @@ public class App extends Application<Config> {
         }
         throw new IllegalArgumentException(LogUtil.message("Could not extract YAML config file from arguments [{}]",
                 Arrays.asList(args)));
+    }
+
+    private static void configureSessionHandling(final Environment environment) {
+        SessionHandler sessionHandler = new SessionHandler();
+        // We need to give our session cookie a name other than JSESSIONID, otherwise it might
+        // clash with other services running on the same domain.
+        sessionHandler.setSessionCookie(SESSION_COOKIE_NAME);
+        environment.servlets().setSessionHandler(sessionHandler);
+        environment.jersey().register(SessionFactoryProvider.class);
+    }
+
+    private static void configureSessionCookie(final Environment environment, final stroom.config.app.SessionCookieConfig config) {
+        // Ensure the session cookie that provides JSESSIONID is secure.
+        final SessionCookieConfig sessionCookieConfig = environment
+                .getApplicationContext()
+                .getServletContext()
+                .getSessionCookieConfig();
+        sessionCookieConfig.setSecure(config.isSecure());
+        sessionCookieConfig.setHttpOnly(config.isHttpOnly());
+        // TODO : Add `SameSite=Strict` when supported by JEE
     }
 
     private static void configureCors(io.dropwizard.setup.Environment environment) {

@@ -14,6 +14,8 @@ import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.lang.JoseException;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import stroom.authentication.TokenBuilder;
 
 import java.util.Arrays;
@@ -23,7 +25,8 @@ import static junit.framework.TestCase.fail;
 
 @Ignore
 public class KeyGenerator {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(KeyGenerator.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(KeyGenerator.class);
+
     RsaJsonWebKey rsaJwk = RsaJwkGenerator.generateJwk(2048);
     private final String JWK = "{\"kty\":\"RSA\",\"kid\":\"1ec7a983-317d-46ce-ae93-ce42bc217e52\",\"n\":\"72G4eRyG91OlsKOs-s2vBsbvXV5IKDOUpqDkFKYR_pCJwSBgD4BZYZ_qnIXx5L6cIK1Hsk_nMchHnL9lK7-nIt_bO41AyBes2IF2TTPuPKwqGY-aKCcuRh_BkDrCPZBR7-iyuYigL8MwgiP-yX6ieNpXzrfy3C8IYwLrKjLt39fb0fBod6_nrBPZeBUlH5m5pswNDfbOJII3bEGq5uQw5SZbaGBEEVbvkLNTROByK1PuOezfrpAyTWHCsG-zEsQ0HuIFyVo07sFJhV1AypPL-s71vKi6sDY46Mc5I2KV4CHbdvIhHT4xTaAhE9VimZgQW6sVvpRalV5XL8czjWVjtw\",\"e\":\"AQAB\",\"d\":\"HnwZXAMQBQs3_Ii7jK0I7xoCfad2FPiMo7O1mBOWEw8hG-EdmpvDxjTxUcGVDoZfp6GpkcGvNZ3F0OZm4e1kQYK0jp7scw7gyimigS5t1nguXFb3UMm8kN2WbuGsvt5UMPM3X31QuQRodwpSdiKUWkOkDwVJ_lRXAxTqEdOui2TY2WzKijvBEahyA2pqUGvrajF2GKFbZzXO1zagq6VhGCQohvCkaRWB-tVzc4-Ns6v3jqCKRpYYPrxD4C0RZ1K6InkxtXg1qYrcGMAPzCbqdjLoN41k-ZLNrp8rUSbRf2JAv9A8Ca2r6GDa0PcsySIbUWfduXOgGSuSfW6Hze1nMQ\",\"p\":\"__6DyUpzhXxh6JfRghv2K371tCeV4l1Q45S92Ea1IX3Y6iBweK4W6ToQYTM7l_0bA5eaJ3kywvmpFqzpEcmtsOJOyg_rPQe3GeBDhUJLHqEPDT4t2yc8eQnrFOdWLEYg2nYWLoOkFPS36UBgJtaxIpyj16qidk-DYSEXpeDcqkM\",\"q\":\"72McA2LIVj3hjlt_JsLpMFpcMm7E6knS-YITQUlwIFmVcW5tNQkC871o5x5AJL2Zj7MwxGHEx1WLzwd8B6lGkFP4BTpjCEoo_kXS-6IWyI3p6v7EmIb1O5Av8W37CA3VkPtuM-_dTFGlEW2vF0_ZetvTL49FlRx01Ekt48pvK30\",\"dp\":\"xEAYQ_6hpVn_rVKGORq6lAnWz2_xhgJH-tCS4fUC81QJMSQBVWMRCWeMGxgtvY06Ynycn1pYwgSnzkxsuUhFse8su9eMXdNGWb4FxWlXMXoDkgFzIiloQNqLsBDRjUuN8CzLQImHBtG9FEJX9C5uybwQF0wnFFBMxe-as345bQU\",\"dq\":\"1z03vNue4dw16Dfgdcueu7kjWL08FKRYK7uG8JbFWHDz68-sJZl6rAlMPzJ13hMT9Z7aZFi8A7apRHaoUIMlTTQStzCuRo_Xl_jUISi2b5EaGA8GWVZPPUUBtoR6x90Yf4lypwQu6CYo0yjZ244SL2Nj2Ulq-Q1jBlTeDAjCOEk\",\"qi\":\"a6D1TYa8dgJDqKfZ926SqPxzA3FiJPWAfo8BTyIahZFqqaPAaXEfKUTTCZKmIqsWwNntGcdmDhnNGZ11E2X8MPYkRpnIQj3BywtDzRbPGJ8AFcvy6Zq_vYl874LFrkvGPILe6NxabRCyrFgDKOQ-gIjkL83t0wyS_vVlrGLtCrk\"}";
 

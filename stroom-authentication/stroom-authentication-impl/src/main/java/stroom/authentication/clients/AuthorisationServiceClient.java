@@ -37,11 +37,11 @@ import javax.ws.rs.core.Response;
 public class AuthorisationServiceClient {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthorisationServiceClient.class);
 
-    private AuthenticationConfig config;
-    private Client authorisationService = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
+    private final AuthenticationConfig config;
+    private final Client authorisationService = ClientBuilder.newClient(new ClientConfig().register(ClientResponse.class));
 
     @Inject
-    public AuthorisationServiceClient(AuthenticationConfig config) {
+    AuthorisationServiceClient(final AuthenticationConfig config) {
         this.config = config;
     }
 

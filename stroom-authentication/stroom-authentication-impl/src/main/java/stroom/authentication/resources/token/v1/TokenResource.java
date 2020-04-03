@@ -22,6 +22,7 @@ import com.codahale.metrics.annotation.Timed;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import stroom.authentication.JwkCache;
 import stroom.authentication.dao.TokenDao;
 import stroom.util.shared.RestResource;
 

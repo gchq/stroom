@@ -20,12 +20,14 @@ package stroom.authentication;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Ignore("Temporarily ignore for auth migration")
 public class AuthenticationRequestFlow_IT extends Dropwizard_IT {
-    private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(AuthenticationRequestFlow_IT.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationRequestFlow_IT.class);
 
     /**
      * This does nothing but initiate the login flow and expect an idToken.
