@@ -22,8 +22,8 @@ import org.jose4j.jwt.MalformedClaimException;
 import org.jose4j.jwt.consumer.InvalidJwtException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import stroom.authentication.resources.authentication.v1.ExchangeAccessCodeRequest;
 import stroom.authentication.resources.authentication.v1.AuthenticationService;
+import stroom.authentication.resources.authentication.v1.ExchangeAccessCodeRequest;
 import stroom.authentication.resources.token.v1.TokenService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
@@ -174,8 +174,10 @@ class SecurityFilter implements Filter {
                         authenticateAsAdmin(request, response, chain, false);
                     } else {
                         // Authenticate requests to the API.
-                        final UserIdentity token = loginAPI(request, response);
-                        continueAsUser(request, response, chain, token);
+                        final Optional<UserIdentity> optToken = loginAPI(request, response);
+                        if (optToken.isPresent()) {
+                            continueAsUser(request, response, chain, optToken.get());
+                        }
                     }
                 } else if (shouldBypassAuthentication(servletPath, fullPath)) {
                     // Some servlet requests need to bypass authentication -- this happens if the servlet class
@@ -454,26 +456,45 @@ class SecurityFilter implements Filter {
         return token;
     }
 
-    private UserIdentity loginAPI(final HttpServletRequest request, final HttpServletResponse response) {
-        // Authenticate requests from an API client
-        final UserIdentity userIdentity = createAPIToken(request);
+    private Optional<UserIdentity> loginAPI(
+            final HttpServletRequest request,
+            final HttpServletResponse response) throws IOException {
 
-        if (userIdentity == null) {
-            LOGGER.debug("API request is unauthorised.");
+        final Optional<String> optRequestJws = jwtService.getJws(request);
+
+        if (optRequestJws.isPresent()) {
+            // Authenticate requests from an API client
+            UserIdentity userIdentity = null;
+            try {
+                userIdentity = createAPIToken(request, optRequestJws.get());
+            } catch (AuthenticationException e) {
+
+            }
+
+            if (userIdentity == null) {
+                LOGGER.debug("API request is unauthorised.");
+                response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
+                    response.getOutputStream().print("Unable to extract user identity from token.");
+            }
+
+            return Optional.ofNullable(userIdentity);
+
+        } else {
             response.setStatus(Response.Status.UNAUTHORIZED.getStatusCode());
+                response.getOutputStream().print(
+                        LogUtil.message("Missing token in '{}' header. Header value should be of the form '{}xxxxxx'" +
+                                ", where xxxxxx is your API key.", JWTService.AUTHORIZATION_HEADER, JWTService.BEARER));
+            return Optional.empty();
         }
-
-        return userIdentity;
     }
 
     /**
      * This method creates a token for the API auth flow.
      */
-    private UserIdentity createAPIToken(final HttpServletRequest request) {
+    private UserIdentity createAPIToken(final HttpServletRequest request, final String requestJws) {
         UserIdentityImpl token = null;
 
-        final Optional<String> optionalJws = jwtService.getJws(request);
-        final Optional<String> optionalUserId = jwtService.getUserId(optionalJws);
+        final Optional<String> optionalUserId = jwtService.getUserId(requestJws);
 
         if (optionalUserId.isPresent()) {
             String sessionId = null;
@@ -485,7 +506,7 @@ class SecurityFilter implements Filter {
             final String userId = optionalUserId.get();
             final Optional<User> optionalUser = userCache.get(userId);
             final User user = optionalUser.orElseThrow(() -> new AuthenticationException("Unable to find user: " + userId));
-            token = new UserIdentityImpl(user, userId, optionalJws.get(), sessionId);
+            token = new UserIdentityImpl(user, userId, requestJws, sessionId);
         } else {
             LOGGER.error("Cannot get a valid JWS for API request!");
         }

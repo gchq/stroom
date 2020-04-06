@@ -30,8 +30,8 @@ import java.util.Optional;
 class JWTService implements HasHealthCheck {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(JWTService.class);
 
-    private static final String BEARER = "Bearer ";
-    private static final String AUTHORIZATION_HEADER = "Authorization";
+    public static final String BEARER = "Bearer ";
+    public static final String AUTHORIZATION_HEADER = "Authorization";
 
     private PublicJsonWebKey jwk;
     private final String authJwtIssuer;
@@ -67,31 +67,33 @@ class JWTService implements HasHealthCheck {
     }
 
 
-    public Optional<String> getUserId(final Optional<String> optionalJws) {
-        final String jws = optionalJws.orElseThrow(() -> new AuthenticationException("Unable to get JWS"));
-        LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jws);
+    public Optional<String> getUserId(final String jws) {
+        if (jws != null && !jws.isEmpty()) {
+            LOGGER.debug(() -> "Found auth header in request. It looks like this: " + jws);
 
-        try {
-            LOGGER.debug(() -> "Verifying token...");
-            final JwtClaims jwtClaims = verifyToken(jws);
-            boolean isVerified = jwtClaims != null;
-            boolean isRevoked = false;
-            if (checkTokenRevocation) {
-                LOGGER.debug(() -> "Checking token revocation status in remote auth service...");
-                final String userId = getUserIdFromToken(jws);
-                isRevoked = userId == null;
+            try {
+                LOGGER.debug(() -> "Verifying token...");
+                final JwtClaims jwtClaims = verifyToken(jws);
+                boolean isVerified = jwtClaims != null;
+                boolean isRevoked = false;
+                if (checkTokenRevocation) {
+                    LOGGER.debug(() -> "Checking token revocation status in remote auth service...");
+                    final String userId = getUserIdFromToken(jws);
+                    isRevoked = userId == null;
+                }
+
+                if (isVerified && !isRevoked) {
+                    return Optional.ofNullable(jwtClaims.getSubject());
+                }
+
+            } catch (Exception e) {
+                LOGGER.error(() -> "Unable to verify token: " + e.getMessage(), e);
+                LOGGER.warn(e::getMessage);
+                throw new AuthenticationException(e.getMessage(), e);
             }
-
-            if (isVerified && !isRevoked) {
-                return Optional.ofNullable(jwtClaims.getSubject());
-            }
-
-        } catch (Exception e) {
-            LOGGER.error(() -> "Unable to verify token: " + e.getMessage(), e);
-            LOGGER.warn(e::getMessage);
-            throw new AuthenticationException(e.getMessage(), e);
+        } else {
+            return Optional.empty();
         }
-
         return Optional.empty();
     }
 
@@ -185,6 +187,5 @@ class JWTService implements HasHealthCheck {
                     "The error was: [" + e.getMessage() + "]");
             resultBuilder.unhealthy();
         }
-
     }
 }
