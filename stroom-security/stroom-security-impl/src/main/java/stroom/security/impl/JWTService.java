@@ -13,13 +13,12 @@ import org.jose4j.jwt.consumer.JwtConsumer;
 import org.jose4j.jwt.consumer.JwtConsumerBuilder;
 import org.jose4j.lang.JoseException;
 import stroom.authentication.resources.token.v1.TokenService;
-import stroom.authentication.service.ApiException;
-import stroom.authentication.service.api.ApiKeyApi;
 import stroom.security.impl.AuthenticationConfig.JwtConfig;
 import stroom.security.impl.exception.AuthenticationException;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
+import stroom.util.logging.LogUtil;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -35,23 +34,18 @@ class JWTService implements HasHealthCheck {
     private static final String AUTHORIZATION_HEADER = "Authorization";
 
     private PublicJsonWebKey jwk;
-    private final String authenticationServiceUrl;
     private final String authJwtIssuer;
     private TokenService tokenService;
-    private AuthenticationServiceClients authenticationServiceClients;
     private final boolean checkTokenRevocation;
     private String clientId;
 
     @Inject
     JWTService(final AuthenticationConfig securityConfig,
                final JwtConfig jwtConfig,
-               final TokenService tokenService,
-               final AuthenticationServiceClients authenticationServiceClients) {
+               final TokenService tokenService) {
         this.clientId = securityConfig.getClientId();
-        this.authenticationServiceUrl = securityConfig.getAuthenticationServiceUrl();
         this.authJwtIssuer = jwtConfig.getJwtIssuer();
         this.tokenService = tokenService;
-        this.authenticationServiceClients = authenticationServiceClients;
         this.checkTokenRevocation = jwtConfig.isEnableTokenRevocationCheck();
 
         if (securityConfig.isAuthenticationRequired()) {
@@ -72,26 +66,6 @@ class JWTService implements HasHealthCheck {
         }
     }
 
-    /**
-     * Check to see if the remote authentication service has published a public key.
-     * <p>
-     * We need this key to verify id tokens.
-     * <p>
-     * We need to do this if the remote public key changes and verification fails.
-     */
-    private String fetchNewPublicKey() throws ApiException {
-        try {
-            // We need to fetch the public key from the remote authentication service.
-            final ApiKeyApi apiKeyApi = authenticationServiceClients.newApiKeyApi();
-            return apiKeyApi.getPublicKey();
-        } catch (final ApiException | RuntimeException e) {
-            LOGGER.error(() -> "Error fetching new public API key from URL '" + authenticationServiceUrl + "'.");
-            if (authenticationServiceUrl != null && authenticationServiceUrl.toLowerCase().contains("https")) {
-                LOGGER.error(() -> "Are you sure you want to use HTTPS? IF so you will need to configure the trust store or disable SSL verification with 'stroom.auth.services.verifyingSsl=false'");
-            }
-            throw e;
-        }
-    }
 
     public Optional<String> getUserId(final Optional<String> optionalJws) {
         final String jws = optionalJws.orElseThrow(() -> new AuthenticationException("Unable to get JWS"));
@@ -137,16 +111,10 @@ class JWTService implements HasHealthCheck {
     }
 
     private String getUserIdFromToken(final String token) {
-        try {
-            LOGGER.debug(() -> "Checking with the Authentication Service that a token is valid.");
-            return authenticationServiceClients.newAuthenticationApi().verifyToken(token);
-        } catch (ApiException e) {
-            String message = String.format(
-                    "Unable to verify token remotely! Message was: %s. HTTP response code was: %s. Response body was: %s",
-                    e.getMessage(), e.getCode(), e.getResponseBody());
-            LOGGER.debug(() -> message);
-            throw new RuntimeException(message, e);
-        }
+        LOGGER.debug(() -> "Checking with the Authentication Service that a token is valid.");
+        return tokenService.verifyToken(token)
+            .orElseThrow(() -> new RuntimeException(
+                LogUtil.message("Unable to get user identity from token {} ", token)));
     }
 
     public JwtClaims verifyToken(final String token) throws InvalidJwtException {
@@ -206,16 +174,14 @@ class JWTService implements HasHealthCheck {
     private void checkHealthForJwkRetrieval(HealthCheck.ResultBuilder resultBuilder) {
         final String KEY = "public_key_retrieval";
         try {
-            String publicJsonWebKey = fetchNewPublicKey();
+            String publicJsonWebKey = tokenService.getPublicKey();
             boolean canGetJwk = StringUtils.isNotBlank(publicJsonWebKey);
             if (!canGetJwk) {
-                resultBuilder.withDetail(KEY, "Cannot get stroom-authentication-service's public key!\n");
+                resultBuilder.withDetail(KEY, "Missing public key\n");
                 resultBuilder.unhealthy();
             }
-        } catch (ApiException | RuntimeException e) {
-            resultBuilder.withDetail(KEY, "Error fetching our identity provider's public key! " +
-                    "This means we cannot verify clients' authentication tokens ourselves. " +
-                    "This might mean the authentication service is down or unavailable. " +
+        } catch (RuntimeException e) {
+            resultBuilder.withDetail(KEY, "Error fetching our public key! " +
                     "The error was: [" + e.getMessage() + "]");
             resultBuilder.unhealthy();
         }
