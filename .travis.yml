@@ -33,14 +33,23 @@ before_install:
 #  - sudo apt-get update -qq
 #  - sudo apt-get install -y -qq yarn=1.22.4-1
 
-  # Install Node
-  - curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
-  - sudo apt-get install -y nodejs
-  - node --version
+#  # Install Node
+#  - curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+#  - sudo apt-get install -y nodejs
+#  - node --version
+#
+#
+#
+#  # Install NPM
+#  - curl -L https://www.npmjs.com/install.sh | sh
+#  - npm --version
 
-  # Install NPM
-  - curl -L https://www.npmjs.com/install.sh | sh
-  - npm --version
+  # Install NVM
+  - curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.35.2/install.sh | bash
+
+  # Install Node
+  - nvm install 13.12.0
+  - node --version
 
   # Install Yarn
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.22.4
