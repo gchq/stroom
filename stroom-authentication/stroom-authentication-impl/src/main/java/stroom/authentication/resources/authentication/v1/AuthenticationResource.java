@@ -33,6 +33,7 @@ import stroom.event.logging.api.StroomEventLoggingService;
 import stroom.security.api.SecurityContext;
 import stroom.security.api.UserIdentity;
 import stroom.security.impl.session.UserIdentitySessionUtil;
+import stroom.util.shared.ResourcePaths;
 import stroom.util.shared.RestResource;
 
 import javax.annotation.Nullable;
@@ -62,11 +63,14 @@ import static javax.ws.rs.core.Response.seeOther;
 import static javax.ws.rs.core.Response.status;
 
 @Singleton
-@Path("/authentication/v1")
+@Path(AuthenticationResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom Authentication API", tags = {"Authentication"})
 public final class AuthenticationResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationResource.class);
+
+    public static final String BASE_PATH = "/authentication" + ResourcePaths.V1;
+
     private AuthenticationService service;
     private SecurityContext securityContext;
     private StroomEventLoggingService stroomEventLoggingService;
@@ -94,9 +98,12 @@ public final class AuthenticationResource implements RestResource {
     }
 
     @GET
-    @Path("noauth/authenticate")
+    @Path(ResourcePaths.NO_AUTH + "/authenticate")
     @Timed
-    @ApiOperation(value = "Submit an OpenId AuthenticationRequest.", response = String.class, tags = {"Authentication"})
+    @ApiOperation(
+        value = "Submit an OpenId AuthenticationRequest.",
+        response = String.class,
+        tags = {"Authentication"})
     public final Response handleAuthenticationRequest(
             @Session HttpSession httpSession,
             @Context @NotNull HttpServletRequest httpServletRequest,
@@ -120,13 +127,15 @@ public final class AuthenticationResource implements RestResource {
      * an AuthenticationRequest to /authenticate.
      */
     @POST
-    @Path("/noauth/authenticate")
+    @Path(ResourcePaths.NO_AUTH + "/authenticate")
     @Consumes({"application/json"})
     @Produces({"application/json"})
     @Timed
     @NotNull
-    @ApiOperation(value = "Handle a login request made using username and password credentials.",
-            response = String.class, tags = {"Authentication"})
+    @ApiOperation(
+        value = "Handle a login request made using username and password credentials.",
+        response = String.class,
+        tags = {"Authentication"})
     public final Response handleLogin(
             @Session HttpSession httpSession,
             @Context @NotNull HttpServletRequest httpServletRequest,
@@ -140,7 +149,7 @@ public final class AuthenticationResource implements RestResource {
     }
 
     @GET
-    @Path("/logout")
+    @Path(ResourcePaths.NO_AUTH + "/logout")
     @Consumes({"application/json"})
     @Produces({"application/json"})
     @Timed
@@ -156,11 +165,13 @@ public final class AuthenticationResource implements RestResource {
     }
 
     @GET
-    @Path("/noauth/reset/{email}")
+    @Path(ResourcePaths.NO_AUTH + "/reset/{email}")
     @Timed
     @NotNull
-    @ApiOperation(value = "Reset a user account using an email address.",
-            response = String.class, tags = {"Authentication"})
+    @ApiOperation(
+        value = "Reset a user account using an email address.",
+        response = String.class,
+        tags = {"Authentication"})
     public final Response resetEmail(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @PathParam("email") String emailAddress) throws NoSuchUserException {
@@ -171,11 +182,13 @@ public final class AuthenticationResource implements RestResource {
     }
 
     @GET
-    @Path("/noauth/verify/{token}")
+    @Path(ResourcePaths.NO_AUTH + "/verify/{token}")
     @Timed
     @NotNull
-    @ApiOperation(value = "Verify the authenticity and current-ness of a JWS token.",
-            response = String.class, tags = {"Authentication"})
+    @ApiOperation(
+        value = "Verify the authenticity and current-ness of a JWS token.",
+        response = String.class,
+        tags = {"Authentication"})
     public final Response verifyToken(@PathParam("token") String token) {
         var usersEmail = tokenService.verifyToken(token);
         return usersEmail
@@ -185,11 +198,13 @@ public final class AuthenticationResource implements RestResource {
 
 
     @POST
-    @Path("noauth/changePassword")
+    @Path(ResourcePaths.NO_AUTH + "/changePassword")
     @Timed
     @NotNull
-    @ApiOperation(value = "Change a user's password.",
-            response = String.class, tags = {"Authentication"})
+    @ApiOperation(
+        value = "Change a user's password.",
+        response = String.class,
+        tags = {"Authentication"})
     public final Response changePassword(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @ApiParam("changePasswordRequest") @NotNull ChangePasswordRequest changePasswordRequest,
@@ -203,8 +218,10 @@ public final class AuthenticationResource implements RestResource {
     @Path("resetPassword")
     @Timed
     @NotNull
-    @ApiOperation(value = "Reset an authenticated user's password.",
-            response = String.class, tags = {"Authentication"})
+    @ApiOperation(
+        value = "Reset an authenticated user's password.",
+        response = String.class,
+        tags = {"Authentication"})
     public final Response resetPassword(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @ApiParam("changePasswordRequest") @NotNull ResetPasswordRequest req) {
@@ -218,19 +235,23 @@ public final class AuthenticationResource implements RestResource {
     @Path("needsPasswordChange")
     @Timed
     @NotNull
-    @ApiOperation(value = "Check if a user's password needs changing.",
-            response = Boolean.class, tags = {"Authentication"})
+    @ApiOperation(
+        value = "Check if a user's password needs changing.",
+        response = Boolean.class,
+        tags = {"Authentication"})
     public final Response needsPasswordChange(@QueryParam("email") String email) {
         var userNeedsToChangePassword = service.needsPasswordChange(email);
         return Response.status(Status.OK).entity(userNeedsToChangePassword).build();
     }
 
     @POST
-    @Path("noauth/isPasswordValid")
+    @Path(ResourcePaths.NO_AUTH + "/isPasswordValid")
     @Timed
     @NotNull
-    @ApiOperation(value = "Returns the length and complexity rules.",
-            response = Boolean.class, tags = {"Authentication"})
+    @ApiOperation(
+        value = "Returns the length and complexity rules.",
+        response = Boolean.class,
+        tags = {"Authentication"})
     public final Response isPasswordValid(
             @Context @NotNull HttpServletRequest httpServletRequest,
             @ApiParam("passwordValidationRequest") @NotNull PasswordValidationRequest passwordValidationRequest) {
@@ -243,7 +264,7 @@ public final class AuthenticationResource implements RestResource {
      * If they don't it will create the redirection URL with access code as normal.
      */
     @GET
-    @Path("/noauth/postAuthenticationRedirect")
+    @Path(ResourcePaths.NO_AUTH + "/postAuthenticationRedirect")
     @Produces({"application/json"})
     @Timed
     @NotNull
@@ -263,7 +284,7 @@ public final class AuthenticationResource implements RestResource {
      * This must be kept as a back-channel request, and the clientSecret kept away from the browser.
      */
     @POST
-    @Path("noauth/exchange")
+    @Path(ResourcePaths.NO_AUTH + "/exchange")
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @ApiOperation(
@@ -272,9 +293,12 @@ public final class AuthenticationResource implements RestResource {
     public Response exchangeAccessCode(
             @ApiParam("ExchangeAccessCodeRequest") final ExchangeAccessCodeRequest exchangeAccessCodeRequest) {
         var optionalToken = service.exchangeAccessCode(exchangeAccessCodeRequest);
-        return optionalToken.map(
-                idToken -> Response.status(Status.OK).entity(idToken).build())
-                .orElse(Response.status(Status.UNAUTHORIZED).entity("Invalid client or access code").build());
+        return optionalToken.map(idToken ->
+                Response.status(Status.OK)
+                        .entity(idToken).build())
+                .orElse(Response.status(Status.UNAUTHORIZED)
+                        .entity("Invalid client or access code")
+                        .build());
     }
 
     @GET
@@ -294,7 +318,9 @@ public final class AuthenticationResource implements RestResource {
             }
             if (userIdentity != null) {
                 // Create an event for logout
-                stroomEventLoggingService.createAction("Logoff", "Logging off " + userIdentity.getId());
+                stroomEventLoggingService.createAction(
+                        "Logoff",
+                        "Logging off " + userIdentity.getId());
             }
 
             return true;
