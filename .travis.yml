@@ -33,6 +33,11 @@ before_install:
 #  - sudo apt-get update -qq
 #  - sudo apt-get install -y -qq yarn=1.22.4-1
 
+  # Install Node
+  - curl -sL https://deb.nodesource.com/setup_13.x | sudo -E bash -
+  - sudo apt-get install -y nodejs
+
+  # Install Yarn
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.22.4
   - export PATH="$HOME/.yarn/bin:$HOME/.config/yarn/global/node_modules/.bin:$PATH"
   - yarn --version
