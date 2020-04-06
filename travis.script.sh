@@ -183,8 +183,8 @@ else
     STROOM_VERSION="${TRAVIS_BRANCH}"
 fi
 
-JAVA_VERSION=java --version
-YARN_VERSION=yarn --version
+JAVA_VERSION="java --version"
+YARN_VERSION="yarn --version"
 
 # Dump all the travis env vars to the console for debugging
 echo -e "TRAVIS_BUILD_NUMBER:           [${GREEN}${TRAVIS_BUILD_NUMBER}${NC}]"
