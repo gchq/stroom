@@ -33,6 +33,7 @@ import stroom.security.shared.UserAndPermissions;
 import stroom.task.client.TaskEndEvent;
 import stroom.task.client.TaskStartEvent;
 import stroom.ui.config.client.UiConfigCache;
+import stroom.util.shared.ResourcePaths;
 
 public class LoginManager implements HasHandlers {
     private static final AuthenticationResource AUTHENTICATION_RESOURCE = GWT.create(AuthenticationResource.class);
@@ -87,13 +88,15 @@ public class LoginManager implements HasHandlers {
                     clientPropertyCache
                             .get()
                             .onSuccess(result -> {
+                                // TODO should be using the apigateway url for this, but that is not in UiConfig at
+                                //   the mo.
                                 final String authServiceUrl = result.getUrl().getAuthenticationService();
                                 // Send the user's browser to the remote Authentication Service's logout endpoint.
                                 // By adding 'prompt=login' we ask the Identity Provider to prompt the user for a login,
                                 // bypassing certificate checks. We need this to enable username/password
                                 // logins in an environment where the user's browser always presents a certificate.
                                 String redirectUrl = URL.encode(result.getUrl().getUi() + "?prompt=login");
-                                Window.Location.replace(authServiceUrl + "/logout?redirect_url=" + redirectUrl);
+                                Window.Location.replace(authServiceUrl + ResourcePaths.NO_AUTH + "/logout?redirect_url=" + redirectUrl);
                             });
                 })
                 .onFailure(throwable -> AlertEvent.fireErrorFromException(LoginManager.this, throwable, null))

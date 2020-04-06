@@ -63,11 +63,14 @@ import static javax.ws.rs.core.Response.seeOther;
 import static javax.ws.rs.core.Response.status;
 
 @Singleton
-@Path("/authentication/v1")
+@Path(AuthenticationResource.BASE_PATH)
 @Produces(MediaType.APPLICATION_JSON)
 @Api(description = "Stroom Authentication API", tags = {"Authentication"})
 public final class AuthenticationResource implements RestResource {
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationResource.class);
+
+    public static final String BASE_PATH = "/authentication" + ResourcePaths.V1;
+
     private AuthenticationService service;
     private SecurityContext securityContext;
     private StroomEventLoggingService stroomEventLoggingService;
@@ -146,7 +149,7 @@ public final class AuthenticationResource implements RestResource {
     }
 
     @GET
-    @Path("/logout")
+    @Path(ResourcePaths.NO_AUTH + "/logout")
     @Consumes({"application/json"})
     @Produces({"application/json"})
     @Timed
