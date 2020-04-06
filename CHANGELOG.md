@@ -8,8 +8,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 * Update auth flow for auth-into-stroom integration
 
-## [v7.0-beta.23] - 2020-03-24
+* Issue **#1426** : Change /logout endpoint to /noauth/logout.
 
+* Issue **#1427** : Change remote call to auth sercice to a local call.
+
+
+## [v7.0-beta.23] - 2020-03-24
 
 * Rename all legacy DB tables to `OLD_`.
 
