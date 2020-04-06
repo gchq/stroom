@@ -86,7 +86,6 @@ class SecurityFilter implements Filter {
     private final AuthenticationConfig config;
     private final UiConfig uiConfig;
     private final JWTService jwtService;
-    private final AuthenticationServiceClients authenticationServiceClients;
     private AuthenticationService authenticationService;
     private TokenService tokenService;
     private final UserCache userCache;
@@ -98,14 +97,12 @@ class SecurityFilter implements Filter {
             final AuthenticationConfig config,
             final UiConfig uiConfig,
             final JWTService jwtService,
-            final AuthenticationServiceClients authenticationServiceClients,
             final AuthenticationService authenticationService,
             final UserCache userCache,
             final SecurityContext securityContext) {
         this.config = config;
         this.uiConfig = uiConfig;
         this.jwtService = jwtService;
-        this.authenticationServiceClients = authenticationServiceClients;
         this.authenticationService = authenticationService;
         this.userCache = userCache;
         this.securityContext = securityContext;
