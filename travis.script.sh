@@ -260,6 +260,8 @@ else
       -PgwtCompilerMaxHeap=1G \
       clean \
       build \
+      -x gwtCompile \
+      -x test \
       buildDistribution \
       "${extraBuildArgs[@]}"
 
