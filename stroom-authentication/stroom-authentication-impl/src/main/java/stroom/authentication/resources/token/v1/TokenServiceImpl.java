@@ -149,7 +149,8 @@ public class TokenServiceImpl implements TokenService {
 
     @Override
     public String getPublicKey() {
-        String jwkAsJson = tokenVerifier.getJwk().toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
+        String jwkAsJson = tokenVerifier.getJwk()
+            .toJson(JsonWebKey.OutputControlLevel.PUBLIC_ONLY);
         stroomEventLoggingService.createAction("GetPublicApiKey", "Read a token by the token ID.");
         return jwkAsJson;
     }
