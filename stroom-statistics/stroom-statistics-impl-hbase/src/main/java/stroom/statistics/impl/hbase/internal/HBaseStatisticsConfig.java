@@ -40,7 +40,8 @@ public class HBaseStatisticsConfig extends AbstractConfig {
         this.kafkaConfigUuid = kafkaConfigUuid;
     }
 
-    @JsonPropertyDescription("The number of internal statistic events to batch together in a single Kafka message. High numbers reduce network overhead but limit the parallelism.")
+    @JsonPropertyDescription("The number of internal statistic events to batch together in a single Kafka message. " +
+            "High numbers reduce network overhead but limit the parallelism.")
     public int getEventsPerMessage() {
         return eventsPerMessage;
     }

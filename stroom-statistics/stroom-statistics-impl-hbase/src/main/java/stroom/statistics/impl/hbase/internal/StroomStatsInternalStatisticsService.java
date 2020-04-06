@@ -1,6 +1,7 @@
 package stroom.statistics.impl.hbase.internal;
 
 import com.google.common.base.Preconditions;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import stroom.docref.DocRef;
 import stroom.kafka.pipeline.KafkaProducerFactory;
@@ -11,7 +12,6 @@ import stroom.stats.schema.v4.ObjectFactory;
 import stroom.stats.schema.v4.Statistics;
 import stroom.stats.schema.v4.TagType;
 import stroom.util.collections.BatchingIterator;
-import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 
@@ -63,7 +63,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     @Override
     public void putEvents(final Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
         final DocRef kafkaConfigDocRef = new DocRef(KafkaConfigDoc.DOCUMENT_TYPE, internalStatisticsConfig.getKafkaConfigUuid());
-        org.apache.kafka.clients.producer.KafkaProducer kafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigDocRef).orElse(null);
+        final KafkaProducer<String, String> kafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigDocRef).orElse(null);
         if (kafkaProducer == null) {
             throw new RuntimeException("The Kafka producer isn't initialised, unable to send any events");
         }
@@ -91,7 +91,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                 });
     }
 
-    private void sendMessage(final org.apache.kafka.clients.producer.KafkaProducer kafkaProducer,
+    private void sendMessage(final KafkaProducer kafkaProducer,
                              final String topic,
                              final String key,
                              final List<InternalStatisticEvent> events) {

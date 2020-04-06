@@ -29,7 +29,6 @@ import stroom.pipeline.factory.PipelineFactoryException;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.writer.AbstractDestinationProvider;
-import stroom.util.io.StreamUtil;
 import stroom.util.logging.LambdaLogger;
 import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.ModelStringUtil;
@@ -37,10 +36,6 @@ import stroom.util.shared.Severity;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
-import java.util.ArrayDeque;
-import java.util.Queue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 public abstract class AbstractKafkaAppender extends AbstractDestinationProvider implements Destination {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractKafkaAppender.class);
@@ -66,9 +61,8 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     }
 
     /*
-    Warning! This software has not been tested recently and is likely to need some rework as a number of things
-    have moved on, including the way that KafkaProducer works.
-    todo test and fix as appropriate!
+    TODO Warning! This software has not been tested recently and is likely to need some rework as a number of things
+      have moved on, including the way that KafkaProducer works. Test and fix as appropriate!
      */
     @Override
     public void startProcessing() {

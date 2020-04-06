@@ -50,21 +50,25 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory {
 
         final KafkaConfigDoc kafkaConfigDoc = kafkaConfigStore.readDocument(kafkaConfigRef);
 
-        return Optional.of(new KafkaProducer<String,String>(getProperties(kafkaConfigDoc)));
+        final KafkaProducer<String, String> kafkaProducer = new KafkaProducer<>(getProperties(kafkaConfigDoc));
+        return Optional.of(kafkaProducer);
     }
 
     void shutdown() {
         LOGGER.info("Shutting Down Stroom Kafka Producer Factory Service");
+        // TODO need to flush all producers
 //        super.shutdown();
     }
 
     public static Properties getProperties(KafkaConfigDoc doc){
         Properties properties = new Properties();
-        StringReader reader = new StringReader(doc.getData());
-        try {
-            properties.load(reader);
-        }catch (IOException ex){
-            LOGGER.error("Unable to read kafka properties", ex);
+        if (doc.getData() != null && !doc.getData().isEmpty()) {
+            StringReader reader = new StringReader(doc.getData());
+            try {
+                properties.load(reader);
+            }catch (IOException ex){
+                LOGGER.error("Unable to read kafka properties", ex);
+            }
         }
         return properties;
     }
