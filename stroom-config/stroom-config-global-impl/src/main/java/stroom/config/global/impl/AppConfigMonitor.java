@@ -299,7 +299,9 @@ public class AppConfigMonitor implements Managed, HasHealthCheck {
         }
 
         return resultBuilder
-                .withDetail("configFilePath", configFile)
+                .withDetail("configFilePath", configFile != null
+                    ? configFile.toAbsolutePath().normalize().toString()
+                    : null)
                 .withDetail("isRunning", isRunning)
                 .withDetail("isValidFile", isValidFile)
                 .build();
