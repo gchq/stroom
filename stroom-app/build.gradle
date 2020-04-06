@@ -310,7 +310,7 @@ swagger {
         outputFormats = ['json', 'yaml']
         // See prepareSwaggerClasses task
         locations = restResourceClassNames
-        schemes = ['http', 'https']
+        schemes = ['https']
         basePath = '/api'
         info {
             title = 'Stroom API'
