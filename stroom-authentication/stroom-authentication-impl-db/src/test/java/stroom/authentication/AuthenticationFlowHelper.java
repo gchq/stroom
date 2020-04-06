@@ -63,7 +63,8 @@ public class AuthenticationFlowHelper {
         return authenticateAs("admin", "admin");
     }
 
-    public static String authenticateAs(String userEmail, String password) throws JoseException, ApiException, URISyntaxException, IOException, UnirestException {
+    public static String authenticateAs(String userEmail, String password)
+            throws JoseException, ApiException, URISyntaxException, IOException, UnirestException {
         // We have to change the password for admin because otherwise the flow might demand a changepassword --
         // it certainly would in TravisCI.
         HttpResponse changePasswordResponse = Unirest.post("http://localhost:8099/authentication/v1/changePassword")
@@ -159,7 +160,9 @@ public class AuthenticationFlowHelper {
      * <p>
      * The sessionId would be stored in a cookie and a normal relying party would not have to do this.
      */
-    public static String performLogin(String sessionId, String username, String password) throws ApiException, URISyntaxException, IOException {
+    public static String performLogin(String sessionId, String username, String password)
+            throws ApiException, URISyntaxException, IOException {
+
         // We need to use UniRest again because we're not a browser and we need to manually add in the cookies.
         Credentials credentials = new Credentials();
         credentials.setEmail(username);
@@ -223,7 +226,7 @@ public class AuthenticationFlowHelper {
         return accessCode;
     }
 
-    public static String exchangeAccessCodeForIdToken(String sessionId, String accessCode) {
+    private static String exchangeAccessCodeForIdToken(String sessionId, String accessCode) {
         LOGGER.info("Exchanging the access code for an ID token.");
         ApiClient apiClient = new ApiClient();
         apiClient.setBasePath("http://localhost:8099");
@@ -244,7 +247,7 @@ public class AuthenticationFlowHelper {
         return idToken;
     }
 
-    public static PublicJsonWebKey fetchPublicJwk() throws ApiException, JoseException {
+    private static PublicJsonWebKey fetchPublicJwk() throws ApiException, JoseException {
         ApiClient apiClient = new ApiClient();
         apiClient.setBasePath("http://localhost:8099");
         ApiKeyApi apiKeyApi = new ApiKeyApi(apiClient);
