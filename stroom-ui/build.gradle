@@ -56,5 +56,3 @@ task copyYarnBuild(dependsOn: yarnBuild, type: Copy) {
     from "${project.buildDir}"
     into "${outputDir}"
 }
-
-yarnBuild.onlyIf { !project.hasProperty('skipYarn') }

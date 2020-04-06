@@ -260,10 +260,13 @@ else
       -PgwtCompilerMaxHeap=1G \
       clean \
       build \
-      -x gwtCompile \
-      -x test \
       buildDistribution \
       "${extraBuildArgs[@]}"
+
+# IF WE WANT TO SKIP SOME PARTS OF THE BUILD INCLUDE THESE LINES
+#      -x gwtCompile \
+#      -x copyYarnBuild \
+#      -x test \
 
     generate_file_hashes
 
