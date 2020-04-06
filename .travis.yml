@@ -43,13 +43,13 @@ before_install:
 #  # Install NPM
 #  - curl -L https://www.npmjs.com/install.sh | sh
 #  - npm --version
-
-  # Install NVM
-  - curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.35.2/install.sh | bash
-
-  # Install Node
-  - nvm install 13.12.0
-  - node --version
+#
+#  # Install NVM
+#  - curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.35.2/install.sh | bash
+#
+#  # Install Node
+#  - nvm install 13.12.0
+#  - node --version
 
   # Install Yarn
   - curl -o- -L https://yarnpkg.com/install.sh | bash -s -- --version 1.22.4
