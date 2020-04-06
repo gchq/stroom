@@ -122,6 +122,11 @@ public abstract class AbstractSearchTest extends AbstractCoreIntegrationTest {
             assertThat(rows).isEmpty();
         } else {
             assertThat(rows).hasSize(componentIds.size());
+
+            long count = 0;
+            for (List <Row> rowList : rows.values())
+                count += rowList.size();
+            assertThat(count).isEqualTo(expectResultCount).as("Correct number of results found");
         }
         resultMapConsumer.accept(rows);
     }
