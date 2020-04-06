@@ -387,6 +387,8 @@ class SecurityFilter implements Filter {
         final AuthenticationState state = AuthenticationStateSessionUtil.create(request, redirectUrl);
 
         // In some cases we might need to use an external URL as the current incoming one might have been proxied.
+        // TODO Not sure the auth service url should be in config as it is a local service, thus we can get
+        //  the path from the resource, and use the api gateway url
         final UriBuilder authenticationRequest = UriBuilder.fromUri(config.getAuthenticationServiceUrl())
                 .path("/noauth/authenticate")
                 .queryParam(SCOPE, "openid")
