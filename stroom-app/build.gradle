@@ -304,6 +304,7 @@ task copyFilesForStroomDockerBuild() {
 }
 
 // Generate the swagger spec files from the resource classes
+// For configuration see https://github.com/gigaSproule/swagger-gradle-plugin
 swagger {
     apiSource {
         springmvc = false
@@ -325,6 +326,7 @@ swagger {
                 name = 'Apache 2.0'
             }
         }
+        // Define the security definitions that are available
         securityDefinition {
             // `name` can be used refer to this security schemes from elsewhere
             name = 'ApiKeyAuth'
@@ -334,6 +336,8 @@ swagger {
             // The name of the header
             keyName = 'Authorization'
         }
+        // Defing the named security definition to use for the whole API
+        security = [ [ ApiKeyAuth : [] ] ]
         swaggerDirectory = "${swaggerDir}"
     }
 }
