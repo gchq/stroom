@@ -19,6 +19,7 @@ package stroom.core.servlet;
 import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import stroom.util.shared.ResourcePaths;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -79,7 +80,8 @@ public class CacheControlFilter implements Filter {
         // explicitly marked for not caching.
         if (GET_METHOD.equals(httpServletRequest.getMethod())
                 && seconds > 0
-                && (CACHEABLE_FILE_TYPES.contains(filetypeRequested) || isCacheablePath(requestUri))
+                //&& (CACHEABLE_FILE_TYPES.contains(filetypeRequested) || isCacheablePath(requestUri))
+                && !requestUri.contains(ResourcePaths.API_ROOT_PATH)
                 && !requestUri.contains(GWT_NO_CACHE)) {
             httpServletResponse.setHeader("Cache-Control", "public, max-age=" + seconds);
 
