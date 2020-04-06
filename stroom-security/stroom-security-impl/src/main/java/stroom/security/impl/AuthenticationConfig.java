@@ -144,46 +144,46 @@ public class AuthenticationConfig extends AbstractConfig {
                 '}';
     }
 
-    public static class JwtConfig extends AbstractConfig {
-
-        public static final String PROP_NAME_JWT_ISSUER = "jwtIssuer";
-        public static final String PROP_NAME_ENABLE_TOKEN_REVOCATION_CHECK = "enableTokenRevocationCheck";
-
-        private String jwtIssuer = "stroom";
-        private boolean enableTokenRevocationCheck = true;
-
-        @RequiresRestart(RequiresRestart.RestartScope.UI)
-        @JsonPropertyDescription("The issuer to expect when verifying JWTs.")
-        @JsonProperty(PROP_NAME_JWT_ISSUER)
-        @NotNull
-        public String getJwtIssuer() {
-            return jwtIssuer;
-        }
-
-        @SuppressWarnings("unused")
-        public void setJwtIssuer(final String jwtIssuer) {
-            this.jwtIssuer = jwtIssuer;
-        }
-
-        @RequiresRestart(RequiresRestart.RestartScope.UI)
-        @JsonPropertyDescription("Whether or not to enable remote calls to the auth service to check if " +
-                "a token we have has been revoked.")
-        @JsonProperty(PROP_NAME_ENABLE_TOKEN_REVOCATION_CHECK)
-        public boolean isEnableTokenRevocationCheck() {
-            return enableTokenRevocationCheck;
-        }
-
-        @SuppressWarnings("unused")
-        public void setEnableTokenRevocationCheck(final boolean enableTokenRevocationCheck) {
-            this.enableTokenRevocationCheck = enableTokenRevocationCheck;
-        }
-
-        @Override
-        public String toString() {
-            return "JwtConfig{" +
-                    "jwtIssuer='" + jwtIssuer + '\'' +
-                    ", enableTokenRevocationCheck=" + enableTokenRevocationCheck +
-                    '}';
-        }
-    }
+//    public static class JwtConfig extends AbstractConfig {
+//
+//        public static final String PROP_NAME_JWT_ISSUER = "jwtIssuer";
+//        public static final String PROP_NAME_ENABLE_TOKEN_REVOCATION_CHECK = "enableTokenRevocationCheck";
+//
+//        private String jwtIssuer = "stroom";
+//        private boolean enableTokenRevocationCheck = true;
+//
+//        @RequiresRestart(RequiresRestart.RestartScope.UI)
+//        @JsonPropertyDescription("The issuer to expect when verifying JWTs.")
+//        @JsonProperty(PROP_NAME_JWT_ISSUER)
+//        @NotNull
+//        public String getJwtIssuer() {
+//            return jwtIssuer;
+//        }
+//
+//        @SuppressWarnings("unused")
+//        public void setJwtIssuer(final String jwtIssuer) {
+//            this.jwtIssuer = jwtIssuer;
+//        }
+//
+//        @RequiresRestart(RequiresRestart.RestartScope.UI)
+//        @JsonPropertyDescription("Whether or not to enable remote calls to the auth service to check if " +
+//                "a token we have has been revoked.")
+//        @JsonProperty(PROP_NAME_ENABLE_TOKEN_REVOCATION_CHECK)
+//        public boolean isEnableTokenRevocationCheck() {
+//            return enableTokenRevocationCheck;
+//        }
+//
+//        @SuppressWarnings("unused")
+//        public void setEnableTokenRevocationCheck(final boolean enableTokenRevocationCheck) {
+//            this.enableTokenRevocationCheck = enableTokenRevocationCheck;
+//        }
+//
+//        @Override
+//        public String toString() {
+//            return "JwtConfig{" +
+//                    "jwtIssuer='" + jwtIssuer + '\'' +
+//                    ", enableTokenRevocationCheck=" + enableTokenRevocationCheck +
+//                    '}';
+//        }
+//    }
 }
