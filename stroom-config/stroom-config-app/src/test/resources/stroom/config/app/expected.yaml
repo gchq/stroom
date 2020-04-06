@@ -769,10 +769,10 @@ appConfig:
         \ must be at least 80 characters long.\" ></textarea>Explain what the activity\
         \ is"
     url:
-      ui: "http://IP_ADDRESS"
-      users: "http://IP_ADDRESS/users"
-      apiKeys: "http://IP_ADDRESS/tokens"
-      changepassword: "http://IP_ADDRESS/changepassword"
+      ui: "http://localhost:8080/stroom/ui"
+      users: "../../../s/users"
+      apiKeys: "../../../s/apiKeys"
+      changepassword: "../../../s/changepassword"
   volumes:
     resilientReplicationCount: 1
     preferLocalVolumes: false

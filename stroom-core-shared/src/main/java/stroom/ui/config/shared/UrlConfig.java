@@ -15,13 +15,13 @@ import java.util.Objects;
 public class UrlConfig extends AbstractConfig {
     @JsonProperty
     @JsonPropertyDescription("The URL of Stroom as provided to the browser")
-    private String ui;
+    private String ui = "http://localhost:8080/stroom/ui";
     @JsonProperty
-    private String users;
+    private String users = "../../../s/users";
     @JsonProperty
-    private String apiKeys;
+    private String apiKeys = "../../../s/apiKeys";
     @JsonProperty
-    private String changepassword;
+    private String changepassword = "../../../s/changepassword";
 
     public UrlConfig() {
 //        setDefaults();
