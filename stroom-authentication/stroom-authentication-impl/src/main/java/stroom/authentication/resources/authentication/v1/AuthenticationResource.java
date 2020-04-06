@@ -290,9 +290,12 @@ public final class AuthenticationResource implements RestResource {
     public Response exchangeAccessCode(
             @ApiParam("ExchangeAccessCodeRequest") final ExchangeAccessCodeRequest exchangeAccessCodeRequest) {
         var optionalToken = service.exchangeAccessCode(exchangeAccessCodeRequest);
-        return optionalToken.map(
-                idToken -> Response.status(Status.OK).entity(idToken).build())
-                .orElse(Response.status(Status.UNAUTHORIZED).entity("Invalid client or access code").build());
+        return optionalToken.map(idToken ->
+                Response.status(Status.OK)
+                        .entity(idToken).build())
+                .orElse(Response.status(Status.UNAUTHORIZED)
+                        .entity("Invalid client or access code")
+                        .build());
     }
 
     @GET
@@ -312,7 +315,9 @@ public final class AuthenticationResource implements RestResource {
             }
             if (userIdentity != null) {
                 // Create an event for logout
-                stroomEventLoggingService.createAction("Logoff", "Logging off " + userIdentity.getId());
+                stroomEventLoggingService.createAction(
+                        "Logoff",
+                        "Logging off " + userIdentity.getId());
             }
 
             return true;
