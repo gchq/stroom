@@ -183,6 +183,9 @@ else
     STROOM_VERSION="${TRAVIS_BRANCH}"
 fi
 
+JAVA_VERSION=java --version
+YARN_VERSION=yarn --version
+
 # Dump all the travis env vars to the console for debugging
 echo -e "TRAVIS_BUILD_NUMBER:           [${GREEN}${TRAVIS_BUILD_NUMBER}${NC}]"
 echo -e "TRAVIS_COMMIT:                 [${GREEN}${TRAVIS_COMMIT}${NC}]"
@@ -190,6 +193,8 @@ echo -e "TRAVIS_BRANCH:                 [${GREEN}${TRAVIS_BRANCH}${NC}]"
 echo -e "TRAVIS_TAG:                    [${GREEN}${TRAVIS_TAG}${NC}]"
 echo -e "TRAVIS_PULL_REQUEST:           [${GREEN}${TRAVIS_PULL_REQUEST}${NC}]"
 echo -e "TRAVIS_EVENT_TYPE:             [${GREEN}${TRAVIS_EVENT_TYPE}${NC}]"
+echo -e "JAVA_VERSION:                  [${GREEN}${JAVA_VERSION}${NC}]"
+echo -e "YARN_VERSION:                  [${GREEN}${YARN_VERSION}${NC}]"
 echo -e "STROOM_VERSION:                [${GREEN}${STROOM_VERSION}${NC}]"
 echo -e "CURRENT_STROOM_RELEASE_BRANCH: [${GREEN}${CURRENT_STROOM_RELEASE_BRANCH}${NC}]"
 
