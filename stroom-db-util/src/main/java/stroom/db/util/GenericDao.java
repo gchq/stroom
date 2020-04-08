@@ -15,7 +15,7 @@ import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-public class GenericDao<RecordType extends UpdatableRecord, ObjectType, IdType>
+public class GenericDao<RecordType extends UpdatableRecord<RecordType>, ObjectType, IdType>
         implements HasCrud<ObjectType, IdType> {
 
     private static final LambdaLogger LAMBDA_LOGGER = LambdaLoggerFactory.getLogger(GenericDao.class);
