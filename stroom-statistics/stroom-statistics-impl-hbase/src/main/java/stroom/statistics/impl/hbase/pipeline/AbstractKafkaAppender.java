@@ -17,8 +17,11 @@
 package stroom.statistics.impl.hbase.pipeline;
 
 import com.google.common.base.Preconditions;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
 import stroom.docref.DocRef;
+import stroom.kafka.impl.KafkaProducerSupplier;
 import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.pipeline.destination.Destination;
@@ -36,17 +39,23 @@ import stroom.util.shared.Severity;
 
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
+import java.util.ArrayDeque;
+import java.util.Queue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public abstract class AbstractKafkaAppender extends AbstractDestinationProvider implements Destination {
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractKafkaAppender.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
-    private org.apache.kafka.clients.producer.KafkaProducer kafkaProducer;
+    private KafkaProducerSupplier kafkaProducerSupplier;
+    private KafkaProducer<String, byte[]> kafkaProducer;
     private final KafkaProducerFactory stroomKafkaProducerFactory;
 
     private final ByteArrayOutputStream byteArrayOutputStream;
+    private final Queue<Future<RecordMetadata>> kafkaMetaFutures;
 
-    private boolean flushOnSend = false;
+    private boolean flushOnSend = true;
     private DocRef kafkaConfigRef;
     private long maxRecordCount;
     private long recordCount = 0;
@@ -58,6 +67,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         this.errorReceiverProxy = errorReceiverProxy;
         this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
         this.byteArrayOutputStream = new ByteArrayOutputStream();
+        this.kafkaMetaFutures = new ArrayDeque<>();
     }
 
     /*
@@ -71,24 +81,58 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         }
 
         try {
-            this.kafkaProducer = stroomKafkaProducerFactory.createProducer(kafkaConfigRef).orElse(null);
+            this.kafkaProducerSupplier = stroomKafkaProducerFactory.getSupplier(kafkaConfigRef);
         } catch (final RuntimeException e) {
             String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
             throw new LoggedException(msg);
         }
 
-        if (kafkaProducer == null) {
+        kafkaProducer = kafkaProducerSupplier.getKafkaProducer().orElseThrow(() -> {
             String msg = "No Kafka producer connector is available, check Stroom's configuration";
             log(Severity.FATAL_ERROR, msg, null);
             throw new LoggedException(msg);
-        }
+        });
         super.startProcessing();
     }
 
     @Override
     public void endProcessing() {
         closeAndResetStream();
+
+        if (flushOnSend) {
+            // Ensure all msgs buffered by kafka has been sent. As the producer is
+            // shared this means waiting for other msgs from other streams however the
+            // buffer is likely small so should not be a major issue.
+            LOGGER.logDurationIfDebugEnabled(
+                    () -> kafkaProducer.flush(),
+                    "KafkaProducer flush");
+
+            // If flushOnSend was set we will have futures in the queue
+            // so call get on each one to ensure they have all completed.
+            // Not certain that we need to check the futures after the flush as I think
+            // the flush will block till everything has sent.
+            LOGGER.logDurationIfDebugEnabled(
+                    () -> {
+                        Future<RecordMetadata> future;
+                        while ((future = kafkaMetaFutures.poll()) != null) {
+                            try {
+                                future.get();
+                            } catch (final InterruptedException e) {
+                                // Continue to interrupt this thread.
+                                Thread.currentThread().interrupt();
+
+                                throw new ProcessException("Thread interrupted");
+                            } catch (ExecutionException e) {
+                                log(Severity.ERROR, "Error sending message to Kafka", e);
+                            }
+                        }
+                    },
+            "Wait for futures to complete");
+        }
+
+        // Vital this happens or we leak resources
+        stroomKafkaProducerFactory.returnSupplier(kafkaProducerSupplier);
 
         super.endProcessing();
     }
@@ -153,41 +197,33 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
 
         //clear the stream ready for the next borrow call
         byteArrayOutputStream.reset();
-
     }
 
     private void sendMessage(final byte[] messageValue) {
 
-        final ProducerRecord<String, String> record = new ProducerRecord(getTopic(),
-                getRecordKey(), messageValue);
+        final ProducerRecord<String, byte[]> record = new ProducerRecord<>(
+                getTopic(), getRecordKey(), messageValue);
 
         try {
-            kafkaProducer.send(record);
+            final Future<RecordMetadata> sendFuture = kafkaProducer.send(record);
             if (flushOnSend) {
-                throw new UnsupportedOperationException("Flush on send is not available in this version of Stroom");
+                //keep hold of the future so we can wait for it at the end of processing
+                kafkaMetaFutures.add(sendFuture);
             }
         } catch (RuntimeException e) {
             error(e);
         }
-
     }
 
     @SuppressWarnings("unused")
-    @PipelineProperty(description = "The Kafka config to use.", displayPriority = 1)
+    @PipelineProperty(
+            description = "The Kafka config to use.",
+            displayPriority = 1)
     @PipelinePropertyDocRef(types = KafkaConfigDoc.DOCUMENT_TYPE)
     public void setKafkaConfig(final DocRef kafkaConfigRef) {
         this.kafkaConfigRef = kafkaConfigRef;
     }
 
-    @SuppressWarnings("unused")
-    @PipelineProperty(
-            description = "Wait for acknowledgement from the Kafka broker for all of the messages sent." +
-                    "This is slower but catches errors in the pipeline process",
-            defaultValue = "false",
-            displayPriority = 4)
-    public void setFlushOnSend(final boolean flushOnSend) {
-        this.flushOnSend = flushOnSend;
-    }
 
     @SuppressWarnings("unused")
     @PipelineProperty(
@@ -207,6 +243,16 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
                 throw new PipelineFactoryException("Incorrect value for max record count: " + maxRecordCount);
             }
         }
+    }
+
+    @SuppressWarnings("unused")
+    @PipelineProperty(
+            description = "At the end of the stream, wait for acknowledgement from the Kafka broker for all " +
+                    "the messages sent. This ensures errors are caught in the pipeline process.",
+            defaultValue = "true",
+            displayPriority = 4)
+    public void setFlushOnSend(final boolean flushOnSend) {
+        this.flushOnSend = flushOnSend;
     }
 
     protected void error(final Exception e) {

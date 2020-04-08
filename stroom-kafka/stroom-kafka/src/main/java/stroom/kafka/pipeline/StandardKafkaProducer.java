@@ -16,37 +16,41 @@
 
 package stroom.kafka.pipeline;
 
-import org.apache.kafka.clients.producer.Callback;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import org.apache.kafka.common.KafkaException;
 import org.apache.kafka.common.header.Headers;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
+import stroom.kafka.impl.KafkaProducerSupplier;
 import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
+import stroom.pipeline.errorhandler.ProcessException;
 import stroom.pipeline.factory.ConfigurableElement;
 import stroom.pipeline.factory.PipelineProperty;
 import stroom.pipeline.factory.PipelinePropertyDocRef;
 import stroom.pipeline.filter.AbstractXMLFilter;
 import stroom.pipeline.shared.ElementIcons;
 import stroom.pipeline.shared.data.PipelineElementType;
+import stroom.util.io.StreamUtil;
+import stroom.util.logging.LambdaLogger;
+import stroom.util.logging.LambdaLoggerFactory;
 import stroom.util.shared.Severity;
 
 import javax.inject.Inject;
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Optional;
-import java.util.Random;
+import java.util.List;
+import java.util.Queue;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Pipeline filter element that expects XML documents that conform to kafka-records:1 format and creates corresponding
@@ -61,34 +65,7 @@ import java.util.Random;
         icon = ElementIcons.KAFKA)
 class StandardKafkaProducer extends AbstractXMLFilter {
 
-    private static class KafkaMessageState{
-        public Integer partition = null;
-        public String topic = null;
-        public String key = null;
-        public ArrayList<String> headerNames = new ArrayList();
-        public ArrayList<String> headerVals = new ArrayList();
-        public Long timestamp = null;
-        public String messageValue = null;
-        public boolean inHeader = false;
-        public String lastElement = null;
-
-        public boolean isInvalid(){
-            return whyInvalid() != null;
-        }
-
-        public String whyInvalid (){
-            if (topic == null)
-                return "Topic is not defined.";
-            if (key == null && messageValue == null)
-                return "Neither the key or the value of the message are defined.";
-            if (headerNames.size() != headerVals.size())
-                return "Incomplete header information.";
-
-            return null;
-        }
-    }
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(StandardKafkaProducer.class);
+    private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(StandardKafkaProducer.class);
 
     private static final String RECORDS_ELEMENT_LOCAL_NAME = "kafkaRecords";
     private static final String RECORD_ELEMENT_LOCAL_NAME = "kafkaRecord";
@@ -102,22 +79,23 @@ class StandardKafkaProducer extends AbstractXMLFilter {
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
     private final KafkaProducerFactory stroomKafkaProducerFactory;
-    private final KafkaConfigStore configStore;
+    private final Queue<Future<RecordMetadata>> kafkaMetaFutures;
 
     private Locator locator = null;
-
     private DocRef configRef = null;
-    private KafkaProducer<String, String> kafkaProducer = null;
+    private KafkaProducerSupplier kafkaProducerSupplier = null;
+    private KafkaProducer<String, byte[]> kafkaProducer = null;
+    private KafkaMessageState state = null;
+    private boolean flushOnSend = true;
 
     @Inject
     StandardKafkaProducer(final ErrorReceiverProxy errorReceiverProxy,
                           final LocationFactoryProxy locationFactory,
-                          final KafkaProducerFactory stroomKafkaProducerFactory,
-                          final KafkaConfigStore configStore) {
+                          final KafkaProducerFactory stroomKafkaProducerFactory) {
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
         this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
-        this.configStore = configStore;
+        this.kafkaMetaFutures = new ArrayDeque<>();
     }
 
     /**
@@ -142,32 +120,66 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                 throw new LoggedException("KafkaConfig has not been set");
             }
 
-            //Initialise connection to Kafka broker
-            KafkaConfigDoc config = configStore.readDocument(configRef);
+            kafkaProducerSupplier = stroomKafkaProducerFactory.getSupplier(configRef);
 
-            Optional <KafkaProducer<String,String>> optional = stroomKafkaProducerFactory.createProducer(configRef);
-            if (!optional.isPresent())
-            {
-                log(Severity.FATAL_ERROR, "Unable to create Kafka Producer using config " + config.getData(), null);
+            kafkaProducer = kafkaProducerSupplier.getKafkaProducer().orElseThrow(() -> {
+                log(Severity.FATAL_ERROR, "No Kafka produce exists for config " + configRef, null);
                 throw new LoggedException("Unable to create Kafka Producer using config " + configRef);
-            }
-            kafkaProducer = optional.get();
-            super.startProcessing();
-        } catch(KafkaException ex) {
+            });
+        } catch (KafkaException ex) {
             log(Severity.FATAL_ERROR, "Unable to create Kafka Producer using config " + configRef.getUuid(), ex);
         }
+        super.startProcessing();
     }
 
-    private static Long createTimestamp(String isoFormat){
+
+    @Override
+    public void endProcessing() {
+        if (flushOnSend) {
+            // Ensure all msgs buffered by kafka has been sent. As the producer is
+            // shared this means waiting for other msgs from other streams however the
+            // buffer is likely small so should not be a major issue.
+            LOGGER.logDurationIfDebugEnabled(
+                    () -> kafkaProducer.flush(),
+                    "KafkaProducer flush");
+
+            // If flushOnSend was set we will have futures in the queue
+            // so call get on each one to ensure they have all completed.
+            // Not certain that we need to check the futures after the flush as I think
+            // the flush will block till everything has sent.
+            LOGGER.logDurationIfDebugEnabled(
+                    () -> {
+                        Future<RecordMetadata> future;
+                        while ((future = kafkaMetaFutures.poll()) != null) {
+                            try {
+                                future.get();
+                            } catch (final InterruptedException e) {
+                                // Continue to interrupt this thread.
+                                Thread.currentThread().interrupt();
+
+                                throw new ProcessException("Thread interrupted");
+                            } catch (ExecutionException e) {
+                                log(Severity.ERROR, "Error sending message to Kafka", e);
+                            }
+                        }
+                    },
+                    "Wait for futures to complete");
+        }
+
+        // Vital this happens or we leak resources
+        stroomKafkaProducerFactory.returnSupplier(kafkaProducerSupplier);
+        super.endProcessing();
+    }
+
+    private static Long createTimestamp(String isoFormat) {
         try {
             Instant instant = Instant.parse(isoFormat);
             return instant.toEpochMilli();
-        }catch (DateTimeParseException ex){
+        } catch (DateTimeParseException ex) {
             return null;
         }
     }
 
-    private KafkaMessageState state = null;
 
     @Override
     public void startElement(final String uri, final String localName, final String qName, final Attributes atts)
@@ -176,33 +188,33 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         if (RECORD_ELEMENT_LOCAL_NAME.equals(localName)) {
             state = new KafkaMessageState();
 
-            for (int a = 0; a < atts.getLength(); a++){
-                String attName = atts.getLocalName(a);
+            for (int i = 0; i < atts.getLength(); i++) {
+                String attName = atts.getLocalName(i);
 
-                if (TOPIC_ATTRIBUTE_LOCAL_NAME.equals(attName)){
-                    state.topic = atts.getValue(a);
-                } else if (TIMESTAMP_ATTRIBUTE_LOCAL_NAME.equals(attName)){
-                    Long timestamp = createTimestamp (atts.getValue(a));
-                    if (timestamp == null){
-                        log (Severity.ERROR, "Kafka timestamp must be in ISO 8601 format.  Got " + atts.getValue(a), null);
+                if (TOPIC_ATTRIBUTE_LOCAL_NAME.equals(attName)) {
+                    state.topic = atts.getValue(i);
+                } else if (TIMESTAMP_ATTRIBUTE_LOCAL_NAME.equals(attName)) {
+                    Long timestamp = createTimestamp (atts.getValue(i));
+                    if (timestamp == null) {
+                        log (Severity.ERROR, "Kafka timestamp must be in ISO 8601 format.  Got " + atts.getValue(i), null);
                     }else{
                         state.timestamp = timestamp;
                     }
-                } else if (PARTITION_ATTRIBUTE_LOCAL_NAME.equals(attName)){
+                } else if (PARTITION_ATTRIBUTE_LOCAL_NAME.equals(attName)) {
                     try {
-                        state.partition = Integer.parseInt(atts.getValue(a));
-                    }catch (NumberFormatException ex){
-                        log (Severity.ERROR, "Kafka partition must be an integer.  Got " + atts.getValue(a), null);
+                        state.partition = Integer.parseInt(atts.getValue(i));
+                    }catch (NumberFormatException ex) {
+                        log (Severity.ERROR, "Kafka partition must be an integer.  Got " + atts.getValue(i), null);
                     }
                 }
             }
         }
 
-        if (HEADER_ELEMENT_LOCAL_NAME.equals(localName)){
+        if (HEADER_ELEMENT_LOCAL_NAME.equals(localName)) {
             state.inHeader = true;
         }
 
-        if (state != null){
+        if (state != null) {
             state.lastElement = localName;
         }
 
@@ -216,13 +228,13 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         String val = new String (ch, start, length);
         String element = state.lastElement;
         if (KEY_ELEMENT_LOCAL_NAME.equals(element)) {
-            if (state.inHeader){
+            if (state.inHeader) {
                 state.headerNames.add(val);
             } else {
                 state.key = val;
             }
         } else if (VALUE_ELEMENT_LOCAL_NAME.equals (element)) {
-            if (state.inHeader){
+            if (state.inHeader) {
                 state.headerVals.add(val);
             }
             else {
@@ -239,7 +251,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         if (state != null)
             state.lastElement = null;
 
-        if (HEADER_ELEMENT_LOCAL_NAME.equals(localName)){
+        if (HEADER_ELEMENT_LOCAL_NAME.equals(localName)) {
             state.inHeader = false;
         } else if (RECORD_ELEMENT_LOCAL_NAME.equals(localName)) {
             createKafkaMessage (state);
@@ -254,43 +266,73 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         if (state.isInvalid()) {
             log(Severity.ERROR,"Badly formed Kafka message " + state.whyInvalid(), null);
         } else {
-            ProducerRecord<String, String> record = new ProducerRecord<>(state.topic, state.partition,
-                    state.timestamp, state.key, state.messageValue);
-            Headers headers = record.headers();
-            for (int h=0; h < state.headerNames.size(); h++){
-                headers.add(state.headerNames.get(h), state.headerVals.get(h).getBytes(StandardCharsets.UTF_8));
-            }
-            StringBuffer buffer = new StringBuffer();
-            buffer.append("Writing to Kafka topic: " + state.topic);
-            buffer.append(" Timestamp: " + state.timestamp);
-            buffer.append(" Key: " + state.key);
-            for (int i = 0; i < state.headerNames.size(); i++) {
-                buffer.append(" Header " + state.headerNames.get(i) + " = " + state.headerVals.get(i));
-            }
-            buffer.append(" Value: " + state.messageValue);
+            // We need to serialise to byte[] with the same encoding as kafka's
+            // StringSerializer which also uses. By default kafka will use UTF8
+            final ProducerRecord<String, byte[]> record = new ProducerRecord<>(
+                    state.topic,
+                    state.partition,
+                    state.timestamp,
+                    state.key,
+                    state.messageValue.getBytes(StreamUtil.DEFAULT_CHARSET));
 
-//            log (Severity.INFO, buffer.toString(), null);
-            kafkaProducer.send(record, new Callback() {
-                public void onCompletion(RecordMetadata metadata, Exception e) {
-                    if(e != null) {
-                        log (Severity.ERROR, "Unable to send record to Kafka", e);
-                    } else {
-//                        log (Severity.INFO, "Successfully sent record to Kafka", null);
-                    }
-                }});
+            Headers headers = record.headers();
+            for (int i = 0; i < state.headerNames.size(); i++) {
+                headers.add(
+                        state.headerNames.get(i),
+                        state.headerVals.get(i).getBytes(StreamUtil.DEFAULT_CHARSET));
+            }
+//            logState(state);
+            final Future<RecordMetadata> sendFuture = kafkaProducer.send(record);
+            if (flushOnSend) {
+                //keep hold of the future so we can wait for it at the end of processing
+                kafkaMetaFutures.add(sendFuture);
+            }
         }
     }
 
+    private void logState(final KafkaMessageState state) {
+        final StringBuilder stringBuilder = new StringBuilder()
+                .append("Writing to Kafka topic: ")
+                .append(state.topic)
+                .append(" Timestamp: ")
+                .append(state.timestamp)
+                .append(" Key: ")
+                .append(state.key);
+        for (int i = 0; i < state.headerNames.size(); i++) {
+            stringBuilder
+                    .append(" Header ")
+                    .append(state.headerNames.get(i))
+                    .append(" = ")
+                    .append(state.headerVals.get(i));
+        }
+        stringBuilder
+                .append(" Value: ")
+                .append(state.messageValue);
 
-    @PipelineProperty(description = "Kafka configuration details relating to where and how to send Kafka messages.", displayPriority = 1)
+            log(Severity.INFO, stringBuilder.toString(), null);
+    }
+
+    @PipelineProperty(
+            description = "Kafka configuration details relating to where and how to send Kafka messages.",
+            displayPriority = 1)
     @PipelinePropertyDocRef(types = KafkaConfigDoc.DOCUMENT_TYPE)
     public void setKafkaConfig(final DocRef configRef) {
         this.configRef = configRef;
     }
 
+    @SuppressWarnings("unused")
+    @PipelineProperty(
+            description = "At the end of the stream, wait for acknowledgement from the Kafka broker for all " +
+                    "the messages sent. This ensures errors are caught in the pipeline process.",
+            defaultValue = "true",
+            displayPriority = 2)
+    public void setFlushOnSend(final boolean flushOnSend) {
+        this.flushOnSend = flushOnSend;
+    }
+
     private void log(final Severity severity, final String message, final Exception e) {
         errorReceiverProxy.log(severity, locationFactory.create(locator), getElementId(), message, e);
-        switch (severity){
+        switch (severity) {
             case FATAL_ERROR:
                 LOGGER.error(message, e);
                 break;
@@ -303,6 +345,33 @@ class StandardKafkaProducer extends AbstractXMLFilter {
             case INFO:
                 LOGGER.info(message,e);
                 break;
+        }
+    }
+
+    private static class KafkaMessageState{
+        public Integer partition = null;
+        public String topic = null;
+        public String key = null;
+        public List<String> headerNames = new ArrayList<>();
+        public List<String> headerVals = new ArrayList<>();
+        public Long timestamp = null;
+        public String messageValue = null;
+        public boolean inHeader = false;
+        public String lastElement = null;
+
+        public boolean isInvalid() {
+            return whyInvalid() != null;
+        }
+
+        public String whyInvalid() {
+            if (topic == null)
+                return "Topic is not defined.";
+            if (key == null && messageValue == null)
+                return "Neither the key or the value of the message are defined.";
+            if (headerNames.size() != headerVals.size())
+                return "Incomplete header information.";
+
+            return null;
         }
     }
 

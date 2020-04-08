@@ -24,6 +24,7 @@ import stroom.kafka.pipeline.KafkaConfigStore;
 import stroom.kafka.pipeline.KafkaProducerFactory;
 import stroom.kafkaConfig.shared.KafkaConfigDoc;
 import stroom.util.guice.GuiceUtil;
+import stroom.util.guice.HealthCheckBinder;
 
 public class KafkaConfigModule extends AbstractModule {
     @Override
@@ -39,5 +40,9 @@ public class KafkaConfigModule extends AbstractModule {
 
         DocumentActionHandlerBinder.create(binder())
                 .bind(KafkaConfigDoc.DOCUMENT_TYPE, KafkaConfigStoreImpl.class);
+
+        HealthCheckBinder.create(binder())
+                .bind(KafkaProducerFactoryImpl.class);
+
     }
 }
