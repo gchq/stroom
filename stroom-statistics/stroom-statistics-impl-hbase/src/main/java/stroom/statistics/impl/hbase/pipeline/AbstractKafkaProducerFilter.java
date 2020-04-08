@@ -7,9 +7,9 @@ import org.apache.kafka.clients.producer.RecordMetadata;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
-import stroom.kafka.impl.KafkaProducerSupplier;
-import stroom.kafka.pipeline.KafkaProducerFactory;
-import stroom.kafkaConfig.shared.KafkaConfigDoc;
+import stroom.kafka.api.KafkaProducerFactory;
+import stroom.kafka.api.KafkaProducerSupplier;
+import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -34,7 +34,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
     private DocRef kafkaConfigRef;
     private final ErrorReceiverProxy errorReceiverProxy;
     private final LocationFactoryProxy locationFactory;
-    private final KafkaProducerFactory stroomKafkaProducerFactory;
+    private final KafkaProducerFactory kafkaProducerFactory;
     private final Queue<Future<RecordMetadata>> kafkaMetaFutures;
 
     private KafkaProducer<String, byte[]> kafkaProducer;
@@ -44,12 +44,12 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
 
     protected AbstractKafkaProducerFilter(final ErrorReceiverProxy errorReceiverProxy,
                                           final LocationFactoryProxy locationFactory,
-                                          final KafkaProducerFactory stroomKafkaProducerFactory) {
+                                          final KafkaProducerFactory kafkaProducerFactory) {
 
         super(errorReceiverProxy, locationFactory);
         this.errorReceiverProxy = errorReceiverProxy;
         this.locationFactory = locationFactory;
-        this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
+        this.kafkaProducerFactory = kafkaProducerFactory;
         this.flushOnSend = true;
         this.kafkaMetaFutures = new ArrayDeque<>();
     }
@@ -91,7 +91,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         }
 
         try {
-            kafkaProducerSupplier = stroomKafkaProducerFactory.getSupplier(kafkaConfigRef);
+            kafkaProducerSupplier = kafkaProducerFactory.getSupplier(kafkaConfigRef);
         } catch (final RuntimeException e) {
             String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
@@ -138,7 +138,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
                     "Wait for futures to complete");
         }
         // Vital this happens or we leak resources
-        stroomKafkaProducerFactory.returnSupplier(kafkaProducerSupplier);
+        kafkaProducerFactory.returnSupplier(kafkaProducerSupplier);
         super.endProcessing();
     }
 

@@ -21,9 +21,9 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import stroom.docref.DocRef;
-import stroom.kafka.impl.KafkaProducerSupplier;
-import stroom.kafka.pipeline.KafkaProducerFactory;
-import stroom.kafkaConfig.shared.KafkaConfigDoc;
+import stroom.kafka.api.KafkaProducerFactory;
+import stroom.kafka.api.KafkaProducerSupplier;
+import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
 import stroom.pipeline.errorhandler.LoggedException;
@@ -50,7 +50,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     private final ErrorReceiverProxy errorReceiverProxy;
     private KafkaProducerSupplier kafkaProducerSupplier;
     private KafkaProducer<String, byte[]> kafkaProducer;
-    private final KafkaProducerFactory stroomKafkaProducerFactory;
+    private final KafkaProducerFactory kafkaProducerFactory;
 
     private final ByteArrayOutputStream byteArrayOutputStream;
     private final Queue<Future<RecordMetadata>> kafkaMetaFutures;
@@ -63,9 +63,9 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     private byte[] footer;
 
     protected AbstractKafkaAppender(final ErrorReceiverProxy errorReceiverProxy,
-                                    final KafkaProducerFactory stroomKafkaProducerFactory) {
+                                    final KafkaProducerFactory kafkaProducerFactory) {
         this.errorReceiverProxy = errorReceiverProxy;
-        this.stroomKafkaProducerFactory = stroomKafkaProducerFactory;
+        this.kafkaProducerFactory = kafkaProducerFactory;
         this.byteArrayOutputStream = new ByteArrayOutputStream();
         this.kafkaMetaFutures = new ArrayDeque<>();
     }
@@ -81,7 +81,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         }
 
         try {
-            this.kafkaProducerSupplier = stroomKafkaProducerFactory.getSupplier(kafkaConfigRef);
+            this.kafkaProducerSupplier = kafkaProducerFactory.getSupplier(kafkaConfigRef);
         } catch (final RuntimeException e) {
             String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
@@ -132,7 +132,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         }
 
         // Vital this happens or we leak resources
-        stroomKafkaProducerFactory.returnSupplier(kafkaProducerSupplier);
+        kafkaProducerFactory.returnSupplier(kafkaProducerSupplier);
 
         super.endProcessing();
     }

@@ -13,8 +13,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
-import stroom.kafka.impl.KafkaProducerSupplier;
-import stroom.kafka.pipeline.KafkaProducerFactory;
+import stroom.kafka.api.KafkaProducerFactory;
+import stroom.kafka.api.KafkaProducerSupplier;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 
