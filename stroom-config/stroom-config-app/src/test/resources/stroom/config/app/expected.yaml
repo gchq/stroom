@@ -326,6 +326,11 @@ appConfig:
         maxLifetime: null
         minimumIdle: null
         maxPoolSize: null
+  kafka:
+    kafkaConfigDocCache:
+      maximumSize: 1000
+      expireAfterAccess: "PT10S"
+      expireAfterWrite: null
   lifecycle:
     enabled: true
   node:

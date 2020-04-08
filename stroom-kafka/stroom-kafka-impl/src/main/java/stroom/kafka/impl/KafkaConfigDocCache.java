@@ -25,31 +25,33 @@ import stroom.util.shared.Clearable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
+import java.util.Objects;
 import java.util.Optional;
 
 @Singleton
 public class KafkaConfigDocCache implements Clearable {
     private static final String CACHE_NAME = "Kafka Config Doc Cache";
 
-    private final ICache<String, Optional<KafkaConfigDoc>> cache;
+    private final ICache<DocRef, Optional<KafkaConfigDoc>> cache;
     private final KafkaConfigStore kafkaConfigStore;
     private final SecurityContext securityContext;
 
     @Inject
     public KafkaConfigDocCache(final CacheManager cacheManager,
                                final KafkaConfigStore kafkaConfigStore,
+                               final KafkaConfig kafkaConfig,
                                final SecurityContext securityContext) {
         this.kafkaConfigStore = kafkaConfigStore;
         this.securityContext = securityContext;
-//        cache = cacheManager.create(CACHE_NAME, feedConfig::getFeedDocCache, this::create);
-        cache = null;
+        cache = cacheManager.create(CACHE_NAME, kafkaConfig::getKafkaConfigDocCache, this::create);
     }
 
-    public Optional<KafkaConfigDoc> get(final String feedName) {
-        return cache.get(feedName);
+    public Optional<KafkaConfigDoc> get(final DocRef kafkaConfigDocRef) {
+        return cache.get(kafkaConfigDocRef);
     }
 
     private Optional<KafkaConfigDoc> create(final DocRef kafkaConfigDocRef) {
+        Objects.requireNonNull(kafkaConfigDocRef);
         return securityContext.asProcessingUserResult(() ->
                 Optional.ofNullable(kafkaConfigStore.readDocument(kafkaConfigDocRef)));
     }

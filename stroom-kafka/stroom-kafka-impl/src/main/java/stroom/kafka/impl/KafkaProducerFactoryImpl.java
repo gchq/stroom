@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -54,7 +55,7 @@ import java.util.concurrent.ConcurrentMap;
 class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
     private static final Logger LOGGER = LoggerFactory.getLogger(KafkaProducerFactoryImpl.class);
 
-    private final KafkaConfigStore kafkaConfigStore;
+    private final KafkaConfigDocCache kafkaConfigDocCache;
 
     // Keyed on uuid, represents the current KP for each UUID. These are the KPs that are given out to
     // new calls to getSupplier()
@@ -64,8 +65,8 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
     private final ConcurrentMap<KafkaProducerSupplierKey, KafkaProducerSupplierImpl> allProducerSuppliersMap = new ConcurrentHashMap<>();
 
     @Inject
-    KafkaProducerFactoryImpl(final KafkaConfigStore kafkaConfigStore) {
-        this.kafkaConfigStore = kafkaConfigStore;
+    KafkaProducerFactoryImpl(final KafkaConfigDocCache kafkaConfigDocCache) {
+        this.kafkaConfigDocCache = kafkaConfigDocCache;
     }
 
     public KafkaProducerSupplier getSupplier(final DocRef kafkaConfigDocRef) {
@@ -73,14 +74,11 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
         Objects.requireNonNull(kafkaConfigDocRef.getUuid(),
                 "No Kafka config UUID has been defined, unable to send any events");
 
-        // TODO could do with caching the docs to save the db lookups all the time
-        final KafkaConfigDoc kafkaConfigDoc = kafkaConfigStore.readDocument(kafkaConfigDocRef);
         final KafkaProducerSupplierImpl kafkaProducerSupplier;
+        final Optional<KafkaConfigDoc> optKafkaConfigDoc = kafkaConfigDocCache.get(kafkaConfigDocRef);
 
-        if (kafkaConfigDoc == null) {
-            // No doc for this docref so return an empty supplier
-            kafkaProducerSupplier = KafkaProducerSupplierImpl.empty();
-        } else {
+        if (optKafkaConfigDoc.isPresent()) {
+            KafkaConfigDoc kafkaConfigDoc = optKafkaConfigDoc.get();
             final KafkaProducerSupplierKey key = new KafkaProducerSupplierKey(kafkaConfigDoc);
 
             kafkaProducerSupplier = currentProducerSuppliersMap.compute(
@@ -112,6 +110,9 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
                         }
                         return producerSupplier;
                     });
+        } else {
+            // No doc for this docref so return an empty supplier
+            kafkaProducerSupplier = KafkaProducerSupplierImpl.empty();
         }
 
         return kafkaProducerSupplier;
