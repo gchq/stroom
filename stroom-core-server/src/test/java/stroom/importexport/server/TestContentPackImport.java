@@ -33,6 +33,8 @@ import org.mockito.junit.MockitoRule;
 import stroom.node.server.GlobalPropertyService;
 import stroom.node.server.MockStroomPropertyService;
 import stroom.node.shared.GlobalProperty;
+import stroom.security.SecurityContext;
+import stroom.security.shared.UserIdentity;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.test.StroomExpectedException;
@@ -42,7 +44,6 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @RunWith(StroomJUnit4ClassRunner.class)
 public class TestContentPackImport {
@@ -57,6 +58,9 @@ public class TestContentPackImport {
     //so this is the same as @RunWith(MockitoJUnitRunner.class)
     @Rule
     public MockitoRule mockitoRule = MockitoJUnit.rule();
+
+    @Mock
+    SecurityContext securityContext;
     @Mock
     ImportExportService importExportService;
     MockStroomPropertyService stroomPropertyService = new MockStroomPropertyService();
@@ -85,6 +89,24 @@ public class TestContentPackImport {
                 }
             });
         }
+        // This whole block is different in v7 so can be ignored in the merge
+        Mockito.when(securityContext.createIdentity(Mockito.anyString()))
+                .thenReturn(new UserIdentity() {
+                    @Override
+                    public String getId() {
+                        return "admin";
+                    }
+
+                    @Override
+                    public String getJws() {
+                        return null;
+                    }
+
+                    @Override
+                    public String getSessionId() {
+                        return null;
+                    }
+                });
     }
 
     @After
@@ -101,7 +123,7 @@ public class TestContentPackImport {
 
     @Test
     public void testStartup_disabled() throws IOException {
-        ContentPackImport contentPackImport = new ContentPackImport(importExportService, stroomPropertyService);
+        ContentPackImport contentPackImport = new ContentPackImport(importExportService, stroomPropertyService, securityContext);
         stroomPropertyService.setProperty(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY, "false");
 
         FileUtil.touch(testPack1);
@@ -114,7 +136,7 @@ public class TestContentPackImport {
 
     @Test
     public void testStartup_enabledNoFiles() {
-        ContentPackImport contentPackImport = new ContentPackImport(importExportService, stroomPropertyService);
+        ContentPackImport contentPackImport = new ContentPackImport(importExportService, stroomPropertyService, securityContext);
         Mockito.when(globalPropertyService.loadByName(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY)).thenReturn(null);
         stroomPropertyService.setProperty(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY, "true");
         contentPackImport.startup();
@@ -123,7 +145,7 @@ public class TestContentPackImport {
 
     @Test
     public void testStartup_enabledThreeFiles() throws IOException {
-        ContentPackImport contentPackImport = new ContentPackImport(importExportService, stroomPropertyService);
+        ContentPackImport contentPackImport = new ContentPackImport(importExportService, stroomPropertyService, securityContext);
         Mockito.when(globalPropertyService.loadByName(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY))
                 .thenReturn(null);
         stroomPropertyService.setProperty(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY, "true");
@@ -151,7 +173,7 @@ public class TestContentPackImport {
     @Test
     @StroomExpectedException(exception = RuntimeException.class)
     public void testStartup_failedImport() throws IOException {
-        ContentPackImport contentPackImport = new ContentPackImport(importExportService, stroomPropertyService);
+        ContentPackImport contentPackImport = new ContentPackImport(importExportService, stroomPropertyService, securityContext);
         Mockito.when(globalPropertyService.loadByName(ContentPackImport.AUTO_IMPORT_ENABLED_PROP_KEY))
                 .thenReturn(null);
 

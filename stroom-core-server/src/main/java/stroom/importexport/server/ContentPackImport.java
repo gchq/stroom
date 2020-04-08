@@ -20,6 +20,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import stroom.node.server.StroomPropertyService;
+import stroom.security.SecurityContext;
+import stroom.security.SecurityHelper;
+import stroom.security.shared.UserIdentity;
 import stroom.util.config.StroomProperties;
 import stroom.util.io.FileUtil;
 import stroom.util.spring.StroomStartup;
@@ -48,12 +51,16 @@ public class ContentPackImport {
     private static final Logger LOGGER = LoggerFactory.getLogger(ContentPackImport.class);
     private ImportExportService importExportService;
     private StroomPropertyService stroomPropertyService;
+    private SecurityContext securityContext;
+
 
     @SuppressWarnings("unused")
     @Inject
-    ContentPackImport(ImportExportService importExportService, StroomPropertyService stroomPropertyService) {
+    ContentPackImport(ImportExportService importExportService, StroomPropertyService stroomPropertyService,
+                      SecurityContext securityContext) {
         this.importExportService = importExportService;
         this.stroomPropertyService = stroomPropertyService;
+        this.securityContext = securityContext;
     }
 
     //Startup with very low priority to ensure it starts after everything else
@@ -63,7 +70,12 @@ public class ContentPackImport {
         final boolean isEnabled = stroomPropertyService.getBooleanProperty(AUTO_IMPORT_ENABLED_PROP_KEY, true);
 
         if (isEnabled) {
-            doImport();
+            // admin user name hardcoded for now to simplify the merge up to v7
+            // In v7 is is a const in User class
+            final UserIdentity admin = securityContext.createIdentity("admin");
+            try (SecurityHelper securityHelper = SecurityHelper.asUser(securityContext, admin)) {
+                doImport();
+            }
         } else {
             LOGGER.info("Content pack import currently disabled via property: {}", AUTO_IMPORT_ENABLED_PROP_KEY);
         }
