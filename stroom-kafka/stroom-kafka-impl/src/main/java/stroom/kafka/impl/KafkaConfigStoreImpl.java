@@ -36,10 +36,13 @@ import java.util.Set;
 @Singleton
 class KafkaConfigStoreImpl implements KafkaConfigStore {
     private final Store<KafkaConfigDoc> store;
+    private final KafkaConfig kafkaConfig;
 
     @Inject
     KafkaConfigStoreImpl(final StoreFactory storeFactory,
+                         final KafkaConfig kafkaConfig,
                          final KafkaConfigSerialiser serialiser) {
+        this.kafkaConfig = kafkaConfig;
         this.store = storeFactory.createStore(serialiser, KafkaConfigDoc.DOCUMENT_TYPE, KafkaConfigDoc.class);
     }
 
@@ -49,7 +52,25 @@ class KafkaConfigStoreImpl implements KafkaConfigStore {
 
     @Override
     public DocRef createDocument(final String name) {
-        return store.createDocument(name);
+        // create the document with some configurable skeleton content
+        return store.createDocument(
+                name,
+                (type, uuid, docName, version, createTime, updateTime, createUser, updateUser) -> {
+
+                    final String skeletonConfigText = kafkaConfig.getSkeletonConfigContent();
+
+                    return new KafkaConfigDoc(
+                            type,
+                            uuid,
+                            docName,
+                            version,
+                            createTime,
+                            updateTime,
+                            createUser,
+                            updateUser,
+                            "",
+                            skeletonConfigText);
+                });
     }
 
     @Override

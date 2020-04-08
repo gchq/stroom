@@ -34,6 +34,13 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
     // END OF ExplorerActionHandler
     ////////////////////////////////////////////////////////////////////////
 
+    /**
+     * Creates the named document, using the supplied {@link DocumentCreator} to
+     * provide the initial document skeleton. This allows doc store implementors
+     * to provide custom skeleton content.
+     */
+    DocRef createDocument(final String name, final DocumentCreator<D> documentCreator);
+
     boolean exists(DocRef docRef);
 
     Set<DocRef> listDocuments();
@@ -53,4 +60,15 @@ public interface Store<D extends Doc> extends DocumentActionHandler<D> {
     List<DocRef> list();
 
     List<DocRef> findByName(String name);
+
+    interface DocumentCreator<D extends Doc> {
+        D create(final String type,
+                 final String uuid,
+                 final String name,
+                 final String version,
+                 final Long createTime,
+                 final Long updateTime,
+                 final String createUser,
+                 final String updateUser);
+    }
 }
