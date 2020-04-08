@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Utility class for converting a stream of T into batches of T
+ * Utility class for converting a stream of T into batches of {@link List<T>}
  * @param <T> The type of object in the stream
  */
 public class BatchingIterator<T> implements Iterator<List<T>> {
@@ -35,7 +35,7 @@ public class BatchingIterator<T> implements Iterator<List<T>> {
     private List<T> currentBatch;
     private Iterator<T> sourceIterator;
 
-    public BatchingIterator(Iterator<T> sourceIterator, int batchSize) {
+    private BatchingIterator(Iterator<T> sourceIterator, int batchSize) {
         this.batchSize = batchSize;
         this.sourceIterator = sourceIterator;
     }
