@@ -126,6 +126,13 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
     public void returnSupplier(final KafkaProducerSupplier kafkaProducerSupplier) {
 
         if (kafkaProducerSupplier != null && kafkaProducerSupplier.hasKafkaProducer()) {
+            kafkaProducerSupplier.close();
+        }
+    }
+
+    private void returnAction(final KafkaProducerSupplier kafkaProducerSupplier) {
+
+        if (kafkaProducerSupplier != null && kafkaProducerSupplier.hasKafkaProducer()) {
             if (kafkaProducerSupplier instanceof KafkaProducerSupplierImpl) {
                 KafkaProducerSupplierImpl kafkaProducerSupplierImpl = (KafkaProducerSupplierImpl) kafkaProducerSupplier;
                 kafkaProducerSupplierImpl.decrementUseCount();
@@ -160,7 +167,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
                     e);
         }
         final KafkaProducerSupplierImpl kafkaProducerSupplier = new KafkaProducerSupplierImpl(
-                kafkaProducer, this::returnSupplier, key, kafkaConfigDocRef);
+                kafkaProducer, this::returnAction, key, kafkaConfigDocRef);
         // Hold on to a reference to each one we create
         allProducerSuppliersMap.put(key, kafkaProducerSupplier);
         return kafkaProducerSupplier;
@@ -203,6 +210,7 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
                     map.put("docUuid", kafkaProducerSupplier.getConfigUuid());
                     map.put("docVersion", kafkaProducerSupplier.getConfigVersion());
                     map.put("useCount", kafkaProducerSupplier.getUseCount());
+                    map.put("isSuperseded", kafkaProducerSupplier.isSuperseded());
                     return map;
                 })
                 .collect(Collectors.toList());
