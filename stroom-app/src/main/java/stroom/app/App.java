@@ -305,7 +305,7 @@ public class App extends Application<Config> {
                 .toString();
 
             LOGGER.warn(msg);
-            authenticationConfig.setAuthenticationRequired(true);
+            authenticationConfig.setAuthenticationRequired(false);
 
             // The standard content security policy is incompatible with GWT super dev mode
             msg = new ColouredStringBuilder()
