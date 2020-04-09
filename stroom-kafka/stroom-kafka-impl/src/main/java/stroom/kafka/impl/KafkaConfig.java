@@ -1,6 +1,7 @@
 package stroom.kafka.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import stroom.util.cache.CacheConfig;
 import stroom.util.shared.AbstractConfig;
 import stroom.util.time.StroomDuration;
@@ -18,12 +19,15 @@ public class KafkaConfig extends AbstractConfig {
             .build();
 
     @JsonProperty("skeletonConfigContent")
+    @JsonPropertyDescription("The value of this property will be used to pre-populate a new Kafka Configuration. "
+            + "It must be in Java Properties File format. Its purpose is to provide a skeleton for creating a working "
+            + "Kafka Configuration.")
     public String getSkeletonConfigContent() {
         return skeletonConfigContent;
     }
 
     @SuppressWarnings("unused")
-    void setSkeletonConfigContent(final String skeletonConfigContent) {
+    public void setSkeletonConfigContent(final String skeletonConfigContent) {
         this.skeletonConfigContent = skeletonConfigContent;
     }
 
@@ -54,8 +58,13 @@ public class KafkaConfig extends AbstractConfig {
             + "# these are set within stroom.\n"
             + "# https://kafka.apache.org/22/documentation.html#producerconfigs\n"
             + "\n"
+            + "# The following properties are recommended to be set\n"
+            + "bootstrap.servers=\n"
+            + "client.id=\n"
+            + "\n"
+            + "# The following properties are all remaining producer properties that can\n"
+            + "# be set if the Kafka default values are not suitable.\n"
             + "#acks=\n"
-            + "#bootstrap.servers=\n"
             + "#buffer.memory=\n"
             + "#compression.type=\n"
             + "#retries=\n"
@@ -66,7 +75,6 @@ public class KafkaConfig extends AbstractConfig {
             + "#ssl.truststore.password=\n"
             + "#batch.size=\n"
             + "#client.dns.lookup=\n"
-            + "#client.id=\n"
             + "#connections.max.idle.ms=\n"
             + "#delivery.timeout.ms=\n"
             + "#linger.ms=\n"
