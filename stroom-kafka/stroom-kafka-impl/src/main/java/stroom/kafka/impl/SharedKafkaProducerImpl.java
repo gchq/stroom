@@ -17,7 +17,6 @@ public class SharedKafkaProducerImpl implements SharedKafkaProducer {
     private final SharedKafkaProducerIdentity sharedKafkaProducerIdentity;
     private final DocRef kafkaConfigRef;
     private final AtomicBoolean isSuperseded = new AtomicBoolean(false);
-    private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final AtomicInteger useCounter = new AtomicInteger(0);
 
     SharedKafkaProducerImpl(final KafkaProducer<String, byte[]> kafkaProducer,
@@ -32,9 +31,6 @@ public class SharedKafkaProducerImpl implements SharedKafkaProducer {
 
     @Override
     public Optional<KafkaProducer<String, byte[]>> getKafkaProducer() {
-        if (isClosed.get()) {
-            throw new RuntimeException("Has been closed");
-        }
         return Optional.ofNullable(kafkaProducer);
     }
 
@@ -63,12 +59,7 @@ public class SharedKafkaProducerImpl implements SharedKafkaProducer {
      */
     @Override
     public void close() {
-        if (!isClosed.getAndSet(true)) {
-            // wasn't closed so close it
-            closeAction.accept(this);
-        } else {
-            throw new RuntimeException("Already closed");
-        }
+        closeAction.accept(this);
     }
 
     static SharedKafkaProducerImpl empty() {

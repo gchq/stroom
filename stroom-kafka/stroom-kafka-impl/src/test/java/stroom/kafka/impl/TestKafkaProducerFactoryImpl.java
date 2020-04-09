@@ -2,7 +2,6 @@ package stroom.kafka.impl;
 
 import com.codahale.metrics.health.HealthCheck;
 import org.apache.kafka.clients.producer.KafkaProducer;
-import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -48,33 +47,6 @@ public class TestKafkaProducerFactoryImpl {
 
         // Check we can still close with an empty supplier
         sharedKafkaProducer.close();
-    }
-
-    @Test
-    public void getSupplier_multipleCloseCalls() {
-
-        final KafkaProducerFactory kafkaProducerFactory = new KafkaProducerFactoryImpl(kafkaConfigDocCache);
-
-        final KafkaConfigDoc kafkaConfigDoc = createKafkaConfigDoc("Config1", "v1");
-
-        final DocRef docRef = DocRefUtil.create(kafkaConfigDoc);
-
-        final SharedKafkaProducer sharedKafkaProducer = kafkaProducerFactory.getSharedProducer(docRef);
-
-        // Cache knows nothing of the doc so there cannot be a producer
-        assertThat(sharedKafkaProducer.getKafkaProducer()).isEmpty();
-        assertThat(sharedKafkaProducer.hasKafkaProducer()).isFalse();
-
-        // Check we can still close with an empty supplier
-        sharedKafkaProducer.close();
-
-        // it is closed so closing again will throw
-        Assertions.assertThatThrownBy(sharedKafkaProducer::close)
-                .isInstanceOf(RuntimeException.class);
-
-        // it is closed so getting again will throw
-        Assertions.assertThatThrownBy(sharedKafkaProducer::getKafkaProducer)
-                .isInstanceOf(RuntimeException.class);
     }
 
     @Test
