@@ -100,7 +100,7 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
                 });
     }
 
-    private void sendMessage(final KafkaProducer kafkaProducer,
+    private void sendMessage(final KafkaProducer<String, byte[]> kafkaProducer,
                              final String topic,
                              final String key,
                              final List<InternalStatisticEvent> events) {
@@ -114,12 +114,11 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
 //                        .value(message)
 //                        .build();
 
-        final ProducerRecord<String, String> record = new ProducerRecord(topic,
+        final ProducerRecord<String, byte[]> record = new ProducerRecord<>(topic,
                 key, message);
 
         //These are only internal stats so just send them async for performance
         kafkaProducer.send(record);
-
     }
 
     private byte[] buildMessage(final List<InternalStatisticEvent> events) {

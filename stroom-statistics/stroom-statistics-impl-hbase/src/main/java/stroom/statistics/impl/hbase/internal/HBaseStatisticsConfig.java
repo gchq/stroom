@@ -31,7 +31,7 @@ public class HBaseStatisticsConfig extends AbstractConfig {
         this.kafkaTopicsConfig = kafkaTopicsConfig;
     }
 
-    @JsonPropertyDescription("The UUID of the Kafka config to use")
+    @JsonPropertyDescription("The UUID of the Kafka config document to use")
     public String getKafkaConfigUuid() {
         return kafkaConfigUuid;
     }
@@ -54,6 +54,7 @@ public class HBaseStatisticsConfig extends AbstractConfig {
     public String toString() {
         return "HBaseStatisticsConfig{" +
                 "docRefType='" + docRefType + '\'' +
+                ", kafkaTopicsConfig=" + kafkaTopicsConfig +
                 ", kafkaConfigUuid='" + kafkaConfigUuid + '\'' +
                 ", eventsPerMessage=" + eventsPerMessage +
                 '}';
