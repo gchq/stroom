@@ -98,7 +98,7 @@ public final class XMLUtil {
         prettyPrintXML(reader, writer);
     }
 
-    private static void prettyPrintXML(final Reader reader, final Writer writer) {
+    public static void prettyPrintXML(final Reader reader, final Writer writer) {
         try {
             final TransformerHandler handler = createTransformerHandler(new FatalErrorListener(), true);
             handler.setResult(new StreamResult(writer));

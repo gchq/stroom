@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](http://semver.org/).
 
 ## [Unreleased]
 
+* Fix `Expecting a real user identity` errors on auto import of content packs.
+
+* Increase wait timeout to 240s in `start.sh`.
+
+* Issue **#1404** : Fixed issue with invalid XML character filter.
+
 
 ## [v6.1.5] - 2020-03-12
 

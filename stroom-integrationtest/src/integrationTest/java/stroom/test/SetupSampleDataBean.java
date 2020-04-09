@@ -182,12 +182,18 @@ public final class SetupSampleDataBean {
 
 
         // Add volumes to all indexes.
-        final BaseResultList<Volume> volumeList = volumeService.find(new FindVolumeCriteria());
+        FindVolumeCriteria findVolumeCriteria = new FindVolumeCriteria();
+        findVolumeCriteria.getVolumeTypeSet().add(Volume.VolumeType.PRIVATE);
+        final BaseResultList<Volume> volumeList = volumeService.find(findVolumeCriteria);
+        if (volumeList.isEmpty()) {
+            throw new RuntimeException("No PRIVATE volumes found to add to the indexes");
+        }
         final BaseResultList<Index> indexList = indexService.find(new FindIndexCriteria());
         logEntities(indexList, "indexes");
         final Set<Volume> volumeSet = new HashSet<>(volumeList);
 
         for (final Index index : indexList) {
+            LOGGER.info("Adding {} volume(s) to index {}", volumeSet.size(), index.getName());
             index.setVolumes(volumeSet);
             indexService.save(index);
         }
