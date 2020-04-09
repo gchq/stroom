@@ -66,6 +66,8 @@ public class App extends Application<Config> {
     private static final Logger LOGGER = LoggerFactory.getLogger(App.class);
 
     private static final String GWT_SUPER_DEV_SYSTEM_PROP_NAME = "gwtSuperDevMode";
+    private static final boolean SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE = false;
+    private static final String SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE = "";
 
     @Inject
     private HealthChecks healthChecks;
@@ -275,6 +277,7 @@ public class App extends Application<Config> {
 
     private void checkForSuperDev(final AppConfig appConfig) {
         // If sys prop gwtSuperDevMode=true then override other config props
+        // i.e. use a run configuration with arg '-DgwtSuperDevMode=true'
         if (Boolean.getBoolean(GWT_SUPER_DEV_SYSTEM_PROP_NAME)) {
             LOGGER.warn("\n" + ConsoleColour.red(
 
@@ -292,31 +295,31 @@ public class App extends Application<Config> {
                     "\n                          ALL AUTHENTICATION IS DISABLED!" +
                     "\n           ***************************************************************"));
 
-            final AuthenticationConfig authenticationConfig = appConfig.getSecurityConfig().getAuthenticationConfig();
-            final ContentSecurityConfig contentSecurityConfig = appConfig.getSecurityConfig().getContentSecurityConfig();
 
-            // YAuth needs HTTPS and GWT super dev mode cannot work in HTTPS
+            // Auth needs HTTPS and GWT super dev mode cannot work in HTTPS
             String msg = new ColouredStringBuilder()
                 .appendRed("In GWT Super Dev Mode, overriding ")
                 .appendCyan(AuthenticationConfig.PROP_NAME_AUTHENTICATION_REQUIRED)
-                .appendRed(" to ")
-                .appendCyan("false ")
-                .appendRed("in appConfig")
+                .appendRed(" to [")
+                .appendCyan(Boolean.toString(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE))
+                .appendRed("] in appConfig")
                 .toString();
 
             LOGGER.warn(msg);
-            authenticationConfig.setAuthenticationRequired(false);
+            final AuthenticationConfig authenticationConfig = appConfig.getSecurityConfig().getAuthenticationConfig();
+            authenticationConfig.setAuthenticationRequired(SUPER_DEV_AUTHENTICATION_REQUIRED_VALUE);
 
             // The standard content security policy is incompatible with GWT super dev mode
             msg = new ColouredStringBuilder()
                 .appendRed("In GWT Super Dev Mode, overriding ")
                 .appendCyan(ContentSecurityConfig.PROP_NAME_CONTENT_SECURITY_POLICY)
-                .appendRed(" to ")
-                .appendCyan("\"\" ")
-                .appendRed("in appConfig")
+                .appendRed(" to [")
+                .appendCyan(SUPER_DEV_CONTENT_SECURITY_POLICY_VALUE)
+                .appendRed("] in appConfig")
                 .toString();
 
             LOGGER.warn(msg);
+            final ContentSecurityConfig contentSecurityConfig = appConfig.getSecurityConfig().getContentSecurityConfig();
             contentSecurityConfig.setContentSecurityPolicy("");
         }
     }
