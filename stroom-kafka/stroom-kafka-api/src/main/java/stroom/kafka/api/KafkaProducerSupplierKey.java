@@ -10,8 +10,8 @@ public class KafkaProducerSupplierKey {
 
     public KafkaProducerSupplierKey(final KafkaConfigDoc kafkaConfigDoc) {
         Objects.requireNonNull(kafkaConfigDoc);
-        this.uuid = Objects.requireNonNull(kafkaConfigDoc.getUuid());
-        this.version = Objects.requireNonNull(kafkaConfigDoc.getVersion());
+        this.uuid = Objects.requireNonNull(kafkaConfigDoc.getUuid(), "KafkaConfigDoc is missing a UUID");
+        this.version = Objects.requireNonNull(kafkaConfigDoc.getVersion(), "KafkaConfigDoc is missing a version");
     }
 
     public KafkaProducerSupplierKey(final String uuid, final String version) {
