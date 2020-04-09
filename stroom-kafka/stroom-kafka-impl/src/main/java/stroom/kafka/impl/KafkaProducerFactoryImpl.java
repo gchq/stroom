@@ -33,7 +33,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +41,7 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.stream.Collectors;
 
 /**
  * Class to provide shared {@link KafkaProducer} instances wrapped inside a {@link KafkaProducerSupplier}.
@@ -69,77 +69,60 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
         this.kafkaConfigDocCache = kafkaConfigDocCache;
     }
 
+    @Override
     public KafkaProducerSupplier getSupplier(final DocRef kafkaConfigDocRef) {
         Objects.requireNonNull(kafkaConfigDocRef);
         Objects.requireNonNull(kafkaConfigDocRef.getUuid(),
-                "No Kafka config UUID has been defined, unable to send any events");
+                "No Kafka config UUID has been defined");
 
         final KafkaProducerSupplierImpl kafkaProducerSupplier;
         final Optional<KafkaConfigDoc> optKafkaConfigDoc = kafkaConfigDocCache.get(kafkaConfigDocRef);
 
         if (optKafkaConfigDoc.isPresent()) {
             KafkaConfigDoc kafkaConfigDoc = optKafkaConfigDoc.get();
-            final KafkaProducerSupplierKey key = new KafkaProducerSupplierKey(kafkaConfigDoc);
+            final KafkaProducerSupplierKey desiredKey = new KafkaProducerSupplierKey(kafkaConfigDoc);
 
-            kafkaProducerSupplier = currentProducerSuppliersMap.compute(
-                    kafkaConfigDoc.getUuid(),
-                    (k, existingValue) -> {
-                        final KafkaProducerSupplierImpl producerSupplier;
-                        if (existingValue == null) {
-                            producerSupplier = createProducerSupplier(
-                                    kafkaConfigDoc, kafkaConfigDocRef, key);
-                            producerSupplier.incrementUseCount();
-                            allProducerSuppliersMap.put(key, producerSupplier);
-                        } else {
-                            // we already have one so check if it should be current
-                            if (key.equals(existingValue.getKafkaProducerSupplierKey())) {
-                                // is up to date
-                                producerSupplier = existingValue;
+            // Optimistically assume the map will have the latest KafkaProducerSupplier
+            final KafkaProducerSupplierImpl activeKafkaProducerSupplier = currentProducerSuppliersMap.get(desiredKey.getUuid());
+            if (activeKafkaProducerSupplier != null
+                    && desiredKey.equals(activeKafkaProducerSupplier.getKafkaProducerSupplierKey())) {
+                // This is the latest KafkaProducerSupplier so use it
+                kafkaProducerSupplier = activeKafkaProducerSupplier;
+            } else {
+                // Not there or not latest so compute a new/updated one atomically
+                kafkaProducerSupplier = currentProducerSuppliersMap.compute(
+                        kafkaConfigDoc.getUuid(),
+                        (k, existingValue) -> {
+                            final KafkaProducerSupplierImpl producerSupplier;
+                            if (existingValue == null) {
+                                // Don't have one so create a new one
+                                producerSupplier = createProducerSupplier(kafkaConfigDoc, kafkaConfigDocRef, desiredKey);
                             } else {
-                                // needs to be superseded
-                                existingValue.markSuperseded();
+                                // we already have one so check if it should be current
+                                if (desiredKey.equals(existingValue.getKafkaProducerSupplierKey())) {
+                                    // is up to date
+                                    producerSupplier = existingValue;
+                                } else {
+                                    // needs to be superseded
+                                    existingValue.markSuperseded();
 
-                                KafkaProducerSupplierImpl newProducerSupplier = createProducerSupplier(
-                                        kafkaConfigDoc, kafkaConfigDocRef, key);
-                                newProducerSupplier.incrementUseCount();
-                                allProducerSuppliersMap.put(key, newProducerSupplier);
-
-                                // swap out the existing current supplier for our new one
-                                producerSupplier = newProducerSupplier;
+                                    // swap out the existing current supplier for our new one
+                                    producerSupplier = createProducerSupplier(kafkaConfigDoc, kafkaConfigDocRef, desiredKey);
+                                }
                             }
-                        }
-                        return producerSupplier;
-                    });
+                            return producerSupplier;
+                        });
+            }
+            // Increment the use count so we can track when objects are unused and can be closed.
+            kafkaProducerSupplier.incrementUseCount();
         } else {
             // No doc for this docref so return an empty supplier
             kafkaProducerSupplier = KafkaProducerSupplierImpl.empty();
         }
-
         return kafkaProducerSupplier;
     }
 
-    private KafkaProducerSupplierImpl createProducerSupplier(
-            final KafkaConfigDoc kafkaConfigDoc,
-            final DocRef kafkaConfigDocRef,
-            final KafkaProducerSupplierKey key) {
-
-        final Properties producerProperties = getProperties(kafkaConfigDoc);
-        final KafkaProducer<String, byte[]> kafkaProducer;
-        try {
-            // For flexibility we always use a byte[] as the msg value.  This means the same producer
-            // can cope with different flavours of data and it is up to the consumer to know
-            // what data is on what topic.
-            kafkaProducer = new KafkaProducer<>(producerProperties, new StringSerializer(), new ByteArraySerializer());
-        } catch (Exception e) {
-            throw new RuntimeException(LogUtil.message("Error creating KafkaProducer for {} - {}: {}",
-                    kafkaConfigDoc.getName(),
-                    kafkaConfigDoc.getUuid(),
-                    e.getMessage()),
-                    e);
-        }
-        return new KafkaProducerSupplierImpl(kafkaProducer, this::returnSupplier, key, kafkaConfigDocRef);
-    }
-
+    @Override
     public void returnSupplier(final KafkaProducerSupplier kafkaProducerSupplier) {
 
         if (kafkaProducerSupplier != null && kafkaProducerSupplier.hasKafkaProducer()) {
@@ -157,14 +140,43 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
         }
     }
 
+    private KafkaProducerSupplierImpl createProducerSupplier(
+            final KafkaConfigDoc kafkaConfigDoc,
+            final DocRef kafkaConfigDocRef,
+            final KafkaProducerSupplierKey key) {
+
+        final Properties producerProperties = getProperties(kafkaConfigDoc);
+        final KafkaProducer<String, byte[]> kafkaProducer;
+        try {
+            // For flexibility we always use a byte[] as the msg value.  This means the same producer
+            // can cope with different flavours of data and it is up to the consumer to know
+            // what data is on what topic. It is also up to the use of the KP to serialise down to a byte[]
+            kafkaProducer = new KafkaProducer<>(producerProperties, new StringSerializer(), new ByteArraySerializer());
+        } catch (Exception e) {
+            throw new RuntimeException(LogUtil.message("Error creating KafkaProducer for {} - {}: {}",
+                    kafkaConfigDoc.getName(),
+                    kafkaConfigDoc.getUuid(),
+                    e.getMessage()),
+                    e);
+        }
+        final KafkaProducerSupplierImpl kafkaProducerSupplier = new KafkaProducerSupplierImpl(
+                kafkaProducer, this::returnSupplier, key, kafkaConfigDocRef);
+        // Hold on to a reference to each one we create
+        allProducerSuppliersMap.put(key, kafkaProducerSupplier);
+        return kafkaProducerSupplier;
+    }
+
+
     void shutdown() {
-        LOGGER.info("Shutting Down Stroom Kafka Producer Factory Service");
+        LOGGER.info("Shutting down Stroom Kafka Producer Factory Service");
 
         allProducerSuppliersMap.values()
                 .parallelStream()
                 .forEach(kafkaProducerSupplier -> {
-                    LOGGER.info("Closing Kafka producer for {}", kafkaProducerSupplier.getKafkaProducerSupplierKey());
-                    kafkaProducerSupplier.getKafkaProducer().ifPresent(KafkaProducer::close);
+                    kafkaProducerSupplier.getKafkaProducer().ifPresent(kafkaProducer -> {
+                        LOGGER.info("Closing Kafka producer for {}", kafkaProducerSupplier.getKafkaProducerSupplierKey());
+                        kafkaProducer.close();
+                    });
                 });
     }
 
@@ -184,16 +196,16 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
     @Override
     public HealthCheck.Result getHealth() {
 
-        List<Map<String,Object>> producerInfo = new ArrayList<>();
-
-        allProducerSuppliersMap.values().forEach(kafkaProducerSupplier -> {
-            Map<String, Object> map = new HashMap<>();
-            map.put("name", kafkaProducerSupplier.getConfigName());
-            map.put("uuid", kafkaProducerSupplier.getConfigUuid());
-            map.put("version", kafkaProducerSupplier.getConfigVersion());
-            map.put("useCount", kafkaProducerSupplier.getUseCount());
-            producerInfo.add(map);
-        });
+        final List<Map<String,Object>> producerInfo = allProducerSuppliersMap.values().stream()
+                .map(kafkaProducerSupplier -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("docName", kafkaProducerSupplier.getConfigName());
+                    map.put("docUuid", kafkaProducerSupplier.getConfigUuid());
+                    map.put("docVersion", kafkaProducerSupplier.getConfigVersion());
+                    map.put("useCount", kafkaProducerSupplier.getUseCount());
+                    return map;
+                })
+                .collect(Collectors.toList());
 
         return HealthCheck.Result.builder()
                 .healthy()

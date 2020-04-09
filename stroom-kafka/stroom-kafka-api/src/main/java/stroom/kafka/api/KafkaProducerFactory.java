@@ -17,7 +17,8 @@ public interface KafkaProducerFactory {
 
     /**
      * 'Returns' the {@link KafkaProducerSupplier} to the factory so it can close the wrapped producer
-     * as required. Should only be called once and the {@link KafkaProducerSupplier} should not be
+     * if required. This is for use when a try-with-resources block is not applicable.
+     * Should only be called once and the {@link KafkaProducerSupplier} should not be
      * used after it is called.
      */
     void returnSupplier(final KafkaProducerSupplier kafkaProducerSupplier);
