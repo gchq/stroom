@@ -23,8 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.kafka.api.KafkaProducerFactory;
-import stroom.kafka.api.KafkaProducerSupplier;
-import stroom.kafka.api.KafkaProducerSupplierKey;
+import stroom.kafka.api.SharedKafkaProducer;
+import stroom.kafka.api.SharedKafkaProducerIdentity;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.util.HasHealthCheck;
 import stroom.util.logging.LogUtil;
@@ -44,11 +44,11 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 /**
- * Class to provide shared {@link KafkaProducer} instances wrapped inside a {@link KafkaProducerSupplier}.
+ * Class to provide shared {@link KafkaProducer} instances wrapped inside a {@link SharedKafkaProducer}.
  * We want one {@link KafkaProducer} per {@link KafkaConfigDoc}, however the config in a {@link KafkaConfigDoc}
- * can change at runtime so on each request for a {@link KafkaProducerSupplier} we need to check if the
+ * can change at runtime so on each request for a {@link SharedKafkaProducer} we need to check if the
  * {@link KafkaConfigDoc} has changed since the time we created it. New calls to
- * {@link KafkaProducerFactory#getSupplier(DocRef)} will always get a {@link KafkaProducerSupplier} for the
+ * {@link KafkaProducerFactory#getSharedProducer(DocRef)} will always get a {@link SharedKafkaProducer} for the
  * latest config. {@link KafkaProducer}
  */
 @Singleton
@@ -58,11 +58,11 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
     private final KafkaConfigDocCache kafkaConfigDocCache;
 
     // Keyed on uuid, represents the current KP for each UUID. These are the KPs that are given out to
-    // new calls to getSupplier()
-    private final ConcurrentMap<String, KafkaProducerSupplierImpl> currentProducerSuppliersMap = new ConcurrentHashMap<>();
+    // new calls to getSharedProducer()
+    private final ConcurrentMap<String, SharedKafkaProducerImpl> currentSharedProducersMap = new ConcurrentHashMap<>();
     // Keyed on uuid|version so can hold one or more KPs for each uuid if the config has changed over
     // time. Once clients are no longer using the superseded KPs they will be removed.
-    private final ConcurrentMap<KafkaProducerSupplierKey, KafkaProducerSupplierImpl> allProducerSuppliersMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<SharedKafkaProducerIdentity, SharedKafkaProducerImpl> allSharedProducersMap = new ConcurrentHashMap<>();
 
     @Inject
     KafkaProducerFactoryImpl(final KafkaConfigDocCache kafkaConfigDocCache) {
@@ -70,87 +70,87 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
     }
 
     @Override
-    public KafkaProducerSupplier getSupplier(final DocRef kafkaConfigDocRef) {
+    public SharedKafkaProducer getSharedProducer(final DocRef kafkaConfigDocRef) {
         Objects.requireNonNull(kafkaConfigDocRef);
         Objects.requireNonNull(kafkaConfigDocRef.getUuid(),
                 "No Kafka config UUID has been defined");
 
-        final KafkaProducerSupplierImpl kafkaProducerSupplier;
+        final SharedKafkaProducerImpl sharedKafkaProducer;
         final Optional<KafkaConfigDoc> optKafkaConfigDoc = kafkaConfigDocCache.get(kafkaConfigDocRef);
 
         if (optKafkaConfigDoc.isPresent()) {
             KafkaConfigDoc kafkaConfigDoc = optKafkaConfigDoc.get();
-            final KafkaProducerSupplierKey desiredKey = new KafkaProducerSupplierKey(kafkaConfigDoc);
+            final SharedKafkaProducerIdentity desiredKey = new SharedKafkaProducerIdentity(kafkaConfigDoc);
 
-            // Optimistically assume the map will have the latest KafkaProducerSupplier
-            final KafkaProducerSupplierImpl activeKafkaProducerSupplier = currentProducerSuppliersMap.get(desiredKey.getUuid());
-            if (activeKafkaProducerSupplier != null
-                    && desiredKey.equals(activeKafkaProducerSupplier.getKafkaProducerSupplierKey())) {
-                // This is the latest KafkaProducerSupplier so use it
-                kafkaProducerSupplier = activeKafkaProducerSupplier;
+            // Optimistically assume the map will have the latest SharedKafkaProducer
+            final SharedKafkaProducerImpl activeSharedProducer = currentSharedProducersMap.get(desiredKey.getConfigUuid());
+            if (activeSharedProducer != null
+                    && desiredKey.equals(activeSharedProducer.getSharedKafkaProducerIdentity())) {
+                // This is the latest SharedKafkaProducer so use it
+                sharedKafkaProducer = activeSharedProducer;
             } else {
                 // Not there or not latest so compute a new/updated one atomically
-                kafkaProducerSupplier = currentProducerSuppliersMap.compute(
+                sharedKafkaProducer = currentSharedProducersMap.compute(
                         kafkaConfigDoc.getUuid(),
                         (k, existingValue) -> {
-                            final KafkaProducerSupplierImpl producerSupplier;
+                            final SharedKafkaProducerImpl sharedKafkaProducer2;
                             if (existingValue == null) {
                                 // Don't have one so create a new one
-                                producerSupplier = createProducerSupplier(kafkaConfigDoc, kafkaConfigDocRef, desiredKey);
+                                sharedKafkaProducer2 = createSharedProducer(kafkaConfigDoc, kafkaConfigDocRef, desiredKey);
                             } else {
                                 // we already have one so check if it should be current
-                                if (desiredKey.equals(existingValue.getKafkaProducerSupplierKey())) {
+                                if (desiredKey.equals(existingValue.getSharedKafkaProducerIdentity())) {
                                     // is up to date
-                                    producerSupplier = existingValue;
+                                    sharedKafkaProducer2 = existingValue;
                                 } else {
                                     // needs to be superseded
                                     existingValue.markSuperseded();
 
-                                    // swap out the existing current supplier for our new one
-                                    producerSupplier = createProducerSupplier(kafkaConfigDoc, kafkaConfigDocRef, desiredKey);
+                                    // swap out the existing current SharedKafkaProducer for our new one
+                                    sharedKafkaProducer2 = createSharedProducer(kafkaConfigDoc, kafkaConfigDocRef, desiredKey);
                                 }
                             }
-                            return producerSupplier;
+                            return sharedKafkaProducer2;
                         });
             }
             // Increment the use count so we can track when objects are unused and can be closed.
-            kafkaProducerSupplier.incrementUseCount();
+            sharedKafkaProducer.incrementUseCount();
         } else {
-            // No doc for this docref so return an empty supplier
-            kafkaProducerSupplier = KafkaProducerSupplierImpl.empty();
+            // No doc for this docref so return an empty SharedKafkaProducer
+            sharedKafkaProducer = SharedKafkaProducerImpl.empty();
         }
-        return kafkaProducerSupplier;
+        return sharedKafkaProducer;
     }
 
     @Override
-    public void returnSupplier(final KafkaProducerSupplier kafkaProducerSupplier) {
+    public void returnSharedKafkaProducer(final SharedKafkaProducer sharedKafkaProducer) {
 
-        if (kafkaProducerSupplier != null && kafkaProducerSupplier.hasKafkaProducer()) {
-            kafkaProducerSupplier.close();
+        if (sharedKafkaProducer != null && sharedKafkaProducer.hasKafkaProducer()) {
+            sharedKafkaProducer.close();
         }
     }
 
-    private void returnAction(final KafkaProducerSupplier kafkaProducerSupplier) {
+    private void returnAction(final SharedKafkaProducer sharedKafkaProducer) {
 
-        if (kafkaProducerSupplier != null && kafkaProducerSupplier.hasKafkaProducer()) {
-            if (kafkaProducerSupplier instanceof KafkaProducerSupplierImpl) {
-                KafkaProducerSupplierImpl kafkaProducerSupplierImpl = (KafkaProducerSupplierImpl) kafkaProducerSupplier;
-                kafkaProducerSupplierImpl.decrementUseCount();
-                if (kafkaProducerSupplierImpl.isSuperseded() && kafkaProducerSupplierImpl.getUseCount() <= 0) {
-                    allProducerSuppliersMap.remove(kafkaProducerSupplierImpl.getKafkaProducerSupplierKey());
-                    final KafkaProducer<String, byte[]> kafkaProducer = kafkaProducerSupplier.getKafkaProducer().get();
+        if (sharedKafkaProducer != null && sharedKafkaProducer.hasKafkaProducer()) {
+            if (sharedKafkaProducer instanceof SharedKafkaProducerImpl) {
+                SharedKafkaProducerImpl sharedKafkaProducerImpl = (SharedKafkaProducerImpl) sharedKafkaProducer;
+                sharedKafkaProducerImpl.decrementUseCount();
+                if (sharedKafkaProducerImpl.isSuperseded() && sharedKafkaProducerImpl.getUseCount() <= 0) {
+                    allSharedProducersMap.remove(sharedKafkaProducerImpl.getSharedKafkaProducerIdentity());
+                    final KafkaProducer<String, byte[]> kafkaProducer = sharedKafkaProducer.getKafkaProducer().get();
                     kafkaProducer.close();
                 }
             } else {
-                throw new RuntimeException("Unexpected type " + kafkaProducerSupplier.getClass().getName());
+                throw new RuntimeException("Unexpected type " + sharedKafkaProducer.getClass().getName());
             }
         }
     }
 
-    private KafkaProducerSupplierImpl createProducerSupplier(
+    private SharedKafkaProducerImpl createSharedProducer(
             final KafkaConfigDoc kafkaConfigDoc,
             final DocRef kafkaConfigDocRef,
-            final KafkaProducerSupplierKey key) {
+            final SharedKafkaProducerIdentity key) {
 
         final Properties producerProperties = getProperties(kafkaConfigDoc);
         final KafkaProducer<String, byte[]> kafkaProducer;
@@ -166,22 +166,22 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
                     e.getMessage()),
                     e);
         }
-        final KafkaProducerSupplierImpl kafkaProducerSupplier = new KafkaProducerSupplierImpl(
+        final SharedKafkaProducerImpl sharedKafkaProducer = new SharedKafkaProducerImpl(
                 kafkaProducer, this::returnAction, key, kafkaConfigDocRef);
         // Hold on to a reference to each one we create
-        allProducerSuppliersMap.put(key, kafkaProducerSupplier);
-        return kafkaProducerSupplier;
+        allSharedProducersMap.put(key, sharedKafkaProducer);
+        return sharedKafkaProducer;
     }
 
 
     void shutdown() {
         LOGGER.info("Shutting down Stroom Kafka Producer Factory Service");
 
-        allProducerSuppliersMap.values()
+        allSharedProducersMap.values()
                 .parallelStream()
-                .forEach(kafkaProducerSupplier -> {
-                    kafkaProducerSupplier.getKafkaProducer().ifPresent(kafkaProducer -> {
-                        LOGGER.info("Closing Kafka producer for {}", kafkaProducerSupplier.getKafkaProducerSupplierKey());
+                .forEach(sharedKafkaProducer -> {
+                    sharedKafkaProducer.getKafkaProducer().ifPresent(kafkaProducer -> {
+                        LOGGER.info("Closing Kafka producer for {}", sharedKafkaProducer.getSharedKafkaProducerIdentity());
                         kafkaProducer.close();
                     });
                 });
@@ -203,14 +203,14 @@ class KafkaProducerFactoryImpl implements KafkaProducerFactory, HasHealthCheck {
     @Override
     public HealthCheck.Result getHealth() {
 
-        final List<Map<String,Object>> producerInfo = allProducerSuppliersMap.values().stream()
-                .map(kafkaProducerSupplier -> {
+        final List<Map<String,Object>> producerInfo = allSharedProducersMap.values().stream()
+                .map(sharedKafkaProducer -> {
                     Map<String, Object> map = new HashMap<>();
-                    map.put("docName", kafkaProducerSupplier.getConfigName());
-                    map.put("docUuid", kafkaProducerSupplier.getConfigUuid());
-                    map.put("docVersion", kafkaProducerSupplier.getConfigVersion());
-                    map.put("useCount", kafkaProducerSupplier.getUseCount());
-                    map.put("isSuperseded", kafkaProducerSupplier.isSuperseded());
+                    map.put("docName", sharedKafkaProducer.getConfigName());
+                    map.put("docUuid", sharedKafkaProducer.getConfigUuid());
+                    map.put("docVersion", sharedKafkaProducer.getConfigVersion());
+                    map.put("useCount", sharedKafkaProducer.getUseCount());
+                    map.put("isSuperseded", sharedKafkaProducer.isSuperseded());
                     return map;
                 })
                 .collect(Collectors.toList());

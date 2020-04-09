@@ -8,7 +8,7 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
 import stroom.kafka.api.KafkaProducerFactory;
-import stroom.kafka.api.KafkaProducerSupplier;
+import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.pipeline.LocationFactoryProxy;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -38,7 +38,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
     private final Queue<Future<RecordMetadata>> kafkaMetaFutures;
 
     private KafkaProducer<String, byte[]> kafkaProducer;
-    private KafkaProducerSupplier kafkaProducerSupplier;
+    private SharedKafkaProducer sharedKafkaProducer;
 
     private Locator locator;
 
@@ -66,11 +66,6 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         this.locator = locator;
     }
 
-    /*
-    Warning! This software has not been tested recently and is likely to need some rework as a number of things
-    have moved on, including the way that KafkaProducer works.
-    todo test and fix as appropriate!
-     */
     @Override
     public void startProcessing() {
         super.startProcessing();
@@ -91,14 +86,14 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
         }
 
         try {
-            kafkaProducerSupplier = kafkaProducerFactory.getSupplier(kafkaConfigRef);
+            sharedKafkaProducer = kafkaProducerFactory.getSharedProducer(kafkaConfigRef);
         } catch (final RuntimeException e) {
             String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
             throw new LoggedException(msg);
         }
 
-        kafkaProducer = kafkaProducerSupplier.getKafkaProducer().orElseThrow(() -> {
+        kafkaProducer = sharedKafkaProducer.getKafkaProducer().orElseThrow(() -> {
             String msg = "No Kafka producer connector is available, check Stroom's configuration";
             log(Severity.FATAL_ERROR, msg, null);
             throw new LoggedException(msg);
@@ -138,7 +133,7 @@ public abstract class AbstractKafkaProducerFilter extends AbstractSamplingFilter
                     "Wait for futures to complete");
         }
         // Vital this happens or we leak resources
-        kafkaProducerFactory.returnSupplier(kafkaProducerSupplier);
+        kafkaProducerFactory.returnSharedKafkaProducer(sharedKafkaProducer);
         super.endProcessing();
     }
 

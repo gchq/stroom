@@ -5,7 +5,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import stroom.docref.DocRef;
 import stroom.kafka.api.KafkaProducerFactory;
-import stroom.kafka.api.KafkaProducerSupplier;
+import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.impl.InternalStatisticsService;
@@ -65,8 +65,8 @@ class StroomStatsInternalStatisticsService implements InternalStatisticsService 
     public void putEvents(final Map<DocRef, List<InternalStatisticEvent>> eventsMap) {
         final DocRef kafkaConfigDocRef = new DocRef(KafkaConfigDoc.DOCUMENT_TYPE, internalStatisticsConfig.getKafkaConfigUuid());
 
-        try(KafkaProducerSupplier kafkaProducerSupplier = stroomKafkaProducerFactory.getSupplier(kafkaConfigDocRef)) {
-            kafkaProducerSupplier.getKafkaProducer().ifPresentOrElse(
+        try(SharedKafkaProducer sharedKafkaProducer = stroomKafkaProducerFactory.getSharedProducer(kafkaConfigDocRef)) {
+            sharedKafkaProducer.getKafkaProducer().ifPresentOrElse(
                     kafkaProducer ->
                             sendMessages(eventsMap, kafkaProducer),
                     () -> {

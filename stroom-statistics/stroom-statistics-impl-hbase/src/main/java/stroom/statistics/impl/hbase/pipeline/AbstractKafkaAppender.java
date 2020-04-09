@@ -22,7 +22,7 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
 import stroom.docref.DocRef;
 import stroom.kafka.api.KafkaProducerFactory;
-import stroom.kafka.api.KafkaProducerSupplier;
+import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.pipeline.destination.Destination;
 import stroom.pipeline.errorhandler.ErrorReceiverProxy;
@@ -48,7 +48,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
     private static final LambdaLogger LOGGER = LambdaLoggerFactory.getLogger(AbstractKafkaAppender.class);
 
     private final ErrorReceiverProxy errorReceiverProxy;
-    private KafkaProducerSupplier kafkaProducerSupplier;
+    private SharedKafkaProducer sharedKafkaProducer;
     private KafkaProducer<String, byte[]> kafkaProducer;
     private final KafkaProducerFactory kafkaProducerFactory;
 
@@ -70,10 +70,6 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         this.kafkaMetaFutures = new ArrayDeque<>();
     }
 
-    /*
-    TODO Warning! This software has not been tested recently and is likely to need some rework as a number of things
-      have moved on, including the way that KafkaProducer works. Test and fix as appropriate!
-     */
     @Override
     public void startProcessing() {
         if (kafkaConfigRef == null) {
@@ -81,14 +77,14 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         }
 
         try {
-            this.kafkaProducerSupplier = kafkaProducerFactory.getSupplier(kafkaConfigRef);
+            this.sharedKafkaProducer = kafkaProducerFactory.getSharedProducer(kafkaConfigRef);
         } catch (final RuntimeException e) {
             String msg = "Error initialising kafka producer - " + e.getMessage();
             log(Severity.FATAL_ERROR, msg, e);
             throw new LoggedException(msg);
         }
 
-        kafkaProducer = kafkaProducerSupplier.getKafkaProducer().orElseThrow(() -> {
+        kafkaProducer = sharedKafkaProducer.getKafkaProducer().orElseThrow(() -> {
             String msg = "No Kafka producer connector is available, check Stroom's configuration";
             log(Severity.FATAL_ERROR, msg, null);
             throw new LoggedException(msg);
@@ -132,7 +128,7 @@ public abstract class AbstractKafkaAppender extends AbstractDestinationProvider 
         }
 
         // Vital this happens or we leak resources
-        kafkaProducerFactory.returnSupplier(kafkaProducerSupplier);
+        kafkaProducerFactory.returnSharedKafkaProducer(sharedKafkaProducer);
 
         super.endProcessing();
     }

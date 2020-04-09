@@ -2,41 +2,31 @@ package stroom.kafka.impl;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import stroom.docref.DocRef;
-import stroom.kafka.api.KafkaProducerSupplier;
-import stroom.kafka.api.KafkaProducerSupplierKey;
+import stroom.kafka.api.SharedKafkaProducer;
+import stroom.kafka.api.SharedKafkaProducerIdentity;
 
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-/**
- * A wrapper for a shared {@link KafkaProducer} that MUST be used in a try-with-resources
- * block (or similar mechanism to call {@link KafkaProducerSupplier#close()}) so that
- * the {@link KafkaProducer} is closed when no longer needed by all parties.
- * An instance may not contain a {@link KafkaProducer}, e.g. when no {@link stroom.kafka.shared.KafkaConfigDoc}
- * can be found for a UUID.
- *
- * Users of this class should NOT call close() on the KafkaProducer themselves as it is potentially shared.
- * They are permitted to flush it though.
- */
-public class KafkaProducerSupplierImpl implements KafkaProducerSupplier {
+public class SharedKafkaProducerImpl implements SharedKafkaProducer {
 
     private final KafkaProducer<String, byte[]> kafkaProducer;
-    private final Consumer<KafkaProducerSupplier> closeAction;
-    private final KafkaProducerSupplierKey kafkaProducerSupplierKey;
+    private final Consumer<SharedKafkaProducer> closeAction;
+    private final SharedKafkaProducerIdentity sharedKafkaProducerIdentity;
     private final DocRef kafkaConfigRef;
     private final AtomicBoolean isSuperseded = new AtomicBoolean(false);
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final AtomicInteger useCounter = new AtomicInteger(0);
 
-    KafkaProducerSupplierImpl(final KafkaProducer<String, byte[]> kafkaProducer,
-                              final Consumer<KafkaProducerSupplier> closeAction,
-                              final KafkaProducerSupplierKey kafkaProducerSupplierKey,
-                              final DocRef kafkaConfigRef) {
+    SharedKafkaProducerImpl(final KafkaProducer<String, byte[]> kafkaProducer,
+                            final Consumer<SharedKafkaProducer> closeAction,
+                            final SharedKafkaProducerIdentity sharedKafkaProducerIdentity,
+                            final DocRef kafkaConfigRef) {
         this.kafkaProducer = kafkaProducer;
         this.closeAction = closeAction;
-        this.kafkaProducerSupplierKey = kafkaProducerSupplierKey;
+        this.sharedKafkaProducerIdentity = sharedKafkaProducerIdentity;
         this.kafkaConfigRef = kafkaConfigRef;
     }
 
@@ -60,12 +50,12 @@ public class KafkaProducerSupplierImpl implements KafkaProducerSupplier {
 
     @Override
     public String getConfigUuid() {
-        return kafkaProducerSupplierKey != null ? kafkaProducerSupplierKey.getUuid() : null;
+        return sharedKafkaProducerIdentity != null ? sharedKafkaProducerIdentity.getConfigUuid() : null;
     }
 
     @Override
     public String getConfigVersion() {
-        return kafkaProducerSupplierKey != null ? kafkaProducerSupplierKey.getVersion() : null;
+        return sharedKafkaProducerIdentity != null ? sharedKafkaProducerIdentity.getConfigVersion() : null;
     }
 
     /**
@@ -81,15 +71,15 @@ public class KafkaProducerSupplierImpl implements KafkaProducerSupplier {
         }
     }
 
-    static KafkaProducerSupplierImpl empty() {
-        return new KafkaProducerSupplierImpl(null,
+    static SharedKafkaProducerImpl empty() {
+        return new SharedKafkaProducerImpl(null,
                 kafkaProducerSupplier -> {},
                 null,
                 null);
     }
 
-    KafkaProducerSupplierKey getKafkaProducerSupplierKey() {
-        return kafkaProducerSupplierKey;
+    SharedKafkaProducerIdentity getSharedKafkaProducerIdentity() {
+        return sharedKafkaProducerIdentity;
     }
 
     boolean isSuperseded() {

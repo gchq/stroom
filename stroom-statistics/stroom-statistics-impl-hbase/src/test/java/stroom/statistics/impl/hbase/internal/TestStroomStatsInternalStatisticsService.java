@@ -14,7 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.kafka.api.KafkaProducerFactory;
-import stroom.kafka.api.KafkaProducerSupplier;
+import stroom.kafka.api.SharedKafkaProducer;
 import stroom.statistics.api.InternalStatisticEvent;
 import stroom.statistics.api.InternalStatisticKey;
 
@@ -37,18 +37,18 @@ class TestStroomStatsInternalStatisticsService {
     @Captor
     private ArgumentCaptor<Consumer<Throwable>> exceptionHandlerCaptor;
     @Mock
-    private KafkaProducerSupplier mockKafkaProducerSupplier;
+    private SharedKafkaProducer mockSharedKafkaProducer;
     @Mock
     private KafkaProducer<String, byte[]> mockKafkaProducer;
     @Mock
     private KafkaProducerFactory mockStroomKafkaProducerFactory;
 
     private void initMocks() {
-        Mockito.when(mockKafkaProducerSupplier.getKafkaProducer())
+        Mockito.when(mockSharedKafkaProducer.getKafkaProducer())
                 .thenReturn(Optional.of(mockKafkaProducer));
 
-        Mockito.when(mockStroomKafkaProducerFactory.getSupplier(Mockito.any()))
-                .thenReturn(mockKafkaProducerSupplier);
+        Mockito.when(mockStroomKafkaProducerFactory.getSharedProducer(Mockito.any()))
+                .thenReturn(mockSharedKafkaProducer);
     }
 
     @Test

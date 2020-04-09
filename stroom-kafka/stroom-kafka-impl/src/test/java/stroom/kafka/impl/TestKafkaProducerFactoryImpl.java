@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 import stroom.docref.DocRef;
 import stroom.docstore.shared.DocRefUtil;
 import stroom.kafka.api.KafkaProducerFactory;
-import stroom.kafka.api.KafkaProducerSupplier;
+import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.shared.KafkaConfigDoc;
 
 import java.util.List;
@@ -40,14 +40,14 @@ public class TestKafkaProducerFactoryImpl {
 
         final DocRef docRef = DocRefUtil.create(kafkaConfigDoc);
 
-        final KafkaProducerSupplier kafkaProducerSupplier = kafkaProducerFactory.getSupplier(docRef);
+        final SharedKafkaProducer sharedKafkaProducer = kafkaProducerFactory.getSharedProducer(docRef);
 
         // Cache knows nothing of the doc so there cannot be a producer
-        assertThat(kafkaProducerSupplier.getKafkaProducer()).isEmpty();
-        assertThat(kafkaProducerSupplier.hasKafkaProducer()).isFalse();
+        assertThat(sharedKafkaProducer.getKafkaProducer()).isEmpty();
+        assertThat(sharedKafkaProducer.hasKafkaProducer()).isFalse();
 
         // Check we can still close with an empty supplier
-        kafkaProducerSupplier.close();
+        sharedKafkaProducer.close();
     }
 
     @Test
@@ -59,21 +59,21 @@ public class TestKafkaProducerFactoryImpl {
 
         final DocRef docRef = DocRefUtil.create(kafkaConfigDoc);
 
-        final KafkaProducerSupplier kafkaProducerSupplier = kafkaProducerFactory.getSupplier(docRef);
+        final SharedKafkaProducer sharedKafkaProducer = kafkaProducerFactory.getSharedProducer(docRef);
 
         // Cache knows nothing of the doc so there cannot be a producer
-        assertThat(kafkaProducerSupplier.getKafkaProducer()).isEmpty();
-        assertThat(kafkaProducerSupplier.hasKafkaProducer()).isFalse();
+        assertThat(sharedKafkaProducer.getKafkaProducer()).isEmpty();
+        assertThat(sharedKafkaProducer.hasKafkaProducer()).isFalse();
 
         // Check we can still close with an empty supplier
-        kafkaProducerSupplier.close();
+        sharedKafkaProducer.close();
 
         // it is closed so closing again will throw
-        Assertions.assertThatThrownBy(kafkaProducerSupplier::close)
+        Assertions.assertThatThrownBy(sharedKafkaProducer::close)
                 .isInstanceOf(RuntimeException.class);
 
         // it is closed so getting again will throw
-        Assertions.assertThatThrownBy(kafkaProducerSupplier::getKafkaProducer)
+        Assertions.assertThatThrownBy(sharedKafkaProducer::getKafkaProducer)
                 .isInstanceOf(RuntimeException.class);
     }
 
@@ -93,29 +93,29 @@ public class TestKafkaProducerFactoryImpl {
         Mockito.when(kafkaConfigDocCache.get(Mockito.eq(docRef2)))
                 .thenReturn(Optional.of(kafkaConfigDoc2));
 
-        final KafkaProducerSupplier kafkaProducerSupplier1 = kafkaProducerFactory.getSupplier(docRef1);
+        final SharedKafkaProducer sharedKafkaProducer1 = kafkaProducerFactory.getSharedProducer(docRef1);
 
-        assertThat(kafkaProducerSupplier1.getKafkaProducer()).isPresent();
-        assertThat(kafkaProducerSupplier1.hasKafkaProducer()).isTrue();
-        assertThat(kafkaProducerSupplier1.getConfigName()).isEqualTo(kafkaConfigDoc1.getName());
-        assertThat(kafkaProducerSupplier1.getConfigUuid()).isEqualTo(kafkaConfigDoc1.getUuid());
-        assertThat(kafkaProducerSupplier1.getConfigVersion()).isEqualTo(kafkaConfigDoc1.getVersion());
+        assertThat(sharedKafkaProducer1.getKafkaProducer()).isPresent();
+        assertThat(sharedKafkaProducer1.hasKafkaProducer()).isTrue();
+        assertThat(sharedKafkaProducer1.getConfigName()).isEqualTo(kafkaConfigDoc1.getName());
+        assertThat(sharedKafkaProducer1.getConfigUuid()).isEqualTo(kafkaConfigDoc1.getUuid());
+        assertThat(sharedKafkaProducer1.getConfigVersion()).isEqualTo(kafkaConfigDoc1.getVersion());
 
-        KafkaProducer<String, byte[]> kafkaProducer1 = kafkaProducerSupplier1.getKafkaProducer().get();
+        KafkaProducer<String, byte[]> kafkaProducer1 = sharedKafkaProducer1.getKafkaProducer().get();
 
         assertThat(kafkaProducer1).isNotNull();
 
         // Now get the second one
 
-        final KafkaProducerSupplier kafkaProducerSupplier2 = kafkaProducerFactory.getSupplier(docRef2);
+        final SharedKafkaProducer sharedKafkaProducer2 = kafkaProducerFactory.getSharedProducer(docRef2);
 
-        assertThat(kafkaProducerSupplier2.getKafkaProducer()).isPresent();
-        assertThat(kafkaProducerSupplier2.hasKafkaProducer()).isTrue();
-        assertThat(kafkaProducerSupplier2.getConfigName()).isEqualTo(kafkaConfigDoc2.getName());
-        assertThat(kafkaProducerSupplier2.getConfigUuid()).isEqualTo(kafkaConfigDoc2.getUuid());
-        assertThat(kafkaProducerSupplier2.getConfigVersion()).isEqualTo(kafkaConfigDoc2.getVersion());
+        assertThat(sharedKafkaProducer2.getKafkaProducer()).isPresent();
+        assertThat(sharedKafkaProducer2.hasKafkaProducer()).isTrue();
+        assertThat(sharedKafkaProducer2.getConfigName()).isEqualTo(kafkaConfigDoc2.getName());
+        assertThat(sharedKafkaProducer2.getConfigUuid()).isEqualTo(kafkaConfigDoc2.getUuid());
+        assertThat(sharedKafkaProducer2.getConfigVersion()).isEqualTo(kafkaConfigDoc2.getVersion());
 
-        KafkaProducer<String, byte[]> kafkaProducer2 = kafkaProducerSupplier2.getKafkaProducer().get();
+        KafkaProducer<String, byte[]> kafkaProducer2 = sharedKafkaProducer2.getKafkaProducer().get();
 
         assertThat(kafkaProducer2).isNotNull();
 
@@ -123,15 +123,15 @@ public class TestKafkaProducerFactoryImpl {
 
         // Now get the first one again to check it is the same KP instance
 
-        final KafkaProducerSupplier kafkaProducerSupplier1b = kafkaProducerFactory.getSupplier(docRef1);
+        final SharedKafkaProducer sharedKafkaProducer1B = kafkaProducerFactory.getSharedProducer(docRef1);
 
-        assertThat(kafkaProducerSupplier1b.getKafkaProducer()).isPresent();
-        assertThat(kafkaProducerSupplier1b.hasKafkaProducer()).isTrue();
-        assertThat(kafkaProducerSupplier1b.getConfigName()).isEqualTo(kafkaConfigDoc1.getName());
-        assertThat(kafkaProducerSupplier1b.getConfigUuid()).isEqualTo(kafkaConfigDoc1.getUuid());
-        assertThat(kafkaProducerSupplier1b.getConfigVersion()).isEqualTo(kafkaConfigDoc1.getVersion());
+        assertThat(sharedKafkaProducer1B.getKafkaProducer()).isPresent();
+        assertThat(sharedKafkaProducer1B.hasKafkaProducer()).isTrue();
+        assertThat(sharedKafkaProducer1B.getConfigName()).isEqualTo(kafkaConfigDoc1.getName());
+        assertThat(sharedKafkaProducer1B.getConfigUuid()).isEqualTo(kafkaConfigDoc1.getUuid());
+        assertThat(sharedKafkaProducer1B.getConfigVersion()).isEqualTo(kafkaConfigDoc1.getVersion());
 
-        KafkaProducer<String, byte[]> kafkaProducer1b = kafkaProducerSupplier1b.getKafkaProducer().get();
+        KafkaProducer<String, byte[]> kafkaProducer1b = sharedKafkaProducer1B.getKafkaProducer().get();
 
         assertThat(kafkaProducer1b).isNotNull();
 
@@ -155,15 +155,15 @@ public class TestKafkaProducerFactoryImpl {
         Mockito.when(kafkaConfigDocCache.get(Mockito.eq(docRef1)))
                 .thenReturn(Optional.of(kafkaConfigDoc1mk1));
 
-        final KafkaProducerSupplier kafkaProducerSupplier1 = kafkaProducerFactory.getSupplier(docRef1);
+        final SharedKafkaProducer sharedKafkaProducer1 = kafkaProducerFactory.getSharedProducer(docRef1);
 
-        assertThat(kafkaProducerSupplier1.getKafkaProducer()).isPresent();
-        assertThat(kafkaProducerSupplier1.hasKafkaProducer()).isTrue();
-        assertThat(kafkaProducerSupplier1.getConfigName()).isEqualTo(kafkaConfigDoc1mk1.getName());
-        assertThat(kafkaProducerSupplier1.getConfigUuid()).isEqualTo(kafkaConfigDoc1mk1.getUuid());
-        assertThat(kafkaProducerSupplier1.getConfigVersion()).isEqualTo(kafkaConfigDoc1mk1.getVersion());
+        assertThat(sharedKafkaProducer1.getKafkaProducer()).isPresent();
+        assertThat(sharedKafkaProducer1.hasKafkaProducer()).isTrue();
+        assertThat(sharedKafkaProducer1.getConfigName()).isEqualTo(kafkaConfigDoc1mk1.getName());
+        assertThat(sharedKafkaProducer1.getConfigUuid()).isEqualTo(kafkaConfigDoc1mk1.getUuid());
+        assertThat(sharedKafkaProducer1.getConfigVersion()).isEqualTo(kafkaConfigDoc1mk1.getVersion());
 
-        final KafkaProducer<String, byte[]> kafkaProducer1 = kafkaProducerSupplier1.getKafkaProducer().get();
+        final KafkaProducer<String, byte[]> kafkaProducer1 = sharedKafkaProducer1.getKafkaProducer().get();
 
         assertThat(kafkaProducer1).isNotNull();
 
@@ -174,15 +174,15 @@ public class TestKafkaProducerFactoryImpl {
         Mockito.when(kafkaConfigDocCache.get(Mockito.eq(docRef1)))
                 .thenReturn(Optional.of(kafkaConfigDoc1mk2));
 
-        final KafkaProducerSupplier kafkaProducerSupplier1b = kafkaProducerFactory.getSupplier(docRef1);
+        final SharedKafkaProducer sharedKafkaProducer1B = kafkaProducerFactory.getSharedProducer(docRef1);
 
-        assertThat(kafkaProducerSupplier1b.getKafkaProducer()).isPresent();
-        assertThat(kafkaProducerSupplier1b.hasKafkaProducer()).isTrue();
-        assertThat(kafkaProducerSupplier1b.getConfigName()).isEqualTo(kafkaConfigDoc1mk1.getName());
-        assertThat(kafkaProducerSupplier1b.getConfigUuid()).isEqualTo(kafkaConfigDoc1mk1.getUuid());
-        assertThat(kafkaProducerSupplier1b.getConfigVersion()).isEqualTo(kafkaConfigDoc1mk2.getVersion());
+        assertThat(sharedKafkaProducer1B.getKafkaProducer()).isPresent();
+        assertThat(sharedKafkaProducer1B.hasKafkaProducer()).isTrue();
+        assertThat(sharedKafkaProducer1B.getConfigName()).isEqualTo(kafkaConfigDoc1mk1.getName());
+        assertThat(sharedKafkaProducer1B.getConfigUuid()).isEqualTo(kafkaConfigDoc1mk1.getUuid());
+        assertThat(sharedKafkaProducer1B.getConfigVersion()).isEqualTo(kafkaConfigDoc1mk2.getVersion());
 
-        final KafkaProducer<String, byte[]> kafkaProducer1b = kafkaProducerSupplier1b.getKafkaProducer().get();
+        final KafkaProducer<String, byte[]> kafkaProducer1b = sharedKafkaProducer1B.getKafkaProducer().get();
 
         assertThat(kafkaProducer1b).isNotNull();
 
@@ -190,15 +190,15 @@ public class TestKafkaProducerFactoryImpl {
 
         // Now get it again to check it is the same KP instance
 
-        final KafkaProducerSupplier kafkaProducerSupplier1c = kafkaProducerFactory.getSupplier(docRef1);
+        final SharedKafkaProducer sharedKafkaProducer1C = kafkaProducerFactory.getSharedProducer(docRef1);
 
-        assertThat(kafkaProducerSupplier1c.getKafkaProducer()).isPresent();
-        assertThat(kafkaProducerSupplier1c.hasKafkaProducer()).isTrue();
-        assertThat(kafkaProducerSupplier1c.getConfigName()).isEqualTo(kafkaConfigDoc1mk1.getName());
-        assertThat(kafkaProducerSupplier1c.getConfigUuid()).isEqualTo(kafkaConfigDoc1mk1.getUuid());
-        assertThat(kafkaProducerSupplier1c.getConfigVersion()).isEqualTo(kafkaConfigDoc1mk2.getVersion());
+        assertThat(sharedKafkaProducer1C.getKafkaProducer()).isPresent();
+        assertThat(sharedKafkaProducer1C.hasKafkaProducer()).isTrue();
+        assertThat(sharedKafkaProducer1C.getConfigName()).isEqualTo(kafkaConfigDoc1mk1.getName());
+        assertThat(sharedKafkaProducer1C.getConfigUuid()).isEqualTo(kafkaConfigDoc1mk1.getUuid());
+        assertThat(sharedKafkaProducer1C.getConfigVersion()).isEqualTo(kafkaConfigDoc1mk2.getVersion());
 
-        KafkaProducer<String, byte[]> kafkaProducer1c = kafkaProducerSupplier1c.getKafkaProducer().get();
+        KafkaProducer<String, byte[]> kafkaProducer1c = sharedKafkaProducer1C.getKafkaProducer().get();
 
         assertThat(kafkaProducer1c).isNotNull();
 
@@ -232,8 +232,8 @@ public class TestKafkaProducerFactoryImpl {
 
 
         // Now get both so the factory should be holding both
-        try (final KafkaProducerSupplier kafkaProducerSupplier1 = kafkaProducerFactory.getSupplier(docRef1)) {
-            try (final KafkaProducerSupplier kafkaProducerSupplier2 = kafkaProducerFactory.getSupplier(docRef2)) {
+        try (final SharedKafkaProducer sharedKafkaProducer1 = kafkaProducerFactory.getSharedProducer(docRef1)) {
+            try (final SharedKafkaProducer sharedKafkaProducer2 = kafkaProducerFactory.getSharedProducer(docRef2)) {
 
                 final HealthCheck.Result health2 = kafkaProducerFactory.getHealth();
                 LOGGER.info(health2.toString());

@@ -25,7 +25,7 @@ import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import stroom.docref.DocRef;
-import stroom.kafka.api.KafkaProducerSupplier;
+import stroom.kafka.api.SharedKafkaProducer;
 import stroom.kafka.api.KafkaProducerFactory;
 import stroom.kafka.shared.KafkaConfigDoc;
 import stroom.pipeline.LocationFactoryProxy;
@@ -84,7 +84,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
 
     private Locator locator = null;
     private DocRef configRef = null;
-    private KafkaProducerSupplier kafkaProducerSupplier = null;
+    private SharedKafkaProducer sharedKafkaProducer = null;
     private KafkaProducer<String, byte[]> kafkaProducer = null;
     private KafkaMessageState state = null;
     private boolean flushOnSend = true;
@@ -121,9 +121,9 @@ class StandardKafkaProducer extends AbstractXMLFilter {
                 throw new LoggedException("KafkaConfig has not been set");
             }
 
-            kafkaProducerSupplier = stroomKafkaProducerFactory.getSupplier(configRef);
+            sharedKafkaProducer = stroomKafkaProducerFactory.getSharedProducer(configRef);
 
-            kafkaProducer = kafkaProducerSupplier.getKafkaProducer().orElseThrow(() -> {
+            kafkaProducer = sharedKafkaProducer.getKafkaProducer().orElseThrow(() -> {
                 log(Severity.FATAL_ERROR, "No Kafka produce exists for config " + configRef, null);
                 throw new LoggedException("Unable to create Kafka Producer using config " + configRef);
             });
@@ -168,7 +168,7 @@ class StandardKafkaProducer extends AbstractXMLFilter {
         }
 
         // Vital this happens or we leak resources
-        stroomKafkaProducerFactory.returnSupplier(kafkaProducerSupplier);
+        stroomKafkaProducerFactory.returnSharedKafkaProducer(sharedKafkaProducer);
         super.endProcessing();
     }
 
